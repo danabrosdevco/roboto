@@ -1,4 +1,9 @@
-[gd_scene load_steps=14 format=3 uid="uid://c5r8kyl3dh8ox"]
+[gd_scene load_steps=8 format=3 uid="uid://c5r8kyl3dh8ox"]
+
+[ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="1_d2eqf"]
+[ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="1_frury"]
+[ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud.tscn" id="2_x7qjx"]
+[ext_resource type="PackedScene" uid="uid://fr4657li7txj" path="res://Env/world_objects/large_barrier.tscn" id="5_crx3c"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oql1c"]
 albedo_color = Color(0.477757, 0.884906, 0.786467, 1)
@@ -9,94 +14,6 @@ size = Vector2(100, 100)
 [sub_resource type="BoxShape3D" id="BoxShape3D_uaxtn"]
 size = Vector3(1000, 0.25, 1000)
 
-[sub_resource type="Environment" id="Environment_6vduw"]
-ambient_light_color = Color(0.961816, 0.95082, 0.952282, 1)
-
-[sub_resource type="Gradient" id="Gradient_4l82j"]
-offsets = PackedFloat32Array(0.2, 1)
-colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
-
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_2lcd0"]
-noise_type = 2
-frequency = 0.03
-cellular_jitter = 3.0
-cellular_return_type = 0
-domain_warp_enabled = true
-domain_warp_type = 1
-domain_warp_amplitude = 50.0
-domain_warp_fractal_type = 2
-domain_warp_fractal_lacunarity = 1.5
-domain_warp_fractal_gain = 1.0
-
-[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_uhgl3"]
-seamless = true
-color_ramp = SubResource("Gradient_4l82j")
-noise = SubResource("FastNoiseLite_2lcd0")
-
-[sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_dvftf"]
-_shader_parameters = {
-"bias_distance": 512.0,
-"blend_sharpness": 0.87,
-"depth_blur": 0.0,
-"enable_macro_variation": true,
-"enable_projection": true,
-"height_blending": true,
-"macro_variation1": Color(1, 1, 1, 1),
-"macro_variation2": Color(1, 1, 1, 1),
-"macro_variation_slope": 0.333,
-"mipmap_bias": 1.0,
-"noise1_angle": 0.0,
-"noise1_offset": Vector2(0.5, 0.5),
-"noise1_scale": 0.04,
-"noise2_scale": 0.076,
-"noise3_scale": 0.225,
-"noise_texture": SubResource("NoiseTexture2D_uhgl3"),
-"projection_angular_division": 2.0,
-"projection_threshold": 0.8,
-"world_space_normal_blend": true
-}
-show_checkered = true
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ptfgh"]
-transparency = 4
-cull_mode = 2
-vertex_color_use_as_albedo = true
-backlight_enabled = true
-backlight = Color(0.5, 0.5, 0.5, 1)
-distance_fade_mode = 1
-distance_fade_min_distance = 128.0
-distance_fade_max_distance = 96.0
-
-[sub_resource type="Terrain3DMeshAsset" id="Terrain3DMeshAsset_ngr04"]
-generated_type = 1
-height_offset = 0.5
-material_override = SubResource("StandardMaterial3D_ptfgh")
-last_lod = 0
-last_shadow_lod = 0
-lod0_range = 128.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_123ex"]
-transparency = 4
-cull_mode = 2
-vertex_color_use_as_albedo = true
-backlight_enabled = true
-backlight = Color(0.5, 0.5, 0.5, 1)
-distance_fade_mode = 1
-distance_fade_min_distance = 128.0
-distance_fade_max_distance = 96.0
-
-[sub_resource type="Terrain3DMeshAsset" id="Terrain3DMeshAsset_jb2er"]
-id = 1
-generated_type = 1
-height_offset = 0.5
-material_override = SubResource("StandardMaterial3D_123ex")
-last_lod = 0
-last_shadow_lod = 0
-lod0_range = 128.0
-
-[sub_resource type="Terrain3DAssets" id="Terrain3DAssets_m875n"]
-mesh_list = Array[Terrain3DMeshAsset]([SubResource("Terrain3DMeshAsset_ngr04"), SubResource("Terrain3DMeshAsset_jb2er")])
-
 [node name="World" type="Node3D"]
 
 [node name="CSGBox3D" type="CSGBox3D" parent="."]
@@ -104,7 +21,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.750092, -6.021)
 material = SubResource("StandardMaterial3D_oql1c")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-visible = false
 mesh = SubResource("PlaneMesh_yt31w")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="MeshInstance3D"]
@@ -112,16 +28,43 @@ mesh = SubResource("PlaneMesh_yt31w")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D/StaticBody3D"]
 shape = SubResource("BoxShape3D_uaxtn")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_6vduw")
+[node name="StaticBody3D" parent="." instance=ExtResource("1_d2eqf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.17932, 0.121961, 1.38387)
+metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 38.5299, 0)
+[node name="StaticBody3D (1)" parent="." instance=ExtResource("1_d2eqf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.56985, 0.12196, -0.974696)
+metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
 
-[node name="Terrain3D" type="Terrain3D" parent="."]
-data_directory = "res://Env/terrain3d"
-material = SubResource("Terrain3DMaterial_dvftf")
-assets = SubResource("Terrain3DAssets_m875n")
-show_checkered = true
-top_level = true
-metadata/_edit_lock_ = true
+[node name="StaticBody3D (2)" parent="." instance=ExtResource("1_d2eqf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.67929, 0.121961, 0.148993)
+metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
+
+[node name="StaticBody3D (3)" parent="." instance=ExtResource("1_d2eqf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.27162, 0.12196, 1.91637)
+metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
+
+[node name="StaticBody3D (4)" parent="." instance=ExtResource("1_d2eqf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.28024, 0.121961, -2.34783)
+metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
+
+[node name="HUD" parent="." instance=ExtResource("2_x7qjx")]
+metadata/_edit_use_anchors_ = true
+
+[node name="@StaticBody3D@116456" parent="." instance=ExtResource("5_crx3c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.97189, 0.128499, -4.38642)
+metadata/asset_placer_res_id = "uid://fr4657li7txj"
+
+[node name="@StaticBody3D@116457" parent="." instance=ExtResource("5_crx3c")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -2.11158, 0.1285, -4.52122)
+metadata/asset_placer_res_id = "uid://fr4657li7txj"
+
+[node name="@StaticBody3D@116458" parent="." instance=ExtResource("5_crx3c")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -10.082, 0.128499, -4.30321)
+metadata/asset_placer_res_id = "uid://fr4657li7txj"
+
+[node name="@StaticBody3D@116459" parent="." instance=ExtResource("5_crx3c")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -13.8959, 0.128499, -4.19149)
+metadata/asset_placer_res_id = "uid://fr4657li7txj"
+
+[node name="WorldEnvironment" parent="." instance=ExtResource("1_frury")]

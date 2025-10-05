@@ -1,15 +1,37 @@
-[gd_scene load_steps=3 format=3 uid="uid://bgj56y7q1pyxr"]
+[gd_scene load_steps=5 format=3 uid="uid://bgj56y7q1pyxr"]
 
 [ext_resource type="Script" path="res://Character/test_character.gd" id="1_xw2ar"]
+[ext_resource type="PackedScene" uid="uid://bqvaekw1dbcch" path="res://Character/hud_weapon.tscn" id="2_hvn8u"]
+[ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/bullet.tscn" id="2_qrfbk"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8ja6s"]
 
-[node name="test_character" type="CharacterBody3D"]
+[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("muzzle_flash", "reload_sounds", "rifle_stream_player", "click_stream_player")]
 script = ExtResource("1_xw2ar")
+projectile_scene = ExtResource("2_qrfbk")
+muzzle_flash = NodePath("Camera3D/Weapon/MuzzleFlash")
+reload_sounds = [NodePath("Camera3D/Weapon/Reload1"), NodePath("Camera3D/Weapon/Reload2"), NodePath("Camera3D/Weapon/Reload3"), NodePath("Camera3D/Weapon/Reload4"), NodePath("Camera3D/Weapon/Reload5")]
+reload_delays = Array[float]([0.6, 0.6, 0.35, 0.3, 0.3])
+rifle_stream_player = NodePath("Camera3D/Weapon/RifleShot")
+click_stream_player = NodePath("Camera3D/Weapon/Click")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_8ja6s")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 
+[node name="Weapon" parent="Camera3D" instance=ExtResource("2_hvn8u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.192761, -0.207464, 0)
+
 [node name="RayCast3D" type="RayCast3D" parent="."]
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.236776)
+omni_range = 3.0
+omni_attenuation = 0.5
+omni_shadow_mode = 0
+
+[node name="AudioListener3D" type="AudioListener3D" parent="."]
+
+[editable path="Camera3D/Weapon"]
+[editable path="Camera3D/Weapon/AssaultRifle2_12"]

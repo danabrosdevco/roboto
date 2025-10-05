@@ -9,3 +9,6 @@
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.04127, 0)
 
 [node name="World" parent="." instance=ExtResource("2_phnw0")]
+
+[editable path="test_character"]
+[editable path="World"]

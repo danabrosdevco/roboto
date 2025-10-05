@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://fr4657li7txj"]
+
+[ext_resource type="PackedScene" uid="uid://bwh76x4pgn1yg" path="res://3d_assets/shooter pack/Environment/glTF/Barrier_Large.gltf" id="1_8bsqi"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_l7pyf"]
+size = Vector3(3.81779, 3.14888, 0.641815)
+
+[node name="StaticBody3D" type="StaticBody3D"]
+
+[node name="Barrier_Large2" parent="." instance=ExtResource("1_8bsqi")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0053502, 1.56914, 0.000869751)
+shape = SubResource("BoxShape3D_l7pyf")

@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://iupiouf41mdu"]
+
+[ext_resource type="Script" path="res://Character/bullet.gd" id="1_e27hr"]
+
+[node name="bullet" type="CSGSphere3D"]
+radius = 0.1
+radial_segments = 6
+script = ExtResource("1_e27hr")
