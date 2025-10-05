@@ -1,15 +1,19 @@
-[gd_scene load_steps=5 format=3 uid="uid://bgj56y7q1pyxr"]
+[gd_scene load_steps=6 format=3 uid="uid://bgj56y7q1pyxr"]
 
 [ext_resource type="Script" path="res://Character/test_character.gd" id="1_xw2ar"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/tracer.tscn" id="2_3jw7k"]
 [ext_resource type="PackedScene" uid="uid://bqvaekw1dbcch" path="res://Character/hud_weapon.tscn" id="2_hvn8u"]
 [ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/bullet.tscn" id="2_qrfbk"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8ja6s"]
 
-[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("muzzle_flash", "reload_sounds", "rifle_stream_player", "click_stream_player")]
+[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "reload_sounds", "rifle_stream_player", "click_stream_player")]
 script = ExtResource("1_xw2ar")
+tracer_scene = ExtResource("2_3jw7k")
+tracer_origin = NodePath("Camera3D/Weapon/Muzzle")
 projectile_scene = ExtResource("2_qrfbk")
 muzzle_flash = NodePath("Camera3D/Weapon/MuzzleFlash")
+weapon_model = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1")
 reload_sounds = [NodePath("Camera3D/Weapon/Reload1"), NodePath("Camera3D/Weapon/Reload2"), NodePath("Camera3D/Weapon/Reload3"), NodePath("Camera3D/Weapon/Reload4"), NodePath("Camera3D/Weapon/Reload5")]
 reload_delays = Array[float]([0.6, 0.6, 0.35, 0.3, 0.3])
 rifle_stream_player = NodePath("Camera3D/Weapon/RifleShot")
@@ -19,9 +23,20 @@ click_stream_player = NodePath("Camera3D/Weapon/Click")
 shape = SubResource("CapsuleShape3D_8ja6s")
 
 [node name="Camera3D" type="Camera3D" parent="."]
+doppler_tracking = 2
+far = 2500.0
 
 [node name="Weapon" parent="Camera3D" instance=ExtResource("2_hvn8u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.192761, -0.207464, 0)
+
+[node name="AssaultRifle2_12" parent="Camera3D/Weapon" index="0"]
+transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.0776801, -0.0526062, -0.218037)
+
+[node name="AssaultRifle2_1" parent="Camera3D/Weapon/AssaultRifle2_12" index="0"]
+transform = Transform3D(0.993417, -0.0486929, 0.103694, 0.0484298, 0.998814, 0.00505514, -0.103817, -2.12843e-09, 0.994596, 0, 0, 0)
+
+[node name="MuzzleFlash" parent="Camera3D/Weapon" index="2"]
+transform = Transform3D(-0.0844665, -9.48706e-05, 0.994508, 0.0394247, 0.998792, 0.00523596, -0.80167, 0.0491288, -0.104527, -0.0295902, 0.0303454, -1.25611)
 
 [node name="RayCast3D" type="RayCast3D" parent="."]
 

@@ -11,9 +11,12 @@ script = ExtResource("1_u12us")
 flash_textures = Array[Texture2D]([ExtResource("1_2vqki"), ExtResource("2_n46ad"), ExtResource("3_eufnm"), ExtResource("4_m06pc")])
 
 [node name="Sprite3D" type="Sprite3D" parent="."]
+transform = Transform3D(0.75, 0, 0, 0, 0.75, 0, 0, 0, 0.75, 0, 0, 0)
+modulate = Color(1, 1, 1, 0.658824)
 billboard = 1
 texture = ExtResource("1_2vqki")
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
 light_color = Color(0.536313, 0.186568, 0.117025, 1)
+light_energy = 6.0
 light_bake_mode = 0

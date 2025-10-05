@@ -1,12 +1,14 @@
 extends CharacterBody3D
-
+@export var world: Node3D
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENS := 0.002
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-
+@export var tracer_scene: PackedScene
+@export var tracer_origin: Node3D
 @export var projectile_scene: PackedScene
 @export var muzzle_flash: Node3D
+@export var weapon_model: Node3D
 @export var reload_sounds: Array[AudioStreamPlayer3D]
 @export var reload_delays: Array[float]
 
@@ -17,14 +19,19 @@ const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 const FIRE_RATE := 0.0705
 var fire_cooldown := 0.0
-
 var recoil_amount := 0.0
 const RECOIL_DECAY := 8.0
 
+var recoil_rotation := Vector3.ZERO
+var recoil_position := Vector3.ZERO
 var is_ads := false
 var magazine_size: int = 30
 var magazine_capacity: int = 30
+const tracers_in_mag: Array[int] = [30, 25,20, 15, 10, 5, 4, 3, 2, 1, 0]
+var tracer: bool = false
 var is_reloading := false
+var from
+var to
 
 @export var reload_time := 2.15 # seconds to reload
 @export var rifle_stream_player: AudioStreamPlayer3D
@@ -92,7 +99,29 @@ func _physics_process(delta: float) -> void:
 
 	cam.fov = lerp(cam.fov, target_fov, delta * ADS_SPEED)
 	cam.rotation.z = lerp(cam.rotation.z, target_lean, delta * LEAN_SPEED)
+	# Smooth recoil decay
+	recoil_amount = move_toward(recoil_amount, 0.0, delta * RECOIL_DECAY)
 
+	# Offset recoil target
+	var target_recoil_rot = Vector3(
+		recoil_amount * 3.0,         # Pitch up (X)
+		recoil_amount * randf_range(-1.0, 1.0),  # Yaw (Y)
+		0.0                          # Roll (Z)
+	)
+
+	var target_recoil_pos = Vector3(
+		0.0,
+		recoil_amount * -0.05,       # Up
+		recoil_amount * -0.1         # Backward
+	)
+
+	# Interpolate recoil
+	recoil_rotation = recoil_rotation.lerp(target_recoil_rot, delta * 12.0)
+	recoil_position = recoil_position.lerp(target_recoil_pos, delta * 12.0)
+
+	# Apply offset to weapon
+	weapon_model.rotation_degrees = Vector3.ZERO + recoil_rotation
+	weapon_model.position = Vector3.ZERO + recoil_position
 	# 🔫 Firing Logic
 	if not is_reloading and fire_cooldown <= 0.0:
 		if magazine_capacity > 0:
@@ -112,11 +141,19 @@ func _physics_process(delta: float) -> void:
 
 
 func fire() -> void:
-	recoil_amount += 0.03
+	for i in tracers_in_mag:
+		if magazine_capacity == i:
+			tracer = true
+			break
+		else:
+			tracer = false
+	recoil_amount += 0.04  # increase slightly per shot
+	recoil_amount = min(recoil_amount, 0.2)  # clamp to avoid going crazy
 
+	# Existing raycast and muzzle flash code...
 	# Raycast
-	var from = cam.global_position
-	var to = from + -cam.global_transform.basis.z * 100.0
+	from = cam.global_position
+	to = from + -cam.global_transform.basis.z * 100.0
 
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.new()
@@ -143,8 +180,22 @@ func fire() -> void:
 		print("Hit:", collider, " at ", hit_pos)
 		if collider.has_method("apply_damage"):
 			collider.apply_damage(10)
-
+	if tracer:
+		fire_tracer()
 	magazine_capacity = max(0, magazine_capacity - 1)
+	tracer = false
+
+
+func fire_tracer():
+	var tracer = tracer_scene.instantiate()
+	world.add_child(tracer)
+	tracer.global_position = tracer_origin.global_position
+	tracer.rotation = cam.rotation
+	var dir = (to - from).normalized()
+	var distance = from.distance_to(to)
+	tracer.direction = dir  # Set initial direction
+	tracer.look_at(to)
+
 
 
 # 🔁 Reload Handling

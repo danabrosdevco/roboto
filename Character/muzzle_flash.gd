@@ -7,15 +7,23 @@ extends Node3D
 var frame_counter := 0
 var active := false
 @export var flash_frames := 2
-
+var prev_number
 func play_flash() -> void:
-	if flash_textures.size() > 0:
-		sprite.texture = flash_textures.pick_random()
+	var number = randi_range(0, flash_textures.size() -1)
+	sprite.texture = flash_textures.pick_random()
+	if number == prev_number:
+		if number == 3:
+			sprite.texture = flash_textures[0]
+		else:
+			sprite.texture = flash_textures[number + 1]
+	else:
+		sprite.texture = flash_textures[number]
 	visible = true
 	if light:
 		light.visible = true
 	active = true
 	frame_counter = 0
+	prev_number = number
 
 func _process(delta: float) -> void:
 	if not active:

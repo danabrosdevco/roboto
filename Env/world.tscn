@@ -1,15 +1,24 @@
-[gd_scene load_steps=8 format=3 uid="uid://c5r8kyl3dh8ox"]
+[gd_scene load_steps=11 format=3 uid="uid://c5r8kyl3dh8ox"]
 
 [ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="1_d2eqf"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="1_frury"]
+[ext_resource type="Texture2D" uid="uid://c3ap1lken8oba" path="res://2d_assets/Seamless ground sand dirt crack texture.jpg" id="1_tnwa1"]
 [ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud.tscn" id="2_x7qjx"]
 [ext_resource type="PackedScene" uid="uid://fr4657li7txj" path="res://Env/world_objects/large_barrier.tscn" id="5_crx3c"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oql1c"]
 albedo_color = Color(0.477757, 0.884906, 0.786467, 1)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_41c1e"]
+albedo_texture = ExtResource("1_tnwa1")
+
 [sub_resource type="PlaneMesh" id="PlaneMesh_yt31w"]
+material = SubResource("StandardMaterial3D_41c1e")
 size = Vector2(100, 100)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4074w"]
+albedo_texture = ExtResource("1_tnwa1")
+uv1_scale = Vector3(16, 16, 16)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_uaxtn"]
 size = Vector3(1000, 0.25, 1000)
@@ -22,6 +31,7 @@ material = SubResource("StandardMaterial3D_oql1c")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_yt31w")
+surface_material_override/0 = SubResource("StandardMaterial3D_4074w")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="MeshInstance3D"]
 

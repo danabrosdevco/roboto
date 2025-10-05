@@ -5,10 +5,13 @@
 
 [node name="Master" type="Node"]
 
-[node name="test_character" parent="." instance=ExtResource("1_3hxox")]
+[node name="test_character" parent="." node_paths=PackedStringArray("world") instance=ExtResource("1_3hxox")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.04127, 0)
+world = NodePath("../World")
 
 [node name="World" parent="." instance=ExtResource("2_phnw0")]
 
 [editable path="test_character"]
+[editable path="test_character/Camera3D/Weapon"]
+[editable path="test_character/Camera3D/Weapon/AssaultRifle2_12"]
 [editable path="World"]
