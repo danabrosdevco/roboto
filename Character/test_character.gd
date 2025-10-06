@@ -11,7 +11,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var weapon_model: Node3D
 @export var reload_sounds: Array[AudioStreamPlayer3D]
 @export var reload_delays: Array[float]
-
+@export var recoil_curve: Curve
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
 const ADS_FOV := 45.0
@@ -19,14 +19,16 @@ const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 const FIRE_RATE := 0.0705
 const reload_return_speed:= 30
-const recoil_decay_speed :=1.5
+const recoil_decay_speed :=0.3
 var fire_cooldown := 0.0
-var recoil_amount := 20
-const RECOIL_DECAY := 1.0
-
+var recoil_amount := 0.0
+var recoil_per_shot := 10
+const RECOIL_DECAY := 75
+const recoil_duration = 0.25
+var recoil_timer := 0.0
+var recoil_horizontal := 0.0
 
 var recoil_rotation := Vector3.ZERO
-var recoil_position := Vector3.ZERO
 
 var ads_position := Vector3(0.0,0.0,-1.077)
 var ads_rotation := Vector3(0.0,0.0,3.0)
@@ -130,20 +132,12 @@ func _physics_process(delta: float) -> void:
 	# --- Procedural recoil ---
 	recoil_amount = move_toward(recoil_amount, 0.0, delta * RECOIL_DECAY)
 	var target_recoil_rot = Vector3(
-		recoil_amount * 4.0,
+		0,
 		recoil_amount * randf_range(-1.0, 1.0),
-		0.0
+		recoil_amount * 2,
 	)
-	var target_recoil_pos = Vector3(
-		0.0,
-		recoil_amount * -0.03,
-		recoil_amount * -0.08
-	)
-	recoil_rotation = recoil_rotation.lerp(target_recoil_rot, recoil_decay_speed)
-	recoil_position = recoil_position.lerp(target_recoil_pos, recoil_decay_speed)
+	recoil_rotation = recoil_rotation.lerp(target_recoil_rot, delta)
 
-	# --- Final transform ---
-	weapon_model.position = weapon_model.position + recoil_position
 	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation
 	# 🔫 Firing Logic
 	if not is_reloading and fire_cooldown <= 0.0:
@@ -170,8 +164,7 @@ func fire() -> void:
 			break
 		else:
 			tracer = false
-	recoil_amount += 0.04  # increase slightly per shot
-	recoil_amount = min(recoil_amount, 0.2)  # clamp to avoid going crazy
+	recoil_amount += recoil_per_shot  # increase slightly per shot
 
 	# Existing raycast and muzzle flash code...
 	# Raycast
