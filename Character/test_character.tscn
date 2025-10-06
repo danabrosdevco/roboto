@@ -1,21 +1,23 @@
-[gd_scene load_steps=6 format=3 uid="uid://bgj56y7q1pyxr"]
+[gd_scene load_steps=7 format=3 uid="uid://bgj56y7q1pyxr"]
 
 [ext_resource type="Script" path="res://Character/test_character.gd" id="1_xw2ar"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/tracer.tscn" id="2_3jw7k"]
 [ext_resource type="PackedScene" uid="uid://bqvaekw1dbcch" path="res://Character/hud_weapon.tscn" id="2_hvn8u"]
 [ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/bullet.tscn" id="2_qrfbk"]
+[ext_resource type="Curve" uid="uid://dp686k5ckuokb" path="res://Character/recoil_curve.tres" id="4_n81mu"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8ja6s"]
 
 [node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "reload_sounds", "rifle_stream_player", "click_stream_player")]
 script = ExtResource("1_xw2ar")
 tracer_scene = ExtResource("2_3jw7k")
-tracer_origin = NodePath("Camera3D/Weapon/AssaultRifle2_12/Muzzle")
+tracer_origin = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/Muzzle")
 projectile_scene = ExtResource("2_qrfbk")
-muzzle_flash = NodePath("Camera3D/Weapon/AssaultRifle2_12/MuzzleFlash")
+muzzle_flash = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/MuzzleFlash")
 weapon_model = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1")
 reload_sounds = [NodePath("Camera3D/Weapon/Reload1"), NodePath("Camera3D/Weapon/Reload2"), NodePath("Camera3D/Weapon/Reload3"), NodePath("Camera3D/Weapon/Reload4"), NodePath("Camera3D/Weapon/Reload5")]
 reload_delays = Array[float]([0.6, 0.6, 0.35, 0.3, 0.3])
+recoil_curve = ExtResource("4_n81mu")
 rifle_stream_player = NodePath("Camera3D/Weapon/RifleShot")
 click_stream_player = NodePath("Camera3D/Weapon/Click")
 

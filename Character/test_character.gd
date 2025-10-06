@@ -11,20 +11,25 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var weapon_model: Node3D
 @export var reload_sounds: Array[AudioStreamPlayer3D]
 @export var reload_delays: Array[float]
-
+@export var recoil_curve: Curve
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
 const ADS_FOV := 45.0
 const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 const FIRE_RATE := 0.0705
+const reload_return_speed:= 30
+var look_direction: Vector3
+@export var look_interp_speed := 12.0  # how fast the camera follows the target
 var fire_cooldown := 0.0
 var recoil_amount := 0.0
-const RECOIL_DECAY := 8.0
-
-
+var recoil_per_shot := 3
+const recoil_duration = 0.25
+var recoil_timer := 0.0
+var recoil_horizontal := 0.0
+@export var camera_recoil_scale := 0.75  # fraction of recoil applied to camera
+var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
 var recoil_rotation := Vector3.ZERO
-var recoil_position := Vector3.ZERO
 
 var ads_position := Vector3(0.0,0.0,-1.077)
 var ads_rotation := Vector3(0.0,0.0,3.0)
@@ -61,9 +66,13 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		rotate_y(-event.relative.x * MOUSE_SENS)
-		pitch = clamp(pitch - event.relative.y * MOUSE_SENS, -1.5, 1.5)
-		rotation.x = pitch
+		# Update the clean look direction, not the actual camera yet
+		look_direction.y -= event.relative.x * MOUSE_SENS  # yaw
+		look_direction.x = clamp(
+			look_direction.x - event.relative.y * MOUSE_SENS, 
+			-1.5, 
+			1.5
+		)
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
@@ -111,29 +120,56 @@ func _physics_process(delta: float) -> void:
 
 	cam.fov = lerp(cam.fov, target_fov, delta * ADS_SPEED)
 	cam.rotation.z = lerp(cam.rotation.z, target_lean, delta * LEAN_SPEED)
-	# Smooth recoil decay
-	recoil_amount = move_toward(recoil_amount, 0.0, delta * RECOIL_DECAY)
+	# --- ADS / RELOAD state transitions ---
+	if is_reloading:
+		# Lerp toward reload pose
+		weapon_model.position = weapon_model.position.lerp(reload_position, delta * reload_return_speed)
+		weapon_model.rotation = weapon_model.rotation.lerp(reload_rotation, delta * reload_return_speed)
+	elif is_ads:
+		# Lerp toward ADS pose
+		weapon_model.position = weapon_model.position.lerp(ads_position, delta * ADS_SPEED)
+		weapon_model.rotation = weapon_model.rotation.lerp(ads_rotation, delta * ADS_SPEED)
+	else:
+		# Return to base
+		weapon_model.position = weapon_model.rotation.lerp(base_weapon_position, delta * ADS_SPEED)
+		weapon_model.rotation = weapon_model.rotation.lerp(base_weapon_rotation, delta * ADS_SPEED)
 
-	# Offset recoil target
-	var target_recoil_rot = Vector3(
-		recoil_amount * 3.0,         # Pitch up (X)
-		recoil_amount * randf_range(-1.0, 1.0),  # Yaw (Y)
-		0.0                          # Roll (Z)
+	if recoil_timer > 0.0:
+		recoil_timer -= delta
+		var t = 1.0 - (recoil_timer / recoil_duration)
+		t = clamp(t, 0.0, 1.0)
+		
+		# --- WEAPON RECOIL (visual) ---
+		var pitch = recoil_curve.sample(t) * recoil_per_shot
+		var yaw = recoil_horizontal * (1.0 - t)  # decays horizontally
+		recoil_rotation = Vector3(0, yaw, pitch)
+		
+		# --- CAMERA RECOIL (gameplay effect) ---
+		var cam_pitch_kick = pitch * camera_recoil_scale
+		var cam_yaw_kick = yaw * camera_recoil_scale
+		camera_recoil_current = Vector3(cam_pitch_kick, 0, 0)
+		pitch = clamp(
+	pitch - deg_to_rad(camera_recoil_current.x),  # pitch up
+	-1.5, 1.5
 	)
+# --- CAMERA & RECOIL ROTATION INTERPOLATION ---
+# Smoothly move the player's rotation toward the look_direction (yaw)
+	var current_yaw = rotation.y
+	var target_yaw = look_direction.y
+	current_yaw = lerp_angle(current_yaw, target_yaw, delta * look_interp_speed)
+	rotation.y = current_yaw
 
-	var target_recoil_pos = Vector3(
-		0.0,
-		recoil_amount * -0.05,       # Up
-		recoil_amount * -0.1         # Backward
-	)
+# Smoothly move the camera pitch toward look_direction.x
+	var current_pitch = cam.rotation.x
+	var target_pitch = look_direction.x
+	current_pitch = lerp_angle(current_pitch, target_pitch, delta * look_interp_speed)
+	cam.rotation.x = current_pitch
 
-	# Interpolate recoil
-	recoil_rotation = recoil_rotation.lerp(target_recoil_rot, delta * 12.0)
-	recoil_position = recoil_position.lerp(target_recoil_pos, delta * 12.0)
+# Apply recoil offset (temporary offset on top)
+	cam.rotation_degrees.x += camera_recoil_current.x
+	cam.rotation_degrees.y += camera_recoil_current.y
 
-	## Apply offset to weapon
-	#weapon_model.rotation_degrees = Vector3.ZERO + recoil_rotation
-	#weapon_model.position = Vector3.ZERO + recoil_position
+	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation
 	# 🔫 Firing Logic
 	if not is_reloading and fire_cooldown <= 0.0:
 		if magazine_capacity > 0:
@@ -159,9 +195,8 @@ func fire() -> void:
 			break
 		else:
 			tracer = false
-	recoil_amount += 0.04  # increase slightly per shot
-	recoil_amount = min(recoil_amount, 0.2)  # clamp to avoid going crazy
-
+	recoil_timer = recoil_duration
+	recoil_horizontal = randf_range(-1.0, 1.0) * 2.0  # control horizontal sway strength
 	# Existing raycast and muzzle flash code...
 	# Raycast
 	from = cam.global_position
@@ -201,12 +236,15 @@ func fire() -> void:
 func fire_tracer():
 	var tracer = tracer_scene.instantiate()
 	world.add_child(tracer)
+	# 1. Set starting position at tracer origin (on the weapon)
 	tracer.global_position = tracer_origin.global_position
-	tracer.rotation = cam.rotation
-	var dir = (to - from).normalized()
-	var distance = from.distance_to(to)
-	tracer.direction = dir  # Set initial direction
-	tracer.look_at(to)
+	# 2. Get world-space forward direction from tracer_origin
+	var dir = tracer_origin.global_transform.basis.x.normalized()
+	# 3. Set the tracer's direction (assuming it has a .direction property)
+	tracer.direction = dir
+	# 4. Point it visually in the direction (optional but good for visuals)
+	tracer.look_at(tracer.global_position + dir)
+
 
 
 
