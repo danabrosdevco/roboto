@@ -18,9 +18,11 @@ const ADS_FOV := 45.0
 const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 const FIRE_RATE := 0.0705
+const reload_return_speed:= 30
+const recoil_decay_speed :=1.5
 var fire_cooldown := 0.0
-var recoil_amount := 0.0
-const RECOIL_DECAY := 8.0
+var recoil_amount := 20
+const RECOIL_DECAY := 1.0
 
 
 var recoil_rotation := Vector3.ZERO
@@ -111,29 +113,38 @@ func _physics_process(delta: float) -> void:
 
 	cam.fov = lerp(cam.fov, target_fov, delta * ADS_SPEED)
 	cam.rotation.z = lerp(cam.rotation.z, target_lean, delta * LEAN_SPEED)
-	# Smooth recoil decay
+	# --- ADS / RELOAD state transitions ---
+	if is_reloading:
+		# Lerp toward reload pose
+		weapon_model.position = weapon_model.position.lerp(reload_position, delta * reload_return_speed)
+		weapon_model.rotation = weapon_model.rotation.lerp(reload_rotation, delta * reload_return_speed)
+	elif is_ads:
+		# Lerp toward ADS pose
+		weapon_model.position = weapon_model.position.lerp(ads_position, delta * ADS_SPEED)
+		weapon_model.rotation = weapon_model.rotation.lerp(ads_rotation, delta * ADS_SPEED)
+	else:
+		# Return to base
+		weapon_model.position = weapon_model.rotation.lerp(base_weapon_position, delta * ADS_SPEED)
+		weapon_model.rotation = weapon_model.rotation.lerp(base_weapon_rotation, delta * ADS_SPEED)
+
+	# --- Procedural recoil ---
 	recoil_amount = move_toward(recoil_amount, 0.0, delta * RECOIL_DECAY)
-
-	# Offset recoil target
 	var target_recoil_rot = Vector3(
-		recoil_amount * 3.0,         # Pitch up (X)
-		recoil_amount * randf_range(-1.0, 1.0),  # Yaw (Y)
-		0.0                          # Roll (Z)
+		recoil_amount * 4.0,
+		recoil_amount * randf_range(-1.0, 1.0),
+		0.0
 	)
-
 	var target_recoil_pos = Vector3(
 		0.0,
-		recoil_amount * -0.05,       # Up
-		recoil_amount * -0.1         # Backward
+		recoil_amount * -0.03,
+		recoil_amount * -0.08
 	)
+	recoil_rotation = recoil_rotation.lerp(target_recoil_rot, recoil_decay_speed)
+	recoil_position = recoil_position.lerp(target_recoil_pos, recoil_decay_speed)
 
-	# Interpolate recoil
-	recoil_rotation = recoil_rotation.lerp(target_recoil_rot, delta * 12.0)
-	recoil_position = recoil_position.lerp(target_recoil_pos, delta * 12.0)
-
-	## Apply offset to weapon
-	#weapon_model.rotation_degrees = Vector3.ZERO + recoil_rotation
-	#weapon_model.position = Vector3.ZERO + recoil_position
+	# --- Final transform ---
+	weapon_model.position = weapon_model.position + recoil_position
+	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation
 	# 🔫 Firing Logic
 	if not is_reloading and fire_cooldown <= 0.0:
 		if magazine_capacity > 0:
