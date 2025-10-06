@@ -1,10 +1,11 @@
-[gd_scene load_steps=11 format=3 uid="uid://c5r8kyl3dh8ox"]
+[gd_scene load_steps=12 format=3 uid="uid://c5r8kyl3dh8ox"]
 
 [ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="1_d2eqf"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="1_frury"]
 [ext_resource type="Texture2D" uid="uid://c3ap1lken8oba" path="res://2d_assets/Seamless ground sand dirt crack texture.jpg" id="1_tnwa1"]
 [ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud.tscn" id="2_x7qjx"]
 [ext_resource type="PackedScene" uid="uid://fr4657li7txj" path="res://Env/world_objects/large_barrier.tscn" id="5_crx3c"]
+[ext_resource type="PackedScene" uid="uid://dgdfk0ov1c85l" path="res://Character/characters/test_enemy.tscn" id="6_w64c2"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oql1c"]
 albedo_color = Color(0.477757, 0.884906, 0.786467, 1)
@@ -50,7 +51,7 @@ metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.67929, 0.121961, 0.148993)
 metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
 
-[node name="StaticBody3D (3)" parent="." instance=ExtResource("1_d2eqf")]
+[node name="TARGET BOX" parent="." instance=ExtResource("1_d2eqf")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.27162, 0.12196, 1.91637)
 metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
 
@@ -78,3 +79,7 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -13.8959, 0.128499, -4.1914
 metadata/asset_placer_res_id = "uid://fr4657li7txj"
 
 [node name="WorldEnvironment" parent="." instance=ExtResource("1_frury")]
+
+[node name="Node3D" parent="." instance=ExtResource("6_w64c2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47, 1, 47)
+target_node_path = NodePath("../TARGET BOX")

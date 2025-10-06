@@ -1,4 +1,5 @@
 extends CharacterBody3D
+@export var faction: Enums.Factions = Enums.Factions.PLAYER
 @export var world: Node3D
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
@@ -36,6 +37,14 @@ var ads_rotation := Vector3(0.0,0.0,3.0)
 var reload_rotation := Vector3(0.2,20.5,58.0)
 var reload_position := Vector3(0.31,-0.425,-0.015)
 
+# --- Weapon Bob (Idle Sway) ---
+@export var bob_speed := 1.1            # how fast the gun bobs (Hz)
+@export var bob_amount := 0.015          # how far the gun moves when hip-firing
+@export var ads_bob_scale := 0.05         # how much to reduce bob when ADS (0.2 = 80% less)
+@export var movement_bob_scale := 2.2    # scale bobbing when moving
+var bob_time := 0.0                      # internal timer
+
+
 # Base transform snapshot
 const base_weapon_position := Vector3(0.31,-0.425,-0.015)
 const base_weapon_rotation := Vector3(-0.3,6.0,2.8)
@@ -44,7 +53,7 @@ const base_weapon_rotation := Vector3(-0.3,6.0,2.8)
 var is_ads := false
 var magazine_size: int = 30
 var magazine_capacity: int = 30
-const tracers_in_mag: Array[int] = [30, 25,20, 15, 10, 5, 4, 3, 2, 1, 0]
+const tracers_in_mag: Array[int] = [30, 27, 25, 22, 20, 17, 15, 12, 10, 7, 5, 4, 3, 2, 1, 0]
 var tracer: bool = false
 var is_reloading := false
 var from
@@ -108,6 +117,27 @@ func _physics_process(delta: float) -> void:
 		target_lean = 0.0
 
 	is_ads = Input.is_action_pressed("aim")
+	#if is_ads:
+		#
+		
+	# --- Weapon Bob ---
+	# Increment time based on movement speed
+	var move_factor = clamp(velocity.length() / SPEED, 0.0, 1.0)
+	bob_time += delta * bob_speed * (1.0 + move_factor * movement_bob_scale)
+
+	# Choose bob amplitude based on ADS
+	var current_bob_amount := bob_amount
+
+	if is_ads:
+		current_bob_amount *= ads_bob_scale
+	# Apply sine-wave based offset for natural motion
+	var bob_offset = Vector3(
+		sin(bob_time * 2.0) * current_bob_amount * 0.5,  # slight horizontal wobble
+		abs(sin(bob_time)) * current_bob_amount,         # vertical bounce
+		0.0
+	)
+
+
 
 	# FOV transition
 	var target_fov
@@ -133,7 +163,8 @@ func _physics_process(delta: float) -> void:
 		# Return to base
 		weapon_model.position = weapon_model.rotation.lerp(base_weapon_position, delta * ADS_SPEED)
 		weapon_model.rotation = weapon_model.rotation.lerp(base_weapon_rotation, delta * ADS_SPEED)
-
+	if not is_reloading:
+		weapon_model.position += bob_offset
 	if recoil_timer > 0.0:
 		recoil_timer -= delta
 		var t = 1.0 - (recoil_timer / recoil_duration)
@@ -152,6 +183,14 @@ func _physics_process(delta: float) -> void:
 	pitch - deg_to_rad(camera_recoil_current.x),  # pitch up
 	-1.5, 1.5
 	)
+	
+	var bob_rotation = Vector3(
+	sin(bob_time * 2.0) * current_bob_amount * 20.0,  # tilt side to side
+	sin(bob_time) * current_bob_amount * 10.0,        # yaw wobble
+	0.0
+	)
+
+
 # --- CAMERA & RECOIL ROTATION INTERPOLATION ---
 # Smoothly move the player's rotation toward the look_direction (yaw)
 	var current_yaw = rotation.y
@@ -168,8 +207,7 @@ func _physics_process(delta: float) -> void:
 # Apply recoil offset (temporary offset on top)
 	cam.rotation_degrees.x += camera_recoil_current.x
 	cam.rotation_degrees.y += camera_recoil_current.y
-
-	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation
+	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation + bob_rotation
 	# 🔫 Firing Logic
 	if not is_reloading and fire_cooldown <= 0.0:
 		if magazine_capacity > 0:
@@ -196,11 +234,11 @@ func fire() -> void:
 		else:
 			tracer = false
 	recoil_timer = recoil_duration
-	recoil_horizontal = randf_range(-1.0, 1.0) * 2.0  # control horizontal sway strength
+	recoil_horizontal = randf_range(-1.0, 1.0) * 2.0 * 0.5*recoil_per_shot # control horizontal sway strength
 	# Existing raycast and muzzle flash code...
 	# Raycast
 	from = cam.global_position
-	to = from + -cam.global_transform.basis.z * 100.0
+	to = from + tracer_origin.global_transform.basis.x.normalized() * 250.0
 
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.new()
