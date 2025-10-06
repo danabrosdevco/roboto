@@ -22,8 +22,20 @@ var fire_cooldown := 0.0
 var recoil_amount := 0.0
 const RECOIL_DECAY := 8.0
 
+
 var recoil_rotation := Vector3.ZERO
 var recoil_position := Vector3.ZERO
+
+var ads_position := Vector3(0.0,0.0,-1.077)
+var ads_rotation := Vector3(0.0,0.0,3.0)
+var reload_rotation := Vector3(0.2,20.5,58.0)
+var reload_position := Vector3(0.31,-0.425,-0.015)
+
+# Base transform snapshot
+const base_weapon_position := Vector3(0.31,-0.425,-0.015)
+const base_weapon_rotation := Vector3(-0.3,6.0,2.8)
+
+
 var is_ads := false
 var magazine_size: int = 30
 var magazine_capacity: int = 30
@@ -119,9 +131,9 @@ func _physics_process(delta: float) -> void:
 	recoil_rotation = recoil_rotation.lerp(target_recoil_rot, delta * 12.0)
 	recoil_position = recoil_position.lerp(target_recoil_pos, delta * 12.0)
 
-	# Apply offset to weapon
-	weapon_model.rotation_degrees = Vector3.ZERO + recoil_rotation
-	weapon_model.position = Vector3.ZERO + recoil_position
+	## Apply offset to weapon
+	#weapon_model.rotation_degrees = Vector3.ZERO + recoil_rotation
+	#weapon_model.position = Vector3.ZERO + recoil_position
 	# 🔫 Firing Logic
 	if not is_reloading and fire_cooldown <= 0.0:
 		if magazine_capacity > 0:

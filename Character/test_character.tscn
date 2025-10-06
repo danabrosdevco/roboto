@@ -10,9 +10,9 @@
 [node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "reload_sounds", "rifle_stream_player", "click_stream_player")]
 script = ExtResource("1_xw2ar")
 tracer_scene = ExtResource("2_3jw7k")
-tracer_origin = NodePath("Camera3D/Weapon/Muzzle")
+tracer_origin = NodePath("Camera3D/Weapon/AssaultRifle2_12/Muzzle")
 projectile_scene = ExtResource("2_qrfbk")
-muzzle_flash = NodePath("Camera3D/Weapon/MuzzleFlash")
+muzzle_flash = NodePath("Camera3D/Weapon/AssaultRifle2_12/MuzzleFlash")
 weapon_model = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1")
 reload_sounds = [NodePath("Camera3D/Weapon/Reload1"), NodePath("Camera3D/Weapon/Reload2"), NodePath("Camera3D/Weapon/Reload3"), NodePath("Camera3D/Weapon/Reload4"), NodePath("Camera3D/Weapon/Reload5")]
 reload_delays = Array[float]([0.6, 0.6, 0.35, 0.3, 0.3])
@@ -33,10 +33,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.192761, -0.207464, 0)
 transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.0776801, -0.0526062, -0.218037)
 
 [node name="AssaultRifle2_1" parent="Camera3D/Weapon/AssaultRifle2_12" index="0"]
-transform = Transform3D(0.993417, -0.0486929, 0.103694, 0.0484298, 0.998814, 0.00505514, -0.103817, -2.12843e-09, 0.994596, 0, 0, 0)
-
-[node name="MuzzleFlash" parent="Camera3D/Weapon" index="2"]
-transform = Transform3D(-0.0844665, -9.48706e-05, 0.994508, 0.0394247, 0.998792, 0.00523596, -0.80167, 0.0491288, -0.104527, -0.0295902, 0.0303454, -1.25611)
+transform = Transform3D(0.99863, -0.052336, 0, 0.052336, 0.99863, 0, 0, 0, 1, 0.31, -0.425, -0.015)
 
 [node name="RayCast3D" type="RayCast3D" parent="."]
 
