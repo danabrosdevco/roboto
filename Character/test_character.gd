@@ -19,15 +19,14 @@ const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 const FIRE_RATE := 0.0705
 const reload_return_speed:= 30
-const recoil_decay_speed :=0.3
 var fire_cooldown := 0.0
 var recoil_amount := 0.0
-var recoil_per_shot := 10
-const RECOIL_DECAY := 75
+var recoil_per_shot := 5
 const recoil_duration = 0.25
 var recoil_timer := 0.0
 var recoil_horizontal := 0.0
-
+@export var camera_recoil_scale := 0.25  # fraction of recoil applied to camera
+var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
 var recoil_rotation := Vector3.ZERO
 
 var ads_position := Vector3(0.0,0.0,-1.077)
@@ -134,13 +133,23 @@ func _physics_process(delta: float) -> void:
 		var t = 1.0 - (recoil_timer / recoil_duration)
 		t = clamp(t, 0.0, 1.0)
 		
+		# --- WEAPON RECOIL (visual) ---
 		var pitch = recoil_curve.sample(t) * recoil_per_shot
-		var yaw = recoil_horizontal * (1.0 - t) # decay horizontal over same duration
-
+		var yaw = recoil_horizontal * (1.0 - t)  # decays horizontally
 		recoil_rotation = Vector3(0, yaw, pitch)
+		
+		# --- CAMERA RECOIL (gameplay effect) ---
+		var cam_pitch_kick = pitch * camera_recoil_scale
+		var cam_yaw_kick = yaw * camera_recoil_scale
+		camera_recoil_current = Vector3(cam_pitch_kick, 0, 0)
+		pitch = clamp(
+	pitch - deg_to_rad(camera_recoil_current.x),  # pitch up
+	-1.5, 1.5
+	)
+		cam.rotation_degrees += camera_recoil_current
 	else:
 		recoil_rotation = Vector3.ZERO
-
+		camera_recoil_current = camera_recoil_current.lerp(Vector3.ZERO, delta * 10.0)
 	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation
 	# 🔫 Firing Logic
 	if not is_reloading and fire_cooldown <= 0.0:
@@ -208,12 +217,15 @@ func fire() -> void:
 func fire_tracer():
 	var tracer = tracer_scene.instantiate()
 	world.add_child(tracer)
+	# 1. Set starting position at tracer origin (on the weapon)
 	tracer.global_position = tracer_origin.global_position
-	tracer.rotation = cam.rotation
-	var dir = (to - from).normalized()
-	var distance = from.distance_to(to)
-	tracer.direction = tracer_origin.rotation  # Set initial direction
-	tracer.look_at(to)
+	# 2. Get world-space forward direction from tracer_origin
+	var dir = tracer_origin.global_transform.basis.x.normalized()
+	# 3. Set the tracer's direction (assuming it has a .direction property)
+	tracer.direction = dir
+	# 4. Point it visually in the direction (optional but good for visuals)
+	tracer.look_at(tracer.global_position + dir)
+
 
 
 
