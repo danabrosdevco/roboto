@@ -19,13 +19,15 @@ const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 const FIRE_RATE := 0.0705
 const reload_return_speed:= 30
+var look_direction: Vector3
+@export var look_interp_speed := 12.0  # how fast the camera follows the target
 var fire_cooldown := 0.0
 var recoil_amount := 0.0
-var recoil_per_shot := 5
+var recoil_per_shot := 3
 const recoil_duration = 0.25
 var recoil_timer := 0.0
 var recoil_horizontal := 0.0
-@export var camera_recoil_scale := 0.25  # fraction of recoil applied to camera
+@export var camera_recoil_scale := 0.75  # fraction of recoil applied to camera
 var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
 var recoil_rotation := Vector3.ZERO
 
@@ -64,9 +66,13 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		rotate_y(-event.relative.x * MOUSE_SENS)
-		pitch = clamp(pitch - event.relative.y * MOUSE_SENS, -1.5, 1.5)
-		rotation.x = pitch
+		# Update the clean look direction, not the actual camera yet
+		look_direction.y -= event.relative.x * MOUSE_SENS  # yaw
+		look_direction.x = clamp(
+			look_direction.x - event.relative.y * MOUSE_SENS, 
+			-1.5, 
+			1.5
+		)
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
@@ -146,10 +152,23 @@ func _physics_process(delta: float) -> void:
 	pitch - deg_to_rad(camera_recoil_current.x),  # pitch up
 	-1.5, 1.5
 	)
-		cam.rotation_degrees += camera_recoil_current
-	else:
-		recoil_rotation = Vector3.ZERO
-		camera_recoil_current = camera_recoil_current.lerp(Vector3.ZERO, delta * 10.0)
+# --- CAMERA & RECOIL ROTATION INTERPOLATION ---
+# Smoothly move the player's rotation toward the look_direction (yaw)
+	var current_yaw = rotation.y
+	var target_yaw = look_direction.y
+	current_yaw = lerp_angle(current_yaw, target_yaw, delta * look_interp_speed)
+	rotation.y = current_yaw
+
+# Smoothly move the camera pitch toward look_direction.x
+	var current_pitch = cam.rotation.x
+	var target_pitch = look_direction.x
+	current_pitch = lerp_angle(current_pitch, target_pitch, delta * look_interp_speed)
+	cam.rotation.x = current_pitch
+
+# Apply recoil offset (temporary offset on top)
+	cam.rotation_degrees.x += camera_recoil_current.x
+	cam.rotation_degrees.y += camera_recoil_current.y
+
 	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation
 	# 🔫 Firing Logic
 	if not is_reloading and fire_cooldown <= 0.0:
