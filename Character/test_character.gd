@@ -129,14 +129,17 @@ func _physics_process(delta: float) -> void:
 		weapon_model.position = weapon_model.rotation.lerp(base_weapon_position, delta * ADS_SPEED)
 		weapon_model.rotation = weapon_model.rotation.lerp(base_weapon_rotation, delta * ADS_SPEED)
 
-	# --- Procedural recoil ---
-	recoil_amount = move_toward(recoil_amount, 0.0, delta * RECOIL_DECAY)
-	var target_recoil_rot = Vector3(
-		0,
-		recoil_amount * randf_range(-1.0, 1.0),
-		recoil_amount * 2,
-	)
-	recoil_rotation = recoil_rotation.lerp(target_recoil_rot, delta)
+	if recoil_timer > 0.0:
+		recoil_timer -= delta
+		var t = 1.0 - (recoil_timer / recoil_duration)
+		t = clamp(t, 0.0, 1.0)
+		
+		var pitch = recoil_curve.sample(t) * recoil_per_shot
+		var yaw = recoil_horizontal * (1.0 - t) # decay horizontal over same duration
+
+		recoil_rotation = Vector3(0, yaw, pitch)
+	else:
+		recoil_rotation = Vector3.ZERO
 
 	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation
 	# 🔫 Firing Logic
@@ -164,8 +167,8 @@ func fire() -> void:
 			break
 		else:
 			tracer = false
-	recoil_amount += recoil_per_shot  # increase slightly per shot
-
+	recoil_timer = recoil_duration
+	recoil_horizontal = randf_range(-1.0, 1.0) * 2.0  # control horizontal sway strength
 	# Existing raycast and muzzle flash code...
 	# Raycast
 	from = cam.global_position
@@ -209,7 +212,7 @@ func fire_tracer():
 	tracer.rotation = cam.rotation
 	var dir = (to - from).normalized()
 	var distance = from.distance_to(to)
-	tracer.direction = dir  # Set initial direction
+	tracer.direction = tracer_origin.rotation  # Set initial direction
 	tracer.look_at(to)
 
 

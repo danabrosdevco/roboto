@@ -11,9 +11,9 @@
 [node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "reload_sounds", "rifle_stream_player", "click_stream_player")]
 script = ExtResource("1_xw2ar")
 tracer_scene = ExtResource("2_3jw7k")
-tracer_origin = NodePath("Camera3D/Weapon/AssaultRifle2_12/Muzzle")
+tracer_origin = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/Muzzle")
 projectile_scene = ExtResource("2_qrfbk")
-muzzle_flash = NodePath("Camera3D/Weapon/AssaultRifle2_12/MuzzleFlash")
+muzzle_flash = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/MuzzleFlash")
 weapon_model = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1")
 reload_sounds = [NodePath("Camera3D/Weapon/Reload1"), NodePath("Camera3D/Weapon/Reload2"), NodePath("Camera3D/Weapon/Reload3"), NodePath("Camera3D/Weapon/Reload4"), NodePath("Camera3D/Weapon/Reload5")]
 reload_delays = Array[float]([0.6, 0.6, 0.35, 0.3, 0.3])
