@@ -1,0 +1,40 @@
+[gd_scene load_steps=5 format=3 uid="uid://dpww17fdlkhv8"]
+
+[ext_resource type="Shader" path="res://Character/hud_filter.gdshader" id="1_hu82k"]
+[ext_resource type="Script" path="res://Character/hud/scan_enemy_marker.gd" id="1_ops1h"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_uw5v1"]
+shader = ExtResource("1_hu82k")
+shader_parameter/tint_color = Color(1, 0.1, 0.1, 1)
+shader_parameter/grit_strength = 0.05
+shader_parameter/scanline_strength = 0.1
+shader_parameter/brightness = 1.0
+shader_parameter/time_speed = 0.8
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_p1db4"]
+shader = ExtResource("1_hu82k")
+shader_parameter/tint_color = Color(1, 0.1, 0.1, 1)
+shader_parameter/grit_strength = 0.05
+shader_parameter/scanline_strength = 0.1
+shader_parameter/brightness = 1.0
+shader_parameter/time_speed = 0.8
+
+[node name="ScanEnemyMarker" type="Control"]
+material = SubResource("ShaderMaterial_uw5v1")
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_ops1h")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_p1db4")
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 0
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0

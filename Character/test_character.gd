@@ -1,6 +1,9 @@
 extends CharacterBody3D
 @export var faction: Enums.Factions = Enums.Factions.PLAYER
 @export var world: Node3D
+@export var hud: Control
+signal activate_scanner_ui
+signal highlight_enemy(target:Node3D)
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENS := 0.002
@@ -13,6 +16,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var reload_sounds: Array[AudioStreamPlayer3D]
 @export var reload_delays: Array[float]
 @export var recoil_curve: Curve
+@export var scanner: Node3D
 var is_fullscreen = false
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
@@ -32,6 +36,9 @@ var recoil_horizontal := 0.0
 @export var camera_recoil_scale := 0.75  # fraction of recoil applied to camera
 var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
 var recoil_rotation := Vector3.ZERO
+
+var scanner_timer: = 0.0
+var scanner_cooldown = 20
 
 var ads_position := Vector3(0.0,0.0,-1.077)
 var ads_rotation := Vector3(0.0,0.0,3.0)
@@ -102,7 +109,9 @@ func _physics_process(delta: float) -> void:
 	# Jump
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
-
+	if Input.is_action_just_pressed("scan"):
+		scanner.activate_scan()
+		activate_scanner_ui.emit()
 	# Movement
 	var input2 := Input.get_vector("ui_left", "ui_right", "ui_down", "ui_up")
 	var dir := (transform.basis.x * input2.x) + (-transform.basis.z * input2.y)
@@ -306,3 +315,7 @@ func play_reload_sequence():
 		var delay = reload_delays[i]
 		await get_tree().create_timer(delay).timeout
 		sound.play()
+
+
+func _on_scanner_highlight_target(target: Node3D) -> void:
+	highlight_enemy.emit(target)

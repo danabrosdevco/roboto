@@ -64,26 +64,26 @@ func _run_scan_animation():
 func _fade_out():
 	var screen_size = get_viewport_rect().size
 	var center_y = screen_size.y * 0.5
-	var tween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	var new_tween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	var time = 0.1
 	# Collapse vertically toward center
 	for rect in get_children():
 		if rect is ColorRect:
 			# Move top/bottom bars to the center line
 			if rect == $Top:
-				tween.parallel().tween_property(rect, "position:y", center_y - scan_thickness * 0.5, time)
+				new_tween.parallel().tween_property(rect, "position:y", center_y - scan_thickness * 0.5, time)
 			elif rect == $Bottom:
-				tween.parallel().tween_property(rect, "position:y", center_y - scan_thickness * 0.5, time)
+				new_tween.parallel().tween_property(rect, "position:y", center_y - scan_thickness * 0.5, time)
 			elif rect == $Left or rect == $Right:
 				# Shrink vertical bars horizontally toward middle
 				var center_x = screen_size.x * 0.5
-				tween.parallel().tween_property(rect, "position:x", center_x - scan_thickness * 0.5, time)
-				tween.parallel().tween_property(rect, "size:x", 1.0, time)
+				new_tween.parallel().tween_property(rect, "position:x", center_x - scan_thickness * 0.5, time)
+				new_tween.parallel().tween_property(rect, "size:x", 1.0, time)
 			# Bright flash as they meet
-			tween.parallel().tween_property(rect, "modulate", Color(1, 0.2, 0.2, 1.0), time * 0.75)
-	tween.tween_interval(0.05)
+			#tween.parallel().tween_property(rect, "modulate", Color(1, 0.2, 0.2, 1.0), time * 0.75)
+	new_tween.tween_interval(0.05)
 	# Snap to black instantly
 	for rect in get_children():
 		if rect is ColorRect:
-			tween.parallel().tween_property(rect, "modulate:a", 0.0, 0.05)
-	tween.tween_callback(Callable(self, "queue_free"))
+			new_tween.parallel().tween_property(rect, "modulate:a", 0.0, 0.05)
+	new_tween.tween_callback(Callable(self, "queue_free"))

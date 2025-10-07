@@ -1,10 +1,10 @@
 shader_type canvas_item;
 
-uniform vec3 tint_color : source_color = vec3(1.0, 0.1, 0.1); // deep red
-uniform float grit_strength : hint_range(0.0, 1.0) = 0.25; // noise intensity
-uniform float scanline_strength : hint_range(0.0, 1.0) = 0.2; // horizontal grain
+uniform vec3 tint_color : source_color = vec3(.56, 0.153, 0.341); // deep red
+uniform float grit_strength : hint_range(0.0, 1.0) = 0.05; // noise intensity
+uniform float scanline_strength : hint_range(0.0, 1.0) = 0.1; // horizontal grain
 uniform float brightness : hint_range(0.0, 2.0) = 1.0;
-uniform float time_speed : hint_range(0.0, 5.0) = 1.0; // animation speed
+uniform float time_speed : hint_range(0.0, 5.0) = 0.8; // animation speed
 
 // Simple 2D hash noise (very cheap)
 float hash(vec2 p) {

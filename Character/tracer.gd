@@ -1,4 +1,5 @@
 extends Area3D
+class_name Tracer
 
 @export var speed: float = 160.0
 @export var max_distance: float = 100.0

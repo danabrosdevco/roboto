@@ -1,5 +1,5 @@
 extends CharacterBody3D
-class_name TestEnemy
+class_name EnemyTest
 @export var faction = Enums.Factions.ENEMY
 @export var move_speed: float = 3.0
 @export var glide_height: float = 2.0
@@ -44,3 +44,6 @@ func apply_damage(damage):
 func die():
 	await get_tree().create_timer(0.75).timeout
 	queue_free()
+
+func get_faction():
+	return faction

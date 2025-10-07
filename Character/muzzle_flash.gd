@@ -1,4 +1,5 @@
 extends Node3D
+class_name MuzzleFlash
 
 @export var flash_textures: Array[Texture2D]
 @onready var sprite: Sprite3D = $Sprite3D
