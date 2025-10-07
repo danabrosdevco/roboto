@@ -13,6 +13,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var reload_sounds: Array[AudioStreamPlayer3D]
 @export var reload_delays: Array[float]
 @export var recoil_curve: Curve
+var is_fullscreen = false
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
 const ADS_FOV := 45.0
@@ -92,7 +93,12 @@ func _physics_process(delta: float) -> void:
 	# Gravity
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-
+	if Input.is_action_just_pressed("fullscreen"):
+		is_fullscreen = !is_fullscreen
+		if is_fullscreen:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		else:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	# Jump
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
@@ -171,13 +177,12 @@ func _physics_process(delta: float) -> void:
 		t = clamp(t, 0.0, 1.0)
 		
 		# --- WEAPON RECOIL (visual) ---
-		var pitch = recoil_curve.sample(t) * recoil_per_shot
+		pitch = recoil_curve.sample(t) * recoil_per_shot
 		var yaw = recoil_horizontal * (1.0 - t)  # decays horizontally
 		recoil_rotation = Vector3(0, yaw, pitch)
 		
 		# --- CAMERA RECOIL (gameplay effect) ---
 		var cam_pitch_kick = pitch * camera_recoil_scale
-		var cam_yaw_kick = yaw * camera_recoil_scale
 		camera_recoil_current = Vector3(cam_pitch_kick, 0, 0)
 		pitch = clamp(
 	pitch - deg_to_rad(camera_recoil_current.x),  # pitch up
@@ -272,16 +277,16 @@ func fire() -> void:
 
 
 func fire_tracer():
-	var tracer = tracer_scene.instantiate()
-	world.add_child(tracer)
+	var new_tracer = tracer_scene.instantiate()
+	world.add_child(new_tracer)
 	# 1. Set starting position at tracer origin (on the weapon)
-	tracer.global_position = tracer_origin.global_position
+	new_tracer.global_position = tracer_origin.global_position
 	# 2. Get world-space forward direction from tracer_origin
 	var dir = tracer_origin.global_transform.basis.x.normalized()
 	# 3. Set the tracer's direction (assuming it has a .direction property)
-	tracer.direction = dir
+	new_tracer.direction = dir
 	# 4. Point it visually in the direction (optional but good for visuals)
-	tracer.look_at(tracer.global_position + dir)
+	new_tracer.look_at(new_tracer.global_position + dir)
 
 
 

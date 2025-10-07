@@ -25,7 +25,7 @@ func play_flash() -> void:
 	frame_counter = 0
 	prev_number = number
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if not active:
 		return
 

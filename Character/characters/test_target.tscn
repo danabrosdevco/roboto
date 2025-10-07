@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3 uid="uid://deb6uwnna01po"]
+
+[ext_resource type="Script" path="res://Character/characters/test_target.gd" id="1_16n30"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_pp7af"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wossu"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_uowf8"]
+
+[node name="TargetBody" type="StaticBody3D"]
+script = ExtResource("1_16n30")
+
+[node name="EnemyMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.37114e-08, -0.0499128, 0, 1, -2.18176e-09, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_pp7af")
+surface_material_override/0 = SubResource("StandardMaterial3D_wossu")
+
+[node name="EnemyColShape" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_uowf8")

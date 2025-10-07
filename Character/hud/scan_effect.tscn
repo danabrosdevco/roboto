@@ -1,0 +1,80 @@
+[gd_scene load_steps=7 format=3 uid="uid://b4n2skq3ovhu6"]
+
+[ext_resource type="Script" path="res://Character/hud/scan_effect.gd" id="1_celhg"]
+[ext_resource type="Shader" path="res://Character/hud_filter.gdshader" id="2_6lqqk"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qxvaa"]
+shader = ExtResource("2_6lqqk")
+shader_parameter/tint_color = Color(1, 0.1, 0.1, 1)
+shader_parameter/grit_strength = 0.25
+shader_parameter/scanline_strength = 0.2
+shader_parameter/brightness = 1.0
+shader_parameter/time_speed = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7qwpf"]
+shader = ExtResource("2_6lqqk")
+shader_parameter/tint_color = Color(1, 0.1, 0.1, 1)
+shader_parameter/grit_strength = 0.25
+shader_parameter/scanline_strength = 0.2
+shader_parameter/brightness = 1.0
+shader_parameter/time_speed = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5exiu"]
+shader = ExtResource("2_6lqqk")
+shader_parameter/tint_color = Color(1, 0.1, 0.1, 1)
+shader_parameter/grit_strength = 0.25
+shader_parameter/scanline_strength = 0.2
+shader_parameter/brightness = 1.0
+shader_parameter/time_speed = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eu0hn"]
+shader = ExtResource("2_6lqqk")
+shader_parameter/tint_color = Color(1, 0.1, 0.1, 1)
+shader_parameter/grit_strength = 0.25
+shader_parameter/scanline_strength = 0.2
+shader_parameter/brightness = 1.0
+shader_parameter/time_speed = 1.0
+
+[node name="ScanEffect" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_celhg")
+
+[node name="Top" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_qxvaa")
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+
+[node name="Bottom" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_7qwpf")
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Left" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_5exiu")
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+grow_vertical = 2
+
+[node name="Right" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_eu0hn")
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 2

@@ -1,5 +1,5 @@
 extends CharacterBody3D
-
+class_name TestEnemy
 @export var faction = Enums.Factions.ENEMY
 @export var move_speed: float = 3.0
 @export var glide_height: float = 2.0
@@ -20,7 +20,7 @@ func _physics_process(delta):
 		_move_towards_target(delta)
 		_apply_hover_effect(delta)
 
-func _move_towards_target(delta):
+func _move_towards_target(_delta):
 	var to_target = (target.global_transform.origin - global_transform.origin)
 	to_target.y = 0  # Flatten movement (no vertical chase)
 	var direction = to_target.normalized()
@@ -42,5 +42,5 @@ func apply_damage(damage):
 	pass
 
 func die():
-	await get_tree().create_timer(0.75)
+	await get_tree().create_timer(0.75).timeout
 	queue_free()

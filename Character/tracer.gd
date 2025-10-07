@@ -33,7 +33,7 @@ func _physics_process(delta: float) -> void:
 			effect.global_position = result.position
 			get_tree().current_scene.add_child(effect)
 
-		await get_tree().create_timer(0.1).timeout
+		await get_tree().create_timer(0.01).timeout
 		queue_free()
 	else:
 		global_translate(move_amount)

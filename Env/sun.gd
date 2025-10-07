@@ -40,7 +40,7 @@ func kelvin_to_rgb(temp_kelvin: float) -> Color:
 func sun_dir_ray() -> Vector3:
 	return global_basis.z.normalized()
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	# Transform the light
 	#rotate_y(delta * 0.002)
 	#rotate_x(delta * 0.002)
