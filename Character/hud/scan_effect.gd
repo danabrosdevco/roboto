@@ -3,12 +3,16 @@ extends Control
 @export var scan_duration := 3.5
 @export var scan_thickness := 16.0
 @export var scan_color := Color(1, 0, 0, 0.8)  # semi-transparent red
-
+var scan_mode : Enums.ScanModes = Enums.ScanModes.TOP_DOWN
 var tween: Tween
 
 func _ready():
 	_setup_scan_rects()
-	_run_scan_animation()
+	match scan_mode:
+		Enums.ScanModes.TOP_DOWN:
+			_run_scan_animation_top_to_bottom()
+		Enums.ScanModes.RECTANGLE:
+			_run_scan_animation()
 
 func _setup_scan_rects():
 	var screen_size = get_viewport_rect().size
@@ -38,6 +42,25 @@ func _setup_scan_rects():
 
 	$Right.position = Vector2(screen_size.x, 0)
 	$Right.size = Vector2(scan_thickness, screen_size.y)
+
+func _run_scan_animation_top_to_bottom():
+	var screen_size = get_viewport_rect().size
+	tween = create_tween()
+
+	# Start with a single sweeping line (using Top rect)
+	$Top.visible = true
+	$Bottom.visible = false
+	$Left.visible = false
+	$Right.visible = false
+
+	# Reset the line at the top
+	$Top.position = Vector2(0, -scan_thickness*1.5)
+	$Top.size = Vector2(screen_size.x, scan_thickness*1.5)
+
+	# Sweep from top → bottom
+	tween.tween_property($Top, "position:y", screen_size.y, scan_duration)
+	tween.tween_callback(Callable(self, "_fade_out_top_to_bottom"))
+
 
 func _run_scan_animation():
 	var screen_size = get_viewport_rect().size

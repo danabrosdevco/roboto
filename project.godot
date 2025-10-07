@@ -113,6 +113,10 @@ scan={
 ]
 }
 
+[physics]
+
+3d/solver/solver_iterations=4
+
 [rendering]
 
 renderer/rendering_method="mobile"

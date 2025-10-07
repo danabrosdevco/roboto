@@ -130,11 +130,7 @@ func _physics_process(delta: float) -> void:
 		target_lean = -LEAN_ANGLE
 	else:
 		target_lean = 0.0
-
 	is_ads = Input.is_action_pressed("aim")
-	#if is_ads:
-		#
-		
 	# --- Weapon Bob ---
 	# Increment time based on movement speed
 	var move_factor = clamp(velocity.length() / SPEED, 0.0, 1.0)
@@ -151,9 +147,6 @@ func _physics_process(delta: float) -> void:
 		abs(sin(bob_time)) * current_bob_amount,         # vertical bounce
 		0.0
 	)
-
-
-
 	# FOV transition
 	var target_fov
 	if is_ads:
@@ -203,8 +196,6 @@ func _physics_process(delta: float) -> void:
 	sin(bob_time) * current_bob_amount * 10.0,        # yaw wobble
 	0.0
 	)
-
-
 # --- CAMERA & RECOIL ROTATION INTERPOLATION ---
 # Smoothly move the player's rotation toward the look_direction (yaw)
 	var current_yaw = rotation.y
@@ -232,14 +223,10 @@ func _physics_process(delta: float) -> void:
 			if Input.is_action_just_pressed("fire"):
 				click_stream_player.play()
 				fire_cooldown = FIRE_RATE
-
 	# 🔁 Reload Logic
 	if Input.is_action_just_pressed("reload") and not is_reloading and magazine_capacity < magazine_size:
 		start_reload()
-
 	move_and_slide()
-
-
 func fire() -> void:
 	for i in tracers_in_mag:
 		if magazine_capacity == i:
@@ -264,14 +251,8 @@ func fire() -> void:
 
 	var result = space_state.intersect_ray(query)
 
-	# Projectile
-	#var new_bullet = projectile_scene.instantiate()
-	#new_bullet.initiate(Vector3(cam.rotation.x, cam.rotation.y, cam.rotation.z))
-	#add_child(new_bullet)
-
 	# Muzzle flash
 	muzzle_flash.play_flash()
-
 	# Hit detection
 	if result:
 		var hit_pos = result.position

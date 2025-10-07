@@ -5,7 +5,7 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_qxvaa"]
 shader = ExtResource("2_6lqqk")
-shader_parameter/tint_color = Color(0.5307, 0.87, 0.660765, 1)
+shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
 shader_parameter/grit_strength = 0.25
 shader_parameter/scanline_strength = 0.2
 shader_parameter/brightness = 0.5
@@ -13,7 +13,7 @@ shader_parameter/time_speed = 1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_7qwpf"]
 shader = ExtResource("2_6lqqk")
-shader_parameter/tint_color = Color(0.5307, 0.87, 0.660765, 1)
+shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
 shader_parameter/grit_strength = 0.25
 shader_parameter/scanline_strength = 0.2
 shader_parameter/brightness = 0.5
@@ -21,7 +21,7 @@ shader_parameter/time_speed = 1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5exiu"]
 shader = ExtResource("2_6lqqk")
-shader_parameter/tint_color = Color(0.5307, 0.87, 0.660765, 1)
+shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
 shader_parameter/grit_strength = 0.25
 shader_parameter/scanline_strength = 0.2
 shader_parameter/brightness = 0.5
@@ -29,7 +29,7 @@ shader_parameter/time_speed = 1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_eu0hn"]
 shader = ExtResource("2_6lqqk")
-shader_parameter/tint_color = Color(0.5307, 0.87, 0.660765, 1)
+shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
 shader_parameter/grit_strength = 0.25
 shader_parameter/scanline_strength = 0.2
 shader_parameter/brightness = 0.5

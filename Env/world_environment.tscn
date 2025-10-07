@@ -19,4 +19,5 @@ directional_shadow_blend_splits = true
 script = ExtResource("2_k68cc")
 
 [node name="CSGSphere3D" type="CSGSphere3D" parent="Sun"]
+visible = false
 material = SubResource("ShaderMaterial_cf586")

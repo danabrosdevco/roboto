@@ -30,6 +30,7 @@ enemy_marker_scene = ExtResource("3_2h28p")
 layout_mode = 0
 offset_right = 190.0
 offset_bottom = 101.0
+mouse_filter = 2
 
 [node name="Label" type="Label" parent="VBoxContainer"]
 layout_mode = 2
@@ -46,7 +47,7 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "Energy: High"
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="GreenFilter" type="ColorRect" parent="."]
 material = SubResource("ShaderMaterial_bvcf1")
 layout_mode = 2
 offset_left = -1.0

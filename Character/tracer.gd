@@ -1,4 +1,4 @@
-extends Area3D
+extends Node3D
 class_name Tracer
 
 @export var speed: float = 160.0
@@ -39,15 +39,9 @@ func _physics_process(delta: float) -> void:
 	else:
 		global_translate(move_amount)
 		distance_traveled += move_amount.length()
-
-		# --- Tracer scaling logic ---
-		# Map distance (0 → scale_distance) → normalized 0–1
 		var t = clamp(inverse_lerp(0.0, scale_distance, distance_traveled), 0.0, 1.0)
-		# Lerp the tracer length between start and end
 		var new_scale_z = lerp(start_scale_z, end_scale_z, t)
 		scale.z = new_scale_z
-
-		# Stop tracer when out of range
 		if distance_traveled >= max_distance:
 			is_active = false
 			queue_free()
