@@ -36,9 +36,10 @@ var wander_time: float = 0.0
 var idle_time: float = 0.0
 
 func _ready():
-	await get_tree().process_frame  # Wait 1 frame for the map to register
-	await get_tree().process_frame  # (Optional second frame if needed)
-	print("Navigation map ready:", nav_agent.get_navigation_map())
+	pass
+	#await get_tree().process_frame  # Wait 1 frame for the map to register
+	#await get_tree().process_frame  # (Optional second frame if needed)
+	#print("Navigation map ready:", nav_agent.get_navigation_map())
 
 func _physics_process(delta: float) -> void:
 	weapon_time += delta
@@ -60,7 +61,7 @@ func handle_movement(delta):
 				current_patrol_index = (current_patrol_index + 1) % patrol_points.size()
 				move_to(patrol_points[current_patrol_index].global_position)
 			else:
-				move_along_nav()
+				move_along_nav(delta)
 		MovementState.WANDER:
 			wander_time -= delta
 			if wander_time <= 0.0:
@@ -79,11 +80,11 @@ func handle_movement(delta):
 				look_target = next_point
 				move_to(movement_target)
 			else:
-				move_along_nav()
+				move_along_nav(delta)
 		MovementState.ENGAGE:
 			if is_instance_valid(movement_target):
 				move_to(movement_target)
-				move_along_nav()
+				move_along_nav(delta)
 
 		MovementState.SEEK_COVER:
 			# TODO: implement cover seeking
@@ -98,18 +99,43 @@ func move_to(pos: Vector3):
 		print("Moving to:", pos)
 		nav_agent.set_target_position(pos)
 
-func move_along_nav():
+func move_along_nav(delta):
+
 	var next_point = nav_agent.get_next_path_position()
-	print (next_point)
-	var dir = (next_point - global_position).normalized()
-	print (dir)
-	velocity = dir * move_speed
-	print ("Velocity is: " + str(velocity))
+	
+	var direction = next_point - global_position
+	direction.y = 0  # Flatten direction to ground plane
+	
+	if direction.length() > 0.1:
+		direction = direction.normalized()
+		
+		# Smooth velocity with lerp
+		var target_velocity = direction * move_speed
+		velocity.x = lerp(velocity.x, target_velocity.x, acceleration * delta)
+		velocity.z = lerp(velocity.z, target_velocity.z, acceleration * delta)
+	else:
+		# Stop when close enough
+		velocity.x = lerp(velocity.x, 0.0, acceleration * delta)
+		velocity.z = lerp(velocity.z, 0.0, acceleration * delta)
+
+	# Preserve vertical velocity (if using gravity later)
+	# velocity.y = velocity.y
+	
 	move_and_slide()
 
+	# Smooth rotation toward movement direction
+	if direction.length() > 0.1:
+		var current_yaw = rotation.y
+		var target_yaw = atan2(-direction.x, -direction.z)  # Negative because Godot faces -Z by default
+		var new_yaw = lerp_angle(current_yaw, target_yaw, rotation_speed * delta)
+		rotation.y = new_yaw
 func handle_looking():
-	look_at(look_target, Vector3.UP)
-	## Optional: rotate head/torso separately
+	if is_instance_valid(look_target):
+		var flat_look_target = Vector3(look_target.x, global_position.y, look_target.z)
+		if global_position.distance_to(flat_look_target) > 0.01:
+			look_at(flat_look_target, Vector3.UP)
+			head.look_at(flat_look_target, Vector3.UP)
+			torso.look_at(flat_look_target, Vector3.UP)	## Optional: rotate head/torso separately
 	#head.look_at(look_target, Vector3.UP)
 	#torso.look_at(look_target, Vector3.UP)
 

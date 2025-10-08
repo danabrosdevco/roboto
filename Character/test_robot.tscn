@@ -33,14 +33,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0126063, 1.3408, 0)
 mesh = SubResource("SphereMesh_57lf6")
 
 [node name="Torso" type="CSGMesh3D" parent="."]
-transform = Transform3D(-6.32757e-08, 0, 1.73206, 0, 1, 0, -1.44758, 0, -7.57107e-08, 0, 0.578723, 0)
+transform = Transform3D(1.44758, 0, 0, 0, 1, 0, 0, 0, 1.73206, 0, 0.578723, 0)
 mesh = SubResource("BoxMesh_6f6i5")
 
 [node name="ai_world_weapon" parent="Torso" instance=ExtResource("2_u05y2")]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.106883, 0, -4.67201e-09)
+transform = Transform3D(-0.2, 0, -1.74846e-08, 0, 0.2, 0, 1.74846e-08, 0, -0.2, 0.456663, 0, -4.67201e-09)
 
 [node name="WheelsLegs" type="CSGMesh3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.00771594, 0)
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -0.00771594, 0)
 mesh = SubResource("PrismMesh_d888e")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -51,6 +51,5 @@ shape = SubResource("CapsuleShape3D_7pps7")
 path_desired_distance = 2.0
 target_desired_distance = 2.0
 avoidance_enabled = true
-debug_enabled = true
 
 [connection signal="target_reached" from="NavigationAgent3D" to="." method="_on_navigation_agent_3d_target_reached"]
