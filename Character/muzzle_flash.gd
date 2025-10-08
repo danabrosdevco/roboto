@@ -1,4 +1,5 @@
 extends Node3D
+class_name MuzzleFlash
 
 @export var flash_textures: Array[Texture2D]
 @onready var sprite: Sprite3D = $Sprite3D
@@ -25,7 +26,7 @@ func play_flash() -> void:
 	frame_counter = 0
 	prev_number = number
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if not active:
 		return
 

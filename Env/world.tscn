@@ -1,10 +1,13 @@
-[gd_scene load_steps=11 format=3 uid="uid://c5r8kyl3dh8ox"]
+[gd_scene load_steps=14 format=3 uid="uid://c5r8kyl3dh8ox"]
 
 [ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="1_d2eqf"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="1_frury"]
 [ext_resource type="Texture2D" uid="uid://c3ap1lken8oba" path="res://2d_assets/Seamless ground sand dirt crack texture.jpg" id="1_tnwa1"]
 [ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud.tscn" id="2_x7qjx"]
 [ext_resource type="PackedScene" uid="uid://fr4657li7txj" path="res://Env/world_objects/large_barrier.tscn" id="5_crx3c"]
+[ext_resource type="PackedScene" uid="uid://dgdfk0ov1c85l" path="res://Character/characters/test_enemy.tscn" id="6_w64c2"]
+[ext_resource type="PackedScene" uid="uid://deb6uwnna01po" path="res://Character/characters/test_target.tscn" id="7_c4qea"]
+[ext_resource type="Script" path="res://Character/characters/enemy_test.gd" id="8_sdgva"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oql1c"]
 albedo_color = Color(0.477757, 0.884906, 0.786467, 1)
@@ -50,7 +53,7 @@ metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.67929, 0.121961, 0.148993)
 metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
 
-[node name="StaticBody3D (3)" parent="." instance=ExtResource("1_d2eqf")]
+[node name="TARGET BOX" parent="." instance=ExtResource("1_d2eqf")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.27162, 0.12196, 1.91637)
 metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
 
@@ -78,3 +81,49 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -13.8959, 0.128499, -4.1914
 metadata/asset_placer_res_id = "uid://fr4657li7txj"
 
 [node name="WorldEnvironment" parent="." instance=ExtResource("1_frury")]
+
+[node name="TargetBody" parent="." instance=ExtResource("7_c4qea")]
+transform = Transform3D(-0.663407, 0, -0.748258, -0.748258, 0, 0.663407, 0, 1, 0, -13.7832, 2.57528, -3.37145)
+metadata/asset_placer_res_id = "uid://deb6uwnna01po"
+
+[node name="TargetBody (1)" parent="." instance=ExtResource("7_c4qea")]
+transform = Transform3D(0.00858618, 0, -0.999963, -0.999963, 0, -0.00858618, 0, 1, 0, -11.7087, 2.75573, -3.48317)
+metadata/asset_placer_res_id = "uid://deb6uwnna01po"
+
+[node name="TargetBody (2)" parent="." instance=ExtResource("7_c4qea")]
+transform = Transform3D(-0.0482164, -0.997683, 0.0479986, 0.0632426, -0.0510074, -0.996694, 0.996833, -0.0450214, 0.0655555, -10.0813, 1.91215, -4.02079)
+metadata/asset_placer_res_id = "uid://deb6uwnna01po"
+
+[node name="TargetBody (3)" parent="." instance=ExtResource("7_c4qea")]
+transform = Transform3D(0, 0, -1, 4.37114e-08, 1, 0, 1, -4.37114e-08, 0, -6.31171, 2.34804, -4.42568)
+metadata/asset_placer_res_id = "uid://deb6uwnna01po"
+
+[node name="TargetBody (4)" parent="." instance=ExtResource("7_c4qea")]
+transform = Transform3D(0.0128692, 1.3121e-08, -0.999917, 4.15233e-08, 1, 1.36565e-08, 0.999917, -4.16956e-08, 0.0128692, -5.18841, 2.45674, -4.43151)
+metadata/asset_placer_res_id = "uid://deb6uwnna01po"
+
+[node name="TargetBody (5)" parent="." instance=ExtResource("7_c4qea")]
+transform = Transform3D(0, 0, -1, 4.37114e-08, 1, 0, 1, -4.37114e-08, 0, -8.38519, 2.29642, -4.00833)
+metadata/asset_placer_res_id = "uid://deb6uwnna01po"
+
+[node name="TargetBody (6)" parent="." instance=ExtResource("7_c4qea")]
+transform = Transform3D(0, 0, -1, 4.37114e-08, 1, 0, 1, -4.37114e-08, 0, -2.5153, 2.29877, -3.70118)
+metadata/asset_placer_res_id = "uid://deb6uwnna01po"
+
+[node name="EnemyCharBody" type="CharacterBody3D" parent="." instance=ExtResource("6_w64c2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.0119, 1.125, 40.4858)
+script = ExtResource("8_sdgva")
+target_node_path = NodePath("../TargetBody (6)")
+metadata/asset_placer_res_id = "uid://dgdfk0ov1c85l"
+
+[node name="EnemyCharBody (1)" type="CharacterBody3D" parent="." instance=ExtResource("6_w64c2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.2318, 1.125, 41.2756)
+script = ExtResource("8_sdgva")
+target_node_path = NodePath("../TargetBody (6)")
+metadata/asset_placer_res_id = "uid://dgdfk0ov1c85l"
+
+[node name="EnemyCharBody (2)" type="CharacterBody3D" parent="." instance=ExtResource("6_w64c2")]
+transform = Transform3D(0.998558, 0, 0.0536897, 0, 1, 0, -0.0536897, 0, 0.998558, -5.57033, 1.125, 41.4048)
+script = ExtResource("8_sdgva")
+target_node_path = NodePath("../TargetBody (6)")
+metadata/asset_placer_res_id = "uid://dgdfk0ov1c85l"

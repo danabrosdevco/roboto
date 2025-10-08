@@ -1,5 +1,9 @@
 extends CharacterBody3D
+@export var faction: Enums.Factions = Enums.Factions.PLAYER
 @export var world: Node3D
+@export var hud: Control
+signal activate_scanner_ui
+signal highlight_enemy(target:Node3D)
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENS := 0.002
@@ -12,6 +16,8 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var reload_sounds: Array[AudioStreamPlayer3D]
 @export var reload_delays: Array[float]
 @export var recoil_curve: Curve
+@export var scanner: Node3D
+var is_fullscreen = false
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
 const ADS_FOV := 45.0
@@ -31,10 +37,21 @@ var recoil_horizontal := 0.0
 var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
 var recoil_rotation := Vector3.ZERO
 
+var scanner_timer: = 0.0
+var scanner_cooldown = 20
+
 var ads_position := Vector3(0.0,0.0,-1.077)
 var ads_rotation := Vector3(0.0,0.0,3.0)
 var reload_rotation := Vector3(0.2,20.5,58.0)
 var reload_position := Vector3(0.31,-0.425,-0.015)
+
+# --- Weapon Bob (Idle Sway) ---
+@export var bob_speed := 1.1            # how fast the gun bobs (Hz)
+@export var bob_amount := 0.015          # how far the gun moves when hip-firing
+@export var ads_bob_scale := 0.05         # how much to reduce bob when ADS (0.2 = 80% less)
+@export var movement_bob_scale := 2.2    # scale bobbing when moving
+var bob_time := 0.0                      # internal timer
+
 
 # Base transform snapshot
 const base_weapon_position := Vector3(0.31,-0.425,-0.015)
@@ -44,7 +61,7 @@ const base_weapon_rotation := Vector3(-0.3,6.0,2.8)
 var is_ads := false
 var magazine_size: int = 30
 var magazine_capacity: int = 30
-const tracers_in_mag: Array[int] = [30, 25,20, 15, 10, 5, 4, 3, 2, 1, 0]
+const tracers_in_mag: Array[int] = [30, 27, 25, 22, 20, 17, 15, 12, 10, 7, 5, 4, 3, 2, 1, 0]
 var tracer: bool = false
 var is_reloading := false
 var from
@@ -80,26 +97,38 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	fire_cooldown -= delta
 
-	# Gravity
+	handle_gravity(delta)
+	handle_input(delta)
+	handle_movement(delta)
+	handle_camera_and_weapon(delta)
+	handle_weapon_logic(delta)
+
+	move_and_slide()
+func handle_gravity(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 
-	# Jump
+
+func handle_input(_delta: float) -> void:
+	if Input.is_action_just_pressed("fullscreen"):
+		is_fullscreen = !is_fullscreen
+		if is_fullscreen:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		else:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
 
-	# Movement
-	var input2 := Input.get_vector("ui_left", "ui_right", "ui_down", "ui_up")
-	var dir := (transform.basis.x * input2.x) + (-transform.basis.z * input2.y)
-	if dir.length() > 0.001:
-		dir = dir.normalized() * SPEED
-		velocity.x = dir.x
-		velocity.z = dir.z
-	else:
-		velocity.x = move_toward(velocity.x, 0.0, SPEED)
-		velocity.z = move_toward(velocity.z, 0.0, SPEED)
+	if Input.is_action_just_pressed("scan"):
+		scanner.activate_scan()
+		activate_scanner_ui.emit()
 
-	# Lean
+	if Input.is_action_just_pressed("reload") and not is_reloading and magazine_capacity < magazine_size:
+		start_reload()
+
+	is_ads = Input.is_action_pressed("aim")
+
 	if Input.is_action_pressed("lean_left"):
 		target_lean = LEAN_ANGLE
 	elif Input.is_action_pressed("lean_right"):
@@ -107,86 +136,107 @@ func _physics_process(delta: float) -> void:
 	else:
 		target_lean = 0.0
 
-	is_ads = Input.is_action_pressed("aim")
 
-	# FOV transition
-	var target_fov
+func handle_movement(_delta: float) -> void:
+	var input2 := Input.get_vector("ui_left", "ui_right", "ui_down", "ui_up")
+	var new_basis = transform.basis
+	var dir = new_basis.x * input2.x - new_basis.z * input2.y
+
+	if dir.length_squared() > 0.001:
+		dir = dir.normalized() * SPEED
+		velocity.x = dir.x
+		velocity.z = dir.z
+	else:
+		velocity.x = move_toward(velocity.x, 0.0, SPEED)
+		velocity.z = move_toward(velocity.z, 0.0, SPEED)
+
+
+func handle_camera_and_weapon(delta: float) -> void:
+	# Weapon Bobbing
+	var move_factor = clamp(velocity.length() / SPEED, 0.0, 1.0)
+	bob_time += delta * bob_speed * (1.0 + move_factor * movement_bob_scale)
+
+	var current_bob_amount := bob_amount
 	if is_ads:
-		target_fov = ADS_FOV
+		current_bob_amount *= ads_bob_scale
+
+	var bob_offset = Vector3(
+		sin(bob_time * 2.0) * current_bob_amount * 0.5,
+		abs(sin(bob_time)) * current_bob_amount,
+		0.0
+	)
+
+# FOV & Lean
+	var target_fov: float
+	if is_ads:
 		if Input.is_action_pressed("zoom"):
 			target_fov = ADS_FOV * 0.6
+		else:
+			target_fov = ADS_FOV
 	else:
 		target_fov = HIP_FOV
 
-	cam.fov = lerp(cam.fov, target_fov, delta * ADS_SPEED)
+	if abs(cam.fov - target_fov) > 0.01:
+		cam.fov = lerp(cam.fov, target_fov, delta * ADS_SPEED)
 	cam.rotation.z = lerp(cam.rotation.z, target_lean, delta * LEAN_SPEED)
-	# --- ADS / RELOAD state transitions ---
-	if is_reloading:
-		# Lerp toward reload pose
-		weapon_model.position = weapon_model.position.lerp(reload_position, delta * reload_return_speed)
-		weapon_model.rotation = weapon_model.rotation.lerp(reload_rotation, delta * reload_return_speed)
-	elif is_ads:
-		# Lerp toward ADS pose
-		weapon_model.position = weapon_model.position.lerp(ads_position, delta * ADS_SPEED)
-		weapon_model.rotation = weapon_model.rotation.lerp(ads_rotation, delta * ADS_SPEED)
-	else:
-		# Return to base
-		weapon_model.position = weapon_model.rotation.lerp(base_weapon_position, delta * ADS_SPEED)
-		weapon_model.rotation = weapon_model.rotation.lerp(base_weapon_rotation, delta * ADS_SPEED)
 
+	# Weapon Pose Interpolation
+	var target_pos: Vector3
+	var target_rot: Vector3
+
+	if is_reloading:
+		target_pos = reload_position
+		target_rot = reload_rotation
+	elif is_ads:
+		target_pos = ads_position
+		target_rot = ads_rotation
+	else:
+		target_pos = base_weapon_position
+		target_rot = base_weapon_rotation
+
+	if weapon_model.position.distance_to(target_pos) > 0.001:
+		weapon_model.position = weapon_model.position.lerp(target_pos, delta * ADS_SPEED)
+	if weapon_model.rotation.distance_to(target_rot) > 0.001:
+		weapon_model.rotation = weapon_model.rotation.lerp(target_rot, delta * ADS_SPEED)
+
+	if not is_reloading:
+		weapon_model.position += bob_offset
+
+	# Recoil
 	if recoil_timer > 0.0:
 		recoil_timer -= delta
-		var t = 1.0 - (recoil_timer / recoil_duration)
-		t = clamp(t, 0.0, 1.0)
-		
-		# --- WEAPON RECOIL (visual) ---
-		var pitch = recoil_curve.sample(t) * recoil_per_shot
-		var yaw = recoil_horizontal * (1.0 - t)  # decays horizontally
-		recoil_rotation = Vector3(0, yaw, pitch)
-		
-		# --- CAMERA RECOIL (gameplay effect) ---
-		var cam_pitch_kick = pitch * camera_recoil_scale
-		var cam_yaw_kick = yaw * camera_recoil_scale
-		camera_recoil_current = Vector3(cam_pitch_kick, 0, 0)
-		pitch = clamp(
-	pitch - deg_to_rad(camera_recoil_current.x),  # pitch up
-	-1.5, 1.5
+		var t = clamp(1.0 - (recoil_timer / recoil_duration), 0.0, 1.0)
+		var pitch_offset = recoil_curve.sample(t) * recoil_per_shot
+		var yaw = recoil_horizontal * (1.0 - t)
+		recoil_rotation = Vector3(0, yaw, pitch_offset)
+
+		camera_recoil_current = Vector3(pitch_offset * camera_recoil_scale, 0, 0)
+		pitch = clamp(pitch - deg_to_rad(camera_recoil_current.x), -1.5, 1.5)
+
+	var bob_rotation = Vector3(
+		sin(bob_time * 2.0) * current_bob_amount * 20.0,
+		sin(bob_time) * current_bob_amount * 10.0,
+		0.0
 	)
-# --- CAMERA & RECOIL ROTATION INTERPOLATION ---
-# Smoothly move the player's rotation toward the look_direction (yaw)
-	var current_yaw = rotation.y
-	var target_yaw = look_direction.y
-	current_yaw = lerp_angle(current_yaw, target_yaw, delta * look_interp_speed)
-	rotation.y = current_yaw
 
-# Smoothly move the camera pitch toward look_direction.x
-	var current_pitch = cam.rotation.x
-	var target_pitch = look_direction.x
-	current_pitch = lerp_angle(current_pitch, target_pitch, delta * look_interp_speed)
-	cam.rotation.x = current_pitch
+	# Rotation interpolation (look direction)
+	rotation.y = lerp_angle(rotation.y, look_direction.y, delta * look_interp_speed)
+	cam.rotation.x = lerp_angle(cam.rotation.x, look_direction.x, delta * look_interp_speed)
 
-# Apply recoil offset (temporary offset on top)
+	# Apply recoil
 	cam.rotation_degrees.x += camera_recoil_current.x
 	cam.rotation_degrees.y += camera_recoil_current.y
+	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation + bob_rotation
 
-	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation
-	# 🔫 Firing Logic
+
+func handle_weapon_logic(_delta: float) -> void:
 	if not is_reloading and fire_cooldown <= 0.0:
-		if magazine_capacity > 0:
-			if Input.is_action_pressed("fire"):
-				fire()
-				fire_cooldown = FIRE_RATE
-		else:
-			if Input.is_action_just_pressed("fire"):
-				click_stream_player.play()
-				fire_cooldown = FIRE_RATE
-
-	# 🔁 Reload Logic
-	if Input.is_action_just_pressed("reload") and not is_reloading and magazine_capacity < magazine_size:
-		start_reload()
-
-	move_and_slide()
-
+		if magazine_capacity > 0 and Input.is_action_pressed("fire"):
+			fire()
+			fire_cooldown = FIRE_RATE
+		elif magazine_capacity <= 0 and Input.is_action_just_pressed("fire"):
+			click_stream_player.play()
+			fire_cooldown = FIRE_RATE
 
 func fire() -> void:
 	for i in tracers_in_mag:
@@ -196,11 +246,11 @@ func fire() -> void:
 		else:
 			tracer = false
 	recoil_timer = recoil_duration
-	recoil_horizontal = randf_range(-1.0, 1.0) * 2.0  # control horizontal sway strength
+	recoil_horizontal = randf_range(-1.0, 1.0) * 2.0 * 0.5*recoil_per_shot # control horizontal sway strength
 	# Existing raycast and muzzle flash code...
 	# Raycast
 	from = cam.global_position
-	to = from + -cam.global_transform.basis.z * 100.0
+	to = from + tracer_origin.global_transform.basis.x.normalized() * 250.0
 
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.new()
@@ -212,14 +262,8 @@ func fire() -> void:
 
 	var result = space_state.intersect_ray(query)
 
-	# Projectile
-	#var new_bullet = projectile_scene.instantiate()
-	#new_bullet.initiate(Vector3(cam.rotation.x, cam.rotation.y, cam.rotation.z))
-	#add_child(new_bullet)
-
 	# Muzzle flash
 	muzzle_flash.play_flash()
-
 	# Hit detection
 	if result:
 		var hit_pos = result.position
@@ -234,16 +278,16 @@ func fire() -> void:
 
 
 func fire_tracer():
-	var tracer = tracer_scene.instantiate()
-	world.add_child(tracer)
+	var new_tracer = tracer_scene.instantiate()
+	world.add_child(new_tracer)
 	# 1. Set starting position at tracer origin (on the weapon)
-	tracer.global_position = tracer_origin.global_position
+	new_tracer.global_position = tracer_origin.global_position
 	# 2. Get world-space forward direction from tracer_origin
 	var dir = tracer_origin.global_transform.basis.x.normalized()
 	# 3. Set the tracer's direction (assuming it has a .direction property)
-	tracer.direction = dir
+	new_tracer.direction = dir
 	# 4. Point it visually in the direction (optional but good for visuals)
-	tracer.look_at(tracer.global_position + dir)
+	new_tracer.look_at(new_tracer.global_position + dir)
 
 
 
@@ -263,3 +307,7 @@ func play_reload_sequence():
 		var delay = reload_delays[i]
 		await get_tree().create_timer(delay).timeout
 		sound.play()
+
+
+func _on_scanner_highlight_target(target: Node3D) -> void:
+	highlight_enemy.emit(target)

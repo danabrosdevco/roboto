@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://bqffo2cja7mh2"]
 
-[ext_resource type="PackedScene" uid="uid://dbghe3jrvbxhk" path="res://3d_assets/shooter pack/Environment/glTF/Barrier_Single.gltf" id="1_ba11c"]
+[ext_resource type="PackedScene" uid="uid://dk6wgwi22huy" path="res://3d_assets/shooter pack/Environment/glTF/Barrier_Single.gltf" id="1_ba11c"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_l7pyf"]
 size = Vector3(1.86979, 0.662575, 0.641815)

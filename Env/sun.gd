@@ -41,10 +41,8 @@ func sun_dir_ray() -> Vector3:
 	return global_basis.z.normalized()
 
 func _process(delta: float) -> void:
-	# Transform the light
-	#rotate_y(delta * 0.002)
-	#rotate_x(delta * 0.002)
-	 #Update color
+	rotate_y(delta * 0.002)
+	rotate_x(delta * 0.002)
 	var weight: float = sun_dir_ray().dot(Vector3.UP)
 	var energy = smoothstep(-0.1, -0.05, weight)
 	weight = pow(clamp(weight, 0.0, 1.0), 0.5)

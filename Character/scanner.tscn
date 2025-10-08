@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cia7d1ywjwrgf"]
+
+[ext_resource type="Script" path="res://Character/scanner.gd" id="1_dfnoe"]
+
+[node name="Scanner" type="Node3D"]
+script = ExtResource("1_dfnoe")

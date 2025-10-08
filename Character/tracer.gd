@@ -1,9 +1,14 @@
-extends Area3D
+extends Node3D
+class_name Tracer
 
-
-@export var speed: float = 120.0
+@export var speed: float = 160.0
 @export var max_distance: float = 100.0
 @export var hit_effect_scene: PackedScene
+
+# --- Tracer scaling config ---
+@export var start_scale_z: float = 0.5
+@export var end_scale_z: float = 4.0
+@export var scale_distance: float = 15  # distance over which tracer lengthens
 
 var direction: Vector3
 var distance_traveled := 0.0
@@ -19,7 +24,6 @@ func _physics_process(delta: float) -> void:
 	var query := PhysicsRayQueryParameters3D.create(global_position, global_position + move_amount)
 	query.exclude = [self]
 	var result = space_state.intersect_ray(query)
-
 	if result:
 		# 🎯 Stop tracer on hit
 		is_active = false
@@ -30,13 +34,14 @@ func _physics_process(delta: float) -> void:
 			effect.global_position = result.position
 			get_tree().current_scene.add_child(effect)
 
-		# Optionally stick tracer or destroy it
-		await get_tree().create_timer(0.1).timeout
+		await get_tree().create_timer(0.01).timeout
 		queue_free()
 	else:
 		global_translate(move_amount)
 		distance_traveled += move_amount.length()
-
+		var t = clamp(inverse_lerp(0.0, scale_distance, distance_traveled), 0.0, 1.0)
+		var new_scale_z = lerp(start_scale_z, end_scale_z, t)
+		scale.z = new_scale_z
 		if distance_traveled >= max_distance:
 			is_active = false
 			queue_free()

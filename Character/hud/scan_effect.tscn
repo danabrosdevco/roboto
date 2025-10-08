@@ -1,0 +1,54 @@
+[gd_scene load_steps=5 format=3 uid="uid://b4n2skq3ovhu6"]
+
+[ext_resource type="Script" path="res://Character/hud/scan_effect.gd" id="1_celhg"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7qwpf"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5exiu"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eu0hn"]
+
+[node name="ScanEffect" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_celhg")
+scan_color = Color(0.5307, 0.87, 0.660765, 0.8)
+
+[node name="Top" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+color = Color(0.784314, 0.784314, 0.784314, 0.27451)
+
+[node name="Bottom" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_7qwpf")
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Left" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_5exiu")
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+grow_vertical = 2
+
+[node name="Right" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_eu0hn")
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 2

@@ -1,0 +1,7 @@
+- bullets hit raycast matches tracer
+
+- make an enemy
+
+- bullets do something [ragdoll an enemy]
+- enemy moves around to location
+	- enemy moves around in group

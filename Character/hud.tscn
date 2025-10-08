@@ -1,6 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://ib6m72545n75"]
+[gd_scene load_steps=6 format=3 uid="uid://ib6m72545n75"]
 
+[ext_resource type="PackedScene" uid="uid://b4n2skq3ovhu6" path="res://Character/hud/scan_effect.tscn" id="1_80vuv"]
 [ext_resource type="Shader" path="res://Character/green_filter.gdshader" id="1_ct71j"]
+[ext_resource type="Script" path="res://Character/hud.gd" id="1_nopku"]
+[ext_resource type="PackedScene" uid="uid://dpww17fdlkhv8" path="res://Character/hud/scan_enemy_marker.tscn" id="3_2h28p"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bvcf1"]
 shader = ExtResource("1_ct71j")
@@ -19,25 +22,32 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("1_nopku")
+scan_effect_scene = ExtResource("1_80vuv")
+enemy_marker_scene = ExtResource("3_2h28p")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_right = 109.0
-offset_bottom = 77.0
+offset_right = 190.0
+offset_bottom = 101.0
+mouse_filter = 2
 
 [node name="Label" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "Health: Stable"
 
 [node name="Label2" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "Signal: Strong"
 
 [node name="Label3" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "Energy: High"
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="GreenFilter" type="ColorRect" parent="."]
 material = SubResource("ShaderMaterial_bvcf1")
 layout_mode = 2
 offset_left = -1.0
