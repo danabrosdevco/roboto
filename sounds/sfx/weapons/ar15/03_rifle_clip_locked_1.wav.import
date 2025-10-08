@@ -3,12 +3,12 @@
 importer="wav"
 type="AudioStreamWAV"
 uid="uid://bshw86qb3nu6a"
-path="res://.godot/imported/03_rifle_clip_locked_1.wav-3227789d9bc14bb9983221d13ba577eb.sample"
+path="res://.godot/imported/03_rifle_clip_locked_1.wav-eac78915ef5668ec091d8248d91bd494.sample"
 
 [deps]
 
-source_file="res://sounds/sfx/03_rifle_clip_locked_1.wav"
-dest_files=["res://.godot/imported/03_rifle_clip_locked_1.wav-3227789d9bc14bb9983221d13ba577eb.sample"]
+source_file="res://sounds/sfx/weapons/ar15/03_rifle_clip_locked_1.wav"
+dest_files=["res://.godot/imported/03_rifle_clip_locked_1.wav-eac78915ef5668ec091d8248d91bd494.sample"]
 
 [params]
 

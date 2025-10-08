@@ -10,5 +10,5 @@ size = Vector3(3.81779, 3.14888, 0.641815)
 [node name="Barrier_Large2" parent="." instance=ExtResource("1_8bsqi")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0053502, 1.56914, 0.000869751)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.288856, -0.0053502, 1.56914, -0.138537)
 shape = SubResource("BoxShape3D_l7pyf")

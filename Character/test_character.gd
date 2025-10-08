@@ -269,8 +269,17 @@ func fire() -> void:
 		var hit_pos = result.position
 		var collider = result.collider
 		print("Hit:", collider, " at ", hit_pos)
+		#var sphere = MeshInstance3D.new()
+		#sphere.mesh = SphereMesh.new()
+		#sphere.mesh.radius = 0.05  # Very small
+		#sphere.mesh.height = 0.1   # Optional if you want a stretched look
+		#sphere.global_position = hit_pos
+		#get_tree().current_scene.add_child(sphere)
 		if collider.has_method("apply_damage"):
 			collider.apply_damage(10)
+		else:
+			if collider.get_parent().has_method("apply_damage"):
+				collider.apply_damage(10)
 	if tracer:
 		fire_tracer()
 	magazine_capacity = max(0, magazine_capacity - 1)

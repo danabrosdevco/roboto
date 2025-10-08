@@ -3,12 +3,12 @@
 importer="wav"
 type="AudioStreamWAV"
 uid="uid://b0rtjdn40pw18"
-path="res://.godot/imported/01_rifle_clip_out_1.wav-6c7540ab5e8b4768c1c6de96f331a177.sample"
+path="res://.godot/imported/01_rifle_clip_out_1.wav-69d6bcae71ea586d43bbf18d273a909f.sample"
 
 [deps]
 
-source_file="res://sounds/sfx/01_rifle_clip_out_1.wav"
-dest_files=["res://.godot/imported/01_rifle_clip_out_1.wav-6c7540ab5e8b4768c1c6de96f331a177.sample"]
+source_file="res://sounds/sfx/weapons/ar15/01_rifle_clip_out_1.wav"
+dest_files=["res://.godot/imported/01_rifle_clip_out_1.wav-69d6bcae71ea586d43bbf18d273a909f.sample"]
 
 [params]
 

@@ -9,6 +9,8 @@ class_name EnemyTest
 var target: Node3D
 var hover_offset := 0.0
 var base_y := 0.0
+var timer : float = 0.0
+var time_to_check = 0.5
 
 func _ready():
 	target = get_node_or_null(target_node_path)
@@ -16,9 +18,16 @@ func _ready():
 	hover_offset = randf() * TAU  # Randomize starting phase
 
 func _physics_process(delta):
+	timer += delta
 	if target:
-		_move_towards_target(delta)
-		_apply_hover_effect(delta)
+		if timer <= time_to_check:
+			_apply_hover_effect(delta)
+			move_and_slide()
+			return
+		else:
+			_move_towards_target(delta)
+			_apply_hover_effect(delta)
+			timer = 0.0
 
 func _move_towards_target(_delta):
 	if not is_instance_valid(target):

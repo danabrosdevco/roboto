@@ -1,15 +1,56 @@
-[gd_scene load_steps=3 format=3 uid="uid://bevu1pewciouu"]
+[gd_scene load_steps=7 format=3 uid="uid://bevu1pewciouu"]
 
-[sub_resource type="PrismMesh" id="PrismMesh_d888e"]
+[ext_resource type="Script" path="res://Character/test_robot.gd" id="1_mmb2y"]
+[ext_resource type="PackedScene" uid="uid://boyiducyiek8k" path="res://Character/ai_world_weapon.tscn" id="2_u05y2"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_57lf6"]
+radius = 0.4
+height = 0.8
+radial_segments = 16
+rings = 8
 
 [sub_resource type="BoxMesh" id="BoxMesh_6f6i5"]
+size = Vector3(0.8, 1.2, 0.2)
 
-[node name="EnemyRobot" type="CharacterBody3D"]
+[sub_resource type="PrismMesh" id="PrismMesh_d888e"]
+size = Vector3(1, 1.2, 1.2)
 
-[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
-transform = Transform3D(-6.55671e-08, 0, 1.5, 0, 1.5, 0, -1.5, 0, -6.55671e-08, 0, -0.231052, 0)
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_7pps7"]
+radius = 1.0
+height = 2.3
+
+[node name="EnemyRobot" type="CharacterBody3D" node_paths=PackedStringArray("head", "torso", "legs_wheels", "nav_agent", "Weapon")]
+script = ExtResource("1_mmb2y")
+head = NodePath("Head")
+torso = NodePath("Torso")
+legs_wheels = NodePath("WheelsLegs")
+nav_agent = NodePath("NavigationAgent3D")
+Weapon = NodePath("Torso/ai_world_weapon")
+faction = 2
+
+[node name="Head" type="CSGMesh3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0126063, 1.3408, 0)
+mesh = SubResource("SphereMesh_57lf6")
+
+[node name="Torso" type="CSGMesh3D" parent="."]
+transform = Transform3D(-6.32757e-08, 0, 1.73206, 0, 1, 0, -1.44758, 0, -7.57107e-08, 0, 0.578723, 0)
+mesh = SubResource("BoxMesh_6f6i5")
+
+[node name="ai_world_weapon" parent="Torso" instance=ExtResource("2_u05y2")]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.106883, 0, -4.67201e-09)
+
+[node name="WheelsLegs" type="CSGMesh3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.00771594, 0)
 mesh = SubResource("PrismMesh_d888e")
 
-[node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0.972984, 0)
-mesh = SubResource("BoxMesh_6f6i5")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.532203, 0)
+shape = SubResource("CapsuleShape3D_7pps7")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 2.0
+target_desired_distance = 2.0
+avoidance_enabled = true
+debug_enabled = true
+
+[connection signal="target_reached" from="NavigationAgent3D" to="." method="_on_navigation_agent_3d_target_reached"]

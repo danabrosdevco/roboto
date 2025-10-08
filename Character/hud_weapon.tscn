@@ -2,13 +2,13 @@
 
 [ext_resource type="PackedScene" uid="uid://bnspkdie7wm5m" path="res://3d_assets/gun_pack/Blends/AssaultRifle2_1.blend" id="1_vd8cs"]
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/muzzle_flash.tscn" id="2_xlqvk"]
-[ext_resource type="AudioStream" uid="uid://b46wwhkqbq3x2" path="res://sounds/sfx/best_rifle_fire_1 (2).wav" id="3_nx084"]
-[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/682140__henkonen__metal-click.wav" id="4_esmsq"]
-[ext_resource type="AudioStream" uid="uid://b0rtjdn40pw18" path="res://sounds/sfx/01_rifle_clip_out_1.wav" id="5_w8o7c"]
-[ext_resource type="AudioStream" uid="uid://cm56wd0aykjpe" path="res://sounds/sfx/02_rifle_clip_in_1 (3).wav" id="6_h3i32"]
-[ext_resource type="AudioStream" uid="uid://bshw86qb3nu6a" path="res://sounds/sfx/03_rifle_clip_locked_1.wav" id="7_5erg2"]
-[ext_resource type="AudioStream" uid="uid://dtcxy21jrbgpb" path="res://sounds/sfx/04_rifle_slideback_1.wav" id="8_nxmw0"]
-[ext_resource type="AudioStream" uid="uid://h0woe50lq5tt" path="res://sounds/sfx/05_rifle_slideforward_1 (2).wav" id="9_o0tuw"]
+[ext_resource type="AudioStream" uid="uid://b46wwhkqbq3x2" path="res://sounds/sfx/weapons/ar15/best_rifle_fire_1 (2).wav" id="3_nx084"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="4_esmsq"]
+[ext_resource type="AudioStream" uid="uid://b0rtjdn40pw18" path="res://sounds/sfx/weapons/ar15/01_rifle_clip_out_1.wav" id="5_w8o7c"]
+[ext_resource type="AudioStream" uid="uid://cm56wd0aykjpe" path="res://sounds/sfx/weapons/ar15/02_rifle_clip_in_1 (3).wav" id="6_h3i32"]
+[ext_resource type="AudioStream" uid="uid://bshw86qb3nu6a" path="res://sounds/sfx/weapons/ar15/03_rifle_clip_locked_1.wav" id="7_5erg2"]
+[ext_resource type="AudioStream" uid="uid://dtcxy21jrbgpb" path="res://sounds/sfx/weapons/ar15/04_rifle_slideback_1.wav" id="8_nxmw0"]
+[ext_resource type="AudioStream" uid="uid://h0woe50lq5tt" path="res://sounds/sfx/weapons/ar15/05_rifle_slideforward_1 (2).wav" id="9_o0tuw"]
 
 [node name="Weapon" type="Node3D"]
 

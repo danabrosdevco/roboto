@@ -6,7 +6,8 @@
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wossu"]
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_uowf8"]
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_knqht"]
+height = 0.2
 
 [node name="TargetBody" type="StaticBody3D"]
 script = ExtResource("1_16n30")
@@ -17,4 +18,5 @@ mesh = SubResource("CylinderMesh_pp7af")
 surface_material_override/0 = SubResource("StandardMaterial3D_wossu")
 
 [node name="EnemyColShape" type="CollisionShape3D" parent="."]
-shape = SubResource("CapsuleShape3D_uowf8")
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("CylinderShape3D_knqht")
