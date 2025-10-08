@@ -109,7 +109,7 @@ func handle_gravity(delta: float) -> void:
 		velocity.y -= gravity * delta
 
 
-func handle_input(delta: float) -> void:
+func handle_input(_delta: float) -> void:
 	if Input.is_action_just_pressed("fullscreen"):
 		is_fullscreen = !is_fullscreen
 		if is_fullscreen:
@@ -137,10 +137,10 @@ func handle_input(delta: float) -> void:
 		target_lean = 0.0
 
 
-func handle_movement(delta: float) -> void:
+func handle_movement(_delta: float) -> void:
 	var input2 := Input.get_vector("ui_left", "ui_right", "ui_down", "ui_up")
-	var basis = transform.basis
-	var dir = basis.x * input2.x - basis.z * input2.y
+	var new_basis = transform.basis
+	var dir = new_basis.x * input2.x - new_basis.z * input2.y
 
 	if dir.length_squared() > 0.001:
 		dir = dir.normalized() * SPEED
@@ -229,7 +229,7 @@ func handle_camera_and_weapon(delta: float) -> void:
 	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation + bob_rotation
 
 
-func handle_weapon_logic(delta: float) -> void:
+func handle_weapon_logic(_delta: float) -> void:
 	if not is_reloading and fire_cooldown <= 0.0:
 		if magazine_capacity > 0 and Input.is_action_pressed("fire"):
 			fire()

@@ -21,6 +21,8 @@ func _physics_process(delta):
 		_apply_hover_effect(delta)
 
 func _move_towards_target(_delta):
+	if not is_instance_valid(target):
+		return
 	var to_target = (target.global_transform.origin - global_transform.origin)
 	to_target.y = 0  # Flatten movement (no vertical chase)
 	var direction = to_target.normalized()
@@ -42,7 +44,7 @@ func apply_damage(damage):
 	pass
 
 func die():
-	await get_tree().create_timer(0.75).timeout
+	await get_tree().create_timer(0.25).timeout
 	queue_free()
 
 func get_faction():

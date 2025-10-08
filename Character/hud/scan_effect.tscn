@@ -1,39 +1,12 @@
-[gd_scene load_steps=7 format=3 uid="uid://b4n2skq3ovhu6"]
+[gd_scene load_steps=5 format=3 uid="uid://b4n2skq3ovhu6"]
 
 [ext_resource type="Script" path="res://Character/hud/scan_effect.gd" id="1_celhg"]
-[ext_resource type="Shader" path="res://Character/hud_filter.gdshader" id="2_6lqqk"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_qxvaa"]
-shader = ExtResource("2_6lqqk")
-shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
-shader_parameter/grit_strength = 0.25
-shader_parameter/scanline_strength = 0.2
-shader_parameter/brightness = 0.5
-shader_parameter/time_speed = 1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_7qwpf"]
-shader = ExtResource("2_6lqqk")
-shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
-shader_parameter/grit_strength = 0.25
-shader_parameter/scanline_strength = 0.2
-shader_parameter/brightness = 0.5
-shader_parameter/time_speed = 1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5exiu"]
-shader = ExtResource("2_6lqqk")
-shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
-shader_parameter/grit_strength = 0.25
-shader_parameter/scanline_strength = 0.2
-shader_parameter/brightness = 0.5
-shader_parameter/time_speed = 1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_eu0hn"]
-shader = ExtResource("2_6lqqk")
-shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
-shader_parameter/grit_strength = 0.25
-shader_parameter/scanline_strength = 0.2
-shader_parameter/brightness = 0.5
-shader_parameter/time_speed = 1.0
 
 [node name="ScanEffect" type="Control"]
 layout_mode = 3
@@ -47,11 +20,11 @@ script = ExtResource("1_celhg")
 scan_color = Color(0.5307, 0.87, 0.660765, 0.8)
 
 [node name="Top" type="ColorRect" parent="."]
-material = SubResource("ShaderMaterial_qxvaa")
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 grow_horizontal = 2
+color = Color(0.784314, 0.784314, 0.784314, 0.27451)
 
 [node name="Bottom" type="ColorRect" parent="."]
 material = SubResource("ShaderMaterial_7qwpf")
