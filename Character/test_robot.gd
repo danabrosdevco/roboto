@@ -5,9 +5,10 @@ class_name TestRobot
 @export var torso: Node3D
 @export var legs_wheels: Node3D
 @export var nav_agent: NavigationAgent3D
-@export var Weapon: AIWorldWeapon
+@export var weapon: AIWorldWeapon
 @export var hearing: Area3D
 @export var sight: Area3D
+@export var label: Label3D
 
 # EXPORT DATA # 
 @export var health: int = 20
@@ -59,6 +60,7 @@ func _physics_process(delta: float) -> void:
 		handle_looking()
 		handle_movement(delta)
 	handle_weapon_logic()
+	update_debug_label()
 	
 func handle_movement(delta):
 	if movement_time >= movement_recon_time:
@@ -98,7 +100,6 @@ func handle_movement(delta):
 			else:
 				move_along_nav(delta)
 		MovementState.ENGAGE:
-			if is_instance_valid(weapon_target):
 				var to_target = weapon_target - global_position
 				to_target.y = 0
 				var engage_distance = 8.0  # Stand this far from the target
@@ -121,7 +122,6 @@ func handle_movement(delta):
 
 func move_to(pos: Vector3):
 	if nav_agent:
-		print("Moving to:", pos)
 		nav_agent.set_target_position(pos)
 
 func move_along_nav(delta):
@@ -142,13 +142,7 @@ func move_along_nav(delta):
 		# Stop when close enough
 		velocity.x = lerp(velocity.x, 0.0, acceleration * delta)
 		velocity.z = lerp(velocity.z, 0.0, acceleration * delta)
-
-	# Preserve vertical velocity (if using gravity later)
-	# velocity.y = velocity.y
-	
 	move_and_slide()
-
-	# Smooth rotation toward movement direction
 	if direction.length() > 0.1:
 		var current_yaw = rotation.y
 		var target_yaw = atan2(-direction.x, -direction.z)  # Negative because Godot faces -Z by default
@@ -169,11 +163,11 @@ func handle_weapon_logic():
 		reconsider_weapon()
 	match weapon_state:
 		WeaponState.IDLE:
-			if is_instance_valid(weapon_target):
-				weapon_state = WeaponState.AIM
+			weapon_state = WeaponState.AIM
 		WeaponState.AIM:
-			# Check distance or visibility
-			weapon_state = WeaponState.FIRE
+			var dist = global_position.distance_to(weapon_target)
+			if dist <= 16.0:
+				weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
 			fire()
 			weapon_state = WeaponState.RELOAD
@@ -191,11 +185,16 @@ func reconsider_weapon():
 	weapon_time = 0
 	return
 
-func change_state(new_state):
-	pass
-	
+func change_state(new_state: MovementState):
+	if movement_state != new_state:
+		print("Changing state to:", new_state)
+		movement_state = new_state
+		movement_time = 0
+		idle_time = 0
 
 func fire():
+	weapon.fire()
+	print ("FIRE!")
 	pass
 
 func apply_damage(damage):
@@ -214,7 +213,6 @@ func get_faction():
 func _on_navigation_agent_3d_target_reached() -> void:
 	pass # Replace with function body.
 
-
 func create_hearing_sphere():
 	hearing.get_child(0).shape.radius = hearing_sphere_radius
 
@@ -222,7 +220,6 @@ func create_sight_shape():
 	var shape := ConvexPolygonShape3D.new()
 	var half_near := sqrt(sight_rectangle_near_area) * 0.5
 	var half_far := sqrt(sight_rectangle_far_area) * 0.5
-	
 	# Define 8 vertices (same as previous answer)
 	var vertices := PackedVector3Array([
 		# Near face (Z = 0)
@@ -230,26 +227,36 @@ func create_sight_shape():
 		Vector3( half_near,  half_near, 0),  # n1 - top-right
 		Vector3( half_near, -half_near, 0),  # n2 - bottom-right
 		Vector3(-half_near, -half_near, 0),  # n3 - bottom-left
-
 		# Far face (Z = distance)
 		Vector3(-half_far,  half_far, sight_rectangle_distance),  # f0 - top-left
 		Vector3( half_far,  half_far, sight_rectangle_distance),  # f1 - top-right
 		Vector3( half_far, -half_far, sight_rectangle_distance),  # f2 - bottom-right
 		Vector3(-half_far, -half_far, sight_rectangle_distance),  # f3 - bottom-left
 	])
-	
 	shape.points = vertices
 	sight.get_child(0).shape = shape
-
 
 func _on_sight_body_entered(body: Node3D) -> void:
 	if body is CharacterBody3D:
 		if body.has_method("get_faction"):
 			if body.get_faction() != get_faction():
 				seen_bodies.append(body)
+				weapon_target = body.global_position
+				look_target = body.global_position
+				change_state(MovementState.ENGAGE)
+				weapon_state = WeaponState.AIM
 	print (seen_bodies)
 
-
-func _on_sight_body_shape_exited(body_rid: RID, body: Node3D, body_shape_index: int, local_shape_index: int) -> void:
+func _on_sight_body_shape_exited(_body_rid: RID, body: Node3D, _body_shape_index: int, _local_shape_index: int) -> void:
 	if seen_bodies.has(body) == true:
 		seen_bodies.erase(body)
+
+func update_debug_label():
+	var movement_state_str = MovementState.keys()[movement_state]
+	var weapon_state_str = WeaponState.keys()[weapon_state]
+	
+	label.text = "HP: %d\nMovement State: %s\nWeapon State: %s" % [
+		health,
+		movement_state_str,
+		weapon_state_str
+	]
