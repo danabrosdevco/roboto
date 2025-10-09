@@ -1,23 +1,30 @@
 extends CharacterBody3D
+
+# Node References # 
+@onready var cam: Camera3D = $Camera3D
 @export var faction: Enums.Factions = Enums.Factions.PLAYER
 @export var world: Node3D
 @export var hud: Control
-signal activate_scanner_ui
-signal highlight_enemy(target:Node3D)
+@export var scanner: Node3D
+@export var tracer_origin: Node3D
+@export var muzzle_flash: Node3D
+@export var weapon_model: Node3D
+@export var projectile_scene: PackedScene
+@export var tracer_scene: PackedScene
+@export var reload_sounds: Array[AudioStreamPlayer3D]
+@export var reload_delays: Array[float]
+
+@export var rifle_stream_player: AudioStreamPlayer3D
+@export var click_stream_player: AudioStreamPlayer3D
+@export var reload_stream_player: AudioStreamPlayer3D
+# Export Data # 
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENS := 0.002
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-@export var tracer_scene: PackedScene
-@export var tracer_origin: Node3D
-@export var projectile_scene: PackedScene
-@export var muzzle_flash: Node3D
-@export var weapon_model: Node3D
-@export var reload_sounds: Array[AudioStreamPlayer3D]
-@export var reload_delays: Array[float]
+@export var health = 100
 @export var recoil_curve: Curve
-@export var scanner: Node3D
-var is_fullscreen = false
+
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
 const ADS_FOV := 45.0
@@ -25,6 +32,15 @@ const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 const FIRE_RATE := 0.0705
 const reload_return_speed:= 30
+# Enums #
+
+# Working Data #
+
+signal activate_scanner_ui
+signal highlight_enemy(target:Node3D)
+
+
+var is_fullscreen = false
 var look_direction: Vector3
 @export var look_interp_speed := 12.0  # how fast the camera follows the target
 var fire_cooldown := 0.0
@@ -68,14 +84,10 @@ var from
 var to
 
 @export var reload_time := 2.15 # seconds to reload
-@export var rifle_stream_player: AudioStreamPlayer3D
-@export var click_stream_player: AudioStreamPlayer3D
-@export var reload_stream_player: AudioStreamPlayer3D
 
 var target_lean := 0.0
 var pitch := 0.0
 
-@onready var cam: Camera3D = $Camera3D
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -320,3 +332,17 @@ func play_reload_sequence():
 
 func _on_scanner_highlight_target(target: Node3D) -> void:
 	highlight_enemy.emit(target)
+
+
+func apply_damage(damage):
+	health -= damage
+	if health <= 0:
+		die()
+	pass
+
+func die():
+	await get_tree().create_timer(0.25).timeout
+	queue_free()
+
+func get_faction():
+	return faction

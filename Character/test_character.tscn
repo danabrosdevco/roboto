@@ -42,19 +42,19 @@ shader_parameter/scanline_strength = 0.2
 shader_parameter/brightness = 0.5
 shader_parameter/time_speed = 1.0
 
-[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "reload_sounds", "scanner", "rifle_stream_player", "click_stream_player")]
+[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("scanner", "tracer_origin", "muzzle_flash", "weapon_model", "reload_sounds", "rifle_stream_player", "click_stream_player")]
 script = ExtResource("1_xw2ar")
-tracer_scene = ExtResource("2_3jw7k")
+scanner = NodePath("Scanner")
 tracer_origin = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/Muzzle")
-projectile_scene = ExtResource("2_qrfbk")
 muzzle_flash = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/MuzzleFlash")
 weapon_model = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1")
+projectile_scene = ExtResource("2_qrfbk")
+tracer_scene = ExtResource("2_3jw7k")
 reload_sounds = [NodePath("Camera3D/Weapon/Reload1"), NodePath("Camera3D/Weapon/Reload2"), NodePath("Camera3D/Weapon/Reload3"), NodePath("Camera3D/Weapon/Reload4"), NodePath("Camera3D/Weapon/Reload5")]
 reload_delays = Array[float]([0.6, 0.6, 0.35, 0.3, 0.3])
-recoil_curve = ExtResource("4_n81mu")
-scanner = NodePath("Scanner")
 rifle_stream_player = NodePath("Camera3D/Weapon/RifleShot")
 click_stream_player = NodePath("Camera3D/Weapon/Click")
+recoil_curve = ExtResource("4_n81mu")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_8ja6s")

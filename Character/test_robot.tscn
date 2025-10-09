@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://bevu1pewciouu"]
+[gd_scene load_steps=9 format=3 uid="uid://bevu1pewciouu"]
 
 [ext_resource type="Script" path="res://Character/test_robot.gd" id="1_mmb2y"]
 [ext_resource type="PackedScene" uid="uid://boyiducyiek8k" path="res://Character/ai_world_weapon.tscn" id="2_u05y2"]
@@ -19,13 +19,20 @@ size = Vector3(1, 1.2, 1.2)
 radius = 1.0
 height = 2.3
 
-[node name="EnemyRobot" type="CharacterBody3D" node_paths=PackedStringArray("head", "torso", "legs_wheels", "nav_agent", "Weapon")]
+[sub_resource type="SphereShape3D" id="SphereShape3D_g6ejh"]
+radius = 5.0
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_wrtgx"]
+
+[node name="EnemyRobot" type="CharacterBody3D" node_paths=PackedStringArray("head", "torso", "legs_wheels", "nav_agent", "Weapon", "hearing", "sight")]
 script = ExtResource("1_mmb2y")
 head = NodePath("Head")
 torso = NodePath("Torso")
 legs_wheels = NodePath("WheelsLegs")
 nav_agent = NodePath("NavigationAgent3D")
 Weapon = NodePath("Torso/ai_world_weapon")
+hearing = NodePath("Hearing")
+sight = NodePath("Sight")
 faction = 2
 
 [node name="Head" type="CSGMesh3D" parent="."]
@@ -52,4 +59,18 @@ path_desired_distance = 2.0
 target_desired_distance = 2.0
 avoidance_enabled = true
 
+[node name="Hearing" type="Area3D" parent="."]
+monitorable = false
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Hearing"]
+shape = SubResource("SphereShape3D_g6ejh")
+
+[node name="Sight" type="Area3D" parent="."]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 1.20882, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Sight"]
+shape = SubResource("ConvexPolygonShape3D_wrtgx")
+
 [connection signal="target_reached" from="NavigationAgent3D" to="." method="_on_navigation_agent_3d_target_reached"]
+[connection signal="body_entered" from="Sight" to="." method="_on_sight_body_entered"]
+[connection signal="body_shape_exited" from="Sight" to="." method="_on_sight_body_shape_exited"]

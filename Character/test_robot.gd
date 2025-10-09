@@ -6,6 +6,8 @@ class_name TestRobot
 @export var legs_wheels: Node3D
 @export var nav_agent: NavigationAgent3D
 @export var Weapon: AIWorldWeapon
+@export var hearing: Area3D
+@export var sight: Area3D
 
 # EXPORT DATA # 
 @export var health: int = 20
@@ -18,6 +20,11 @@ class_name TestRobot
 @export var idle_to_wander: float = 1
 @export var acceleration := 1.50
 @export var rotation_speed := 1.0  # Radians per second
+@export var hearing_sphere_radius: float = 5 
+@export var sight_rectangle_near_area: float = 4
+@export var sight_rectangle_far_area: float = 100
+@export var sight_rectangle_distance: float = 20
+
 # ENUMS # 
 enum MovementState {IDLE, PATROL, ENGAGE, SEEK_COVER, DEAD, WANDER}
 enum WeaponState {FIRE, RELOAD, IDLE, AIM}
@@ -35,7 +42,11 @@ var weapon_time: float = 0.0
 var wander_time: float = 0.0
 var idle_time: float = 0.0
 
+var seen_bodies: Array = []
+
 func _ready():
+	create_sight_shape()
+	create_hearing_sphere()
 	pass
 	#await get_tree().process_frame  # Wait 1 frame for the map to register
 	#await get_tree().process_frame  # (Optional second frame if needed)
@@ -57,9 +68,14 @@ func handle_movement(delta):
 			idle_time += delta
 			velocity = Vector3.ZERO
 		MovementState.PATROL:
+			if patrol_points.is_empty():
+				return
 			if nav_agent.is_navigation_finished():
 				current_patrol_index = (current_patrol_index + 1) % patrol_points.size()
-				move_to(patrol_points[current_patrol_index].global_position)
+				var next_point = patrol_points[current_patrol_index].global_position
+				movement_target = next_point
+				look_target = next_point
+				move_to(next_point)
 			else:
 				move_along_nav(delta)
 		MovementState.WANDER:
@@ -82,10 +98,19 @@ func handle_movement(delta):
 			else:
 				move_along_nav(delta)
 		MovementState.ENGAGE:
-			if is_instance_valid(movement_target):
-				move_to(movement_target)
+			if is_instance_valid(weapon_target):
+				var to_target = weapon_target - global_position
+				to_target.y = 0
+				var engage_distance = 8.0  # Stand this far from the target
+				if to_target.length() > engage_distance:
+					var offset = to_target.normalized() * (to_target.length() - engage_distance)
+					var destination = global_position + offset
+					var nav_map = nav_agent.get_navigation_map()
+					var nav_pos = NavigationServer3D.map_get_closest_point(nav_map, destination)
+					movement_target = nav_pos
+					look_target = weapon_target
+					move_to(movement_target)
 				move_along_nav(delta)
-
 		MovementState.SEEK_COVER:
 			# TODO: implement cover seeking
 			pass
@@ -166,6 +191,9 @@ func reconsider_weapon():
 	weapon_time = 0
 	return
 
+func change_state(new_state):
+	pass
+	
 
 func fire():
 	pass
@@ -185,3 +213,43 @@ func get_faction():
 
 func _on_navigation_agent_3d_target_reached() -> void:
 	pass # Replace with function body.
+
+
+func create_hearing_sphere():
+	hearing.get_child(0).shape.radius = hearing_sphere_radius
+
+func create_sight_shape():
+	var shape := ConvexPolygonShape3D.new()
+	var half_near := sqrt(sight_rectangle_near_area) * 0.5
+	var half_far := sqrt(sight_rectangle_far_area) * 0.5
+	
+	# Define 8 vertices (same as previous answer)
+	var vertices := PackedVector3Array([
+		# Near face (Z = 0)
+		Vector3(-half_near,  half_near, 0),  # n0 - top-left
+		Vector3( half_near,  half_near, 0),  # n1 - top-right
+		Vector3( half_near, -half_near, 0),  # n2 - bottom-right
+		Vector3(-half_near, -half_near, 0),  # n3 - bottom-left
+
+		# Far face (Z = distance)
+		Vector3(-half_far,  half_far, sight_rectangle_distance),  # f0 - top-left
+		Vector3( half_far,  half_far, sight_rectangle_distance),  # f1 - top-right
+		Vector3( half_far, -half_far, sight_rectangle_distance),  # f2 - bottom-right
+		Vector3(-half_far, -half_far, sight_rectangle_distance),  # f3 - bottom-left
+	])
+	
+	shape.points = vertices
+	sight.get_child(0).shape = shape
+
+
+func _on_sight_body_entered(body: Node3D) -> void:
+	if body is CharacterBody3D:
+		if body.has_method("get_faction"):
+			if body.get_faction() != get_faction():
+				seen_bodies.append(body)
+	print (seen_bodies)
+
+
+func _on_sight_body_shape_exited(body_rid: RID, body: Node3D, body_shape_index: int, local_shape_index: int) -> void:
+	if seen_bodies.has(body) == true:
+		seen_bodies.erase(body)
