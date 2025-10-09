@@ -14,6 +14,7 @@ class_name TestRobot
 @export var health: int = 20
 @export var faction : Enums.Factions = Enums.Factions.ENEMY
 @export var move_speed: float = 4
+@export var fire_cooldown: float = 0.35
 @export var movement_recon_time : float = 0.35
 @export var weapon_recon_time: float = 0.6
 @export var wander_radius: float = 30
@@ -39,6 +40,7 @@ var movement_state = MovementState.IDLE
 var weapon_state = WeaponState.IDLE
 var current_patrol_index := 0
 var movement_time: float = 0.0
+var fire_time: float = 0.0
 var weapon_time: float = 0.0
 var wander_time: float = 0.0
 var idle_time: float = 0.0
@@ -59,7 +61,7 @@ func _physics_process(delta: float) -> void:
 	if movement_state != MovementState.DEAD:
 		handle_looking()
 		handle_movement(delta)
-	handle_weapon_logic()
+	handle_weapon_logic(delta)
 	update_debug_label()
 	
 func handle_movement(delta):
@@ -158,7 +160,8 @@ func handle_looking():
 	#head.look_at(look_target, Vector3.UP)
 	#torso.look_at(look_target, Vector3.UP)
 
-func handle_weapon_logic():
+func handle_weapon_logic(delta):
+	fire_time -= delta
 	if weapon_time >= weapon_recon_time:
 		reconsider_weapon()
 	match weapon_state:
@@ -169,8 +172,10 @@ func handle_weapon_logic():
 			if dist <= 16.0:
 				weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
-			fire()
-			weapon_state = WeaponState.RELOAD
+			if fire_time <= 0.0:
+				fire()
+				fire_time = fire_cooldown
+			#weapon_state = WeaponState.RELOAD
 		WeaponState.RELOAD:
 			# Simulate reload time
 			weapon_state = WeaponState.IDLE
