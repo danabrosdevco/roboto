@@ -13,16 +13,16 @@ class_name TestRobot
 # EXPORT DATA # 
 @export var health: int = 20
 @export var faction : Enums.Factions = Enums.Factions.ENEMY
-@export var move_speed: float = 4
+@export var move_speed: float = 4.5
+@export var acceleration := 1.50
+@export var rotation_speed := 1.0  # Radians per second
 @export var fire_cooldown: float = 0.75
 @export var targetting_cooldown: float = 0.35
 @export var movement_recon_time : float = 0.35
 @export var weapon_recon_time: float = 0.6
-@export var wander_radius: float = 30
+@export var wander_radius: float = 45
 @export var wander_delay: float = 20
 @export var idle_to_wander: float = 1
-@export var acceleration := 1.50
-@export var rotation_speed := 1.0  # Radians per second
 @export var hearing_sphere_radius: float = 5 
 @export var sight_rectangle_near_area: float = 4
 @export var sight_rectangle_far_area: float = 100
@@ -44,7 +44,7 @@ var current_patrol_index := 0
 var movement_time: float = 0.0
 var fire_time: float = 0.0
 var weapon_time: float = 0.0
-var wander_time: float = 0.0
+var wander_time: float = 0.75
 var targetting_time: float = 0.0
 var idle_time: float = 0.0
 var last_seen_point: Array[Vector3]
@@ -75,6 +75,7 @@ func handle_targeting(delta):
 
 	if seen_bodies.is_empty():
 		change_state(MovementState.WANDER)
+		weapon_state = WeaponState.IDLE
 		return
 	if seen_bodies.is_empty() == false:
 		for i in seen_bodies:
@@ -205,12 +206,12 @@ func handle_weapon_logic(delta):
 					var hit_pos = result.position
 					var collider = result.collider
 					print("Hit:", collider, " at ", hit_pos)
-					var sphere = MeshInstance3D.new()
-					sphere.mesh = SphereMesh.new()
-					sphere.mesh.radius = 0.05  # Very small
-					sphere.mesh.height = 0.1   # Optional if you want a stretched look
-					get_tree().current_scene.add_child(sphere)
-					sphere.global_position = hit_pos
+					#var sphere = MeshInstance3D.new()
+					#sphere.mesh = SphereMesh.new()
+					#sphere.mesh.radius = 0.05  # Very small
+					#sphere.mesh.height = 0.1   # Optional if you want a stretched look
+					#get_tree().current_scene.add_child(sphere)
+					#sphere.global_position = hit_pos
 					if collider.has_method("apply_damage"):
 						collider.apply_damage(10)
 					else:

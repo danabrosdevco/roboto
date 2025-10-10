@@ -6,6 +6,7 @@ class_name EnemyTest
 @export var hover_smoothness: float = 2.0
 @export var target_node_path: NodePath  # Assign a player or path node
 @export var health = 30
+@export var label: Label3D
 var target: Node3D
 var hover_offset := 0.0
 var base_y := 0.0
@@ -18,6 +19,7 @@ func _ready():
 	hover_offset = randf() * TAU  # Randomize starting phase
 
 func _physics_process(delta):
+	update_debug_label()
 	timer += delta
 	if target:
 		if timer <= time_to_check:
@@ -58,3 +60,8 @@ func die():
 
 func get_faction():
 	return faction
+
+func update_debug_label():
+	label.text = "HP: %d" % [
+		health,
+	]

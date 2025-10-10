@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://dgdfk0ov1c85l"]
+[gd_scene load_steps=6 format=3 uid="uid://dgdfk0ov1c85l"]
 
 [ext_resource type="Script" path="res://Character/characters/enemy_test.gd" id="1_hdy57"]
+[ext_resource type="Script" path="res://Character/char_debug_label.gd" id="2_oqdbm"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_mnfds"]
 
@@ -8,8 +9,9 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_uowf8"]
 
-[node name="EnemyCharBody" type="CharacterBody3D"]
+[node name="EnemyCharBody" type="CharacterBody3D" node_paths=PackedStringArray("label")]
 script = ExtResource("1_hdy57")
+label = NodePath("Label3D")
 
 [node name="EnemyMesh" type="MeshInstance3D" parent="."]
 mesh = SubResource("CylinderMesh_mnfds")
@@ -17,3 +19,10 @@ surface_material_override/0 = SubResource("StandardMaterial3D_wossu")
 
 [node name="EnemyColShape" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_uowf8")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+billboard = 1
+text = "Text"
+font_size = 48
+script = ExtResource("2_oqdbm")
