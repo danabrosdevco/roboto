@@ -15,6 +15,7 @@ class_name TestRobot
 @export var faction : Enums.Factions = Enums.Factions.ENEMY
 @export var move_speed: float = 4
 @export var fire_cooldown: float = 0.75
+@export var targetting_cooldown: float = 0.35
 @export var movement_recon_time : float = 0.35
 @export var weapon_recon_time: float = 0.6
 @export var wander_radius: float = 30
@@ -44,6 +45,7 @@ var movement_time: float = 0.0
 var fire_time: float = 0.0
 var weapon_time: float = 0.0
 var wander_time: float = 0.0
+var targetting_time: float = 0.0
 var idle_time: float = 0.0
 var last_seen_point: Array[Vector3]
 
@@ -58,11 +60,35 @@ func _physics_process(delta: float) -> void:
 	weapon_time += delta
 	movement_time += delta
 	if movement_state != MovementState.DEAD:
+		handle_targeting(delta)
 		handle_looking()
 		handle_movement(delta)
 	handle_weapon_logic(delta)
 	update_debug_label()
 	
+func handle_targeting(delta):
+	targetting_time += delta
+	for body in seen_bodies:
+		if not is_instance_valid(body) or body.health <= 0:
+			seen_bodies.erase(body)
+			last_seen_point.clear()
+
+	if seen_bodies.is_empty():
+		change_state(MovementState.WANDER)
+		return
+	if seen_bodies.is_empty() == false:
+		for i in seen_bodies:
+			seen_bodies.sort_custom(func(a, b):
+				return global_position.distance_to(a.global_position) < global_position.distance_to(b.global_position)
+			)
+		weapon_target = seen_bodies[0].global_position
+		look_target = seen_bodies[0].global_position
+		targetting_time = 0.0
+	if seen_bodies.is_empty():
+		if last_seen_point.is_empty():
+			pass
+	pass
+
 func handle_movement(delta):
 	if movement_time >= movement_recon_time:
 		await reconsider_movement()
@@ -103,7 +129,7 @@ func handle_movement(delta):
 		MovementState.ENGAGE:
 				var to_target = weapon_target - global_position
 				to_target.y = 0
-				var engage_distance = 8.0  # Stand this far from the target
+				var engage_distance = 6.0  # Stand this far from the target
 				if to_target.length() > engage_distance:
 					var offset = to_target.normalized() * (to_target.length() - engage_distance)
 					var destination = global_position + offset
@@ -159,13 +185,9 @@ func handle_weapon_logic(delta):
 			weapon_state = WeaponState.AIM
 		WeaponState.AIM:
 				var dist = global_position.distance_to(weapon_target)
-				if dist <= 16.0:
+				if dist <= 10.0:
 					if fire_time <= 0:
 						weapon_state = WeaponState.FIRE
-				# Aim weapon toward target
-				var from = weapon.muzzle_origin.global_position
-				var to = weapon_target
-				var dir = (to - from).normalized()
 				
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
@@ -187,8 +209,8 @@ func handle_weapon_logic(delta):
 					sphere.mesh = SphereMesh.new()
 					sphere.mesh.radius = 0.05  # Very small
 					sphere.mesh.height = 0.1   # Optional if you want a stretched look
-					sphere.global_position = hit_pos
 					get_tree().current_scene.add_child(sphere)
+					sphere.global_position = hit_pos
 					if collider.has_method("apply_damage"):
 						collider.apply_damage(10)
 					else:
