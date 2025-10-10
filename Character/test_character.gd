@@ -261,6 +261,7 @@ func fire() -> void:
 	recoil_horizontal = randf_range(-1.0, 1.0) * 2.0 * 0.5*recoil_per_shot # control horizontal sway strength
 	# Existing raycast and muzzle flash code...
 	# Raycast
+	
 	from = cam.global_position
 	to = from + tracer_origin.global_transform.basis.x.normalized() * 250.0
 

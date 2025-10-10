@@ -14,7 +14,7 @@ class_name TestRobot
 @export var health: int = 20
 @export var faction : Enums.Factions = Enums.Factions.ENEMY
 @export var move_speed: float = 4
-@export var fire_cooldown: float = 0.35
+@export var fire_cooldown: float = 0.75
 @export var movement_recon_time : float = 0.35
 @export var weapon_recon_time: float = 0.6
 @export var wander_radius: float = 30
@@ -31,6 +31,7 @@ class_name TestRobot
 enum MovementState {IDLE, PATROL, ENGAGE, SEEK_COVER, DEAD, WANDER}
 enum WeaponState {FIRE, RELOAD, IDLE, AIM}
 
+
 # WORKING DATA # 
 @export var movement_target: Vector3
 @export var weapon_target: Vector3
@@ -44,6 +45,7 @@ var fire_time: float = 0.0
 var weapon_time: float = 0.0
 var wander_time: float = 0.0
 var idle_time: float = 0.0
+var last_seen_point: Array[Vector3]
 
 var seen_bodies: Array = []
 
@@ -51,9 +53,6 @@ func _ready():
 	create_sight_shape()
 	create_hearing_sphere()
 	pass
-	#await get_tree().process_frame  # Wait 1 frame for the map to register
-	#await get_tree().process_frame  # (Optional second frame if needed)
-	#print("Navigation map ready:", nav_agent.get_navigation_map())
 
 func _physics_process(delta: float) -> void:
 	weapon_time += delta
@@ -93,7 +92,7 @@ func handle_movement(delta):
 					randf_range(-wander_radius, wander_radius)
 				)
 				var target_pos = origin + random_offset
-				print ("Target pos is: " + str(target_pos))
+				#print ("Target pos is: " + str(target_pos))
 				var map = nav_agent.get_navigation_map()
 				var next_point = NavigationServer3D.map_get_closest_point(map, target_pos)
 				movement_target = next_point
@@ -113,6 +112,7 @@ func handle_movement(delta):
 					movement_target = nav_pos
 					look_target = weapon_target
 					move_to(movement_target)
+				look_target = weapon_target
 				move_along_nav(delta)
 		MovementState.SEEK_COVER:
 			# TODO: implement cover seeking
@@ -127,15 +127,11 @@ func move_to(pos: Vector3):
 		nav_agent.set_target_position(pos)
 
 func move_along_nav(delta):
-
 	var next_point = nav_agent.get_next_path_position()
-	
 	var direction = next_point - global_position
 	direction.y = 0  # Flatten direction to ground plane
-	
 	if direction.length() > 0.1:
 		direction = direction.normalized()
-		
 		# Smooth velocity with lerp
 		var target_velocity = direction * move_speed
 		velocity.x = lerp(velocity.x, target_velocity.x, acceleration * delta)
@@ -151,15 +147,9 @@ func move_along_nav(delta):
 		var new_yaw = lerp_angle(current_yaw, target_yaw, rotation_speed * delta)
 		rotation.y = new_yaw
 func handle_looking():
-	if is_instance_valid(look_target):
-		var flat_look_target = Vector3(look_target.x, global_position.y, look_target.z)
-		if global_position.distance_to(flat_look_target) > 0.01:
-			look_at(flat_look_target, Vector3.UP)
-			head.look_at(flat_look_target, Vector3.UP)
-			torso.look_at(flat_look_target, Vector3.UP)	## Optional: rotate head/torso separately
-	#head.look_at(look_target, Vector3.UP)
-	#torso.look_at(look_target, Vector3.UP)
-
+	var flat_look_target = Vector3(look_target.x, global_position.y, look_target.z)
+	if global_position.distance_to(flat_look_target) > 0.01:
+		look_at(flat_look_target, Vector3.UP)
 func handle_weapon_logic(delta):
 	fire_time -= delta
 	if weapon_time >= weapon_recon_time:
@@ -168,18 +158,48 @@ func handle_weapon_logic(delta):
 		WeaponState.IDLE:
 			weapon_state = WeaponState.AIM
 		WeaponState.AIM:
-			var dist = global_position.distance_to(weapon_target)
-			if dist <= 16.0:
-				weapon_state = WeaponState.FIRE
+				var dist = global_position.distance_to(weapon_target)
+				if dist <= 16.0:
+					if fire_time <= 0:
+						weapon_state = WeaponState.FIRE
+				# Aim weapon toward target
+				var from = weapon.muzzle_origin.global_position
+				var to = weapon_target
+				var dir = (to - from).normalized()
+				
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
 				fire()
+				var space_state = get_world_3d().direct_space_state
+				var query := PhysicsRayQueryParameters3D.new()
+				var from = weapon.muzzle_origin.global_position
+				var direction = (weapon_target - from).normalized()
+				var to = from + direction * 250.0
+				query.from = from
+				query.to = to
+				query.exclude = [self]
+				var result = space_state.intersect_ray(query)
+				if result:
+					var hit_pos = result.position
+					var collider = result.collider
+					print("Hit:", collider, " at ", hit_pos)
+					var sphere = MeshInstance3D.new()
+					sphere.mesh = SphereMesh.new()
+					sphere.mesh.radius = 0.05  # Very small
+					sphere.mesh.height = 0.1   # Optional if you want a stretched look
+					sphere.global_position = hit_pos
+					get_tree().current_scene.add_child(sphere)
+					if collider.has_method("apply_damage"):
+						collider.apply_damage(10)
+					else:
+						if collider.get_parent().has_method("apply_damage"):
+							collider.apply_damage(10)
 				fire_time = fire_cooldown
-			#weapon_state = WeaponState.RELOAD
+				weapon_state = WeaponState.AIM
 		WeaponState.RELOAD:
 			# Simulate reload time
 			weapon_state = WeaponState.IDLE
-
+#region Reconsider
 func reconsider_movement():
 	movement_time = 0
 	if idle_time >= idle_to_wander:
@@ -190,16 +210,17 @@ func reconsider_weapon():
 	weapon_time = 0
 	return
 
+#endregion Reconsider
 func change_state(new_state: MovementState):
 	if movement_state != new_state:
-		print("Changing state to:", new_state)
+		#print("Changing state to:", new_state)
 		movement_state = new_state
 		movement_time = 0
 		idle_time = 0
 
 func fire():
 	weapon.fire()
-	print ("FIRE!")
+	#print ("FIRE!")
 	pass
 
 func apply_damage(damage):
@@ -228,16 +249,17 @@ func create_sight_shape():
 	# Define 8 vertices (same as previous answer)
 	var vertices := PackedVector3Array([
 		# Near face (Z = 0)
-		Vector3(-half_near,  half_near, 0),  # n0 - top-left
-		Vector3( half_near,  half_near, 0),  # n1 - top-right
-		Vector3( half_near, -half_near, 0),  # n2 - bottom-right
-		Vector3(-half_near, -half_near, 0),  # n3 - bottom-left
+		Vector3( half_near,  half_near, 0),  # n0 - top-left
+		Vector3( half_near, -half_near, 0),  # n1 - top-right
+		Vector3(-half_near, -half_near, 0),  # n2 - bottom-right
+		Vector3(-half_near,  half_near, 0),  # n3 - bottom-left
 		# Far face (Z = distance)
-		Vector3(-half_far,  half_far, sight_rectangle_distance),  # f0 - top-left
-		Vector3( half_far,  half_far, sight_rectangle_distance),  # f1 - top-right
-		Vector3( half_far, -half_far, sight_rectangle_distance),  # f2 - bottom-right
-		Vector3(-half_far, -half_far, sight_rectangle_distance),  # f3 - bottom-left
+		Vector3( half_far,  half_far, sight_rectangle_distance),  # f0 - top-left
+		Vector3( half_far, -half_far, sight_rectangle_distance),  # f1 - top-right
+		Vector3(-half_far, -half_far, sight_rectangle_distance),  # f2 - bottom-right
+		Vector3(-half_far,  half_far, sight_rectangle_distance),  # f3 - bottom-left
 	])
+
 	shape.points = vertices
 	sight.get_child(0).shape = shape
 
@@ -250,16 +272,15 @@ func _on_sight_body_entered(body: Node3D) -> void:
 				look_target = body.global_position
 				change_state(MovementState.ENGAGE)
 				weapon_state = WeaponState.AIM
-	print (seen_bodies)
 
 func _on_sight_body_shape_exited(_body_rid: RID, body: Node3D, _body_shape_index: int, _local_shape_index: int) -> void:
 	if seen_bodies.has(body) == true:
 		seen_bodies.erase(body)
+		last_seen_point.append(body.global_position)
 
 func update_debug_label():
 	var movement_state_str = MovementState.keys()[movement_state]
 	var weapon_state_str = WeaponState.keys()[weapon_state]
-	
 	label.text = "HP: %d\nMovement State: %s\nWeapon State: %s" % [
 		health,
 		movement_state_str,
