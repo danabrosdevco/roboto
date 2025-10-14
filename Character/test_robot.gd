@@ -148,7 +148,6 @@ func handle_movement(delta):
 		MovementState.DEAD:
 			velocity = Vector3.ZERO
 
-
 func move_to(pos: Vector3):
 	if nav_agent:
 		nav_agent.set_target_position(pos)

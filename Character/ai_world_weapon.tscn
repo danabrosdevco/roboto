@@ -16,7 +16,6 @@ shot_audio = NodePath("Shotgun_22/ShotgunShot")
 tracer_scene = ExtResource("2_aqmos")
 
 [node name="Shotgun_22" parent="." instance=ExtResource("1_kec3m")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="Muzzle" type="Node3D" parent="Shotgun_22"]
 transform = Transform3D(3.22828, 1.98523e-23, -2.98023e-08, 0, 4, 1.86265e-09, -1.42109e-14, -1.86265e-09, 4, 4.7889, 0.281185, 0.0134409)

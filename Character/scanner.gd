@@ -3,8 +3,13 @@ extends Node3D
 @export var scan_radius: float = 30.0
 @export var scan_duration: float = 3.5  # same length as your scan animation
 signal highlight_target(target: Node3D)
+@export var sound: AudioStreamPlayer3D
+@export var ping: AudioStreamPlayer3D
+@export var fail: AudioStreamPlayer3D
 func activate_scan():
+	sound.play()
 	await get_tree().create_timer(scan_duration).timeout
+	sound.stop()
 	_scan_for_enemies()
 	
 func _scan_for_enemies():
@@ -20,6 +25,7 @@ func _scan_for_enemies():
 	query.margin = 0.0
 	query.exclude = [self, get_parent()]  # optional: don't hit self
 	var results = space_state.intersect_shape(query, 64)
+	var play_ping = 0
 	for result in results:
 		var obj = result.get("collider")
 		print (obj.name)
@@ -28,3 +34,8 @@ func _scan_for_enemies():
 				print ("HAS FACTION!")
 				if obj.get_faction() == Enums.Factions.ENEMY:
 					highlight_target.emit(obj)
+					play_ping += 1
+	if play_ping >= 1:
+		ping.play()
+	else:
+		fail.play()
