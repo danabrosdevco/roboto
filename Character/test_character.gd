@@ -37,7 +37,7 @@ const reload_return_speed:= 30
 # Working Data #
 
 signal activate_scanner_ui
-signal highlight_enemy(target:Node3D)
+signal highlight_enemy(target:Node3D, duration: float)
 
 
 var is_fullscreen = false
@@ -331,8 +331,8 @@ func play_reload_sequence():
 		sound.play()
 
 
-func _on_scanner_highlight_target(target: Node3D) -> void:
-	highlight_enemy.emit(target)
+func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
+	highlight_enemy.emit(target, duration)
 
 
 func apply_damage(damage):

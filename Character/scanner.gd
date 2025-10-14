@@ -1,7 +1,8 @@
 extends Node3D
 
 @export var scan_radius: float = 30.0
-@export var scan_duration: float = 3.5  # same length as your scan animation
+@export var scan_duration: float = 3.5   # same length as your scan animation
+@export var target_mark_duration: float = 5
 signal highlight_target(target: Node3D)
 @export var sound: AudioStreamPlayer3D
 @export var ping: AudioStreamPlayer3D
@@ -33,7 +34,7 @@ func _scan_for_enemies():
 			if obj.has_method("get_faction"):
 				print ("HAS FACTION!")
 				if obj.get_faction() == Enums.Factions.ENEMY:
-					highlight_target.emit(obj)
+					highlight_target.emit(obj, target_mark_duration)
 					play_ping += 1
 	if play_ping >= 1:
 		ping.play()

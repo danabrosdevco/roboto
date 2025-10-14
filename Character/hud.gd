@@ -8,7 +8,7 @@ func activate_scan_effect():
 	add_child(new_scan_effect_scene)
 	move_child(new_scan_effect_scene,0)
 
-func activate_enemy_marker(obj:Node3D):
+func activate_enemy_marker(obj:Node3D, duration: float):
 	var target = obj
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
@@ -17,5 +17,6 @@ func activate_enemy_marker(obj:Node3D):
 	var hud_marker = enemy_marker_scene.instantiate()
 	hud_marker.position = Vector2(screen_pos.x, screen_pos.y)
 	hud_marker.target = target
+	hud_marker.duration = duration
 	add_child(hud_marker)
 	move_child(hud_marker, 0)
