@@ -13,7 +13,7 @@ extends CharacterBody3D
 @export var tracer_scene: PackedScene
 @export var reload_sounds: Array[AudioStreamPlayer3D]
 @export var reload_delays: Array[float]
-
+@export var command_marker_scene: PackedScene
 @export var rifle_stream_player: AudioStreamPlayer3D
 @export var click_stream_player: AudioStreamPlayer3D
 @export var reload_stream_player: AudioStreamPlayer3D
@@ -49,6 +49,7 @@ var recoil_per_shot := 3
 const recoil_duration = 0.25
 var recoil_timer := 0.0
 var recoil_horizontal := 0.0
+var command_marker_instance: Node3D = null
 @export var camera_recoil_scale := 0.75  # fraction of recoil applied to camera
 var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
 var recoil_rotation := Vector3.ZERO
@@ -128,6 +129,9 @@ func handle_input(_delta: float) -> void:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 		else:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+
+	if Input.is_action_just_pressed("command"):
+		activate_command()
 
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
@@ -249,6 +253,45 @@ func handle_weapon_logic(_delta: float) -> void:
 		elif magazine_capacity <= 0 and Input.is_action_just_pressed("fire"):
 			click_stream_player.play()
 			fire_cooldown = FIRE_RATE
+
+func activate_command():
+	# Raycast from the camera to where it's looking
+	var ray_origin = cam.global_position
+	var ray_end = ray_origin + cam.global_transform.basis.z * -1000  # Forward direction in Godot is -Z
+	var space_state = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(ray_origin, ray_end)
+	query.collide_with_areas = false
+	query.collision_mask = 1  # Set this if your terrain/ground uses a specific mask
+
+	var result = space_state.intersect_ray(query)
+
+	if result:
+		var target_position = result.position
+
+		# If we already have a command marker, move it
+		if command_marker_instance and is_instance_valid(command_marker_instance):
+			command_marker_instance.global_position = target_position
+			command_marker_instance.global_position.y = 0
+			command_marker_instance.rotation = Vector3(0,0,0)
+			command_marker_instance.perform_faction_check()
+		else:
+			# Spawn new marker
+			command_marker_instance = command_marker_scene.instantiate()
+			world.add_child(command_marker_instance)
+			command_marker_instance.global_position = target_position
+			command_marker_instance.global_position.y = 0
+			command_marker_instance.rotation = Vector3(0,0,0)
+
+			# Optional: Assign faction/team if needed
+			if command_marker_instance.has_method("set_faction"):
+				command_marker_instance.set_faction(faction)
+
+			# Optional: orient marker to look forward from camera
+			#command_marker_instance.look_at(target_position + cam.global_transform.basis.z * -1, Vector3.UP)
+	else:
+		print("No valid target point found where camera is looking.")
+	pass
+
 
 func fire() -> void:
 	for i in tracers_in_mag:

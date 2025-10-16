@@ -29,8 +29,9 @@ class_name TestRobot
 @export var sight_rectangle_distance: float = 20
 
 # ENUMS # 
-enum MovementState {IDLE, PATROL, ENGAGE, SEEK_COVER, DEAD, WANDER}
+enum MovementState {IDLE, WANDER, PATROL, ENGAGE, SEEK_COVER, DEAD}
 enum WeaponState {FIRE, RELOAD, IDLE, AIM}
+enum TargetSource { NONE, VISION, COMMAND }
 
 
 # WORKING DATA # 
@@ -48,15 +49,19 @@ var wander_time: float = 0.75
 var targetting_time: float = 0.0
 var idle_time: float = 0.0
 var last_seen_point: Array[Vector3]
-
 var seen_bodies: Array = []
+var frame_waited: bool = false
 
 func _ready():
 	create_sight_shape()
 	create_hearing_sphere()
+	await get_tree().process_frame
+	frame_waited = true
 	pass
 
 func _physics_process(delta: float) -> void:
+	if frame_waited == false:
+		return
 	weapon_time += delta
 	movement_time += delta
 	if movement_state != MovementState.DEAD:
@@ -73,10 +78,9 @@ func handle_targeting(delta):
 			seen_bodies.erase(body)
 			last_seen_point.clear()
 
-	if seen_bodies.is_empty():
+	if seen_bodies.is_empty() && look_target != null:
 		change_state(MovementState.WANDER)
 		weapon_state = WeaponState.IDLE
-		return
 	if seen_bodies.is_empty() == false:
 		for i in seen_bodies:
 			seen_bodies.sort_custom(func(a, b):
@@ -202,9 +206,9 @@ func handle_weapon_logic(delta):
 				query.exclude = [self]
 				var result = space_state.intersect_ray(query)
 				if result:
-					var hit_pos = result.position
+					var _hit_pos = result.position
 					var collider = result.collider
-					print("Hit:", collider, " at ", hit_pos)
+					#print("Hit:", collider, " at ", hit_pos)
 					#var sphere = MeshInstance3D.new()
 					#sphere.mesh = SphereMesh.new()
 					#sphere.mesh.radius = 0.05  # Very small
@@ -239,6 +243,7 @@ func change_state(new_state: MovementState):
 		movement_state = new_state
 		movement_time = 0
 		idle_time = 0
+		wander_time = 0
 
 func fire():
 	weapon.fire()
@@ -285,6 +290,37 @@ func create_sight_shape():
 	shape.points = vertices
 	sight.get_child(0).shape = shape
 
+func on_command_marker_nearby(node):
+	print ("AYY!!!")
+	match movement_state:
+		MovementState.IDLE:
+			change_state(MovementState.ENGAGE)
+			movement_target = node.global_position
+			look_target = node.global_position
+			weapon_target = node.global_position
+			print ("IDLE TO ENGAGE")
+			pass
+		MovementState.WANDER:
+			change_state(MovementState.ENGAGE)
+			movement_target = node.global_position
+			look_target = node.global_position
+			weapon_target = node.global_position
+			print ("WANDER TO ENGAGE")
+			pass
+		MovementState.PATROL:
+			change_state(MovementState.ENGAGE)
+			movement_target = node.global_position
+			movement_target = node.global_position
+			look_target = node.global_position
+			weapon_target = node.global_position
+			print ("PATROL TO ENGAGE")
+			pass
+		MovementState.ENGAGE:
+			pass
+		MovementState.SEEK_COVER:
+			pass
+	pass
+
 func _on_sight_body_entered(body: Node3D) -> void:
 	if body is CharacterBody3D:
 		if body.has_method("get_faction"):
@@ -303,8 +339,10 @@ func _on_sight_body_shape_exited(_body_rid: RID, body: Node3D, _body_shape_index
 func update_debug_label():
 	var movement_state_str = MovementState.keys()[movement_state]
 	var weapon_state_str = WeaponState.keys()[weapon_state]
-	label.text = "HP: %d\nMovement State: %s\nWeapon State: %s" % [
+	var faction_str = Enums.Factions.keys()[faction]
+	label.text = "HP: %d\nFaction: %s\nMovement State: %s\nWeapon State: %s" % [
 		health,
+		faction_str,
 		movement_state_str,
 		weapon_state_str
 	]
