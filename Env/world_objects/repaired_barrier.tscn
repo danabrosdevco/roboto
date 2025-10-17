@@ -3,12 +3,12 @@
 [ext_resource type="PackedScene" uid="uid://fcrld72adw8t" path="res://3d_assets/shooter pack/Environment/glTF/Barrier_Fixed.gltf" id="1_5mfd7"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_l7pyf"]
-size = Vector3(3.77946, 3.34073, 0.641815)
+size = Vector3(3.77946, 3.34073, 0.332626)
 
 [node name="StaticBody3D" type="StaticBody3D"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0109252, 1.66506, 0.000869751)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0109252, 1.66506, -0.180545)
 shape = SubResource("BoxShape3D_l7pyf")
 
 [node name="Barrier_Fixed2" parent="." instance=ExtResource("1_5mfd7")]

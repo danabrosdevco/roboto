@@ -1,12 +1,15 @@
-[gd_scene load_steps=5 format=3 uid="uid://deb6uwnna01po"]
+[gd_scene load_steps=6 format=3 uid="uid://deb6uwnna01po"]
 
 [ext_resource type="Script" path="res://Character/characters/test_target.gd" id="1_16n30"]
+[ext_resource type="Texture2D" uid="uid://bdp4uio5fyhxp" path="res://2d_assets/Kenney Prototype Textures/PNG/Light/texture_08.png" id="2_r44oa"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_pp7af"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wossu"]
+albedo_texture = ExtResource("2_r44oa")
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_uowf8"]
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_knqht"]
+height = 0.2
 
 [node name="TargetBody" type="StaticBody3D"]
 script = ExtResource("1_16n30")
@@ -17,4 +20,5 @@ mesh = SubResource("CylinderMesh_pp7af")
 surface_material_override/0 = SubResource("StandardMaterial3D_wossu")
 
 [node name="EnemyColShape" type="CollisionShape3D" parent="."]
-shape = SubResource("CapsuleShape3D_uowf8")
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("CylinderShape3D_knqht")

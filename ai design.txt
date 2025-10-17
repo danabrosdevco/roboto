@@ -1,0 +1,20 @@
+goal: X
+target: Y
+behavior: I does A.
+
+Move
+Turn
+Shoot
+
+Trigger 'Actions'
+
+
+PRIORITIZED-LIST:
+	- CAN I DO THIS?
+		-NO.
+	- OKAY, THIS?
+		-NO.
+
+IMPULSE: TAKING AN ALTERNATE CONDITION TO AN EXISTING BEHAVIOR.
+		
+FORMALIZE COMPLEXITY: DON'T HIDE IT

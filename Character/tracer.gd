@@ -20,7 +20,6 @@ func _physics_process(delta: float) -> void:
 
 	var move_amount = direction * speed * delta
 	var space_state = get_world_3d().direct_space_state
-
 	var query := PhysicsRayQueryParameters3D.create(global_position, global_position + move_amount)
 	query.exclude = [self]
 	var result = space_state.intersect_ray(query)

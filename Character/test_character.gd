@@ -1,23 +1,30 @@
 extends CharacterBody3D
+
+# Node References # 
+@onready var cam: Camera3D = $Camera3D
 @export var faction: Enums.Factions = Enums.Factions.PLAYER
 @export var world: Node3D
 @export var hud: Control
-signal activate_scanner_ui
-signal highlight_enemy(target:Node3D)
+@export var scanner: Node3D
+@export var tracer_origin: Node3D
+@export var muzzle_flash: Node3D
+@export var weapon_model: Node3D
+@export var projectile_scene: PackedScene
+@export var tracer_scene: PackedScene
+@export var reload_sounds: Array[AudioStreamPlayer3D]
+@export var reload_delays: Array[float]
+@export var command_marker_scene: PackedScene
+@export var rifle_stream_player: AudioStreamPlayer3D
+@export var click_stream_player: AudioStreamPlayer3D
+@export var reload_stream_player: AudioStreamPlayer3D
+# Export Data # 
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENS := 0.002
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-@export var tracer_scene: PackedScene
-@export var tracer_origin: Node3D
-@export var projectile_scene: PackedScene
-@export var muzzle_flash: Node3D
-@export var weapon_model: Node3D
-@export var reload_sounds: Array[AudioStreamPlayer3D]
-@export var reload_delays: Array[float]
+@export var health = 100
 @export var recoil_curve: Curve
-@export var scanner: Node3D
-var is_fullscreen = false
+
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
 const ADS_FOV := 45.0
@@ -25,6 +32,15 @@ const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 const FIRE_RATE := 0.0705
 const reload_return_speed:= 30
+# Enums #
+
+# Working Data #
+
+signal activate_scanner_ui
+signal highlight_enemy(target:Node3D, duration: float)
+
+
+var is_fullscreen = false
 var look_direction: Vector3
 @export var look_interp_speed := 12.0  # how fast the camera follows the target
 var fire_cooldown := 0.0
@@ -33,12 +49,13 @@ var recoil_per_shot := 3
 const recoil_duration = 0.25
 var recoil_timer := 0.0
 var recoil_horizontal := 0.0
+var command_marker_instance: Node3D = null
 @export var camera_recoil_scale := 0.75  # fraction of recoil applied to camera
 var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
 var recoil_rotation := Vector3.ZERO
 
 var scanner_timer: = 0.0
-var scanner_cooldown = 20
+var scanner_cooldown = 3
 
 var ads_position := Vector3(0.0,0.0,-1.077)
 var ads_rotation := Vector3(0.0,0.0,3.0)
@@ -68,14 +85,10 @@ var from
 var to
 
 @export var reload_time := 2.15 # seconds to reload
-@export var rifle_stream_player: AudioStreamPlayer3D
-@export var click_stream_player: AudioStreamPlayer3D
-@export var reload_stream_player: AudioStreamPlayer3D
 
 var target_lean := 0.0
 var pitch := 0.0
 
-@onready var cam: Camera3D = $Camera3D
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -96,7 +109,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	fire_cooldown -= delta
-
+	scanner_timer -= delta
 	handle_gravity(delta)
 	handle_input(delta)
 	handle_movement(delta)
@@ -117,10 +130,16 @@ func handle_input(_delta: float) -> void:
 		else:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 
+	if Input.is_action_just_pressed("command"):
+		activate_command()
+
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
 
 	if Input.is_action_just_pressed("scan"):
+		if scanner_timer >= 0:
+			return
+		scanner_timer = scanner_cooldown
 		scanner.activate_scan()
 		activate_scanner_ui.emit()
 
@@ -238,6 +257,45 @@ func handle_weapon_logic(_delta: float) -> void:
 			click_stream_player.play()
 			fire_cooldown = FIRE_RATE
 
+func activate_command():
+	# Raycast from the camera to where it's looking
+	var ray_origin = cam.global_position
+	var ray_end = ray_origin + cam.global_transform.basis.z * -1000  # Forward direction in Godot is -Z
+	var space_state = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(ray_origin, ray_end)
+	query.collide_with_areas = false
+	query.collision_mask = 1  # Set this if your terrain/ground uses a specific mask
+
+	var result = space_state.intersect_ray(query)
+
+	if result:
+		var target_position = result.position
+
+		# If we already have a command marker, move it
+		if command_marker_instance and is_instance_valid(command_marker_instance):
+			command_marker_instance.global_position = target_position
+			command_marker_instance.global_position.y = 0
+			command_marker_instance.rotation = Vector3(0,0,0)
+			command_marker_instance.perform_faction_check()
+		else:
+			# Spawn new marker
+			command_marker_instance = command_marker_scene.instantiate()
+			world.add_child(command_marker_instance)
+			command_marker_instance.global_position = target_position
+			command_marker_instance.global_position.y = 0
+			command_marker_instance.rotation = Vector3(0,0,0)
+
+			# Optional: Assign faction/team if needed
+			if command_marker_instance.has_method("set_faction"):
+				command_marker_instance.set_faction(faction)
+
+			# Optional: orient marker to look forward from camera
+			#command_marker_instance.look_at(target_position + cam.global_transform.basis.z * -1, Vector3.UP)
+	else:
+		print("No valid target point found where camera is looking.")
+	pass
+
+
 func fire() -> void:
 	for i in tracers_in_mag:
 		if magazine_capacity == i:
@@ -249,6 +307,7 @@ func fire() -> void:
 	recoil_horizontal = randf_range(-1.0, 1.0) * 2.0 * 0.5*recoil_per_shot # control horizontal sway strength
 	# Existing raycast and muzzle flash code...
 	# Raycast
+	
 	from = cam.global_position
 	to = from + tracer_origin.global_transform.basis.x.normalized() * 250.0
 
@@ -269,8 +328,17 @@ func fire() -> void:
 		var hit_pos = result.position
 		var collider = result.collider
 		print("Hit:", collider, " at ", hit_pos)
+		#var sphere = MeshInstance3D.new()
+		#sphere.mesh = SphereMesh.new()
+		#sphere.mesh.radius = 0.05  # Very small
+		#sphere.mesh.height = 0.1   # Optional if you want a stretched look
+		#sphere.global_position = hit_pos
+		#get_tree().current_scene.add_child(sphere)
 		if collider.has_method("apply_damage"):
 			collider.apply_damage(10)
+		else:
+			if collider.get_parent().has_method("apply_damage"):
+				collider.apply_damage(10)
 	if tracer:
 		fire_tracer()
 	magazine_capacity = max(0, magazine_capacity - 1)
@@ -309,5 +377,19 @@ func play_reload_sequence():
 		sound.play()
 
 
-func _on_scanner_highlight_target(target: Node3D) -> void:
-	highlight_enemy.emit(target)
+func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
+	highlight_enemy.emit(target, duration)
+
+
+func apply_damage(damage):
+	health -= damage
+	if health <= 0:
+		die()
+	pass
+
+func die():
+	await get_tree().create_timer(0.25).timeout
+	queue_free()
+
+func get_faction():
+	return faction

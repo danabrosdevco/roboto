@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://dpfbodwgxmxj3"]
+
+[ext_resource type="PackedScene" uid="uid://yborw0dd2b5n" path="res://3d_assets/kenny_nature_pack/tree_small_fall.glb" id="1_tbn17"]
+[ext_resource type="Script" path="res://Character/command.gd" id="1_v7q4x"]
+
+[node name="CommandMarker" type="Node3D"]
+script = ExtResource("1_v7q4x")
+
+[node name="tree_small_fall2" parent="." instance=ExtResource("1_tbn17")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)

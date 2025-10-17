@@ -5,3 +5,12 @@
 - bullets do something [ragdoll an enemy]
 - enemy moves around to location
 	- enemy moves around in group
+- set place where robots move
+- robots avoid and flock.
+- robots advance as group.
+- robots defend as a group.
+SUPPRESSION EFFECT.
+- robots suppressing fire.
+GRENADES
+
+- robots use grenades.
