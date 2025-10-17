@@ -55,7 +55,7 @@ var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
 var recoil_rotation := Vector3.ZERO
 
 var scanner_timer: = 0.0
-var scanner_cooldown = 20
+var scanner_cooldown = 3
 
 var ads_position := Vector3(0.0,0.0,-1.077)
 var ads_rotation := Vector3(0.0,0.0,3.0)
@@ -109,7 +109,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	fire_cooldown -= delta
-
+	scanner_timer -= delta
 	handle_gravity(delta)
 	handle_input(delta)
 	handle_movement(delta)
@@ -137,6 +137,9 @@ func handle_input(_delta: float) -> void:
 		velocity.y = JUMP_VELOCITY
 
 	if Input.is_action_just_pressed("scan"):
+		if scanner_timer >= 0:
+			return
+		scanner_timer = scanner_cooldown
 		scanner.activate_scan()
 		activate_scanner_ui.emit()
 

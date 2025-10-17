@@ -1,6 +1,7 @@
-[gd_scene load_steps=10 format=3 uid="uid://bevu1pewciouu"]
+[gd_scene load_steps=14 format=3 uid="uid://bevu1pewciouu"]
 
 [ext_resource type="Script" path="res://Character/test_robot.gd" id="1_mmb2y"]
+[ext_resource type="Texture2D" uid="uid://c44yctcpvsqd8" path="res://2d_assets/Kenney Prototype Textures/PNG/Dark/texture_01.png" id="2_ay3ug"]
 [ext_resource type="PackedScene" uid="uid://boyiducyiek8k" path="res://Character/ai_world_weapon.tscn" id="2_u05y2"]
 [ext_resource type="Script" path="res://Character/char_debug_label.gd" id="3_42qaq"]
 
@@ -10,10 +11,21 @@ height = 0.4
 radial_segments = 16
 rings = 8
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yey2c"]
+albedo_texture = ExtResource("2_ay3ug")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lf2sa"]
+albedo_texture = ExtResource("2_ay3ug")
+
 [sub_resource type="BoxMesh" id="BoxMesh_6f6i5"]
+material = SubResource("StandardMaterial3D_lf2sa")
 size = Vector3(0.8, 1.2, 0.2)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7q2ri"]
+albedo_texture = ExtResource("2_ay3ug")
+
 [sub_resource type="PrismMesh" id="PrismMesh_d888e"]
+material = SubResource("StandardMaterial3D_7q2ri")
 size = Vector3(1, 1, 0.8)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_7pps7"]
@@ -40,6 +52,7 @@ faction = 2
 [node name="Head" type="CSGMesh3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, 0)
 mesh = SubResource("SphereMesh_57lf6")
+material = SubResource("StandardMaterial3D_yey2c")
 
 [node name="Torso" type="CSGMesh3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)

@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://drdw1nif6ti6q" path="res://2d_assets/aimer.png" id="3_7n5mn"]
 
 [node name="ScanEnemyMarker" type="NinePatchRect"]
+visible = false
 offset_right = 51.0
 offset_bottom = 50.0
 texture = ExtResource("3_7n5mn")

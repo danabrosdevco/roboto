@@ -1,11 +1,13 @@
-[gd_scene load_steps=6 format=3 uid="uid://dgdfk0ov1c85l"]
+[gd_scene load_steps=7 format=3 uid="uid://dgdfk0ov1c85l"]
 
 [ext_resource type="Script" path="res://Character/characters/enemy_test.gd" id="1_hdy57"]
+[ext_resource type="Texture2D" uid="uid://d37l8fhghu1xf" path="res://2d_assets/Kenney Prototype Textures/PNG/Dark/texture_07.png" id="2_jtylq"]
 [ext_resource type="Script" path="res://Character/char_debug_label.gd" id="2_oqdbm"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_mnfds"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wossu"]
+albedo_texture = ExtResource("2_jtylq")
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_uowf8"]
 

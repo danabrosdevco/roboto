@@ -7,11 +7,16 @@ signal highlight_target(target: Node3D)
 @export var sound: AudioStreamPlayer3D
 @export var ping: AudioStreamPlayer3D
 @export var fail: AudioStreamPlayer3D
+var scanning: bool = false
 func activate_scan():
+	if scanning == true:
+		return
+	scanning = true
 	sound.play()
 	await get_tree().create_timer(scan_duration).timeout
 	sound.stop()
 	_scan_for_enemies()
+	scanning = false
 	
 func _scan_for_enemies():
 	var space_state = get_world_3d().direct_space_state

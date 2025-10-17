@@ -4,7 +4,7 @@ class_name ScanEnemyMarker
 @export var duration := 5.0
 var time: float = 0
 
-@export var base_size := Vector2(60, 60)
+@export var base_size := Vector2(75, 75)
 @export var color := Color(1, 0.1, 0.1, 0.8)
 @export var height_offset := 1.005  # vertical offset above target origin
 @export var min_scale := 0.6
@@ -16,6 +16,10 @@ var time: float = 0
 
 var target: Node3D
 @onready var camera := get_viewport().get_camera_3d()
+
+func _ready():
+	await get_tree().create_timer(0.05)
+	visible = true
 
 func _physics_process(delta: float) -> void:
 	time += delta
