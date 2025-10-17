@@ -1,6 +1,5 @@
 extends CharacterBody3D
 class_name TestRobot
-
 # NODE REFERENCES #
 @export var head: Node3D
 @export var torso: Node3D
@@ -30,12 +29,9 @@ class_name TestRobot
 @export var sight_rectangle_distance: float = 20
 
 # ENUMS # 
-enum AIState {IDLE, PATROL, SEARCH, WANDER, COMBAT, DEAD}
 enum MovementState {IDLE, WANDER, PATROL, ENGAGE, SEEK_COVER, DEAD}
 enum WeaponState {FIRE, RELOAD, IDLE, AIM}
-enum CombatBehavior {ADVANCE, RETREAT, TAKE_COVER, SUPPRESS, EXECUTE}
-
-# BEHAVIORS #
+enum TargetSource { NONE, VISION, COMMAND }
 
 
 # WORKING DATA # 
@@ -55,8 +51,6 @@ var idle_time: float = 0.0
 var last_seen_point: Array[Vector3]
 var seen_bodies: Array = []
 var frame_waited: bool = false
-
-# SIGNALS # 
 
 func _ready():
 	create_sight_shape()
