@@ -18,7 +18,7 @@ var target: Node3D
 @onready var camera := get_viewport().get_camera_3d()
 
 func _ready():
-	await get_tree().create_timer(0.05)
+	await get_tree().physics_frame
 	visible = true
 
 func _physics_process(delta: float) -> void:

@@ -15,6 +15,7 @@ func activate_scan():
 	sound.play()
 	await get_tree().create_timer(scan_duration).timeout
 	sound.stop()
+	await get_tree().physics_frame
 	_scan_for_enemies()
 	scanning = false
 	

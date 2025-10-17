@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://c5r8kyl3dh8ox"]
+[gd_scene load_steps=22 format=3 uid="uid://c5r8kyl3dh8ox"]
 
 [ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="1_d2eqf"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="1_frury"]
@@ -9,6 +9,11 @@
 [ext_resource type="PackedScene" uid="uid://deb6uwnna01po" path="res://Character/characters/test_target.tscn" id="7_c4qea"]
 [ext_resource type="PackedScene" uid="uid://bevu1pewciouu" path="res://Character/test_robot.tscn" id="8_xoot0"]
 [ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/command.tscn" id="9_c6boo"]
+[ext_resource type="PackedScene" uid="uid://b25a0pisovd32" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-a.glb" id="10_q2mdg"]
+[ext_resource type="PackedScene" uid="uid://bkq6p35njragv" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-b.glb" id="11_s2qpd"]
+[ext_resource type="PackedScene" uid="uid://pekotw8a7ul" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-c.glb" id="12_nu2ue"]
+[ext_resource type="PackedScene" uid="uid://bum3xvqlx2pwp" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-t.glb" id="13_c2clf"]
+[ext_resource type="PackedScene" uid="uid://dv75dvnr26c72" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-s.glb" id="14_4i2mi"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oql1c"]
 albedo_color = Color(0.477757, 0.884906, 0.786467, 1)
@@ -153,3 +158,33 @@ faction = 0
 
 [node name="CommandMarker" parent="." instance=ExtResource("9_c6boo")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.6276, 0.125, 34.5762)
+
+[node name="building-a2" parent="." instance=ExtResource("10_q2mdg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.7354, 0.125, 21.4308)
+
+[node name="building-b2" parent="." instance=ExtResource("11_s2qpd")]
+transform = Transform3D(-0.0112571, 0, -0.999937, 0, 1, 0, 0.999937, 0, -0.0112571, 13.4845, 0.125, 13.0305)
+
+[node name="building-c2" parent="." instance=ExtResource("12_nu2ue")]
+transform = Transform3D(0.0453629, 0, 0.998971, 0, 1, 0, -0.998971, 0, 0.0453629, -22.493, 0.125, 5.76199)
+
+[node name="building-t2" parent="." instance=ExtResource("13_c2clf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.9264, 0.125, 21.8079)
+
+[node name="building-s2" parent="." instance=ExtResource("14_4i2mi")]
+transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934, -9.40658, 0.125, 12.4338)
+
+[node name="building-s3" parent="." instance=ExtResource("14_4i2mi")]
+transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934, -9.6422, 0.125, 22.1032)
+
+[node name="building-s4" parent="." instance=ExtResource("14_4i2mi")]
+transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934, -3.03873, 0.125, 12.4338)
+
+[node name="building-s5" parent="." instance=ExtResource("14_4i2mi")]
+transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934, -3.27435, 0.125, 22.1032)
+
+[node name="building-s6" parent="." instance=ExtResource("14_4i2mi")]
+transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934, 2.17082, 0.129402, 12.4657)
+
+[node name="building-s7" parent="." instance=ExtResource("14_4i2mi")]
+transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934, 1.9352, 0.129402, 22.1351)
