@@ -188,3 +188,6 @@ transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934
 
 [node name="building-s7" parent="." instance=ExtResource("14_4i2mi")]
 transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934, 1.9352, 0.129402, 22.1351)
+
+[node name="StaticBody3D2" parent="." instance=ExtResource("5_crx3c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.64194, 0.125, -4.30416)

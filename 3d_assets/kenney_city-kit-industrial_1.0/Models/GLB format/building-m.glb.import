@@ -34,6 +34,7 @@ import_script/path=""
 _subresources={
 "nodes": {
 "PATH:building-m": {
+"generate/occluder": 1,
 "generate/physics": true
 }
 }
