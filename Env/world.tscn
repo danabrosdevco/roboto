@@ -148,6 +148,12 @@ mesh = SubResource("PlaneMesh_l5ox5")
 [node name="EnemyRobot" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
 transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -6.4975, 0.125, 51.1368)
 
+[node name="EnemyRobot4" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
+transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -6.4975, 0.125, -0.0824547)
+
+[node name="EnemyRobot5" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
+transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, 7.57783, 0.125, -0.0824547)
+
 [node name="EnemyRobot2" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
 transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -39.4512, 0.125, 51.1368)
 faction = 0
