@@ -1,11 +1,11 @@
 - bullets hit raycast matches tracer
-
+	- done
 - make an enemy
-
+	- done
 - bullets do something [ragdoll an enemy]
-- enemy moves around to location
-	- enemy moves around in group
+	- not ragdoll, queue_free()
 - set place where robots move
+	- YOU CAN SET A LOCATION BUT  THEY WON'T GO THERE
 - robots avoid and flock.
 - robots advance as group.
 - robots defend as a group.

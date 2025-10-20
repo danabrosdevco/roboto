@@ -7,11 +7,14 @@ class_name EnemyTest
 @export var target_node_path: NodePath  # Assign a player or path node
 @export var health = 30
 @export var label: Label3D
+@export var bark: Bark
 var target: Node3D
 var hover_offset := 0.0
 var base_y := 0.0
 var timer : float = 0.0
 var time_to_check = 0.5
+var bark_timer: float = 0.0
+var time_to_bark: float = 3.5
 
 func _ready():
 	target = get_node_or_null(target_node_path)
@@ -20,7 +23,13 @@ func _ready():
 
 func _physics_process(delta):
 	update_debug_label()
+	bark_timer += delta
 	timer += delta
+	if bark:
+		if bark_timer >= time_to_bark:
+			bark_timer = 0
+			bark.bark()
+			time_to_bark += randf_range(-0.5, 0.5)
 	if target:
 		if timer <= time_to_check:
 			_apply_hover_effect(delta)
