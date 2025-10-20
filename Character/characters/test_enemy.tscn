@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Character/characters/enemy_test.gd" id="1_hdy57"]
 [ext_resource type="Texture2D" uid="uid://d37l8fhghu1xf" path="res://2d_assets/Kenney Prototype Textures/PNG/Dark/texture_07.png" id="2_jtylq"]
-[ext_resource type="Script" path="res://Character/char_debug_label.gd" id="2_oqdbm"]
+[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="2_oqdbm"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_mnfds"]
 

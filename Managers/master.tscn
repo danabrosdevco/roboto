@@ -1,12 +1,12 @@
 [gd_scene load_steps=3 format=3 uid="uid://bw1jh4dftjbaa"]
 
-[ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/test_character.tscn" id="1_3hxox"]
+[ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/test_character.tscn" id="1_3hxox"]
 [ext_resource type="PackedScene" uid="uid://c5r8kyl3dh8ox" path="res://Env/world.tscn" id="2_phnw0"]
 
 [node name="Master" type="Node"]
 
 [node name="test_character" parent="." node_paths=PackedStringArray("world", "hud") instance=ExtResource("1_3hxox")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.04127, 0)
+transform = Transform3D(-0.998356, 0, -0.0573201, 0, 1, 0, 0.0573201, 0, -0.998356, 0, 1.04127, 0)
 world = NodePath("../World")
 hud = NodePath("../World/HUD")
 

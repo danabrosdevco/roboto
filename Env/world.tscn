@@ -3,12 +3,12 @@
 [ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="1_d2eqf"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="1_frury"]
 [ext_resource type="Texture2D" uid="uid://c3ap1lken8oba" path="res://2d_assets/Seamless ground sand dirt crack texture.jpg" id="1_tnwa1"]
-[ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud.tscn" id="2_x7qjx"]
+[ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud/hud.tscn" id="2_x7qjx"]
 [ext_resource type="PackedScene" uid="uid://fr4657li7txj" path="res://Env/world_objects/large_barrier.tscn" id="5_crx3c"]
 [ext_resource type="PackedScene" uid="uid://dgdfk0ov1c85l" path="res://Character/characters/test_enemy.tscn" id="6_w64c2"]
 [ext_resource type="PackedScene" uid="uid://deb6uwnna01po" path="res://Character/characters/test_target.tscn" id="7_c4qea"]
-[ext_resource type="PackedScene" uid="uid://bevu1pewciouu" path="res://Character/test_robot.tscn" id="8_xoot0"]
-[ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/command.tscn" id="9_c6boo"]
+[ext_resource type="PackedScene" uid="uid://bevu1pewciouu" path="res://Character/characters/test_robot.tscn" id="8_xoot0"]
+[ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/components/command.tscn" id="9_c6boo"]
 [ext_resource type="PackedScene" uid="uid://b25a0pisovd32" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-a.glb" id="10_q2mdg"]
 [ext_resource type="PackedScene" uid="uid://bkq6p35njragv" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-b.glb" id="11_s2qpd"]
 [ext_resource type="PackedScene" uid="uid://pekotw8a7ul" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-c.glb" id="12_nu2ue"]
@@ -85,6 +85,18 @@ metadata/asset_placer_res_id = "uid://fr4657li7txj"
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -2.11158, 0.1285, -4.52122)
 metadata/asset_placer_res_id = "uid://fr4657li7txj"
 
+[node name="_StaticBody3D_116457" parent="." instance=ExtResource("5_crx3c")]
+transform = Transform3D(-0.0391551, 0, -0.999233, 0, 1, 0, 0.999233, 0, -0.0391551, -0.633537, 0.1285, -2.46934)
+metadata/asset_placer_res_id = "uid://fr4657li7txj"
+
+[node name="_StaticBody3D_116458" parent="." instance=ExtResource("5_crx3c")]
+transform = Transform3D(-0.0391551, 0, -0.999233, 0, 1, 0, 0.999233, 0, -0.0391551, -0.633537, 0.1285, 1.30603)
+metadata/asset_placer_res_id = "uid://fr4657li7txj"
+
+[node name="_StaticBody3D_116459" parent="." instance=ExtResource("5_crx3c")]
+transform = Transform3D(-0.0391551, 0, -0.999233, 0, 1, 0, 0.999233, 0, -0.0391551, -0.633537, 0.1285, 5.09196)
+metadata/asset_placer_res_id = "uid://fr4657li7txj"
+
 [node name="@StaticBody3D@116458" parent="." instance=ExtResource("5_crx3c")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -10.082, 0.128499, -4.30321)
 metadata/asset_placer_res_id = "uid://fr4657li7txj"
@@ -150,9 +162,6 @@ transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746
 
 [node name="EnemyRobot4" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
 transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -6.4975, 0.125, -0.0824547)
-
-[node name="EnemyRobot5" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
-transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, 7.57783, 0.125, -0.0824547)
 
 [node name="EnemyRobot2" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
 transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -39.4512, 0.125, 51.1368)

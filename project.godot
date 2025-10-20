@@ -11,6 +11,7 @@ config_version=5
 [application]
 
 config/name="Roboto"
+run/main_scene="res://Managers/master.tscn"
 config/features=PackedStringArray("4.3", "Mobile")
 config/icon="res://icon.svg"
 
@@ -120,4 +121,5 @@ command={
 
 [rendering]
 
-renderer/rendering_method="compatibility"
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
