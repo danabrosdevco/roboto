@@ -288,7 +288,8 @@ func activate_command():
 			# Optional: Assign faction/team if needed
 			if command_marker_instance.has_method("set_faction"):
 				command_marker_instance.set_faction(faction)
-
+			await get_tree().create_timer(0.1).timeout
+			command_marker_instance.perform_faction_check()
 			# Optional: orient marker to look forward from camera
 			#command_marker_instance.look_at(target_position + cam.global_transform.basis.z * -1, Vector3.UP)
 	else:

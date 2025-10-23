@@ -7,6 +7,8 @@ func set_faction(new_faction):
 	faction = Enums.Factions.values()[new_faction]
 
 func perform_faction_check():
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var space_state = get_world_3d().direct_space_state
 
 	# Create a sphere shape for overlap query

@@ -52,6 +52,7 @@ var idle_time: float = 0.0
 var last_seen_point: Array[Vector3]
 var seen_bodies: Array = []
 var frame_waited: bool = false
+var command_point: Vector3
 
 func _ready():
 	create_sight_shape()
@@ -78,10 +79,11 @@ func handle_targeting(delta):
 		if not is_instance_valid(body) or body.health <= 0:
 			seen_bodies.erase(body)
 			last_seen_point.clear()
-
 	if seen_bodies.is_empty() && look_target != null:
-		change_state(MovementState.WANDER)
-		weapon_state = WeaponState.IDLE
+		if movement_state != MovementState.PATROL:
+			change_state(MovementState.WANDER)
+			weapon_state = WeaponState.IDLE
+			return
 	if seen_bodies.is_empty() == false:
 		for i in seen_bodies:
 			seen_bodies.sort_custom(func(a, b):
@@ -90,9 +92,12 @@ func handle_targeting(delta):
 		weapon_target = seen_bodies[0].global_position
 		look_target = seen_bodies[0].global_position
 		targetting_time = 0.0
+		return
 	if seen_bodies.is_empty():
 		if last_seen_point.is_empty():
 			pass
+	if !command_point:
+		pass
 	pass
 
 func handle_movement(delta):
@@ -105,9 +110,14 @@ func handle_movement(delta):
 		MovementState.PATROL:
 			if patrol_points.is_empty():
 				return
+			var target_pos = patrol_points[0].global_position
+			var nav_map = nav_agent.get_navigation_map()
+			var next_point = NavigationServer3D.map_get_closest_point(nav_map, target_pos)
+			move_to(next_point)
+			look_target = next_point
 			if nav_agent.is_navigation_finished():
 				current_patrol_index = (current_patrol_index + 1) % patrol_points.size()
-				var next_point = patrol_points[current_patrol_index].global_position
+				next_point = patrol_points[current_patrol_index].global_position
 				movement_target = next_point
 				look_target = next_point
 				move_to(next_point)
@@ -183,7 +193,11 @@ func handle_looking():
 	if global_position.distance_to(flat_look_target) > 0.01:
 		look_at(flat_look_target, Vector3.UP)
 func handle_weapon_logic(delta):
-	fire_time -= delta
+	if fire_time >= 0:
+		fire_time -= delta
+	if movement_state != MovementState.ENGAGE:
+		weapon_state = WeaponState.IDLE
+		return
 	if weapon_time >= weapon_recon_time:
 		reconsider_weapon()
 	match weapon_state:
@@ -294,34 +308,19 @@ func create_sight_shape():
 	sight.get_child(0).shape = shape
 
 func on_command_marker_nearby(node):
-	print ("AYY!!!")
-	match movement_state:
-		MovementState.IDLE:
-			change_state(MovementState.ENGAGE)
-			movement_target = node.global_position
-			look_target = node.global_position
-			weapon_target = node.global_position
-			print ("IDLE TO ENGAGE")
-			pass
-		MovementState.WANDER:
-			change_state(MovementState.ENGAGE)
-			movement_target = node.global_position
-			look_target = node.global_position
-			weapon_target = node.global_position
-			print ("WANDER TO ENGAGE")
-			pass
-		MovementState.PATROL:
-			change_state(MovementState.ENGAGE)
-			movement_target = node.global_position
-			movement_target = node.global_position
-			look_target = node.global_position
-			weapon_target = node.global_position
-			print ("PATROL TO ENGAGE")
-			pass
-		MovementState.ENGAGE:
-			pass
-		MovementState.SEEK_COVER:
-			pass
+	if movement_state == MovementState.ENGAGE:
+		return
+	command_point = node.global_position
+	look_target = command_point
+	movement_target = command_point
+	if movement_state != MovementState.PATROL:
+		change_state(MovementState.PATROL)
+
+	if not patrol_points.has(node):
+		patrol_points.append(node)
+
+	weapon_target = Vector3.ZERO
+	weapon_state = WeaponState.IDLE
 	pass
 
 func _on_sight_body_entered(body: Node3D) -> void:

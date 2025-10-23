@@ -5,8 +5,10 @@
 - bullets do something [ragdoll an enemy]
 	- not ragdoll, queue_free()
 - set place where robots move
-	- YOU CAN SET A LOCATION BUT  THEY WON'T GO THERE
+	- YOU CAN SET A LOCATION AND THEY'LL GO THERE.
 - robots avoid and flock.
+	- STEERING VECTOR
+	- AVOIDANCE
 - robots advance as group.
 - robots defend as a group.
 SUPPRESSION EFFECT.
