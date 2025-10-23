@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://kj7m1ra6ev18"
+path="res://.godot/imported/Explosion2.wav-dd88e5ee0d77d547ee73a7927cc558bb.sample"
+
+[deps]
+
+source_file="res://sounds/sfx/superior soundfx/Explosion2.wav"
+dest_files=["res://.godot/imported/Explosion2.wav-dd88e5ee0d77d547ee73a7927cc558bb.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=0

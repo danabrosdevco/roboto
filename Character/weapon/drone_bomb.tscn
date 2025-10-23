@@ -1,0 +1,24 @@
+[gd_scene load_steps=6 format=3 uid="uid://bkxmadl8vaepc"]
+
+[ext_resource type="Texture2D" uid="uid://daawd0v3fkdlg" path="res://2d_assets/Kenney Prototype Textures/PNG/Orange/texture_10.png" id="1_3n0hr"]
+[ext_resource type="Script" path="res://Character/weapon/drone_bomb.gd" id="1_mrvog"]
+[ext_resource type="AudioStream" uid="uid://bojna3iqqu0a5" path="res://sounds/sfx/superior soundfx/Explosion1.wav" id="3_0hv4g"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_qg1yl"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5eo3l"]
+albedo_texture = ExtResource("1_3n0hr")
+
+[node name="DroneBomb" type="RigidBody3D"]
+script = ExtResource("1_mrvog")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_qg1yl")
+
+[node name="CSGSphere3D" type="CSGSphere3D" parent="."]
+material = SubResource("StandardMaterial3D_5eo3l")
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("3_0hv4g")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

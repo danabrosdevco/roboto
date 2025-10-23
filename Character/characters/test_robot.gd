@@ -386,7 +386,7 @@ func get_neighbors() -> Array:
 func get_avoidance_vector() -> Vector3:
 	var forward = -transform.basis.z
 	var ray_origin = global_position
-	var ray_end = ray_origin + forward * 1.5
+	var ray_end = ray_origin + forward * 0.25
 
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.new()

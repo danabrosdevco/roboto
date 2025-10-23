@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://rfr47xbyvjfl"
+path="res://.godot/imported/MilitaryBoat.obj-13b89c9087425ede396a2644d4c15b9f.mesh"
+
+[deps]
+
+files=["res://.godot/imported/MilitaryBoat.obj-13b89c9087425ede396a2644d4c15b9f.mesh"]
+
+source_file="res://3d_assets/Military_Vehicles_LP/OBJ/MilitaryBoat.obj"
+dest_files=["res://.godot/imported/MilitaryBoat.obj-13b89c9087425ede396a2644d4c15b9f.mesh", "res://.godot/imported/MilitaryBoat.obj-13b89c9087425ede396a2644d4c15b9f.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

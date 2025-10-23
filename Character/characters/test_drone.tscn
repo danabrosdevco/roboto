@@ -1,0 +1,70 @@
+[gd_scene load_steps=11 format=3 uid="uid://cw5qsxqebuch8"]
+
+[ext_resource type="PackedScene" uid="uid://dum2lfdjba4t7" path="res://3d_assets/Military_Vehicles_LP/FBX/Aircraft.fbx" id="1_j3b5w"]
+[ext_resource type="Script" path="res://Character/characters/test_drone.gd" id="1_rci4v"]
+[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="3_wfjqf"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="4_0k34t"]
+[ext_resource type="AudioStream" uid="uid://dsdolq0nwpaj" path="res://sounds/sfx/heli/td.helicopter-sound-41975.mp3" id="5_bwbdw"]
+[ext_resource type="PackedScene" uid="uid://b4117jeojkuqx" path="res://Character/weapon/ai_drone_bomb_weapon.tscn" id="6_76rta"]
+[ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="7_36j8d"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_6li31"]
+height = 18.0
+radius = 2.25
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_qwdaq"]
+radius = 5.0
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_jlcmr"]
+
+[node name="TestDrone" type="CharacterBody3D" node_paths=PackedStringArray("weapon", "hearing", "sight", "label", "bark", "heli_loop")]
+script = ExtResource("1_rci4v")
+weapon = NodePath("ai_bomb_weapon")
+hearing = NodePath("Hearing")
+sight = NodePath("Sight")
+label = NodePath("Label3D")
+bark = NodePath("Bark")
+heli_loop = NodePath("AudioStreamPlayer3D")
+
+[node name="Aircraft" parent="." instance=ExtResource("1_j3b5w")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, -0.319206, -2.08508)
+shape = SubResource("CylinderShape3D_6li31")
+
+[node name="Hearing" type="Area3D" parent="."]
+visible = false
+monitorable = false
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Hearing"]
+shape = SubResource("SphereShape3D_qwdaq")
+
+[node name="Sight" type="Area3D" parent="."]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 1.2, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Sight"]
+shape = SubResource("ConvexPolygonShape3D_jlcmr")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -12, 0)
+billboard = 1
+text = "Text"
+font_size = 48
+script = ExtResource("3_wfjqf")
+
+[node name="Bark" parent="." instance=ExtResource("4_0k34t")]
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("5_bwbdw")
+volume_db = 7.0
+max_db = 3.5
+autoplay = true
+max_distance = 50.0
+doppler_tracking = 2
+
+[node name="ai_bomb_weapon" parent="." instance=ExtResource("6_76rta")]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.596605, -5.30058)
+script = ExtResource("7_36j8d")

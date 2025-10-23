@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://bgj56y7q1pyxr"]
+[gd_scene load_steps=15 format=3 uid="uid://bgj56y7q1pyxr"]
 
 [ext_resource type="Script" path="res://Character/characters/test_character.gd" id="1_xw2ar"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_3jw7k"]
@@ -8,6 +8,7 @@
 [ext_resource type="Curve" uid="uid://dp686k5ckuokb" path="res://Character/weapon/recoil_curve.tres" id="4_n81mu"]
 [ext_resource type="PackedScene" uid="uid://cia7d1ywjwrgf" path="res://Character/components/scanner.tscn" id="6_pxhlj"]
 [ext_resource type="Shader" path="res://Character/hud_filter.gdshader" id="6_tcmfb"]
+[ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="6_umrcu"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8ja6s"]
 
@@ -64,6 +65,7 @@ shape = SubResource("CapsuleShape3D_8ja6s")
 [node name="Camera3D" type="Camera3D" parent="."]
 doppler_tracking = 2
 far = 2500.0
+script = ExtResource("6_umrcu")
 
 [node name="Weapon" parent="Camera3D" instance=ExtResource("2_hvn8u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.192761, -0.207464, 0)
