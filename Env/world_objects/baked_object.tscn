@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://cc37as4ho8eol"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="NavigationObstacle3D" type="NavigationObstacle3D" parent="."]
+radius = 0.5
+height = 0.25
+affect_navigation_mesh = true
+use_3d_avoidance = true

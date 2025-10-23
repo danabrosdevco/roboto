@@ -29,6 +29,13 @@ class_name TestRobot
 @export var sight_rectangle_far_area: float = 100
 @export var sight_rectangle_distance: float = 20
 
+@export var neighbor_radius := 10.0
+@export var separation_weight := 1.5
+@export var alignment_weight := 1.0
+@export var cohesion_weight := 1.0
+@export var max_steering_force := 1.0
+@export var obstacle_avoidance_weight := 2.5
+
 # ENUMS # 
 enum MovementState {IDLE, WANDER, PATROL, ENGAGE, SEEK_COVER, DEAD}
 enum WeaponState {FIRE, RELOAD, IDLE, AIM}
@@ -98,6 +105,13 @@ func handle_targeting(delta):
 			pass
 	if !command_point:
 		pass
+	var obstacle = get_obstacle_ahead()
+	if obstacle:
+		weapon_target = obstacle.global_position
+		look_target = obstacle.global_position
+		change_state(MovementState.ENGAGE)
+		weapon_state = WeaponState.AIM
+		return
 	pass
 
 func handle_movement(delta):
@@ -169,25 +183,28 @@ func move_to(pos: Vector3):
 		nav_agent.set_target_position(pos)
 
 func move_along_nav(delta):
-	var next_point = nav_agent.get_next_path_position()
-	var direction = next_point - global_position
-	direction.y = 0  # Flatten direction to ground plane
-	if direction.length() > 0.1:
-		direction = direction.normalized()
-		# Smooth velocity with lerp
-		var target_velocity = direction * move_speed
-		velocity.x = lerp(velocity.x, target_velocity.x, acceleration * delta)
-		velocity.z = lerp(velocity.z, target_velocity.z, acceleration * delta)
-	else:
-		# Stop when close enough
-		velocity.x = lerp(velocity.x, 0.0, acceleration * delta)
-		velocity.z = lerp(velocity.z, 0.0, acceleration * delta)
+	var path_dir = nav_agent.get_next_path_position() - global_position
+	path_dir.y = 0
+	var base_dir = path_dir.normalized()
+
+	var flocking = get_flocking_steering()
+	var avoidance = get_avoidance_vector()
+
+	var combined_dir = base_dir + flocking + avoidance
+	if combined_dir.length() > 0.01:
+		combined_dir = combined_dir.normalized()
+
+	var target_velocity = combined_dir * move_speed
+	velocity.x = lerp(velocity.x, target_velocity.x, acceleration * delta)
+	velocity.z = lerp(velocity.z, target_velocity.z, acceleration * delta)
+
 	move_and_slide()
-	if direction.length() > 0.1:
+
+	# Rotate to face direction
+	if combined_dir.length() > 0.01:
 		var current_yaw = rotation.y
-		var target_yaw = atan2(-direction.x, -direction.z)  # Negative because Godot faces -Z by default
-		var new_yaw = lerp_angle(current_yaw, target_yaw, rotation_speed * delta)
-		rotation.y = new_yaw
+		var target_yaw = atan2(-combined_dir.x, -combined_dir.z)
+		rotation.y = lerp_angle(current_yaw, target_yaw, rotation_speed * delta)
 func handle_looking():
 	var flat_look_target = Vector3(look_target.x, global_position.y, look_target.z)
 	if global_position.distance_to(flat_look_target) > 0.01:
@@ -349,3 +366,82 @@ func update_debug_label():
 		movement_state_str,
 		weapon_state_str
 	]
+
+func get_neighbors() -> Array:
+	var space_state = get_world_3d().direct_space_state
+	var query := PhysicsShapeQueryParameters3D.new()
+	var shape = SphereShape3D.new()
+	shape.radius = neighbor_radius
+	query.shape_rid = shape.get_rid()
+	query.transform.origin = global_position
+	query.collide_with_bodies = true
+	query.exclude = [self]
+
+	var results = space_state.intersect_shape(query)
+	var neighbors = []
+	for result in results:
+		if result.collider and result.collider is TestRobot and result.collider.faction == faction:
+			neighbors.append(result.collider)
+	return neighbors
+func get_avoidance_vector() -> Vector3:
+	var forward = -transform.basis.z
+	var ray_origin = global_position
+	var ray_end = ray_origin + forward * 1.5
+
+	var space_state = get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.new()
+	query.from = ray_origin
+	query.to = ray_end
+	query.exclude = [self]
+	var result = space_state.intersect_ray(query)
+	if result:
+		var normal = result.normal
+		return normal * obstacle_avoidance_weight
+	else:
+		return Vector3.ZERO
+func get_flocking_steering() -> Vector3:
+	var neighbors = get_neighbors()
+	if neighbors.is_empty():
+		return Vector3.ZERO
+
+	var separation := Vector3.ZERO
+	var alignment := Vector3.ZERO
+	var cohesion := Vector3.ZERO
+
+	for neighbor in neighbors:
+		var to_neighbor = global_position - neighbor.global_position
+		var dist = to_neighbor.length()
+		if dist > 0:
+			separation += to_neighbor.normalized() / dist  # Separation force
+		alignment += neighbor.velocity
+		cohesion += neighbor.global_position
+
+	var count = neighbors.size()
+	alignment = (alignment / count).normalized()
+	cohesion = ((cohesion / count) - global_position).normalized()
+
+	var steering = separation * separation_weight + alignment * alignment_weight + cohesion * cohesion_weight
+
+	return limit_vector(steering, max_steering_force)
+
+func get_obstacle_ahead() -> Node3D:
+	var forward = -transform.basis.z
+	var from = global_position
+	var to = from + forward * 3.0
+
+	var space_state = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.new()
+	query.from = from
+	query.to = to
+	query.exclude = [self]
+	query.collide_with_bodies = true
+
+	var result = space_state.intersect_ray(query)
+	if result:
+		var collider = result.collider
+		if collider.has_method("is_obstacle") and collider.is_obstacle():
+			return collider  # return obstacle
+	return null
+
+func limit_vector(v: Vector3, max_length: float) -> Vector3:
+	return v.normalized() * min(v.length(), max_length)

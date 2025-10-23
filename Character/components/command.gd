@@ -13,7 +13,7 @@ func perform_faction_check():
 
 	# Create a sphere shape for overlap query
 	var sphere = SphereShape3D.new()
-	sphere.radius = 200.0
+	sphere.radius = 600.0
 
 	var new_transform = Transform3D.IDENTITY
 	transform.origin = global_position  # Center the sphere on this marker
