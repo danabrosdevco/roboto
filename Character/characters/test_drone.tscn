@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://cw5qsxqebuch8"]
+[gd_scene load_steps=14 format=3 uid="uid://cw5qsxqebuch8"]
 
 [ext_resource type="PackedScene" uid="uid://dum2lfdjba4t7" path="res://3d_assets/Military_Vehicles_LP/FBX/Aircraft.fbx" id="1_j3b5w"]
 [ext_resource type="Script" path="res://Character/characters/test_drone.gd" id="1_rci4v"]
@@ -10,7 +10,6 @@
 [ext_resource type="PackedScene" uid="uid://b4117jeojkuqx" path="res://Character/weapon/ai_drone_bomb_weapon.tscn" id="6_76rta"]
 [ext_resource type="AudioStream" uid="uid://wgyi3tqk1bc3" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__78.wav" id="7_11cgd"]
 [ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="7_36j8d"]
-[ext_resource type="PackedScene" uid="uid://d3et0g3g4ak1" path="res://Character/components/game_object.tscn" id="11_dt0hy"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_6li31"]
 height = 18.0
@@ -75,5 +74,3 @@ transform = Transform3D(1, 0, 0, 0, 0.996763, 0.0803903, 0, -0.0803903, 0.996763
 script = ExtResource("7_36j8d")
 
 [node name="AudioListener3D" type="AudioListener3D" parent="Camera3D"]
-
-[node name="GameObject" parent="." instance=ExtResource("11_dt0hy")]

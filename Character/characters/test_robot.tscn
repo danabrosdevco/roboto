@@ -1,11 +1,10 @@
-[gd_scene load_steps=16 format=3 uid="uid://bevu1pewciouu"]
+[gd_scene load_steps=15 format=3 uid="uid://bevu1pewciouu"]
 
 [ext_resource type="Script" path="res://Character/characters/test_robot.gd" id="1_mmb2y"]
 [ext_resource type="Texture2D" uid="uid://c44yctcpvsqd8" path="res://2d_assets/Kenney Prototype Textures/PNG/Dark/texture_01.png" id="2_ay3ug"]
 [ext_resource type="PackedScene" uid="uid://boyiducyiek8k" path="res://Character/weapon/ai_world_weapon.tscn" id="2_u05y2"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="3_42qaq"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="5_p0x1d"]
-[ext_resource type="PackedScene" uid="uid://d3et0g3g4ak1" path="res://Character/components/game_object.tscn" id="6_ygasv"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_57lf6"]
 radius = 0.2
@@ -39,7 +38,7 @@ radius = 5.0
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_wrtgx"]
 
-[node name="EnemyRobot" type="CharacterBody3D" node_paths=PackedStringArray("head", "torso", "legs_wheels", "nav_agent", "weapon", "hearing", "sight", "label", "bark", "game_object")]
+[node name="EnemyRobot" type="CharacterBody3D" node_paths=PackedStringArray("head", "torso", "legs_wheels", "nav_agent", "weapon", "hearing", "sight", "label", "bark")]
 script = ExtResource("1_mmb2y")
 head = NodePath("Head")
 torso = NodePath("Torso")
@@ -50,7 +49,6 @@ hearing = NodePath("Hearing")
 sight = NodePath("Sight")
 label = NodePath("Label3D")
 bark = NodePath("Bark")
-game_object = NodePath("GameObject")
 faction = 2
 
 [node name="Head" type="CSGMesh3D" parent="."]
@@ -99,8 +97,6 @@ font_size = 48
 script = ExtResource("3_42qaq")
 
 [node name="Bark" parent="." instance=ExtResource("5_p0x1d")]
-
-[node name="GameObject" parent="." instance=ExtResource("6_ygasv")]
 
 [connection signal="target_reached" from="NavigationAgent3D" to="." method="_on_navigation_agent_3d_target_reached"]
 [connection signal="body_entered" from="Sight" to="." method="_on_sight_body_entered"]

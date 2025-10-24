@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://d3et0g3g4ak1"]
-
-[ext_resource type="Script" path="res://Character/game_object.gd" id="1_bkylp"]
-
-[node name="GameObject" type="Node3D"]
-script = ExtResource("1_bkylp")

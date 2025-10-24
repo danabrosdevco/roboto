@@ -10,7 +10,6 @@ class_name TestRobot
 @export var sight: Area3D
 @export var label: Label3D
 @export var bark: Bark
-@export var game_object: GameObject
 
 # EXPORT DATA # 
 @export var health: int = 20
@@ -71,8 +70,6 @@ func _ready():
 
 func _physics_process(delta: float) -> void:
 	if frame_waited == false:
-		return
-	if game_object.active == false:
 		return
 	weapon_time += delta
 	movement_time += delta
@@ -287,8 +284,6 @@ func fire():
 	pass
 
 func apply_damage(damage):
-	if game_object.invulnerable == true:
-		return
 	bark.bark()
 	health -= damage
 	if health <= 0:
