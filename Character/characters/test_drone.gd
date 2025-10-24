@@ -18,7 +18,7 @@ class_name TestHelicopter
 @export var acceleration := 2.0
 @export var lift_force := 5.0  # constant upward lift
 @export var gravity_force := -9.8
-@export var hover_height := 60.0
+@export var hover_height := 55.0
 @export var altitude_smoothness := 3.0
 @export var wander_radius := 600.0
 @export var wander_delay := 10.0
@@ -117,7 +117,6 @@ func _fly_steering(delta, target: Vector3):
 	move_and_slide()
 
 	# Smooth rotation to match heading (banking effect)
-	var target_basis = Basis().looking_at(new_dir, Vector3.UP)
 	var flat_dir = Vector3(to_target.x, 0, to_target.z).normalized()
 	var current_facing = -global_transform.basis.z
 	var flat_facing = Vector3(current_facing.x, 0, current_facing.z).normalized()
@@ -128,8 +127,8 @@ func _fly_steering(delta, target: Vector3):
 	if angle > 0.01 and axis.length() > 0.001:
 		var max_angle = turn_speed * delta
 		var limited_angle = min(angle, max_angle)
-		var rotation = Quaternion(axis, limited_angle)
-		var rotation_basis = Basis(rotation)
+		var new_rotation = Quaternion(axis, limited_angle)
+		var rotation_basis = Basis(new_rotation)
 		global_transform.basis = rotation_basis * global_transform.basis
 # === Hovering ===
 func _get_desired_hover_altitude() -> float:
@@ -155,7 +154,7 @@ func _pick_new_wander_target():
 	look_target = wander_target
 
 # === Weapon Logic ===
-func _handle_weapon_logic(delta):
+func _handle_weapon_logic(_delta):
 	if weapon_state == WeaponState.IDLE:
 		weapon_state = WeaponState.AIM
 	elif weapon_state == WeaponState.AIM:
