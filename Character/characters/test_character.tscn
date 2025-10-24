@@ -67,6 +67,9 @@ doppler_tracking = 2
 far = 2500.0
 script = ExtResource("6_umrcu")
 
+[node name="AudioListener3D" type="AudioListener3D" parent="Camera3D"]
+current = true
+
 [node name="Weapon" parent="Camera3D" instance=ExtResource("2_hvn8u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.192761, -0.207464, 0)
 
@@ -119,8 +122,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.236776)
 omni_range = 3.0
 omni_attenuation = 0.5
 omni_shadow_mode = 0
-
-[node name="AudioListener3D" type="AudioListener3D" parent="."]
 
 [node name="Scanner" parent="." instance=ExtResource("6_pxhlj")]
 

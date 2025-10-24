@@ -15,7 +15,14 @@ func register_camera(cam: Camera3D):
 
 func _activate_camera(index: int):
 	for i in cameras.size():
-		cameras[i].current = (i == index)
+		var cam = cameras[i]
+		var listener = cam.get_child(0) if cam.get_child_count() > 0 else null
+		cam.current = (i == index)
+		if is_instance_valid(listener) and listener is AudioListener3D:
+			if i == index:
+				listener.make_current()
+			else:
+				listener.clear_current()
 	current_index = index
 
 func _input(event):

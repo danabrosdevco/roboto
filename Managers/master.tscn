@@ -12,6 +12,15 @@ hud = NodePath("../World/HUD")
 
 [node name="World" parent="." instance=ExtResource("2_phnw0")]
 
+[node name="building-s3" parent="World/NavigationRegion3D" index="10"]
+transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934, -9.6422, 0.125, 23.3032)
+
+[node name="building-s5" parent="World/NavigationRegion3D" index="12"]
+transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934, -3.27435, 0.125, 23.5138)
+
+[node name="building-s7" parent="World/NavigationRegion3D" index="14"]
+transform = Transform3D(0.0403934, 0, 0.999184, 0, 1, 0, -0.999184, 0, 0.0403934, 1.95703, 0.125604, 23.6937)
+
 [connection signal="activate_scanner_ui" from="test_character" to="World/HUD" method="activate_scan_effect"]
 [connection signal="highlight_enemy" from="test_character" to="World/HUD" method="activate_enemy_marker"]
 

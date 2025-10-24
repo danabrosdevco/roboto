@@ -18,7 +18,7 @@ class_name TestHelicopter
 @export var acceleration := 2.0
 @export var lift_force := 5.0  # constant upward lift
 @export var gravity_force := -9.8
-@export var hover_height := 15.0
+@export var hover_height := 60.0
 @export var altitude_smoothness := 3.0
 @export var wander_radius := 600.0
 @export var wander_delay := 10.0

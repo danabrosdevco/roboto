@@ -1,11 +1,14 @@
-[gd_scene load_steps=11 format=3 uid="uid://cw5qsxqebuch8"]
+[gd_scene load_steps=14 format=3 uid="uid://cw5qsxqebuch8"]
 
 [ext_resource type="PackedScene" uid="uid://dum2lfdjba4t7" path="res://3d_assets/Military_Vehicles_LP/FBX/Aircraft.fbx" id="1_j3b5w"]
 [ext_resource type="Script" path="res://Character/characters/test_drone.gd" id="1_rci4v"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="3_wfjqf"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="4_0k34t"]
 [ext_resource type="AudioStream" uid="uid://dsdolq0nwpaj" path="res://sounds/sfx/heli/td.helicopter-sound-41975.mp3" id="5_bwbdw"]
+[ext_resource type="AudioStream" uid="uid://v5pmyoun6w0s" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__68.wav" id="5_i8xil"]
+[ext_resource type="AudioStream" uid="uid://dprfj2aqejx3s" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__70.wav" id="6_13kd7"]
 [ext_resource type="PackedScene" uid="uid://b4117jeojkuqx" path="res://Character/weapon/ai_drone_bomb_weapon.tscn" id="6_76rta"]
+[ext_resource type="AudioStream" uid="uid://wgyi3tqk1bc3" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__78.wav" id="7_11cgd"]
 [ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="7_36j8d"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_6li31"]
@@ -24,7 +27,7 @@ hearing = NodePath("Hearing")
 sight = NodePath("Sight")
 label = NodePath("Label3D")
 bark = NodePath("Bark")
-heli_loop = NodePath("AudioStreamPlayer3D")
+heli_loop = NodePath("RotorNoise")
 
 [node name="Aircraft" parent="." instance=ExtResource("1_j3b5w")]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
@@ -54,17 +57,20 @@ font_size = 48
 script = ExtResource("3_wfjqf")
 
 [node name="Bark" parent="." instance=ExtResource("4_0k34t")]
+bark_clips = Array[AudioStream]([ExtResource("5_i8xil"), ExtResource("6_13kd7"), ExtResource("7_11cgd")])
 
-[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]
+[node name="RotorNoise" type="AudioStreamPlayer3D" parent="."]
 stream = ExtResource("5_bwbdw")
 volume_db = 7.0
 max_db = 3.5
 autoplay = true
-max_distance = 50.0
+max_distance = 300.0
 doppler_tracking = 2
 
 [node name="ai_bomb_weapon" parent="." instance=ExtResource("6_76rta")]
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.596605, -5.30058)
+transform = Transform3D(1, 0, 0, 0, 0.996763, 0.0803903, 0, -0.0803903, 0.996763, 0, 0.596605, -6.61877)
 script = ExtResource("7_36j8d")
+
+[node name="AudioListener3D" type="AudioListener3D" parent="Camera3D"]
