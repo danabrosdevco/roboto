@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://cvgqcttmucw6e"]
+[gd_scene load_steps=22 format=3 uid="uid://cvgqcttmucw6e"]
 
 [ext_resource type="Script" path="res://Character/weapon/explosion.gd" id="1_5xa17"]
 [ext_resource type="AudioStream" uid="uid://bojna3iqqu0a5" path="res://sounds/sfx/superior soundfx/Explosion1.wav" id="1_f1ed5"]
@@ -97,10 +97,14 @@ color = Color(1, 1, 0.054902, 1)
 color_ramp = SubResource("GradientTexture1D_f7q76")
 emission_curve = SubResource("CurveTexture_6wv1d")
 
-[node name="Explosion" type="Node3D" node_paths=PackedStringArray("effects", "audio")]
+[sub_resource type="SphereShape3D" id="SphereShape3D_1hvkh"]
+radius = 2.5
+
+[node name="Explosion" type="Node3D" node_paths=PackedStringArray("effects", "audio", "damage_area")]
 script = ExtResource("1_5xa17")
 effects = [NodePath("smoke"), NodePath("debris"), NodePath("fire")]
 audio = NodePath("AudioStreamPlayer3D")
+damage_area = NodePath("Area3D")
 
 [node name="smoke" type="GPUParticles3D" parent="."]
 emitting = false
@@ -134,3 +138,11 @@ draw_pass_1 = SubResource("SphereMesh_0rbo0")
 stream = ExtResource("1_f1ed5")
 unit_size = 75.0
 max_distance = 750.0
+
+[node name="Area3D" type="Area3D" parent="."]
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_1hvkh")
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]

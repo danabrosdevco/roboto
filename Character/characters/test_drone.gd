@@ -22,6 +22,8 @@ class_name TestHelicopter
 @export var altitude_smoothness := 3.0
 @export var wander_radius := 600.0
 @export var wander_delay := 10.0
+@export var engage_reset_distance := 200.0  # how far past target before disengaging
+
 
 # === Flocking / Avoidance ===
 @export var neighbor_radius := 15.0
@@ -50,6 +52,7 @@ var origin: Vector3
 var targetting_time = 2.5
 var seen_bodies : Array = []
 var last_seen_point: Array = []
+var engage_target_point: Vector3 = Vector3.ZERO
 
 
 # === Initialization ===
@@ -73,7 +76,6 @@ func _physics_process(delta):
 			return
 
 	_handle_weapon_logic(delta)
-	fire_time -= delta
 	_update_debug_label()
 
 
@@ -122,20 +124,27 @@ func _handle_wander(delta):
 	_fly_steering(delta, wander_target)
 
 # === Engage Logic ===
+
 func _handle_engage(delta):
 	if weapon_target == Vector3.ZERO:
 		movement_state = MovementState.WANDER
 		return
+	# Pick a single fly-over point once per engage
+	if engage_target_point == Vector3.ZERO:
+		var to_target := (weapon_target - global_position).normalized()
+		# Aim beyond the target so it flies straight across it
+		engage_target_point = weapon_target + to_target * 150.0
+	# Steer toward that fly-over point
+	_fly_steering(delta, engage_target_point)
 
-	# Fly near target but orbit around it
-	var offset_dir = (global_position - weapon_target).normalized()
-	var orbit_point = weapon_target + offset_dir.rotated(Vector3.UP, deg_to_rad(90)) * 80.0
-	_fly_steering(delta, orbit_point)
+	# Once we’ve flown past it, reset to wander or pick a new target
+	if global_position.distance_to(engage_target_point) < 50.0:
+		movement_state = MovementState.WANDER
+		engage_target_point = Vector3.ZERO
 
 # === Steering + Flight ===
 func _fly_steering(delta, target: Vector3):
 	var to_target = (target - global_position).normalized()
-
 	# Adjust desired heading gradually (helicopters don't snap)
 	var forward = -global_transform.basis.z
 	var new_dir = forward.lerp(to_target, turn_speed * delta).normalized()
@@ -156,7 +165,7 @@ func _fly_steering(delta, target: Vector3):
 	move_and_slide()
 
 	# Smooth rotation to match heading (banking effect)
-	var target_basis = Basis().looking_at(new_dir, Vector3.UP)
+	#var target_basis = Basis.looking_at(new_dir, Vector3.UP)
 	var flat_dir = Vector3(to_target.x, 0, to_target.z).normalized()
 	var current_facing = -global_transform.basis.z
 	var flat_facing = Vector3(current_facing.x, 0, current_facing.z).normalized()
@@ -167,8 +176,8 @@ func _fly_steering(delta, target: Vector3):
 	if angle > 0.01 and axis.length() > 0.001:
 		var max_angle = turn_speed * delta
 		var limited_angle = min(angle, max_angle)
-		var rotation = Quaternion(axis, limited_angle)
-		var rotation_basis = Basis(rotation)
+		var new_rotation = Quaternion(axis, limited_angle)
+		var rotation_basis = Basis(new_rotation)
 		global_transform.basis = rotation_basis * global_transform.basis
 # === Hovering ===
 func _get_desired_hover_altitude() -> float:
@@ -195,17 +204,25 @@ func _pick_new_wander_target():
 
 # === Weapon Logic ===
 func _handle_weapon_logic(delta):
-	if weapon_state == WeaponState.IDLE:
-		weapon_state = WeaponState.AIM
-	elif weapon_state == WeaponState.AIM:
-		if weapon_target != Vector3.ZERO:
-			var dist = global_position.distance_to(weapon_target)
-			if dist <= 120.0 and fire_time <= 0:
+	fire_time -= delta
+	match weapon_state:
+		WeaponState.IDLE:
+			weapon_state = WeaponState.AIM
+
+		WeaponState.AIM:
+			if weapon_target == Vector3.ZERO:
+				return
+			var dist := global_position.distance_to(weapon_target)
+
+			# When close enough horizontally and roughly above target → drop
+			if dist <= 80.0 and abs(global_position.y - weapon_target.y) < 60.0 and fire_time <= 0.0:
 				weapon_state = WeaponState.FIRE
-	elif weapon_state == WeaponState.FIRE:
-		_fire_weapon()
-		fire_time = fire_cooldown
-		weapon_state = WeaponState.AIM
+
+		WeaponState.FIRE:
+			_fire_weapon()
+			fire_time = fire_cooldown
+			weapon_state = WeaponState.AIM
+
 
 func _fire_weapon():
 	if weapon:

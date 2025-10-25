@@ -6,13 +6,14 @@ extends RigidBody3D
 var impact_position
 
 func _ready():
-	# Optional: Set downward velocity or let gravity handle it
-	linear_velocity = Vector3(0, -5, 0)
+	pass
+	## Optional: Set downward velocity or let gravity handle it
+	#linear_velocity = Vector3(0, -5, 0)
 
-func _integrate_forces(state):
-	# Optional: Limit max fall speed
-	if linear_velocity.y < -50:
-		linear_velocity.y = -50
+#func _integrate_forces(_state):
+	## Optional: Limit max fall speed
+	#if linear_velocity.y < -85:
+		#linear_velocity.y = -85
 
 func _on_body_entered(body: Node):
 	#print ("BOMB TOUCHED!")
@@ -33,7 +34,7 @@ func explode():
 	#explosion_instance.damage = explosion_damage
 
 
-func _on_body_shape_entered(body_rid: RID, body: Node, body_shape_index: int, local_shape_index: int) -> void:
+func _on_body_shape_entered(_body_rid: RID, body: Node, _body_shape_index: int, _local_shape_index: int) -> void:
 	print ("BOMB TOUCHED!")
 	if body != self:
 		explode()

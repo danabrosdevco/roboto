@@ -325,7 +325,7 @@ func fire() -> void:
 	muzzle_flash.play_flash()
 	# Hit detection
 	if result:
-		var hit_pos = result.position
+		#var hit_pos = result.position
 		var collider = result.collider
 		#print("Hit:", collider, " at ", hit_pos)
 		#var sphere = MeshInstance3D.new()
