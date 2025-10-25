@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://c5r8kyl3dh8ox"]
+[gd_scene load_steps=22 format=3 uid="uid://c5r8kyl3dh8ox"]
 
 [ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="1_d2eqf"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="1_frury"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://fr4657li7txj" path="res://Env/world_objects/large_barrier.tscn" id="5_crx3c"]
 [ext_resource type="PackedScene" uid="uid://dgdfk0ov1c85l" path="res://Character/characters/test_enemy.tscn" id="6_w64c2"]
 [ext_resource type="PackedScene" uid="uid://deb6uwnna01po" path="res://Character/characters/test_target.tscn" id="7_c4qea"]
+[ext_resource type="PackedScene" uid="uid://bevu1pewciouu" path="res://Character/characters/test_robot.tscn" id="8_xoot0"]
 [ext_resource type="PackedScene" uid="uid://b25a0pisovd32" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-a.glb" id="10_q2mdg"]
 [ext_resource type="PackedScene" uid="uid://bkq6p35njragv" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-b.glb" id="11_s2qpd"]
 [ext_resource type="PackedScene" uid="uid://pekotw8a7ul" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-c.glb" id="12_nu2ue"]
@@ -116,6 +117,22 @@ navigation_mesh = SubResource("NavigationMesh_62ft8")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D"]
 visible = false
 mesh = SubResource("PlaneMesh_l5ox5")
+
+[node name="EnemyRobot" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
+transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -6.4975, 0.125, 51.1368)
+faction = 1
+
+[node name="EnemyRobot4" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
+transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -6.4975, 0.125, -0.0824547)
+faction = 1
+
+[node name="EnemyRobot2" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
+transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -39.4512, 0.125, 51.1368)
+faction = 1
+
+[node name="EnemyRobot3" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
+transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -21.5757, 0.125, 51.1368)
+faction = 1
 
 [node name="building-a2" parent="NavigationRegion3D" instance=ExtResource("10_q2mdg")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.7354, 0.125, 21.4308)

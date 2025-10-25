@@ -64,6 +64,7 @@ func apply_damage(damage):
 	pass
 
 func die():
+	print (name + (" has died!"))
 	await get_tree().create_timer(0.25).timeout
 	queue_free()
 

@@ -6,7 +6,7 @@
 [node name="Master" type="Node"]
 
 [node name="test_character" parent="." node_paths=PackedStringArray("world", "hud") instance=ExtResource("1_3hxox")]
-transform = Transform3D(-0.998356, 0, -0.0573201, 0, 1, 0, 0.0573201, 0, -0.998356, 0, 1.04127, 0)
+transform = Transform3D(-0.998356, 0, -0.0573201, 0, 1, 0, 0.0573201, 0, -0.998356, 21.9242, 1.04127, -26.8763)
 world = NodePath("../World")
 hud = NodePath("../World/HUD")
 

@@ -55,6 +55,8 @@ var targetting_time = 0.5
 var seen_bodies : Array = []
 var last_seen_point: Array = []
 var engage_target_point: Vector3 = Vector3.ZERO
+var check_weapon_target: Vector3
+var distance_to_target: float
 
 
 # === Initialization ===
@@ -73,6 +75,7 @@ func _physics_process(delta):
 		MovementState.WANDER:
 			_handle_wander(delta)
 		MovementState.ENGAGE:
+			distance_to_target = global_position.distance_to(check_weapon_target)
 			_handle_engage(delta)
 		MovementState.DEAD:
 			return
@@ -216,13 +219,11 @@ func _handle_weapon_logic(delta):
 			DebugDraw3D.draw_line(global_position, weapon_target, Color(1, 1, 0))
 			if engage_target_point != Vector3.ZERO:
 				DebugDraw3D.draw_line(global_position, engage_target_point, Color(1, 1, 0))
-			var check_weapon_target = Vector3(weapon_target.x, global_position.y, weapon_target.z)
-			var dist := global_position.distance_to(check_weapon_target)
-			print (dist)
-			if dist <=100:
+			check_weapon_target = Vector3(weapon_target.x, global_position.y, weapon_target.z)
+			if distance_to_target <=100:
 				var to_target := (weapon_target - global_position).normalized()
 				engage_target_point = global_position + (to_target * engage_reset_distance)
-			if dist <= 10.0 and fire_time <= 0:
+			if distance_to_target <= 8.0 and fire_time <= 0:
 				weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
 			_fire_weapon()
@@ -271,6 +272,8 @@ func _on_sight_body_entered(body: Node3D) -> void:
 	if body is CharacterBody3D:
 		if body.has_method("get_faction"):
 			if body.get_faction() != get_faction():
+				if seen_bodies.has(body):
+					return
 				#print ("SEEING ENEMY: " + str(body))
 				seen_bodies.append(body)
 				weapon_target = body.global_position
@@ -279,7 +282,7 @@ func _on_sight_body_entered(body: Node3D) -> void:
 				weapon_state = WeaponState.AIM
 				bark.bark()
 
-func _on_sight_body_shape_exited(_body_rid: RID, body: Node3D, _body_shape_index: int, _local_shape_index: int) -> void:
-	if seen_bodies.has(body) == true:
-		seen_bodies.erase(body)
-		last_seen_point.append(body.global_position)
+#func _on_sight_body_shape_exited(_body_rid: RID, body: Node3D, _body_shape_index: int, _local_shape_index: int) -> void:
+	#if seen_bodies.has(body) == true:
+		#seen_bodies.erase(body)
+		#last_seen_point.append(body.global_position)

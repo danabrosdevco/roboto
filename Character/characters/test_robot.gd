@@ -288,6 +288,7 @@ func apply_damage(damage):
 	health -= damage
 	if health <= 0:
 		die()
+		print (name + (" has died!"))
 	pass
 
 func die():
