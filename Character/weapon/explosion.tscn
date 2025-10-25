@@ -104,6 +104,7 @@ radius = 2.5
 script = ExtResource("1_5xa17")
 effects = [NodePath("smoke"), NodePath("debris"), NodePath("fire")]
 audio = NodePath("AudioStreamPlayer3D")
+damage_value = 100
 damage_area = NodePath("Area3D")
 
 [node name="smoke" type="GPUParticles3D" parent="."]

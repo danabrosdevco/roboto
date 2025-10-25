@@ -13,8 +13,8 @@ class_name TestHelicopter
 @export var health := 60
 @export var faction : Enums.Factions = Enums.Factions.ENEMY
 @export var move_speed := 40.0
-@export var min_speed := 10.0  # helicopter can’t go below this
-@export var turn_speed := 0.8  # slower turning
+@export var min_speed := 5.0  # helicopter can’t go below this
+@export var turn_speed := 1.2  # slower turning
 @export var acceleration := 2.0
 @export var lift_force := 5.0  # constant upward lift
 @export var gravity_force := -9.8
@@ -22,7 +22,7 @@ class_name TestHelicopter
 @export var altitude_smoothness := 3.0
 @export var wander_radius := 600.0
 @export var wander_delay := 10.0
-@export var engage_reset_distance := 200.0  # how far past target before disengaging
+@export var engage_reset_distance := 250.0  # how far past target before disengaging
 
 
 # === Flocking / Avoidance ===
@@ -38,7 +38,8 @@ var weapon_target: Vector3
 var look_target: Vector3
 var fire_time := 0.0
 var wander_target := Vector3.ZERO
-
+var enroute: bool = false
+var flyby: bool = false
 enum WeaponState { IDLE, AIM, FIRE, RELOAD }
 enum MovementState { WANDER, ENGAGE, DEAD }
 
@@ -49,7 +50,8 @@ var wander_time := 0.0
 var current_speed := 0.0
 var frame_waited := false
 var origin: Vector3
-var targetting_time = 2.5
+var targetting_count = 0.0
+var targetting_time = 0.5
 var seen_bodies : Array = []
 var last_seen_point: Array = []
 var engage_target_point: Vector3 = Vector3.ZERO
@@ -74,18 +76,22 @@ func _physics_process(delta):
 			_handle_engage(delta)
 		MovementState.DEAD:
 			return
-
+	handle_targeting(delta)
 	_handle_weapon_logic(delta)
 	_update_debug_label()
 
 
 func handle_targeting(delta):
-	targetting_time += delta
+	targetting_count += delta
+	if targetting_count <= targetting_time:
+		return
 	for body in seen_bodies:
 		if not is_instance_valid(body) or body.health <= 0:
 			seen_bodies.erase(body)
 			last_seen_point.clear()
 	if seen_bodies.is_empty() && look_target != null && movement_state != MovementState.WANDER:
+			weapon_target = Vector3.ZERO
+			engage_target_point = Vector3.ZERO
 			movement_state = MovementState.WANDER
 			weapon_state = WeaponState.IDLE
 			return
@@ -130,16 +136,14 @@ func _handle_engage(delta):
 		movement_state = MovementState.WANDER
 		return
 	# Pick a single fly-over point once per engage
-	if engage_target_point == Vector3.ZERO:
-		var to_target := (weapon_target - global_position).normalized()
-		# Aim beyond the target so it flies straight across it
-		engage_target_point = weapon_target + to_target * 150.0
+	#if engage_target_point == Vector3.ZERO:
+		#var to_target := (weapon_target - global_position).normalized()
+		##engage_target_point = global_position + (to_target * engage_reset_distance)
 	# Steer toward that fly-over point
 	_fly_steering(delta, engage_target_point)
 
 	# Once we’ve flown past it, reset to wander or pick a new target
-	if global_position.distance_to(engage_target_point) < 50.0:
-		movement_state = MovementState.WANDER
+	if global_position.distance_to(engage_target_point) < 100.0:
 		engage_target_point = Vector3.ZERO
 
 # === Steering + Flight ===
@@ -148,10 +152,8 @@ func _fly_steering(delta, target: Vector3):
 	# Adjust desired heading gradually (helicopters don't snap)
 	var forward = -global_transform.basis.z
 	var new_dir = forward.lerp(to_target, turn_speed * delta).normalized()
-
 	# Maintain constant forward motion
 	current_speed = clamp(lerp(current_speed, move_speed, acceleration * delta), min_speed, move_speed)
-
 	# Altitude control (hover at set height over terrain)
 	var desired_y = _get_desired_hover_altitude()
 	var altitude_error = desired_y - global_position.y
@@ -208,16 +210,20 @@ func _handle_weapon_logic(delta):
 	match weapon_state:
 		WeaponState.IDLE:
 			weapon_state = WeaponState.AIM
-
 		WeaponState.AIM:
 			if weapon_target == Vector3.ZERO:
 				return
-			var dist := global_position.distance_to(weapon_target)
-
-			# When close enough horizontally and roughly above target → drop
-			if dist <= 80.0 and abs(global_position.y - weapon_target.y) < 60.0 and fire_time <= 0.0:
+			DebugDraw3D.draw_line(global_position, weapon_target, Color(1, 1, 0))
+			if engage_target_point != Vector3.ZERO:
+				DebugDraw3D.draw_line(global_position, engage_target_point, Color(1, 1, 0))
+			var check_weapon_target = Vector3(weapon_target.x, global_position.y, weapon_target.z)
+			var dist := global_position.distance_to(check_weapon_target)
+			print (dist)
+			if dist <=100:
+				var to_target := (weapon_target - global_position).normalized()
+				engage_target_point = global_position + (to_target * engage_reset_distance)
+			if dist <= 10.0 and fire_time <= 0:
 				weapon_state = WeaponState.FIRE
-
 		WeaponState.FIRE:
 			_fire_weapon()
 			fire_time = fire_cooldown
