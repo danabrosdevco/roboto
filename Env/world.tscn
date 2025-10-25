@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://c5r8kyl3dh8ox"]
+[gd_scene load_steps=23 format=3 uid="uid://c5r8kyl3dh8ox"]
 
 [ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="1_d2eqf"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="1_frury"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://bum3xvqlx2pwp" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-t.glb" id="13_c2clf"]
 [ext_resource type="PackedScene" uid="uid://dv75dvnr26c72" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-s.glb" id="14_4i2mi"]
 [ext_resource type="PackedScene" uid="uid://cw5qsxqebuch8" path="res://Character/characters/test_drone.tscn" id="14_88v31"]
+[ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="15_jsrdb"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oql1c"]
 albedo_color = Color(0.477757, 0.884906, 0.786467, 1)
@@ -209,3 +210,8 @@ metadata/asset_placer_res_id = "uid://fr4657li7txj"
 
 [node name="StaticBody3D2" parent="." instance=ExtResource("5_crx3c")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.64194, 0.125, -4.30416)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(-0.737855, -0.33748, 0.584532, 0, 0.866025, 0.5, -0.674959, 0.368927, -0.639001, 0, 8.2333, 0)
+fov = 70.0
+script = ExtResource("15_jsrdb")

@@ -32,3 +32,6 @@ func _input(event):
 	if event.is_action_pressed("2"):
 				if cameras.size() >= 2:
 					_activate_camera(1)
+	if event.is_action_pressed("3"):
+				if cameras.size() >= 3:
+					_activate_camera(2)

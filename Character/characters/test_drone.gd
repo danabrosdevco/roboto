@@ -22,7 +22,7 @@ class_name TestHelicopter
 @export var altitude_smoothness := 3.0
 @export var wander_radius := 600.0
 @export var wander_delay := 10.0
-@export var engage_reset_distance := 250.0  # how far past target before disengaging
+@export var engage_reset_distance := 300.0  # how far past target before disengaging
 
 
 # === Flocking / Avoidance ===
@@ -216,15 +216,17 @@ func _handle_weapon_logic(delta):
 		WeaponState.AIM:
 			if weapon_target == Vector3.ZERO:
 				return
-			DebugDraw3D.draw_line(global_position, weapon_target, Color(1, 1, 0))
-			if engage_target_point != Vector3.ZERO:
-				DebugDraw3D.draw_line(global_position, engage_target_point, Color(1, 1, 0))
+			#DebugDraw3D.draw_line(global_position, weapon_target, Color(1, 1, 0))
+			#if engage_target_point != Vector3.ZERO:
+				#DebugDraw3D.draw_line(global_position, engage_target_point, Color(1, 1, 0))
 			check_weapon_target = Vector3(weapon_target.x, global_position.y, weapon_target.z)
+			var to_target := (weapon_target - global_position).normalized()
 			if distance_to_target <=100:
-				var to_target := (weapon_target - global_position).normalized()
 				engage_target_point = global_position + (to_target * engage_reset_distance)
 			if distance_to_target <= 8.0 and fire_time <= 0:
 				weapon_state = WeaponState.FIRE
+				engage_target_point = global_position + (to_target * engage_reset_distance)
+
 		WeaponState.FIRE:
 			_fire_weapon()
 			fire_time = fire_cooldown
