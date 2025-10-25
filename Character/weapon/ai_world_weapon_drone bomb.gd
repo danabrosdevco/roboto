@@ -15,7 +15,6 @@ func play_shot_audio():
 
 
 func fire_bomb():
-	return
 	var new_bomb = bomb_scene.instantiate()
 	add_child(new_bomb)
 	# 1. Set starting position at tracer origin (on the weapon)

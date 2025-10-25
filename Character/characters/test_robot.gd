@@ -241,7 +241,7 @@ func handle_weapon_logic(delta):
 				if result:
 					var hit_pos = result.position
 					var collider = result.collider
-					print("Hit:", collider, " at ", hit_pos)
+					#print("Hit:", collider, " at ", hit_pos)
 					#var sphere = MeshInstance3D.new()
 					#sphere.mesh = SphereMesh.new()
 					#sphere.mesh.radius = 0.05  # Very small

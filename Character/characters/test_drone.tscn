@@ -51,6 +51,7 @@ shape = SubResource("ConvexPolygonShape3D_jlcmr")
 
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -12, 0)
+visible = false
 billboard = 1
 text = "Text"
 font_size = 48
@@ -64,10 +65,11 @@ stream = ExtResource("5_bwbdw")
 volume_db = 7.0
 max_db = 3.5
 autoplay = true
-max_distance = 300.0
+max_distance = 600.0
 doppler_tracking = 2
 
 [node name="ai_bomb_weapon" parent="." instance=ExtResource("6_76rta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.31606, 0)
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.996763, 0.0803903, 0, -0.0803903, 0.996763, 0, 0.596605, -6.61877)
