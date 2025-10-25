@@ -31,7 +31,7 @@ class_name TestHelicopter
 @export var obstacle_avoidance_weight := 3.0
 
 # === Weapon Logic ===
-@export var fire_cooldown := 6.0
+@export var fire_cooldown := 1.0
 var weapon_target: Vector3
 var look_target: Vector3
 var fire_time := 0.0
@@ -40,12 +40,17 @@ var wander_target := Vector3.ZERO
 enum WeaponState { IDLE, AIM, FIRE, RELOAD }
 enum MovementState { WANDER, ENGAGE, DEAD }
 
+# WORKING CODE #
 var weapon_state = WeaponState.IDLE
 var movement_state = MovementState.WANDER
 var wander_time := 0.0
 var current_speed := 0.0
 var frame_waited := false
 var origin: Vector3
+var targetting_time = 2.5
+var seen_bodies : Array = []
+var last_seen_point: Array = []
+
 
 # === Initialization ===
 func _ready():
@@ -59,7 +64,6 @@ func _ready():
 func _physics_process(delta):
 	if not frame_waited:
 		return
-
 	match movement_state:
 		MovementState.WANDER:
 			_handle_wander(delta)
@@ -71,6 +75,41 @@ func _physics_process(delta):
 	_handle_weapon_logic(delta)
 	fire_time -= delta
 	_update_debug_label()
+
+
+func handle_targeting(delta):
+	targetting_time += delta
+	for body in seen_bodies:
+		if not is_instance_valid(body) or body.health <= 0:
+			seen_bodies.erase(body)
+			last_seen_point.clear()
+	if seen_bodies.is_empty() && look_target != null && movement_state != MovementState.WANDER:
+			movement_state = MovementState.WANDER
+			weapon_state = WeaponState.IDLE
+			return
+	if seen_bodies.is_empty() == false:
+		for i in seen_bodies:
+			seen_bodies.sort_custom(func(a, b):
+				return global_position.distance_to(a.global_position) < global_position.distance_to(b.global_position)
+			)
+		weapon_target = seen_bodies[0].global_position
+		look_target = seen_bodies[0].global_position
+		targetting_time = 0.0
+		return
+	if seen_bodies.is_empty():
+		if last_seen_point.is_empty():
+			pass
+	#if !command_point:
+		#pass
+	#var obstacle = get_obstacle_ahead()
+	#if obstacle:
+		#weapon_target = obstacle.global_position
+		#look_target = obstacle.global_position
+		#change_state(MovementState.ENGAGE)
+		#weapon_state = WeaponState.AIM
+		#return
+	#pass
+
 
 # === Wander Logic ===
 func _handle_wander(delta):
@@ -203,3 +242,21 @@ func _update_debug_label():
 		current_speed,
 		MovementState.keys()[movement_state]
 	]
+
+
+func _on_sight_body_entered(body: Node3D) -> void:
+	if body is CharacterBody3D:
+		if body.has_method("get_faction"):
+			if body.get_faction() != get_faction():
+				#print ("SEEING ENEMY: " + str(body))
+				seen_bodies.append(body)
+				weapon_target = body.global_position
+				look_target = body.global_position
+				movement_state = MovementState.ENGAGE
+				weapon_state = WeaponState.AIM
+				bark.bark()
+
+func _on_sight_body_shape_exited(_body_rid: RID, body: Node3D, _body_shape_index: int, _local_shape_index: int) -> void:
+	if seen_bodies.has(body) == true:
+		seen_bodies.erase(body)
+		last_seen_point.append(body.global_position)

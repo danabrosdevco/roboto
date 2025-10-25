@@ -16,7 +16,7 @@ func play_shot_audio():
 
 func fire_bomb():
 	var new_bomb = bomb_scene.instantiate()
-	add_child(new_bomb)
+	get_tree().current_scene.add_child(new_bomb)
 	# 1. Set starting position at tracer origin (on the weapon)
 	new_bomb.global_position = global_position
 	# 2. Get world-space forward direction from tracer_origin
