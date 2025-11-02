@@ -1,0 +1,16 @@
+// Game: Roboto
+// Format: Standard
+// entity 0
+{
+"wad" ""
+"classname" "worldspawn"
+// brush 0
+{
+( -448 464 16 ) ( -448 -352 16 ) ( -448 -352 -16 ) textures_pack/Metal_08-256x256 0 0 0 1 1
+( -448 -352 16 ) ( 64 -352 16 ) ( 64 -352 -16 ) textures_pack/Metal_08-256x256 0 0 0 1 1
+( 64 -352 -16 ) ( 64 464 -16 ) ( -448 464 -16 ) textures_pack/Metal_08-256x256 0 0 0 1 1
+( -448 464 16 ) ( 64 464 16 ) ( 64 -352 16 ) textures_pack/Metal_08-256x256 0 0 0 1 1
+( 64 464 -16 ) ( 64 464 16 ) ( -448 464 16 ) textures_pack/Metal_08-256x256 0 0 0 1 1
+( 64 -352 16 ) ( 64 464 16 ) ( 64 464 -16 ) textures_pack/Metal_08-256x256 0 0 0 1 1
+}
+}

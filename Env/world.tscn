@@ -39,6 +39,8 @@ size = Vector2(1000, 1000)
 
 [node name="World" type="Node3D"]
 
+[node name="WorldEnvironment" parent="." instance=ExtResource("1_frury")]
+
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_yt31w")
 surface_material_override/0 = SubResource("StandardMaterial3D_4074w")
@@ -67,11 +69,6 @@ metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
 [node name="StaticBody3D (4)" parent="." instance=ExtResource("1_d2eqf")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.28024, 0.121961, -2.34783)
 metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
-
-[node name="HUD" parent="." instance=ExtResource("2_x7qjx")]
-metadata/_edit_use_anchors_ = true
-
-[node name="WorldEnvironment" parent="." instance=ExtResource("1_frury")]
 
 [node name="TargetBody" parent="." instance=ExtResource("7_c4qea")]
 transform = Transform3D(0.0832955, 0.159672, -0.983649, -0.110549, 0.982468, 0.150119, 0.990373, 0.0962373, 0.0994869, -13.7832, 2.57528, -3.98737)
@@ -208,3 +205,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.64194, 0.125, -4.30416)
 transform = Transform3D(-0.737855, -0.33748, 0.584532, 0, 0.866025, 0.5, -0.674959, 0.368927, -0.639001, 0, 8.2333, 0)
 fov = 70.0
 script = ExtResource("15_jsrdb")
+
+[node name="HUD" parent="." instance=ExtResource("2_x7qjx")]
+metadata/_edit_use_anchors_ = true

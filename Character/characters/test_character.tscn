@@ -119,6 +119,7 @@ transform = Transform3D(3.2, -1.04308e-07, -7.10543e-14, 8.9407e-08, 3.965, 5.32
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.236776)
+visible = false
 omni_range = 3.0
 omni_attenuation = 0.5
 omni_shadow_mode = 0
