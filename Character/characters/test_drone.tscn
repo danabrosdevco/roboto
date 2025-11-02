@@ -79,6 +79,7 @@ pitch_scale = 0.7
 [node name="RotorNoise" type="AudioStreamPlayer3D" parent="."]
 stream = ExtResource("5_bwbdw")
 volume_db = 7.0
+unit_size = 65.0
 max_db = 3.5
 autoplay = true
 max_distance = 600.0

@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://c5r8kyl3dh8ox"]
+[gd_scene load_steps=22 format=3 uid="uid://c5r8kyl3dh8ox"]
 
 [ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="1_d2eqf"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="1_frury"]
@@ -15,9 +15,6 @@
 [ext_resource type="PackedScene" uid="uid://dv75dvnr26c72" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-s.glb" id="14_4i2mi"]
 [ext_resource type="PackedScene" uid="uid://cw5qsxqebuch8" path="res://Character/characters/test_drone.tscn" id="14_88v31"]
 [ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="15_jsrdb"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oql1c"]
-albedo_color = Color(0.477757, 0.884906, 0.786467, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_41c1e"]
 albedo_texture = ExtResource("1_tnwa1")
@@ -41,10 +38,6 @@ polygons = [PackedInt32Array(1, 0, 2), PackedInt32Array(2, 0, 3), PackedInt32Arr
 size = Vector2(1000, 1000)
 
 [node name="World" type="Node3D"]
-
-[node name="CSGBox3D" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.750092, -6.021)
-material = SubResource("StandardMaterial3D_oql1c")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_yt31w")
