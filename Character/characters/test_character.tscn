@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://bgj56y7q1pyxr"]
+[gd_scene load_steps=10 format=3 uid="uid://bgj56y7q1pyxr"]
 
 [ext_resource type="Script" path="res://Character/characters/test_character.gd" id="1_xw2ar"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_3jw7k"]
@@ -7,42 +7,11 @@
 [ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/components/command.tscn" id="4_ig1ws"]
 [ext_resource type="Curve" uid="uid://dp686k5ckuokb" path="res://Character/weapon/recoil_curve.tres" id="4_n81mu"]
 [ext_resource type="PackedScene" uid="uid://cia7d1ywjwrgf" path="res://Character/components/scanner.tscn" id="6_pxhlj"]
-[ext_resource type="Shader" path="res://Character/hud_filter.gdshader" id="6_tcmfb"]
 [ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="6_umrcu"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8ja6s"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ao10f"]
-shader = ExtResource("6_tcmfb")
-shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
-shader_parameter/grit_strength = 0.25
-shader_parameter/scanline_strength = 0.2
-shader_parameter/brightness = 0.5
-shader_parameter/time_speed = 1.0
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_vc3nm"]
-shader = ExtResource("6_tcmfb")
-shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
-shader_parameter/grit_strength = 0.25
-shader_parameter/scanline_strength = 0.2
-shader_parameter/brightness = 0.5
-shader_parameter/time_speed = 1.0
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_udild"]
-shader = ExtResource("6_tcmfb")
-shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
-shader_parameter/grit_strength = 0.25
-shader_parameter/scanline_strength = 0.2
-shader_parameter/brightness = 0.5
-shader_parameter/time_speed = 1.0
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_t2hgw"]
-shader = ExtResource("6_tcmfb")
-shader_parameter/tint_color = Color(0.392157, 0.392157, 0.392157, 1)
-shader_parameter/grit_strength = 0.25
-shader_parameter/scanline_strength = 0.2
-shader_parameter/brightness = 0.5
-shader_parameter/time_speed = 1.0
+radius = 0.25
+height = 1.5
 
 [node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("scanner", "tracer_origin", "muzzle_flash", "weapon_model", "reload_sounds", "rifle_stream_player", "click_stream_player")]
 script = ExtResource("1_xw2ar")
@@ -81,36 +50,6 @@ transform = Transform3D(0.99863, -0.052336, 0, 0.052336, 0.99863, 0, 0, 0, 1, 0.
 
 [node name="Muzzle" parent="Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1" index="0"]
 transform = Transform3D(3.22828, 0, -2.98024e-08, 1.19209e-07, 4, 1.86265e-09, 4.26326e-14, -1.86266e-09, 4, 3.62259, 0.638353, 0.0119146)
-
-[node name="Top" type="ColorRect" parent="Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/Muzzle" index="0"]
-material = SubResource("ShaderMaterial_ao10f")
-anchors_preset = 10
-anchor_right = 1.0
-grow_horizontal = 2
-
-[node name="Bottom" type="ColorRect" parent="Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/Muzzle" index="1"]
-material = SubResource("ShaderMaterial_vc3nm")
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 0
-
-[node name="Left" type="ColorRect" parent="Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/Muzzle" index="2"]
-material = SubResource("ShaderMaterial_udild")
-anchors_preset = 9
-anchor_bottom = 1.0
-grow_vertical = 2
-
-[node name="Right" type="ColorRect" parent="Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/Muzzle" index="3"]
-material = SubResource("ShaderMaterial_t2hgw")
-anchors_preset = 11
-anchor_left = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 0
-grow_vertical = 2
 
 [node name="MuzzleFlash" parent="Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1" index="1"]
 transform = Transform3D(3.2, -1.04308e-07, -7.10543e-14, 8.9407e-08, 3.965, 5.32907e-15, 5.68434e-14, -7.10543e-15, 3.965, 5.88254, 0.77531, -0.164609)

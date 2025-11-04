@@ -39,7 +39,7 @@ func _scan_for_enemies():
 		if obj:
 			if obj.has_method("get_faction"):
 				print ("HAS FACTION!")
-				if obj.get_faction() == Enums.Factions.ENEMY:
+				if obj.get_faction() != get_parent().get_faction():
 					highlight_target.emit(obj, target_mark_duration)
 					play_ping += 1
 	if play_ping >= 1:

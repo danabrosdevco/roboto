@@ -378,6 +378,7 @@ func play_reload_sequence():
 
 
 func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
+	print ("TIME TO HIGHLIGHT!")
 	highlight_enemy.emit(target, duration)
 
 

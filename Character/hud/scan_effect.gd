@@ -8,6 +8,7 @@ var tween: Tween
 
 func _ready():
 	_setup_scan_rects()
+	print ("HELLO WORLD!")
 	match scan_mode:
 		Enums.ScanModes.TOP_DOWN:
 			_run_scan_animation_top_to_bottom()
