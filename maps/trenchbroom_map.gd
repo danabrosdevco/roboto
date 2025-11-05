@@ -1,2 +1,2 @@
 extends Node3D
-class_name Map
+class_name Level

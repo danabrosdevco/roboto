@@ -12,7 +12,7 @@ shader = ExtResource("3_qovdm")
 environment = ExtResource("1_wxdkf")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.852165, -0.452715, 0.262421, 0.290895, 0.826717, 0.48158, -0.434966, -0.334049, 0.836191, 0, 0, 0)
+transform = Transform3D(0.840856, -0.470471, 0.267617, 0.296198, 0.813798, 0.5, -0.453021, -0.34116, 0.823639, 0, 0, 0)
 shadow_enabled = true
 directional_shadow_mode = 0
 directional_shadow_blend_splits = true

@@ -1,0 +1,35 @@
+[gd_scene load_steps=6 format=3 uid="uid://bnygpdpgt07ir"]
+
+[ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
+[ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud/hud.tscn" id="2_ox1ok"]
+[ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="3_eflx3"]
+[ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/test_character.tscn" id="4_m38gd"]
+[ext_resource type="PackedScene" uid="uid://hynq1rcc8yjr" path="res://maps/test_01_tb_level.tscn" id="5_5u7fo"]
+
+[node name="World" type="Node3D" node_paths=PackedStringArray("world_env", "player")]
+script = ExtResource("1_2t272")
+world_env = NodePath("WorldEnvironment")
+player = NodePath("test_character")
+
+[node name="HUD" parent="." instance=ExtResource("2_ox1ok")]
+metadata/_edit_use_anchors_ = true
+
+[node name="WorldEnvironment" parent="." instance=ExtResource("3_eflx3")]
+
+[node name="Sun" parent="WorldEnvironment" index="0"]
+transform = Transform3D(0.0342164, 0.576504, -0.816378, -0.0241415, 0.817095, 0.575998, 0.999123, 0, 0.0418757, 0, 13.3885, 0)
+
+[node name="test_character" parent="." node_paths=PackedStringArray("world", "hud") instance=ExtResource("4_m38gd")]
+transform = Transform3D(-0.575419, 0, 0.817859, 0, 1, 0, -0.817859, 0, -0.575419, 0, 1.77266, 0)
+world = NodePath("..")
+hud = NodePath("../HUD")
+
+[node name="TBLevel" parent="." instance=ExtResource("5_5u7fo")]
+
+[connection signal="activate_scanner_ui" from="test_character" to="HUD" method="activate_scan_effect"]
+[connection signal="highlight_enemy" from="test_character" to="HUD" method="activate_enemy_marker"]
+
+[editable path="WorldEnvironment"]
+[editable path="test_character"]
+[editable path="test_character/Camera3D/Weapon"]
+[editable path="test_character/Camera3D/Weapon/AssaultRifle2_12"]

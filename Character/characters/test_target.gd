@@ -3,13 +3,17 @@ extends StaticBody3D
 @export var faction = Enums.Factions.ENEMY
 @export var health = 30
 @export var obstacle = true
+var alive: bool = true
 
 func apply_damage(damage):
+	if alive == false:
+		return
 	health -= damage
 	if health <= 0:
+		alive = false
 		die()
+		print (name + (" has died!"))
 	pass
-
 func get_faction():
 	return faction
 

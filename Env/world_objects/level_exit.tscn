@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3 uid="uid://big5ms541m2j7"]
+
+[ext_resource type="Script" path="res://Env/world_objects/level_exit.gd" id="1_l5cdk"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fxyc7"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7d6oy"]
+albedo_color = Color(0.607843, 0.607843, 0.607843, 0.494118)
+
+[node name="LevelExit" type="Node3D" node_paths=PackedStringArray("area")]
+script = ExtResource("1_l5cdk")
+area = NodePath("Area3D")
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("BoxShape3D_fxyc7")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+material = SubResource("StandardMaterial3D_7d6oy")
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]
