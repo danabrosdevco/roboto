@@ -1,4 +1,5 @@
 extends CharacterBody3D
+class_name Player
 
 # Node References # 
 @onready var cam: Camera3D = $Camera3D
@@ -92,6 +93,7 @@ var pitch := 0.0
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	hud.update_status(health, magazine_capacity, magazine_size)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -343,6 +345,7 @@ func fire() -> void:
 		fire_tracer()
 	magazine_capacity = max(0, magazine_capacity - 1)
 	tracer = false
+	hud.update_status(health, magazine_capacity, magazine_size)
 
 
 func fire_tracer():
@@ -368,6 +371,7 @@ func start_reload() -> void:
 	await get_tree().create_timer(reload_time).timeout
 	magazine_capacity = magazine_size
 	is_reloading = false
+	hud.update_status(health, magazine_capacity, magazine_size)
 	#print("Reload complete.")
 func play_reload_sequence():
 	for i in reload_sounds.size():
@@ -378,13 +382,15 @@ func play_reload_sequence():
 
 
 func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
-	print ("TIME TO HIGHLIGHT!")
+	#print ("TIME TO HIGHLIGHT!")
 	highlight_enemy.emit(target, duration)
 
 
 func apply_damage(damage):
 	health -= damage
+	hud.update_status(health, magazine_capacity, magazine_size)
 	if health <= 0:
+		health = 0
 		die()
 	pass
 

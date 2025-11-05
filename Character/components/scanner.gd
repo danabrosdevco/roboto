@@ -38,7 +38,7 @@ func _scan_for_enemies():
 		#print (obj.name)
 		if obj:
 			if obj.has_method("get_faction"):
-				print ("HAS FACTION!")
+				#print ("HAS FACTION!")
 				if obj.get_faction() != get_parent().get_faction():
 					highlight_target.emit(obj, target_mark_duration)
 					play_ping += 1

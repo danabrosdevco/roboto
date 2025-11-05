@@ -47,6 +47,7 @@ enum TargetSource { NONE, VISION, COMMAND }
 @export var weapon_target: Vector3
 @export var look_target: Vector3
 @export var patrol_points: Array[Node3D] = []
+var alive : bool = true
 var movement_state = MovementState.IDLE
 var weapon_state = WeaponState.IDLE
 var current_patrol_index := 0
@@ -284,9 +285,12 @@ func fire():
 	pass
 
 func apply_damage(damage):
+	if alive == false:
+		return
 	bark.bark()
 	health -= damage
 	if health <= 0:
+		alive = false
 		die()
 		print (name + (" has died!"))
 	pass
