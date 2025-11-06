@@ -24,7 +24,7 @@ class_name TestRobot
 @export var wander_radius: float = 45
 @export var wander_delay: float = 20
 @export var idle_to_wander: float = 1
-@export var hearing_sphere_radius: float = 5 
+@export var hearing_sphere_radius: float = 7
 @export var sight_rectangle_near_area: float = 4
 @export var sight_rectangle_far_area: float = 100
 @export var sight_rectangle_distance: float = 20
@@ -349,6 +349,8 @@ func _on_sight_body_entered(body: Node3D) -> void:
 	if body is CharacterBody3D:
 		if body.has_method("get_faction"):
 			if body.get_faction() != get_faction():
+				if seen_bodies.has(body) == true:
+					return
 				seen_bodies.append(body)
 				weapon_target = body.global_position
 				look_target = body.global_position

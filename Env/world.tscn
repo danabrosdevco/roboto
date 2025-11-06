@@ -5,9 +5,10 @@
 [ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/test_character.tscn" id="4_m38gd"]
 [ext_resource type="PackedScene" uid="uid://fgdjjw1lgv8e" path="res://maps/civil-unrest_level.tscn" id="5_gxlro"]
 
-[node name="World" type="Node3D" node_paths=PackedStringArray("player")]
+[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level")]
 script = ExtResource("1_2t272")
 player = NodePath("test_character")
+current_level = NodePath("TBLevel")
 
 [node name="HUD" parent="." instance=ExtResource("2_ox1ok")]
 metadata/_edit_use_anchors_ = true
