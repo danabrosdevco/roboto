@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://db8tfh4xhs5mk"]
+
+[ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_tjwe3"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_bwwih"]
+[ext_resource type="Resource" uid="uid://bkhxcqsquw1yg" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_n5mxl"]
+
+[node name="TBLevel" type="Node3D"]
+script = ExtResource("1_tjwe3")
+
+[node name="FuncGodotMap" type="Node3D" parent="."]
+script = ExtResource("2_bwwih")
+map_settings = ExtResource("3_n5mxl")
+
+[node name="SpawnPoint" type="Node3D" parent="FuncGodotMap"]

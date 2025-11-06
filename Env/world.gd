@@ -61,5 +61,5 @@ func deload_current_level(level):
 	return true
 
 func _on_next_level_requested(next_level_scene: PackedScene) -> void:
-	print("Received signal to load next level.")
+	#print("Received signal to load next level.")
 	load_next_level(next_level_scene)
