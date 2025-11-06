@@ -1,0 +1,20 @@
+// Game: Roboto
+// Format: Standard
+// entity 0
+{
+"wad" ""
+"classname" "worldspawn"
+}
+// entity 1
+{
+"classname" "func_detail"
+// brush 0
+{
+( -864 432 16 ) ( -864 -384 16 ) ( -864 -384 -16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+( 64 464 -16 ) ( 64 464 16 ) ( -864 432 16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+( 64 -352 -16 ) ( 64 464 -16 ) ( -864 432 -16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+( -864 432 16 ) ( 64 464 16 ) ( 64 -352 16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+( -864 -384 16 ) ( 64 -352 16 ) ( 64 -352 -16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+( 64 -352 16 ) ( 64 464 16 ) ( 64 464 -16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+}
+}

@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cd0yrhn7jprwj"
+path="res://.godot/imported/AmbulanceCar.obj-0f306f957c0a3aea5b878885071fff3a.mesh"
+
+[deps]
+
+files=["res://.godot/imported/AmbulanceCar.obj-0f306f957c0a3aea5b878885071fff3a.mesh"]
+
+source_file="res://3d_assets/Military_Vehicles_LP/OBJ/AmbulanceCar.obj"
+dest_files=["res://.godot/imported/AmbulanceCar.obj-0f306f957c0a3aea5b878885071fff3a.mesh", "res://.godot/imported/AmbulanceCar.obj-0f306f957c0a3aea5b878885071fff3a.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

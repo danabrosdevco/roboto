@@ -1,0 +1,12 @@
+[gd_scene load_steps=5 format=3 uid="uid://cafl1duafidy"]
+
+[ext_resource type="Script" path="res://Character/components/bark.gd" id="1_qm4ej"]
+[ext_resource type="AudioStream" uid="uid://b0k5y4bh3agyp" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__2.wav" id="2_w5kea"]
+[ext_resource type="AudioStream" uid="uid://c5r8sga38igu8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__5.wav" id="3_hbxff"]
+[ext_resource type="AudioStream" uid="uid://la4eq52akqul" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__98.wav" id="4_4wk63"]
+
+[node name="Bark" type="Node3D"]
+script = ExtResource("1_qm4ej")
+bark_clips = Array[AudioStream]([ExtResource("2_w5kea"), ExtResource("3_hbxff"), ExtResource("4_4wk63")])
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]

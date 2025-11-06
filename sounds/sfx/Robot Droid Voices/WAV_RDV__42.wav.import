@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bnm1ppyb52qst"
+path="res://.godot/imported/WAV_RDV__42.wav-b47b9bd42a027c12b8dec205ee332cef.sample"
+
+[deps]
+
+source_file="res://sounds/sfx/Robot Droid Voices/WAV_RDV__42.wav"
+dest_files=["res://.godot/imported/WAV_RDV__42.wav-b47b9bd42a027c12b8dec205ee332cef.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=0

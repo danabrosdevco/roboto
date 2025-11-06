@@ -1,0 +1,33 @@
+[gd_scene load_steps=7 format=3 uid="uid://bkxmadl8vaepc"]
+
+[ext_resource type="Texture2D" uid="uid://daawd0v3fkdlg" path="res://2d_assets/Kenney Prototype Textures/PNG/Orange/texture_10.png" id="1_3n0hr"]
+[ext_resource type="Script" path="res://Character/weapon/drone_bomb.gd" id="1_mrvog"]
+[ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="2_taynh"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_qg1yl"]
+radius = 0.25
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5eo3l"]
+albedo_texture = ExtResource("1_3n0hr")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2kmqt"]
+
+[node name="DroneBomb" type="RigidBody3D"]
+script = ExtResource("1_mrvog")
+explosion_scene = ExtResource("2_taynh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_qg1yl")
+
+[node name="CSGSphere3D" type="CSGSphere3D" parent="."]
+material = SubResource("StandardMaterial3D_5eo3l")
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.424597, 0)
+shape = SubResource("BoxShape3D_2kmqt")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="body_shape_entered" from="." to="." method="_on_body_shape_entered"]
+[connection signal="body_entered" from="Area3D" to="." method="_on_body_entered"]

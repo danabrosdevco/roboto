@@ -1,155 +1,28 @@
-[gd_scene load_steps=17 format=3 uid="uid://c5r8kyl3dh8ox"]
+[gd_scene load_steps=5 format=3 uid="uid://bnygpdpgt07ir"]
 
-[ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="1_d2eqf"]
-[ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="1_frury"]
-[ext_resource type="Texture2D" uid="uid://c3ap1lken8oba" path="res://2d_assets/Seamless ground sand dirt crack texture.jpg" id="1_tnwa1"]
-[ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud.tscn" id="2_x7qjx"]
-[ext_resource type="PackedScene" uid="uid://fr4657li7txj" path="res://Env/world_objects/large_barrier.tscn" id="5_crx3c"]
-[ext_resource type="PackedScene" uid="uid://dgdfk0ov1c85l" path="res://Character/characters/test_enemy.tscn" id="6_w64c2"]
-[ext_resource type="PackedScene" uid="uid://deb6uwnna01po" path="res://Character/characters/test_target.tscn" id="7_c4qea"]
-[ext_resource type="PackedScene" uid="uid://bevu1pewciouu" path="res://Character/test_robot.tscn" id="8_xoot0"]
-[ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/command.tscn" id="9_c6boo"]
+[ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
+[ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud/hud.tscn" id="2_ox1ok"]
+[ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/test_character.tscn" id="4_m38gd"]
+[ext_resource type="PackedScene" uid="uid://fgdjjw1lgv8e" path="res://maps/civil-unrest_level.tscn" id="5_gxlro"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oql1c"]
-albedo_color = Color(0.477757, 0.884906, 0.786467, 1)
+[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level")]
+script = ExtResource("1_2t272")
+player = NodePath("test_character")
+current_level = NodePath("TBLevel")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_41c1e"]
-albedo_texture = ExtResource("1_tnwa1")
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_yt31w"]
-material = SubResource("StandardMaterial3D_41c1e")
-size = Vector2(1000, 1000)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4074w"]
-albedo_texture = ExtResource("1_tnwa1")
-uv1_scale = Vector3(32, 32, 32)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_uaxtn"]
-size = Vector3(1000, 0.25, 1000)
-
-[sub_resource type="NavigationMesh" id="NavigationMesh_62ft8"]
-vertices = PackedVector3Array(-499.5, 0.267284, 20.25, -7.5, 0.267284, 20.25, -7.5, 0.267284, 19.75, -6.5, 0.267284, 19.25, -6.5, 0.267284, -499.5, -499.5, 0.267284, -499.5, -4.5, 0.267284, 19.75, -4.25, 0.267284, 20.5, 499.5, 0.267284, 20.5, 499.5, 0.267284, -499.5, -6.25, 0.267284, 499.5, -6.25, 0.267284, 21.5, -7.5, 0.267284, 21, -499.5, 0.267284, 499.5, -4.5, 0.267284, 21.25, 499.5, 0.267284, 499.5)
-polygons = [PackedInt32Array(2, 1, 0), PackedInt32Array(2, 0, 3), PackedInt32Array(3, 0, 4), PackedInt32Array(4, 0, 5), PackedInt32Array(8, 7, 6), PackedInt32Array(6, 3, 8), PackedInt32Array(8, 3, 4), PackedInt32Array(8, 4, 9), PackedInt32Array(11, 10, 12), PackedInt32Array(12, 10, 13), PackedInt32Array(12, 13, 0), PackedInt32Array(0, 1, 12), PackedInt32Array(10, 11, 14), PackedInt32Array(14, 7, 10), PackedInt32Array(10, 7, 8), PackedInt32Array(10, 8, 15)]
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_l5ox5"]
-size = Vector2(1000, 1000)
-
-[node name="World" type="Node3D"]
-
-[node name="CSGBox3D" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.750092, -6.021)
-material = SubResource("StandardMaterial3D_oql1c")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-mesh = SubResource("PlaneMesh_yt31w")
-surface_material_override/0 = SubResource("StandardMaterial3D_4074w")
-
-[node name="StaticBody3D" type="StaticBody3D" parent="MeshInstance3D"]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D/StaticBody3D"]
-shape = SubResource("BoxShape3D_uaxtn")
-
-[node name="StaticBody3D" parent="." instance=ExtResource("1_d2eqf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.17932, 0.121961, 1.38387)
-metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
-
-[node name="StaticBody3D (1)" parent="." instance=ExtResource("1_d2eqf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.56985, 0.12196, -0.974696)
-metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
-
-[node name="StaticBody3D (2)" parent="." instance=ExtResource("1_d2eqf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.67929, 0.121961, 0.148993)
-metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
-
-[node name="TARGET BOX" parent="." instance=ExtResource("1_d2eqf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.27162, 0.12196, 1.91637)
-metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
-
-[node name="StaticBody3D (4)" parent="." instance=ExtResource("1_d2eqf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.28024, 0.121961, -2.34783)
-metadata/asset_placer_res_id = "uid://c34427d1yh8jv"
-
-[node name="HUD" parent="." instance=ExtResource("2_x7qjx")]
+[node name="HUD" parent="." instance=ExtResource("2_ox1ok")]
 metadata/_edit_use_anchors_ = true
 
-[node name="@StaticBody3D@116456" parent="." instance=ExtResource("5_crx3c")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.97189, 0.128499, -4.38642)
-metadata/asset_placer_res_id = "uid://fr4657li7txj"
+[node name="test_character" parent="." node_paths=PackedStringArray("world", "hud") instance=ExtResource("4_m38gd")]
+transform = Transform3D(-0.575419, 0, 0.817859, 0, 1, 0, -0.817859, 0, -0.575419, 0, 1.77266, 0)
+world = NodePath("..")
+hud = NodePath("../HUD")
 
-[node name="@StaticBody3D@116457" parent="." instance=ExtResource("5_crx3c")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -2.11158, 0.1285, -4.52122)
-metadata/asset_placer_res_id = "uid://fr4657li7txj"
+[node name="TBLevel" parent="." instance=ExtResource("5_gxlro")]
 
-[node name="@StaticBody3D@116458" parent="." instance=ExtResource("5_crx3c")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -10.082, 0.128499, -4.30321)
-metadata/asset_placer_res_id = "uid://fr4657li7txj"
+[connection signal="activate_scanner_ui" from="test_character" to="HUD" method="activate_scan_effect"]
+[connection signal="highlight_enemy" from="test_character" to="HUD" method="activate_enemy_marker"]
 
-[node name="@StaticBody3D@116459" parent="." instance=ExtResource("5_crx3c")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -13.8959, 0.128499, -4.19149)
-metadata/asset_placer_res_id = "uid://fr4657li7txj"
-
-[node name="WorldEnvironment" parent="." instance=ExtResource("1_frury")]
-
-[node name="TargetBody" parent="." instance=ExtResource("7_c4qea")]
-transform = Transform3D(0.0832955, 0.159672, -0.983649, -0.110549, 0.982468, 0.150119, 0.990373, 0.0962373, 0.0994869, -13.7832, 2.57528, -3.98737)
-metadata/asset_placer_res_id = "uid://deb6uwnna01po"
-
-[node name="TargetBody (1)" parent="." instance=ExtResource("7_c4qea")]
-transform = Transform3D(0.00858618, 0, -0.999963, -0.039642, 0.999214, -0.000340386, 0.999177, 0.0396435, 0.00857943, -11.7087, 2.75573, -4.0356)
-metadata/asset_placer_res_id = "uid://deb6uwnna01po"
-
-[node name="TargetBody (2)" parent="." instance=ExtResource("7_c4qea")]
-transform = Transform3D(-0.0482164, -0.997683, 0.0479986, 0.0632426, -0.0510074, -0.996694, 0.996833, -0.0450214, 0.0655555, -10.0813, 1.91215, -4.02079)
-metadata/asset_placer_res_id = "uid://deb6uwnna01po"
-
-[node name="TargetBody (3)" parent="." instance=ExtResource("7_c4qea")]
-transform = Transform3D(0, 0, -1, 4.37114e-08, 1, 0, 1, -4.37114e-08, 0, -6.31171, 2.34804, -4.42568)
-metadata/asset_placer_res_id = "uid://deb6uwnna01po"
-
-[node name="TargetBody (4)" parent="." instance=ExtResource("7_c4qea")]
-transform = Transform3D(0.0128692, 1.3121e-08, -0.999917, 4.15233e-08, 1, 1.36565e-08, 0.999917, -4.16956e-08, 0.0128692, -5.18841, 2.45674, -4.43151)
-metadata/asset_placer_res_id = "uid://deb6uwnna01po"
-
-[node name="TargetBody (5)" parent="." instance=ExtResource("7_c4qea")]
-transform = Transform3D(0, 0, -1, 4.37114e-08, 1, 0, 1, -4.37114e-08, 0, -8.38519, 2.29642, -4.00833)
-metadata/asset_placer_res_id = "uid://deb6uwnna01po"
-
-[node name="TargetBody (6)" parent="." instance=ExtResource("7_c4qea")]
-transform = Transform3D(0, 0, -1, 4.37114e-08, 1, 0, 1, -4.37114e-08, 0, -2.5153, 2.29877, -3.70118)
-metadata/asset_placer_res_id = "uid://deb6uwnna01po"
-
-[node name="EnemyCharBody" parent="." instance=ExtResource("6_w64c2")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.0119, 1.125, 40.4858)
-target_node_path = NodePath("../TargetBody (6)")
-metadata/asset_placer_res_id = "uid://dgdfk0ov1c85l"
-
-[node name="EnemyCharBody (1)" parent="." instance=ExtResource("6_w64c2")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.2318, 1.125, 41.2756)
-target_node_path = NodePath("../TargetBody (6)")
-metadata/asset_placer_res_id = "uid://dgdfk0ov1c85l"
-
-[node name="EnemyCharBody (2)" parent="." instance=ExtResource("6_w64c2")]
-transform = Transform3D(0.998558, 0, 0.0536897, 0, 1, 0, -0.0536897, 0, 0.998558, -5.57033, 1.125, 41.4048)
-target_node_path = NodePath("../TargetBody (6)")
-metadata/asset_placer_res_id = "uid://dgdfk0ov1c85l"
-
-[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
-navigation_mesh = SubResource("NavigationMesh_62ft8")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D"]
-visible = false
-mesh = SubResource("PlaneMesh_l5ox5")
-
-[node name="EnemyRobot" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
-transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -6.4975, 0.125, 51.1368)
-
-[node name="EnemyRobot2" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
-transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -39.4512, 0.125, 51.1368)
-faction = 0
-
-[node name="EnemyRobot3" parent="NavigationRegion3D" instance=ExtResource("8_xoot0")]
-transform = Transform3D(-0.952746, 0, -0.303767, 0, 1, 0, 0.303767, 0, -0.952746, -21.5757, 0.125, 51.1368)
-faction = 0
-
-[node name="CommandMarker" parent="." instance=ExtResource("9_c6boo")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.6276, 0.125, 34.5762)
+[editable path="test_character"]
+[editable path="test_character/Camera3D/Weapon"]
+[editable path="test_character/Camera3D/Weapon/AssaultRifle2_12"]

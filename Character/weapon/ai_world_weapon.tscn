@@ -1,0 +1,33 @@
+[gd_scene load_steps=7 format=3 uid="uid://boyiducyiek8k"]
+
+[ext_resource type="Script" path="res://Character/weapon/ai_world_weapon.gd" id="1_aydy3"]
+[ext_resource type="PackedScene" uid="uid://vwg10a8rgqjf" path="res://3d_assets/gun_pack/Blends/Shotgun_2.blend" id="1_kec3m"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_aqmos"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="2_whxho"]
+[ext_resource type="AudioStream" uid="uid://ber1keqk8ky8h" path="res://sounds/sfx/weapons/shotgun/shotgun_fire_1 (3).wav" id="3_0jjqy"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="4_fjj8h"]
+
+[node name="ai_world_weapon" type="Node3D" node_paths=PackedStringArray("muzzle_flash", "muzzle_origin", "shot_audio")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 0)
+script = ExtResource("1_aydy3")
+muzzle_flash = NodePath("Shotgun_22/MuzzleFlash")
+muzzle_origin = NodePath("Shotgun_22/Muzzle")
+shot_audio = NodePath("Shotgun_22/ShotgunShot")
+tracer_scene = ExtResource("2_aqmos")
+
+[node name="Shotgun_22" parent="." instance=ExtResource("1_kec3m")]
+
+[node name="Muzzle" type="Node3D" parent="Shotgun_22"]
+transform = Transform3D(3.22828, 1.98523e-23, -2.98023e-08, 0, 4, 1.86265e-09, -1.42109e-14, -1.86265e-09, 4, 4.7889, 0.281185, 0.0134409)
+
+[node name="MuzzleFlash" parent="Shotgun_22" instance=ExtResource("2_whxho")]
+transform = Transform3D(0, 0, 0, 0, 0, 0, 0, 0, 0, 4.62965, 0.625657, -0.071623)
+
+[node name="ShotgunShot" type="AudioStreamPlayer3D" parent="Shotgun_22"]
+transform = Transform3D(-0.993308, 0.0491288, -0.104527, 0.0488491, 0.998792, 0.00523596, 0.104658, 9.48705e-05, -0.994508, -0.977198, 0.0303454, 0.100835)
+stream = ExtResource("3_0jjqy")
+unit_size = 25.0
+
+[node name="Click" type="AudioStreamPlayer3D" parent="Shotgun_22"]
+transform = Transform3D(-0.993308, 0.0491288, -0.104527, 0.0488491, 0.998792, 0.00523596, 0.104658, 9.48705e-05, -0.994508, -0.977198, 0.0303454, 0.100835)
+stream = ExtResource("4_fjj8h")

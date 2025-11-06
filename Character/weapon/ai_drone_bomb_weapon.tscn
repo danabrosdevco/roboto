@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://b4117jeojkuqx"]
+
+[ext_resource type="Script" path="res://Character/weapon/ai_world_weapon_drone bomb.gd" id="1_rtn4u"]
+[ext_resource type="PackedScene" uid="uid://bkxmadl8vaepc" path="res://Character/weapon/drone_bomb.tscn" id="2_d4jga"]
+
+[node name="ai_bomb_weapon" type="Node3D" node_paths=PackedStringArray("muzzle_origin")]
+script = ExtResource("1_rtn4u")
+bomb_scene = ExtResource("2_d4jga")
+muzzle_origin = NodePath(".")

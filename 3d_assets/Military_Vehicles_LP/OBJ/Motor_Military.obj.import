@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://3eb80yrbc2my"
+path="res://.godot/imported/Motor_Military.obj-c8edabd019bf22a2387b5e797c85ef4b.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Motor_Military.obj-c8edabd019bf22a2387b5e797c85ef4b.mesh"]
+
+source_file="res://3d_assets/Military_Vehicles_LP/OBJ/Motor_Military.obj"
+dest_files=["res://.godot/imported/Motor_Military.obj-c8edabd019bf22a2387b5e797c85ef4b.mesh", "res://.godot/imported/Motor_Military.obj-c8edabd019bf22a2387b5e797c85ef4b.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://geb24u1mk4yk"
+path="res://.godot/imported/Super_Tank.obj-cf87c8672e45ed6a717e485fb09387d6.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Super_Tank.obj-cf87c8672e45ed6a717e485fb09387d6.mesh"]
+
+source_file="res://3d_assets/Military_Vehicles_LP/OBJ/Super_Tank.obj"
+dest_files=["res://.godot/imported/Super_Tank.obj-cf87c8672e45ed6a717e485fb09387d6.mesh", "res://.godot/imported/Super_Tank.obj-cf87c8672e45ed6a717e485fb09387d6.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

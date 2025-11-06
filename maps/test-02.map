@@ -1,0 +1,31 @@
+// Game: Roboto
+// Format: Standard
+// entity 0
+{
+"wad" ""
+"classname" "worldspawn"
+"func detail" ""
+// brush 0
+{
+( -704 -40 14 ) ( -704 -39 14 ) ( -704 -40 15 ) textures_pack/Wood_12-256x256 -104 46 0 1 1
+( -704 -40 14 ) ( -704 -40 15 ) ( -703 -40 14 ) textures_pack/Wood_12-256x256 -80 46 0 1 1
+( -704 -40 14 ) ( -703 -40 14 ) ( -704 -39 14 ) textures_pack/Wood_12-256x256 -80 104 0 1 1
+( -672 56 30 ) ( -672 57 30 ) ( -671 56 30 ) textures_pack/Wood_12-256x256 -80 104 0 1 1
+( -672 56 30 ) ( -671 56 30 ) ( -672 56 31 ) textures_pack/Wood_12-256x256 -80 46 0 1 1
+( -672 56 30 ) ( -672 56 31 ) ( -672 57 30 ) textures_pack/Wood_12-256x256 -104 46 0 1 1
+}
+}
+// entity 1
+{
+"classname" "func_detail"
+"property 1" ""
+// brush 0
+{
+( -864 432 16 ) ( -864 -384 16 ) ( -864 -384 -16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+( 64 464 -16 ) ( 64 464 16 ) ( -864 432 16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+( 64 -352 -16 ) ( 64 464 -16 ) ( -864 432 -16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+( -864 432 16 ) ( 64 464 16 ) ( 64 -352 16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+( -864 -384 16 ) ( 64 -352 16 ) ( 64 -352 -16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+( 64 -352 16 ) ( 64 464 16 ) ( 64 464 -16 ) textures_pack/Stone_11-256x256 0 0 0 1 1
+}
+}

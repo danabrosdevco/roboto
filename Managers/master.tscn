@@ -1,21 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://bw1jh4dftjbaa"]
+[gd_scene load_steps=2 format=3 uid="uid://bw1jh4dftjbaa"]
 
-[ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/test_character.tscn" id="1_3hxox"]
-[ext_resource type="PackedScene" uid="uid://c5r8kyl3dh8ox" path="res://Env/world.tscn" id="2_phnw0"]
+[ext_resource type="PackedScene" uid="uid://bnygpdpgt07ir" path="res://Env/world.tscn" id="1_dsoqm"]
 
 [node name="Master" type="Node"]
 
-[node name="test_character" parent="." node_paths=PackedStringArray("world", "hud") instance=ExtResource("1_3hxox")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.04127, 0)
-world = NodePath("../World")
-hud = NodePath("../World/HUD")
-
-[node name="World" parent="." instance=ExtResource("2_phnw0")]
-
-[connection signal="activate_scanner_ui" from="test_character" to="World/HUD" method="activate_scan_effect"]
-[connection signal="highlight_enemy" from="test_character" to="World/HUD" method="activate_enemy_marker"]
-
-[editable path="test_character"]
-[editable path="test_character/Camera3D/Weapon"]
-[editable path="test_character/Camera3D/Weapon/AssaultRifle2_12"]
-[editable path="World"]
+[node name="World" parent="." instance=ExtResource("1_dsoqm")]

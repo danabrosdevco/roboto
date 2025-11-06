@@ -1,0 +1,22 @@
+[gd_scene load_steps=6 format=3 uid="uid://bq3ky68ibirr6"]
+
+[ext_resource type="Texture2D" uid="uid://ctw7y7lxnanuc" path="res://2d_assets/image_part_001 Background Removed.png" id="1_2vqki"]
+[ext_resource type="Script" path="res://Character/weapon/muzzle_flash.gd" id="1_u12us"]
+[ext_resource type="Texture2D" uid="uid://xy2afgtqrrh3" path="res://2d_assets/image_part_002 Background Removed.png" id="2_n46ad"]
+[ext_resource type="Texture2D" uid="uid://l17fny5rktro" path="res://2d_assets/image_part_003 Background Removed.png" id="3_eufnm"]
+[ext_resource type="Texture2D" uid="uid://4e4fep7idusq" path="res://2d_assets/image_part_004 Background Removed.png" id="4_m06pc"]
+
+[node name="MuzzleFlash" type="Node3D"]
+script = ExtResource("1_u12us")
+flash_textures = Array[Texture2D]([ExtResource("1_2vqki"), ExtResource("2_n46ad"), ExtResource("3_eufnm"), ExtResource("4_m06pc")])
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+transform = Transform3D(0.65, 0, 0, 0, 0.65, 0, 0, 0, 0.65, 0, 0, 0)
+modulate = Color(1, 1, 1, 0.627451)
+billboard = 1
+texture = ExtResource("1_2vqki")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(0.536313, 0.186568, 0.117025, 1)
+light_energy = 6.0
+light_bake_mode = 0
