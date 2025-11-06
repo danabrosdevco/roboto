@@ -10,12 +10,9 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bvcf1"]
 shader = ExtResource("1_ct71j")
-shader_parameter/posterize_levels = 4.0
-shader_parameter/contrast = 1.0
+shader_parameter/posterize_levels = 5.0
+shader_parameter/contrast = 1.1
 shader_parameter/tint_color = Vector3(0.85, 0.85, 0.65)
-shader_parameter/fog_strength = 0.1
-shader_parameter/fog_depth_start = 0.0
-shader_parameter/fog_depth_end = 1.0
 
 [node name="HUD" type="Control" node_paths=PackedStringArray("health_label", "ammo_label")]
 layout_mode = 3

@@ -478,6 +478,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.61099, 3.60764, 4.0665)
 [node name="WorldEnvironment" parent="." instance=ExtResource("8_2tdx3")]
 
 [node name="Sun" parent="WorldEnvironment" index="0"]
-transform = Transform3D(0.89002, -0.45575, -0.0124598, -0.278779, -0.565637, 0.776103, -0.360757, -0.687274, -0.630483, 2.68291, 5.01918, 2.68093)
+transform = Transform3D(0.211335, -0.824465, -0.524972, -0.278779, -0.565637, 0.776104, -0.936813, -0.0176672, -0.349383, 2.68291, 5.01918, 2.68093)
 
 [editable path="WorldEnvironment"]
