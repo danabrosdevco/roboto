@@ -10,7 +10,7 @@ class_name Tracer
 @export var end_scale_z: float = 4.0
 @export var scale_distance: float = 15  # distance over which tracer lengthens
 
-var direction: Vector3
+@export var direction: Vector3
 var distance_traveled := 0.0
 var is_active := true
 

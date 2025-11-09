@@ -23,7 +23,9 @@ const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENS := 0.002
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-@export var health = 100
+@export var health = 50
+@export var max_health = 100
+var shards = 0
 @export var recoil_curve: Curve
 
 const LEAN_ANGLE := 0.35
@@ -93,7 +95,7 @@ var pitch := 0.0
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	hud.update_status(health, magazine_capacity, magazine_size)
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -345,7 +347,7 @@ func fire() -> void:
 		fire_tracer()
 	magazine_capacity = max(0, magazine_capacity - 1)
 	tracer = false
-	hud.update_status(health, magazine_capacity, magazine_size)
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
 
 
 func fire_tracer():
@@ -371,7 +373,7 @@ func start_reload() -> void:
 	await get_tree().create_timer(reload_time).timeout
 	magazine_capacity = magazine_size
 	is_reloading = false
-	hud.update_status(health, magazine_capacity, magazine_size)
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
 	#print("Reload complete.")
 func play_reload_sequence():
 	for i in reload_sounds.size():
@@ -388,11 +390,22 @@ func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
 
 func apply_damage(damage):
 	health -= damage
-	hud.update_status(health, magazine_capacity, magazine_size)
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
 	if health <= 0:
 		health = 0
 		die()
 	pass
+
+func apply_healing(healing):
+	var new_health = health + healing
+	if new_health >= max_health:
+		new_health = max_health
+	health = new_health
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
+
+func add_shards(value):
+	shards += value
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
 
 func die():
 	set_process(false)

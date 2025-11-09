@@ -4,6 +4,7 @@ class_name HUD
 @export var enemy_marker_scene: PackedScene
 @export var health_label: Label
 @export var ammo_label: Label
+@export var shards_label: Label
 
 func activate_scan_effect():
 	var new_scan_effect_scene = scan_effect_scene.instantiate()
@@ -24,6 +25,7 @@ func activate_enemy_marker(obj:Node3D, duration: float):
 	move_child(hud_marker, 0)
 
 
-func update_status(health: int, magazine_capacity: int, magazine_size: int) -> void:
+func update_status(health: int, magazine_capacity: int, magazine_size: int, shards:int) -> void:
 	health_label.text = "Health: %d" % health
 	ammo_label.text = "Ammo: %d / %d" % [magazine_capacity, magazine_size]
+	shards_label.text = ": " + str(shards)

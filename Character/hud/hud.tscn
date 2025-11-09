@@ -14,7 +14,7 @@ shader_parameter/posterize_levels = 5.0
 shader_parameter/contrast = 1.1
 shader_parameter/tint_color = Vector3(0.85, 0.85, 0.65)
 
-[node name="HUD" type="Control" node_paths=PackedStringArray("health_label", "ammo_label")]
+[node name="HUD" type="Control" node_paths=PackedStringArray("health_label", "ammo_label", "shards_label")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -27,6 +27,7 @@ scan_effect_scene = ExtResource("1_80vuv")
 enemy_marker_scene = ExtResource("3_2h28p")
 health_label = NodePath("VBoxContainer/HullHealth")
 ammo_label = NodePath("VBoxContainer/Ammo")
+shards_label = NodePath("VBoxContainer/HBoxContainer/Label3")
 
 [node name="TextureRect" type="ColorRect" parent="."]
 layout_mode = 0

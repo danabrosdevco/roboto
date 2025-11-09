@@ -8,10 +8,12 @@ var damaged: = {}
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+
 	for i in effects:
 		i.emitting = true
 	audio.pitch_scale = randf_range(0.9, 1.1)   # ±10% pitch change
-	audio.play()
+	if get_parent() is not WorldTemplate:
+		audio.play()
 	await get_tree().create_timer(0.3).timeout
 	damage_area.monitoring = false
 	await get_tree().create_timer(2).timeout

@@ -1,0 +1,31 @@
+[gd_scene load_steps=8 format=3 uid="uid://dntb6tk73oe4t"]
+
+[ext_resource type="PackedScene" uid="uid://bnykkcx5dvsr5" path="res://3d_assets/HackerRoom/FBX/FloppyDisk.fbx" id="1_n7b2k"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_4r1p7"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_q6udq"]
+width = 32
+height = 32
+noise = SubResource("FastNoiseLite_4r1p7")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cymkl"]
+albedo_color = Color(0.12, 0.15, 0.142, 1)
+albedo_texture = SubResource("NoiseTexture2D_q6udq")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_4gys4"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_d653y"]
+width = 16
+height = 16
+noise = SubResource("FastNoiseLite_4gys4")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6jjsj"]
+albedo_texture = SubResource("NoiseTexture2D_d653y")
+
+[node name="FloppyDisk" instance=ExtResource("1_n7b2k")]
+transform = Transform3D(0.75, 0, 0, 0, 0.75, 0, 0, 0, 0.75, 0, 0, 0)
+
+[node name="Plane_001_Plane_004" parent="." index="0"]
+surface_material_override/0 = SubResource("StandardMaterial3D_cymkl")
+surface_material_override/1 = SubResource("StandardMaterial3D_6jjsj")

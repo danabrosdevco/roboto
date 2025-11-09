@@ -1,9 +1,12 @@
-[gd_scene load_steps=5 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=8 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud/hud.tscn" id="2_ox1ok"]
 [ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/test_character.tscn" id="4_m38gd"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="5_5i2ew"]
 [ext_resource type="PackedScene" uid="uid://fgdjjw1lgv8e" path="res://maps/civil-unrest_level.tscn" id="5_gxlro"]
+[ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="6_ckjgx"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="7_ura3n"]
 
 [node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level")]
 script = ExtResource("1_2t272")
@@ -19,6 +22,17 @@ world = NodePath("..")
 hud = NodePath("../HUD")
 
 [node name="TBLevel" parent="." instance=ExtResource("5_gxlro")]
+
+[node name="MuzzleFlash" parent="." instance=ExtResource("5_5i2ew")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -11.0057, 0)
+
+[node name="Explosion" parent="." instance=ExtResource("6_ckjgx")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -16.3576, 0)
+damage_value = 0
+
+[node name="Tracer" parent="." instance=ExtResource("7_ura3n")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -16.0631, 0)
+direction = Vector3(0, -1, 0)
 
 [connection signal="activate_scanner_ui" from="test_character" to="HUD" method="activate_scan_effect"]
 [connection signal="highlight_enemy" from="test_character" to="HUD" method="activate_enemy_marker"]
