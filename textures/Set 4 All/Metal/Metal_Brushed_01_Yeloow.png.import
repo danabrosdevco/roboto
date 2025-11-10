@@ -1,0 +1,34 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://7hm4vyvlxsu"
+path="res://.godot/imported/Metal_Brushed_01_Yeloow.png-e92620f85870a7065ea2d5fad25eba66.ctex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://textures/Set 4 All/Metal/Metal_Brushed_01_Yeloow.png"
+dest_files=["res://.godot/imported/Metal_Brushed_01_Yeloow.png-e92620f85870a7065ea2d5fad25eba66.ctex"]
+
+[params]
+
+compress/mode=0
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=1

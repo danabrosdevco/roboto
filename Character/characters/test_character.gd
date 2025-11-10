@@ -18,6 +18,8 @@ class_name Player
 @export var rifle_stream_player: AudioStreamPlayer3D
 @export var click_stream_player: AudioStreamPlayer3D
 @export var reload_stream_player: AudioStreamPlayer3D
+@export var obstruction_raycast: RayCast3D
+@export var health_sfx: AudioStreamPlayer
 # Export Data # 
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
@@ -76,8 +78,10 @@ var bob_time := 0.0                      # internal timer
 # Base transform snapshot
 const base_weapon_position := Vector3(0.31,-0.425,-0.015)
 const base_weapon_rotation := Vector3(-0.3,6.0,2.8)
+const obstructed_weapon_position: = Vector3(-0.5, -0.425, -1)
+const obstructed_weapon_rotation = Vector3(0, 90, 3)
 
-
+var is_obstructed :=false
 var is_ads := false
 var magazine_size: int = 30
 var magazine_capacity: int = 30
@@ -189,6 +193,7 @@ func handle_camera_and_weapon(delta: float) -> void:
 		0.0
 	)
 
+	is_obstructed = obstruction_raycast.is_colliding()
 # FOV & Lean
 	var target_fov: float
 	if is_ads:
@@ -210,6 +215,9 @@ func handle_camera_and_weapon(delta: float) -> void:
 	if is_reloading:
 		target_pos = reload_position
 		target_rot = reload_rotation
+	elif is_obstructed:
+		target_pos = obstructed_weapon_position
+		target_rot = obstructed_weapon_rotation
 	elif is_ads:
 		target_pos = ads_position
 		target_rot = ads_rotation
@@ -401,6 +409,7 @@ func apply_healing(healing):
 	if new_health >= max_health:
 		new_health = max_health
 	health = new_health
+	health_sfx.play()
 	hud.update_status(health, magazine_capacity, magazine_size, shards)
 
 func add_shards(value):
