@@ -66,6 +66,8 @@ var ads_position := Vector3(0.0,0.0,-1.077)
 var ads_rotation := Vector3(0.0,0.0,3.0)
 var reload_rotation := Vector3(0.2,20.5,58.0)
 var reload_position := Vector3(0.31,-0.425,-0.015)
+const obstructed_weapon_position = Vector3(-0.5, -0.425, -1)
+const obstructed_weapon_rotation = Vector3(0.3, 270, 3)
 
 # --- Weapon Bob (Idle Sway) ---
 @export var bob_speed := 1.1            # how fast the gun bobs (Hz)
@@ -78,8 +80,6 @@ var bob_time := 0.0                      # internal timer
 # Base transform snapshot
 const base_weapon_position := Vector3(0.31,-0.425,-0.015)
 const base_weapon_rotation := Vector3(-0.3,6.0,2.8)
-const obstructed_weapon_position: = Vector3(-0.5, -0.425, -1)
-const obstructed_weapon_rotation = Vector3(0, 90, 3)
 
 var is_obstructed :=false
 var is_ads := false
@@ -253,7 +253,6 @@ func handle_camera_and_weapon(delta: float) -> void:
 	# Rotation interpolation (look direction)
 	rotation.y = lerp_angle(rotation.y, look_direction.y, delta * look_interp_speed)
 	cam.rotation.x = lerp_angle(cam.rotation.x, look_direction.x, delta * look_interp_speed)
-
 	# Apply recoil
 	cam.rotation_degrees.x += camera_recoil_current.x
 	cam.rotation_degrees.y += camera_recoil_current.y

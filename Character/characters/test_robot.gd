@@ -140,6 +140,9 @@ func handle_movement(delta):
 				move_along_nav(delta)
 		MovementState.WANDER:
 			wander_time -= delta
+			if look_target.distance_to(global_position) <= 1:
+				change_state(MovementState.IDLE)
+				return
 			if wander_time <= 0.0:
 				wander_time = wander_delay
 				var origin = global_position
