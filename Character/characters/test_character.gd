@@ -19,7 +19,9 @@ class_name Player
 @export var click_stream_player: AudioStreamPlayer3D
 @export var reload_stream_player: AudioStreamPlayer3D
 @export var obstruction_raycast: RayCast3D
+@export var interact_raycast: RayCast3D
 @export var health_sfx: AudioStreamPlayer
+@export var shards_sfx: AudioStreamPlayer
 # Export Data # 
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
@@ -37,13 +39,8 @@ const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 const FIRE_RATE := 0.0705
 const reload_return_speed:= 30
-# Enums #
 
 # Working Data #
-
-signal activate_scanner_ui
-signal highlight_enemy(target:Node3D, duration: float)
-
 
 var is_fullscreen = false
 var look_direction: Vector3
@@ -62,6 +59,9 @@ var recoil_rotation := Vector3.ZERO
 var scanner_timer: = 0.0
 var scanner_cooldown = 3
 
+
+var current_interactible : Interactible
+
 var ads_position := Vector3(0.0,0.0,-1.077)
 var ads_rotation := Vector3(0.0,0.0,3.0)
 var reload_rotation := Vector3(0.2,20.5,58.0)
@@ -69,18 +69,12 @@ var reload_position := Vector3(0.31,-0.425,-0.015)
 const obstructed_weapon_position = Vector3(-0.5, -0.425, -1)
 const obstructed_weapon_rotation = Vector3(0.3, 270, 3)
 
-# --- Weapon Bob (Idle Sway) ---
-@export var bob_speed := 1.1            # how fast the gun bobs (Hz)
-@export var bob_amount := 0.015          # how far the gun moves when hip-firing
-@export var ads_bob_scale := 0.05         # how much to reduce bob when ADS (0.2 = 80% less)
-@export var movement_bob_scale := 2.2    # scale bobbing when moving
-var bob_time := 0.0                      # internal timer
-
 
 # Base transform snapshot
 const base_weapon_position := Vector3(0.31,-0.425,-0.015)
 const base_weapon_rotation := Vector3(-0.3,6.0,2.8)
 
+# WEAPONS #
 var is_obstructed :=false
 var is_ads := false
 var magazine_size: int = 30
@@ -90,12 +84,19 @@ var tracer: bool = false
 var is_reloading := false
 var from
 var to
-
 @export var reload_time := 2.15 # seconds to reload
-
+# --- Weapon Bob (Idle Sway) ---
+@export var bob_speed := 1.1            # how fast the gun bobs (Hz)
+@export var bob_amount := 0.015          # how far the gun moves when hip-firing
+@export var ads_bob_scale := 0.05         # how much to reduce bob when ADS (0.2 = 80% less)
+@export var movement_bob_scale := 2.2    # scale bobbing when moving
+var bob_time := 0.0                      # internal timer
 var target_lean := 0.0
 var pitch := 0.0
 
+signal activate_scanner_ui
+signal highlight_enemy(target:Node3D, duration: float)
+signal activate_interactible_ui(interactible: Interactible)
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -118,6 +119,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	fire_cooldown -= delta
 	scanner_timer -= delta
+	check_interactible()
 	handle_gravity(delta)
 	handle_input(delta)
 	handle_movement(delta)
@@ -125,6 +127,25 @@ func _physics_process(delta: float) -> void:
 	handle_weapon_logic(delta)
 
 	move_and_slide()
+
+func check_interactible():
+	if interact_raycast and interact_raycast.is_colliding():
+		var collider = interact_raycast.get_collider()
+		if !collider:
+			return
+		if collider is not Interactible:
+			return
+		if current_interactible == collider:
+			return
+		current_interactible = collider
+		activate_interactible_ui.emit(current_interactible)
+		return
+	else:
+		if current_interactible:
+			current_interactible = null
+			activate_interactible_ui.emit(current_interactible)
+
+
 func handle_gravity(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
@@ -162,6 +183,9 @@ func handle_input(_delta: float) -> void:
 		target_lean = -LEAN_ANGLE
 	else:
 		target_lean = 0.0
+
+	if Input.is_action_just_pressed("interact") and not is_reloading and current_interactible != null:
+		interact(current_interactible)
 
 
 func handle_movement(_delta: float) -> void:
@@ -389,6 +413,22 @@ func play_reload_sequence():
 		await get_tree().create_timer(delay).timeout
 		sound.play()
 
+func interact(interactible:Interactible):
+	if interactible == null:
+		return
+	match interactible.get_type():
+		Enums.InteractTypes.HEALTH:
+			apply_healing(interactible.get_value())
+		Enums.InteractTypes.SHARDS:
+			add_shards(interactible.get_value())
+		_:
+			print("Unknown interactible type")
+	interactible.disable()
+	current_interactible = null
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
+	activate_interactible_ui.emit(current_interactible)
+	pass
+
 
 func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
 	#print ("TIME TO HIGHLIGHT!")
@@ -413,6 +453,7 @@ func apply_healing(healing):
 
 func add_shards(value):
 	shards += value
+	shards_sfx.play()
 	hud.update_status(health, magazine_capacity, magazine_size, shards)
 
 func die():

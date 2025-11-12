@@ -5,3 +5,9 @@ class_name Interactible
 
 func get_interactible():
 	return [type, value]
+func get_type():
+	return type
+func get_value():
+	return value
+func disable():
+	queue_free()

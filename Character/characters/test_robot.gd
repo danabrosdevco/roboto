@@ -41,6 +41,9 @@ enum MovementState {IDLE, WANDER, PATROL, ENGAGE, SEEK_COVER, DEAD}
 enum WeaponState {FIRE, RELOAD, IDLE, AIM}
 enum TargetSource { NONE, VISION, COMMAND }
 
+# CONST #
+var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+
 
 # WORKING DATA # 
 @export var movement_target: Vector3
@@ -75,12 +78,17 @@ func _physics_process(delta: float) -> void:
 	weapon_time += delta
 	movement_time += delta
 	if movement_state != MovementState.DEAD:
+		handle_gravity(delta)
 		handle_targeting(delta)
 		handle_looking()
 		handle_movement(delta)
 	handle_weapon_logic(delta)
 	update_debug_label()
-	
+
+func handle_gravity(delta: float) -> void:
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+
 func handle_targeting(delta):
 	targetting_time += delta
 	for body in seen_bodies:

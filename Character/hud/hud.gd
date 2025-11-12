@@ -34,12 +34,15 @@ func activate_enemy_marker(obj:Node3D, duration: float):
 	move_child(hud_marker, 0)
 
 
-func activate_interaction(type, value):
+func activate_interactible(interactible: Interactible):
+	if interactible == null:
+		deactivate_interaction()
+		return
+	var type = interactible.get_type()
+	var value = interactible.get_value()
 	interact_box.visible = true
-
 	# Set label text like "F | 50"
-	interact_label.text = "F | %d" % value
-
+	interact_label.text = "G | %d" % value
 	# Set the correct icon
 	if interact_textures.has(type):
 		interact_texture.texture = interact_textures[type]

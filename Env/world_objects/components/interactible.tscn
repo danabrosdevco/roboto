@@ -2,5 +2,7 @@
 
 [ext_resource type="Script" path="res://Env/world_objects/components/interactible.gd" id="1_soxuo"]
 
-[node name="Interactible" type="Node3D"]
+[node name="Interactible" type="Area3D"]
 script = ExtResource("1_soxuo")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
