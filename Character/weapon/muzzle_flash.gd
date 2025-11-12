@@ -9,6 +9,11 @@ var frame_counter := 0
 var active := false
 @export var flash_frames := 3
 var prev_number
+
+func _ready():
+	if get_parent() is WorldTemplate:
+		play_flash()
+
 func play_flash() -> void:
 	var number = randi_range(0, flash_textures.size() -1)
 	sprite.texture = flash_textures.pick_random()
@@ -25,6 +30,9 @@ func play_flash() -> void:
 	active = true
 	frame_counter = 0
 	prev_number = number
+	if get_parent() is WorldTemplate:
+		await get_tree().create_timer(0.3).timeout
+		queue_free()
 
 func _process(_delta: float) -> void:
 	if not active:

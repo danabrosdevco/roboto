@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://d3b6t0u0yav3s"]
+
+[ext_resource type="Script" path="res://Env/world_objects/components/interactible.gd" id="1_vo168"]
+[ext_resource type="PackedScene" uid="uid://dntb6tk73oe4t" path="res://Env/world_objects/edited models/floppy_disk.tscn" id="2_t18jf"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wptlo"]
+size = Vector3(0.3, 0.3, 0.3)
+
+[node name="Interactible" type="Area3D"]
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_vo168")
+type = 1
+value = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_wptlo")
+
+[node name="FloppyDisk" parent="." instance=ExtResource("2_t18jf")]

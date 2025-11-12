@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://cvqlpgdyw0obl"]
+
+[ext_resource type="Texture2D" uid="uid://bnu03jlr4gaqw" path="res://textures/PSX_Textures/dirt_hell_1.png" id="1_rgrqe"]
+
+[resource]
+albedo_texture = ExtResource("1_rgrqe")
+metallic_specular = 0.0
+texture_filter = 2

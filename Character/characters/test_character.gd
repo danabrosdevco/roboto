@@ -18,12 +18,18 @@ class_name Player
 @export var rifle_stream_player: AudioStreamPlayer3D
 @export var click_stream_player: AudioStreamPlayer3D
 @export var reload_stream_player: AudioStreamPlayer3D
+@export var obstruction_raycast: RayCast3D
+@export var interact_raycast: RayCast3D
+@export var health_sfx: AudioStreamPlayer
+@export var shards_sfx: AudioStreamPlayer
 # Export Data # 
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENS := 0.002
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-@export var health = 100
+@export var health = 50
+@export var max_health = 100
+var shards = 0
 @export var recoil_curve: Curve
 
 const LEAN_ANGLE := 0.35
@@ -33,13 +39,8 @@ const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 const FIRE_RATE := 0.0705
 const reload_return_speed:= 30
-# Enums #
 
 # Working Data #
-
-signal activate_scanner_ui
-signal highlight_enemy(target:Node3D, duration: float)
-
 
 var is_fullscreen = false
 var look_direction: Vector3
@@ -58,24 +59,23 @@ var recoil_rotation := Vector3.ZERO
 var scanner_timer: = 0.0
 var scanner_cooldown = 3
 
+
+var current_interactible : Interactible
+
 var ads_position := Vector3(0.0,0.0,-1.077)
 var ads_rotation := Vector3(0.0,0.0,3.0)
 var reload_rotation := Vector3(0.2,20.5,58.0)
 var reload_position := Vector3(0.31,-0.425,-0.015)
-
-# --- Weapon Bob (Idle Sway) ---
-@export var bob_speed := 1.1            # how fast the gun bobs (Hz)
-@export var bob_amount := 0.015          # how far the gun moves when hip-firing
-@export var ads_bob_scale := 0.05         # how much to reduce bob when ADS (0.2 = 80% less)
-@export var movement_bob_scale := 2.2    # scale bobbing when moving
-var bob_time := 0.0                      # internal timer
+const obstructed_weapon_position = Vector3(-0.5, -0.425, -1)
+const obstructed_weapon_rotation = Vector3(0.3, 270, 3)
 
 
 # Base transform snapshot
 const base_weapon_position := Vector3(0.31,-0.425,-0.015)
 const base_weapon_rotation := Vector3(-0.3,6.0,2.8)
 
-
+# WEAPONS #
+var is_obstructed :=false
 var is_ads := false
 var magazine_size: int = 30
 var magazine_capacity: int = 30
@@ -84,16 +84,23 @@ var tracer: bool = false
 var is_reloading := false
 var from
 var to
-
 @export var reload_time := 2.15 # seconds to reload
-
+# --- Weapon Bob (Idle Sway) ---
+@export var bob_speed := 1.1            # how fast the gun bobs (Hz)
+@export var bob_amount := 0.015          # how far the gun moves when hip-firing
+@export var ads_bob_scale := 0.05         # how much to reduce bob when ADS (0.2 = 80% less)
+@export var movement_bob_scale := 2.2    # scale bobbing when moving
+var bob_time := 0.0                      # internal timer
 var target_lean := 0.0
 var pitch := 0.0
 
+signal activate_scanner_ui
+signal highlight_enemy(target:Node3D, duration: float)
+signal activate_interactible_ui(interactible: Interactible)
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	hud.update_status(health, magazine_capacity, magazine_size)
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -112,6 +119,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	fire_cooldown -= delta
 	scanner_timer -= delta
+	check_interactible()
 	handle_gravity(delta)
 	handle_input(delta)
 	handle_movement(delta)
@@ -119,6 +127,25 @@ func _physics_process(delta: float) -> void:
 	handle_weapon_logic(delta)
 
 	move_and_slide()
+
+func check_interactible():
+	if interact_raycast and interact_raycast.is_colliding():
+		var collider = interact_raycast.get_collider()
+		if !collider:
+			return
+		if collider is not Interactible:
+			return
+		if current_interactible == collider:
+			return
+		current_interactible = collider
+		activate_interactible_ui.emit(current_interactible)
+		return
+	else:
+		if current_interactible:
+			current_interactible = null
+			activate_interactible_ui.emit(current_interactible)
+
+
 func handle_gravity(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
@@ -157,6 +184,9 @@ func handle_input(_delta: float) -> void:
 	else:
 		target_lean = 0.0
 
+	if Input.is_action_just_pressed("interact") and not is_reloading and current_interactible != null:
+		interact(current_interactible)
+
 
 func handle_movement(_delta: float) -> void:
 	var input2 := Input.get_vector("ui_left", "ui_right", "ui_down", "ui_up")
@@ -187,6 +217,7 @@ func handle_camera_and_weapon(delta: float) -> void:
 		0.0
 	)
 
+	is_obstructed = obstruction_raycast.is_colliding()
 # FOV & Lean
 	var target_fov: float
 	if is_ads:
@@ -208,6 +239,9 @@ func handle_camera_and_weapon(delta: float) -> void:
 	if is_reloading:
 		target_pos = reload_position
 		target_rot = reload_rotation
+	elif is_obstructed:
+		target_pos = obstructed_weapon_position
+		target_rot = obstructed_weapon_rotation
 	elif is_ads:
 		target_pos = ads_position
 		target_rot = ads_rotation
@@ -243,7 +277,6 @@ func handle_camera_and_weapon(delta: float) -> void:
 	# Rotation interpolation (look direction)
 	rotation.y = lerp_angle(rotation.y, look_direction.y, delta * look_interp_speed)
 	cam.rotation.x = lerp_angle(cam.rotation.x, look_direction.x, delta * look_interp_speed)
-
 	# Apply recoil
 	cam.rotation_degrees.x += camera_recoil_current.x
 	cam.rotation_degrees.y += camera_recoil_current.y
@@ -345,7 +378,7 @@ func fire() -> void:
 		fire_tracer()
 	magazine_capacity = max(0, magazine_capacity - 1)
 	tracer = false
-	hud.update_status(health, magazine_capacity, magazine_size)
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
 
 
 func fire_tracer():
@@ -371,7 +404,7 @@ func start_reload() -> void:
 	await get_tree().create_timer(reload_time).timeout
 	magazine_capacity = magazine_size
 	is_reloading = false
-	hud.update_status(health, magazine_capacity, magazine_size)
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
 	#print("Reload complete.")
 func play_reload_sequence():
 	for i in reload_sounds.size():
@@ -379,6 +412,22 @@ func play_reload_sequence():
 		var delay = reload_delays[i]
 		await get_tree().create_timer(delay).timeout
 		sound.play()
+
+func interact(interactible:Interactible):
+	if interactible == null:
+		return
+	match interactible.get_type():
+		Enums.InteractTypes.HEALTH:
+			apply_healing(interactible.get_value())
+		Enums.InteractTypes.SHARDS:
+			add_shards(interactible.get_value())
+		_:
+			print("Unknown interactible type")
+	interactible.disable()
+	current_interactible = null
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
+	activate_interactible_ui.emit(current_interactible)
+	pass
 
 
 func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
@@ -388,11 +437,24 @@ func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
 
 func apply_damage(damage):
 	health -= damage
-	hud.update_status(health, magazine_capacity, magazine_size)
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
 	if health <= 0:
 		health = 0
 		die()
 	pass
+
+func apply_healing(healing):
+	var new_health = health + healing
+	if new_health >= max_health:
+		new_health = max_health
+	health = new_health
+	health_sfx.play()
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
+
+func add_shards(value):
+	shards += value
+	shards_sfx.play()
+	hud.update_status(health, magazine_capacity, magazine_size, shards)
 
 func die():
 	set_process(false)

@@ -11,8 +11,34 @@
 	- AVOIDANCE
 - robots advance as group.
 - robots defend as a group.
+
+ARGO POINTS
+- COMPUTER YOU CAN INTERACT WITH AND INFECT WITH ARGO FOR POINTS.
+
+INTERACTION / LINK
+- PUSH A BUTTON, TRIGGERS EFFECT ON ANOTHER THING.
+
+MELEE ENEMY
+
+INSURGENT ENEMY
+
+GUN PUSHES INTO TABLES ETC.
+
 SUPPRESSION EFFECT.
 - robots suppressing fire.
 GRENADES
 
 - robots use grenades.
+
+GRENADES ARE EQUIPMENT
+- FRAG
+- STUN
+- SMOKE
+- GAS
+- SUPPORT CALL-IN
+- ALLY DRONE SPAWN
+
+LEVEL 1
+- Civil Unrest. Stone breaking robots have gone berserk.
+- Insurgent cell is activating and revolting against Order.
+- Restore Order, Eliminate Insurgent Leader, Shut Down the stone breakers.

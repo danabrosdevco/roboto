@@ -1,0 +1,25 @@
+[gd_scene load_steps=4 format=3 uid="uid://buetx64wgjk38"]
+
+[ext_resource type="Script" path="res://Env/world_objects/pick_up.gd" id="1_hk5o4"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_3xymf"]
+radius = 0.75
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6x6o8"]
+transparency = 1
+
+[node name="PickUp" type="Node3D" node_paths=PackedStringArray("model")]
+script = ExtResource("1_hk5o4")
+model = NodePath("CSGTorus3D")
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_3xymf")
+
+[node name="CSGTorus3D" type="CSGTorus3D" parent="."]
+inner_radius = 0.45
+outer_radius = 0.75
+material = SubResource("StandardMaterial3D_6x6o8")
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]
