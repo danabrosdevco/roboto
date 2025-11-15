@@ -1,6 +1,6 @@
-[gd_scene load_steps=4 format=3 uid="uid://buetx64wgjk38"]
+[gd_scene load_steps=4 format=3 uid="uid://clfngb5bi10q3"]
 
-[ext_resource type="Script" path="res://Env/world_objects/pick_up.gd" id="1_hk5o4"]
+[ext_resource type="Script" path="res://Env/world_objects/pick_up.gd" id="1_dofyk"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_3xymf"]
 radius = 0.75
@@ -9,9 +9,10 @@ radius = 0.75
 transparency = 1
 
 [node name="PickUp" type="Node3D" node_paths=PackedStringArray("model", "collision_shape") groups=["pickups"]]
-script = ExtResource("1_hk5o4")
+script = ExtResource("1_dofyk")
 model = NodePath("CSGTorus3D")
 collision_shape = NodePath("Area3D/CollisionShape3D")
+destroy_on_use = true
 
 [node name="Area3D" type="Area3D" parent="."]
 

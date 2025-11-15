@@ -38,7 +38,7 @@ radius = 5.0
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_wrtgx"]
 
-[node name="EnemyRobot" type="CharacterBody3D" node_paths=PackedStringArray("head", "torso", "legs_wheels", "nav_agent", "weapon", "hearing", "sight", "label", "bark")]
+[node name="EnemyRobot" type="CharacterBody3D" node_paths=PackedStringArray("head", "torso", "legs_wheels", "nav_agent", "weapon", "hearing", "sight", "label", "bark") groups=["enemies"]]
 script = ExtResource("1_mmb2y")
 head = NodePath("Head")
 torso = NodePath("Torso")
@@ -91,6 +91,7 @@ shape = SubResource("ConvexPolygonShape3D_wrtgx")
 
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5317, 0)
+visible = false
 billboard = 1
 text = "Text"
 font_size = 48

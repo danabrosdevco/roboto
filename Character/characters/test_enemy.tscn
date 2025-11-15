@@ -12,7 +12,7 @@ albedo_texture = ExtResource("2_jtylq")
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_uowf8"]
 
-[node name="EnemyCharBody" type="CharacterBody3D" node_paths=PackedStringArray("label")]
+[node name="EnemyCharBody" type="CharacterBody3D" node_paths=PackedStringArray("label") groups=["enemies"]]
 script = ExtResource("1_hdy57")
 label = NodePath("Label3D")
 

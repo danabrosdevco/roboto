@@ -25,7 +25,7 @@ radius = 45.0
 [sub_resource type="BoxShape3D" id="BoxShape3D_bc8ty"]
 size = Vector3(30, 15, 90)
 
-[node name="TestDrone" type="CharacterBody3D" node_paths=PackedStringArray("weapon", "hearing", "sight", "label", "bark", "heli_loop")]
+[node name="TestDrone" type="CharacterBody3D" node_paths=PackedStringArray("weapon", "hearing", "sight", "label", "bark", "heli_loop") groups=["enemies"]]
 script = ExtResource("1_rci4v")
 weapon = NodePath("ai_bomb_weapon")
 hearing = NodePath("Hearing")

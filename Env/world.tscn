@@ -1,17 +1,28 @@
-[gd_scene load_steps=8 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=10 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
+[ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
 [ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud/hud.tscn" id="2_ox1ok"]
+[ext_resource type="Script" path="res://Managers/game_manager.gd" id="3_7kch0"]
 [ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/test_character.tscn" id="4_m38gd"]
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="5_5i2ew"]
 [ext_resource type="PackedScene" uid="uid://fgdjjw1lgv8e" path="res://maps/civil-unrest_level.tscn" id="5_gxlro"]
 [ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="6_ckjgx"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="7_ura3n"]
 
-[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level")]
+[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager")]
 script = ExtResource("1_2t272")
 player = NodePath("test_character")
 current_level = NodePath("TBLevel")
+ai_manager = NodePath("AIManager")
+game_manager = NodePath("GameManager")
+
+[node name="AIManager" parent="." node_paths=PackedStringArray("world") instance=ExtResource("2_d77gp")]
+world = NodePath("..")
+
+[node name="GameManager" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("3_7kch0")
+player = NodePath("../test_character")
 
 [node name="HUD" parent="." instance=ExtResource("2_ox1ok")]
 metadata/_edit_use_anchors_ = true

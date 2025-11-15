@@ -12,7 +12,7 @@ func _ready() -> void:
 	for i in effects:
 		i.emitting = true
 	audio.pitch_scale = randf_range(0.9, 1.1)   # ±10% pitch change
-	if get_parent() is not WorldTemplate:
+	if get_parent() is not World:
 		audio.play()
 	await get_tree().create_timer(0.3).timeout
 	damage_area.monitoring = false

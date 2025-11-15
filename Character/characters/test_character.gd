@@ -97,11 +97,10 @@ var pitch := 0.0
 signal activate_scanner_ui
 signal highlight_enemy(target:Node3D, duration: float)
 signal activate_interactible_ui(interactible: Interactible)
-
+signal touched_bonfire (interactible: Interactible)
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	hud.update_status(health, magazine_capacity, magazine_size, shards)
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
@@ -134,6 +133,8 @@ func check_interactible():
 		if !collider:
 			return
 		if collider is not Interactible:
+			return
+		if collider.used == true:
 			return
 		if current_interactible == collider:
 			return
@@ -421,9 +422,11 @@ func interact(interactible:Interactible):
 			apply_healing(interactible.get_value())
 		Enums.InteractTypes.SHARDS:
 			add_shards(interactible.get_value())
+		Enums.InteractTypes.BONFIRE:
+			pass
 		_:
 			print("Unknown interactible type")
-	interactible.disable()
+	interactible.interacted_with()
 	current_interactible = null
 	hud.update_status(health, magazine_capacity, magazine_size, shards)
 	activate_interactible_ui.emit(current_interactible)
@@ -456,6 +459,11 @@ func add_shards(value):
 	shards_sfx.play()
 	hud.update_status(health, magazine_capacity, magazine_size, shards)
 
+func reset():
+	health = max_health
+	magazine_capacity = magazine_size
+	
+
 func die():
 	set_process(false)
 	set_physics_process(false)
@@ -469,6 +477,5 @@ func die():
 	# You might want to detach camera from the player before freeing the node
 	# For now, we just clean up:
 	queue_free()
-
 func get_faction():
 	return faction

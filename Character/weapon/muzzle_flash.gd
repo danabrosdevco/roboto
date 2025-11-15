@@ -11,7 +11,7 @@ var active := false
 var prev_number
 
 func _ready():
-	if get_parent() is WorldTemplate:
+	if get_parent() is World:
 		play_flash()
 
 func play_flash() -> void:
@@ -30,7 +30,7 @@ func play_flash() -> void:
 	active = true
 	frame_counter = 0
 	prev_number = number
-	if get_parent() is WorldTemplate:
+	if get_parent() is World:
 		await get_tree().create_timer(0.3).timeout
 		queue_free()
 

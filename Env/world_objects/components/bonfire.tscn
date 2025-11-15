@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3 uid="uid://c7yxcpgs2ry2p"]
+
+[ext_resource type="Script" path="res://Env/world_objects/bonfire.gd" id="1_gbn2l"]
+[ext_resource type="PackedScene" uid="uid://6362c6ca4oqf" path="res://3d_assets/Low Poly Furniture/Electronics/Console A.fbx" id="2_mr4w7"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xksoe"]
+size = Vector3(1.5, 3, 1.5)
+
+[node name="Bonfire" type="Area3D" groups=["bonfires"]]
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_gbn2l")
+type = 2
+destroy_on_use = false
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.034691, 1.5165, -0.101501)
+shape = SubResource("BoxShape3D_xksoe")
+
+[node name="Console A" parent="." instance=ExtResource("2_mr4w7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.40754, 0)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.034691, 1.5165, -0.101501)
+shape = SubResource("BoxShape3D_xksoe")
