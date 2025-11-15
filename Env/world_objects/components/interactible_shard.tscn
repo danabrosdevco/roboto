@@ -6,7 +6,7 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_wptlo"]
 size = Vector3(0.3, 0.3, 0.3)
 
-[node name="Interactible" type="Area3D"]
+[node name="Shard1" type="Area3D"]
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_vo168")

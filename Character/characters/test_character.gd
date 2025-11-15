@@ -469,6 +469,5 @@ func die():
 	# You might want to detach camera from the player before freeing the node
 	# For now, we just clean up:
 	queue_free()
-
 func get_faction():
 	return faction

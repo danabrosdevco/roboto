@@ -1,7 +1,32 @@
-- bullets hit raycast matches tracer
-	- done
-- make an enemy
-	- done
+PLAYER CONTROLLER
+- Weapon Generalization
+	- Swap weapons, weapons different functionalities.
+- Melee
+- Fix Lean
+- Grenade
+	- Frag
+	- Missile
+	- Healing Zone
+	- Drone
+
+ENEMIES / AI
+- Alerts
+- Sound / Hearing
+- Better movement
+- Melee
+- Ragdoll
+
+EX-LEVELS
+
+LEVEL DESIGN
+
+WORLD OBJECTS
+- interactible interacting with world objects
+	- doors
+	- gates
+	- elevators
+
+
 - bullets do something [ragdoll an enemy]
 	- not ragdoll, queue_free()
 - set place where robots move

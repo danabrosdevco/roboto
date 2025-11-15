@@ -1,4 +1,4 @@
-extends CharacterBody3D
+extends AI
 class_name TestRobot
 # NODE REFERENCES #
 @export var head: Node3D
@@ -65,7 +65,8 @@ var seen_bodies: Array = []
 var frame_waited: bool = false
 var command_point: Vector3
 
-func _ready():
+
+func initialize():
 	create_sight_shape()
 	create_hearing_sphere()
 	await get_tree().process_frame

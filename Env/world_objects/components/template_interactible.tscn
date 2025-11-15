@@ -1,8 +1,8 @@
 [gd_scene load_steps=2 format=3 uid="uid://bk13ou262jq2t"]
 
-[ext_resource type="Script" path="res://Env/world_objects/components/interactible.gd" id="1_soxuo"]
+[ext_resource type="Script" path="res://Env/world_objects/components/interactible.gd" id="1_vhpwk"]
 
 [node name="Interactible" type="Area3D"]
-script = ExtResource("1_soxuo")
+script = ExtResource("1_vhpwk")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]

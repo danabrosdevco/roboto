@@ -68,7 +68,7 @@ collide_with_areas = true
 collide_with_bodies = false
 
 [node name="ObstructionRaycast" type="RayCast3D" parent="Camera3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.230862, 0, -0.0875422)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.231695, 0, -0.0875422)
 target_position = Vector3(0, 0, -1.5)
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
