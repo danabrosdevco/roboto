@@ -1,7 +1,7 @@
 PLAYER CONTROLLER
 - Weapon Generalization
 	- Swap weapons, weapons different functionalities.
-- Melee
+- Melee - melee weapons
 - Fix Lean
 - Grenade
 	- Frag
@@ -16,7 +16,11 @@ ENEMIES / AI
 - Melee
 - Ragdoll
 
-EX-LEVELS
+MENUS / BETWEEN LEVELS
+
+Hud
+- energy, hull integrity, fluids
+- ammo, weapons
 
 LEVEL DESIGN
 
