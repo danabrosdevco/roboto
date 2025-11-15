@@ -31,6 +31,14 @@ window/stretch/mode="viewport"
 
 enabled=PackedStringArray("res://addons/func_godot/plugin.cfg")
 
+[global_group]
+
+interactibles=""
+pickups=""
+enemies=""
+levelexit=""
+bonfires=""
+
 [gui]
 
 theme/custom_font="res://2d_assets/fonts/DS-Digital/DS-DIGII.TTF"

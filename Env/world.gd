@@ -6,6 +6,7 @@ var world_states: Enums.WorldStates
 @export var player: Player
 @export var current_level: TrenchBroomLevel
 @export var ai_manager: AIManager
+@export var game_manager: GameManager
 
 func _ready():
 	await get_tree().process_frame
@@ -26,7 +27,6 @@ func _ready():
 	register_world_objects(current_level)
 func load_next_level(next_level_scene: PackedScene) -> void:
 	get_tree().paused = true
-
 	await get_tree().process_frame
 	if current_level:
 		await deload_current_level(current_level)
@@ -48,7 +48,7 @@ func deload_current_level(level):
 		level.queue_free()
 	return true
 
-func register_world_objects(level:TrenchBroomLevel):
+func register_world_objects(_level:TrenchBroomLevel):
 	ai_manager.reset_all_reg_enemies()
 	for child in current_level.nav_region.get_children():
 		if child is AI:
@@ -57,6 +57,9 @@ func register_world_objects(level:TrenchBroomLevel):
 			pass
 		if child is PickUp:
 			pass
+
+func reset_level():
+	game_manager.reset_level()
 
 func _on_next_level_requested(next_level_scene: PackedScene) -> void:
 	#print("Received signal to load next level.")

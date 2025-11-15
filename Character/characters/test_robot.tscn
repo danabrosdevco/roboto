@@ -38,7 +38,7 @@ radius = 5.0
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_wrtgx"]
 
-[node name="EnemyRobot" type="CharacterBody3D" node_paths=PackedStringArray("head", "torso", "legs_wheels", "nav_agent", "weapon", "hearing", "sight", "label", "bark")]
+[node name="EnemyRobot" type="CharacterBody3D" node_paths=PackedStringArray("head", "torso", "legs_wheels", "nav_agent", "weapon", "hearing", "sight", "label", "bark") groups=["enemies"]]
 script = ExtResource("1_mmb2y")
 head = NodePath("Head")
 torso = NodePath("Torso")

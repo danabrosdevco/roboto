@@ -12,7 +12,8 @@ class_name HUD
 
 var interact_textures: Dictionary = {
 	Enums.InteractTypes.HEALTH : "PASS",
-	Enums.InteractTypes.SHARDS : preload("res://2d_assets/TB_Textures/flash-drive.png")
+	Enums.InteractTypes.SHARDS : preload("res://2d_assets/TB_Textures/flash-drive.png"),
+	Enums.InteractTypes.BONFIRE: preload ("res://addons/plenticons/icons/64x-hidpi/symbols/refresh-green.png")
 }
 
 func activate_scan_effect():
@@ -41,9 +42,15 @@ func activate_interactible(interactible: Interactible):
 	var type = interactible.get_type()
 	var value = interactible.get_value()
 	interact_box.visible = true
-	# Set label text like "F | 50"
-	interact_label.text = "G | %d" % value
-	# Set the correct icon
+	match type:
+		Enums.InteractTypes.BONFIRE:
+			if not interactible.get_activated():
+				interact_label.text = "G | Activate Factory"
+			else:
+				interact_label.text = "G | Reconstruct at Factory"
+		_:
+			interact_label.text = "G | %d" % value  # default label for others
+
 	if interact_textures.has(type):
 		interact_texture.texture = interact_textures[type]
 	else:

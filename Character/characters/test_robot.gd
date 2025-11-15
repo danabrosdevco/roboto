@@ -50,6 +50,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var weapon_target: Vector3
 @export var look_target: Vector3
 @export var patrol_points: Array[Node3D] = []
+var spawn_transform
 var alive : bool = true
 var movement_state = MovementState.IDLE
 var weapon_state = WeaponState.IDLE
@@ -67,6 +68,7 @@ var command_point: Vector3
 
 
 func initialize():
+	spawn_transform = transform
 	create_sight_shape()
 	create_hearing_sphere()
 	await get_tree().process_frame
@@ -252,7 +254,7 @@ func handle_weapon_logic(delta):
 				query.exclude = [self]
 				var result = space_state.intersect_ray(query)
 				if result:
-					var hit_pos = result.position
+					var _hit_pos = result.position
 					var collider = result.collider
 					#print("Hit:", collider, " at ", hit_pos)
 					#var sphere = MeshInstance3D.new()
@@ -308,8 +310,41 @@ func apply_damage(damage):
 	pass
 
 func die():
-	await get_tree().create_timer(0.25).timeout
-	queue_free()
+	change_state(MovementState.DEAD)
+	alive = false
+	set_physics_process(false)
+	set_process(false)
+	hide()
+	weapon.hide()
+	nav_agent.set_target_position(global_position)  # Cancel nav
+	#nav_agent.set_enabled(false)
+	hearing.monitoring = false
+	sight.monitoring = false
+	$CollisionShape3D.disabled = true  # or disable all collision shapes
+
+func respawn():
+	reset()
+
+
+func reset():
+	transform = spawn_transform
+	health = 20
+	alive = true
+	change_state(MovementState.IDLE)
+	seen_bodies.clear()
+	last_seen_point.clear()
+	command_point = Vector3.ZERO
+	velocity = Vector3.ZERO
+	weapon_target = Vector3.ZERO
+	look_target = Vector3.ZERO
+	show()
+	weapon.show()
+	set_physics_process(true)
+	set_process(true)
+	hearing.monitoring = true
+	sight.monitoring = true
+	$CollisionShape3D.disabled = false
+
 
 func get_faction():
 	return faction

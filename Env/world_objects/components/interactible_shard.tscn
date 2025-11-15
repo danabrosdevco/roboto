@@ -6,14 +6,15 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_wptlo"]
 size = Vector3(0.3, 0.3, 0.3)
 
-[node name="Shard1" type="Area3D"]
+[node name="Shard1" type="Area3D" node_paths=PackedStringArray("collision_body") groups=["interactibles"]]
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_vo168")
+collision_body = NodePath("InteractCollision")
 type = 1
 value = 1
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="InteractCollision" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_wptlo")
 
 [node name="FloppyDisk" parent="." instance=ExtResource("2_t18jf")]
