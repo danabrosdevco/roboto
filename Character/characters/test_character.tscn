@@ -1,11 +1,8 @@
-[gd_scene load_steps=12 format=3 uid="uid://bgj56y7q1pyxr"]
+[gd_scene load_steps=9 format=3 uid="uid://bgj56y7q1pyxr"]
 
 [ext_resource type="Script" path="res://Character/characters/test_character.gd" id="1_xw2ar"]
-[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_3jw7k"]
-[ext_resource type="PackedScene" uid="uid://bqvaekw1dbcch" path="res://Character/weapon/hud_weapon.tscn" id="2_hvn8u"]
-[ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/weapon/bullet.tscn" id="2_qrfbk"]
-[ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/components/command.tscn" id="4_ig1ws"]
-[ext_resource type="Curve" uid="uid://cj4p72ytyyees" path="res://Character/weapon/m4_recoil_curve.tres" id="5_eg8us"]
+[ext_resource type="PackedScene" uid="uid://c73xl4hq8l5aa" path="res://Character/weapon/pistol_hud_weapon.tscn" id="4_4quvt"]
+[ext_resource type="PackedScene" uid="uid://be2sgj1qwg7f2" path="res://Character/weapon/m4_hud_weapon.tscn" id="4_p7j6a"]
 [ext_resource type="PackedScene" uid="uid://cia7d1ywjwrgf" path="res://Character/components/scanner.tscn" id="6_pxhlj"]
 [ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="6_umrcu"]
 [ext_resource type="AudioStream" uid="uid://cjb3ght3deqbq" path="res://sounds/sfx/mini-sfx/healing-4.wav" id="9_umkd4"]
@@ -15,24 +12,14 @@
 radius = 0.25
 height = 1.5
 
-[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("scanner", "tracer_origin", "muzzle_flash", "weapon_model", "reload_sounds", "rifle_stream_player", "click_stream_player", "obstruction_raycast", "interact_raycast", "health_sfx", "shards_sfx")]
+[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("hud_weapon", "scanner", "obstruction_raycast", "interact_raycast", "health_sfx", "shards_sfx")]
 script = ExtResource("1_xw2ar")
+hud_weapon = NodePath("Camera3D/Weapon")
 scanner = NodePath("Scanner")
-tracer_origin = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/Muzzle")
-muzzle_flash = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1/MuzzleFlash")
-weapon_model = NodePath("Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1")
-projectile_scene = ExtResource("2_qrfbk")
-tracer_scene = ExtResource("2_3jw7k")
-reload_sounds = [NodePath("Camera3D/Weapon/Reload1"), NodePath("Camera3D/Weapon/Reload2"), NodePath("Camera3D/Weapon/Reload3"), NodePath("Camera3D/Weapon/Reload4"), NodePath("Camera3D/Weapon/Reload5")]
-reload_delays = Array[float]([0.6, 0.6, 0.35, 0.3, 0.3])
-command_marker_scene = ExtResource("4_ig1ws")
-rifle_stream_player = NodePath("Camera3D/Weapon/RifleShot")
-click_stream_player = NodePath("Camera3D/Weapon/Click")
 obstruction_raycast = NodePath("Camera3D/ObstructionRaycast")
 interact_raycast = NodePath("Camera3D/InteractRaycast")
 health_sfx = NodePath("HealthSFX")
 shards_sfx = NodePath("ShardSFX")
-recoil_curve = ExtResource("5_eg8us")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_8ja6s")
@@ -45,20 +32,11 @@ script = ExtResource("6_umrcu")
 [node name="AudioListener3D" type="AudioListener3D" parent="Camera3D"]
 current = true
 
-[node name="Weapon" parent="Camera3D" instance=ExtResource("2_hvn8u")]
+[node name="Weapon2" parent="Camera3D" node_paths=PackedStringArray("reload_sounds") instance=ExtResource("4_p7j6a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.192761, -0.207464, 0)
-
-[node name="AssaultRifle2_12" parent="Camera3D/Weapon" index="0"]
-transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.0776801, -0.0526062, -0.218037)
-
-[node name="AssaultRifle2_1" parent="Camera3D/Weapon/AssaultRifle2_12" index="0"]
-transform = Transform3D(0.99863, -0.052336, 0, 0.052336, 0.99863, 0, 0, 0, 1, 0.31, -0.425, -0.015)
-
-[node name="Muzzle" parent="Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1" index="0"]
-transform = Transform3D(3.22828, 0, -2.98024e-08, 1.19209e-07, 4, 1.86265e-09, 4.26326e-14, -1.86266e-09, 4, 3.62259, 0.638353, 0.0119146)
-
-[node name="MuzzleFlash" parent="Camera3D/Weapon/AssaultRifle2_12/AssaultRifle2_1" index="1"]
-transform = Transform3D(3.2, -1.04308e-07, -7.10543e-14, 8.9407e-08, 3.965, 5.32907e-15, 5.68434e-14, -7.10543e-15, 3.965, 5.88254, 0.77531, -0.164609)
+visible = false
+reload_sounds = []
+active = false
 
 [node name="InteractRaycast" type="RayCast3D" parent="Camera3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.147827, -0.260928)
@@ -70,6 +48,8 @@ collide_with_bodies = false
 [node name="ObstructionRaycast" type="RayCast3D" parent="Camera3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.231695, 0, -0.0875422)
 target_position = Vector3(0, 0, -1.5)
+
+[node name="Weapon" parent="Camera3D" instance=ExtResource("4_4quvt")]
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.236776)
@@ -88,7 +68,6 @@ volume_db = 1.5
 stream = ExtResource("10_7l2sv")
 volume_db = 1.5
 
+[connection signal="request_status" from="Camera3D/Weapon2" to="." method="update_status"]
+[connection signal="request_status" from="Camera3D/Weapon" to="." method="update_status"]
 [connection signal="highlight_target" from="Scanner" to="." method="_on_scanner_highlight_target"]
-
-[editable path="Camera3D/Weapon"]
-[editable path="Camera3D/Weapon/AssaultRifle2_12"]

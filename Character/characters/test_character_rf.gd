@@ -1,5 +1,5 @@
 extends CharacterBody3D
-class_name Player
+class_name PlayerRF
 
 # Node References # 
 @onready var cam: Camera3D = $Camera3D
