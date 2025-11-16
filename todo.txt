@@ -10,11 +10,9 @@ PLAYER CONTROLLER
 	- Drone
 
 ENEMIES / AI
-- Alerts
-- Sound / Hearing
-- Better movement
-- Melee
-- Ragdoll
+ - STIMULUS MANAGER
+- AI MANAGER
+- Alerts / Sound / Hearing / Movement / Melee / Ragdoll
 
 MENUS / BETWEEN LEVELS
 

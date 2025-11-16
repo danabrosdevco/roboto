@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://bqvaekw1dbcch" path="res://Character/weapon/hud_weapon.tscn" id="2_hvn8u"]
 [ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/weapon/bullet.tscn" id="2_qrfbk"]
 [ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/components/command.tscn" id="4_ig1ws"]
-[ext_resource type="Curve" uid="uid://dp686k5ckuokb" path="res://Character/weapon/recoil_curve.tres" id="4_n81mu"]
+[ext_resource type="Curve" uid="uid://cj4p72ytyyees" path="res://Character/weapon/m4_recoil_curve.tres" id="5_eg8us"]
 [ext_resource type="PackedScene" uid="uid://cia7d1ywjwrgf" path="res://Character/components/scanner.tscn" id="6_pxhlj"]
 [ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="6_umrcu"]
 [ext_resource type="AudioStream" uid="uid://cjb3ght3deqbq" path="res://sounds/sfx/mini-sfx/healing-4.wav" id="9_umkd4"]
@@ -32,7 +32,7 @@ obstruction_raycast = NodePath("Camera3D/ObstructionRaycast")
 interact_raycast = NodePath("Camera3D/InteractRaycast")
 health_sfx = NodePath("HealthSFX")
 shards_sfx = NodePath("ShardSFX")
-recoil_curve = ExtResource("4_n81mu")
+recoil_curve = ExtResource("5_eg8us")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_8ja6s")

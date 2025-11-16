@@ -462,7 +462,6 @@ func add_shards(value):
 func reset():
 	health = max_health
 	magazine_capacity = magazine_size
-	
 
 func die():
 	set_process(false)
