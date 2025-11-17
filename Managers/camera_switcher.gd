@@ -25,13 +25,14 @@ func _activate_camera(index: int):
 				listener.clear_current()
 	current_index = index
 
-func _input(event):
-	if event.is_action_pressed("1"):
-				if cameras.size() >= 1:
-					_activate_camera(0)
-	if event.is_action_pressed("2"):
-				if cameras.size() >= 2:
-					_activate_camera(1)
-	if event.is_action_pressed("3"):
-				if cameras.size() >= 3:
-					_activate_camera(2)
+func _input(_event):
+	pass
+	#if event.is_action_pressed("1"):
+				#if cameras.size() >= 1:
+					#_activate_camera(0)
+	#if event.is_action_pressed("2"):
+				#if cameras.size() >= 2:
+					#_activate_camera(1)
+	#if event.is_action_pressed("3"):
+				#if cameras.size() >= 3:
+					#_activate_camera(2)

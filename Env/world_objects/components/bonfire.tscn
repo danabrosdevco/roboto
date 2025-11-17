@@ -6,10 +6,13 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_xksoe"]
 size = Vector3(1.5, 3, 1.5)
 
-[node name="Bonfire" type="Area3D" groups=["bonfires"]]
+[node name="Bonfire" type="Area3D" node_paths=PackedStringArray("console", "collision_body", "static_body") groups=["bonfires"]]
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_gbn2l")
+console = NodePath("Console A/Console A")
+collision_body = NodePath("CollisionShape3D2")
+static_body = NodePath("StaticBody3D")
 type = 2
 destroy_on_use = false
 

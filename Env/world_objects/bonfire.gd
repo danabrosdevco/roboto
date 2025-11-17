@@ -1,6 +1,7 @@
 extends Interactible
 class_name Bonfire
 @export var activated: bool = false
+@export var console: Node3D
 signal bonfire_reset()
 
 func get_activated():

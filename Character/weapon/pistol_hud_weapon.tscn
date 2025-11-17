@@ -1,0 +1,73 @@
+[gd_scene load_steps=13 format=3 uid="uid://c73xl4hq8l5aa"]
+
+[ext_resource type="Script" path="res://Character/weapon/hud_weapon_template.gd" id="1_mcwkk"]
+[ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/weapon/bullet.tscn" id="2_ltlsc"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="3_x66t0"]
+[ext_resource type="Curve" uid="uid://bokc3y5xvp7qu" path="res://Character/weapon/pistol_recoil_curve.tres" id="4_juv8j"]
+[ext_resource type="PackedScene" uid="uid://b7o4s63hdt0kn" path="res://3d_assets/gun_pack/Blends/Pistol_5.blend" id="5_s1xoq"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="6_dtar4"]
+[ext_resource type="AudioStream" uid="uid://w1wof1nua0k2" path="res://sounds/sfx/weapons/pistol/pistol_fire.wav" id="7_qkx71"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="8_s75re"]
+[ext_resource type="AudioStream" uid="uid://dcnpmsn7rwpyg" path="res://sounds/sfx/weapons/pistol/pistol_clip_out_1 (2).wav" id="9_dtv5t"]
+[ext_resource type="AudioStream" uid="uid://cjwwditbrrs7q" path="res://sounds/sfx/weapons/pistol/pistol_clip_in_1 (2).wav" id="10_fvl4h"]
+[ext_resource type="AudioStream" uid="uid://dtrxid3044v1b" path="res://sounds/sfx/weapons/pistol/pistol_slideback_1.wav" id="11_vy856"]
+[ext_resource type="AudioStream" uid="uid://cpdjw4y1j3a4m" path="res://sounds/sfx/weapons/pistol/pistol_slideforward_1.wav" id="12_pehuu"]
+
+[node name="Pistol" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "reload_sounds", "rifle_stream_player", "click_stream_player")]
+script = ExtResource("1_mcwkk")
+tracer_origin = NodePath("Pistol_52/Pistol_5/Muzzle")
+muzzle_flash = NodePath("Pistol_52/Pistol_5/MuzzleFlash")
+weapon_model = NodePath("Pistol_52/Pistol_5")
+projectile_scene = ExtResource("2_ltlsc")
+tracer_scene = ExtResource("3_x66t0")
+reload_sounds = [NodePath("Reload1"), NodePath("Reload2"), NodePath("Reload3"), NodePath("Reload4")]
+reload_delays = Array[float]([0.9, 0.85, 0.4, 0.3])
+rifle_stream_player = NodePath("PistolShot")
+click_stream_player = NodePath("Click")
+damage = 9
+recoil_curve = ExtResource("4_juv8j")
+recoil_duration = 0.35
+recoil_per_shot = 3.5
+ADS_FOV = 65.0
+ADS_SPEED = 7.5
+FIRE_RATE = 0.015
+reload_return_speed = 20
+camera_recoil_scale = 0.7
+ads_position = Vector3(-0.5, 0, -0.8)
+ads_rotation = Vector3(0, 0, 0)
+reload_rotation = Vector3(0.2, 30.5, 58)
+magazine_size = 16
+tracers_in_mag = Array[int]([16, 14, 12, 10, 8, 6, 5, 4, 3, 2, 1])
+reload_time = 2.45
+
+[node name="Pistol_52" parent="." instance=ExtResource("5_s1xoq")]
+transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.196851, -0.180077, -0.320649)
+
+[node name="Muzzle" type="Node3D" parent="Pistol_52/Pistol_5" index="0"]
+transform = Transform3D(3.23298, 0, 0, 0, 4, 0, 0, 0, 4.49517, 5.37418, 0.235605, 0.0516961)
+
+[node name="MuzzleFlash" parent="Pistol_52/Pistol_5" index="1" instance=ExtResource("6_dtar4")]
+transform = Transform3D(3.10638, -0.182618, -1.07337, 0.157698, 3.99516, 0.020944, 0.972606, -0.0816663, 4.33523, 3.38108, 0.775784, -0.127881)
+visible = false
+
+[node name="PistolShot" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(-0.104658, -9.4871e-05, 0.994508, 0.0488491, 0.998792, 0.00523596, -0.993308, 0.0491288, -0.104527, -0.100835, 0.0303454, -0.977198)
+stream = ExtResource("7_qkx71")
+
+[node name="Click" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(-0.104658, -9.4871e-05, 0.994508, 0.0488491, 0.998792, 0.00523596, -0.993308, 0.0491288, -0.104527, -0.100835, 0.0303454, -0.977198)
+stream = ExtResource("8_s75re")
+
+[node name="Reload1" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("9_dtv5t")
+
+[node name="Reload2" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("10_fvl4h")
+
+[node name="Reload3" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("11_vy856")
+
+[node name="Reload4" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("12_pehuu")
+
+[editable path="Pistol_52"]

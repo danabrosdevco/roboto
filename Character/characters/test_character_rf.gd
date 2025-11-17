@@ -1,8 +1,8 @@
 extends CharacterBody3D
-class_name Player
+class_name PlayerRF
 
 # Node References # 
-@export var cam: Camera3D 
+@onready var cam: Camera3D = $Camera3D
 @export var faction: Enums.Factions = Enums.Factions.PLAYER
 @export var hud_weapon: HUDWeapon
 @export var world: Node3D
@@ -13,8 +13,6 @@ class_name Player
 @export var interact_raycast: RayCast3D
 @export var health_sfx: AudioStreamPlayer
 @export var shards_sfx: AudioStreamPlayer
-@export var weapon_list: Array[HUDWeapon]
-var current_weapon_index: int
 # Export Data # 
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
@@ -23,6 +21,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var health = 50
 @export var max_health = 100
 var shards = 0
+
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
 const ADS_FOV := 45.0
@@ -49,56 +48,19 @@ var current_interactible : Interactible
 
 
 # WEAPONS #
+var is_obstructed :=false
 var is_ads := false
-var fire_held_last_frame := false
+
+
 var target_lean := 0.0
 var pitch := 0.0
 
 signal activate_scanner_ui
 signal highlight_enemy(target:Node3D, duration: float)
 signal activate_interactible_ui(interactible: Interactible)
-
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	update_status()
-	for child in cam.get_children():
-		if child is HUDWeapon:
-			if weapon_list.has(child):
-				continue
-			else:
-				weapon_list.append(child)
-		else:
-				continue
-	if weapon_list.size() > 0:
-		current_weapon_index = 0
-		set_active_weapon(0)
-
-func set_active_weapon(index: int):
-	# Deactivate all weapons
-	for i in weapon_list.size():
-		weapon_list[i].active = false
-		weapon_list[i].weapon_model.visible = false
-	
-	# Activate the selected one
-	current_weapon_index = index
-	hud_weapon = weapon_list[index]
-	hud_weapon.active = true
-	hud_weapon.weapon_model.visible = true
-	#print("✅ Switched to weapon:", hud_weapon.name)
-
-func switch_weapon(direction: int):
-	var next_index = (current_weapon_index + direction) % weapon_list.size()
-	if next_index < 0:
-		next_index = weapon_list.size() - 1
-	set_active_weapon(next_index)
-	update_status()
-
-func switch_weapon_direct(index: int):
-	if index >= 0 and index < weapon_list.size():
-		set_active_weapon(index)
-	update_status()
-
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
@@ -155,33 +117,13 @@ func handle_input(_delta: float) -> void:
 		else:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 
-
-	var fire_pressed := Input.is_action_pressed("fire")
-	var fire_just_pressed := Input.is_action_just_pressed("fire")
-
-	match hud_weapon.firemode:
-		Enums.FireModes.FULL:
-			if fire_pressed:
-				hud_weapon.fire()
-		Enums.FireModes.SEMI:
-			if fire_just_pressed and not fire_held_last_frame:
-				hud_weapon.fire()
-	fire_held_last_frame = fire_pressed
+	if Input.is_action_pressed("fire"):
+		hud_weapon.fire()
 	if Input.is_action_just_pressed("command"):
 		activate_command()
 
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
-
-
-	#if Input.is_action_pressed("weapon_next"):
-		#switch_weapon(1)
-	#elif Input.is_action_pressed("weapon_prev"):
-		#switch_weapon(-1)
-	elif Input.is_action_pressed("1"):
-		switch_weapon_direct(0)
-	elif Input.is_action_pressed("2"):
-		switch_weapon_direct(1)
 
 	if Input.is_action_just_pressed("scan"):
 		if scanner_timer >= 0:
@@ -227,9 +169,9 @@ func handle_camera_and_weapon(delta: float) -> void:
 	# FOV adjustment
 	var target_fov = ADS_FOV if Input.is_action_pressed("zoom") else HIP_FOV
 	if is_ads and Input.is_action_pressed("zoom"):
-		target_fov = hud_weapon.ADS_FOV * 0.6
+		target_fov = ADS_FOV * 0.6
 	elif is_ads:
-		target_fov = hud_weapon.ADS_FOV
+		target_fov = ADS_FOV
 
 	cam.fov = lerp(cam.fov, target_fov, delta * ADS_SPEED)
 	cam.rotation.z = lerp(cam.rotation.z, target_lean, delta * LEAN_SPEED)
@@ -295,8 +237,6 @@ func interact(interactible:Interactible):
 	pass
 
 func update_status():
-	if hud_weapon == null:
-		await get_tree().process_frame
 	hud.update_status(health, hud_weapon.magazine_capacity, hud_weapon.magazine_size, shards)
 
 
