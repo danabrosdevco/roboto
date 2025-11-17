@@ -13,6 +13,7 @@ class_name HUDWeapon
 @export var rifle_stream_player: AudioStreamPlayer3D
 @export var click_stream_player: AudioStreamPlayer3D
 # Weapon Data #
+@export var firemode: Enums.FireModes
 @export var damage: int = 10
 @export var recoil_curve: Curve
 @export var recoil_duration = 0.25
@@ -44,7 +45,7 @@ class_name HUDWeapon
 # Working Data #
 var move_factor
 @export var active: bool = true
-var magazine_capacity:= 30
+var magazine_capacity:= 16
 var fire_cooldown := 0.0
 var recoil_amount := 0.0
 var recoil_timer := 0.0
@@ -66,6 +67,7 @@ signal request_status
 
 func _ready() -> void:
 	cam = get_parent()
+	magazine_capacity = magazine_size
 	pass
 func _physics_process(delta: float) -> void:
 	if active == false:
@@ -77,8 +79,8 @@ func set_move_factor(new_move_factor: float):
 	move_factor = new_move_factor
 
 func handle_camera_and_weapon(delta: float) -> void:
-	#SPEED OF CHARACTER
-	# NEED TO BE TOLD THE 
+	if move_factor == null:
+		return
 	bob_time += delta * bob_speed * (1.0 + move_factor * movement_bob_scale)
 	var current_bob_amount := bob_amount
 	if is_ads:
@@ -152,6 +154,7 @@ func fire() -> void:
 		query.to = to
 		query.exclude = [self]
 		rifle_stream_player.play()
+		muzzle_flash.play_flash()
 		var result = space_state.intersect_ray(query)
 		#var sphere = MeshInstance3D.new()
 		#sphere.mesh = SphereMesh.new()

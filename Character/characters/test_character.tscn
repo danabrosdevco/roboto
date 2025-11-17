@@ -12,9 +12,9 @@
 radius = 0.25
 height = 1.5
 
-[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("hud_weapon", "scanner", "obstruction_raycast", "interact_raycast", "health_sfx", "shards_sfx")]
+[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("cam", "scanner", "obstruction_raycast", "interact_raycast", "health_sfx", "shards_sfx")]
 script = ExtResource("1_xw2ar")
-hud_weapon = NodePath("Camera3D/Weapon")
+cam = NodePath("Camera3D")
 scanner = NodePath("Scanner")
 obstruction_raycast = NodePath("Camera3D/ObstructionRaycast")
 interact_raycast = NodePath("Camera3D/InteractRaycast")
@@ -29,14 +29,15 @@ doppler_tracking = 2
 far = 2500.0
 script = ExtResource("6_umrcu")
 
-[node name="AudioListener3D" type="AudioListener3D" parent="Camera3D"]
-current = true
-
-[node name="Weapon2" parent="Camera3D" node_paths=PackedStringArray("reload_sounds") instance=ExtResource("4_p7j6a")]
+[node name="M4" parent="Camera3D" node_paths=PackedStringArray("reload_sounds") instance=ExtResource("4_p7j6a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.192761, -0.207464, 0)
-visible = false
 reload_sounds = []
 active = false
+
+[node name="Pistol" parent="Camera3D" instance=ExtResource("4_4quvt")]
+
+[node name="AudioListener3D" type="AudioListener3D" parent="Camera3D"]
+current = true
 
 [node name="InteractRaycast" type="RayCast3D" parent="Camera3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.147827, -0.260928)
@@ -48,8 +49,6 @@ collide_with_bodies = false
 [node name="ObstructionRaycast" type="RayCast3D" parent="Camera3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.231695, 0, -0.0875422)
 target_position = Vector3(0, 0, -1.5)
-
-[node name="Weapon" parent="Camera3D" instance=ExtResource("4_4quvt")]
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.236776)
@@ -68,6 +67,6 @@ volume_db = 1.5
 stream = ExtResource("10_7l2sv")
 volume_db = 1.5
 
-[connection signal="request_status" from="Camera3D/Weapon2" to="." method="update_status"]
-[connection signal="request_status" from="Camera3D/Weapon" to="." method="update_status"]
+[connection signal="request_status" from="Camera3D/M4" to="." method="update_status"]
+[connection signal="request_status" from="Camera3D/Pistol" to="." method="update_status"]
 [connection signal="highlight_target" from="Scanner" to="." method="_on_scanner_highlight_target"]
