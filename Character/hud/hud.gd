@@ -45,9 +45,9 @@ func activate_interactible(interactible: Interactible):
 	match type:
 		Enums.InteractTypes.BONFIRE:
 			if not interactible.get_activated():
-				interact_label.text = "G | Activate Factory"
+				interact_label.text = "G | Activate SLAB"
 			else:
-				interact_label.text = "G | Reconstruct at Factory"
+				interact_label.text = "G | Reconstruct at SLAB"
 		_:
 			interact_label.text = "G | %d" % value  # default label for others
 

@@ -179,8 +179,12 @@ func handle_input(_delta: float) -> void:
 	#elif Input.is_action_pressed("weapon_prev"):
 		#switch_weapon(-1)
 	elif Input.is_action_pressed("1"):
+		if hud_weapon.is_reloading:
+			return
 		switch_weapon_direct(0)
 	elif Input.is_action_pressed("2"):
+		if hud_weapon.is_reloading:
+			return
 		switch_weapon_direct(1)
 
 	if Input.is_action_just_pressed("scan"):
