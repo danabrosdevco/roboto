@@ -301,7 +301,7 @@ func interact(interactible:Interactible):
 func update_status():
 	if hud_weapon == null:
 		await get_tree().process_frame
-	hud.update_status(health, hud_weapon.magazine_capacity, hud_weapon.magazine_size, shards)
+	hud.update_status(health, max_health, hud_weapon.magazine_capacity, hud_weapon.magazine_size, shards)
 
 
 func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:

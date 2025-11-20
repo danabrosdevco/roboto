@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://okx8aisron30"]
+
+[node name="HealthBar" type="ProgressBar"]
+custom_minimum_size = Vector2(40, 16)
+max_value = 20.0
+value = 20.0
+show_percentage = false

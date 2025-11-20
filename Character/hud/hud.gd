@@ -9,6 +9,7 @@ class_name HUD
 @export var interact_box: HBoxContainer
 @export var interact_label: Label
 @export var interact_texture: TextureRect
+@export var ui: Control
 
 var interact_textures: Dictionary = {
 	Enums.InteractTypes.HEALTH : "PASS",
@@ -61,7 +62,8 @@ func deactivate_interaction():
 
 
 
-func update_status(health: int, magazine_capacity: int, magazine_size: int, shards:int) -> void:
-	health_label.text = "Health: %d" % health
-	ammo_label.text = "Ammo: %d / %d" % [magazine_capacity, magazine_size]
-	shards_label.text = ": " + str(shards)
+func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int, shards:int) -> void:
+	ui.update_status(health, max_health, magazine_capacity, magazine_size, shards)
+	#health_label.text = "Health: %d" % health
+	#ammo_label.text = "Ammo: %d / %d" % [magazine_capacity, magazine_size]
+	#shards_label.text = ": " + str(sharsds)

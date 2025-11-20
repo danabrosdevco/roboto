@@ -183,6 +183,8 @@ func fire_tracer():
 	new_tracer.direction = dir
 	new_tracer.look_at(new_tracer.global_position + dir)
 func start_reload() -> void:
+	if active == false:
+		return
 	if is_reloading == true:
 		return
 	if magazine_capacity >= magazine_size:

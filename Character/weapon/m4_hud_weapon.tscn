@@ -27,7 +27,7 @@ rifle_stream_player = NodePath("RifleShot")
 click_stream_player = NodePath("Click")
 firemode = 1
 recoil_curve = ExtResource("4_ji5lj")
-FIRE_RATE = 0.085
+FIRE_RATE = 0.075
 
 [node name="AssaultRifle2_12" parent="." instance=ExtResource("5_di8i3")]
 transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.0776801, -0.0526062, -0.218037)

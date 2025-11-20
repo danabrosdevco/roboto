@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://ib6m72545n75"]
+[gd_scene load_steps=10 format=3 uid="uid://ib6m72545n75"]
 
 [ext_resource type="PackedScene" uid="uid://b4n2skq3ovhu6" path="res://Character/hud/scan_effect.tscn" id="1_80vuv"]
 [ext_resource type="Shader" path="res://Character/green_filter.gdshader" id="1_ct71j"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://Character/hud/fps.gd" id="4_wqlwh"]
 [ext_resource type="Texture2D" uid="uid://dgcfptv5bmsic" path="res://2d_assets/TB_Textures/flash-drive.png" id="5_tw6wi"]
 [ext_resource type="Texture2D" uid="uid://dmeibsbghoudy" path="res://2d_assets/plug.png" id="6_uv5m5"]
+[ext_resource type="PackedScene" uid="uid://c3e3nxrjlhipg" path="res://Character/weapon/ui.tscn" id="7_64yrs"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bvcf1"]
 shader = ExtResource("1_ct71j")
@@ -14,7 +15,7 @@ shader_parameter/posterize_levels = 5.0
 shader_parameter/contrast = 1.1
 shader_parameter/tint_color = Vector3(0.85, 0.85, 0.65)
 
-[node name="HUD" type="Control" node_paths=PackedStringArray("health_label", "ammo_label", "shards_label", "interact_box", "interact_label", "interact_texture")]
+[node name="HUD" type="Control" node_paths=PackedStringArray("health_label", "ammo_label", "shards_label", "interact_box", "interact_label", "interact_texture", "ui")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,12 +32,7 @@ shards_label = NodePath("VBoxContainer/HBoxContainer/Label3")
 interact_box = NodePath("InteractBox")
 interact_label = NodePath("InteractBox/InteractText")
 interact_texture = NodePath("InteractBox/InteractSymbol")
-
-[node name="TextureRect" type="ColorRect" parent="."]
-layout_mode = 0
-offset_right = 221.0
-offset_bottom = 178.0
-color = Color(0.180005, 0.180005, 0.180005, 0.419608)
+ui = NodePath("UI")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 0
@@ -51,16 +47,19 @@ text = "FPS:"
 script = ExtResource("4_wqlwh")
 
 [node name="HullHealth" type="Label" parent="VBoxContainer"]
+visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "Health: Stable"
 
 [node name="Ammo" type="Label" parent="VBoxContainer"]
+visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "Signal: Strong"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+visible = false
 layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="VBoxContainer/HBoxContainer"]
@@ -74,6 +73,7 @@ theme_override_font_sizes/font_size = 30
 text = ":"
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer"]
+visible = false
 layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="VBoxContainer/HBoxContainer2"]
@@ -114,6 +114,11 @@ layout_mode = 2
 texture = ExtResource("5_tw6wi")
 expand_mode = 4
 stretch_mode = 2
+
+[node name="UI" parent="." instance=ExtResource("7_64yrs")]
+layout_mode = 1
+offset_top = 550.0
+offset_bottom = 550.0
 
 [node name="GreenFilter" type="ColorRect" parent="."]
 material = SubResource("ShaderMaterial_bvcf1")
