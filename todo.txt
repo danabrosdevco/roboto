@@ -29,6 +29,24 @@ WORLD OBJECTS
 	- elevators
 
 
+Network / Faction
+- Local Network / Network Owner
+- Refugees / State
+- Stonebreakers / Chaos
+- Stonebreakers / Argus
+- Outpost / State
+Most of humans are dead.
+Most of interactions are with servitor robots.
+Servitors operate under a local network, directed by network owner.
+Insurgents: Fighting their way out ::
+State: Fighting to maintain. <>
+Argus: 
+	/.\
+	\o/
+State:
+	<*>
+Insurgents:  	::
+				::
 - bullets do something [ragdoll an enemy]
 	- not ragdoll, queue_free()
 - set place where robots move

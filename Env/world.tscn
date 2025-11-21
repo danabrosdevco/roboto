@@ -20,8 +20,9 @@ game_manager = NodePath("GameManager")
 [node name="AIManager" parent="." node_paths=PackedStringArray("world") instance=ExtResource("2_d77gp")]
 world = NodePath("..")
 
-[node name="GameManager" type="Node" parent="."]
+[node name="GameManager" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("3_7kch0")
+player = NodePath("../test_character")
 
 [node name="test_character" parent="." node_paths=PackedStringArray("world", "hud") instance=ExtResource("4_m38gd")]
 world = NodePath("..")
