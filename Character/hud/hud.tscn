@@ -46,6 +46,16 @@ theme_override_font_sizes/font_size = 30
 text = "FPS:"
 script = ExtResource("4_wqlwh")
 
+[node name="FPS2" type="Label" parent="VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "<*>
+
+/.\\
+\\./"
+script = ExtResource("4_wqlwh")
+
 [node name="HullHealth" type="Label" parent="VBoxContainer"]
 visible = false
 layout_mode = 2
@@ -63,6 +73,7 @@ visible = false
 layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="VBoxContainer/HBoxContainer"]
+visible = false
 layout_mode = 2
 texture = ExtResource("5_tw6wi")
 expand_mode = 2
@@ -117,8 +128,8 @@ stretch_mode = 2
 
 [node name="UI" parent="." instance=ExtResource("7_64yrs")]
 layout_mode = 1
-offset_top = 550.0
-offset_bottom = 550.0
+offset_top = 505.0
+offset_bottom = 505.0
 
 [node name="GreenFilter" type="ColorRect" parent="."]
 material = SubResource("ShaderMaterial_bvcf1")
@@ -126,5 +137,5 @@ layout_mode = 2
 offset_left = -1.0
 offset_top = -3.0
 offset_right = 1157.0
-offset_bottom = 697.0
+offset_bottom = 652.0
 mouse_filter = 2

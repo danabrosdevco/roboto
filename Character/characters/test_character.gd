@@ -41,7 +41,7 @@ var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
 var recoil_rotation := Vector3.ZERO
 
 var scanner_timer: = 0.0
-var scanner_cooldown = 3
+var scanner_cooldown = 15
 
 
 var current_interactible : Interactible
@@ -54,7 +54,7 @@ var fire_held_last_frame := false
 var target_lean := 0.0
 var pitch := 0.0
 
-signal activate_scanner_ui
+signal activate_scanner_ui(time: float)
 signal highlight_enemy(target:Node3D, duration: float)
 signal activate_interactible_ui(interactible: Interactible)
 
@@ -192,7 +192,7 @@ func handle_input(_delta: float) -> void:
 			return
 		scanner_timer = scanner_cooldown
 		scanner.activate_scan()
-		activate_scanner_ui.emit()
+		activate_scanner_ui.emit(scanner_cooldown)
 
 	if Input.is_action_just_pressed("reload"):
 		hud_weapon.start_reload()

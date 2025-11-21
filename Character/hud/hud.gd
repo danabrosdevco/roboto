@@ -17,10 +17,11 @@ var interact_textures: Dictionary = {
 	Enums.InteractTypes.BONFIRE: preload ("res://addons/plenticons/icons/64x-hidpi/symbols/refresh-green.png")
 }
 
-func activate_scan_effect():
+func activate_scan_effect(time: float):
 	var new_scan_effect_scene = scan_effect_scene.instantiate()
 	add_child(new_scan_effect_scene)
 	move_child(new_scan_effect_scene,0)
+	update_scanner(time)
 
 func activate_enemy_marker(obj:Node3D, duration: float):
 	var target = obj
@@ -60,7 +61,8 @@ func activate_interactible(interactible: Interactible):
 func deactivate_interaction():
 	interact_box.visible = false
 
-
+func update_scanner(time:float):
+	ui.update_scanner(time)
 
 func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int, shards:int) -> void:
 	ui.update_status(health, max_health, magazine_capacity, magazine_size, shards)

@@ -6,6 +6,16 @@ extends Control
 @export var progress_bars: Array[ProgressBar]
 @export var bar_scene: PackedScene
 @export var health_container: HBoxContainer
+@export var scanner: TextureProgressBar
+var tween : Tween
+
+func update_scanner(time: float):
+	if tween and is_instance_valid(tween):
+		tween.kill()
+	scanner.value = 0 
+	tween = create_tween()
+	tween.tween_property(scanner, "value", scanner.max_value, time)
+	pass
 
 
 func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int, shards: int) -> void:
