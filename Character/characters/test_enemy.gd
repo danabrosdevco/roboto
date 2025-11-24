@@ -2,7 +2,7 @@ extends AI
 class_name Enemy
 # NODE REFERENCES #
 @export var nav_agent: NavigationAgent3D
-@export var weapon: AIWorldWeapon
+@export var weapon: AIWeapon
 @export var label: Label3D
 @export var bark: Bark
 #@export var fire_cooldown: float = 0.75
@@ -13,14 +13,21 @@ class_name Enemy
 @export var move_speed: float = 4.5
 @export var acceleration := 1.50
 @export var rotation_speed := 1.0  # Radians per second
+@export var reposition_distance: float = 1.5
+@export var advance_distance: float = 3.0
+@export var fallback_distance: float = 3.0 
 var idle_to_wander = 3
 var movement_recon_time = 1.5
+var targeting_recon_time = 0.33
+var combat_recon_time = 1.65
 var weapon_recon_time = 1.5
 var wander_delay = 1.5
-var wander_radius = 10
+var wander_radius = 3.5
+
+
 # ENUMS # 
 enum AIState {COMBAT, PATROL, SEARCH, IDLE, DEAD}
-enum MovementState {NONE, MOVE_TO}
+enum MovementState {NONE, MOVING}
 enum WeaponState {FIRE, RELOAD, AIM, IDLE}
 enum CombatOptions {MOVE, AIM, FIRE}
 enum MovementOptions {ADVANCE, REPOSITION, FALLBACK}
@@ -28,9 +35,15 @@ enum MovementOptions {ADVANCE, REPOSITION, FALLBACK}
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 # WORKING DATA # 
-var ai_state = AIState.IDLE
+var player: Player
+var ai_state = AIState.COMBAT
 var movement_state = MovementState.NONE
 var weapon_state = WeaponState.IDLE
+
+var previous_combat_option: CombatOptions
+var previous_movement_option: CombatOptions
+
+var combat_target: CharacterBody3D
 var movement_target: Vector3
 var weapon_target: Vector3
 var look_target: Vector3
@@ -38,13 +51,17 @@ var patrol_points: Array[Node3D] = []
 var spawn_transform
 var alive : bool = true
 
-var current_patrol_index := 0
+var combat_time: float = 0.0
 var movement_time: float = 0.0
+var search_time : float = 0.0
 var fire_time: float = 0.0
 var weapon_time: float = 0.0
 var wander_time: float = 0.00
-var targetting_time: float = 0.0
+var targeting_time: float = 0.0
 var idle_time: float = 0.0
+
+
+
 var last_seen_point: Array[Vector3]
 var seen_bodies: Array = []
 var frame_waited: bool = false
@@ -53,6 +70,8 @@ var frame_waited: bool = false
 func initialize():
 	spawn_transform = transform
 	await get_tree().process_frame
+	await get_tree().process_frame
+	combat_target = player
 	frame_waited = true
 	pass
 
@@ -60,66 +79,54 @@ func _physics_process(delta: float) -> void:
 	if frame_waited == false:
 		return
 	if ai_state != AIState.DEAD:
-		weapon_time += delta
-		movement_time += delta
+		handle_time_passing(delta)
 		handle_gravity(delta)
-		#handle_targeting(delta)
 		handle_looking()
 		handle_movement(delta)
 		handle_weapon_logic(delta)
 		if label != null:
 			update_debug_label()
 
+func handle_time_passing(delta):
+	weapon_time += delta
+	targeting_time += delta
+	if movement_state == MovementState.MOVING:
+		movement_time += delta
+	if ai_state == AIState.COMBAT:
+		combat_time += delta
+	if ai_state == AIState.IDLE:
+		idle_time += delta
+	if ai_state == AIState.SEARCH:
+		search_time += delta
+	if combat_time >= combat_recon_time:
+		reconsider_combat()
+	if targeting_time >= targeting_recon_time:
+		reconsider_target()
+
 func handle_gravity(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-
 func handle_targeting(delta):
-	targetting_time += delta
-	for body in seen_bodies:
-		if not is_instance_valid(body) or body.health <= 0:
-			seen_bodies.erase(body)
-			last_seen_point.clear()
-	if seen_bodies.is_empty() && look_target != null:
-		#if movement_state != MovementState.PATROL:
-			#change_state(MovementState.MOVE_TO)
-			weapon_state = WeaponState.IDLE
-			return
-	if seen_bodies.is_empty() == false:
-		for i in seen_bodies:
-			seen_bodies.sort_custom(func(a, b):
-				return global_position.distance_to(a.global_position) < global_position.distance_to(b.global_position)
-			)
-		weapon_target = seen_bodies[0].global_position
-		look_target = seen_bodies[0].global_position
-		targetting_time = 0.0
-		return
-	if seen_bodies.is_empty():
-		if last_seen_point.is_empty():
-			pass
 	pass
-
 func handle_movement(delta):
-	if movement_time >= movement_recon_time:
-		await reconsider_movement()
+	#if movement_time >= movement_recon_time:
+		#await reconsider_movement()
 	match movement_state:
 		MovementState.NONE:
 			velocity.x = 0
 			velocity.z = 0
-		MovementState.MOVE_TO:
-			var nav_map = nav_agent.get_navigation_map()
-			var next_point = NavigationServer3D.map_get_closest_point(nav_map, movement_target)
-			move_to(next_point)
-			look_target = next_point
+		MovementState.MOVING:
 			if nav_agent.is_navigation_finished():
 				reconsider_movement()
-				#move_to(next_point)
 			else:
 				move_along_nav(delta)
 
 func move_to(pos: Vector3):
-	if nav_agent:
-		nav_agent.set_target_position(pos)
+	#if nav_agent:
+	nav_agent.set_target_position(pos)
+	movement_target = pos
+	movement_state = MovementState.MOVING
+	movement_time = 0
 
 func move_along_nav(delta):
 	var path_dir = nav_agent.get_next_path_position() - global_position
@@ -131,7 +138,6 @@ func move_along_nav(delta):
 	velocity.x = lerp(velocity.x, target_velocity.x, acceleration * delta)
 	velocity.z = lerp(velocity.z, target_velocity.z, acceleration * delta)
 	move_and_slide()
-
 	# Rotate to face direction
 	if base_dir.length() > 0.01:
 		var current_yaw = rotation.y
@@ -160,56 +166,133 @@ func handle_weapon_logic(delta):
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
 				fire()
-				var space_state = get_world_3d().direct_space_state
-				var query := PhysicsRayQueryParameters3D.new()
-				var from = weapon.muzzle_origin.global_position
-				var direction = (weapon_target - from).normalized()
-				var to = from + direction * 250.0
-				query.from = from
-				query.to = to
-				query.exclude = [self]
-				var result = space_state.intersect_ray(query)
-				if result:
-					var _hit_pos = result.position
-					var collider = result.collider
-					#print("Hit:", collider, " at ", hit_pos)
-					#var sphere = MeshInstance3D.new()
-					#sphere.mesh = SphereMesh.new()
-					#sphere.mesh.radius = 0.05  # Very small
-					#sphere.mesh.height = 0.1   # Optional if you want a stretched look
-					#get_tree().current_scene.add_child(sphere)
-					#sphere.global_position = hit_pos
-					if collider.has_method("apply_damage"):
-						collider.apply_damage(10)
-					else:
-						if collider.get_parent().has_method("apply_damage"):
-							collider.apply_damage(10)
 				fire_time = weapon.fire_cooldown
 				weapon_state = WeaponState.AIM
 		WeaponState.RELOAD:
-			# Simulate reload time
 			weapon_state = WeaponState.IDLE
 #region Reconsider
+func roll_combat_action():
+	var keys := CombatOptions.keys()
+	var action := randi_range(0, keys.size() - 1)
+	var new_action = keys[action]
+	var new_action_value = CombatOptions[new_action]
+	new_action_value = CombatOptions.MOVE
+	perform_action(new_action_value)
+
 func reconsider_movement():
 	movement_time = 0
-	if idle_time >= idle_to_wander:
-		movement_state = MovementState.MOVE_TO
+	if movement_target.distance_to(global_position) >= 3:
+		return
+	if ai_state == AIState.COMBAT:
+		roll_combat_action()
 	return
 func reconsider_weapon():
 	weapon_time = 0
 	return
+
+func reconsider_combat():
+	combat_time = 0
+	roll_combat_action()
+
+func reconsider_target():
+	if combat_target == null:
+		change_ai_state(AIState.IDLE)
+		return
+	if combat_target.alive == true:
+		weapon_target = combat_target.global_position
+		look_target = combat_target.global_position
+
 #endregion Reconsider
-func change_state(new_state: AIState):
-	if movement_state != new_state:
+func change_ai_state(new_state: AIState):
+	if ai_state != new_state:
 		#print("Changing state to:", new_state)
-		movement_state = new_state
+		ai_state = new_state
 		movement_time = 0
 		idle_time = 0
 		wander_time = 0
+		combat_time = 0
+		search_time = 0
 
+func change_combat_target(body):
+	combat_target = body
+	weapon_target = body
+	look_target = body
+
+func perform_action(action: CombatOptions):
+	match action:
+		CombatOptions.MOVE:
+			#print ("HEY MOVE WAS SEELCTED!")
+			var keys := MovementOptions.keys()
+			var movement := randi_range(0, keys.size() - 1)
+			var new_move_target
+			match movement:
+				MovementOptions.REPOSITION:
+					new_move_target = find_reposition_target()
+					#if new_move_target != false:
+					move_to(new_move_target)
+					pass
+				MovementOptions.ADVANCE:
+					new_move_target =  find_advance_target()
+					#if new_move_target != false:
+					move_to(new_move_target)
+					pass
+				MovementOptions.FALLBACK:
+					new_move_target = find_fallback_target()
+					#if new_move_target != false:
+					move_to(new_move_target)
+					pass
+		CombatOptions.FIRE:
+			pass
+		CombatOptions.AIM:
+			pass
+	pass
+
+func find_reposition_target():
+	var nav_map = nav_agent.get_navigation_map()
+	var to_target = (combat_target.global_position - global_position).normalized()
+	var right = to_target.cross(Vector3.UP).normalized()
+	var lateral_dir = right if randf() > 0.5 else -right
+	var test_pos = global_position + lateral_dir * reposition_distance
+	var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+
+	if is_path_clear(closest_point, combat_target.global_position):
+		return closest_point
+	else:
+		test_pos = global_position + lateral_dir * reposition_distance * 0.5
+		closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+		if is_path_clear(closest_point, combat_target.global_position):
+			return closest_point
+	return global_position
+	pass
+
+func find_advance_target():
+	var nav_map = nav_agent.get_navigation_map()
+	var direction = (combat_target.global_position - global_position).normalized()
+	var test_pos = global_position + direction * advance_distance
+	var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+	if is_path_clear(closest_point, combat_target.global_position):
+		return closest_point
+	else:
+		test_pos = global_position + direction * advance_distance * 0.5
+		closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+		if is_path_clear(test_pos, combat_target.global_position):
+			return closest_point
+	return global_position  # fallback to current
+func find_fallback_target():
+	var nav_map = nav_agent.get_navigation_map()
+	var away_dir = (global_position - combat_target.global_position).normalized()
+	var test_pos = global_position + away_dir * fallback_distance
+	var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+	if is_path_clear(closest_point, combat_target.global_position):
+		return closest_point
+	else:
+		test_pos = global_position + away_dir * fallback_distance * 0.5
+		closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+		if is_path_clear(test_pos, combat_target.global_position):
+			return closest_point
+	return global_position
 func fire():
-	weapon.fire()
-	#print ("FIRE!")
+	weapon.fire(weapon_target)
 	pass
 
 func apply_damage(damage):
@@ -225,7 +308,7 @@ func apply_damage(damage):
 	pass
 
 func die():
-	change_state(AIState.DEAD)
+	change_ai_state(AIState.DEAD)
 	alive = false
 	set_physics_process(false)
 	set_process(false)
@@ -243,7 +326,7 @@ func reset():
 	transform = spawn_transform
 	health = max_health
 	alive = true
-	change_state(AIState.IDLE)
+	change_ai_state(AIState.IDLE)
 	seen_bodies.clear()
 	last_seen_point.clear()
 	velocity = Vector3.ZERO
@@ -261,50 +344,36 @@ func reset():
 func get_faction():
 	return faction
 
-func _on_sight_body_entered(body: Node3D) -> void:
-	if body is CharacterBody3D:
-		if body.has_method("get_faction"):
-			if body.get_faction() != get_faction():
-				if seen_bodies.has(body) == true:
-					return
-				seen_bodies.append(body)
-				weapon_target = body.global_position
-				look_target = body.global_position
-				change_state(AIState.COMBAT)
-				weapon_state = WeaponState.AIM
-				bark.bark()
+func is_path_clear(from: Vector3, to: Vector3) -> bool:
+	return true
+	var space_state = get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	DebugDraw3D.draw_ray(to, from, from.distance_squared_to(to))
 
-func _on_sight_body_shape_exited(_body_rid: RID, body: Node3D, _body_shape_index: int, _local_shape_index: int) -> void:
-	if seen_bodies.has(body) == true:
-		seen_bodies.erase(body)
-		last_seen_point.append(body.global_position)
+	query.exclude = [self]
+	var result = space_state.intersect_ray(query)
+	return not result
 
 func update_debug_label():
+	var ai_state_str = AIState.keys()[ai_state]
 	var movement_state_str = MovementState.keys()[movement_state]
 	var weapon_state_str = WeaponState.keys()[weapon_state]
 	var faction_str = Enums.Factions.keys()[faction]
-	label.text = "HP: %d\nFaction: %s\nMovement State: %s\nWeapon State: %s" % [
-		health,
+	label.text = "AI: %s\nCombatTime: %s\nMovement State: %s\nWeapon State: %s" % [
+		ai_state_str,
 		faction_str,
 		movement_state_str,
 		weapon_state_str
 	]
 
-func get_obstacle_ahead() -> Node3D:
-	var forward = -transform.basis.z
-	var from = global_position
-	var to = from + forward * 3.0
 
-	var space_state = get_world_3d().direct_space_state
-	var query = PhysicsRayQueryParameters3D.new()
-	query.from = from
-	query.to = to
-	query.exclude = [self]
-	query.collide_with_bodies = true
+func _on_detection_body_entered(body: Node3D) -> void:
+	if ai_state == AIState.DEAD:
+		return
+	if body is Player:
+		change_ai_state(AIState.COMBAT)
+		change_combat_target(body)
+	pass # Replace with function body.
 
-	var result = space_state.intersect_ray(query)
-	if result:
-		var collider = result.collider
-		if collider.has_method("is_obstacle") and collider.is_obstacle():
-			return collider  # return obstacle
-	return null
+func _on_detection_body_exited(body: Node3D) -> void:
+	pass # Replace with function body.

@@ -17,8 +17,9 @@ current_level = NodePath("TBLevel")
 ai_manager = NodePath("AIManager")
 game_manager = NodePath("GameManager")
 
-[node name="AIManager" parent="." node_paths=PackedStringArray("world") instance=ExtResource("2_d77gp")]
+[node name="AIManager" parent="." node_paths=PackedStringArray("world", "player") instance=ExtResource("2_d77gp")]
 world = NodePath("..")
+player = NodePath("../test_character")
 
 [node name="GameManager" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("3_7kch0")

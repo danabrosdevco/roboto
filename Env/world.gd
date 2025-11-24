@@ -10,7 +10,6 @@ var world_states: Enums.WorldStates
 
 func _ready():
 	await get_tree().process_frame
-	await get_tree().process_frame
 	if current_level:
 		var spawn_transform = current_level.spawn_point.global_transform
 		player.global_transform = spawn_transform
@@ -50,7 +49,7 @@ func deload_current_level(level):
 
 func register_world_objects(_level:TrenchBroomLevel):
 	ai_manager.reset_all_reg_enemies()
-	for child in current_level.nav_region.get_children():
+	for child in current_level.get_children():
 		if child is AI:
 			ai_manager.register_enemy(child)
 		if child is Interactible:

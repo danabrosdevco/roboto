@@ -50,6 +50,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var weapon_target: Vector3
 @export var look_target: Vector3
 @export var patrol_points: Array[Node3D] = []
+var player: Player
 var spawn_transform
 var alive : bool = true
 var movement_state = MovementState.IDLE

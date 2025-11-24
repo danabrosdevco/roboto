@@ -45,7 +45,7 @@ var scanner_cooldown = 15
 
 
 var current_interactible : Interactible
-
+var alive = true
 
 
 # WEAPONS #
