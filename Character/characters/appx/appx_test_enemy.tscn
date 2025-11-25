@@ -1,19 +1,19 @@
 [gd_scene load_steps=8 format=3 uid="uid://dgdfk0ov1c85l"]
 
-[ext_resource type="Script" path="res://Character/characters/enemy_test.gd" id="1_hdy57"]
-[ext_resource type="Texture2D" uid="uid://d37l8fhghu1xf" path="res://2d_assets/Kenney Prototype Textures/PNG/Dark/texture_07.png" id="2_jtylq"]
-[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="2_oqdbm"]
-[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="4_g8g3q"]
+[ext_resource type="Script" path="res://Character/characters/appx_enemy_test.gd" id="1_miucu"]
+[ext_resource type="Texture2D" uid="uid://d37l8fhghu1xf" path="res://2d_assets/Kenney Prototype Textures/PNG/Dark/texture_07.png" id="2_fxpwc"]
+[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="3_j0ddm"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="4_sgjfv"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_mnfds"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wossu"]
-albedo_texture = ExtResource("2_jtylq")
+albedo_texture = ExtResource("2_fxpwc")
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_uowf8"]
 
 [node name="EnemyCharBody" type="CharacterBody3D" node_paths=PackedStringArray("label") groups=["enemies"]]
-script = ExtResource("1_hdy57")
+script = ExtResource("1_miucu")
 label = NodePath("Label3D")
 
 [node name="EnemyMesh" type="MeshInstance3D" parent="."]
@@ -28,6 +28,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 billboard = 1
 text = "Text"
 font_size = 48
-script = ExtResource("2_oqdbm")
+script = ExtResource("3_j0ddm")
 
-[node name="Bark" parent="." instance=ExtResource("4_g8g3q")]
+[node name="Bark" parent="." instance=ExtResource("4_sgjfv")]

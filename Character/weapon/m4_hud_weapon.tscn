@@ -1,7 +1,7 @@
 [gd_scene load_steps=14 format=3 uid="uid://be2sgj1qwg7f2"]
 
 [ext_resource type="Script" path="res://Character/weapon/hud_weapon_template.gd" id="1_85vic"]
-[ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/weapon/bullet.tscn" id="2_uepc4"]
+[ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/weapon/appx/bullet.tscn" id="2_uepc4"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="3_qqqty"]
 [ext_resource type="Curve" uid="uid://cj4p72ytyyees" path="res://Character/weapon/m4_recoil_curve.tres" id="4_ji5lj"]
 [ext_resource type="PackedScene" uid="uid://bnspkdie7wm5m" path="res://3d_assets/gun_pack/Blends/AssaultRifle2_1.blend" id="5_di8i3"]

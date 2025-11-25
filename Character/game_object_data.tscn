@@ -1,6 +1,12 @@
-[gd_scene load_steps=2 format=3 uid="uid://b54p5ajvjw1r"]
+[gd_scene load_steps=2 format=3 uid="uid://cv75a5rclf6gc"]
 
-[ext_resource type="Script" path="res://Character/game_object_data.gd" id="1_2l7oq"]
+[sub_resource type="GDScript" id="GDScript_5n1ps"]
+script/source = "@icon (\"res://addons/plenticons/icons/64x-hidpi/objects/floppy-red.png\")
+extends Node
+class_name GameObjectData
+
+@export var faction: Enums.Factions
+"
 
 [node name="GameObjectData" type="Node"]
-script = ExtResource("1_2l7oq")
+script = SubResource("GDScript_5n1ps")

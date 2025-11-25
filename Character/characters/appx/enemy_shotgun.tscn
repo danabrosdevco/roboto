@@ -1,26 +1,26 @@
-[gd_scene load_steps=13 format=3 uid="uid://bq2p5mjiw62cy"]
+[gd_scene load_steps=13 format=3 uid="uid://bww5b5c7ej00s"]
 
-[ext_resource type="Script" path="res://Character/characters/test_enemy.gd" id="1_8o3xw"]
-[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_l157q"]
-[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_tcgwd"]
-[ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_s5pn6"]
-[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_ys3k2"]
-[ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_08lu8"]
-[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_6pb18"]
-[ext_resource type="PackedScene" uid="uid://viqumhnkw2cx" path="res://Character/weapon/ai-wep_shotgun.tscn" id="8_xw0ww"]
+[ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_hl8ar"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_1tcv8"]
+[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_g7j85"]
+[ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_6duy0"]
+[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_bmp85"]
+[ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_awkce"]
+[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_50t0y"]
+[ext_resource type="PackedScene" uid="uid://viqumhnkw2cx" path="res://Character/weapon/ai-wep_shotgun.tscn" id="8_4xe6a"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_jrkgo"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_negfm"]
-albedo_texture = ExtResource("6_08lu8")
+albedo_texture = ExtResource("6_awkce")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 45.0
 
 [node name="Enemy" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark") groups=["enemies"]]
-script = ExtResource("1_8o3xw")
+script = ExtResource("1_hl8ar")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("aiweapon")
 label = NodePath("Label3D")
@@ -30,8 +30,8 @@ AllowedMovementOptions = Array[int]([0, 1])
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_mygdm")
 
-[node name="Bark" parent="." instance=ExtResource("2_l157q")]
-bark_clips = Array[AudioStream]([ExtResource("3_tcgwd"), ExtResource("4_s5pn6"), ExtResource("5_ys3k2")])
+[node name="Bark" parent="." instance=ExtResource("2_1tcv8")]
+bark_clips = Array[AudioStream]([ExtResource("3_g7j85"), ExtResource("4_6duy0"), ExtResource("5_bmp85")])
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
@@ -45,9 +45,9 @@ visible = false
 billboard = 1
 text = "Text"
 font_size = 48
-script = ExtResource("7_6pb18")
+script = ExtResource("7_50t0y")
 
-[node name="aiweapon" parent="." instance=ExtResource("8_xw0ww")]
+[node name="aiweapon" parent="." instance=ExtResource("8_4xe6a")]
 transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.553111, 0.221401, 0)
 
 [node name="Detection" type="Area3D" parent="."]

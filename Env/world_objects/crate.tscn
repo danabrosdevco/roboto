@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://c34427d1yh8jv"]
 
 [ext_resource type="PackedScene" uid="uid://bq16shmgkpxmv" path="res://3d_assets/shooter pack/Environment/glTF/Crate.gltf" id="1_3g6xg"]
-[ext_resource type="Script" path="res://Character/characters/test_target.gd" id="1_jduce"]
+[ext_resource type="Script" path="res://Character/characters/appx/test_target.gd" id="1_jduce"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_l7pyf"]
 size = Vector3(0.799988, 0.810608, 0.738159)

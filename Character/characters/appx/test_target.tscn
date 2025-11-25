@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://deb6uwnna01po"]
 
-[ext_resource type="Script" path="res://Character/characters/test_target.gd" id="1_16n30"]
+[ext_resource type="Script" path="res://Character/characters/appx/test_target.gd" id="1_16n30"]
 [ext_resource type="Texture2D" uid="uid://bdp4uio5fyhxp" path="res://2d_assets/Kenney Prototype Textures/PNG/Light/texture_08.png" id="2_r44oa"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_pp7af"]

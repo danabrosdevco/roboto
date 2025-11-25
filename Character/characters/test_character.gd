@@ -161,7 +161,9 @@ func handle_input(_delta: float) -> void:
 
 	match hud_weapon.firemode:
 		Enums.FireModes.FULL:
-			if fire_pressed:
+			if fire_pressed && hud_weapon.magazine_capacity > 0:
+				hud_weapon.fire()
+			if fire_pressed and not fire_held_last_frame:
 				hud_weapon.fire()
 		Enums.FireModes.SEMI:
 			if fire_just_pressed and not fire_held_last_frame:
