@@ -166,10 +166,10 @@ func fire() -> void:
 		if result:
 			var collider = result.collider
 			if collider.has_method("apply_damage"):
-				collider.apply_damage(damage)
+				collider.apply_damage(damage, cam.get_parent())
 			else:
 				if collider.get_parent().has_method("apply_damage"):
-					collider.apply_damage(damage)
+					collider.apply_damage(damage, cam.get_parent())
 		if tracer:
 			fire_tracer()
 		magazine_capacity = max(0, magazine_capacity - 1)

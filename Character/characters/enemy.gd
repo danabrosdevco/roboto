@@ -19,6 +19,8 @@ class_name Enemy
 @export var max_fire_distance: float = 30
 @export var max_accuracy: float = 0.90
 @export var min_accuracy: float = 0.5
+@export var bits: int = 10
+var damaged_by_player : bool = false
 var idle_to_wander = 3
 var movement_recon_time = 1.5
 var targeting_recon_time = 0.33
@@ -307,9 +309,12 @@ func fire():
 	weapon.fire(final_target)
 	pass
 
-func apply_damage(damage):
+func apply_damage(damage, source):
+	print (source)
 	if ai_state == AIState.DEAD:
 		return
+	if source is Player:
+		damaged_by_player = true
 	bark.bark()
 	health -= damage
 	if health <= 0:
@@ -328,7 +333,8 @@ func die():
 	if weapon != null:
 		weapon.hide()
 	nav_agent.set_target_position(global_position)  # Cancel nav
-	#nav_agent.set_enabled(false)
+	if damaged_by_player == true:
+		player.add_bits(bits)
 	$CollisionShape3D.disabled = true  # or disable all collision shapes
 
 func respawn():

@@ -36,10 +36,10 @@ func check_damage(weapon_target: Vector3):
 		#get_tree().current_scene.add_child(sphere)
 		#sphere.global_position = hit_pos
 		if collider.has_method("apply_damage"):
-			collider.apply_damage(10)
+			collider.apply_damage(damage, get_parent())
 		else:
 			if collider.get_parent().has_method("apply_damage"):
-				collider.apply_damage(10)
+				collider.apply_damage(damage, get_parent())
 
 func play_shot_audio():
 	shot_audio.play()

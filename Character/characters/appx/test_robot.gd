@@ -265,10 +265,10 @@ func handle_weapon_logic(delta):
 					#get_tree().current_scene.add_child(sphere)
 					#sphere.global_position = hit_pos
 					if collider.has_method("apply_damage"):
-						collider.apply_damage(10)
+						collider.apply_damage(10, self)
 					else:
 						if collider.get_parent().has_method("apply_damage"):
-							collider.apply_damage(10)
+							collider.apply_damage(10, self)
 				fire_time = fire_cooldown
 				weapon_state = WeaponState.AIM
 		WeaponState.RELOAD:
@@ -299,7 +299,7 @@ func fire():
 	#print ("FIRE!")
 	pass
 
-func apply_damage(damage):
+func apply_damage(damage, body):
 	if alive == false:
 		return
 	bark.bark()
