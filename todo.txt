@@ -1,9 +1,11 @@
 Next To Do:
 	- Melee enemy
-		- Chaser / Defender
+		- Chaser 
+		- Nest Defender
 	- Generic Enemy Scene
 	- Sound Orbs to check detection
 	- var building up to awareness rather than instant
+		- var building up to shot rather than 'HEY I CAN SHOOT YOU'
 
 
 
@@ -54,7 +56,8 @@ Argus:
 	\o/
 State:
 	<*>
-Insurgents:  	::
+Insurgents:  	^^
+				::
 				::
 - bullets do something [ragdoll an enemy]
 	- not ragdoll, queue_free()

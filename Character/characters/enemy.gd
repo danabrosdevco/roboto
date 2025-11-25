@@ -170,7 +170,9 @@ func handle_weapon_logic(delta):
 				var dist = global_position.distance_to(weapon_target)
 				if fire_time <= 0:
 					if dist <= max_fire_distance:
-						if is_path_clear(weapon.muzzle_origin.global_position, combat_target.global_position) == true:
+						if weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
+							weapon_state = WeaponState.FIRE
+						elif is_path_clear(weapon.muzzle_origin.global_position, combat_target.global_position) == true:
 							weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
@@ -310,7 +312,6 @@ func fire():
 	pass
 
 func apply_damage(damage, source):
-	print (source)
 	if ai_state == AIState.DEAD:
 		return
 	if source is Player:
@@ -336,7 +337,7 @@ func die():
 	if damaged_by_player == true:
 		player.add_bits(bits)
 	$CollisionShape3D.disabled = true  # or disable all collision shapes
-
+	damaged_by_player = false
 func respawn():
 	reset()
 
@@ -366,7 +367,7 @@ func is_path_clear(from: Vector3, to: Vector3) -> bool:
 	#return true
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(from, to)
-	DebugDraw3D.draw_ray(to, from, from.distance_squared_to(to))
+	#DebugDraw3D.draw_ray(to, from, from.distance_squared_to(to))
 
 	query.exclude = [self, combat_target]
 	var result = space_state.intersect_ray(query)

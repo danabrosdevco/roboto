@@ -28,6 +28,8 @@ class_name TestRobot
 @export var sight_rectangle_near_area: float = 4
 @export var sight_rectangle_far_area: float = 100
 @export var sight_rectangle_distance: float = 20
+@export var bits : int =5
+@export var damaged_by_player: bool = false
 
 @export var neighbor_radius := 10.0
 @export var separation_weight := 1.5
@@ -304,6 +306,8 @@ func apply_damage(damage, body):
 		return
 	bark.bark()
 	health -= damage
+	if body is Player:
+		damaged_by_player = true
 	if health <= 0:
 		alive = false
 		die()
@@ -317,12 +321,14 @@ func die():
 	set_process(false)
 	hide()
 	weapon.hide()
+	if damaged_by_player == true:
+		player.add_bits(bits)
 	nav_agent.set_target_position(global_position)  # Cancel nav
 	#nav_agent.set_enabled(false)
 	hearing.monitoring = false
 	sight.monitoring = false
 	$CollisionShape3D.disabled = true  # or disable all collision shapes
-
+	damaged_by_player = false
 func respawn():
 	reset()
 

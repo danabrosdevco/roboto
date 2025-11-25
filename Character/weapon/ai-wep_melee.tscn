@@ -1,0 +1,35 @@
+[gd_scene load_steps=7 format=3 uid="uid://gymujiepqrjl"]
+
+[ext_resource type="Script" path="res://Character/weapon/ai_weapon.gd" id="1_payy6"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_awy8x"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="4_wm7qy"]
+[ext_resource type="AudioStream" uid="uid://cv8qan32ox2h7" path="res://sounds/sfx/weapons/melee/WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_17.wav" id="4_x4srj"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="6_cev26"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_xjwny"]
+size = Vector3(1.5, 0.25, 0.25)
+
+[node name="ai_world_weapon" type="Node3D" node_paths=PackedStringArray("muzzle_flash", "muzzle_origin", "shot_audio")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 0)
+script = ExtResource("1_payy6")
+muzzle_flash = NodePath("CSGMesh3D/MuzzleFlash")
+muzzle_origin = NodePath("CSGMesh3D/Muzzle")
+shot_audio = NodePath("CSGMesh3D/Whoosh")
+tracer_scene = ExtResource("2_awy8x")
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+transform = Transform3D(1, 0, 3.55271e-15, 0, 1, 0, -3.55271e-15, 0, 1, -0.00969648, 0, -4.23847e-10)
+mesh = SubResource("BoxMesh_xjwny")
+
+[node name="Muzzle" type="Node3D" parent="CSGMesh3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 4.65663e-10, 0, -4.65663e-10, 1, 0, 0, 0)
+
+[node name="MuzzleFlash" parent="CSGMesh3D" instance=ExtResource("4_wm7qy")]
+transform = Transform3D(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+[node name="Whoosh" type="AudioStreamPlayer3D" parent="CSGMesh3D"]
+stream = ExtResource("4_x4srj")
+unit_size = 25.0
+
+[node name="Click" type="AudioStreamPlayer3D" parent="CSGMesh3D"]
+stream = ExtResource("6_cev26")

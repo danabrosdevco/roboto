@@ -38,7 +38,7 @@ cast_shadow = 0
 ignore_occlusion_culling = true
 
 [node name="Muzzle" type="Node3D" parent="AssaultRifle2_12/AssaultRifle2_1" index="0"]
-transform = Transform3D(3.22828, -2.98023e-08, 0, 0, 4, 2.04891e-08, 0, -1.11759e-08, 4, 6.85113, 0.582417, 0.108339)
+transform = Transform3D(3.22828, -5.96046e-08, 0, 0, 4, 2.98023e-08, 0, -1.49012e-08, 4, 11.431, 0.724916, -0.0666242)
 
 [node name="MuzzleFlash" parent="AssaultRifle2_12/AssaultRifle2_1" index="1" instance=ExtResource("6_f4hur")]
 transform = Transform3D(3.00282, 0.0213606, -1.46844, 0.00481322, 3.99932, 0.0732868, 1.18525, -0.070358, 3.71999, 4.44377, 0.61281, -0.143923)
