@@ -9,9 +9,8 @@ func register_enemy(new_enemy:AI):
 	enemies.append(new_enemy)
 	new_enemy.player = player
 
-func deregister_enemy(enemy:AI):
+func deregister_enemy(enemy):
 	enemies.erase(enemy)
 
 func reset_all_reg_enemies():
-	for e in enemies:
-		deregister_enemy(e)
+	enemies = []

@@ -14,8 +14,9 @@ func _ready():
 		var spawn_transform = current_level.spawn_point.global_transform
 		player.global_transform = spawn_transform
 		player.cam.look_at(Vector3(player.global_position.x, player.global_position.y, player.global_position.z - 1))
-		for level_exit in current_level.level_exits:
-			level_exit.next_level_signal.connect(_on_next_level_requested)
+		var level_exits = get_tree().get_nodes_in_group("levelexit")
+		for exit in level_exits:
+			exit.next_level_signal.connect(_on_next_level_requested)
 	else:
 		for i in get_children():
 			if i is TrenchBroomLevel:

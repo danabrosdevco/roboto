@@ -13,9 +13,12 @@ class_name Enemy
 @export var move_speed: float = 4.5
 @export var acceleration := 1.50
 @export var rotation_speed := 1.0  # Radians per second
-@export var reposition_distance: float = 1.5
+@export var reposition_distance: float = 2.0
 @export var advance_distance: float = 3.0
-@export var fallback_distance: float = 3.0 
+@export var fallback_distance: float = 1.25 
+@export var max_fire_distance: float = 30
+@export var max_accuracy: float = 0.90
+@export var min_accuracy: float = 0.5
 var idle_to_wander = 3
 var movement_recon_time = 1.5
 var targeting_recon_time = 0.33
@@ -31,6 +34,9 @@ enum MovementState {NONE, MOVING}
 enum WeaponState {FIRE, RELOAD, AIM, IDLE}
 enum CombatOptions {MOVE, AIM, FIRE}
 enum MovementOptions {ADVANCE, REPOSITION, FALLBACK}
+
+@export var AllowedMovementOptions: Array[MovementOptions]
+
 # CONST #
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -160,9 +166,10 @@ func handle_weapon_logic(delta):
 			weapon_state = WeaponState.AIM
 		WeaponState.AIM:
 				var dist = global_position.distance_to(weapon_target)
-				if dist <= 10.0:
-					if fire_time <= 0:
-						weapon_state = WeaponState.FIRE
+				if fire_time <= 0:
+					if dist <= max_fire_distance:
+						if is_path_clear(weapon.muzzle_origin.global_position, combat_target.global_position) == true:
+							weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
 				fire()
@@ -176,8 +183,12 @@ func roll_combat_action():
 	var action := randi_range(0, keys.size() - 1)
 	var new_action = keys[action]
 	var new_action_value = CombatOptions[new_action]
-	new_action_value = CombatOptions.MOVE
+	if new_action_value == previous_combat_option:
+		action = (action) % keys.size() 
+		new_action = keys[action] 
+	new_action_value = CombatOptions[new_action]
 	perform_action(new_action_value)
+	new_action_value = previous_combat_option
 
 func reconsider_movement():
 	movement_time = 0
@@ -215,14 +226,14 @@ func change_ai_state(new_state: AIState):
 
 func change_combat_target(body):
 	combat_target = body
-	weapon_target = body
-	look_target = body
+	weapon_target = body.global_position
+	look_target = body.global_position
 
 func perform_action(action: CombatOptions):
 	match action:
 		CombatOptions.MOVE:
 			#print ("HEY MOVE WAS SEELCTED!")
-			var keys := MovementOptions.keys()
+			var keys := AllowedMovementOptions
 			var movement := randi_range(0, keys.size() - 1)
 			var new_move_target
 			match movement:
@@ -292,7 +303,8 @@ func find_fallback_target():
 			return closest_point
 	return global_position
 func fire():
-	weapon.fire(weapon_target)
+	var final_target = get_inaccurate_target(weapon_target)
+	weapon.fire(final_target)
 	pass
 
 func apply_damage(damage):
@@ -345,12 +357,12 @@ func get_faction():
 	return faction
 
 func is_path_clear(from: Vector3, to: Vector3) -> bool:
-	return true
+	#return true
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	DebugDraw3D.draw_ray(to, from, from.distance_squared_to(to))
 
-	query.exclude = [self]
+	query.exclude = [self, combat_target]
 	var result = space_state.intersect_ray(query)
 	return not result
 
@@ -366,7 +378,6 @@ func update_debug_label():
 		weapon_state_str
 	]
 
-
 func _on_detection_body_entered(body: Node3D) -> void:
 	if ai_state == AIState.DEAD:
 		return
@@ -377,3 +388,27 @@ func _on_detection_body_entered(body: Node3D) -> void:
 
 func _on_detection_body_exited(body: Node3D) -> void:
 	pass # Replace with function body.
+
+
+func get_inaccurate_target(target_pos: Vector3) -> Vector3:
+	var dist := global_position.distance_to(weapon_target)
+	# If too far away → guaranteed miss
+	if dist > max_fire_distance:
+		return target_pos + get_random_spread(dist, min_accuracy)
+	# Accuracy scales based on distance
+	var t = clamp(dist / max_fire_distance, 0.0, 1.0)
+	var accuracy = lerp(max_accuracy, min_accuracy, t)
+	# Apply random spread based on accuracy
+	return target_pos + get_random_spread(dist, accuracy)
+
+func get_random_spread(distance: float, accuracy: float) -> Vector3:
+	# Accuracy 1.0 = no spread
+	# Accuracy 0.0 = huge spread
+	var spread_strength := (1.0 - accuracy)
+	# Scale spread with distance so missing becomes more dramatic further away
+	var max_offset := spread_strength * (distance * 0.1)
+	return Vector3(
+		randf_range(-max_offset, max_offset),
+		randf_range(-max_offset, max_offset),
+		randf_range(-max_offset, max_offset)
+	)

@@ -2,7 +2,7 @@ extends Node3D
 class_name AIWeapon
 
 @export var damage: int = 10
-@export var fire_cooldown : float = 0.75
+@export var fire_cooldown : float = 1.35
 @export var muzzle_flash: MuzzleFlash
 @export var muzzle_origin: Node3D
 @export var shot_audio: AudioStreamPlayer3D

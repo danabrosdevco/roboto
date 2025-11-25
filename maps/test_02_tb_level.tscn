@@ -1,9 +1,10 @@
-[gd_scene load_steps=9 format=4 uid="uid://cpqy5v5k8a86s"]
+[gd_scene load_steps=10 format=4 uid="uid://cpqy5v5k8a86s"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_teevl"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_ojnbl"]
 [ext_resource type="Resource" uid="uid://bkhxcqsquw1yg" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_lhrpx"]
 [ext_resource type="Material" uid="uid://bavw3nrsrdewq" path="res://textures/textures_pack/Stone_11-256x256.tres" id="4_fyp4b"]
+[ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="5_qd1es"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_b87a8"]
 vertices = PackedVector3Array(-10.5, 1, -13.5, -10.5, 1, 1.5, 14, 1, 1.5, 14, 1, -13.5)
@@ -58,3 +59,10 @@ occluder = SubResource("ArrayOccluder3D_pfd87")
 
 [node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_0_worldspawn"]
 shape = SubResource("ConvexPolygonShape3D_bnowr")
+
+[node name="WorldEnvironment" parent="." instance=ExtResource("5_qd1es")]
+
+[node name="Sun" parent="WorldEnvironment" index="0"]
+transform = Transform3D(0.211335, -0.824465, -0.524972, -0.278779, -0.565637, 0.776104, -0.936813, -0.0176672, -0.349383, 2.68291, 5.01918, 2.68093)
+
+[editable path="WorldEnvironment"]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=108 format=4 uid="uid://fgdjjw1lgv8e"]
+[gd_scene load_steps=109 format=4 uid="uid://fgdjjw1lgv8e"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_kgieb"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_mbgf5"]
@@ -16,6 +16,7 @@
 [ext_resource type="Material" uid="uid://b5y0bw7i7rumr" path="res://textures/PSX_Textures/wood_2.tres" id="11_ngkdy"]
 [ext_resource type="PackedScene" uid="uid://d3b6t0u0yav3s" path="res://Env/world_objects/components/interactible_shard.tscn" id="13_bhe8f"]
 [ext_resource type="PackedScene" uid="uid://buetx64wgjk38" path="res://Env/world_objects/pickup.tscn" id="13_r30j6"]
+[ext_resource type="PackedScene" uid="uid://cpqy5v5k8a86s" path="res://maps/test_02_tb_level.tscn" id="15_o6ge4"]
 [ext_resource type="PackedScene" uid="uid://qec53sx1mmk2" path="res://3d_assets/Low Poly Furniture/Lights/Ceiling Light.fbx" id="18_4v03s"]
 [ext_resource type="PackedScene" uid="uid://c7yxcpgs2ry2p" path="res://Env/world_objects/components/bonfire.tscn" id="18_rk63d"]
 [ext_resource type="PackedScene" uid="uid://bq2p5mjiw62cy" path="res://Character/characters/enemy.tscn" id="19_ky2xj"]
@@ -739,16 +740,17 @@ shape = SubResource("ConcavePolygonShape3D_f5c4m")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.52151, 0.449806, 50.7488)
 
 [node name="Enemy" parent="." instance=ExtResource("19_ky2xj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.7985, 1.3005, 62.3157)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.9774, 0.360831, 73.4744)
 
 [node name="Enemy2" parent="." instance=ExtResource("19_ky2xj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.59569, 1.3005, 62.3157)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4678, 1.3005, 66.9647)
 
 [node name="Enemy3" parent="." instance=ExtResource("19_ky2xj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.90527, 1.3005, 57.1722)
 
 [node name="LevelExit" parent="." instance=ExtResource("4_gnl0g")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25.5034, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.1617, 1.14425, 67.1867)
+next_level = ExtResource("15_o6ge4")
 
 [node name="SpawnPoint" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.61099, 3.60764, 4.0665)
