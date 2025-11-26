@@ -19,12 +19,13 @@ albedo_texture = ExtResource("6_lx4cr")
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 45.0
 
-[node name="Enemy" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark") groups=["enemies"]]
+[node name="Enemy" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection") groups=["enemies"]]
 script = ExtResource("1_dwt7a")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("aiweapon")
 label = NodePath("Label3D")
 bark = NodePath("Bark")
+detection = NodePath("Detection")
 AllowedMovementOptions = Array[int]([0, 1])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]

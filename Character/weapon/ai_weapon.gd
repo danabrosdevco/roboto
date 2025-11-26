@@ -99,18 +99,18 @@ func fire_tracer():
 	new_tracer.look_at(new_tracer.global_position + dir)
 
 func fire_tracer_spread(weapon_target, spread_count := 8, spread_angle_degrees := 10.0):
+	var aim_dir = (weapon_target - muzzle_origin.global_position).normalized()
 	for i in spread_count:
 			var new_tracer = tracer_scene.instantiate()
 			add_child(new_tracer)
 			new_tracer.global_position = muzzle_origin.global_position
 			# Godot forward is -Z, but your muzzle uses +X
-			var base_dir = muzzle_origin.global_transform.basis.x.normalized()
 			var angle_y = deg_to_rad(randf_range(-spread_angle_degrees, spread_angle_degrees))
 			var angle_z = deg_to_rad(randf_range(-spread_angle_degrees, spread_angle_degrees))
 			var spread_basis = Basis()
 			spread_basis = spread_basis.rotated(Vector3.UP, angle_y)
 			spread_basis = spread_basis.rotated(Vector3.FORWARD, angle_z)
-			var final_dir = (spread_basis * base_dir).normalized()
+			var final_dir = (spread_basis * aim_dir).normalized()
 			new_tracer.direction = final_dir
 			# Align forward (-Z) with +X direction
 			new_tracer.look_at(new_tracer.global_position + final_dir, Vector3.UP)

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://fxth7brdn14n"
+path="res://.godot/imported/civil-unrest-4.1.map-6a33a98c7da965908fdcae389b7656c3.tres"
+
+[deps]
+
+source_file="res://maps/autosave/civil-unrest-4.1.map"
+dest_files=["res://.godot/imported/civil-unrest-4.1.map-6a33a98c7da965908fdcae389b7656c3.tres"]
+
+[params]
+

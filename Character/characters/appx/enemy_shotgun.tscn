@@ -19,12 +19,13 @@ albedo_texture = ExtResource("6_j1oqd")
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 45.0
 
-[node name="Enemy" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark") groups=["enemies"]]
+[node name="Enemy" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection") groups=["enemies"]]
 script = ExtResource("1_veyd1")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("aiweapon")
 label = NodePath("Label3D")
 bark = NodePath("Bark")
+detection = NodePath("Detection")
 AllowedMovementOptions = Array[int]([0, 1])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -41,7 +42,6 @@ material = SubResource("StandardMaterial3D_negfm")
 
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
-visible = false
 billboard = 1
 text = "Text"
 font_size = 48

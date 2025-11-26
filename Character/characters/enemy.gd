@@ -5,7 +5,7 @@ class_name Enemy
 @export var weapon: AIWeapon
 @export var label: Label3D
 @export var bark: Bark
-#@export var fire_cooldown: float = 0.75
+@export var detection: Area3D
 # EXPORT DATA # 
 @export var health: int = 20
 @export var max_health: int = 20
@@ -354,11 +354,13 @@ func reset():
 	show()
 	if weapon != null:
 		weapon.show()
+	force_check_detection()
 	set_physics_process(true)
 	set_process(true)
 	#hearing.monitoring = true
 	#sight.monitoring = true
 	$CollisionShape3D.disabled = false
+	force_check_detection()
 
 func get_faction():
 	return faction
@@ -385,12 +387,33 @@ func update_debug_label():
 		weapon_state_str
 	]
 
+func force_check_detection():
+	var shape = detection.get_child(0).shape
+	var new_transform: Transform3D = detection.global_transform
+
+	var space_state = get_world_3d().direct_space_state
+
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = new_transform
+	query.collide_with_areas = true
+	query.collide_with_bodies = true
+	query.exclude = [detection, self]
+
+	var results = space_state.intersect_shape(query, 64)
+
+	for result in results:
+		var collider = result.collider
+		#print("Area overlaps with: ", collider)
+		if collider is Player:
+			_on_detection_body_entered(collider)
+
 func _on_detection_body_entered(body: Node3D) -> void:
 	if ai_state == AIState.DEAD:
 		return
 	if body is Player:
-		change_ai_state(AIState.COMBAT)
 		change_combat_target(body)
+		change_ai_state(AIState.COMBAT)
 	pass # Replace with function body.
 
 func _on_detection_body_exited(body: Node3D) -> void:
