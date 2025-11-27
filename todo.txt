@@ -1,8 +1,8 @@
 Next To Do:
 	- Melee enemy
-		- Chaser 
-		- Nest Defender
-	- Generic Enemy Scene
+		- Chaser [done]
+		- Nest Defender 
+	- Generic Enemy Scene [done]
 	- Sound Orbs to check detection
 	- var building up to awareness rather than instant
 		- var building up to shot rather than 'HEY I CAN SHOOT YOU'

@@ -1,10 +1,11 @@
-[gd_scene load_steps=10 format=4 uid="uid://cpqy5v5k8a86s"]
+[gd_scene load_steps=11 format=4 uid="uid://cpqy5v5k8a86s"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_teevl"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_ojnbl"]
 [ext_resource type="Resource" uid="uid://bkhxcqsquw1yg" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_lhrpx"]
 [ext_resource type="Material" uid="uid://bavw3nrsrdewq" path="res://textures/textures_pack/Stone_11-256x256.tres" id="4_fyp4b"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="5_qd1es"]
+[ext_resource type="PackedScene" uid="uid://d2qtk67sm0w38" path="res://Character/characters/enemy_nest-chaser.tscn" id="6_1wf7q"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_b87a8"]
 vertices = PackedVector3Array(-10.5, 1, -13.5, -10.5, 1, 1.5, 14, 1, 1.5, 14, 1, -13.5)
@@ -39,6 +40,7 @@ nav_region = NodePath("NavigationRegion3D")
 func_godot_map = NodePath("NavigationRegion3D/FuncGodotMap")
 
 [node name="SpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6257, 0, -6.92589)
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_b87a8")
@@ -64,5 +66,8 @@ shape = SubResource("ConvexPolygonShape3D_bnowr")
 
 [node name="Sun" parent="WorldEnvironment" index="0"]
 transform = Transform3D(0.211335, -0.824465, -0.524972, -0.278779, -0.565637, 0.776104, -0.936813, -0.0176672, -0.349383, 2.68291, 5.01918, 2.68093)
+
+[node name="Enm_Nest Chaser" parent="." instance=ExtResource("6_1wf7q")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.76987, 0.5, -5.69145)
 
 [editable path="WorldEnvironment"]

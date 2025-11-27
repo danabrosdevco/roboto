@@ -32,12 +32,13 @@ var wander_radius = 3.5
 
 # ENUMS # 
 enum AIState {COMBAT, PATROL, SEARCH, IDLE, DEAD}
-enum MovementState {NONE, MOVING}
+enum MovementState {NONE, MOVING, LEAPING}
 enum WeaponState {FIRE, RELOAD, AIM, IDLE}
 enum CombatOptions {MOVE, AIM, FIRE}
-enum MovementOptions {ADVANCE, REPOSITION, FALLBACK}
-
+enum MovementOptions {ADVANCE, REPOSITION, FALLBACK, LEAP}
+@export var DefaultAIState: AIState
 @export var AllowedMovementOptions: Array[MovementOptions]
+@export var AllowedCombatOptions: Array[CombatOptions]
 
 # CONST #
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -128,6 +129,8 @@ func handle_movement(delta):
 				reconsider_movement()
 			else:
 				move_along_nav(delta)
+		MovementState.LEAPING:
+			handle_leap(delta)
 
 func move_to(pos: Vector3):
 	#if nav_agent:
@@ -151,6 +154,16 @@ func move_along_nav(delta):
 		var current_yaw = rotation.y
 		var target_yaw = atan2(-base_dir.x, -base_dir.z)
 		rotation.y = lerp_angle(current_yaw, target_yaw, rotation_speed * delta)
+
+func handle_leap(delta):
+	#print ("HANDLING LEAP")
+	velocity.y -= gravity * delta
+	move_and_slide()
+	if is_on_floor():
+		movement_state = MovementState.NONE
+		velocity = Vector3.ZERO
+		roll_combat_action()
+
 func handle_looking():
 	var flat_look_target = Vector3(look_target.x, global_position.y, look_target.z)
 	if global_position.distance_to(flat_look_target) > 0.01:
@@ -183,6 +196,7 @@ func handle_weapon_logic(delta):
 			weapon_state = WeaponState.IDLE
 #region Reconsider
 func roll_combat_action():
+	#print ("ROLLING COMBAT!")
 	var keys := CombatOptions.keys()
 	var action := randi_range(0, keys.size() - 1)
 	var new_action = keys[action]
@@ -238,20 +252,30 @@ func perform_action(action: CombatOptions):
 		CombatOptions.MOVE:
 			#print ("HEY MOVE WAS SEELCTED!")
 			var keys := AllowedMovementOptions
-			var movement := randi_range(0, keys.size() - 1)
+			var random_index := randi_range(0, keys.size() - 1)
 			var new_move_target
+			var movement = keys[random_index]
+			#print (movement)
 			match movement:
+				MovementOptions.LEAP:
+					#print ("LEAP")
+					movement_state = MovementState.LEAPING
+					leap_towards(combat_target.global_position)
+					pass
 				MovementOptions.REPOSITION:
+					#print ("REPOSITION")
 					new_move_target = find_reposition_target()
 					#if new_move_target != false:
 					move_to(new_move_target)
 					pass
 				MovementOptions.ADVANCE:
+					#print ("ADVANCE")
 					new_move_target =  find_advance_target()
 					#if new_move_target != false:
 					move_to(new_move_target)
 					pass
 				MovementOptions.FALLBACK:
+					#print ("FALLBACK")
 					new_move_target = find_fallback_target()
 					#if new_move_target != false:
 					move_to(new_move_target)
@@ -306,6 +330,26 @@ func find_fallback_target():
 		if is_path_clear(test_pos, combat_target.global_position):
 			return closest_point
 	return global_position
+
+func leap_towards(target_pos: Vector3, leap_time: float = 0.95):
+	movement_state = MovementState.LEAPING
+	var vel = compute_leap_velocity(target_pos, leap_time)
+	velocity = vel
+	look_target = target_pos
+
+func compute_leap_velocity(target: Vector3, time: float) -> Vector3:
+	var g = gravity
+	var displacement := target - global_position
+	var dx = displacement.x
+	var dy = displacement.y
+	var dz = displacement.z
+
+	var vx = dx / time
+	var vz = dz / time
+	var vy = (dy / time) + (0.5 * g * time)
+	#print (Vector3(vx, vy, vz))
+	return Vector3(vx, vy, vz)
+
 func fire():
 	var final_target = get_inaccurate_target(weapon_target)
 	weapon.fire(final_target)
@@ -345,15 +389,25 @@ func reset():
 	transform = spawn_transform
 	health = max_health
 	alive = true
-	change_ai_state(AIState.IDLE)
+	change_ai_state(DefaultAIState)
 	seen_bodies.clear()
 	last_seen_point.clear()
+	nav_agent.clear_path()
+
 	velocity = Vector3.ZERO
 	weapon_target = Vector3.ZERO
 	look_target = Vector3.ZERO
 	show()
 	if weapon != null:
 		weapon.show()
+	movement_time = 0
+	combat_time = 0
+	weapon_time = 0
+	targeting_time = 0
+	fire_time = 0
+	idle_time = 0
+	search_time = 0
+	wander_time = 0
 	force_check_detection()
 	set_physics_process(true)
 	set_process(true)
@@ -380,7 +434,7 @@ func update_debug_label():
 	var movement_state_str = MovementState.keys()[movement_state]
 	var weapon_state_str = WeaponState.keys()[weapon_state]
 	var faction_str = Enums.Factions.keys()[faction]
-	label.text = "AI: %s\nCombatTime: %s\nMovement State: %s\nWeapon State: %s" % [
+	label.text = "AI: %s\nFaction: %s\nMovement State: %s\nWeapon State: %s" % [
 		ai_state_str,
 		faction_str,
 		movement_state_str,

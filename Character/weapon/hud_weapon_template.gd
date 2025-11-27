@@ -149,7 +149,6 @@ func fire() -> void:
 		to = from + tracer_origin.global_transform.basis.x.normalized() * 250.0
 		var space_state = get_world_3d().direct_space_state
 		var query := PhysicsRayQueryParameters3D.new()
-
 		query.from = from
 		query.to = to
 		query.exclude = [self]

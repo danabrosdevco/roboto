@@ -1,0 +1,72 @@
+[gd_scene load_steps=11 format=3 uid="uid://d2qtk67sm0w38"]
+
+[ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_3hqvp"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_ddssu"]
+[ext_resource type="AudioStream" uid="uid://cmkbne2h7vucj" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__24.wav" id="3_sn28p"]
+[ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_1hh83"]
+[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_hss0i"]
+[ext_resource type="PackedScene" uid="uid://gymujiepqrjl" path="res://Character/weapon/ai-wep_melee.tscn" id="8_tcfqy"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
+height = 1.0
+
+[sub_resource type="TubeTrailMesh" id="TubeTrailMesh_y58w7"]
+radius = 0.45
+section_length = 0.1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_negfm"]
+albedo_texture = ExtResource("6_1hh83")
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
+radius = 45.0
+
+[node name="Enm_Nest Chaser" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection") groups=["enemies"]]
+script = ExtResource("1_3hqvp")
+nav_agent = NodePath("NavigationAgent3D")
+weapon = NodePath("ai_world_weapon")
+label = NodePath("Label3D")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+move_speed = 2.0
+acceleration = 0.75
+reposition_distance = 0.0
+advance_distance = 5.0
+fallback_distance = 0.0
+max_fire_distance = 2.0
+max_accuracy = 1.0
+min_accuracy = 1.0
+bits = 5
+AllowedMovementOptions = Array[int]([3, 0])
+AllowedCombatOptions = Array[int]([0, 2])
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0320198, 0)
+shape = SubResource("CapsuleShape3D_mygdm")
+
+[node name="Bark" parent="." instance=ExtResource("2_ddssu")]
+bark_clips = Array[AudioStream]([ExtResource("3_sn28p")])
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+mesh = SubResource("TubeTrailMesh_y58w7")
+material = SubResource("StandardMaterial3D_negfm")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+billboard = 1
+text = "Text"
+font_size = 48
+script = ExtResource("7_hss0i")
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.2422, 0, 0)
+shape = SubResource("SphereShape3D_mkxqd")
+
+[node name="ai_world_weapon" parent="." instance=ExtResource("8_tcfqy")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0.0244119, 0, -0.0834309)
+
+[connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
+[connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]
