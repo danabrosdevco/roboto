@@ -196,18 +196,15 @@ func handle_weapon_logic(delta):
 			weapon_state = WeaponState.IDLE
 #region Reconsider
 func roll_combat_action():
-	#print ("ROLLING COMBAT!")
-	var keys := CombatOptions.keys()
-	var action := randi_range(0, keys.size() - 1)
-	var new_action = keys[action]
-	var new_action_value = CombatOptions[new_action]
-	if new_action_value == previous_combat_option:
-		action = (action) % keys.size() 
-		new_action = keys[action] 
-	new_action_value = CombatOptions[new_action]
-	perform_action(new_action_value)
-	new_action_value = previous_combat_option
-
+	if AllowedCombatOptions.is_empty():
+		return
+	var options := AllowedCombatOptions.duplicate()  # Clone to safely modify
+	if options.size() > 1:
+		options.erase(previous_combat_option)  # Remove last action to avoid repetition
+	var new_action = options[randi_range(0, options.size() - 1)]
+	#print("Combat action selected:", new_action)
+	perform_action(new_action)
+	previous_combat_option = new_action
 func reconsider_movement():
 	movement_time = 0
 	if movement_target.distance_to(global_position) >= 3:
@@ -331,9 +328,9 @@ func find_fallback_target():
 			return closest_point
 	return global_position
 
-func leap_towards(target_pos: Vector3, leap_time: float = 0.95):
+func leap_towards(target_pos: Vector3, leap_vel: float = 16.5):
 	movement_state = MovementState.LEAPING
-	var vel = compute_leap_velocity(target_pos, leap_time)
+	var vel = compute_leap_velocity_fixed_speed(target_pos, leap_vel)
 	velocity = vel
 	look_target = target_pos
 
@@ -343,12 +340,38 @@ func compute_leap_velocity(target: Vector3, time: float) -> Vector3:
 	var dx = displacement.x
 	var dy = displacement.y
 	var dz = displacement.z
-
 	var vx = dx / time
 	var vz = dz / time
 	var vy = (dy / time) + (0.5 * g * time)
 	#print (Vector3(vx, vy, vz))
 	return Vector3(vx, vy, vz)
+func compute_leap_velocity_fixed_speed(target: Vector3, speed: float) -> Vector3:
+	var g = gravity
+	var displacement := target - global_position
+	# Separate horizontal and vertical components
+	var horizontal_displacement = displacement
+	horizontal_displacement.y = 0.0
+	var distance = horizontal_displacement.length()
+
+	# How long will the leap take at this fixed horizontal speed?
+	if speed <= 0.0:
+		return Vector3.ZERO  # avoid divide by zero
+
+	var time = distance / speed
+
+	# Horizontal direction (normalized)
+	var direction = horizontal_displacement.normalized()
+
+	# Compute horizontal velocity
+	var vx = direction.x * speed
+	var vz = direction.z * speed
+
+	# Compute vertical velocity to reach Y in that time
+	var dy = displacement.y
+	var vy = (dy / time) + (0.5 * g * time)
+
+	return Vector3(vx, vy, vz)
+
 
 func fire():
 	var final_target = get_inaccurate_target(weapon_target)

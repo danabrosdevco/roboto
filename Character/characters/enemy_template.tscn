@@ -27,6 +27,7 @@ label = NodePath("Label3D")
 bark = NodePath("Bark")
 detection = NodePath("Detection")
 AllowedMovementOptions = Array[int]([0, 1])
+AllowedCombatOptions = Array[int]([0, 1, 2])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_mygdm")

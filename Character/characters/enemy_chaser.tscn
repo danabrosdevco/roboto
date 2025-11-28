@@ -38,6 +38,7 @@ max_accuracy = 1.0
 min_accuracy = 1.0
 bits = 5
 AllowedMovementOptions = Array[int]([0])
+AllowedCombatOptions = Array[int]([0, 2])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_mygdm")
