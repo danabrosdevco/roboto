@@ -10,13 +10,13 @@ var world_states: Enums.WorldStates
 
 func _ready():
 	await get_tree().process_frame
-	await get_tree().process_frame
 	if current_level:
 		var spawn_transform = current_level.spawn_point.global_transform
 		player.global_transform = spawn_transform
 		player.cam.look_at(Vector3(player.global_position.x, player.global_position.y, player.global_position.z - 1))
-		for level_exit in current_level.level_exits:
-			level_exit.next_level_signal.connect(_on_next_level_requested)
+		var level_exits = get_tree().get_nodes_in_group("levelexit")
+		for exit in level_exits:
+			exit.next_level_signal.connect(_on_next_level_requested)
 	else:
 		for i in get_children():
 			if i is TrenchBroomLevel:
@@ -50,7 +50,7 @@ func deload_current_level(level):
 
 func register_world_objects(_level:TrenchBroomLevel):
 	ai_manager.reset_all_reg_enemies()
-	for child in current_level.nav_region.get_children():
+	for child in current_level.get_children():
 		if child is AI:
 			ai_manager.register_enemy(child)
 		if child is Interactible:

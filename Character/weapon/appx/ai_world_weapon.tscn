@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://boyiducyiek8k"]
 
-[ext_resource type="Script" path="res://Character/weapon/ai_world_weapon.gd" id="1_aydy3"]
+[ext_resource type="Script" path="res://Character/weapon/appx/ai_world_weapon.gd" id="1_aydy3"]
 [ext_resource type="PackedScene" uid="uid://vwg10a8rgqjf" path="res://3d_assets/gun_pack/Blends/Shotgun_2.blend" id="1_kec3m"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_aqmos"]
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="2_whxho"]

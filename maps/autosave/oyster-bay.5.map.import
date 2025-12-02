@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://d4ms3o4uhe5ky"
+path="res://.godot/imported/oyster-bay.5.map-ee080bdbc0bbeb27ad3fe65012e161a6.tres"
+
+[deps]
+
+source_file="res://maps/autosave/oyster-bay.5.map"
+dest_files=["res://.godot/imported/oyster-bay.5.map-ee080bdbc0bbeb27ad3fe65012e161a6.tres"]
+
+[params]
+

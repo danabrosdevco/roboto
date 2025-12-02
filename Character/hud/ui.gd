@@ -18,10 +18,11 @@ func update_scanner(time: float):
 	pass
 
 
-func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int, shards: int) -> void:
+func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int, shards: int, bits: int) -> void:
 	# --- Ammo & Shards ---
 	ammo_label.text = "%d / %d" % [magazine_capacity, magazine_size]
 	shards_label.text = ": " + str(shards)
+	second_label.text = ": " + str(bits)
 
 	# --- Health Segments ---
 	var health_per_segment := 20

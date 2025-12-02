@@ -16,6 +16,7 @@ class_name Player
 @export var weapon_list: Array[HUDWeapon]
 var current_weapon_index: int
 # Export Data # 
+var coyote_time = 0.12
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENS := 0.002
@@ -23,6 +24,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var health = 50
 @export var max_health = 100
 var shards = 0
+var bits = 0 
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
 const ADS_FOV := 45.0
@@ -30,7 +32,11 @@ const HIP_FOV := 70.0
 const ADS_SPEED := 10.0
 
 # Working Data #
-
+var time_since_grounded: float = 0.0
+var last_grounded_time: float = 0.0
+var coyote_used: bool = false
+var is_grounded: bool
+var was_grounded:bool
 var is_fullscreen = false
 var look_direction: Vector3
 @export var look_interp_speed := 12.0  # how fast the camera follows the target
@@ -45,7 +51,7 @@ var scanner_cooldown = 15
 
 
 var current_interactible : Interactible
-
+var alive = true
 
 
 # WEAPONS #
@@ -143,8 +149,25 @@ func check_interactible():
 
 
 func handle_gravity(delta: float) -> void:
-	if not is_on_floor():
+	was_grounded = is_grounded
+	is_grounded = is_on_floor()
+	if not is_grounded:
 		velocity.y -= gravity * delta
+		time_since_grounded += delta
+	if is_grounded:
+		time_since_grounded = 0.0
+		last_grounded_time = Time.get_ticks_msec() / 1000.0
+		coyote_used = false
+
+func can_coyote_jump() -> bool:
+	# Can jump if grounded OR within coyote time window
+	if is_grounded:
+		return true
+	# Coyote time check
+	if time_since_grounded <= coyote_time and not coyote_used:
+		coyote_used = true  # Prevent double-jumps from coyote
+		return true
+	return false
 
 
 func handle_input(_delta: float) -> void:
@@ -161,7 +184,9 @@ func handle_input(_delta: float) -> void:
 
 	match hud_weapon.firemode:
 		Enums.FireModes.FULL:
-			if fire_pressed:
+			if fire_pressed && hud_weapon.magazine_capacity > 0:
+				hud_weapon.fire()
+			if fire_pressed and not fire_held_last_frame:
 				hud_weapon.fire()
 		Enums.FireModes.SEMI:
 			if fire_just_pressed and not fire_held_last_frame:
@@ -170,7 +195,7 @@ func handle_input(_delta: float) -> void:
 	if Input.is_action_just_pressed("command"):
 		activate_command()
 
-	if Input.is_action_just_pressed("jump") and is_on_floor():
+	if Input.is_action_just_pressed("jump") and can_coyote_jump():
 		velocity.y = JUMP_VELOCITY
 
 
@@ -301,7 +326,7 @@ func interact(interactible:Interactible):
 func update_status():
 	if hud_weapon == null:
 		await get_tree().process_frame
-	hud.update_status(health, max_health, hud_weapon.magazine_capacity, hud_weapon.magazine_size, shards)
+	hud.update_status(health, max_health, hud_weapon.magazine_capacity, hud_weapon.magazine_size, shards, bits)
 
 
 func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
@@ -309,7 +334,7 @@ func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
 	highlight_enemy.emit(target, duration)
 
 
-func apply_damage(damage):
+func apply_damage(damage, source):
 	health -= damage
 	update_status()
 	if health <= 0:
@@ -327,6 +352,10 @@ func apply_healing(healing):
 func add_shards(value):
 	shards += value
 	shards_sfx.play()
+	update_status()
+
+func add_bits(value):
+	bits += value
 	update_status()
 
 func reset():

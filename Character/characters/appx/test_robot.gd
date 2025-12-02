@@ -28,6 +28,8 @@ class_name TestRobot
 @export var sight_rectangle_near_area: float = 4
 @export var sight_rectangle_far_area: float = 100
 @export var sight_rectangle_distance: float = 20
+@export var bits : int =5
+@export var damaged_by_player: bool = false
 
 @export var neighbor_radius := 10.0
 @export var separation_weight := 1.5
@@ -50,6 +52,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var weapon_target: Vector3
 @export var look_target: Vector3
 @export var patrol_points: Array[Node3D] = []
+var player: Player
 var spawn_transform
 var alive : bool = true
 var movement_state = MovementState.IDLE
@@ -264,10 +267,10 @@ func handle_weapon_logic(delta):
 					#get_tree().current_scene.add_child(sphere)
 					#sphere.global_position = hit_pos
 					if collider.has_method("apply_damage"):
-						collider.apply_damage(10)
+						collider.apply_damage(10, self)
 					else:
 						if collider.get_parent().has_method("apply_damage"):
-							collider.apply_damage(10)
+							collider.apply_damage(10, self)
 				fire_time = fire_cooldown
 				weapon_state = WeaponState.AIM
 		WeaponState.RELOAD:
@@ -298,11 +301,13 @@ func fire():
 	#print ("FIRE!")
 	pass
 
-func apply_damage(damage):
+func apply_damage(damage, body):
 	if alive == false:
 		return
 	bark.bark()
 	health -= damage
+	if body is Player:
+		damaged_by_player = true
 	if health <= 0:
 		alive = false
 		die()
@@ -316,12 +321,14 @@ func die():
 	set_process(false)
 	hide()
 	weapon.hide()
+	if damaged_by_player == true:
+		player.add_bits(bits)
 	nav_agent.set_target_position(global_position)  # Cancel nav
 	#nav_agent.set_enabled(false)
 	hearing.monitoring = false
 	sight.monitoring = false
 	$CollisionShape3D.disabled = true  # or disable all collision shapes
-
+	damaged_by_player = false
 func respawn():
 	reset()
 

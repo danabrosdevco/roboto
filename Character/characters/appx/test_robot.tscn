@@ -1,8 +1,8 @@
 [gd_scene load_steps=15 format=3 uid="uid://bevu1pewciouu"]
 
-[ext_resource type="Script" path="res://Character/characters/test_robot.gd" id="1_mmb2y"]
+[ext_resource type="Script" path="res://Character/characters/appx/test_robot.gd" id="1_mmb2y"]
 [ext_resource type="Texture2D" uid="uid://c44yctcpvsqd8" path="res://2d_assets/Kenney Prototype Textures/PNG/Dark/texture_01.png" id="2_ay3ug"]
-[ext_resource type="PackedScene" uid="uid://boyiducyiek8k" path="res://Character/weapon/ai_world_weapon.tscn" id="2_u05y2"]
+[ext_resource type="PackedScene" uid="uid://boyiducyiek8k" path="res://Character/weapon/appx/ai_world_weapon.tscn" id="2_u05y2"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="3_42qaq"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="5_p0x1d"]
 

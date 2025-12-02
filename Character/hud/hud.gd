@@ -64,8 +64,8 @@ func deactivate_interaction():
 func update_scanner(time:float):
 	ui.update_scanner(time)
 
-func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int, shards:int) -> void:
-	ui.update_status(health, max_health, magazine_capacity, magazine_size, shards)
+func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int, shards:int, bits: int) -> void:
+	ui.update_status(health, max_health, magazine_capacity, magazine_size, shards, bits)
 	#health_label.text = "Health: %d" % health
 	#ammo_label.text = "Ammo: %d / %d" % [magazine_capacity, magazine_size]
 	#shards_label.text = ": " + str(sharsds)

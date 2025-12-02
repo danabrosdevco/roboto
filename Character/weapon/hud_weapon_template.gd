@@ -149,7 +149,6 @@ func fire() -> void:
 		to = from + tracer_origin.global_transform.basis.x.normalized() * 250.0
 		var space_state = get_world_3d().direct_space_state
 		var query := PhysicsRayQueryParameters3D.new()
-
 		query.from = from
 		query.to = to
 		query.exclude = [self]
@@ -166,10 +165,10 @@ func fire() -> void:
 		if result:
 			var collider = result.collider
 			if collider.has_method("apply_damage"):
-				collider.apply_damage(damage)
+				collider.apply_damage(damage, cam.get_parent())
 			else:
 				if collider.get_parent().has_method("apply_damage"):
-					collider.apply_damage(damage)
+					collider.apply_damage(damage, cam.get_parent())
 		if tracer:
 			fire_tracer()
 		magazine_capacity = max(0, magazine_capacity - 1)

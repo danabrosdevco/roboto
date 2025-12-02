@@ -10,7 +10,6 @@ func perform_faction_check():
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var space_state = get_world_3d().direct_space_state
-
 	# Create a sphere shape for overlap query
 	var sphere = SphereShape3D.new()
 	sphere.radius = 600.0
@@ -23,13 +22,12 @@ func perform_faction_check():
 	query.transform = new_transform
 	query.collide_with_areas = false
 	query.collide_with_bodies = true
-
 	# Get all intersecting bodies
 	var results = space_state.intersect_shape(query, 32)
 
 	for result in results:
 		var body = result.get("collider")
 		if body and body.has_method("get_faction"):
-			if body.get_faction() == faction:
+			#if body.get_faction() == faction:
 				if body.has_method("on_command_marker_nearby"):
 					body.on_command_marker_nearby(self)
