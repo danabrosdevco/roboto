@@ -6,9 +6,9 @@
 [ext_resource type="Script" path="res://Managers/game_manager.gd" id="3_7kch0"]
 [ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/test_character.tscn" id="4_m38gd"]
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="5_5i2ew"]
-[ext_resource type="PackedScene" uid="uid://fgdjjw1lgv8e" path="res://maps/civil-unrest_level.tscn" id="5_gxlro"]
 [ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="6_ckjgx"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="7_ura3n"]
+[ext_resource type="PackedScene" uid="uid://bg6q500jq5ifk" path="res://maps/oyster-bay_level.tscn" id="9_spwj6"]
 
 [node name="World" type="Node3D" node_paths=PackedStringArray("player", "ai_manager", "game_manager")]
 script = ExtResource("1_2t272")
@@ -25,7 +25,7 @@ script = ExtResource("3_7kch0")
 player = NodePath("../test_character")
 
 [node name="test_character" parent="." node_paths=PackedStringArray("world", "hud") instance=ExtResource("4_m38gd")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0.768372, 1.54999, -2.10053)
+transform = Transform3D(-0.145306, 0, -0.989387, 0, 1, 0, 0.989387, 0, -0.145306, 0.593646, 1.91338, -0.545752)
 world = NodePath("..")
 hud = NodePath("../HUD")
 
@@ -43,7 +43,7 @@ damage_value = 0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -16.0631, 0)
 direction = Vector3(0, -1, 0)
 
-[node name="TBLevel" parent="." instance=ExtResource("5_gxlro")]
+[node name="TBLevel" parent="." instance=ExtResource("9_spwj6")]
 
 [connection signal="activate_interactible_ui" from="test_character" to="HUD" method="activate_interactible"]
 [connection signal="activate_scanner_ui" from="test_character" to="HUD" method="activate_scan_effect"]

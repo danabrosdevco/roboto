@@ -352,26 +352,19 @@ func compute_leap_velocity_fixed_speed(target: Vector3, speed: float) -> Vector3
 	var horizontal_displacement = displacement
 	horizontal_displacement.y = 0.0
 	var distance = horizontal_displacement.length()
-
 	# How long will the leap take at this fixed horizontal speed?
 	if speed <= 0.0:
 		return Vector3.ZERO  # avoid divide by zero
-
 	var time = distance / speed
-
 	# Horizontal direction (normalized)
 	var direction = horizontal_displacement.normalized()
-
 	# Compute horizontal velocity
 	var vx = direction.x * speed
 	var vz = direction.z * speed
-
 	# Compute vertical velocity to reach Y in that time
 	var dy = displacement.y
 	var vy = (dy / time) + (0.5 * g * time)
-
 	return Vector3(vx, vy, vz)
-
 
 func fire():
 	var final_target = get_inaccurate_target(weapon_target)
@@ -502,10 +495,8 @@ func get_inaccurate_target(target_pos: Vector3) -> Vector3:
 	# If too far away → guaranteed miss
 	if dist > max_fire_distance:
 		return target_pos + get_random_spread(dist, min_accuracy)
-	# Accuracy scales based on distance
 	var t = clamp(dist / max_fire_distance, 0.0, 1.0)
 	var accuracy = lerp(max_accuracy, min_accuracy, t)
-	# Apply random spread based on accuracy
 	return target_pos + get_random_spread(dist, accuracy)
 
 func get_random_spread(distance: float, accuracy: float) -> Vector3:

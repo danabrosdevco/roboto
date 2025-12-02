@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://cokps8vdm1s5k"]
+
+[ext_resource type="Texture2D" uid="uid://b6co1lsm7vx5i" path="res://textures/PSX_Textures/concrete_tx_5.png" id="1_bkc5k"]
+
+[resource]
+albedo_texture = ExtResource("1_bkc5k")
+metallic_specular = 0.0
+texture_filter = 2
