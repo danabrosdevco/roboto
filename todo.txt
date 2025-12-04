@@ -8,6 +8,14 @@ Next To Do:
 		- var building up to shot rather than 'HEY I CAN SHOOT YOU'
 
 
+SLAB system (checkpoint, rest, reset)
+Death + corpse retrieval
+Enemy respawn + placement logic
+Damage stagger + i-frames
+Dodge / dash mechanic
+Heat / stamina system
+Simple upgrade menu at SLAB
+Prototype mini-boss
 
 PLAYER CONTROLLER
 - Weapon Generalization

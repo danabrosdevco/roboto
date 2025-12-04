@@ -162,6 +162,7 @@ interact={
 
 [physics]
 
+3d/physics_engine="Jolt Physics (Extension)"
 3d/solver/solver_iterations=4
 
 [rendering]

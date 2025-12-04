@@ -1,0 +1,23 @@
+Levels:
+	
+
+Estate:
+	NPC Home for OMC / Mama Green Farms associated humans.
+	Doors open as quests are completed.
+	NPCs require other NPCs dead, items from other realms.
+	Accessible by some sort of metro or train station?
+
+XXX's Palace:
+	Former home of STATE Governor.
+	Dungeon underneath with Assad-like mass graves.
+	STATE robots patrol and continue to monitor and repress on the dead.
+
+Industrial / Slums
+	Civilian robots gone mad, streets are un-navigable by humans.
+	Individual humans live in sparse apartments, locked away and waiting for death.
+
+ARGUS Launchsite
+	Orbital platform launcher
+
+Mama Green's Data center
+	Core of Mama Green, surrounded by greenhouses, gardens, pools.
