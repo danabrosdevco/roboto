@@ -27,6 +27,7 @@ var movement_recon_time = 1.5
 var targeting_recon_time = 0.33
 var combat_recon_time = 1.65
 var weapon_recon_time = 1.5
+var patrol_recon_time = 1.5
 var wander_delay = 1.5
 var wander_radius = 3.5
 
@@ -64,6 +65,7 @@ var alive : bool = true
 var combat_time: float = 0.0
 var movement_time: float = 0.0
 var search_time : float = 0.0
+var patrol_time : float = 0.0
 var fire_time: float = 0.0
 var weapon_time: float = 0.0
 var wander_time: float = 0.00
@@ -103,14 +105,21 @@ func handle_time_passing(delta):
 	targeting_time += delta
 	if movement_state == MovementState.MOVING:
 		movement_time += delta
-	if ai_state == AIState.COMBAT:
-		combat_time += delta
-	if ai_state == AIState.IDLE:
-		idle_time += delta
-	if ai_state == AIState.SEARCH:
-		search_time += delta
-	if combat_time >= combat_recon_time:
-		reconsider_combat()
+	match ai_state:
+		AIState.COMBAT:
+			combat_time += delta
+			if combat_time >= combat_recon_time:
+				reconsider_combat()
+		AIState.PATROL:
+			patrol_time += delta
+			if patrol_time >= patrol_recon_time:
+				reconsider_patrol()
+		AIState.IDLE:
+			idle_time += delta
+		AIState.SEARCH:
+			search_time += delta
+
+
 	if targeting_time >= targeting_recon_time:
 		reconsider_target()
 
@@ -214,6 +223,9 @@ func reconsider_movement():
 		return
 	if ai_state == AIState.COMBAT:
 		roll_combat_action()
+		return
+	if ai_state == AIState.PATROL:
+		reconsider_patrol()
 	return
 func reconsider_weapon():
 	weapon_time = 0
@@ -230,6 +242,15 @@ func reconsider_target():
 	if combat_target.alive == true:
 		weapon_target = combat_target.global_position
 		look_target = combat_target.global_position
+
+func reconsider_patrol():
+	if patrol_path == null or patrol_path.points.is_empty():
+		return
+	if nav_agent.is_navigation_finished() or movement_target == null:
+		var next_point = patrol_path.get_next_point(self)
+		if next_point:
+			move_to(next_point.global_position)
+			look_target = next_point.global_position
 
 #endregion Reconsider
 func change_ai_state(new_state: AIState):
@@ -293,7 +314,6 @@ func find_reposition_target():
 	var lateral_dir = right if randf() > 0.5 else -right
 	var test_pos = global_position + lateral_dir * reposition_distance
 	var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-
 	if is_path_clear(closest_point, combat_target.global_position):
 		return closest_point
 	else:
@@ -377,6 +397,7 @@ func apply_damage(damage, source):
 	if ai_state == AIState.DEAD:
 		return
 	if source is Player:
+		player = source
 		damaged_by_player = true
 	bark.bark()
 	health -= damage
@@ -476,8 +497,11 @@ func force_check_detection():
 func _on_detection_body_entered(body: Node3D) -> void:
 	if ai_state == AIState.DEAD:
 		return
+	if ai_state == AIState.COMBAT && combat_target == body:
+		return
 	if body is Player:
 		change_combat_target(body)
+		movement_target = Vector3.ZERO
 		change_ai_state(AIState.COMBAT)
 		combat_triggered.emit(self)
 	pass # Replace with function body.
@@ -485,6 +509,8 @@ func _on_detection_body_entered(body: Node3D) -> void:
 func _on_detection_body_exited(body: Node3D) -> void:
 	pass # Replace with function body.
 
+func trigger_combat(body: AI):
+	_on_detection_body_entered(body.combat_target)
 
 func get_inaccurate_target(target_pos: Vector3) -> Vector3:
 	var dist := global_position.distance_to(weapon_target)

@@ -1176,7 +1176,8 @@ shape = SubResource("ConvexPolygonShape3D_ycpwg")
 [node name="entity_0_brush_142_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_0_worldspawn"]
 shape = SubResource("ConvexPolygonShape3D_i30v3")
 
-[node name="Squad" parent="NavigationRegion3D" instance=ExtResource("22_48kem")]
+[node name="Squad" parent="NavigationRegion3D" node_paths=PackedStringArray("squad_members") instance=ExtResource("22_48kem")]
+squad_members = [NodePath("Enm_Chaser"), NodePath("Enm_Chaser3"), NodePath("Enm_Chaser2")]
 
 [node name="Enm_Chaser" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("patrol_path") instance=ExtResource("23_h3a1e")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.7424, 3.19376, 0)
@@ -1186,10 +1187,12 @@ DefaultAIState = 1
 [node name="Enm_Chaser2" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("patrol_path") instance=ExtResource("23_h3a1e")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.8529, 1.49632, 0)
 patrol_path = NodePath("../../PatrolPath2")
+DefaultAIState = 1
 
 [node name="Enm_Chaser3" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("patrol_path") instance=ExtResource("23_h3a1e")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.0371, 1.89334, 0)
 patrol_path = NodePath("../../PatrolPath")
+DefaultAIState = 1
 
 [node name="PatrolPath" parent="NavigationRegion3D" node_paths=PackedStringArray("points") instance=ExtResource("24_oaa5p")]
 points = [NodePath("Node3D2"), NodePath("Node3D3")]

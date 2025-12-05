@@ -24,5 +24,5 @@ func remove_ai_from_squad(ai: AI):
 			return
 func combat_triggered(triggered_ai: AI = null):
 	for ai in squad_members:
-		combat_triggered(triggered_ai)
+		ai.trigger_combat(triggered_ai)
 		
