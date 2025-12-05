@@ -46,3 +46,5 @@ initial_velocity_max = 1.5
 [node name="CSGSphere3D" type="CSGSphere3D" parent="."]
 radius = 0.15
 material = SubResource("StandardMaterial3D_63u78")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]

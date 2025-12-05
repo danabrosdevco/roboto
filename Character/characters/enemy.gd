@@ -1,6 +1,7 @@
 extends AI
 class_name Enemy
 # NODE REFERENCES #
+@export var patrol_path: PatrolPath
 @export var nav_agent: NavigationAgent3D
 @export var weapon: AIWeapon
 @export var label: Label3D
@@ -69,8 +70,6 @@ var wander_time: float = 0.00
 var targeting_time: float = 0.0
 var idle_time: float = 0.0
 
-
-
 var last_seen_point: Array[Vector3]
 var seen_bodies: Array = []
 var frame_waited: bool = false
@@ -82,7 +81,8 @@ func initialize():
 	spawn_transform = transform
 	await get_tree().process_frame
 	await get_tree().process_frame
-	combat_target = player
+	ai_state = DefaultAIState
+	#combat_target = player
 	frame_waited = true
 	pass
 
@@ -207,6 +207,7 @@ func roll_combat_action():
 	#print("Combat action selected:", new_action)
 	perform_action(new_action)
 	previous_combat_option = new_action
+
 func reconsider_movement():
 	movement_time = 0
 	if movement_target.distance_to(global_position) >= 3:
@@ -345,7 +346,6 @@ func compute_leap_velocity(target: Vector3, time: float) -> Vector3:
 	var vx = dx / time
 	var vz = dz / time
 	var vy = (dy / time) + (0.5 * g * time)
-	#print (Vector3(vx, vy, vz))
 	return Vector3(vx, vy, vz)
 func compute_leap_velocity_fixed_speed(target: Vector3, speed: float) -> Vector3:
 	var g = gravity
@@ -411,7 +411,6 @@ func reset():
 	change_ai_state(DefaultAIState)
 	seen_bodies.clear()
 	last_seen_point.clear()
-
 	velocity = Vector3.ZERO
 	weapon_target = Vector3.ZERO
 	look_target = Vector3.ZERO
@@ -458,28 +457,22 @@ func update_debug_label():
 		movement_state_str,
 		weapon_state_str
 	]
-
 func force_check_detection():
 	var shape = detection.get_child(0).shape
 	var new_transform: Transform3D = detection.global_transform
-
 	var space_state = get_world_3d().direct_space_state
-
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = shape
 	query.transform = new_transform
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
 	query.exclude = [detection, self]
-
 	var results = space_state.intersect_shape(query, 64)
-
 	for result in results:
 		var collider = result.collider
 		#print("Area overlaps with: ", collider)
 		if collider is Player:
 			_on_detection_body_entered(collider)
-
 func _on_detection_body_entered(body: Node3D) -> void:
 	if ai_state == AIState.DEAD:
 		return

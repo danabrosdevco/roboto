@@ -1,6 +1,6 @@
 extends Node
 class_name Squad
-var squad_members: Array[AI]
+@export var squad_members: Array[AI]
 
 func _ready() -> void:
 	for ai in squad_members:
@@ -11,6 +11,7 @@ func add_ai_to_squad(ai: AI):
 	if ai:
 		if squad_members.has(ai) == false:
 			squad_members.append(ai)
+			ai.connect("combat_triggered", combat_triggered)
 		else:
 			return
 
@@ -18,9 +19,10 @@ func remove_ai_from_squad(ai: AI):
 	if ai:
 		if squad_members.has(ai) == true:
 			squad_members.erase(ai)
+			ai.disconnect("combat_triggered", combat_triggered)
 		else:
 			return
-func combat_triggered(triggered_ai: AI):
+func combat_triggered(triggered_ai: AI = null):
 	for ai in squad_members:
 		combat_triggered(triggered_ai)
 		

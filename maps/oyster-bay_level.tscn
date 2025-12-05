@@ -1,4 +1,4 @@
-[gd_scene load_steps=175 format=4 uid="uid://bg6q500jq5ifk"]
+[gd_scene load_steps=178 format=4 uid="uid://bg6q500jq5ifk"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_fkqyn"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_m58x0"]
@@ -22,7 +22,10 @@
 [ext_resource type="Material" uid="uid://c8r0drt5k3jtn" path="res://textures/Set4All/Wood/Wood_Planks_03_Brown_3.tres" id="19_wnwy2"]
 [ext_resource type="Material" uid="uid://6hul43bbmx2l" path="res://textures/Set4All/Glass/Glass_01_1.tres" id="20_m2ka0"]
 [ext_resource type="Material" uid="uid://d0swj2p7g5yn1" path="res://textures/Set4All/Glass/Glass_01_2.tres" id="21_n55yq"]
+[ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="22_48kem"]
 [ext_resource type="Shader" path="res://Env/new_sky_oct.16.gdshader" id="22_48too"]
+[ext_resource type="PackedScene" uid="uid://bjnmbvul1677q" path="res://Character/characters/enemy_chaser.tscn" id="23_h3a1e"]
+[ext_resource type="PackedScene" uid="uid://v7tw1nq0fdn0" path="res://Managers/AI/patrol_path.tscn" id="24_oaa5p"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_b87a8"]
 vertices = PackedVector3Array(-68, 8.5, -36.5, -19.25, 8.5, -36.5, -19.5, 8.5, -54.25, -68.25, 8.5, -54.25, -52.75, 2.5, -52.5, -54.75, 2.75, -52.5, -54.75, 2.25, -48, -51, 2.25, -48, -54.75, 2.75, -49.125, -52.75, 2.25, -53.5, -46, 2.25, -47.75, -43.75, 2.25, -48, -43.75, 2.25, -53.5, -50.75, 2.25, -46, -46, 2.25, -45.75, -29.5, 2.25, -48, -29.25, 2.25, -51.5, -29.5, 2.25, -53.5, -66.5, 2.5, -48.5, -67.5, 2.25, -48.5, -67.5, 2.25, -48, -66.5, 2.75, -52.5, -66.5, 2.75, -49.8333, -64.5, 2.25, -46.75, -64.5, 2.25, -45, -52, 2.25, -45, -52, 2.25, -46.75, -67.5, 2.25, -46.25, -67.5, 2.25, -45.5, -65.75, 2.25, -45.5, -65.75, 2.25, -46.25, -50.75, 2.25, -44.25, -45.75, 2.25, -43.75, -45.75, 2.25, -37.25, -43.75, 2.25, -37.25, -43.75, 2.25, -43.75, -50.75, 2.25, -36.25, -46, 2.25, -36, -51, 2.25, -37.25, -51.25, 2.25, -43.75, -53.25, 2.25, -43.75, -53.25, 2.25, -37.25, -20.25, 1.75, -38.5, -21.5, 2, -38, -21.25, 1.75, -37.25, -20, 1.75, -37.25, -21.75, 1.75, -43.75, -21.75, 1.75, -43, -20.5, 1.75, -43.25, -20, 1.75, -43.75, -27.75, 2, -37.25, -25, 1.75, -37.25, -26, 1.75, -37.75, -25.75, 1.75, -39.25, -26.5, 1.75, -39.5, -27.75, 2, -39, -27.75, 2, -42, -28.25, 2.25, -41.5, -26.5, 1.75, -40.75, -29.25, 2.25, -41.5, -29.25, 2.25, -39.25, -26.25, 1.75, -43.75, -27.75, 2, -43.75, -25.25, 1.75, -42.75, -24, 1.75, -42.75, -22, 2.25, -44.75, -25.75, 2.25, -44.75, -23.75, 1.75, -41.25, -25, 2, -39.25, -21.5, 1.75, -38.25, -63.25, 2.25, -37.25, -63.25, 2.25, -43.75, -67.5, 2.25, -43.75, -67.5, 2.25, -37.25, -61, 2.25, -37, -58.25, 2.25, -37, -29.5, 2.25, -37.25, -29.5, 2.25, -43.75, -61.5, 1, -30.5, -65, 1, -30.5, -65, 1, -28.75, -58.25, 1, -28.75, -61, 1, -31, -58.25, 1, -32.875, -61, 1, -33.4, -42.25, 2, -34, -41.25, 2, -34.25, -41.25, 2.25, -35.25, -45.75, 2.25, -35, -56.25, 2.25, -35, -56.25, 2, -34.25, -55, 2, -34, -51.25, 2.25, -35, -55, 2, -32.75, -56.25, 2, -32.25, -56.25, 1.75, -27, -55.9375, 2, -28.4375, -56.25, 2, -28.3125, -41, 1.5, -26.75, -41, 2, -32.25, -42.25, 2, -32.5, -41.3125, 2, -28.1875, -41, 2, -28.125, -42, 1, -22, -40.75, 1, -22, -40.5, 1.5, -26.5, -40.5625, 1, -25.375, -57, 1.5, -26.5, -56.75, 1, -22, -55.25, 1, -22, -56.9375, 1, -25.375, -42.25, 1, -21, -55, 1, -21, -41.3125, 1, -25.3125, -55.5357, 2, -28.1429, -55.75, 1, -24.6, -49.7745, 1, -24.7355, -49.7348, 2, -29.2712, -25.75, 1, 2.75, -16.75, 1.25, 11.5, -16.5, 1.25, 11, -8, 1.25, -35.5, -25.75, 1.25, -35.5, -25.75, 1.25, -27, -8, 1.25, -22.75, -26.25, 1.25, -26.5, -5.75, 1.25, 11, -5.75, 1.25, -22.5, -56.75, 7.25, -35.25, -56.75, 7.25, -28.25, -41, 7, -28.25, -41, 7, -35.25, -15.25, 9.25, 12.25, 13.25, 9.25, 12.25, -15.75, 9.25, 12, -80.25, 9.25, 21.25, -80.75, 9.25, -26.75, -80.75, 9.25, 21.5, -16, 9.25, 21.25, -15.5, 9.25, 21.5, -57, 1, -20.25, -79.25, 1.25, -26.5, -79.25, 1.25, 20.25, -56, 1.25, 20.25, -56, 1, -20, -56.25, 7.25, -26.5, -56.25, 7.25, -21, -41.25, 7.25, -21, -41.25, 7.25, -26.5, -48.0682, 9.5, -26.5, -49.4318, 9.5, -26.5, -49.4318, 9.5, -21, -48.0682, 9.5, -21, -49.77, 9.5, -24.742, -40.25, 1, -21.75, -40.25, 1, -20.75, 13.5, 1.25, 11, 13.5, 1.25, -22.5, -42.25, 1, -20.25, -55.5, 1, -20, -41.25, 1.25, 20.25, -41.25, 1, -20, -16.75, 1.25, 20.25)
@@ -1172,6 +1175,48 @@ shape = SubResource("ConvexPolygonShape3D_ycpwg")
 
 [node name="entity_0_brush_142_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_0_worldspawn"]
 shape = SubResource("ConvexPolygonShape3D_i30v3")
+
+[node name="Squad" parent="NavigationRegion3D" instance=ExtResource("22_48kem")]
+
+[node name="Enm_Chaser" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("patrol_path") instance=ExtResource("23_h3a1e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.7424, 3.19376, 0)
+patrol_path = NodePath("../../PatrolPath3")
+DefaultAIState = 1
+
+[node name="Enm_Chaser2" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("patrol_path") instance=ExtResource("23_h3a1e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.8529, 1.49632, 0)
+patrol_path = NodePath("../../PatrolPath2")
+
+[node name="Enm_Chaser3" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("patrol_path") instance=ExtResource("23_h3a1e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.0371, 1.89334, 0)
+patrol_path = NodePath("../../PatrolPath")
+
+[node name="PatrolPath" parent="NavigationRegion3D" node_paths=PackedStringArray("points") instance=ExtResource("24_oaa5p")]
+points = [NodePath("Node3D2"), NodePath("Node3D3")]
+
+[node name="Node3D2" type="Node3D" parent="NavigationRegion3D/PatrolPath"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5945, 0, 7.15972)
+
+[node name="Node3D3" type="Node3D" parent="NavigationRegion3D/PatrolPath"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.011, 0, -21.676)
+
+[node name="PatrolPath2" parent="NavigationRegion3D" node_paths=PackedStringArray("points") instance=ExtResource("24_oaa5p")]
+points = [NodePath("Node3D2"), NodePath("Node3D3")]
+
+[node name="Node3D2" type="Node3D" parent="NavigationRegion3D/PatrolPath2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.8613, 0, 7.15972)
+
+[node name="Node3D3" type="Node3D" parent="NavigationRegion3D/PatrolPath2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.9645, 0, -21.676)
+
+[node name="PatrolPath3" parent="NavigationRegion3D" node_paths=PackedStringArray("points") instance=ExtResource("24_oaa5p")]
+points = [NodePath("Node3D2"), NodePath("Node3D3")]
+
+[node name="Node3D2" type="Node3D" parent="NavigationRegion3D/PatrolPath3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38.0026, 0, 7.15972)
+
+[node name="Node3D3" type="Node3D" parent="NavigationRegion3D/PatrolPath3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.2306, 0, -21.676)
 
 [node name="WorldEnvironment" parent="." instance=ExtResource("5_ee6ry")]
 environment = SubResource("Environment_6x7du")
