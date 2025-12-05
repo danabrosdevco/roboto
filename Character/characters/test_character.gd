@@ -1,4 +1,4 @@
-extends CharacterBody3D
+extends AI
 class_name Player
 
 # Node References # 
@@ -65,7 +65,7 @@ signal activate_scanner_ui(time: float)
 signal highlight_enemy(target:Node3D, duration: float)
 signal activate_interactible_ui(interactible: Interactible)
 signal died(value: int, global_position)
-func _ready() -> void:
+func initialize() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	update_last_bonfire(null)
 	update_status()

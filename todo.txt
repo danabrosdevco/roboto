@@ -12,6 +12,9 @@ ALL ENEMIES FRIENDLY FIRE
 SLAB MENU
 
 Enemy respawn + placement logic
+STAGGER ON DAMAGE?
+- slow, aim crazy?
+- suppress?
 Damage stagger + i-frames
 Dodge / dash mechanic
 Heat / stamina system

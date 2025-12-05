@@ -75,6 +75,8 @@ var last_seen_point: Array[Vector3]
 var seen_bodies: Array = []
 var frame_waited: bool = false
 
+signal combat_triggered(ai: AI)
+
 
 func initialize():
 	spawn_transform = transform
@@ -484,6 +486,7 @@ func _on_detection_body_entered(body: Node3D) -> void:
 	if body is Player:
 		change_combat_target(body)
 		change_ai_state(AIState.COMBAT)
+		combat_triggered.emit(self)
 	pass # Replace with function body.
 
 func _on_detection_body_exited(body: Node3D) -> void:

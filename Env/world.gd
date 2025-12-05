@@ -38,7 +38,7 @@ func load_next_level(next_level_scene: PackedScene) -> void:
 	if new_level.spawn_point:
 		var spawn_transform = new_level.spawn_point.global_transform
 		player.global_transform = spawn_transform
-		player.last_bonfire = spawn_transform
+		player.last_bonfire = current_level.spawn_point.global_position
 	for level_exit in current_level.level_exits:
 		level_exit.next_level_signal.connect(_on_next_level_requested)
 	await get_tree().process_frame
