@@ -1,0 +1,48 @@
+[gd_scene load_steps=5 format=3 uid="uid://caid5k6em2ds7"]
+
+[ext_resource type="Script" path="res://Env/world_objects/components/player_corpse.gd" id="1_ubkpi"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5k06y"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_x7vt1"]
+radius = 0.05
+height = 0.1
+radial_segments = 4
+rings = 4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_63u78"]
+transparency = 1
+metallic_specular = 0.0
+
+[node name="PlayerCorpse" type="Area3D" node_paths=PackedStringArray("collision_body") groups=["interactibles"]]
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_ubkpi")
+collision_body = NodePath("CollisionShape3D")
+type = 3
+respawns_on_reset = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_5k06y")
+
+[node name="GPUParticles3D" type="CPUParticles3D" parent="."]
+amount = 4
+lifetime = 1.5
+randomness = 0.1
+lifetime_randomness = 0.1
+mesh = SubResource("SphereMesh_x7vt1")
+emission_shape = 6
+emission_ring_axis = Vector3(0, 0, 1)
+emission_ring_height = 1.0
+emission_ring_radius = 1.0
+emission_ring_inner_radius = 0.0
+direction = Vector3(0, 1, 0)
+spread = 15.0
+flatness = 1.0
+gravity = Vector3(0, 0, 0)
+initial_velocity_min = 0.75
+initial_velocity_max = 1.5
+
+[node name="CSGSphere3D" type="CSGSphere3D" parent="."]
+radius = 0.15
+material = SubResource("StandardMaterial3D_63u78")

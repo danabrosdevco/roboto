@@ -52,6 +52,7 @@ var scanner_cooldown = 15
 
 var current_interactible : Interactible
 var alive = true
+var last_bonfire
 
 
 # WEAPONS #
@@ -63,9 +64,10 @@ var pitch := 0.0
 signal activate_scanner_ui(time: float)
 signal highlight_enemy(target:Node3D, duration: float)
 signal activate_interactible_ui(interactible: Interactible)
-
+signal died(value: int, global_position)
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	update_last_bonfire(null)
 	update_status()
 	for child in cam.get_children():
 		if child is HUDWeapon:
@@ -314,7 +316,10 @@ func interact(interactible:Interactible):
 		Enums.InteractTypes.SHARDS:
 			add_shards(interactible.get_value())
 		Enums.InteractTypes.BONFIRE:
+			last_bonfire = interactible
 			pass
+		Enums.InteractTypes.BITS:
+			add_bits(interactible.value)
 		_:
 			print("Unknown interactible type")
 	interactible.interacted_with()
@@ -335,6 +340,8 @@ func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
 
 
 func apply_damage(damage, source):
+	if alive == false:
+		return
 	health -= damage
 	update_status()
 	if health <= 0:
@@ -358,22 +365,42 @@ func add_bits(value):
 	bits += value
 	update_status()
 
+func update_last_bonfire(bonfire: Node3D):
+	if bonfire == null:
+		last_bonfire = world.current_level.spawn_point.global_position
+		return
+	last_bonfire = bonfire
+
 func reset():
+	set_process(true)
+	set_physics_process(true)
+	set_process_input(true)
+	set_process_unhandled_input(true)
+	#Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	alive = true
 	health = max_health
 	hud_weapon.magazine_capacity = hud_weapon.magazine_size
+	#print (last_bonfire)
+	if last_bonfire is Vector3:
+		global_position = last_bonfire
+	if last_bonfire is Bonfire:
+		global_position = last_bonfire.global_position
+	update_status()
 
 func die():
+	alive = false
 	set_process(false)
 	set_physics_process(false)
 	set_process_input(false)
 	set_process_unhandled_input(false)
+	#Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	# Delay to allow any death effects (like sounds, particles)
-	await get_tree().create_timer(0.25).timeout
-	# Show cursor
-	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	await get_tree().create_timer(0.5).timeout
+	died.emit(bits, global_position)
+	bits = 0
+
 	# Optional: Unlock the camera or transition
 	# You might want to detach camera from the player before freeing the node
 	# For now, we just clean up:
-	queue_free()
 func get_faction():
 	return faction

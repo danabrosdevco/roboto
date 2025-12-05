@@ -7,9 +7,10 @@ Next To Do:
 	- var building up to awareness rather than instant [now]
 		- var building up to shot rather than 'HEY I CAN SHOOT YOU'
 
+MELEE CHASER DOESN'T ACTUALLY ATTACK / OR DOES IT?
+ALL ENEMIES FRIENDLY FIRE
+SLAB MENU
 
-SLAB system (checkpoint, rest, reset)
-Death + corpse retrieval
 Enemy respawn + placement logic
 Damage stagger + i-frames
 Dodge / dash mechanic

@@ -402,13 +402,13 @@ func respawn():
 	reset()
 
 func reset():
+	ai_state = DefaultAIState
 	transform = spawn_transform
 	health = max_health
 	alive = true
 	change_ai_state(DefaultAIState)
 	seen_bodies.clear()
 	last_seen_point.clear()
-	nav_agent.clear_path()
 
 	velocity = Vector3.ZERO
 	weapon_target = Vector3.ZERO
