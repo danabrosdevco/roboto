@@ -501,20 +501,20 @@ indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 
 [sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_3jwtk"]
 data = PackedVector3Array(-14.75, 0.5, -12.75, -14.75, -0.5, -12.75, 14.75, -0.5, -5.24999, -14.75, 0.5, -12.75, 14.75, -0.5, -5.24999, 14.75, 0.5, -5.24999, -14.75, 0.5, -12.75, -14.75, 0.5, 8.25, -14.75, -0.5, 8.25, -14.75, 0.5, -12.75, -14.75, -0.5, 8.25, -14.75, -0.5, -12.75, 14.75, -0.5, -5.24999, -14.75, -0.5, -12.75, -14.75, -0.5, 8.25, 14.75, -0.5, -5.24999, -14.75, -0.5, 8.25, 13.75, -0.5, 12.75, 14.75, 0.5, -5.24999, 13.75, 0.5, 12.75, -14.75, 0.5, 8.25, 14.75, 0.5, -5.24999, -14.75, 0.5, 8.25, -14.75, 0.5, -12.75, 14.75, 0.5, -5.24999, 14.75, -0.5, -5.24999, 13.75, -0.5, 12.75, 14.75, 0.5, -5.24999, 13.75, -0.5, 12.75, 13.75, 0.5, 12.75, -14.75, 0.5, 8.25, 13.75, 0.5, 12.75, 13.75, -0.5, 12.75, -14.75, 0.5, 8.25, 13.75, -0.5, 12.75, -14.75, -0.5, 8.25)
 
-[sub_resource type="Gradient" id="Gradient_w3tef"]
+[sub_resource type="Gradient" id="Gradient_w7a6c"]
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_fbxxc"]
-gradient = SubResource("Gradient_w3tef")
+gradient = SubResource("Gradient_w7a6c")
 width = 32
 height = 32
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_01tpi"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_xumup"]
 atlas = SubResource("GradientTexture2D_fbxxc")
 region = Rect2(0, 33, 16, 16)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bfugf"]
 albedo_color = Color(0.04, 0.04, 0.04, 0)
-albedo_texture = SubResource("AtlasTexture_01tpi")
+albedo_texture = SubResource("AtlasTexture_xumup")
 
 [node name="TBLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region")]
 script = ExtResource("1_kgieb")

@@ -28,16 +28,17 @@ var targeting_recon_time = 0.33
 var combat_recon_time = 1.65
 var weapon_recon_time = 1.5
 var patrol_recon_time = 1.5
+var chasing_recon_time = 0.2
 var wander_delay = 1.5
 var wander_radius = 3.5
 
 
 # ENUMS # 
 enum AIState {COMBAT, PATROL, SEARCH, IDLE, DEAD}
-enum MovementState {NONE, MOVING, LEAPING}
+enum MovementState {NONE, MOVING, LEAPING, ADVANCING, CHASING}
 enum WeaponState {FIRE, RELOAD, AIM, IDLE}
 enum CombatOptions {MOVE, AIM, FIRE}
-enum MovementOptions {ADVANCE, REPOSITION, FALLBACK, LEAP}
+enum MovementOptions {ADVANCE, REPOSITION, FALLBACK, LEAP, CHASE}
 @export var DefaultAIState: AIState
 @export var AllowedMovementOptions: Array[MovementOptions]
 @export var AllowedCombatOptions: Array[CombatOptions]
@@ -71,6 +72,7 @@ var weapon_time: float = 0.0
 var wander_time: float = 0.00
 var targeting_time: float = 0.0
 var idle_time: float = 0.0
+var chasing_time: float = 0.0
 
 var last_seen_point: Array[Vector3]
 var seen_bodies: Array = []
@@ -126,7 +128,7 @@ func handle_time_passing(delta):
 func handle_gravity(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-func handle_targeting(delta):
+func handle_targeting(_delta):
 	pass
 func handle_movement(delta):
 	#if movement_time >= movement_recon_time:
@@ -142,6 +144,8 @@ func handle_movement(delta):
 				move_along_nav(delta)
 		MovementState.LEAPING:
 			handle_leap(delta)
+		MovementState.CHASING:
+			handle_chasing(delta)
 
 func move_to(pos: Vector3):
 	#if nav_agent:
@@ -165,6 +169,15 @@ func move_along_nav(delta):
 		var current_yaw = rotation.y
 		var target_yaw = atan2(-base_dir.x, -base_dir.z)
 		rotation.y = lerp_angle(current_yaw, target_yaw, rotation_speed * delta)
+
+func handle_chasing(delta):
+	chasing_time += delta
+	if chasing_time >= chasing_recon_time:
+		chasing_time = 0 
+		nav_agent.set_target_position(combat_target.global_position)
+	move_along_nav(delta)
+	pass
+
 
 func handle_leap(delta):
 	#print ("HANDLING LEAP")
@@ -254,6 +267,7 @@ func reconsider_patrol():
 
 #endregion Reconsider
 func change_ai_state(new_state: AIState):
+	bark.bark()
 	if ai_state != new_state:
 		#print("Changing state to:", new_state)
 		ai_state = new_state
@@ -262,6 +276,9 @@ func change_ai_state(new_state: AIState):
 		wander_time = 0
 		combat_time = 0
 		search_time = 0
+		patrol_time = 0
+		chasing_time = 0
+		targeting_time = 0
 
 func change_combat_target(body):
 	combat_target = body
@@ -290,11 +307,13 @@ func perform_action(action: CombatOptions):
 					move_to(new_move_target)
 					pass
 				MovementOptions.ADVANCE:
-					#print ("ADVANCE")
+					#OLD ADVANCE
 					new_move_target =  find_advance_target()
-					#if new_move_target != false:
 					move_to(new_move_target)
+					#NEW ADVANCE
 					pass
+				MovementOptions.CHASE:
+					movement_state = MovementState.CHASING
 				MovementOptions.FALLBACK:
 					#print ("FALLBACK")
 					new_move_target = find_fallback_target()
@@ -322,7 +341,6 @@ func find_reposition_target():
 		if is_path_clear(closest_point, combat_target.global_position):
 			return closest_point
 	return global_position
-	pass
 
 func find_advance_target():
 	var nav_map = nav_agent.get_navigation_map()
@@ -399,6 +417,7 @@ func apply_damage(damage, source):
 	if source is Player:
 		player = source
 		damaged_by_player = true
+		combat_triggered.emit(self)
 	bark.bark()
 	health -= damage
 	if health <= 0:
@@ -506,11 +525,12 @@ func _on_detection_body_entered(body: Node3D) -> void:
 		combat_triggered.emit(self)
 	pass # Replace with function body.
 
-func _on_detection_body_exited(body: Node3D) -> void:
+func _on_detection_body_exited(_body: Node3D) -> void:
 	pass # Replace with function body.
 
 func trigger_combat(body: AI):
 	_on_detection_body_entered(body.combat_target)
+	combat_time = combat_recon_time
 
 func get_inaccurate_target(target_pos: Vector3) -> Vector3:
 	var dist := global_position.distance_to(weapon_target)

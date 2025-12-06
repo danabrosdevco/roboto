@@ -19,7 +19,7 @@ section_length = 0.3
 albedo_texture = ExtResource("6_x173h")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
-radius = 45.0
+radius = 25.0
 
 [node name="Enm_Chaser" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection") groups=["enemies"]]
 script = ExtResource("1_omglo")
@@ -37,7 +37,7 @@ max_fire_distance = 2.0
 max_accuracy = 1.0
 min_accuracy = 1.0
 bits = 5
-AllowedMovementOptions = Array[int]([0])
+AllowedMovementOptions = Array[int]([4])
 AllowedCombatOptions = Array[int]([0, 2])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -54,7 +54,6 @@ material = SubResource("StandardMaterial3D_negfm")
 
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
-visible = false
 billboard = 1
 text = "Text"
 font_size = 48
@@ -63,7 +62,7 @@ script = ExtResource("7_2u31t")
 [node name="Detection" type="Area3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.5639, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6204, 0, 0)
 shape = SubResource("SphereShape3D_mkxqd")
 
 [node name="ai_world_weapon" parent="." instance=ExtResource("8_nvx10")]

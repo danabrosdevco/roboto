@@ -339,7 +339,7 @@ func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
 	highlight_enemy.emit(target, duration)
 
 
-func apply_damage(damage, source):
+func apply_damage(damage, _source):
 	if alive == false:
 		return
 	health -= damage

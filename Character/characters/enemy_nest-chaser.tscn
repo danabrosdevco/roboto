@@ -18,7 +18,7 @@ section_length = 0.1
 albedo_texture = ExtResource("6_1hh83")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
-radius = 45.0
+radius = 25.0
 
 [node name="Enm_NestChaser" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection") groups=["enemies"]]
 script = ExtResource("1_3hqvp")
@@ -63,7 +63,7 @@ script = ExtResource("7_hss0i")
 [node name="Detection" type="Area3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.2422, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.36912, 0, 0)
 shape = SubResource("SphereShape3D_mkxqd")
 
 [node name="ai_world_weapon" parent="." instance=ExtResource("8_tcfqy")]
