@@ -8,8 +8,8 @@ class_name Enemy
 @export var bark: Bark
 @export var detection: Area3D
 # EXPORT DATA # 
-@export var health: int = 20
-@export var max_health: int = 20
+@export var health: int = 30
+@export var max_health: int = 30
 @export var faction : Enums.Factions = Enums.Factions.ENEMY
 @export var move_speed: float = 4.5
 @export var acceleration := 1.50
