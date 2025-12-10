@@ -424,7 +424,7 @@ func apply_damage(damage, source):
 		alive = false
 		ai_state = AIState.DEAD
 		die()
-		print (name + (" has died!"))
+		#print (name + (" has died!"))
 	pass
 
 func die():

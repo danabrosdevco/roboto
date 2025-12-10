@@ -45,7 +45,7 @@ func activate_interactible(interactible: Interactible):
 	var type = interactible.get_type()
 	var value = interactible.get_value()
 	interact_box.visible = true
-	print (interactible)
+	#print (interactible)
 	match type:
 		Enums.InteractTypes.BONFIRE:
 			if not interactible.get_activated():

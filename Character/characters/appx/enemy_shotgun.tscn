@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bww5b5c7ej00s"]
+[gd_scene load_steps=14 format=3 uid="uid://bww5b5c7ej00s"]
 
 [ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_veyd1"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_awse3"]
@@ -18,6 +18,12 @@ albedo_texture = ExtResource("6_j1oqd")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 25.0
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_3rhyt"]
+radius = 0.2
+height = 0.6
+radial_segments = 6
+rings = 6
 
 [node name="Enm_Shotgun" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection") groups=["enemies"]]
 script = ExtResource("1_veyd1")
@@ -57,6 +63,10 @@ transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-0
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.4731, 0, 0)
 shape = SubResource("SphereShape3D_mkxqd")
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.403749)
+mesh = SubResource("CapsuleMesh_3rhyt")
 
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

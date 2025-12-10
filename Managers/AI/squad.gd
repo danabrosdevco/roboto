@@ -4,6 +4,8 @@ class_name Squad
 
 func _ready() -> void:
 	for ai in squad_members:
+		if ai == null:
+			continue
 		ai.connect("combat_triggered", combat_triggered)
 		# CONNECT EACH AI's (combat_triggered(self)) signal to combat_triggered() function
 		pass
@@ -23,6 +25,9 @@ func remove_ai_from_squad(ai: AI):
 		else:
 			return
 func combat_triggered(triggered_ai: AI = null):
-	for ai in squad_members:
-		ai.trigger_combat(triggered_ai)
+	if triggered_ai != null:
+		for ai in squad_members:
+			if ai == null:
+				continue
+			ai.trigger_combat(triggered_ai)
 		

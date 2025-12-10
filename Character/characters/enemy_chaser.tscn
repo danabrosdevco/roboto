@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bjnmbvul1677q"]
+[gd_scene load_steps=14 format=3 uid="uid://bjnmbvul1677q"]
 
 [ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_omglo"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_gg277"]
@@ -17,6 +17,12 @@ section_length = 0.3
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_negfm"]
 albedo_texture = ExtResource("6_x173h")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_ift78"]
+radius = 0.2
+height = 0.6
+radial_segments = 6
+rings = 6
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 25.0
@@ -51,6 +57,10 @@ bark_clips = Array[AudioStream]([ExtResource("3_biu6s"), ExtResource("4_ape12"),
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
 mesh = SubResource("TubeTrailMesh_y58w7")
 material = SubResource("StandardMaterial3D_negfm")
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.310242)
+mesh = SubResource("CapsuleMesh_ift78")
 
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)

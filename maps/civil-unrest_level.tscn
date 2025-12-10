@@ -1,4 +1,4 @@
-[gd_scene load_steps=178 format=4 uid="uid://fgdjjw1lgv8e"]
+[gd_scene load_steps=177 format=4 uid="uid://fgdjjw1lgv8e"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_kgieb"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_mbgf5"]
@@ -12,7 +12,6 @@
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="8_2tdx3"]
 [ext_resource type="Material" uid="uid://v3x2b6pwruig" path="res://textures/PSX_Textures/concrete_wall_tx_2.tres" id="8_me2th"]
 [ext_resource type="Material" uid="uid://b3ras3faq22ob" path="res://textures/PSX_Textures/hl_office_complex_style_carpet_floor_1.tres" id="9_nfy86"]
-[ext_resource type="PackedScene" uid="uid://bevu1pewciouu" path="res://Character/characters/appx/test_robot.tscn" id="10_06knx"]
 [ext_resource type="Material" uid="uid://b5y0bw7i7rumr" path="res://textures/PSX_Textures/wood_2.tres" id="11_ngkdy"]
 [ext_resource type="Material" uid="uid://ceo38l8uh1f2m" path="res://textures/PSX_Textures/crate_wooden_2.tres" id="12_8utdc"]
 [ext_resource type="PackedScene" uid="uid://d3b6t0u0yav3s" path="res://Env/world_objects/components/interactible_shard.tscn" id="13_bhe8f"]
@@ -1193,7 +1192,7 @@ destroy_on_use = true
 
 [node name="PickUp2" parent="." instance=ExtResource("13_r30j6")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37.8862, 0.807236, 69.6894)
-value = 30
+value = 50
 destroy_on_use = true
 
 [node name="Ceiling Light" parent="." instance=ExtResource("18_4v03s")]
@@ -1214,29 +1213,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90.2135, 1.19982, 71.6694)
 [node name="Bonfire" parent="." instance=ExtResource("18_rk63d")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0137725, -0.05018, 18.3407)
 
-[node name="EnemyRobot" parent="." instance=ExtResource("10_06knx")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.157, 0.5, 76.373)
-faction = 1
-
-[node name="EnemyRobot2" parent="." instance=ExtResource("10_06knx")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.4619, 0.5, 65.9391)
-faction = 1
-
-[node name="EnemyRobot3" parent="." instance=ExtResource("10_06knx")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -64.2455, 1.91427, 85.6713)
-faction = 1
-
-[node name="EnemyRobot4" parent="." instance=ExtResource("10_06knx")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -56.8371, 1.91427, 78.6428)
-faction = 1
-
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.35676, 3.37723, 51.3033)
 light_energy = 3.5
 omni_range = 10.0
 
 [node name="Squad" parent="." node_paths=PackedStringArray("squad_members") instance=ExtResource("22_vcigg")]
-squad_members = [NodePath("Enemy6"), NodePath("Enm_Nest Chaser"), NodePath("Enm_Nest Chaser2"), NodePath("Enemy2"), NodePath("Enemy3")]
+squad_members = [NodePath("Enemy6"), NodePath("Enm_Nest Chaser"), NodePath("Enm_Nest Chaser2"), null, null]
 
 [node name="Enemy6" parent="Squad" instance=ExtResource("21_4n2ml")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.214, 0.848076, 64.8174)
@@ -1246,12 +1229,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5475, -0.05018, 60.6678)
 
 [node name="Enm_Nest Chaser2" parent="Squad" instance=ExtResource("23_a840j")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5871, -0.0501804, 75.2315)
-
-[node name="Enemy2" parent="Squad" instance=ExtResource("19_ky2xj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4678, 1.3005, 66.9647)
-
-[node name="Enemy3" parent="Squad" instance=ExtResource("19_ky2xj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.9584, 1.3005, 62.9173)
 
 [node name="Enm_NestChaser" parent="." instance=ExtResource("23_a840j")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -94.0029, -2.30018, 73.1436)
@@ -1273,6 +1250,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.9383, -0.0501804, -19.0997
 
 [node name="Enm_NestChaser5" parent="Squad3" instance=ExtResource("23_a840j")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.9917, -0.0501804, -22.6863)
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66.2429, 2.03121, -17.1178)
+billboard = 1
+text = "WASD -  MOVE
+R - RELOAD
+COMMAND - SHOOT
+RIGHT click - aim-down sights
+shift - zoom
+f - FullScreen
+1/2 - SWITCH WEAPONS"
+font_size = 120
 
 [editable path="LevelExit"]
 [editable path="WorldEnvironment"]
