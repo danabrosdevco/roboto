@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://bww5b5c7ej00s"]
+[gd_scene load_steps=16 format=3 uid="uid://bww5b5c7ej00s"]
 
 [ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_veyd1"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_awse3"]
@@ -8,6 +8,8 @@
 [ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_j1oqd"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_62r2t"]
 [ext_resource type="PackedScene" uid="uid://viqumhnkw2cx" path="res://Character/weapon/ai-wep_shotgun.tscn" id="8_gpbuc"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_b8klc"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_t0yoj"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
@@ -25,13 +27,16 @@ height = 0.6
 radial_segments = 6
 rings = 6
 
-[node name="Enm_Shotgun" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection") groups=["enemies"]]
+[node name="Enm_Shotgun" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
 script = ExtResource("1_veyd1")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("aiweapon")
 label = NodePath("Label3D")
 bark = NodePath("Bark")
 detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("CSGMesh3D"), NodePath("aiweapon"), NodePath("CSGMesh3D2")]
 AllowedMovementOptions = Array[int]([0, 1])
 AllowedCombatOptions = Array[int]([0, 1, 2])
 
@@ -67,6 +72,10 @@ shape = SubResource("SphereShape3D_mkxqd")
 [node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.403749)
 mesh = SubResource("CapsuleMesh_3rhyt")
+
+[node name="SparkBurst" parent="." instance=ExtResource("9_b8klc")]
+
+[node name="OilSpray" parent="." instance=ExtResource("10_t0yoj")]
 
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

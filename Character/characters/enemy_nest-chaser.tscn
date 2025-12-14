@@ -1,10 +1,12 @@
-[gd_scene load_steps=11 format=3 uid="uid://d2qtk67sm0w38"]
+[gd_scene load_steps=13 format=3 uid="uid://d2qtk67sm0w38"]
 
 [ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_3hqvp"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_ddssu"]
 [ext_resource type="AudioStream" uid="uid://cmkbne2h7vucj" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__24.wav" id="3_sn28p"]
 [ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_1hh83"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_hss0i"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="7_o8of3"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="8_43qi4"]
 [ext_resource type="PackedScene" uid="uid://gymujiepqrjl" path="res://Character/weapon/ai-wep_melee.tscn" id="8_tcfqy"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
@@ -20,13 +22,16 @@ albedo_texture = ExtResource("6_1hh83")
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 25.0
 
-[node name="Enm_NestChaser" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection") groups=["enemies"]]
+[node name="Enm_NestChaser" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
 script = ExtResource("1_3hqvp")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("ai_world_weapon")
 label = NodePath("Label3D")
 bark = NodePath("Bark")
 detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("CSGMesh3D"), NodePath("ai_world_weapon")]
 move_speed = 2.0
 acceleration = 0.75
 reposition_distance = 0.0
@@ -68,6 +73,10 @@ shape = SubResource("SphereShape3D_mkxqd")
 
 [node name="ai_world_weapon" parent="." instance=ExtResource("8_tcfqy")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0.0244119, 0, -0.0834309)
+
+[node name="SparkBurst" parent="." instance=ExtResource("7_o8of3")]
+
+[node name="OilSpray" parent="." instance=ExtResource("8_43qi4")]
 
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

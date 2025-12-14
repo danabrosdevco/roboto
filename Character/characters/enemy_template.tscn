@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bq2p5mjiw62cy"]
+[gd_scene load_steps=16 format=3 uid="uid://bq2p5mjiw62cy"]
 
 [ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_dwt7a"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_p721x"]
@@ -8,6 +8,8 @@
 [ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_lx4cr"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_xpn7d"]
 [ext_resource type="PackedScene" uid="uid://viqumhnkw2cx" path="res://Character/weapon/ai-wep_shotgun.tscn" id="8_1jnxl"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="9_dwlvk"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="10_wo5ym"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
@@ -19,13 +21,22 @@ albedo_texture = ExtResource("6_lx4cr")
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 45.0
 
-[node name="EnemyTemplate" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection") groups=["enemies"]]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_f26kk"]
+radius = 0.2
+height = 0.6
+radial_segments = 6
+rings = 6
+
+[node name="EnemyTemplate" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
 script = ExtResource("1_dwt7a")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("aiweapon")
 label = NodePath("Label3D")
 bark = NodePath("Bark")
 detection = NodePath("Detection")
+particle_effects_die = [NodePath("OilSpray"), NodePath("SparkBurst")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("aiweapon"), NodePath("CSGMesh3D"), NodePath("CSGMesh3D2")]
 AllowedMovementOptions = Array[int]([0, 1])
 AllowedCombatOptions = Array[int]([0, 1, 2])
 
@@ -57,6 +68,14 @@ transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-0
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.5639, 0, 0)
 shape = SubResource("SphereShape3D_mkxqd")
+
+[node name="OilSpray" parent="." instance=ExtResource("9_dwlvk")]
+
+[node name="SparkBurst" parent="." instance=ExtResource("10_wo5ym")]
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.403749)
+mesh = SubResource("CapsuleMesh_f26kk")
 
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

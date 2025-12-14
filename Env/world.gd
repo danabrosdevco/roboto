@@ -77,7 +77,6 @@ func _on_next_level_requested(next_level_scene: PackedScene) -> void:
 	#print("Received signal to load next level.")
 	load_next_level(next_level_scene)
 
-
 func _on_player_died(value: int, pos) -> void:
 	reset_level()
 	player.bits = 0

@@ -1,0 +1,39 @@
+[gd_scene load_steps=5 format=3 uid="uid://ds43cg4ier0x6"]
+
+[ext_resource type="Script" path="res://Character/components/particle_effect.gd" id="1_k42d2"]
+[ext_resource type="Texture2D" uid="uid://b85h04ienor7" path="res://textures/td/oil globule.png" id="2_vg8wm"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4kpjh"]
+albedo_texture = ExtResource("2_vg8wm")
+
+[sub_resource type="SphereMesh" id="SphereMesh_p6ql7"]
+material = SubResource("StandardMaterial3D_4kpjh")
+radius = 0.07
+height = 0.24
+radial_segments = 16
+rings = 8
+
+[node name="OilSpray" type="Node3D" node_paths=PackedStringArray("particles")]
+script = ExtResource("1_k42d2")
+particles = NodePath("CPUParticles3D")
+
+[node name="CPUParticles3D" type="CPUParticles3D" parent="."]
+emitting = false
+amount = 6
+lifetime = 0.6
+one_shot = true
+mesh = SubResource("SphereMesh_p6ql7")
+emission_shape = 1
+emission_sphere_radius = 1.0
+particle_flag_align_y = true
+direction = Vector3(0, 1, 0)
+spread = 30.0
+gravity = Vector3(0, -20, 0)
+initial_velocity_min = 4.0
+initial_velocity_max = 6.0
+angular_velocity_min = 1.0
+angular_velocity_max = 3.0
+linear_accel_min = 1.0
+linear_accel_max = 1.5
+tangential_accel_min = 1.0
+tangential_accel_max = 1.0

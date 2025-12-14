@@ -7,6 +7,9 @@ class_name Enemy
 @export var label: Label3D
 @export var bark: Bark
 @export var detection: Area3D
+@export var particle_effects_die: Array[ParticleEffect]
+@export var particle_effects_hit: Array[ParticleEffect]
+@export var visible_pieces: Array[Node3D]
 # EXPORT DATA # 
 @export var health: int = 30
 @export var max_health: int = 30
@@ -421,27 +424,42 @@ func apply_damage(damage, source):
 	bark.bark()
 	health -= damage
 	if health <= 0:
-		alive = false
-		ai_state = AIState.DEAD
+		#alive = false
+		#ai_state = AIState.DEAD
 		die()
-		#print (name + (" has died!"))
+		return
+	for i in particle_effects_hit:
+		i.activate()
 	pass
 
 func die():
-	change_ai_state(AIState.DEAD)
-	alive = false
+	if alive == false:
+		return
 	set_physics_process(false)
 	set_process(false)
-	hide()
-	if weapon != null:
-		weapon.hide()
+	alive = false
+	change_ai_state(AIState.DEAD)
+	for i in particle_effects_die:
+		i.activate()
 	nav_agent.set_target_position(global_position)  # Cancel nav
 	if damaged_by_player == true:
 		player.add_bits(bits)
 	$CollisionShape3D.disabled = true  # or disable all collision shapes
 	damaged_by_player = false
+	#await get_tree().create_timer(0.9).timeout
+	hide_body()
+	if weapon != null:
+		weapon.hide()
 func respawn():
 	reset()
+
+func hide_body():
+	for i in visible_pieces:
+		i.visible = false
+
+func show_body():
+	for i in visible_pieces:
+		i.visible = true
 
 func reset():
 	ai_state = DefaultAIState
@@ -454,7 +472,7 @@ func reset():
 	velocity = Vector3.ZERO
 	weapon_target = Vector3.ZERO
 	look_target = Vector3.ZERO
-	show()
+	show_body()
 	if weapon != null:
 		weapon.show()
 	movement_time = 0
