@@ -3,18 +3,23 @@ Next To Do:
 		- Chaser [done]
 		- Nest Defender [delay]
 	- Generic Enemy Scene [done]
-	- Sound Orbs to check detection [delay]
+	- Sound Orbs to check detection [delay] EHHHH
 	- var building up to awareness rather than instant [now]
 		- var building up to shot rather than 'HEY I CAN SHOOT YOU'
 
 
 ALL ENEMIES FRIENDLY FIRE / PROBLEM
+
 SLAB MENU - TELEPORT, LEVEL-UP - TO-DO
+
+G: SWITCHT TO GRENADE
+T: SWITCH TO ABILITY 1
+C: SWITCH TO ABILITY 2
 SEARCH / RETURN TO IDLE
-FLOCKING/AVOIDANCE
+FLOCKING / AVOIDANCE
 SUPPRESSION
 MELEE WEAPON
-ESTUS
+ESTUS 
 SECRET BOSSES: INSANE VETERANS
 
 

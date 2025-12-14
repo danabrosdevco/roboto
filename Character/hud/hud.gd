@@ -49,11 +49,11 @@ func activate_interactible(interactible: Interactible):
 	match type:
 		Enums.InteractTypes.BONFIRE:
 			if not interactible.get_activated():
-				interact_label.text = "G | Activate SLAB"
+				interact_label.text = "F | Activate SLAB"
 			else:
-				interact_label.text = "G | Reconstruct at SLAB"
+				interact_label.text = "F | Reconstruct at SLAB"
 		_:
-			interact_label.text = "G | %d" % value  # default label for others
+			interact_label.text = "F | %d" % value  # default label for others
 
 	if interact_textures.has(type):
 		interact_texture.texture = interact_textures[type]
