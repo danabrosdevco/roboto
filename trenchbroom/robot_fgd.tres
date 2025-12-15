@@ -1,7 +1,9 @@
-[gd_resource type="Resource" script_class="FuncGodotFGDFile" load_steps=3 format=3 uid="uid://caggbcpqxboyp"]
+[gd_resource type="Resource" script_class="FuncGodotFGDFile" load_steps=5 format=3 uid="uid://caggbcpqxboyp"]
 
 [ext_resource type="Resource" uid="uid://crgpdahjaj" path="res://addons/func_godot/fgd/func_godot_fgd.tres" id="1_k6nrd"]
 [ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_file.gd" id="1_rc3cn"]
+[ext_resource type="Resource" uid="uid://d04ombf0oln1i" path="res://addons/func_godot/src/fgd/fgd_enemy_leaper.tres" id="2_l1d2r"]
+[ext_resource type="Resource" uid="uid://6c5qg73vbqs5" path="res://addons/func_godot/src/fgd/fgd_world_ceiling-lamp.tres" id="3_obwe0"]
 
 [resource]
 script = ExtResource("1_rc3cn")
@@ -9,4 +11,4 @@ export_file = false
 target_map_editor = 1
 fgd_name = "Roboto"
 base_fgd_files = Array[Resource]([ExtResource("1_k6nrd")])
-entity_definitions = Array[Resource]([])
+entity_definitions = Array[Resource]([ExtResource("2_l1d2r"), ExtResource("3_obwe0")])

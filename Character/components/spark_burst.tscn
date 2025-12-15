@@ -10,7 +10,7 @@ texture_filter = 0
 
 [sub_resource type="BoxMesh" id="BoxMesh_l5c4x"]
 material = SubResource("StandardMaterial3D_38cty")
-size = Vector3(0.08, 0.35, 0.08)
+size = Vector3(0.1, 0.4, 0.1)
 
 [node name="SparkBurst" type="Node3D" node_paths=PackedStringArray("particles")]
 script = ExtResource("1_cctfy")
@@ -18,7 +18,7 @@ particles = NodePath("CPUParticles3D")
 
 [node name="CPUParticles3D" type="CPUParticles3D" parent="."]
 emitting = false
-amount = 9
+amount = 14
 lifetime = 0.1
 one_shot = true
 mesh = SubResource("BoxMesh_l5c4x")

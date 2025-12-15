@@ -1630,3 +1630,14 @@
 ( -736 224 280 ) ( -736 488 280 ) ( -736 488 -8 ) PSX_Textures/grass_7 [ 0 1 0 -48 ] [ 0 0 -1 8 ] 0 1 1
 }
 }
+// entity 1
+{
+"classname" "enm_leaper"
+"origin" "-88 -1016 40"
+"angle" "90"
+}
+// entity 2
+{
+"classname" "world_ceiling-lamp"
+"origin" "-952 -1944 200"
+}
