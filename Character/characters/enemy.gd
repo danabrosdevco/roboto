@@ -483,13 +483,13 @@ func reset():
 	idle_time = 0
 	search_time = 0
 	wander_time = 0
-	force_check_detection()
+	#force_check_detection()
 	set_physics_process(true)
 	set_process(true)
 	#hearing.monitoring = true
 	#sight.monitoring = true
 	$CollisionShape3D.disabled = false
-	force_check_detection()
+	#force_check_detection()
 
 func get_faction():
 	return faction
