@@ -52,6 +52,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 # WORKING DATA # 
 var player: Player
+var checking_for_player: bool = false
 var ai_state = AIState.COMBAT
 var movement_state = MovementState.NONE
 var weapon_state = WeaponState.IDLE
@@ -112,6 +113,7 @@ func _physics_process(delta: float) -> void:
 		
 	if player == null:
 		return
+	
 
 	var dist_sq = global_position.distance_squared_to(player.global_position)
 	if dist_sq > activation_distance_sq:
@@ -120,9 +122,11 @@ func _physics_process(delta: float) -> void:
 		return
 	else:
 		exit_passive_mode()
-	
-	handle_time_passing(delta)
 	handle_gravity(delta)
+	if checking_for_player:
+		if is_path_clear(global_position, player.global_position) == true:
+			trigger_combat(player)
+	handle_time_passing(delta)
 	handle_looking()
 	handle_movement(delta)
 	handle_weapon_logic(delta)
@@ -463,7 +467,9 @@ func apply_damage(damage, source):
 	if source is Player:
 		player = source
 		damaged_by_player = true
-		combat_triggered.emit(self)
+		if ai_state != AIState.COMBAT:
+			trigger_combat(source)
+			combat_triggered.emit(self)
 	bark.bark()
 	health -= damage
 	if health <= 0:
@@ -541,9 +547,12 @@ func is_path_clear(from: Vector3, to: Vector3) -> bool:
 	#return true
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(from, to)
-	#DebugDraw3D.draw_ray(to, from, from.distance_squared_to(to))
-
-	query.exclude = [self, combat_target]
+	var exclusion_body
+	if combat_target == null:
+		exclusion_body = player
+	else:
+		exclusion_body = combat_target
+	query.exclude = [self, exclusion_body]
 	var result = space_state.intersect_ray(query)
 	return not result
 
@@ -580,18 +589,24 @@ func _on_detection_body_entered(body: Node3D) -> void:
 	if ai_state == AIState.COMBAT && combat_target == body:
 		return
 	if body is Player:
-		change_combat_target(body)
-		movement_target = Vector3.ZERO
-		change_ai_state(AIState.COMBAT)
-		combat_triggered.emit(self)
+		if is_path_clear(global_position, body.global_position):
+			trigger_combat(body)
+		else: 
+			checking_for_player = true
 	pass # Replace with function body.
 
 func _on_detection_body_exited(_body: Node3D) -> void:
 	pass # Replace with function body.
 
 func trigger_combat(body: AI):
-	_on_detection_body_entered(body.combat_target)
+	change_combat_target(body)
+	movement_target = Vector3.ZERO
+	change_ai_state(AIState.COMBAT)
+	combat_triggered.emit(self)
+	checking_for_player = false
+	#_on_detection_body_entered(body.combat_target)
 	combat_time = combat_recon_time
+	reconsider_combat()
 
 func get_inaccurate_target(target_pos: Vector3) -> Vector3:
 	var dist := global_position.distance_to(weapon_target)

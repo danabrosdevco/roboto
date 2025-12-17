@@ -29,5 +29,6 @@ func combat_triggered(triggered_ai: AI = null):
 		for ai in squad_members:
 			if ai == null:
 				continue
-			ai.trigger_combat(triggered_ai)
+			if ai.ai_state != Enemy.AIState.COMBAT:
+				ai.trigger_combat(triggered_ai.combat_target)
 		
