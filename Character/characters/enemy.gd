@@ -11,6 +11,7 @@ class_name Enemy
 @export var particle_effects_hit: Array[ParticleEffect]
 @export var visible_pieces: Array[Node3D]
 # EXPORT DATA # 
+@export var activation_distance : int = 75
 @export var health: int = 30
 @export var max_health: int = 30
 @export var faction : Enums.Factions = Enums.Factions.ENEMY
@@ -37,7 +38,7 @@ var wander_radius = 3.5
 
 
 # ENUMS # 
-enum AIState {COMBAT, PATROL, SEARCH, IDLE, DEAD}
+enum AIState {COMBAT, PATROL, SEARCH, IDLE, DEAD, PASSIVE}
 enum MovementState {NONE, MOVING, LEAPING, ADVANCING, CHASING}
 enum WeaponState {FIRE, RELOAD, AIM, IDLE}
 enum CombatOptions {MOVE, AIM, FIRE}
@@ -54,6 +55,7 @@ var player: Player
 var ai_state = AIState.COMBAT
 var movement_state = MovementState.NONE
 var weapon_state = WeaponState.IDLE
+var activation_distance_sq: float
 
 var previous_combat_option: CombatOptions
 var previous_movement_option: CombatOptions
@@ -86,8 +88,16 @@ signal combat_triggered(ai: AI)
 
 func initialize():
 	spawn_transform = transform
+	activation_distance_sq = activation_distance * activation_distance
 	await get_tree().process_frame
 	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+
 	ai_state = DefaultAIState
 	#combat_target = player
 	frame_waited = true
@@ -96,14 +106,46 @@ func initialize():
 func _physics_process(delta: float) -> void:
 	if frame_waited == false:
 		return
-	if ai_state != AIState.DEAD:
-		handle_time_passing(delta)
-		handle_gravity(delta)
-		handle_looking()
-		handle_movement(delta)
-		handle_weapon_logic(delta)
-		if label != null:
-			update_debug_label()
+	
+	if ai_state == AIState.DEAD:
+		return
+		
+	if player == null:
+		return
+
+	var dist_sq = global_position.distance_squared_to(player.global_position)
+	if dist_sq > activation_distance_sq:
+		#print ("ENTERING PASSIVE MODE")
+		enter_passive_mode()
+		return
+	else:
+		exit_passive_mode()
+	
+	handle_time_passing(delta)
+	handle_gravity(delta)
+	handle_looking()
+	handle_movement(delta)
+	handle_weapon_logic(delta)
+	if label != null:
+		update_debug_label()
+
+
+
+func enter_passive_mode():
+	if ai_state == AIState.PASSIVE:
+		return
+	change_ai_state(AIState.PASSIVE)
+	velocity.x = 0
+	velocity.z = 0
+	movement_state = MovementState.NONE
+	weapon_state = WeaponState.IDLE
+	# Optional: stop nav updates
+	nav_agent.set_target_position(global_position)
+func exit_passive_mode():
+	if ai_state != AIState.PASSIVE:
+		return
+	# Resume default behavior
+	change_ai_state(DefaultAIState)
 
 func handle_time_passing(delta):
 	weapon_time += delta
@@ -211,8 +253,9 @@ func handle_weapon_logic(delta):
 				if fire_time <= 0:
 					if dist <= max_fire_distance:
 						if weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
-							weapon_state = WeaponState.FIRE
-						elif is_path_clear(weapon.muzzle_origin.global_position, combat_target.global_position) == true:
+							if is_path_clear(global_position, combat_target.global_position):
+								weapon_state = WeaponState.FIRE
+						elif is_path_clear(global_position, combat_target.global_position) == true:
 							weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
@@ -270,7 +313,7 @@ func reconsider_patrol():
 
 #endregion Reconsider
 func change_ai_state(new_state: AIState):
-	bark.bark()
+	#bark.bark()
 	if ai_state != new_state:
 		#print("Changing state to:", new_state)
 		ai_state = new_state

@@ -53,7 +53,7 @@ func deload_current_level(level):
 
 func register_world_objects(_level:TrenchBroomLevel):
 	ai_manager.reset_all_reg_enemies()
-	for child in current_level.get_children():
+	for child in get_tree().get_nodes_in_group("enemies"):
 		if child is AI:
 			ai_manager.register_enemy(child)
 		if child is Interactible:

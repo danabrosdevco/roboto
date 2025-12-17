@@ -14,6 +14,8 @@ radiance_size = 0
 
 [resource]
 background_mode = 2
-background_energy_multiplier = 1.5
+background_energy_multiplier = 2.0
 sky = SubResource("Sky_siqjn")
 ambient_light_color = Color(0.176471, 0.219608, 0.054902, 1)
+ambient_light_sky_contribution = 0.75
+ambient_light_energy = 2.0
