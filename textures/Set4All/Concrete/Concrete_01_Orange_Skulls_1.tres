@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://crt71cj5rx6n6"]
+
+[ext_resource type="Texture2D" uid="uid://pgwmjd6lyxcm" path="res://textures/Set4All/Concrete/Concrete_01_Orange_Skulls_1.png" id="1_l4sxt"]
+
+[resource]
+albedo_texture = ExtResource("1_l4sxt")
+metallic_specular = 0.0
+texture_filter = 2

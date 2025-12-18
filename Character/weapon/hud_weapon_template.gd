@@ -68,6 +68,7 @@ signal request_status
 func _ready() -> void:
 	cam = get_parent()
 	magazine_capacity = magazine_size
+	muzzle_flash.play_flash()
 	pass
 func _physics_process(delta: float) -> void:
 	if active == false:
