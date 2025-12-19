@@ -1,15 +1,15 @@
-[gd_scene load_steps=17 format=3 uid="uid://bq2p5mjiw62cy"]
+[gd_scene load_steps=17 format=3 uid="uid://vckeok0ct116"]
 
-[ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_dwt7a"]
-[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_p721x"]
-[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_ww7gg"]
-[ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_qtd4q"]
-[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_w2a6j"]
-[ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_lx4cr"]
-[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_xpn7d"]
-[ext_resource type="PackedScene" uid="uid://viqumhnkw2cx" path="res://Character/weapon/ai-wep_shotgun.tscn" id="8_1jnxl"]
-[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="9_dwlvk"]
-[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="10_wo5ym"]
+[ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_wpkca"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_xm5lr"]
+[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_3foix"]
+[ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_bejop"]
+[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_0n0sg"]
+[ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_oujhr"]
+[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_2kaci"]
+[ext_resource type="PackedScene" uid="uid://viqumhnkw2cx" path="res://Character/weapon/ai-wep_shotgun.tscn" id="8_360uj"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="9_7spem"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="10_6rasd"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
@@ -18,7 +18,7 @@ radius = 0.05
 height = 0.1
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_negfm"]
-albedo_texture = ExtResource("6_lx4cr")
+albedo_texture = ExtResource("6_oujhr")
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_jrkgo"]
 
@@ -32,7 +32,7 @@ radial_segments = 6
 rings = 6
 
 [node name="EnemyTemplate" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
-script = ExtResource("1_dwt7a")
+script = ExtResource("1_wpkca")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("aiweapon")
 label = NodePath("Label3D")
@@ -47,8 +47,8 @@ AllowedCombatOptions = Array[int]([0, 1, 2])
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_mygdm")
 
-[node name="Bark" parent="." instance=ExtResource("2_p721x")]
-bark_clips = Array[AudioStream]([ExtResource("3_ww7gg"), ExtResource("4_qtd4q"), ExtResource("5_w2a6j")])
+[node name="Bark" parent="." instance=ExtResource("2_xm5lr")]
+bark_clips = Array[AudioStream]([ExtResource("3_3foix"), ExtResource("4_bejop"), ExtResource("5_0n0sg")])
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
@@ -66,9 +66,9 @@ visible = false
 billboard = 1
 text = "Text"
 font_size = 48
-script = ExtResource("7_xpn7d")
+script = ExtResource("7_2kaci")
 
-[node name="aiweapon" parent="." instance=ExtResource("8_1jnxl")]
+[node name="aiweapon" parent="." instance=ExtResource("8_360uj")]
 transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.553111, 0.221401, 0)
 
 [node name="Detection" type="Area3D" parent="."]
@@ -77,9 +77,9 @@ transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.5639, 0, 0)
 shape = SubResource("SphereShape3D_mkxqd")
 
-[node name="OilSpray" parent="." instance=ExtResource("9_dwlvk")]
+[node name="OilSpray" parent="." instance=ExtResource("9_7spem")]
 
-[node name="SparkBurst" parent="." instance=ExtResource("10_wo5ym")]
+[node name="SparkBurst" parent="." instance=ExtResource("10_6rasd")]
 
 [node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.403749)

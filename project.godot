@@ -170,3 +170,5 @@ interact={
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+lights_and_shadows/directional_shadow/size.mobile=512
+lights_and_shadows/positional_shadow/atlas_size.mobile=512

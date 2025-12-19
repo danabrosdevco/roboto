@@ -48,6 +48,7 @@ max_fire_distance = 2.0
 max_accuracy = 1.0
 min_accuracy = 1.0
 bits = 5
+combat_recon_time = 0.7
 AllowedMovementOptions = Array[int]([4])
 AllowedCombatOptions = Array[int]([0, 2])
 
