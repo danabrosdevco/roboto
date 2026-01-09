@@ -256,11 +256,12 @@ func handle_weapon_logic(delta):
 				var dist = global_position.distance_to(weapon_target)
 				if fire_time <= 0:
 					if dist <= max_fire_distance:
-						if weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
-							if is_path_clear(global_position, combat_target.global_position):
+						if weapon:
+							if weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
+								if is_path_clear(global_position, combat_target.global_position):
+									weapon_state = WeaponState.FIRE
+							elif is_path_clear(global_position, combat_target.global_position) == true:
 								weapon_state = WeaponState.FIRE
-						elif is_path_clear(global_position, combat_target.global_position) == true:
-							weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
 				fire()
