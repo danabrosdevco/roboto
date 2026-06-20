@@ -47,6 +47,8 @@ visible = false
 [node name="RifleShot" type="AudioStreamPlayer3D" parent="."]
 transform = Transform3D(-0.104658, -9.4871e-05, 0.994508, 0.0488491, 0.998792, 0.00523596, -0.993308, 0.0491288, -0.104527, -0.100835, 0.0303454, -0.977198)
 stream = ExtResource("7_es37m")
+volume_db = -2.0
+max_db = 2.0
 
 [node name="Click" type="AudioStreamPlayer3D" parent="."]
 transform = Transform3D(-0.104658, -9.4871e-05, 0.994508, 0.0488491, 0.998792, 0.00523596, -0.993308, 0.0491288, -0.104527, -0.100835, 0.0303454, -0.977198)

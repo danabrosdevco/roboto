@@ -1,14 +1,19 @@
 extends AI
 class_name Enemy
 # NODE REFERENCES #
+@export var patrol_path: PatrolPath
 @export var nav_agent: NavigationAgent3D
 @export var weapon: AIWeapon
 @export var label: Label3D
 @export var bark: Bark
 @export var detection: Area3D
+@export var particle_effects_die: Array[ParticleEffect]
+@export var particle_effects_hit: Array[ParticleEffect]
+@export var visible_pieces: Array[Node3D]
 # EXPORT DATA # 
-@export var health: int = 20
-@export var max_health: int = 20
+@export var activation_distance : int = 75
+@export var health: int = 30
+@export var max_health: int = 30
 @export var faction : Enums.Factions = Enums.Factions.ENEMY
 @export var move_speed: float = 4.5
 @export var acceleration := 1.50
@@ -24,18 +29,20 @@ var damaged_by_player : bool = false
 var idle_to_wander = 3
 var movement_recon_time = 1.5
 var targeting_recon_time = 0.33
-var combat_recon_time = 1.65
+@export var combat_recon_time = 1.65
 var weapon_recon_time = 1.5
+var patrol_recon_time = 1.5
+var chasing_recon_time = 0.2
 var wander_delay = 1.5
 var wander_radius = 3.5
 
 
 # ENUMS # 
-enum AIState {COMBAT, PATROL, SEARCH, IDLE, DEAD}
-enum MovementState {NONE, MOVING, LEAPING}
+enum AIState {COMBAT, PATROL, SEARCH, IDLE, DEAD, PASSIVE}
+enum MovementState {NONE, MOVING, LEAPING, ADVANCING, CHASING}
 enum WeaponState {FIRE, RELOAD, AIM, IDLE}
 enum CombatOptions {MOVE, AIM, FIRE}
-enum MovementOptions {ADVANCE, REPOSITION, FALLBACK, LEAP}
+enum MovementOptions {ADVANCE, REPOSITION, FALLBACK, LEAP, CHASE}
 @export var DefaultAIState: AIState
 @export var AllowedMovementOptions: Array[MovementOptions]
 @export var AllowedCombatOptions: Array[CombatOptions]
@@ -45,9 +52,11 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 # WORKING DATA # 
 var player: Player
+var checking_for_player: bool = false
 var ai_state = AIState.COMBAT
 var movement_state = MovementState.NONE
 var weapon_state = WeaponState.IDLE
+var activation_distance_sq: float
 
 var previous_combat_option: CombatOptions
 var previous_movement_option: CombatOptions
@@ -63,59 +72,112 @@ var alive : bool = true
 var combat_time: float = 0.0
 var movement_time: float = 0.0
 var search_time : float = 0.0
+var patrol_time : float = 0.0
 var fire_time: float = 0.0
 var weapon_time: float = 0.0
 var wander_time: float = 0.00
 var targeting_time: float = 0.0
 var idle_time: float = 0.0
-
-
+var chasing_time: float = 0.0
 
 var last_seen_point: Array[Vector3]
 var seen_bodies: Array = []
 var frame_waited: bool = false
 
+signal combat_triggered(ai: AI)
+
 
 func initialize():
 	spawn_transform = transform
+	activation_distance_sq = activation_distance * activation_distance
 	await get_tree().process_frame
 	await get_tree().process_frame
-	combat_target = player
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	ai_state = DefaultAIState
+	#combat_target = player
 	frame_waited = true
 	pass
 
 func _physics_process(delta: float) -> void:
 	if frame_waited == false:
 		return
-	if ai_state != AIState.DEAD:
-		handle_time_passing(delta)
-		handle_gravity(delta)
-		handle_looking()
-		handle_movement(delta)
-		handle_weapon_logic(delta)
-		if label != null:
-			update_debug_label()
+	
+	if ai_state == AIState.DEAD:
+		return
+		
+	if player == null:
+		return
+	
+
+	var dist_sq = global_position.distance_squared_to(player.global_position)
+	if dist_sq > activation_distance_sq:
+		#print ("ENTERING PASSIVE MODE")
+		enter_passive_mode()
+		return
+	else:
+		exit_passive_mode()
+	handle_gravity(delta)
+	if checking_for_player:
+		if is_path_clear(global_position, player.global_position) == true:
+			trigger_combat(player)
+	handle_time_passing(delta)
+	handle_looking()
+	handle_movement(delta)
+	handle_weapon_logic(delta)
+	if label != null:
+		update_debug_label()
+
+
+
+func enter_passive_mode():
+	if ai_state == AIState.PASSIVE:
+		return
+	change_ai_state(AIState.PASSIVE)
+	velocity.x = 0
+	velocity.z = 0
+	movement_state = MovementState.NONE
+	weapon_state = WeaponState.IDLE
+	# Optional: stop nav updates
+	nav_agent.set_target_position(global_position)
+func exit_passive_mode():
+	if ai_state != AIState.PASSIVE:
+		return
+	# Resume default behavior
+	change_ai_state(DefaultAIState)
 
 func handle_time_passing(delta):
 	weapon_time += delta
 	targeting_time += delta
 	if movement_state == MovementState.MOVING:
 		movement_time += delta
-	if ai_state == AIState.COMBAT:
-		combat_time += delta
-	if ai_state == AIState.IDLE:
-		idle_time += delta
-	if ai_state == AIState.SEARCH:
-		search_time += delta
-	if combat_time >= combat_recon_time:
-		reconsider_combat()
+	match ai_state:
+		AIState.COMBAT:
+			combat_time += delta
+			if combat_time >= combat_recon_time:
+				reconsider_combat()
+		AIState.PATROL:
+			patrol_time += delta
+			if patrol_time >= patrol_recon_time:
+				reconsider_patrol()
+		AIState.IDLE:
+			idle_time += delta
+		AIState.SEARCH:
+			search_time += delta
+
+
 	if targeting_time >= targeting_recon_time:
 		reconsider_target()
 
 func handle_gravity(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-func handle_targeting(delta):
+func handle_targeting(_delta):
 	pass
 func handle_movement(delta):
 	#if movement_time >= movement_recon_time:
@@ -131,6 +193,8 @@ func handle_movement(delta):
 				move_along_nav(delta)
 		MovementState.LEAPING:
 			handle_leap(delta)
+		MovementState.CHASING:
+			handle_chasing(delta)
 
 func move_to(pos: Vector3):
 	#if nav_agent:
@@ -154,6 +218,15 @@ func move_along_nav(delta):
 		var current_yaw = rotation.y
 		var target_yaw = atan2(-base_dir.x, -base_dir.z)
 		rotation.y = lerp_angle(current_yaw, target_yaw, rotation_speed * delta)
+
+func handle_chasing(delta):
+	chasing_time += delta
+	if chasing_time >= chasing_recon_time:
+		chasing_time = 0 
+		nav_agent.set_target_position(combat_target.global_position)
+	move_along_nav(delta)
+	pass
+
 
 func handle_leap(delta):
 	#print ("HANDLING LEAP")
@@ -183,10 +256,12 @@ func handle_weapon_logic(delta):
 				var dist = global_position.distance_to(weapon_target)
 				if fire_time <= 0:
 					if dist <= max_fire_distance:
-						if weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
-							weapon_state = WeaponState.FIRE
-						elif is_path_clear(weapon.muzzle_origin.global_position, combat_target.global_position) == true:
-							weapon_state = WeaponState.FIRE
+						if weapon:
+							if weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
+								if is_path_clear(global_position, combat_target.global_position):
+									weapon_state = WeaponState.FIRE
+							elif is_path_clear(global_position, combat_target.global_position) == true:
+								weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
 				fire()
@@ -205,12 +280,16 @@ func roll_combat_action():
 	#print("Combat action selected:", new_action)
 	perform_action(new_action)
 	previous_combat_option = new_action
+
 func reconsider_movement():
 	movement_time = 0
 	if movement_target.distance_to(global_position) >= 3:
 		return
 	if ai_state == AIState.COMBAT:
 		roll_combat_action()
+		return
+	if ai_state == AIState.PATROL:
+		reconsider_patrol()
 	return
 func reconsider_weapon():
 	weapon_time = 0
@@ -228,8 +307,18 @@ func reconsider_target():
 		weapon_target = combat_target.global_position
 		look_target = combat_target.global_position
 
+func reconsider_patrol():
+	if patrol_path == null or patrol_path.points.is_empty():
+		return
+	if nav_agent.is_navigation_finished() or movement_target == null:
+		var next_point = patrol_path.get_next_point(self)
+		if next_point:
+			move_to(next_point.global_position)
+			look_target = next_point.global_position
+
 #endregion Reconsider
 func change_ai_state(new_state: AIState):
+	#bark.bark()
 	if ai_state != new_state:
 		#print("Changing state to:", new_state)
 		ai_state = new_state
@@ -238,6 +327,9 @@ func change_ai_state(new_state: AIState):
 		wander_time = 0
 		combat_time = 0
 		search_time = 0
+		patrol_time = 0
+		chasing_time = 0
+		targeting_time = 0
 
 func change_combat_target(body):
 	combat_target = body
@@ -266,11 +358,13 @@ func perform_action(action: CombatOptions):
 					move_to(new_move_target)
 					pass
 				MovementOptions.ADVANCE:
-					#print ("ADVANCE")
+					#OLD ADVANCE
 					new_move_target =  find_advance_target()
-					#if new_move_target != false:
 					move_to(new_move_target)
+					#NEW ADVANCE
 					pass
+				MovementOptions.CHASE:
+					movement_state = MovementState.CHASING
 				MovementOptions.FALLBACK:
 					#print ("FALLBACK")
 					new_move_target = find_fallback_target()
@@ -290,7 +384,6 @@ func find_reposition_target():
 	var lateral_dir = right if randf() > 0.5 else -right
 	var test_pos = global_position + lateral_dir * reposition_distance
 	var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-
 	if is_path_clear(closest_point, combat_target.global_position):
 		return closest_point
 	else:
@@ -299,7 +392,6 @@ func find_reposition_target():
 		if is_path_clear(closest_point, combat_target.global_position):
 			return closest_point
 	return global_position
-	pass
 
 func find_advance_target():
 	var nav_map = nav_agent.get_navigation_map()
@@ -343,7 +435,6 @@ func compute_leap_velocity(target: Vector3, time: float) -> Vector3:
 	var vx = dx / time
 	var vz = dz / time
 	var vy = (dy / time) + (0.5 * g * time)
-	#print (Vector3(vx, vy, vz))
 	return Vector3(vx, vy, vz)
 func compute_leap_velocity_fixed_speed(target: Vector3, speed: float) -> Vector3:
 	var g = gravity
@@ -375,45 +466,63 @@ func apply_damage(damage, source):
 	if ai_state == AIState.DEAD:
 		return
 	if source is Player:
+		player = source
 		damaged_by_player = true
+		if ai_state != AIState.COMBAT:
+			trigger_combat(source)
+			combat_triggered.emit(self)
 	bark.bark()
 	health -= damage
 	if health <= 0:
-		alive = false
-		ai_state = AIState.DEAD
+		#alive = false
+		#ai_state = AIState.DEAD
 		die()
-		print (name + (" has died!"))
+		return
+	for i in particle_effects_hit:
+		i.activate()
 	pass
 
 func die():
-	change_ai_state(AIState.DEAD)
-	alive = false
+	if alive == false:
+		return
 	set_physics_process(false)
 	set_process(false)
-	hide()
-	if weapon != null:
-		weapon.hide()
+	alive = false
+	change_ai_state(AIState.DEAD)
+	for i in particle_effects_die:
+		i.activate()
 	nav_agent.set_target_position(global_position)  # Cancel nav
 	if damaged_by_player == true:
 		player.add_bits(bits)
 	$CollisionShape3D.disabled = true  # or disable all collision shapes
 	damaged_by_player = false
+	#await get_tree().create_timer(0.9).timeout
+	hide_body()
+	if weapon != null:
+		weapon.hide()
 func respawn():
 	reset()
 
+func hide_body():
+	for i in visible_pieces:
+		i.visible = false
+
+func show_body():
+	for i in visible_pieces:
+		i.visible = true
+
 func reset():
+	ai_state = DefaultAIState
 	transform = spawn_transform
 	health = max_health
 	alive = true
 	change_ai_state(DefaultAIState)
 	seen_bodies.clear()
 	last_seen_point.clear()
-	nav_agent.clear_path()
-
 	velocity = Vector3.ZERO
 	weapon_target = Vector3.ZERO
 	look_target = Vector3.ZERO
-	show()
+	show_body()
 	if weapon != null:
 		weapon.show()
 	movement_time = 0
@@ -424,13 +533,13 @@ func reset():
 	idle_time = 0
 	search_time = 0
 	wander_time = 0
-	force_check_detection()
+	#force_check_detection()
 	set_physics_process(true)
 	set_process(true)
 	#hearing.monitoring = true
 	#sight.monitoring = true
 	$CollisionShape3D.disabled = false
-	force_check_detection()
+	#force_check_detection()
 
 func get_faction():
 	return faction
@@ -439,9 +548,12 @@ func is_path_clear(from: Vector3, to: Vector3) -> bool:
 	#return true
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(from, to)
-	#DebugDraw3D.draw_ray(to, from, from.distance_squared_to(to))
-
-	query.exclude = [self, combat_target]
+	var exclusion_body
+	if combat_target == null:
+		exclusion_body = player
+	else:
+		exclusion_body = combat_target
+	query.exclude = [self, exclusion_body]
 	var result = space_state.intersect_ray(query)
 	return not result
 
@@ -456,39 +568,46 @@ func update_debug_label():
 		movement_state_str,
 		weapon_state_str
 	]
-
 func force_check_detection():
 	var shape = detection.get_child(0).shape
 	var new_transform: Transform3D = detection.global_transform
-
 	var space_state = get_world_3d().direct_space_state
-
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = shape
 	query.transform = new_transform
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
 	query.exclude = [detection, self]
-
 	var results = space_state.intersect_shape(query, 64)
-
 	for result in results:
 		var collider = result.collider
 		#print("Area overlaps with: ", collider)
 		if collider is Player:
 			_on_detection_body_entered(collider)
-
 func _on_detection_body_entered(body: Node3D) -> void:
 	if ai_state == AIState.DEAD:
 		return
+	if ai_state == AIState.COMBAT && combat_target == body:
+		return
 	if body is Player:
-		change_combat_target(body)
-		change_ai_state(AIState.COMBAT)
+		if is_path_clear(global_position, body.global_position):
+			trigger_combat(body)
+		else: 
+			checking_for_player = true
 	pass # Replace with function body.
 
-func _on_detection_body_exited(body: Node3D) -> void:
+func _on_detection_body_exited(_body: Node3D) -> void:
 	pass # Replace with function body.
 
+func trigger_combat(body: AI):
+	change_combat_target(body)
+	movement_target = Vector3.ZERO
+	change_ai_state(AIState.COMBAT)
+	combat_triggered.emit(self)
+	checking_for_player = false
+	#_on_detection_body_entered(body.combat_target)
+	combat_time = combat_recon_time
+	reconsider_combat()
 
 func get_inaccurate_target(target_pos: Vector3) -> Vector3:
 	var dist := global_position.distance_to(weapon_target)

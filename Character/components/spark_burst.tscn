@@ -1,0 +1,39 @@
+[gd_scene load_steps=5 format=3 uid="uid://b8axqwdv8lhep"]
+
+[ext_resource type="Script" path="res://Character/components/particle_effect.gd" id="1_cctfy"]
+[ext_resource type="Texture2D" uid="uid://2hms7c5nepn0" path="res://textures/td/sparks flying.png" id="2_4tehn"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_38cty"]
+albedo_texture = ExtResource("2_4tehn")
+uv1_scale = Vector3(0.5, 0.5, 0.5)
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_l5c4x"]
+material = SubResource("StandardMaterial3D_38cty")
+size = Vector3(0.1, 0.4, 0.1)
+
+[node name="SparkBurst" type="Node3D" node_paths=PackedStringArray("particles")]
+script = ExtResource("1_cctfy")
+particles = NodePath("CPUParticles3D")
+
+[node name="CPUParticles3D" type="CPUParticles3D" parent="."]
+emitting = false
+amount = 14
+lifetime = 0.1
+one_shot = true
+mesh = SubResource("BoxMesh_l5c4x")
+emission_shape = 1
+emission_sphere_radius = 1.0
+particle_flag_align_y = true
+direction = Vector3(0, 0, 1)
+spread = 180.0
+flatness = 0.45
+gravity = Vector3(0, 3, 0)
+initial_velocity_min = 15.0
+initial_velocity_max = 30.0
+angular_velocity_min = -10.0
+angular_velocity_max = -10.0
+radial_accel_min = -20.0
+radial_accel_max = -20.0
+tangential_accel_min = 1.0
+tangential_accel_max = 1.0

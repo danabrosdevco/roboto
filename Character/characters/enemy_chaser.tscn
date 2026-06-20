@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bjnmbvul1677q"]
+[gd_scene load_steps=16 format=3 uid="uid://bjnmbvul1677q"]
 
 [ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_omglo"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_gg277"]
@@ -8,6 +8,8 @@
 [ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_x173h"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_2u31t"]
 [ext_resource type="PackedScene" uid="uid://gymujiepqrjl" path="res://Character/weapon/ai-wep_melee.tscn" id="8_nvx10"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_sjywf"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_itigm"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
@@ -18,16 +20,25 @@ section_length = 0.3
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_negfm"]
 albedo_texture = ExtResource("6_x173h")
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
-radius = 45.0
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_ift78"]
+radius = 0.2
+height = 0.6
+radial_segments = 6
+rings = 6
 
-[node name="Enm_Chaser" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection") groups=["enemies"]]
+[sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
+radius = 25.0
+
+[node name="Enm_Chaser" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
 script = ExtResource("1_omglo")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("ai_world_weapon")
 label = NodePath("Label3D")
 bark = NodePath("Bark")
 detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("CSGMesh3D"), NodePath("CSGMesh3D2"), NodePath("ai_world_weapon")]
 move_speed = 5.5
 acceleration = 1.85
 reposition_distance = 0.0
@@ -37,7 +48,8 @@ max_fire_distance = 2.0
 max_accuracy = 1.0
 min_accuracy = 1.0
 bits = 5
-AllowedMovementOptions = Array[int]([0])
+combat_recon_time = 0.7
+AllowedMovementOptions = Array[int]([4])
 AllowedCombatOptions = Array[int]([0, 2])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -52,6 +64,10 @@ bark_clips = Array[AudioStream]([ExtResource("3_biu6s"), ExtResource("4_ape12"),
 mesh = SubResource("TubeTrailMesh_y58w7")
 material = SubResource("StandardMaterial3D_negfm")
 
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.310242)
+mesh = SubResource("CapsuleMesh_ift78")
+
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 visible = false
@@ -63,11 +79,15 @@ script = ExtResource("7_2u31t")
 [node name="Detection" type="Area3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.5639, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6204, 0, 0)
 shape = SubResource("SphereShape3D_mkxqd")
 
 [node name="ai_world_weapon" parent="." instance=ExtResource("8_nvx10")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0.415559, 0, -0.505568)
+
+[node name="SparkBurst" parent="." instance=ExtResource("9_sjywf")]
+
+[node name="OilSpray" parent="." instance=ExtResource("10_itigm")]
 
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

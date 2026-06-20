@@ -9,7 +9,10 @@ enum ScanModes{RECTANGLE, TOP_DOWN}
 enum WorldStates {RUNNING, LOADING, PAUSED}
 enum FireModes {SEMI, FULL, MANUAL}
 enum AIWeaponTypes {MELEE, HITSCAN, PROJECTILE}
+
+# BOSS AI #
+enum GuardianCombatOptions {SPINNING_ATTACK, RECOVERY}
 # WORLD OBJECT INF #
 enum WorldObjectTypes {CHAR_SPAWN, AI_SPAWN, LEVEL_EXIT, PICKUP, INTERACTIBLE, AI, STATIC_TARGET}
 enum PickUpTypes {HEALTH, SHARDS}
-enum InteractTypes {HEALTH, SHARDS, BONFIRE}
+enum InteractTypes {HEALTH, SHARDS, BONFIRE, BITS}

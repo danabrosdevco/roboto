@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://djujtutnl2vug"]
+
+[ext_resource type="Texture2D" uid="uid://c2ng4y7oh4vqm" path="res://textures/Set4All/Bricks/Bricks/Bricks_04_Red_Moss_2.png" id="1_a02fg"]
+
+[resource]
+albedo_texture = ExtResource("1_a02fg")
+metallic_specular = 0.0
+texture_filter = 2

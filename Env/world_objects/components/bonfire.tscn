@@ -1,16 +1,18 @@
-[gd_scene load_steps=4 format=3 uid="uid://c7yxcpgs2ry2p"]
+[gd_scene load_steps=5 format=3 uid="uid://c7yxcpgs2ry2p"]
 
 [ext_resource type="Script" path="res://Env/world_objects/bonfire.gd" id="1_gbn2l"]
 [ext_resource type="PackedScene" uid="uid://6362c6ca4oqf" path="res://3d_assets/Low Poly Furniture/Electronics/Console A.fbx" id="2_mr4w7"]
+[ext_resource type="AudioStream" uid="uid://bdw0etendn460" path="res://sounds/sfx/SLAB/Scifi waves_fast_long.wav" id="3_58spo"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_xksoe"]
 size = Vector3(1.5, 3, 1.5)
 
-[node name="Bonfire" type="Area3D" node_paths=PackedStringArray("console", "collision_body", "static_body") groups=["bonfires"]]
+[node name="Bonfire" type="Area3D" node_paths=PackedStringArray("console", "activate_sound_effect", "collision_body", "static_body") groups=["bonfires"]]
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_gbn2l")
 console = NodePath("Console A/Console A")
+activate_sound_effect = NodePath("AudioStreamPlayer3D")
 collision_body = NodePath("CollisionShape3D2")
 static_body = NodePath("StaticBody3D")
 type = 2
@@ -28,3 +30,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.40754, 0)
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="StaticBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.034691, 1.5165, -0.101501)
 shape = SubResource("BoxShape3D_xksoe")
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("3_58spo")

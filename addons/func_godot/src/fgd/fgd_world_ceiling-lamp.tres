@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDPointClass" load_steps=3 format=3 uid="uid://6c5qg73vbqs5"]
+
+[ext_resource type="PackedScene" uid="uid://bl2dq7api7pws" path="res://Env/world_objects/ceiling_light.tscn" id="1_i8rvv"]
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_point_class.gd" id="1_ny26v"]
+
+[resource]
+script = ExtResource("1_ny26v")
+scene_file = ExtResource("1_i8rvv")
+apply_rotation_on_map_build = true
+classname = "world_ceiling-lamp"
+description = ""
+func_godot_internal = false
+base_classes = Array[Resource]([])
+class_properties = {}
+class_property_descriptions = {}
+auto_apply_to_matching_node_properties = false
+meta_properties = {
+"color": Color(0.8, 0.8, 0.8, 1),
+"size": AABB(-8, -8, -8, 8, 8, 8)
+}
+node_class = ""
+name_property = ""

@@ -3,19 +3,20 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://do64cr0gku878"
-path="res://.godot/imported/Wood_Planks_03_Brown_3.png-8a73b76eb3e48288bfcdd42ce8daca01.ctex"
+path.s3tc="res://.godot/imported/Wood_Planks_03_Brown_3.png-8a73b76eb3e48288bfcdd42ce8daca01.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://textures/Set4All/Wood/Wood_Planks_03_Brown_3.png"
-dest_files=["res://.godot/imported/Wood_Planks_03_Brown_3.png-8a73b76eb3e48288bfcdd42ce8daca01.ctex"]
+dest_files=["res://.godot/imported/Wood_Planks_03_Brown_3.png-8a73b76eb3e48288bfcdd42ce8daca01.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
@@ -31,4 +32,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

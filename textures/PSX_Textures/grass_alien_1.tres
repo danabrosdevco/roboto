@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://nux8d6j5rj6j"]
+
+[ext_resource type="Texture2D" uid="uid://xxc3we8lee2g" path="res://textures/PSX_Textures/grass_alien_1.png" id="1_tjwm5"]
+
+[resource]
+albedo_texture = ExtResource("1_tjwm5")
+metallic_specular = 0.0
+texture_filter = 2

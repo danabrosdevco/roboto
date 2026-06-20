@@ -1,13 +1,56 @@
+GRENADES
+ABILITIES
+WEAPON PICK-UPS
+WEAPON SWITCHING
+INVENTORY
+BOSS
+DASH
+MOVEMENT VFX
+TAKE DAMAGE VFX
+SCAN INFO: NAME, MODEL #, SIGNAL STRENGTH
+
+
+
+
+
+
+
+
+
 Next To Do:
 	- Melee enemy
 		- Chaser [done]
 		- Nest Defender [delay]
 	- Generic Enemy Scene [done]
-	- Sound Orbs to check detection [delay]
-	- var building up to awareness rather than instant [now]
+	- Sound Orbs to check detection [delay] EHHHH
+	- var building up to awareness rather than instant [ehHhh]
 		- var building up to shot rather than 'HEY I CAN SHOOT YOU'
 
 
+ALL ENEMIES FRIENDLY FIRE / PROBLEM
+
+SLAB MENU - TELEPORT, LEVEL-UP - TO-DO
+
+G: SWITCHT TO GRENADE
+T: SWITCH TO ABILITY 1
+C: SWITCH TO ABILITY 2
+SEARCH / RETURN TO IDLE
+FLOCKING / AVOIDANCE
+SUPPRESSION
+MELEE WEAPON
+ESTUS 
+SECRET BOSSES: INSANE VETERANS
+
+
+Enemy respawn + placement logic
+STAGGER ON DAMAGE?
+- slow, aim crazy?
+- suppress?
+Damage stagger + i-frames
+Dodge / dash mechanic
+Heat / stamina system
+Simple upgrade menu at SLAB
+Prototype mini-boss
 
 PLAYER CONTROLLER
 - Weapon Generalization
@@ -69,8 +112,8 @@ Insurgents:  	^^
 - robots advance as group.
 - robots defend as a group.
 
-ARGO POINTS
-- COMPUTER YOU CAN INTERACT WITH AND INFECT WITH ARGO FOR POINTS.
+POINTS
+- COMPUTER YOU CAN INTERACT WITH AND INFECT fOR POINTS.
 
 INTERACTION / LINK
 - PUSH A BUTTON, TRIGGERS EFFECT ON ANOTHER THING.

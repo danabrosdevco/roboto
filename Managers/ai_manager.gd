@@ -15,5 +15,5 @@ func deregister_enemy(enemy):
 func reset_all_reg_enemies():
 	enemies = []
 
-func on_sound_emitted(location: Vector3, meter_distance: float):
+func on_sound_emitted(_location: Vector3, _meter_distance: float):
 	pass
