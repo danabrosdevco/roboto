@@ -30,6 +30,7 @@ player = NodePath("../test_character")
 transform = Transform3D(-0.145306, 0, -0.989387, 0, 1, 0, 0.989387, 0, -0.145306, 66.6153, 1.91338, -5.55146)
 world = NodePath("..")
 hud = NodePath("../HUD")
+use_gravity = false
 health = 100
 
 [node name="HUD" parent="." instance=ExtResource("2_ox1ok")]

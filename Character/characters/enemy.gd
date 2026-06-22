@@ -51,8 +51,9 @@ enum MovementOptions {ADVANCE, REPOSITION, FALLBACK, LEAP, CHASE}
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 # WORKING DATA # 
-var player: Player
-var checking_for_player: bool = false
+var player: Player           # always set by AIManager — used for player-specific logic
+var ai_manager: AIManager    # set by AIManager on registration
+var checking_for_target: bool = false  # was checking_for_player
 var ai_state = AIState.COMBAT
 var movement_state = MovementState.NONE
 var weapon_state = WeaponState.IDLE
@@ -116,17 +117,18 @@ func _physics_process(delta: float) -> void:
 		return
 	
 
+	# Use player distance for activation (cheap check, player always present)
+	# Once active, targeting is faction-aware via reconsider_target
 	var dist_sq = global_position.distance_squared_to(player.global_position)
 	if dist_sq > activation_distance_sq:
-		#print ("ENTERING PASSIVE MODE")
 		enter_passive_mode()
 		return
 	else:
 		exit_passive_mode()
 	handle_gravity(delta)
-	if checking_for_player:
-		if is_path_clear(global_position, player.global_position) == true:
-			trigger_combat(player)
+	if checking_for_target and combat_target != null:
+		if is_path_clear(global_position, combat_target.global_position):
+			trigger_combat(combat_target)
 	handle_time_passing(delta)
 	handle_looking()
 	handle_movement(delta)
@@ -300,13 +302,33 @@ func reconsider_combat():
 	combat_time = 0
 	roll_combat_action()
 
-func reconsider_target():
-	if combat_target == null:
-		change_ai_state(AIState.IDLE)
-		return
-	if combat_target.alive == true:
-		weapon_target = combat_target.global_position
-		look_target = combat_target.global_position
+func reconsider_target() -> void:
+	targeting_time = 0
+	# If current target is still alive and hostile, keep it
+	if combat_target != null and combat_target.alive:
+		if _is_hostile(combat_target):
+			weapon_target = combat_target.global_position
+			look_target = combat_target.global_position
+			return
+
+	# Current target is gone or no longer hostile — find a new one
+	var new_target: CharacterBody3D = null
+	if ai_manager != null:
+		new_target = ai_manager.get_nearest_hostile(self)
+	elif player != null and Enums.are_hostile(faction, Enums.Factions.PLAYER):
+		# Fallback if no manager: target player if hostile to us
+		new_target = player
+
+	if new_target != null:
+		if ai_state != AIState.COMBAT:
+			trigger_combat(new_target)
+		else:
+			change_combat_target(new_target)
+	else:
+		# No hostiles found
+		combat_target = null
+		if ai_state == AIState.COMBAT:
+			change_ai_state(AIState.PATROL)
 
 func reconsider_patrol():
 	if patrol_path == null or patrol_path.points.is_empty():
@@ -463,25 +485,26 @@ func fire():
 	weapon.fire(final_target)
 	pass
 
-func apply_damage(damage, source):
+func apply_damage(damage, source) -> void:
 	if ai_state == AIState.DEAD:
 		return
 	if source is Player:
 		player = source
 		damaged_by_player = true
+	# Retaliate against whoever shot us, if hostile
+	if source is CharacterBody3D and _is_hostile(source):
 		if ai_state != AIState.COMBAT:
 			trigger_combat(source)
 			combat_triggered.emit(self)
+		elif combat_target == null:
+			change_combat_target(source)
 	bark.bark()
 	health -= damage
 	if health <= 0:
-		#alive = false
-		#ai_state = AIState.DEAD
 		die()
 		return
 	for i in particle_effects_hit:
 		i.activate()
-	pass
 
 func die():
 	if alive == false:
@@ -520,6 +543,7 @@ func reset():
 	change_ai_state(DefaultAIState)
 	seen_bodies.clear()
 	last_seen_point.clear()
+	checking_for_target = false
 	velocity = Vector3.ZERO
 	weapon_target = Vector3.ZERO
 	look_target = Vector3.ZERO
@@ -545,16 +569,22 @@ func reset():
 func get_faction():
 	return faction
 
+func _is_hostile(body: Node3D) -> bool:
+	if body is Player:
+		return Enums.are_hostile(faction, Enums.Factions.PLAYER)
+	if body is Enemy:
+		return Enums.are_hostile(faction, (body as Enemy).faction)
+	return false
+
 func is_path_clear(from: Vector3, to: Vector3) -> bool:
-	#return true
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(from, to)
-	var exclusion_body
-	if combat_target == null:
-		exclusion_body = player
-	else:
-		exclusion_body = combat_target
-	query.exclude = [self, exclusion_body]
+	var exclusion = [self]
+	if combat_target != null:
+		exclusion.append(combat_target)
+	elif player != null:
+		exclusion.append(player)
+	query.exclude = exclusion
 	var result = space_state.intersect_ray(query)
 	return not result
 
@@ -588,24 +618,33 @@ func force_check_detection():
 func _on_detection_body_entered(body: Node3D) -> void:
 	if ai_state == AIState.DEAD:
 		return
-	if ai_state == AIState.COMBAT && combat_target == body:
+	# Ignore bodies that aren't AI or Player
+	if not (body is Player or body is Enemy):
 		return
-	if body is Player:
-		if is_path_clear(global_position, body.global_position):
-			trigger_combat(body)
-		else: 
-			checking_for_player = true
-	pass # Replace with function body.
+	# Ignore if already fighting this body
+	if ai_state == AIState.COMBAT and combat_target == body:
+		return
+	# Faction check — only react to hostiles
+	if not _is_hostile(body):
+		return
+	if is_path_clear(global_position, body.global_position):
+		trigger_combat(body)
+	else:
+		# LOS blocked — keep checking each frame until clear
+		checking_for_target = true
+		combat_target = body
 
-func _on_detection_body_exited(_body: Node3D) -> void:
-	pass # Replace with function body.
+func _on_detection_body_exited(body: Node3D) -> void:
+	# If the body we were waiting on LOS for just left detection range, stop checking
+	if checking_for_target and body == combat_target:
+		checking_for_target = false
 
 func trigger_combat(body: AI):
 	change_combat_target(body)
 	movement_target = Vector3.ZERO
 	change_ai_state(AIState.COMBAT)
 	combat_triggered.emit(self)
-	checking_for_player = false
+	checking_for_target = false
 	#_on_detection_body_entered(body.combat_target)
 	combat_time = combat_recon_time
 	reconsider_combat()
