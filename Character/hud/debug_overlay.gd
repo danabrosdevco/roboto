@@ -46,7 +46,7 @@ func _discover_squads() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_QUOTELEFT:  # ~ key
+		if event.keycode == KEY_U:  # ~ key
 			_toggle()
 
 func _toggle() -> void:

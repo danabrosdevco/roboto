@@ -20,6 +20,7 @@ var coyote_time = 0.12
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENS := 0.002
+@export var use_gravity = true
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var health = 50
 @export var max_health = 100
@@ -124,7 +125,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	scanner_timer -= delta
 	check_interactible()
-	handle_gravity(delta)
+	if use_gravity == true:
+		handle_gravity(delta)
 	handle_input(delta)
 	handle_movement(delta)
 	handle_camera_and_weapon(delta)
