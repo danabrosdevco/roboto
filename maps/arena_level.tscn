@@ -5034,12 +5034,15 @@ target_objective = NodePath("../SquadObjectivePoint")
 
 [node name="Enm_Shotgun" parent="Squad2" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.20157, 2.63201, 38.3703)
+DefaultAIState = 1
 
 [node name="Enm_Shotgun2" parent="Squad2" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.60916, 2.63201, 39.911)
+DefaultAIState = 1
 
 [node name="Enm_Shotgun3" parent="Squad2" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.67459, 2.63201, 39.612)
+DefaultAIState = 1
 
 [node name="Squad" parent="." node_paths=PackedStringArray("squad_members", "target_objective") instance=ExtResource("9_rgdym")]
 script = ExtResource("10_pd836")
@@ -5048,15 +5051,18 @@ target_objective = NodePath("../SquadObjectivePoint2")
 
 [node name="Enm_Shotgun" parent="Squad" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.20157, 2.63201, -38.5183)
-faction = 0
+faction = 2
+DefaultAIState = 1
 
 [node name="Enm_Shotgun2" parent="Squad" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.41419, 2.63201, -33.8591)
-faction = 0
+faction = 2
+DefaultAIState = 1
 
 [node name="Enm_Shotgun3" parent="Squad" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4038, 2.63201, -38.3266)
-faction = 0
+faction = 2
+DefaultAIState = 1
 
 [node name="SquadObjectivePoint" parent="." instance=ExtResource("12_y5xdw")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.992464, 2.51753, -38.6296)

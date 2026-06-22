@@ -311,22 +311,30 @@ func reconsider_target() -> void:
 			look_target = combat_target.global_position
 			return
 
+	# Target is dead, gone, or no longer hostile — stop looking at it
+	if combat_target != null and not combat_target.alive:
+		combat_target = null
+		weapon_target = Vector3.ZERO
+		if movement_target != Vector3.ZERO:
+			look_target = movement_target
+
 	# Current target is gone or no longer hostile — find a new one
 	var new_target: CharacterBody3D = null
 	if ai_manager != null:
 		new_target = ai_manager.get_nearest_hostile(self)
 	elif player != null and Enums.are_hostile(faction, Enums.Factions.PLAYER):
-		# Fallback if no manager: target player if hostile to us
 		new_target = player
 
 	if new_target != null:
-		if ai_state != AIState.COMBAT:
-			trigger_combat(new_target)
-		else:
+		if ai_state == AIState.COMBAT:
 			change_combat_target(new_target)
+		# Don't auto-trigger combat from IDLE/PATROL — let detection handle that
 	else:
-		# No hostiles found
+		# No hostiles — clear target and look where we're going
 		combat_target = null
+		weapon_target = Vector3.ZERO
+		if movement_target != Vector3.ZERO:
+			look_target = movement_target
 		if ai_state == AIState.COMBAT:
 			change_ai_state(AIState.PATROL)
 
@@ -645,7 +653,6 @@ func trigger_combat(body: AI):
 	change_ai_state(AIState.COMBAT)
 	combat_triggered.emit(self)
 	checking_for_target = false
-	#_on_detection_body_entered(body.combat_target)
 	combat_time = combat_recon_time
 	reconsider_combat()
 

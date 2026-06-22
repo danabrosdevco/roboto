@@ -53,8 +53,7 @@ mesh = SubResource("CapsuleMesh_jrkgo")
 material = SubResource("StandardMaterial3D_negfm")
 
 [node name="Label3D" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
-visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.22588, 0)
 billboard = 1
 text = "Text"
 font_size = 48
