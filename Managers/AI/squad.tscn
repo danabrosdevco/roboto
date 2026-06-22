@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" path="res://Managers/AI/squad.gd" id="1_kydxs"]
 
-[node name="Squad" type="Node"]
+[node name="Squad" type="Node" groups=["squads"]]
 script = ExtResource("1_kydxs")

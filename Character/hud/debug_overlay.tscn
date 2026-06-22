@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://cgixlpeuaxv87"]
+
+[ext_resource type="Script" path="res://Character/hud/debug_overlay.gd" id="1_8xw03"]
+
+[node name="DebugOverlay" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_8xw03")

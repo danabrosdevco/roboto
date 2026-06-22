@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cyslwv078g4sk"]
+
+[ext_resource type="Script" path="res://Env/world_objects/cover_point_spawner.gd" id="1_qehr0"]
+
+[node name="CoverPointSpawner" type="Node3D"]
+script = ExtResource("1_qehr0")

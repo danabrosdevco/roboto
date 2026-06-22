@@ -102,6 +102,7 @@ func initialize():
 	ai_state = DefaultAIState
 	#combat_target = player
 	frame_waited = true
+	reconsider_target()
 	pass
 
 func _physics_process(delta: float) -> void:
