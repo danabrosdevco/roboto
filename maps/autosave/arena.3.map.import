@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bcr1ai7xj72lc"
+path="res://.godot/imported/arena.3.map-561c68bb38b61a3afb5def1a9f224be8.tres"
+
+[deps]
+
+source_file="res://maps/autosave/arena.3.map"
+dest_files=["res://.godot/imported/arena.3.map-561c68bb38b61a3afb5def1a9f224be8.tres"]
+
+[params]
+

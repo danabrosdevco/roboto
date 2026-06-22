@@ -11,6 +11,10 @@ var player_corpse_scene = preload("res://Env/world_objects/components/player_cor
 
 func _ready():
 	await get_tree().process_frame
+	if current_level == null:
+		for child in get_children():
+			if child is TrenchBroomLevel:
+				current_level = child
 	if current_level:
 		var spawn_transform = current_level.spawn_point.global_transform
 		player.global_transform = spawn_transform

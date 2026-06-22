@@ -1,5 +1,5 @@
 extends Node
-class_name Squad
+class_name SquadNew
 @export var squad_members: Array[AI]
 
 func _ready() -> void:

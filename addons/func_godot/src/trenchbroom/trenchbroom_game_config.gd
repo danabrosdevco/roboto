@@ -75,7 +75,7 @@ enum GameConfigVersion {
 @export_category("Compatibility")
 
 ## Game configuration format compatible with the version of TrenchBroom being used.
-@export var game_config_version: GameConfigVersion = GameConfigVersion.Latest
+@export var game_config_version: GameConfigVersion = GameConfigVersion.Version9
 
 ## Matches tag key enum to the String name used in .cfg
 static func get_match_key(tag_match_type: int) -> String:

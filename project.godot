@@ -39,6 +39,7 @@ pickups=""
 enemies=""
 levelexit=""
 bonfires=""
+squads=""
 
 [gui]
 
