@@ -5031,6 +5031,7 @@ shadow_opacity = 0.6
 script = ExtResource("10_pd836")
 squad_members = [NodePath("Enm_Shotgun"), NodePath("Enm_Shotgun2"), NodePath("Enm_Shotgun3"), NodePath("Enm_Shotgun4"), NodePath("Enm_Shotgun5")]
 target_objective = NodePath("../SquadObjectivePoint")
+shared_target_ttl = 10.0
 
 [node name="Enm_Shotgun" parent="Squad2" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.20157, 2.63201, 38.3703)
@@ -5056,6 +5057,7 @@ DefaultAIState = 1
 script = ExtResource("10_pd836")
 squad_members = [NodePath("Enm_Shotgun"), NodePath("Enm_Shotgun2"), NodePath("Enm_Shotgun3"), NodePath("Enm_Shotgun5"), NodePath("Enm_Shotgun4")]
 target_objective = NodePath("../SquadObjectivePoint2")
+shared_target_ttl = 10.0
 
 [node name="Enm_Shotgun" parent="Squad" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.20157, 2.63201, -38.5183)

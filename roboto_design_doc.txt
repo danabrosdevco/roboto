@@ -14,11 +14,11 @@ SECTION 1 — AI ARCHITECTURE OVERVIEW
 The AI system uses a class hierarchy where every combat character inherits from
 a shared base and specializes from there. The chain is:
 
-    CharacterBody3D
-    └── AI                  (ai.gd)           — empty base, just calls initialize()
-        └── Enemy           (enemy.gd)         — full combat AI: nav, weapons, detection
-            └── Soldier     (soldier.gd)       — smart infantry: cover, suppress, bound
-                └── [future specialist classes]
+	CharacterBody3D
+	└── AI                  (ai.gd)           — empty base, just calls initialize()
+		└── Enemy           (enemy.gd)         — full combat AI: nav, weapons, detection
+			└── Soldier     (soldier.gd)       — smart infantry: cover, suppress, bound
+				└── [future specialist classes]
 
 This means every enemy IS an Enemy. Every Soldier IS an Enemy. You can place
 a basic Enemy in a level and it works standalone. A Soldier just adds smarter
@@ -52,8 +52,8 @@ WEAPON STATES (WeaponState enum):
 COMBAT BEHAVIOR:
   Enemy rolls a random action every combat_recon_time (default 1.65s).
   Actions come from two exported arrays on the scene:
-    AllowedCombatOptions  — MOVE, AIM, FIRE
-    AllowedMovementOptions — ADVANCE, REPOSITION, FALLBACK, LEAP, CHASE
+	AllowedCombatOptions  — MOVE, AIM, FIRE
+	AllowedMovementOptions — ADVANCE, REPOSITION, FALLBACK, LEAP, CHASE
   These arrays are set per-scene in the inspector, giving each enemy type
   a different behavioral profile without changing any code.
 
@@ -67,12 +67,12 @@ KEY TIMERS:
 TARGETING:
   reconsider_target() runs every 0.33s.
   - If current combat_target is alive and hostile, keeps it and updates
-    weapon_target and look_target to its position.
+	weapon_target and look_target to its position.
   - If current target is dead, clears it and sets look_target toward
-    movement_target so the AI faces where it's going.
+	movement_target so the AI faces where it's going.
   - Asks AIManager.get_nearest_hostile(self) for a replacement.
   - Does NOT auto-trigger combat from IDLE/PATROL — only detection and
-    taking damage trigger combat transitions.
+	taking damage trigger combat transitions.
 
 DETECTION:
   Each Enemy has a detection Area3D. When a body enters it:
@@ -90,17 +90,17 @@ FACTION SYSTEM:
   Every Enemy has a faction export (default: ENEMY).
   Factions: PLAYER, ENEMY, ALLIED, NEUTRAL
   Enums.are_hostile(faction_a, faction_b) defines the hostility matrix:
-    ENEMY   fights PLAYER and ALLIED
-    ALLIED  fights ENEMY
-    PLAYER  fights ENEMY
-    NEUTRAL fights nobody
+	ENEMY   fights PLAYER and ALLIED
+	ALLIED  fights ENEMY
+	PLAYER  fights ENEMY
+	NEUTRAL fights nobody
   To make AI fight AI, give one group faction=ENEMY and another faction=ALLIED.
   Register both through AIManager and detection handles the rest.
 
 INSPECTOR EXPORTS (key ones to configure per scene):
   faction               — which side this AI is on
   DefaultAIState        — starting state (use PATROL for active units, IDLE for
-                          guards that wait for detection)
+						  guards that wait for detection)
   AllowedMovementOptions — which movement behaviors this type can use
   AllowedCombatOptions   — MOVE/AIM/FIRE (usually keep all three)
   health / max_health   — hit points
@@ -142,10 +142,10 @@ COVER SYSTEM:
   On first combat contact, Soldier proactively calls enter_cover_seeking().
   find_best_cover_point() queries all nodes in group "cover_points" within
   cover_search_radius (default 25m) and scores each via CoverPoint.score_for():
-    - Closer to soldier = better
-    - Blocks LOS to enemy = +15 points (strongly preferred)
-    - Stand cover over crouch cover = +5 points
-    - Cover facing direction toward enemy = up to +3 points
+	- Closer to soldier = better
+	- Blocks LOS to enemy = +15 points (strongly preferred)
+	- Stand cover over crouch cover = +5 points
+	- Cover facing direction toward enemy = up to +3 points
   The best unoccupied point is claimed (mark_occupied) and the soldier navigates
   to it. On arrival (is_target_reached()), cover is marked and soldier_state
   returns to NONE so Enemy combat logic resumes.
@@ -221,15 +221,15 @@ Central registry for all active AI in a level.
 REGISTRATION:
   World.register_world_objects() iterates the "enemies" group and calls
   AIManager.register_enemy() on each. This sets:
-    enemy.player = player  (reference to the human player)
-    enemy.ai_manager = self (reference back to manager for queries)
+	enemy.player = player  (reference to the human player)
+	enemy.ai_manager = self (reference back to manager for queries)
 
 FACTION QUERIES:
   get_nearest_hostile(requesting_ai) — returns the closest living body hostile
-    to the requester's faction. Checks player first, then all_ai.
+	to the requester's faction. Checks player first, then all_ai.
   get_hostiles_in_radius(requesting_ai, radius) — returns all hostiles within
-    a given distance. Not yet called anywhere — available for future use
-    (e.g. area denial, squad awareness radius).
+	a given distance. Not yet called anywhere — available for future use
+	(e.g. area denial, squad awareness radius).
 
 LEVEL TRANSITIONS:
   reset_all_reg_enemies() clears the registry when a new level loads.
@@ -240,13 +240,13 @@ LEVEL TRANSITIONS:
 
 CoverPoint (cover_point.gd / Env/world_objects/cover_point.gd):
   Node3D placed in the scene. Stores:
-    cover_direction — which way soldier faces when using this cover
-    is_crouch_cover — whether this is low cover only
+	cover_direction — which way soldier faces when using this cover
+	is_crouch_cover — whether this is low cover only
   Methods:
-    is_occupied() — true if a living soldier is using this point
-    mark_occupied(soldier) / mark_unoccupied(soldier) — claim/release
-    has_los_to(world_pos) — raycast check for LOS
-    score_for(soldier_pos, target_pos) — scoring for best point selection
+	is_occupied() — true if a living soldier is using this point
+	mark_occupied(soldier) / mark_unoccupied(soldier) — claim/release
+	has_los_to(world_pos) — raycast check for LOS
+	score_for(soldier_pos, target_pos) — scoring for best point selection
 
 CoverPointSpawner (cover_point_spawner.gd — @tool script):
   Generates CoverPoints automatically in the editor using navmesh edge-walking.
@@ -275,7 +275,7 @@ PatrolPath (patrol_path.gd):
 
 StimulusManager (stimulus_manager.gd):
   Currently an empty class. Intended to be a scene-wide event bus for:
-    ALLY_SHOT, ALLY_DIED, GUNSHOT_HEARD, ENEMY_SPOTTED
+	ALLY_SHOT, ALLY_DIED, GUNSHOT_HEARD, ENEMY_SPOTTED
   Each stimulus would have a source position and radius. AIs within range
   receive the stimulus and respond based on their current state and role.
   This would enable reactive behaviors like "squad hears gunshot, turns toward
@@ -338,22 +338,22 @@ WORLD SCENE STRUCTURE:
   ├── DebugOverlay
   ├── [shared effect nodes: MuzzleFlash, Explosion, Tracer]
   └── TrenchBroomLevel (the actual map)
-      ├── FuncGodotMap (brush geometry, collision, textures)
-      ├── NavigationRegion3D (baked navmesh)
-      ├── SpawnPoint (Node3D)
-      ├── [Enemies / Soldiers in "enemies" group]
-      ├── [Squads]
-      ├── [CoverPointSpawner → CoverPoints]
-      ├── [SquadObjectivePoints]
-      ├── [PatrolPaths]
-      ├── [Bonfires / Pickups / Interactibles]
-      └── [LevelExits]
+	  ├── FuncGodotMap (brush geometry, collision, textures)
+	  ├── NavigationRegion3D (baked navmesh)
+	  ├── SpawnPoint (Node3D)
+	  ├── [Enemies / Soldiers in "enemies" group]
+	  ├── [Squads]
+	  ├── [CoverPointSpawner → CoverPoints]
+	  ├── [SquadObjectivePoints]
+	  ├── [PatrolPaths]
+	  ├── [Bonfires / Pickups / Interactibles]
+	  └── [LevelExits]
 
 LEVEL LOAD FLOW:
   1. World._ready() finds the TrenchBroomLevel child
   2. Sets player spawn position from level.spawn_point
   3. Calls register_world_objects() which iterates "enemies" group
-     and registers each with AIManager (sets player and ai_manager refs)
+	 and registers each with AIManager (sets player and ai_manager refs)
   4. Connects LevelExit signals for level transitions
 
 LEVEL EXIT / TRANSITION:
@@ -376,16 +376,16 @@ The arena (maps/arena.map / arena_level.tscn) is the reference level. It has:
 
 TO BUILD A NEW LEVEL:
   1. Create a new .map in TrenchBroom using the Roboto FGD
-     (res://trenchbroom/robot_fgd.tres)
+	 (res://trenchbroom/robot_fgd.tres)
   2. Add a spawn_point entity for player start
   3. Add cover_point entities manually OR leave for spawner to generate
   4. Add squad_objective entities for AI advance targets
   5. Build the map in Godot (FuncGodotMap node → Build Map button)
   6. Add a NavigationRegion3D, set mesh source to StaticBody children,
-     configure agent radius/height, bake
+	 configure agent radius/height, bake
   7. Add CoverPointSpawner, assign NavigationRegion3D, click Generate
   8. Add Squad node, assign Soldier instances as squad_members,
-     assign a SquadObjectivePoint to target_objective
+	 assign a SquadObjectivePoint to target_objective
   9. Add a TrenchBroomLevel node, wire spawn_point/nav_region/func_godot_map
   10. Add LevelExit trigger volumes if needed
 
@@ -454,9 +454,9 @@ REQUIRED SIGNAL CONNECTION:
 3. CONFIGURE THE WEAPON
    Swap the aiweapon child scene to your desired weapon scene.
    AIWeapon exports to configure:
-     weapon_type   — MELEE, HITSCAN, or PROJECTILE
-     damage        — damage per shot
-     fire_cooldown — seconds between shots
+	 weapon_type   — MELEE, HITSCAN, or PROJECTILE
+	 damage        — damage per shot
+	 fire_cooldown — seconds between shots
    For a rifle: weapon_type=HITSCAN, damage=15, fire_cooldown=0.8
    For a shotgun: fire_tracer_spread fires 8 tracers with spread_angle_degrees=10
    For melee: weapon_type=MELEE, configure melee_range and melee_arc_angle
@@ -465,9 +465,9 @@ REQUIRED SIGNAL CONNECTION:
    faction              = ENEMY (or ALLIED for friendly units)
    DefaultAIState       = PATROL (active units) or IDLE (guards)
    AllowedMovementOptions = pick from: ADVANCE, REPOSITION, FALLBACK, LEAP, CHASE
-     Aggressive type: [ADVANCE, CHASE]
-     Cautious type:   [REPOSITION, FALLBACK]
-     Berserker type:  [LEAP, CHASE]
+	 Aggressive type: [ADVANCE, CHASE]
+	 Cautious type:   [REPOSITION, FALLBACK]
+	 Berserker type:  [LEAP, CHASE]
    AllowedCombatOptions = [MOVE, AIM, FIRE] (keep all three for normal combatants)
    health               = varies by type (grunt: 30, heavy: 80, elite: 50)
    move_speed           = varies (grunt: 4.5, heavy: 2.5, flanker: 6.0)
@@ -480,9 +480,9 @@ REQUIRED SIGNAL CONNECTION:
 5. DETECTION AREA
    Set the CollisionShape3D inside the Area3D to a sphere.
    Radius determines detection range:
-     Short range (melee/shotgun): 8-12m
-     Medium range (rifle): 20-25m
-     Long range (sniper/overwatch): 40-60m
+	 Short range (melee/shotgun): 8-12m
+	 Medium range (rifle): 20-25m
+	 Long range (sniper/overwatch): 40-60m
    Collision layer/mask must include the layer that Player and other
    enemies are on (usually layer 1). Check both Layer and Mask.
 
@@ -563,7 +563,7 @@ PRIORITY ORDER (suggested):
    Create nco.gd extending Soldier. Behaviors:
    - On combat: stays back, takes OVERWATCH role automatically
    - Periodically calls squad.assign_roles() to redistribute based on
-     current situation (if too many dying, shift to FALLBACK)
+	 current situation (if too many dying, shift to FALLBACK)
    - On low squad strength: could request reinforcements via GameMaster
    - On death: squad.notify_member_died() already handles degradation
 
@@ -573,7 +573,7 @@ PRIORITY ORDER (suggested):
    - Spawns reinforcements when a squad is wiped
    - Triggers artillery/drone barrages on a schedule
    - Fake artillery: spawn Explosion nodes at positions preceded by
-     a visible incoming marker (red ground circle, 1.5s warning)
+	 a visible incoming marker (red ground circle, 1.5s warning)
 
 6. DRONE CLASS
    FPV Drone extends Enemy but uses no navmesh.
@@ -585,11 +585,11 @@ PRIORITY ORDER (suggested):
 7. SIGNAL / E-WARFARE SYSTEM
    signal_integrity float (0.0 to 1.0) on each Enemy.
    Degradation stages:
-     0.75-1.0  CLEAN      — full function
-     0.50-0.75 FUZZED     — accuracy displaced
-     0.25-0.50 DEGRADED   — detection radius shrinks, erratic movement
-     0.0-0.25  CRITICAL   — ignores squad orders, random behavior
-     0.0       E-KILL     — disabled, physically intact but non-functional
+	 0.75-1.0  CLEAN      — full function
+	 0.50-0.75 FUZZED     — accuracy displaced
+	 0.25-0.50 DEGRADED   — detection radius shrinks, erratic movement
+	 0.0-0.25  CRITICAL   — ignores squad orders, random behavior
+	 0.0       E-KILL     — disabled, physically intact but non-functional
    Sources of interference: EMP rounds, jamming grenades, player scanner ability.
    NCO/Officer boost nearby signal integrity — making them priority targets.
 
@@ -605,10 +605,10 @@ PRIORITY ORDER (suggested):
    Design needed: what do bits unlock/purchase?
 
 10. RESPAWN / BONFIRE SYSTEM
-    Bonfire exists (bonfire.gd) and player.last_bonfire is tracked.
-    Enemy reset() and respawn() exist but nothing calls respawn() on level reset.
-    Game loop for death/respawn needs: enemy respawn on player death,
-    bit loss on death, corpse spawning (already partially implemented).
+	Bonfire exists (bonfire.gd) and player.last_bonfire is tracked.
+	Enemy reset() and respawn() exist but nothing calls respawn() on level reset.
+	Game loop for death/respawn needs: enemy respawn on player death,
+	bit loss on death, corpse spawning (already partially implemented).
 
 ================================================================================
 SECTION 5 — QUICK REFERENCE: ADDING A SOLDIER TO A LEVEL

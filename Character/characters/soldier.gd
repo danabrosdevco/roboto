@@ -83,6 +83,16 @@ func _physics_process(delta: float) -> void:
 # SOLDIER STATE HANDLER
 # ─────────────────────────────────────────────
 func handle_soldier_state(delta: float) -> void:
+	# If weapon is reloading and we're not already in cover or seeking it, fix that
+	if weapon != null and weapon.is_reloading:
+		if soldier_state == SoldierState.NONE and not at_cover:
+			enter_cover_seeking()
+		# If we were suppressing, we can't anymore — notify squad to reassign
+		if soldier_state == SoldierState.SUPPRESSING:
+			change_soldier_state(SoldierState.NONE)
+			if squad != null:
+				squad.notify_suppressor_reloading(self)
+
 	match soldier_state:
 		SoldierState.COVER_SEEKING:
 			tick_cover_seeking()
