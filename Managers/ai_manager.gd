@@ -3,6 +3,7 @@ class_name AIManager
 
 @export var world: World
 @export var player: Player
+@export var stimulus_manager: StimulusManager
 
 # All registered AI bodies in the current level
 var all_ai: Array[AI] = []
@@ -11,17 +12,21 @@ func register_enemy(new_enemy: AI) -> void:
 	if new_enemy in all_ai:
 		return
 	all_ai.append(new_enemy)
-	# Always give every AI a reference to the player
-	# so existing player-targeting code keeps working
 	new_enemy.player = player
-	# Give it a reference to the manager so it can query targets
 	new_enemy.ai_manager = self
+	if stimulus_manager != null:
+		new_enemy.stimulus_manager = stimulus_manager
+		stimulus_manager.register_ai(new_enemy)
 
 func deregister_enemy(enemy: AI) -> void:
 	all_ai.erase(enemy)
+	if stimulus_manager != null:
+		stimulus_manager.deregister_ai(enemy)
 
 func reset_all_reg_enemies() -> void:
 	all_ai = []
+	if stimulus_manager != null:
+		stimulus_manager.clear()
 
 # ─────────────────────────────────────────────
 # FACTION QUERY

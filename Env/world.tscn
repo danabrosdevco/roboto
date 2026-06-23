@@ -1,9 +1,10 @@
-[gd_scene load_steps=11 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=12 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
 [ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud/hud.tscn" id="2_ox1ok"]
 [ext_resource type="Script" path="res://Managers/game_manager.gd" id="3_7kch0"]
+[ext_resource type="Script" path="res://Managers/stimulus_manager.gd" id="3_kcauh"]
 [ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/test_character.tscn" id="4_m38gd"]
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="5_5i2ew"]
 [ext_resource type="PackedScene" uid="uid://cgixlpeuaxv87" path="res://Character/hud/debug_overlay.tscn" id="6_366oq"]
@@ -18,9 +19,13 @@ current_level = NodePath("TBLevel2")
 ai_manager = NodePath("AIManager")
 game_manager = NodePath("GameManager")
 
-[node name="AIManager" parent="." node_paths=PackedStringArray("world", "player") instance=ExtResource("2_d77gp")]
+[node name="AIManager" parent="." node_paths=PackedStringArray("world", "player", "stimulus_manager") instance=ExtResource("2_d77gp")]
 world = NodePath("..")
 player = NodePath("../test_character")
+stimulus_manager = NodePath("../StimulusManager")
+
+[node name="StimulusManager" type="Node" parent="."]
+script = ExtResource("3_kcauh")
 
 [node name="GameManager" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("3_7kch0")

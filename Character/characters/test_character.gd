@@ -127,6 +127,8 @@ func _physics_process(delta: float) -> void:
 	check_interactible()
 	if use_gravity == true:
 		handle_gravity(delta)
+	else:
+		handle_gravity(delta* 0.1)
 	handle_input(delta)
 	handle_movement(delta)
 	handle_camera_and_weapon(delta)

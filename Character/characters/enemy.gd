@@ -53,7 +53,8 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 # WORKING DATA # 
 var player: Player           # always set by AIManager — used for player-specific logic
 var ai_manager: AIManager    # set by AIManager on registration
-var checking_for_target: bool = false  # was checking_for_player
+var stimulus_manager: StimulusManager  # set by AIManager on registration
+var checking_for_target: bool = false
 var ai_state = AIState.COMBAT
 var movement_state = MovementState.NONE
 var weapon_state = WeaponState.IDLE
@@ -491,7 +492,13 @@ func compute_leap_velocity_fixed_speed(target: Vector3, speed: float) -> Vector3
 func fire():
 	var final_target = get_inaccurate_target(weapon_target)
 	weapon.fire(final_target)
-	pass
+	if stimulus_manager != null:
+		stimulus_manager.emit_stimulus(
+			StimulusManager.StimulusType.GUNSHOT_HEARD,
+			global_position,
+			faction,
+			self
+		)
 
 func apply_damage(damage, source) -> void:
 	if ai_state == AIState.DEAD:
@@ -506,6 +513,14 @@ func apply_damage(damage, source) -> void:
 			combat_triggered.emit(self)
 		elif combat_target == null:
 			change_combat_target(source)
+		# Alert nearby allies that we've been shot
+		if stimulus_manager != null:
+			stimulus_manager.emit_stimulus(
+				StimulusManager.StimulusType.ALLY_SHOT,
+				global_position,
+				faction,
+				source
+			)
 	bark.bark()
 	health -= damage
 	if health <= 0:
@@ -517,6 +532,14 @@ func apply_damage(damage, source) -> void:
 func die():
 	if alive == false:
 		return
+	# Alert nearby allies before stopping physics
+	if stimulus_manager != null:
+		stimulus_manager.emit_stimulus(
+			StimulusManager.StimulusType.ALLY_DIED,
+			global_position,
+			faction,
+			self
+		)
 	set_physics_process(false)
 	set_process(false)
 	alive = false
@@ -576,6 +599,50 @@ func reset():
 
 func get_faction():
 	return faction
+
+func receive_stimulus(
+	type: StimulusManager.StimulusType,
+	source_position: Vector3,
+	source_node: Node,
+	distance: float
+) -> void:
+	if ai_state == AIState.DEAD or ai_state == AIState.PASSIVE:
+		return
+
+	match type:
+		StimulusManager.StimulusType.GUNSHOT_HEARD:
+			# If idle or patrolling and not already in combat, face the gunshot
+			if ai_state != AIState.COMBAT:
+				look_target = source_position
+
+		StimulusManager.StimulusType.ALLY_SHOT:
+			# An ally nearby is taking fire — if we're idle, turn toward the threat
+			if ai_state != AIState.COMBAT:
+				look_target = source_position
+			# If we can see the attacker and they're hostile, engage
+			if source_node != null and _is_hostile(source_node):
+				if is_path_clear(global_position, source_position):
+					trigger_combat(source_node)
+
+		StimulusManager.StimulusType.ALLY_DIED:
+			# An ally died nearby — if not in combat, face the position urgently
+			# Squad handles role reassignment via notify_member_died
+			if ai_state != AIState.COMBAT:
+				look_target = source_position
+			# If very close (within half the stimulus radius), consider engaging
+			if distance < StimulusManager.DEFAULT_RADIUS[type] * 0.5:
+				if source_node != null and _is_hostile(source_node):
+					if is_path_clear(global_position, source_node.global_position):
+						trigger_combat(source_node)
+
+		StimulusManager.StimulusType.ENEMY_SPOTTED:
+			# Another ally spotted an enemy — if we're not in combat and the
+			# spotted position is navigable, begin searching toward it
+			if ai_state != AIState.COMBAT and ai_state != AIState.SEARCH:
+				look_target = source_position
+				# Move toward the spotted position if close enough to be useful
+				if distance < 20.0:
+					move_to(source_position)
 
 func _is_hostile(body: Node3D) -> bool:
 	if body is Player:
@@ -637,8 +704,15 @@ func _on_detection_body_entered(body: Node3D) -> void:
 		return
 	if is_path_clear(global_position, body.global_position):
 		trigger_combat(body)
+		# Tell nearby allies we have visual contact
+		if stimulus_manager != null:
+			stimulus_manager.emit_stimulus(
+				StimulusManager.StimulusType.ENEMY_SPOTTED,
+				body.global_position,
+				faction,
+				body
+			)
 	else:
-		# LOS blocked — keep checking each frame until clear
 		checking_for_target = true
 		combat_target = body
 

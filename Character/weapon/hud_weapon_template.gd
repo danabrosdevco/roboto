@@ -175,6 +175,17 @@ func fire() -> void:
 		magazine_capacity = max(0, magazine_capacity - 1)
 		tracer = false
 		request_status.emit()
+		# Alert nearby enemies that the player fired
+		var player_node = cam.get_parent()
+		if player_node and player_node.has_node("../AIManager"):
+			var mgr = player_node.get_node("../AIManager")
+			if mgr and mgr.stimulus_manager != null:
+				mgr.stimulus_manager.emit_stimulus(
+					StimulusManager.StimulusType.GUNSHOT_HEARD,
+					global_position,
+					Enums.Factions.PLAYER,
+					player_node
+				)
 func fire_tracer():
 	var new_tracer = tracer_scene.instantiate()
 	cam.get_parent().world.add_child(new_tracer)
