@@ -1,7 +1,7 @@
 [gd_scene load_steps=15 format=3 uid="uid://cw5qsxqebuch8"]
 
 [ext_resource type="PackedScene" uid="uid://dum2lfdjba4t7" path="res://3d_assets/Military_Vehicles_LP/FBX/Aircraft.fbx" id="1_j3b5w"]
-[ext_resource type="Script" path="res://Character/characters/test_drone.gd" id="1_rci4v"]
+[ext_resource type="Script" path="res://Character/characters/appx/test_drone.gd" id="1_rci4v"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="3_wfjqf"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="4_0k34t"]
 [ext_resource type="AudioStream" uid="uid://dsdolq0nwpaj" path="res://sounds/sfx/heli/td.helicopter-sound-41975.mp3" id="5_bwbdw"]

@@ -1,6 +1,6 @@
 [gd_scene load_steps=10 format=3 uid="uid://bgj56y7q1pyxr"]
 
-[ext_resource type="Script" path="res://Character/characters/test_character.gd" id="1_xw2ar"]
+[ext_resource type="Script" path="res://Character/characters/player/test_character.gd" id="1_xw2ar"]
 [ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/components/command.tscn" id="2_ysmyv"]
 [ext_resource type="PackedScene" uid="uid://c73xl4hq8l5aa" path="res://Character/weapon/pistol_hud_weapon.tscn" id="4_4quvt"]
 [ext_resource type="PackedScene" uid="uid://be2sgj1qwg7f2" path="res://Character/weapon/m4_hud_weapon.tscn" id="4_p7j6a"]

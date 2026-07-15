@@ -44,6 +44,7 @@ var nudge_timer: float = 0.0
 # ─────────────────────────────────────────────
 func _ready() -> void:
 	for ai in squad_members:
+		await get_tree().process_frame
 		_connect_member(ai)
 		# Give each soldier a back-reference to this squad
 		if ai is Soldier:

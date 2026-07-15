@@ -1,15 +1,14 @@
-[gd_scene load_steps=11 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=10 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
 [ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud/hud.tscn" id="2_ox1ok"]
 [ext_resource type="Script" path="res://Managers/game_manager.gd" id="3_7kch0"]
-[ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/test_character.tscn" id="4_m38gd"]
+[ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/player/test_character.tscn" id="4_m38gd"]
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="5_5i2ew"]
-[ext_resource type="PackedScene" uid="uid://cgixlpeuaxv87" path="res://Character/hud/debug_overlay.tscn" id="6_366oq"]
 [ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="6_ckjgx"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="7_ura3n"]
-[ext_resource type="PackedScene" uid="uid://cge3jcx7hq4xj" path="res://maps/arena_level.tscn" id="9_5auhn"]
+[ext_resource type="PackedScene" uid="uid://rnm8xsxcwbsx" path="res://maps/arena_level.tscn" id="9_4x5vb"]
 
 [node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager")]
 script = ExtResource("1_2t272")
@@ -30,15 +29,10 @@ player = NodePath("../test_character")
 transform = Transform3D(-0.145306, 0, -0.989387, 0, 1, 0, 0.989387, 0, -0.145306, 66.6153, 1.91338, -5.55146)
 world = NodePath("..")
 hud = NodePath("../HUD")
-use_gravity = false
 health = 100
 
 [node name="HUD" parent="." instance=ExtResource("2_ox1ok")]
 metadata/_edit_use_anchors_ = true
-
-[node name="DebugOverlay" parent="." node_paths=PackedStringArray("player", "squads") instance=ExtResource("6_366oq")]
-player = NodePath("../test_character")
-squads = [null]
 
 [node name="MuzzleFlash" parent="." instance=ExtResource("5_5i2ew")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -11.0057, 0)
@@ -51,7 +45,7 @@ damage_value = 0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -16.0631, 0)
 direction = Vector3(0, -1, 0)
 
-[node name="TBLevel2" parent="." instance=ExtResource("9_5auhn")]
+[node name="TBLevel2" parent="." instance=ExtResource("9_4x5vb")]
 
 [connection signal="activate_interactible_ui" from="test_character" to="HUD" method="activate_interactible"]
 [connection signal="activate_scanner_ui" from="test_character" to="HUD" method="activate_scan_effect"]

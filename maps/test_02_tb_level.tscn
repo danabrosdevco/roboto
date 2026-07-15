@@ -5,7 +5,7 @@
 [ext_resource type="Resource" uid="uid://bkhxcqsquw1yg" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_lhrpx"]
 [ext_resource type="Material" uid="uid://bavw3nrsrdewq" path="res://textures/textures_pack/Stone_11-256x256.tres" id="4_fyp4b"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="5_qd1es"]
-[ext_resource type="PackedScene" uid="uid://d2qtk67sm0w38" path="res://Character/characters/enemy_nest-chaser.tscn" id="6_1wf7q"]
+[ext_resource type="PackedScene" uid="uid://d2qtk67sm0w38" path="res://Character/characters/appx/enemy_nest-chaser.tscn" id="6_1wf7q"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_b87a8"]
 vertices = PackedVector3Array(-10.5, 1, -13.5, -10.5, 1, 1.5, 14, 1, 1.5, 14, 1, -13.5)

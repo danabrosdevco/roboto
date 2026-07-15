@@ -1,6 +1,6 @@
 [gd_scene load_steps=15 format=3 uid="uid://vckeok0ct116"]
 
-[ext_resource type="Script" path="res://Character/characters/miniboss.gd" id="1_n3nx1"]
+[ext_resource type="Script" path="res://Character/characters/appx/miniboss.gd" id="1_n3nx1"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_xm5lr"]
 [ext_resource type="AudioStream" uid="uid://cleqlo57empfy" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__89.wav" id="3_yp4jh"]
 [ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_oujhr"]

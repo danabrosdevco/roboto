@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="FuncGodotFGDPointClass" load_steps=3 format=3 uid="uid://d04ombf0oln1i"]
 
-[ext_resource type="PackedScene" uid="uid://d2qtk67sm0w38" path="res://Character/characters/enemy_nest-chaser.tscn" id="1_b3qhs"]
+[ext_resource type="PackedScene" uid="uid://d2qtk67sm0w38" path="res://Character/characters/appx/enemy_nest-chaser.tscn" id="1_d5btq"]
 [ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_point_class.gd" id="1_h30tj"]
 
 [resource]
 script = ExtResource("1_h30tj")
-scene_file = ExtResource("1_b3qhs")
+scene_file = ExtResource("1_d5btq")
 apply_rotation_on_map_build = true
 classname = "enm_leaper"
 description = ""

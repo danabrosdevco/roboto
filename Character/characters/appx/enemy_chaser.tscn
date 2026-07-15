@@ -1,6 +1,6 @@
 [gd_scene load_steps=16 format=3 uid="uid://bjnmbvul1677q"]
 
-[ext_resource type="Script" path="res://Character/characters/enemy.gd" id="1_omglo"]
+[ext_resource type="Script" path="res://Character/characters/ai/enemy.gd" id="1_omglo"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_gg277"]
 [ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_biu6s"]
 [ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ape12"]
