@@ -16,7 +16,7 @@ DONE
 - Squad class [context, objectives, role assignment, bounding pairs, NCO slot]
 - Cover point system [spawner tool, navmesh edge walking, scoring]
 - Squad objective points [designer placed, squad advances to on load]
-- Stimulus manager [gunshot heard, ally shot, ally died, enemy spotted]
+- Stimulus manager [gunshot heard, ally shot, ally died, enemy spotted] // NOT DONE
 - Shared targeting [squad broadcasts last known position, credibility decay]
 - Search state [los patience scaling with range, fires at last known, resumes patrol]
 - AI Weapon magazine + reload [can_fire, needs_reload, signals]
@@ -191,7 +191,7 @@ ARCHITECTURE NOTES FOR REFERENCE
 
 CLASS HIERARCHY
   AI → Enemy → Soldier → [Heavy, Engineer, NCO]
-              → [Drone - no navmesh]
+			  → [Drone - no navmesh]
 
 KEY RESPONSIBILITIES
   GameMaster  - strategic objectives, mission state, spawn waves

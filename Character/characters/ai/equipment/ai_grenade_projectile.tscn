@@ -1,0 +1,26 @@
+[gd_scene load_steps=6 format=3 uid="uid://b1d0y44phe80"]
+
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_grenade_projectile.gd" id="1_s38ws"]
+[ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="2_1g1m5"]
+[ext_resource type="PackedScene" uid="uid://tq40d0jrqxyt" path="res://3d_assets/Flat Grenades_FBX/Frag_West.fbx" id="3_ic34c"]
+[ext_resource type="AudioStream" uid="uid://bojna3iqqu0a5" path="res://sounds/sfx/superior soundfx/Explosion1.wav" id="4_3sv41"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_fpl5m"]
+radius = 0.15
+
+[node name="AI_Grenade_Projectile" type="RigidBody3D" node_paths=PackedStringArray("explosion_sfx", "mesh")]
+script = ExtResource("1_s38ws")
+explosion_scene = ExtResource("2_1g1m5")
+explosion_sfx = NodePath("ExplosionSound")
+mesh = NodePath("Frag_West")
+
+[node name="Frag_West" parent="." instance=ExtResource("3_ic34c")]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_fpl5m")
+
+[node name="ExplosionSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("4_3sv41")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

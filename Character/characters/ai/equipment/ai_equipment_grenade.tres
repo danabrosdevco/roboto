@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AIEquipmentSlot" load_steps=3 format=3 uid="uid://cavuq6s132jy8"]
+
+[ext_resource type="PackedScene" uid="uid://bdt1481i5nwi1" path="res://Character/characters/ai/equipment/ai_grenade.tscn" id="1_ahno5"]
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="1_qsrw6"]
+
+[resource]
+script = ExtResource("1_qsrw6")
+equipment_scene = ExtResource("1_ahno5")
+quantity = 1
+label = "Frag Grenade"

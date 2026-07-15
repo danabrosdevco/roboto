@@ -25,7 +25,9 @@ class_name Enemy
 @export var max_accuracy: float = 0.90
 @export var min_accuracy: float = 0.5
 @export var bits: int = 10
-var damaged_by_player : bool = false
+# Equipment — assign AIEquipmentSlot resources in the inspector
+@export var equipment_slots: Array[AIEquipmentSlot] = []
+var damaged_by_player: bool = false
 var idle_to_wander = 3
 var movement_recon_time = 1.5
 var targeting_recon_time = 0.33
@@ -53,6 +55,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 # WORKING DATA # 
 var player: Player           # always set by AIManager — used for player-specific logic
 var ai_manager: AIManager    # set by AIManager on registration
+var stimulus_manager: StimulusManager
 var checking_for_target: bool = false  # was checking_for_player
 var ai_state = AIState.COMBAT
 var movement_state = MovementState.NONE
@@ -85,6 +88,13 @@ var last_seen_point: Array[Vector3]
 var seen_bodies: Array = []
 var frame_waited: bool = false
 
+# Equipment
+var _equipment_cooldowns: Dictionary = {}   # slot index → remaining cooldown
+var _target_stationary_time: float = 0.0    # how long combat_target hasn't moved
+var _target_last_position: Vector3 = Vector3.ZERO
+const EQUIPMENT_RECON_TIME: float = 1.5
+var _equipment_recon_timer: float = 0.0
+
 signal combat_triggered(ai: AI)
 
 
@@ -92,17 +102,11 @@ func initialize():
 	spawn_transform = transform
 	activation_distance_sq = activation_distance * activation_distance
 	await get_tree().process_frame
-	await get_tree().process_frame
-	await get_tree().process_frame
-	await get_tree().process_frame
-	await get_tree().process_frame
-	await get_tree().process_frame
-	await get_tree().process_frame
-	await get_tree().process_frame
-
 	ai_state = DefaultAIState
 	#combat_target = player
 	frame_waited = true
+	for slot in equipment_slots:
+		slot.initialize()
 	reconsider_target()
 	pass
 
@@ -176,6 +180,10 @@ func handle_time_passing(delta):
 
 	if targeting_time >= targeting_recon_time:
 		reconsider_target()
+
+	# Equipment evaluation — only during active combat
+	if ai_state == AIState.COMBAT and not equipment_slots.is_empty():
+		_tick_equipment(delta)
 
 func handle_gravity(delta: float) -> void:
 	if not is_on_floor():
@@ -337,6 +345,71 @@ func reconsider_target() -> void:
 			look_target = movement_target
 		if ai_state == AIState.COMBAT:
 			change_ai_state(AIState.PATROL)
+
+func _tick_equipment(delta: float) -> void:
+	# Tick all cooldowns
+	for i in _equipment_cooldowns.size():
+		_equipment_cooldowns[i] = maxf(0.0, _equipment_cooldowns[i] - delta)
+
+	# Track how long the target has been stationary
+	if combat_target != null and combat_target.alive:
+		var target_pos = combat_target.global_position
+		if target_pos.distance_to(_target_last_position) < 0.5:
+			_target_stationary_time += delta
+		else:
+			_target_stationary_time = 0.0
+			_target_last_position = target_pos
+
+	# Evaluate whether to use equipment
+	_equipment_recon_timer += delta
+	if _equipment_recon_timer < EQUIPMENT_RECON_TIME:
+		return
+	_equipment_recon_timer = 0.0
+	_evaluate_equipment_use()
+
+func _evaluate_equipment_use() -> void:
+	if combat_target == null:
+		return
+
+	# Build context once for all equipment to evaluate
+	var context = AIEquipment.EquipmentContext.new()
+	context.owner_ai = self
+	context.combat_target = combat_target
+	context.target_position = combat_target.global_position
+	context.time_since_target_moved = _target_stationary_time
+	context.owner_is_reloading = weapon != null and weapon.is_reloading
+	# Collect nearby hostiles for cluster check
+	context.nearby_hostiles = []
+	if ai_manager != null:
+		context.nearby_hostiles = ai_manager.get_hostiles_in_radius(self, 5.0)
+
+	# Check each slot in order — use the first one that's ready and applicable
+	for i in equipment_slots.size():
+		var slot: AIEquipmentSlot = equipment_slots[i]
+		if not slot.has_uses():
+			continue
+		# Check cooldown
+		var cooldown_remaining = _equipment_cooldowns.get(i, 0.0)
+		if cooldown_remaining > 0.0:
+			continue
+		if slot.equipment_scene == null:
+			continue
+		# Instantiate temporarily to call can_use — then discard or keep
+		var equipment = slot.equipment_scene.instantiate() as AIEquipment
+		if equipment == null:
+			continue
+		if equipment.can_use(context):
+			# Add to scene so it has tree access for execute()
+			get_tree().current_scene.add_child(equipment)
+			equipment.execute(context)
+			slot.consume()
+			_equipment_cooldowns[i] = equipment.cooldown
+			# equipment frees itself or we free it after execute
+			if equipment.is_inside_tree():
+				equipment.queue_free()
+			return  # only one piece of equipment per evaluation tick
+		else:
+			equipment.free()
 
 func reconsider_patrol():
 	if patrol_path == null or patrol_path.points.is_empty():
@@ -566,13 +639,15 @@ func reset():
 	idle_time = 0
 	search_time = 0
 	wander_time = 0
-	#force_check_detection()
+	_equipment_cooldowns.clear()
+	_target_stationary_time = 0.0
+	_target_last_position = Vector3.ZERO
+	_equipment_recon_timer = 0.0
+	for slot in equipment_slots:
+		slot.initialize()
 	set_physics_process(true)
 	set_process(true)
-	#hearing.monitoring = true
-	#sight.monitoring = true
 	$CollisionShape3D.disabled = false
-	#force_check_detection()
 
 func get_faction():
 	return faction

@@ -26,7 +26,7 @@ func _on_area_3d_body_entered(body: Node3D) -> void:
 		return
 
 	if body.has_method("apply_damage"):
-		body.apply_damage(damage_value)
+		body.apply_damage(damage_value, self)
 		damaged[body] = true
 		print("BOMBED", body.name)
 	elif body.get_parent() and body.get_parent().has_method("apply_damage"):

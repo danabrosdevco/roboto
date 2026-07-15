@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://bdt1481i5nwi1"]
+
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_grenade.gd" id="1_gf8l2"]
+[ext_resource type="PackedScene" uid="uid://b1d0y44phe80" path="res://Character/characters/ai/equipment/ai_grenade_projectile.tscn" id="2_hds4q"]
+
+[node name="AI_Grenade" type="Node3D"]
+script = ExtResource("1_gf8l2")
+grenade_scene = ExtResource("2_hds4q")

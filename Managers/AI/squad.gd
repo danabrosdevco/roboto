@@ -50,10 +50,11 @@ func _ready() -> void:
 		if ai is Soldier:
 			ai.squad = self
 
-	# If a designer assigned an objective point in the inspector, use it
 	if target_objective != null:
-		# Wait a frame so soldiers are fully initialized
-		await get_tree().process_frame
+		# Wait until all members have finished their initialization (8 frames in Enemy)
+		# Use 10 frames to be safe
+		for i in 2:
+			await get_tree().process_frame
 		set_objective(SquadObjective.ADVANCE, target_objective.global_position)
 
 
