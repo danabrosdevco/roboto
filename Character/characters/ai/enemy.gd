@@ -27,9 +27,8 @@ class_name Enemy
 @export var max_accuracy: float = 0.90
 @export var min_accuracy: float = 0.5
 @export var bits: int = 10
-@export var combat_recon_time: float = 1.65
-# Equipment — assign AIEquipmentSlot resources in the inspector
 @export var equipment_slots: Array[AIEquipmentSlot] = []
+@export var combat_recon_time: float = 1.65
 
 # ── ENUMS ─────────────────────────────────────
 enum AIState { COMBAT, PATROL, SEARCH, IDLE, DEAD, PASSIVE }
@@ -93,19 +92,19 @@ var last_seen_point: Array[Vector3] = []
 var seen_bodies: Array = []
 var frame_waited: bool = false
 
-# ── STUCK DETECTION ───────────────────────────
-const STUCK_CHECK_INTERVAL: float = 3.0
-const STUCK_MOVE_THRESHOLD: float = 0.5
-var _stuck_timer: float = 0.0
-var _stuck_last_position: Vector3 = Vector3.ZERO
-var _stuck_retry_count: int = 0
-
 # ── EQUIPMENT ─────────────────────────────────
 var _equipment_cooldowns: Dictionary = {}
 var _target_stationary_time: float = 0.0
 var _target_last_position: Vector3 = Vector3.ZERO
 const EQUIPMENT_RECON_TIME: float = 1.5
 var _equipment_recon_timer: float = 0.0
+
+# ── STUCK DETECTION ───────────────────────────
+const STUCK_CHECK_INTERVAL: float = 3.0
+const STUCK_MOVE_THRESHOLD: float = 0.5
+var _stuck_timer: float = 0.0
+var _stuck_last_position: Vector3 = Vector3.ZERO
+var _stuck_retry_count: int = 0
 
 signal combat_triggered(ai: AI)
 
@@ -116,7 +115,6 @@ signal combat_triggered(ai: AI)
 func initialize():
 	spawn_transform = transform
 	activation_distance_sq = activation_distance * activation_distance
-	await get_tree().process_frame
 	await get_tree().process_frame
 	ai_state = DefaultAIState
 	frame_waited = true
@@ -200,6 +198,7 @@ func handle_time_passing(delta):
 
 	if ai_state == AIState.COMBAT and not equipment_slots.is_empty():
 		_tick_equipment(delta)
+
 
 
 # ─────────────────────────────────────────────
@@ -408,6 +407,11 @@ func reconsider_patrol():
 			look_target = next_point.global_position
 
 
+
+# ─────────────────────────────────────────────
+# STATE / TARGET
+# ─────────────────────────────────────────────
+
 # ─────────────────────────────────────────────
 # EQUIPMENT
 # ─────────────────────────────────────────────
@@ -461,10 +465,6 @@ func _evaluate_equipment_use() -> void:
 		else:
 			equipment.free()
 
-
-# ─────────────────────────────────────────────
-# STATE / TARGET
-# ─────────────────────────────────────────────
 func change_ai_state(new_state: AIState):
 	if ai_state != new_state:
 		ai_state = new_state
