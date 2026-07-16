@@ -5021,7 +5021,8 @@ shape = SubResource("ConvexPolygonShape3D_rttq4")
 
 [node name="Squad2" parent="NavigationRegion3D" node_paths=PackedStringArray("squad_members", "target_objective") instance=ExtResource("9_rgdym")]
 squad_members = [NodePath("Soldier_Shotgun"), NodePath("Soldier_Shotgun2"), NodePath("Soldier_Shotgun3"), NodePath("Soldier_Shotgun4"), NodePath("Soldier_Shotgun5")]
-target_objective = NodePath("../../OBJ2")
+target_objective = NodePath("../../OBJ1")
+default_objective = 2
 
 [node name="Soldier_Shotgun" parent="NavigationRegion3D/Squad2" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9608, 2.69966, -38.5643)

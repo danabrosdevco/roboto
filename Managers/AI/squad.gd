@@ -21,6 +21,8 @@ enum SquadObjective { NONE, ADVANCE, DEFEND, WITHDRAW }
 # Assign a SquadObjectivePoint in the inspector to give the squad
 # a destination before contact is made.
 @export var target_objective: SquadObjectivePoint
+# What this squad does when it reaches its objective on map load
+@export var default_objective: SquadObjective = SquadObjective.ADVANCE
 
 var context: SquadContext = SquadContext.UNENGAGED
 var objective: SquadObjective = SquadObjective.NONE
@@ -55,7 +57,7 @@ func _ready() -> void:
 		# Use 10 frames to be safe
 		for i in 2:
 			await get_tree().process_frame
-		set_objective(SquadObjective.ADVANCE, target_objective.global_position)
+		set_objective(default_objective, target_objective.global_position)
 
 
 # ─────────────────────────────────────────────
@@ -167,27 +169,113 @@ func set_objective(new_objective: SquadObjective, position: Vector3 = Vector3.ZE
 
 func _issue_objective_orders() -> void:
 	match objective:
-		SquadObjective.ADVANCE, SquadObjective.DEFEND:
+		SquadObjective.ADVANCE:
 			for ai in get_living_members():
 				var offset = Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, 2.0))
-				# Prevent passive mode from blocking objective movement
 				if ai.has_method("enter_passive_mode"):
 					ai.always_active = true
 				if ai is Soldier:
+					ai.defensive_mode = false
 					ai.order_move_to(objective_position + offset)
 				else:
 					if ai.ai_state != Enemy.AIState.COMBAT:
 						ai.move_to(objective_position + offset)
+		SquadObjective.DEFEND:
+			_issue_defend_orders()
 		SquadObjective.WITHDRAW:
 			for ai in get_living_members():
 				var offset = Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, 2.0))
 				if ai.has_method("enter_passive_mode"):
 					ai.always_active = true
 				if ai is Soldier:
+					ai.defensive_mode = false
 					ai.order_move_to(objective_position + offset)
 					ai.change_soldier_state(Soldier.SoldierState.NONE)
 				else:
 					ai.move_to(objective_position + offset)
+
+func _issue_defend_orders() -> void:
+	var soldiers = get_living_soldiers()
+	if soldiers.is_empty():
+		return
+
+	# Get all candidate cover points near the objective
+	var candidates = _get_cover_points_near(objective_position, 25.0)
+
+	# Use farthest-point sampling to spread soldiers out:
+	# Pick the first point closest to the objective, then each
+	# subsequent pick is the point farthest from all chosen points.
+	var chosen: Array = _select_spread_cover(candidates, soldiers.size())
+
+	for i in soldiers.size():
+		var soldier: Soldier = soldiers[i]
+		if soldier.has_method("enter_passive_mode"):
+			soldier.always_active = true
+		soldier.defensive_mode = true
+		if i < chosen.size():
+			var cp: CoverPoint = chosen[i]
+			soldier.current_cover_point = cp
+			cp.mark_occupied(soldier)
+			soldier.order_move_to(cp.global_position)
+		else:
+			# More soldiers than cover points — spread in a ring around objective
+			var angle = (TAU / soldiers.size()) * i
+			var spread = Vector3(cos(angle), 0, sin(angle)) * 6.0
+			soldier.order_move_to(objective_position + spread)
+
+func _select_spread_cover(candidates: Array, count: int) -> Array:
+	# Farthest-point sampling: maximises minimum distance between chosen points.
+	# Seed with the point closest to the objective so the defence anchors there.
+	if candidates.is_empty():
+		return []
+
+	var result: Array = []
+
+	# Seed: pick point closest to objective
+	var seed: CoverPoint = candidates[0]
+	var seed_dist = INF
+	for cp in candidates:
+		var d = objective_position.distance_to(cp.global_position)
+		if d < seed_dist:
+			seed_dist = d
+			seed = cp
+	result.append(seed)
+
+	# Greedy farthest-point: each pick maximises min-distance to all chosen
+	var remaining: Array = candidates.duplicate()
+	remaining.erase(seed)
+
+	while result.size() < count and not remaining.is_empty():
+		var best: CoverPoint = null
+		var best_min_dist: float = -1.0
+		for cp in remaining:
+			# Find this candidate's minimum distance to any already-chosen point
+			var min_dist: float = INF
+			for chosen_cp in result:
+				var d = cp.global_position.distance_to(chosen_cp.global_position)
+				if d < min_dist:
+					min_dist = d
+			# Keep the candidate whose min distance to chosen set is largest
+			if min_dist > best_min_dist:
+				best_min_dist = min_dist
+				best = cp
+		if best != null:
+			result.append(best)
+			remaining.erase(best)
+
+	return result
+
+func _get_cover_points_near(pos: Vector3, radius: float) -> Array:
+	var all_cover = get_tree().get_nodes_in_group("cover_points")
+	var result: Array = []
+	for cp in all_cover:
+		if not cp is CoverPoint:
+			continue
+		if cp.is_occupied():
+			continue
+		if pos.distance_to(cp.global_position) <= radius:
+			result.append(cp)
+	return result
 
 
 # ─────────────────────────────────────────────
@@ -217,10 +305,23 @@ func assign_roles() -> void:
 	var soldiers = get_living_soldiers()
 	if soldiers.is_empty():
 		return
+	# Defending squads don't bound — everyone suppresses or overwatches
+	if objective == SquadObjective.DEFEND:
+		_defensive_assign_roles(soldiers)
+		return
 	if nco != null and nco.alive:
 		_nco_assign_roles(soldiers)
 	else:
 		_basic_assign_roles(soldiers)
+
+func _defensive_assign_roles(soldiers: Array) -> void:
+	bound_pairs.clear()
+	# NCO overwatches if present, everyone else suppresses from cover
+	for soldier in soldiers:
+		if soldier == nco and nco != null and nco.alive:
+			soldier.assign_role(Soldier.SoldierRole.OVERWATCH)
+		else:
+			soldier.assign_role(Soldier.SoldierRole.SUPPRESSOR)
 
 func _basic_assign_roles(soldiers: Array) -> void:
 	bound_pairs.clear()
@@ -319,6 +420,9 @@ func _disengage_and_resume() -> void:
 		if ai is Soldier:
 			ai.change_soldier_state(Soldier.SoldierState.NONE)
 			ai.assign_role(Soldier.SoldierRole.NONE)
+			# Only clear defensive mode if we're no longer on a DEFEND objective
+			if objective != SquadObjective.DEFEND:
+				ai.defensive_mode = false
 
 	# Resume movement toward objective if one exists
 	if objective != SquadObjective.NONE and objective_position != Vector3.ZERO:

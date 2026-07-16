@@ -31,6 +31,10 @@ var squad_role: SoldierRole = SoldierRole.NONE
 # Reference back to the squad — set by Squad on registration
 var squad: Squad = null
 
+# When true: soldier holds position near objective, does not advance
+# or chase, fires from cover only. Set by Squad on DEFEND objective.
+var defensive_mode: bool = false
+
 # ── Cover ──
 var current_cover_point: CoverPoint = null
 var at_cover: bool = false
@@ -63,7 +67,6 @@ func reconsider_combat() -> void:
 	if soldier_state != SoldierState.NONE:
 		combat_time = 0
 		return
-	# No active soldier state — let Enemy roll a combat action normally
 	super()
 
 
@@ -216,9 +219,37 @@ func tick_bounding() -> void:
 # OVERRIDE: trigger_combat
 # Seek cover on first contact.
 # ─────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# OVERRIDE: perform_action
+# In defensive mode, intercept MOVE actions and
+# block any movement that would leave cover.
+# ─────────────────────────────────────────────
+func perform_action(action: CombatOptions) -> void:
+	if defensive_mode and action == CombatOptions.MOVE:
+		# Only allow repositioning within the defence perimeter
+		# Explicitly block advance, chase, leap by re-rolling as AIM
+		var roll = randi_range(0, 1)
+		if roll == 0:
+			perform_action(CombatOptions.AIM)
+		else:
+			perform_action(CombatOptions.FIRE)
+		return
+	super(action)
+
 func trigger_combat(body: AI) -> void:
 	super(body)
-	if soldier_state == SoldierState.NONE and not at_cover:
+	if soldier_state != SoldierState.NONE:
+		return
+	if defensive_mode:
+		# Already in position — suppress from here rather than seeking new cover
+		if at_cover:
+			enter_suppressing()
+		else:
+			# Not at cover yet — seek nearest cover to objective, not to enemy
+			enter_cover_seeking()
+		return
+	# Normal combat: seek cover proactively
+	if not at_cover:
 		enter_cover_seeking()
 
 
@@ -306,6 +337,7 @@ func die() -> void:
 	release_cover()
 	if squad != null:
 		squad.notify_member_died(self)
+	reset_debug_label()
 	super()
 
 
@@ -316,6 +348,7 @@ func reset() -> void:
 	release_cover()
 	soldier_state = SoldierState.NONE
 	squad_role = SoldierRole.NONE
+	defensive_mode = false
 	bound_partner = null
 	suppress_timer = 0.0
 	suppressed_timer = 0.0
@@ -328,8 +361,13 @@ func reset() -> void:
 func update_debug_label() -> void:
 	super()
 	if label != null:
-		label.text += "\nSoldier: %s\nRole: %s\nCover: %s" % [
+		label.text += "\nSoldier: %s\nRole: %s\nCover: %s\nDefend: %s" % [
 			SoldierState.keys()[soldier_state],
 			SoldierRole.keys()[squad_role],
-			"YES" if at_cover else "no"
+			"YES" if at_cover else "no",
+			"YES" if defensive_mode else "no"
 		]
+
+func reset_debug_label() -> void:
+	if label != null:
+		label.text = "DEAD"
