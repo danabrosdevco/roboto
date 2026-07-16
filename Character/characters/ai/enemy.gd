@@ -29,6 +29,8 @@ class_name Enemy
 @export var bits: int = 10
 @export var equipment_slots: Array[AIEquipmentSlot] = []
 @export var combat_recon_time: float = 1.65
+# Never enters passive mode — set true on soldiers with active squad objectives
+@export var always_active: bool = false
 
 # ── ENUMS ─────────────────────────────────────
 enum AIState { COMBAT, PATROL, SEARCH, IDLE, DEAD, PASSIVE }
@@ -157,6 +159,8 @@ func _physics_process(delta: float) -> void:
 func enter_passive_mode():
 	if ai_state == AIState.PASSIVE:
 		return
+	if always_active:
+		return
 	change_ai_state(AIState.PASSIVE)
 	velocity.x = 0
 	velocity.z = 0
@@ -168,6 +172,9 @@ func exit_passive_mode():
 	if ai_state != AIState.PASSIVE:
 		return
 	change_ai_state(DefaultAIState)
+	# Re-issue movement if we had an active target before going passive
+	if movement_target != Vector3.ZERO:
+		move_to(movement_target)
 
 
 # ─────────────────────────────────────────────
@@ -220,9 +227,18 @@ func handle_movement(delta):
 			_stuck_retry_count = 0
 		MovementState.MOVING:
 			if nav_agent.is_navigation_finished():
-				reconsider_movement()
-				_stuck_timer = 0.0
-				_stuck_retry_count = 0
+				var dist_to_target = global_position.distance_to(movement_target)
+				if dist_to_target < 2.0:
+					# Actually arrived — normal completion
+					reconsider_movement()
+					_stuck_timer = 0.0
+					_stuck_retry_count = 0
+				else:
+					# Nav says done but we're NOT there — path is blocked
+					# Zero velocity to stop sliding
+					velocity.x = 0
+					velocity.z = 0
+					_handle_path_blocked()
 			else:
 				move_along_nav(delta)
 				_check_stuck(delta)
@@ -241,20 +257,10 @@ func _check_stuck(delta: float) -> void:
 	if moved > STUCK_MOVE_THRESHOLD:
 		_stuck_retry_count = 0
 		return
-	_stuck_retry_count += 1
-	if _stuck_retry_count >= 3:
-		movement_state = MovementState.NONE
-		_stuck_retry_count = 0
-		if ai_state == AIState.PATROL or ai_state == AIState.SEARCH:
-			var nav_map = nav_agent.get_navigation_map()
-			var random_offset = Vector3(randf_range(-4.0, 4.0), 0, randf_range(-4.0, 4.0))
-			var fallback = NavigationServer3D.map_get_closest_point(nav_map, global_position + random_offset)
-			move_to(fallback)
-		return
-	var nav_map = nav_agent.get_navigation_map()
-	var jitter = Vector3(randf_range(-1.5, 1.5), 0, randf_range(-1.5, 1.5))
-	var nudged = NavigationServer3D.map_get_closest_point(nav_map, movement_target + jitter)
-	nav_agent.set_target_position(nudged)
+	# Still here — hand off to path blocked handler
+	velocity.x = 0
+	velocity.z = 0
+	_handle_path_blocked()
 
 func move_to(pos: Vector3):
 	nav_agent.set_target_position(pos)
@@ -283,12 +289,33 @@ func move_along_nav(delta):
 func handle_chasing(delta):
 	if combat_target == null or not combat_target.alive:
 		movement_state = MovementState.NONE
+		velocity.x = 0
+		velocity.z = 0
 		return
+
+	# Stop chasing once we're close enough to engage from here
+	var dist_to_target = global_position.distance_to(combat_target.global_position)
+	if dist_to_target <= max_fire_distance * 0.6:
+		movement_state = MovementState.NONE
+		velocity.x = 0
+		velocity.z = 0
+		return
+
 	chasing_time += delta
 	if chasing_time >= chasing_recon_time:
 		chasing_time = 0
 		nav_agent.set_target_position(combat_target.global_position)
+
+	# Zero velocity if path direction is degenerate (causes sliding)
+	var path_dir = nav_agent.get_next_path_position() - global_position
+	path_dir.y = 0
+	if path_dir.length() < 0.1:
+		velocity.x = 0
+		velocity.z = 0
+		return
+
 	move_along_nav(delta)
+	_check_stuck(delta)
 
 func handle_leap(delta):
 	velocity.y -= gravity * delta
@@ -349,10 +376,51 @@ func roll_combat_action():
 	perform_action(new_action)
 	previous_combat_option = new_action
 
+func _handle_path_blocked() -> void:
+	_stuck_retry_count += 1
+
+	var nav_map = nav_agent.get_navigation_map()
+
+	if _stuck_retry_count == 1:
+		# First block — try a lateral step to get around whatever is blocking
+		var to_target = (movement_target - global_position).normalized()
+		var right = to_target.cross(Vector3.UP).normalized()
+		var lateral_dir = right if randf() > 0.5 else -right
+		var step = global_position + lateral_dir * 3.0 + to_target * 1.5
+		var nav_point = NavigationServer3D.map_get_closest_point(nav_map, step)
+		nav_agent.set_target_position(nav_point)
+		return
+
+	if _stuck_retry_count == 2:
+		# Second block — try the opposite lateral direction
+		var to_target = (movement_target - global_position).normalized()
+		var right = to_target.cross(Vector3.UP).normalized()
+		# Opposite of retry 1 — alternate sides
+		var lateral_dir = right if _stuck_retry_count % 2 == 0 else -right
+		var step = global_position + lateral_dir * 4.0
+		var nav_point = NavigationServer3D.map_get_closest_point(nav_map, step)
+		nav_agent.set_target_position(nav_point)
+		return
+
+	# Third block — path is genuinely impassable from here
+	# In combat: stop moving and fight from current position
+	# In patrol/search: pick a random nearby point and try from there
+	_stuck_retry_count = 0
+	movement_state = MovementState.NONE
+	if ai_state == AIState.COMBAT:
+		# Stand and fight — roll a non-move combat action
+		var options = AllowedCombatOptions.duplicate()
+		options.erase(CombatOptions.MOVE)
+		if not options.is_empty():
+			perform_action(options[randi_range(0, options.size() - 1)])
+	else:
+		var random_offset = Vector3(randf_range(-5.0, 5.0), 0, randf_range(-5.0, 5.0))
+		var fallback = NavigationServer3D.map_get_closest_point(nav_map, global_position + random_offset)
+		move_to(fallback)
+
 func reconsider_movement():
 	movement_time = 0
-	if movement_target.distance_to(global_position) >= 3:
-		return
+	# If we arrived (distance check passed in handle_movement), act on it
 	if ai_state == AIState.COMBAT:
 		roll_combat_action()
 		return

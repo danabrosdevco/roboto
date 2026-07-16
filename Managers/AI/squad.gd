@@ -95,11 +95,16 @@ func _tick_unengaged(delta: float) -> void:
 		return
 	nudge_timer = 0.0
 
-	# Re-issue move orders to any soldier who's stopped and isn't at the objective yet
+	# Re-issue move orders to any soldier who has stopped or gone passive
 	for ai in get_living_members():
 		if ai is Soldier:
 			var dist = ai.global_position.distance_to(objective_position)
-			if dist > 3.0 and ai.movement_state == Enemy.MovementState.NONE:
+			var is_stuck = dist > 3.0 and (
+				ai.movement_state == Enemy.MovementState.NONE or
+				ai.ai_state == Enemy.AIState.PASSIVE
+			)
+			if is_stuck:
+				ai.always_active = true  # prevent passive mode from blocking movement
 				var offset = Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, 2.0))
 				ai.order_move_to(objective_position + offset)
 
@@ -165,15 +170,19 @@ func _issue_objective_orders() -> void:
 		SquadObjective.ADVANCE, SquadObjective.DEFEND:
 			for ai in get_living_members():
 				var offset = Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, 2.0))
+				# Prevent passive mode from blocking objective movement
+				if ai.has_method("enter_passive_mode"):
+					ai.always_active = true
 				if ai is Soldier:
 					ai.order_move_to(objective_position + offset)
 				else:
-					# Non-Soldier Enemy — just move directly
 					if ai.ai_state != Enemy.AIState.COMBAT:
 						ai.move_to(objective_position + offset)
 		SquadObjective.WITHDRAW:
 			for ai in get_living_members():
 				var offset = Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, 2.0))
+				if ai.has_method("enter_passive_mode"):
+					ai.always_active = true
 				if ai is Soldier:
 					ai.order_move_to(objective_position + offset)
 					ai.change_soldier_state(Soldier.SoldierState.NONE)
