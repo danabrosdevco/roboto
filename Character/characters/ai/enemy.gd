@@ -108,6 +108,10 @@ var _stuck_timer: float = 0.0
 var _stuck_last_position: Vector3 = Vector3.ZERO
 var _stuck_retry_count: int = 0
 
+# How long to tolerate no LOS to target before actively seeking a new angle
+const NO_LOS_PATIENCE: float = 2.5
+var _no_los_timer: float = 0.0
+
 signal combat_triggered(ai: AI)
 
 
@@ -191,6 +195,15 @@ func handle_time_passing(delta):
 			combat_time += delta
 			if combat_time >= combat_recon_time:
 				reconsider_combat()
+			# Track time without LOS — if too long, seek a new position
+			if combat_target != null and combat_target.alive:
+				if not is_path_clear(global_position + Vector3.UP * 0.5, combat_target.global_position):
+					_no_los_timer += delta
+					if _no_los_timer >= NO_LOS_PATIENCE:
+						_no_los_timer = 0.0
+						_seek_los_position()
+				else:
+					_no_los_timer = 0.0
 		AIState.PATROL:
 			patrol_time += delta
 			if patrol_time >= patrol_recon_time:
@@ -418,6 +431,41 @@ func _handle_path_blocked() -> void:
 		var fallback = NavigationServer3D.map_get_closest_point(nav_map, global_position + random_offset)
 		move_to(fallback)
 
+func _seek_los_position() -> void:
+	if combat_target == null:
+		return
+	var nav_map = nav_agent.get_navigation_map()
+	var target_pos = combat_target.global_position
+	var check_from_height = Vector3.UP * 0.8
+
+	# Sample positions in a ring around the combat target at increasing radii.
+	# Pick the closest one that has clear LOS.
+	var best_pos: Vector3 = Vector3.ZERO
+	var best_dist: float = INF
+
+	for radius_mult in [1.0, 1.5, 2.5, 4.0]:
+		var radius = advance_distance * radius_mult
+		for i in 8:
+			var angle = (TAU / 8.0) * i
+			var dir = Vector3(cos(angle), 0.0, sin(angle))
+			var test = target_pos + dir * radius
+			var nav_point = NavigationServer3D.map_get_closest_point(nav_map, test)
+			# Skip if this is basically where we already are
+			if nav_point.distance_to(global_position) < 1.5:
+				continue
+			if is_path_clear(nav_point + check_from_height, target_pos):
+				var dist = global_position.distance_to(nav_point)
+				if dist < best_dist:
+					best_dist = dist
+					best_pos = nav_point
+		# If we found a valid position at this radius, use it — don't search further
+		if best_pos != Vector3.ZERO:
+			break
+
+	if best_pos != Vector3.ZERO:
+		move_to(best_pos)
+	# If nothing found: let normal combat reconsider run as fallback
+
 func reconsider_movement():
 	movement_time = 0
 	# If we arrived (distance check passed in handle_movement), act on it
@@ -544,6 +592,7 @@ func change_ai_state(new_state: AIState):
 		patrol_time = 0
 		chasing_time = 0
 		targeting_time = 0
+		_no_los_timer = 0.0
 
 func change_combat_target(body):
 	combat_target = body
@@ -748,6 +797,7 @@ func reset():
 	_stuck_timer = 0.0
 	_stuck_last_position = Vector3.ZERO
 	_stuck_retry_count = 0
+	_no_los_timer = 0.0
 	_equipment_cooldowns.clear()
 	_target_stationary_time = 0.0
 	_target_last_position = Vector3.ZERO
@@ -822,12 +872,13 @@ func is_path_clear(from: Vector3, to: Vector3) -> bool:
 
 func update_debug_label():
 	var target_str = combat_target.name if combat_target != null else "none"
-	label.text = "AI: %s\nFaction: %s\nMove: %s\nWeapon: %s\nTarget: %s" % [
+	label.text = "AI: %s\nFaction: %s\nMove: %s\nWeapon: %s\nTarget: %s\nNoLOS: %.1fs" % [
 		AIState.keys()[ai_state],
 		Enums.Factions.keys()[faction],
 		MovementState.keys()[movement_state],
 		WeaponState.keys()[weapon_state],
-		target_str
+		target_str,
+		_no_los_timer
 	]
 
 func force_check_detection():

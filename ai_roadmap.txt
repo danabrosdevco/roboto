@@ -14,30 +14,66 @@ DONE
 - AI Manager [registers ai, faction queries, nearest hostile]
 - Soldier class [extends enemy, cover seeking, suppressing, bounding, suppressed]
 - Squad class [context, objectives, role assignment, bounding pairs, NCO slot]
-- Cover point system [spawner tool, navmesh edge walking, scoring]
-- Squad objective points [designer placed, squad advances to on load]
-- Stimulus manager [gunshot heard, ally shot, ally died, enemy spotted] // NOT DONE
-- Shared targeting [squad broadcasts last known position, credibility decay]
-- Search state [los patience scaling with range, fires at last known, resumes patrol]
-- AI Weapon magazine + reload [can_fire, needs_reload, signals]
-- Equipment system [slot resource, base class, grenade class + projectile]
-- Debug overlay [~ key, per-squad per-member state display]
-- Cover point spawner [@tool, generates from navmesh edges in editor]
+- Cover point system [spawner tool, navmesh edge walking, scoring, @tool]
+- Squad objective points [designer placed, squad advances/defends on load]
+- Cover point spawner [farthest-point sampling for DEFEND spread]
 - FGD entities [cover_point, squad_objective in trenchbroom]
 - Enemy faction awareness [detection checks faction, apply_damage retaliates]
-- Dynamic LOS patience [scales 2x-6x with engagement distance]
+- Equipment system [slot resource, base class, grenade class + projectile]
+- Debug overlay [~ key, per-squad per-member state display, reset button]
+- Stuck detection [_check_stuck, _handle_path_blocked, lateral retry]
+- LOS-seeking behavior [_no_los_timer, _seek_los_position, 8-point ring sample]
+- always_active flag [bypasses passive mode for squads with objectives]
+- DEFEND objective [farthest-point cover assignment, defensive_mode on soldier]
+- default_objective export [set advance/defend per squad in inspector]
+- Passive mode fix [exit_passive_mode restores movement_target]
+- handle_chasing fix [stops at fire range, zeroes velocity on degenerate path]
+- Dynamic LOS patience [los_patience_close scales with engagement distance]
+
+IN REPO BUT NEEDS TESTING / TUNING
+- Search state [committed, needs range testing — does area fire feel right?]
+- Shared targeting [committed, credibility decay tuning needed]
+- Stimulus manager [committed but not wired to player weapon fire yet]
+- AI Weapon magazine + reload [committed, needs animation hook]
+- Equipment / grenade [.tscn not set up in editor yet]
+- _no_los_timer [2.5s patience — slightly aggressive, tune down to 4-5s]
+- Soldier reload cover seek [written, not committed]
+- Squad notify_suppressor_reloading [written, not committed]
+
+NOT YET DONE
+- Formation during unengaged movement [soldiers stack on same point]
+- Break contact decision [squad fights to last man, no withdrawal logic]
+- Grenade .tscn wiring [projectile scene, explosion, indicator]
+- Grenade chokepoint check [stubbed, returns false]
+- Stimulus manager → player weapon fire [GUNSHOT_HEARD from player]
+- Contact range posture [all contacts treated same regardless of distance]
 
 
-KNOWN ISSUES / INCOMPLETE
-- grenade chokepoint check is stubbed [returns false, needs space_state]
-- search state area fire needs more testing at range
-- squad doesn't yet adjust posture based on contact range [all contacts treated same]
-- no formation during unengaged movement [soldiers stack on same point]
-- no break contact / withdrawal decision [squad fights to last man]
-- equipment grenade scene not wired in editor yet [needs .tscn setup]
-- stimulus manager not yet wired to player weapon fire in committed code
-- soldier.gd reload cover seek not yet in committed code
-- squad notify_suppressor_reloading not yet in committed code
+================================================================================
+TUNING NOTES
+================================================================================
+
+_no_los_timer / NO_LOS_PATIENCE
+  Currently 2.5s — fires too aggressively on soldiers that are just
+  waiting for a shot window. Recommend bumping to 4.0-5.0s so soldiers
+  hold position a bit longer before repositioning. Edit in enemy.gd:
+    const NO_LOS_PATIENCE: float = 4.0
+
+advance_distance
+  Controls how far each ADVANCE step moves. Currently 3.0m. For longer
+  range firefights bump to 5.0-6.0. Per enemy type via inspector or
+  EnemyProfile resource when that's implemented.
+
+cover_search_radius (soldier.gd)
+  25m radius for cover seeking. If cover points are sparse, increase.
+  If soldiers are grabbing cover too far away, decrease.
+
+suppress_duration (soldier.gd)
+  3.0s default. Increase for heavier suppression feel.
+
+combat_recon_time (enemy.gd export)
+  1.65s default. Lower = more aggressive re-evaluation.
+  Tune per enemy type: grunt 1.65, heavy 2.5, sniper 3.0.
 
 
 ================================================================================
@@ -47,142 +83,111 @@ work through these in order. each section is a session or two.
 
 
 --------------------------------------------------------------------------------
-PHASE 1 — MAKE EXISTING ENGAGEMENTS WORK PROPERLY [2-3 sessions]
+PHASE 1 — FINISH AND TUNE WHAT EXISTS [1-2 sessions]
 --------------------------------------------------------------------------------
-these are fixes and completions of what we already have before adding anything new.
+before adding anything new, get what's built working well in the arena.
 
+- tune NO_LOS_PATIENCE from 2.5s to 4.0-5.0s [too aggressive currently]
 - wire grenade .tscn in editor [projectile scene, explosion scene, indicator]
 - test and tune grenade throw arc [fuse_time, throw_speed, min/max distance]
-- fix grenade chokepoint check [pass space_state from evaluate_equipment_use]
-- commit stimulus manager wiring [player weapon fires GUNSHOT_HEARD]
-- commit soldier reload cover behavior
-- commit squad notify_suppressor_reloading
-- tune los_patience_close values per enemy type [grunt 2s, heavy 4s, sniper 8s]
-- test search state at 40m+ [does area fire feel right, does squad hold shared target]
-- fix formation stacking [squad spread soldiers to offset positions, not same point]
-  - add formation_spread to squad [offset each member by a slot in a loose line]
-- add break contact decision to squad [if >50% dead, withdraw to objective fallback]
+- commit soldier reload cover behavior + squad notify_suppressor_reloading
+- wire stimulus manager to player weapon [GUNSHOT_HEARD from player fire]
+- fix formation stacking [soldiers spread into a loose line on advance]
+  - simplest: offset each member by slot index along perpendicular axis
+- test DEFEND in arena [set one squad to DEFEND, other to ADVANCE]
+  - do defenders spread out properly? do they hold position under fire?
+- add break contact [squad withdraws if >50% casualties]
+  - squad._tick_engaged: if living < total * 0.5, set_objective(WITHDRAW, spawn)
 
 
 --------------------------------------------------------------------------------
 PHASE 2 — CONTACT RANGE POSTURE [1-2 sessions]
 --------------------------------------------------------------------------------
-squads react differently based on how far away contact is when it happens.
+squads react differently based on how far away contact is.
 
-- add contact_range to squad [measure distance when _on_combat_triggered fires]
-- add EngagementPosture enum to squad [IMMEDIATE_ACTION, FIRE_AND_MOVEMENT, FIRE_BASE]
-- assign posture based on contact range
-  - <15m: IMMEDIATE_ACTION [everyone engages from current position]
-  - 15-40m: FIRE_AND_MOVEMENT [current suppressor/advancer bounding system]
-  - >40m: FIRE_BASE [establish static firing position first, advance only after]
-- update assign_roles() to use posture [fire base = all suppress until position set]
-- add advance_threshold to squad [fire base only advances when suppression established]
-  - suppress for N seconds before promoting any advancers
+- add contact_range measurement when _on_combat_triggered fires
+- add EngagementPosture enum [IMMEDIATE_ACTION, FIRE_AND_MOVEMENT, FIRE_BASE]
+- IMMEDIATE_ACTION (<15m): everyone engages from current position, no bounding
+- FIRE_AND_MOVEMENT (15-40m): current system, suppressor/advancer bounding
+- FIRE_BASE (>40m): all suppress first, advance only after N seconds of fire
+- update assign_roles() to branch on posture
+- this fixes the "enemy runs straight at you from 60m" problem
 
 
 --------------------------------------------------------------------------------
-PHASE 3 — STRATEGIC OBJECTIVES [2-3 sessions]
+PHASE 3 — STRATEGIC OBJECTIVES + GAMEMASTER [2-3 sessions]
 --------------------------------------------------------------------------------
-gamemaster / command layer that gives squads strategic level orders.
+command layer that drives squads at the mission level.
 
-- build GameMaster node [singleton or world child]
-  - holds references to all squads and objective points
-  - can assign objectives to squads at runtime or on map load
-- add strategic objective types to squad
-  - HOLD [defend current position, don't advance]
-  - ADVANCE_AND_HOLD [move to objective, defend on arrival]
-  - HUNTER_KILLER [find and destroy enemy squad]
-  - DESTROY_OBJECTIVE [move to target, destroy it]
-- HOLD behavior
-  - squad enters defensive posture on arrival
-  - soldiers seek cover and overwatch rather than advancing
-  - NCO designates fire lanes [look_target assignments per soldier]
-- ADVANCE_AND_HOLD behavior
-  - squad advances using fire and movement
-  - on arrival switches to HOLD
-- HUNTER_KILLER behavior
-  - squad patrols toward last known enemy squad position
-  - on contact: engage, pursue if enemy withdraws
-  - needs squad-to-squad awareness [ai manager tracks squad positions]
-- DESTROY_OBJECTIVE behavior
-  - advance to target position
-  - on arrival: designate soldiers to interact with objective node
-  - objective node has health / apply_damage
+- build GameMaster node [world child, holds all squad + objective refs]
+- ADVANCE_AND_HOLD [advance to objective, switch to DEFEND on arrival]
+  - squad._tick_unengaged: if at objective, call set_objective(DEFEND)
+- HUNTER_KILLER [patrol toward last known enemy squad position]
+  - needs squad-to-squad awareness: ai_manager tracks squad positions
+- DESTROY_OBJECTIVE [advance to target, interact on arrival]
+  - objective node has health / apply_damage method
+- wire GameMaster to arena [give each squad a strategic order on load]
+- this is where the game starts feeling like a real scenario
 
 
 --------------------------------------------------------------------------------
-PHASE 4 — SPECIALIST ROLES [2-3 sessions]
+PHASE 4 — PLAYER SQUAD [1-2 sessions]
 --------------------------------------------------------------------------------
-individual soldiers with distinct capabilities that squads can use.
+give the player something to command.
 
-- MG / HEAVY class [extends soldier]
-  - always assigned SUPPRESSOR role by squad
-  - fire_base posture: MG sets up, squad advances under its cover
-  - higher magazine, longer suppress_duration, slower move_speed
-- ENGINEER class [extends soldier]
-  - can fortify a position [place a cover point node at runtime]
-  - can deploy a turret [spawn a stationary enemy AI at a location]
-  - can summon a drone [spawn drone AI, assign to squad]
-- NCO class [extends soldier, proper implementation]
-  - stays back, overwatches, issues role assignments
-  - on squad taking >50% casualties: calls retreat
-  - on player nearby: prioritizes targeting player
-  - death causes squad degradation [already stubbed]
-- DRONE class [extends enemy, not soldier]
-  - no navmesh, direct Vector3 steering
-  - hovers at altitude, strafes, retreats when hit
-  - uses drone_bomb weapon already in repo
-  - can be spawned by engineer or by wave manager
+- player squad [Squad node, faction ALLIED, player as squad leader]
+- command system [already partially built in test_character.gd]
+  - raycast to world → squad.set_objective(ADVANCE, hit_position)
+  - hold key to cycle objective type [advance / defend / withdraw]
+- HUD squad status panel [health bar per member, state indicator]
+- squad follows player loosely when no objective set
+- player squad persists between bonfires [reset health, not position]
 
 
 --------------------------------------------------------------------------------
-PHASE 5 — PLAYER SQUAD [1-2 sessions]
+PHASE 5 — SPECIALIST CLASSES [2-3 sessions]
 --------------------------------------------------------------------------------
-give the player a squad to command and build the mission structure.
+once the base soldier works well, add specialist types.
 
-- player can be assigned a squad [squad with faction ALLIED]
-- player issues orders to squad via command system [already partially built]
-  - raycast to world point → squad.set_objective()
-  - cycle through objective types [advance, hold, withdraw]
-- squad follows player within range [order_move_to player position + offset]
-- HUD squad status [show squad member health/state in corner]
-- player squad survives between encounters [reset on bonfire, not on death]
+- NCO [extends Soldier, overwatches, directs roles, calls retreat at 50% loss]
+- HEAVY / MG [extends Soldier, always SUPPRESSOR, high mag, slow move]
+  - fire_base posture: MG establishes position, others advance under cover
+- DRONE [extends Enemy, no navmesh, Vector3 steering, uses drone_bomb]
+  - hovers at altitude, strafes, retreats when hit, can be spawned by squad
+- ENGINEER [extends Soldier, fortifies position, deploys turret/drone]
 
 
 --------------------------------------------------------------------------------
 PHASE 6 — MISSION STRUCTURE [2-3 sessions]
 --------------------------------------------------------------------------------
-give the player an objective and build the loop around it.
+build the loop around the AI.
 
-- GameMaster assigns player a mission objective on level load
+- GameMaster assigns mission to player on level load
   - ELIMINATE enemy squad
   - HOLD position for N seconds
   - ADVANCE with squad to objective
-  - DESTROY enemy installation
-- mission progress tracked by GameMaster
-- mission complete condition triggers level exit or next phase
-- mission fail condition [player dies, squad wiped, time expires]
-- build arena into a proper mission map
-  - two opposing squads, player commands allied squad
-  - enemy squad has strategic objective [advance to player side]
-  - player must stop them
+- mission progress UI [objective marker, timer if applicable]
+- mission complete → level exit or next wave
+- mission fail → respawn at bonfire, enemies reset
+- build arena into first proper mission
+  - enemy squad advances to player side with ADVANCE_AND_HOLD
+  - player must stop them with their allied squad
 
 
 --------------------------------------------------------------------------------
-PHASE 7 — POLISH AND FEEL [ongoing]
+PHASE 7 — POLISH AND FEEL [ongoing, do alongside other phases]
 --------------------------------------------------------------------------------
-things that make it feel like a real game once the above works.
 
-- suppression effect [near-miss detection, camera shake, screen distortion]
-- grenade variety [smoke, EMP, stun — extends AIEquipment]
-- weapon variety [rifle, MG, rocket — different fire modes, distances]
-- reload animations [tie weapon.reload_started signal to animation player]
-- bark / voice lines [bark.bark() already exists, add more variety per state]
-- stagger on damage [slow + accuracy penalty on heavy hit]
-- death variety [ragdoll or collapse animation per direction of damage]
-- flocking / avoidance [soldiers don't stack or clip through each other]
-- signal / e-warfare system [designed, not yet built — see design doc]
-- threat zones [designer placed, squad adjusts posture when approaching]
+- NO_LOS repositioning: add a brief pause/crouch animation before moving
+  so it looks like a decision rather than a spasm
+- suppression effect [near-miss camera shake, screen distortion]
+- bark / voice lines [state-aware: contact, suppressed, flanking, dying]
+- stagger on heavy damage [slow + accuracy penalty for 1-2s]
+- grenade variety [smoke, EMP — extend AIEquipment, easy to add]
+- flocking / separation [soldiers don't stack on same navmesh point]
+- signal / e-warfare system [designed in design doc, build after phase 5]
+- threat zones [designer-placed, squad slows and spreads approaching]
+- weapon variety [rifle, MG, rocket — configure via AIWeapon exports]
 
 
 ================================================================================
@@ -190,19 +195,27 @@ ARCHITECTURE NOTES FOR REFERENCE
 ================================================================================
 
 CLASS HIERARCHY
-  AI → Enemy → Soldier → [Heavy, Engineer, NCO]
-			  → [Drone - no navmesh]
+  AI → Enemy → Soldier → [NCO, Heavy, Engineer]
+             → [Drone - no navmesh, Vector3 steering]
 
 KEY RESPONSIBILITIES
-  GameMaster  - strategic objectives, mission state, spawn waves
-  Squad       - tactical decisions, role assignment, posture, formation
-  Soldier     - individual behaviors, cover, suppress, bound, reload
-  Enemy       - physics, nav, weapons, detection, stimulus, equipment
-  AIManager   - registry, faction queries, shared data across squads
+  GameMaster      - strategic objectives, mission state, spawn waves
+  Squad           - tactical decisions, role assignment, posture, formation
+  Soldier         - individual behaviors, cover, suppress, bound, reload
+  Enemy           - physics, nav, weapons, detection, stimulus, equipment
+  AIManager       - registry, faction queries, shared data across squads
   StimulusManager - event bus, broadcasts stimuli to nearby AI
 
+KEY VARS TO KNOW
+  enemy.always_active       - bypasses passive mode distance check
+  enemy._no_los_timer       - time without LOS, triggers _seek_los_position
+  soldier.defensive_mode    - blocks advance/chase, holds position
+  squad.default_objective   - ADVANCE or DEFEND, set in inspector
+  squad.context             - UNENGAGED / ENGAGED
+  squad.objective           - NONE / ADVANCE / DEFEND / WITHDRAW
+
 ADDING A NEW ENEMY TYPE
-  1. extend Soldier (infantry) or Enemy (non-infantry)
+  1. extend Soldier (infantry) or Enemy (non-infantry / drone)
   2. set faction, DefaultAIState, AllowedMovementOptions in inspector
   3. configure weapon scene [damage, fire_cooldown, magazine_size]
   4. add AIEquipmentSlot resources for any equipment
@@ -211,17 +224,17 @@ ADDING A NEW ENEMY TYPE
 
 ADDING A NEW EQUIPMENT TYPE
   1. extend AIEquipment
-  2. override can_use(context) - return true when conditions are right
-  3. override execute(context) - do the thing
+  2. override can_use(context) → return true when conditions are right
+  3. override execute(context) → do the thing
   4. create .tscn, assign to AIEquipmentSlot.equipment_scene
 
 ADDING A NEW MAP
   1. build in trenchbroom, import via funcgodot
   2. bake navmesh on NavigationRegion3D
-  3. run CoverPointSpawner [assign nav region, click generate]
+  3. run CoverPointSpawner [assign nav region, generate]
   4. place SquadObjectivePoints
-  5. place Squads with members assigned
-  6. assign GameMaster objectives on _ready()
+  5. place Squads with members and default_objective set
+  6. wire GameMaster with squad and objective refs
 
 
 ================================================================================
@@ -230,4 +243,7 @@ SESSION LOG [you fill this in]
 - [date] started AI work - enemy, faction, squad basics
 - [date] cover points, stimulus manager, search state, shared targeting
 - [date] equipment system, grenade, magazine/reload
-- [date] roadmap session - this doc
+- [date] roadmap session - first version of this doc
+- [date] stuck detection, path blocked, always_active, passive mode fix
+- [date] LOS-seeking behavior, DEFEND objective, farthest-point sampling
+- [date] no_los_timer, _seek_los_position, roadmap updated
