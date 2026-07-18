@@ -24,6 +24,8 @@ enum InteractTypes { HEALTH, SHARDS, BONFIRE, BITS }
 # Which factions are hostile to which
 # Returns true if faction_a should attack faction_b
 static func are_hostile(faction_a: Factions, faction_b: Factions) -> bool:
+	if faction_b == Factions.NEUTRAL:
+		return false
 	match faction_a:
 		Factions.PLAYER:
 			return faction_b == Factions.ENEMY

@@ -2,5 +2,6 @@
 
 [ext_resource type="Script" path="res://Managers/AI/squad.gd" id="1_kydxs"]
 
-[node name="Squad" type="Node" groups=["squads"]]
+[node name="Squad" type="Node" node_paths=PackedStringArray("squad_members") groups=["squads"]]
 script = ExtResource("1_kydxs")
+squad_members = [null]

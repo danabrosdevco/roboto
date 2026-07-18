@@ -1,0 +1,86 @@
+[gd_scene load_steps=18 format=3 uid="uid://t51su0vouiu6"]
+
+[ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_nty0a"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="2_8p1te"]
+[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_0ci13"]
+[ext_resource type="Resource" uid="uid://cavuq6s132jy8" path="res://Character/characters/ai/equipment/ai_equipment_grenade.tres" id="3_3i6e3"]
+[ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ic4jn"]
+[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t0xuv"]
+[ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_yr7d0"]
+[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_t1gg6"]
+[ext_resource type="PackedScene" uid="uid://viqumhnkw2cx" path="res://Character/weapon/ai-wep_shotgun.tscn" id="8_utu75"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_jrkgo"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_negfm"]
+albedo_texture = ExtResource("6_yr7d0")
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
+radius = 25.0
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_3rhyt"]
+radius = 0.2
+height = 0.6
+radial_segments = 6
+rings = 6
+
+[node name="Soldier_Shotgun" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+script = ExtResource("1_nty0a")
+nav_agent = NodePath("NavigationAgent3D")
+weapon = NodePath("aiweapon")
+label = NodePath("Label3D")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("CSGMesh3D"), NodePath("aiweapon"), NodePath("CSGMesh3D2")]
+health = 100
+max_health = 100
+equipment_slots = Array[ExtResource("2_8p1te")]([ExtResource("3_3i6e3")])
+soldier_name = "Grunt_ShotgunFrag"
+AllowedMovementOptions = Array[int]([0, 1])
+AllowedCombatOptions = Array[int]([0, 1, 2])
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_mygdm")
+
+[node name="Bark" parent="." instance=ExtResource("2_7mr33")]
+bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"), ExtResource("5_t0xuv")])
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+mesh = SubResource("CapsuleMesh_jrkgo")
+material = SubResource("StandardMaterial3D_negfm")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.22588, 0)
+billboard = 1
+text = "Text"
+font_size = 48
+script = ExtResource("7_t1gg6")
+
+[node name="aiweapon" parent="." instance=ExtResource("8_utu75")]
+transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.553111, 0.221401, 0)
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.4731, 0, 0)
+shape = SubResource("SphereShape3D_mkxqd")
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.403749)
+mesh = SubResource("CapsuleMesh_3rhyt")
+
+[node name="SparkBurst" parent="." instance=ExtResource("9_pm84i")]
+
+[node name="OilSpray" parent="." instance=ExtResource("10_ukmfb")]
+
+[connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
+[connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

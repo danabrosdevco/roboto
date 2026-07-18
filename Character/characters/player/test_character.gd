@@ -1,0 +1,479 @@
+extends AI
+class_name Player
+
+# Node References # 
+@export var cam: Camera3D 
+@export var faction: Enums.Factions = Enums.Factions.PLAYER
+@export var hud_weapon: HUDWeapon
+@export var world: Node3D
+@export var hud: Control
+@export var scanner: Node3D
+@export var command_marker_scene: PackedScene
+@export var obstruction_raycast: RayCast3D
+@export var interact_raycast: RayCast3D
+@export var health_sfx: AudioStreamPlayer
+@export var shards_sfx: AudioStreamPlayer
+@export var weapon_list: Array[HUDWeapon]
+var current_weapon_index: int
+# Export Data # 
+var coyote_time = 0.12
+const SPEED := 6.0
+const JUMP_VELOCITY := 4.5
+const MOUSE_SENS := 0.002
+@export var use_gravity = true
+var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+@export var health = 50
+@export var max_health = 100
+var shards = 0
+var bits = 0 
+const LEAN_ANGLE := 0.35
+const LEAN_SPEED := 5.0
+const ADS_FOV := 45.0
+const HIP_FOV := 70.0
+const ADS_SPEED := 10.0
+
+# Working Data #
+var time_since_grounded: float = 0.0
+var last_grounded_time: float = 0.0
+var coyote_used: bool = false
+var is_grounded: bool
+var was_grounded:bool
+var is_fullscreen = false
+var look_direction: Vector3
+@export var look_interp_speed := 12.0  # how fast the camera follows the target
+
+var command_marker_instance: Node3D = null
+@export var camera_recoil_scale := 0.75  # fraction of recoil applied to camera
+var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
+var recoil_rotation := Vector3.ZERO
+
+var scanner_timer: = 0.0
+var scanner_cooldown = 15
+
+
+var current_interactible : Interactible
+var alive = true
+var last_bonfire
+
+# ── SPECTATOR MODE ────────────────────────────
+# Toggle with F4. Free-flying camera, not targeted by AI, no collision.
+var spectator_mode: bool = false
+const SPECTATOR_SPEED: float = 12.0
+const SPECTATOR_FAST_MULT: float = 3.0
+
+
+# WEAPONS #
+var is_ads := false
+var fire_held_last_frame := false
+var target_lean := 0.0
+var pitch := 0.0
+
+signal activate_scanner_ui(time: float)
+signal highlight_enemy(target:Node3D, duration: float)
+signal activate_interactible_ui(interactible: Interactible)
+signal died(value: int, global_position)
+func initialize() -> void:
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	update_last_bonfire(null)
+	update_status()
+	for child in cam.get_children():
+		if child is HUDWeapon:
+			if weapon_list.has(child):
+				continue
+			else:
+				weapon_list.append(child)
+		else:
+				continue
+	if weapon_list.size() > 0:
+		current_weapon_index = 0
+		set_active_weapon(0)
+
+func set_active_weapon(index: int):
+	# Deactivate all weapons
+	for i in weapon_list.size():
+		weapon_list[i].active = false
+		weapon_list[i].weapon_model.visible = false
+	
+	# Activate the selected one
+	current_weapon_index = index
+	hud_weapon = weapon_list[index]
+	hud_weapon.active = true
+	hud_weapon.weapon_model.visible = true
+	#print("✅ Switched to weapon:", hud_weapon.name)
+
+func switch_weapon(direction: int):
+	var next_index = (current_weapon_index + direction) % weapon_list.size()
+	if next_index < 0:
+		next_index = weapon_list.size() - 1
+	set_active_weapon(next_index)
+	update_status()
+
+func switch_weapon_direct(index: int):
+	if index >= 0 and index < weapon_list.size():
+		set_active_weapon(index)
+	update_status()
+
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		look_direction.y -= event.relative.x * MOUSE_SENS
+		look_direction.x = clamp(
+			look_direction.x - event.relative.y * MOUSE_SENS,
+			-1.5,
+			1.5
+		)
+	elif event is InputEventKey and event.pressed:
+		if event.keycode == KEY_ESCAPE:
+			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		elif event.keycode == KEY_F4:
+			_toggle_spectator()
+
+
+func _physics_process(delta: float) -> void:
+	if spectator_mode == true:
+		_handle_spectator(delta)
+		return
+	scanner_timer -= delta
+	check_interactible()
+	if use_gravity == true:
+		handle_gravity(delta)
+	handle_input(delta)
+	handle_movement(delta)
+	handle_camera_and_weapon(delta)
+	move_and_slide()
+
+func _toggle_spectator() -> void:
+	spectator_mode = not spectator_mode
+	# Find collision shape safely by type rather than hardcoded name
+	var col_shape: CollisionShape3D = null
+	for child in get_children():
+		if child is CollisionShape3D:
+			col_shape = child
+			break
+	if spectator_mode:
+		if col_shape:
+			col_shape.set_deferred("disabled", true)
+		faction = Enums.Factions.NEUTRAL
+		velocity = Vector3.ZERO
+		use_gravity = false
+		if hud_weapon:
+			hud_weapon.visible = false
+	else:
+		if col_shape:
+			col_shape.set_deferred("disabled", false)
+		faction = Enums.Factions.PLAYER
+		velocity = Vector3.ZERO
+		use_gravity = true
+		if hud_weapon:
+			hud_weapon.visible = true
+
+func _handle_spectator(delta: float) -> void:
+	# Mouse look
+	var look_basis = Basis()
+	look_basis = look_basis.rotated(Vector3.UP, look_direction.y)
+	look_basis = look_basis.rotated(look_basis.x, look_direction.x)
+
+	# Horizontal movement — existing inputs
+	var input2 := Input.get_vector("ui_left", "ui_right", "ui_down", "ui_up")
+	var dir = look_basis.x * input2.x - look_basis.z * input2.y
+
+	# Vertical — Space up, Ctrl down. Shift = fast.
+	var fast = Input.is_key_pressed(KEY_SHIFT)
+	var speed = SPECTATOR_SPEED * (SPECTATOR_FAST_MULT if fast else 1.0)
+
+	if dir.length_squared() > 0.001:
+		dir = dir.normalized() * speed
+		velocity.x = dir.x
+		velocity.z = dir.z
+	else:
+		velocity.x = move_toward(velocity.x, 0.0, speed)
+		velocity.z = move_toward(velocity.z, 0.0, speed)
+
+	if Input.is_action_pressed("jump"):
+		velocity.y = speed
+	elif Input.is_key_pressed(KEY_CTRL):
+		velocity.y = -speed
+	else:
+		velocity.y = move_toward(velocity.y, 0.0, speed)
+
+	# Apply camera rotation
+	cam.global_transform.basis = look_basis
+	move_and_slide()
+
+func check_interactible():
+	if interact_raycast and interact_raycast.is_colliding():
+		var collider = interact_raycast.get_collider()
+		if !collider:
+			return
+		if collider is not Interactible:
+			return
+		if collider.used == true:
+			return
+		if current_interactible == collider:
+			return
+		current_interactible = collider
+		activate_interactible_ui.emit(current_interactible)
+		return
+	else:
+		if current_interactible:
+			current_interactible = null
+			activate_interactible_ui.emit(current_interactible)
+
+
+func handle_gravity(delta: float) -> void:
+	if spectator_mode == true:
+		return
+	was_grounded = is_grounded
+	is_grounded = is_on_floor()
+	if not is_grounded:
+		velocity.y -= gravity * delta
+		time_since_grounded += delta
+	if is_grounded:
+		time_since_grounded = 0.0
+		last_grounded_time = Time.get_ticks_msec() / 1000.0
+		coyote_used = false
+
+func can_coyote_jump() -> bool:
+	# Can jump if grounded OR within coyote time window
+	if is_grounded:
+		return true
+	# Coyote time check
+	if time_since_grounded <= coyote_time and not coyote_used:
+		coyote_used = true  # Prevent double-jumps from coyote
+		return true
+	return false
+
+
+func handle_input(_delta: float) -> void:
+	if Input.is_action_just_pressed("fullscreen"):
+		is_fullscreen = !is_fullscreen
+		if is_fullscreen:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		else:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+
+
+	var fire_pressed := Input.is_action_pressed("fire")
+	var fire_just_pressed := Input.is_action_just_pressed("fire")
+
+	match hud_weapon.firemode:
+		Enums.FireModes.FULL:
+			if fire_pressed && hud_weapon.magazine_capacity > 0:
+				hud_weapon.fire()
+			if fire_pressed and not fire_held_last_frame:
+				hud_weapon.fire()
+		Enums.FireModes.SEMI:
+			if fire_just_pressed and not fire_held_last_frame:
+				hud_weapon.fire()
+	fire_held_last_frame = fire_pressed
+	if Input.is_action_just_pressed("command"):
+		activate_command()
+
+	if Input.is_action_just_pressed("jump") and can_coyote_jump():
+		velocity.y = JUMP_VELOCITY
+
+
+	#if Input.is_action_pressed("weapon_next"):
+		#switch_weapon(1)
+	#elif Input.is_action_pressed("weapon_prev"):
+		#switch_weapon(-1)
+	elif Input.is_action_pressed("1"):
+		if hud_weapon.is_reloading:
+			return
+		switch_weapon_direct(0)
+	elif Input.is_action_pressed("2"):
+		if hud_weapon.is_reloading:
+			return
+		switch_weapon_direct(1)
+
+	if Input.is_action_just_pressed("scan"):
+		if scanner_timer >= 0:
+			return
+		scanner_timer = scanner_cooldown
+		scanner.activate_scan()
+		activate_scanner_ui.emit(scanner_cooldown)
+
+	if Input.is_action_just_pressed("reload"):
+		hud_weapon.start_reload()
+
+	is_ads = Input.is_action_pressed("aim")
+	hud_weapon.is_ads = is_ads
+	if Input.is_action_pressed("lean_left"):
+		target_lean = LEAN_ANGLE
+	elif Input.is_action_pressed("lean_right"):
+		target_lean = -LEAN_ANGLE
+	else:
+		target_lean = 0.0
+
+	if Input.is_action_just_pressed("interact") and current_interactible != null:
+		interact(current_interactible)
+
+
+func handle_movement(_delta: float) -> void:
+	var input2 := Input.get_vector("ui_left", "ui_right", "ui_down", "ui_up")
+	var new_basis = transform.basis
+	var dir = new_basis.x * input2.x - new_basis.z * input2.y
+
+	if dir.length_squared() > 0.001:
+		dir = dir.normalized() * SPEED
+		velocity.x = dir.x
+		velocity.z = dir.z
+	else:
+		velocity.x = move_toward(velocity.x, 0.0, SPEED)
+		velocity.z = move_toward(velocity.z, 0.0, SPEED)
+
+func handle_camera_and_weapon(delta: float) -> void:
+	var move_factor = clamp(velocity.length() / SPEED, 0.0, 1.0)
+	hud_weapon.set_move_factor(move_factor)
+	hud_weapon.is_obstructed = obstruction_raycast.is_colliding()
+	hud_weapon.pitch = look_direction.x
+	# FOV adjustment
+	var target_fov = ADS_FOV if Input.is_action_pressed("zoom") else HIP_FOV
+	if is_ads and Input.is_action_pressed("zoom"):
+		target_fov = hud_weapon.ADS_FOV * 0.6
+	elif is_ads:
+		target_fov = hud_weapon.ADS_FOV
+
+	cam.fov = lerp(cam.fov, target_fov, delta * ADS_SPEED)
+	cam.rotation.z = lerp(cam.rotation.z, target_lean, delta * LEAN_SPEED)
+	# Camera look rotation
+	rotation.y = lerp_angle(rotation.y, look_direction.y, delta * look_interp_speed)
+	cam.rotation.x = lerp_angle(cam.rotation.x, look_direction.x, delta * look_interp_speed)
+
+func activate_command():
+	# Raycast from the camera to where it's looking
+	var ray_origin = cam.global_position
+	var ray_end = ray_origin + cam.global_transform.basis.z * -1000  # Forward direction in Godot is -Z
+	var space_state = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(ray_origin, ray_end)
+	query.collide_with_areas = false
+	query.collision_mask = 1  # Set this if your terrain/ground uses a specific mask
+
+	var result = space_state.intersect_ray(query)
+
+	if result:
+		var target_position = result.position
+
+		# If we already have a command marker, move it
+		if command_marker_instance and is_instance_valid(command_marker_instance):
+			command_marker_instance.global_position = target_position
+			command_marker_instance.global_position.y = 0
+			command_marker_instance.rotation = Vector3(0,0,0)
+			command_marker_instance.perform_faction_check()
+		else:
+			# Spawn new marker
+			command_marker_instance = command_marker_scene.instantiate()
+			world.add_child(command_marker_instance)
+			command_marker_instance.global_position = target_position
+			command_marker_instance.global_position.y = 0
+			command_marker_instance.rotation = Vector3(0,0,0)
+
+			# Optional: Assign faction/team if needed
+			if command_marker_instance.has_method("set_faction"):
+				command_marker_instance.set_faction(faction)
+			await get_tree().create_timer(0.1).timeout
+			command_marker_instance.perform_faction_check()
+			# Optional: orient marker to look forward from camera
+			#command_marker_instance.look_at(target_position + cam.global_transform.basis.z * -1, Vector3.UP)
+	else:
+		print("No valid target point found where camera is looking.")
+	pass
+
+func interact(interactible:Interactible):
+	if interactible == null:
+		return
+	match interactible.get_type():
+		Enums.InteractTypes.HEALTH:
+			apply_healing(interactible.get_value())
+		Enums.InteractTypes.SHARDS:
+			add_shards(interactible.get_value())
+		Enums.InteractTypes.BONFIRE:
+			last_bonfire = interactible
+			pass
+		Enums.InteractTypes.BITS:
+			add_bits(interactible.value)
+		_:
+			print("Unknown interactible type")
+	interactible.interacted_with()
+	current_interactible = null
+	update_status()
+	activate_interactible_ui.emit(current_interactible)
+	pass
+
+func update_status():
+	if hud_weapon == null:
+		await get_tree().process_frame
+	hud.update_status(health, max_health, hud_weapon.magazine_capacity, hud_weapon.magazine_size, shards, bits)
+
+
+func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
+	#print ("TIME TO HIGHLIGHT!")
+	highlight_enemy.emit(target, duration)
+
+
+func apply_damage(damage, _source):
+	if alive == false:
+		return
+	health -= damage
+	update_status()
+	if health <= 0:
+		health = 0
+		die()
+	pass
+
+func apply_healing(healing):
+	var new_health = health + healing
+	if new_health >= max_health:
+		new_health = max_health
+	health = new_health
+	health_sfx.play()
+	update_status()
+func add_shards(value):
+	shards += value
+	shards_sfx.play()
+	update_status()
+
+func add_bits(value):
+	bits += value
+	update_status()
+
+func update_last_bonfire(bonfire: Node3D):
+	if bonfire == null:
+		last_bonfire = world.current_level.spawn_point.global_position
+		return
+	last_bonfire = bonfire
+
+func reset():
+	set_process(true)
+	set_physics_process(true)
+	set_process_input(true)
+	set_process_unhandled_input(true)
+	#Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	alive = true
+	health = max_health
+	hud_weapon.magazine_capacity = hud_weapon.magazine_size
+	#print (last_bonfire)
+	if last_bonfire is Vector3:
+		global_position = last_bonfire
+	if last_bonfire is Bonfire:
+		global_position = last_bonfire.global_position
+	update_status()
+
+func die():
+	alive = false
+	set_process(false)
+	set_physics_process(false)
+	set_process_input(false)
+	set_process_unhandled_input(false)
+	#Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	# Delay to allow any death effects (like sounds, particles)
+	await get_tree().create_timer(0.5).timeout
+	died.emit(bits, global_position)
+	bits = 0
+
+	# Optional: Unlock the camera or transition
+	# You might want to detach camera from the player before freeing the node
+	# For now, we just clean up:
+func get_faction():
+	return faction

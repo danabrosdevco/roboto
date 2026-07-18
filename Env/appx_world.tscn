@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://c3ap1lken8oba" path="res://2d_assets/Seamless ground sand dirt crack texture.jpg" id="2_emynq"]
 [ext_resource type="PackedScene" uid="uid://c34427d1yh8jv" path="res://Env/world_objects/crate.tscn" id="3_0pg6n"]
 [ext_resource type="PackedScene" uid="uid://deb6uwnna01po" path="res://Character/characters/appx/test_target.tscn" id="4_rjwuf"]
-[ext_resource type="PackedScene" uid="uid://cw5qsxqebuch8" path="res://Character/characters/test_drone.tscn" id="5_ooc5f"]
+[ext_resource type="PackedScene" uid="uid://cw5qsxqebuch8" path="res://Character/characters/appx/test_drone.tscn" id="5_ooc5f"]
 [ext_resource type="PackedScene" uid="uid://bevu1pewciouu" path="res://Character/characters/appx/test_robot.tscn" id="6_vh7yd"]
 [ext_resource type="PackedScene" uid="uid://b25a0pisovd32" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-a.glb" id="7_cljhe"]
 [ext_resource type="PackedScene" uid="uid://bkq6p35njragv" path="res://3d_assets/kenney_city-kit-industrial_1.0/Models/GLB format/building-b.glb" id="8_f8fsj"]
