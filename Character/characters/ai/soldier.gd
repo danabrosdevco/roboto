@@ -204,7 +204,7 @@ func tick_bounding() -> void:
 	if movement_state == MovementState.CHASING:
 		if combat_target != null:
 			var dist = global_position.distance_to(combat_target.global_position)
-			if dist <= max_fire_distance * 0.6:
+			if dist <= weapon.max_effective_range * 0.6:
 				# Close enough to engage — stop advancing
 				movement_state = MovementState.NONE
 				change_soldier_state(SoldierState.NONE)
@@ -261,8 +261,11 @@ func trigger_combat(body: AI) -> void:
 func order_move_to(pos: Vector3) -> void:
 	if ai_state == AIState.COMBAT or ai_state == AIState.DEAD:
 		return
+	# CRITICAL or E-KILL: signal too degraded to receive squad orders
+	if not _can_receive_orders():
+		return
 	change_soldier_state(SoldierState.NONE)
-	change_ai_state(AIState.PATROL)  # Use PATROL so Enemy doesn't fight the move
+	change_ai_state(AIState.PATROL)
 	move_to(pos)
 
 
@@ -270,6 +273,9 @@ func order_move_to(pos: Vector3) -> void:
 # ROLE ASSIGNMENT (called by Squad)
 # ─────────────────────────────────────────────
 func assign_role(role: SoldierRole) -> void:
+	# CRITICAL or E-KILL: ignores squad role assignments
+	if not _can_receive_orders():
+		return
 	squad_role = role
 	match role:
 		SoldierRole.SUPPRESSOR:
@@ -309,13 +315,23 @@ func find_flank_target() -> Vector3:
 
 # ─────────────────────────────────────────────
 # OVERRIDE: get_inaccurate_target
-# Apply accuracy penalty when suppressed.
+# When SUPPRESSED, multiply spread mrad by the penalty factor instead
+# of the old accuracy float system.
 # ─────────────────────────────────────────────
 func get_inaccurate_target(target_pos: Vector3) -> Vector3:
-	if soldier_state == SoldierState.SUPPRESSED:
+	if soldier_state == SoldierState.SUPPRESSED and weapon != null:
 		var dist := global_position.distance_to(weapon_target)
-		var penalised = clamp(min_accuracy * suppressed_accuracy_penalty, 0.0, 1.0)
-		return target_pos + get_random_spread(dist, penalised)
+		# suppressed_accuracy_penalty < 1.0 means worse accuracy.
+		# We invert it to get a spread multiplier: 0.4 penalty → 2.5x spread.
+		var spread_mult = 1.0 / maxf(suppressed_accuracy_penalty, 0.1)
+		var effective_skill = accuracy_skill * maxf(signal_integrity, 0.1)
+		var spread_mrad = (weapon.ai_spread_mrad / effective_skill) * spread_mult
+		var spread_m = spread_mrad * dist / 1000.0
+		return target_pos + Vector3(
+			randf_range(-spread_m, spread_m),
+			randf_range(-spread_m * 0.35, spread_m * 0.35),
+			randf_range(-spread_m, spread_m)
+		)
 	return super(target_pos)
 
 
@@ -361,12 +377,7 @@ func reset() -> void:
 func update_debug_label() -> void:
 	super()
 	if label != null:
-		label.text += "\nSoldier: %s\nRole: %s\nCover: %s\nDefend: %s" % [
-			SoldierState.keys()[soldier_state],
-			SoldierRole.keys()[squad_role],
-			"YES" if at_cover else "no",
-			"YES" if defensive_mode else "no"
-		]
+		label.text += "\n%s" % SoldierRole.keys()[squad_role]
 
 func reset_debug_label() -> void:
 	if label != null:

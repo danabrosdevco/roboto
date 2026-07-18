@@ -11,6 +11,10 @@
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 0)
 script = ExtResource("1_cg26h")
 weapon_type = 1
+base_damage = 45
+min_damage = 30
+max_effective_range = 45.0
+magazine_size = 4
 muzzle_flash = NodePath("Shotgun_22/MuzzleFlash")
 muzzle_origin = NodePath("Shotgun_22/Muzzle")
 shot_audio = NodePath("Shotgun_22/ShotgunShot")

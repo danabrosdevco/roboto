@@ -41,7 +41,7 @@ func get_nearest_hostile(requesting_ai: AI) -> CharacterBody3D:
 
 	# Check the player first
 	if player != null and player.alive:
-		if Enums.are_hostile(req_faction, Enums.Factions.PLAYER):
+		if Enums.are_hostile(req_faction, player.faction):
 			var d = requesting_ai.global_position.distance_squared_to(player.global_position)
 			if d < best_dist:
 				best_dist = d

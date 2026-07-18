@@ -23,14 +23,30 @@ class_name Enemy
 @export var reposition_distance: float = 2.0
 @export var advance_distance: float = 3.0
 @export var fallback_distance: float = 1.25
-@export var max_fire_distance: float = 30
-@export var max_accuracy: float = 0.90
-@export var min_accuracy: float = 0.5
+# max_fire_distance removed — use weapon.max_effective_range instead
 @export var bits: int = 10
 @export var equipment_slots: Array[AIEquipmentSlot] = []
 @export var combat_recon_time: float = 1.65
+# Display name shown in the debug label — e.g. "Shotgun Grunt", "Sniper", "Heavy"
+@export var soldier_name: String = "Enemy"
+
+# ── ACCURACY ──────────────────────────────────
+# accuracy_skill: static per-character. How close this AI shoots to the
+# weapon's physical spread limit. Degraded at runtime by signal_integrity.
+@export var accuracy_skill: float = 0.75
+
+# ── SIGNAL INTEGRITY ──────────────────────────
+# The health of this robot's networked systems.
+# Degraded by suppressing fire, EMP, jamming. Recovers passively.
+# Drives a cascade of behavioral degradation.
+@export var signal_integrity: float = 1.0
+@export var signal_recovery_rate: float = 0.08   # per second, passive recovery
+@export var signal_resistance: float = 1.0       # damage multiplier. >1 = more resistant
+
 # Never enters passive mode — set true on soldiers with active squad objectives
 @export var always_active: bool = false
+# Detection range used for signal-degraded sensor checks (match your Area3D radius)
+@export var detection_radius: float = 20.0
 
 # ── ENUMS ─────────────────────────────────────
 enum AIState { COMBAT, PATROL, SEARCH, IDLE, DEAD, PASSIVE }
@@ -38,6 +54,13 @@ enum MovementState { NONE, MOVING, LEAPING, ADVANCING, CHASING }
 enum WeaponState { FIRE, RELOAD, AIM, IDLE }
 enum CombatOptions { MOVE, AIM, FIRE }
 enum MovementOptions { ADVANCE, REPOSITION, FALLBACK, LEAP, CHASE }
+
+# Signal degradation stages
+enum SignalState { CLEAN, FUZZED, DEGRADED, CRITICAL, EKILL }
+const SIGNAL_FUZZED: float   = 0.75  # below here: accuracy penalty kicks in
+const SIGNAL_DEGRADED: float = 0.50  # below here: sensors halved, movement stutters
+const SIGNAL_CRITICAL: float = 0.25  # below here: ignores squad orders, erratic
+const SIGNAL_EKILL: float    = 0.01  # below here: fully disabled
 
 @export var DefaultAIState: AIState
 @export var AllowedMovementOptions: Array[MovementOptions]
@@ -108,9 +131,14 @@ var _stuck_timer: float = 0.0
 var _stuck_last_position: Vector3 = Vector3.ZERO
 var _stuck_retry_count: int = 0
 
-# How long to tolerate no LOS to target before actively seeking a new angle
-const NO_LOS_PATIENCE: float = 2.5
+# ── NO-LOS TIMER ──────────────────────────────
+const NO_LOS_PATIENCE: float = 4.0
 var _no_los_timer: float = 0.0
+
+# ── SIGNAL WORKING STATE ──────────────────────
+# Tracks stuttering for DEGRADED movement hesitation
+var _signal_stutter_timer: float = 0.0
+const SIGNAL_STUTTER_INTERVAL: float = 0.8  # how often to check for stutter
 
 signal combat_triggered(ai: AI)
 
@@ -136,6 +164,14 @@ func _physics_process(delta: float) -> void:
 	if not frame_waited or ai_state == AIState.DEAD:
 		return
 	if player == null:
+		return
+
+	# E-KILL: electronically disabled — freeze in place, do nothing
+	if get_signal_state() == SignalState.EKILL:
+		_enter_ekill()
+		# Still apply gravity so we don't float
+		handle_gravity(delta)
+		move_and_slide()
 		return
 
 	var dist_sq = global_position.distance_squared_to(player.global_position)
@@ -218,6 +254,8 @@ func handle_time_passing(delta):
 
 	if ai_state == AIState.COMBAT and not equipment_slots.is_empty():
 		_tick_equipment(delta)
+
+	_tick_signal(delta)
 
 
 
@@ -308,7 +346,7 @@ func handle_chasing(delta):
 
 	# Stop chasing once we're close enough to engage from here
 	var dist_to_target = global_position.distance_to(combat_target.global_position)
-	if dist_to_target <= max_fire_distance * 0.6:
+	if dist_to_target <= (weapon.max_effective_range if weapon else 30.0) * 0.7:
 		movement_state = MovementState.NONE
 		velocity.x = 0
 		velocity.z = 0
@@ -353,20 +391,24 @@ func handle_weapon_logic(delta):
 	if ai_state != AIState.COMBAT:
 		weapon_state = WeaponState.IDLE
 		return
+	if weapon == null:
+		return
 	if weapon_time >= weapon_recon_time:
 		reconsider_weapon()
+	var dist = global_position.distance_to(weapon_target)
+	var max_range = weapon.max_effective_range if weapon else 30.0
+	var min_range = weapon.min_effective_range if weapon else 0.0
 	match weapon_state:
 		WeaponState.IDLE:
 			weapon_state = WeaponState.AIM
 		WeaponState.AIM:
-			var dist = global_position.distance_to(weapon_target)
-			if fire_time <= 0 and dist <= max_fire_distance:
-				if weapon:
-					if weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
-						if combat_target != null and is_path_clear(global_position, combat_target.global_position):
-							weapon_state = WeaponState.FIRE
-					elif combat_target != null and is_path_clear(global_position, combat_target.global_position):
+			# Check both min and max range + LOS
+			if fire_time <= 0 and dist <= max_range and dist >= min_range:
+				if weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
+					if combat_target != null and is_path_clear(global_position, combat_target.global_position):
 						weapon_state = WeaponState.FIRE
+				elif combat_target != null and is_path_clear(global_position, combat_target.global_position):
+					weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
 				fire()
@@ -798,6 +840,8 @@ func reset():
 	_stuck_last_position = Vector3.ZERO
 	_stuck_retry_count = 0
 	_no_los_timer = 0.0
+	signal_integrity = 1.0
+	_signal_stutter_timer = 0.0
 	_equipment_cooldowns.clear()
 	_target_stationary_time = 0.0
 	_target_last_position = Vector3.ZERO
@@ -848,6 +892,64 @@ func receive_stimulus(
 # ─────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────
+
+# ─────────────────────────────────────────────
+# SIGNAL INTEGRITY
+# ─────────────────────────────────────────────
+func get_signal_state() -> SignalState:
+	if signal_integrity <= SIGNAL_EKILL:
+		return SignalState.EKILL
+	elif signal_integrity <= SIGNAL_CRITICAL:
+		return SignalState.CRITICAL
+	elif signal_integrity <= SIGNAL_DEGRADED:
+		return SignalState.DEGRADED
+	elif signal_integrity <= SIGNAL_FUZZED:
+		return SignalState.FUZZED
+	return SignalState.CLEAN
+
+# Called by near-miss suppression, EMP grenades, jamming, etc.
+func receive_signal_damage(amount: float) -> void:
+	var actual = amount / maxf(signal_resistance, 0.01)
+	signal_integrity = maxf(0.0, signal_integrity - actual)
+	if signal_integrity <= SIGNAL_EKILL:
+		_enter_ekill()
+
+func _enter_ekill() -> void:
+	# Robot is electronically disabled — physically intact, non-functional.
+	# Recovers automatically when signal_integrity rises above SIGNAL_EKILL.
+	movement_state = MovementState.NONE
+	velocity.x = 0
+	velocity.z = 0
+	velocity.y = 0
+	weapon_state = WeaponState.IDLE
+
+func _tick_signal(delta: float) -> void:
+	# Passive signal recovery
+	if signal_integrity < 1.0:
+		signal_integrity = minf(1.0, signal_integrity + signal_recovery_rate * delta)
+
+	# DEGRADED: movement hesitation — occasional stutter
+	if get_signal_state() == SignalState.DEGRADED:
+		_signal_stutter_timer += delta
+		if _signal_stutter_timer >= SIGNAL_STUTTER_INTERVAL:
+			_signal_stutter_timer = 0.0
+			if randf() < 0.35:  # 35% chance to stutter each interval
+				velocity.x = 0
+				velocity.z = 0
+
+func _can_receive_orders() -> bool:
+	# CRITICAL or E-KILL: robot ignores squad orders
+	var state = get_signal_state()
+	return state != SignalState.CRITICAL and state != SignalState.EKILL
+
+func get_effective_detection_radius() -> float:
+	match get_signal_state():
+		SignalState.FUZZED:    return detection_radius * 0.85
+		SignalState.DEGRADED:  return detection_radius * 0.5
+		SignalState.CRITICAL:  return detection_radius * 0.2
+		SignalState.EKILL:     return 0.0
+		_:                     return detection_radius
+
 func get_faction():
 	return faction
 
@@ -871,15 +973,15 @@ func is_path_clear(from: Vector3, to: Vector3) -> bool:
 	return not result
 
 func update_debug_label():
-	var target_str = combat_target.name if combat_target != null else "none"
-	label.text = "AI: %s\nFaction: %s\nMove: %s\nWeapon: %s\nTarget: %s\nNoLOS: %.1fs" % [
-		AIState.keys()[ai_state],
-		Enums.Factions.keys()[faction],
-		MovementState.keys()[movement_state],
-		WeaponState.keys()[weapon_state],
-		target_str,
-		_no_los_timer
+	var sig_str = SignalState.keys()[get_signal_state()]
+	var faction_str = Enums.Factions.keys()[faction]
+	label.text = "%s | %s\nHP: %d  Sig: %s" % [
+		soldier_name,
+		faction_str,
+		health,
+		sig_str
 	]
+
 
 func force_check_detection():
 	var shape = detection.get_child(0).shape
@@ -899,12 +1001,23 @@ func force_check_detection():
 func _on_detection_body_entered(body: Node3D) -> void:
 	if ai_state == AIState.DEAD:
 		return
+	# E-KILL and CRITICAL: sensors too degraded to detect anything
+	var sig_state = get_signal_state()
+	if sig_state == SignalState.EKILL or sig_state == SignalState.CRITICAL:
+		return
 	if not (body is Player or body is Enemy):
 		return
 	if ai_state == AIState.COMBAT and combat_target == body:
 		return
 	if not _is_hostile(body):
 		return
+	# When signal is degraded, apply a soft range cap on top of the Area3D.
+	# CLEAN state: Area3D collision shape handles range normally.
+	# FUZZED/DEGRADED: cap at reduced radius.
+	if sig_state != SignalState.CLEAN:
+		var eff_range = get_effective_detection_radius()
+		if global_position.distance_to(body.global_position) > eff_range:
+			return
 	if is_path_clear(global_position, body.global_position):
 		trigger_combat(body)
 		if stimulus_manager != null:
@@ -934,17 +1047,23 @@ func trigger_combat(body: AI):
 # ─────────────────────────────────────────────
 func get_inaccurate_target(target_pos: Vector3) -> Vector3:
 	var dist := global_position.distance_to(weapon_target)
-	if dist > max_fire_distance:
-		return target_pos + get_random_spread(dist, min_accuracy)
-	var t = clamp(dist / max_fire_distance, 0.0, 1.0)
-	var accuracy = lerp(max_accuracy, min_accuracy, t)
-	return target_pos + get_random_spread(dist, accuracy)
+	if weapon == null:
+		return target_pos
 
-func get_random_spread(distance: float, accuracy: float) -> Vector3:
-	var spread_strength := (1.0 - accuracy)
-	var max_offset := spread_strength * (distance * 0.1)
-	return Vector3(
-		randf_range(-max_offset, max_offset),
-		randf_range(-max_offset, max_offset),
-		randf_range(-max_offset, max_offset)
+	# effective_accuracy_skill = static skill degraded by signal integrity
+	# signal_integrity 1.0 = full skill, 0.0 = minimum (0.1 floor)
+	var effective_skill = accuracy_skill * maxf(signal_integrity, 0.1)
+
+	# mrad spread: weapon defines physical limit, skill scales it up (worse AI = more spread)
+	# effective_skill 1.0 = base spread, 0.5 = 2x spread, 0.25 = 4x spread
+	var spread_mrad = weapon.ai_spread_mrad / effective_skill
+
+	# Convert mrad to metres at this distance
+	var spread_m = spread_mrad * dist / 1000.0
+
+	# Less vertical spread than horizontal (body centre is wide, height is tall)
+	return target_pos + Vector3(
+		randf_range(-spread_m, spread_m),
+		randf_range(-spread_m * 0.35, spread_m * 0.35),
+		randf_range(-spread_m, spread_m)
 	)
