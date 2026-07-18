@@ -26,6 +26,7 @@ reload_delays = Array[float]([0.6, 0.6, 0.35, 0.3, 0.3])
 rifle_stream_player = NodePath("RifleShot")
 click_stream_player = NodePath("Click")
 firemode = 1
+damage = 65
 recoil_curve = ExtResource("4_ji5lj")
 FIRE_RATE = 0.075
 

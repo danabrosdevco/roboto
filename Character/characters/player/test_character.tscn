@@ -22,6 +22,7 @@ obstruction_raycast = NodePath("Camera3D/ObstructionRaycast")
 interact_raycast = NodePath("Camera3D/InteractRaycast")
 health_sfx = NodePath("HealthSFX")
 shards_sfx = NodePath("ShardSFX")
+health = 100
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_8ja6s")

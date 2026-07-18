@@ -781,8 +781,8 @@ func apply_damage(damage, source) -> void:
 		i.activate()
 
 func die():
-	if not alive:
-		return
+	#if not alive:
+		#return
 	if stimulus_manager != null:
 		stimulus_manager.emit_stimulus(
 			StimulusManager.StimulusType.ALLY_DIED,

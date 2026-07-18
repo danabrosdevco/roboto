@@ -1,4 +1,4 @@
-[gd_scene load_steps=1366 format=4 uid="uid://rnm8xsxcwbsx"]
+[gd_scene load_steps=1364 format=4 uid="uid://rnm8xsxcwbsx"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_afbfh"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_6gcxp"]
@@ -7,9 +7,7 @@
 [ext_resource type="Material" path="res://textures/PSX_Textures/concrete_7.tres" id="5_ape54"]
 [ext_resource type="Texture2D" uid="uid://b6q2mm5c6hi4i" path="res://textures/PSX_Textures/concrete_6.png" id="6_exybl"]
 [ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="8_tebvu"]
-[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="9_o7ogh"]
 [ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="9_rgdym"]
-[ext_resource type="Resource" uid="uid://cavuq6s132jy8" path="res://Character/characters/ai/equipment/ai_equipment_grenade.tres" id="10_jtxqm"]
 [ext_resource type="PackedScene" path="res://Env/world_objects/squad_objective_point.tscn" id="12_y5xdw"]
 [ext_resource type="PackedScene" path="res://Env/world_objects/cover_point_spawner.tscn" id="13_3t0w6"]
 [ext_resource type="Script" path="res://Env/world_objects/cover_point.gd" id="14_jydu6"]
@@ -5024,84 +5022,44 @@ squad_members = [NodePath("Soldier_Shotgun"), NodePath("Soldier_Shotgun2"), Node
 target_objective = NodePath("../../OBJ1")
 default_objective = 2
 
-[node name="Soldier_Shotgun" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit", "visible_pieces") instance=ExtResource("8_tebvu")]
+[node name="Soldier_Shotgun" parent="NavigationRegion3D/Squad2" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9608, 2.69966, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-visible_pieces = []
 faction = 2
-equipment_slots = Array[ExtResource("9_o7ogh")]([ExtResource("10_jtxqm")])
 
-[node name="Soldier_Shotgun2" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit", "visible_pieces") instance=ExtResource("8_tebvu")]
+[node name="Soldier_Shotgun2" parent="NavigationRegion3D/Squad2" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.69966, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-visible_pieces = []
 faction = 2
-equipment_slots = Array[ExtResource("9_o7ogh")]([ExtResource("10_jtxqm")])
 
-[node name="Soldier_Shotgun3" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit", "visible_pieces") instance=ExtResource("8_tebvu")]
+[node name="Soldier_Shotgun3" parent="NavigationRegion3D/Squad2" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.78838, 2.69966, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-visible_pieces = []
 faction = 2
-equipment_slots = Array[ExtResource("9_o7ogh")]([ExtResource("10_jtxqm")])
 
-[node name="Soldier_Shotgun4" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit", "visible_pieces") instance=ExtResource("8_tebvu")]
+[node name="Soldier_Shotgun4" parent="NavigationRegion3D/Squad2" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5778, 2.69966, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-visible_pieces = []
 faction = 2
-equipment_slots = Array[ExtResource("9_o7ogh")]([ExtResource("10_jtxqm")])
 
-[node name="Soldier_Shotgun5" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit", "visible_pieces") instance=ExtResource("8_tebvu")]
+[node name="Soldier_Shotgun5" parent="NavigationRegion3D/Squad2" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.7513, 2.69966, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-visible_pieces = []
 faction = 2
-equipment_slots = Array[ExtResource("9_o7ogh")]([ExtResource("10_jtxqm")])
 
 [node name="Squad" parent="NavigationRegion3D" node_paths=PackedStringArray("squad_members", "target_objective") instance=ExtResource("9_rgdym")]
 squad_members = [NodePath("Soldier_Shotgun"), NodePath("Soldier_Shotgun2"), NodePath("Soldier_Shotgun3"), NodePath("Soldier_Shotgun4"), NodePath("Soldier_Shotgun5")]
 target_objective = NodePath("../../OBJ1")
 
-[node name="Soldier_Shotgun" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit", "visible_pieces") instance=ExtResource("8_tebvu")]
+[node name="Soldier_Shotgun" parent="NavigationRegion3D/Squad" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.73589, 2.70758, 37.0445)
-particle_effects_die = []
-particle_effects_hit = []
-visible_pieces = []
-equipment_slots = Array[ExtResource("9_o7ogh")]([ExtResource("10_jtxqm")])
 
-[node name="Soldier_Shotgun2" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit", "visible_pieces") instance=ExtResource("8_tebvu")]
+[node name="Soldier_Shotgun2" parent="NavigationRegion3D/Squad" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.04741, 2.70758, 37.0445)
-particle_effects_die = []
-particle_effects_hit = []
-visible_pieces = []
-equipment_slots = Array[ExtResource("9_o7ogh")]([ExtResource("10_jtxqm")])
 
-[node name="Soldier_Shotgun3" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit", "visible_pieces") instance=ExtResource("8_tebvu")]
+[node name="Soldier_Shotgun3" parent="NavigationRegion3D/Squad" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.70758, 37.0445)
-particle_effects_die = []
-particle_effects_hit = []
-visible_pieces = []
-equipment_slots = Array[ExtResource("9_o7ogh")]([ExtResource("10_jtxqm")])
 
-[node name="Soldier_Shotgun4" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit", "visible_pieces") instance=ExtResource("8_tebvu")]
+[node name="Soldier_Shotgun4" parent="NavigationRegion3D/Squad" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.4553, 2.70758, 39.6005)
-particle_effects_die = []
-particle_effects_hit = []
-visible_pieces = []
-equipment_slots = Array[ExtResource("9_o7ogh")]([ExtResource("10_jtxqm")])
 
-[node name="Soldier_Shotgun5" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit", "visible_pieces") instance=ExtResource("8_tebvu")]
+[node name="Soldier_Shotgun5" parent="NavigationRegion3D/Squad" instance=ExtResource("8_tebvu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6501, 2.70758, 39.6005)
-particle_effects_die = []
-particle_effects_hit = []
-visible_pieces = []
-equipment_slots = Array[ExtResource("9_o7ogh")]([ExtResource("10_jtxqm")])
 
 [node name="WorldEnvironment" parent="." instance=ExtResource("32_12g0t")]
 environment = SubResource("Environment_6x7du")
