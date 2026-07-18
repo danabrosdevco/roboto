@@ -72,7 +72,7 @@ func get_hostiles_in_radius(requesting_ai: AI, radius: float) -> Array:
 	var radius_sq = radius * radius
 	var req_faction = requesting_ai.faction
 
-	if player != null and player.alive:
+	if player != null and player.alive and player.spectator_mode == false:
 		if Enums.are_hostile(req_faction, Enums.Factions.PLAYER):
 			if requesting_ai.global_position.distance_squared_to(player.global_position) <= radius_sq:
 				result.append(player)

@@ -55,6 +55,12 @@ var current_interactible : Interactible
 var alive = true
 var last_bonfire
 
+# ── SPECTATOR MODE ────────────────────────────
+# Toggle with F4. Free-flying camera, not targeted by AI, no collision.
+var spectator_mode: bool = false
+const SPECTATOR_SPEED: float = 12.0
+const SPECTATOR_FAST_MULT: float = 3.0
+
 
 # WEAPONS #
 var is_ads := false
@@ -111,18 +117,23 @@ func switch_weapon_direct(index: int):
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		# Update the clean look direction, not the actual camera yet
-		look_direction.y -= event.relative.x * MOUSE_SENS  # yaw
+		look_direction.y -= event.relative.x * MOUSE_SENS
 		look_direction.x = clamp(
-			look_direction.x - event.relative.y * MOUSE_SENS, 
-			-1.5, 
+			look_direction.x - event.relative.y * MOUSE_SENS,
+			-1.5,
 			1.5
 		)
-	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	elif event is InputEventKey and event.pressed:
+		if event.keycode == KEY_ESCAPE:
+			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		elif event.keycode == KEY_F4:
+			_toggle_spectator()
 
 
 func _physics_process(delta: float) -> void:
+	if spectator_mode == true:
+		_handle_spectator(delta)
+		return
 	scanner_timer -= delta
 	check_interactible()
 	if use_gravity == true:
@@ -130,6 +141,64 @@ func _physics_process(delta: float) -> void:
 	handle_input(delta)
 	handle_movement(delta)
 	handle_camera_and_weapon(delta)
+	move_and_slide()
+
+func _toggle_spectator() -> void:
+	spectator_mode = not spectator_mode
+	# Find collision shape safely by type rather than hardcoded name
+	var col_shape: CollisionShape3D = null
+	for child in get_children():
+		if child is CollisionShape3D:
+			col_shape = child
+			break
+	if spectator_mode:
+		if col_shape:
+			col_shape.set_deferred("disabled", true)
+		faction = Enums.Factions.NEUTRAL
+		velocity = Vector3.ZERO
+		use_gravity = false
+		if hud_weapon:
+			hud_weapon.visible = false
+	else:
+		if col_shape:
+			col_shape.set_deferred("disabled", false)
+		faction = Enums.Factions.PLAYER
+		velocity = Vector3.ZERO
+		use_gravity = true
+		if hud_weapon:
+			hud_weapon.visible = true
+
+func _handle_spectator(delta: float) -> void:
+	# Mouse look
+	var look_basis = Basis()
+	look_basis = look_basis.rotated(Vector3.UP, look_direction.y)
+	look_basis = look_basis.rotated(look_basis.x, look_direction.x)
+
+	# Horizontal movement — existing inputs
+	var input2 := Input.get_vector("ui_left", "ui_right", "ui_down", "ui_up")
+	var dir = look_basis.x * input2.x - look_basis.z * input2.y
+
+	# Vertical — Space up, Ctrl down. Shift = fast.
+	var fast = Input.is_key_pressed(KEY_SHIFT)
+	var speed = SPECTATOR_SPEED * (SPECTATOR_FAST_MULT if fast else 1.0)
+
+	if dir.length_squared() > 0.001:
+		dir = dir.normalized() * speed
+		velocity.x = dir.x
+		velocity.z = dir.z
+	else:
+		velocity.x = move_toward(velocity.x, 0.0, speed)
+		velocity.z = move_toward(velocity.z, 0.0, speed)
+
+	if Input.is_action_pressed("jump"):
+		velocity.y = speed
+	elif Input.is_key_pressed(KEY_CTRL):
+		velocity.y = -speed
+	else:
+		velocity.y = move_toward(velocity.y, 0.0, speed)
+
+	# Apply camera rotation
+	cam.global_transform.basis = look_basis
 	move_and_slide()
 
 func check_interactible():
@@ -153,6 +222,8 @@ func check_interactible():
 
 
 func handle_gravity(delta: float) -> void:
+	if spectator_mode == true:
+		return
 	was_grounded = is_grounded
 	is_grounded = is_on_floor()
 	if not is_grounded:

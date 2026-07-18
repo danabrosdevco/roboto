@@ -498,7 +498,7 @@ func reconsider_target() -> void:
 	var new_target: CharacterBody3D = null
 	if ai_manager != null:
 		new_target = ai_manager.get_nearest_hostile(self)
-	elif player != null and Enums.are_hostile(faction, Enums.Factions.PLAYER):
+	elif player != null and _is_hostile(player):
 		new_target = player
 
 	if new_target != null:
@@ -853,7 +853,7 @@ func get_faction():
 
 func _is_hostile(body: Node3D) -> bool:
 	if body is Player:
-		return Enums.are_hostile(faction, Enums.Factions.PLAYER)
+		return Enums.are_hostile(faction, (body as Player).faction)
 	if body is Enemy:
 		return Enums.are_hostile(faction, (body as Enemy).faction)
 	return false

@@ -57,7 +57,7 @@ _no_los_timer / NO_LOS_PATIENCE
   Currently 2.5s — fires too aggressively on soldiers that are just
   waiting for a shot window. Recommend bumping to 4.0-5.0s so soldiers
   hold position a bit longer before repositioning. Edit in enemy.gd:
-    const NO_LOS_PATIENCE: float = 4.0
+	const NO_LOS_PATIENCE: float = 4.0
 
 advance_distance
   Controls how far each ADVANCE step moves. Currently 3.0m. For longer
@@ -196,7 +196,7 @@ ARCHITECTURE NOTES FOR REFERENCE
 
 CLASS HIERARCHY
   AI → Enemy → Soldier → [NCO, Heavy, Engineer]
-             → [Drone - no navmesh, Vector3 steering]
+			 → [Drone - no navmesh, Vector3 steering]
 
 KEY RESPONSIBILITIES
   GameMaster      - strategic objectives, mission state, spawn waves
