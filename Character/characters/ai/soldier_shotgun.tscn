@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://t51su0vouiu6"]
+[gd_scene load_steps=20 format=3 uid="uid://t51su0vouiu6"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_nty0a"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
@@ -7,18 +7,17 @@
 [ext_resource type="Resource" uid="uid://cavuq6s132jy8" path="res://Character/characters/ai/equipment/ai_equipment_grenade.tres" id="3_3i6e3"]
 [ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ic4jn"]
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t0xuv"]
-[ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_yr7d0"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_t1gg6"]
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
 [ext_resource type="PackedScene" uid="uid://viqumhnkw2cx" path="res://Character/weapon/ai-wep_shotgun.tscn" id="8_utu75"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
+[ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="11_n4p1p"]
+[ext_resource type="Script" path="res://Character/faction_livery.gd" id="14_agla4"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_jrkgo"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_negfm"]
-albedo_texture = ExtResource("6_yr7d0")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 25.0
@@ -28,6 +27,9 @@ radius = 0.2
 height = 0.6
 radial_segments = 6
 rings = 6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6qgus"]
+albedo_texture = ExtResource("11_n4p1p")
 
 [node name="Soldier_Shotgun" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
 script = ExtResource("1_nty0a")
@@ -56,7 +58,7 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
 mesh = SubResource("CapsuleMesh_jrkgo")
-material = SubResource("StandardMaterial3D_negfm")
+material = ExtResource("8_pr6gp")
 
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.22588, 0)
@@ -77,10 +79,18 @@ shape = SubResource("SphereShape3D_mkxqd")
 [node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.403749)
 mesh = SubResource("CapsuleMesh_3rhyt")
+material = SubResource("StandardMaterial3D_6qgus")
 
 [node name="SparkBurst" parent="." instance=ExtResource("9_pm84i")]
 
 [node name="OilSpray" parent="." instance=ExtResource("10_ukmfb")]
+
+[node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("14_agla4")
+base_material = ExtResource("8_pr6gp")
+pieces = [NodePath("../CSGMesh3D")]
+paint_blend = 1.0
+marker_energy = 6.0
 
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]
