@@ -1,5 +1,6 @@
 extends Control
 class_name HUD
+@export var player: Player
 @export var scan_effect_scene: PackedScene
 @export var enemy_marker_scene: PackedScene
 @export var health_label: Label

@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://Character/components/command.gd" id="1_v7q4x"]
 
 [node name="CommandMarker" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.711726, 0)
 script = ExtResource("1_v7q4x")
 
 [node name="tree_small_fall2" parent="." instance=ExtResource("1_tbn17")]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://t51su0vouiu6"]
+[gd_scene load_steps=24 format=3 uid="uid://t51su0vouiu6"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_nty0a"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
@@ -8,14 +8,35 @@
 [ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ic4jn"]
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t0xuv"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_t1gg6"]
+[ext_resource type="Shader" path="res://Character/faction_metal.gdshader" id="8_27chb"]
 [ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
 [ext_resource type="PackedScene" uid="uid://viqumhnkw2cx" path="res://Character/weapon/ai-wep_shotgun.tscn" id="8_utu75"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
+[ext_resource type="Texture2D" uid="uid://bvk26224sihon" path="res://2d_assets/metal textures poly.com/metal_plate_02_diff_4k.jpg" id="9_qbqh2"]
+[ext_resource type="Texture2D" uid="uid://o8ik6rntdl2v" path="res://2d_assets/metal textures poly.com/metal_plate_02_disp_4k.png" id="10_tx84r"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
 [ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="11_n4p1p"]
 [ext_resource type="Script" path="res://Character/faction_livery.gd" id="14_agla4"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_k6f72"]
+render_priority = 0
+shader = ExtResource("8_27chb")
+shader_parameter/use_normal_map = false
+shader_parameter/normal_scale = 1.0
+shader_parameter/derive_mask_from_albedo = true
+shader_parameter/paint_band_center = 0.45
+shader_parameter/paint_band_width = 0.425
+shader_parameter/base_tint = Color(1, 1, 1, 1)
+shader_parameter/metallic = 0.4
+shader_parameter/roughness = 0.85
+shader_parameter/faction_color = Color(0.7, 0.35, 0.02, 1)
+shader_parameter/paint_blend = 1.0
+shader_parameter/marker_energy = 6.0
+shader_parameter/shutdown = 0.0
+shader_parameter/albedo_tex = ExtResource("9_qbqh2")
+shader_parameter/normal_tex = ExtResource("10_tx84r")
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_jrkgo"]
 
@@ -35,7 +56,7 @@ albedo_texture = ExtResource("11_n4p1p")
 script = ExtResource("1_nty0a")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("aiweapon")
-label = NodePath("Label3D")
+label = NodePath("DebugLabel")
 bark = NodePath("Bark")
 detection = NodePath("Detection")
 particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
@@ -57,11 +78,13 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+material_override = SubResource("ShaderMaterial_k6f72")
 mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
 
-[node name="Label3D" type="Label3D" parent="."]
+[node name="DebugLabel" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.22588, 0)
+visible = false
 billboard = 1
 text = "Text"
 font_size = 48

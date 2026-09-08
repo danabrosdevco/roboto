@@ -9,6 +9,11 @@ class_name Soldier
 #   Enemy  — physics, nav, weapons, gravity, detection, timers
 #   Soldier — WHAT to do in combat (cover, suppress, bound)
 #             and HOW to respond to squad orders
+#
+# Key design: reconsider_combat() is overridden to block
+# Enemy's random action rolling while a soldier state is
+# active. This lets cover-seeking / bounding / suppressing
+# complete uninterrupted.
 # ─────────────────────────────────────────────
 
 enum SoldierState {
@@ -26,37 +31,27 @@ var squad_role: SoldierRole = SoldierRole.NONE
 # Reference back to the squad — set by Squad on registration
 var squad: Squad = null
 
+# ── PLAYER CONTROL ────────────────────────────
+# True while the player has assumed control of this body. Every AI decision
+# path checks this. See possession.gd.
+var player_controlled: bool = false
+
 # When true: soldier holds position near objective, does not advance
 # or chase, fires from cover only. Set by Squad on DEFEND objective.
 var defensive_mode: bool = false
-# Where the defence is anchored — repositioning stays inside this radius.
-var defensive_anchor: Vector3 = Vector3.ZERO
-@export var defensive_perimeter: float = 7.0
 
 # ── Cover ──
 var current_cover_point: CoverPoint = null
 var at_cover: bool = false
 @export var cover_arrival_threshold: float = 1.2
 @export var cover_search_radius: float = 25.0
-# Role to apply once cover is reached. Lets the squad say "suppress" and
-# have the soldier get into cover first instead of standing in the open.
-var _pending_role_after_cover: SoldierRole = SoldierRole.NONE
 
 # ── Suppression ──
 @export var suppress_duration: float = 3.0
 var suppress_timer: float = 0.0
-## Position being suppressed. Blind fire goes here when LOS is lost.
-var suppress_position: Vector3 = Vector3.ZERO
-## Spread multiplier when firing at a position we cannot currently see.
-@export var blind_fire_spread_multiplier: float = 4.0
-
 @export var suppressed_duration: float = 2.5
 var suppressed_timer: float = 0.0
 @export var suppressed_accuracy_penalty: float = 0.4
-## Signal integrity below which incoming fire pins this soldier.
-## Matches Enemy.SIGNAL_DEGRADED by default (literal, since export defaults
-## must be constant expressions).
-@export var suppressed_trigger: float = 0.50
 
 # ── Bounding ──
 var bound_partner: Soldier = null
@@ -70,8 +65,8 @@ signal bound_step_complete(soldier: Soldier)
 
 # ─────────────────────────────────────────────
 # OVERRIDE: reconsider_combat
-# Blocks Enemy's weighted action rolling while a soldier state is active,
-# so cover-seeking / bounding / suppressing complete uninterrupted.
+# Blocks Enemy's random action rolling while a
+# soldier state is active. This is the core fix.
 # ─────────────────────────────────────────────
 func reconsider_combat() -> void:
 	if soldier_state != SoldierState.NONE:
@@ -84,6 +79,10 @@ func reconsider_combat() -> void:
 # OVERRIDE: _physics_process
 # ─────────────────────────────────────────────
 func _physics_process(delta: float) -> void:
+	# Player-driven: skip the entire AI stack. PossessionController calls
+	# drive() from the Player's own _physics_process instead.
+	if player_controlled:
+		return
 	super(delta)
 	if not frame_waited or ai_state == AIState.DEAD or ai_state == AIState.PASSIVE:
 		return
@@ -110,108 +109,38 @@ func handle_soldier_state(delta: float) -> void:
 
 
 # ─────────────────────────────────────────────
-# OVERRIDE: move_to
-# `at_cover` was only ever cleared in release_cover(), so a soldier pushed
-# off its cover kept believing it was in cover forever and never re-sought.
-# ─────────────────────────────────────────────
-func move_to(pos: Vector3) -> void:
-	if at_cover and current_cover_point != null:
-		if pos.distance_to(current_cover_point.global_position) > cover_arrival_threshold:
-			release_cover()
-	super(pos)
-
-
-# ─────────────────────────────────────────────
 # COVER SEEKING
 # ─────────────────────────────────────────────
-func enter_cover_seeking(pending_role: SoldierRole = SoldierRole.NONE) -> void:
-	# Already on the way to a claimed point. Re-running find_best_cover_point
-	# here would skip our own point (we marked it occupied) and send us to a
-	# different one — which is the exact bug the DEFEND path used to have.
-	if soldier_state == SoldierState.COVER_SEEKING and current_cover_point != null:
-		if pending_role != SoldierRole.NONE:
-			_pending_role_after_cover = pending_role
-		return
-	if at_cover and current_cover_point != null:
-		if pending_role != SoldierRole.NONE:
-			_apply_role_now(pending_role)
-		return
-
+func enter_cover_seeking() -> void:
 	var cp = find_best_cover_point()
 	if cp == null:
-		_pending_role_after_cover = SoldierRole.NONE
 		change_soldier_state(SoldierState.NONE)
-		# No cover available — apply the role from here rather than idling.
-		if pending_role != SoldierRole.NONE:
-			_apply_role_now(pending_role)
 		return
-	_pending_role_after_cover = pending_role
 	current_cover_point = cp
-	cp.mark_occupied(self)   # claim it now so squadmates don't pick the same one
 	change_soldier_state(SoldierState.COVER_SEEKING)
-	super.move_to(cp.global_position)
-
-## Assign a specific cover point (used by Squad's DEFEND orders) and route
-## through COVER_SEEKING so at_cover actually gets set on arrival.
-func order_move_to_cover(cp: CoverPoint, pending_role: SoldierRole = SoldierRole.NONE) -> void:
-	if cp == null or not _can_receive_orders():
-		return
-	release_cover()
-	current_cover_point = cp
-	cp.mark_occupied(self)
-	_pending_role_after_cover = pending_role
-	change_ai_state(AIState.PATROL)
-	change_soldier_state(SoldierState.COVER_SEEKING)
-	super.move_to(cp.global_position)
+	move_to(current_cover_point.global_position)
 
 func tick_cover_seeking() -> void:
 	if current_cover_point == null:
 		change_soldier_state(SoldierState.NONE)
 		return
-	# Was using is_target_reached() while everything else used
-	# is_navigation_finished(), and cover_arrival_threshold went unused.
-	var arrived = global_position.distance_to(current_cover_point.global_position) <= cover_arrival_threshold
-	if not arrived and not nav_agent.is_navigation_finished():
-		return
-	if not arrived:
-		# Nav gave up short of the point — take it anyway if we're close-ish,
-		# otherwise drop the claim and re-plan.
-		if global_position.distance_to(current_cover_point.global_position) > cover_arrival_threshold * 3.0:
-			release_cover()
-			change_soldier_state(SoldierState.NONE)
-			var pending = _pending_role_after_cover
-			_pending_role_after_cover = SoldierRole.NONE
-			if pending != SoldierRole.NONE:
-				_apply_role_now(pending)
-			return
-	at_cover = true
-	movement_state = MovementState.NONE
-	if current_cover_point.cover_direction.length_squared() > 0.0001:
-		look_target = current_cover_point.global_position + current_cover_point.cover_direction * 5.0
-	change_soldier_state(SoldierState.NONE)
-	reached_cover.emit(self)
-
-	var pending_role = _pending_role_after_cover
-	_pending_role_after_cover = SoldierRole.NONE
-	if pending_role != SoldierRole.NONE:
-		_apply_role_now(pending_role)
+	if nav_agent.is_target_reached():
+		at_cover = true
+		current_cover_point.mark_occupied(self)
+		change_soldier_state(SoldierState.NONE)
+		reached_cover.emit(self)
 
 func find_best_cover_point() -> CoverPoint:
 	var cover_points = get_tree().get_nodes_in_group("cover_points")
 	var best: CoverPoint = null
 	var best_score: float = -INF
 	var target_pos = combat_target.global_position if combat_target else global_position
-	var radius_sq = cover_search_radius * cover_search_radius
 
 	for cp in cover_points:
 		if not cp is CoverPoint or cp.is_occupied():
 			continue
-		if global_position.distance_squared_to(cp.global_position) > radius_sq:
+		if global_position.distance_to(cp.global_position) > cover_search_radius:
 			continue
-		# In defensive mode, don't wander out of the perimeter chasing cover.
-		if defensive_mode and defensive_anchor != Vector3.ZERO:
-			if cp.global_position.distance_to(defensive_anchor) > defensive_perimeter:
-				continue
 		var score = cp.score_for(global_position, target_pos)
 		if score > best_score:
 			best_score = score
@@ -227,74 +156,53 @@ func release_cover() -> void:
 
 # ─────────────────────────────────────────────
 # SUPPRESSING
-# Now actually suppresses: keeps firing at the last known position even
-# without LOS, at heavy spread. Previously a suppressor with no LOS just
-# stood still doing nothing for the whole duration.
 # ─────────────────────────────────────────────
 func enter_suppressing(target_position: Vector3 = Vector3.ZERO) -> void:
 	change_soldier_state(SoldierState.SUPPRESSING)
 	suppress_timer = 0.0
 	movement_state = MovementState.NONE
+	velocity.x = 0
+	velocity.z = 0
 	if target_position != Vector3.ZERO:
-		suppress_position = target_position
+		weapon_target = target_position
+		look_target = target_position
 	elif combat_target != null:
-		suppress_position = combat_target.global_position
-	elif not last_seen_point.is_empty():
-		suppress_position = last_seen_point.back()
-	else:
-		suppress_position = weapon_target
-	weapon_target = suppress_position
-	look_target = suppress_position
+		weapon_target = combat_target.global_position
+		look_target = combat_target.global_position
 	suppressing_started.emit(self)
 
 func tick_suppressing(delta: float) -> void:
 	suppress_timer += delta
-	# Keep the aim point fresh while we can see them; otherwise keep
-	# hosing the last known position.
-	if combat_target != null and combat_target.alive and _has_los:
-		suppress_position = combat_target.global_position
-	weapon_target = suppress_position
-	look_target = suppress_position
+	# Keep weapon target fresh as enemy moves
+	if combat_target != null:
+		weapon_target = combat_target.global_position
+		look_target = combat_target.global_position
 	if suppress_timer >= suppress_duration:
 		change_soldier_state(SoldierState.NONE)
 		bound_step_complete.emit(self)
 
-func _can_fire_without_los() -> bool:
-	return soldier_state == SoldierState.SUPPRESSING
-
 
 # ─────────────────────────────────────────────
 # SUPPRESSED
-# enter_suppressed() was never called from anywhere. It's now driven by
-# incoming near-miss fire via receive_signal_damage.
 # ─────────────────────────────────────────────
-func _on_signal_damaged(before: float, after: float) -> void:
-	if before > suppressed_trigger and after <= suppressed_trigger:
-		if soldier_state != SoldierState.SUPPRESSED and ai_state == AIState.COMBAT:
-			enter_suppressed()
-
 func enter_suppressed() -> void:
 	change_soldier_state(SoldierState.SUPPRESSED)
 	suppressed_timer = 0.0
 	movement_state = MovementState.NONE
-	if not last_seen_point.is_empty() and combat_target == null:
-		weapon_target = last_seen_point.back()
+	velocity.x = 0
+	velocity.z = 0
 	suppressed_started.emit(self)
 
 func tick_suppressed(delta: float) -> void:
 	suppressed_timer += delta
-	# Stay pinned as long as rounds keep landing close.
-	if signal_integrity <= suppressed_trigger:
-		suppressed_timer = minf(suppressed_timer, suppressed_duration * 0.5)
 	if suppressed_timer >= suppressed_duration:
 		change_soldier_state(SoldierState.NONE)
-		# Coming out of being pinned, get into cover rather than standing up.
-		if not at_cover and ai_state == AIState.COMBAT:
-			enter_cover_seeking()
 
 
 # ─────────────────────────────────────────────
 # BOUNDING
+# Move to a position while partner suppresses.
+# On arrival, signal Squad to swap roles.
 # ─────────────────────────────────────────────
 func enter_bounding(target_pos: Vector3) -> void:
 	change_soldier_state(SoldierState.BOUNDING)
@@ -305,90 +213,79 @@ func tick_bounding() -> void:
 	if movement_state == MovementState.CHASING:
 		if combat_target != null:
 			var dist = global_position.distance_to(combat_target.global_position)
-			if dist <= _max_range() * 0.6:
+			if dist <= weapon.max_effective_range * 0.6:
+				# Close enough to engage — stop advancing
 				movement_state = MovementState.NONE
 				change_soldier_state(SoldierState.NONE)
 				bound_step_complete.emit(self)
-		else:
-			movement_state = MovementState.NONE
-			change_soldier_state(SoldierState.NONE)
-			bound_step_complete.emit(self)
 		return
-	if movement_state == MovementState.NONE or nav_agent.is_navigation_finished():
+	if nav_agent.is_navigation_finished():
 		change_soldier_state(SoldierState.NONE)
 		bound_step_complete.emit(self)
 
 
 # ─────────────────────────────────────────────
+# OVERRIDE: trigger_combat
+# Seek cover on first contact.
+# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────
 # OVERRIDE: perform_action
-# In defensive mode the old code re-dispatched to AIM/FIRE, both of which
-# were no-ops, so a defending soldier could never adjust position at all
-# despite the comment saying it could.
+# In defensive mode, intercept MOVE actions and
+# block any movement that would leave cover.
 # ─────────────────────────────────────────────
 func perform_action(action: CombatOptions) -> void:
 	if defensive_mode and action == CombatOptions.MOVE:
-		# Allow small adjustments inside the perimeter; block advance/chase/leap.
-		if randf() < 0.5:
-			var pos = _find_perimeter_reposition()
-			if pos != global_position:
-				move_to(pos)
-				previous_movement_option = MovementOptions.REPOSITION
-				return
-		_enter_aim_stance()
+		# Only allow repositioning within the defence perimeter
+		# Explicitly block advance, chase, leap by re-rolling as AIM
+		var roll = randi_range(0, 1)
+		if roll == 0:
+			perform_action(CombatOptions.AIM)
+		else:
+			perform_action(CombatOptions.FIRE)
 		return
 	super(action)
 
-func _find_perimeter_reposition() -> Vector3:
-	var anchor = defensive_anchor if defensive_anchor != Vector3.ZERO else global_position
-	var nav_map = nav_agent.get_navigation_map()
-	var to_target = Vector3.FORWARD
-	if combat_target != null:
-		to_target = (combat_target.global_position - global_position)
-		to_target.y = 0.0
-		if to_target.length_squared() < 0.0001:
-			to_target = Vector3.FORWARD
-		to_target = to_target.normalized()
-	var right = to_target.cross(Vector3.UP).normalized()
-	var lateral = right if randf() > 0.5 else -right
-	for mult in [1.0, 0.5]:
-		var test = global_position + lateral * reposition_distance * mult
-		if test.distance_to(anchor) > defensive_perimeter:
-			continue
-		var pt = NavigationServer3D.map_get_closest_point(nav_map, test)
-		if pt.distance_to(anchor) > defensive_perimeter:
-			continue
-		return pt
-	return global_position
-
-
-# ─────────────────────────────────────────────
-# OVERRIDE: trigger_combat
-# ─────────────────────────────────────────────
 func trigger_combat(body: AI) -> void:
 	super(body)
 	if soldier_state != SoldierState.NONE:
 		return
 	if defensive_mode:
+		# Already in position — suppress from here rather than seeking new cover
 		if at_cover:
 			enter_suppressing()
 		else:
-			enter_cover_seeking(SoldierRole.SUPPRESSOR)
+			# Not at cover yet — seek nearest cover to objective, not to enemy
+			enter_cover_seeking()
 		return
+	# Normal combat: seek cover proactively
 	if not at_cover:
 		enter_cover_seeking()
 
 
 # ─────────────────────────────────────────────
 # SQUAD ORDER: move to objective
+# Called by Squad when unengaged and an objective exists.
+# Only executes if not currently in combat.
 # ─────────────────────────────────────────────
-func order_move_to(pos: Vector3) -> void:
-	if ai_state == AIState.COMBAT or ai_state == AIState.DEAD:
+func order_move_to(pos: Vector3, force: bool = false) -> void:
+	if ai_state == AIState.DEAD:
 		return
-	# CRITICAL or E-KILL: signal too degraded to receive squad orders
+	# A body under player control takes no orders from anyone.
+	if player_controlled:
+		return
+	# Normally an engaged soldier ignores move orders. A forced order — meaning
+	# the player said so — breaks contact and moves anyway. This is what makes
+	# "fall back to that ridge" work in the middle of a firefight.
+	if ai_state == AIState.COMBAT and not force:
+		return
+	# CRITICAL or E-KILL: signal too degraded to receive squad orders.
+	# Note this is deliberately checked even for forced orders — a jammed robot
+	# not answering the radio is the e-warfare system doing its job.
 	if not _can_receive_orders():
 		return
-	release_cover()
-	_pending_role_after_cover = SoldierRole.NONE
+	if force:
+		release_cover()
+		combat_target = null
 	change_soldier_state(SoldierState.NONE)
 	change_ai_state(AIState.PATROL)
 	move_to(pos)
@@ -396,41 +293,30 @@ func order_move_to(pos: Vector3) -> void:
 
 # ─────────────────────────────────────────────
 # ROLE ASSIGNMENT (called by Squad)
-# Roles that want the soldier stationary now route through cover first,
-# instead of standing up in the open. Previously the squad's assign_roles
-# fired immediately after trigger_combat and cancelled cover-seeking, so
-# cover was effectively never used in a fight.
 # ─────────────────────────────────────────────
 func assign_role(role: SoldierRole) -> void:
+	# CRITICAL or E-KILL: ignores squad role assignments
 	if not _can_receive_orders():
 		return
-	squad_role = role
-	if role == SoldierRole.SUPPRESSOR or role == SoldierRole.OVERWATCH:
-		if not at_cover and ai_state == AIState.COMBAT:
-			enter_cover_seeking(role)
-			return
-	_apply_role_now(role)
-
-func _apply_role_now(role: SoldierRole) -> void:
 	squad_role = role
 	match role:
 		SoldierRole.SUPPRESSOR:
 			enter_suppressing()
 		SoldierRole.ADVANCER:
 			if combat_target != null:
-				release_cover()
+				# Move aggressively toward the target — use CHASE so
+				# it keeps updating nav rather than one small step
 				movement_state = MovementState.CHASING
 				change_soldier_state(SoldierState.BOUNDING)
 		SoldierRole.FLANKER:
 			if combat_target != null:
-				release_cover()
 				enter_bounding(find_flank_target())
 		SoldierRole.FALLBACK:
-			release_cover()
 			enter_bounding(find_fallback_target())
 		SoldierRole.OVERWATCH:
 			movement_state = MovementState.NONE
-			change_soldier_state(SoldierState.NONE)
+			velocity.x = 0
+			velocity.z = 0
 		SoldierRole.NONE:
 			change_soldier_state(SoldierState.NONE)
 
@@ -450,19 +336,25 @@ func find_flank_target() -> Vector3:
 
 
 # ─────────────────────────────────────────────
-# OVERRIDE: aim spread
-# Folds the suppressed penalty and blind-fire penalty into Enemy's
-# multiplier rather than duplicating the whole spread calculation.
+# OVERRIDE: get_inaccurate_target
+# When SUPPRESSED, multiply spread mrad by the penalty factor instead
+# of the old accuracy float system.
 # ─────────────────────────────────────────────
-func get_aim_spread_multiplier() -> float:
-	var mult = super()
-	if soldier_state == SoldierState.SUPPRESSED:
-		mult *= 1.0 / maxf(suppressed_accuracy_penalty, 0.1)
-	if soldier_state == SoldierState.SUPPRESSING and not _has_los:
-		mult *= blind_fire_spread_multiplier
-	if at_cover:
-		mult *= 0.85   # braced against cover
-	return mult
+func get_inaccurate_target(target_pos: Vector3) -> Vector3:
+	if soldier_state == SoldierState.SUPPRESSED and weapon != null:
+		var dist := global_position.distance_to(weapon_target)
+		# suppressed_accuracy_penalty < 1.0 means worse accuracy.
+		# We invert it to get a spread multiplier: 0.4 penalty → 2.5x spread.
+		var spread_mult = 1.0 / maxf(suppressed_accuracy_penalty, 0.1)
+		var effective_skill = accuracy_skill * maxf(signal_integrity, 0.1)
+		var spread_mrad = (weapon.ai_spread_mrad / effective_skill) * spread_mult
+		var spread_m = spread_mrad * dist / 1000.0
+		return target_pos + Vector3(
+			randf_range(-spread_m, spread_m),
+			randf_range(-spread_m * 0.35, spread_m * 0.35),
+			randf_range(-spread_m, spread_m)
+		)
+	return super(target_pos)
 
 
 # ─────────────────────────────────────────────
@@ -494,13 +386,10 @@ func reset() -> void:
 	release_cover()
 	soldier_state = SoldierState.NONE
 	squad_role = SoldierRole.NONE
-	_pending_role_after_cover = SoldierRole.NONE
 	defensive_mode = false
-	defensive_anchor = Vector3.ZERO
 	bound_partner = null
 	suppress_timer = 0.0
 	suppressed_timer = 0.0
-	suppress_position = Vector3.ZERO
 	super()
 
 
@@ -510,11 +399,93 @@ func reset() -> void:
 func update_debug_label() -> void:
 	super()
 	if label != null:
-		label.text += "\n%s / %s" % [
-			SoldierRole.keys()[squad_role],
-			SoldierState.keys()[soldier_state]
-		]
+		label.text += "\n%s" % SoldierRole.keys()[squad_role]
 
 func reset_debug_label() -> void:
 	if label != null:
 		label.text = "DEAD"
+
+
+# ─────────────────────────────────────────────
+# PLAYER CONTROL / POSSESSION
+#
+# The body keeps ownership of its own collider and its own move_and_slide().
+# The Player node never drives another node's physics from the outside — it
+# hands this body an intent each frame and lets the body resolve it.
+# ─────────────────────────────────────────────
+const PLAYER_SPEED: float = 5.4
+const PLAYER_JUMP_VELOCITY: float = 4.2
+
+func enter_player_control() -> void:
+	if player_controlled:
+		return
+	player_controlled = true
+
+	# Drop every AI commitment. Anything left dangling here is a thing that
+	# will try to reclaim the body the moment control is released.
+	release_cover()
+	change_soldier_state(SoldierState.NONE)
+	squad_role = SoldierRole.NONE
+	bound_partner = null
+	combat_target = null
+	movement_target = Vector3.ZERO
+	movement_state = MovementState.NONE
+	weapon_state = WeaponState.IDLE
+	checking_for_target = false
+	always_active = true          # never let distance-culling touch this body
+	nav_agent.set_target_position(global_position)
+	velocity = Vector3.ZERO
+
+	if squad != null:
+		squad.notify_roster_changed()
+
+
+func exit_player_control() -> void:
+	if not player_controlled:
+		return
+	player_controlled = false
+	velocity = Vector3.ZERO
+
+	# Hand the body back to the AI in a clean, known state.
+	nav_agent.set_target_position(global_position)
+	change_ai_state(DefaultAIState)
+	change_soldier_state(SoldierState.NONE)
+	reconsider_target()
+
+	# Re-slot into the squad's current plan rather than standing there idle.
+	if squad != null:
+		squad.resume_objective()
+		squad.notify_roster_changed()
+
+
+# Called every physics frame by PossessionController while possessed.
+func drive(move_dir: Vector3, yaw: float, want_jump: bool, delta: float) -> void:
+	handle_gravity(delta)
+
+	if move_dir.length_squared() > 0.001:
+		var d = move_dir.normalized() * PLAYER_SPEED
+		velocity.x = d.x
+		velocity.z = d.z
+	else:
+		velocity.x = move_toward(velocity.x, 0.0, PLAYER_SPEED)
+		velocity.z = move_toward(velocity.z, 0.0, PLAYER_SPEED)
+
+	if want_jump and is_on_floor():
+		velocity.y = PLAYER_JUMP_VELOCITY
+
+	rotation.y = yaw
+	move_and_slide()
+
+
+# Fire this body's weapon at a point the player aimed at, bypassing the AI
+# accuracy spread. Still emits the gunshot stimulus so enemies react normally.
+func fire_as_player(target_point: Vector3) -> bool:
+	if weapon == null or not weapon.can_fire():
+		return false
+	weapon_target = target_point
+	weapon.fire(target_point)
+	if stimulus_manager != null:
+		stimulus_manager.emit_stimulus(
+			StimulusManager.StimulusType.GUNSHOT_HEARD,
+			global_position, faction, self)
+	return true

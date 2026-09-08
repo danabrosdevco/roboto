@@ -9,6 +9,8 @@ class_name Player
 @export var hud: Control
 @export var scanner: Node3D
 @export var command_marker_scene: PackedScene
+@export var commander: SquadCommander
+@export var possession: PossessionController
 @export var obstruction_raycast: RayCast3D
 @export var interact_raycast: RayCast3D
 @export var health_sfx: AudioStreamPlayer
@@ -131,6 +133,15 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# Possessing: the camera is off in another body, but this chassis stays in
+	# the world. Keep it grounded and solid — just don't take input for it.
+	if possession != null and possession.is_possessing():
+		if use_gravity:
+			handle_gravity(delta)
+		velocity.x = 0.0
+		velocity.z = 0.0
+		move_and_slide()
+		return
 	if spectator_mode == true:
 		_handle_spectator(delta)
 		return
@@ -267,9 +278,6 @@ func handle_input(_delta: float) -> void:
 			if fire_just_pressed and not fire_held_last_frame:
 				hud_weapon.fire()
 	fire_held_last_frame = fire_pressed
-	if Input.is_action_just_pressed("command"):
-		activate_command()
-
 	if Input.is_action_just_pressed("jump") and can_coyote_jump():
 		velocity.y = JUMP_VELOCITY
 
@@ -342,43 +350,34 @@ func handle_camera_and_weapon(delta: float) -> void:
 	cam.rotation.x = lerp_angle(cam.rotation.x, look_direction.x, delta * look_interp_speed)
 
 func activate_command():
-	# Raycast from the camera to where it's looking
-	var ray_origin = cam.global_position
-	var ray_end = ray_origin + cam.global_transform.basis.z * -1000  # Forward direction in Godot is -Z
-	var space_state = get_world_3d().direct_space_state
-	var query = PhysicsRayQueryParameters3D.create(ray_origin, ray_end)
-	query.collide_with_areas = false
-	query.collision_mask = 1  # Set this if your terrain/ground uses a specific mask
+	# Kept so existing call sites and .tscn signal connections don't break.
+	# The real work moved to SquadCommander, which owns the "command" action,
+	# resolves the verb from what you're aiming at, and dispatches straight to
+	# the selected squad. The old body raycast-and-sphere-sweep is gone.
+	if commander != null:
+		commander._issue_contextual_order()
 
-	var result = space_state.intersect_ray(query)
 
-	if result:
-		var target_position = result.position
+# Enemies use this instead of reading spectator_mode directly, so ghosting for
+# any reason (spectate, possession) removes the player from targeting in one place.
+func is_targetable() -> bool:
+	if not alive:
+		return false
+	if spectator_mode:
+		return false
+	# Deliberately still targetable while possessing. The body you left behind
+	# is exposed, and that's the cost of the mechanic.
+	return true
 
-		# If we already have a command marker, move it
-		if command_marker_instance and is_instance_valid(command_marker_instance):
-			command_marker_instance.global_position = target_position
-			command_marker_instance.global_position.y = 0
-			command_marker_instance.rotation = Vector3(0,0,0)
-			command_marker_instance.perform_faction_check()
-		else:
-			# Spawn new marker
-			command_marker_instance = command_marker_scene.instantiate()
-			world.add_child(command_marker_instance)
-			command_marker_instance.global_position = target_position
-			command_marker_instance.global_position.y = 0
-			command_marker_instance.rotation = Vector3(0,0,0)
 
-			# Optional: Assign faction/team if needed
-			if command_marker_instance.has_method("set_faction"):
-				command_marker_instance.set_faction(faction)
-			await get_tree().create_timer(0.1).timeout
-			command_marker_instance.perform_faction_check()
-			# Optional: orient marker to look forward from camera
-			#command_marker_instance.look_at(target_position + cam.global_transform.basis.z * -1, Vector3.UP)
-	else:
-		print("No valid target point found where camera is looking.")
-	pass
+# Where the player's ATTENTION is, which is not always where their body is.
+# Enemy uses this for activation-distance culling so the AI around the robot
+# you're driving stays awake instead of going passive.
+func get_focus_position() -> Vector3:
+	if possession != null and possession.is_possessing():
+		return possession.possessed.global_position
+	return global_position
+
 
 func interact(interactible:Interactible):
 	if interactible == null:
