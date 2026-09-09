@@ -15,7 +15,9 @@ var time: float = 0
 @export var max_pixel_height := 200.0
 
 var target: Node3D
-@onready var camera := get_viewport().get_camera_3d()
+# Do NOT cache this. The active camera changes (spectator toggle, level reload)
+# and a stale Camera3D unprojects to nonsense screen positions.
+var camera: Camera3D
 
 func _ready():
 	await get_tree().physics_frame
@@ -29,6 +31,17 @@ func _physics_process(delta: float) -> void:
 
 	if not is_instance_valid(target):
 		queue_free()
+		return
+
+	# Drop the marker the moment the robot dies rather than hanging on the
+	# corpse for the rest of the duration.
+	if "alive" in target and not target.alive:
+		queue_free()
+		return
+
+	camera = get_viewport().get_camera_3d()
+	if camera == null:
+		visible = false
 		return
 
 	# Get two world positions: bottom and top of target

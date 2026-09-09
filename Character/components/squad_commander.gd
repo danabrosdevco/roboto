@@ -35,6 +35,11 @@ class_name SquadCommander
 @export var hold_threshold: float = 0.22
 @export var wheel_sensitivity: float = 0.006
 
+# How often the squad registry is rebuilt. It used to be built exactly once in
+# _ready(), so a squad that spawned later never became commandable and a wiped
+# one stayed in the cycle list forever.
+@export var registry_refresh_interval: float = 2.0
+
 enum Verb { MOVE, DEFEND, ATTACK, WITHDRAW, CONTACT }
 
 const VERB_LABELS := {
@@ -53,6 +58,8 @@ var _wheel_open: bool = false
 var _wheel_accum: float = 0.0
 var _wheel_index: int = 0
 var _markers: Dictionary = {}   # Squad -> CommandMarker
+var _preview: CommandMarker = null
+var _registry_timer: float = 0.0
 
 signal squad_selected(squad: Squad)
 signal squads_refreshed(squads: Array)
@@ -64,10 +71,31 @@ signal contact_called(position: Vector3, target: Node)
 
 
 func _ready() -> void:
+	_autowire()
 	# Squads add themselves to the group in their own _ready, which may not have
 	# run yet. Wait a frame before the first sweep.
 	await get_tree().process_frame
 	refresh_squads()
+
+
+# `world` and `hud` are not set in test_character.tscn. _place_marker() bails on
+# `world == null` and _call_contact() skips the enemy marker on `hud == null`,
+# which is the whole reason no marker ever appeared at the aim point. Player
+# already holds both references, so take them from there rather than relying on
+# the inspector.
+func _autowire() -> void:
+	if player == null:
+		player = get_parent() as Player
+	if player == null:
+		return
+	if cam == null:
+		cam = player.cam
+	if world == null:
+		world = player.world
+	if hud == null:
+		hud = player.hud
+	if marker_scene == null:
+		marker_scene = player.command_marker_scene
 
 
 # ─────────────────────────────────────────────
@@ -157,10 +185,20 @@ func _process(delta: float) -> void:
 	if player == null or not player.alive:
 		return
 
+	_registry_timer += delta
+	if _registry_timer >= registry_refresh_interval:
+		_registry_timer = 0.0
+		_refresh_registry_quietly()
+
 	if Input.is_action_pressed("command"):
 		_hold_time += delta
 		if not _wheel_open and _hold_time >= hold_threshold:
 			_open_wheel()
+		# Live preview: while the wheel is open the marker tracks the crosshair
+		# and recolours as you scrub verbs, so you can see where the order will
+		# land BEFORE you commit it.
+		if _wheel_open:
+			_update_preview()
 		return
 
 	if Input.is_action_just_released("command") or (_hold_time > 0.0 and not Input.is_action_pressed("command")):
@@ -181,6 +219,7 @@ func _open_wheel() -> void:
 	_wheel_open = true
 	_wheel_accum = 0.0
 	_wheel_index = 0
+	_spawn_preview()
 	var labels: Array = []
 	for v in _available_verbs():
 		labels.append(VERB_LABELS[v])
@@ -189,6 +228,7 @@ func _open_wheel() -> void:
 
 func _commit_wheel() -> void:
 	_wheel_open = false
+	_clear_preview()
 	wheel_closed.emit()
 	var verbs := _available_verbs()
 	if _wheel_index < 0 or _wheel_index >= verbs.size():
@@ -308,6 +348,72 @@ func _call_contact(position: Vector3, target: Node) -> void:
 		hud.activate_enemy_marker(target, 8.0)
 
 	contact_called.emit(position, target)
+
+
+# ─────────────────────────────────────────────
+# AIM PREVIEW — the marker you see while the wheel is open
+# ─────────────────────────────────────────────
+# Returns the world point currently under the crosshair, or a point 60m down
+# the sightline when the ray hits nothing.
+func get_aim_point() -> Vector3:
+	var hit := _aim_result()
+	if hit.is_empty():
+		if cam == null:
+			return Vector3.ZERO
+		return cam.global_position + (-cam.global_transform.basis.z * 60.0)
+	return hit.position
+
+
+func _spawn_preview() -> void:
+	if marker_scene == null or world == null:
+		return
+	if _preview != null and is_instance_valid(_preview):
+		return
+	_preview = marker_scene.instantiate() as CommandMarker
+	if _preview == null:
+		push_warning("SquadCommander: marker_scene is not a CommandMarker.")
+		return
+	_preview.preview = true
+	world.add_child(_preview)
+	_update_preview()
+
+
+func _update_preview() -> void:
+	if _preview == null or not is_instance_valid(_preview):
+		_spawn_preview()
+		if _preview == null:
+			return
+	var verbs := _available_verbs()
+	var verb: int = verbs[_wheel_index] if _wheel_index >= 0 and _wheel_index < verbs.size() else Verb.MOVE
+	_preview.global_position = _snap_to_ground(get_aim_point())
+	_preview.set_order(verb, str(VERB_LABELS.get(verb, "")))
+
+
+func _clear_preview() -> void:
+	if _preview != null and is_instance_valid(_preview):
+		_preview.queue_free()
+	_preview = null
+
+
+# Rebuild the registry without firing squad_selected, so the HUD doesn't toast
+# "COMMANDING X" twice a second.
+func _refresh_registry_quietly() -> void:
+	var previous := get_selected_squad()
+	commandable_squads.clear()
+	for s in get_tree().get_nodes_in_group("squads"):
+		if not s is Squad:
+			continue
+		var squad := s as Squad
+		if squad.is_wiped():
+			continue
+		if squad.player_commandable or _is_friendly_squad(squad):
+			commandable_squads.append(squad)
+	if previous != null and commandable_squads.has(previous):
+		selected_index = commandable_squads.find(previous)
+	else:
+		selected_index = clampi(selected_index, 0, maxi(0, commandable_squads.size() - 1))
+		if get_selected_squad() != previous:
+			squad_selected.emit(get_selected_squad())
 
 
 # ─────────────────────────────────────────────

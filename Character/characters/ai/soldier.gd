@@ -31,11 +31,6 @@ var squad_role: SoldierRole = SoldierRole.NONE
 # Reference back to the squad — set by Squad on registration
 var squad: Squad = null
 
-# ── PLAYER CONTROL ────────────────────────────
-# True while the player has assumed control of this body. Every AI decision
-# path checks this. See possession.gd.
-var player_controlled: bool = false
-
 # When true: soldier holds position near objective, does not advance
 # or chase, fires from cover only. Set by Squad on DEFEND objective.
 var defensive_mode: bool = false
@@ -79,10 +74,6 @@ func reconsider_combat() -> void:
 # OVERRIDE: _physics_process
 # ─────────────────────────────────────────────
 func _physics_process(delta: float) -> void:
-	# Player-driven: skip the entire AI stack. PossessionController calls
-	# drive() from the Player's own _physics_process instead.
-	if player_controlled:
-		return
 	super(delta)
 	if not frame_waited or ai_state == AIState.DEAD or ai_state == AIState.PASSIVE:
 		return
@@ -270,9 +261,6 @@ func trigger_combat(body: AI) -> void:
 func order_move_to(pos: Vector3, force: bool = false) -> void:
 	if ai_state == AIState.DEAD:
 		return
-	# A body under player control takes no orders from anyone.
-	if player_controlled:
-		return
 	# Normally an engaged soldier ignores move orders. A forced order — meaning
 	# the player said so — breaks contact and moves anyway. This is what makes
 	# "fall back to that ridge" work in the middle of a firefight.
@@ -404,88 +392,3 @@ func update_debug_label() -> void:
 func reset_debug_label() -> void:
 	if label != null:
 		label.text = "DEAD"
-
-
-# ─────────────────────────────────────────────
-# PLAYER CONTROL / POSSESSION
-#
-# The body keeps ownership of its own collider and its own move_and_slide().
-# The Player node never drives another node's physics from the outside — it
-# hands this body an intent each frame and lets the body resolve it.
-# ─────────────────────────────────────────────
-const PLAYER_SPEED: float = 5.4
-const PLAYER_JUMP_VELOCITY: float = 4.2
-
-func enter_player_control() -> void:
-	if player_controlled:
-		return
-	player_controlled = true
-
-	# Drop every AI commitment. Anything left dangling here is a thing that
-	# will try to reclaim the body the moment control is released.
-	release_cover()
-	change_soldier_state(SoldierState.NONE)
-	squad_role = SoldierRole.NONE
-	bound_partner = null
-	combat_target = null
-	movement_target = Vector3.ZERO
-	movement_state = MovementState.NONE
-	weapon_state = WeaponState.IDLE
-	checking_for_target = false
-	always_active = true          # never let distance-culling touch this body
-	nav_agent.set_target_position(global_position)
-	velocity = Vector3.ZERO
-
-	if squad != null:
-		squad.notify_roster_changed()
-
-
-func exit_player_control() -> void:
-	if not player_controlled:
-		return
-	player_controlled = false
-	velocity = Vector3.ZERO
-
-	# Hand the body back to the AI in a clean, known state.
-	nav_agent.set_target_position(global_position)
-	change_ai_state(DefaultAIState)
-	change_soldier_state(SoldierState.NONE)
-	reconsider_target()
-
-	# Re-slot into the squad's current plan rather than standing there idle.
-	if squad != null:
-		squad.resume_objective()
-		squad.notify_roster_changed()
-
-
-# Called every physics frame by PossessionController while possessed.
-func drive(move_dir: Vector3, yaw: float, want_jump: bool, delta: float) -> void:
-	handle_gravity(delta)
-
-	if move_dir.length_squared() > 0.001:
-		var d = move_dir.normalized() * PLAYER_SPEED
-		velocity.x = d.x
-		velocity.z = d.z
-	else:
-		velocity.x = move_toward(velocity.x, 0.0, PLAYER_SPEED)
-		velocity.z = move_toward(velocity.z, 0.0, PLAYER_SPEED)
-
-	if want_jump and is_on_floor():
-		velocity.y = PLAYER_JUMP_VELOCITY
-
-	rotation.y = yaw
-	move_and_slide()
-
-
-# Fire this body's weapon at a point the player aimed at, bypassing the AI
-# accuracy spread. Still emits the gunshot stimulus so enemies react normally.
-func fire_as_player(target_point: Vector3) -> bool:
-	if weapon == null or not weapon.can_fire():
-		return false
-	weapon_target = target_point
-	weapon.fire(target_point)
-	if stimulus_manager != null:
-		stimulus_manager.emit_stimulus(
-			StimulusManager.StimulusType.GUNSHOT_HEARD,
-			global_position, faction, self)
-	return true

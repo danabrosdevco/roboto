@@ -10,7 +10,6 @@ class_name Player
 @export var scanner: Node3D
 @export var command_marker_scene: PackedScene
 @export var commander: SquadCommander
-@export var possession: PossessionController
 @export var obstruction_raycast: RayCast3D
 @export var interact_raycast: RayCast3D
 @export var health_sfx: AudioStreamPlayer
@@ -133,15 +132,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	# Possessing: the camera is off in another body, but this chassis stays in
-	# the world. Keep it grounded and solid — just don't take input for it.
-	if possession != null and possession.is_possessing():
-		if use_gravity:
-			handle_gravity(delta)
-		velocity.x = 0.0
-		velocity.z = 0.0
-		move_and_slide()
-		return
 	if spectator_mode == true:
 		_handle_spectator(delta)
 		return
@@ -358,24 +348,19 @@ func activate_command():
 		commander._issue_contextual_order()
 
 
-# Enemies use this instead of reading spectator_mode directly, so ghosting for
-# any reason (spectate, possession) removes the player from targeting in one place.
+# Enemies use this instead of reading spectator_mode directly, so ghosting the
+# player removes them from targeting in one place.
 func is_targetable() -> bool:
 	if not alive:
 		return false
 	if spectator_mode:
 		return false
-	# Deliberately still targetable while possessing. The body you left behind
-	# is exposed, and that's the cost of the mechanic.
 	return true
 
 
-# Where the player's ATTENTION is, which is not always where their body is.
-# Enemy uses this for activation-distance culling so the AI around the robot
-# you're driving stays awake instead of going passive.
+# Where the player's ATTENTION is. Enemy uses this for activation-distance
+# culling. Kept as a seam even though it now just returns the body position.
 func get_focus_position() -> Vector3:
-	if possession != null and possession.is_possessing():
-		return possession.possessed.global_position
 	return global_position
 
 

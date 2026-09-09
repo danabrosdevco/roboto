@@ -36,6 +36,21 @@ var context: SquadContext = SquadContext.UNENGAGED
 var objective: SquadObjective = SquadObjective.NONE
 var objective_position: Vector3 = Vector3.ZERO
 
+# ── CONTACT TRACKING ──────────────────────────
+# ENGAGED used to be purely event-driven: set by _on_combat_triggered, cleared
+# by a 2s poll that asked "does anyone still hold a live combat_target?".
+# Both halves leaked.
+#   - reconsider_target() nulls combat_target the instant a target dies and
+#     drops the AI into SEARCH. Kill something and every member can be holding
+#     a null target on the same poll, so the squad declared itself CLEAR in the
+#     middle of a firefight.
+#   - if the combat_triggered signal was ever missed (member added after
+#     _ready, combat entered before connection) nothing ever set ENGAGED at all.
+# Now: contact is POLLED from member state and held for CONTACT_GRACE seconds
+# after the last confirmed sighting, so the readout is stable.
+const CONTACT_GRACE: float = 6.0
+var _since_contact: float = CONTACT_GRACE
+
 var squad_combat_target: CharacterBody3D = null
 var nco: Soldier = null
 var bound_pairs: Array = []
@@ -88,11 +103,52 @@ func _ready() -> void:
 # PROCESS — context monitoring
 # ─────────────────────────────────────────────
 func _process(delta: float) -> void:
+	_tick_contact(delta)
 	match context:
 		SquadContext.ENGAGED:
 			_tick_engaged(delta)
 		SquadContext.UNENGAGED:
 			_tick_unengaged(delta)
+
+
+# ─────────────────────────────────────────────
+# CONTACT — polled, with hysteresis
+# ─────────────────────────────────────────────
+# True the moment any member is actually fighting. SEARCH counts: a soldier who
+# just lost sight of a target and is moving to their last known position is
+# still in contact by any sane reading, and excluding it was most of the reason
+# the HUD flickered back to CLEAR.
+func has_live_contact() -> bool:
+	for ai in get_living_members():
+		if not ai is Enemy:
+			continue
+		if ai.ai_state == Enemy.AIState.COMBAT or ai.ai_state == Enemy.AIState.SEARCH:
+			return true
+		if ai.combat_target != null and ai.combat_target.alive:
+			return true
+	return false
+
+
+func _tick_contact(delta: float) -> void:
+	if has_live_contact():
+		_since_contact = 0.0
+		# Safety net: promote to ENGAGED even if combat_triggered never arrived.
+		if context != SquadContext.ENGAGED:
+			context = SquadContext.ENGAGED
+			disengage_timer = 0.0
+			assign_roles()
+	else:
+		_since_contact += delta
+
+
+# Seconds since this squad last had anyone in contact. The HUD reads this
+# rather than `context` so the readout can't lag a frame behind the fight.
+func seconds_since_contact() -> float:
+	return _since_contact
+
+
+func is_in_contact() -> bool:
+	return _since_contact < CONTACT_GRACE
 
 
 func _tick_engaged(delta: float) -> void:
@@ -101,16 +157,10 @@ func _tick_engaged(delta: float) -> void:
 		return
 	disengage_timer = 0.0
 
-	# Check if any living member still has a valid combat target.
-	# Possessed bodies are excluded — a stale combat_target left on the body the
-	# player took over would pin the whole squad in ENGAGED indefinitely.
-	var still_fighting := false
-	for ai in get_orderable_members():
-		if ai is Enemy and ai.combat_target != null and ai.combat_target.alive:
-			still_fighting = true
-			break
-
-	if not still_fighting:
+	# Only stand down once the grace window has fully elapsed with nobody in
+	# contact. This is the fix for the squad flipping to CLEAR between one
+	# target dying and the next being acquired.
+	if _since_contact >= CONTACT_GRACE:
 		_disengage_and_resume()
 
 
@@ -177,15 +227,9 @@ func get_living_soldiers() -> Array:
 func is_wiped() -> bool:
 	return get_living_members().is_empty()
 
-# Members the squad is still allowed to give orders to. A body the player has
-# assumed control of must be excluded from EVERY order path, or the squad will
-# fight the player's own input for control of the same CharacterBody3D.
+# Members the squad is still allowed to give orders to.
 func get_orderable_members() -> Array:
-	return squad_members.filter(func(ai):
-		return ai != null \
-			and ai.alive \
-			and not ai.get("player_controlled")
-	)
+	return get_living_members()
 
 func get_orderable_soldiers() -> Array:
 	return get_orderable_members().filter(func(ai): return ai is Soldier)
@@ -439,8 +483,7 @@ func _on_combat_triggered(triggered_ai: AI) -> void:
 
 	squad_combat_target = triggered_ai.combat_target
 
-	# Alert all members not yet in combat. A player-controlled body is skipped —
-	# forcing it into AIState.COMBAT would let the AI grab its movement back.
+	# Alert all members not yet in combat.
 	for ai in get_orderable_members():
 		if ai.ai_state != Enemy.AIState.COMBAT:
 			ai.trigger_combat(triggered_ai.combat_target)
@@ -567,6 +610,7 @@ func _rebuild_pairs_after_loss() -> void:
 # ─────────────────────────────────────────────
 func _disengage_and_resume() -> void:
 	context = SquadContext.UNENGAGED
+	_since_contact = CONTACT_GRACE
 	squad_combat_target = null
 	bound_pairs.clear()
 
