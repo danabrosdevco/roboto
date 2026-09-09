@@ -676,7 +676,8 @@ environment = SubResource("Environment_6x7du")
 
 [node name="Sun" parent="WorldEnvironment" index="0"]
 transform = Transform3D(-0.878669, 0.476384, 0.0315766, -0.278779, -0.565637, 0.776104, 0.387585, 0.673136, 0.629816, 2.68291, 5.01918, 2.68093)
-light_energy = 1.5
+light_energy = 0.45
+light_indirect_energy = 0.35
 light_angular_distance = 0.5
 shadow_opacity = 0.6
 

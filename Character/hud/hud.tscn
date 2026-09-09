@@ -113,6 +113,7 @@ offset_top = 505.0
 offset_bottom = 505.0
 
 [node name="FPS" type="Label" parent="."]
+layout_mode = 0
 offset_right = 190.0
 offset_bottom = 31.0
 theme_override_font_sizes/font_size = 30
