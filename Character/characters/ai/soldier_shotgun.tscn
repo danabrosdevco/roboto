@@ -20,7 +20,7 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_7ymwn"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_i7xa8"]
 render_priority = 0
 shader = ExtResource("8_27chb")
 shader_parameter/use_normal_map = false
@@ -78,7 +78,7 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
-material_override = SubResource("ShaderMaterial_7ymwn")
+material_override = SubResource("ShaderMaterial_i7xa8")
 mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
 

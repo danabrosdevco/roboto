@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://bgj56y7q1pyxr"]
+[gd_scene load_steps=23 format=3 uid="uid://bgj56y7q1pyxr"]
 
 [ext_resource type="Script" path="res://Character/characters/player/test_character.gd" id="1_xw2ar"]
 [ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/components/command.tscn" id="2_ysmyv"]
@@ -7,18 +7,28 @@
 [ext_resource type="PackedScene" uid="uid://cia7d1ywjwrgf" path="res://Character/components/scanner.tscn" id="6_pxhlj"]
 [ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="6_umrcu"]
 [ext_resource type="Script" path="res://Character/components/squad_commander.gd" id="8_pc27j"]
-[ext_resource type="Script" path="res://Character/components/possession.gd" id="9_561tf"]
 [ext_resource type="AudioStream" uid="uid://cjb3ght3deqbq" path="res://sounds/sfx/mini-sfx/healing-4.wav" id="9_umkd4"]
 [ext_resource type="AudioStream" uid="uid://b7gbabd4ta2bm" path="res://sounds/sfx/superior soundfx/Big Egg collect 1.wav" id="10_7l2sv"]
+[ext_resource type="Script" path="res://Character/equipment/player_melee.gd" id="11_melee"]
+[ext_resource type="Script" path="res://Character/equipment/player_scanner.gd" id="12_scan"]
+[ext_resource type="Script" path="res://Character/equipment/player_grenade.gd" id="13_gren"]
+[ext_resource type="Script" path="res://Character/equipment/player_repair_tool.gd" id="14_repr"]
+[ext_resource type="Script" path="res://Character/equipment/ammo_pool.gd" id="15_pool"]
+[ext_resource type="Script" path="res://Character/equipment/equipment_loadout.gd" id="16_load"]
+[ext_resource type="Script" path="res://Character/equipment/ammo_stock.gd" id="17_stock"]
+[ext_resource type="PackedScene" uid="uid://b1d0y44phe80" path="res://Character/characters/ai/equipment/ai_grenade_projectile.tscn" id="18_proj"]
+[ext_resource type="Resource" path="res://Character/weapon/ammo/ammo_5_56.tres" id="19_a556"]
+[ext_resource type="Resource" path="res://Character/weapon/ammo/ammo_9mm.tres" id="20_a9mm"]
+[ext_resource type="Resource" uid="uid://cwvhikyeeecfp" path="res://Character/weapon/ammo/ammo_grenade.tres" id="21_agrn"]
+[ext_resource type="Resource" uid="uid://c2sm02qfnpajw" path="res://Character/weapon/ammo/ammo_repair.tres" id="22_arep"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8ja6s"]
 radius = 0.25
 height = 1.5
 
-[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("cam", "hud_weapon", "scanner", "commander", "obstruction_raycast", "interact_raycast", "health_sfx", "shards_sfx", "weapon_list")]
+[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("cam", "scanner", "commander", "obstruction_raycast", "interact_raycast", "health_sfx", "shards_sfx", "loadout", "ammo")]
 script = ExtResource("1_xw2ar")
 cam = NodePath("Camera3D")
-hud_weapon = NodePath("Camera3D/M4")
 scanner = NodePath("Scanner")
 command_marker_scene = ExtResource("2_ysmyv")
 commander = NodePath("SquadCommander")
@@ -26,7 +36,8 @@ obstruction_raycast = NodePath("Camera3D/ObstructionRaycast")
 interact_raycast = NodePath("Camera3D/InteractRaycast")
 health_sfx = NodePath("HealthSFX")
 shards_sfx = NodePath("ShardSFX")
-weapon_list = [NodePath("Camera3D/M4"), NodePath("Camera3D/Pistol")]
+loadout = NodePath("EquipmentLoadout")
+ammo = NodePath("AmmoPool")
 health = 100
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -39,9 +50,34 @@ script = ExtResource("6_umrcu")
 
 [node name="M4" parent="Camera3D" instance=ExtResource("4_p7j6a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.192761, -0.207464, 0)
-active = false
+display_name = "M4"
+slot = 0
 
 [node name="Pistol" parent="Camera3D" instance=ExtResource("4_4quvt")]
+ammo_type = &"9mm"
+display_name = "Pistol"
+slot = 1
+
+[node name="Melee" type="Node3D" parent="Camera3D"]
+script = ExtResource("11_melee")
+display_name = "Wrench"
+slot = 2
+
+[node name="ScannerTool" type="Node3D" parent="Camera3D" node_paths=PackedStringArray("scanner")]
+script = ExtResource("12_scan")
+scanner = NodePath("../../Scanner")
+display_name = "Scanner"
+
+[node name="Grenade" type="Node3D" parent="Camera3D"]
+script = ExtResource("13_gren")
+grenade_scene = ExtResource("18_proj")
+display_name = "Grenade"
+equipment_order = 1
+
+[node name="RepairTool" type="Node3D" parent="Camera3D"]
+script = ExtResource("14_repr")
+display_name = "Repair Kit"
+equipment_order = 2
 
 [node name="AudioListener3D" type="AudioListener3D" parent="Camera3D"]
 current = true
@@ -80,11 +116,12 @@ player = NodePath("..")
 cam = NodePath("../Camera3D")
 marker_scene = ExtResource("2_ysmyv")
 
-[node name="Possession" type="Node" parent="." node_paths=PackedStringArray("player", "cam")]
-script = ExtResource("9_561tf")
+[node name="AmmoPool" type="Node" parent="."]
+script = ExtResource("15_pool")
+starting_ammo = Array[ExtResource("17_stock")]([ExtResource("19_a556"), ExtResource("20_a9mm"), ExtResource("21_agrn"), ExtResource("22_arep")])
+
+[node name="EquipmentLoadout" type="Node" parent="." node_paths=PackedStringArray("player", "cam", "ammo")]
+script = ExtResource("16_load")
 player = NodePath("..")
 cam = NodePath("../Camera3D")
-
-[connection signal="request_status" from="Camera3D/M4" to="." method="update_status"]
-[connection signal="request_status" from="Camera3D/Pistol" to="." method="update_status"]
-[connection signal="highlight_target" from="Scanner" to="." method="_on_scanner_highlight_target"]
+ammo = NodePath("../AmmoPool")

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AmmoStock" load_steps=2 format=3 uid="uid://cwvhikyeeecfp"]
+
+[ext_resource type="Script" path="res://Character/equipment/ammo_stock.gd" id="1_pmnwa"]
+
+[resource]
+script = ExtResource("1_pmnwa")
+ammo_type = &"grenade"
+amount = 4
+capacity = 8

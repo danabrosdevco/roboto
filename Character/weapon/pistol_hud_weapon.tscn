@@ -13,32 +13,31 @@
 [ext_resource type="AudioStream" uid="uid://dtrxid3044v1b" path="res://sounds/sfx/weapons/pistol/pistol_slideback_1.wav" id="11_vy856"]
 [ext_resource type="AudioStream" uid="uid://cpdjw4y1j3a4m" path="res://sounds/sfx/weapons/pistol/pistol_slideforward_1.wav" id="12_pehuu"]
 
-[node name="Pistol" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "reload_sounds", "rifle_stream_player", "click_stream_player")]
+[node name="Pistol" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "reload_sounds", "click_stream_player")]
 script = ExtResource("1_mcwkk")
 tracer_origin = NodePath("Pistol_52/Pistol_5/Muzzle")
 muzzle_flash = NodePath("Pistol_52/Pistol_5/MuzzleFlash")
 weapon_model = NodePath("Pistol_52/Pistol_5")
 projectile_scene = ExtResource("2_ltlsc")
 tracer_scene = ExtResource("3_x66t0")
-reload_sounds = [NodePath("Reload1"), NodePath("Reload2"), NodePath("Reload3"), NodePath("Reload4")]
-reload_delays = Array[float]([0.9, 0.85, 0.4, 0.3])
 rifle_stream_player = NodePath("PistolShot")
-click_stream_player = NodePath("Click")
-damage = 28
 recoil_curve = ExtResource("4_juv8j")
 recoil_duration = 0.35
 recoil_per_shot = 3.5
+camera_recoil_scale = 0.7
+tracers_in_mag = Array[int]([16, 14, 12, 10, 8, 6, 5, 4, 3, 2, 1])
+magazine_size = 16
+reload_time = 2.45
+damage = 28
+FIRE_RATE = 0.015
 ADS_FOV = 65.0
 ADS_SPEED = 7.5
-FIRE_RATE = 0.015
-reload_return_speed = 20
-camera_recoil_scale = 0.7
 ads_position = Vector3(-0.5, 0, -0.8)
 ads_rotation = Vector3(0, 0, 0)
 reload_rotation = Vector3(0.2, 30.5, 58)
-magazine_size = 16
-tracers_in_mag = Array[int]([16, 14, 12, 10, 8, 6, 5, 4, 3, 2, 1])
-reload_time = 2.45
+reload_sounds = [NodePath("Reload1"), NodePath("Reload2"), NodePath("Reload3"), NodePath("Reload4")]
+reload_delays = Array[float]([0.9, 0.85, 0.4, 0.3])
+click_stream_player = NodePath("Click")
 
 [node name="Pistol_52" parent="." instance=ExtResource("5_s1xoq")]
 transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.196851, -0.180077, -0.320649)

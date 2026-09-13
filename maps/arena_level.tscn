@@ -319,7 +319,11 @@ points = PackedVector3Array(-5.5, 4.5, 33.5, -5.5, 4, 33.5, 5.5, 4, 33.5, 5.5, 4
 shader = ExtResource("33_rebam")
 shader_parameter/top_color = Color(0.2, 0.4, 0.8, 1)
 shader_parameter/bottom_color = Color(0.9, 0.9, 1, 1)
+shader_parameter/fog_color = Color(0.32, 0.34, 0.35, 1)
 shader_parameter/horizon_falloff = 1.5
+shader_parameter/fog_amount = 0.45
+shader_parameter/fog_falloff = 3.0
+shader_parameter/brightness = 0.7
 
 [sub_resource type="Sky" id="Sky_siqjn"]
 sky_material = SubResource("ShaderMaterial_7a55h")

@@ -1,10 +1,33 @@
 extends AI
 class_name Player
 
-# Node References # 
-@export var cam: Camera3D 
+# ─────────────────────────────────────────────
+# PLAYER
+#
+# WHAT CHANGED IN THE EQUIPMENT PASS
+# weapon_list / current_weapon_index / set_active_weapon / switch_weapon /
+# switch_weapon_direct are gone. They toggled `active` and
+# `weapon_model.visible` from out here, which meant an item had no way to react
+# to being put away — the reason a reload could finish after you'd switched off
+# the weapon. EquipmentLoadout owns selection now and items get a real
+# equip/unequip lifecycle.
+#
+# The fire, reload, slot and scan input blocks collapsed into one
+# loadout.update() call. The scanner is a slot item rather than a key with its
+# own cooldown timer living on the player.
+#
+# TWO BUGS THAT WENT WITH THEM, worth knowing about because they'd have looked
+# like new bugs otherwise:
+#   - weapon switching was chained onto the jump check with `elif`, so you
+#     couldn't change weapon on a frame you jumped.
+#   - it used is_action_pressed (held) rather than just_pressed, and the
+#     is_reloading guard did a bare `return` that ate the rest of the input
+#     frame — scan, reload, ADS, lean and interact all silently skipped.
+# ─────────────────────────────────────────────
+
+# Node References #
+@export var cam: Camera3D
 @export var faction: Enums.Factions = Enums.Factions.PLAYER
-@export var hud_weapon: HUDWeapon
 @export var world: Node3D
 @export var hud: Control
 @export var scanner: Node3D
@@ -14,9 +37,15 @@ class_name Player
 @export var interact_raycast: RayCast3D
 @export var health_sfx: AudioStreamPlayer
 @export var shards_sfx: AudioStreamPlayer
-@export var weapon_list: Array[HUDWeapon]
-var current_weapon_index: int
-# Export Data # 
+
+# ── EQUIPMENT ─────────────────────────────────
+# Put the AmmoPool node ABOVE the EquipmentLoadout node in the scene tree.
+# Children ready in order and the loadout hands the pool to every item during
+# its own _ready, so the pool has to have populated itself first.
+@export var loadout: EquipmentLoadout
+@export var ammo: AmmoPool
+
+# Export Data #
 var coyote_time = 0.12
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
@@ -26,7 +55,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var health = 50
 @export var max_health = 100
 var shards = 0
-var bits = 0 
+var bits = 0
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
 const ADS_FOV := 45.0
@@ -38,21 +67,17 @@ var time_since_grounded: float = 0.0
 var last_grounded_time: float = 0.0
 var coyote_used: bool = false
 var is_grounded: bool
-var was_grounded:bool
+var was_grounded: bool
 var is_fullscreen = false
 var look_direction: Vector3
 @export var look_interp_speed := 12.0  # how fast the camera follows the target
 
 var command_marker_instance: Node3D = null
-@export var camera_recoil_scale := 0.75  # fraction of recoil applied to camera
-var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
+@export var camera_recoil_scale := 0.75
+var camera_recoil_current := Vector3.ZERO
 var recoil_rotation := Vector3.ZERO
 
-var scanner_timer: = 0.0
-var scanner_cooldown = 15
-
-
-var current_interactible : Interactible
+var current_interactible: Interactible
 var alive = true
 var last_bonfire
 
@@ -62,58 +87,63 @@ var spectator_mode: bool = false
 const SPECTATOR_SPEED: float = 12.0
 const SPECTATOR_FAST_MULT: float = 3.0
 
-
 # WEAPONS #
 var is_ads := false
-var fire_held_last_frame := false
 var target_lean := 0.0
-var pitch := 0.0
+var move_factor := 0.0
 
 signal activate_scanner_ui(time: float)
-signal highlight_enemy(target:Node3D, duration: float)
+signal highlight_enemy(target: Node3D, duration: float)
 signal activate_interactible_ui(interactible: Interactible)
 signal died(value: int, global_position)
+
+
 func initialize() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	update_last_bonfire(null)
-	update_status()
-	for child in cam.get_children():
-		if child is HUDWeapon:
-			if weapon_list.has(child):
-				continue
-			else:
-				weapon_list.append(child)
-		else:
-				continue
-	if weapon_list.size() > 0:
-		current_weapon_index = 0
-		set_active_weapon(0)
-
-func set_active_weapon(index: int):
-	# Deactivate all weapons
-	for i in weapon_list.size():
-		weapon_list[i].active = false
-		weapon_list[i].weapon_model.visible = false
-	
-	# Activate the selected one
-	current_weapon_index = index
-	hud_weapon = weapon_list[index]
-	hud_weapon.active = true
-	hud_weapon.weapon_model.visible = true
-	#print("✅ Switched to weapon:", hud_weapon.name)
-
-func switch_weapon(direction: int):
-	var next_index = (current_weapon_index + direction) % weapon_list.size()
-	if next_index < 0:
-		next_index = weapon_list.size() - 1
-	set_active_weapon(next_index)
+	_wire_loadout()
 	update_status()
 
-func switch_weapon_direct(index: int):
-	if index >= 0 and index < weapon_list.size():
-		set_active_weapon(index)
+
+# The loadout auto-collects every PlayerEquipment under the camera and sorts
+# them by slot, so there's no weapon list to build here any more. All this does
+# is forward the signals the HUD already listens for.
+func _wire_loadout() -> void:
+	if loadout == null:
+		push_warning("Player: no EquipmentLoadout assigned — no weapons will work.")
+		return
+	loadout.readout_changed.connect(_on_readout_changed)
+	loadout.equipped.connect(_on_equipped)
+
+	for item in loadout.equipment:
+		if item is PlayerScanner:
+			# Keeps the existing scanner sweep UI working off its new home.
+			(item as PlayerScanner).scan_started.connect(
+				func(cd: float): activate_scanner_ui.emit(cd))
+		elif item is PlayerRepairTool:
+			var tool := item as PlayerRepairTool
+			# The squad should hold a member still while you're working on them.
+			# That's an order, not a new mechanic — SquadCommander already has
+			# the vocabulary for it. Hook it up when you're ready:
+			# tool.repair_target_pinned.connect(commander.hold_member)
+			tool.repaired.connect(func(_t, _a): update_status())
+
+
+func _on_readout_changed(_readout: PlayerEquipment.Readout) -> void:
 	update_status()
 
+
+func _on_equipped(_item: PlayerEquipment) -> void:
+	update_status()
+
+
+# Convenience for anything that still needs the gun specifically — FOV, the
+# debug overlay. Returns null when you're holding a grenade or the scanner,
+# so always null-check it.
+func current_weapon() -> PlayerWeapon:
+	if loadout == null:
+		return null
+	return loadout.current as PlayerWeapon
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -135,14 +165,23 @@ func _physics_process(delta: float) -> void:
 	if spectator_mode == true:
 		_handle_spectator(delta)
 		return
-	scanner_timer -= delta
 	check_interactible()
 	if use_gravity == true:
 		handle_gravity(delta)
 	handle_input(delta)
 	handle_movement(delta)
-	handle_camera_and_weapon(delta)
+	handle_camera(delta)
+
+	# Equipment runs after movement so move_factor is this frame's, and before
+	# move_and_slide so a shot fired this frame uses the camera position the
+	# player was actually looking from.
+	if loadout != null:
+		move_factor = clampf(velocity.length() / SPEED, 0.0, 1.0)
+		var obstructed := obstruction_raycast != null and obstruction_raycast.is_colliding()
+		loadout.update(delta, move_factor, obstructed, is_ads)
+
 	move_and_slide()
+
 
 func _toggle_spectator() -> void:
 	spectator_mode = not spectator_mode
@@ -158,16 +197,20 @@ func _toggle_spectator() -> void:
 		faction = Enums.Factions.NEUTRAL
 		velocity = Vector3.ZERO
 		use_gravity = false
-		if hud_weapon:
-			hud_weapon.visible = false
+		_set_viewmodel_visible(false)
 	else:
 		if col_shape:
 			col_shape.set_deferred("disabled", false)
 		faction = Enums.Factions.PLAYER
 		velocity = Vector3.ZERO
 		use_gravity = true
-		if hud_weapon:
-			hud_weapon.visible = true
+		_set_viewmodel_visible(true)
+
+
+func _set_viewmodel_visible(shown: bool) -> void:
+	if loadout != null and loadout.current != null:
+		loadout.current.set_hidden(not shown)
+
 
 func _handle_spectator(delta: float) -> void:
 	# Mouse look
@@ -202,6 +245,7 @@ func _handle_spectator(delta: float) -> void:
 	cam.global_transform.basis = look_basis
 	move_and_slide()
 
+
 func check_interactible():
 	if interact_raycast and interact_raycast.is_colliding():
 		var collider = interact_raycast.get_collider()
@@ -235,6 +279,7 @@ func handle_gravity(delta: float) -> void:
 		last_grounded_time = Time.get_ticks_msec() / 1000.0
 		coyote_used = false
 
+
 func can_coyote_jump() -> bool:
 	# Can jump if grounded OR within coyote time window
 	if is_grounded:
@@ -246,6 +291,10 @@ func can_coyote_jump() -> bool:
 	return false
 
 
+# Fire, reload, slot selection and scanning are all gone from here — the
+# loadout reads those actions itself. What's left is movement and world
+# interaction, which is the right split: this script shouldn't know what a
+# magazine is.
 func handle_input(_delta: float) -> void:
 	if Input.is_action_just_pressed("fullscreen"):
 		is_fullscreen = !is_fullscreen
@@ -254,49 +303,13 @@ func handle_input(_delta: float) -> void:
 		else:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 
-
-	var fire_pressed := Input.is_action_pressed("fire")
-	var fire_just_pressed := Input.is_action_just_pressed("fire")
-
-	match hud_weapon.firemode:
-		Enums.FireModes.FULL:
-			if fire_pressed && hud_weapon.magazine_capacity > 0:
-				hud_weapon.fire()
-			if fire_pressed and not fire_held_last_frame:
-				hud_weapon.fire()
-		Enums.FireModes.SEMI:
-			if fire_just_pressed and not fire_held_last_frame:
-				hud_weapon.fire()
-	fire_held_last_frame = fire_pressed
+	# Its own `if`, not chained onto anything. The old version had the weapon
+	# switch as an `elif` on this check.
 	if Input.is_action_just_pressed("jump") and can_coyote_jump():
 		velocity.y = JUMP_VELOCITY
 
-
-	#if Input.is_action_pressed("weapon_next"):
-		#switch_weapon(1)
-	#elif Input.is_action_pressed("weapon_prev"):
-		#switch_weapon(-1)
-	elif Input.is_action_pressed("1"):
-		if hud_weapon.is_reloading:
-			return
-		switch_weapon_direct(0)
-	elif Input.is_action_pressed("2"):
-		if hud_weapon.is_reloading:
-			return
-		switch_weapon_direct(1)
-
-	if Input.is_action_just_pressed("scan"):
-		if scanner_timer >= 0:
-			return
-		scanner_timer = scanner_cooldown
-		scanner.activate_scan()
-		activate_scanner_ui.emit(scanner_cooldown)
-
-	if Input.is_action_just_pressed("reload"):
-		hud_weapon.start_reload()
-
 	is_ads = Input.is_action_pressed("aim")
-	hud_weapon.is_ads = is_ads
+
 	if Input.is_action_pressed("lean_left"):
 		target_lean = LEAN_ANGLE
 	elif Input.is_action_pressed("lean_right"):
@@ -313,31 +326,45 @@ func handle_movement(_delta: float) -> void:
 	var new_basis = transform.basis
 	var dir = new_basis.x * input2.x - new_basis.z * input2.y
 
+	# Channelling the repair tool slows you rather than rooting you. Being able
+	# to shuffle into cover mid-repair is most of what makes the channel feel
+	# like a decision instead of a punishment.
+	var speed := SPEED * _move_scale()
+
 	if dir.length_squared() > 0.001:
-		dir = dir.normalized() * SPEED
+		dir = dir.normalized() * speed
 		velocity.x = dir.x
 		velocity.z = dir.z
 	else:
-		velocity.x = move_toward(velocity.x, 0.0, SPEED)
-		velocity.z = move_toward(velocity.z, 0.0, SPEED)
+		velocity.x = move_toward(velocity.x, 0.0, speed)
+		velocity.z = move_toward(velocity.z, 0.0, speed)
 
-func handle_camera_and_weapon(delta: float) -> void:
-	var move_factor = clamp(velocity.length() / SPEED, 0.0, 1.0)
-	hud_weapon.set_move_factor(move_factor)
-	hud_weapon.is_obstructed = obstruction_raycast.is_colliding()
-	hud_weapon.pitch = look_direction.x
+
+func _move_scale() -> float:
+	if loadout != null and loadout.current is PlayerRepairTool:
+		return (loadout.current as PlayerRepairTool).get_move_scale()
+	return 1.0
+
+
+# The weapon half of this moved into PlayerEquipment.update_view, and the
+# camera-recoil kick into HUDWeapon.update_view. Don't re-add them here or the
+# recoil applies twice.
+func handle_camera(delta: float) -> void:
 	# FOV adjustment
 	var target_fov = ADS_FOV if Input.is_action_pressed("zoom") else HIP_FOV
-	if is_ads and Input.is_action_pressed("zoom"):
-		target_fov = hud_weapon.ADS_FOV * 0.6
-	elif is_ads:
-		target_fov = hud_weapon.ADS_FOV
+	var weapon := current_weapon()
+	if weapon != null:
+		if is_ads and Input.is_action_pressed("zoom"):
+			target_fov = weapon.ADS_FOV * 0.6
+		elif is_ads:
+			target_fov = weapon.ADS_FOV
 
 	cam.fov = lerp(cam.fov, target_fov, delta * ADS_SPEED)
 	cam.rotation.z = lerp(cam.rotation.z, target_lean, delta * LEAN_SPEED)
 	# Camera look rotation
 	rotation.y = lerp_angle(rotation.y, look_direction.y, delta * look_interp_speed)
 	cam.rotation.x = lerp_angle(cam.rotation.x, look_direction.x, delta * look_interp_speed)
+
 
 func activate_command():
 	# Kept so existing call sites and .tscn signal connections don't break.
@@ -364,7 +391,7 @@ func get_focus_position() -> Vector3:
 	return global_position
 
 
-func interact(interactible:Interactible):
+func interact(interactible: Interactible):
 	if interactible == null:
 		return
 	match interactible.get_type():
@@ -385,14 +412,25 @@ func interact(interactible:Interactible):
 	activate_interactible_ui.emit(current_interactible)
 	pass
 
+
+# Passes the equipped item's readout rather than reaching into the weapon for
+# magazine_capacity, which is what lets a grenade count or a repair charge use
+# the same widget. This still calls hud.update_status with its existing six
+# arguments so nothing else has to change today — but the better version is:
+#
+#   hud.update_status(health, max_health, readout, shards, bits)
+#
+# with hud.gd switching on readout.mode. Worth doing when you touch the HUD.
 func update_status():
-	if hud_weapon == null:
-		await get_tree().process_frame
-	hud.update_status(health, max_health, hud_weapon.magazine_capacity, hud_weapon.magazine_size, shards, bits)
+	if hud == null:
+		return
+	var readout := PlayerEquipment.Readout.new()
+	if loadout != null:
+		readout = loadout.get_readout()
+	hud.update_status(health, max_health, readout.primary, readout.secondary, shards, bits)
 
 
 func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
-	#print ("TIME TO HIGHLIGHT!")
 	highlight_enemy.emit(target, duration)
 
 
@@ -400,27 +438,37 @@ func apply_damage(damage, _source):
 	if alive == false:
 		return
 	health -= damage
+	# Taking fire breaks a repair channel. Progress survives for resume_grace
+	# seconds, so ducking into cover and resuming doesn't start from zero.
+	if loadout != null and loadout.current is PlayerRepairTool:
+		(loadout.current as PlayerRepairTool).interrupt()
 	update_status()
 	if health <= 0:
 		health = 0
 		die()
 	pass
 
+
 func apply_healing(healing):
 	var new_health = health + healing
 	if new_health >= max_health:
 		new_health = max_health
 	health = new_health
-	health_sfx.play()
+	if health_sfx != null:
+		health_sfx.play()
 	update_status()
+
+
 func add_shards(value):
 	shards += value
 	shards_sfx.play()
 	update_status()
 
+
 func add_bits(value):
 	bits += value
 	update_status()
+
 
 func update_last_bonfire(bonfire: Node3D):
 	if bonfire == null:
@@ -428,21 +476,30 @@ func update_last_bonfire(bonfire: Node3D):
 		return
 	last_bonfire = bonfire
 
+
 func reset():
 	set_process(true)
 	set_physics_process(true)
 	set_process_input(true)
 	set_process_unhandled_input(true)
-	#Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	alive = true
 	health = max_health
-	hud_weapon.magazine_capacity = hud_weapon.magazine_size
-	#print (last_bonfire)
+	# Was: hud_weapon.magazine_capacity = hud_weapon.magazine_size, which
+	# refilled one gun and nothing else. refill() resets every reserve from the
+	# starting AmmoStock list.
+	#
+	# THIS IS A DESIGN DECISION, not just a port. Refilling here makes ammo a
+	# per-life resource and the pressure per-encounter. Delete the call and it
+	# becomes per-mission and dying compounds — much harsher, and only fair if
+	# resupply is reliable.
+	if loadout != null:
+		loadout.refill()
 	if last_bonfire is Vector3:
 		global_position = last_bonfire
 	if last_bonfire is Bonfire:
 		global_position = last_bonfire.global_position
 	update_status()
+
 
 func die():
 	alive = false
@@ -450,14 +507,11 @@ func die():
 	set_physics_process(false)
 	set_process_input(false)
 	set_process_unhandled_input(false)
-	#Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	# Delay to allow any death effects (like sounds, particles)
 	await get_tree().create_timer(0.5).timeout
 	died.emit(bits, global_position)
 	bits = 0
 
-	# Optional: Unlock the camera or transition
-	# You might want to detach camera from the player before freeing the node
-	# For now, we just clean up:
+
 func get_faction():
 	return faction
