@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bsjvqukwourp1"
+path="res://.godot/imported/homebase_level.map-48e3657c7437e0562145c403f8a98a0c.tres"
+
+[deps]
+
+source_file="res://maps/homebase/autosave/homebase_level.map"
+dest_files=["res://.godot/imported/homebase_level.map-48e3657c7437e0562145c403f8a98a0c.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://w245v2nedstp"
+path="res://.godot/imported/homebase_level.map-d1bbe94f4695a95ecc01e6659b26c97e.tres"
+
+[deps]
+
+source_file="res://maps/homebase/homebase_level.map"
+dest_files=["res://.godot/imported/homebase_level.map-d1bbe94f4695a95ecc01e6659b26c97e.tres"]
+
+[params]
+

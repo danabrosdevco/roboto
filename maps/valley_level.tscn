@@ -1,7 +1,9 @@
-[gd_scene load_steps=14 format=3 uid="uid://bry0vr0coxyl4"]
+[gd_scene load_steps=16 format=3 uid="uid://bry0vr0coxyl4"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_swp7i"]
 [ext_resource type="PackedScene" uid="uid://6rxa3n85rd2w" path="res://3d_assets/terrain/terrain.fbx" id="2_33emj"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="5_406yi"]
+[ext_resource type="PackedScene" uid="uid://rnm8xsxcwbsx" path="res://maps/arena_level.tscn" id="6_m6c6u"]
 [ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="7_1rl6w"]
 [ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="8_14lvr"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="9_mpaex"]
@@ -50,6 +52,7 @@ transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 
 [node name="Squad2" parent="NavigationRegion3D" node_paths=PackedStringArray("squad_members", "target_objective") instance=ExtResource("7_1rl6w")]
 squad_members = [NodePath("Soldier_Shotgun"), NodePath("Soldier_Shotgun2"), NodePath("Soldier_Shotgun3"), NodePath("Soldier_Shotgun4"), NodePath("Soldier_Shotgun5")]
+callsign = "AlphaSquad"
 target_objective = NodePath("../../OBJ1")
 default_objective = 2
 
@@ -112,6 +115,40 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6501, -5.6656, 39.6005)
 particle_effects_die = []
 particle_effects_hit = []
 
+[node name="Squad3" parent="NavigationRegion3D" node_paths=PackedStringArray("squad_members", "target_objective") instance=ExtResource("7_1rl6w")]
+squad_members = [NodePath("Soldier_Shotgun"), NodePath("Soldier_Shotgun2"), NodePath("Soldier_Shotgun3"), NodePath("Soldier_Shotgun4"), NodePath("Soldier_Shotgun5")]
+target_objective = NodePath("../../OBJ3")
+default_objective = 2
+
+[node name="Soldier_Shotgun" parent="NavigationRegion3D/Squad3" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_14lvr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90.8424, -10.2128, 183.349)
+particle_effects_die = []
+particle_effects_hit = []
+
+[node name="Soldier_Shotgun2" parent="NavigationRegion3D/Squad3" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_14lvr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96.6257, -10.2128, 183.349)
+particle_effects_die = []
+particle_effects_hit = []
+
+[node name="Soldier_Shotgun3" parent="NavigationRegion3D/Squad3" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_14lvr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 93.5783, -10.2128, 183.349)
+particle_effects_die = []
+particle_effects_hit = []
+
+[node name="Soldier_Shotgun4" parent="NavigationRegion3D/Squad3" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_14lvr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 106.034, -10.2128, 185.905)
+particle_effects_die = []
+particle_effects_hit = []
+
+[node name="Soldier_Shotgun5" parent="NavigationRegion3D/Squad3" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_14lvr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.9282, -10.2128, 185.905)
+particle_effects_die = []
+particle_effects_hit = []
+
+[node name="LevelExit" parent="NavigationRegion3D" instance=ExtResource("5_406yi")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 94.1581, -11.1037, 186.733)
+next_level = ExtResource("6_m6c6u")
+
 [node name="WorldEnvironment" parent="." instance=ExtResource("9_mpaex")]
 environment = SubResource("Environment_6x7du")
 
@@ -128,6 +165,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.992464, -2.59327, -38.6296
 [node name="OBJ2" parent="." instance=ExtResource("11_n4srd")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.992464, 2.51753, 38.3165)
 objective_name = "Objective2"
+
+[node name="OBJ3" parent="." instance=ExtResource("11_n4srd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 94.0061, -9.94179, 180.717)
+objective_name = "Objective3"
 
 [node name="CoverPointSpawner" parent="." node_paths=PackedStringArray("navigation_region") instance=ExtResource("12_so3nt")]
 navigation_region = NodePath("../NavigationRegion3D")

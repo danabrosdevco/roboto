@@ -21,6 +21,8 @@ func _ready() -> void:
 func reset_level():
 	player.reset()
 	for i in enemies:
+		if i == null:
+			continue
 		i.reset()
 	for i in pickups:
 		i.reset()
