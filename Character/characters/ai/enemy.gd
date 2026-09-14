@@ -73,6 +73,30 @@ class_name Enemy
 
 # Never enters passive mode — set true on soldiers with active squad objectives
 @export var always_active: bool = false
+# ── CLOSE THREAT ───────────────────────────────
+# Opportunistic retargeting. The detection Area3D handles long-range
+# acquisition; this handles "something is right next to me", which the old code
+# had no concept of — reconsider_target() kept whatever target it already had as
+# long as that target was alive, so a hostile that walked into arm's reach while
+# you were shooting at someone 40m away was simply never noticed.
+#
+# Deliberately narrow. It only fires inside close_threat_range, so patrolling
+# robots don't start aggroing across the level from the targeting tick; the
+# Area3D still owns everything beyond a few metres.
+@export var close_threat_range: float = 6.0
+# How much closer the new contact has to be before it's worth switching. Without
+# a margin two hostiles at similar range make the AI oscillate between them
+# every targeting tick and it never shoots anything.
+@export var close_threat_advantage: float = 8.0
+# Don't swap onto something on the far side of a wall.
+@export var close_threat_requires_los: bool = true
+
+# What we were shooting at before a close threat interrupted. Restored when the
+# close threat dies, so a squad ATTACK order survives being jumped en route.
+var _preempted_target: CharacterBody3D = null
+
+signal close_threat_engaged(target)
+
 # Detection range used for signal-degraded sensor checks (match your Area3D radius)
 @export var detection_radius: float = 20.0
 
@@ -862,6 +886,13 @@ func reconsider_combat():
 
 func reconsider_target() -> void:
 	targeting_time = 0
+
+	# Checked BEFORE the keep-current-target early return below. That return is
+	# exactly what made a point-blank contact invisible — it fired whenever the
+	# existing target was alive, without ever comparing distances.
+	if _check_close_threat():
+		return
+
 	if combat_target != null and combat_target.alive:
 		if _is_hostile(combat_target):
 			weapon_target = combat_target.global_position
@@ -875,11 +906,14 @@ func reconsider_target() -> void:
 		if movement_target != Vector3.ZERO:
 			look_target = movement_target
 
-	var new_target: CharacterBody3D = null
-	if ai_manager != null:
-		new_target = ai_manager.get_nearest_hostile(self)
-	elif player != null and _is_hostile(player):
-		new_target = player
+		# Close threat is down — go back to whatever we were on rather than
+		# re-picking nearest, which would lose a player-designated target.
+		var resumed := _take_preempted_target()
+		if resumed != null:
+			change_combat_target(resumed)
+			return
+
+	var new_target: CharacterBody3D = _nearest_hostile()
 
 	if new_target != null:
 		if ai_state == AIState.COMBAT:
@@ -894,6 +928,73 @@ func reconsider_target() -> void:
 		if ai_state == AIState.COMBAT:
 			# Lost them — go look, rather than instantly forgetting.
 			_enter_search()
+
+# Extracted from reconsider_target so the close-threat check shares one source
+# of truth for "who is hostile and nearby".
+func _nearest_hostile() -> CharacterBody3D:
+	if ai_manager != null:
+		return ai_manager.get_nearest_hostile(self)
+	if player != null and _is_hostile(player) and player.is_targetable():
+		return player
+	return null
+
+
+func _take_preempted_target() -> CharacterBody3D:
+	var t := _preempted_target
+	_preempted_target = null
+	if t == null or not is_instance_valid(t) or not t.alive:
+		return null
+	if not _is_hostile(t):
+		return null
+	return t
+
+
+# Returns true if it took over targeting this tick.
+func _check_close_threat() -> bool:
+	if close_threat_range <= 0.0 or ai_state == AIState.DEAD:
+		return false
+	# Same sensor rule the detection area uses — a robot with a wrecked sensor
+	# package doesn't get a free point-blank sense.
+	var sig := get_signal_state()
+	if sig == SignalState.EKILL or sig == SignalState.CRITICAL:
+		return false
+
+	var candidate := _nearest_hostile()
+	if candidate == null or candidate == combat_target:
+		return false
+
+	var dist := global_position.distance_to(candidate.global_position)
+	if dist > close_threat_range:
+		return false
+
+	var current_valid: bool = combat_target != null \
+		and is_instance_valid(combat_target) \
+		and combat_target.alive
+
+	# Already fighting something at least as close? Leave it alone.
+	if current_valid:
+		var current_dist := global_position.distance_to(combat_target.global_position)
+		if current_dist - dist < close_threat_advantage:
+			return false
+
+	if close_threat_requires_los:
+		if not is_path_clear(global_position + Vector3.UP * 0.8, candidate.global_position, candidate):
+			return false
+
+	if current_valid:
+		_preempted_target = combat_target
+
+	if ai_state == AIState.COMBAT:
+		change_combat_target(candidate)
+	else:
+		# Not fighting yet. This is the case the Area3D misses when the hostile
+		# was already inside the radius before this robot became relevant —
+		# body_entered never fires for an overlap that already existed.
+		trigger_combat(candidate)
+
+	close_threat_engaged.emit(candidate)
+	return true
+
 
 func reconsider_patrol():
 	patrol_time = 0
@@ -1227,7 +1328,9 @@ func respawn():
 	reset()
 
 func hide_body():
+	#print("hiding ", visible_pieces.size(), " pieces")
 	for i in visible_pieces:
+		#print("  hiding: ", i.name, " at ", i.get_path())
 		i.visible = false
 func show_body():
 	for i in visible_pieces:
@@ -1459,6 +1562,14 @@ func _on_detection_body_entered(body: Node3D) -> void:
 		return
 	if not _is_hostile(body):
 		return
+	# Detection used to be last-enterer-wins: anything walking into the radius
+	# took the target, even from 40m away while something was shooting at us
+	# from 3m. Nearest wins now, which is the same rule _check_close_threat uses.
+	if ai_state == AIState.COMBAT and combat_target != null \
+			and is_instance_valid(combat_target) and combat_target.alive:
+		if global_position.distance_to(body.global_position) \
+				>= global_position.distance_to(combat_target.global_position):
+			return
 	if sig_state != SignalState.CLEAN:
 		var eff_range = get_effective_detection_radius()
 		if global_position.distance_to(body.global_position) > eff_range:
@@ -1470,8 +1581,13 @@ func _on_detection_body_entered(body: Node3D) -> void:
 				StimulusManager.StimulusType.ENEMY_SPOTTED,
 				body.global_position, faction, body)
 	else:
+		# Spotted but no clear line. This used to assign combat_target directly,
+		# which silently replaced whatever we were actually fighting with a body
+		# behind a wall — without changing state, so nothing corrected it. Only
+		# fill the slot when it's empty.
 		checking_for_target = true
-		combat_target = body
+		if combat_target == null:
+			combat_target = body
 
 func _on_detection_body_exited(body: Node3D) -> void:
 	if checking_for_target and body == combat_target:

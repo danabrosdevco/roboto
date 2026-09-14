@@ -22,10 +22,9 @@ class_name CommandMarker
 
 # Tint per verb — index matches SquadCommander.Verb ordering.
 @export var verb_colors: Array[Color] = [
-	Color(0.55, 0.85, 0.55),   # MOVE
+	Color(0.95, 0.45, 0.35),   # ASSAULT
 	Color(0.45, 0.70, 0.95),   # DEFEND
-	Color(0.95, 0.45, 0.35),   # ATTACK
-	Color(0.95, 0.80, 0.35),   # WITHDRAW
+	Color(0.55, 0.85, 0.55),   # FOLLOW
 	Color(0.90, 0.90, 0.90),   # CONTACT
 ]
 
@@ -34,6 +33,25 @@ class_name CommandMarker
 @export var bob_height: float = 0.18
 @export var bob_speed: float = 2.0
 @export var label_height: float = 3.35
+
+# ── AGEING ────────────────────────────────────
+# A freshly placed marker is loud, because you want to see where the order
+# landed. Thirty seconds later the order is still standing but you already know
+# about it, so the marker shrinking and dimming to a quiet pip keeps the
+# information without the marker dominating the view.
+#
+# It does NOT delete itself — the objective is still active, and a marker that
+# vanishes reads as "that order was cancelled". Set expire_after above zero if
+# you'd rather it did go away.
+@export var age_duration: float = 40.0
+# Scale and alpha at the end of age_duration, as fractions of the fresh values.
+@export var aged_scale: float = 0.3
+@export var aged_alpha: float = 0.28
+# The label goes first — text is the most visually noisy part and the least
+# useful once you've read it once.
+@export var label_fade_fraction: float = 0.35
+# 0 disables. Seconds after placement before the marker frees itself.
+@export var expire_after: float = 0.0
 
 # Preview markers (shown live while the verb wheel is open) sit at lower alpha
 # and don't animate, so a committed order still reads as the louder thing.
@@ -51,6 +69,7 @@ var _mat_beam: StandardMaterial3D
 
 var _color: Color = Color.WHITE
 var _t: float = 0.0
+var _age: float = 0.0
 
 
 func _ready() -> void:
@@ -91,8 +110,8 @@ func _build() -> void:
 
 	_label = Label3D.new()
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.no_depth_test = true
-	_label.fixed_size = true
+	_label.no_depth_test = false
+	_label.fixed_size = false
 	_label.pixel_size = 0.0022
 	_label.font_size = 64
 	_label.outline_size = 12
@@ -118,13 +137,24 @@ func set_order(verb: int, text: String = "") -> void:
 		_color = verb_colors[verb]
 	else:
 		_color = Color.WHITE
-	if _label != null:
-		_label.text = text
+	#if _label != null:
+		#_label.text = text
+	# A new order on an existing marker is a new marker as far as the player is
+	# concerned, so it goes back to full size and brightness.
+	_age = 0.0
 	_apply_color()
 
 
+# 0 when fresh, 1 when fully aged.
+func _age_fraction() -> float:
+	if preview or age_duration <= 0.0:
+		return 0.0
+	return clampf(_age / age_duration, 0.0, 1.0)
+
+
 func _apply_color() -> void:
-	var a: float = 0.45 if preview else 0.9
+	var aged := _age_fraction()
+	var a: float = 0.45 if preview else lerpf(0.9, 0.9 * aged_alpha, aged)
 	var col := Color(_color.r, _color.g, _color.b, a)
 	if _mat_ring != null:
 		_mat_ring.albedo_color = col
@@ -133,7 +163,14 @@ func _apply_color() -> void:
 	if _mat_beam != null:
 		_mat_beam.albedo_color = Color(_color.r, _color.g, _color.b, a * 0.65)
 	if _label != null:
-		_label.modulate = Color(_color.r, _color.g, _color.b, 0.55 if preview else 1.0)
+		var label_a := 1.0
+		if preview:
+			label_a = 0.55
+		else:
+			# Fades over the first slice of the lifetime, then stays gone.
+			label_a = clampf(1.0 - (aged / maxf(label_fade_fraction, 0.01)), 0.0, 1.0)
+		_label.modulate = Color(_color.r, _color.g, _color.b, label_a)
+		_label.visible = label_a > 0.01
 
 
 func _process(delta: float) -> void:
@@ -142,7 +179,22 @@ func _process(delta: float) -> void:
 	if preview:
 		_pivot.position.y = 0.0
 		_pivot.rotation.y = 0.0
+		scale = Vector3.ONE
 		return
+
 	_t += delta * bob_speed
 	_pivot.position.y = sin(_t) * bob_height
 	_pivot.rotate_y(delta * 0.8)
+
+	if _age < age_duration:
+		_age += delta
+		var aged := _age_fraction()
+		# Shrink and dim together. Scaling the whole node takes the beam and the
+		# ring down with it; the Label3D is fixed_size so it's faded separately
+		# rather than scaled.
+		var s := lerpf(1.0, aged_scale, aged)
+		scale = Vector3(s, s, s)
+		_apply_color()
+
+	if expire_after > 0.0 and _age >= expire_after:
+		queue_free()

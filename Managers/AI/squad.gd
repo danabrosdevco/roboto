@@ -16,7 +16,11 @@ class_name Squad
 enum SquadContext { UNENGAGED, ENGAGED }
 # NOTE: ATTACK is appended, never inserted — inspector-set default_objective
 # values are stored as ints and inserting would silently remap every squad.
-enum SquadObjective { NONE, ADVANCE, DEFEND, WITHDRAW, ATTACK }
+# NOTE: FOLLOW is appended for the same reason ATTACK was. WITHDRAW is no
+# longer reachable from the command wheel (DEFEND at a point behind you does the
+# same job) but it stays in the enum — deleting it would shift ATTACK and FOLLOW
+# down and silently remap every inspector-set default_objective in the project.
+enum SquadObjective { NONE, ADVANCE, DEFEND, WITHDRAW, ATTACK, FOLLOW }
 
 @export var squad_members: Array [Soldier]
 
@@ -31,6 +35,19 @@ enum SquadObjective { NONE, ADVANCE, DEFEND, WITHDRAW, ATTACK }
 @export var target_objective: SquadObjectivePoint
 # What this squad does when it reaches its objective on map load
 @export var default_objective: SquadObjective = SquadObjective.ADVANCE
+
+# ── FOLLOW ────────────────────────────────────
+# Who the squad is trailing when objective == FOLLOW. Normally the player.
+# FOLLOW is the one objective with no fixed world position, so objective_position
+# is recomputed from the leader every frame rather than set once.
+var follow_leader: Node3D = null
+# How far behind the leader the formation centre sits.
+@export var follow_distance: float = 5.0
+# Re-issue move orders once the leader has drifted this far from where the last
+# order was given. Too small and the squad stutters as it re-paths every frame;
+# too large and they lag visibly behind.
+@export var follow_reissue_distance: float = 3.5
+var _last_follow_issue: Vector3 = Vector3.ZERO
 
 var context: SquadContext = SquadContext.UNENGAGED
 var objective: SquadObjective = SquadObjective.NONE
@@ -103,12 +120,68 @@ func _ready() -> void:
 # PROCESS — context monitoring
 # ─────────────────────────────────────────────
 func _process(delta: float) -> void:
+	_tick_follow()
 	_tick_contact(delta)
 	match context:
 		SquadContext.ENGAGED:
 			_tick_engaged(delta)
 		SquadContext.UNENGAGED:
 			_tick_unengaged(delta)
+
+
+# ─────────────────────────────────────────────
+# FOLLOW
+# ─────────────────────────────────────────────
+# The leader is a moving objective, so this runs every frame regardless of
+# context — the squad keeps its formation slot updated while it fights, and
+# resumes following the moment contact breaks without needing a fresh order.
+func _tick_follow() -> void:
+	if objective != SquadObjective.FOLLOW:
+		return
+	if follow_leader == null or not is_instance_valid(follow_leader):
+		# Leader gone. Hold where they are rather than trailing a freed node.
+		set_objective(SquadObjective.DEFEND, get_center(), true)
+		return
+
+	objective_position = _follow_anchor()
+
+	if context == SquadContext.ENGAGED:
+		return
+	if _last_follow_issue.distance_to(objective_position) < follow_reissue_distance:
+		return
+	_last_follow_issue = objective_position
+	_issue_follow_orders()
+
+
+# A point behind the leader, so the squad stacks up at their back rather than
+# walking through them.
+func _follow_anchor() -> Vector3:
+	var back := follow_leader.global_transform.basis.z
+	back.y = 0.0
+	if back.length_squared() < 0.01:
+		back = Vector3.BACK
+	return follow_leader.global_position + back.normalized() * follow_distance
+
+
+func _issue_follow_orders() -> void:
+	for ai in get_orderable_members():
+		ai.always_active = true
+		if ai is Soldier:
+			ai.defensive_mode = false
+			ai.order_move_to(objective_position + _formation_offset(ai), true)
+			ai.change_soldier_state(Soldier.SoldierState.NONE)
+		else:
+			ai.move_to(objective_position + _formation_offset(ai))
+
+
+# Cancels whatever the squad was doing and puts them on the leader's hip.
+func follow(leader: Node3D) -> void:
+	follow_leader = leader
+	player_ordered = true
+	ordered_target = null
+	squad_combat_target = null
+	_last_follow_issue = Vector3.ZERO
+	set_objective(SquadObjective.FOLLOW, _follow_anchor() if leader != null else get_center(), true)
 
 
 # ─────────────────────────────────────────────
@@ -306,6 +379,9 @@ func _issue_objective_orders(force: bool = false) -> void:
 					ai.move_to(objective_position + offset)
 		SquadObjective.ATTACK:
 			_issue_attack_orders()
+		SquadObjective.FOLLOW:
+			_last_follow_issue = objective_position
+			_issue_follow_orders()
 
 
 # ─────────────────────────────────────────────
@@ -377,6 +453,14 @@ func receive_player_order(
 ) -> void:
 	player_ordered = true
 	ordered_target = target
+
+	# FOLLOW has no world position — it tracks a node. Route it through follow()
+	# so the leader gets stored and the anchor is computed rather than frozen.
+	if order == SquadObjective.FOLLOW:
+		return
+
+	# Any other order cancels a follow.
+	follow_leader = null
 
 	if order == SquadObjective.ATTACK:
 		if target == null or not is_instance_valid(target):

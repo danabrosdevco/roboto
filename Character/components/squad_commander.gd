@@ -7,13 +7,25 @@ class_name SquadCommander
 #
 # TAP T    — contextual order at the crosshair. The verb is inferred from what
 #            you're looking at, so the common case costs one keypress:
-#              hostile   → ATTACK that target
+#              hostile   → ASSAULT that target
 #              friendly  → select that robot's squad
-#              ground    → MOVE TO
+#              ground    → ASSAULT that position
 #              nothing   → CONTACT callout down the sightline
 # HOLD T   — opens the verb wheel. Mouse left/right picks, release commits.
 #            Camera is frozen while the wheel is open.
 # TAB      — cycle which squad you're commanding.
+#
+# WHY THREE VERBS
+# The wheel used to carry MOVE TO / DEFEND / ATTACK / FALL BACK / CONTACT. Those
+# weren't five orders, they were two questions collapsed into one list: WHERE
+# and HOW. The aim point already answers WHERE in every case, so the verb only
+# ever had to answer HOW.
+#   ASSAULT at ground   = the old MOVE TO
+#   ASSAULT at a hostile = the old ATTACK
+#   DEFEND at a point behind you = the old FALL BACK
+# CONTACT came off the wheel entirely — it isn't a posture, it's a report, and
+# it needs to be instant. By the time you have held, scrubbed and released, the
+# thing you spotted has moved. It is the TAP now.
 #
 # The old CommandMarker did a 600m physics sphere sweep every press to work out
 # who should listen. That's replaced: the commander already knows which squad is
@@ -40,14 +52,13 @@ class_name SquadCommander
 # one stayed in the cycle list forever.
 @export var registry_refresh_interval: float = 2.0
 
-enum Verb { MOVE, DEFEND, ATTACK, WITHDRAW, CONTACT }
+enum Verb { ASSAULT, DEFEND, FOLLOW, CONTACT }
 
 const VERB_LABELS := {
-	Verb.MOVE:     "MOVE TO",
-	Verb.DEFEND:   "DEFEND",
-	Verb.ATTACK:   "ATTACK",
-	Verb.WITHDRAW: "FALL BACK",
-	Verb.CONTACT:  "CONTACT",
+	Verb.ASSAULT: "ASSAULT",
+	Verb.DEFEND:  "DEFEND",
+	Verb.FOLLOW:  "FOLLOW",
+	Verb.CONTACT: "CONTACT",
 }
 
 var commandable_squads: Array[Squad] = []
@@ -209,8 +220,9 @@ func _process(delta: float) -> void:
 		_hold_time = 0.0
 
 
+# CONTACT is deliberately absent — it's the tap, not a wheel entry.
 func _available_verbs() -> Array:
-	return [Verb.MOVE, Verb.DEFEND, Verb.ATTACK, Verb.WITHDRAW, Verb.CONTACT]
+	return [Verb.ASSAULT, Verb.DEFEND, Verb.FOLLOW]
 
 
 func _open_wheel() -> void:
@@ -272,13 +284,13 @@ func _issue_contextual_order() -> void:
 			squad_selected.emit(s)
 			return
 
-	# Hostile under the crosshair — attack it.
+	# Hostile under the crosshair — assault it.
 	if collider is Enemy and Enums.are_hostile(Enums.Factions.PLAYER, collider.faction):
-		_issue_order(Verb.ATTACK, hit.position, collider)
+		_issue_order(Verb.ASSAULT, hit.position, collider)
 		return
 
-	# Ground. Move there.
-	_issue_order(Verb.MOVE, hit.position)
+	# Ground. Push to it.
+	_issue_order(Verb.ASSAULT, hit.position)
 
 
 func _issue_order(verb: int, position = null, target: Node = null) -> void:
@@ -294,7 +306,7 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 			pos = player.global_position
 		else:
 			pos = hit.position
-			if verb == Verb.ATTACK and target == null:
+			if verb == Verb.ASSAULT and target == null:
 				var c = hit.get("collider")
 				if c is Enemy and Enums.are_hostile(Enums.Factions.PLAYER, c.faction):
 					target = c
@@ -305,20 +317,25 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 		Verb.CONTACT:
 			_call_contact(pos, target)
 			return
-		Verb.ATTACK:
+		Verb.ASSAULT:
+			# One verb, two objectives, resolved by whether the crosshair found
+			# a body. Designating a target is strictly more specific than
+			# pushing to a spot, so prefer it when we have one.
 			if target == null:
-				# No designated body — push to the position instead of silently
-				# doing nothing, which is what the player expects to happen.
 				squad.receive_player_order(Squad.SquadObjective.ADVANCE, pos)
 			else:
 				squad.receive_player_order(
 					Squad.SquadObjective.ATTACK, pos, target as CharacterBody3D)
-		Verb.MOVE:
-			squad.receive_player_order(Squad.SquadObjective.ADVANCE, pos)
 		Verb.DEFEND:
 			squad.receive_player_order(Squad.SquadObjective.DEFEND, pos)
-		Verb.WITHDRAW:
-			squad.receive_player_order(Squad.SquadObjective.WITHDRAW, pos)
+		Verb.FOLLOW:
+			# No world position to mark — the objective is a moving node. Clear
+			# any standing marker so the map doesn't still show an objective the
+			# squad has been pulled off.
+			squad.follow(player)
+			_clear_marker(squad)
+			order_issued.emit(squad, verb, player.global_position, player)
+			return
 
 	_place_marker(squad, verb, pos)
 	order_issued.emit(squad, verb, pos, target)
@@ -384,8 +401,13 @@ func _update_preview() -> void:
 		if _preview == null:
 			return
 	var verbs := _available_verbs()
-	var verb: int = verbs[_wheel_index] if _wheel_index >= 0 and _wheel_index < verbs.size() else Verb.MOVE
-	_preview.global_position = _snap_to_ground(get_aim_point())
+	var verb: int = verbs[_wheel_index] if _wheel_index >= 0 and _wheel_index < verbs.size() else Verb.ASSAULT
+	# FOLLOW has no aim point — park the preview at the player's feet so the
+	# ring still reads as "this order is about you", not about the crosshair.
+	if verb == Verb.FOLLOW and player != null:
+		_preview.global_position = _snap_to_ground(player.global_position)
+	else:
+		_preview.global_position = _snap_to_ground(get_aim_point())
 	_preview.set_order(verb, str(VERB_LABELS.get(verb, "")))
 
 
@@ -442,6 +464,13 @@ func _place_marker(squad: Squad, verb: int, pos: Vector3) -> void:
 	marker.rotation = Vector3.ZERO
 	if marker.has_method("set_order"):
 		marker.set_order(verb, VERB_LABELS.get(verb, ""))
+
+
+func _clear_marker(squad: Squad) -> void:
+	var marker = _markers.get(squad)
+	if marker != null and is_instance_valid(marker):
+		marker.queue_free()
+	_markers.erase(squad)
 
 
 # The old code forced marker.y = 0, which drops the marker to world origin

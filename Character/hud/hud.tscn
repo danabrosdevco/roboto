@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://ib6m72545n75"]
+[gd_scene load_steps=12 format=3 uid="uid://ib6m72545n75"]
 
 [ext_resource type="PackedScene" uid="uid://b4n2skq3ovhu6" path="res://Character/hud/scan_effect.tscn" id="1_80vuv"]
 [ext_resource type="Script" path="res://Character/hud/hud.gd" id="1_nopku"]
@@ -6,7 +6,9 @@
 [ext_resource type="Script" path="res://Character/hud/fps.gd" id="4_wqlwh"]
 [ext_resource type="Texture2D" uid="uid://dgcfptv5bmsic" path="res://2d_assets/TB_Textures/flash-drive.png" id="5_tw6wi"]
 [ext_resource type="PackedScene" uid="uid://c3e3nxrjlhipg" path="res://Character/weapon/ui.tscn" id="7_64yrs"]
+[ext_resource type="AudioStream" uid="uid://hnl8e7n2tuid" path="res://sounds/sfx/psx ui sfx/DropB.wav" id="7_raese"]
 [ext_resource type="Shader" path="res://Character/hud/signal_filter.gdshader" id="8_21qk7"]
+[ext_resource type="AudioStream" uid="uid://cvyks5ixawlx2" path="res://sounds/sfx/psx ui sfx/ConfirmH.wav" id="8_21ypy"]
 [ext_resource type="Script" path="res://Character/hud/squad_hud.gd" id="9_n3ibl"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bvcf1"]
@@ -92,7 +94,7 @@ texture = ExtResource("5_tw6wi")
 expand_mode = 4
 stretch_mode = 2
 
-[node name="SquadHud" type="Control" parent="."]
+[node name="SquadHud" type="Control" parent="." node_paths=PackedStringArray("order_ux_sound", "order_ux_sound_confirm")]
 layout_mode = 3
 anchors_preset = 0
 offset_left = -16.0
@@ -100,12 +102,20 @@ offset_top = 508.0
 offset_right = 24.0
 offset_bottom = 548.0
 script = ExtResource("9_n3ibl")
+order_ux_sound = NodePath("OrderUXSoundCycle")
+order_ux_sound_confirm = NodePath("OrderUXSoundConfirm")
 font_size_header = 16
 font_size_body = 14
 font_size_nearby = 14
 font_size_wheel = 14
 font_size_toast = 14
 font_size_marker = 14
+
+[node name="OrderUXSoundCycle" type="AudioStreamPlayer" parent="SquadHud"]
+stream = ExtResource("7_raese")
+
+[node name="OrderUXSoundConfirm" type="AudioStreamPlayer" parent="SquadHud"]
+stream = ExtResource("8_21ypy")
 
 [node name="UI" parent="." instance=ExtResource("7_64yrs")]
 layout_mode = 1

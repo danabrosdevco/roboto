@@ -8,7 +8,21 @@ class_name SquadHUD
 #
 # THREE LAYERS
 #   1. Roster panel (bottom left): the squad you're commanding, one row per
-#      robot — callsign, role, health, signal integrity, current state.
+#      robot — callsign, health, signal integrity, current state.
+#
+# WHY THE ROLE COLUMN IS GONE
+# Rows used to carry a role tag (SUP/ADV/FLK/FBK/OVW) AND a state
+# (SUPPRESSING/COVER_SEEKING/BOUNDING/SUPPRESSED). Two columns of jargon, both
+# describing how assign_roles() carved the squad up — bookkeeping, not anything
+# the player can act on. Worse, SUPPRESSING and SUPPRESSED differ by one letter
+# and mean opposite things, and bounding is inherently a PAIR taking turns while
+# the roster showed each half as an isolated static label.
+#
+# Bounding should be something you see in the world — soldiers visibly
+# alternating movement — not something you read in a list. So state collapses to
+# the three things worth knowing, and PINNED is the only one that asks anything
+# of you. The roles still exist and still drive the AI; they're just internal
+# now. The debug overlay is the right place for them.
 #   2. Squad strip (above roster): other squads in range and their posture, so
 #      you can see who else is on the field before you cycle to them.
 #   3. World markers: a chevron over each member of the selected squad, drawn
@@ -26,6 +40,8 @@ class_name SquadHUD
 
 @export var commander: SquadCommander
 @export var player: Player
+@export var order_ux_sound: AudioStreamPlayer
+@export var order_ux_sound_confirm: AudioStreamPlayer
 
 # ── TEXT SIZE ─────────────────────────────────
 @export var font_size_header: int = 24
@@ -55,14 +71,12 @@ const COL_WARN    := HUDPalette.WARN
 const COL_CRIT    := HUDPalette.CRIT
 const COL_SIGNAL  := HUDPalette.SIGNAL
 
-const ROLE_TAG := {
-	Soldier.SoldierRole.NONE:       "--",
-	Soldier.SoldierRole.SUPPRESSOR: "SUP",
-	Soldier.SoldierRole.ADVANCER:   "ADV",
-	Soldier.SoldierRole.FLANKER:    "FLK",
-	Soldier.SoldierRole.FALLBACK:   "FBK",
-	Soldier.SoldierRole.OVERWATCH:  "OVW",
-}
+# The three states a player can act on. Everything the AI does maps onto one of
+# them; the distinctions it drops were never actionable.
+const STATE_MOVING := "MOVING"
+const STATE_FIRING := "FIRING"
+const STATE_PINNED := "PINNED"
+const STATE_HOLDING := "HOLDING"
 
 var _panel: VBoxContainer
 var _squad_header: Label
@@ -297,16 +311,16 @@ func _make_member_row(m: Soldier) -> Control:
 	var name_col := COL_CRIT if not m.alive else COL_BRIGHT
 	row.add_child(_make_label(" %-10s" % m.soldier_name.left(10), name_col))
 
-	var role_text: String = str(ROLE_TAG.get(m.squad_role, "--"))
-	row.add_child(_make_label(role_text, COL_DIM))
-
 	if not m.alive:
 		row.add_child(_make_label("DESTROYED", COL_CRIT))
 		return row
 
 	row.add_child(_make_bar(float(m.health) / float(maxi(1, m.max_health)), _health_color(m)))
 	row.add_child(_make_bar(m.signal_integrity, COL_SIGNAL))
-	row.add_child(_make_label(_state_text(m), COL_DIM))
+	var state := _state_text(m)
+	# PINNED is the only state that's a request rather than a report, so it's
+	# the only one that gets to be loud.
+	row.add_child(_make_label(state, COL_WARN if state == STATE_PINNED else COL_DIM))
 	return row
 
 
@@ -320,9 +334,20 @@ func _state_text(m: Soldier) -> String:
 		return "E-KILL"
 	if sig == Enemy.SignalState.CRITICAL:
 		return "NO LINK"
-	if m.soldier_state != Soldier.SoldierState.NONE:
-		return str(Soldier.SoldierState.keys()[m.soldier_state])
-	return str(Enemy.AIState.keys()[m.ai_state])
+
+	match m.soldier_state:
+		Soldier.SoldierState.SUPPRESSED:
+			return STATE_PINNED
+		Soldier.SoldierState.SUPPRESSING:
+			return STATE_FIRING
+		Soldier.SoldierState.BOUNDING, Soldier.SoldierState.COVER_SEEKING:
+			return STATE_MOVING
+
+	if m.ai_state == Enemy.AIState.COMBAT:
+		return STATE_FIRING
+	if m.movement_state != Enemy.MovementState.NONE:
+		return STATE_MOVING
+	return STATE_HOLDING
 
 
 func _make_bar(fraction: float, col: Color) -> Control:
@@ -427,11 +452,14 @@ func _draw() -> void:
 		])
 		draw_polyline(pts, col, 1.5)
 
-		if dist < 45.0:
-			var tag: String = str(ROLE_TAG.get(m.squad_role, ""))
-			if tag != "" and tag != "--":
-				draw_string(ThemeDB.fallback_font, p + Vector2(size + 3, 2),
-					tag, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size_marker, col)
+		# Only a pinned squadmate gets text in the world. Tagging every robot
+		# with its role was noise you had to read past to find the one that
+		# mattered.
+		if dist < 60.0 and m.soldier_state == Soldier.SoldierState.SUPPRESSED:
+			var warn := COL_WARN
+			warn.a = alpha
+			draw_string(ThemeDB.fallback_font, p + Vector2(size + 3, 2),
+				STATE_PINNED, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size_marker, warn)
 
 
 # ─────────────────────────────────────────────
@@ -449,6 +477,7 @@ func _on_order_issued(squad: Squad, verb: int, _position: Vector3, target: Node)
 	if target != null and target is Enemy:
 		suffix = " > %s" % (target as Enemy).soldier_name.to_upper()
 	_show_toast("%s : %s%s" % [squad.get_display_name().to_upper(), verb_text, suffix], COL_BRIGHT)
+	order_ux_sound_confirm.play()
 
 
 func _on_contact_called(_position: Vector3, target: Node) -> void:
@@ -470,16 +499,17 @@ func _on_wheel_opened(labels: Array, index: int) -> void:
 
 
 func _on_wheel_moved(index: int) -> void:
+	order_ux_sound.play()
 	for i in _wheel_labels.size():
 		var l: Label = _wheel_labels[i]
 		l.add_theme_color_override("font_color", COL_BRIGHT if i == index else COL_DIM)
 		l.add_theme_font_size_override("font_size",
 			font_size_wheel + 3 if i == index else font_size_wheel)
+	
 
 
 func _on_wheel_closed() -> void:
 	_wheel.visible = false
-
 
 func _show_toast(text: String, col: Color) -> void:
 	_toast.text = text
