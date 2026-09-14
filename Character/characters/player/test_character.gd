@@ -404,6 +404,10 @@ func interact(interactible: Interactible):
 			pass
 		Enums.InteractTypes.BITS:
 			add_bits(interactible.value)
+		Enums.InteractTypes.OBJECTIVE:
+			# Nothing to collect. The objective connected to this Interactible's
+			# `interacted` signal and handles itself.
+			pass
 		_:
 			print("Unknown interactible type")
 	interactible.interacted_with()
@@ -454,8 +458,8 @@ func apply_healing(healing):
 	if new_health >= max_health:
 		new_health = max_health
 	health = new_health
-	if health_sfx != null:
-		health_sfx.play()
+	#if health_sfx != null:
+		#health_sfx.play()
 	update_status()
 
 

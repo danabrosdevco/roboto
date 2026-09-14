@@ -1,0 +1,120 @@
+extends Node3D
+class_name MissionObjective
+
+# ─────────────────────────────────────────────
+# MISSION OBJECTIVE — a thing that must happen for the mission to succeed.
+#
+# NOT THE SAME AS SquadObjectivePoint. That marks a place you can order a squad
+# to; this marks something the mission requires. Conflating them would make
+# every tactical waypoint a win condition, and would mean you could never have
+# an objective that isn't a place — hold for 90 seconds, destroy three relays,
+# get everyone out alive.
+#
+# They do often sit together, so `linked_squad_point` lets one objective expose
+# an ordering target without the two becoming the same object.
+#
+# Subclasses decide WHEN complete() fires. This base owns the rest: activation,
+# prerequisites, optional-vs-required, and the signals the tracker and HUD read.
+# ─────────────────────────────────────────────
+
+@export var id: StringName = &""
+@export var display_name: String = "Objective"
+@export_multiline var description: String = ""
+
+# Bonus objectives don't gate extraction. They still pay out.
+@export var optional: bool = false
+# Paid on extraction, on top of the mission's own reward.
+@export var reward_resources: int = 0
+
+# Optional ordering target so you can send a squad to this objective.
+@export var linked_squad_point: SquadObjectivePoint
+
+# Hidden/inert until its prerequisites complete. A false here with no
+# prerequisites means something else has to call activate().
+@export var starts_active: bool = true
+@export var prerequisites: Array[MissionObjective] = []
+
+# Marks this as the one that ends the mission. MissionExit doesn't need it —
+# it checks all required objectives — but the HUD wants to say "EXTRACT".
+@export var is_extraction: bool = false
+
+var completed: bool = false
+var failed: bool = false
+var active: bool = false
+
+signal objective_activated(objective: MissionObjective)
+signal objective_completed(objective: MissionObjective)
+signal objective_failed(objective: MissionObjective)
+signal progress_changed(objective: MissionObjective, current: int, target: int)
+
+
+func _ready() -> void:
+	add_to_group("mission_objectives")
+	for prereq in prerequisites:
+		if prereq != null:
+			prereq.objective_completed.connect(_on_prerequisite_completed)
+	if starts_active and _prerequisites_met():
+		activate()
+	_on_objective_ready()
+
+
+# Subclass hook. Use this instead of overriding _ready so the registration and
+# prerequisite wiring above can't be accidentally skipped.
+func _on_objective_ready() -> void:
+	pass
+
+
+func _prerequisites_met() -> bool:
+	for prereq in prerequisites:
+		if prereq != null and not prereq.completed:
+			return false
+	return true
+
+
+func _on_prerequisite_completed(_objective: MissionObjective) -> void:
+	if not active and not completed and _prerequisites_met():
+		activate()
+
+
+func activate() -> void:
+	if active or completed:
+		return
+	active = true
+	if linked_squad_point != null:
+		linked_squad_point.visible = true
+	objective_activated.emit(self)
+	_on_activated()
+
+
+func _on_activated() -> void:
+	pass
+
+
+func complete() -> void:
+	if completed or failed:
+		return
+	completed = true
+	active = false
+	objective_completed.emit(self)
+	_on_completed()
+
+
+func _on_completed() -> void:
+	pass
+
+
+func fail() -> void:
+	if completed or failed:
+		return
+	failed = true
+	active = false
+	objective_failed.emit(self)
+
+
+# [current, target] for the HUD. Override where a count makes sense.
+func progress() -> Array:
+	return [1 if completed else 0, 1]
+
+
+func counts_toward_extraction() -> bool:
+	return not optional and not is_extraction

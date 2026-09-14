@@ -7,6 +7,10 @@ var world_states: Enums.WorldStates
 @export var current_level: TrenchBroomLevel
 @export var ai_manager: AIManager
 @export var game_manager: GameManager
+# Persists across level loads so it can collect the squad out of one map and
+# rebuild it in the next. Put it under World, never under a level.
+@export var squad_spawner: SquadSpawner
+@export var objective_tracker: ObjectiveTracker
 var player_corpse_scene = preload("res://Env/world_objects/components/player_corpse.tscn")
 
 func _ready():
@@ -31,6 +35,11 @@ func _ready():
 					level_exit.next_level_signal.connect(_on_next_level_requested)
 				pass
 	register_world_objects(current_level)
+	if squad_spawner != null:
+		Campaign.register_spawner(squad_spawner)
+	if objective_tracker != null:
+		Campaign.register_objective_tracker(objective_tracker)
+	Campaign.on_level_loaded(current_level)
 func load_next_level(next_level_scene: PackedScene) -> void:
 	get_tree().paused = true
 	await get_tree().process_frame
@@ -48,6 +57,13 @@ func load_next_level(next_level_scene: PackedScene) -> void:
 	await get_tree().process_frame
 	get_tree().paused = false
 	register_world_objects(current_level)
+	# Arriving somewhere new: either deploy the roster into a mission, or clean
+	# up after coming home. Campaign.in_mission was already flipped by the exit.
+	if Campaign.in_mission:
+		Campaign.on_level_loaded(current_level)
+	else:
+		Campaign.on_returned_to_base()
+		Campaign.on_level_loaded(current_level)
 
 
 func deload_current_level(level):

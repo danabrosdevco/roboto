@@ -67,6 +67,7 @@ class Readout:
 # The visible model. Left null for items with no viewmodel yet — everything
 # still works, you just don't see anything in hand.
 @export var viewmodel: Node3D
+@export var use_default_position: bool = true
 @export var base_position: Vector3 = Vector3(0.31, -0.425, -0.015)
 @export var base_rotation: Vector3 = Vector3(-0.3, 6.0, 2.8)
 @export var obstructed_position: Vector3 = Vector3(-0.5, -0.425, -1.0)
@@ -88,7 +89,6 @@ class Readout:
 # Can this be selected at all when empty? Almost always no: equipping an empty
 # hand is worse than denying the input.
 @export var equippable_when_empty: bool = false
-
 # ── SIGNALS ───────────────────────────────────
 signal equipped
 signal unequipped
@@ -121,6 +121,9 @@ func initialize(p_player: Node, p_cam: Camera3D, p_ammo: AmmoPool) -> void:
 	# (HUDWeapon forwards its own weapon_model export into it) and set_hidden
 	# needs it to already be there or the model starts visible.
 	_on_initialize()
+	if use_default_position == false:
+		base_position = viewmodel.position
+		base_rotation = viewmodel.rotation
 	set_hidden(true)
 
 

@@ -29,6 +29,7 @@ FIRE_RATE = 0.075
 reload_sounds = [NodePath("Reload1"), NodePath("Reload2"), NodePath("Reload3"), NodePath("Reload4"), NodePath("Reload5")]
 reload_delays = Array[float]([0.6, 0.6, 0.35, 0.3, 0.3])
 click_stream_player = NodePath("Click")
+display_name = "Rifle"
 
 [node name="AssaultRifle2_12" parent="." instance=ExtResource("5_di8i3")]
 transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.0776801, -0.0526062, -0.218037)

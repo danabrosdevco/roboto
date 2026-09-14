@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://b2hibouhtggt2"
+path="res://.godot/imported/freesound_community-gear-spinning-loop-6981.mp3-7c54e1c4f52858315e9d25b74f89b2bf.mp3str"
+
+[deps]
+
+source_file="res://sounds/sfx/free cinematic sfx/freesound_community-gear-spinning-loop-6981.mp3"
+dest_files=["res://.godot/imported/freesound_community-gear-spinning-loop-6981.mp3-7c54e1c4f52858315e9d25b74f89b2bf.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

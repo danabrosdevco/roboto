@@ -110,11 +110,11 @@ func _build() -> void:
 
 	_label = Label3D.new()
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.no_depth_test = false
+	_label.no_depth_test = true
 	_label.fixed_size = false
 	_label.pixel_size = 0.0022
-	_label.font_size = 64
-	_label.outline_size = 12
+	_label.font_size = 128
+	_label.outline_size = 24
 	_label.outline_modulate = Color(0, 0, 0, 0.7)
 	_label.position.y = label_height
 	_label.text = ""
@@ -137,8 +137,8 @@ func set_order(verb: int, text: String = "") -> void:
 		_color = verb_colors[verb]
 	else:
 		_color = Color.WHITE
-	#if _label != null:
-		#_label.text = text
+	if _label != null:
+		_label.text = text
 	# A new order on an existing marker is a new marker as far as the player is
 	# concerned, so it goes back to full size and brightness.
 	_age = 0.0

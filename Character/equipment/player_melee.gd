@@ -15,7 +15,7 @@ class_name PlayerMelee
 @export var damage: int = 40
 @export var range: float = 2.2
 @export var swing_time: float = 0.45
-# When the damage lands within the swing, as a fraction of swing_time. Damage on
+# When the damage lands within the swing, as a fraction of swing_time. Damage o"res://Character/equipment/player_melee.gd"n
 # the contact frame rather than the input frame, so the animation reads.
 @export var impact_at: float = 0.35
 @export var swing_rotation: Vector3 = Vector3(-35.0, 15.0, 0.0)

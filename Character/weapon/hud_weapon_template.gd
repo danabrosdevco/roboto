@@ -141,7 +141,7 @@ func _fire_shot() -> void:
 		rifle_stream_player.play()
 	if muzzle_flash != null:
 		muzzle_flash.play_flash()
-
+	DebugDraw3D.draw_line(from, to, Color(1,0,0), 50)
 	var result := get_world_3d().direct_space_state.intersect_ray(query)
 	if result:
 		var collider = result.collider

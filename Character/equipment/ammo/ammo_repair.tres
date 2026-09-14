@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AmmoStock" load_steps=2 format=3 uid="uid://b5ukc6x65d6ss"]
+
+[ext_resource type="Script" path="res://Character/equipment/ammo_stock.gd" id="1_qtnvv"]
+
+[resource]
+script = ExtResource("1_qtnvv")
+ammo_type = &"repair"
+amount = 500
+capacity = 500

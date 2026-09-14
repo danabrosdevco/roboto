@@ -1328,9 +1328,7 @@ func respawn():
 	reset()
 
 func hide_body():
-	#print("hiding ", visible_pieces.size(), " pieces")
 	for i in visible_pieces:
-		#print("  hiding: ", i.name, " at ", i.get_path())
 		i.visible = false
 func show_body():
 	for i in visible_pieces:
