@@ -431,7 +431,87 @@ func handle_gravity(delta: float) -> void:
 	else:
 		velocity.y -= gravity * delta
 
+# ─────────────────────────────────────────────
+# HOLD STILL
+# ─────────────────────────────────────────────
+# Stops TRANSLATION only. The robot keeps facing, aiming and firing — it just
+# doesn't walk off while you're working on it.
+#
+# The gate sits in handle_movement() rather than in move_to(), because cover
+# seeking, bounding and chasing all set nav targets by different routes
+# (set_target_position directly in three places). handle_movement is the one
+# funnel every one of them passes through, so gating here catches all of them
+# without hunting down each caller.
+#
+# move_to() is ALSO gated, so a held robot doesn't burn pathfinding on orders it
+# can't act on — and so the last order is replayed on release rather than lost.
+var _hold_count: int = 0
+var _hold_timer: float = 0.0
+var _pending_move: Vector3 = Vector3.ZERO
+var _has_pending_move: bool = false
+# Safety release. Without it, anything that grabs a hold and then gets freed
+# before releasing leaves a robot frozen for the rest of the mission.
+@export var max_hold_time: float = 30.0
+
+signal hold_started
+signal hold_released
+
+
+func is_held() -> bool:
+	return _hold_count > 0
+
+
+# Reference counted, so two things holding the same robot don't release each
+# other early.
+func hold_still() -> void:
+	_hold_count += 1
+	_hold_timer = 0.0
+	if _hold_count == 1:
+		hold_started.emit()
+
+
+func release_hold() -> void:
+	if _hold_count <= 0:
+		return
+	_hold_count -= 1
+	if _hold_count > 0:
+		return
+	hold_released.emit()
+	# Resume whatever was asked for while we were pinned.
+	if _has_pending_move:
+		_has_pending_move = false
+		var pos := _pending_move
+		_pending_move = Vector3.ZERO
+		move_to(pos)
+
+
+func force_release_hold() -> void:
+	_hold_count = 0
+	_has_pending_move = false
+
+
+func _tick_hold(delta: float) -> void:
+	if _hold_count <= 0:
+		return
+	_hold_timer += delta
+	if max_hold_time > 0.0 and _hold_timer >= max_hold_time:
+		push_warning("%s: hold exceeded %.0fs, force-releasing." % [name, max_hold_time])
+		force_release_hold()
+		hold_released.emit()
+
+
 func handle_movement(delta):
+	_tick_hold(delta)
+
+	if is_held():
+		# Same deceleration curve MovementState.NONE uses, so a pinned robot
+		# coasts to a stop instead of snapping, and reads as deliberate.
+		var hold_t = 1.0 - exp(-acceleration * delta)
+		velocity.x = lerp(velocity.x, 0.0, hold_t)
+		velocity.z = lerp(velocity.z, 0.0, hold_t)
+		_stuck_timer = 0.0
+		return
+
 	match movement_state:
 		MovementState.NONE:
 			# Decelerate through the same curve as acceleration rather than
@@ -479,6 +559,11 @@ func _check_stuck(delta: float) -> void:
 	_handle_path_blocked()
 
 func move_to(pos: Vector3):
+	# Pinned. Remember where we were told to go and replay it on release.
+	if is_held():
+		_pending_move = pos
+		_has_pending_move = true
+		return
 	nav_agent.set_target_position(pos)
 	movement_target = pos
 	movement_state = MovementState.MOVING
@@ -1300,6 +1385,7 @@ func apply_damage(damage, source) -> void:
 		i.activate()
 
 func die():
+	force_release_hold()
 	if not alive:
 		return
 	if stimulus_manager != null:

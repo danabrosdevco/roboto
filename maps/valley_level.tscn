@@ -50,42 +50,6 @@ navigation_mesh = SubResource("NavigationMesh_b87a8")
 [node name="terrain" parent="NavigationRegion3D" instance=ExtResource("2_33emj")]
 transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 
-[node name="Squad2" parent="NavigationRegion3D" node_paths=PackedStringArray("squad_members", "target_objective") instance=ExtResource("7_1rl6w")]
-squad_members = [NodePath("Soldier_Shotgun"), NodePath("Soldier_Shotgun2"), NodePath("Soldier_Shotgun3"), NodePath("Soldier_Shotgun4"), NodePath("Soldier_Shotgun5")]
-callsign = "AlphaSquad"
-target_objective = NodePath("../../OBJ1")
-default_objective = 2
-
-[node name="Soldier_Shotgun" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_14lvr")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9608, -1.42876, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-faction = 2
-
-[node name="Soldier_Shotgun2" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_14lvr")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.68767, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-faction = 2
-
-[node name="Soldier_Shotgun3" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_14lvr")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.78838, -1.68767, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-faction = 2
-
-[node name="Soldier_Shotgun4" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_14lvr")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5778, -1.39131, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-faction = 2
-
-[node name="Soldier_Shotgun5" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_14lvr")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.7513, -0.100033, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-faction = 2
-
 [node name="Squad" parent="NavigationRegion3D" node_paths=PackedStringArray("squad_members", "target_objective") instance=ExtResource("7_1rl6w")]
 squad_members = [NodePath("Soldier_Shotgun"), NodePath("Soldier_Shotgun2"), NodePath("Soldier_Shotgun3"), NodePath("Soldier_Shotgun4"), NodePath("Soldier_Shotgun5")]
 target_objective = NodePath("../../OBJ1")

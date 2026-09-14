@@ -409,7 +409,7 @@ func interact(interactible: Interactible):
 			# `interacted` signal and handles itself.
 			pass
 		_:
-			print("Unknown interactible type")
+			pass
 	interactible.interacted_with()
 	current_interactible = null
 	update_status()
@@ -476,6 +476,8 @@ func add_bits(value):
 
 func update_last_bonfire(bonfire: Node3D):
 	if bonfire == null:
+		if world.current_level == null:
+			return
 		last_bonfire = world.current_level.spawn_point.global_position
 		return
 	last_bonfire = bonfire

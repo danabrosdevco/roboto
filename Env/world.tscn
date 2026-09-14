@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=18 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
@@ -9,18 +9,22 @@
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="5_5i2ew"]
 [ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="6_ckjgx"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="7_ura3n"]
-[ext_resource type="PackedScene" uid="uid://bry0vr0coxyl4" path="res://maps/valley_level.tscn" id="10_govo2"]
 [ext_resource type="Script" path="res://Campaign/squad_spawner.gd" id="11_0cp1s"]
 [ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="12_0vb83"]
 [ext_resource type="Script" path="res://Campaign/objective_tracker.gd" id="12_1xc4a"]
 [ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="12_nadmy"]
+[ext_resource type="Script" path="res://Campaign/campaign.gd" id="15_3b3cm"]
+[ext_resource type="PackedScene" uid="uid://lpptelhi4w0y" path="res://maps/homebase_level.tscn" id="16_oio3q"]
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="16_oqoj0"]
+[ext_resource type="Resource" uid="uid://cs70pdfsa0rfb" path="res://Campaign/missions/mission_valley.tres" id="17_pp0hd"]
 
-[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager")]
+[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "Campaign")]
 script = ExtResource("1_2t272")
 player = NodePath("test_character")
-current_level = NodePath("TBLevel")
+current_level = NodePath("Homebase")
 ai_manager = NodePath("AIManager")
 game_manager = NodePath("GameManager")
+Campaign = NodePath("CampaignManager")
 
 [node name="AIManager" parent="." node_paths=PackedStringArray("world", "player", "stimulus_manager") instance=ExtResource("2_d77gp")]
 world = NodePath("..")
@@ -54,8 +58,6 @@ damage_value = 0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -81.0613, 0)
 direction = Vector3(0, -1, 0)
 
-[node name="TBLevel" parent="." instance=ExtResource("10_govo2")]
-
 [node name="SquadSpawner" type="Node" parent="." node_paths=PackedStringArray("world", "ai_manager")]
 script = ExtResource("11_0cp1s")
 world = NodePath("..")
@@ -65,6 +67,14 @@ squad_scene = ExtResource("12_nadmy")
 
 [node name="ObjectiveTracker" type="Node" parent="."]
 script = ExtResource("12_1xc4a")
+
+[node name="CampaignManager" type="Node" parent="."]
+script = ExtResource("15_3b3cm")
+base_level = ExtResource("16_oio3q")
+missions = Array[ExtResource("16_oqoj0")]([ExtResource("17_pp0hd")])
+starting_max_health = 50
+
+[node name="Homebase" parent="." instance=ExtResource("16_oio3q")]
 
 [connection signal="activate_interactible_ui" from="test_character" to="HUD" method="activate_interactible"]
 [connection signal="activate_scanner_ui" from="test_character" to="HUD" method="activate_scan_effect"]

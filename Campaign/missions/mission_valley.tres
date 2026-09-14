@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=3 format=3 uid="uid://cs70pdfsa0rfb"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="PackedScene" uid="uid://bry0vr0coxyl4" path="res://maps/valley_level.tscn" id="2_valley"]
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"valley"
+display_name = "Valley Sweep"
+briefing = "Clear the valley relay station and extract."
+level_scene = ExtResource("2_valley")
+map_position = Vector2(0, 0)
+reward_resources = 120
+unlocks = Array[StringName]([])
+repeatable = true
+requires = Array[StringName]([])

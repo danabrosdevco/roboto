@@ -92,10 +92,10 @@ func _on_unequip() -> void:
 # ─────────────────────────────────────────────
 func primary_pressed() -> void:
 	if _throwing or is_raising():
-		print ("THROWING OR RAISING")
+		#print ("THROWING OR RAISING")
 		return
 	if not has_charge():
-		denied.emit("NO GRENADES")
+		#denied.emit("NO GRENADES")
 		return
 	if can_cook:
 		_cooking = true

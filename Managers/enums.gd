@@ -19,7 +19,7 @@ enum GuardianCombatOptions { SPINNING_ATTACK, RECOVERY }
 # WORLD OBJECT INF #
 enum WorldObjectTypes { CHAR_SPAWN, AI_SPAWN, LEVEL_EXIT, PICKUP, INTERACTIBLE, AI, STATIC_TARGET }
 enum PickUpTypes { HEALTH, SHARDS }
-enum InteractTypes { HEALTH, SHARDS, BONFIRE, BITS, OBJECTIVE }
+enum InteractTypes { HEALTH, SHARDS, BONFIRE, BITS, OBJECTIVE, MISSION }
  
 # Which factions are hostile to which
 # Returns true if faction_a should attack faction_b

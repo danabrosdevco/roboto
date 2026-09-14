@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://ib6m72545n75"]
+[gd_scene load_steps=13 format=3 uid="uid://ib6m72545n75"]
 
 [ext_resource type="PackedScene" uid="uid://b4n2skq3ovhu6" path="res://Character/hud/scan_effect.tscn" id="1_80vuv"]
 [ext_resource type="Script" path="res://Character/hud/hud.gd" id="1_nopku"]
@@ -10,6 +10,7 @@
 [ext_resource type="Shader" path="res://Character/hud/signal_filter.gdshader" id="8_21qk7"]
 [ext_resource type="AudioStream" uid="uid://cvyks5ixawlx2" path="res://sounds/sfx/psx ui sfx/ConfirmH.wav" id="8_21ypy"]
 [ext_resource type="Script" path="res://Character/hud/squad_hud.gd" id="9_n3ibl"]
+[ext_resource type="Script" path="res://Character/hud/objective_hud.gd" id="11_1xhm8"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bvcf1"]
 shader = ExtResource("8_21qk7")
@@ -129,3 +130,9 @@ offset_bottom = 31.0
 theme_override_font_sizes/font_size = 30
 text = "FPS:"
 script = ExtResource("4_wqlwh")
+
+[node name="ObjectiveHud" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("11_1xhm8")

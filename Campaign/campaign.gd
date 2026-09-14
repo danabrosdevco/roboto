@@ -23,6 +23,16 @@ class_name CampaignManager
 @export var missions: Array[MissionDefinition] = []
 @export var autosave: bool = true
 
+# ── STARTING ROSTER ───────────────────────────
+# A brand new CampaignState has an empty roster, so without this nothing ever
+# deploys and the spawner silently does nothing — which looks exactly like the
+# spawner being broken. These are only used on a fresh save.
+@export var starting_squad_size: int = 4
+@export var starting_names: Array[String] = ["Bravo-1", "Bravo-2", "Bravo-3", "Bravo-4"]
+@export var starting_chassis: PackedScene
+@export var starting_max_health: int = 30
+@export var starting_resources: int = 0
+
 signal state_loaded
 signal deployed(mission: MissionDefinition)
 signal extracted(mission: MissionDefinition, result: Dictionary)
@@ -41,6 +51,30 @@ func _ready() -> void:
 	state = CampaignState.load_from_disk()
 	if state == null:
 		state = CampaignState.new()
+		_seed_new_campaign()
+	state_loaded.emit()
+
+
+func _seed_new_campaign() -> void:
+	state.award(starting_resources)
+	for i in starting_squad_size:
+		var r := SoldierRecord.new()
+		r.display_name = starting_names[i] if i < starting_names.size() else "Unit-%02d" % (i + 1)
+		r.max_health = starting_max_health
+		r.chassis_scene = starting_chassis
+		state.add_soldier(r)
+	if autosave:
+		state.save_to_disk()
+
+
+# Wipes the save and starts over. Bind it to a debug key while you're iterating
+# — otherwise every change to the starting roster is invisible until you go and
+# delete user://campaign.json by hand.
+func reset_campaign() -> void:
+	state = CampaignState.new()
+	_seed_new_campaign()
+	current_mission = null
+	in_mission = false
 	state_loaded.emit()
 
 

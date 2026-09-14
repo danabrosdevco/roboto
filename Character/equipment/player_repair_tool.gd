@@ -163,6 +163,10 @@ func _start_channel() -> void:
 	if target == null:
 		denied.emit("NO TARGET")
 		return
+	# Re-pressing while already channelling on someone else would otherwise
+	# leave the previous patient pinned forever.
+	if _channelling and _target != target:
+		_stop_channel()
 	if _target != target:
 		# Different patient — progress doesn't carry across.
 		_partial = 0.0
@@ -172,6 +176,11 @@ func _start_channel() -> void:
 	if loop_sound != null and not loop_sound.playing:
 		loop_sound.play()
 	if _target != player:
+		# Pin them. Without this the patient walks off mid-channel, the
+		# crosshair loses them, and _tick_channel drops the repair a frame
+		# later — which is the "putzing around" problem.
+		if _target.has_method("hold_still"):
+			_target.hold_still()
 		repair_target_pinned.emit(_target)
 	channel_started.emit(_target)
 
@@ -184,7 +193,9 @@ func _stop_channel() -> void:
 	_recharge_t = recharge_delay
 	if loop_sound != null:
 		loop_sound.stop()
-	if _target != null and _target != player:
+	if _target != null and is_instance_valid(_target) and _target != player:
+		if _target.has_method("release_hold"):
+			_target.release_hold()
 		repair_target_released.emit(_target)
 	channel_ended.emit(_target)
 

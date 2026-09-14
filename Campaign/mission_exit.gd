@@ -18,7 +18,7 @@ enum Mode {
 	DEPLOY,
 	EXTRACT,
 }
-
+@onready var Campaign :CampaignManager = get_parent().Campaign
 @export var mode: Mode = Mode.AUTO
 # Blocks extraction until the mission's objectives report done. Leave false
 # while you're still building the loop out.
@@ -29,6 +29,7 @@ signal blocked(reason: String)
 
 
 func _ready() -> void:
+
 	# LevelExit is found by group in World._ready(), so stay in it.
 	add_to_group("levelexit")
 

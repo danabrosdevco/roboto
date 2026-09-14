@@ -7,6 +7,7 @@ var world_states: Enums.WorldStates
 @export var current_level: TrenchBroomLevel
 @export var ai_manager: AIManager
 @export var game_manager: GameManager
+@export var Campaign: CampaignManager
 # Persists across level loads so it can collect the squad out of one map and
 # rebuild it in the next. Put it under World, never under a level.
 @export var squad_spawner: SquadSpawner
@@ -19,6 +20,7 @@ func _ready():
 		for child in get_children():
 			if child is TrenchBroomLevel:
 				current_level = child
+				player.update_last_bonfire(current_level.spawn_point)
 	if current_level:
 		var spawn_transform = current_level.spawn_point.global_transform
 		player.global_transform = spawn_transform

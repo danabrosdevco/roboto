@@ -335,7 +335,7 @@ background_energy_multiplier = 1.5
 sky = SubResource("Sky_siqjn")
 ambient_light_color = Color(0.176471, 0.219608, 0.054902, 1)
 
-[node name="TBLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region", "func_godot_map")]
+[node name="ArenaLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region", "func_godot_map")]
 script = ExtResource("1_afbfh")
 spawn_point = NodePath("SpawnPoint")
 nav_region = NodePath("NavigationRegion3D")
