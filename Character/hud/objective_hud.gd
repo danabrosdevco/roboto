@@ -143,11 +143,20 @@ func _process(delta: float) -> void:
 func _rebuild() -> void:
 	if tracker == null and _campaign != null:
 		tracker = _campaign.objectives
-	# At base there are no objectives and an empty panel looks like a bug.
+	# At base there genuinely are no objectives, so hide. But "in a mission with
+	# zero objectives" is a SETUP PROBLEM, not a normal state — hiding there is
+	# what made this look like a broken HUD instead of an empty level.
 	var in_mission: bool = _campaign != null and _campaign.in_mission
-	var showing: bool = in_mission and tracker != null and not tracker.objectives().is_empty()
-	_panel.visible = showing
-	if not showing:
+	_panel.visible = in_mission
+	if not in_mission:
+		return
+
+	if tracker == null or tracker.objectives().is_empty():
+		for c in _list.get_children():
+			c.queue_free()
+		_header.text = "NO OBJECTIVES"
+		_header.add_theme_color_override("font_color", COL_WARN)
+		_list.add_child(_make_label("no MissionObjective nodes in level", COL_DIM))
 		return
 
 	for c in _list.get_children():

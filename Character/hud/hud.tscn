@@ -95,13 +95,21 @@ texture = ExtResource("5_tw6wi")
 expand_mode = 4
 stretch_mode = 2
 
+[node name="ObjectiveHud" type="Control" parent="."]
+anchors_preset = 0
+offset_top = 190.0
+offset_right = 40.0
+offset_bottom = 230.0
+script = ExtResource("11_1xhm8")
+panel_margin = Vector2(28, -100)
+
 [node name="SquadHud" type="Control" parent="." node_paths=PackedStringArray("order_ux_sound", "order_ux_sound_confirm")]
 layout_mode = 3
 anchors_preset = 0
 offset_left = -16.0
-offset_top = 508.0
+offset_top = 594.0
 offset_right = 24.0
-offset_bottom = 548.0
+offset_bottom = 634.0
 script = ExtResource("9_n3ibl")
 order_ux_sound = NodePath("OrderUXSoundCycle")
 order_ux_sound_confirm = NodePath("OrderUXSoundConfirm")
@@ -111,6 +119,7 @@ font_size_nearby = 14
 font_size_wheel = 14
 font_size_toast = 14
 font_size_marker = 14
+panel_margin = Vector2(0, -150)
 
 [node name="OrderUXSoundCycle" type="AudioStreamPlayer" parent="SquadHud"]
 stream = ExtResource("7_raese")
@@ -130,9 +139,3 @@ offset_bottom = 31.0
 theme_override_font_sizes/font_size = 30
 text = "FPS:"
 script = ExtResource("4_wqlwh")
-
-[node name="ObjectiveHud" type="Control" parent="."]
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-script = ExtResource("11_1xhm8")

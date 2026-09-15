@@ -20,7 +20,9 @@ enum SquadContext { UNENGAGED, ENGAGED }
 # longer reachable from the command wheel (DEFEND at a point behind you does the
 # same job) but it stays in the enum — deleting it would shift ATTACK and FOLLOW
 # down and silently remap every inspector-set default_objective in the project.
-enum SquadObjective { NONE, ADVANCE, DEFEND, WITHDRAW, ATTACK, FOLLOW }
+# PATROL appended for the same reason ATTACK and FOLLOW were — inspector
+# default_objective values are stored as ints and inserting would remap them.
+enum SquadObjective { NONE, ADVANCE, DEFEND, WITHDRAW, ATTACK, FOLLOW, PATROL }
 
 @export var squad_members: Array [Soldier]
 
@@ -48,6 +50,19 @@ var follow_leader: Node3D = null
 # too large and they lag visibly behind.
 @export var follow_reissue_distance: float = 3.5
 var _last_follow_issue: Vector3 = Vector3.ZERO
+
+# ── PATROL ────────────────────────────────────
+# The squad walks a level-authored route as a unit. Contact suspends it; the
+# existing disengage path resumes it, from the point they were heading to
+# rather than from the start, so a firefight doesn't reset the whole circuit.
+@export var patrol_route: PatrolPath
+@export var patrol_arrive_distance: float = 4.0
+# Pause at each point. Zero makes them loop relentlessly, which reads as
+# robotic in the bad way.
+@export var patrol_dwell: float = 2.5
+var patrol_index: int = 0
+var _patrol_forward: bool = true
+var _patrol_dwell_t: float = 0.0
 
 var context: SquadContext = SquadContext.UNENGAGED
 var objective: SquadObjective = SquadObjective.NONE
@@ -121,6 +136,7 @@ func _ready() -> void:
 # ─────────────────────────────────────────────
 func _process(delta: float) -> void:
 	_tick_follow()
+	_tick_patrol(delta)
 	_tick_contact(delta)
 	match context:
 		SquadContext.ENGAGED:
@@ -182,6 +198,61 @@ func follow(leader: Node3D) -> void:
 	squad_combat_target = null
 	_last_follow_issue = Vector3.ZERO
 	set_objective(SquadObjective.FOLLOW, _follow_anchor() if leader != null else get_center(), true)
+
+
+# ─────────────────────────────────────────────
+# PATROL
+# ─────────────────────────────────────────────
+func set_patrol(route: PatrolPath, start_index: int = 0) -> void:
+	patrol_route = route
+	patrol_index = start_index
+	_patrol_forward = true
+	_patrol_dwell_t = 0.0
+	if route == null or route.points.is_empty():
+		set_objective(SquadObjective.DEFEND, get_center(), true)
+		return
+	var point := route.point_at(patrol_index)
+	set_objective(SquadObjective.PATROL, point.global_position if point else get_center(), true)
+
+
+func _tick_patrol(delta: float) -> void:
+	if objective != SquadObjective.PATROL:
+		return
+	if patrol_route == null or patrol_route.points.is_empty():
+		return
+	# Fighting takes priority. _disengage_and_resume re-issues the current leg.
+	if context == SquadContext.ENGAGED:
+		return
+
+	if _patrol_dwell_t > 0.0:
+		_patrol_dwell_t = maxf(0.0, _patrol_dwell_t - delta)
+		return
+
+	var point := patrol_route.point_at(patrol_index)
+	if point == null:
+		return
+	if get_center().distance_to(point.global_position) > patrol_arrive_distance:
+		return
+
+	var stepped: Array = patrol_route.advance(patrol_index, _patrol_forward)
+	patrol_index = stepped[0]
+	_patrol_forward = stepped[1]
+	_patrol_dwell_t = patrol_dwell
+	var next_point := patrol_route.point_at(patrol_index)
+	if next_point != null:
+		objective_position = next_point.global_position
+		_issue_patrol_orders(true)
+
+
+func _issue_patrol_orders(force: bool = false) -> void:
+	for ai in get_orderable_members():
+		ai.always_active = true
+		if ai is Soldier:
+			ai.defensive_mode = false
+			ai.order_move_to(objective_position + _formation_offset(ai), force)
+			ai.change_soldier_state(Soldier.SoldierState.NONE)
+		else:
+			ai.move_to(objective_position + _formation_offset(ai))
 
 
 # ─────────────────────────────────────────────
@@ -382,6 +453,8 @@ func _issue_objective_orders(force: bool = false) -> void:
 		SquadObjective.FOLLOW:
 			_last_follow_issue = objective_position
 			_issue_follow_orders()
+		SquadObjective.PATROL:
+			_issue_patrol_orders(force)
 
 
 # ─────────────────────────────────────────────

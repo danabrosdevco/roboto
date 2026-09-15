@@ -26,6 +26,22 @@ class_name SquadSpawner
 # Optional. Instantiated for the Squad node; falls back to a bare Squad.
 @export var squad_scene: PackedScene
 
+# ── WHERE THE SQUAD APPEARS ───────────────────
+# SPAWN_POINT        use the level's SquadSpawnPoint, fail if there isn't one
+# PLAYER             ignore spawn points, form up on the player
+# NEAREST_ELSE_PLAYER  use the spawn point closest to the player, and fall back
+#                    to the player if the level has none
+#
+# The last is the default because it's what you want while iterating: drop a
+# spawn point where you want a set-piece arrival, and everywhere else the squad
+# just turns up with you instead of silently not deploying.
+enum SpawnMode { SPAWN_POINT, PLAYER, NEAREST_ELSE_PLAYER }
+@export var spawn_mode: SpawnMode = SpawnMode.NEAREST_ELSE_PLAYER
+@export var player: Node3D
+# Formation stand-off when forming up on the player.
+@export var player_spacing: float = 2.2
+@export var player_back_offset: float = 3.0
+
 signal squad_deployed(squad: Squad, count: int)
 signal squad_collected(survivors: int, lost: int)
 
@@ -46,9 +62,18 @@ func deploy_into(level: Node, records: Array[SoldierRecord]) -> Squad:
 	if level == null:
 		return null
 
-	var point := _find_spawn_point(level)
+	if player == null and world != null:
+		player = world.get("player")
+
+	var point := _pick_spawn_point(level)
+	if point == null and spawn_mode != SpawnMode.SPAWN_POINT and player != null:
+		# No point, but we know where the player is — form up on them.
+		return _deploy_on_player(level, records)
 	if point == null:
-		# Not an error — a level with no spawn point simply doesn't get a squad.
+		# Was silent on the theory that some levels legitimately have no squad.
+		# In practice it's always a forgotten node, and silence cost more than
+		# the occasional redundant warning.
+		push_warning("SquadSpawner: no SquadSpawnPoint in '%s' — your squad will not deploy here." % level.name)
 		return null
 
 	var to_deploy: Array[SoldierRecord] = []
@@ -58,6 +83,7 @@ func deploy_into(level: Node, records: Array[SoldierRecord]) -> Squad:
 		if point.max_slots > 0 and to_deploy.size() >= point.max_slots:
 			break
 	if to_deploy.is_empty():
+		push_warning("SquadSpawner: no deployable soldiers in the roster (%d total). Check Campaign starting_* exports, and delete user://campaign.json if you changed them." % records.size())
 		return null
 
 	var members: Array[Soldier] = []
@@ -113,14 +139,87 @@ func _build_squad(point: SquadSpawnPoint, members: Array[Soldier]) -> Squad:
 	return squad
 
 
-func _find_spawn_point(level: Node) -> SquadSpawnPoint:
-	if level is SquadSpawnPoint:
-		return level
-	for child in level.get_children():
-		var found := _find_spawn_point(child)
-		if found != null:
-			return found
-	return null
+# Collects every spawn point rather than taking the first one found. A level
+# with several used to silently use whichever came first in the tree, which
+# makes the other two look broken.
+func _pick_spawn_point(level: Node) -> SquadSpawnPoint:
+	if spawn_mode == SpawnMode.PLAYER and player != null:
+		return null
+
+	var found: Array[SquadSpawnPoint] = []
+	_gather_points(level, found)
+	if found.is_empty():
+		return null
+	if found.size() == 1 or player == null:
+		return found[0]
+
+	# Nearest to the player. With several in a level that's almost always the
+	# one you meant, and it makes extra points useful instead of inert.
+	var best: SquadSpawnPoint = found[0]
+	var best_d: float = player.global_position.distance_to(best.global_position)
+	for p in found:
+		var d: float = player.global_position.distance_to(p.global_position)
+		if d < best_d:
+			best = p
+			best_d = d
+	return best
+
+
+func _gather_points(node: Node, out: Array[SquadSpawnPoint]) -> void:
+	if node is SquadSpawnPoint:
+		out.append(node)
+	for child in node.get_children():
+		_gather_points(child, out)
+
+
+# Form up behind the player, in the same alternating arc SquadSpawnPoint uses.
+func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
+	var to_deploy: Array[SoldierRecord] = []
+	for r in records:
+		if r != null and r.is_deployable():
+			to_deploy.append(r)
+	if to_deploy.is_empty():
+		push_warning("SquadSpawner: no deployable soldiers to form up on the player.")
+		return null
+
+	var basis := player.global_transform.basis
+	var anchor := player.global_position + (basis.z.normalized() * player_back_offset)
+
+	var members: Array[Soldier] = []
+	for i in to_deploy.size():
+		var soldier := _build_soldier(to_deploy[i])
+		if soldier == null:
+			continue
+		level.add_child(soldier)
+		var row := i / 2
+		var side := 1.0 if i % 2 == 0 else -1.0
+		var offset := Vector3(side * player_spacing * (float(row) * 0.5 + 0.5), 0.0, float(row) * player_spacing)
+		soldier.global_position = anchor + (basis * offset)
+		if ai_manager != null:
+			ai_manager.register_enemy(soldier)
+		_spawned[soldier] = to_deploy[i]
+		members.append(soldier)
+
+	if members.is_empty():
+		return null
+
+	var squad: Squad = null
+	if squad_scene != null:
+		squad = squad_scene.instantiate() as Squad
+	if squad == null:
+		squad = Squad.new()
+	squad.name = "PlayerSquad"
+	squad.callsign = "ALPHA"
+	squad.player_commandable = true
+	squad.default_objective = Squad.SquadObjective.FOLLOW
+	squad.squad_members = members
+	level.add_child(squad)
+	# Straight onto the player's hip, which is the point of spawning here.
+	squad.follow(player)
+	active_squad = squad
+	squad_deployed.emit(squad, members.size())
+	print("[SquadSpawner] %d deployed on the player (no spawn point used)" % members.size())
+	return squad
 
 
 # ─────────────────────────────────────────────

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemySquadSpec" load_steps=3 format=3 uid="uid://bsdxmikw0bsan"]
+
+[ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="1_44i85"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="1_miapc"]
+
+[resource]
+script = ExtResource("1_miapc")
+callsign = "HOSTILE"
+count = 3
+chassis = ExtResource("1_44i85")
+posture = 0
+route_tag = &""
+post_tag = &""
+spawn_tag = &""
+always_active = false
+faction = 1
+reinforcement_tag = &""

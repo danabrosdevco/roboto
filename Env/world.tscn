@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=20 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
@@ -17,16 +17,18 @@
 [ext_resource type="PackedScene" uid="uid://lpptelhi4w0y" path="res://maps/homebase_level.tscn" id="16_oio3q"]
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="16_oqoj0"]
 [ext_resource type="Resource" uid="uid://cs70pdfsa0rfb" path="res://Campaign/missions/mission_valley.tres" id="17_pp0hd"]
+[ext_resource type="Script" path="res://Campaign/enemy_force_spawner.gd" id="18_r3yq3"]
+[ext_resource type="PackedScene" uid="uid://bww5b5c7ej00s" path="res://Character/characters/appx/enemy_shotgun.tscn" id="19_dmcx0"]
 
-[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "Campaign", "squad_spawner", "objective_tracker")]
+[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "squad_spawner", "objective_tracker", "Campaign")]
 script = ExtResource("1_2t272")
 player = NodePath("test_character")
 current_level = NodePath("Homebase")
 ai_manager = NodePath("AIManager")
 game_manager = NodePath("GameManager")
-Campaign = NodePath("CampaignManager")
 squad_spawner = NodePath("SquadSpawner")
 objective_tracker = NodePath("ObjectiveTracker")
+Campaign = NodePath("CampaignManager")
 
 [node name="AIManager" parent="." node_paths=PackedStringArray("world", "player", "stimulus_manager") instance=ExtResource("2_d77gp")]
 world = NodePath("..")
@@ -60,12 +62,13 @@ damage_value = 0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -81.0613, 0)
 direction = Vector3(0, -1, 0)
 
-[node name="SquadSpawner" type="Node" parent="." node_paths=PackedStringArray("world", "ai_manager")]
+[node name="SquadSpawner" type="Node" parent="." node_paths=PackedStringArray("world", "ai_manager", "player")]
 script = ExtResource("11_0cp1s")
 world = NodePath("..")
 ai_manager = NodePath("../AIManager")
 default_chassis = ExtResource("12_0vb83")
 squad_scene = ExtResource("12_nadmy")
+player = NodePath("../test_character")
 
 [node name="ObjectiveTracker" type="Node" parent="."]
 script = ExtResource("12_1xc4a")
@@ -75,6 +78,13 @@ script = ExtResource("15_3b3cm")
 base_level = ExtResource("16_oio3q")
 missions = Array[ExtResource("16_oqoj0")]([ExtResource("17_pp0hd")])
 starting_max_health = 50
+
+[node name="EnemyForceSpawner" type="Node" parent="." node_paths=PackedStringArray("world", "ai_manager")]
+script = ExtResource("18_r3yq3")
+world = NodePath("..")
+ai_manager = NodePath("../AIManager")
+default_chassis = ExtResource("12_0vb83")
+squad_scene = ExtResource("19_dmcx0")
 
 [node name="Homebase" parent="." instance=ExtResource("16_oio3q")]
 

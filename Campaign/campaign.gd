@@ -23,6 +23,15 @@ class_name CampaignManager
 @export var missions: Array[MissionDefinition] = []
 @export var autosave: bool = true
 
+# ── DEV: launching a mission level directly ───
+# Running valley_level.tscn (or world.tscn pointed at it) skips the base, so
+# begin_deploy() never runs: in_mission stays false, current_mission stays null,
+# the enemy force never spawns and the objective HUD hides itself. All silently.
+#
+# Assign a MissionDefinition here and the campaign assumes that operation when
+# it finds itself in a level that isn't base. Leave null for shipping builds.
+@export var debug_mission: MissionDefinition
+
 # ── STARTING ROSTER ───────────────────────────
 # A brand new CampaignState has an empty roster, so without this nothing ever
 # deploys and the spawner silently does nothing — which looks exactly like the
@@ -44,6 +53,7 @@ var state: CampaignState
 var current_mission: MissionDefinition = null
 var spawner: SquadSpawner = null
 var objectives: ObjectiveTracker = null
+var enemy_spawner: EnemyForceSpawner = null
 # The exits at base that the terminal writes a destination into. Registered by
 # World on every level load, because they live in the level scene and die with
 # it.
@@ -93,6 +103,21 @@ func register_objective_tracker(t: ObjectiveTracker) -> void:
 	objectives = t
 
 
+func register_enemy_spawner(s: EnemyForceSpawner) -> void:
+	enemy_spawner = s
+
+
+# True when this objective id should be live for the current operation. An empty
+# active_objectives list on the mission means "all of them", so a level's
+# objectives keep working with no mission configuration at all.
+func is_objective_active(id: StringName) -> bool:
+	if current_mission == null:
+		return true
+	if current_mission.active_objectives.is_empty():
+		return true
+	return current_mission.active_objectives.has(id)
+
+
 # World calls this after each level load with whatever it found in the
 # "departure_exits" group. Re-pushes the current selection so the train is
 # already pointed somewhere if a mission was picked before this level existed.
@@ -140,7 +165,6 @@ func available_missions() -> Array[MissionDefinition]:
 
 
 func select_mission(id: StringName) -> void:
-	print ("selected mission!")
 	state.selected_mission_id = id
 	# Writing the destination into the exit is the point of selecting. Do it
 	# here rather than in the terminal so every terminal, and any future map
@@ -180,8 +204,25 @@ func begin_deploy() -> void:
 func on_level_loaded(level: Node) -> void:
 	if level == null:
 		return
+
+	# Direct launch: no one called begin_deploy(), so adopt debug_mission.
+	if not in_mission and debug_mission != null:
+		current_mission = debug_mission
+		state.selected_mission_id = debug_mission.id
+		in_mission = true
+		print("[Campaign] debug_mission active: '%s'. Base flow was skipped." % debug_mission.id)
+
+	if not in_mission and debug_mission == null and base_level != null:
+		push_warning("Campaign: level loaded but in_mission is false, so NO enemy force will spawn and the objective HUD will stay hidden. If you launched this level directly, set Campaign.debug_mission.")
+
+	if in_mission and current_mission == null:
+		push_warning("Campaign: in a mission but current_mission is null. Nothing will spawn. Either deploy from base, or set Campaign.debug_mission while iterating.")
 	if spawner != null:
 		spawner.deploy_into(level, state.deployable())
+	# Opposition AFTER the player squad, so an EliminateObjective capturing
+	# hostiles in a zone sees a fully populated map.
+	if enemy_spawner != null and in_mission:
+		enemy_spawner.deploy_force(level, current_mission)
 	# After deploy: an EliminateObjective captures hostiles in its zone when it
 	# activates, and the squad should already be in the world by then.
 	if objectives != null:
@@ -232,6 +273,8 @@ func on_returned_to_base() -> void:
 		spawner.clear()
 	if objectives != null:
 		objectives.clear()
+	if enemy_spawner != null:
+		enemy_spawner.clear()
 	returned_to_base.emit()
 
 

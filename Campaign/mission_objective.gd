@@ -49,6 +49,14 @@ signal progress_changed(objective: MissionObjective, current: int, target: int)
 
 
 func _ready() -> void:
+	# Switched off for operations that don't want it. The level holds every
+	# objective it could ever need; the mission picks a subset. Freed rather
+	# than hidden so the tracker never counts it and its props go with it.
+	var campaign := get_node_or_null("/root/Campaign")
+	if campaign != null and id != &"" and not campaign.is_objective_active(id):
+		queue_free()
+		return
+
 	add_to_group("mission_objectives")
 	for prereq in prerequisites:
 		if prereq != null:
