@@ -1,17 +1,17 @@
 [gd_scene load_steps=6 format=3 uid="uid://c28bwsb1wj5sh"]
 
-[ext_resource type="Script" path="res://Env/world_objects/mission_terminal.gd" id="1_dthos"]
+[ext_resource type="Script" path="res://Campaign/mission_terminal.gd" id="1_onjnb"]
 [ext_resource type="PackedScene" uid="uid://bk13ou262jq2t" path="res://Env/world_objects/components/template_interactible.tscn" id="2_m144y"]
 [ext_resource type="PackedScene" uid="uid://cqwr1eg01xfqc" path="res://3d_assets/HackerRoom/FBX/PersonalComputer.fbx" id="3_vw5a2"]
 [ext_resource type="AudioStream" uid="uid://ds57hoihm1xto" path="res://sounds/sfx/psx ui sfx/ConfirmK.wav" id="4_qr3ls"]
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_xnja6"]
-radius = 1.0
+[sub_resource type="BoxShape3D" id="BoxShape3D_8rj18"]
 
-[node name="MissionTerminal" type="Node3D" node_paths=PackedStringArray("interactible", "label")]
-script = ExtResource("1_dthos")
+[node name="MissionTerminal" type="Node3D" node_paths=PackedStringArray("interactible", "label", "select_sound")]
+script = ExtResource("1_onjnb")
 interactible = NodePath("Interactible")
 label = NodePath("Label3D")
+select_sound = NodePath("AudioStreamPlayer3D")
 
 [node name="Interactible" parent="." instance=ExtResource("2_m144y")]
 collision_layer = 3
@@ -21,7 +21,7 @@ destroy_on_use = false
 
 [node name="CollisionShape3D" parent="Interactible" index="0"]
 transform = Transform3D(1.38711, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.108154, 0)
-shape = SubResource("SphereShape3D_xnja6")
+shape = SubResource("BoxShape3D_8rj18")
 
 [node name="PersonalComputer" parent="." instance=ExtResource("3_vw5a2")]
 

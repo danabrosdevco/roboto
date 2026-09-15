@@ -37,11 +37,17 @@ signal state_loaded
 signal deployed(mission: MissionDefinition)
 signal extracted(mission: MissionDefinition, result: Dictionary)
 signal returned_to_base
+signal mission_selected(mission: MissionDefinition)
+signal departure_ready(mission: MissionDefinition)
 
 var state: CampaignState
 var current_mission: MissionDefinition = null
 var spawner: SquadSpawner = null
 var objectives: ObjectiveTracker = null
+# The exits at base that the terminal writes a destination into. Registered by
+# World on every level load, because they live in the level scene and die with
+# it.
+var departure_exits: Array[LevelExit] = []
 
 # True while the player is on a mission map rather than at base.
 var in_mission: bool = false
@@ -87,6 +93,27 @@ func register_objective_tracker(t: ObjectiveTracker) -> void:
 	objectives = t
 
 
+# World calls this after each level load with whatever it found in the
+# "departure_exits" group. Re-pushes the current selection so the train is
+# already pointed somewhere if a mission was picked before this level existed.
+func register_departure_exits(exits: Array) -> void:
+	departure_exits.clear()
+	for e in exits:
+		if e is LevelExit:
+			departure_exits.append(e)
+	_push_destination()
+
+
+# The whole "terminal sets the train's destination" mechanic, in one place.
+func _push_destination() -> void:
+	var mission := selected_mission()
+	for exit in departure_exits:
+		if is_instance_valid(exit):
+			exit.next_level = mission.level_scene if mission != null else null
+	if mission != null:
+		departure_ready.emit(mission)
+
+
 # ─────────────────────────────────────────────
 # MISSION SELECTION
 # ─────────────────────────────────────────────
@@ -113,7 +140,13 @@ func available_missions() -> Array[MissionDefinition]:
 
 
 func select_mission(id: StringName) -> void:
+	print ("selected mission!")
 	state.selected_mission_id = id
+	# Writing the destination into the exit is the point of selecting. Do it
+	# here rather than in the terminal so every terminal, and any future map
+	# UI, gets the behaviour for free.
+	_push_destination()
+	mission_selected.emit(selected_mission())
 
 
 func selected_mission() -> MissionDefinition:

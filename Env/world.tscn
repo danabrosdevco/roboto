@@ -18,13 +18,15 @@
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="16_oqoj0"]
 [ext_resource type="Resource" uid="uid://cs70pdfsa0rfb" path="res://Campaign/missions/mission_valley.tres" id="17_pp0hd"]
 
-[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "Campaign")]
+[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "Campaign", "squad_spawner", "objective_tracker")]
 script = ExtResource("1_2t272")
 player = NodePath("test_character")
 current_level = NodePath("Homebase")
 ai_manager = NodePath("AIManager")
 game_manager = NodePath("GameManager")
 Campaign = NodePath("CampaignManager")
+squad_spawner = NodePath("SquadSpawner")
+objective_tracker = NodePath("ObjectiveTracker")
 
 [node name="AIManager" parent="." node_paths=PackedStringArray("world", "player", "stimulus_manager") instance=ExtResource("2_d77gp")]
 world = NodePath("..")

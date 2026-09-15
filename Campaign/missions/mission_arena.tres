@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="PackedScene" uid="uid://rnm8xsxcwbsx" path="res://maps/arena_level.tscn" id="2_arena"]
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"arena"
+display_name = "Arena Assault"
+briefing = "Break the garrison holding the arena floor."
+level_scene = ExtResource("2_arena")
+map_position = Vector2(140, -60)
+reward_resources = 90
+unlocks = Array[StringName]([])
+repeatable = true
+requires = Array[StringName]([])

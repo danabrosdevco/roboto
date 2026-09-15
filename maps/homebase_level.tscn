@@ -2700,6 +2700,7 @@ transform = Transform3D(-3, 2.62268e-07, 1.14641e-14, 0, -1.31134e-07, 3, 2.6226
 
 [node name="LevelExit" parent="." instance=ExtResource("5_xs52v")]
 transform = Transform3D(2.72158, 0, 0, 0, 1.97621, 0, 0, 0, 3.11484, -15.5288, 1.5, 12.8134)
+is_departure = true
 
 [node name="MissionTerminal" parent="." instance=ExtResource("15_mby7b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4232, 2.07874, 13.7727)
