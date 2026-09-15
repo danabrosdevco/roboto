@@ -20,7 +20,7 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_i7xa8"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ymya6"]
 render_priority = 0
 shader = ExtResource("8_27chb")
 shader_parameter/use_normal_map = false
@@ -62,8 +62,10 @@ detection = NodePath("Detection")
 particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
 particle_effects_hit = [NodePath("SparkBurst")]
 visible_pieces = [NodePath("CSGMesh3D"), NodePath("aiweapon"), NodePath("CSGMesh3D2")]
+activation_distance = 250
 health = 100
 max_health = 100
+move_speed = 6.0
 equipment_slots = Array[ExtResource("2_8p1te")]([ExtResource("3_3i6e3")])
 soldier_name = "Grunt_ShotgunFrag"
 AllowedMovementOptions = Array[int]([0, 1])
@@ -78,7 +80,7 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
-material_override = SubResource("ShaderMaterial_i7xa8")
+material_override = SubResource("ShaderMaterial_ymya6")
 mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
 

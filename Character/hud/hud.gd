@@ -11,6 +11,8 @@ class_name HUD
 @export var interact_label: Label
 @export var interact_texture: TextureRect
 @export var ui: Control
+@export var campaign: CampaignManager
+
 
 var interact_textures: Dictionary = {
 	Enums.InteractTypes.HEALTH : "PASS",

@@ -40,6 +40,7 @@ enemies=""
 levelexit=""
 bonfires=""
 squads=""
+campaign=""
 
 [gui]
 

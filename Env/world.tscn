@@ -20,7 +20,7 @@
 [ext_resource type="Script" path="res://Campaign/enemy_force_spawner.gd" id="18_r3yq3"]
 [ext_resource type="PackedScene" uid="uid://bww5b5c7ej00s" path="res://Character/characters/appx/enemy_shotgun.tscn" id="19_dmcx0"]
 
-[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "squad_spawner", "objective_tracker", "Campaign")]
+[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "squad_spawner", "objective_tracker", "Campaign", "enemy_spawner")]
 script = ExtResource("1_2t272")
 player = NodePath("test_character")
 current_level = NodePath("Homebase")
@@ -29,6 +29,7 @@ game_manager = NodePath("GameManager")
 squad_spawner = NodePath("SquadSpawner")
 objective_tracker = NodePath("ObjectiveTracker")
 Campaign = NodePath("CampaignManager")
+enemy_spawner = NodePath("EnemyForceSpawner")
 
 [node name="AIManager" parent="." node_paths=PackedStringArray("world", "player", "stimulus_manager") instance=ExtResource("2_d77gp")]
 world = NodePath("..")
@@ -47,8 +48,9 @@ transform = Transform3D(-0.145306, 0, -0.989387, 0, 1, 0, 0.989387, 0, -0.145306
 world = NodePath("..")
 hud = NodePath("../HUD")
 
-[node name="HUD" parent="." node_paths=PackedStringArray("player") instance=ExtResource("2_ox1ok")]
+[node name="HUD" parent="." node_paths=PackedStringArray("player", "campaign") instance=ExtResource("2_ox1ok")]
 player = NodePath("../test_character")
+campaign = NodePath("../CampaignManager")
 metadata/_edit_use_anchors_ = true
 
 [node name="MuzzleFlash" parent="." instance=ExtResource("5_5i2ew")]
@@ -73,7 +75,7 @@ player = NodePath("../test_character")
 [node name="ObjectiveTracker" type="Node" parent="."]
 script = ExtResource("12_1xc4a")
 
-[node name="CampaignManager" type="Node" parent="."]
+[node name="CampaignManager" type="Node" parent="." groups=["campaign"]]
 script = ExtResource("15_3b3cm")
 base_level = ExtResource("16_oio3q")
 missions = Array[ExtResource("16_oqoj0")]([ExtResource("17_pp0hd")])

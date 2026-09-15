@@ -61,6 +61,20 @@ class_name SquadHUD
 @export var bar_size: Vector2 = Vector2(70, 12)
 
 @export var marker_range: float = 150.0
+
+# ── MARKER HEALTH STATE ───────────────────────
+# The chevron is colour-coded by health, using the same thresholds as the roster
+# bars so the two readouts can never disagree. Below hurt_at it also grows a
+# small bar underneath — quiet by default, so a healthy squad stays clean and a
+# hurt one is immediately obvious across the map.
+@export var marker_hurt_at: float = 0.6
+@export var marker_critical_at: float = 0.3
+# Critical markers pulse. Motion is the only channel that reads at distance once
+# the chevron is a few pixels wide and colour alone stops being legible.
+@export var marker_pulse_speed: float = 4.5
+@export var marker_pulse_depth: float = 0.35
+@export var marker_bar_width: float = 22.0
+@export var marker_bar_height: float = 3.0
 @export var nearby_radius: float = 120.0
 @export var refresh_interval: float = 0.15
 
@@ -87,6 +101,7 @@ var _toast: Label
 
 var _timer: float = 0.0
 var _toast_time: float = 0.0
+var _pulse: float = 0.0
 var _wheel_labels: Array = []
 
 
@@ -252,6 +267,8 @@ func _process(delta: float) -> void:
 
 	if _wheel != null and _wheel.visible:
 		_layout_wheel()
+
+	_pulse += delta
 
 	_timer += delta
 	if _timer >= refresh_interval:
@@ -440,8 +457,24 @@ func _draw() -> void:
 		p -= origin
 
 		var alpha: float = clampf(1.0 - (dist / marker_range), 0.25, 0.9)
-		var col := COL_BRIGHT
+
+		# Same helper the roster bars use, so the chevron and the bar can never
+		# disagree about whether someone is in trouble.
+		var hp: float = float(m.health) / float(maxi(1, m.max_health))
+		var col: Color = HUDPalette.health_color(hp)
+		var critical: bool = hp <= marker_critical_at
+		var hurt: bool = hp <= marker_hurt_at
+
+		if critical:
+			# Pulse toward full opacity rather than away from it, so a critical
+			# marker is never dimmer than a healthy one.
+			var beat: float = (sin(_pulse * marker_pulse_speed) + 1.0) * 0.5
+			alpha = clampf(alpha + beat * marker_pulse_depth, 0.0, 1.0)
 		col.a = alpha
+
+		# Hurt markers are drawn slightly heavier as well as recoloured —
+		# colour alone is a poor signal for anyone red/green colourblind.
+		var width: float = 2.6 if critical else (2.0 if hurt else 1.5)
 
 		# Chevron
 		var size := clampf(10.0 - dist * 0.03, 4.0, 10.0)
@@ -450,7 +483,32 @@ func _draw() -> void:
 			p + Vector2(0, size * 0.5),
 			p + Vector2(size, -size * 0.7),
 		])
-		draw_polyline(pts, col, 1.5)
+		draw_polyline(pts, col, width)
+
+		# Critical gets a second, larger chevron behind it — a halo that reads
+		# as urgency at distances where the pulse is too small to notice.
+		if critical:
+			var halo: Color = col
+			halo.a = alpha * 0.35
+			var hs: float = size * 1.6
+			draw_polyline(PackedVector2Array([
+				p + Vector2(-hs, -hs * 0.7),
+				p + Vector2(0, hs * 0.5),
+				p + Vector2(hs, -hs * 0.7),
+			]), halo, width)
+
+		# Health bar, only once they're hurt. A bar over every healthy squadmate
+		# is noise you have to read past to find the one that matters.
+		if hurt and dist < 90.0:
+			var bar_w: float = marker_bar_width * clampf(1.0 - dist / 160.0, 0.45, 1.0)
+			var bar_h: float = marker_bar_height
+			var bar_top: float = p.y - size * 1.05 - bar_h - 2.0
+			var back: Color = COL_DIM
+			back.a = alpha * 0.45
+			draw_rect(Rect2(p.x - bar_w * 0.5, bar_top, bar_w, bar_h), back, true)
+			var fill: Color = col
+			fill.a = alpha
+			draw_rect(Rect2(p.x - bar_w * 0.5, bar_top, bar_w * clampf(hp, 0.0, 1.0), bar_h), fill, true)
 
 		# Only a pinned squadmate gets text in the world. Tagging every robot
 		# with its role was noise you had to read past to find the one that

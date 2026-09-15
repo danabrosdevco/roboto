@@ -46,7 +46,7 @@ func _ready() -> void:
 	_ensure_full_rect()
 	z_index = 50
 	_build_ui()
-	_campaign = get_node_or_null("/root/Campaign")
+	_campaign = get_tree().get_first_node_in_group("campaign")
 	_bind_tracker()
 	# Re-bind on every level load; the tracker persists but its contents don't.
 	if _campaign != null:

@@ -54,7 +54,7 @@ func _on_area_3d_body_entered(body: Node3D) -> void:
 # still works in a scene where the campaign autoload isn't present — this is a
 # generic door, and it shouldn't hard-depend on the campaign layer.
 func _objectives_done() -> bool:
-	var campaign := get_node_or_null("/root/Campaign")
+	var campaign := get_tree().get_first_node_in_group("campaign")
 	if campaign == null:
 		return true
 	var tracker = campaign.objectives

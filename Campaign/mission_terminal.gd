@@ -32,7 +32,7 @@ class_name MissionTerminal
 @export var idle_color: Color = Color(0.75, 0.75, 0.75)
 @export var unavailable_color: Color = Color(0.5, 0.35, 0.35)
 @export var select_sound: AudioStreamPlayer3D
-@onready var Campaign: CampaignManager = get_parent().get_parent().Campaign
+@onready var Campaign: CampaignManager = get_tree().get_first_node_in_group("campaign")
 signal mission_selected(mission: MissionDefinition)
 
 var _cycle_index: int = -1
