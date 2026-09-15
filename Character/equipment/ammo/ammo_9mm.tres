@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AmmoStock" load_steps=2 format=3 uid="uid://b1r5x5m37xxx4"]
+
+[ext_resource type="Script" path="res://Character/equipment/ammo_stock.gd" id="1_dao2i"]
+
+[resource]
+script = ExtResource("1_dao2i")
+ammo_type = &"9mm"
+amount = 120
+capacity = 120

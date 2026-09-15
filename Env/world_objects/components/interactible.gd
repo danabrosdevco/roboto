@@ -10,6 +10,11 @@ class_name Interactible
 @export var disable_on_use: bool = false
 var spawn_transform
 
+# Objectives listen to this rather than Player routing to them by type. Keeps
+# mission logic out of the player script — an Interactible doesn't need to know
+# what, if anything, cares that it was used.
+signal interacted(interactible: Interactible)
+
 func _ready() -> void:
 	spawn_transform = transform
 
@@ -58,6 +63,7 @@ func disable():
 	used = true
 
 func interacted_with():
+	interacted.emit(self)
 	match destroy_on_use:
 		true:
 			destroy()

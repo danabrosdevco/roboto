@@ -1,0 +1,228 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://dw52ua5m428lx"
+path="res://.godot/imported/robotic_train_lowpoly.glb-977ca62806c5ac222cd778b34545058b.scn"
+
+[deps]
+
+source_file="res://3d_assets/chatgptg/robotic_train_lowpoly.glb"
+dest_files=["res://.godot/imported/robotic_train_lowpoly.glb-977ca62806c5ac222cd778b34545058b.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+_subresources={
+"nodes": {
+"PATH:world/axle_block_0": {
+"generate/physics": true
+},
+"PATH:world/axle_block_1": {
+"generate/physics": true
+},
+"PATH:world/axle_block_2": {
+"generate/physics": true
+},
+"PATH:world/axle_block_3": {
+"generate/physics": true
+},
+"PATH:world/axle_block_4": {
+"generate/physics": true
+},
+"PATH:world/cable_0": {
+"generate/physics": true
+},
+"PATH:world/cable_1": {
+"generate/physics": true
+},
+"PATH:world/cable_2": {
+"generate/physics": true
+},
+"PATH:world/cable_3": {
+"generate/physics": true
+},
+"PATH:world/car_front_cap": {
+"generate/physics": true
+},
+"PATH:world/car_rear_cap": {
+"generate/physics": true
+},
+"PATH:world/car_vertical_11_2_-1": {
+"generate/physics": true
+},
+"PATH:world/car_vertical_11_2_1": {
+"generate/physics": true
+},
+"PATH:world/car_vertical_5_199999999999999_-1": {
+"generate/physics": true
+},
+"PATH:world/car_vertical_5_199999999999999_1": {
+"generate/physics": true
+},
+"PATH:world/car_vertical_8_2_-1": {
+"generate/physics": true
+},
+"PATH:world/car_vertical_8_2_1": {
+"generate/physics": true
+},
+"PATH:world/coupler_bar": {
+"generate/physics": true
+},
+"PATH:world/coupler_head_car": {
+"generate/physics": true
+},
+"PATH:world/coupler_head_engine": {
+"generate/physics": true
+},
+"PATH:world/engine_core": {
+"generate/physics": true
+},
+"PATH:world/engine_nose": {
+"generate/physics": true
+},
+"PATH:world/engine_roof": {
+"generate/physics": true
+},
+"PATH:world/engine_side_armor_R_0": {
+"generate/physics": true
+},
+"PATH:world/front_bumper": {
+"generate/physics": true
+},
+"PATH:world/front_coupler_bar": {
+"generate/physics": true
+},
+"PATH:world/front_coupler_head": {
+"generate/physics": true
+},
+"PATH:world/lower_red_light_-1": {
+"generate/physics": true
+},
+"PATH:world/lower_red_light_1": {
+"generate/physics": true
+},
+"PATH:world/passenger_car_body": {
+"generate/physics": true
+},
+"PATH:world/passenger_car_roof": {
+"generate/physics": true
+},
+"PATH:world/passenger_car_underbody": {
+"generate/physics": true
+},
+"PATH:world/red_side_slit_1_2": {
+"generate/physics": true
+},
+"PATH:world/side_mech_disk_-1_0": {
+"generate/physics": true
+},
+"PATH:world/side_mech_disk_-1_1": {
+"generate/physics": true
+},
+"PATH:world/side_mech_disk_1_0": {
+"generate/physics": true
+},
+"PATH:world/side_mech_disk_1_1": {
+"generate/physics": true
+},
+"PATH:world/wheel_0_-1": {
+"generate/physics": true
+},
+"PATH:world/wheel_0_1": {
+"generate/physics": true
+},
+"PATH:world/wheel_1_-1": {
+"generate/physics": true
+},
+"PATH:world/wheel_1_1": {
+"generate/physics": true
+},
+"PATH:world/wheel_2_-1": {
+"generate/physics": true
+},
+"PATH:world/wheel_2_1": {
+"generate/physics": true
+},
+"PATH:world/wheel_3_-1": {
+"generate/physics": true
+},
+"PATH:world/wheel_3_1": {
+"generate/physics": true
+},
+"PATH:world/wheel_4_-1": {
+"generate/physics": true
+},
+"PATH:world/wheel_4_1": {
+"generate/physics": true
+},
+"PATH:world/wheel_hub_0_-1": {
+"generate/physics": true
+},
+"PATH:world/wheel_hub_0_1": {
+"generate/physics": true
+},
+"PATH:world/wheel_hub_1_-1": {
+"generate/physics": true
+},
+"PATH:world/wheel_hub_1_1": {
+"generate/physics": true
+},
+"PATH:world/wheel_hub_2_-1": {
+"generate/physics": true
+},
+"PATH:world/wheel_hub_2_1": {
+"generate/physics": true
+},
+"PATH:world/wheel_hub_3_-1": {
+"generate/physics": true
+},
+"PATH:world/wheel_hub_3_1": {
+"generate/physics": true
+},
+"PATH:world/wheel_hub_4_-1": {
+"generate/physics": true
+},
+"PATH:world/wheel_hub_4_1": {
+"generate/physics": true
+},
+"PATH:world/window_1_4": {
+"generate/physics": true
+},
+"PATH:world/window_border_bot_1_2": {
+"generate/physics": true
+},
+"PATH:world/window_border_bot_1_3": {
+"generate/physics": true
+},
+"PATH:world/window_border_bot_1_4": {
+"generate/physics": true
+},
+"PATH:world/window_border_top_1_3": {
+"generate/physics": true
+},
+"PATH:world/window_border_top_1_4": {
+"generate/physics": true
+}
+}
+}
+gltf/naming_version=1
+gltf/embedded_image_handling=1

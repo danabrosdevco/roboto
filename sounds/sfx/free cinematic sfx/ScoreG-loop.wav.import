@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://cefem310kg1np"
+path="res://.godot/imported/ScoreG-loop.wav-4fe197fd4feca04091e8d638fc8ff866.sample"
+
+[deps]
+
+source_file="res://sounds/sfx/free cinematic sfx/ScoreG-loop.wav"
+dest_files=["res://.godot/imported/ScoreG-loop.wav-4fe197fd4feca04091e8d638fc8ff866.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=0

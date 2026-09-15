@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://g7fmy28elpah"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_thanl"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xy31g"]
+vertex_color_use_as_albedo = true
+albedo_color = Color(0, 0.831373, 0, 1)
+
+[node name="SpawnPoint" type="Node3D"]
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+mesh = SubResource("BoxMesh_thanl")
+material = SubResource("StandardMaterial3D_xy31g")

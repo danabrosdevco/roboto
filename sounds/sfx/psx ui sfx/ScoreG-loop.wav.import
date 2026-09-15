@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://d4b8iip21llg"
+path="res://.godot/imported/ScoreG-loop.wav-d500122c9f0373b3d4be58f37a0eea91.sample"
+
+[deps]
+
+source_file="res://sounds/sfx/psx ui sfx/ScoreG-loop.wav"
+dest_files=["res://.godot/imported/ScoreG-loop.wav-d500122c9f0373b3d4be58f37a0eea91.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=0

@@ -2,7 +2,8 @@
 
 [ext_resource type="Script" path="res://Env/world_objects/components/interactible.gd" id="1_vhpwk"]
 
-[node name="Interactible" type="Area3D" groups=["interactibles"]]
+[node name="Interactible" type="Area3D" node_paths=PackedStringArray("collision_body") groups=["interactibles"]]
 script = ExtResource("1_vhpwk")
+collision_body = NodePath("CollisionShape3D")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]

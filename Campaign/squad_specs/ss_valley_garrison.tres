@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemySquadSpec" load_steps=3 format=3 uid="uid://c1xmie20ewrtc"]
+
+[ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="1_chfdc"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_a4rll"]
+
+[resource]
+script = ExtResource("2_a4rll")
+callsign = "RELAY"
+count = 3
+chassis = ExtResource("1_chfdc")
+posture = 1
+route_tag = &""
+post_tag = &"obj_valley_garrison"
+spawn_tag = &"obj_valley_garrison"
+always_active = true
+faction = 1
+reinforcement_tag = &""

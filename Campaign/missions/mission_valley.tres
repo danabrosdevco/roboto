@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=6 format=3 uid="uid://cs70pdfsa0rfb"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Resource" uid="uid://bpjecuijok5fg" path="res://Campaign/squad_specs/ss_valley_patrol_mid.tres" id="2_8ywia"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="Resource" uid="uid://c1xmie20ewrtc" path="res://Campaign/squad_specs/ss_valley_garrison.tres" id="3_idain"]
+[ext_resource type="PackedScene" uid="uid://bry0vr0coxyl4" path="res://maps/valley_level.tscn" id="3_valley"]
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"valley_sweep"
+display_name = "Valley Sweep"
+briefing = "Take out the garrison, and extract."
+level_scene = ExtResource("3_valley")
+map_position = Vector2(0, 0)
+enemy_force = Array[ExtResource("2_espec")]([ExtResource("2_8ywia"), ExtResource("3_idain")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"valley_garrison_cap", &"extract"])
+reward_resources = 120
+unlocks = Array[StringName]([])
+repeatable = true
+requires = Array[StringName]([])

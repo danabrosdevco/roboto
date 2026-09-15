@@ -1,0 +1,24 @@
+[gd_scene load_steps=5 format=3 uid="uid://b0b0b4xmxn7ke"]
+
+[ext_resource type="Script" path="res://Character/equipment/player_grenade.gd" id="1_1d8om"]
+[ext_resource type="PackedScene" uid="uid://b1d0y44phe80" path="res://Character/characters/ai/equipment/ai_grenade_projectile.tscn" id="2_712of"]
+[ext_resource type="PackedScene" uid="uid://tq40d0jrqxyt" path="res://3d_assets/Flat Grenades_FBX/Frag_West.fbx" id="5_ej6fx"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="8_m0sg4"]
+
+[node name="Grenade" type="Node3D" node_paths=PackedStringArray("pin_sound", "viewmodel")]
+script = ExtResource("1_1d8om")
+grenade_scene = ExtResource("2_712of")
+pin_sound = NodePath("Click")
+display_name = "Grenade"
+equipment_order = 1
+viewmodel = NodePath("Frag_West")
+use_default_position = false
+bob_speed = 0.6
+bob_amount = 0.005
+
+[node name="Frag_West" parent="." instance=ExtResource("5_ej6fx")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0237351, -0.473094)
+
+[node name="Click" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(-0.104658, -9.4871e-05, 0.994508, 0.0488491, 0.998792, 0.00523596, -0.993308, 0.0491288, -0.104527, -0.100835, 0.0303454, -0.977198)
+stream = ExtResource("8_m0sg4")

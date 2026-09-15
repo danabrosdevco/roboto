@@ -11,6 +11,11 @@ class_name SquadObjectivePoint
 # ─────────────────────────────────────────────
  
 @export var objective_name: String = "Objective"
+
+# Missions reference these by TAG, never by node path. A tag survives the node
+# being renamed or moved, and it lets one mission definition work across any
+# map that uses the same vocabulary — "relay", "north_gate", "reserve".
+@export var tag: StringName = &""
  
 # Optional: visually mark this in-editor with a label
 @export var show_debug_label: bool = true

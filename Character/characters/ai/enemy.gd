@@ -18,12 +18,15 @@ class_name Enemy
 @export var max_health: int = 30
 @export var faction: Enums.Factions = Enums.Factions.ENEMY
 @export var move_speed: float = 4.5
-@export var acceleration := 1.50
-@export var rotation_speed := 1.0
+## Movement response rate, used as 1-exp(-acceleration*delta).
+## Framerate independent. ~8 is responsive, ~3 is heavy and lumbering.
+## NOTE: scenes overriding this with the old ~1.5-2.0 values will feel sluggish.
+@export var acceleration := 8.0
+## Turn response rate, same curve as acceleration.
+@export var rotation_speed := 7.0
 @export var reposition_distance: float = 2.0
 @export var advance_distance: float = 3.0
 @export var fallback_distance: float = 1.25
-# max_fire_distance removed — use weapon.max_effective_range instead
 @export var bits: int = 10
 @export var equipment_slots: Array[AIEquipmentSlot] = []
 @export var combat_recon_time: float = 1.65
@@ -35,6 +38,31 @@ class_name Enemy
 # weapon's physical spread limit. Degraded at runtime by signal_integrity.
 @export var accuracy_skill: float = 0.75
 
+# ── AIMING ────────────────────────────────────
+## Seconds of settled, stationary tracking before accuracy is at its best.
+@export var aim_settle_time: float = 1.2
+## Accuracy fraction at zero tracking. 0.35 means a snap shot has ~2.9x the
+## spread of a settled shot.
+@export var aim_floor: float = 0.35
+## Spread multiplier applied while the body is actually moving.
+@export var moving_accuracy_penalty: float = 3.0
+## Shots per committed burst when the AI rolls FIRE.
+@export var burst_min: int = 2
+@export var burst_max: int = 5
+
+# ── DECISION WEIGHTING ────────────────────────
+## Multiplier applied to the previously chosen action when re-rolling.
+## 1.0 = no memory, 0.0 = never repeat. Anything in between discourages
+## repetition without banning it, which is what stops the metronome feel.
+@export var repeat_penalty: float = 0.45
+## Per-character jitter applied to combat_recon_time at spawn so squads
+## don't re-decide in lockstep.
+@export var recon_jitter: float = 0.25
+
+# ── SEARCH ────────────────────────────────────
+@export var search_duration: float = 9.0
+@export var search_look_interval: float = 1.6
+
 # ── SIGNAL INTEGRITY ──────────────────────────
 # The health of this robot's networked systems.
 # Degraded by suppressing fire, EMP, jamming. Recovers passively.
@@ -45,10 +73,35 @@ class_name Enemy
 
 # Never enters passive mode — set true on soldiers with active squad objectives
 @export var always_active: bool = false
+# ── CLOSE THREAT ───────────────────────────────
+# Opportunistic retargeting. The detection Area3D handles long-range
+# acquisition; this handles "something is right next to me", which the old code
+# had no concept of — reconsider_target() kept whatever target it already had as
+# long as that target was alive, so a hostile that walked into arm's reach while
+# you were shooting at someone 40m away was simply never noticed.
+#
+# Deliberately narrow. It only fires inside close_threat_range, so patrolling
+# robots don't start aggroing across the level from the targeting tick; the
+# Area3D still owns everything beyond a few metres.
+@export var close_threat_range: float = 6.0
+# How much closer the new contact has to be before it's worth switching. Without
+# a margin two hostiles at similar range make the AI oscillate between them
+# every targeting tick and it never shoots anything.
+@export var close_threat_advantage: float = 8.0
+# Don't swap onto something on the far side of a wall.
+@export var close_threat_requires_los: bool = true
+
+# What we were shooting at before a close threat interrupted. Restored when the
+# close threat dies, so a squad ATTACK order survives being jumped en route.
+var _preempted_target: CharacterBody3D = null
+
+signal close_threat_engaged(target)
+
 # Detection range used for signal-degraded sensor checks (match your Area3D radius)
 @export var detection_radius: float = 20.0
 
 # ── ENUMS ─────────────────────────────────────
+# NOTE: ordering is load-bearing. Scenes store these as raw ints.
 enum AIState { COMBAT, PATROL, SEARCH, IDLE, DEAD, PASSIVE }
 enum MovementState { NONE, MOVING, LEAPING, ADVANCING, CHASING }
 enum WeaponState { FIRE, RELOAD, AIM, IDLE }
@@ -91,8 +144,8 @@ var movement_state = MovementState.NONE
 var weapon_state = WeaponState.IDLE
 var activation_distance_sq: float
 
-var previous_combat_option: CombatOptions
-var previous_movement_option: CombatOptions
+var previous_combat_option: CombatOptions = CombatOptions.MOVE
+var previous_movement_option: MovementOptions = MovementOptions.ADVANCE
 
 var combat_target: CharacterBody3D
 var movement_target: Vector3
@@ -135,6 +188,35 @@ var _stuck_retry_count: int = 0
 const NO_LOS_PATIENCE: float = 4.0
 var _no_los_timer: float = 0.0
 
+# ── LOS CACHE ─────────────────────────────────
+# One raycast per interval, shared by weapon logic, the no-LOS timer and
+# the deferred-detection check. Previously each of those raycast separately,
+# every frame, per AI.
+const LOS_CHECK_INTERVAL: float = 0.15
+var _has_los: bool = false
+var _los_check_timer: float = 0.0
+
+# ── AIM / BURST ───────────────────────────────
+var _aim_tracking: float = 0.0
+var _burst_left: int = 0
+
+# ── FACING ────────────────────────────────────
+var _last_move_dir: Vector3 = Vector3.ZERO
+
+# ── SEARCH / WANDER ───────────────────────────
+var _search_look_timer: float = 0.0
+var _next_wander_at: float = 3.0
+
+# ── LOS SEEK BUDGET ───────────────────────────
+# One ring per call rather than four, so a squad losing LOS at the same
+# moment doesn't spike the frame.
+const SEEK_RING_RADII := [1.0, 1.5, 2.5, 4.0]
+var _seek_ring_index: int = 0
+
+# ── CACHED NODES ──────────────────────────────
+var _collision_shape: CollisionShape3D = null
+var _self_rid: RID
+
 # ── SIGNAL WORKING STATE ──────────────────────
 # Tracks stuttering for DEGRADED movement hesitation
 var _signal_stutter_timer: float = 0.0
@@ -149,12 +231,31 @@ signal combat_triggered(ai: AI)
 func initialize():
 	spawn_transform = transform
 	activation_distance_sq = activation_distance * activation_distance
+	_self_rid = get_rid()
+	_collision_shape = _find_collision_shape()
+
+	# Desynchronise decision cadence per character. Without this every
+	# soldier in a squad re-rolls on exactly the same frame.
+	combat_recon_time *= randf_range(1.0 - recon_jitter, 1.0 + recon_jitter)
+	combat_time = randf() * combat_recon_time
+	targeting_time = randf() * targeting_recon_time
+	_los_check_timer = randf() * LOS_CHECK_INTERVAL
+	_next_wander_at = wander_delay + randf_range(0.0, float(idle_to_wander))
+
 	await get_tree().process_frame
 	ai_state = DefaultAIState
 	frame_waited = true
 	for slot in equipment_slots:
 		slot.initialize()
+	if weapon != null and not weapon.reload_finished.is_connected(_on_reload_finished):
+		weapon.reload_finished.connect(_on_reload_finished)
 	reconsider_target()
+
+func _find_collision_shape() -> CollisionShape3D:
+	for child in get_children():
+		if child is CollisionShape3D:
+			return child
+	return null
 
 
 # ─────────────────────────────────────────────
@@ -166,31 +267,85 @@ func _physics_process(delta: float) -> void:
 	if player == null:
 		return
 
+	handle_gravity(delta)
+
+	# Signal always ticks, even when passive or disabled, so a robot can
+	# actually recover from an e-kill instead of being bricked forever.
+	_tick_signal(delta)
+
 	# E-KILL: electronically disabled — freeze in place, do nothing
 	if get_signal_state() == SignalState.EKILL:
 		_enter_ekill()
-		# Still apply gravity so we don't float
-		handle_gravity(delta)
-		move_and_slide()
+		_apply_motion()
 		return
 
 	var dist_sq = global_position.distance_squared_to(player.global_position)
 	if dist_sq > activation_distance_sq:
 		enter_passive_mode()
+		_apply_motion()
 		return
 	else:
 		exit_passive_mode()
 
-	handle_gravity(delta)
-	if checking_for_target and combat_target != null:
-		if is_path_clear(global_position, combat_target.global_position):
-			trigger_combat(combat_target)
+	_tick_los(delta)
+	if checking_for_target and combat_target != null and _has_los:
+		trigger_combat(combat_target)
 	handle_time_passing(delta)
-	handle_looking()
 	handle_movement(delta)
+	_update_facing(delta)
 	handle_weapon_logic(delta)
+	_apply_motion()
 	if label != null:
 		update_debug_label()
+
+
+# ─────────────────────────────────────────────
+# MOTION
+# Single move_and_slide per frame, at the end.
+# Previously it only ran inside move_along_nav / handle_leap, so a
+# stationary AI accumulated velocity.y forever and never refreshed
+# is_on_floor().
+# ─────────────────────────────────────────────
+func _apply_motion() -> void:
+	# Cheap out for a settled passive body — nothing to resolve.
+	if ai_state == AIState.PASSIVE and is_on_floor() and velocity.length_squared() < 0.01:
+		return
+
+	move_and_slide()
+
+	# Leap landing is detected here now, after the move has resolved.
+	if movement_state == MovementState.LEAPING and is_on_floor() and velocity.y <= 0.0:
+		movement_state = MovementState.NONE
+		velocity = Vector3.ZERO
+		roll_combat_action()
+
+
+# ─────────────────────────────────────────────
+# LOS CACHE
+# ─────────────────────────────────────────────
+func _tick_los(delta: float) -> void:
+	_los_check_timer -= delta
+	if _los_check_timer > 0.0:
+		return
+	_los_check_timer = LOS_CHECK_INTERVAL
+
+	var had_los = _has_los
+	if combat_target == null or not combat_target.alive:
+		_has_los = false
+	else:
+		_has_los = is_path_clear(
+			global_position + Vector3.UP * 0.8,
+			combat_target.global_position,
+			combat_target)
+		# Remember where they were the moment we lost sight of them.
+		# This is what SEARCH now runs on.
+		if had_los and not _has_los:
+			_remember_last_seen(combat_target.global_position)
+
+func _remember_last_seen(pos: Vector3) -> void:
+	last_seen_point.append(pos)
+	if last_seen_point.size() > 4:
+		last_seen_point.remove_at(0)
 
 
 # ─────────────────────────────────────────────
@@ -231,9 +386,10 @@ func handle_time_passing(delta):
 			combat_time += delta
 			if combat_time >= combat_recon_time:
 				reconsider_combat()
-			# Track time without LOS — if too long, seek a new position
+			# Track time without LOS — if too long, seek a new position.
+			# Uses the cached LOS result now instead of its own raycast.
 			if combat_target != null and combat_target.alive:
-				if not is_path_clear(global_position + Vector3.UP * 0.5, combat_target.global_position):
+				if not _has_los:
 					_no_los_timer += delta
 					if _no_los_timer >= NO_LOS_PATIENCE:
 						_no_los_timer = 0.0
@@ -246,8 +402,15 @@ func handle_time_passing(delta):
 				reconsider_patrol()
 		AIState.IDLE:
 			idle_time += delta
+			if idle_time >= _next_wander_at:
+				idle_time = 0.0
+				_next_wander_at = wander_delay + randf_range(0.0, float(idle_to_wander))
+				_wander()
 		AIState.SEARCH:
 			search_time += delta
+			_tick_search(delta)
+			if search_time >= search_duration:
+				_end_search()
 
 	if targeting_time >= targeting_recon_time:
 		reconsider_target()
@@ -255,25 +418,107 @@ func handle_time_passing(delta):
 	if ai_state == AIState.COMBAT and not equipment_slots.is_empty():
 		_tick_equipment(delta)
 
-	_tick_signal(delta)
-
 
 
 # ─────────────────────────────────────────────
 # GRAVITY / MOVEMENT
 # ─────────────────────────────────────────────
 func handle_gravity(delta: float) -> void:
-	if not is_on_floor():
+	if is_on_floor():
+		# Zero out accumulated fall speed instead of letting it grow.
+		if velocity.y < 0.0:
+			velocity.y = 0.0
+	else:
 		velocity.y -= gravity * delta
 
-func handle_targeting(_delta):
-	pass
+# ─────────────────────────────────────────────
+# HOLD STILL
+# ─────────────────────────────────────────────
+# Stops TRANSLATION only. The robot keeps facing, aiming and firing — it just
+# doesn't walk off while you're working on it.
+#
+# The gate sits in handle_movement() rather than in move_to(), because cover
+# seeking, bounding and chasing all set nav targets by different routes
+# (set_target_position directly in three places). handle_movement is the one
+# funnel every one of them passes through, so gating here catches all of them
+# without hunting down each caller.
+#
+# move_to() is ALSO gated, so a held robot doesn't burn pathfinding on orders it
+# can't act on — and so the last order is replayed on release rather than lost.
+var _hold_count: int = 0
+var _hold_timer: float = 0.0
+var _pending_move: Vector3 = Vector3.ZERO
+var _has_pending_move: bool = false
+# Safety release. Without it, anything that grabs a hold and then gets freed
+# before releasing leaves a robot frozen for the rest of the mission.
+@export var max_hold_time: float = 30.0
+
+signal hold_started
+signal hold_released
+
+
+func is_held() -> bool:
+	return _hold_count > 0
+
+
+# Reference counted, so two things holding the same robot don't release each
+# other early.
+func hold_still() -> void:
+	_hold_count += 1
+	_hold_timer = 0.0
+	if _hold_count == 1:
+		hold_started.emit()
+
+
+func release_hold() -> void:
+	if _hold_count <= 0:
+		return
+	_hold_count -= 1
+	if _hold_count > 0:
+		return
+	hold_released.emit()
+	# Resume whatever was asked for while we were pinned.
+	if _has_pending_move:
+		_has_pending_move = false
+		var pos := _pending_move
+		_pending_move = Vector3.ZERO
+		move_to(pos)
+
+
+func force_release_hold() -> void:
+	_hold_count = 0
+	_has_pending_move = false
+
+
+func _tick_hold(delta: float) -> void:
+	if _hold_count <= 0:
+		return
+	_hold_timer += delta
+	if max_hold_time > 0.0 and _hold_timer >= max_hold_time:
+		push_warning("%s: hold exceeded %.0fs, force-releasing." % [name, max_hold_time])
+		force_release_hold()
+		hold_released.emit()
+
 
 func handle_movement(delta):
+	_tick_hold(delta)
+
+	if is_held():
+		# Same deceleration curve MovementState.NONE uses, so a pinned robot
+		# coasts to a stop instead of snapping, and reads as deliberate.
+		var hold_t = 1.0 - exp(-acceleration * delta)
+		velocity.x = lerp(velocity.x, 0.0, hold_t)
+		velocity.z = lerp(velocity.z, 0.0, hold_t)
+		_stuck_timer = 0.0
+		return
+
 	match movement_state:
 		MovementState.NONE:
-			velocity.x = 0
-			velocity.z = 0
+			# Decelerate through the same curve as acceleration rather than
+			# snapping to zero. Instant stops are most of the "mechanical" read.
+			var t = 1.0 - exp(-acceleration * delta)
+			velocity.x = lerp(velocity.x, 0.0, t)
+			velocity.z = lerp(velocity.z, 0.0, t)
 			_stuck_timer = 0.0
 			_stuck_retry_count = 0
 		MovementState.MOVING:
@@ -286,15 +531,15 @@ func handle_movement(delta):
 					_stuck_retry_count = 0
 				else:
 					# Nav says done but we're NOT there — path is blocked
-					# Zero velocity to stop sliding
-					velocity.x = 0
-					velocity.z = 0
+					var t = 1.0 - exp(-acceleration * delta)
+					velocity.x = lerp(velocity.x, 0.0, t)
+					velocity.z = lerp(velocity.z, 0.0, t)
 					_handle_path_blocked()
 			else:
 				move_along_nav(delta)
 				_check_stuck(delta)
 		MovementState.LEAPING:
-			handle_leap(delta)
+			pass  # ballistic — gravity and landing handled in _apply_motion
 		MovementState.CHASING:
 			handle_chasing(delta)
 
@@ -314,6 +559,11 @@ func _check_stuck(delta: float) -> void:
 	_handle_path_blocked()
 
 func move_to(pos: Vector3):
+	# Pinned. Remember where we were told to go and replay it on release.
+	if is_held():
+		_pending_move = pos
+		_has_pending_move = true
+		return
 	nav_agent.set_target_position(pos)
 	movement_target = pos
 	movement_state = MovementState.MOVING
@@ -325,31 +575,28 @@ func move_to(pos: Vector3):
 func move_along_nav(delta):
 	var path_dir = nav_agent.get_next_path_position() - global_position
 	path_dir.y = 0
+	var t = 1.0 - exp(-acceleration * delta)
+	if path_dir.length() < 0.15:
+		velocity.x = lerp(velocity.x, 0.0, t)
+		velocity.z = lerp(velocity.z, 0.0, t)
+		return
 	var base_dir = path_dir.normalized()
-	if base_dir.length() > 0.01:
-		base_dir = base_dir.normalized()
+	_last_move_dir = base_dir
 	var target_velocity = base_dir * move_speed
-	velocity.x = lerp(velocity.x, target_velocity.x, acceleration * delta)
-	velocity.z = lerp(velocity.z, target_velocity.z, acceleration * delta)
-	move_and_slide()
-	if base_dir.length() > 0.01:
-		var current_yaw = rotation.y
-		var target_yaw = atan2(-base_dir.x, -base_dir.z)
-		rotation.y = lerp_angle(current_yaw, target_yaw, rotation_speed * delta)
+	velocity.x = lerp(velocity.x, target_velocity.x, t)
+	velocity.z = lerp(velocity.z, target_velocity.z, t)
+	# NOTE: rotation is no longer set here. Facing is decoupled from
+	# movement so the body can strafe and backpedal while aiming.
 
 func handle_chasing(delta):
 	if combat_target == null or not combat_target.alive:
 		movement_state = MovementState.NONE
-		velocity.x = 0
-		velocity.z = 0
 		return
 
 	# Stop chasing once we're close enough to engage from here
 	var dist_to_target = global_position.distance_to(combat_target.global_position)
-	if dist_to_target <= (weapon.max_effective_range if weapon else 30.0) * 0.7:
+	if dist_to_target <= _max_range() * 0.7:
 		movement_state = MovementState.NONE
-		velocity.x = 0
-		velocity.z = 0
 		return
 
 	chasing_time += delta
@@ -357,79 +604,272 @@ func handle_chasing(delta):
 		chasing_time = 0
 		nav_agent.set_target_position(combat_target.global_position)
 
-	# Zero velocity if path direction is degenerate (causes sliding)
-	var path_dir = nav_agent.get_next_path_position() - global_position
-	path_dir.y = 0
-	if path_dir.length() < 0.1:
-		velocity.x = 0
-		velocity.z = 0
-		return
-
 	move_along_nav(delta)
 	_check_stuck(delta)
 
-func handle_leap(delta):
-	velocity.y -= gravity * delta
-	move_and_slide()
-	if is_on_floor():
-		movement_state = MovementState.NONE
-		velocity = Vector3.ZERO
-		roll_combat_action()
+func _update_facing(delta: float) -> void:
+	# The core fix for "faces where it walks while shooting sideways".
+	# In combat the body tracks the target; movement direction is
+	# independent, which gives strafing and backpedalling for free.
+	var face_dir := Vector3.ZERO
+	if ai_state == AIState.COMBAT and combat_target != null and combat_target.alive:
+		face_dir = combat_target.global_position - global_position
+	elif weapon_target != Vector3.ZERO and ai_state == AIState.COMBAT:
+		face_dir = weapon_target - global_position
+	elif look_target != Vector3.ZERO and global_position.distance_squared_to(look_target) > 0.04:
+		face_dir = look_target - global_position
+	elif _last_move_dir.length_squared() > 0.0001:
+		face_dir = _last_move_dir
 
-func handle_looking():
-	var flat_look_target = Vector3(look_target.x, global_position.y, look_target.z)
-	if global_position.distance_to(flat_look_target) > 0.01:
-		look_at(flat_look_target, Vector3.UP)
+	face_dir.y = 0.0
+	if face_dir.length_squared() < 0.0001:
+		return
+	face_dir = face_dir.normalized()
+	var target_yaw = atan2(-face_dir.x, -face_dir.z)
+	var t = 1.0 - exp(-rotation_speed * delta)
+	rotation.y = lerp_angle(rotation.y, target_yaw, t)
+
+func _is_moving() -> bool:
+	return Vector2(velocity.x, velocity.z).length() > 0.6
 
 
 # ─────────────────────────────────────────────
 # WEAPON LOGIC
+# Now aware of magazines, reloads, sight-picture settling and
+# committed bursts.
 # ─────────────────────────────────────────────
 func handle_weapon_logic(delta):
-	if fire_time >= 0:
+	if fire_time > 0.0:
 		fire_time -= delta
-	if ai_state != AIState.COMBAT:
-		weapon_state = WeaponState.IDLE
-		return
 	if weapon == null:
 		return
+	if ai_state != AIState.COMBAT:
+		weapon_state = WeaponState.IDLE
+		_aim_tracking = 0.0
+		_burst_left = 0
+		return
+
+	# Reload is now a real state the AI reacts to, rather than the weapon
+	# silently refusing to fire while the AI kept cycling FIRE.
+	if weapon.is_reloading:
+		weapon_state = WeaponState.RELOAD
+		_aim_tracking = 0.0
+		_burst_left = 0
+		return
+	if weapon.needs_reload():
+		weapon.start_reload()
+		_on_reload_started()
+		return
+
+	# Tracking builds while settled with LOS, decays while moving.
+	if _has_los and combat_target != null:
+		if _is_moving():
+			_aim_tracking = maxf(0.0, _aim_tracking - delta * 1.5)
+		else:
+			_aim_tracking = minf(aim_settle_time, _aim_tracking + delta)
+	else:
+		_aim_tracking = maxf(0.0, _aim_tracking - delta * 2.0)
+
 	if weapon_time >= weapon_recon_time:
 		reconsider_weapon()
+
 	var dist = global_position.distance_to(weapon_target)
-	var max_range = weapon.max_effective_range if weapon else 30.0
-	var min_range = weapon.min_effective_range if weapon else 0.0
+	var max_range = _max_range()
+	var min_range = weapon.min_effective_range
+
 	match weapon_state:
-		WeaponState.IDLE:
+		WeaponState.IDLE, WeaponState.RELOAD:
 			weapon_state = WeaponState.AIM
 		WeaponState.AIM:
-			# Check both min and max range + LOS
-			if fire_time <= 0 and dist <= max_range and dist >= min_range:
-				if weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
-					if combat_target != null and is_path_clear(global_position, combat_target.global_position):
-						weapon_state = WeaponState.FIRE
-				elif combat_target != null and is_path_clear(global_position, combat_target.global_position):
-					weapon_state = WeaponState.FIRE
+			if fire_time > 0.0:
+				return
+			if combat_target == null:
+				return
+			if not _has_los and not _can_fire_without_los():
+				return
+			if dist > max_range or dist < min_range:
+				return
+			# A committed burst fires immediately. Otherwise wait for a
+			# sight picture proportional to range — snap shots up close,
+			# a real pause before a long shot.
+			if _burst_left <= 0 and _aim_tracking < _prefire_threshold():
+				return
+			weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
 				fire()
 				fire_time = weapon.fire_cooldown
+				if _burst_left > 0:
+					_burst_left -= 1
 				weapon_state = WeaponState.AIM
-		WeaponState.RELOAD:
-			weapon_state = WeaponState.IDLE
+
+func _prefire_threshold() -> float:
+	if weapon == null:
+		return 0.0
+	var d = global_position.distance_to(weapon_target)
+	var ratio = clampf(d / maxf(_max_range(), 0.01), 0.0, 1.0)
+	return aim_settle_time * ratio * 0.8
+
+## Overridden by Soldier so a SUPPRESSING soldier can put rounds onto a
+## position it can't currently see.
+func _can_fire_without_los() -> bool:
+	return false
+
+func _max_range() -> float:
+	return weapon.max_effective_range if weapon != null else 30.0
+
+func _on_reload_started() -> void:
+	# Break contact while vulnerable rather than standing in the open.
+	weapon_state = WeaponState.RELOAD
+	_burst_left = 0
+	_aim_tracking = 0.0
+	if MovementOptions.FALLBACK in AllowedMovementOptions:
+		move_to(find_fallback_target())
+	elif MovementOptions.REPOSITION in AllowedMovementOptions:
+		move_to(find_reposition_target())
+
+func _on_reload_finished() -> void:
+	if ai_state == AIState.COMBAT:
+		weapon_state = WeaponState.AIM
 
 
 # ─────────────────────────────────────────────
-# RECONSIDER
+# RECONSIDER — weighted, context-driven
 # ─────────────────────────────────────────────
 func roll_combat_action():
 	if AllowedCombatOptions.is_empty():
 		return
-	var options := AllowedCombatOptions.duplicate()
-	if options.size() > 1:
-		options.erase(previous_combat_option)
-	var new_action = options[randi_range(0, options.size() - 1)]
-	perform_action(new_action)
-	previous_combat_option = new_action
+
+	var weights: Dictionary = {}
+	var total: float = 0.0
+	for opt in AllowedCombatOptions:
+		var w: float = maxf(_score_combat_option(opt), 0.0)
+		if opt == previous_combat_option:
+			w *= repeat_penalty
+		weights[opt] = w
+		total += w
+
+	var chosen = AllowedCombatOptions[randi() % AllowedCombatOptions.size()]
+	if total > 0.0:
+		var roll = randf() * total
+		for opt in AllowedCombatOptions:
+			roll -= weights[opt]
+			if roll <= 0.0:
+				chosen = opt
+				break
+
+	perform_action(chosen)
+	previous_combat_option = chosen
+
+## Score, don't shuffle. The old version erased the previous option, which
+## structurally forced move/stand/move/stand on a fixed timer.
+func _score_combat_option(option: int) -> float:
+	var max_range = _max_range()
+	var dist = max_range
+	if combat_target != null:
+		dist = global_position.distance_to(combat_target.global_position)
+	var range_ratio = clampf(dist / maxf(max_range, 0.01), 0.0, 2.0)
+	var health_ratio = float(health) / maxf(float(max_health), 1.0)
+	var pinned = signal_integrity < SIGNAL_FUZZED
+	var low_ammo = false
+	if weapon != null and not weapon.infinite_ammo:
+		low_ammo = float(weapon.magazine_current) / maxf(float(weapon.magazine_size), 1.0) < 0.25
+
+	var w: float = 1.0
+	match option:
+		CombatOptions.MOVE:
+			w += range_ratio * 2.5             # far → close the distance
+			if not _has_los:
+				w += 3.0                       # blocked → moving is the only fix
+			if range_ratio < 0.25:
+				w += 1.0                       # crowding → open the range
+			if health_ratio < 0.4:
+				w += 0.8                       # hurt → don't stand still
+			if pinned:
+				w *= 0.5                       # under fire → less willing to move
+		CombatOptions.AIM:
+			if not _has_los:
+				return 0.15                    # nothing to aim at
+			w += 1.5
+			w += range_ratio * 2.5             # long shots want a settled stance
+			if low_ammo:
+				w += 0.6                       # make the remaining rounds count
+			if pinned:
+				w *= 0.6
+		CombatOptions.FIRE:
+			if not _has_los and not _can_fire_without_los():
+				return 0.1
+			w += 2.5
+			w += (1.0 - minf(range_ratio, 1.0)) * 2.0   # close range → just shoot
+			if low_ammo:
+				w *= 0.4
+			if pinned:
+				w += 0.8                       # return fire even while suppressed
+	return w
+
+func _pick_movement_option() -> int:
+	if AllowedMovementOptions.is_empty():
+		return -1
+	var weights: Dictionary = {}
+	var total: float = 0.0
+	for m in AllowedMovementOptions:
+		var w: float = maxf(_score_movement_option(m), 0.0)
+		if m == previous_movement_option:
+			w *= repeat_penalty
+		weights[m] = w
+		total += w
+	if total <= 0.0:
+		return AllowedMovementOptions[randi() % AllowedMovementOptions.size()]
+	var roll = randf() * total
+	for m in AllowedMovementOptions:
+		roll -= weights[m]
+		if roll <= 0.0:
+			return m
+	return AllowedMovementOptions[0]
+
+func _score_movement_option(option: int) -> float:
+	var max_range = _max_range()
+	var dist = max_range
+	if combat_target != null:
+		dist = global_position.distance_to(combat_target.global_position)
+	var range_ratio = clampf(dist / maxf(max_range, 0.01), 0.0, 2.0)
+	var health_ratio = float(health) / maxf(float(max_health), 1.0)
+
+	var w: float = 1.0
+	match option:
+		MovementOptions.ADVANCE:
+			w = 0.4 + range_ratio * 3.0
+			if range_ratio < 0.35:
+				w *= 0.2
+		MovementOptions.REPOSITION:
+			w = 1.2
+			if _has_los:
+				w += 1.0                       # shuffle to break the firing solution
+			else:
+				w += 1.8                       # small step to try to open a lane
+			if range_ratio > 1.0:
+				w *= 0.5                       # too far for a 2m sidestep to matter
+		MovementOptions.FALLBACK:
+			w = 0.2
+			if range_ratio < 0.3:
+				w += 2.0                       # too close
+			if health_ratio < 0.4:
+				w += 1.5
+			if weapon != null and weapon.is_reloading:
+				w += 2.0
+		MovementOptions.LEAP:
+			if combat_target == null or not _has_los:
+				return 0.0
+			if range_ratio > 0.6 or range_ratio < 0.1:
+				return 0.1
+			w = 1.5
+		MovementOptions.CHASE:
+			w = 0.3 + range_ratio * 2.0
+			if not _has_los:
+				w += 1.5
+			if range_ratio < 0.5:
+				w *= 0.3
+	return w
 
 func _handle_path_blocked() -> void:
 	_stuck_retry_count += 1
@@ -450,16 +890,13 @@ func _handle_path_blocked() -> void:
 		# Second block — try the opposite lateral direction
 		var to_target = (movement_target - global_position).normalized()
 		var right = to_target.cross(Vector3.UP).normalized()
-		# Opposite of retry 1 — alternate sides
-		var lateral_dir = right if _stuck_retry_count % 2 == 0 else -right
+		var lateral_dir = -right if randf() > 0.5 else right
 		var step = global_position + lateral_dir * 4.0
 		var nav_point = NavigationServer3D.map_get_closest_point(nav_map, step)
 		nav_agent.set_target_position(nav_point)
 		return
 
 	# Third block — path is genuinely impassable from here
-	# In combat: stop moving and fight from current position
-	# In patrol/search: pick a random nearby point and try from there
 	_stuck_retry_count = 0
 	movement_state = MovementState.NONE
 	if ai_state == AIState.COMBAT:
@@ -473,6 +910,9 @@ func _handle_path_blocked() -> void:
 		var fallback = NavigationServer3D.map_get_closest_point(nav_map, global_position + random_offset)
 		move_to(fallback)
 
+## One ring of 8 samples per call instead of 32 samples in a single frame.
+## Successive calls widen the search; the angle offset is randomised so
+## squadmates don't all test identical points.
 func _seek_los_position() -> void:
 	if combat_target == null:
 		return
@@ -480,45 +920,50 @@ func _seek_los_position() -> void:
 	var target_pos = combat_target.global_position
 	var check_from_height = Vector3.UP * 0.8
 
-	# Sample positions in a ring around the combat target at increasing radii.
-	# Pick the closest one that has clear LOS.
+	var radius = advance_distance * SEEK_RING_RADII[_seek_ring_index]
+	_seek_ring_index = (_seek_ring_index + 1) % SEEK_RING_RADII.size()
+
 	var best_pos: Vector3 = Vector3.ZERO
 	var best_dist: float = INF
+	var angle_offset = randf() * TAU
 
-	for radius_mult in [1.0, 1.5, 2.5, 4.0]:
-		var radius = advance_distance * radius_mult
-		for i in 8:
-			var angle = (TAU / 8.0) * i
-			var dir = Vector3(cos(angle), 0.0, sin(angle))
-			var test = target_pos + dir * radius
-			var nav_point = NavigationServer3D.map_get_closest_point(nav_map, test)
-			# Skip if this is basically where we already are
-			if nav_point.distance_to(global_position) < 1.5:
-				continue
-			if is_path_clear(nav_point + check_from_height, target_pos):
-				var dist = global_position.distance_to(nav_point)
-				if dist < best_dist:
-					best_dist = dist
-					best_pos = nav_point
-		# If we found a valid position at this radius, use it — don't search further
-		if best_pos != Vector3.ZERO:
-			break
+	for i in 8:
+		var angle = angle_offset + (TAU / 8.0) * i
+		var dir = Vector3(cos(angle), 0.0, sin(angle))
+		var test = target_pos + dir * radius
+		var nav_point = NavigationServer3D.map_get_closest_point(nav_map, test)
+		if nav_point.distance_to(global_position) < 1.5:
+			continue
+		if is_path_clear(nav_point + check_from_height, target_pos, combat_target):
+			var dist = global_position.distance_to(nav_point)
+			if dist < best_dist:
+				best_dist = dist
+				best_pos = nav_point
 
 	if best_pos != Vector3.ZERO:
+		_seek_ring_index = 0
 		move_to(best_pos)
-	# If nothing found: let normal combat reconsider run as fallback
 
 func reconsider_movement():
 	movement_time = 0
-	# If we arrived (distance check passed in handle_movement), act on it
-	if ai_state == AIState.COMBAT:
-		roll_combat_action()
-		return
-	if ai_state == AIState.PATROL:
-		reconsider_patrol()
+	match ai_state:
+		AIState.COMBAT:
+			roll_combat_action()
+		AIState.PATROL:
+			reconsider_patrol()
+		_:
+			movement_state = MovementState.NONE
 
 func reconsider_weapon():
 	weapon_time = 0
+	if weapon == null:
+		return
+	# Top up out of contact rather than starting a fight on a half magazine.
+	if not weapon.infinite_ammo and not weapon.is_reloading:
+		var frac = float(weapon.magazine_current) / maxf(float(weapon.magazine_size), 1.0)
+		if frac < 0.35 and (not _has_los or ai_state != AIState.COMBAT):
+			weapon.start_reload()
+			_on_reload_started()
 
 func reconsider_combat():
 	combat_time = 0
@@ -526,22 +971,34 @@ func reconsider_combat():
 
 func reconsider_target() -> void:
 	targeting_time = 0
+
+	# Checked BEFORE the keep-current-target early return below. That return is
+	# exactly what made a point-blank contact invisible — it fired whenever the
+	# existing target was alive, without ever comparing distances.
+	if _check_close_threat():
+		return
+
 	if combat_target != null and combat_target.alive:
 		if _is_hostile(combat_target):
 			weapon_target = combat_target.global_position
 			look_target = combat_target.global_position
 			return
 	if combat_target != null and not combat_target.alive:
+		_remember_last_seen(combat_target.global_position)
 		combat_target = null
 		weapon_target = Vector3.ZERO
+		_has_los = false
 		if movement_target != Vector3.ZERO:
 			look_target = movement_target
 
-	var new_target: CharacterBody3D = null
-	if ai_manager != null:
-		new_target = ai_manager.get_nearest_hostile(self)
-	elif player != null and _is_hostile(player):
-		new_target = player
+		# Close threat is down — go back to whatever we were on rather than
+		# re-picking nearest, which would lose a player-designated target.
+		var resumed := _take_preempted_target()
+		if resumed != null:
+			change_combat_target(resumed)
+			return
+
+	var new_target: CharacterBody3D = _nearest_hostile()
 
 	if new_target != null:
 		if ai_state == AIState.COMBAT:
@@ -550,31 +1007,151 @@ func reconsider_target() -> void:
 	else:
 		combat_target = null
 		weapon_target = Vector3.ZERO
+		_has_los = false
 		if movement_target != Vector3.ZERO:
 			look_target = movement_target
 		if ai_state == AIState.COMBAT:
-			change_ai_state(AIState.PATROL)
+			# Lost them — go look, rather than instantly forgetting.
+			_enter_search()
+
+# Extracted from reconsider_target so the close-threat check shares one source
+# of truth for "who is hostile and nearby".
+func _nearest_hostile() -> CharacterBody3D:
+	if ai_manager != null:
+		return ai_manager.get_nearest_hostile(self)
+	if player != null and _is_hostile(player) and player.is_targetable():
+		return player
+	return null
+
+
+func _take_preempted_target() -> CharacterBody3D:
+	var t := _preempted_target
+	_preempted_target = null
+	if t == null or not is_instance_valid(t) or not t.alive:
+		return null
+	if not _is_hostile(t):
+		return null
+	return t
+
+
+# Returns true if it took over targeting this tick.
+func _check_close_threat() -> bool:
+	if close_threat_range <= 0.0 or ai_state == AIState.DEAD:
+		return false
+	# Same sensor rule the detection area uses — a robot with a wrecked sensor
+	# package doesn't get a free point-blank sense.
+	var sig := get_signal_state()
+	if sig == SignalState.EKILL or sig == SignalState.CRITICAL:
+		return false
+
+	var candidate := _nearest_hostile()
+	if candidate == null or candidate == combat_target:
+		return false
+
+	var dist := global_position.distance_to(candidate.global_position)
+	if dist > close_threat_range:
+		return false
+
+	var current_valid: bool = combat_target != null \
+		and is_instance_valid(combat_target) \
+		and combat_target.alive
+
+	# Already fighting something at least as close? Leave it alone.
+	if current_valid:
+		var current_dist := global_position.distance_to(combat_target.global_position)
+		if current_dist - dist < close_threat_advantage:
+			return false
+
+	if close_threat_requires_los:
+		if not is_path_clear(global_position + Vector3.UP * 0.8, candidate.global_position, candidate):
+			return false
+
+	if current_valid:
+		_preempted_target = combat_target
+
+	if ai_state == AIState.COMBAT:
+		change_combat_target(candidate)
+	else:
+		# Not fighting yet. This is the case the Area3D misses when the hostile
+		# was already inside the radius before this robot became relevant —
+		# body_entered never fires for an overlap that already existed.
+		trigger_combat(candidate)
+
+	close_threat_engaged.emit(candidate)
+	return true
+
 
 func reconsider_patrol():
+	patrol_time = 0
 	if patrol_path == null or patrol_path.points.is_empty():
 		return
-	if nav_agent.is_navigation_finished() or movement_target == null:
+	if nav_agent.is_navigation_finished():
 		var next_point = patrol_path.get_next_point(self)
 		if next_point:
 			move_to(next_point.global_position)
 			look_target = next_point.global_position
 
 
+# ─────────────────────────────────────────────
+# SEARCH
+# Previously a declared-but-unreachable state.
+# ─────────────────────────────────────────────
+func _enter_search() -> void:
+	if last_seen_point.is_empty():
+		change_ai_state(AIState.PATROL)
+		return
+	change_ai_state(AIState.SEARCH)
+	search_time = 0.0
+	_search_look_timer = 0.0
+	move_to(last_seen_point.back())
+	look_target = last_seen_point.back()
+
+func _tick_search(delta: float) -> void:
+	if movement_state != MovementState.NONE:
+		return
+	_search_look_timer -= delta
+	if _search_look_timer > 0.0:
+		return
+	_search_look_timer = search_look_interval * randf_range(0.7, 1.4)
+
+	# Sweep a random heading, and sometimes push to a new vantage point.
+	var a = randf() * TAU
+	look_target = global_position + Vector3(cos(a), 0.0, sin(a)) * 6.0
+	if randf() < 0.45:
+		var nav_map = nav_agent.get_navigation_map()
+		var offset = Vector3(randf_range(-7.0, 7.0), 0.0, randf_range(-7.0, 7.0))
+		move_to(NavigationServer3D.map_get_closest_point(nav_map, global_position + offset))
+
+func _end_search() -> void:
+	search_time = 0.0
+	last_seen_point.clear()
+	if patrol_path != null and not patrol_path.points.is_empty():
+		change_ai_state(AIState.PATROL)
+	else:
+		change_ai_state(AIState.IDLE)
+
 
 # ─────────────────────────────────────────────
-# STATE / TARGET
+# IDLE WANDER
+# Previously four declared variables and no implementation.
 # ─────────────────────────────────────────────
+func _wander() -> void:
+	if movement_state != MovementState.NONE:
+		return
+	var nav_map = nav_agent.get_navigation_map()
+	var a = randf() * TAU
+	var r = randf_range(wander_radius * 0.4, wander_radius)
+	var pt = NavigationServer3D.map_get_closest_point(
+		nav_map, global_position + Vector3(cos(a), 0.0, sin(a)) * r)
+	move_to(pt)
+	look_target = pt
+
 
 # ─────────────────────────────────────────────
 # EQUIPMENT
 # ─────────────────────────────────────────────
 func _tick_equipment(delta: float) -> void:
-	for i in _equipment_cooldowns.size():
+	for i in _equipment_cooldowns.keys():
 		_equipment_cooldowns[i] = maxf(0.0, _equipment_cooldowns[i] - delta)
 	if combat_target != null and combat_target.alive:
 		var target_pos = combat_target.global_position
@@ -637,6 +1214,11 @@ func change_ai_state(new_state: AIState):
 		_no_los_timer = 0.0
 
 func change_combat_target(body):
+	if body != combat_target:
+		_aim_tracking = 0.0
+		_burst_left = 0
+		_has_los = false
+		_los_check_timer = 0.0
 	combat_target = body
 	weapon_target = body.global_position
 	look_target = body.global_position
@@ -648,14 +1230,13 @@ func change_combat_target(body):
 func perform_action(action: CombatOptions):
 	match action:
 		CombatOptions.MOVE:
-			var keys := AllowedMovementOptions
-			if keys.is_empty():
+			var movement = _pick_movement_option()
+			if movement < 0:
 				return
-			var movement = keys[randi_range(0, keys.size() - 1)]
+			previous_movement_option = movement
 			match movement:
 				MovementOptions.LEAP:
 					if combat_target != null:
-						movement_state = MovementState.LEAPING
 						leap_towards(combat_target.global_position)
 				MovementOptions.REPOSITION:
 					move_to(find_reposition_target())
@@ -667,9 +1248,20 @@ func perform_action(action: CombatOptions):
 				MovementOptions.FALLBACK:
 					move_to(find_fallback_target())
 		CombatOptions.FIRE:
-			pass
+			_commit_burst()
 		CombatOptions.AIM:
-			pass
+			_enter_aim_stance()
+
+## AIM used to be `pass`. It now means: stop, settle, let accuracy build.
+func _enter_aim_stance() -> void:
+	if movement_state == MovementState.MOVING or movement_state == MovementState.CHASING:
+		movement_state = MovementState.NONE
+	_burst_left = 0
+
+## FIRE used to be `pass`. It now means: commit to a burst from wherever
+## you are — if you were moving, keep moving and eat the accuracy penalty.
+func _commit_burst() -> void:
+	_burst_left = randi_range(burst_min, max(burst_min, burst_max))
 
 func find_reposition_target():
 	if combat_target == null:
@@ -678,29 +1270,38 @@ func find_reposition_target():
 	var to_target = (combat_target.global_position - global_position).normalized()
 	var right = to_target.cross(Vector3.UP).normalized()
 	var lateral_dir = right if randf() > 0.5 else -right
-	var test_pos = global_position + lateral_dir * reposition_distance
-	var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-	if is_path_clear(closest_point, combat_target.global_position):
-		return closest_point
-	test_pos = global_position + lateral_dir * reposition_distance * 0.5
-	closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-	if is_path_clear(closest_point, combat_target.global_position):
-		return closest_point
+	for mult in [1.0, 0.5]:
+		var test_pos = global_position + lateral_dir * reposition_distance * mult
+		var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+		if is_path_clear(closest_point + Vector3.UP * 0.8, combat_target.global_position, combat_target):
+			return closest_point
 	return global_position
 
+## Step length now scales with range: long bounds when far, short careful
+## steps when close, and it won't step inside a crowding distance.
 func find_advance_target():
 	if combat_target == null:
 		return global_position
 	var nav_map = nav_agent.get_navigation_map()
-	var direction = (combat_target.global_position - global_position).normalized()
-	var test_pos = global_position + direction * advance_distance
-	var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-	if is_path_clear(closest_point, combat_target.global_position):
-		return closest_point
-	test_pos = global_position + direction * advance_distance * 0.5
-	closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-	if is_path_clear(test_pos, combat_target.global_position):
-		return closest_point
+	var to_target = combat_target.global_position - global_position
+	to_target.y = 0.0
+	var dist = to_target.length()
+	if dist < 0.01:
+		return global_position
+	var direction = to_target / dist
+	var max_range = _max_range()
+
+	var step = advance_distance * clampf(dist / maxf(max_range, 0.01), 0.4, 3.0)
+	step = minf(step, dist - max_range * 0.35)   # don't crowd the target
+	if step <= 0.2:
+		return global_position
+
+	for mult in [1.0, 0.6, 0.3]:
+		var test_pos = global_position + direction * step * mult
+		var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+		# Previously this checked test_pos but returned closest_point.
+		if is_path_clear(closest_point + Vector3.UP * 0.8, combat_target.global_position, combat_target):
+			return closest_point
 	return global_position
 
 func find_fallback_target():
@@ -708,14 +1309,12 @@ func find_fallback_target():
 		return global_position
 	var nav_map = nav_agent.get_navigation_map()
 	var away_dir = (global_position - combat_target.global_position).normalized()
-	var test_pos = global_position + away_dir * fallback_distance
-	var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-	if is_path_clear(closest_point, combat_target.global_position):
-		return closest_point
-	test_pos = global_position + away_dir * fallback_distance * 0.5
-	closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-	if is_path_clear(test_pos, combat_target.global_position):
-		return closest_point
+	for mult in [1.0, 0.5]:
+		var test_pos = global_position + away_dir * fallback_distance * mult
+		var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+		# Same copy-paste bug as find_advance_target had.
+		if is_path_clear(closest_point + Vector3.UP * 0.8, combat_target.global_position, combat_target):
+			return closest_point
 	return global_position
 
 
@@ -728,6 +1327,8 @@ func leap_towards(target_pos: Vector3, leap_vel: float = 16.5):
 	look_target = target_pos
 
 func compute_leap_velocity(target: Vector3, time: float) -> Vector3:
+	if time <= 0.0:
+		return Vector3.ZERO
 	var displacement := target - global_position
 	var vy = (displacement.y / time) + (0.5 * gravity * time)
 	return Vector3(displacement.x / time, vy, displacement.z / time)
@@ -739,6 +1340,8 @@ func compute_leap_velocity_fixed_speed(target: Vector3, speed: float) -> Vector3
 	var horiz = displacement
 	horiz.y = 0.0
 	var distance = horiz.length()
+	if distance < 0.01:
+		return Vector3.ZERO
 	var time = distance / speed
 	var direction = horiz.normalized()
 	var vy = (displacement.y / time) + (0.5 * gravity * time)
@@ -772,7 +1375,8 @@ func apply_damage(damage, source) -> void:
 			stimulus_manager.emit_stimulus(
 				StimulusManager.StimulusType.ALLY_SHOT,
 				global_position, faction, source)
-	bark.bark()
+	if bark != null:
+		bark.bark()
 	health -= damage
 	if health <= 0:
 		die()
@@ -781,6 +1385,7 @@ func apply_damage(damage, source) -> void:
 		i.activate()
 
 func die():
+	force_release_hold()
 	if not alive:
 		return
 	if stimulus_manager != null:
@@ -794,9 +1399,12 @@ func die():
 	for i in particle_effects_die:
 		i.activate()
 	nav_agent.set_target_position(global_position)
-	if damaged_by_player:
+	if damaged_by_player and player != null:
 		player.add_bits(bits)
-	$CollisionShape3D.disabled = true
+	if _collision_shape == null:
+		_collision_shape = _find_collision_shape()
+	if _collision_shape != null:
+		_collision_shape.set_deferred("disabled", true)
 	damaged_by_player = false
 	hide_body()
 	if weapon != null:
@@ -808,7 +1416,6 @@ func respawn():
 func hide_body():
 	for i in visible_pieces:
 		i.visible = false
-
 func show_body():
 	for i in visible_pieces:
 		i.visible = true
@@ -825,9 +1432,12 @@ func reset():
 	velocity = Vector3.ZERO
 	weapon_target = Vector3.ZERO
 	look_target = Vector3.ZERO
+	combat_target = null
 	show_body()
 	if weapon != null:
 		weapon.show()
+	movement_state = MovementState.NONE
+	weapon_state = WeaponState.IDLE
 	movement_time = 0
 	combat_time = 0
 	weapon_time = 0
@@ -840,6 +1450,16 @@ func reset():
 	_stuck_last_position = Vector3.ZERO
 	_stuck_retry_count = 0
 	_no_los_timer = 0.0
+	_has_los = false
+	_los_check_timer = 0.0
+	_aim_tracking = 0.0
+	_burst_left = 0
+	_last_move_dir = Vector3.ZERO
+	_seek_ring_index = 0
+	_search_look_timer = 0.0
+	# Was never reset — squads set this true and nothing ever set it back,
+	# so every squad member ran full physics forever.
+	always_active = false
 	signal_integrity = 1.0
 	_signal_stutter_timer = 0.0
 	_equipment_cooldowns.clear()
@@ -850,7 +1470,10 @@ func reset():
 		slot.initialize()
 	set_physics_process(true)
 	set_process(true)
-	$CollisionShape3D.disabled = false
+	if _collision_shape == null:
+		_collision_shape = _find_collision_shape()
+	if _collision_shape != null:
+		_collision_shape.set_deferred("disabled", false)
 
 
 # ─────────────────────────────────────────────
@@ -868,30 +1491,30 @@ func receive_stimulus(
 		StimulusManager.StimulusType.GUNSHOT_HEARD:
 			if ai_state != AIState.COMBAT:
 				look_target = source_position
+				_remember_last_seen(source_position)
 		StimulusManager.StimulusType.ALLY_SHOT:
 			if ai_state != AIState.COMBAT:
 				look_target = source_position
+				_remember_last_seen(source_position)
 			if source_node != null and _is_hostile(source_node):
-				if is_path_clear(global_position, source_position):
+				if is_path_clear(global_position + Vector3.UP * 0.8, source_position, source_node):
 					trigger_combat(source_node)
 		StimulusManager.StimulusType.ALLY_DIED:
 			if ai_state != AIState.COMBAT:
 				look_target = source_position
+				_remember_last_seen(source_position)
 			if distance < StimulusManager.DEFAULT_RADIUS[type] * 0.5:
 				if source_node != null and _is_hostile(source_node):
-					if is_path_clear(global_position, source_node.global_position):
+					if is_path_clear(global_position + Vector3.UP * 0.8, source_node.global_position, source_node):
 						trigger_combat(source_node)
 		StimulusManager.StimulusType.ENEMY_SPOTTED:
 			if ai_state != AIState.COMBAT and ai_state != AIState.SEARCH:
+				_remember_last_seen(source_position)
 				if distance < 20.0:
 					move_to(source_position)
 				else:
 					look_target = source_position
 
-
-# ─────────────────────────────────────────────
-# HELPERS
-# ─────────────────────────────────────────────
 
 # ─────────────────────────────────────────────
 # SIGNAL INTEGRITY
@@ -910,9 +1533,15 @@ func get_signal_state() -> SignalState:
 # Called by near-miss suppression, EMP grenades, jamming, etc.
 func receive_signal_damage(amount: float) -> void:
 	var actual = amount / maxf(signal_resistance, 0.01)
+	var before = signal_integrity
 	signal_integrity = maxf(0.0, signal_integrity - actual)
+	_on_signal_damaged(before, signal_integrity)
 	if signal_integrity <= SIGNAL_EKILL:
 		_enter_ekill()
+
+## Hook for subclasses. Soldier uses this to enter SUPPRESSED.
+func _on_signal_damaged(_before: float, _after: float) -> void:
+	pass
 
 func _enter_ekill() -> void:
 	# Robot is electronically disabled — physically intact, non-functional.
@@ -920,8 +1549,9 @@ func _enter_ekill() -> void:
 	movement_state = MovementState.NONE
 	velocity.x = 0
 	velocity.z = 0
-	velocity.y = 0
 	weapon_state = WeaponState.IDLE
+	_burst_left = 0
+	_aim_tracking = 0.0
 
 func _tick_signal(delta: float) -> void:
 	# Passive signal recovery
@@ -960,30 +1590,34 @@ func _is_hostile(body: Node3D) -> bool:
 		return Enums.are_hostile(faction, (body as Enemy).faction)
 	return false
 
-func is_path_clear(from: Vector3, to: Vector3) -> bool:
+## `exclude` in Godot 4 is Array[RID], not Array[Node]. The old version
+## passed nodes, which meant the exclusion silently did nothing and rays
+## could hit the caster's own capsule. Also no longer blanket-excludes the
+## player when there's no combat target.
+func is_path_clear(from: Vector3, to: Vector3, ignore: Node3D = null) -> bool:
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(from, to)
-	var exclusion = [self]
-	if combat_target != null:
-		exclusion.append(combat_target)
-	elif player != null:
-		exclusion.append(player)
+	var exclusion: Array[RID] = [_self_rid]
+	if ignore != null and ignore is CollisionObject3D:
+		exclusion.append((ignore as CollisionObject3D).get_rid())
 	query.exclude = exclusion
-	var result = space_state.intersect_ray(query)
-	return not result
+	return not space_state.intersect_ray(query)
 
 func update_debug_label():
 	var sig_str = SignalState.keys()[get_signal_state()]
 	var faction_str = Enums.Factions.keys()[faction]
-	label.text = "%s | %s\nHP: %d  Sig: %s" % [
+	label.text = "%s | %s\nHP: %d  Sig: %s\n%s" % [
 		soldier_name,
 		faction_str,
 		health,
-		sig_str
+		sig_str,
+		AIState.keys()[ai_state]
 	]
 
 
 func force_check_detection():
+	if detection == null or detection.get_child_count() == 0:
+		return
 	var shape = detection.get_child(0).shape
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsShapeQueryParameters3D.new()
@@ -991,11 +1625,12 @@ func force_check_detection():
 	query.transform = detection.global_transform
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
-	query.exclude = [detection, self]
+	var exclusion: Array[RID] = [_self_rid]
+	query.exclude = exclusion
 	var results = space_state.intersect_shape(query, 64)
 	for result in results:
 		var collider = result.collider
-		if collider is Player:
+		if collider is Player or collider is Enemy:
 			_on_detection_body_entered(collider)
 
 func _on_detection_body_entered(body: Node3D) -> void:
@@ -1011,22 +1646,32 @@ func _on_detection_body_entered(body: Node3D) -> void:
 		return
 	if not _is_hostile(body):
 		return
-	# When signal is degraded, apply a soft range cap on top of the Area3D.
-	# CLEAN state: Area3D collision shape handles range normally.
-	# FUZZED/DEGRADED: cap at reduced radius.
+	# Detection used to be last-enterer-wins: anything walking into the radius
+	# took the target, even from 40m away while something was shooting at us
+	# from 3m. Nearest wins now, which is the same rule _check_close_threat uses.
+	if ai_state == AIState.COMBAT and combat_target != null \
+			and is_instance_valid(combat_target) and combat_target.alive:
+		if global_position.distance_to(body.global_position) \
+				>= global_position.distance_to(combat_target.global_position):
+			return
 	if sig_state != SignalState.CLEAN:
 		var eff_range = get_effective_detection_radius()
 		if global_position.distance_to(body.global_position) > eff_range:
 			return
-	if is_path_clear(global_position, body.global_position):
+	if is_path_clear(global_position + Vector3.UP * 0.8, body.global_position, body):
 		trigger_combat(body)
 		if stimulus_manager != null:
 			stimulus_manager.emit_stimulus(
 				StimulusManager.StimulusType.ENEMY_SPOTTED,
 				body.global_position, faction, body)
 	else:
+		# Spotted but no clear line. This used to assign combat_target directly,
+		# which silently replaced whatever we were actually fighting with a body
+		# behind a wall — without changing state, so nothing corrected it. Only
+		# fill the slot when it's empty.
 		checking_for_target = true
-		combat_target = body
+		if combat_target == null:
+			combat_target = body
 
 func _on_detection_body_exited(body: Node3D) -> void:
 	if checking_for_target and body == combat_target:
@@ -1046,24 +1691,32 @@ func trigger_combat(body: AI):
 # ACCURACY
 # ─────────────────────────────────────────────
 func get_inaccurate_target(target_pos: Vector3) -> Vector3:
-	var dist := global_position.distance_to(weapon_target)
 	if weapon == null:
 		return target_pos
+	# Was measuring distance to weapon_target rather than the passed-in
+	# position, which diverged whenever a subclass passed something else.
+	var dist := global_position.distance_to(target_pos)
 
-	# effective_accuracy_skill = static skill degraded by signal integrity
-	# signal_integrity 1.0 = full skill, 0.0 = minimum (0.1 floor)
 	var effective_skill = accuracy_skill * maxf(signal_integrity, 0.1)
+	var spread_mrad = weapon.ai_spread_mrad / maxf(effective_skill, 0.01)
+	spread_mrad *= get_aim_spread_multiplier()
 
-	# mrad spread: weapon defines physical limit, skill scales it up (worse AI = more spread)
-	# effective_skill 1.0 = base spread, 0.5 = 2x spread, 0.25 = 4x spread
-	var spread_mrad = weapon.ai_spread_mrad / effective_skill
-
-	# Convert mrad to metres at this distance
 	var spread_m = spread_mrad * dist / 1000.0
 
-	# Less vertical spread than horizontal (body centre is wide, height is tall)
 	return target_pos + Vector3(
 		randf_range(-spread_m, spread_m),
 		randf_range(-spread_m * 0.35, spread_m * 0.35),
 		randf_range(-spread_m, spread_m)
 	)
+
+## Settled and stationary shoots tight. Snap-firing on the move is bad.
+## This is what makes "stop and aim" vs "shoot while moving" a real choice
+## rather than two labels for the same behaviour.
+func get_aim_spread_multiplier() -> float:
+	var mult := 1.0
+	if aim_settle_time > 0.0:
+		var t = clampf(_aim_tracking / aim_settle_time, 0.0, 1.0)
+		mult = 1.0 / maxf(lerp(aim_floor, 1.0, t), 0.01)
+	if _is_moving():
+		mult *= moving_accuracy_penalty
+	return mult

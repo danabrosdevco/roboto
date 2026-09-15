@@ -1,10 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://c3e3nxrjlhipg"]
+[gd_scene load_steps=5 format=3 uid="uid://c3e3nxrjlhipg"]
 
 [ext_resource type="Script" path="res://Character/hud/ui.gd" id="1_lsqa1"]
-[ext_resource type="Texture2D" uid="uid://dgcfptv5bmsic" path="res://2d_assets/TB_Textures/flash-drive.png" id="1_qf3cj"]
 [ext_resource type="PackedScene" uid="uid://okx8aisron30" path="res://Character/hud/farcry2_health_marker.tscn" id="2_ldhfw"]
+[ext_resource type="Script" path="res://Character/hud/use_hud_palette.gd" id="3_dudrt"]
 [ext_resource type="Texture2D" uid="uid://cbc1eigqtilxa" path="res://2d_assets/white.png" id="4_xwo8j"]
-[ext_resource type="Texture2D" uid="uid://csgfqbbeiq83h" path="res://2d_assets/icon_neural-bit.png" id="5_dakd8"]
 
 [node name="UI" type="Control" node_paths=PackedStringArray("health_label", "ammo_label", "shards_label", "second_label", "health_container", "scanner")]
 layout_mode = 3
@@ -33,11 +32,13 @@ offset_bottom = 90.0
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "30 / 30"
+script = ExtResource("3_dudrt")
 
 [node name="HullIntegrity" type="Label" parent="Left Vbox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "Stable"
+script = ExtResource("3_dudrt")
 
 [node name="HealthBarHolder" type="HBoxContainer" parent="Left Vbox"]
 layout_mode = 2
@@ -79,25 +80,17 @@ offset_bottom = 66.0
 [node name="HBoxContainer3" type="HBoxContainer" parent="Right Vbox"]
 layout_mode = 2
 
-[node name="Shards" type="TextureRect" parent="Right Vbox/HBoxContainer3"]
-layout_mode = 2
-texture = ExtResource("1_qf3cj")
-expand_mode = 2
-
 [node name="ShardNumber" type="Label" parent="Right Vbox/HBoxContainer3"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
-text = ":"
+text = ": 0"
+script = ExtResource("3_dudrt")
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="Right Vbox"]
 layout_mode = 2
-
-[node name="Bits" type="TextureRect" parent="Right Vbox/HBoxContainer4"]
-layout_mode = 2
-texture = ExtResource("5_dakd8")
-expand_mode = 2
 
 [node name="BitsNumber" type="Label" parent="Right Vbox/HBoxContainer4"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = ": 0"
+script = ExtResource("3_dudrt")

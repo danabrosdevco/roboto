@@ -1,203 +1,173 @@
-extends Node3D
+extends PlayerWeapon
 class_name HUDWeapon
 
-# Node References # 
-@export var cam: Camera3D
+# ─────────────────────────────────────────────
+# HUD WEAPON — the M4 and the pistol.
+#
+# This used to be a 200-line standalone Node3D. Roughly half of it (bob, the
+# pose lerp, the equip lifecycle) was generic to anything you can hold and now
+# lives in PlayerEquipment; the magazine, reload and firemode half moved to
+# PlayerWeapon. What's left here is what's actually gun-specific to THIS gun:
+# the hitscan shot, tracers, muzzle flash, and the recoil that kicks the camera.
+#
+# The export names the weapon scenes store — weapon_model, tracer_origin,
+# magazine_size, ads_position and the rest — are all preserved, so
+# m4_hud_weapon.tscn and pistol_hud_weapon.tscn keep their tuned values.
+# Renaming a stored export drops it silently back to the default, which is a
+# miserable bug to chase.
+#
+# WHAT MOVED, so you know where to look:
+#   magazine_size, reload_time, firemode, damage, FIRE_RATE,
+#   ADS_FOV/HIP_FOV/ADS_SPEED, ads_position/rotation,
+#   reload_position/rotation, reload_sounds, reload_delays,
+#   click_stream_player                              -> PlayerWeapon
+#   bob_speed, bob_amount, movement_bob_scale        -> PlayerEquipment
+#   base_weapon_position    -> base_position         (PlayerEquipment)
+#   base_weapon_rotation    -> base_rotation
+#   obstructed_weapon_*     -> obstructed_position/rotation
+#   magazine_capacity       -> loaded                (PlayerWeapon)
+#   fire()                  -> _fire_shot()          (try_fire drives it)
+#   start_reload()          -> PlayerWeapon, delta-driven and cancellable
+# ─────────────────────────────────────────────
+
+# ── NODE REFERENCES ───────────────────────────
 @export var tracer_origin: Node3D
 @export var muzzle_flash: Node3D
+# Kept under its original name because the weapon scenes store it. Forwarded
+# into PlayerEquipment.viewmodel in _on_initialize().
 @export var weapon_model: Node3D
 @export var projectile_scene: PackedScene
 @export var tracer_scene: PackedScene
-@export var reload_sounds: Array[AudioStreamPlayer3D]
-@export var reload_delays: Array[float]
 @export var rifle_stream_player: AudioStreamPlayer3D
-@export var click_stream_player: AudioStreamPlayer3D
-# Weapon Data #
-@export var firemode: Enums.FireModes
-@export var damage: int = 10
+
+# ── RECOIL ────────────────────────────────────
 @export var recoil_curve: Curve
-@export var recoil_duration = 0.25
-@export var recoil_per_shot : float = 2.0
-@export var look_interp_speed := 12.0  # how fast the camera follows the target
-@export var LEAN_ANGLE := 0.35
-@export var LEAN_SPEED := 5.0
-@export var ADS_FOV := 45.0
-@export var HIP_FOV := 70.0
-@export var ADS_SPEED := 10.0
-@export var FIRE_RATE := 0.100
-@export var reload_return_speed:= 30
-@export var camera_recoil_scale := 0.75  # fraction of recoil applied to camera
-@export var ads_position := Vector3(0.0,0.0,-1.077)
-@export var ads_rotation := Vector3(0.0,0.0,3.0)
-@export var reload_rotation := Vector3(0.2,20.5,58.0)
-@export var reload_position := Vector3(0.31,-0.425,-0.015)
-@export var base_weapon_position := Vector3(0.31,-0.425,-0.015)
-@export var base_weapon_rotation := Vector3(-0.3,6.0,2.8)
-@export var obstructed_weapon_position = Vector3(-0.5, -0.425, -1)
-@export var obstructed_weapon_rotation = Vector3(0.3, 270, 3)
-@export var magazine_size: int = 30
+@export var recoil_duration: float = 0.25
+@export var recoil_per_shot: float = 2.0
+@export var camera_recoil_scale: float = 0.75
+@export var look_interp_speed: float = 12.0
+@export var reload_return_speed: float = 30.0
+
+# ── LEAN ──────────────────────────────────────
+@export var LEAN_ANGLE: float = 0.35
+@export var LEAN_SPEED: float = 5.0
+
+# ── TRACERS ───────────────────────────────────
+# Magazine positions that fire a visible tracer.
 @export var tracers_in_mag: Array[int] = [30, 27, 25, 22, 20, 17, 15, 12, 10, 7, 5, 4, 3, 2, 1, 0]
-@export var reload_time := 2.15 # seconds to reload
-@export var bob_speed := 1.1            # how fast the gun bobs (Hz)
-@export var bob_amount := 0.015          # how far the gun moves when hip-firing
-@export var ads_bob_scale := 0.05         # how much to reduce bob when ADS (0.2 = 80% less)
-@export var movement_bob_scale := 2.2    # scale bobbing when moving
-# Working Data #
-var move_factor
-@export var active: bool = true
-var magazine_capacity:= 16
-var fire_cooldown := 0.0
-var recoil_amount := 0.0
-var recoil_timer := 0.0
-var recoil_horizontal := 0.0
-var recoil_vertical := 0.0
-var camera_recoil_current := Vector3.ZERO  # yaw (x), pitch (y)
-var recoil_rotation := Vector3.ZERO
-var is_obstructed :=false
-var is_ads := false
-var tracer: bool = false
-var is_reloading := false
-var from
-var to
-var bob_time := 0.0
-var target_lean := 0.0
-var pitch := 0.0
+
+@export var hitscan_range: float = 250.0
 
 signal request_status
 
-func _ready() -> void:
-	cam = get_parent()
-	magazine_capacity = magazine_size
-	muzzle_flash.play_flash()
-	pass
-func _physics_process(delta: float) -> void:
-	if active == false:
-		return
-	fire_cooldown -= delta
-	handle_camera_and_weapon(delta)
+var recoil_amount: float = 0.0
+var recoil_timer: float = 0.0
+var recoil_horizontal: float = 0.0
+var recoil_vertical: float = 0.0
+var camera_recoil_current: Vector3 = Vector3.ZERO
+var recoil_rotation: Vector3 = Vector3.ZERO
+var tracer: bool = false
+var target_lean: float = 0.0
+var pitch: float = 0.0
+var from
+var to
 
-func set_move_factor(new_move_factor: float):
-	move_factor = new_move_factor
 
-func handle_camera_and_weapon(delta: float) -> void:
-	if move_factor == null:
-		return
-	bob_time += delta * bob_speed * (1.0 + move_factor * movement_bob_scale)
-	var current_bob_amount := bob_amount
-	if is_ads:
-		current_bob_amount *= ads_bob_scale
-	var bob_offset = Vector3(
-		sin(bob_time * 2.0) * current_bob_amount * 0.5,
-		abs(sin(bob_time)) * current_bob_amount,
-		0.0
-	)
-	# Weapon Pose Interpolation
-	var target_pos: Vector3
-	var target_rot: Vector3
-	if is_reloading:
-		target_pos = reload_position
-		target_rot = reload_rotation
-	elif is_obstructed:
-		target_pos = obstructed_weapon_position
-		target_rot = obstructed_weapon_rotation
-	elif is_ads:
-		target_pos = ads_position
-		target_rot = ads_rotation
-	else:
-		target_pos = base_weapon_position
-		target_rot = base_weapon_rotation
-	if weapon_model.position.distance_to(target_pos) > 0.001:
-		weapon_model.position = weapon_model.position.lerp(target_pos, delta * ADS_SPEED)
-	if weapon_model.rotation.distance_to(target_rot) > 0.001:
-		weapon_model.rotation = weapon_model.rotation.lerp(target_rot, delta * ADS_SPEED)
-	if not is_reloading:
-		weapon_model.position += bob_offset
-	# Recoil
-	if recoil_timer > 0.0:
-		recoil_timer -= delta
-		var t = clamp(1.0 - (recoil_timer / recoil_duration), 0.0, 1.0)
-		var pitch_offset = recoil_curve.sample(t) * recoil_per_shot
-		var yaw = recoil_horizontal * (1.0 - t)
-		recoil_rotation = Vector3(0, yaw, pitch_offset)
-		camera_recoil_current = Vector3(pitch_offset * camera_recoil_scale, 0, 0)
-		pitch = clamp(pitch - deg_to_rad(camera_recoil_current.x), -1.5, 1.5)
-	var bob_rotation = Vector3(
-		sin(bob_time * 2.0) * current_bob_amount * 20.0,
-		sin(bob_time) * current_bob_amount * 10.0,
-		0.0
-	)
-	cam.rotation.x = lerp_angle(cam.rotation.x, cam.get_parent().look_direction.x, delta * look_interp_speed)
-	cam.rotation_degrees.x += camera_recoil_current.x
-	cam.rotation_degrees.y += camera_recoil_current.y
-	weapon_model.rotation_degrees = weapon_model.rotation + recoil_rotation + bob_rotation
-
-func fire() -> void:
-	if not is_reloading and fire_cooldown <= 0.0:
-		if magazine_capacity <= 0:
-			click_stream_player.play()
-			fire_cooldown = FIRE_RATE
-			return
-		for i in tracers_in_mag:
-			if magazine_capacity == i:
-				tracer = true
-				break
-			else:
-				tracer = false
-		fire_cooldown = FIRE_RATE
-		recoil_timer = recoil_duration
-		recoil_horizontal = randf_range(-1.0, 1.0) * 2.0 * 0.5 * recoil_per_shot # control horizontal sway strength
-		from = cam.global_position
-		to = from + tracer_origin.global_transform.basis.x.normalized() * 250.0
-		var space_state = get_world_3d().direct_space_state
-		var query := PhysicsRayQueryParameters3D.new()
-		query.from = from
-		query.to = to
-		query.exclude = [self]
-		rifle_stream_player.play()
+func _on_initialize() -> void:
+	super()
+	viewmodel = weapon_model
+	pose_speed = ADS_SPEED
+	if muzzle_flash != null:
 		muzzle_flash.play_flash()
-		var result = space_state.intersect_ray(query)
-		#var sphere = MeshInstance3D.new()
-		#sphere.mesh = SphereMesh.new()
-		#sphere.mesh.radius = 0.05  # Very small
-		#sphere.mesh.height = 0.1   # Optional if you want a stretched look
-		#sphere.global_position = hit_pos
-		#get_tree().current_scene.add_child(sphere)
-		# Hit detection
-		if result:
-			var collider = result.collider
-			if collider.has_method("apply_damage"):
-				collider.apply_damage(damage, cam.get_parent())
-			else:
-				if collider.get_parent().has_method("apply_damage"):
-					collider.apply_damage(damage, cam.get_parent())
-		if tracer:
-			fire_tracer()
-		magazine_capacity = max(0, magazine_capacity - 1)
-		tracer = false
-		request_status.emit()
-func fire_tracer():
+
+
+# ─────────────────────────────────────────────
+# VIEWMODEL — camera recoil on top of the shared pose stack
+# ─────────────────────────────────────────────
+func update_view(delta: float, p_move_factor: float, p_obstructed: bool, p_ads: bool) -> void:
+	_tick_recoil(delta)
+	# Camera follow + recoil kick. Runs before super() so the pose is built
+	# against this frame's camera orientation.
+	if cam != null and cam.get_parent() != null and "look_direction" in cam.get_parent():
+		cam.rotation.x = lerp_angle(cam.rotation.x, cam.get_parent().look_direction.x, delta * look_interp_speed)
+		cam.rotation_degrees.x += camera_recoil_current.x
+		cam.rotation_degrees.y += camera_recoil_current.y
+	super(delta, p_move_factor, p_obstructed, p_ads)
+
+
+func _tick_recoil(delta: float) -> void:
+	if recoil_timer <= 0.0:
+		camera_recoil_current = Vector3.ZERO
+		recoil_rotation = Vector3.ZERO
+		return
+	recoil_timer -= delta
+	var t: float = clampf(1.0 - (recoil_timer / recoil_duration), 0.0, 1.0)
+	var pitch_offset: float = 0.0
+	if recoil_curve != null:
+		pitch_offset = recoil_curve.sample(t) * recoil_per_shot
+	var yaw := recoil_horizontal * (1.0 - t)
+	recoil_rotation = Vector3(0, yaw, pitch_offset)
+	camera_recoil_current = Vector3(pitch_offset * camera_recoil_scale, 0, 0)
+	pitch = clampf(pitch - deg_to_rad(camera_recoil_current.x), -1.5, 1.5)
+
+
+func _extra_rotation() -> Vector3:
+	return recoil_rotation
+
+
+# ─────────────────────────────────────────────
+# THE SHOT
+# ─────────────────────────────────────────────
+# Cooldown, the empty click and the ammo decrement all happen in
+# PlayerWeapon.try_fire(). This is only what leaves the barrel.
+func _fire_shot() -> void:
+	tracer = tracers_in_mag.has(loaded)
+
+	recoil_timer = recoil_duration
+	recoil_horizontal = randf_range(-1.0, 1.0) * 2.0 * 0.5 * recoil_per_shot
+
+	if cam == null or tracer_origin == null:
+		return
+
+	from = cam.global_position
+	to = from + tracer_origin.global_transform.basis.x.normalized() * hitscan_range
+
+	var query := PhysicsRayQueryParameters3D.new()
+	query.from = from
+	query.to = to
+	query.exclude = [self, player] if player != null else [self]
+
+	if rifle_stream_player != null:
+		rifle_stream_player.play()
+	if muzzle_flash != null:
+		muzzle_flash.play_flash()
+	#DebugDraw3D.draw_line(from, to, Color(1,0,0), 50)
+	var result := get_world_3d().direct_space_state.intersect_ray(query)
+	if result:
+		var collider = result.collider
+		var victim = collider
+		if not victim.has_method("apply_damage") and victim.get_parent() != null:
+			victim = victim.get_parent()
+		if victim.has_method("apply_damage"):
+			victim.apply_damage(damage, player)
+
+	if tracer:
+		fire_tracer()
+	tracer = false
+	request_status.emit()
+
+
+func fire_tracer() -> void:
+	if tracer_scene == null or tracer_origin == null:
+		return
+	var world: Node = null
+	if player != null:
+		world = player.get("world")
+	if world == null:
+		world = get_tree().current_scene
 	var new_tracer = tracer_scene.instantiate()
-	cam.get_parent().world.add_child(new_tracer)
+	world.add_child(new_tracer)
 	new_tracer.global_position = tracer_origin.global_position
-	var dir = tracer_origin.global_transform.basis.x.normalized()
+	var dir := tracer_origin.global_transform.basis.x.normalized()
 	new_tracer.direction = dir
 	new_tracer.look_at(new_tracer.global_position + dir)
-func start_reload() -> void:
-	if active == false:
-		return
-	if is_reloading == true:
-		return
-	if magazine_capacity >= magazine_size:
-		return
-	is_reloading = true
-	play_reload_sequence()
-	await get_tree().create_timer(reload_time).timeout
-	magazine_capacity = magazine_size
-	is_reloading = false
-	request_status.emit()
-func play_reload_sequence():
-	for i in reload_sounds.size():
-		var sound = reload_sounds[i]
-		var delay = reload_delays[i]
-		await get_tree().create_timer(delay).timeout
-		sound.play()

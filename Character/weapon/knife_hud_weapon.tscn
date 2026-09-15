@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://ra5s4hc8nno3"]
+
+[ext_resource type="Script" path="res://Character/equipment/player_melee.gd" id="1_f3g4c"]
+[ext_resource type="PackedScene" uid="uid://dajw7tfkxblmo" path="res://3d_assets/knifes/combatknife1.glb" id="2_nh7ge"]
+
+[node name="Melee" type="Node3D" node_paths=PackedStringArray("viewmodel")]
+transform = Transform3D(0.842424, 0, -0.538815, 0, 1, 0, 0.538815, 0, 0.842424, -0.0106153, -0.166956, -0.00870863)
+script = ExtResource("1_f3g4c")
+display_name = "Wrench"
+slot = 2
+viewmodel = NodePath("combatknife12")
+use_default_position = false
+bob_speed = 0.75
+movement_bob_scale = 1.1
+
+[node name="combatknife12" parent="." instance=ExtResource("2_nh7ge")]
+transform = Transform3D(0.396003, -0.803956, -0.443662, 0.843827, 0.509157, -0.169457, 0.36213, -0.307268, 0.880027, -0.0413318, 0.0310261, -0.301865)

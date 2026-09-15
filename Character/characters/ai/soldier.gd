@@ -258,12 +258,22 @@ func trigger_combat(body: AI) -> void:
 # Called by Squad when unengaged and an objective exists.
 # Only executes if not currently in combat.
 # ─────────────────────────────────────────────
-func order_move_to(pos: Vector3) -> void:
-	if ai_state == AIState.COMBAT or ai_state == AIState.DEAD:
+func order_move_to(pos: Vector3, force: bool = false) -> void:
+	if ai_state == AIState.DEAD:
 		return
-	# CRITICAL or E-KILL: signal too degraded to receive squad orders
+	# Normally an engaged soldier ignores move orders. A forced order — meaning
+	# the player said so — breaks contact and moves anyway. This is what makes
+	# "fall back to that ridge" work in the middle of a firefight.
+	if ai_state == AIState.COMBAT and not force:
+		return
+	# CRITICAL or E-KILL: signal too degraded to receive squad orders.
+	# Note this is deliberately checked even for forced orders — a jammed robot
+	# not answering the radio is the e-warfare system doing its job.
 	if not _can_receive_orders():
 		return
+	if force:
+		release_cover()
+		combat_target = null
 	change_soldier_state(SoldierState.NONE)
 	change_ai_state(AIState.PATROL)
 	move_to(pos)

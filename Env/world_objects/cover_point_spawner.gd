@@ -213,7 +213,6 @@ func _spawn_cover_point(pos: Vector3, cover_dir: Vector3, is_crouch_cover: bool)
 	cp.set_meta("is_crouch_cover", is_crouch_cover)
 	add_child(cp)
 	cp.owner = get_tree().edited_scene_root
-
 	if debug_visualize:
 		# Sphere marker
 		var mesh_inst = MeshInstance3D.new()

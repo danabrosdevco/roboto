@@ -1,5 +1,6 @@
 extends Control
 class_name HUD
+@export var player: Player
 @export var scan_effect_scene: PackedScene
 @export var enemy_marker_scene: PackedScene
 @export var health_label: Label
@@ -10,6 +11,8 @@ class_name HUD
 @export var interact_label: Label
 @export var interact_texture: TextureRect
 @export var ui: Control
+@export var campaign: CampaignManager
+
 
 var interact_textures: Dictionary = {
 	Enums.InteractTypes.HEALTH : "PASS",
@@ -24,18 +27,34 @@ func activate_scan_effect(time: float):
 	move_child(new_scan_effect_scene,0)
 	update_scanner(time)
 
+# One marker per target, ever. Re-marking something that is already marked just
+# resets its timer — previously every scan spawned a fresh Control on top of the
+# old one and you ended up with a stack of brackets on the same robot.
+var _enemy_markers: Dictionary = {}   # instance_id -> ScanEnemyMarker
+
 func activate_enemy_marker(obj:Node3D, duration: float):
-	var target = obj
+	if obj == null or not is_instance_valid(obj):
+		return
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return
-	var screen_pos = camera.unproject_position(target.global_position)
+
+	var id := obj.get_instance_id()
+	var existing = _enemy_markers.get(id)
+	if existing != null and is_instance_valid(existing):
+		existing.duration = duration
+		existing.time = 0.0
+		return
+
+	var screen_pos = camera.unproject_position(obj.global_position)
 	var hud_marker = enemy_marker_scene.instantiate()
 	hud_marker.position = Vector2(screen_pos.x, screen_pos.y)
-	hud_marker.target = target
+	hud_marker.target = obj
 	hud_marker.duration = duration
 	add_child(hud_marker)
 	move_child(hud_marker, 0)
+	_enemy_markers[id] = hud_marker
+	hud_marker.tree_exited.connect(func(): _enemy_markers.erase(id))
 
 
 func activate_interactible(interactible: Interactible):
