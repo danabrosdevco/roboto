@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=4 uid="uid://lpptelhi4w0y"]
+[gd_scene load_steps=91 format=4 uid="uid://lpptelhi4w0y"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_5kek6"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="4_2pjlg"]
@@ -138,6 +138,202 @@ background_energy_multiplier = 1.5
 sky = SubResource("Sky_siqjn")
 ambient_light_color = Color(0.176471, 0.219608, 0.054902, 1)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x6bak"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_ung7c"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_frmt2"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_58m2v"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gdb6p"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_8op72"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_imfeq"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_0615y"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_u3qgk"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_m7r6u"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tur1m"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_t2lgc"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v04ud"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_v0n8b"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3ccyv"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_q5eet"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_iaa3i"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_f8bm6"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_erofc"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_nnnp8"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jwlbc"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_e0136"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l0isq"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_se2kd"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5sqgl"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_mtn3k"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_riw3j"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6dnf1"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r28t8"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_kfce0"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j17ux"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7aly3"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ua7qk"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_75pb3"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d7gv8"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_w5da0"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4ttft"]
+transparency = 1
+albedo_color = Color(0, 1, 0.4, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_hoyr3"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k6wf1"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1vu0k"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fwj67"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_8w2eh"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7lwe8"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_fu88m"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ntuph"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_rfm2s"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ra5jl"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_55x6f"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_no6r6"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_3r6kl"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0loqo"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_goon4"]
+size = Vector3(0.05, 0.05, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4r2vn"]
+transparency = 1
+albedo_color = Color(1, 0.9, 0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_ry6wc"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bbi8j"]
+albedo_color = Color(1, 0.3, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_xo4lu"]
+size = Vector3(0.05, 0.05, 0.4)
+
 [node name="HomebaseLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region")]
 script = ExtResource("1_5kek6")
 spawn_point = NodePath("SpawnPoint")
@@ -216,2484 +412,243 @@ shadow_opacity = 0.6
 
 [node name="CoverPointSpawner" parent="." node_paths=PackedStringArray("navigation_region") instance=ExtResource("10_pg440")]
 navigation_region = NodePath("../NavigationRegion3D")
-debug_visualize = false
 
 [node name="CoverPoint_0" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.375, 2, -33.625)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.7824, 1.8963, 33.3369)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, -0.707107)
+cover_direction = Vector3(1, 0, -2.4811e-07)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
+metadata/cover_direction = Vector3(1, 0, -2.4811e-07)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76431" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_0"]
+material_override = SubResource("StandardMaterial3D_x6bak")
+mesh = SubResource("SphereMesh_ung7c")
+
+[node name="@MeshInstance3D@76432" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_0"]
+transform = Transform3D(2.4811e-07, 0, -1, 0, 1, 0, 1, 0, 2.4811e-07, 0.3, 0.18, -7.44331e-08)
+material_override = SubResource("StandardMaterial3D_frmt2")
+mesh = SubResource("BoxMesh_58m2v")
 
 [node name="CoverPoint_1" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.25, 2, -37.625)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.7824, 1.8963, 23.0869)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
+cover_direction = Vector3(1, 0, -2.4811e-07)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
+metadata/cover_direction = Vector3(1, 0, -2.4811e-07)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76433" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_1"]
+material_override = SubResource("StandardMaterial3D_gdb6p")
+mesh = SubResource("SphereMesh_8op72")
+
+[node name="@MeshInstance3D@76434" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_1"]
+transform = Transform3D(2.4811e-07, 0, -1, 0, 1, 0, 1, 0, 2.4811e-07, 0.3, 0.18, -7.44331e-08)
+material_override = SubResource("StandardMaterial3D_imfeq")
+mesh = SubResource("BoxMesh_0615y")
 
 [node name="CoverPoint_2" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.875, 2, -34.125)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.7824, 1.8963, 12.8369)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, -0.707107)
+cover_direction = Vector3(1, 0, -2.4811e-07)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
+metadata/cover_direction = Vector3(1, 0, -2.4811e-07)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76435" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_2"]
+material_override = SubResource("StandardMaterial3D_u3qgk")
+mesh = SubResource("SphereMesh_m7r6u")
+
+[node name="@MeshInstance3D@76436" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_2"]
+transform = Transform3D(2.4811e-07, 0, -1, 0, 1, 0, 1, 0, 2.4811e-07, 0.3, 0.18, -7.44331e-08)
+material_override = SubResource("StandardMaterial3D_tur1m")
+mesh = SubResource("BoxMesh_t2lgc")
 
 [node name="CoverPoint_3" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.5, 2, -35.3333)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0926037, 1.8963, 38.4619)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
+cover_direction = Vector3(-1.51829e-07, 0, -1)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
+metadata/cover_direction = Vector3(-1.51829e-07, 0, -1)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76437" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_3"]
+material_override = SubResource("StandardMaterial3D_v04ud")
+mesh = SubResource("SphereMesh_v0n8b")
+
+[node name="@MeshInstance3D@76438" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_3"]
+transform = Transform3D(1, 0, 1.51829e-07, 0, 1, 0, -1.51829e-07, 0, 1, -4.55486e-08, 0.18, -0.3)
+material_override = SubResource("StandardMaterial3D_3ccyv")
+mesh = SubResource("BoxMesh_q5eet")
 
 [node name="CoverPoint_4" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.25, 2, -37.5833)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.6574, 1.8963, 38.4619)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
+cover_direction = Vector3(-1.51829e-07, 0, -1)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
+metadata/cover_direction = Vector3(-1.51829e-07, 0, -1)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76439" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_4"]
+material_override = SubResource("StandardMaterial3D_iaa3i")
+mesh = SubResource("SphereMesh_f8bm6")
+
+[node name="@MeshInstance3D@76440" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_4"]
+transform = Transform3D(1, 0, 1.51829e-07, 0, 1, 0, -1.51829e-07, 0, 1, -4.55486e-08, 0.18, -0.3)
+material_override = SubResource("StandardMaterial3D_erofc")
+mesh = SubResource("BoxMesh_nnnp8")
 
 [node name="CoverPoint_5" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.625, 2, -35.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.4074, 1.8963, 38.4619)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.67828, 0, 0.734803)
+cover_direction = Vector3(-1.51829e-07, 0, -1)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.67828, 0, 0.734803)
+metadata/cover_direction = Vector3(-1.51829e-07, 0, -1)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76441" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_5"]
+material_override = SubResource("StandardMaterial3D_jwlbc")
+mesh = SubResource("SphereMesh_e0136")
+
+[node name="@MeshInstance3D@76442" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_5"]
+transform = Transform3D(1, 0, 1.51829e-07, 0, 1, 0, -1.51829e-07, 0, 1, -4.55486e-08, 0.18, -0.3)
+material_override = SubResource("StandardMaterial3D_l0isq")
+mesh = SubResource("BoxMesh_se2kd")
 
 [node name="CoverPoint_6" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.25, 2, -31.5417)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4676, 1.8963, 12.8369)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.734803, 0, -0.67828)
+cover_direction = Vector3(-1, 0, 1.24055e-07)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(0.734803, 0, -0.67828)
+metadata/cover_direction = Vector3(-1, 0, 1.24055e-07)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76443" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_6"]
+material_override = SubResource("StandardMaterial3D_5sqgl")
+mesh = SubResource("SphereMesh_mtn3k")
+
+[node name="@MeshInstance3D@76444" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_6"]
+transform = Transform3D(-1.24055e-07, 0, 1, 0, 1, 0, -1, 0, -1.24055e-07, -0.3, 0.18, 3.72166e-08)
+material_override = SubResource("StandardMaterial3D_riw3j")
+mesh = SubResource("BoxMesh_6dnf1")
 
 [node name="CoverPoint_7" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 2, -37)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4676, 1.8963, 23.0869)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, -0.707107)
+cover_direction = Vector3(-1, 0, 1.24055e-07)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, -0.707107)
+metadata/cover_direction = Vector3(-1, 0, 1.24055e-07)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76445" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_7"]
+material_override = SubResource("StandardMaterial3D_r28t8")
+mesh = SubResource("SphereMesh_kfce0")
+
+[node name="@MeshInstance3D@76446" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_7"]
+transform = Transform3D(-1.24055e-07, 0, 1, 0, 1, 0, -1, 0, -1.24055e-07, -0.3, 0.18, 3.72166e-08)
+material_override = SubResource("StandardMaterial3D_j17ux")
+mesh = SubResource("BoxMesh_7aly3")
 
 [node name="CoverPoint_8" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.33333, 2, -38.4583)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4676, 1.8963, 33.3369)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.242536, 0, -0.970143)
+cover_direction = Vector3(-1, 0, 1.24055e-07)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.242536, 0, -0.970143)
+metadata/cover_direction = Vector3(-1, 0, 1.24055e-07)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76447" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_8"]
+material_override = SubResource("StandardMaterial3D_ua7qk")
+mesh = SubResource("SphereMesh_75pb3")
+
+[node name="@MeshInstance3D@76448" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_8"]
+transform = Transform3D(-1.24055e-07, 0, 1, 0, 1, 0, -1, 0, -1.24055e-07, -0.3, 0.18, 3.72166e-08)
+material_override = SubResource("StandardMaterial3D_d7gv8")
+mesh = SubResource("BoxMesh_w5da0")
 
 [node name="CoverPoint_9" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 2, -39.625)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5324, -2.6037, 4.9619)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.0370117, 0, -0.999315)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.0370117, 0, -0.999315)
-metadata/is_crouch_cover = true
+cover_direction = Vector3(-0.0216399, 0, 0.999766)
+metadata/cover_direction = Vector3(-0.0216399, 0, 0.999766)
+metadata/is_crouch_cover = false
+
+[node name="@MeshInstance3D@76449" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_9"]
+material_override = SubResource("StandardMaterial3D_4ttft")
+mesh = SubResource("SphereMesh_hoyr3")
+
+[node name="@MeshInstance3D@76450" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_9"]
+transform = Transform3D(-0.999766, 0, 0.0216399, 0, 1, 0, -0.0216399, 0, -0.999766, -0.00649196, 0.18, 0.29993)
+material_override = SubResource("StandardMaterial3D_k6wf1")
+mesh = SubResource("BoxMesh_1vu0k")
 
 [node name="CoverPoint_10" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.375, 2, -39.5417)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.9676, -2.6037, 5.79523)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.0370117, 0, -0.999315)
+cover_direction = Vector3(0.0216399, 0, -0.999766)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(0.0370117, 0, -0.999315)
+metadata/cover_direction = Vector3(0.0216399, 0, -0.999766)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76451" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_10"]
+material_override = SubResource("StandardMaterial3D_fwj67")
+mesh = SubResource("SphereMesh_8w2eh")
+
+[node name="@MeshInstance3D@76452" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_10"]
+transform = Transform3D(0.999766, 0, -0.0216399, 0, 1, 0, 0.0216399, 0, 0.999766, 0.00649196, 0.18, -0.29993)
+material_override = SubResource("StandardMaterial3D_7lwe8")
+mesh = SubResource("BoxMesh_fu88m")
 
 [node name="CoverPoint_11" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.66667, 2, -39.3333)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.0324, -2.6037, 6.2119)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
+cover_direction = Vector3(-9.08261e-08, 0, -1)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
+metadata/cover_direction = Vector3(-9.08261e-08, 0, -1)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76453" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_11"]
+material_override = SubResource("StandardMaterial3D_ntuph")
+mesh = SubResource("SphereMesh_rfm2s")
+
+[node name="@MeshInstance3D@76454" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_11"]
+transform = Transform3D(1, 0, 9.08261e-08, 0, 1, 0, -9.08261e-08, 0, 1, -2.72478e-08, 0.18, -0.3)
+material_override = SubResource("StandardMaterial3D_ra5jl")
+mesh = SubResource("BoxMesh_55x6f")
 
 [node name="CoverPoint_12" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.54167, 2, -37.7917)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.0324, -2.6037, -4.4131)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.995893, 0, -0.0905358)
+cover_direction = Vector3(-0.0194767, 0, 0.99981)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.995893, 0, -0.0905358)
+metadata/cover_direction = Vector3(-0.0194767, 0, 0.99981)
 metadata/is_crouch_cover = true
+
+[node name="@MeshInstance3D@76455" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_12"]
+material_override = SubResource("StandardMaterial3D_no6r6")
+mesh = SubResource("SphereMesh_3r6kl")
+
+[node name="@MeshInstance3D@76456" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_12"]
+transform = Transform3D(-0.99981, 0, 0.0194767, 0, 1, 0, -0.0194767, 0, -0.99981, -0.00584302, 0.18, 0.299943)
+material_override = SubResource("StandardMaterial3D_0loqo")
+mesh = SubResource("BoxMesh_goon4")
 
 [node name="CoverPoint_13" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.04167, 2, -38)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.9676, -2.6037, -4.7881)
 script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.737154, 0, -0.675725)
+cover_direction = Vector3(9.08261e-08, 0, 1)
 is_crouch_cover = true
-metadata/cover_direction = Vector3(0.737154, 0, -0.675725)
+metadata/cover_direction = Vector3(9.08261e-08, 0, 1)
 metadata/is_crouch_cover = true
 
-[node name="CoverPoint_14" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.45833, 2, -41.9583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.997055, 0, 0.0766965)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.997055, 0, 0.0766965)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_15" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, 2, -42.0417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_16" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 2, -42)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_17" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, 2, -37.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_18" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.125, 2, -35.5417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.433816, 0, -0.901002)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.433816, 0, -0.901002)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_19" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 2, -36.625)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_20" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 2, -35)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_21" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.04167, 2, -38.4583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.0905358, 0, -0.995893)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.0905358, 0, -0.995893)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_22" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.125, 2, -37.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_23" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 2, -38)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_24" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 2, -36)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_25" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.375, 2, -33.625)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_26" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.20833, 2, -36.2083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_27" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.25, 2, -33.7083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.734803, 0, -0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.734803, 0, -0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_28" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.25, 2, -31.5417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.734803, 0, -0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.734803, 0, -0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_29" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.54167, 2, -34.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.67828, 0, 0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.67828, 0, 0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_30" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.75, 2, -40.2083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_31" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.375, 2, -33.2083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.857493, 0, -0.514496)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.857493, 0, -0.514496)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_32" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.25, 2, -37.125)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_33" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.7917, 2, -33.7083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.0905358, 0, 0.995893)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.0905358, 0, 0.995893)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_34" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.2917, 2, -31.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.67828, 0, -0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.67828, 0, -0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_35" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.75, 2, -35.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_36" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.375, 2, -26.5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_37" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.4167, 2, -33.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_38" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.75, 2, -35.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_39" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.375, 2, -32.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.67828, 0, -0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.67828, 0, -0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_40" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.75, 2, -31.125)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_41" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 2, -26.5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_42" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.125, 2, -33.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_43" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.625, 2, -28.5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_44" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.125, 2, -28.5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_45" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.45833, 2, -33)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.768221, 0, 0.640184)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.768221, 0, 0.640184)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_46" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2, -25.7917)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.734803, 0, -0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.734803, 0, -0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_47" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.83333, 2, -32.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_48" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -32.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_49" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 2, -26.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.734803, 0, -0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.734803, 0, -0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_50" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 2, -25.8333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_51" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.375, 2, -29.6667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.8, 0, 0.6)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.8, 0, 0.6)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_52" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.2917, 2, -24)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.996546, 0, -0.0830455)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.996546, 0, -0.0830455)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_53" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.4583, 2, -26)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.996546, 0, -0.0830455)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.996546, 0, -0.0830455)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_54" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 2, -24.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_55" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 2, -31)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_56" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 2, -27)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_57" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 2, -30)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_58" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.7083, 2, -23.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.997785, 0, -0.066519)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.997785, 0, -0.066519)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_59" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.75, 2, -23.9583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_60" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 2, -24.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_61" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.25, 2, -29.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.316228, 0, 0.948683)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.316228, 0, 0.948683)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_62" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.625, 2, -24.25)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_63" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 2, -31)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_64" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.625, 2, -24.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.997459, 0, -0.071247)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.997459, 0, -0.071247)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_65" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.25, 2, -29.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.316228, 0, 0.948683)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.316228, 0, 0.948683)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_66" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5833, 2, -31.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_67" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.1667, 2, -24.0417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_68" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.25, 2, -23.5417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_69" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.25, 2, -27.125)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_70" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.08333, 2, -23.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_71" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.95833, 2, -20.2083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.980581, 0, 0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.980581, 0, 0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_72" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.375, 2, -22.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.67828, 0, -0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.67828, 0, -0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_73" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.75, 2, -25.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_74" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.625, 2, -24.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.8, 0, 0.6)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.8, 0, 0.6)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_75" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.79167, 2, -21.0417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.980581, 0, 0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.980581, 0, 0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_76" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.75, 2, -24.2917)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_77" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.75, 2, -26.4583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_78" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.375, 2, -22.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.67828, 0, -0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.67828, 0, -0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_79" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 2, -17.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_80" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.4583, 2, -23.3333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.995037, 0, 0.0995037)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.995037, 0, 0.0995037)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_81" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.4583, 2, -18.4583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.196116, 0, -0.980581)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.196116, 0, -0.980581)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_82" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.6667, 2, -21.3333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_83" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.3333, 2, -21.4583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.242536, 0, 0.970143)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.242536, 0, 0.970143)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_84" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.7083, 2, -17.4583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.980581, 0, -0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.980581, 0, -0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_85" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.625, 2, -22.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.992278, 0, 0.124035)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.992278, 0, 0.124035)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_86" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.125, 2, -18.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.196116, 0, -0.980581)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.196116, 0, -0.980581)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_87" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.7083, 2, -21.3333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.371391, 0, 0.928477)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.371391, 0, 0.928477)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_88" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.8333, 2, -18.2917)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.124035, 0, -0.992278)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.124035, 0, -0.992278)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_89" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 2, -22)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_90" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2, -20)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_91" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.25, 2, -14.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_92" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 2, -10.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_93" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.2917, 2, -10.1667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_94" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.625, 2, -11)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_95" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.70833, 2, -10.1667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_96" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7083, 2, -10.8333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_97" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.25, 2, -19.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.316228, 0, 0.948683)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.316228, 0, 0.948683)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_98" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.6667, 2, -13.4583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.242536, 0, 0.970143)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.242536, 0, 0.970143)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_99" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 2, -11)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_100" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 2, -21)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_101" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 2, -15.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_102" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 2, -10.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.0499376, 0, -0.998752)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.0499376, 0, -0.998752)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_103" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.54167, 2, -10.7917)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.0525588, 0, -0.998618)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.0525588, 0, -0.998618)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_104" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.875, 2, -10.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_105" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.25, 2, -14.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_106" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.25, 2, -17.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_107" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 2, -15.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_108" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.2917, 2, -13.4583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.196116, 0, 0.980581)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.196116, 0, 0.980581)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_109" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.2917, 2, -10.7917)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.980581, 0, -0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.980581, 0, -0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_110" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 2, -15.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_111" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.2083, 2, -13.4583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.141421, 0, 0.98995)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.141421, 0, 0.98995)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_112" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.875, 2, -11)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_113" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.3333, 2, -13.3333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_114" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.2917, 2, -9.79167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.938343, 0, 0.345705)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.938343, 0, 0.345705)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_115" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.125, 2, -15.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.977802, 0, 0.209529)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.977802, 0, 0.209529)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_116" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5417, 2, -14.2917)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.998618, 0, 0.0525588)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.998618, 0, 0.0525588)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_117" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.625, 2, -15.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.998752, 0, 0.0499376)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.998752, 0, 0.0499376)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_118" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.875, 2, -11)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_119" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.25, 2, -4.16667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.8, 0, -0.6)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.8, 0, -0.6)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_120" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 2, -2.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.124035, 0, -0.992278)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.124035, 0, -0.992278)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_121" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.625, 2, -8.95833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.316228, 0, 0.948683)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.316228, 0, 0.948683)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_122" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.79167, 2, -3.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.986394, 0, -0.164399)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.986394, 0, -0.164399)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_123" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.45833, 2, -2.70833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.543251, 0, -0.83957)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.543251, 0, -0.83957)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_124" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.91667, 2, -8.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_125" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.75, 2, 0.0416667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_126" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2, 0.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_127" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.2083, 2, -4.16667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_128" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.625, 2, -10.9583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.316228, 0, -0.948683)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.316228, 0, -0.948683)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_129" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.7083, 2, -4.16667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_130" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.2083, 2, -4.79167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.980581, 0, -0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.980581, 0, -0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_131" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.625, 2, -5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_132" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.0417, 2, -8.79167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.0525588, 0, 0.998618)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.0525588, 0, 0.998618)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_133" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.75, 2, -9.29167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.759257, 0, 0.650791)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.759257, 0, 0.650791)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_134" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.25, 2, -5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_135" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.4167, 2, -8.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_136" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.2917, 2, -4.79167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.980581, 0, -0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.980581, 0, -0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_137" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.875, 2, -8.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_138" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.75, 2, -5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_139" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.2917, 2, -4.16667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_140" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.04167, 2, -5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_141" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.2083, 2, -5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_142" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.625, 2, -4.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.980581, 0, -0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.980581, 0, -0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_143" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.25, 2, -8.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_144" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.125, 2, -5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_145" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.125, 2, -5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_146" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5417, 2, -8.79167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.0525588, 0, 0.998618)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.0525588, 0, 0.998618)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_147" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.875, 2, 3.83333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.8, 0, -0.6)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.8, 0, -0.6)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_148" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.4583, 2, -4.41667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.992278, 0, 0.124035)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.992278, 0, 0.124035)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_149" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.8333, 2, -8.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_150" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.875, 2, -2.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_151" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.75, 2, 3)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_152" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.2917, 2, 3.83333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_153" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.2917, 2, 3.16667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_154" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.625, 2, -2.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_155" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.9583, 2, -2.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_156" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.25, 2, 4.70833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.759257, 0, 0.650791)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.759257, 0, 0.650791)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_157" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.79167, 2, 9.20833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.980581, 0, -0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.980581, 0, -0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_158" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.2917, 2, 9.83333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_159" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 2, 5.125)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.0830455, 0, 0.996546)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.0830455, 0, 0.996546)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_160" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.58333, 2, 3)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_161" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4583, 2, -2.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_162" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.125, 2, -2.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_163" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 2, 3)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_164" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.7083, 2, 3.83333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_165" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.2083, 2, 3.16667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_166" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5417, 2, -2.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_167" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.2083, 2, 3.83333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_168" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.375, 2, -2.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_169" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.5, 2, 3)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_170" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.625, 2, 3.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_171" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 2, 1.41667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.957826, 0, 0.287348)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.957826, 0, 0.287348)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_172" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 2, -2.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_173" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.125, 2, 3)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_174" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.70833, 2, 3.08333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.894427, 0, -0.447214)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.894427, 0, -0.447214)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_175" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.125, 2, 3)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_176" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5417, 2, -2.79167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.0525588, 0, 0.998618)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.0525588, 0, 0.998618)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_177" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.79167, 2, 3.41667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.894427, 0, -0.447214)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.894427, 0, -0.447214)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_178" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.125, 2, -2.70833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.0475652, 0, 0.998868)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.0475652, 0, 0.998868)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_179" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 2, 0.125)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_180" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 2, 2.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_181" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.58333, 2, 2.91667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.581238, 0, 0.813733)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.581238, 0, 0.813733)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_182" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.125, 2, 5.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_183" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.375, 2, 9)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_184" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.70833, 2, 9.33333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.992278, 0, -0.124035)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.992278, 0, -0.124035)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_185" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.375, 2, 5.125)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.141421, 0, 0.98995)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.141421, 0, 0.98995)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_186" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.79167, 2, 10.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.986394, 0, -0.164399)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.986394, 0, -0.164399)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_187" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.375, 2, 9.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_188" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.875, 2, 9)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_189" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.4583, 2, 5.20833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.0525588, 0, 0.998618)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.0525588, 0, 0.998618)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_190" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5417, 2, 9.16667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.496139, 0, -0.868243)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.496139, 0, -0.868243)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_191" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 2, 5.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_192" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.875, 2, 9)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_193" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.25, 2, 9)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_194" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.75, 2, 5.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_195" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7083, 2, 9.20833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.980581, 0, -0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.980581, 0, -0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_196" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.2083, 2, 5.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_197" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.25, 2, 9)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_198" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.7083, 2, 9.83333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_199" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 2, 5.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_200" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.125, 2, 9)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_201" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.7917, 2, 5.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_202" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.4167, 2, 11.1667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.447214, 0, 0.894427)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.447214, 0, 0.894427)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_203" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.5, 2, 13.625)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.164399, 0, -0.986394)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.164399, 0, -0.986394)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_204" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.25, 2, 5.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_205" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.25, 2, 16.0417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_206" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.0833, 2, 13.5417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_207" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.0833, 2, 11.2083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.447214, 0, 0.894427)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.447214, 0, 0.894427)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_208" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.875, 2, 23.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.957826, 0, -0.287348)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.957826, 0, -0.287348)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_209" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.375, 2, 21.5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_210" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 2, 18.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_211" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.8333, 2, 18.5417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.242536, 0, 0.970143)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.242536, 0, 0.970143)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_212" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.9583, 2, 21.5417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.196116, 0, -0.980581)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.196116, 0, -0.980581)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_213" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 2, 16.125)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_214" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 2, 14.5417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_215" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.375, 2, 16.125)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.998618, 0, 0.0525588)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.998618, 0, 0.0525588)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_216" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 2, 11.125)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.242536, 0, 0.970143)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.242536, 0, 0.970143)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_217" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.0833, 2, 13.3333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.780869, 0, -0.624695)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.780869, 0, -0.624695)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_218" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.875, 2, 11.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_219" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 2, 22.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_220" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.75, 2, 19.9167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.316228, 0, -0.948683)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.316228, 0, -0.948683)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_221" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 2, 21)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_222" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.75, 2, 17.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_223" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.625, 2, 11.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_224" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.58333, 2, 11.2083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.447214, 0, 0.894427)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.447214, 0, 0.894427)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_225" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.33333, 2, 11.0417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.928477, 0, 0.371391)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.928477, 0, 0.371391)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_226" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.25, 2, 20.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_227" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.3333, 2, 11.2083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.242536, 0, 0.970143)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.242536, 0, 0.970143)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_228" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.625, 2, 19.5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_229" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.875, 2, 11.125)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.0525588, 0, 0.998618)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.0525588, 0, 0.998618)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_230" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.3333, 2, 15.0417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.888621, 0, -0.458643)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.888621, 0, -0.458643)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_231" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 2, 17.7083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_232" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.375, 2, 11.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_233" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.0833, 2, 21.4167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.0905358, 0, -0.995893)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.0905358, 0, -0.995893)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_234" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.2083, 2, 23.1667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.992278, 0, -0.124035)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.992278, 0, -0.124035)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_235" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.875, 2, 11.6667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.5547, 0, 0.83205)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.5547, 0, 0.83205)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_236" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.75, 2, 22.6667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.8, 0, -0.6)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.8, 0, -0.6)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_237" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.125, 2, 22.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.992278, 0, -0.124035)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.992278, 0, -0.124035)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_238" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.2083, 2, 23.1667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.992278, 0, -0.124035)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.992278, 0, -0.124035)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_239" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.8333, 2, 18.6667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_240" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.375, 2, 11.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_241" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2, 24.8333)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_242" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2, 25.1667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_243" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.25, 2, 24.2917)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.734803, 0, -0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.734803, 0, -0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_244" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.25, 2, 26.4583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.734803, 0, -0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.734803, 0, -0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_245" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.9583, 2, 23.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.67828, 0, 0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.67828, 0, 0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_246" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.25, 2, 21.0833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_247" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.875, 2, 22.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.67828, 0, 0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.67828, 0, 0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_248" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.25, 2, 26.4583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.734803, 0, -0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.734803, 0, -0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_249" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.25, 2, 24.2917)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.734803, 0, -0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.734803, 0, -0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_250" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.125, 2, 34.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_251" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.9583, 2, 32.7083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.980581, 0, 0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.980581, 0, 0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_252" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.25, 2, 30.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_253" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.75, 2, 29.9167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.316228, 0, -0.948683)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.316228, 0, -0.948683)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_254" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 2, 31)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_255" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.75, 2, 25.7083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_256" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.625, 2, 33.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_257" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 2, 32.6667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_258" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 2, 29.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.316228, 0, -0.948683)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.316228, 0, -0.948683)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_259" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.75, 2, 26.625)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.164399, 0, 0.986394)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.164399, 0, 0.986394)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_260" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.25, 2, 30.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_261" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 2, 23.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_262" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 2, 31)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_263" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 2, 32.9167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_264" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.4583, 2, 25.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.923077, 0, 0.384615)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.923077, 0, 0.384615)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_265" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.5833, 2, 26.2083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.630593, 0, 0.776114)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.630593, 0, 0.776114)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_266" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 2, 31)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_267" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5833, 2, 26.0833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.980581, 0, 0.196116)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.980581, 0, 0.196116)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_268" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.9167, 2, 26.5417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.447214, 0, 0.894427)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.447214, 0, 0.894427)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_269" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.6667, 2, 26.6667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_270" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.8333, 2, 29.5)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_271" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 2, 31)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, -0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_272" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.25, 2, 23.9583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_273" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 2, 24)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_274" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.91667, 2, 34.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.83205, 0, -0.5547)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.83205, 0, -0.5547)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_275" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 2, 26.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_276" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.04167, 2, 33)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_277" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 2, 33)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_278" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.79167, 2, 33)
-script = ExtResource("11_rwrya")
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, -1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_279" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 2, 27.9583)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_280" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.125, 2, 28.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_281" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 2, 33.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.351123, 0, -0.936329)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.351123, 0, -0.936329)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_282" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5417, 2, 37.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.514496, 0, 0.857493)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.514496, 0, 0.857493)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_283" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.75, 2, 33.7083)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_284" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.125, 2, 35.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.67828, 0, -0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.67828, 0, -0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_285" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.875, 2, 33.625)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_286" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 2, 34.1667)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.316228, 0, 0.948683)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.316228, 0, 0.948683)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_287" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.75, 2, 36.9167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_288" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 2, 32.625)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_289" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.04167, 2, 34.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.67828, 0, -0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.67828, 0, -0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_290" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 2, 38)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_291" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.2083, 2, 38.5417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.477092, 0, -0.878853)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.477092, 0, -0.878853)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_292" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.4167, 2, 34.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_293" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.75, 2, 37.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_294" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.0833, 2, 38.5)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_295" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.125, 2, 35.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.67828, 0, -0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.67828, 0, -0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_296" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.75, 2, 31.5417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_297" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 2, 36)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_298" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.2083, 2, 36.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.67828, 0, -0.734803)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.67828, 0, -0.734803)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_299" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.75, 2, 32.625)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.734803, 0, 0.67828)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.734803, 0, 0.67828)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_300" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.4167, 2, 34.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_301" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.375, 2, 36.875)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.997785, 0, 0.066519)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.997785, 0, 0.066519)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_302" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.75, 2, 37.9167)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_303" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.33333, 2, 39.5833)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.894427, 0, -0.447214)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.894427, 0, -0.447214)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_304" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 2, 38)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_305" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.29167, 2, 40)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.996546, 0, -0.0830455)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.996546, 0, -0.0830455)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_306" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.45833, 2, 42)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.996546, 0, -0.0830455)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.996546, 0, -0.0830455)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_307" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.75, 2, 42.0417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_308" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, 2, 42.0417)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_309" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 2, 39.375)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_310" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, 2, 35.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(1, 0, 0)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_311" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.375, 2, 35.25)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0, 0, 1)
-metadata/is_crouch_cover = true
-
-[node name="CoverPoint_312" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.125, 2, 37.75)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(0.406138, 0, 0.913812)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(0.406138, 0, 0.913812)
-metadata/is_crouch_cover = true
+[node name="@MeshInstance3D@76457" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_13"]
+material_override = SubResource("StandardMaterial3D_4r2vn")
+mesh = SubResource("SphereMesh_ry6wc")
 
-[node name="CoverPoint_313" type="Node3D" parent="CoverPointSpawner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.54167, 2, 42)
-script = ExtResource("11_rwrya")
-cover_direction = Vector3(-0.996546, 0, -0.0830455)
-is_crouch_cover = true
-metadata/cover_direction = Vector3(-0.996546, 0, -0.0830455)
-metadata/is_crouch_cover = true
+[node name="@MeshInstance3D@76458" type="MeshInstance3D" parent="CoverPointSpawner/CoverPoint_13"]
+transform = Transform3D(-1, 0, -9.08261e-08, 0, 1, 0, 9.08261e-08, 0, -1, 2.72478e-08, 0.18, 0.3)
+material_override = SubResource("StandardMaterial3D_bbi8j")
+mesh = SubResource("BoxMesh_xo4lu")
 
 [node name="robotic_train_lowpoly" parent="." instance=ExtResource("14_c6dfk")]
 transform = Transform3D(-3, 2.62268e-07, 1.14641e-14, 0, -1.31134e-07, 3, 2.62268e-07, 3, 1.31134e-07, -0.0291634, -3.95803, -0.391821)

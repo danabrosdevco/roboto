@@ -29,8 +29,6 @@ class_name SquadSpawnPoint
 
 func _ready() -> void:
 	add_to_group("squad_spawn_points")
-
-
 # Where the nth deployed soldier stands.
 func slot_position(index: int) -> Vector3:
 	if index < slot_markers.size() and slot_markers[index] != null:

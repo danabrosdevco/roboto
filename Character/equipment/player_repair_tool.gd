@@ -25,6 +25,11 @@ class_name PlayerRepairTool
 
 @export var heal_per_second: float = 22.0
 @export var repair_range: float = 3.5
+# Reviving is aimed at something on the floor, so it gets a wider cone and a bit
+# more reach than topping up a standing squadmate. 0.82 is roughly a 35 degree
+# half-angle around the sightline.
+@export var revive_aim_tolerance: float = 0.82
+@export var revive_reach_bonus: float = 1.5
 # Reservoir units spent per point of health restored.
 @export var cost_per_health: float = 1.0
 
@@ -255,6 +260,9 @@ func _apply_repair(target: Node, amount: int) -> void:
 
 
 func _is_full(target: Node) -> bool:
+	# A downed robot is never "full" — there's always the revive to finish.
+	if "downed" in target and target.downed:
+		return false
 	if "health" in target and "max_health" in target:
 		return int(target.health) >= int(target.max_health)
 	return false
@@ -275,7 +283,44 @@ func _acquire_target() -> Node:
 				body = body.get_parent()
 			if _is_repairable_ally(body):
 				return body
+
+	# Ray missed. A collapsed robot is a small, low target and the camera is at
+	# head height, so requiring a clean hit makes reviving feel broken even when
+	# everything is wired correctly. Fall back to the nearest downed ally you're
+	# roughly facing.
+	var downed_ally := _find_downed_ally_near_aim()
+	if downed_ally != null:
+		return downed_ally
+
 	return player
+
+
+func _find_downed_ally_near_aim() -> Node:
+	if cam == null:
+		return null
+	var forward: Vector3 = -cam.global_transform.basis.z.normalized()
+	var best: Node = null
+	var best_dot: float = revive_aim_tolerance
+
+	for squad in get_tree().get_nodes_in_group("squads"):
+		if not (squad is Squad):
+			continue
+		for member in (squad as Squad).squad_members:
+			if member == null or not is_instance_valid(member):
+				continue
+			if not ("downed" in member) or not member.downed:
+				continue
+			if not _is_repairable_ally(member):
+				continue
+			var to_member: Vector3 = member.global_position - cam.global_position
+			if to_member.length() > repair_range + revive_reach_bonus:
+				continue
+			# Dot product against the sightline: 1.0 is dead ahead.
+			var facing: float = forward.dot(to_member.normalized())
+			if facing > best_dot:
+				best_dot = facing
+				best = member
+	return best
 
 
 func _is_repairable_ally(body) -> bool:
@@ -283,10 +328,11 @@ func _is_repairable_ally(body) -> bool:
 		return false
 	if not ("faction" in body):
 		return false
+	# A downed ally IS a valid patient — that's the revive. A properly destroyed
+	# one is not: `downed` distinguishes the wreck you can bring back from the
+	# one you can't.
+	if "downed" in body and body.downed:
+		return not Enums.are_hostile(Enums.Factions.PLAYER, body.faction)
 	if "alive" in body and not body.alive:
-		# Destroyed squadmates are out of scope for now. If squad members are
-		# meant to be yours across missions rather than replaceable, reviving is
-		# the same channel with a different precondition and this is where it
-		# would go.
 		return false
 	return not Enums.are_hostile(Enums.Factions.PLAYER, body.faction)

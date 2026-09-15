@@ -32,13 +32,20 @@ class_name MissionTerminal
 @export var idle_color: Color = Color(0.75, 0.75, 0.75)
 @export var unavailable_color: Color = Color(0.5, 0.35, 0.35)
 @export var select_sound: AudioStreamPlayer3D
-@onready var Campaign: CampaignManager = get_tree().get_first_node_in_group("campaign")
+# Was get_parent().get_parent().Campaign, which assumes this node sits exactly
+# two levels under World. Nest it one deeper and Campaign is null, _ready throws
+# on the state_loaded connect, and the terminal goes quiet with no error you'd
+# associate with the terminal.
+var Campaign: CampaignManager
 signal mission_selected(mission: MissionDefinition)
 
 var _cycle_index: int = -1
 
 
 func _ready() -> void:
+	Campaign = _find_campaign() as CampaignManager
+	if Campaign == null:
+		push_warning("MissionTerminal '%s': no CampaignManager found. Selecting a mission will do nothing." % name)
 	if interactible == null:
 		interactible = _find_interactible(self)
 	if interactible != null:
@@ -49,7 +56,11 @@ func _ready() -> void:
 		interactible.type = Enums.InteractTypes.MISSION
 	else:
 		push_warning("MissionTerminal '%s' has no Interactible child." % name)
-	Campaign.state_loaded.connect(_refresh)
+	if Campaign != null:
+		Campaign.state_loaded.connect(_refresh)
+		# Coming home blanks the selection, so the label has to catch up — and
+		# cycling restarts from the top rather than resuming mid-list.
+		Campaign.returned_to_base.connect(_on_returned_to_base)
 	_refresh()
 
 
@@ -65,6 +76,8 @@ func _find_interactible(node: Node) -> Interactible:
 
 # What the HUD shows next to the F prompt. Reads better than "F | 0".
 func get_prompt() -> String:
+	if Campaign == null:
+		return "Terminal offline"
 	if mission != null:
 		return "Brief: %s" % mission.display_name
 	var queued: MissionDefinition = Campaign.selected_mission()
@@ -74,6 +87,9 @@ func get_prompt() -> String:
 
 
 func _on_interacted(_source: Interactible) -> void:
+	if Campaign == null:
+		push_warning("MissionTerminal: no CampaignManager, cannot select a mission.")
+		return
 	var available: Array[MissionDefinition] = Campaign.available_missions()
 	if available.is_empty():
 		_set_label("NO OPERATIONS AVAILABLE", unavailable_color)
@@ -99,6 +115,11 @@ func _on_interacted(_source: Interactible) -> void:
 	_refresh_all()
 
 
+func _on_returned_to_base() -> void:
+	_cycle_index = -1
+	_refresh()
+
+
 func _refresh_all() -> void:
 	for t in get_tree().get_nodes_in_group("mission_terminals"):
 		if t is MissionTerminal:
@@ -107,6 +128,8 @@ func _refresh_all() -> void:
 
 func _refresh() -> void:
 	add_to_group("mission_terminals")
+	if Campaign == null:
+		return
 	var selected: MissionDefinition = Campaign.selected_mission()
 
 	if mission != null:
@@ -132,3 +155,21 @@ func _set_label(text: String, color: Color) -> void:
 		return
 	label.text = text
 	label.modulate = color
+
+
+# Finds the campaign however it happens to be wired: as a node in the "campaign"
+# group (the reliable way), as a /root/Campaign autoload, or via World's export.
+# Returns null rather than erroring, so a scene without a campaign still runs.
+func _find_campaign() -> Node:
+	var found := get_tree().get_first_node_in_group("campaign")
+	if found != null:
+		return found
+	found = get_node_or_null("/root/Campaign")
+	if found != null:
+		return found
+	var node: Node = self
+	while node != null:
+		if "Campaign" in node and node.get("Campaign") != null:
+			return node.get("Campaign")
+		node = node.get_parent()
+	return null

@@ -64,6 +64,12 @@ var in_mission: bool = false
 
 
 func _ready() -> void:
+	# FIRST, before anything that can fail. Consumers find the campaign through
+	# this group rather than assuming /root/Campaign (autoload) or a specific
+	# parent chain — both of which break the moment you rewire it, and both of
+	# which fail silently.
+	add_to_group("campaign")
+
 	state = CampaignState.load_from_disk()
 	if state == null:
 		state = CampaignState.new()
@@ -132,9 +138,27 @@ func register_departure_exits(exits: Array) -> void:
 # The whole "terminal sets the train's destination" mechanic, in one place.
 func _push_destination() -> void:
 	var mission := selected_mission()
+
+	# Departures belong to base. If we're on a mission, anything still holding
+	# the flag gets pointed home instead of at the operation we're already in —
+	# otherwise the exit becomes a loop back to this level's spawn point.
+	if in_mission:
+		for exit in departure_exits:
+			if is_instance_valid(exit):
+				exit.next_level = base_level
+		return
+
 	for exit in departure_exits:
-		if is_instance_valid(exit):
-			exit.next_level = mission.level_scene if mission != null else null
+		if not is_instance_valid(exit):
+			continue
+		var destination: PackedScene = mission.level_scene if mission != null else null
+		# Belt and braces: a mission whose level_scene is the level we're
+		# standing in would reload it rather than travel anywhere.
+		if destination != null and current_mission != null \
+				and destination == current_mission.level_scene and in_mission:
+			destination = base_level
+		exit.next_level = destination
+
 	if mission != null:
 		departure_ready.emit(mission)
 
@@ -256,6 +280,13 @@ func extract(success: bool = true) -> Dictionary:
 
 	extracted.emit(current_mission, result)
 	in_mission = false
+
+	# Clear the selection HERE rather than in on_returned_to_base(), because
+	# World calls _register_exits() — and therefore _push_destination() — before
+	# on_returned_to_base(). Clearing later would leave the train at base still
+	# pointed at the operation you just came back from.
+	state.selected_mission_id = &""
+
 	if autosave:
 		state.save_to_disk()
 	return result
@@ -269,6 +300,10 @@ func abort() -> Dictionary:
 func on_returned_to_base() -> void:
 	current_mission = null
 	in_mission = false
+	# Belt and braces: if anything reached base without going through extract()
+	# — a debug jump, a future abort path — the train still comes back blank.
+	state.selected_mission_id = &""
+	_push_destination()
 	if spawner != null:
 		spawner.clear()
 	if objectives != null:

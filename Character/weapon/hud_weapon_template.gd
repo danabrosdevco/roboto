@@ -58,6 +58,10 @@ class_name HUDWeapon
 
 @export var hitscan_range: float = 250.0
 
+# How far this weapon is heard. Suppressed or small-calibre weapons should carry
+# less; -1 uses StimulusManager's default for GUNSHOT_HEARD.
+@export var noise_radius: float = 34.0
+
 signal request_status
 
 var recoil_amount: float = 0.0
@@ -139,6 +143,11 @@ func _fire_shot() -> void:
 
 	if rifle_stream_player != null:
 		rifle_stream_player.play()
+
+	# Tell the AI. Emitted on every shot, from the shooter's position rather
+	# than the impact point — you're giving away where YOU are.
+	if player != null and player.has_method("emit_noise"):
+		player.emit_noise(StimulusManager.StimulusType.GUNSHOT_HEARD, noise_radius)
 	if muzzle_flash != null:
 		muzzle_flash.play_flash()
 	#DebugDraw3D.draw_line(from, to, Color(1,0,0), 50)

@@ -60,6 +60,51 @@ class_name Enemy
 @export var recon_jitter: float = 0.25
 
 # ── SEARCH ────────────────────────────────────
+# Off by default. See _wander().
+@export var enable_idle_wander: bool = false
+
+# ── IDLE SCAN ─────────────────────────────────
+# What a robot holding a position does instead of wandering: turns its head and
+# nothing else. Deliberately slow and shallow — a guard sweeping a wide arc every
+# second reads as nervous, not watchful. Never touches movement_state, so it
+# cannot fight a squad holding formation.
+@export var idle_scan_interval: float = 4.5
+@export var idle_scan_arc_degrees: float = 55.0
+@export var idle_scan_distance: float = 8.0
+var _idle_scan_t: float = 0.0
+var _idle_scan_base: Vector3 = Vector3.ZERO
+
+# ── SQUAD CONTROL ─────────────────────────────
+# True while a Squad is issuing this robot's orders. A squad member must not
+# self-direct: AIState.IDLE runs _wander() on a timer and AIState.PATROL runs
+# reconsider_patrol(), so a soldier who arrived at their formation slot would
+# immediately wander off, get dragged back by the next follow order, and repeat.
+# That loop is what reads as "they never stand still".
+#
+# Combat is unaffected — an engaged robot still manoeuvres for itself.
+var squad_directed: bool = false
+
+
+# Stop where you are. Called when a squad member is already standing in their
+# slot, so nothing re-paths them onto a spot they occupy.
+func halt() -> void:
+	movement_state = MovementState.NONE
+	if nav_agent != null:
+		nav_agent.set_target_position(global_position)
+	velocity.x = 0.0
+	velocity.z = 0.0
+
+
+# ── GUNSHOT RESPONSE ──────────────────────────
+# Hearing a shot used to only set look_target and file the position away, so a
+# robot would glance toward the noise and carry on patrolling. It now
+# investigates, with the response scaled by distance: close enough and they come
+# looking, far away and they just orient and go alert.
+@export var investigate_gunshot_within: float = 20.0
+# Don't re-path on every shot of a burst — one investigation per window.
+@export var investigate_cooldown: float = 3.0
+var _investigate_timer: float = 0.0
+
 @export var search_duration: float = 9.0
 @export var search_look_interval: float = 1.6
 
@@ -154,6 +199,33 @@ var look_target: Vector3
 var patrol_points: Array[Node3D] = []
 var spawn_transform
 var alive: bool = true
+
+# ── DOWNED ────────────────────────────────────
+# Robots don't die outright — they collapse and stay on the deck as a wreck that
+# can be brought back with the repair tool. `alive` still goes false, which is
+# what every targeting, squad and objective check already keys off, so nothing
+# downstream has to learn a third state. `downed` is the extra bit that says the
+# wreck is recoverable.
+#
+# Enemies collapse too. The repair tool only targets friendlies, so a downed
+# hostile is just scrap on the floor — but it means every kill leaves a body,
+# which is what a salvage economy would eventually hang off.
+@export var can_be_downed: bool = true
+# Repaired back to this fraction of max_health and they stand up.
+@export var revive_at_fraction: float = 0.5
+# Where health sits while down. Above zero so the repair maths has something to
+# climb from.
+@export var downed_health: int = 1
+# How far the model tips over. Purely cosmetic — the body doesn't rotate,
+# because that would drag the collision capsule and the nav agent with it.
+@export var collapse_pitch_degrees: float = 84.0
+@export var collapse_drop: float = 0.5
+
+var downed: bool = false
+var _piece_rest: Dictionary = {}   # Node3D -> original Transform3D
+
+signal went_down
+signal revived
 
 var combat_time: float = 0.0
 var movement_time: float = 0.0
@@ -398,11 +470,17 @@ func handle_time_passing(delta):
 					_no_los_timer = 0.0
 		AIState.PATROL:
 			patrol_time += delta
-			if patrol_time >= patrol_recon_time:
+			# A squad on SquadObjective.PATROL walks its route as a unit; an
+			# individual also re-picking patrol points fights it.
+			if not squad_directed and patrol_time >= patrol_recon_time:
 				reconsider_patrol()
 		AIState.IDLE:
 			idle_time += delta
-			if idle_time >= _next_wander_at:
+			if squad_directed:
+				# Standing in formation is a valid thing to be doing.
+				idle_time = 0.0
+				_tick_idle_scan(delta)
+			elif idle_time >= _next_wander_at:
 				idle_time = 0.0
 				_next_wander_at = wander_delay + randf_range(0.0, float(idle_to_wander))
 				_wander()
@@ -411,6 +489,9 @@ func handle_time_passing(delta):
 			_tick_search(delta)
 			if search_time >= search_duration:
 				_end_search()
+
+	if _investigate_timer > 0.0:
+		_investigate_timer = maxf(0.0, _investigate_timer - delta)
 
 	if targeting_time >= targeting_recon_time:
 		reconsider_target()
@@ -1083,6 +1164,10 @@ func _check_close_threat() -> bool:
 
 func reconsider_patrol():
 	patrol_time = 0
+	# A squad on SquadObjective.PATROL walks its route as a unit; an individual
+	# re-picking its own patrol point underneath that fights the squad.
+	if squad_directed:
+		return
 	if patrol_path == null or patrol_path.points.is_empty():
 		return
 	if nav_agent.is_navigation_finished():
@@ -1098,7 +1183,10 @@ func reconsider_patrol():
 # ─────────────────────────────────────────────
 func _enter_search() -> void:
 	if last_seen_point.is_empty():
-		change_ai_state(AIState.PATROL)
+		# Nothing to search. A squad member drops to IDLE and lets the squad
+		# decide; PATROL here was putting follow squadmates into a state whose
+		# tick restarts movement.
+		change_ai_state(AIState.IDLE if squad_directed else AIState.PATROL)
 		return
 	change_ai_state(AIState.SEARCH)
 	search_time = 0.0
@@ -1117,6 +1205,11 @@ func _tick_search(delta: float) -> void:
 	# Sweep a random heading, and sometimes push to a new vantage point.
 	var a = randf() * TAU
 	look_target = global_position + Vector3(cos(a), 0.0, sin(a)) * 6.0
+	# A squad member searching is still the squad's to move. Without this they
+	# roam ±7m on their own while the squad is trying to hold formation, which
+	# looks identical to the idle-wander problem.
+	if squad_directed:
+		return
 	if randf() < 0.45:
 		var nav_map = nav_agent.get_navigation_map()
 		var offset = Vector3(randf_range(-7.0, 7.0), 0.0, randf_range(-7.0, 7.0))
@@ -1125,6 +1218,11 @@ func _tick_search(delta: float) -> void:
 func _end_search() -> void:
 	search_time = 0.0
 	last_seen_point.clear()
+	if squad_directed:
+		# The squad decides what happens next, not an individual patrol route.
+		change_ai_state(AIState.IDLE)
+		halt()
+		return
 	if patrol_path != null and not patrol_path.points.is_empty():
 		change_ai_state(AIState.PATROL)
 	else:
@@ -1135,7 +1233,47 @@ func _end_search() -> void:
 # IDLE WANDER
 # Previously four declared variables and no implementation.
 # ─────────────────────────────────────────────
+# Look-only. Picks a heading within idle_scan_arc_degrees of the direction this
+# robot was facing when it settled, so a guard watches roughly one way rather
+# than spinning on the spot.
+func _tick_idle_scan(delta: float) -> void:
+	if movement_state != MovementState.NONE:
+		return
+	if _idle_scan_base.length_squared() < 0.01:
+		var facing := -global_transform.basis.z
+		facing.y = 0.0
+		_idle_scan_base = facing.normalized() if facing.length_squared() > 0.01 else Vector3.FORWARD
+
+	_idle_scan_t -= delta
+	if _idle_scan_t > 0.0:
+		return
+	_idle_scan_t = idle_scan_interval * randf_range(0.7, 1.4)
+
+	var swing := deg_to_rad(randf_range(-idle_scan_arc_degrees, idle_scan_arc_degrees))
+	var dir := _idle_scan_base.rotated(Vector3.UP, swing)
+	look_target = global_position + dir * idle_scan_distance
+
+
+# Call when a robot takes up a new post, so its scan arc re-centres on whatever
+# it should now be watching.
+func set_scan_facing(towards: Vector3) -> void:
+	var dir := towards - global_position
+	dir.y = 0.0
+	if dir.length_squared() > 0.01:
+		_idle_scan_base = dir.normalized()
+		_idle_scan_t = 0.0
+
+
+# Idle wander is OFF by default now. It gave every stationary robot a random
+# stroll on a timer, which for a squad on FOLLOW meant arriving at a formation
+# slot, wandering away, being dragged back, and repeating forever. Nothing in
+# the game needed it, and a robot standing still reads as deliberate rather than
+# broken. Flip enable_idle_wander per-scene if you want it back somewhere.
 func _wander() -> void:
+	if not enable_idle_wander:
+		return
+	if squad_directed:
+		return
 	if movement_state != MovementState.NONE:
 		return
 	var nav_map = nav_agent.get_navigation_map()
@@ -1362,6 +1500,10 @@ func fire():
 func apply_damage(damage, source) -> void:
 	if ai_state == AIState.DEAD:
 		return
+	if downed:
+		# Already on the floor. Shooting a wreck does nothing — if you want a
+		# finishing blow, call destroy() from here instead.
+		return
 	if source is Player:
 		player = source
 		damaged_by_player = true
@@ -1384,10 +1526,54 @@ func apply_damage(damage, source) -> void:
 	for i in particle_effects_hit:
 		i.activate()
 
+# Entry point for lethal damage. Sends them to the floor rather than deleting
+# them, unless downing is switched off for this robot.
 func die():
 	force_release_hold()
 	if not alive:
 		return
+	if can_be_downed and not downed:
+		enter_downed()
+		return
+	destroy()
+
+
+# The wreck stays in the world, visible and repairable.
+func enter_downed() -> void:
+	if downed:
+		return
+	downed = true
+	alive = false
+	health = downed_health
+	change_ai_state(AIState.DEAD)
+	set_physics_process(false)
+	velocity = Vector3.ZERO
+	if nav_agent != null:
+		nav_agent.set_target_position(global_position)
+	if weapon != null:
+		weapon.hide()
+	# Collision stays ENABLED while downed. Disabling it (which is what a proper
+	# death does) meant the repair tool's aim ray passed straight through the
+	# wreck, fell back to the player, and stopped with "full" — you cannot
+	# repair something you cannot hit. Damage is already ignored while downed,
+	# so a live collider costs nothing.
+	if _collision_shape == null:
+		_collision_shape = _find_collision_shape()
+	if _collision_shape != null:
+		_collision_shape.set_deferred("disabled", false)
+	if stimulus_manager != null:
+		stimulus_manager.emit_stimulus(
+			StimulusManager.StimulusType.ALLY_DIED,
+			global_position, faction, self)
+	_collapse_pieces()
+	went_down.emit()
+
+
+# Actually gone. Kept for can_be_downed = false, and as the place a finishing
+# blow or a salvage system would eventually call into.
+func destroy():
+	force_release_hold()
+	downed = false
 	if stimulus_manager != null:
 		stimulus_manager.emit_stimulus(
 			StimulusManager.StimulusType.ALLY_DIED,
@@ -1409,6 +1595,66 @@ func die():
 	hide_body()
 	if weapon != null:
 		weapon.hide()
+
+
+# ─────────────────────────────────────────────
+# REPAIR / REVIVE
+# ─────────────────────────────────────────────
+# Called by PlayerRepairTool. Works on a standing robot (topping them up) and on
+# a downed one (bringing them back), so the tool needs no special case.
+func apply_healing(amount: int) -> void:
+	if ai_state == AIState.DEAD and not downed:
+		return   # properly destroyed, nothing to repair
+	health = mini(max_health, health + amount)
+	if downed and health >= int(ceil(max_health * revive_at_fraction)):
+		revive()
+
+
+func revive() -> void:
+	if not downed:
+		return
+	downed = false
+	alive = true
+	health = maxi(health, int(ceil(max_health * revive_at_fraction)))
+	_restore_pieces()
+	if _collision_shape != null:
+		_collision_shape.set_deferred("disabled", false)
+	if weapon != null:
+		weapon.show()
+	set_physics_process(true)
+	set_process(true)
+	seen_bodies.clear()
+	last_seen_point.clear()
+	checking_for_target = false
+	combat_target = null
+	movement_state = MovementState.NONE
+	change_ai_state(DefaultAIState)
+	if nav_agent != null:
+		nav_agent.set_target_position(global_position)
+	revived.emit()
+
+
+# Tip the visible pieces over. The CharacterBody3D itself stays upright —
+# rotating it would take the collision capsule and the nav agent with it, and a
+# revived robot would come back facing the floor.
+func _collapse_pieces() -> void:
+	for piece in visible_pieces:
+		if piece == null or not is_instance_valid(piece):
+			continue
+		if not _piece_rest.has(piece):
+			_piece_rest[piece] = piece.transform
+		var t: Transform3D = _piece_rest[piece]
+		t = t.rotated_local(Vector3.RIGHT, deg_to_rad(collapse_pitch_degrees))
+		t.origin.y -= collapse_drop
+		piece.transform = t
+
+
+func _restore_pieces() -> void:
+	for piece in _piece_rest.keys():
+		if piece != null and is_instance_valid(piece):
+			piece.transform = _piece_rest[piece]
+	_piece_rest.clear()
+
 
 func respawn():
 	reset()
@@ -1492,6 +1738,15 @@ func receive_stimulus(
 			if ai_state != AIState.COMBAT:
 				look_target = source_position
 				_remember_last_seen(source_position)
+				# Close enough to be worth walking over to. SEARCH already
+				# drives the look-around-and-reposition behaviour, so this just
+				# points it at the right place.
+				if distance <= investigate_gunshot_within and _investigate_timer <= 0.0:
+					_investigate_timer = investigate_cooldown
+					if ai_state != AIState.SEARCH:
+						change_ai_state(AIState.SEARCH)
+					search_time = 0.0
+					move_to(source_position)
 		StimulusManager.StimulusType.ALLY_SHOT:
 			if ai_state != AIState.COMBAT:
 				look_target = source_position

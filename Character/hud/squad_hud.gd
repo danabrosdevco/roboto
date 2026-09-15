@@ -329,7 +329,11 @@ func _make_member_row(m: Soldier) -> Control:
 	row.add_child(_make_label(" %-10s" % m.soldier_name.left(10), name_col))
 
 	if not m.alive:
-		row.add_child(_make_label("DESTROYED", COL_CRIT))
+		# A wreck you can bring back reads very differently from one you can't,
+		# and it's the difference between walking over there and not.
+		var is_down: bool = "downed" in m and m.downed
+		row.add_child(_make_label("DOWNED" if is_down else "DESTROYED",
+			COL_WARN if is_down else COL_CRIT))
 		return row
 
 	row.add_child(_make_bar(float(m.health) / float(maxi(1, m.max_health)), _health_color(m)))
@@ -436,7 +440,15 @@ func _draw() -> void:
 	# the world as a corpse — both produced doubled arrows.
 	var drawn := {}
 
-	for m in squad.get_living_members():
+	# Living members PLUS anyone downed — a wreck you can revive is exactly the
+	# thing you most need to be able to find across a map.
+	var markable: Array = squad.get_living_members()
+	for m in squad.squad_members:
+		if m != null and is_instance_valid(m) and "downed" in m and m.downed:
+			if not markable.has(m):
+				markable.append(m)
+
+	for m in markable:
 		if m == null or not is_instance_valid(m):
 			continue
 		var id: int = m.get_instance_id()
@@ -461,8 +473,9 @@ func _draw() -> void:
 		# Same helper the roster bars use, so the chevron and the bar can never
 		# disagree about whether someone is in trouble.
 		var hp: float = float(m.health) / float(maxi(1, m.max_health))
+		var is_downed: bool = "downed" in m and m.downed
 		var col: Color = HUDPalette.health_color(hp)
-		var critical: bool = hp <= marker_critical_at
+		var critical: bool = is_downed or hp <= marker_critical_at
 		var hurt: bool = hp <= marker_hurt_at
 
 		if critical:
@@ -513,7 +526,12 @@ func _draw() -> void:
 		# Only a pinned squadmate gets text in the world. Tagging every robot
 		# with its role was noise you had to read past to find the one that
 		# mattered.
-		if dist < 60.0 and m.soldier_state == Soldier.SoldierState.SUPPRESSED:
+		if is_downed and dist < 90.0:
+			var down_col := COL_CRIT
+			down_col.a = alpha
+			draw_string(ThemeDB.fallback_font, p + Vector2(size + 3, 2),
+				"DOWNED", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size_marker, down_col)
+		elif dist < 60.0 and m.soldier_state == Soldier.SoldierState.SUPPRESSED:
 			var warn := COL_WARN
 			warn.a = alpha
 			draw_string(ThemeDB.fallback_font, p + Vector2(size + 3, 2),

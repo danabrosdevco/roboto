@@ -434,6 +434,35 @@ func update_status():
 	hud.update_status(health, max_health, readout.primary, readout.secondary, shards, bits)
 
 
+# ─────────────────────────────────────────────
+# NOISE
+# ─────────────────────────────────────────────
+# The AI already has a full stimulus system — AIManager hands every registered
+# Enemy a StimulusManager, and enemy weapons emit GUNSHOT_HEARD when they fire.
+# The PLAYER's weapons never did, so the player was silent to the AI: you could
+# empty a magazine three metres from a patrol and none of them would react.
+#
+# Lives on Player rather than on the weapon so grenades, melee and anything else
+# noisy can call it without each finding the manager for itself.
+var _stimulus_manager: StimulusManager
+
+
+func get_stimulus_manager() -> StimulusManager:
+	if _stimulus_manager != null:
+		return _stimulus_manager
+	if world != null and world.ai_manager != null:
+		_stimulus_manager = world.ai_manager.stimulus_manager
+	return _stimulus_manager
+
+
+func emit_noise(type: StimulusManager.StimulusType, radius: float = -1.0, at: Vector3 = Vector3.INF) -> void:
+	var manager := get_stimulus_manager()
+	if manager == null:
+		return
+	var origin := global_position if at == Vector3.INF else at
+	manager.emit_stimulus(type, origin, faction, self, radius)
+
+
 func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
 	highlight_enemy.emit(target, duration)
 

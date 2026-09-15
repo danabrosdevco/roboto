@@ -49,7 +49,48 @@ var follow_leader: Node3D = null
 # order was given. Too small and the squad stutters as it re-paths every frame;
 # too large and they lag visibly behind.
 @export var follow_reissue_distance: float = 3.5
+
+# ── WHY FOLLOW JITTERED ───────────────────────
+# Two causes, both of which made the squad shuffle constantly a few metres from
+# the player without anyone actually going anywhere.
+#
+# 1. The anchor was taken from the leader's BODY YAW, and the player body turns
+#    with mouse look. A 180° turn swings the anchor a full 2 x follow_distance
+#    across the map, and about 40° was enough to exceed follow_reissue_distance
+#    — so simply looking around re-pathed the whole squad. The heading is now
+#    taken from the leader's MOVEMENT and latched: stand still and turn on the
+#    spot and the squad ignores you.
+#
+# 2. _formation_offset derives its lateral axis from (objective_position -
+#    get_center()). Standing at the anchor makes that vector near zero, so its
+#    direction flips frame to frame and every soldier's slot spins around them.
+#    It now falls back to the latched heading instead.
+#
+# Minimum seconds between re-issues, whatever the distance. Backstop against
+# a leader jittering across the threshold.
+@export var follow_reissue_interval: float = 0.6
+# A member already this close to their slot isn't given a new order. Without it
+# they re-path to a spot they're standing on and pivot in place.
+@export var follow_slot_tolerance: float = 1.6
+# How fast the leader must move for their heading to count. Below this they're
+# considered stationary and the last heading is kept.
+@export var follow_heading_min_speed: float = 0.6
+# Smooths the anchor so it eases rather than snapping.
+@export var follow_anchor_smoothing: float = 6.0
+
 var _last_follow_issue: Vector3 = Vector3.ZERO
+var _follow_heading: Vector3 = Vector3.ZERO
+var _follow_anchor_smoothed: Vector3 = Vector3.INF
+var _follow_reissue_t: float = 0.0
+
+# ── DEFEND POSTS ──────────────────────────────
+# Where each member was told to hunker down. _issue_defend_orders already does
+# the clever part — cover-point spread sampling around the objective — but once
+# a soldier arrived there was nothing holding them, so the same state machine
+# paths that broke FOLLOW (idle wander, search roam, patrol re-pick) walked them
+# off their cover. Posts are remembered and re-asserted every frame.
+@export var defend_post_tolerance: float = 1.4
+var _defend_posts: Dictionary = {}   # Soldier -> Vector3
 
 # ── PATROL ────────────────────────────────────
 # The squad walks a level-authored route as a unit. Contact suspends it; the
@@ -135,8 +176,9 @@ func _ready() -> void:
 # PROCESS — context monitoring
 # ─────────────────────────────────────────────
 func _process(delta: float) -> void:
-	_tick_follow()
+	_tick_follow(delta)
 	_tick_patrol(delta)
+	_tick_defend()
 	_tick_contact(delta)
 	match context:
 		SquadContext.ENGAGED:
@@ -151,7 +193,7 @@ func _process(delta: float) -> void:
 # The leader is a moving objective, so this runs every frame regardless of
 # context — the squad keeps its formation slot updated while it fights, and
 # resumes following the moment contact breaks without needing a fresh order.
-func _tick_follow() -> void:
+func _tick_follow(delta: float) -> void:
 	if objective != SquadObjective.FOLLOW:
 		return
 	if follow_leader == null or not is_instance_valid(follow_leader):
@@ -159,35 +201,163 @@ func _tick_follow() -> void:
 		set_objective(SquadObjective.DEFEND, get_center(), true)
 		return
 
-	objective_position = _follow_anchor()
+	_update_follow_heading()
+	objective_position = _follow_anchor(delta)
 
 	if context == SquadContext.ENGAGED:
 		return
-	if _last_follow_issue.distance_to(objective_position) < follow_reissue_distance:
+
+	# Authoritative, every frame. Gating individual behaviours one at a time
+	# (idle wander, search roam, patrol re-pick, stale passive targets) kept
+	# missing one — there are at least five paths in Enemy that can start a
+	# movement. So rather than chase them, the squad asserts the outcome: in
+	# your slot means stopped and IDLE, out of it means walking to it. Anything
+	# that starts a move on its own gets overridden within a frame.
+	_hold_follow_formation()
+
+	if _last_follow_issue.distance_to(objective_position) >= follow_reissue_distance:
+		_last_follow_issue = objective_position
+
+
+# ─────────────────────────────────────────────
+# DEFEND — hold the post you were given
+# ─────────────────────────────────────────────
+func _tick_defend() -> void:
+	if objective != SquadObjective.DEFEND:
 		return
-	_last_follow_issue = objective_position
-	_issue_follow_orders()
+	if context == SquadContext.ENGAGED:
+		return
+
+	for ai in get_orderable_soldiers():
+		var soldier := ai as Soldier
+		if soldier == null or soldier.ai_state == Enemy.AIState.COMBAT:
+			continue
+
+		var post: Vector3 = _defend_post_for(soldier)
+		var gap: float = soldier.global_position.distance_to(post)
+
+		if gap <= defend_post_tolerance:
+			# In cover. Static, apart from the head — _tick_idle_scan turns
+			# look_target and never touches movement.
+			if soldier.ai_state != Enemy.AIState.IDLE:
+				soldier.change_ai_state(Enemy.AIState.IDLE)
+				# Watch outward, away from the thing being defended.
+				soldier.set_scan_facing(soldier.global_position + (soldier.global_position - objective_position))
+			if soldier.movement_state != Enemy.MovementState.NONE:
+				soldier.halt()
+			continue
+
+		if soldier.movement_state == Enemy.MovementState.NONE \
+				or soldier.movement_target.distance_to(post) > defend_post_tolerance:
+			soldier.defensive_mode = true
+			soldier.order_move_to(post, true)
 
 
-# A point behind the leader, so the squad stacks up at their back rather than
-# walking through them.
-func _follow_anchor() -> Vector3:
-	var back := follow_leader.global_transform.basis.z
-	back.y = 0.0
-	if back.length_squared() < 0.01:
-		back = Vector3.BACK
-	return follow_leader.global_position + back.normalized() * follow_distance
+# The post assigned by _issue_defend_orders, or a lazily-assigned fallback for a
+# member who joined the squad after the order was given.
+func _defend_post_for(soldier: Soldier) -> Vector3:
+	if _defend_posts.has(soldier):
+		return _defend_posts[soldier]
+	var cover := soldier.find_best_cover_point()
+	var post: Vector3
+	if cover != null and cover.global_position.distance_to(objective_position) < 25.0:
+		soldier.current_cover_point = cover
+		cover.mark_occupied(soldier)
+		post = cover.global_position
+	else:
+		var members := get_orderable_soldiers()
+		var idx: int = maxi(0, members.find(soldier))
+		var angle: float = (TAU / maxi(1, members.size())) * idx
+		post = objective_position + Vector3(cos(angle), 0.0, sin(angle)) * 6.0
+	_defend_posts[soldier] = post
+	return post
+
+
+# Runs every frame while following and out of contact. Cheap: one distance check
+# per member, and orders only when something actually needs to change.
+func _hold_follow_formation() -> void:
+	for ai in get_orderable_members():
+		if not (ai is Enemy):
+			continue
+		var robot := ai as Enemy
+		# An engaged robot manoeuvres for itself — never override combat.
+		if robot.ai_state == Enemy.AIState.COMBAT:
+			continue
+
+		robot.always_active = true
+		var slot: Vector3 = objective_position + _formation_offset(ai)
+		var gap: float = robot.global_position.distance_to(slot)
+
+		if gap <= follow_slot_tolerance:
+			# In position. Force the STATE as well as the movement — leaving
+			# them in PATROL or SEARCH is what let the state machine restart a
+			# move a frame later.
+			if robot.ai_state != Enemy.AIState.IDLE:
+				robot.change_ai_state(Enemy.AIState.IDLE)
+			if robot.movement_state != Enemy.MovementState.NONE:
+				robot.halt()
+			continue
+
+		# Out of position, and not already on their way there.
+		if robot.movement_state == Enemy.MovementState.NONE \
+				or robot.movement_target.distance_to(slot) > follow_slot_tolerance:
+			if robot is Soldier:
+				(robot as Soldier).defensive_mode = false
+				(robot as Soldier).order_move_to(slot, true)
+				(robot as Soldier).change_soldier_state(Soldier.SoldierState.NONE)
+			else:
+				robot.move_to(slot)
+
+
+# Latched from the leader's actual motion, not their facing. Turning on the spot
+# must not move the squad.
+func _update_follow_heading() -> void:
+	var velocity := Vector3.ZERO
+	if follow_leader is CharacterBody3D:
+		velocity = (follow_leader as CharacterBody3D).velocity
+	velocity.y = 0.0
+	if velocity.length() >= follow_heading_min_speed:
+		_follow_heading = velocity.normalized()
+		return
+	if _follow_heading.length_squared() < 0.01:
+		# Nothing to go on yet — seed from facing once, then never again.
+		var back := follow_leader.global_transform.basis.z
+		back.y = 0.0
+		_follow_heading = -back.normalized() if back.length_squared() > 0.01 else Vector3.FORWARD
+
+
+# A point behind the leader along their travel direction, so the squad stacks up
+# at their back rather than walking through them — and smoothed, so a sharp
+# change of direction eases the anchor across instead of teleporting it.
+func _follow_anchor(delta: float) -> Vector3:
+	var heading := _follow_heading
+	if heading.length_squared() < 0.01:
+		heading = Vector3.FORWARD
+	var target: Vector3 = follow_leader.global_position - heading * follow_distance
+	if _follow_anchor_smoothed == Vector3.INF or follow_anchor_smoothing <= 0.0:
+		_follow_anchor_smoothed = target
+	else:
+		_follow_anchor_smoothed = _follow_anchor_smoothed.lerp(
+			target, clampf(delta * follow_anchor_smoothing, 0.0, 1.0))
+	return _follow_anchor_smoothed
 
 
 func _issue_follow_orders() -> void:
 	for ai in get_orderable_members():
 		ai.always_active = true
+		var slot: Vector3 = objective_position + _formation_offset(ai)
+		# Already standing in their slot — stop, don't re-path. Re-issuing a
+		# move to a spot you occupy is what produces the pivot-in-place shuffle.
+		if ai.global_position.distance_to(slot) <= follow_slot_tolerance:
+			if ai is Enemy:
+				(ai as Enemy).halt()
+			continue
 		if ai is Soldier:
 			ai.defensive_mode = false
-			ai.order_move_to(objective_position + _formation_offset(ai), true)
+			ai.order_move_to(slot, true)
 			ai.change_soldier_state(Soldier.SoldierState.NONE)
 		else:
-			ai.move_to(objective_position + _formation_offset(ai))
+			ai.move_to(slot)
 
 
 # Cancels whatever the squad was doing and puts them on the leader's hip.
@@ -197,7 +367,13 @@ func follow(leader: Node3D) -> void:
 	ordered_target = null
 	squad_combat_target = null
 	_last_follow_issue = Vector3.ZERO
-	set_objective(SquadObjective.FOLLOW, _follow_anchor() if leader != null else get_center(), true)
+	# Seed the heading and anchor from the leader's current facing, once.
+	_follow_heading = Vector3.ZERO
+	_follow_anchor_smoothed = Vector3.INF
+	_follow_reissue_t = 0.0
+	if leader != null:
+		_update_follow_heading()
+	set_objective(SquadObjective.FOLLOW, _follow_anchor(0.0) if leader != null else get_center(), true)
 
 
 # ─────────────────────────────────────────────
@@ -349,6 +525,10 @@ func remove_ai_from_squad(ai: Node) -> void:
 func _connect_member(ai: Node) -> void:
 	if ai == null:
 		return
+	# The squad owns this robot's movement now. Without this they keep running
+	# idle wander and individual patrol underneath every order we give.
+	if ai is Enemy:
+		(ai as Enemy).squad_directed = true
 	if ai.has_signal("combat_triggered") and not ai.is_connected("combat_triggered", _on_combat_triggered):
 		ai.connect("combat_triggered", _on_combat_triggered)
 	if ai is Soldier and not ai.is_connected("bound_step_complete", _on_bound_step_complete):
@@ -357,6 +537,9 @@ func _connect_member(ai: Node) -> void:
 func _disconnect_member(ai: Node) -> void:
 	if ai == null:
 		return
+	# Hand them back their own behaviour.
+	if ai is Enemy:
+		(ai as Enemy).squad_directed = false
 	if ai.has_signal("combat_triggered") and ai.is_connected("combat_triggered", _on_combat_triggered):
 		ai.disconnect("combat_triggered", _on_combat_triggered)
 	if ai is Soldier and ai.is_connected("bound_step_complete", _on_bound_step_complete):
@@ -405,11 +588,22 @@ func resume_objective() -> void:
 # ─────────────────────────────────────────────
 # OBJECTIVE
 # ─────────────────────────────────────────────
+# Any new objective invalidates the old posts, including a DEFEND re-issued at a
+# different position — otherwise they walk back to where they were last time.
+func _clear_defend_posts() -> void:
+	_defend_posts.clear()
+
+
 func set_objective(
 	new_objective: SquadObjective,
 	position: Vector3 = Vector3.ZERO,
 	force: bool = false
 ) -> void:
+	# Posts belong to the previous order. A DEFEND re-issued at a new position
+	# must not send everyone back to where they stood last time.
+	if new_objective != objective or not position.is_equal_approx(objective_position):
+		_clear_defend_posts()
+
 	objective = new_objective
 	objective_position = position
 	objective_changed.emit(self)
@@ -497,8 +691,14 @@ func _formation_offset(member: Node) -> Vector3:
 
 	var advance_dir = (objective_position - get_center())
 	advance_dir.y = 0.0
-	if advance_dir.length_squared() < 0.01:
-		advance_dir = Vector3.FORWARD
+	# Near the objective this vector collapses and its direction becomes noise,
+	# spinning every slot around. Fall back to the latched follow heading (or a
+	# fixed axis) so the formation holds its shape when the squad has arrived.
+	if advance_dir.length_squared() < 0.25:
+		if _follow_heading.length_squared() > 0.01:
+			advance_dir = _follow_heading
+		else:
+			advance_dir = Vector3.FORWARD
 	advance_dir = advance_dir.normalized()
 
 	var lateral = advance_dir.cross(Vector3.UP).normalized()
@@ -560,6 +760,8 @@ func _issue_defend_orders() -> void:
 	# subsequent pick is the point farthest from all chosen points.
 	var chosen: Array = _select_spread_cover(candidates, soldiers.size())
 
+	_defend_posts.clear()
+
 	for i in soldiers.size():
 		var soldier: Soldier = soldiers[i]
 		if soldier.has_method("enter_passive_mode"):
@@ -570,11 +772,13 @@ func _issue_defend_orders() -> void:
 			soldier.current_cover_point = cp
 			cp.mark_occupied(soldier)
 			soldier.order_move_to(cp.global_position)
+			_defend_posts[soldier] = cp.global_position
 		else:
 			# More soldiers than cover points — spread in a ring around objective
 			var angle = (TAU / soldiers.size()) * i
 			var spread = Vector3(cos(angle), 0, sin(angle)) * 6.0
 			soldier.order_move_to(objective_position + spread)
+			_defend_posts[soldier] = objective_position + spread
 
 func _select_spread_cover(candidates: Array, count: int) -> Array:
 	# Farthest-point sampling: maximises minimum distance between chosen points.
