@@ -17,6 +17,10 @@ func register_enemy(new_enemy: AI) -> void:
 	if stimulus_manager != null:
 		new_enemy.stimulus_manager = stimulus_manager
 		stimulus_manager.register_ai(new_enemy)
+	# Spread their think-frames. A squad spawned in one loop otherwise ticks in
+	# lockstep forever.
+	if new_enemy.has_method("_stagger_ai_timers"):
+		new_enemy._stagger_ai_timers()
 
 func deregister_enemy(enemy: AI) -> void:
 	all_ai.erase(enemy)
@@ -34,6 +38,44 @@ func reset_all_reg_enemies() -> void:
 # Returns the closest living CharacterBody3D that
 # is hostile to the requesting AI's faction.
 # ─────────────────────────────────────────────
+# Called by reconsider_target, _check_close_threat and the vision scan — several
+# times per AI per second, each one a full pass over every registered body. With
+# 35 AI that is well over a thousand iterations a second before anything useful
+# happens.
+#
+# The list is cached per faction and rebuilt on a short timer instead. Callers
+# still get an exact nearest; they just don't each re-filter the whole world.
+var _hostile_cache: Dictionary = {}     # faction -> Array[CharacterBody3D]
+var _hostile_cache_age: float = 0.0
+const HOSTILE_CACHE_LIFETIME: float = 0.4
+
+
+func _process(delta: float) -> void:
+	_hostile_cache_age -= delta
+	if _hostile_cache_age <= 0.0:
+		_hostile_cache.clear()
+		_hostile_cache_age = HOSTILE_CACHE_LIFETIME
+
+
+func hostiles_for(faction) -> Array:
+	if _hostile_cache.has(faction):
+		return _hostile_cache[faction]
+	var list: Array = []
+	for other in all_ai:
+		if other == null or not is_instance_valid(other) or not other.alive:
+			continue
+		if not Enums.are_hostile(faction, other.faction):
+			continue
+		if other is Player and not other.is_targetable():
+			continue
+		list.append(other)
+	if player != null and player.alive and player.is_targetable() \
+			and Enums.are_hostile(faction, player.faction) and not list.has(player):
+		list.append(player)
+	_hostile_cache[faction] = list
+	return list
+
+
 func get_nearest_hostile(requesting_ai: AI) -> CharacterBody3D:
 	var best: CharacterBody3D = null
 	var best_dist: float = INF

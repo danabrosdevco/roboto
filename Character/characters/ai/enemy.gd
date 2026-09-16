@@ -153,6 +153,11 @@ var _sidestep_attempts: int = 0
 func _clear_line_of_fire() -> bool:
 	if not sidestep_when_blocked or weapon == null:
 		return false
+	# Up to four raycasts per shot. With thirty robots firing that is the second
+	# biggest cost after vision, and a careful sidestep 80m away is invisible.
+	# Distant robots just take the shot; friendly fire is a third damage anyway.
+	if lod_scale() > 2.0:
+		return false
 	if not weapon.has_method("friendly_in_line"):
 		return false
 	if not weapon.friendly_in_line(weapon_target):
@@ -290,8 +295,35 @@ var sensor_bonus: float = 0.0
 # is what makes who-saw-who-first feel earned rather than arbitrary.
 @export var acquire_far_penalty: float = 4.0
 @export var vision_interval: float = 0.15
+# HARD CAP on line-of-sight raycasts per robot per vision tick.
+#
+# The first version scanned every hostile every tick: 35 robots x 34 candidates
+# every 0.15s is ~8,000 raycasts a second, all of them on the same frames. That
+# is the lag, and the fact that it spiked at the START of contact — when nobody
+# has a target yet and everyone is scanning — matches exactly.
+#
+# You only need to notice the nearest few. Candidates are sorted by distance and
+# the closest N get a raycast; the rest wait for the next tick.
+@export var vision_los_checks: int = 3
+# Robots far from the player think slower. Their behaviour barely reads at that
+# distance, so the cost is the only thing you'd notice.
+@export var lod_near_distance: float = 35.0
+@export var lod_far_distance: float = 80.0
+@export var lod_far_multiplier: float = 4.0
 var _vision_timer: float = 0.0
 var _awareness: Dictionary = {}   # body -> 0..1
+
+
+# Every periodic timer starts at a random point in its cycle. Without this all
+# 35 robots spawn together, tick together, and land every vision scan and
+# targeting pass on the SAME frame — which is why the lag was intermittent
+# rather than constant. Spreading the phase costs nothing and turns a spike
+# into a flat line.
+func _stagger_ai_timers() -> void:
+	_vision_timer = randf() * vision_interval
+	targeting_time = randf() * targeting_recon_time
+	_investigate_timer = randf() * 0.5
+	_sidestep_timer = randf() * 0.5
 
 
 func sight_range() -> float:
@@ -310,8 +342,9 @@ func _tick_vision(delta: float) -> void:
 	_vision_timer -= delta
 	if _vision_timer > 0.0:
 		return
-	var elapsed: float = vision_interval
-	_vision_timer = vision_interval
+	var scale: float = lod_scale()
+	var elapsed: float = vision_interval * scale
+	_vision_timer = elapsed
 
 	var reach := sight_range()
 	var forward: Vector3 = -global_transform.basis.z
@@ -321,20 +354,34 @@ func _tick_vision(delta: float) -> void:
 	forward = forward.normalized()
 	var half_fov: float = deg_to_rad(fov_degrees * 0.5)
 
+	# Cheapest tests first, and only the nearest few ever reach a raycast.
+	var shortlist: Array = []
+	var reach_sq: float = reach * reach
+	var peripheral_sq: float = peripheral_range * peripheral_range
 	for candidate in _visible_candidates():
-		var to_them: Vector3 = candidate.global_position - global_position
-		var distance: float = to_them.length()
-		if distance > reach:
+		var offset: Vector3 = candidate.global_position - global_position
+		var dist_sq: float = offset.length_squared()
+		if dist_sq > reach_sq:
 			_awareness.erase(candidate)
 			continue
-
-		var flat: Vector3 = to_them
+		var flat: Vector3 = offset
 		flat.y = 0.0
-		var angle: float = forward.angle_to(flat.normalized()) if flat.length_squared() > 0.01 else 0.0
-		var in_cone: bool = angle <= half_fov or distance <= peripheral_range
-		if not in_cone:
+		var angle_to: float = forward.angle_to(flat.normalized()) if flat.length_squared() > 0.01 else 0.0
+		if angle_to > half_fov and dist_sq > peripheral_sq:
 			_awareness.erase(candidate)
 			continue
+		shortlist.append({"body": candidate, "dist_sq": dist_sq, "angle": angle_to})
+
+	shortlist.sort_custom(func(a, b): return a["dist_sq"] < b["dist_sq"])
+	var budget: int = maxi(1, vision_los_checks)
+
+	for entry in shortlist:
+		if budget <= 0:
+			break
+		budget -= 1
+		var candidate = entry["body"]
+		var distance: float = sqrt(entry["dist_sq"])
+		var angle: float = entry["angle"]
 
 		if not is_path_clear(global_position + Vector3.UP * 0.9, candidate.global_position, candidate):
 			# Behind cover. Awareness decays rather than resetting, so stepping
@@ -362,18 +409,38 @@ func _tick_vision(delta: float) -> void:
 		return   # one contact per tick is plenty
 
 
+# 1.0 close to the player, rising to lod_far_multiplier out at lod_far_distance.
+# Squad members are always full fidelity — you're looking straight at them and
+# any hitch in their behaviour is the most visible thing on screen.
+func lod_scale() -> float:
+	if squad_directed and not Enums.are_hostile(Enums.Factions.PLAYER, faction):
+		return 1.0
+	if player == null:
+		return 1.0
+	var d: float = global_position.distance_to(player.get_focus_position())
+	if d <= lod_near_distance:
+		return 1.0
+	if d >= lod_far_distance:
+		return lod_far_multiplier
+	var t: float = (d - lod_near_distance) / maxf(lod_far_distance - lod_near_distance, 0.01)
+	return lerpf(1.0, lod_far_multiplier, t)
+
+
+# Uses AIManager's cached per-faction list rather than re-filtering every
+# registered body on every tick, for every robot.
 func _visible_candidates() -> Array:
-	var out: Array = []
 	if ai_manager == null:
 		if player != null and player.alive and _is_hostile(player) and player.is_targetable():
-			out.append(player)
-		return out
+			return [player]
+		return []
+	if ai_manager.has_method("hostiles_for"):
+		return ai_manager.hostiles_for(faction)
+
+	var out: Array = []
 	for other in ai_manager.all_ai:
 		if other == null or other == self or not is_instance_valid(other):
 			continue
 		if not other.alive or not _is_hostile(other):
-			continue
-		if other is Player and not other.is_targetable():
 			continue
 		out.append(other)
 	return out
@@ -773,7 +840,7 @@ func handle_time_passing(delta):
 	_tick_vision(delta)
 	_tick_travel_look(delta)
 
-	if targeting_time >= targeting_recon_time:
+	if targeting_time >= targeting_recon_time * lod_scale():
 		reconsider_target()
 
 	if ai_state == AIState.COMBAT and not equipment_slots.is_empty():
