@@ -291,7 +291,7 @@ func _tick_defend() -> void:
 
 		if soldier.movement_state == Enemy.MovementState.NONE \
 				or soldier.movement_target.distance_to(post) > defend_post_tolerance:
-			soldier.order_move_to(post, true)
+			soldier.order_move_to(post, true, true)
 
 
 # The post assigned by _issue_defend_orders, or a lazily-assigned fallback for a
@@ -348,7 +348,7 @@ func _tick_assault() -> void:
 		if not _may_recall(soldier):
 			continue
 		soldier.defensive_mode = false
-		soldier.order_move_to(slot, true)
+		soldier.order_move_to(slot, true, true)
 
 
 # Is this soldier fighting something it can actually hit? A target 80m away for
@@ -405,7 +405,7 @@ func _enforce_leash(radius: float, defensive: bool) -> void:
 			continue   # already walking back
 		if not _may_recall(soldier):
 			continue
-		soldier.order_move_to(anchor, true)
+		soldier.order_move_to(anchor, true, true)
 
 
 # Where this member is supposed to be, whatever the current objective is.
@@ -448,7 +448,7 @@ func _hold_follow_formation() -> void:
 				or robot.movement_target.distance_to(slot) > follow_slot_tolerance:
 			if robot is Soldier:
 				(robot as Soldier).defensive_mode = false
-				(robot as Soldier).order_move_to(slot, true)
+				(robot as Soldier).order_move_to(slot, true, true)
 				(robot as Soldier).change_soldier_state(Soldier.SoldierState.NONE)
 			else:
 				robot.move_to(slot)
@@ -499,7 +499,7 @@ func _issue_follow_orders() -> void:
 			continue
 		if ai is Soldier:
 			ai.defensive_mode = false
-			ai.order_move_to(slot, true)
+			ai.order_move_to(slot, true, true)
 			ai.change_soldier_state(Soldier.SoldierState.NONE)
 		else:
 			ai.move_to(slot)
@@ -570,7 +570,7 @@ func _issue_patrol_orders(force: bool = false) -> void:
 		ai.always_active = true
 		if ai is Soldier:
 			ai.defensive_mode = false
-			ai.order_move_to(objective_position + _formation_offset(ai), force)
+			ai.order_move_to(objective_position + _formation_offset(ai), force, true)
 			ai.change_soldier_state(Soldier.SoldierState.NONE)
 		else:
 			ai.move_to(objective_position + _formation_offset(ai))
@@ -654,7 +654,7 @@ func _tick_unengaged(delta: float) -> void:
 		)
 		if is_stuck:
 			ai.always_active = true  # prevent passive mode from blocking movement
-			ai.order_move_to(objective_position + _formation_offset(ai))
+			ai.order_move_to(objective_position + _formation_offset(ai), true, true)
 
 
 # ─────────────────────────────────────────────
@@ -777,7 +777,7 @@ func _issue_objective_orders(force: bool = false) -> void:
 					ai.always_active = true
 				if ai is Soldier:
 					ai.defensive_mode = false
-					ai.order_move_to(objective_position + offset, force)
+					ai.order_move_to(objective_position + offset, force, true)
 				else:
 					if force or ai.ai_state != Enemy.AIState.COMBAT:
 						ai.move_to(objective_position + offset)
@@ -790,7 +790,7 @@ func _issue_objective_orders(force: bool = false) -> void:
 					ai.always_active = true
 				if ai is Soldier:
 					ai.defensive_mode = false
-					ai.order_move_to(objective_position + offset, force)
+					ai.order_move_to(objective_position + offset, force, true)
 					ai.change_soldier_state(Soldier.SoldierState.NONE)
 				else:
 					ai.move_to(objective_position + offset)
@@ -923,13 +923,13 @@ func _issue_defend_orders() -> void:
 			var cp: CoverPoint = chosen[i]
 			soldier.current_cover_point = cp
 			cp.mark_occupied(soldier)
-			soldier.order_move_to(cp.global_position)
+			soldier.order_move_to(cp.global_position, true, true)
 			_defend_posts[soldier] = cp.global_position
 		else:
 			# More soldiers than cover points — spread in a ring around objective
 			var angle = (TAU / soldiers.size()) * i
 			var spread = Vector3(cos(angle), 0, sin(angle)) * 6.0
-			soldier.order_move_to(objective_position + spread)
+			soldier.order_move_to(objective_position + spread, true, true)
 			_defend_posts[soldier] = objective_position + spread
 
 func _select_spread_cover(candidates: Array, count: int) -> Array:

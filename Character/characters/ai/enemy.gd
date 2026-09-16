@@ -462,6 +462,27 @@ var alive: bool = true
 # editing one would flatten every robot in the level). The CollisionShape3D NODE
 # is rotated instead, which lays the capsule on its side for free.
 @export var flatten_collider_when_downed: bool = true
+
+# ── SETTLING ──────────────────────────────────
+# A prone collider is still something to trip over, and squads walking a line
+# over a pile of wrecks jam on them. After a short beat the body sinks partway
+# into the deck and its collider switches off entirely, so it becomes scenery
+# you walk through rather than terrain you path around.
+#
+# It stays VISIBLE and stays revivable. The repair tool doesn't need a collider
+# to find an ally — PlayerRepairTool falls back to a proximity cone around the
+# crosshair precisely because a body on the floor is a miserable ray target.
+@export var settle_after: float = 1.2
+@export var settle_duration: float = 1.0
+@export var settle_depth: float = 0.45
+# Enemies sink further and faster — nobody is coming back for them, so the only
+# job left is to stop being an obstacle.
+@export var settle_depth_hostile: float = 0.7
+
+var _settle_timer: float = 0.0
+var _settling: bool = false
+var _settled: bool = false
+var _settle_rest_y: float = 0.0
 var _collider_rest: Transform3D
 var _collider_flattened: bool = false
 
@@ -578,6 +599,17 @@ func _find_collision_shape() -> CollisionShape3D:
 # PHYSICS PROCESS
 # ─────────────────────────────────────────────
 func _physics_process(delta: float) -> void:
+	# Downed robots run NOTHING except the sink, and once that finishes the tick
+	# disables itself — so a battlefield full of wrecks costs zero per frame
+	# rather than a permanent _process each. This branch is why enter_downed()
+	# leaves physics running instead of switching it off immediately.
+	if downed:
+		if _settling:
+			_tick_settle(delta)
+		else:
+			set_physics_process(false)
+		return
+
 	if not frame_waited or ai_state == AIState.DEAD:
 		return
 	if player == null:
@@ -1871,7 +1903,6 @@ func enter_downed() -> void:
 	alive = false
 	health = downed_health
 	change_ai_state(AIState.DEAD)
-	set_physics_process(false)
 	velocity = Vector3.ZERO
 	if nav_agent != null:
 		nav_agent.set_target_position(global_position)
@@ -1892,6 +1923,7 @@ func enter_downed() -> void:
 			StimulusManager.StimulusType.ALLY_DIED,
 			global_position, faction, self)
 	_collapse_pieces()
+	_begin_settle()
 	went_down.emit()
 
 
@@ -1943,6 +1975,7 @@ func revive() -> void:
 	alive = true
 	health = maxi(health, int(ceil(max_health * revive_at_fraction)))
 	_restore_pieces()
+	_unsettle()
 	_restore_collider()
 	if _collision_shape != null:
 		_collision_shape.set_deferred("disabled", false)
@@ -1964,6 +1997,58 @@ func revive() -> void:
 # Tip the visible pieces over. The CharacterBody3D itself stays upright —
 # rotating it would take the collision capsule and the nav agent with it, and a
 # revived robot would come back facing the floor.
+# ─────────────────────────────────────────────
+# SETTLING INTO THE GROUND
+# ─────────────────────────────────────────────
+func _begin_settle() -> void:
+	if settle_after < 0.0:
+		# Settling switched off — nothing left to tick, so stop now.
+		set_physics_process(false)
+		return
+	_settle_rest_y = global_position.y
+	_settle_timer = 0.0
+	_settling = true
+	_settled = false
+	# The downed branch of _physics_process drives it from here.
+	set_physics_process(true)
+
+
+func _tick_settle(delta: float) -> void:
+	if not _settling:
+		return
+	_settle_timer += delta
+	if _settle_timer < settle_after:
+		return
+
+	var depth: float = settle_depth
+	if Enums.are_hostile(Enums.Factions.PLAYER, faction):
+		depth = settle_depth_hostile
+
+	var progress: float = clampf((_settle_timer - settle_after) / maxf(settle_duration, 0.01), 0.0, 1.0)
+	global_position.y = _settle_rest_y - depth * progress
+
+	if progress < 1.0:
+		return
+
+	_settling = false
+	_settled = true
+	# Down and out of the way. Collision off, so nothing paths around it and
+	# nothing trips over it — and the next tick turns the tick itself off.
+	if _collision_shape != null:
+		_collision_shape.set_deferred("disabled", true)
+	set_physics_process(false)
+
+
+# Undo the sink. Called on revive, so a repaired squadmate stands back up at
+# ground level rather than knee-deep in it.
+func _unsettle() -> void:
+	if _settling or _settled:
+		global_position.y = _settle_rest_y
+	_settling = false
+	_settled = false
+	_settle_timer = 0.0
+
+
 # Lays the collider on its side so a wreck is prone cover rather than a pillar.
 # Still solid, still hittable by the repair tool's ray — just the right height.
 func _flatten_collider() -> void:

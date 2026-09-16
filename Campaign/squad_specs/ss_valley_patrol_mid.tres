@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("2_q2r5y")
-callsign = "WATCH"
+callsign = "ANNA"
 count = 3
 chassis = ExtResource("1_n0auv")
 posture = 0

@@ -258,12 +258,22 @@ func trigger_combat(body: AI) -> void:
 # Called by Squad when unengaged and an objective exists.
 # Only executes if not currently in combat.
 # ─────────────────────────────────────────────
-func order_move_to(pos: Vector3, force: bool = false) -> void:
+# keep_target separates "go somewhere" from "stop fighting".
+#
+# A forced order used to always null combat_target and drop to PATROL, because
+# force meant "the player said fall back". But the squad ALSO forces moves for
+# routine corrections — leash recalls, taking up a new defend post — and those
+# are repositioning, not disengaging. Issuing ADVANCE mid-firefight therefore
+# wiped every target in the squad and the whole unit fell out of contact until
+# the 25m detection sphere re-triggered.
+#
+# force  = move even though we're fighting
+# keep_target = ...but keep fighting while we do it
+func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false) -> void:
 	if ai_state == AIState.DEAD:
 		return
-	# Normally an engaged soldier ignores move orders. A forced order — meaning
-	# the player said so — breaks contact and moves anyway. This is what makes
-	# "fall back to that ridge" work in the middle of a firefight.
+	# Normally an engaged soldier ignores move orders. A forced order moves
+	# anyway — that's what makes "get to that ridge" work mid-firefight.
 	if ai_state == AIState.COMBAT and not force:
 		return
 	# CRITICAL or E-KILL: signal too degraded to receive squad orders.
@@ -271,11 +281,18 @@ func order_move_to(pos: Vector3, force: bool = false) -> void:
 	# not answering the radio is the e-warfare system doing its job.
 	if not _can_receive_orders():
 		return
+
+	# Cover is released either way; you can't hold it and walk.
 	if force:
 		release_cover()
-		combat_target = null
+		if not keep_target:
+			combat_target = null
+
 	change_soldier_state(SoldierState.NONE)
-	change_ai_state(AIState.PATROL)
+	# Staying in COMBAT is what lets them shoot on the move. Dropping to PATROL
+	# is what made the squad forget there was a fight at all.
+	if not (keep_target and ai_state == AIState.COMBAT):
+		change_ai_state(AIState.PATROL)
 	move_to(pos)
 
 
