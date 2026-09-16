@@ -69,6 +69,11 @@ var _selected: SoldierRecord
 var _name_edit: LineEdit
 var _repair_button: Button
 
+# Rebuilding Controls underneath a stationary mouse can emit mouse_entered on
+# the replacement Controls. Suppress hover SFX until the player actually moves
+# the mouse again so a click only produces its confirm/select sound.
+var _suppress_hover_until_mouse_moves: bool = false
+
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -112,6 +117,10 @@ func _resolve_campaign() -> bool:
 # you picked. Consuming the event here also stops it double-firing into whatever
 # else shares the binding.
 func _input(event: InputEvent) -> void:
+	# A real mouse movement re-arms hover audio after a rebuild.
+	if event is InputEventMouseMotion:
+		_suppress_hover_until_mouse_moves = false
+
 	if not InputMap.has_action(open_action):
 		return
 	if event.is_action_pressed(open_action):
@@ -189,6 +198,12 @@ func _clear_cursors() -> void:
 func _play(player: AudioStreamPlayer) -> void:
 	if player != null:
 		player.play()
+
+
+func _play_hover() -> void:
+	if _suppress_hover_until_mouse_moves:
+		return
+	_play(sfx_hover)
 
 
 # A drag preview that reads. The default was a bare Label, which inherits the
@@ -319,6 +334,11 @@ func _on_name_submitted(new_name: String) -> void:
 func _rebuild() -> void:
 	if state == null or _roster_list == null:
 		return
+
+	# The rebuild may replace a hovered Control while the cursor has not moved.
+	# Any mouse_entered caused by that replacement should be silent.
+	_suppress_hover_until_mouse_moves = true
+
 	_resource_label.text = "RESOURCES  %d" % state.available()
 	# Don't stomp what they're mid-way through typing.
 	if not _name_edit.has_focus():
@@ -374,7 +394,7 @@ func _make_roster_row(record: SoldierRecord) -> Control:
 		_selected = record
 		_play(sfx_select)
 		_rebuild())
-	row.mouse_entered.connect(func(): _play(sfx_hover))
+	row.mouse_entered.connect(func(): _play_hover())
 	return row
 
 
@@ -392,18 +412,42 @@ func _make_armoury_row(item: ItemDefinition, count: int) -> Control:
 	row.custom_minimum_size = Vector2(0, 40)
 	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
-	row.mouse_entered.connect(func(): _play(sfx_hover))
-	row.add_child(_label("%dx" % count, COL_WARN))
-	row.add_child(_label(item.display_name, COL_BRIGHT))
+
+	# Armoury rows are Containers rather than Buttons, so they do not get a
+	# Button's automatic hover font colour. Store each label's resting colour
+	# and explicitly brighten the whole row while hovered.
+	row.add_child(_armoury_label("%dx" % count, COL_WARN))
+	row.add_child(_armoury_label(item.display_name, COL_DIM))
 	var summary := item.effect_summary()
 	if summary != "":
-		row.add_child(_label(summary, COL_DIM))
+		row.add_child(_armoury_label(summary, COL_DIM))
 	# A player-only weapon sitting in stores that won't drop onto a squadmate
 	# looks like a bug unless it says so.
 	var tag := item.carrier_tag()
 	if tag != "":
-		row.add_child(_label(tag, COL_WARN if tag == "[YOU]" else COL_DIM))
+		row.add_child(_armoury_label(tag, COL_WARN if tag == "[YOU]" else COL_DIM))
+
+	row.mouse_entered.connect(func():
+		_set_armoury_row_hover(row, true)
+		_play_hover())
+	row.mouse_exited.connect(func(): _set_armoury_row_hover(row, false))
 	return row
+
+
+func _armoury_label(text: String, col: Color) -> Label:
+	var label := _label(text, col)
+	label.set_meta("armoury_rest_color", col)
+	return label
+
+
+func _set_armoury_row_hover(row: Control, hovered: bool) -> void:
+	for child in row.get_children():
+		if child is Label:
+			var label := child as Label
+			var col := COL_BRIGHT
+			if not hovered:
+				col = label.get_meta("armoury_rest_color", COL_DIM) as Color
+			label.add_theme_color_override("font_color", col)
 
 
 func _rebuild_detail() -> void:
@@ -458,7 +502,7 @@ func _rebuild_detail() -> void:
 				_play(sfx_drop)
 			else:
 				_play(sfx_denied))
-		_repair_button.mouse_entered.connect(func(): _play(sfx_hover))
+		_repair_button.mouse_entered.connect(func(): _play_hover())
 		_detail.add_child(_repair_button)
 
 	_add_slot_group("WEAPON", ItemDefinition.Kind.WEAPON, _selected.weapon_ids)
@@ -492,7 +536,7 @@ func _make_slot(kind: int, index: int, item_id: StringName) -> Control:
 	var lit := outline.duplicate() as StyleBoxFlat
 	lit.border_color = COL_BRIGHT
 	slot.add_theme_stylebox_override("hover", lit)
-	slot.mouse_entered.connect(func(): _play(sfx_hover))
+	slot.mouse_entered.connect(func(): _play_hover())
 	slot.kind = kind
 	slot.slot_index = index
 	slot.item_id = item_id
