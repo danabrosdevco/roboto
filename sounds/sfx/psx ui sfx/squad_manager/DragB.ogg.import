@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://bntfdsr3ubjrc"
+path="res://.godot/imported/DragB.ogg-d1f32f3a82d7e474663de47a6b925288.oggvorbisstr"
+
+[deps]
+
+source_file="res://sounds/sfx/psx ui sfx/squad_manager/DragB.ogg"
+dest_files=["res://.godot/imported/DragB.ogg-d1f32f3a82d7e474663de47a6b925288.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

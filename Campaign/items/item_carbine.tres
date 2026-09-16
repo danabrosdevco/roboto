@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3 uid="uid://citemcarbine01"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" uid="uid://be2sgj1qwg7f2" path="res://Character/weapon/m4_hud_weapon.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://caiwepm4rifle1" path="res://Character/weapon/ai-wep_m4.tscn" id="3_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"carbine"
+display_name = "Scout Carbine"
+short_name = "Carbine"
+description = "Shorter and lighter than the standard rifle. Quick to bring round."
+kind = 0
+cost = 55
+player_scene = ExtResource("2_player")
+ai_scene = ExtResource("3_ai")
+usable_by_player = true
+usable_by_ai = true
+quantity = 1
+required_rank = 0

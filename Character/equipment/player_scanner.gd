@@ -118,6 +118,12 @@ func tick(delta: float) -> void:
 		charges_changed.emit()
 
 
+func restock() -> void:
+	_cooldown_t = 0.0
+	_scanning = false
+	charges_changed.emit()
+
+
 # The cooldown keeps running while the scanner is stowed — it's a system
 # recharging, not something you have to stand still holding.
 func tick_stowed(delta: float) -> void:

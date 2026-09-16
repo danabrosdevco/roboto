@@ -71,7 +71,12 @@ func _on_initialize() -> void:
 	# Don't yank it out of their hands the instant the reservoir empties —
 	# they're probably mid-repair and it refills.
 	reverts_when_empty = false
-	equippable_when_empty = false
+	# Deliberately TRUE. Refusing to equip an empty repair tool reads as the
+	# item being broken — and combined with the recharge only running while
+	# equipped, it was a permanent deadlock: empty meant you couldn't hold it,
+	# and not holding it meant it never refilled. Let them pull it out and watch
+	# the bar climb.
+	equippable_when_empty = true
 	reservoir = reservoir_max
 
 
@@ -90,7 +95,10 @@ func charges_remaining() -> int:
 func get_readout() -> Readout:
 	var r := Readout.new(ReadoutMode.CHANNEL)
 	r.label = display_name
+	# Was reservoir over nothing, which printed "100/0" and read as broken.
+	# Charge over capacity is what the player actually wants to know.
 	r.primary = charges_remaining()
+	r.secondary = int(reservoir_max) if not use_ammo_pool else 0
 	if use_ammo_pool:
 		r.fraction = 1.0 if has_charge() else 0.0
 	else:
@@ -135,6 +143,24 @@ func interrupt() -> void:
 	if _channelling:
 		_stop_channel()
 		denied.emit("REPAIR INTERRUPTED")
+
+
+# The reservoir refills whether or not it's in your hands. This is the half of
+# the deadlock fix that matters — see equippable_when_empty above for the other.
+func tick_stowed(delta: float) -> void:
+	if _recharge_t > 0.0:
+		_recharge_t = maxf(0.0, _recharge_t - delta)
+		return
+	_tick_recharge(delta)
+
+
+# Back to full at base.
+func restock() -> void:
+	reservoir = reservoir_max
+	_recharge_t = 0.0
+	_grace_t = 0.0
+	_partial = 0.0
+	charges_changed.emit()
 
 
 func tick(delta: float) -> void:

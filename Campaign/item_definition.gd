@@ -63,6 +63,9 @@ enum Kind {
 @export var damage_bonus: int = 0
 @export var speed_multiplier: float = 1.0
 @export var signal_bonus: float = 0.0
+# Additive metres of sight. The module that lets a rifle squad actually use its
+# range — see Enemy.sensor_range for why that gap exists on purpose.
+@export var sensor_bonus: float = 0.0
 
 # Gating. A module can require a rank before it will fit — that's what makes
 # rank matter more than raw level.
@@ -136,6 +139,8 @@ func effect_summary() -> String:
 		parts.append("%+.0f%% ACC" % (accuracy_bonus * 100.0))
 	if signal_bonus != 0.0:
 		parts.append("%+.0f%% SIG" % (signal_bonus * 100.0))
+	if sensor_bonus != 0.0:
+		parts.append("%+.0fm SENSOR" % sensor_bonus)
 	if not is_equal_approx(speed_multiplier, 1.0):
 		parts.append("%+.0f%% SPD" % ((speed_multiplier - 1.0) * 100.0))
 	if kind == Kind.EQUIPMENT and quantity > 0:

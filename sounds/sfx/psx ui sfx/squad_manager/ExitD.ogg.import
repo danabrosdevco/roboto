@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://ddtuxkblwhgfy"
+path="res://.godot/imported/ExitD.ogg-e12b026c6d88ba3d3a209bd1ac1d6417.oggvorbisstr"
+
+[deps]
+
+source_file="res://sounds/sfx/psx ui sfx/squad_manager/ExitD.ogg"
+dest_files=["res://.godot/imported/ExitD.ogg-e12b026c6d88ba3d3a209bd1ac1d6417.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

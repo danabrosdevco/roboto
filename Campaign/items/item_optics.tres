@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3 uid="uid://citemoptics001"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"optics"
+display_name = "Optics Package"
+short_name = "Optics"
+description = "Extends sensor range. Lets a long weapon see as far as it shoots."
+kind = 2
+cost = 70
+usable_by_player = true
+usable_by_ai = true
+sensor_bonus = 30.0
+required_rank = 0

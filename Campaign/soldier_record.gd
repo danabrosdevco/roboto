@@ -42,6 +42,7 @@ enum Status { ACTIVE, WOUNDED, DESTROYED }
 @export var effective_accuracy: float = 1.0
 @export var effective_speed: float = 1.0
 @export var effective_signal_bonus: float = 0.0
+@export var effective_sensor_range: float = 45.0
 @export var damage: int = 0
 @export var signal_integrity: float = 1.0
 @export var status: Status = Status.ACTIVE
@@ -153,6 +154,7 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 	var accuracy := chassis.base_accuracy
 	var speed := chassis.base_speed
 	var signal_gain := 0.0
+	var sensors := chassis.base_sensor_range
 	for module_id in module_ids:
 		if module_id == &"":
 			continue
@@ -163,11 +165,13 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 		accuracy += module.accuracy_bonus
 		speed *= module.speed_multiplier
 		signal_gain += module.signal_bonus
+		sensors += module.sensor_bonus
 
 	max_health = maxi(1, health)
 	effective_accuracy = accuracy
 	effective_speed = speed
 	effective_signal_bonus = signal_gain
+	effective_sensor_range = maxf(4.0, sensors)
 	# Pulling a health module must not leave someone on negative health.
 	damage = clampi(damage, 0, max_health)
 

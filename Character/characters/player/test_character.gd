@@ -115,6 +115,21 @@ func _wire_loadout() -> void:
 	loadout.readout_changed.connect(_on_readout_changed)
 	loadout.equipped.connect(_on_equipped)
 
+	# Build what we're carrying from the player's record, exactly as the squad
+	# does. Previously the player's kit was whatever nodes happened to be
+	# parented under the camera, so fitting a rifle to YOU in the management
+	# screen changed a record nobody read.
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	if campaign != null and campaign.state != null:
+		var apply_loadout := func():
+			loadout.apply_record(campaign.state.player_record, campaign.get("catalogue"))
+		apply_loadout.call()
+		# Re-applied on roster changes, so a rifle fitted at base is in your
+		# hands before you reach the train rather than next mission.
+		campaign.state.roster_changed.connect(apply_loadout)
+		if campaign.has_signal("returned_to_base"):
+			campaign.returned_to_base.connect(func(): loadout.refill())
+
 	for item in loadout.equipment:
 		if item is PlayerScanner:
 			# Keeps the existing scanner sweep UI working off its new home.

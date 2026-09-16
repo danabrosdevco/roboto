@@ -48,6 +48,23 @@ class_name EquipmentLoadout
 #         frame along with it).
 @export var cancel_busy_on_switch: bool = true
 
+# ── BUILD FROM THE RECORD ─────────────────────
+# The player's kit came from whatever PlayerEquipment nodes happened to be
+# parented under the camera in test_character.tscn — authored once, identical
+# every mission, and untouched by the management screen. The squad's loadout was
+# already data; the player's wasn't, so fitting a rifle to YOU changed a record
+# nobody read.
+#
+# apply_record() rebuilds the hierarchy from CampaignState.player_record instead.
+# Auto-collect is still the fallback, so a scene with no campaign behaves exactly
+# as it always did.
+@export var build_from_record: bool = true
+# Kept and never rebuilt, because they aren't items. Melee in particular is the
+# floor the whole slot system falls back to and must always exist.
+@export var permanent_items: Array[PlayerEquipment] = []
+
+var _record_built: Array[PlayerEquipment] = []
+
 signal equipped(item: PlayerEquipment)
 signal denied(reason: String)
 signal readout_changed(readout: PlayerEquipment.Readout)
@@ -210,6 +227,15 @@ func get_readout() -> PlayerEquipment.Readout:
 # stops reaching into the weapon directly.
 func update(delta: float, move_factor: float, obstructed: bool, ads: bool) -> void:
 	_handle_slot_input()
+
+	# Everything you are NOT holding still ticks. Cooldowns and reservoirs don't
+	# pause because you happen to be carrying a rifle — and for the repair tool
+	# that was a hard deadlock: empty meant it couldn't be equipped, and not
+	# being equipped meant it never recharged.
+	for item in _all:
+		if item != current:
+			item.tick_stowed(delta)
+
 	if current == null:
 		return
 	_handle_use_input(delta)
@@ -241,8 +267,82 @@ func _handle_use_input(delta: float) -> void:
 		current.reload_pressed()
 
 
+# ─────────────────────────────────────────────
+# RECORD -> NODES
+# ─────────────────────────────────────────────
+# Instances the player_scene of every fitted item under the camera, then
+# re-collects. Called at deploy, and again whenever the record changes at base.
+func apply_record(record, catalogue) -> void:
+	if not build_from_record or record == null or catalogue == null:
+		return
+	if search_root == null:
+		search_root = cam
+	if search_root == null:
+		return
+
+	# Tear down only what WE built. Anything hand-placed and listed in
+	# permanent_items survives, which is what keeps melee from evaporating.
+	for node in _record_built:
+		if node != null and is_instance_valid(node):
+			node.queue_free()
+	_record_built.clear()
+
+	var current_id: StringName = &""
+	for group in [record.weapon_ids, record.equipment_ids]:
+		for item_id in group:
+			if item_id == &"":
+				continue
+			var item = catalogue.item(item_id)
+			if item == null or not item.fits_player() or item.player_scene == null:
+				continue
+			var node = item.player_scene.instantiate()
+			if not (node is PlayerEquipment):
+				push_warning("EquipmentLoadout: %s is not a PlayerEquipment scene." % item.player_scene.resource_path)
+				node.queue_free()
+				continue
+			search_root.add_child(node)
+			_record_built.append(node)
+			current_id = item_id
+
+	# Hand-placed items we're replacing must go, or you end up holding two
+	# rifles — the authored one and the one the record asked for.
+	for child in search_root.get_children():
+		if child is PlayerEquipment and not _record_built.has(child) \
+				and not permanent_items.has(child):
+			child.queue_free()
+
+	# Rebuild the slot table from what's actually there now.
+	primary = null
+	sidearm = null
+	melee = null
+	equipment.clear()
+	current = null
+	_previous = null
+	await get_tree().process_frame
+	_collect()
+	for item in _all:
+		item.initialize(player, cam, ammo)
+		if not item.charges_changed.is_connected(_on_charges_changed):
+			item.charges_changed.connect(_on_charges_changed)
+			item.wants_revert.connect(_on_wants_revert.bind(item))
+			item.denied.connect(func(reason: String): denied.emit(reason))
+	var opener := _first_available()
+	if opener != null:
+		equip_item(opener)
+
+
 # For a resupply crate or a respawn.
+# Reserve, magazines, reservoirs and cooldowns. ammo.reset() alone restored the
+# starting reserve and nothing else — every weapon kept whatever was chambered
+# when you extracted, and the repair tool's reservoir isn't in the AmmoPool at
+# all, so neither came back.
 func refill() -> void:
 	if ammo != null:
-		ammo.reset()
+		ammo.refill_all()
+	for item in _all:
+		item.restock()
+		if item is PlayerWeapon:
+			var gun := item as PlayerWeapon
+			gun.cancel_reload()
+			gun.loaded = gun.magazine_size
 	_on_charges_changed()

@@ -45,12 +45,13 @@ class_name CampaignManager
 @export var starting_chassis: PackedScene
 # The frame every starting soldier is built on. Their health comes from this
 # now, not from a number on the record.
-@export var starting_chassis_id: StringName = &"light"
+@export var starting_chassis_id: StringName = &"soldier"
 @export var starting_resources: int = 0
 # Item ids granted to stores on a fresh campaign, and the weapon every starting
 # soldier is issued. Without these a new save has an empty armoury and a squad
 # holding nothing, because the chassis ships with no gun by design.
-@export var starting_stock: Array[StringName] = [&"m4", &"m4", &"shotgun", &"pistol"]
+@export var starting_stock: Array[StringName] = [
+]
 @export var starting_weapon_id: StringName = &"m4"
 
 signal state_loaded

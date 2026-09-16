@@ -172,6 +172,8 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 		soldier.accuracy_multiplier = record.effective_accuracy
 	if "speed_multiplier" in soldier:
 		soldier.speed_multiplier = record.effective_speed
+	soldier.sensor_range = record.effective_sensor_range
+	soldier.sensor_bonus = 0.0   # already folded into the record's value
 	if record.effective_signal_bonus != 0.0:
 		soldier.signal_integrity = clampf(
 			soldier.signal_integrity + record.effective_signal_bonus, 0.0, 1.0)

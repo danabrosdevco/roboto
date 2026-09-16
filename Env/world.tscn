@@ -84,7 +84,7 @@ missions = Array[ExtResource("16_oqoj0")]([ExtResource("17_pp0hd")])
 catalogue = ExtResource("18_kolru")
 starting_chassis = ExtResource("11_6rcry")
 starting_resources = 300
-starting_stock = Array[StringName]([&"m4", &"m4", &"shotgun", &"pistol", &"m4"])
+starting_stock = Array[StringName]([&"m4", &"m4", &"carbine", &"carbine", &"pistol", &"shotgun", &"frag", &"frag", &"frag", &"repair_tool", &"m4", &"m4", &"m4"])
 
 [node name="EnemyForceSpawner" type="Node" parent="." node_paths=PackedStringArray("world", "ai_manager")]
 script = ExtResource("18_r3yq3")

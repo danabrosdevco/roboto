@@ -50,6 +50,17 @@ func equip_weapon_scene(scene: PackedScene) -> void:
 @export var rotation_speed := 7.0
 @export var reposition_distance: float = 2.0
 @export var advance_distance: float = 3.0
+# Fraction of the weapon's effective range to hold at. 0.8 keeps a rifle out at
+# ~64m and a shotgun at ~36m, so the longer weapon fights at a distance the
+# shorter one can't answer.
+@export var engage_standoff: float = 0.8
+# When the target outranges us we have to close, and crossing open ground to do
+# it is how a shotgun squad dies to rifles without ever firing. Outranged
+# advances hop cover to cover instead of walking a straight line.
+@export var bound_when_outranged: bool = true
+# How much further they'll detour for a covered position, as a multiple of the
+# direct step. Above ~2 they start taking absurd routes.
+@export var bound_detour_limit: float = 1.8
 @export var fallback_distance: float = 1.25
 @export var bits: int = 10
 @export var equipment_slots: Array[AIEquipmentSlot] = []
@@ -248,6 +259,125 @@ signal close_threat_engaged(target)
 # Detection range used for signal-degraded sensor checks (match your Area3D radius)
 @export var detection_radius: float = 20.0
 
+# ── VISION ────────────────────────────────────
+# The Area3D is a 25m sphere with no concept of facing or line of sight.
+#
+# Sight is a SENSOR stat, inherent to the robot — it is deliberately NOT derived
+# from the weapon. Tying it to the gun would mean picking up a rifle magically
+# improves your eyes, and it would leave nothing for a sensor module to upgrade.
+#
+# The consequence is the interesting part: default sensors (45m) are SHORTER
+# than a rifle's reach (80m), so a rifle squad can out-shoot what it can't yet
+# out-spot. Closing that gap is what a sensor module is for, and until you fit
+# one the rifle is a gun you can't fully aim. That's a loadout decision rather
+# than a bug.
+#
+# Note this only gates who spots FIRST. Once anyone in a squad calls contact the
+# whole squad engages, so one good sensor package carries the fireteam.
+@export var use_vision_cone: bool = true
+@export var sensor_range: float = 45.0
+# Set by modules at spawn. Additive metres.
+var sensor_bonus: float = 0.0
+# Total cone, degrees. Outside it you rely on peripheral_range and on hearing.
+@export var fov_degrees: float = 130.0
+# Anything this close is noticed regardless of facing — you don't need to be
+# looking at someone standing next to you.
+@export var peripheral_range: float = 8.0
+# Seconds of clear, centred view before a contact is called at point blank.
+@export var acquire_time: float = 0.35
+# Multiplier on acquire_time at maximum range and at the edge of the cone.
+# Spotting something far away and off to one side should take a beat; that beat
+# is what makes who-saw-who-first feel earned rather than arbitrary.
+@export var acquire_far_penalty: float = 4.0
+@export var vision_interval: float = 0.15
+var _vision_timer: float = 0.0
+var _awareness: Dictionary = {}   # body -> 0..1
+
+
+func sight_range() -> float:
+	return maxf(4.0, sensor_range + sensor_bonus)
+
+
+# Polled rather than event-driven, because "can I see them" changes when EITHER
+# of us moves or turns — there's no body_entered for that.
+func _tick_vision(delta: float) -> void:
+	if not use_vision_cone or ai_state == AIState.DEAD or downed:
+		return
+	var sig := get_signal_state()
+	if sig == SignalState.EKILL or sig == SignalState.CRITICAL:
+		return
+
+	_vision_timer -= delta
+	if _vision_timer > 0.0:
+		return
+	var elapsed: float = vision_interval
+	_vision_timer = vision_interval
+
+	var reach := sight_range()
+	var forward: Vector3 = -global_transform.basis.z
+	forward.y = 0.0
+	if forward.length_squared() < 0.01:
+		forward = Vector3.FORWARD
+	forward = forward.normalized()
+	var half_fov: float = deg_to_rad(fov_degrees * 0.5)
+
+	for candidate in _visible_candidates():
+		var to_them: Vector3 = candidate.global_position - global_position
+		var distance: float = to_them.length()
+		if distance > reach:
+			_awareness.erase(candidate)
+			continue
+
+		var flat: Vector3 = to_them
+		flat.y = 0.0
+		var angle: float = forward.angle_to(flat.normalized()) if flat.length_squared() > 0.01 else 0.0
+		var in_cone: bool = angle <= half_fov or distance <= peripheral_range
+		if not in_cone:
+			_awareness.erase(candidate)
+			continue
+
+		if not is_path_clear(global_position + Vector3.UP * 0.9, candidate.global_position, candidate):
+			# Behind cover. Awareness decays rather than resetting, so stepping
+			# in and out of cover doesn't make you permanently invisible.
+			_awareness[candidate] = maxf(0.0, float(_awareness.get(candidate, 0.0)) - elapsed)
+			continue
+
+		# Centred and close acquires fast; far and peripheral takes a beat.
+		var angle_factor: float = clampf(angle / maxf(half_fov, 0.01), 0.0, 1.0)
+		var range_factor: float = clampf(distance / maxf(reach, 0.01), 0.0, 1.0)
+		var penalty: float = 1.0 + (acquire_far_penalty - 1.0) * maxf(angle_factor, range_factor)
+		var needed: float = maxf(0.05, acquire_time * penalty)
+
+		var level: float = float(_awareness.get(candidate, 0.0)) + (elapsed / needed)
+		if level < 1.0:
+			_awareness[candidate] = level
+			continue
+
+		_awareness.erase(candidate)
+		if ai_state != AIState.COMBAT:
+			trigger_combat(candidate)
+			combat_triggered.emit(self)
+		elif not has_live_target():
+			change_combat_target(candidate)
+		return   # one contact per tick is plenty
+
+
+func _visible_candidates() -> Array:
+	var out: Array = []
+	if ai_manager == null:
+		if player != null and player.alive and _is_hostile(player) and player.is_targetable():
+			out.append(player)
+		return out
+	for other in ai_manager.all_ai:
+		if other == null or other == self or not is_instance_valid(other):
+			continue
+		if not other.alive or not _is_hostile(other):
+			continue
+		if other is Player and not other.is_targetable():
+			continue
+		out.append(other)
+	return out
+
 # ── ENUMS ─────────────────────────────────────
 # NOTE: ordering is load-bearing. Scenes store these as raw ints.
 enum AIState { COMBAT, PATROL, SEARCH, IDLE, DEAD, PASSIVE }
@@ -323,6 +453,17 @@ var alive: bool = true
 # because that would drag the collision capsule and the nav agent with it.
 @export var collapse_pitch_degrees: float = 84.0
 @export var collapse_drop: float = 0.5
+# The collider has to go down with the model. Tipping only the meshes leaves an
+# upright 2m capsule standing where the robot was, so a corpse keeps blocking
+# rounds at head height — worse, it becomes invisible cover, since nothing is
+# drawn there any more.
+#
+# The SHAPE is untouched (shapes are shared resources between instances and
+# editing one would flatten every robot in the level). The CollisionShape3D NODE
+# is rotated instead, which lays the capsule on its side for free.
+@export var flatten_collider_when_downed: bool = true
+var _collider_rest: Transform3D
+var _collider_flattened: bool = false
 
 var downed: bool = false
 var _piece_rest: Dictionary = {}   # Node3D -> original Transform3D
@@ -597,6 +738,7 @@ func handle_time_passing(delta):
 		_investigate_timer = maxf(0.0, _investigate_timer - delta)
 	if _sidestep_timer > 0.0:
 		_sidestep_timer = maxf(0.0, _sidestep_timer - delta)
+	_tick_vision(delta)
 	_tick_travel_look(delta)
 
 	if targeting_time >= targeting_recon_time:
@@ -1553,8 +1695,22 @@ func find_advance_target():
 	var direction = to_target / dist
 	var max_range = _max_range()
 
+	# Outranged? Take the covered route in.
+	if bound_when_outranged and _is_outranged() and has_method("find_best_cover_point"):
+		var bound := _find_bound_cover(dist)
+		if bound != Vector3.INF:
+			return bound
+
+	# Stop closing once we can reliably hit them. The old floor was
+	# max_range * 0.35 — for an 80m rifle that walked them to 28m, deep inside a
+	# 45m shotgun's envelope, and handed the fight to the shorter weapon. Hold
+	# at most of your own reach instead; that IS the advantage of a long gun.
+	var standoff: float = max_range * engage_standoff
+	if dist <= standoff:
+		return global_position
+
 	var step = advance_distance * clampf(dist / maxf(max_range, 0.01), 0.4, 3.0)
-	step = minf(step, dist - max_range * 0.35)   # don't crowd the target
+	step = minf(step, dist - standoff)
 	if step <= 0.2:
 		return global_position
 
@@ -1565,6 +1721,40 @@ func find_advance_target():
 		if is_path_clear(closest_point + Vector3.UP * 0.8, combat_target.global_position, combat_target):
 			return closest_point
 	return global_position
+
+# True when whatever we're fighting can hit us from further away than we can hit
+# them. That asymmetry, not the raw numbers, is what should change how we move.
+func _is_outranged() -> bool:
+	if combat_target == null or not is_instance_valid(combat_target):
+		return false
+	var theirs: float = 0.0
+	if "weapon" in combat_target and combat_target.weapon != null \
+			and "max_effective_range" in combat_target.weapon:
+		theirs = combat_target.weapon.max_effective_range
+	elif combat_target is Player:
+		# The player's HUDWeapon uses hitscan_range rather than an AI falloff
+		# curve, so assume they outrange us unless we're already long-ranged.
+		theirs = 60.0
+	return theirs > _max_range() * 1.15
+
+
+# A cover point that actually gets us closer, without walking miles for it.
+func _find_bound_cover(current_dist: float) -> Vector3:
+	var cover = call("find_best_cover_point")
+	if cover == null:
+		return Vector3.INF
+	var cover_pos: Vector3 = cover.global_position
+	var new_dist: float = cover_pos.distance_to(combat_target.global_position)
+	# Must make progress. A cover point that leaves us no closer is a retreat
+	# dressed up as an advance.
+	if new_dist >= current_dist - 1.0:
+		return Vector3.INF
+	# And must not be a ludicrous detour.
+	var travel: float = global_position.distance_to(cover_pos)
+	if travel > (current_dist - new_dist) * bound_detour_limit + advance_distance:
+		return Vector3.INF
+	return cover_pos
+
 
 func find_fallback_target():
 	if combat_target == null:
@@ -1696,6 +1886,7 @@ func enter_downed() -> void:
 		_collision_shape = _find_collision_shape()
 	if _collision_shape != null:
 		_collision_shape.set_deferred("disabled", false)
+	_flatten_collider()
 	if stimulus_manager != null:
 		stimulus_manager.emit_stimulus(
 			StimulusManager.StimulusType.ALLY_DIED,
@@ -1752,6 +1943,7 @@ func revive() -> void:
 	alive = true
 	health = maxi(health, int(ceil(max_health * revive_at_fraction)))
 	_restore_pieces()
+	_restore_collider()
 	if _collision_shape != null:
 		_collision_shape.set_deferred("disabled", false)
 	if weapon != null:
@@ -1772,6 +1964,46 @@ func revive() -> void:
 # Tip the visible pieces over. The CharacterBody3D itself stays upright —
 # rotating it would take the collision capsule and the nav agent with it, and a
 # revived robot would come back facing the floor.
+# Lays the collider on its side so a wreck is prone cover rather than a pillar.
+# Still solid, still hittable by the repair tool's ray — just the right height.
+func _flatten_collider() -> void:
+	if not flatten_collider_when_downed or _collision_shape == null:
+		return
+	if _collider_flattened:
+		return
+	_collider_rest = _collision_shape.transform
+	_collider_flattened = true
+
+	var lying := _collider_rest
+	lying = lying.rotated_local(Vector3.RIGHT, deg_to_rad(90.0))
+	# Drop it so the now-horizontal shape rests on the deck instead of floating
+	# at the old centre height.
+	lying.origin.y = _prone_height()
+	_collision_shape.transform = lying
+
+
+func _restore_collider() -> void:
+	if not _collider_flattened or _collision_shape == null:
+		return
+	_collision_shape.transform = _collider_rest
+	_collider_flattened = false
+
+
+# Half the thickness of the shape once it's on its side, so it sits on the
+# ground rather than sinking or hovering.
+func _prone_height() -> float:
+	var shape := _collision_shape.shape
+	if shape is CapsuleShape3D:
+		return (shape as CapsuleShape3D).radius
+	if shape is CylinderShape3D:
+		return (shape as CylinderShape3D).radius
+	if shape is SphereShape3D:
+		return (shape as SphereShape3D).radius
+	if shape is BoxShape3D:
+		return (shape as BoxShape3D).size.z * 0.5
+	return 0.4
+
+
 func _collapse_pieces() -> void:
 	for piece in visible_pieces:
 		if piece == null or not is_instance_valid(piece):

@@ -82,9 +82,16 @@ func add(ammo_type: StringName, amount: int) -> int:
 
 
 # For a resupply crate that tops everything up to capacity.
+# Back to carrying capacity. A capacity of 0 means "no limit", which has no
+# ceiling to fill to — those were silently SKIPPED, so any ammo type you didn't
+# give a cap never restocked. They restore their starting amount instead.
 func refill_all() -> void:
+	var starting := {}
+	for stock in starting_ammo:
+		if stock != null and stock.ammo_type != &"":
+			starting[stock.ammo_type] = stock.amount
 	for ammo_type in _capacities.keys():
 		var cap := get_capacity(ammo_type)
-		if cap > 0:
-			_counts[ammo_type] = cap
-			ammo_changed.emit(ammo_type, cap)
+		var amount: int = cap if cap > 0 else int(starting.get(ammo_type, get_count(ammo_type)))
+		_counts[ammo_type] = amount
+		ammo_changed.emit(ammo_type, amount)

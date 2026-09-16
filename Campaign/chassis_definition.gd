@@ -22,6 +22,9 @@ class_name ChassisDefinition
 @export var base_health: int = 30
 @export var base_speed: float = 1.0
 @export var base_accuracy: float = 1.0
+# How far this frame can SEE, in metres. Independent of whatever it's holding —
+# a heavy frame with better optics spots sooner regardless of its weapon.
+@export var base_sensor_range: float = 45.0
 
 # ── SLOTS ─────────────────────────────────────
 # Weapon slots are almost always 1; kept configurable for a future heavy frame.

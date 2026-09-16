@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3 uid="uid://citemfragplyr1"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" uid="uid://b0b0b4xmxn7ke" path="res://Character/weapon/grenade_hud_weapon.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://bdt1481i5nwi1" path="res://Character/characters/ai/equipment/ai_grenade.tscn" id="3_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"frag"
+display_name = "Frag Charge"
+short_name = "Frag"
+description = "Thrown demolition charge. Breaks a holdout that a rifle can't."
+kind = 1
+cost = 20
+player_scene = ExtResource("2_player")
+ai_scene = ExtResource("3_ai")
+usable_by_player = true
+usable_by_ai = true
+quantity = 2
+required_rank = 0

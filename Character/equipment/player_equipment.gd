@@ -203,6 +203,20 @@ func tick(_delta: float) -> void:
 	pass
 
 
+# Ticked for every item you are NOT holding. Anything that recovers over time
+# has to run here, or it only recovers while equipped — which for a resource
+# that gates equipping is a deadlock: empty means you can't hold it, and not
+# holding it means it never refills.
+func tick_stowed(_delta: float) -> void:
+	pass
+
+
+# Called by EquipmentLoadout.refill() at base. Reservoirs, cooldowns, anything
+# that isn't in the shared AmmoPool and so isn't covered by refill_all().
+func restock() -> void:
+	pass
+
+
 # ─────────────────────────────────────────────
 # INPUT — the loadout routes to whatever is held
 # ─────────────────────────────────────────────
