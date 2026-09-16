@@ -49,6 +49,21 @@ enum Kind {
 
 # Set these deliberately rather than inferring from which scene is non-null, so
 # a half-authored item fails loudly instead of quietly becoming AI-only.
+# ── PLAYER MOUNT ──────────────────────────────
+# Per-instance overrides that used to live on the node in test_character.tscn —
+# the M4 carried transform = (0.192761, -0.207464, 0) to sit at eye level, and
+# instancing the packed scene fresh loses that. It belongs on the ITEM now: the
+# alignment is a property of the weapon, not of one hand-placed node, so every
+# copy of an M4 hangs the same way and a new weapon is tuned in one place.
+@export var player_mount_offset: Vector3 = Vector3.ZERO
+@export var player_mount_rotation_degrees: Vector3 = Vector3.ZERO
+
+# Blank leaves whatever the scene says. Set it where two items share a scene but
+# feed from different pools — the pistol uses m4-shaped scenes but 9mm ammo.
+@export var ammo_type: StringName = &""
+# 0 leaves the scene's value.
+@export var weapon_damage: int = 0
+
 @export var usable_by_player: bool = true
 @export var usable_by_ai: bool = true
 # EQUIPMENT only: how many uses one of these grants.

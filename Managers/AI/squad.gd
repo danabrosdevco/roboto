@@ -272,6 +272,11 @@ func _tick_defend() -> void:
 		var post: Vector3 = _defend_post_for(soldier)
 		var gap: float = soldier.global_position.distance_to(post)
 
+		# Travelling: don't hug cover en route or they stop every few metres and
+		# never arrive. defensive_mode goes on when they get there.
+		if gap > defend_post_tolerance:
+			soldier.defensive_mode = false
+
 		if gap <= defend_post_tolerance:
 			# In cover. Static, apart from the head — _tick_idle_scan turns
 			# look_target and never touches movement.
@@ -279,13 +284,13 @@ func _tick_defend() -> void:
 				soldier.change_ai_state(Enemy.AIState.IDLE)
 				# Watch outward, away from the thing being defended.
 				soldier.set_scan_facing(soldier.global_position + (soldier.global_position - objective_position))
+			soldier.defensive_mode = true
 			if soldier.movement_state != Enemy.MovementState.NONE:
 				soldier.halt()
 			continue
 
 		if soldier.movement_state == Enemy.MovementState.NONE \
 				or soldier.movement_target.distance_to(post) > defend_post_tolerance:
-			soldier.defensive_mode = true
 			soldier.order_move_to(post, true)
 
 

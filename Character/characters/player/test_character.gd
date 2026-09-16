@@ -119,16 +119,11 @@ func _wire_loadout() -> void:
 	# does. Previously the player's kit was whatever nodes happened to be
 	# parented under the camera, so fitting a rifle to YOU in the management
 	# screen changed a record nobody read.
-	var campaign := get_tree().get_first_node_in_group("campaign")
-	if campaign != null and campaign.state != null:
-		var apply_loadout := func():
-			loadout.apply_record(campaign.state.player_record, campaign.get("catalogue"))
-		apply_loadout.call()
-		# Re-applied on roster changes, so a rifle fitted at base is in your
-		# hands before you reach the train rather than next mission.
-		campaign.state.roster_changed.connect(apply_loadout)
-		if campaign.has_signal("returned_to_base"):
-			campaign.returned_to_base.connect(func(): loadout.refill())
+	# Deferred. In world.tscn the CampaignManager node is declared BELOW
+	# test_character, and children ready in declaration order — so at this point
+	# it isn't in its group yet and the lookup returns null. That's why fitting
+	# a rifle to YOU did nothing: apply_record was never called.
+	_bind_campaign.call_deferred()
 
 	for item in loadout.equipment:
 		if item is PlayerScanner:
@@ -142,6 +137,21 @@ func _wire_loadout() -> void:
 			# the vocabulary for it. Hook it up when you're ready:
 			# tool.repair_target_pinned.connect(commander.hold_member)
 			tool.repaired.connect(func(_t, _a): update_status())
+
+
+func _bind_campaign() -> void:
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	if campaign == null or campaign.state == null:
+		push_warning("Player: no CampaignManager found — carrying whatever is in the scene.")
+		return
+	var apply_loadout := func():
+		loadout.apply_record(campaign.state.player_record, campaign.get("catalogue"))
+	apply_loadout.call()
+	# Re-applied on roster changes, so a rifle fitted at base is in your hands
+	# before you reach the train rather than next mission.
+	campaign.state.roster_changed.connect(apply_loadout)
+	if campaign.has_signal("returned_to_base"):
+		campaign.returned_to_base.connect(func(): loadout.refill())
 
 
 func _on_readout_changed(_readout: PlayerEquipment.Readout) -> void:
@@ -158,6 +168,8 @@ func _on_equipped(_item: PlayerEquipment) -> void:
 func current_weapon() -> PlayerWeapon:
 	if loadout == null:
 		return null
+	if loadout.current == null:
+		return
 	return loadout.current as PlayerWeapon
 
 
@@ -356,8 +368,9 @@ func handle_movement(_delta: float) -> void:
 
 
 func _move_scale() -> float:
-	if loadout != null and loadout.current is PlayerRepairTool:
-		return (loadout.current as PlayerRepairTool).get_move_scale()
+	if loadout != null and loadout.current != null:
+		if loadout.current is PlayerRepairTool:
+			return (loadout.current as PlayerRepairTool).get_move_scale()
 	return 1.0
 
 

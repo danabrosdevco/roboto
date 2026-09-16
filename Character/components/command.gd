@@ -21,11 +21,11 @@ class_name CommandMarker
 # ─────────────────────────────────────────────
 
 # Tint per verb — index matches SquadCommander.Verb ordering.
+# Index matches SquadCommander.Verb.
 @export var verb_colors: Array[Color] = [
-	Color(0.95, 0.45, 0.35),   # ASSAULT
-	Color(0.45, 0.70, 0.95),   # DEFEND
-	Color(0.55, 0.85, 0.55),   # FOLLOW
-	Color(0.90, 0.90, 0.90),   # CONTACT
+	Color(0.35, 0.62, 0.95),   # ADVANCE — blue, "go here and hold"
+	Color(0.55, 0.85, 0.55),   # FOLLOW  — green, "stay with me"
+	Color(0.90, 0.90, 0.90),   # CONTACT — white, a report not an order
 ]
 
 @export var ring_radius: float = 1.1

@@ -287,22 +287,28 @@ func apply_record(record, catalogue) -> void:
 			node.queue_free()
 	_record_built.clear()
 
-	var current_id: StringName = &""
-	for group in [record.weapon_ids, record.equipment_ids]:
-		for item_id in group:
-			if item_id == &"":
-				continue
-			var item = catalogue.item(item_id)
-			if item == null or not item.fits_player() or item.player_scene == null:
-				continue
-			var node = item.player_scene.instantiate()
-			if not (node is PlayerEquipment):
-				push_warning("EquipmentLoadout: %s is not a PlayerEquipment scene." % item.player_scene.resource_path)
-				node.queue_free()
-				continue
-			search_root.add_child(node)
-			_record_built.append(node)
-			current_id = item_id
+	# THE SLOT COMES FROM THE RECORD, not from the packed scene.
+	#
+	# m4_hud_weapon.tscn doesn't store `slot` — that was set on the INSTANCE in
+	# test_character.tscn, which no longer exists. So a scene instanced here
+	# arrives with the PlayerEquipment default of EQUIPMENT, and your rifle
+	# quietly landed on key 4 instead of key 1. Which slot an item occupies is a
+	# property of where it was fitted, so assign it from the array it came out
+	# of and ignore whatever the scene happens to say.
+	for weapon_index in record.weapon_ids.size():
+		var node := _build_item(catalogue, record.weapon_ids[weapon_index])
+		if node == null:
+			continue
+		# First weapon slot is PRIMARY, any further ones are SIDEARM.
+		node.slot = PlayerEquipment.Slot.PRIMARY if weapon_index == 0 else PlayerEquipment.Slot.SIDEARM
+
+	for equip_index in record.equipment_ids.size():
+		var node := _build_item(catalogue, record.equipment_ids[equip_index])
+		if node == null:
+			continue
+		node.slot = PlayerEquipment.Slot.EQUIPMENT
+		# Position in the record decides whether it's key 4, 5 or 6.
+		node.equipment_order = equip_index
 
 	# Hand-placed items we're replacing must go, or you end up holding two
 	# rifles — the authored one and the one the record asked for.
@@ -329,6 +335,41 @@ func apply_record(record, catalogue) -> void:
 	var opener := _first_available()
 	if opener != null:
 		equip_item(opener)
+
+
+func _build_item(catalogue, item_id: StringName) -> PlayerEquipment:
+	if item_id == &"":
+		return null
+	var item = catalogue.item(item_id)
+	if item == null:
+		push_warning("EquipmentLoadout: no catalogue entry for '%s'." % item_id)
+		return null
+	if not item.fits_player():
+		return null
+	if item.player_scene == null:
+		push_warning("EquipmentLoadout: '%s' has no player_scene; nothing to put in your hands." % item_id)
+		return null
+	var node = item.player_scene.instantiate()
+	if not (node is PlayerEquipment):
+		push_warning("EquipmentLoadout: %s is not a PlayerEquipment scene." % item.player_scene.resource_path)
+		node.queue_free()
+		return null
+	search_root.add_child(node)
+	_record_built.append(node)
+
+	# Alignment and per-item stats come from the definition. Applied AFTER
+	# add_child so the node's transform isn't overwritten by the scene's own.
+	node.position = item.player_mount_offset
+	node.rotation_degrees = item.player_mount_rotation_degrees
+	node.display_name = item.display_name
+	if node is PlayerWeapon:
+		var gun := node as PlayerWeapon
+		if item.ammo_type != &"":
+			gun.ammo_type = item.ammo_type
+		if item.weapon_damage > 0:
+			gun.damage = item.weapon_damage
+
+	return node
 
 
 # For a resupply crate or a respawn.

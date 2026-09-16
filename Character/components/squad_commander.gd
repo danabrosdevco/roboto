@@ -52,11 +52,19 @@ class_name SquadCommander
 # one stayed in the cycle list forever.
 @export var registry_refresh_interval: float = 2.0
 
-enum Verb { ASSAULT, DEFEND, FOLLOW, CONTACT }
+# ASSAULT is gone. "Go there and engage what you meet on the way" meant the
+# squad self-directed mid-order, and self-direction is where almost every
+# problem came from — chasing corpses, closing into shotgun range, stringing
+# into a line, slipping the leash.
+#
+# ADVANCE is the old DEFEND behaviour under a better name: go there, hold, dig
+# in. Taking ground becomes a sequence of orders you issue rather than a
+# judgement call the AI gets wrong. Bounding a squad forward is now YOUR job,
+# which is the whole appeal of a squad game.
+enum Verb { ADVANCE, FOLLOW, CONTACT }
 
 const VERB_LABELS := {
-	Verb.ASSAULT: "ASSAULT",
-	Verb.DEFEND:  "DEFEND",
+	Verb.ADVANCE: "ADVANCE",
 	Verb.FOLLOW:  "FOLLOW",
 	Verb.CONTACT: "CONTACT",
 }
@@ -222,7 +230,7 @@ func _process(delta: float) -> void:
 
 # CONTACT is deliberately absent — it's the tap, not a wheel entry.
 func _available_verbs() -> Array:
-	return [Verb.ASSAULT, Verb.DEFEND, Verb.FOLLOW]
+	return [Verb.ADVANCE, Verb.FOLLOW]
 
 
 func _open_wheel() -> void:
@@ -284,13 +292,15 @@ func _issue_contextual_order() -> void:
 			squad_selected.emit(s)
 			return
 
-	# Hostile under the crosshair — assault it.
+	# Hostile under the crosshair. With no assault verb there's nothing to send
+	# them AT, so mark it instead — the squad gets a contact call and picks it
+	# up themselves if it's in reach.
 	if collider is Enemy and Enums.are_hostile(Enums.Factions.PLAYER, collider.faction):
-		_issue_order(Verb.ASSAULT, hit.position, collider)
+		_issue_order(Verb.CONTACT, hit.position, collider)
 		return
 
-	# Ground. Push to it.
-	_issue_order(Verb.ASSAULT, hit.position)
+	# Ground. Move there and hold.
+	_issue_order(Verb.ADVANCE, hit.position)
 
 
 func _issue_order(verb: int, position = null, target: Node = null) -> void:
@@ -306,7 +316,7 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 			pos = player.global_position
 		else:
 			pos = hit.position
-			if verb == Verb.ASSAULT and target == null:
+			if verb == Verb.ADVANCE and target == null:
 				var c = hit.get("collider")
 				if c is Enemy and Enums.are_hostile(Enums.Factions.PLAYER, c.faction):
 					target = c
@@ -317,16 +327,11 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 		Verb.CONTACT:
 			_call_contact(pos, target)
 			return
-		Verb.ASSAULT:
-			# One verb, two objectives, resolved by whether the crosshair found
-			# a body. Designating a target is strictly more specific than
-			# pushing to a spot, so prefer it when we have one.
-			if target == null:
-				squad.receive_player_order(Squad.SquadObjective.ADVANCE, pos)
-			else:
-				squad.receive_player_order(
-					Squad.SquadObjective.ATTACK, pos, target as CharacterBody3D)
-		Verb.DEFEND:
+		Verb.ADVANCE:
+			# Maps to SquadObjective.DEFEND — go there and hold. The enum keeps
+			# ADVANCE and ATTACK because EnemySquadSpec.Posture still uses them
+			# for garrisons and patrols; enemies genuinely should push. Only the
+			# PLAYER's vocabulary shrank.
 			squad.receive_player_order(Squad.SquadObjective.DEFEND, pos)
 		Verb.FOLLOW:
 			# No world position to mark — the objective is a moving node. Clear
@@ -401,7 +406,7 @@ func _update_preview() -> void:
 		if _preview == null:
 			return
 	var verbs := _available_verbs()
-	var verb: int = verbs[_wheel_index] if _wheel_index >= 0 and _wheel_index < verbs.size() else Verb.ASSAULT
+	var verb: int = verbs[_wheel_index] if _wheel_index >= 0 and _wheel_index < verbs.size() else Verb.ADVANCE
 	# FOLLOW has no aim point — park the preview at the player's feet so the
 	# ring still reads as "this order is about you", not about the crosshair.
 	if verb == Verb.FOLLOW and player != null:
