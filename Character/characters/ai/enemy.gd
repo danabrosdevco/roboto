@@ -5,6 +5,30 @@ class_name Enemy
 @export var patrol_path: PatrolPath
 @export var nav_agent: NavigationAgent3D
 @export var weapon: AIWeapon
+# Where a weapon gets attached at runtime. A chassis scene ships with an empty
+# mount instead of a baked-in gun, so one frame can carry anything — which is
+# what makes "buy a rifle, fit it to Bravo-2" mean something. Scenes that still
+# have a weapon wired directly keep working; the mount is only used when a
+# weapon is fitted from a record.
+@export var weapon_mount: Node3D
+
+
+# Swaps whatever is on the mount for a new weapon. Safe to call before _ready.
+func equip_weapon_scene(scene: PackedScene) -> void:
+	if weapon_mount == null:
+		push_warning("%s has no weapon_mount; cannot fit a weapon at runtime." % name)
+		return
+	for child in weapon_mount.get_children():
+		child.queue_free()
+	if scene == null:
+		weapon = null
+		return
+	var instance := scene.instantiate()
+	weapon_mount.add_child(instance)
+	instance.transform = Transform3D.IDENTITY
+	weapon = instance as AIWeapon
+	if weapon == null:
+		push_warning("%s is not an AIWeapon scene." % scene.resource_path)
 @export var label: Label3D
 @export var bark: Bark
 @export var detection: Area3D
@@ -1738,6 +1762,13 @@ func receive_stimulus(
 			if ai_state != AIState.COMBAT:
 				look_target = source_position
 				_remember_last_seen(source_position)
+				# A shot from someone hostile is a contact, not ambient noise.
+				# If we can see where it came from, engage; otherwise go look.
+				# This is what lets a long-range weapon start a fight at all —
+				# the shooter is well outside the detection Area3D.
+				if source_node != null and _is_hostile(source_node):
+					if is_path_clear(global_position + Vector3.UP * 0.8, source_position, source_node):
+						trigger_combat(source_node)
 				# Close enough to be worth walking over to. SEARCH already
 				# drives the look-around-and-reposition behaviour, so this just
 				# points it at the right place.

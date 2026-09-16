@@ -23,6 +23,10 @@ class_name CampaignManager
 @export var missions: Array[MissionDefinition] = []
 @export var autosave: bool = true
 
+# Every item, module and chassis in the game. Handed to CampaignState so records
+# can derive their stats, and read by the squad manager UI and the spawner.
+@export var catalogue: ItemCatalogue
+
 # ── DEV: launching a mission level directly ───
 # Running valley_level.tscn (or world.tscn pointed at it) skips the base, so
 # begin_deploy() never runs: in_mission stays false, current_mission stays null,
@@ -39,8 +43,15 @@ class_name CampaignManager
 @export var starting_squad_size: int = 4
 @export var starting_names: Array[String] = ["Bravo-1", "Bravo-2", "Bravo-3", "Bravo-4"]
 @export var starting_chassis: PackedScene
-@export var starting_max_health: int = 30
+# The frame every starting soldier is built on. Their health comes from this
+# now, not from a number on the record.
+@export var starting_chassis_id: StringName = &"soldier"
 @export var starting_resources: int = 0
+# Item ids granted to stores on a fresh campaign, and the weapon every starting
+# soldier is issued. Without these a new save has an empty armoury and a squad
+# holding nothing, because the chassis ships with no gun by design.
+@export var starting_stock: Array[StringName] = [&"m4", &"m4", &"shotgun", &"pistol"]
+@export var starting_weapon_id: StringName = &"m4"
 
 signal state_loaded
 signal deployed(mission: MissionDefinition)
@@ -74,6 +85,8 @@ func _ready() -> void:
 	if state == null:
 		state = CampaignState.new()
 		_seed_new_campaign()
+	state.catalogue = catalogue
+	state.recompute_roster()
 	state_loaded.emit()
 
 
@@ -82,9 +95,22 @@ func _seed_new_campaign() -> void:
 	for i in starting_squad_size:
 		var r := SoldierRecord.new()
 		r.display_name = starting_names[i] if i < starting_names.size() else "Unit-%02d" % (i + 1)
-		r.max_health = starting_max_health
 		r.chassis_scene = starting_chassis
+		var frame: ChassisDefinition = catalogue.chassis_def(starting_chassis_id) if catalogue != null else null
+		if frame != null:
+			r.set_chassis(frame, catalogue)
+		else:
+			push_warning("Campaign: no chassis '%s' in the catalogue — starting soldiers will use the record default health." % starting_chassis_id)
 		state.add_soldier(r)
+	# Stores first, then issue each soldier their weapon out of it.
+	for item_id in starting_stock:
+		state.armoury.add(item_id)
+	if catalogue != null and starting_weapon_id != &"":
+		var gun := catalogue.item(starting_weapon_id)
+		if gun != null:
+			for r in state.roster:
+				state.fit_item(r, gun, 0)
+
 	if autosave:
 		state.save_to_disk()
 
@@ -304,6 +330,11 @@ func on_returned_to_base() -> void:
 	# — a debug jump, a future abort path — the train still comes back blank.
 	state.selected_mission_id = &""
 	_push_destination()
+	# Home. Everyone rearms — the squad from their records, the player through
+	# the returned_to_base signal their loadout listens for.
+	state.restock_roster()
+	if autosave:
+		state.save_to_disk()
 	if spawner != null:
 		spawner.clear()
 	if objectives != null:

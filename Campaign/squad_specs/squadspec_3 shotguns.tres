@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="EnemySquadSpec" load_steps=3 format=3 uid="uid://bsdxmikw0bsan"]
 
-[ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="1_44i85"]
+[ext_resource type="PackedScene" uid="uid://xcfbkp3wkupp" path="res://Character/characters/ai/soldier_chassis.tscn" id="1_i3dtt"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="1_miapc"]
 
 [resource]
 script = ExtResource("1_miapc")
 callsign = "HOSTILE"
 count = 3
-chassis = ExtResource("1_44i85")
+chassis = ExtResource("1_i3dtt")
 posture = 0
 route_tag = &""
 post_tag = &""

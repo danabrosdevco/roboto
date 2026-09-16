@@ -25,6 +25,9 @@ class_name SquadSpawner
 @export var default_chassis: PackedScene
 # Optional. Instantiated for the Squad node; falls back to a bare Squad.
 @export var squad_scene: PackedScene
+# Needed to turn a record's item ids into scenes. Falls back to the campaign's
+# catalogue if left blank.
+@export var catalogue: ItemCatalogue
 
 # ── WHERE THE SQUAD APPEARS ───────────────────
 # SPAWN_POINT        use the level's SquadSpawnPoint, fail if there isn't one
@@ -118,8 +121,49 @@ func _build_soldier(record: SoldierRecord) -> Soldier:
 		return null
 	# Before add_child: AI._ready() calls initialize(), which reads max_health
 	# and initialises every equipment slot.
+	# Stats first: max_health is derived from the chassis and fitted modules,
+	# and write_to() copies it onto the soldier.
+	record.recompute_stats(_catalogue())
 	record.write_to(soldier)
+	_fit_loadout(soldier, record)
 	return soldier
+
+
+# Turns the record's fitted item ids into actual nodes on the chassis.
+func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
+	var cat := _catalogue()
+	if cat == null:
+		return
+
+	# Weapon: only the first slot is used today, but the loop means a future
+	# two-weapon frame needs no change here.
+	for id_value in record.weapon_ids:
+		if id_value == &"":
+			continue
+		var item := cat.item(id_value)
+		if item != null and item.fits_ai():
+			soldier.equip_weapon_scene(item.ai_scene)
+		break
+
+	# Module health is already folded into record.max_health by
+	# recompute_stats(), so adding it again here would double-count it. What's
+	# left are the stats the record can't express as a single number.
+	if "accuracy_multiplier" in soldier:
+		soldier.accuracy_multiplier = record.effective_accuracy
+	if "speed_multiplier" in soldier:
+		soldier.speed_multiplier = record.effective_speed
+	if record.effective_signal_bonus != 0.0:
+		soldier.signal_integrity = clampf(
+			soldier.signal_integrity + record.effective_signal_bonus, 0.0, 1.0)
+
+
+func _catalogue() -> ItemCatalogue:
+	if catalogue != null:
+		return catalogue
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	if campaign != null:
+		catalogue = campaign.get("catalogue")
+	return catalogue
 
 
 func _build_squad(point: SquadSpawnPoint, members: Array[Soldier]) -> Squad:
@@ -218,7 +262,7 @@ func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 	squad.follow(player)
 	active_squad = squad
 	squad_deployed.emit(squad, members.size())
-	print("[SquadSpawner] %d deployed on the player (no spawn point used)" % members.size())
+	#print("[SquadSpawner] %d deployed on the player (no spawn point used)" % members.size())
 	return squad
 
 

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3 uid="uid://dem3le71p01mi"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" uid="uid://viqumhnkw2cx" path="res://Character/weapon/ai-wep_shotgun.tscn" id="2_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"shotgun"
+display_name = "Pump Shotgun"
+description = "Pre-war era commercial firearm loaded with 00 'buckshot'."
+kind = 0
+cost = 50
+ai_scene = ExtResource("2_ai")
+usable_by_player = false
+usable_by_ai = true
+quantity = 1
+health_bonus = 0
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+required_rank = 0
+chassis_whitelist = Array[StringName]([])

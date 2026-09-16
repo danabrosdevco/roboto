@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=22 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="6_ckjgx"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="7_ura3n"]
 [ext_resource type="Script" path="res://Campaign/squad_spawner.gd" id="11_0cp1s"]
+[ext_resource type="PackedScene" uid="uid://xcfbkp3wkupp" path="res://Character/characters/ai/soldier_chassis.tscn" id="11_6rcry"]
 [ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="12_0vb83"]
 [ext_resource type="Script" path="res://Campaign/objective_tracker.gd" id="12_1xc4a"]
 [ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="12_nadmy"]
@@ -17,6 +18,7 @@
 [ext_resource type="PackedScene" uid="uid://lpptelhi4w0y" path="res://maps/homebase_level.tscn" id="16_oio3q"]
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="16_oqoj0"]
 [ext_resource type="Resource" uid="uid://cs70pdfsa0rfb" path="res://Campaign/missions/mission_valley.tres" id="17_pp0hd"]
+[ext_resource type="Resource" uid="uid://ciftj4gygiyem" path="res://Campaign/items & catalogue/test_item_catalogue.tres" id="18_kolru"]
 [ext_resource type="Script" path="res://Campaign/enemy_force_spawner.gd" id="18_r3yq3"]
 [ext_resource type="PackedScene" uid="uid://bww5b5c7ej00s" path="res://Character/characters/appx/enemy_shotgun.tscn" id="19_dmcx0"]
 
@@ -68,7 +70,7 @@ direction = Vector3(0, -1, 0)
 script = ExtResource("11_0cp1s")
 world = NodePath("..")
 ai_manager = NodePath("../AIManager")
-default_chassis = ExtResource("12_0vb83")
+default_chassis = ExtResource("11_6rcry")
 squad_scene = ExtResource("12_nadmy")
 player = NodePath("../test_character")
 
@@ -79,7 +81,10 @@ script = ExtResource("12_1xc4a")
 script = ExtResource("15_3b3cm")
 base_level = ExtResource("16_oio3q")
 missions = Array[ExtResource("16_oqoj0")]([ExtResource("17_pp0hd")])
-starting_max_health = 50
+catalogue = ExtResource("18_kolru")
+starting_chassis = ExtResource("11_6rcry")
+starting_resources = 300
+starting_stock = Array[StringName]([&"m4", &"m4", &"shotgun", &"pistol", &"m4"])
 
 [node name="EnemyForceSpawner" type="Node" parent="." node_paths=PackedStringArray("world", "ai_manager")]
 script = ExtResource("18_r3yq3")

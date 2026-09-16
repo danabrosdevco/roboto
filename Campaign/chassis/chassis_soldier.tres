@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://vw46h82csp7a"]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" uid="uid://xcfbkp3wkupp" path="res://Character/characters/ai/soldier_chassis.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"soldier"
+display_name = "Soldier"
+description = "Standard soldier drone chassis."
+scene = ExtResource("2_scene")
+cost = 0
+base_health = 60
+base_speed = 1.0
+base_accuracy = 1.0
+weapon_slots = 1
+equipment_slots = 2
+module_slots = 2
+required_rank = 0

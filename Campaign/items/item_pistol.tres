@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3 uid="uid://citempistol01"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" uid="uid://c73xl4hq8l5aa" path="res://Character/weapon/pistol_hud_weapon.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_pistol.tscn" id="3_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"pistol"
+display_name = "Ancient Pistol"
+description = "Obsolete sidearm from days long past."
+kind = 0
+cost = 25
+player_scene = ExtResource("2_player")
+ai_scene = ExtResource("3_ai")
+usable_by_player = true
+usable_by_ai = true
+quantity = 1
+health_bonus = 0
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+required_rank = 0
+chassis_whitelist = Array[StringName]([])

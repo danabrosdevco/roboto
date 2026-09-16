@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemCatalogue" load_steps=7 format=3 uid="uid://ciftj4gygiyem"]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_ek13f"]
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="2_rbiaw"]
+[ext_resource type="Resource" uid="uid://citemm4rifle1" path="res://Campaign/items/item_m4.tres" id="3_e1bbr"]
+[ext_resource type="Script" path="res://Campaign/item_catalogue.gd" id="3_rvros"]
+[ext_resource type="Resource" uid="uid://citempistol01" path="res://Campaign/items/item_pistol.tres" id="4_af7aj"]
+[ext_resource type="Resource" uid="uid://dem3le71p01mi" path="res://Campaign/items/item_shotgun.tres" id="5_jydn4"]
+
+[resource]
+script = ExtResource("3_rvros")
+items = Array[ExtResource("2_rbiaw")]([ExtResource("3_e1bbr"), ExtResource("4_af7aj"), ExtResource("5_jydn4")])
+chassis = Array[ExtResource("1_ek13f")]([])
