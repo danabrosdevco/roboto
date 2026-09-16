@@ -168,9 +168,10 @@ func _on_equipped(_item: PlayerEquipment) -> void:
 func current_weapon() -> PlayerWeapon:
 	if loadout == null:
 		return null
-	if loadout.current == null:
-		return
-	return loadout.current as PlayerWeapon
+	var item := loadout.current
+	if not is_instance_valid(item) or item.is_queued_for_deletion():
+		return null
+	return item as PlayerWeapon
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -235,8 +236,11 @@ func _toggle_spectator() -> void:
 
 
 func _set_viewmodel_visible(shown: bool) -> void:
-	if loadout != null and loadout.current != null:
-		loadout.current.set_hidden(not shown)
+	if loadout == null:
+		return
+	var item := loadout.current
+	if is_instance_valid(item) and not item.is_queued_for_deletion():
+		item.set_hidden(not shown)
 
 
 func _handle_spectator(delta: float) -> void:
@@ -368,9 +372,13 @@ func handle_movement(_delta: float) -> void:
 
 
 func _move_scale() -> float:
-	if loadout != null and loadout.current != null:
-		if loadout.current is PlayerRepairTool:
-			return (loadout.current as PlayerRepairTool).get_move_scale()
+	if loadout == null:
+		return 1.0
+	var item := loadout.current
+	if not is_instance_valid(item) or item.is_queued_for_deletion():
+		return 1.0
+	if item is PlayerRepairTool:
+		return (item as PlayerRepairTool).get_move_scale()
 	return 1.0
 
 
@@ -501,8 +509,11 @@ func apply_damage(damage, _source):
 	health -= damage
 	# Taking fire breaks a repair channel. Progress survives for resume_grace
 	# seconds, so ducking into cover and resuming doesn't start from zero.
-	if loadout != null and loadout.current is PlayerRepairTool:
-		(loadout.current as PlayerRepairTool).interrupt()
+	if loadout != null:
+		var item := loadout.current
+		if is_instance_valid(item) and not item.is_queued_for_deletion() \
+				and item is PlayerRepairTool:
+			(item as PlayerRepairTool).interrupt()
 	update_status()
 	if health <= 0:
 		health = 0

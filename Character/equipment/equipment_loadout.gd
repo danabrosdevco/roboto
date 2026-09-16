@@ -74,6 +74,31 @@ var _previous: PlayerEquipment = null
 var _all: Array[PlayerEquipment] = []
 var _fire_held: bool = false
 
+# A record change can replace the object currently in the player's hands. Keep
+# update/input out of the transition, and never carry held-trigger state from an
+# old instance into the replacement instance.
+var _rebuilding: bool = false
+var _block_fire_until_release: bool = false
+
+
+func _is_live(item: PlayerEquipment) -> bool:
+	return is_instance_valid(item) and not item.is_queued_for_deletion()
+
+
+func _slot_index_for_item(item: PlayerEquipment) -> int:
+	if not _is_live(item):
+		return -1
+	if item == primary:
+		return 0
+	if item == sidearm:
+		return 1
+	if item == melee:
+		return 2
+	var equipment_index := equipment.find(item)
+	if equipment_index >= 0:
+		return equipment_index + 3
+	return -1
+
 
 func _ready() -> void:
 	if search_root == null:
@@ -130,6 +155,10 @@ func _collect() -> void:
 
 func _gather(node: Node, out: Array[PlayerEquipment]) -> void:
 	for child in node.get_children():
+		# queue_free() does not remove a node from the tree until the end of the
+		# frame. A loadout rebuild must not recollect those outgoing instances.
+		if child.is_queued_for_deletion():
+			continue
 		if child is PlayerEquipment:
 			out.append(child)
 		_gather(child, out)
@@ -152,14 +181,14 @@ func item_for_slot(index: int) -> PlayerEquipment:
 
 func equip_slot(index: int) -> void:
 	var item := item_for_slot(index)
-	if item == null:
+	if not _is_live(item):
 		denied.emit("EMPTY SLOT")
 		return
 	equip_item(item)
 
 
 func equip_item(item: PlayerEquipment) -> void:
-	if item == null or item == current:
+	if not _is_live(item) or item == current:
 		return
 
 	# Denied rather than equipped-and-useless. Pulling out a grenade you don't
@@ -168,12 +197,18 @@ func equip_item(item: PlayerEquipment) -> void:
 		denied.emit("%s : EMPTY" % item.display_name.to_upper())
 		return
 
-	if current != null and current.is_busy():
+	if _is_live(current) and current.is_busy():
 		if not cancel_busy_on_switch:
 			denied.emit("BUSY")
 			return
 
-	if current != null:
+	if _is_live(current):
+		# If the trigger was down on the old item, finish that input lifecycle on
+		# the old item. The replacement/new item waits for a fresh press.
+		if _fire_held:
+			current.primary_released()
+			_fire_held = false
+			_block_fire_until_release = Input.is_action_pressed(fire_action)
 		_previous = current
 		current.unequip()
 
@@ -188,18 +223,18 @@ func equip_item(item: PlayerEquipment) -> void:
 # nothing and the game has no opinion about what that means.
 func revert() -> void:
 	var target := _previous
-	if target == null or not target.can_equip():
+	if not _is_live(target) or not target.can_equip():
 		target = _first_available()
-	if target != null:
+	if _is_live(target):
 		equip_item(target)
 
 
 func _first_available() -> PlayerEquipment:
 	for candidate in [primary, sidearm, melee]:
-		if candidate != null and candidate.can_equip():
+		if _is_live(candidate) and candidate.can_equip():
 			return candidate
 	for item in _all:
-		if item.can_equip():
+		if _is_live(item) and item.can_equip():
 			return item
 	return null
 
@@ -214,7 +249,7 @@ func _on_charges_changed() -> void:
 
 
 func get_readout() -> PlayerEquipment.Readout:
-	if current == null:
+	if not _is_live(current):
 		return PlayerEquipment.Readout.new(PlayerEquipment.ReadoutMode.NONE)
 	return current.get_readout()
 
@@ -226,6 +261,11 @@ func get_readout() -> PlayerEquipment.Readout:
 # move_factor is current. It owns fire/reload/slot input so the player script
 # stops reaching into the weapon directly.
 func update(delta: float, move_factor: float, obstructed: bool, ads: bool) -> void:
+	# apply_record() is synchronous now, but this also protects against any signal
+	# callback that tries to drive equipment during the rebuild itself.
+	if _rebuilding:
+		return
+
 	_handle_slot_input()
 
 	# Everything you are NOT holding still ticks. Cooldowns and reservoirs don't
@@ -233,11 +273,18 @@ func update(delta: float, move_factor: float, obstructed: bool, ads: bool) -> vo
 	# that was a hard deadlock: empty meant it couldn't be equipped, and not
 	# being equipped meant it never recharged.
 	for item in _all:
+		if not _is_live(item):
+			continue
 		if item != current:
 			item.tick_stowed(delta)
 
-	if current == null:
+	if not _is_live(current):
+		current = null
+		_fire_held = false
+		if Input.is_action_pressed(fire_action):
+			_block_fire_until_release = true
 		return
+
 	_handle_use_input(delta)
 	current.tick(delta)
 	current.update_view(delta, move_factor, obstructed, ads)
@@ -255,13 +302,21 @@ func _handle_slot_input() -> void:
 
 func _handle_use_input(delta: float) -> void:
 	var pressed := Input.is_action_pressed(fire_action)
-	if pressed and not _fire_held:
-		current.primary_pressed()
-	elif pressed:
-		current.primary_held(delta)
-	elif _fire_held:
-		current.primary_released()
-	_fire_held = pressed
+
+	# A held mouse button belongs to the item on which the press began. After a
+	# switch/replacement, require release before beginning a new item's fire cycle.
+	if _block_fire_until_release:
+		_fire_held = false
+		if not pressed:
+			_block_fire_until_release = false
+	else:
+		if pressed and not _fire_held:
+			current.primary_pressed()
+		elif pressed:
+			current.primary_held(delta)
+		elif _fire_held:
+			current.primary_released()
+		_fire_held = pressed
 
 	if Input.is_action_just_pressed(reload_action):
 		current.reload_pressed()
@@ -279,11 +334,39 @@ func apply_record(record, catalogue) -> void:
 		search_root = cam
 	if search_root == null:
 		return
+	if _rebuilding:
+		return
+
+	_rebuilding = true
+
+	# Preserve the logical slot, not the old Node. If the PRIMARY is replaced by
+	# another PRIMARY, the player should come out holding the new PRIMARY.
+	var held_slot := _slot_index_for_item(current)
+
+	# Finish the outgoing item's input/equip lifecycle while it is still alive.
+	if _is_live(current):
+		if _fire_held:
+			current.primary_released()
+		current.unequip()
+
+	# Trigger state cannot be inherited by a newly-instanced gun/tool.
+	_fire_held = false
+	_block_fire_until_release = Input.is_action_pressed(fire_action)
+
+	# CRITICAL: detach the old generation from every runtime lookup BEFORE any of
+	# its nodes are freed. update() can no longer tick or select those objects.
+	current = null
+	_previous = null
+	primary = null
+	sidearm = null
+	melee = null
+	equipment.clear()
+	_all.clear()
 
 	# Tear down only what WE built. Anything hand-placed and listed in
 	# permanent_items survives, which is what keeps melee from evaporating.
 	for node in _record_built:
-		if node != null and is_instance_valid(node):
+		if is_instance_valid(node):
 			node.queue_free()
 	_record_built.clear()
 
@@ -311,30 +394,44 @@ func apply_record(record, catalogue) -> void:
 		node.equipment_order = equip_index
 
 	# Hand-placed items we're replacing must go, or you end up holding two
-	# rifles — the authored one and the one the record asked for.
+	# rifles — the authored one and the one the record asked for. Nodes queued
+	# above are still children until end-of-frame, so skip them explicitly.
 	for child in search_root.get_children():
+		if child.is_queued_for_deletion():
+			continue
 		if child is PlayerEquipment and not _record_built.has(child) \
 				and not permanent_items.has(child):
 			child.queue_free()
 
-	# Rebuild the slot table from what's actually there now.
-	primary = null
-	sidearm = null
-	melee = null
-	equipment.clear()
-	current = null
-	_previous = null
-	await get_tree().process_frame
+	# Rebuild immediately. _gather() ignores outgoing queued nodes, so there is no
+	# process-frame gap in which _all can still point at the old generation.
 	_collect()
+
 	for item in _all:
+		if not _is_live(item):
+			continue
 		item.initialize(player, cam, ammo)
 		if not item.charges_changed.is_connected(_on_charges_changed):
 			item.charges_changed.connect(_on_charges_changed)
 			item.wants_revert.connect(_on_wants_revert.bind(item))
 			item.denied.connect(func(reason: String): denied.emit(reason))
-	var opener := _first_available()
-	if opener != null:
+
+	# Prefer the newly-built item occupying the slot that was held before the
+	# swap. If that slot no longer exists or cannot equip, use the normal fallback.
+	var opener: PlayerEquipment = null
+	if held_slot >= 0:
+		opener = item_for_slot(held_slot)
+		if not _is_live(opener) or not opener.can_equip():
+			opener = null
+	if opener == null:
+		opener = _first_available()
+
+	if _is_live(opener):
 		equip_item(opener)
+	else:
+		_on_charges_changed()
+
+	_rebuilding = false
 
 
 func _build_item(catalogue, item_id: StringName) -> PlayerEquipment:
@@ -381,6 +478,8 @@ func refill() -> void:
 	if ammo != null:
 		ammo.refill_all()
 	for item in _all:
+		if not _is_live(item):
+			continue
 		item.restock()
 		if item is PlayerWeapon:
 			var gun := item as PlayerWeapon

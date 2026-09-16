@@ -6,7 +6,7 @@
 [ext_resource type="AudioStream" uid="uid://b2hibouhtggt2" path="res://sounds/sfx/free cinematic sfx/freesound_community-gear-spinning-loop-6981.mp3" id="4_vxj2y"]
 
 [node name="RepairTool" type="Node3D" node_paths=PackedStringArray("loop_sound", "complete_sound", "viewmodel")]
-transform = Transform3D(0.776684, 0, -0.62989, 0.156818, 0.968514, 0.193364, 0.610057, -0.24896, 0.75223, 0, 0, 0)
+transform = Transform3D(0.431795, 0.108848, -0.89538, 0.156818, 0.968514, 0.193364, 0.888234, -0.223905, 0.401131, 0, 0, 0)
 script = ExtResource("1_4hhsq")
 cost_per_health = 0.5
 loop_sound = NodePath("Loop2")
@@ -15,9 +15,10 @@ display_name = "Repair Kit"
 equipment_order = 2
 viewmodel = NodePath("frontline_maintainer_arcwelder_tool_v2")
 use_default_position = false
+base_rotation = Vector3(-0.3, 90, 2.8)
 
 [node name="frontline_maintainer_arcwelder_tool_v2" parent="." instance=ExtResource("2_2c562")]
-transform = Transform3D(-1.20865, 0.252216, 1.57339, 0.887326, 1.74681, 0.401613, -1.32356, 0.940759, -1.16754, 0.0136874, 0, -0.272315)
+transform = Transform3D(-0.175075, -0.0609519, 1.99139, 0.818385, 1.82042, 0.127668, -1.81648, 0.826037, -0.13441, -0.0983577, 0.0141137, -0.252138)
 
 [node name="Complete" type="AudioStreamPlayer3D" parent="."]
 stream = ExtResource("4_uyogs")
