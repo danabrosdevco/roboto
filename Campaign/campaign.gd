@@ -45,7 +45,7 @@ class_name CampaignManager
 @export var starting_chassis: PackedScene
 # The frame every starting soldier is built on. Their health comes from this
 # now, not from a number on the record.
-@export var starting_chassis_id: StringName = &"soldier"
+@export var starting_chassis_id: StringName = &"light"
 @export var starting_resources: int = 0
 # Item ids granted to stores on a fresh campaign, and the weapon every starting
 # soldier is issued. Without these a new save has an empty armoury and a squad
@@ -86,8 +86,41 @@ func _ready() -> void:
 		state = CampaignState.new()
 		_seed_new_campaign()
 	state.catalogue = catalogue
+	_repair_roster()
 	state.recompute_roster()
 	state_loaded.emit()
+
+
+# The chassis every new soldier gets. Falls back to the FIRST chassis in the
+# catalogue when starting_chassis_id doesn't resolve — renaming an id in a .tres
+# and forgetting the export here otherwise produces a squad with no chassis,
+# which shows up as "NO SLOTS ON THIS CHASSIS" and looks like the drag-and-drop
+# being broken rather than a one-word mismatch.
+func default_chassis() -> ChassisDefinition:
+	if catalogue == null:
+		push_warning("Campaign: no catalogue assigned — soldiers will have no chassis and no slots.")
+		return null
+	var frame := catalogue.chassis_def(starting_chassis_id)
+	if frame != null:
+		return frame
+	if not catalogue.chassis.is_empty():
+		var fallback: ChassisDefinition = catalogue.chassis[0]
+		push_warning("Campaign: no chassis with id '%s'; falling back to '%s'. Fix starting_chassis_id or the .tres id." % [
+			starting_chassis_id, fallback.id])
+		return fallback
+	push_warning("Campaign: the catalogue has no chassis at all.")
+	return null
+
+
+# Existing saves predate the chassis system, or were written when the id didn't
+# match. Repairing on load beats telling people to delete their save.
+func _repair_roster() -> void:
+	var frame := default_chassis()
+	if frame == null:
+		return
+	for r in state.roster:
+		if r.chassis_id == &"" or catalogue.chassis_def(r.chassis_id) == null:
+			r.set_chassis(frame, catalogue)
 
 
 func _seed_new_campaign() -> void:
@@ -96,11 +129,9 @@ func _seed_new_campaign() -> void:
 		var r := SoldierRecord.new()
 		r.display_name = starting_names[i] if i < starting_names.size() else "Unit-%02d" % (i + 1)
 		r.chassis_scene = starting_chassis
-		var frame: ChassisDefinition = catalogue.chassis_def(starting_chassis_id) if catalogue != null else null
+		var frame := default_chassis()
 		if frame != null:
 			r.set_chassis(frame, catalogue)
-		else:
-			push_warning("Campaign: no chassis '%s' in the catalogue — starting soldiers will use the record default health." % starting_chassis_id)
 		state.add_soldier(r)
 	# Stores first, then issue each soldier their weapon out of it.
 	for item_id in starting_stock:

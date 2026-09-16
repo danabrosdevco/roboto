@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3 uid="uid://citemrepairkit"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" uid="uid://cairepairkit01" path="res://Character/characters/ai/equipment/ai_repair_kit.tscn" id="2_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"repair_kit"
+display_name = "Field Repair Kit"
+description = "Patches the worst-hurt robot nearby. Will not raise the downed."
+kind = 1
+cost = 35
+ai_scene = ExtResource("2_ai")
+usable_by_player = false
+usable_by_ai = true
+quantity = 3
+required_rank = 0

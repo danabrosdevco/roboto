@@ -24,6 +24,33 @@ class_name SquadManagerUI
 @export var font_size_body: int = 17
 @export var slot_size: Vector2 = Vector2(58, 58)
 
+# ── AUDIO ─────────────────────────────────────
+# Assign AudioStreamPlayers in the inspector; every one is optional and the UI
+# is silent rather than broken if you leave them blank.
+@export var sfx_hover: AudioStreamPlayer
+@export var sfx_pick_up: AudioStreamPlayer
+@export var sfx_drop: AudioStreamPlayer
+@export var sfx_denied: AudioStreamPlayer
+@export var sfx_select: AudioStreamPlayer
+@export var sfx_open: AudioStreamPlayer
+@export var sfx_close: AudioStreamPlayer
+
+# ── CURSORS ───────────────────────────────────
+# Godot swaps to its own arrow and its own "forbidden" circle-with-a-slash
+# during a drag, which is what you're seeing. Supplying textures replaces both.
+# hotspot is the pixel in the texture that counts as the point.
+@export var cursor_arrow: Texture2D
+@export var cursor_drag: Texture2D
+@export var cursor_forbidden: Texture2D
+@export var cursor_hotspot: Vector2 = Vector2.ZERO
+
+# ── WHAT TO HIDE WHILE OPEN ───────────────────
+# Leave empty and every sibling Control under the HUD is hidden, which is
+# usually what you want. Name specific nodes to keep something visible.
+@export var hide_while_open: Array[Control] = []
+
+var _hidden: Array[Control] = []
+
 const COL_DIM    := HUDPalette.DIM
 const COL_BRIGHT := HUDPalette.BRIGHT
 const COL_WARN   := HUDPalette.WARN
@@ -59,8 +86,7 @@ func _ready() -> void:
 	if not InputMap.has_action(open_action):
 		push_warning("SquadManagerUI: no input action '%s'. Add it in Project Settings > Input Map." % open_action)
 	else:
-		pass
-		#print("[SquadManager] ready, bound to '%s'" % open_action)
+		print("[SquadManager] ready, bound to '%s'" % open_action)
 
 
 # Deferred and retried, because the campaign node readies after this one.
@@ -106,13 +132,82 @@ func open() -> void:
 	# A management screen with the mouse captured is unusable.
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	get_tree().paused = true
+	_apply_cursors()
+	_hide_other_hud(true)
+	_play(sfx_open)
 	_rebuild()
 
 
 func close() -> void:
 	visible = false
 	get_tree().paused = false
+	_hide_other_hud(false)
+	_clear_cursors()
+	_play(sfx_close)
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+
+# The crosshair, ammo readout, squad roster and objective list are all noise
+# behind a management screen — and the squad HUD keeps drawing world markers
+# over the top of it, which looks like a bug.
+func _hide_other_hud(hiding: bool) -> void:
+	if hiding:
+		_hidden.clear()
+		var targets: Array[Control] = hide_while_open
+		if targets.is_empty():
+			for sibling in get_parent().get_children():
+				if sibling is Control and sibling != self:
+					targets.append(sibling)
+		for c in targets:
+			if c != null and is_instance_valid(c) and c.visible:
+				c.visible = false
+				_hidden.append(c)
+		return
+	for c in _hidden:
+		if c != null and is_instance_valid(c):
+			c.visible = true
+	_hidden.clear()
+
+
+func _apply_cursors() -> void:
+	if cursor_arrow != null:
+		Input.set_custom_mouse_cursor(cursor_arrow, Input.CURSOR_ARROW, cursor_hotspot)
+	if cursor_drag != null:
+		Input.set_custom_mouse_cursor(cursor_drag, Input.CURSOR_DRAG, cursor_hotspot)
+		Input.set_custom_mouse_cursor(cursor_drag, Input.CURSOR_CAN_DROP, cursor_hotspot)
+	if cursor_forbidden != null:
+		Input.set_custom_mouse_cursor(cursor_forbidden, Input.CURSOR_FORBIDDEN, cursor_hotspot)
+
+
+func _clear_cursors() -> void:
+	for shape in [Input.CURSOR_ARROW, Input.CURSOR_DRAG, Input.CURSOR_CAN_DROP, Input.CURSOR_FORBIDDEN]:
+		Input.set_custom_mouse_cursor(null, shape)
+
+
+func _play(player: AudioStreamPlayer) -> void:
+	if player != null:
+		player.play()
+
+
+# A drag preview that reads. The default was a bare Label, which inherits the
+# theme's dim font colour and gets lost against the backdrop — and it showed the
+# raw id because that's what the payload carries.
+func make_drag_preview(item: ItemDefinition) -> Control:
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.06, 0.08, 0.09, 0.95)
+	style.border_color = COL_BRIGHT
+	style.set_border_width_all(1)
+	style.set_content_margin_all(8)
+	panel.add_theme_stylebox_override("panel", style)
+	var label := Label.new()
+	label.text = item.display_name if item != null else "?"
+	label.add_theme_color_override("font_color", COL_BRIGHT)
+	label.add_theme_font_size_override("font_size", font_size_body)
+	panel.add_child(label)
+	# Offset so the panel sits beside the pointer rather than under it.
+	panel.position = Vector2(14, 10)
+	return panel
 
 
 # ─────────────────────────────────────────────
@@ -214,8 +309,11 @@ func _rebuild() -> void:
 
 func _make_roster_row(record: SoldierRecord) -> Control:
 	var row := Button.new()
-	row.flat = true
 	row.custom_minimum_size = Vector2(0, 34)
+	# flat = true still draws hover, pressed and focus styleboxes — those are
+	# the horizontal lines lighting up the whole row. Blanking all five leaves
+	# only the font colour to carry selection, which is what you want.
+	_strip_button_styles(row)
 	var hp := record.current_health()
 	var state_tag := ""
 	if record.status == SoldierRecord.Status.DESTROYED:
@@ -229,8 +327,17 @@ func _make_roster_row(record: SoldierRecord) -> Control:
 		COL_BRIGHT if record == _selected else COL_DIM)
 	row.pressed.connect(func():
 		_selected = record
+		_play(sfx_select)
 		_rebuild())
+	row.mouse_entered.connect(func(): _play(sfx_hover))
 	return row
+
+
+# Godot draws a stylebox for each state whether or not the button is flat.
+func _strip_button_styles(button: Button) -> void:
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	button.focus_mode = Control.FOCUS_NONE
 
 
 func _make_armoury_row(item: ItemDefinition, count: int) -> Control:
@@ -239,6 +346,8 @@ func _make_armoury_row(item: ItemDefinition, count: int) -> Control:
 	row.owner_ui = self
 	row.custom_minimum_size = Vector2(0, 40)
 	row.add_theme_constant_override("separation", 8)
+	row.mouse_filter = Control.MOUSE_FILTER_PASS
+	row.mouse_entered.connect(func(): _play(sfx_hover))
 	row.add_child(_label("%dx" % count, COL_WARN))
 	row.add_child(_label(item.display_name, COL_BRIGHT))
 	var summary := item.effect_summary()
@@ -285,6 +394,17 @@ func _add_slot_group(title: String, kind: int, ids: Array) -> void:
 func _make_slot(kind: int, index: int, item_id: StringName) -> Control:
 	var slot := _SlotButton.new()
 	slot.owner_ui = self
+	_strip_button_styles(slot)
+	# Slots keep a visible outline so an empty one still reads as a slot.
+	var outline := StyleBoxFlat.new()
+	outline.bg_color = Color(0.09, 0.11, 0.12, 0.85)
+	outline.border_color = COL_DIM
+	outline.set_border_width_all(1)
+	slot.add_theme_stylebox_override("normal", outline)
+	var lit := outline.duplicate() as StyleBoxFlat
+	lit.border_color = COL_BRIGHT
+	slot.add_theme_stylebox_override("hover", lit)
+	slot.mouse_entered.connect(func(): _play(sfx_hover))
 	slot.kind = kind
 	slot.slot_index = index
 	slot.item_id = item_id
@@ -305,8 +425,10 @@ func fit(item_id: StringName, kind: int, slot_index: int) -> void:
 	if item == null or _selected == null:
 		return
 	if item.kind != kind:
+		_play(sfx_denied)
 		return   # a module doesn't go in a weapon slot
-	state.fit_item(_selected, item, slot_index)
+	if not state.fit_item(_selected, item, slot_index):
+		_play(sfx_denied)
 
 
 func unfit(kind: int, slot_index: int) -> void:
@@ -334,9 +456,8 @@ class _ArmouryRow extends HBoxContainer:
 	var owner_ui: SquadManagerUI
 
 	func _get_drag_data(_at: Vector2) -> Variant:
-		var preview := Label.new()
-		preview.text = String(item_id)
-		set_drag_preview(preview)
+		set_drag_preview(owner_ui.make_drag_preview(owner_ui._item(item_id)))
+		owner_ui._play(owner_ui.sfx_pick_up)
 		return {"source": "armoury", "item_id": item_id}
 
 	# Dropping a fitted item here removes it.
@@ -345,6 +466,7 @@ class _ArmouryRow extends HBoxContainer:
 
 	func _drop_data(_at: Vector2, data: Variant) -> void:
 		owner_ui.unfit(int(data["kind"]), int(data["slot_index"]))
+		owner_ui._play(owner_ui.sfx_drop)
 
 
 class _SlotButton extends Button:
@@ -356,9 +478,8 @@ class _SlotButton extends Button:
 	func _get_drag_data(_at: Vector2) -> Variant:
 		if item_id == &"":
 			return null
-		var preview := Label.new()
-		preview.text = String(item_id)
-		set_drag_preview(preview)
+		set_drag_preview(owner_ui.make_drag_preview(owner_ui._item(item_id)))
+		owner_ui._play(owner_ui.sfx_pick_up)
 		return {"source": "slot", "item_id": item_id, "kind": kind, "slot_index": slot_index}
 
 	func _can_drop_data(_at: Vector2, data: Variant) -> bool:
@@ -371,6 +492,7 @@ class _SlotButton extends Button:
 		return data.get("source") == "slot" and int(data.get("kind", -1)) == kind
 
 	func _drop_data(_at: Vector2, data: Variant) -> void:
+		owner_ui._play(owner_ui.sfx_drop)
 		if data.get("source") == "armoury":
 			owner_ui.fit(data["item_id"], kind, slot_index)
 			return

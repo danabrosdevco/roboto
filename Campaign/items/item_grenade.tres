@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3 uid="uid://citemgrenade01"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" uid="uid://bdt1481i5nwi1" path="res://Character/characters/ai/equipment/ai_grenade.tscn" id="2_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"grenade"
+display_name = "Frag Charge"
+description = "Thrown demolition charge. Squads use them to break a holdout."
+kind = 1
+cost = 20
+ai_scene = ExtResource("2_ai")
+usable_by_player = false
+usable_by_ai = true
+quantity = 2
+required_rank = 0

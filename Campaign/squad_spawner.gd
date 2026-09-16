@@ -145,6 +145,23 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 			soldier.equip_weapon_scene(item.ai_scene)
 		break
 
+	# Equipment: the AI carries these as AIEquipmentSlot resources rather than
+	# nodes. Built fresh each spawn so two soldiers with the same item don't
+	# share a use count.
+	var slots: Array[AIEquipmentSlot] = []
+	for id_value in record.equipment_ids:
+		if id_value == &"":
+			continue
+		var kit := cat.item(id_value)
+		if kit == null or not kit.fits_ai() or kit.ai_scene == null:
+			continue
+		var slot := AIEquipmentSlot.new()
+		slot.equipment_scene = kit.ai_scene
+		slot.quantity = kit.quantity
+		slots.append(slot)
+	if not slots.is_empty():
+		soldier.equipment_slots = slots
+
 	# Module health is already folded into record.max_health by
 	# recompute_stats(), so adding it again here would double-count it. What's
 	# left are the stats the record can't express as a single number.
@@ -262,7 +279,7 @@ func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 	squad.follow(player)
 	active_squad = squad
 	squad_deployed.emit(squad, members.size())
-	#print("[SquadSpawner] %d deployed on the player (no spawn point used)" % members.size())
+	print("[SquadSpawner] %d deployed on the player (no spawn point used)" % members.size())
 	return squad
 
 
