@@ -63,6 +63,7 @@ func activate_interactible(interactible: Interactible):
 		return
 	var type = interactible.get_type()
 	var value = interactible.get_value()
+	_current_interactible = interactible
 	interact_box.visible = true
 	#print (interactible)
 	match type:
@@ -71,16 +72,64 @@ func activate_interactible(interactible: Interactible):
 				interact_label.text = "F | Activate SLAB"
 			else:
 				interact_label.text = "F | Reconstruct at SLAB"
+		Enums.InteractTypes.MISSION:
+			# The terminal knows which operation is queued. `value` is
+			# meaningless on a terminal, which is where "F | 0" came from.
+			interact_label.text = "F | %s" % _prompt_from(interactible.get_parent(), "Select Mission")
+		Enums.InteractTypes.OBJECTIVE:
+			# The console doesn't own the objective — InteractObjective holds an
+			# array of them and tags each one on _ready, so ask the tag.
+			var objective = interactible.get_meta("mission_objective", null)
+			interact_label.text = "F | %s" % _prompt_from(objective, "Interact")
+		Enums.InteractTypes.HEALTH:
+			interact_label.text = "F | Repair  +%d" % value
+		Enums.InteractTypes.SHARDS:
+			interact_label.text = "F | Salvage  +%d" % value
+		Enums.InteractTypes.BITS:
+			interact_label.text = "F | Bits  +%d" % value
 		_:
 			interact_label.text = "F | %d" % value  # default label for others
 
 	if interact_textures.has(type):
 		interact_texture.texture = interact_textures[type]
+		interact_texture.visible = true
 	else:
-		interact_texture.texture = null  # fallback if icon is missing
+		# Hide it rather than blanking it — an empty TextureRect still reserves
+		# its width and leaves a gap where an icon should be.
+		interact_texture.texture = null
+		interact_texture.visible = false
+
+
+# Anything that can describe itself does; everything else falls back.
+func _prompt_from(source, fallback: String) -> String:
+	if source != null and is_instance_valid(source) and source.has_method("get_prompt"):
+		var text: String = source.get_prompt()
+		if text != "":
+			return text
+	return fallback
+
+# Kept so the channel percentage counts up while you hold F. The player script
+# only pushes a new interactible when the raycast target CHANGES, so without
+# this the prompt would sit at 0% for the whole capture.
+var _current_interactible: Interactible
+
+
+func _process(_delta: float) -> void:
+	if _current_interactible == null or not is_instance_valid(_current_interactible):
+		return
+	if not interact_box.visible:
+		return
+	if _current_interactible.get_type() != Enums.InteractTypes.OBJECTIVE:
+		return
+	var objective = _current_interactible.get_meta("mission_objective", null)
+	if objective != null and is_instance_valid(objective) and objective.has_method("is_channelling"):
+		if objective.is_channelling():
+			interact_label.text = "F | %s" % _prompt_from(objective, "Interact")
+
 
 func deactivate_interaction():
 	interact_box.visible = false
+	_current_interactible = null
 
 func update_scanner(time:float):
 	ui.update_scanner(time)

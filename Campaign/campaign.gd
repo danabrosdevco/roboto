@@ -86,6 +86,8 @@ func _ready() -> void:
 		state = CampaignState.new()
 		_seed_new_campaign()
 	state.catalogue = catalogue
+	if not state.soldier_repaired.is_connected(_on_soldier_repaired):
+		state.soldier_repaired.connect(_on_soldier_repaired)
 	_repair_roster()
 	state.recompute_roster()
 	state_loaded.emit()
@@ -121,6 +123,10 @@ func _repair_roster() -> void:
 	for r in state.roster:
 		if r.chassis_id == &"" or catalogue.chassis_def(r.chassis_id) == null:
 			r.set_chassis(frame, catalogue)
+	if state.player_record != null:
+		if state.player_record.chassis_id == &"" or catalogue.chassis_def(state.player_record.chassis_id) == null:
+			state.player_record.display_name = "YOU"
+			state.player_record.set_chassis(frame, catalogue)
 
 
 func _seed_new_campaign() -> void:
@@ -133,6 +139,12 @@ func _seed_new_campaign() -> void:
 		if frame != null:
 			r.set_chassis(frame, catalogue)
 		state.add_soldier(r)
+	# The player is a roster entry too, so they need a frame for their slots.
+	var player_frame := default_chassis()
+	if player_frame != null and state.player_record != null:
+		state.player_record.display_name = "YOU"
+		state.player_record.set_chassis(player_frame, catalogue)
+
 	# Stores first, then issue each soldier their weapon out of it.
 	for item_id in starting_stock:
 		state.armoury.add(item_id)
@@ -160,6 +172,13 @@ func reset_campaign() -> void:
 # World registers itself here so Campaign doesn't have to go looking for it.
 func register_spawner(s: SquadSpawner) -> void:
 	spawner = s
+
+
+# A repair has to reach the body, not just the record — and a rebuilt soldier
+# who wasn't deployable at level load has to actually turn up.
+func _on_soldier_repaired(record: SoldierRecord) -> void:
+	if spawner != null:
+		spawner.sync_record(record)
 
 
 func register_objective_tracker(t: ObjectiveTracker) -> void:

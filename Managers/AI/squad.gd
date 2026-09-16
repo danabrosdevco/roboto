@@ -90,6 +90,36 @@ var _follow_reissue_t: float = 0.0
 # paths that broke FOLLOW (idle wander, search roam, patrol re-pick) walked them
 # off their cover. Posts are remembered and re-asserted every frame.
 @export var defend_post_tolerance: float = 1.4
+
+# ── LEASHES ───────────────────────────────────
+# How far a member may wander from their assigned position WHILE FIGHTING.
+#
+# Contact used to suspend the positional hold entirely — _tick_follow and
+# _tick_defend both returned on ENGAGED and handed the robot to its own combat
+# AI, which chases. At shotgun range that was invisible because the target was
+# already on top of them. With an 80m rifle it means a DEFEND squad abandons the
+# post the moment anyone shoots, and a FOLLOW squad walks off across the valley.
+#
+# The fix isn't to stop them manoeuvring — it's to bound it. Inside the leash
+# they fight for themselves: take cover, bound, reposition. Cross it and the
+# squad pulls them back. The order survives the firefight.
+@export var follow_combat_leash: float = 12.0
+@export var defend_combat_leash: float = 9.0
+# ASSAULT keeps advancing under fire; the leash tracks the objective rather than
+# a fixed post, so "engage along the way" falls out of it.
+@export var assault_combat_leash: float = 14.0
+
+# Seconds between forced recalls of the same soldier. order_move_to(pos, true)
+# CLEARS combat_target and releases cover — that's what makes "fall back" work
+# mid-firefight, and it's why issuing one every frame means a soldier can never
+# finish acquiring, let alone shoot. A recall has to be an occasional
+# correction, never a per-frame nudge.
+@export var recall_interval: float = 1.6
+# How far past the leash someone has to be before a recall interrupts a fight
+# they're actually winning. Inside this band they're left alone.
+@export var leash_grace_multiplier: float = 1.6
+@export var assault_arrive_distance: float = 6.0
+var _recall_times: Dictionary = {}   # Soldier -> msec of last forced order
 var _defend_posts: Dictionary = {}   # Soldier -> Vector3
 
 # ── PATROL ────────────────────────────────────
@@ -179,6 +209,7 @@ func _process(delta: float) -> void:
 	_tick_follow(delta)
 	_tick_patrol(delta)
 	_tick_defend()
+	_tick_assault()
 	_tick_contact(delta)
 	match context:
 		SquadContext.ENGAGED:
@@ -205,6 +236,8 @@ func _tick_follow(delta: float) -> void:
 	objective_position = _follow_anchor(delta)
 
 	if context == SquadContext.ENGAGED:
+		# Fighting, but still following. Only the strays get pulled in.
+		_enforce_leash(follow_combat_leash, false)
 		return
 
 	# Authoritative, every frame. Gating individual behaviours one at a time
@@ -226,6 +259,9 @@ func _tick_defend() -> void:
 	if objective != SquadObjective.DEFEND:
 		return
 	if context == SquadContext.ENGAGED:
+		# Holding under fire is the whole point of DEFEND. Manoeuvre locally,
+		# but nobody leaves the position to chase.
+		_enforce_leash(defend_combat_leash, true)
 		return
 
 	for ai in get_orderable_soldiers():
@@ -271,6 +307,110 @@ func _defend_post_for(soldier: Soldier) -> Vector3:
 		post = objective_position + Vector3(cos(angle), 0.0, sin(angle)) * 6.0
 	_defend_posts[soldier] = post
 	return post
+
+
+# ASSAULT is "take the point, engage on the way" — so contact must not stop the
+# advance. Without this an engaged squad plants itself wherever the first shot
+# landed and the objective is never reached.
+func _tick_assault() -> void:
+	if objective != SquadObjective.ADVANCE and objective != SquadObjective.ATTACK:
+		return
+	if context != SquadContext.ENGAGED:
+		return
+
+	# NOT a leash. On ASSAULT the anchor IS the destination, so everyone is
+	# "out of bounds" until they arrive — running the leash here meant every
+	# soldier got a forced move every frame, which cleared their target every
+	# frame. They ran at the objective and never fired a shot.
+	#
+	# The rule is instead: kill what you can reach, advance when you can't.
+	for ai in get_orderable_members():
+		if not (ai is Soldier):
+			continue
+		var soldier := ai as Soldier
+		if _engaging_usefully(soldier):
+			continue   # something in front of them — let the combat AI work
+
+		var slot: Vector3 = objective_position + _formation_offset(soldier)
+		if soldier.global_position.distance_to(slot) <= assault_arrive_distance:
+			continue   # arrived; hold and fight from here
+
+		# Already heading there under their own steam.
+		if soldier.movement_state != Enemy.MovementState.NONE \
+				and soldier.movement_target.distance_to(slot) <= assault_arrive_distance:
+			continue
+
+		if not _may_recall(soldier):
+			continue
+		soldier.defensive_mode = false
+		soldier.order_move_to(slot, true)
+
+
+# Is this soldier fighting something it can actually hit? A target 80m away for
+# a 45m shotgun is not a reason to stand still, and a target in range is not a
+# reason to be dragged off it.
+func _engaging_usefully(soldier: Soldier) -> bool:
+	if soldier.combat_target == null or not is_instance_valid(soldier.combat_target):
+		return false
+	if not soldier.combat_target.alive:
+		return false
+	var reach: float = 25.0
+	if soldier.weapon != null and "max_effective_range" in soldier.weapon:
+		reach = soldier.weapon.max_effective_range
+	return soldier.global_position.distance_to(soldier.combat_target.global_position) <= reach
+
+
+# Forced orders are rationed. Returns false if this soldier was recalled too
+# recently to be recalled again.
+func _may_recall(soldier: Soldier) -> bool:
+	var now: float = Time.get_ticks_msec() / 1000.0
+	var last: float = float(_recall_times.get(soldier, -999.0))
+	if now - last < recall_interval:
+		return false
+	_recall_times[soldier] = now
+	return true
+
+
+# ─────────────────────────────────────────────
+# LEASH
+# ─────────────────────────────────────────────
+# Runs DURING contact. Deliberately does nothing to anyone inside the radius —
+# the point is to preserve the AI's combat behaviour, not replace it.
+func _enforce_leash(radius: float, defensive: bool) -> void:
+	if radius <= 0.0:
+		return
+	for ai in get_orderable_members():
+		if not (ai is Soldier):
+			continue
+		var soldier := ai as Soldier
+		var anchor: Vector3 = _anchor_for(soldier)
+		var gap: float = soldier.global_position.distance_to(anchor)
+		if gap <= radius:
+			continue   # in bounds — leave them to fight
+
+		# Just outside and shooting something they can hit: let them finish.
+		# Yanking a soldier out of a winning exchange is worse than a loose
+		# formation, and the recall clears their target to do it.
+		if _engaging_usefully(soldier) and gap <= radius * leash_grace_multiplier:
+			continue
+
+		soldier.defensive_mode = defensive
+		if soldier.movement_state != Enemy.MovementState.NONE \
+				and soldier.movement_target.distance_to(anchor) <= radius * 0.5:
+			continue   # already walking back
+		if not _may_recall(soldier):
+			continue
+		soldier.order_move_to(anchor, true)
+
+
+# Where this member is supposed to be, whatever the current objective is.
+func _anchor_for(soldier: Soldier) -> Vector3:
+	match objective:
+		SquadObjective.DEFEND:
+			return _defend_post_for(soldier)
+		SquadObjective.FOLLOW, SquadObjective.PATROL:
+			return objective_position + _formation_offset(soldier)
+	return objective_position
 
 
 # Runs every frame while following and out of contact. Cheap: one distance check
@@ -442,9 +582,16 @@ func has_live_contact() -> bool:
 	for ai in get_living_members():
 		if not ai is Enemy:
 			continue
-		if ai.ai_state == Enemy.AIState.COMBAT or ai.ai_state == Enemy.AIState.SEARCH:
+		var robot := ai as Enemy
+		# COMBAT alone is NOT enough. A robot whose target has been downed sits
+		# in COMBAT with a dead reference, and the old check read that as an
+		# ongoing firefight — so CONTACT never cleared and the squad stayed
+		# engaged with nothing to shoot. Require an actual live target.
+		if robot.has_live_target():
 			return true
-		if ai.combat_target != null and ai.combat_target.alive:
+		# SEARCH still counts: someone hunting a target they just lost sight of
+		# is in contact by any sane reading. It times out on its own.
+		if robot.ai_state == Enemy.AIState.SEARCH:
 			return true
 	return false
 
@@ -864,6 +1011,11 @@ func assign_roles() -> void:
 		return
 	# Defending squads don't bound — everyone suppresses or overwatches
 	if objective == SquadObjective.DEFEND:
+		_defensive_assign_roles(soldiers)
+		return
+	# FOLLOW squads escort; they don't run a bounding assault away from the
+	# player. Same static roles a defending squad uses.
+	if objective == SquadObjective.FOLLOW:
 		_defensive_assign_roles(soldiers)
 		return
 	if nco != null and nco.alive:

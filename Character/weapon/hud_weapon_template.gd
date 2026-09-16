@@ -61,6 +61,11 @@ class_name HUDWeapon
 # How far this weapon is heard. Suppressed or small-calibre weapons should carry
 # less; -1 uses StimulusManager's default for GUNSHOT_HEARD.
 @export var noise_radius: float = 34.0
+# Off by default. Turn it on for a difficulty mode if you ever want it to bite.
+# Your rounds hit your own squad too, at reduced damage. Making them harmless
+# would mean the squad's own sidestep logic is protecting them from a threat
+# that doesn't exist.
+@export var friendly_fire_multiplier: float = 0.34
 
 signal request_status
 
@@ -157,13 +162,25 @@ func _fire_shot() -> void:
 		var victim = collider
 		if not victim.has_method("apply_damage") and victim.get_parent() != null:
 			victim = victim.get_parent()
+		# The player's rounds had NO faction check — walking your own squad into
+		# your line of fire simply killed them. Same are_hostile() test the AI
+		# uses, so both sides agree on who can be shot.
 		if victim.has_method("apply_damage"):
-			victim.apply_damage(damage, player)
+			victim.apply_damage(_damage_for(victim), player)
 
 	if tracer:
 		fire_tracer()
 	tracer = false
 	request_status.emit()
+
+
+func _damage_for(victim: Node) -> int:
+	if not victim.has_method("get_faction"):
+		return damage   # scenery and props take it full
+	var mine: int = player.faction if player != null and "faction" in player else Enums.Factions.PLAYER
+	if Enums.are_hostile(mine, victim.get_faction()):
+		return damage
+	return maxi(1, int(round(float(damage) * friendly_fire_multiplier)))
 
 
 func fire_tracer() -> void:

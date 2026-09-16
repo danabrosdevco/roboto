@@ -19,12 +19,41 @@ var _chassis_index: Dictionary = {}
 func _build_index() -> void:
 	_item_index.clear()
 	_chassis_index.clear()
+	var null_items := 0
+	var null_chassis := 0
+
 	for i in items:
-		if i != null and i.id != &"":
-			_item_index[i.id] = i
+		if i == null:
+			null_items += 1
+			continue
+		if i.id == &"":
+			push_warning("ItemCatalogue: an item has a blank id and was skipped.")
+			continue
+		_item_index[i.id] = i
+
 	for c in chassis:
-		if c != null and c.id != &"":
-			_chassis_index[c.id] = c
+		if c == null:
+			null_chassis += 1
+			continue
+		if c.id == &"":
+			push_warning("ItemCatalogue: a chassis has a blank id and was skipped.")
+			continue
+		_chassis_index[c.id] = c
+
+	# A renamed or moved .tres leaves a NULL in the array — the catalogue still
+	# loads, the entry is just gone. That reads downstream as "this soldier has
+	# no chassis", which points nowhere near the actual cause. Say it plainly.
+	if null_items > 0:
+		push_error("ItemCatalogue: %d item entr%s could not be loaded (renamed or moved .tres?). Re-pick them in the inspector." % [
+			null_items, "y" if null_items == 1 else "ies"])
+	if null_chassis > 0:
+		push_error("ItemCatalogue: %d chassis entr%s could not be loaded (renamed or moved .tres?). Soldiers will have NO CHASSIS and no slots until this is fixed." % [
+			null_chassis, "y" if null_chassis == 1 else "ies"])
+	if _chassis_index.is_empty():
+		push_error("ItemCatalogue: no usable chassis at all. Every soldier will show 'no chassis'.")
+	else:
+		print("[Catalogue] %d items, %d chassis: %s" % [
+			_item_index.size(), _chassis_index.size(), _chassis_index.keys()])
 
 
 func item(id: StringName) -> ItemDefinition:

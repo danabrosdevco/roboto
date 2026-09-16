@@ -4,6 +4,14 @@ class_name Explosion
 @export var audio: AudioStreamPlayer3D
 @export var damage_value:=  20
 @export var damage_area: Area3D
+# Who set it off. Whatever spawns the explosion should set this — the AI grenade
+# and the player's grenade both know. Left at NEUTRAL it damages everyone, which
+# is the old behaviour.
+@export var source_faction: Enums.Factions = Enums.Factions.NEUTRAL
+# Blast hits everyone, allies included, just softer. A grenade that politely
+# ignores your squad is worse than one that makes you think about where you
+# throw it.
+@export var friendly_fire_multiplier: float = 0.34
 var damaged: = {}
 
 # Called when the node enters the scene tree for the first time.
@@ -26,8 +34,18 @@ func _on_area_3d_body_entered(body: Node3D) -> void:
 		return
 
 	if body.has_method("apply_damage"):
-		body.apply_damage(damage_value, self)
+		body.apply_damage(_damage_for(body), self)
 		damaged[body] = true
 	elif body.get_parent() and body.get_parent().has_method("apply_damage"):
 		body.get_parent().apply_damage(damage_value)
 		damaged[body.get_parent()] = true
+
+
+func _damage_for(body: Node) -> int:
+	if source_faction == Enums.Factions.NEUTRAL:
+		return damage_value   # nobody set an owner — blast hits everyone fully
+	if not body.has_method("get_faction"):
+		return damage_value
+	if Enums.are_hostile(source_faction, body.get_faction()):
+		return damage_value
+	return maxi(1, int(round(float(damage_value) * friendly_fire_multiplier)))

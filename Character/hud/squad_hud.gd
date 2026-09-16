@@ -120,6 +120,12 @@ func _ready() -> void:
 	_autowire()
 	_build_ui()
 
+	# Renames and losses should land at once rather than waiting up to
+	# refresh_interval for the next poll.
+	for squad in get_tree().get_nodes_in_group("squads"):
+		if squad is Squad and not (squad as Squad).roster_changed.is_connected(_on_roster_changed):
+			(squad as Squad).roster_changed.connect(_on_roster_changed)
+
 	if commander != null:
 		commander.squad_selected.connect(_on_squad_selected)
 		commander.order_issued.connect(_on_order_issued)
@@ -541,6 +547,10 @@ func _draw() -> void:
 # ─────────────────────────────────────────────
 # SIGNAL HANDLERS
 # ─────────────────────────────────────────────
+func _on_roster_changed(_squad: Squad) -> void:
+	_refresh_roster()
+
+
 func _on_squad_selected(squad: Squad) -> void:
 	if squad != null:
 		_show_toast("COMMANDING %s" % squad.get_display_name().to_upper(), COL_BRIGHT)

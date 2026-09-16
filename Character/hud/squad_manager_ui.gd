@@ -66,6 +66,8 @@ var _armoury_list: VBoxContainer
 var _resource_label: Label
 var _detail: VBoxContainer
 var _selected: SoldierRecord
+var _name_edit: LineEdit
+var _repair_button: Button
 
 
 func _ready() -> void:
@@ -232,7 +234,18 @@ func _build_ui() -> void:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 24)
 	column.add_child(header)
-	header.add_child(_label("SQUAD", COL_BRIGHT, font_size_header))
+	# Editable, and the source of truth — CampaignState.squad_name is what the
+	# spawner puts on the Squad node, so renaming here renames you everywhere.
+	_name_edit = LineEdit.new()
+	_name_edit.custom_minimum_size = Vector2(260, 0)
+	_name_edit.add_theme_font_size_override("font_size", font_size_header)
+	_name_edit.add_theme_color_override("font_color", COL_BRIGHT)
+	_name_edit.flat = true
+	_name_edit.placeholder_text = "NAMELESS"
+	_name_edit.max_length = 16
+	_name_edit.text_submitted.connect(_on_name_submitted)
+	_name_edit.focus_exited.connect(func(): _on_name_submitted(_name_edit.text))
+	header.add_child(_name_edit)
 	_resource_label = _label("", COL_WARN, font_size_header)
 	header.add_child(_resource_label)
 
@@ -245,7 +258,7 @@ func _build_ui() -> void:
 	_detail = _make_column("SOLDIER", 2)
 	_armoury_list = _make_column("ARMOURY", 1)
 
-	var hint := _label("drag from ARMOURY onto a slot  ·  drag a slot back to ARMOURY to remove", COL_DIM, font_size_body)
+	var hint := _label("drag from ARMOURY onto a slot  ·  right-click a slot to remove  ·  click the name to rename the squad", COL_DIM, font_size_body)
 	column.add_child(hint)
 
 
@@ -285,12 +298,42 @@ func _clear(node: Node) -> void:
 # ─────────────────────────────────────────────
 # REBUILD
 # ─────────────────────────────────────────────
+func _on_name_submitted(new_name: String) -> void:
+	if state == null:
+		return
+	var cleaned := new_name.strip_edges().to_upper()
+	state.squad_name = cleaned if cleaned != "" else "NAMELESS"
+	_name_edit.text = state.squad_name
+	# Push it to any squad already in the world. The spawner reads squad_name at
+	# deploy, but at base the squad is standing right there — renaming and not
+	# seeing it change until the next mission reads as the rename not working.
+	for squad in get_tree().get_nodes_in_group("squads"):
+		if squad is Squad and (squad as Squad).player_commandable:
+			(squad as Squad).callsign = state.squad_name
+			(squad as Squad).notify_roster_changed()
+	_rebuild()
+	_name_edit.release_focus()
+	_play(sfx_select)
+
+
 func _rebuild() -> void:
 	if state == null or _roster_list == null:
 		return
 	_resource_label.text = "RESOURCES  %d" % state.available()
+	# Don't stomp what they're mid-way through typing.
+	if not _name_edit.has_focus():
+		_name_edit.text = state.squad_name
 
 	_clear(_roster_list)
+	# The player is one more row. Their slots come from their chassis exactly as
+	# a squadmate's do; only fits_player() vs fits_ai() differs.
+	if state.player_record != null:
+		if state.player_record.display_name == "Unnamed" or state.player_record.display_name == "":
+			state.player_record.display_name = "YOU"
+		_roster_list.add_child(_make_roster_row(state.player_record))
+		var spacer := Control.new()
+		spacer.custom_minimum_size = Vector2(0, 10)
+		_roster_list.add_child(spacer)
 	for record in state.roster:
 		_roster_list.add_child(_make_roster_row(record))
 
@@ -317,9 +360,11 @@ func _make_roster_row(record: SoldierRecord) -> Control:
 	var hp := record.current_health()
 	var state_tag := ""
 	if record.status == SoldierRecord.Status.DESTROYED:
-		state_tag = "  [LOST]"
+		state_tag = "  [WRECKED]"
 	elif record.status == SoldierRecord.Status.WOUNDED:
 		state_tag = "  [HURT]"
+	elif record.damage > 0:
+		state_tag = "  [DAMAGED]"
 	row.text = "%-12s %-10s %d/%d%s" % [
 		record.display_name, record.rank_title(), hp, record.max_health, state_tag]
 	row.add_theme_font_size_override("font_size", font_size_body)
@@ -368,11 +413,53 @@ func _rebuild_detail() -> void:
 		return
 
 	var chassis := _chassis(_selected.chassis_id)
-	_detail.add_child(_label(_selected.display_name, COL_BRIGHT, font_size_header))
+
+	# Editable, same as the squad name. Soldiers you can name are soldiers you
+	# notice losing, which is most of what the roster is for.
+	var name_field := LineEdit.new()
+	name_field.text = _selected.display_name
+	name_field.flat = true
+	name_field.max_length = 14
+	name_field.placeholder_text = "UNNAMED"
+	name_field.add_theme_font_size_override("font_size", font_size_header)
+	name_field.add_theme_color_override("font_color", COL_BRIGHT)
+	var record := _selected
+	var commit := func(text: String):
+		# Goes through CampaignState so the live body is renamed too, not just
+		# the record — otherwise the squad HUD keeps the old name until the
+		# next deploy.
+		state.rename_soldier(record, text, get_tree())
+		_play(sfx_select)
+		_rebuild()
+	name_field.text_submitted.connect(commit)
+	name_field.focus_exited.connect(func(): commit.call(name_field.text))
+	_detail.add_child(name_field)
 	_detail.add_child(_label("%s  ·  %s  ·  XP %d/%d" % [
 		_selected.rank_title(),
 		chassis.display_name if chassis != null else "no chassis",
 		_selected.xp, _selected.xp_per_rank], COL_DIM))
+
+	# Repair is just resources. A wrecked 0/60 frame costs more per point than a
+	# dented one, but it's the same transaction — nobody is permanently lost
+	# while you can still afford to rebuild them.
+	if _selected.damage > 0:
+		var cost := state.repair_cost(_selected)
+		var affordable := state.can_afford(cost)
+		_repair_button = Button.new()
+		_repair_button.text = "REPAIR  %d/%d  —  %d res" % [
+			_selected.current_health(), _selected.max_health, cost]
+		_repair_button.custom_minimum_size = Vector2(0, 32)
+		_repair_button.add_theme_font_size_override("font_size", font_size_body)
+		_strip_button_styles(_repair_button)
+		_repair_button.add_theme_color_override("font_color", COL_WARN if affordable else COL_CRIT)
+		_repair_button.disabled = not affordable
+		_repair_button.pressed.connect(func():
+			if state.repair_soldier(_selected):
+				_play(sfx_drop)
+			else:
+				_play(sfx_denied))
+		_repair_button.mouse_entered.connect(func(): _play(sfx_hover))
+		_detail.add_child(_repair_button)
 
 	_add_slot_group("WEAPON", ItemDefinition.Kind.WEAPON, _selected.weapon_ids)
 	_add_slot_group("EQUIPMENT", ItemDefinition.Kind.EQUIPMENT, _selected.equipment_ids)
@@ -380,6 +467,7 @@ func _rebuild_detail() -> void:
 
 
 func _add_slot_group(title: String, kind: int, ids: Array) -> void:
+	await get_tree().process_frame
 	_detail.add_child(_label(title, COL_DIM))
 	if ids.is_empty():
 		_detail.add_child(_label("  no slots on this chassis", COL_DIM))
@@ -411,9 +499,10 @@ func _make_slot(kind: int, index: int, item_id: StringName) -> Control:
 	slot.custom_minimum_size = slot_size
 	slot.flat = false
 	var item := _item(item_id)
-	slot.text = item.display_name.substr(0, 8) if item != null else "—"
+	slot.text = item.short_label() if item != null else "—"
 	slot.add_theme_font_size_override("font_size", font_size_body - 3)
-	slot.tooltip_text = item.effect_summary() if item != null else "empty slot"
+	slot.tooltip_text = "%s\n%s\n\nright-click to remove" % [
+		item.display_name, item.effect_summary()] if item != null else "empty slot"
 	return slot
 
 
@@ -474,6 +563,17 @@ class _SlotButton extends Button:
 	var kind: int
 	var slot_index: int
 	var item_id: StringName
+
+	# Dragging a slot back to the armoury works, but it's four times the effort
+	# for the common case of "take that off".
+	func _gui_input(event: InputEvent) -> void:
+		if item_id == &"":
+			return
+		if event is InputEventMouseButton and event.pressed \
+				and event.button_index == MOUSE_BUTTON_RIGHT:
+			accept_event()
+			owner_ui.unfit(kind, slot_index)
+			owner_ui._play(owner_ui.sfx_drop)
 
 	func _get_drag_data(_at: Vector2) -> Variant:
 		if item_id == &"":

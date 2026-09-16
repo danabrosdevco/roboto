@@ -98,6 +98,9 @@ func deploy_into(level: Node, records: Array[SoldierRecord]) -> Squad:
 		soldier.global_position = point.slot_position(i)
 		if ai_manager != null:
 			ai_manager.register_enemy(soldier)
+		# Back-reference by id. Renaming a record has to reach the body that was
+		# built from it, and there's nothing else linking the two.
+		soldier.set_meta("record_id", to_deploy[i].id)
 		_spawned[soldier] = to_deploy[i]
 		members.append(soldier)
 
@@ -174,6 +177,18 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 			soldier.signal_integrity + record.effective_signal_bonus, 0.0, 1.0)
 
 
+# CampaignState.squad_name wins over whatever the level author typed on the
+# spawn point — it's what the player set, so it has to be what they see in the
+# roster header and in every order toast.
+func _squad_name(fallback: String) -> String:
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	if campaign != null and campaign.state != null:
+		var chosen: String = campaign.state.squad_name
+		if chosen != "":
+			return chosen
+	return fallback
+
+
 func _catalogue() -> ItemCatalogue:
 	if catalogue != null:
 		return catalogue
@@ -190,7 +205,7 @@ func _build_squad(point: SquadSpawnPoint, members: Array[Soldier]) -> Squad:
 	if squad == null:
 		squad = Squad.new()
 	squad.name = "PlayerSquad"
-	squad.callsign = point.callsign
+	squad.callsign = _squad_name(point.callsign)
 	squad.player_commandable = point.player_commandable
 	squad.default_objective = point.default_objective
 	squad.target_objective = point.target_objective
@@ -258,6 +273,9 @@ func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 		soldier.global_position = anchor + (basis * offset)
 		if ai_manager != null:
 			ai_manager.register_enemy(soldier)
+		# Back-reference by id. Renaming a record has to reach the body that was
+		# built from it, and there's nothing else linking the two.
+		soldier.set_meta("record_id", to_deploy[i].id)
 		_spawned[soldier] = to_deploy[i]
 		members.append(soldier)
 
@@ -270,7 +288,7 @@ func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 	if squad == null:
 		squad = Squad.new()
 	squad.name = "PlayerSquad"
-	squad.callsign = "ALPHA"
+	squad.callsign = _squad_name("ALPHA")
 	squad.player_commandable = true
 	squad.default_objective = Squad.SquadObjective.FOLLOW
 	squad.squad_members = members
@@ -281,6 +299,73 @@ func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 	squad_deployed.emit(squad, members.size())
 	print("[SquadSpawner] %d deployed on the player (no spawn point used)" % members.size())
 	return squad
+
+
+# ─────────────────────────────────────────────
+# SINGLE-SOLDIER SYNC
+# ─────────────────────────────────────────────
+# The body standing in the world carries a COPY of the record's health, taken at
+# deploy. Repairing the record doesn't touch it, so at base you'd pay to rebuild
+# someone and watch them keep standing there at 0/60 — or, if they were
+# destroyed, not appear at all because they weren't deployable when the level
+# loaded. Both cases are handled here.
+func sync_record(record: SoldierRecord) -> Soldier:
+	if record == null:
+		return null
+
+	var existing := find_body(record)
+	if existing != null:
+		# Already in the world: push the repaired numbers across, and stand them
+		# back up if the repair brought them out of the downed state.
+		existing.max_health = record.max_health
+		existing.health = record.current_health()
+		existing.signal_integrity = record.signal_integrity
+		if "downed" in existing and existing.downed and record.is_deployable():
+			existing.revive()
+		return existing
+
+	# Not in the world. If they're deployable now, they should be.
+	if record.is_deployable():
+		return spawn_one(record)
+	return null
+
+
+func find_body(record: SoldierRecord) -> Soldier:
+	for node in _spawned.keys():
+		if _spawned[node] == record and node != null and is_instance_valid(node):
+			return node as Soldier
+	return null
+
+
+# Adds one soldier to the squad that's already deployed, beside the others.
+func spawn_one(record: SoldierRecord) -> Soldier:
+	if not has_squad():
+		return null
+	var level := active_squad.get_parent()
+	if level == null:
+		return null
+
+	var soldier := _build_soldier(record)
+	if soldier == null:
+		return null
+	level.add_child(soldier)
+	soldier.global_position = _rejoin_position()
+	soldier.set_meta("record_id", record.id)
+	if ai_manager != null:
+		ai_manager.register_enemy(soldier)
+	_spawned[soldier] = record
+	active_squad.add_ai_to_squad(soldier)
+	active_squad.notify_roster_changed()
+	return soldier
+
+
+# Beside the squad, or beside the player if the squad is empty.
+func _rejoin_position() -> Vector3:
+	var anchor := active_squad.get_center()
+	if anchor == Vector3.ZERO and player != null:
+		anchor = player.global_position
+	var angle := randf() * TAU
+	return anchor + Vector3(cos(angle), 0.0, sin(angle)) * 2.0
 
 
 # ─────────────────────────────────────────────

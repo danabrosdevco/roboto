@@ -45,6 +45,10 @@ func _on_objective_ready() -> void:
 	for item in interactibles:
 		if item != null:
 			item.interacted.connect(_on_interacted)
+			# Back-reference so the HUD can ask what this console is FOR. The
+			# objective owns an array of interactibles that may live anywhere in
+			# the tree, so parent-walking wouldn't find it.
+			item.set_meta("mission_objective", self)
 	set_process(channel_duration > 0.0)
 	_emit_progress()
 
@@ -57,6 +61,33 @@ func target_count() -> int:
 
 func progress() -> Array:
 	return [_done.size(), maxi(1, target_count())]
+
+
+# What the HUD shows next to the F prompt. "F | 0" told the player nothing —
+# this says which objective the console belongs to, how far through the set they
+# are, and whether it's a tap or a hold.
+func get_prompt() -> String:
+	if completed:
+		return "%s — done" % display_name
+	var target := target_count()
+	var progress := ""
+	if target > 1:
+		progress = "  (%d/%d)" % [_done.size(), target]
+	if channel_duration > 0.0:
+		if _channelling != null:
+			return "%s%s  %d%%" % [display_name, progress, int(channel_fraction() * 100.0)]
+		return "Hold — %s%s" % [display_name, progress]
+	return "%s%s" % [display_name, progress]
+
+
+func channel_fraction() -> float:
+	if channel_duration <= 0.0:
+		return 0.0
+	return clampf(_channel_t / channel_duration, 0.0, 1.0)
+
+
+func is_channelling() -> bool:
+	return _channelling != null
 
 
 func _emit_progress() -> void:

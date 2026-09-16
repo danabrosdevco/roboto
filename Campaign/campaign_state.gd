@@ -36,6 +36,17 @@ const SAVE_VERSION := 1
 # load would break every allocation key that references a soldier.
 @export var _next_id: int = 1
 
+# ── IDENTITY ──────────────────────────────────
+# The single source of truth for what the player's squad is called. The spawner
+# reads it onto the Squad node, so the roster header, the command HUD and the
+# order toasts all agree.
+@export var squad_name: String = "NAMELESS"
+
+# The player's own loadout, held as a record so the management screen can treat
+# them as one more row. Their chassis is whatever you make the player frame —
+# the slot counts come from it exactly as they do for a squadmate.
+@export var player_record: SoldierRecord = SoldierRecord.new()
+
 # Spare kit. Items fitted to a soldier are NOT in here — they're in that
 # soldier's slots. Total owned = armoury spare + everything fitted.
 @export var armoury: Armoury = Armoury.new()
@@ -45,6 +56,10 @@ var catalogue: ItemCatalogue
 
 signal ledger_changed
 signal roster_changed
+# Emitted after a paid repair. CampaignManager listens and tells the spawner to
+# push the new health onto the live body, or bring a rebuilt soldier into the
+# world if they were too wrecked to deploy when the level loaded.
+signal soldier_repaired(record: SoldierRecord)
 
 
 # ─────────────────────────────────────────────
@@ -123,8 +138,50 @@ func deployable() -> Array[SoldierRecord]:
 	return out
 
 
-# Between-mission repair. Costs nothing yet — wire it to the ledger once you've
-# decided whether repairs are free, paid, or time-gated.
+# ── REPAIR ────────────────────────────────────
+# Resources per point of health restored. A destroyed frame costs the same per
+# point as a scratch, so a 0/60 wreck is simply expensive rather than a
+# different transaction.
+@export var repair_cost_per_hp: int = 1
+# Multiplier on top for bringing a DESTROYED record back. Rebuilding a wreck
+# should hurt more than patching a dent, or losing people costs nothing.
+@export var rebuild_cost_multiplier: float = 2.0
+
+
+func repair_cost(record: SoldierRecord) -> int:
+	if record == null or record.damage <= 0:
+		return 0
+	var cost := float(record.damage) * float(repair_cost_per_hp)
+	if record.status == SoldierRecord.Status.DESTROYED:
+		cost *= rebuild_cost_multiplier
+	return int(ceil(cost))
+
+
+func can_repair(record: SoldierRecord) -> bool:
+	var cost := repair_cost(record)
+	return cost > 0 and can_afford(cost)
+
+
+# Charged as an allocation that is never refunded. Consumed spend and refundable
+# spend share one ledger that way — available() stays earned minus everything
+# committed, and there's no second balance to drift out of sync.
+func repair_soldier(record: SoldierRecord) -> bool:
+	var cost := repair_cost(record)
+	if cost <= 0 or not can_afford(cost):
+		return false
+	var key := "repair:%s:%d" % [record.id, _next_purchase()]
+	if not allocate(key, cost):
+		return false
+	record.damage = 0
+	record.signal_integrity = 1.0
+	record.status = SoldierRecord.Status.ACTIVE
+	record.recompute_stats(catalogue)
+	soldier_repaired.emit(record)
+	roster_changed.emit()
+	return true
+
+
+# Free full repair. Kept for debug and for a future "between campaigns" reset.
 func repair_all() -> void:
 	for r in roster:
 		if r.status != SoldierRecord.Status.DESTROYED:
@@ -161,6 +218,32 @@ func remove_destroyed() -> Array[SoldierRecord]:
 # Every one of these is a single call that moves an item between exactly two
 # places, so the pool and the slots cannot disagree.
 # ─────────────────────────────────────────────
+# Renames are expected to be instant. The record is the source of truth, but a
+# body built from it earlier is carrying a stale copy of the name — the squad
+# HUD roster reads Soldier.soldier_name, not the record — so push it across.
+func rename_soldier(record: SoldierRecord, new_name: String, tree: SceneTree) -> void:
+	if record == null:
+		return
+	var cleaned := new_name.strip_edges()
+	record.display_name = cleaned if cleaned != "" else "UNNAMED"
+	if tree == null:
+		roster_changed.emit()
+		return
+	for squad in tree.get_nodes_in_group("squads"):
+		if not (squad is Squad):
+			continue
+		for member in (squad as Squad).squad_members:
+			if member == null or not is_instance_valid(member):
+				continue
+			if member.get_meta("record_id", &"") == record.id:
+				member.soldier_name = record.display_name
+	roster_changed.emit()
+
+
+func is_player_record(record: SoldierRecord) -> bool:
+	return record != null and record == player_record
+
+
 func can_fit(record: SoldierRecord, item: ItemDefinition) -> bool:
 	if record == null or item == null:
 		return false
@@ -168,8 +251,12 @@ func can_fit(record: SoldierRecord, item: ItemDefinition) -> bool:
 		return false
 	if record.rank < item.required_rank:
 		return false
-	# A squadmate can only carry something that has an AI implementation.
-	if not item.fits_ai():
+	# Which implementation is required depends on WHO is carrying it. The pump
+	# shotgun has no HUDWeapon, so it can arm a squadmate and not you.
+	if is_player_record(record):
+		if not item.fits_player():
+			return false
+	elif not item.fits_ai():
 		return false
 	return item.fits_chassis(record.chassis_id)
 
@@ -238,6 +325,8 @@ func set_chassis(record: SoldierRecord, chassis: ChassisDefinition) -> bool:
 func recompute_roster() -> void:
 	for r in roster:
 		r.recompute_stats(catalogue)
+	if player_record != null:
+		player_record.recompute_stats(catalogue)
 	roster_changed.emit()
 
 
@@ -324,8 +413,10 @@ func to_dict() -> Dictionary:
 		"unlocked": unlocks,
 		"selected_mission_id": String(selected_mission_id),
 		"next_id": _next_id,
+		"squad_name": squad_name,
 		"purchase_counter": _purchase_counter,
 		"armoury": armoury.to_dict(),
+		"player_record": player_record.to_dict(),
 	}
 
 
@@ -334,8 +425,11 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	s.earned = int(data.get("earned", 0))
 	s.allocations = data.get("allocations", {})
 	s._next_id = int(data.get("next_id", 1))
+	s.squad_name = str(data.get("squad_name", "NAMELESS"))
 	s._purchase_counter = int(data.get("purchase_counter", 0))
 	s.armoury = Armoury.from_dict(data.get("armoury", {}))
+	if data.has("player_record"):
+		s.player_record = SoldierRecord.from_dict(data["player_record"])
 	s.selected_mission_id = StringName(str(data.get("selected_mission_id", "")))
 
 	var records: Array[SoldierRecord] = []

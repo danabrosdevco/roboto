@@ -20,6 +20,11 @@ enum Kind {
 
 @export var id: StringName = &""
 @export var display_name: String = "Item"
+# What fits in a 58px slot. "Ancient Rifle" and "Ancient Pistol" both truncate
+# to "Ancient" at eight characters, so slots need their own short label rather
+# than a substring of the long one. Leave blank and short_label() derives a
+# sensible one from the last word.
+@export var short_name: String = ""
 @export_multiline var description: String = ""
 @export var kind: Kind = Kind.EQUIPMENT
 @export var icon: Texture2D
@@ -91,6 +96,10 @@ func fits_player() -> bool:
 
 # Shown in the armoury so a player-only weapon in stores reads as deliberate
 # rather than as a bug when it won't drop onto a squadmate.
+# Marks items only one side can carry. "[SQUAD]" on the pump shotgun means it
+# has no player_scene — there is no HUDWeapon version of it — so it will refuse
+# to drop onto your own loadout. Without the tag that refusal looks like a bug.
+# Items both sides can use, and all modules, show nothing.
 func carrier_tag() -> String:
 	if kind == Kind.MODULE:
 		return ""
@@ -101,6 +110,19 @@ func carrier_tag() -> String:
 	if fits_ai():
 		return "[SQUAD]"
 	return "[UNUSABLE]"
+
+
+# Slot label. Falls back to the most distinguishing part of the name — the LAST
+# word — because that's what differs between "Ancient Rifle" and "Ancient
+# Pistol". Truncating from the front gets it exactly backwards.
+func short_label() -> String:
+	if short_name != "":
+		return short_name
+	var words := display_name.split(" ", false)
+	if words.is_empty():
+		return "?"
+	var last: String = words[words.size() - 1]
+	return last.substr(0, 9)
 
 
 # One line for the UI, built from whatever is non-default.

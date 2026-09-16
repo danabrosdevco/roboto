@@ -340,7 +340,7 @@ spawn_point = NodePath("SpawnPoint")
 nav_region = NodePath("NavigationRegion3D")
 
 [node name="SpawnPoint" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.883, 4.02917, 35.3365)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.883, 4.02917, 24.6401)
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -16.2824, 0, 1.2119)

@@ -98,6 +98,85 @@ func equip_weapon_scene(scene: PackedScene) -> void:
 var _idle_scan_t: float = 0.0
 var _idle_scan_base: Vector3 = Vector3.ZERO
 
+# A squad member executing a move order shouldn't be distracted by stimuli
+# behind them. Used to gate the "turn and look" reactions.
+func _moving_under_orders() -> bool:
+	return squad_directed and movement_state != MovementState.NONE
+
+
+# Nothing updated look_target while a robot was walking with no target, so
+# whatever it was last pointed at — a corpse, a squadmate's muzzle flash — stuck
+# for the whole journey. Facing your direction of travel is the sane default.
+func _tick_travel_look(_delta: float) -> void:
+	if has_live_target():
+		return
+	if movement_state == MovementState.NONE:
+		return
+	if movement_target == Vector3.ZERO:
+		return
+	look_target = movement_target
+	# Re-centre the idle scan arc so they sweep around where they ARRIVE, not
+	# around where they set off from.
+	_idle_scan_base = Vector3.ZERO
+
+
+# ── LINE OF FIRE ──────────────────────────────
+# Rounds hit allies for reduced damage rather than passing through, so having a
+# squadmate in your line is a real cost. Rather than hold fire — which reads as
+# the AI freezing — they take a step sideways to clear the shot. That's what a
+# person does, and it's legible from outside.
+@export var sidestep_when_blocked: bool = true
+# How far to slide. Small: this is a shuffle to clear a shoulder, not a flank.
+@export var sidestep_distance: float = 2.2
+# Seconds before the same robot will sidestep again, so two soldiers in a line
+# don't oscillate around each other forever.
+@export var sidestep_cooldown: float = 1.8
+# Give up and take the shot anyway after this many blocked attempts, so a robot
+# pinned in a doorway behind a squadmate still contributes.
+@export var sidestep_max_attempts: int = 2
+var _sidestep_timer: float = 0.0
+var _sidestep_attempts: int = 0
+
+
+# True if the caller should hold this shot. Issues the sidestep as a side effect.
+func _clear_line_of_fire() -> bool:
+	if not sidestep_when_blocked or weapon == null:
+		return false
+	if not weapon.has_method("friendly_in_line"):
+		return false
+	if not weapon.friendly_in_line(weapon_target):
+		_sidestep_attempts = 0
+		return false
+
+	# Blocked. If we've already shuffled twice and someone is STILL in the way,
+	# fire anyway — a third of damage to a squadmate beats a robot that never
+	# shoots because the formation is tight.
+	if _sidestep_attempts >= sidestep_max_attempts:
+		return false
+	if _sidestep_timer > 0.0:
+		return true   # already moving out of the way; just don't fire yet
+
+	_sidestep_timer = sidestep_cooldown
+	_sidestep_attempts += 1
+
+	# Perpendicular to the shot, whichever side has more room.
+	var aim: Vector3 = weapon_target - global_position
+	aim.y = 0.0
+	if aim.length_squared() < 0.01:
+		return false
+	var lateral: Vector3 = aim.normalized().cross(Vector3.UP).normalized()
+	var left: Vector3 = global_position + lateral * sidestep_distance
+	var right: Vector3 = global_position - lateral * sidestep_distance
+	var target_pos: Vector3 = left
+	if not is_path_clear(global_position + Vector3.UP * 0.5, left, null):
+		target_pos = right
+	elif randf() < 0.5:
+		target_pos = right
+
+	move_to(target_pos)
+	return true
+
+
 # ── SQUAD CONTROL ─────────────────────────────
 # True while a Squad is issuing this robot's orders. A squad member must not
 # self-direct: AIState.IDLE runs _wander() on a timer and AIState.PATROL runs
@@ -516,6 +595,9 @@ func handle_time_passing(delta):
 
 	if _investigate_timer > 0.0:
 		_investigate_timer = maxf(0.0, _investigate_timer - delta)
+	if _sidestep_timer > 0.0:
+		_sidestep_timer = maxf(0.0, _sidestep_timer - delta)
+	_tick_travel_look(delta)
 
 	if targeting_time >= targeting_recon_time:
 		reconsider_target()
@@ -1089,7 +1171,9 @@ func reconsider_target() -> void:
 			look_target = combat_target.global_position
 			return
 	if combat_target != null and not combat_target.alive:
-		_remember_last_seen(combat_target.global_position)
+		# Deliberately NOT remembered as a last-known-position. You can see it's
+		# down — filing the corpse as a lead is what sent them walking over to
+		# stare at it instead of looking for whoever is still shooting.
 		combat_target = null
 		weapon_target = Vector3.ZERO
 		_has_los = false
@@ -1108,6 +1192,13 @@ func reconsider_target() -> void:
 	if new_target != null:
 		if ai_state == AIState.COMBAT:
 			change_combat_target(new_target)
+		elif ai_state == AIState.SEARCH:
+			# Searching means we already know there's a fight on. Detection only
+			# fires on body_entered, so a hostile that was already inside the
+			# radius never re-triggers it — without this they search past someone
+			# standing in plain sight.
+			if is_path_clear(global_position + Vector3.UP * 0.8, new_target.global_position, new_target):
+				trigger_combat(new_target)
 		# Don't auto-trigger from IDLE/PATROL — let detection handle that
 	else:
 		combat_target = null
@@ -1140,6 +1231,15 @@ func _take_preempted_target() -> CharacterBody3D:
 
 
 # Returns true if it took over targeting this tick.
+# True when this robot is genuinely fighting something. COMBAT with a null or
+# downed target is a leftover state, not a fight — and it's what kept squads
+# pinned in CONTACT after the last enemy fell.
+func has_live_target() -> bool:
+	if combat_target == null or not is_instance_valid(combat_target):
+		return false
+	return combat_target.alive
+
+
 func _check_close_threat() -> bool:
 	if close_threat_range <= 0.0 or ai_state == AIState.DEAD:
 		return false
@@ -1514,6 +1614,11 @@ func compute_leap_velocity_fixed_speed(target: Vector3, speed: float) -> Vector3
 # FIRE / DAMAGE / DEATH
 # ─────────────────────────────────────────────
 func fire():
+	# Check before the trigger, not after. A round that has already left can't
+	# be un-fired, and holding for a frame while stepping clear is invisible to
+	# the player except as a robot that doesn't shoot its own squad in the back.
+	if _clear_line_of_fire():
+		return
 	var final_target = get_inaccurate_target(weapon_target)
 	weapon.fire(final_target)
 	if stimulus_manager != null:
@@ -1532,10 +1637,16 @@ func apply_damage(damage, source) -> void:
 		player = source
 		damaged_by_player = true
 	if source is CharacterBody3D and _is_hostile(source):
+		# Being shot must never be ignorable. The old test was
+		# `elif combat_target == null`, which misses the case that actually
+		# happens: still in COMBAT, holding a target that is non-null but DOWNED.
+		# Neither branch fired, so a robot would keep "fighting" a corpse while
+		# something live shot it in the back until the 0.33s targeting tick
+		# happened to notice.
 		if ai_state != AIState.COMBAT:
 			trigger_combat(source)
 			combat_triggered.emit(self)
-		elif combat_target == null:
+		elif not has_live_target():
 			change_combat_target(source)
 		if stimulus_manager != null:
 			stimulus_manager.emit_stimulus(
@@ -1759,7 +1870,13 @@ func receive_stimulus(
 		return
 	match type:
 		StimulusManager.StimulusType.GUNSHOT_HEARD:
-			if ai_state != AIState.COMBAT:
+			# Gunshots stopped being faction-filtered so hostiles could hear the
+			# player — which also means you now hear your OWN squad. Turning to
+			# face every friendly muzzle behind you is why an advancing squad
+			# walked forward staring backwards. Only a hostile shot is worth
+			# turning for.
+			var shot_is_hostile: bool = source_node != null and _is_hostile(source_node)
+			if ai_state != AIState.COMBAT and shot_is_hostile:
 				look_target = source_position
 				_remember_last_seen(source_position)
 				# A shot from someone hostile is a contact, not ambient noise.
@@ -1772,23 +1889,28 @@ func receive_stimulus(
 				# Close enough to be worth walking over to. SEARCH already
 				# drives the look-around-and-reposition behaviour, so this just
 				# points it at the right place.
-				if distance <= investigate_gunshot_within and _investigate_timer <= 0.0:
+				if shot_is_hostile and distance <= investigate_gunshot_within and _investigate_timer <= 0.0:
 					_investigate_timer = investigate_cooldown
 					if ai_state != AIState.SEARCH:
 						change_ai_state(AIState.SEARCH)
 					search_time = 0.0
 					move_to(source_position)
 		StimulusManager.StimulusType.ALLY_SHOT:
-			if ai_state != AIState.COMBAT:
+			# The stimulus position is where the VICTIM is, not where the shot
+			# came from. Filing that as a last-known-position sends people to
+			# stand where their friend was hit rather than toward the shooter.
+			if ai_state != AIState.COMBAT and not _moving_under_orders():
 				look_target = source_position
-				_remember_last_seen(source_position)
+			if source_node != null and _is_hostile(source_node):
+				_remember_last_seen(source_node.global_position)
 			if source_node != null and _is_hostile(source_node):
 				if is_path_clear(global_position + Vector3.UP * 0.8, source_position, source_node):
 					trigger_combat(source_node)
 		StimulusManager.StimulusType.ALLY_DIED:
-			if ai_state != AIState.COMBAT:
+			# Same again, and this is the one that had squads advancing over
+			# bodies while staring at them.
+			if ai_state != AIState.COMBAT and not _moving_under_orders():
 				look_target = source_position
-				_remember_last_seen(source_position)
 			if distance < StimulusManager.DEFAULT_RADIUS[type] * 0.5:
 				if source_node != null and _is_hostile(source_node):
 					if is_path_clear(global_position + Vector3.UP * 0.8, source_node.global_position, source_node):
@@ -1928,6 +2050,9 @@ func _on_detection_body_entered(body: Node3D) -> void:
 		return
 	if not (body is Player or body is Enemy):
 		return
+	# Downed or destroyed: not a threat, and not worth acquiring.
+	if "alive" in body and not body.alive:
+		return
 	if ai_state == AIState.COMBAT and combat_target == body:
 		return
 	if not _is_hostile(body):
@@ -1964,6 +2089,13 @@ func _on_detection_body_exited(body: Node3D) -> void:
 		checking_for_target = false
 
 func trigger_combat(body: AI):
+	# A downed robot keeps its collider (so the repair tool can hit it) and is
+	# still found by detection and line-of-sight checks. Without this guard the
+	# squad re-triggers combat on a wreck forever and never stands down.
+	if body == null or not is_instance_valid(body):
+		return
+	if not body.alive:
+		return
 	change_combat_target(body)
 	movement_target = Vector3.ZERO
 	change_ai_state(AIState.COMBAT)
