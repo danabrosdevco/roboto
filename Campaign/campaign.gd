@@ -193,6 +193,27 @@ func register_enemy_spawner(s: EnemyForceSpawner) -> void:
 # True when this objective id should be live for the current operation. An empty
 # active_objectives list on the mission means "all of them", so a level's
 # objectives keep working with no mission configuration at all.
+# Frees any objective the current mission didn't ask for. Safe to call twice —
+# anything already gone isn't in the group.
+func _prune_inactive_objectives() -> void:
+	if current_mission == null or current_mission.active_objectives.is_empty():
+		return
+	var removed: Array[String] = []
+	for node in get_tree().get_nodes_in_group("mission_objectives"):
+		if not (node is MissionObjective):
+			continue
+		var objective := node as MissionObjective
+		if objective.id == &"":
+			continue
+		if current_mission.active_objectives.has(objective.id):
+			continue
+		removed.append(String(objective.id))
+		objective.queue_free()
+	if not removed.is_empty():
+		print("[Campaign] '%s' excludes %d objective(s): %s" % [
+			current_mission.id, removed.size(), removed])
+
+
 func is_objective_active(id: StringName) -> bool:
 	if current_mission == null:
 		return true
@@ -320,6 +341,12 @@ func on_level_loaded(level: Node) -> void:
 		push_warning("Campaign: in a mission but current_mission is null. Nothing will spawn. Either deploy from base, or set Campaign.debug_mission while iterating.")
 	if spawner != null:
 		spawner.deploy_into(level, state.deployable())
+	# Objectives filter themselves in _ready, but that runs before
+	# debug_mission is adopted on a direct launch — and before current_mission
+	# exists at all if anything loads the level out of band. Re-run it here,
+	# where the mission is definitely known.
+	_prune_inactive_objectives()
+
 	# Opposition AFTER the player squad, so an EliminateObjective capturing
 	# hostiles in a zone sees a fully populated map.
 	if enemy_spawner != null and in_mission:

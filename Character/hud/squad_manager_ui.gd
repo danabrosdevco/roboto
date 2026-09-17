@@ -259,7 +259,9 @@ func _build_ui() -> void:
 	_name_edit.placeholder_text = "NAMELESS"
 	_name_edit.max_length = 16
 	_name_edit.text_submitted.connect(_on_name_submitted)
-	_name_edit.focus_exited.connect(func(): _on_name_submitted(_name_edit.text))
+	_name_edit.focus_exited.connect(func():
+		if is_instance_valid(_name_edit) and not _rebuilding:
+			_on_name_submitted(_name_edit.text))
 	header.add_child(_name_edit)
 	_resource_label = _label("", COL_WARN, font_size_header)
 	header.add_child(_resource_label)
@@ -305,8 +307,14 @@ func _label(text: String, col: Color, size: int = -1) -> Label:
 	return l
 
 
+# remove_child BEFORE queue_free. queue_free is deferred — the node stays a
+# child until the end of the frame — so a second _rebuild in the same frame
+# found the old rows still parented and added a fresh set alongside them. That
+# is the duplicated WEAPON / EQUIPMENT / MODULES blocks: two rebuilds, one
+# frame, nothing actually removed in between.
 func _clear(node: Node) -> void:
 	for c in node.get_children():
+		node.remove_child(c)
 		c.queue_free()
 
 
@@ -317,7 +325,11 @@ func _on_name_submitted(new_name: String) -> void:
 	if state == null:
 		return
 	var cleaned := new_name.strip_edges().to_upper()
-	state.squad_name = cleaned if cleaned != "" else "NAMELESS"
+	if cleaned == "":
+		cleaned = "NAMELESS"
+	if cleaned == state.squad_name:
+		return   # nothing changed; don't churn the panel
+	state.squad_name = cleaned
 	_name_edit.text = state.squad_name
 	# Push it to any squad already in the world. The spawner reads squad_name at
 	# deploy, but at base the squad is standing right there — renaming and not
@@ -326,14 +338,27 @@ func _on_name_submitted(new_name: String) -> void:
 		if squad is Squad and (squad as Squad).player_commandable:
 			(squad as Squad).callsign = state.squad_name
 			(squad as Squad).notify_roster_changed()
-	_rebuild()
+	_rebuild()   # squad_name isn't on a record, so nothing else triggers this
 	_name_edit.release_focus()
 	_play(sfx_select)
+
+
+var _rebuilding: bool = false
 
 
 func _rebuild() -> void:
 	if state == null or _roster_list == null:
 		return
+	# Renames emit roster_changed, which is already wired to _rebuild. Callers
+	# that ALSO rebuild by hand would otherwise run the whole thing twice.
+	if _rebuilding:
+		return
+	_rebuilding = true
+	_do_rebuild()
+	_rebuilding = false
+
+
+func _do_rebuild() -> void:
 
 	# The rebuild may replace a hovered Control while the cursor has not moved.
 	# Any mouse_entered caused by that replacement should be silent.
@@ -472,11 +497,19 @@ func _rebuild_detail() -> void:
 		# Goes through CampaignState so the live body is renamed too, not just
 		# the record — otherwise the squad HUD keeps the old name until the
 		# next deploy.
-		state.rename_soldier(record, text, get_tree())
+		# rename_soldier emits roster_changed, which rebuilds. Calling it here
+		# too was the second rebuild in the same frame.
+		var cleaned: String = text.strip_edges()
+		if cleaned == record.display_name:
+			return
+		state.rename_soldier(record, cleaned, get_tree())
 		_play(sfx_select)
-		_rebuild()
 	name_field.text_submitted.connect(commit)
-	name_field.focus_exited.connect(func(): commit.call(name_field.text))
+	# Only on a real focus loss. The rebuild frees this field, which fires
+	# focus_exited, which would commit again and rebuild again.
+	name_field.focus_exited.connect(func():
+		if is_instance_valid(name_field) and not _rebuilding:
+			commit.call(name_field.text))
 	_detail.add_child(name_field)
 	_detail.add_child(_label("%s  ·  %s  ·  XP %d/%d" % [
 		_selected.rank_title(),

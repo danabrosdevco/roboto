@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=27 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
@@ -21,6 +21,11 @@
 [ext_resource type="Resource" uid="uid://ciftj4gygiyem" path="res://Campaign/items & catalogue/test_item_catalogue.tres" id="18_kolru"]
 [ext_resource type="Script" path="res://Campaign/enemy_force_spawner.gd" id="18_r3yq3"]
 [ext_resource type="PackedScene" uid="uid://bww5b5c7ej00s" path="res://Character/characters/appx/enemy_shotgun.tscn" id="19_dmcx0"]
+[ext_resource type="Resource" uid="uid://b7vtusq7ctvn8" path="res://Campaign/missions/mission_valley_1_recon.tres" id="90_v1"]
+[ext_resource type="Resource" uid="uid://r4ysrytaju7c" path="res://Campaign/missions/mission_valley_2_probe.tres" id="91_v2"]
+[ext_resource type="Resource" uid="uid://nfku527pk0fi" path="res://Campaign/missions/mission_valley_3_push.tres" id="92_v3"]
+[ext_resource type="Resource" uid="uid://bfaurydji1ldk" path="res://Campaign/missions/mission_valley_4_assault.tres" id="93_v4"]
+[ext_resource type="Resource" uid="uid://dlwh4ct0km20w" path="res://Campaign/missions/mission_valley_5_siege.tres" id="94_v5"]
 
 [node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "squad_spawner", "objective_tracker", "Campaign", "enemy_spawner")]
 script = ExtResource("1_2t272")
@@ -80,7 +85,7 @@ script = ExtResource("12_1xc4a")
 [node name="CampaignManager" type="Node" parent="." groups=["campaign"]]
 script = ExtResource("15_3b3cm")
 base_level = ExtResource("16_oio3q")
-missions = Array[ExtResource("16_oqoj0")]([ExtResource("17_pp0hd")])
+missions = Array[ExtResource("16_oqoj0")]([ExtResource("17_pp0hd"), ExtResource("90_v1"), ExtResource("91_v2"), ExtResource("92_v3"), ExtResource("93_v4"), ExtResource("94_v5")])
 catalogue = ExtResource("18_kolru")
 starting_chassis = ExtResource("11_6rcry")
 starting_resources = 300

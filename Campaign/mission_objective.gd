@@ -52,7 +52,7 @@ func _ready() -> void:
 	# Switched off for operations that don't want it. The level holds every
 	# objective it could ever need; the mission picks a subset. Freed rather
 	# than hidden so the tracker never counts it and its props go with it.
-	var campaign := get_node_or_null("/root/Campaign")
+	var campaign := _find_campaign()
 	if campaign != null and id != &"" and not campaign.is_objective_active(id):
 		queue_free()
 		return
@@ -126,3 +126,25 @@ func progress() -> Array:
 
 func counts_toward_extraction() -> bool:
 	return not optional and not is_extraction
+
+
+# Finds the campaign however it's wired: a node in the "campaign" group (the
+# reliable way), a /root/Campaign autoload, or a parent's Campaign export.
+#
+# This file was still hard-coded to the autoload path. There is no autoload in
+# this project — CampaignManager is a node under World — so `campaign` was
+# always null, the active_objectives filter never ran, and EVERY objective in
+# the level survived regardless of which mission you were on.
+func _find_campaign() -> Node:
+	var found := get_tree().get_first_node_in_group("campaign")
+	if found != null:
+		return found
+	found = get_node_or_null("/root/Campaign")
+	if found != null:
+		return found
+	var node: Node = self
+	while node != null:
+		if "Campaign" in node and node.get("Campaign") != null:
+			return node.get("Campaign")
+		node = node.get_parent()
+	return null
