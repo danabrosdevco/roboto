@@ -68,7 +68,6 @@ var last_grounded_time: float = 0.0
 var coyote_used: bool = false
 var is_grounded: bool
 var was_grounded: bool
-var is_fullscreen = false
 var look_direction: Vector3
 @export var look_interp_speed := 12.0  # how fast the camera follows the target
 
@@ -190,6 +189,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# First frame back from the squad manager. The click that closed it may still
+	# be held, and the loadout polls the fire action — so without this the menu
+	# hands the gun a trigger pull the player never aimed.
+	if SquadManagerUI.release_pending:
+		SquadManagerUI.release_pending = false
+		if loadout != null:
+			loadout.block_fire_until_release()
+
 	if spectator_mode == true:
 		_handle_spectator(delta)
 		return
@@ -327,12 +334,9 @@ func can_coyote_jump() -> bool:
 # interaction, which is the right split: this script shouldn't know what a
 # magazine is.
 func handle_input(_delta: float) -> void:
-	if Input.is_action_just_pressed("fullscreen"):
-		is_fullscreen = !is_fullscreen
-		if is_fullscreen:
-			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
-		else:
-			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	# Fullscreen moved to Master._input. Polling it here meant F did nothing
+	# whenever _physics_process wasn't running — paused for the squad manager,
+	# paused for a level load, or in spectator mode.
 
 	# Its own `if`, not chained onto anything. The old version had the weapon
 	# switch as an `elif` on this check.

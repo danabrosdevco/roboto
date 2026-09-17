@@ -74,3 +74,10 @@ func _squad_present() -> bool:
 			if centre.distance_to(member.global_position) > squad_radius:
 				return false
 	return true
+
+
+# The extraction point is the one objective players most need named clearly, and
+# it is also the one most often left unnamed in a level — MissionExit sits
+# inside it and the node is easy to place and forget.
+func verb() -> String:
+	return "Extract" if is_extraction else "Reach"

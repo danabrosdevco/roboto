@@ -45,6 +45,16 @@ class_name PlayerWeapon
 
 # ── FIRING ────────────────────────────────────
 @export var firemode: Enums.FireModes
+
+# ── MANUAL ACTION (pump / bolt) ───────────────
+# FireModes.MANUAL existed in the enum but nothing implemented it — a weapon set
+# to MANUAL simply never fired, because primary_pressed only answered SEMI and
+# FULL. A manual gun fires one round per trigger pull and then has to cycle
+# before the next, which is what makes a pump feel like a pump rather than a
+# slow semi-auto.
+@export var pump_time: float = 0.55
+@export var pump_sound: AudioStreamPlayer3D
+
 @export var damage: int = 10
 @export var FIRE_RATE: float = 0.100
 
@@ -77,6 +87,10 @@ var _reload_t: float = 0.0
 var _sound_index: int = 0
 var _sound_t: float = 0.0
 var _fire_held: bool = false
+
+# MANUAL action only: true while the gun is being cycled and cannot fire.
+var needs_pump: bool = false
+var _pump_remaining: float = 0.0
 
 
 func _on_initialize() -> void:
@@ -147,6 +161,10 @@ func primary_pressed() -> void:
 		try_fire()
 	elif firemode == Enums.FireModes.FULL:
 		try_fire()
+	elif firemode == Enums.FireModes.MANUAL:
+		# One round per pull, same as SEMI. The difference is the cycle gate in
+		# can_fire(), not the trigger.
+		try_fire()
 
 
 func primary_held(_delta: float) -> void:
@@ -165,14 +183,36 @@ func reload_pressed() -> void:
 func tick(delta: float) -> void:
 	if fire_cooldown > 0.0:
 		fire_cooldown -= delta
+	_tick_pump(delta)
 	_tick_reload(delta)
+
+
+# The cycle. Ends by telling the HUD, because "ready to fire again" is part of
+# the readout even though the round count has not moved.
+func _tick_pump(delta: float) -> void:
+	if not needs_pump:
+		return
+	_pump_remaining -= delta
+	if _pump_remaining <= 0.0:
+		_pump_remaining = 0.0
+		needs_pump = false
+		charges_changed.emit()
+
+
+func _start_pump() -> void:
+	needs_pump = true
+	_pump_remaining = pump_time
+	if pump_sound != null:
+		pump_sound.play()
+	charges_changed.emit()
 
 
 # ─────────────────────────────────────────────
 # FIRING
 # ─────────────────────────────────────────────
 func can_fire() -> bool:
-	return not is_reloading and fire_cooldown <= 0.0 and not is_raising()
+	return not is_reloading and fire_cooldown <= 0.0 and not is_raising() \
+		and not needs_pump
 
 
 func try_fire() -> void:
@@ -184,6 +224,11 @@ func try_fire() -> void:
 	fire_cooldown = FIRE_RATE
 	_fire_shot()
 	loaded = maxi(0, loaded - 1)
+	# Cycle even on the last round: you rack the empty gun, and the reload picks
+	# up from there. Skipping the pump when empty would let a reload-cancel fire
+	# instantly off a gun that was never cycled.
+	if firemode == Enums.FireModes.MANUAL:
+		_start_pump()
 	charges_changed.emit()
 	fired.emit()
 	used.emit()
@@ -260,6 +305,10 @@ func _tick_reload(delta: float) -> void:
 # place an ammo system usually leaks.
 func _finish_reload() -> void:
 	is_reloading = false
+	# Reloading chambers a round, so a manual action comes out of it ready. Left
+	# set, the gun would demand a pump it had already been given.
+	needs_pump = false
+	_pump_remaining = 0.0
 	if ammo == null:
 		loaded = magazine_size
 		charges_changed.emit()

@@ -68,16 +68,16 @@ func progress() -> Array:
 # are, and whether it's a tap or a hold.
 func get_prompt() -> String:
 	if completed:
-		return "%s — done" % display_name
+		return "%s — done" % label()
 	var target := target_count()
 	var progress := ""
 	if target > 1:
 		progress = "  (%d/%d)" % [_done.size(), target]
 	if channel_duration > 0.0:
 		if _channelling != null:
-			return "%s%s  %d%%" % [display_name, progress, int(channel_fraction() * 100.0)]
-		return "Hold — %s%s" % [display_name, progress]
-	return "%s%s" % [display_name, progress]
+			return "%s%s  %d%%" % [label(), progress, int(channel_fraction() * 100.0)]
+		return "Hold — %s%s" % [label(), progress]
+	return "%s%s" % [label(), progress]
 
 
 func channel_fraction() -> float:
@@ -159,3 +159,9 @@ func _find_player() -> Node3D:
 			return (node as World).player
 		node = node.get_parent()
 	return null
+
+
+# "Garrison" -> CAPTURE GARRISON. An interact objective is always something you
+# go and take, so the verb is constant.
+func verb() -> String:
+	return "Capture"

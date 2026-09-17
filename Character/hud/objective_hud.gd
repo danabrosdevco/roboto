@@ -164,7 +164,12 @@ func _rebuild() -> void:
 
 	var progress: Array = tracker.required_progress()
 	var ready_to_leave: bool = tracker.all_required_complete()
-	_header.text = "EXTRACT" if ready_to_leave else "OBJECTIVES  %d/%d" % [progress[0], progress[1]]
+	# The header used to become "EXTRACT" once everything was done. It sat
+	# directly above the list in the same right-aligned style, so it read as a
+	# list row — and with the extraction objective ALSO listed, the panel showed
+	# EXTRACT twice and in the wrong order. The header stays a header now; the
+	# extraction row speaks for itself.
+	_header.text = "OBJECTIVES  %d/%d" % [progress[0], progress[1]]
 	_header.add_theme_color_override("font_color", COL_DONE if ready_to_leave else COL_BRIGHT)
 
 	for objective in tracker.objectives():
@@ -178,7 +183,9 @@ func _make_row(objective: MissionObjective) -> Control:
 	var current: int = counts[0]
 	var target: int = counts[1]
 
-	var name := objective.display_name
+	# label(), not display_name — carries the verb and never renders the bare
+	# placeholder "Objective" for a node whose name was never authored.
+	var name := objective.label()
 	if objective.optional:
 		name = "(%s)" % name
 	var suffix := ""
@@ -209,9 +216,9 @@ func _on_refreshed(_objectives: Array) -> void:
 
 func _on_changed(objective: MissionObjective) -> void:
 	if objective.completed:
-		_show_toast("OBJECTIVE COMPLETE : %s" % objective.display_name.to_upper(), COL_DONE)
+		_show_toast("OBJECTIVE COMPLETE : %s" % objective.label().to_upper(), COL_DONE)
 	elif objective.failed:
-		_show_toast("OBJECTIVE FAILED : %s" % objective.display_name.to_upper(), COL_WARN)
+		_show_toast("OBJECTIVE FAILED : %s" % objective.label().to_upper(), COL_WARN)
 	_rebuild()
 
 

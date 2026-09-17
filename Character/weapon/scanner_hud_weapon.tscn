@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Character/equipment/player_scanner.gd" id="1_scanner"]
+[ext_resource type="PackedScene" uid="uid://cia7d1ywjwrgf" path="res://Character/components/scanner.tscn" id="2_component"]
+
+[node name="ScannerTool" type="Node3D" node_paths=PackedStringArray("scanner")]
+script = ExtResource("1_scanner")
+scanner = NodePath("Scanner")
+cooldown = 12.0
+display_name = "Scanner"
+equipment_order = 3
+consumes_charge = false
+reverts_when_empty = false
+equippable_when_empty = true
+use_default_position = true
+
+[node name="Scanner" parent="." instance=ExtResource("2_component")]

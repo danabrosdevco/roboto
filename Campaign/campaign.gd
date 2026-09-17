@@ -126,7 +126,7 @@ func _repair_roster() -> void:
 			r.set_chassis(frame, catalogue)
 	if state.player_record != null:
 		if state.player_record.chassis_id == &"" or catalogue.chassis_def(state.player_record.chassis_id) == null:
-			state.player_record.display_name = "YOU"
+			state.player_record.display_name = CampaignState.PLAYER_DEFAULT_NAME
 			state.player_record.set_chassis(frame, catalogue)
 
 
@@ -143,7 +143,7 @@ func _seed_new_campaign() -> void:
 	# The player is a roster entry too, so they need a frame for their slots.
 	var player_frame := default_chassis()
 	if player_frame != null and state.player_record != null:
-		state.player_record.display_name = "YOU"
+		state.player_record.display_name = CampaignState.PLAYER_DEFAULT_NAME
 		state.player_record.set_chassis(player_frame, catalogue)
 
 	# Stores first, then issue each soldier their weapon out of it.

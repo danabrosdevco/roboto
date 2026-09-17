@@ -32,7 +32,35 @@ func refresh() -> void:
 			obj.objective_completed.connect(_on_completed)
 			obj.objective_failed.connect(_on_failed)
 			obj.progress_changed.connect(_on_progress)
+	_sort_objectives()
 	objectives_refreshed.emit(_objectives)
+
+
+# Extraction goes last, then optional, then everything else in scene order.
+#
+# The group returns nodes in tree order, and an extraction point lives inside
+# LevelExit — which in valley_level is declared thousands of lines above the
+# objectives you have to do first. So "get out" listed above "capture the
+# garrison", which is the reverse of the order you do them in. Sorting here
+# rather than in the HUD keeps every reader of objectives() consistent.
+func _sort_objectives() -> void:
+	var order := func(o: MissionObjective) -> int:
+		if o.is_extraction:
+			return 2
+		if o.optional:
+			return 1
+		return 0
+	# Stable: equal ranks keep the scene order the level author chose.
+	var indexed: Array = []
+	for i in _objectives.size():
+		indexed.append({"obj": _objectives[i], "rank": order.call(_objectives[i]), "i": i})
+	indexed.sort_custom(func(a, b):
+		if a["rank"] != b["rank"]:
+			return a["rank"] < b["rank"]
+		return a["i"] < b["i"])
+	_objectives.clear()
+	for entry in indexed:
+		_objectives.append(entry["obj"])
 	_check_all()
 
 

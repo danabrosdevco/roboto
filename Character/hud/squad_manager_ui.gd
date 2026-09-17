@@ -13,9 +13,14 @@ class_name SquadManagerUI
 # item between exactly two places in one call, so the pool and the slots cannot
 # drift apart no matter what the UI does.
 #
-# NOT DONE YET, deliberately: the shop tab and the per-soldier upgrade detail.
-# CampaignState.buy_item/buy_chassis/sell_item exist and work; they just have no
-# screen. Wanted the drag-drop core proven before stacking more on it.
+# BUYING AND SELLING live on the armoury rows themselves rather than in a
+# separate shop tab: [-] sells one at half what it cost, [+] buys one. The list
+# comes from the catalogue, so an item you own none of is still a row with a
+# price on it.
+#
+# NOT DONE YET, deliberately: buying chassis (CampaignState.buy_chassis exists
+# and works, it belongs in the soldier detail panel) and ammo as a priced
+# service. Wanted the drag-drop core proven before stacking more on it.
 # ─────────────────────────────────────────────
 
 @export var open_action: StringName = &"squad_manager"
@@ -50,6 +55,13 @@ class_name SquadManagerUI
 @export var hide_while_open: Array[Control] = []
 
 var _hidden: Array[Control] = []
+
+# Set on close, consumed by the player on its next physics frame, so the click
+# that dismissed the menu is not inherited by the gun as a held trigger. It has
+# to be a flag rather than an edge check on "is the menu open", because
+# _physics_process does not run at all while the tree is paused — the player
+# never gets a frame in which to observe the menu being up.
+static var release_pending: bool = false
 
 const COL_DIM    := HUDPalette.DIM
 const COL_BRIGHT := HUDPalette.BRIGHT
@@ -151,6 +163,7 @@ func open() -> void:
 
 func close() -> void:
 	visible = false
+	release_pending = true
 	get_tree().paused = false
 	_hide_other_hud(false)
 	_clear_cursors()
@@ -273,7 +286,9 @@ func _build_ui() -> void:
 
 	_roster_list = _make_column("ROSTER", 2)
 	_detail = _make_column("SOLDIER", 2)
-	_armoury_list = _make_column("ARMOURY", 1)
+	# Widened from 1. The armoury rows carry a price and two buttons now, and at
+	# the old ratio there was not room for them beside the name.
+	_armoury_list = _make_column("ARMOURY", 2)
 
 	var hint := _label("drag from ARMOURY onto a slot  ·  right-click a slot to remove  ·  click the name to rename the squad", COL_DIM, font_size_body)
 	column.add_child(hint)
@@ -288,6 +303,11 @@ func _make_column(title: String, stretch: int) -> VBoxContainer:
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Horizontal scrolling off. With it on, a row wider than the column is
+	# simply scrolled off to the right instead of being constrained — which is
+	# how the armoury's [+] button ended up somewhere you could not see or
+	# click. Off, the row is held to the column width and its labels clip.
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	wrapper.add_child(scroll)
 
 	var list := VBoxContainer.new()
@@ -373,8 +393,11 @@ func _do_rebuild() -> void:
 	# The player is one more row. Their slots come from their chassis exactly as
 	# a squadmate's do; only fits_player() vs fits_ai() differs.
 	if state.player_record != null:
-		if state.player_record.display_name == "Unnamed" or state.player_record.display_name == "":
-			state.player_record.display_name = "YOU"
+		# "YOU" is also caught, so an existing save that already stored the old
+		# placeholder picks up the new designator instead of keeping it forever.
+		var player_name := state.player_record.display_name
+		if player_name == "Unnamed" or player_name == "" or player_name == "YOU":
+			state.player_record.display_name = CampaignState.PLAYER_DEFAULT_NAME
 		_roster_list.add_child(_make_roster_row(state.player_record))
 		var spacer := Control.new()
 		spacer.custom_minimum_size = Vector2(0, 10)
@@ -383,14 +406,31 @@ func _do_rebuild() -> void:
 		_roster_list.add_child(_make_roster_row(record))
 
 	_clear(_armoury_list)
-	var ids: Array = state.armoury.stock.keys()
-	ids.sort()
-	if ids.is_empty():
+	# Driven by the CATALOGUE, not by what is in stock. Armoury.take() erases
+	# the key when the last spare goes, so a stock-driven list deleted the row
+	# the moment you sold your last one — taking its [+] with it, and leaving no
+	# way to ever buy that item again. Rows at zero stay, dimmed.
+	var shown: Array[ItemDefinition] = []
+	if catalogue != null:
+		for entry in catalogue.items:
+			if entry != null:
+				shown.append(entry)
+		shown.sort_custom(func(a, b): return a.display_name < b.display_name)
+	else:
+		# Catalogue unresolved. Fall back to stock so the panel still shows what
+		# you own, but say why the buyable-but-unowned rows are missing rather
+		# than looking like an empty shop.
+		push_warning("SquadManagerUI: no catalogue resolved; armoury falls back to stock only, so items you own none of are not listed.")
+		var ids: Array = state.armoury.stock.keys()
+		ids.sort()
+		for item_id in ids:
+			var owned := _item(item_id)
+			if owned != null:
+				shown.append(owned)
+	if shown.is_empty():
 		_armoury_list.add_child(_label("nothing in stores", COL_DIM))
-	for item_id in ids:
-		var item := _item(item_id)
-		if item != null:
-			_armoury_list.add_child(_make_armoury_row(item, state.armoury.spare(item_id)))
+	for def in shown:
+		_armoury_list.add_child(_make_armoury_row(def, state.armoury.spare(def.id)))
 
 	_rebuild_detail()
 
@@ -434,23 +474,54 @@ func _make_armoury_row(item: ItemDefinition, count: int) -> Control:
 	var row := _ArmouryRow.new()
 	row.item_id = item.id
 	row.owner_ui = self
+	# The row is a drag source; at zero there is nothing to pick up and it has
+	# to refuse, or you drag a phantom onto a slot.
+	row.spare_count = count
 	row.custom_minimum_size = Vector2(0, 40)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
+
+	# SELL on the left, BUY on the right, so the destructive one is never where
+	# a repeated buy-click lands.
+	var refund_value := state.sale_value_of(item)
+	row.add_child(_make_shop_button("-", count > 0,
+		"Sell one %s for %d" % [item.display_name, refund_value],
+		func(): _on_sell(item)))
 
 	# Armoury rows are Containers rather than Buttons, so they do not get a
 	# Button's automatic hover font colour. Store each label's resting colour
 	# and explicitly brighten the whole row while hovered.
-	row.add_child(_armoury_label("%dx" % count, COL_WARN))
-	row.add_child(_armoury_label(item.display_name, COL_DIM))
+	row.add_child(_armoury_label("%dx" % count, COL_WARN if count > 0 else COL_DIM))
+
+	# The NAME is the only thing allowed to grow, and it clips rather than
+	# pushing. The armoury is the narrowest column, and a row whose labels add up
+	# to more than its width does not wrap or shrink — it just overflows, and
+	# everything after it (the price, the [+]) ends up outside the visible area.
+	# That is why the buy button could not be seen.
+	var name_label := _armoury_label(item.display_name, COL_DIM)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.clip_text = true
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	row.add_child(name_label)
+
 	var summary := item.effect_summary()
 	if summary != "":
-		row.add_child(_armoury_label(summary, COL_DIM))
+		var summary_label := _armoury_label(summary, COL_DIM)
+		summary_label.clip_text = true
+		summary_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		row.add_child(summary_label)
 	# A player-only weapon sitting in stores that won't drop onto a squadmate
 	# looks like a bug unless it says so.
 	var tag := item.carrier_tag()
 	if tag != "":
 		row.add_child(_armoury_label(tag, COL_WARN if tag == "[YOU]" else COL_DIM))
+
+	var affordable := state.can_afford(item.cost)
+	row.add_child(_armoury_label(str(item.cost), COL_WARN if affordable else COL_CRIT))
+	row.add_child(_make_shop_button("+", affordable,
+		"Buy one %s for %d" % [item.display_name, item.cost],
+		func(): _on_buy(item)))
 
 	row.mouse_entered.connect(func():
 		_set_armoury_row_hover(row, true)
@@ -463,6 +534,39 @@ func _armoury_label(text: String, col: Color) -> Label:
 	var label := _label(text, col)
 	label.set_meta("armoury_rest_color", col)
 	return label
+
+
+# Square +/- button for an armoury row. A button you cannot use is DISABLED
+# rather than absent, so the row keeps its width and the [+] does not jump
+# sideways under the cursor the moment you can no longer afford it.
+func _make_shop_button(text: String, enabled: bool, tip: String, on_press: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = Vector2(30, 30)
+	button.focus_mode = Control.FOCUS_NONE
+	button.tooltip_text = tip
+	button.disabled = not enabled
+	button.add_theme_font_size_override("font_size", font_size_body)
+	button.add_theme_color_override("font_color", COL_BRIGHT)
+	button.add_theme_color_override("font_disabled_color", COL_DIM)
+	if enabled:
+		button.pressed.connect(on_press)
+		button.mouse_entered.connect(_play_hover)
+	return button
+
+
+# Both of these lean on ledger_changed -> _rebuild, already wired in
+# _resolve_campaign. Rebuilding by hand here would run it twice per click.
+func _on_buy(item: ItemDefinition) -> void:
+	if state == null or item == null:
+		return
+	_play(sfx_select if state.buy_item(item) else sfx_denied)
+
+
+func _on_sell(item: ItemDefinition) -> void:
+	if state == null or item == null:
+		return
+	_play(sfx_drop if state.sell_item(item) else sfx_denied)
 
 
 func _set_armoury_row_hover(row: Control, hovered: bool) -> void:
@@ -620,8 +724,15 @@ func _chassis(id: StringName) -> ChassisDefinition:
 class _ArmouryRow extends HBoxContainer:
 	var item_id: StringName
 	var owner_ui: SquadManagerUI
+	# Rows for items you own none of are still listed so they can be bought.
+	var spare_count: int = 0
 
 	func _get_drag_data(_at: Vector2) -> Variant:
+		# Refuse rather than handing out a phantom: this row is showing a buy
+		# price, not stock. Without this you can drag a zero-count item onto a
+		# slot and fit something you do not have.
+		if spare_count <= 0:
+			return null
 		set_drag_preview(owner_ui.make_drag_preview(owner_ui._item(item_id)))
 		owner_ui._play(owner_ui.sfx_pick_up)
 		return {"source": "armoury", "item_id": item_id}

@@ -1,0 +1,63 @@
+[gd_scene load_steps=8 format=3 uid="uid://bq8hax1pgmejc"]
+
+[ext_resource type="Script" path="res://Character/weapon/hud_weapon_template.gd" id="1_hudwep"]
+[ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/weapon/appx/bullet.tscn" id="2_bullet"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="3_tracer"]
+[ext_resource type="PackedScene" uid="uid://vwg10a8rgqjf" path="res://3d_assets/gun_pack/Blends/Shotgun_2.blend" id="4_model"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="5_flash"]
+[ext_resource type="AudioStream" uid="uid://ber1keqk8ky8h" path="res://sounds/sfx/weapons/shotgun/shotgun_fire_1 (3).wav" id="6_fire"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="7_click"]
+
+[node name="Shotgun" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "pump_sound", "click_stream_player", "viewmodel")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.140767)
+script = ExtResource("1_hudwep")
+tracer_origin = NodePath("Holder/Shotgun_22/Muzzle")
+muzzle_flash = NodePath("Holder/Shotgun_22/MuzzleFlash")
+weapon_model = NodePath("Holder/Shotgun_22")
+projectile_scene = ExtResource("2_bullet")
+tracer_scene = ExtResource("3_tracer")
+rifle_stream_player = NodePath("ShotgunShot")
+recoil_duration = 0.34
+recoil_per_shot = 5.0
+tracers_in_mag = Array[int]([4, 3, 2, 1, 0])
+hitscan_range = 45.0
+noise_radius = 44.0
+ammo_type = &"12ga"
+magazine_size = 4
+reload_time = 2.6
+discrete_magazines = false
+firemode = 2
+pump_sound = NodePath("Pump")
+damage = 45
+FIRE_RATE = 0.28
+ads_position = Vector3(0.4, -0.2, -1.077)
+click_stream_player = NodePath("Click")
+display_name = "Shotgun"
+viewmodel = NodePath("Holder/Shotgun_22")
+base_position = Vector3(1, -1.5, 1)
+base_rotation = Vector3(5, 0, 2.8)
+obstructed_position = Vector3(0.3, 0, 3)
+obstructed_rotation = Vector3(0.3, 90, 3)
+
+[node name="Holder" type="Node3D" parent="."]
+transform = Transform3D(-1.44248e-08, 0, 0.33, 0, 0.33, 0, -0.33, 0, -1.44248e-08, 0.0223675, -0.0411878, -0.143221)
+
+[node name="Shotgun_22" parent="Holder" instance=ExtResource("4_model")]
+
+[node name="Muzzle" type="Node3D" parent="Holder/Shotgun_22"]
+transform = Transform3D(3.22828, 1.98523e-23, -2.98023e-08, 0, 4, 1.86265e-09, -1.42109e-14, -1.86265e-09, 4, 4.7889, 0.281185, 0.0134409)
+
+[node name="MuzzleFlash" parent="Holder/Shotgun_22" instance=ExtResource("5_flash")]
+transform = Transform3D(3.00282, 0.0213606, -1.46844, 0.00481322, 3.99932, 0.0732868, 1.18525, -0.070358, 3.71999, 4.44377, 0.61281, -0.143923)
+visible = false
+
+[node name="ShotgunShot" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("6_fire")
+volume_db = -20.0
+
+[node name="Click" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("7_click")
+
+[node name="Pump" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("7_click")
+pitch_scale = 0.75

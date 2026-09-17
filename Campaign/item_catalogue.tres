@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemCatalogue" load_steps=13 format=3 uid="uid://citemcatalogue1"]
+[gd_resource type="Resource" script_class="ItemCatalogue" load_steps=15 format=3 uid="uid://citemcatalogue1"]
 
 [ext_resource type="Script" path="res://Campaign/item_catalogue.gd" id="1_cat"]
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="2_itemdef"]
@@ -10,10 +10,12 @@
 [ext_resource type="Resource" uid="uid://vw46h82csp7a" path="res://Campaign/chassis/chassis_soldier.tres" id="7_soldier"]
 [ext_resource type="Resource" uid="uid://citemcarbine01" path="res://Campaign/items/item_carbine.tres" id="10_carbine"]
 [ext_resource type="Resource" uid="uid://citemdmr00001" path="res://Campaign/items/item_dmr.tres" id="11_dmr"]
-[ext_resource type="Resource" uid="uid://citemfragplyr1" path="res://Campaign/items/item_frag.tres" id="12_frag"]
+[ext_resource type="Resource" uid="uid://d27mhtm3hsroa" path="res://Campaign/items/item_frag.tres" id="12_frag"]
 [ext_resource type="Resource" uid="uid://citemoptics001" path="res://Campaign/items/item_optics.tres" id="14_optics"]
+[ext_resource type="Resource" uid="uid://citemfieldrep1" path="res://Campaign/items/item_repair_tool.tres" id="15_repair_tool"]
+[ext_resource type="Resource" path="res://Campaign/items/item_scanner.tres" id="16_scanner"]
 
 [resource]
 script = ExtResource("1_cat")
-items = Array[ExtResource("2_itemdef")]([ExtResource("3_m4"), ExtResource("4_pistol"), ExtResource("5_shotgun"), ExtResource("9_repair"), ExtResource("10_carbine"), ExtResource("11_dmr"), ExtResource("12_frag"), ExtResource("14_optics")])
+items = Array[ExtResource("2_itemdef")]([ExtResource("3_m4"), ExtResource("4_pistol"), ExtResource("5_shotgun"), ExtResource("9_repair"), ExtResource("10_carbine"), ExtResource("11_dmr"), ExtResource("12_frag"), ExtResource("14_optics"), ExtResource("15_repair_tool"), ExtResource("16_scanner")])
 chassis = Array[ExtResource("6_chassisdef")]([ExtResource("7_soldier")])

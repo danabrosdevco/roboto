@@ -36,6 +36,18 @@ const SAVE_VERSION := 1
 # load would break every allocation key that references a soldier.
 @export var _next_id: int = 1
 
+# What the player is called on the roster, before they rename themselves.
+#
+# Straight out of lore.txt: the player is a StratCom AKR — autonomous killer
+# robot — that Algie repurposed and fitted with a Tabula Rasa chip. So the name
+# is the hardware designator, and the 00 is the blank slate: first of a line
+# with nothing written on it yet.
+#
+# Deliberately a machine code while the squad carry human names. You are the
+# thing that names THEM; the contrast in the roster column is the point. Defined
+# once here because three different files were hardcoding the old "YOU".
+const PLAYER_DEFAULT_NAME := "AKR-00"
+
 # ── IDENTITY ──────────────────────────────────
 # The single source of truth for what the player's squad is called. The spawner
 # reads it onto the Squad node, so the roster header, the command HUD and the
@@ -81,12 +93,29 @@ func can_afford(cost: int) -> bool:
 
 
 func allocate(key: String, cost: int) -> bool:
+	var had := allocations.has(key)
+	if not _allocate_quiet(key, cost):
+		return false
+	if not had:
+		ledger_changed.emit()
+	return true
+
+
+# Records the allocation WITHOUT announcing it.
+#
+# Anything that changes the ledger AND the armoury has to use this and emit once
+# at the end. ledger_changed is wired straight to the squad manager's rebuild,
+# and that rebuild runs synchronously — so emitting from inside allocate() meant
+# the UI redrew after the resources had been deducted but before the item had
+# been added to stores. It read the new balance and the old count, and since
+# nothing emits again afterwards the row stayed wrong until the next click
+# happened to trigger another rebuild.
+func _allocate_quiet(key: String, cost: int) -> bool:
 	if allocations.has(key):
 		return true
 	if not can_afford(cost):
 		return false
 	allocations[key] = cost
-	ledger_changed.emit()
 	return true
 
 
@@ -350,9 +379,11 @@ func buy_item(item: ItemDefinition) -> bool:
 	if item == null or not can_afford(item.cost):
 		return false
 	var key := "item:%s:%d" % [item.id, _next_purchase()]
-	if not allocate(key, item.cost):
+	# Quiet, then stock, then announce — see _allocate_quiet.
+	if not _allocate_quiet(key, item.cost):
 		return false
 	armoury.add(item.id)
+	ledger_changed.emit()
 	return true
 
 
@@ -360,28 +391,93 @@ func buy_chassis(chassis: ChassisDefinition) -> bool:
 	if chassis == null or not can_afford(chassis.cost):
 		return false
 	var key := "chassis:%s:%d" % [chassis.id, _next_purchase()]
-	if not allocate(key, chassis.cost):
+	# Same ordering as buy_item: the chassis is in stores before anyone is told.
+	if not _allocate_quiet(key, chassis.cost):
 		return false
 	armoury.add_chassis(chassis.id)
+	ledger_changed.emit()
 	return true
 
 
-# Sell a spare. Refunds the most recent purchase of that id at what was paid for
-# it, so a price change never leaves the ledger owing.
+# Sell a spare. Clears the most recent purchase of that id — so a price change
+# never leaves the ledger owing — but hands back only HALF of what was paid.
+#
+# The un-refunded half does not evaporate: it stays in the ledger under a
+# "sold:" key that nothing ever refunds, exactly like a repair. Erasing the
+# whole allocation would credit the full price back, and holding the loss
+# anywhere else would be the second balance this system exists to avoid.
+# available() is still earned - sum(allocations) and still cannot drift.
 func sell_item(item: ItemDefinition) -> bool:
 	if item == null or armoury.spare(item.id) <= 0:
 		return false
-	var prefix := "item:%s:" % item.id
-	var newest := ""
-	for key in allocations.keys():
-		if String(key).begins_with(prefix) and String(key) > newest:
-			newest = String(key)
+	var newest := _newest_purchase_key("item:%s:" % item.id)
+
+	# STARTING STOCK HAS NO ALLOCATION. Campaign.starting_stock puts items in the
+	# armoury directly — they were issued, not bought — so there is no entry to
+	# shrink. Refusing here meant none of the kit you begin the game with could
+	# ever be sold, which is most of what is in stores on a fresh save.
+	#
+	# Selling those credits earned instead. That is sound: earned only ever goes
+	# up, and it cannot be farmed, because anything you BUY gets an allocation
+	# and therefore takes the branch below. There is no loop that ends with more
+	# resources than it started with.
 	if newest == "":
-		return false
+		if not armoury.take(item.id):
+			return false
+		award(sale_value(item.cost))
+		return true
+
 	if not armoury.take(item.id):
 		return false
-	refund(newest)
+	var paid := int(allocations[newest])
+	var kept := paid - sale_value(paid)
+	# Mutate the ledger completely, THEN emit once. refund() emits on its own
+	# and the squad manager rebuilds synchronously on ledger_changed, so it
+	# would have read the ledger with the full price credited back and the
+	# retained half not yet recorded — a one-frame flash of the wrong balance.
+	allocations.erase(newest)
+	if kept > 0:
+		allocations["sold:%s:%d" % [item.id, _next_purchase()]] = kept
+	ledger_changed.emit()
 	return true
+
+
+# What selling something bought for `paid` hands back. Integer division rounds
+# the player down, so selling and re-buying is always a loss and never a way to
+# launder resources.
+func sale_value(paid: int) -> int:
+	return paid / 2
+
+
+# What the player would get back for selling one spare right now. The UI needs
+# the number before the sale to label the button honestly. Falls back to the
+# catalogue price for issued stock, which has no purchase to look up — the same
+# branch sell_item takes.
+func sale_value_of(item: ItemDefinition) -> int:
+	if item == null:
+		return 0
+	var newest := _newest_purchase_key("item:%s:" % item.id)
+	if newest == "":
+		return sale_value(item.cost)
+	return sale_value(int(allocations[newest]))
+
+
+# Highest-numbered purchase under a prefix. Compares the trailing counter
+# NUMERICALLY: these keys were previously ordered with `>` on the whole string,
+# which sorts "item:frag:9" above "item:frag:10" and picked the wrong
+# allocation to refund as soon as the counter passed single digits.
+func _newest_purchase_key(prefix: String) -> String:
+	var best := ""
+	var best_n := -1
+	for key in allocations.keys():
+		var s := String(key)
+		if not s.begins_with(prefix):
+			continue
+		var n := int(s.substr(prefix.length()))
+		if n > best_n:
+			best_n = n
+			best = s
+	return best
 
 
 @export var _purchase_counter: int = 0

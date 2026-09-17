@@ -128,6 +128,38 @@ func counts_toward_extraction() -> bool:
 	return not optional and not is_extraction
 
 
+# ─────────────────────────────────────────────
+# LABELLING
+# What the HUD and the interact prompt call this objective.
+#
+# display_name names the PLACE ("Garrison"). On its own that doesn't tell the
+# player what to do with it, and an objective whose display_name was never
+# authored fell back to the literal word "Objective", which told them nothing at
+# all. The verb supplies the action, so a level author only has to name the
+# thing: "Garrison" becomes CAPTURE GARRISON, and an unnamed extraction point
+# reads EXTRACT instead of OBJECTIVE.
+# ─────────────────────────────────────────────
+const DEFAULT_DISPLAY_NAME := "Objective"
+
+
+# Subclasses override. Empty means "no verb", and label() falls back to the name.
+func verb() -> String:
+	return ""
+
+
+func has_authored_name() -> bool:
+	return display_name != "" and display_name != DEFAULT_DISPLAY_NAME
+
+
+func label() -> String:
+	var action := verb()
+	if action == "":
+		return display_name if has_authored_name() else DEFAULT_DISPLAY_NAME
+	if has_authored_name():
+		return "%s %s" % [action, display_name]
+	return action
+
+
 # Finds the campaign however it's wired: a node in the "campaign" group (the
 # reliable way), a /root/Campaign autoload, or a parent's Campaign export.
 #

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" path="res://Character/weapon/scanner_hud_weapon.tscn" id="2_player"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"scanner"
+display_name = "Scanner"
+short_name = "Scan"
+description = "Sweeps for hostiles and marks what it finds. Sees further than you do."
+kind = 1
+cost = 35
+player_scene = ExtResource("2_player")
+usable_by_player = true
+usable_by_ai = false
+quantity = 1
+required_rank = 0

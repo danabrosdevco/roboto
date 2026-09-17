@@ -300,6 +300,15 @@ func _handle_slot_input() -> void:
 			return
 
 
+# Public because a UI can swallow the press a gun would otherwise inherit.
+# Closing the squad manager with the mouse still down meant the first unpaused
+# frame read a held trigger and fired a shot nobody asked for — the same
+# inherited-trigger problem as a weapon switch, from a different direction.
+func block_fire_until_release() -> void:
+	_fire_held = false
+	_block_fire_until_release = true
+
+
 func _handle_use_input(delta: float) -> void:
 	var pressed := Input.is_action_pressed(fire_action)
 

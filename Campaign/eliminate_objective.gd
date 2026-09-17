@@ -78,3 +78,7 @@ func _process(delta: float) -> void:
 	progress_changed.emit(self, _killed, maxi(1, target_count()))
 	if _killed >= target_count():
 		complete()
+
+
+func verb() -> String:
+	return "Eliminate"
