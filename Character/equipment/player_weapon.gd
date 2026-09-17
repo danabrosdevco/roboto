@@ -132,6 +132,7 @@ func get_readout() -> Readout:
 	# them magazines — a raw round count doesn't support the decision.
 	if discrete_magazines and magazine_size > 0:
 		r.secondary = int(floor(float(reserve()) / float(magazine_size)))
+	@warning_ignore("integer_division")
 	r.warn = loaded == 0 or (loaded <= magazine_size / 4 and reserve() == 0)
 	return r
 

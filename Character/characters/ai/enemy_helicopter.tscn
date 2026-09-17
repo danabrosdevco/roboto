@@ -1,0 +1,98 @@
+[gd_scene load_steps=19 format=3 uid="uid://cheli0000001"]
+
+[ext_resource type="Script" path="res://Character/characters/ai/enemy_helicopter.gd" id="1_nty0a"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_grenade_launcher.tscn" id="20_gl"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="2_8p1te"]
+[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_0ci13"]
+[ext_resource type="Resource" uid="uid://cavuq6s132jy8" path="res://Character/characters/ai/equipment/ai_equipment_grenade.tres" id="3_3i6e3"]
+[ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ic4jn"]
+[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t0xuv"]
+[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_t1gg6"]
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
+[ext_resource type="PackedScene" uid="uid://v11ihb3rf0ny" path="res://3d_assets/chatgptg/drone_variant_02_interceptor.glb" id="8_sbw46"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
+[ext_resource type="Script" path="res://faction_livery.gd" id="14_agla4"]
+[ext_resource type="Material" uid="uid://dym8xecxayc67" path="res://Campaign/faction_material_shader.tres" id="15_adn8v"]
+[ext_resource type="AudioStream" uid="uid://dsdolq0nwpaj" path="res://sounds/sfx/heli/td.helicopter-sound-41975.mp3" id="99_rotor"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
+radius = 25.0
+
+[node name="Enemy_Helicopter" type="CharacterBody3D" node_paths=PackedStringArray("rotor_loop", "nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+script = ExtResource("1_nty0a")
+rotor_loop = NodePath("RotorLoop")
+nav_agent = NodePath("NavigationAgent3D")
+weapon = NodePath("aiweapon")
+label = NodePath("DebugLabel")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("drone_variant_02_interceptor")]
+activation_distance = 250
+health = 100
+max_health = 100
+move_speed = 14.0
+equipment_slots = Array[ExtResource("2_8p1te")]([ExtResource("3_3i6e3")])
+soldier_name = "Gunship"
+AllowedMovementOptions = Array[int]([0, 1])
+AllowedCombatOptions = Array[int]([0, 1, 2])
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_mygdm")
+
+[node name="Bark" parent="." instance=ExtResource("2_7mr33")]
+bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"), ExtResource("5_t0xuv")])
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="drone_variant_02_interceptor" parent="." instance=ExtResource("8_sbw46")]
+transform = Transform3D(-4.37114e-08, -1, 4.37114e-08, 0, -4.37114e-08, -1, 1, -4.37114e-08, 1.91069e-15, 0, 0, 0)
+
+[node name="DebugLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.22588, 0)
+visible = false
+billboard = 1
+text = "Text"
+font_size = 48
+script = ExtResource("7_t1gg6")
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
+shape = SubResource("SphereShape3D_mkxqd")
+
+[node name="SparkBurst" parent="." instance=ExtResource("9_pm84i")]
+
+[node name="OilSpray" parent="." instance=ExtResource("10_ukmfb")]
+
+[node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("14_agla4")
+base_material = ExtResource("8_pr6gp")
+pieces = []
+paint_blend = 1.0
+marker_energy = 6.0
+
+[node name="RotorLoop" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("99_rotor")
+volume_db = -6.0
+unit_size = 30.0
+autoplay = true
+max_distance = 160.0
+
+[node name="FactionLivery2" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("14_agla4")
+base_material = ExtResource("15_adn8v")
+pieces = [NodePath("../drone_variant_02_interceptor/world/body_core"), NodePath("../drone_variant_02_interceptor/world/body_roof")]
+
+[node name="aiweapon" parent="." instance=ExtResource("20_gl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, 0)
+
+[connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
+[connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]
+
+[editable path="drone_variant_02_interceptor"]

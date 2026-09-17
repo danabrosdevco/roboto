@@ -52,7 +52,7 @@ class_name CampaignManager
 # holding nothing, because the chassis ships with no gun by design.
 @export var starting_stock: Array[StringName] = [
 ]
-@export var starting_weapon_id: StringName = &"m4"
+@export var starting_weapon_id: StringName = &"shotgun"
 
 signal state_loaded
 signal deployed(mission: MissionDefinition)
@@ -184,6 +184,24 @@ func _on_soldier_repaired(record: SoldierRecord) -> void:
 
 func register_objective_tracker(t: ObjectiveTracker) -> void:
 	objectives = t
+	# THE REINFORCEMENT DIRECTOR. Posture.RESERVE has been implemented in the
+	# spawner all along with nothing to trigger it; this is the trigger.
+	# Escalation hangs off what the player DID — an objective completing — not
+	# off a timer, so a cautious player and a fast one meet the same pressure at
+	# the same point in the mission rather than the slow one being punished.
+	if objectives != null and not objectives.objective_changed.is_connected(_on_objective_changed):
+		objectives.objective_changed.connect(_on_objective_changed)
+
+
+func _on_objective_changed(objective: MissionObjective) -> void:
+	if objective == null or not objective.completed:
+		return
+	if enemy_spawner == null:
+		return
+	# The reserve's reinforcement_tag IS an objective id, so completing that
+	# objective is the whole trigger condition. wake() is a no-op for any
+	# objective no reserve is waiting on.
+	enemy_spawner.wake(objective.id)
 
 
 func register_enemy_spawner(s: EnemyForceSpawner) -> void:
@@ -357,6 +375,61 @@ func on_level_loaded(level: Node) -> void:
 		objectives.refresh()
 
 
+# XP weighting is deliberate. SURVIVING is worth more than killing, because the
+# pillar is that you care about these robots — if kills paid better, the correct
+# play would be to push recklessly with them, which is the opposite game.
+#
+# Contribution is counted in KILLS rather than damage only because kills are
+# what the body already tracks; damage dealt would be the better measure and is
+# the natural upgrade when something records it.
+const XP_SURVIVED := 25
+const XP_PER_KILL := 6
+const XP_MISSION_SUCCESS := 15
+
+
+# Returns the soldiers who gained a rank, so the payout card can say so.
+func _award_experience(success: bool) -> Array:
+	var promoted: Array = []
+	if state == null:
+		return promoted
+	for record in state.roster:
+		if record == null or record.status == SoldierRecord.Status.DESTROYED:
+			continue   # lost robots earn nothing; there is nobody to promote
+		var before := record.rank
+		var gained := XP_PER_KILL * record.confirmed_kills_this_mission
+		gained += XP_SURVIVED
+		if success:
+			gained += XP_MISSION_SUCCESS
+		record.add_xp(gained)
+		if record.rank > before:
+			promoted.append(record)
+	return promoted
+
+
+# Pulls the live player body's condition onto their record.
+func _write_back_player() -> void:
+	if state == null or state.player_record == null:
+		return
+	var body := get_tree().get_first_node_in_group("player")
+	if body == null:
+		# The player group is not guaranteed; fall back to the world's export.
+		var world_node := get_parent()
+		if world_node != null and "player" in world_node:
+			body = world_node.player
+	if body == null or not is_instance_valid(body):
+		return
+	var record := state.player_record
+	if "max_health" in body and int(body.max_health) > 0:
+		record.max_health = int(body.max_health)
+	if "health" in body:
+		record.damage = clampi(record.max_health - int(body.health), 0, record.max_health)
+	if "confirmed_kills" in body:
+		record.confirmed_kills += body.confirmed_kills
+		record.confirmed_kills_this_mission = body.confirmed_kills
+		body.confirmed_kills = 0
+	record.missions_survived += 1
+
+
 # Success path. Collect the squad, pay out, save, and head home.
 func extract(success: bool = true) -> Dictionary:
 	var result := {"survivors": 0, "lost": 0, "reward": 0}
@@ -364,6 +437,18 @@ func extract(success: bool = true) -> Dictionary:
 		var counts := spawner.write_back()
 		result["survivors"] = counts["survivors"]
 		result["lost"] = counts["lost"]
+
+	# THE PLAYER IS A ROSTER ENTRY TOO, and nothing was writing their body back.
+	# SquadSpawner only walks the squadmates it spawned, so the player's record
+	# kept its starting health and zero kills no matter what happened in the
+	# mission — which is why the management screen showed a pristine AKR-00
+	# standing next to four dented squadmates.
+	_write_back_player()
+
+	# Veterancy. add_xp(), rank, rank_title() and every required_rank gate have
+	# been implemented all along with NOTHING calling add_xp — so rank was
+	# permanently 0 and every gate permanently shut. This is the missing call.
+	result["ranked_up"] = _award_experience(success)
 
 	# Bonus objectives pay out whether or not the mission itself succeeded —
 	# you did the work, and withholding it makes players avoid optional content.

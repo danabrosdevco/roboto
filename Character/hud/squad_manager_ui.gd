@@ -78,6 +78,8 @@ var _armoury_list: VBoxContainer
 var _resource_label: Label
 var _detail: VBoxContainer
 var _selected: SoldierRecord
+# Incremented on every detail rebuild; see _add_slot_group for why it exists.
+var _detail_generation: int = 0
 var _name_edit: LineEdit
 var _repair_button: Button
 
@@ -319,11 +321,11 @@ func _make_column(title: String, stretch: int) -> VBoxContainer:
 	return list
 
 
-func _label(text: String, col: Color, size: int = -1) -> Label:
+func _label(text: String, col: Color, font_px: int = -1) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.add_theme_color_override("font_color", col)
-	l.add_theme_font_size_override("font_size", size if size > 0 else font_size_body)
+	l.add_theme_font_size_override("font_size", font_px if font_px > 0 else font_size_body)
 	return l
 
 
@@ -450,8 +452,11 @@ func _make_roster_row(record: SoldierRecord) -> Control:
 		state_tag = "  [HURT]"
 	elif record.damage > 0:
 		state_tag = "  [DAMAGED]"
-	row.text = "%-12s %-10s %d/%d%s" % [
-		record.display_name, record.rank_title(), hp, record.max_health, state_tag]
+	# Kills sit next to condition on purpose: the two numbers together are the
+	# whole argument for repairing this one rather than recruiting a fresh frame.
+	row.text = "%-12s %-10s %d/%d  %dK%s" % [
+		record.display_name, record.rank_title(), hp, record.max_health,
+		record.confirmed_kills, state_tag]
 	row.add_theme_font_size_override("font_size", font_size_body)
 	row.add_theme_color_override("font_color",
 		COL_BRIGHT if record == _selected else COL_DIM)
@@ -465,8 +470,8 @@ func _make_roster_row(record: SoldierRecord) -> Control:
 
 # Godot draws a stylebox for each state whether or not the button is flat.
 func _strip_button_styles(button: Button) -> void:
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
-		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	for style_state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(style_state, StyleBoxEmpty.new())
 	button.focus_mode = Control.FOCUS_NONE
 
 
@@ -580,6 +585,9 @@ func _set_armoury_row_hover(row: Control, hovered: bool) -> void:
 
 
 func _rebuild_detail() -> void:
+	# Bumped on every rebuild so any slot-group continuation still waiting on a
+	# frame boundary knows its panel is gone and bails. See _add_slot_group.
+	_detail_generation += 1
 	_clear(_detail)
 	if _selected == null:
 		_detail.add_child(_label("select a soldier", COL_DIM))
@@ -619,6 +627,13 @@ func _rebuild_detail() -> void:
 		_selected.rank_title(),
 		chassis.display_name if chassis != null else "no chassis",
 		_selected.xp, _selected.xp_per_rank], COL_DIM))
+	# The service record. This is what makes a name worth keeping — a soldier
+	# with 14 confirmed and 6 missions behind them is a different proposition
+	# from an identical frame you could buy this afternoon.
+	_detail.add_child(_label("%d CONFIRMED  ·  %d MISSION%s SURVIVED" % [
+		_selected.confirmed_kills,
+		_selected.missions_survived,
+		"" if _selected.missions_survived == 1 else "S"], COL_DIM))
 
 	# Repair is just resources. A wrecked 0/60 frame costs more per point than a
 	# dented one, but it's the same transaction — nobody is permanently lost
@@ -648,7 +663,23 @@ func _rebuild_detail() -> void:
 
 
 func _add_slot_group(title: String, kind: int, ids: Array) -> void:
+	# THIS FUNCTION AWAITS, AND THAT IS WHY SLOTS DUPLICATED.
+	#
+	# _clear(_detail) cannot protect against a builder that adds its children a
+	# frame later: when a second rebuild clears the panel, the first rebuild's
+	# rows do not exist yet, so there is nothing to remove. Both continuations
+	# then resume and each adds a full WEAPON / EQUIPMENT / MODULES set. Two
+	# rebuilds in one frame, two of everything — which is what repairing did,
+	# because repair_soldier emits ledger_changed and roster_changed and the
+	# panel rebuilds on both.
+	#
+	# The generation counter makes a stale continuation abort instead. Fixing it
+	# here rather than by chasing double emits means ANY two rebuilds in a frame
+	# are now harmless, whatever causes them.
+	var generation := _detail_generation
 	await get_tree().process_frame
+	if generation != _detail_generation or not is_instance_valid(_detail):
+		return
 	_detail.add_child(_label(title, COL_DIM))
 	if ids.is_empty():
 		_detail.add_child(_label("  no slots on this chassis", COL_DIM))

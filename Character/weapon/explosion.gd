@@ -8,6 +8,12 @@ class_name Explosion
 # and the player's grenade both know. Left at NEUTRAL it damages everyone, which
 # is the old behaviour.
 @export var source_faction: Enums.Factions = Enums.Factions.NEUTRAL
+# WHO THREW IT. The blast used to pass itself as the damage source, which meant
+# a grenade kill was credited to a particle effect — nobody scored it, nobody
+# barked it, and the victim never retaliated, because apply_damage only reacts
+# when the source `is CharacterBody3D` and an Explosion is a Node3D. Grenades
+# were tactically invisible to the AI.
+@export var source_actor: Node = null
 # Blast hits everyone, allies included, just softer. A grenade that politely
 # ignores your squad is worse than one that makes you think about where you
 # throw it.
@@ -33,11 +39,17 @@ func _on_area_3d_body_entered(body: Node3D) -> void:
 	if damaged.has(body):  # skip repeat
 		return
 
+	var attacker: Node = self
+	if source_actor != null and is_instance_valid(source_actor):
+		attacker = source_actor
+
 	if body.has_method("apply_damage"):
-		body.apply_damage(_damage_for(body), self)
+		body.apply_damage(_damage_for(body), attacker)
 		damaged[body] = true
 	elif body.get_parent() and body.get_parent().has_method("apply_damage"):
-		body.get_parent().apply_damage(damage_value)
+		# This branch was calling apply_damage() with one argument against a
+		# two-argument signature — a runtime error every time it was reached.
+		body.get_parent().apply_damage(_damage_for(body.get_parent()), attacker)
 		damaged[body.get_parent()] = true
 
 

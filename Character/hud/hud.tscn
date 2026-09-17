@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://ib6m72545n75"]
+[gd_scene load_steps=20 format=3 uid="uid://ib6m72545n75"]
 
 [ext_resource type="PackedScene" uid="uid://b4n2skq3ovhu6" path="res://Character/hud/scan_effect.tscn" id="1_80vuv"]
 [ext_resource type="Script" path="res://Character/hud/hud.gd" id="1_nopku"]
@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://Character/hud/squad_hud.gd" id="9_n3ibl"]
 [ext_resource type="Script" path="res://Character/hud/objective_hud.gd" id="11_1xhm8"]
 [ext_resource type="Script" path="res://Character/hud/squad_manager_ui.gd" id="12_b61d5"]
+[ext_resource type="Script" path="res://Character/hud/comms_log.gd" id="13_comms"]
 [ext_resource type="AudioStream" uid="uid://blqxl5ak3y7lq" path="res://sounds/sfx/psx ui sfx/squad_manager/HoverG.ogg" id="13_kseao"]
 [ext_resource type="AudioStream" uid="uid://bntfdsr3ubjrc" path="res://sounds/sfx/psx ui sfx/squad_manager/DragB.ogg" id="14_sxo81"]
 [ext_resource type="AudioStream" uid="uid://hmnqik84omfy" path="res://sounds/sfx/psx ui sfx/squad_manager/DropI.ogg" id="15_4nw2x"]
@@ -122,7 +123,6 @@ order_ux_sound_confirm = NodePath("OrderUXSoundConfirm")
 font_size_header = 16
 font_size_body = 14
 font_size_nearby = 14
-font_size_wheel = 14
 font_size_toast = 14
 font_size_marker = 14
 panel_margin = Vector2(0, -150)
@@ -176,3 +176,7 @@ stream = ExtResource("16_cnjdy")
 
 [node name="SquadUXSoundClose" type="AudioStreamPlayer" parent="SquadManagerUI"]
 stream = ExtResource("17_34lhm")
+
+[node name="CommsLog" type="Control" parent="."]
+anchors_preset = 0
+script = ExtResource("13_comms")

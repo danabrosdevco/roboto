@@ -78,6 +78,10 @@ var recoil_rotation := Vector3.ZERO
 
 var current_interactible: Interactible
 var alive = true
+# Kills this mission. Enemy.apply_damage credits whoever dealt the lethal blow
+# by checking `"confirmed_kills" in source` — the Player is a source like any
+# other, and without this field the player's own kills were silently dropped.
+var confirmed_kills: int = 0
 var last_bonfire
 
 # ── SPECTATOR MODE ────────────────────────────
@@ -250,7 +254,7 @@ func _set_viewmodel_visible(shown: bool) -> void:
 		item.set_hidden(not shown)
 
 
-func _handle_spectator(delta: float) -> void:
+func _handle_spectator(_delta: float) -> void:
 	# Mouse look
 	var look_basis = Basis()
 	look_basis = look_basis.rotated(Vector3.UP, look_direction.y)

@@ -31,4 +31,4 @@ active_objectives = Array[StringName]([&"valley_garrison_cap_1", &"valley_extrac
 reward_resources = 90
 unlocks = Array[StringName]([])
 repeatable = false
-requires = Array[StringName]([])
+requires = Array[StringName]([&"arena_3_firing_line"])

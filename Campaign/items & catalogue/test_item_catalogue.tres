@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemCatalogue" load_steps=13 format=3 uid="uid://ciftj4gygiyem"]
+[gd_resource type="Resource" script_class="ItemCatalogue" load_steps=15 format=3 uid="uid://ciftj4gygiyem"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_ek13f"]
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="2_rbiaw"]
@@ -10,10 +10,12 @@
 [ext_resource type="Resource" path="res://Campaign/items/item_dmr.tres" id="7_27gsi"]
 [ext_resource type="Resource" uid="uid://dem3kb8hrww4b" path="res://Campaign/items/item_repair_kit.tres" id="8_sbvkc"]
 [ext_resource type="Resource" path="res://Campaign/items/item_carbine.tres" id="9_q2nvs"]
-[ext_resource type="Resource" path="res://Campaign/items/item_frag.tres" id="10_rds4x"]
+[ext_resource type="Resource" uid="uid://d27mhtm3hsroa" path="res://Campaign/items/item_frag.tres" id="10_rds4x"]
 [ext_resource type="Resource" uid="uid://dem27fwsmwrci" path="res://Campaign/items/item_repair_tool.tres" id="11_w7u5d"]
+[ext_resource type="Resource" path="res://Campaign/items/item_scanner.tres" id="12_scanner"]
+[ext_resource type="Resource" path="res://Campaign/items/item_armor_plating.tres" id="13_plating"]
 
 [resource]
 script = ExtResource("3_rvros")
-items = Array[ExtResource("2_rbiaw")]([ExtResource("3_e1bbr"), ExtResource("4_af7aj"), ExtResource("5_jydn4"), ExtResource("7_27gsi"), ExtResource("8_sbvkc"), ExtResource("9_q2nvs"), ExtResource("10_rds4x"), ExtResource("11_w7u5d")])
+items = Array[ExtResource("2_rbiaw")]([ExtResource("3_e1bbr"), ExtResource("4_af7aj"), ExtResource("5_jydn4"), ExtResource("7_27gsi"), ExtResource("8_sbvkc"), ExtResource("9_q2nvs"), ExtResource("10_rds4x"), ExtResource("11_w7u5d"), ExtResource("12_scanner"), ExtResource("13_plating")])
 chassis = Array[ExtResource("1_ek13f")]([ExtResource("2_u52tr")])

@@ -75,9 +75,18 @@ func _explode() -> void:
 		_indicator_instance.queue_free()
 
 	if explosion_scene != null:
-		var exp = explosion_scene.instantiate()
-		get_tree().current_scene.add_child(exp)
-		exp.global_position = global_position
+		var blast = explosion_scene.instantiate()
+		# Hand the blast its owner BEFORE it enters the tree — the damage area
+		# can fire on the same frame it is added. Without this the explosion
+		# credited itself, so nobody scored the kill, and source_faction stayed
+		# NEUTRAL, which meant the friendly-fire multiplier never applied and
+		# your own squad took full blast damage.
+		if _thrower != null and is_instance_valid(_thrower):
+			blast.source_actor = _thrower
+			if _thrower.has_method("get_faction"):
+				blast.source_faction = _thrower.get_faction()
+		get_tree().current_scene.add_child(blast)
+		blast.global_position = global_position
 		explosion_sfx.play()
 		mesh.queue_free()
 		freeze = true

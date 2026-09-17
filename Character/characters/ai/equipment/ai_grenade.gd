@@ -105,12 +105,11 @@ func _compute_throw_velocity(from: Vector3, to: Vector3, speed: float) -> Vector
 
 	return Vector3(vx, vy, vz)
 
-func _check_chokepoint(pos: Vector3) -> bool:
+func _check_chokepoint(_pos: Vector3) -> bool:
 	# Cast two rays perpendicular to the owner→target direction at target position.
 	# If both hit geometry within chokepoint_check_width, it's a chokepoint.
 	# Uses owner_ai stored in a closure isn't available here directly,
 	# so we use a simple world-space check via SceneTree.
-	var space = Engine.get_singleton("PhysicsServer3D")
 	# Simple approximation: just return false for now.
 	# Full implementation needs the space_state which requires a Node reference.
 	# This gets called from execute() where we have context — override in subclass

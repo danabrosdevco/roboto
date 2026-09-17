@@ -509,6 +509,7 @@ func _issue_follow_orders() -> void:
 func follow(leader: Node3D) -> void:
 	follow_leader = leader
 	player_ordered = true
+	_acknowledge_order()
 	ordered_target = null
 	squad_combat_target = null
 	_last_follow_issue = Vector3.ZERO
@@ -724,7 +725,7 @@ func get_center() -> Vector3:
 	return sum / living.size()
 
 func get_display_name() -> String:
-	return callsign if callsign != "" else name
+	return callsign if callsign != "" else String(name)
 
 func notify_roster_changed() -> void:
 	roster_changed.emit(self)
@@ -858,6 +859,7 @@ func _formation_offset(member: Node) -> Vector3:
 	# Slot order: centre, right, left, right2, left2 ...
 	var slot := 0
 	if idx > 0:
+		@warning_ignore("integer_division")
 		slot = int((idx + 1) / 2)
 		if idx % 2 == 0:
 			slot = -slot
@@ -871,6 +873,23 @@ func _formation_offset(member: Node) -> Vector3:
 # this instead pushes the order straight at a squad the player has already
 # selected. No physics, no faction scan, deterministic.
 # ─────────────────────────────────────────────
+# ONE voice answers a player order, from the squad rather than from whichever
+# member happened to get the move call. The director elects the speaker and
+# throttles repeats; this just makes sure the request happens exactly once per
+# order, and only for squads the player actually commands.
+func _acknowledge_order() -> void:
+	if not player_commandable:
+		return
+	var speaker: Soldier = nco if (nco != null and is_instance_valid(nco) and nco.alive) else null
+	if speaker == null:
+		for m in squad_members:
+			if m != null and is_instance_valid(m) and m.alive:
+				speaker = m
+				break
+	if speaker != null and speaker.bark != null:
+		speaker.bark.bark(BarkSet.Line.ORDER_ACK)
+
+
 func receive_player_order(
 	order: SquadObjective,
 	position: Vector3 = Vector3.ZERO,
@@ -878,6 +897,7 @@ func receive_player_order(
 ) -> void:
 	player_ordered = true
 	ordered_target = target
+	_acknowledge_order()
 
 	# FOLLOW has no world position — it tracks a node. Route it through follow()
 	# so the leader gets stored and the anchor is computed rather than frozen.
@@ -941,18 +961,18 @@ func _select_spread_cover(candidates: Array, count: int) -> Array:
 	var result: Array = []
 
 	# Seed: pick point closest to objective
-	var seed: CoverPoint = candidates[0]
+	var nearest: CoverPoint = candidates[0]
 	var seed_dist = INF
 	for cp in candidates:
 		var d = objective_position.distance_to(cp.global_position)
 		if d < seed_dist:
 			seed_dist = d
-			seed = cp
-	result.append(seed)
+			nearest = cp
+	result.append(nearest)
 
 	# Greedy farthest-point: each pick maximises min-distance to all chosen
 	var remaining: Array = candidates.duplicate()
-	remaining.erase(seed)
+	remaining.erase(nearest)
 
 	while result.size() < count and not remaining.is_empty():
 		var best: CoverPoint = null
@@ -1042,6 +1062,7 @@ func _basic_assign_roles(soldiers: Array) -> void:
 	if soldiers.size() == 1:
 		soldiers[0].assign_role(Soldier.SoldierRole.ADVANCER)
 		return
+	@warning_ignore("integer_division")
 	var half = int(soldiers.size() / 2)
 	for i in soldiers.size():
 		if i < half:
@@ -1061,6 +1082,7 @@ func _nco_assign_roles(soldiers: Array) -> void:
 		return
 	available[0].assign_role(Soldier.SoldierRole.FLANKER)
 	var rest = available.slice(1)
+	@warning_ignore("integer_division")
 	var half = int(rest.size() / 2)
 	for i in rest.size():
 		if i < half:

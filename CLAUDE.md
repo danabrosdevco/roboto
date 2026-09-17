@@ -29,6 +29,18 @@ genuinely cannot make it pass, say so explicitly and explain what's blocking.
 `bash tools/check.sh` with no argument checks the whole project (~90s, 91
 scripts and 175 resources). Use it when you have touched something shared.
 
+Two more, both of which catch what a parse check cannot:
+
+```bash
+bash tools/test.sh
+bash tools/smoke.sh
+```
+
+`test.sh` runs the headless logic suites in `tools/test_*.gd` — run it after
+touching the ledger, the armoury or anything with an invariant. `smoke.sh`
+boots the game headless and fails on runtime errors; run it after touching
+anything that loads at startup.
+
 ## This machine
 
 - Windows. The shell is Git Bash via the Bash tool; PowerShell is also

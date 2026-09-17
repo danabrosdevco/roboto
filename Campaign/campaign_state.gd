@@ -46,7 +46,7 @@ const SAVE_VERSION := 1
 # Deliberately a machine code while the squad carry human names. You are the
 # thing that names THEM; the contrast in the roster column is the point. Defined
 # once here because three different files were hardcoding the old "YOU".
-const PLAYER_DEFAULT_NAME := "AKR-00"
+const PLAYER_DEFAULT_NAME := "PLAYER"
 
 # ── IDENTITY ──────────────────────────────────
 # The single source of truth for what the player's squad is called. The spawner
@@ -199,12 +199,18 @@ func repair_soldier(record: SoldierRecord) -> bool:
 	if cost <= 0 or not can_afford(cost):
 		return false
 	var key := "repair:%s:%d" % [record.id, _next_purchase()]
-	if not allocate(key, cost):
+	# Quiet, then mend, then announce — same rule as buy_item. allocate() emits
+	# ledger_changed, which the squad manager rebuilds on synchronously, so it
+	# drew the resources already spent while the soldier was still showing full
+	# damage. roster_changed a few lines later corrected it, but the panel had
+	# already been built once from a half-applied repair.
+	if not _allocate_quiet(key, cost):
 		return false
 	record.damage = 0
 	record.signal_integrity = 1.0
 	record.status = SoldierRecord.Status.ACTIVE
 	record.recompute_stats(catalogue)
+	ledger_changed.emit()
 	soldier_repaired.emit(record)
 	roster_changed.emit()
 	return true
@@ -446,6 +452,7 @@ func sell_item(item: ItemDefinition) -> bool:
 # the player down, so selling and re-buying is always a loss and never a way to
 # launder resources.
 func sale_value(paid: int) -> int:
+	@warning_ignore("integer_division")
 	return paid / 2
 
 

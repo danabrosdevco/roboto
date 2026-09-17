@@ -18,10 +18,14 @@ class_name EliminateObjective
 @export var poll_interval: float = 0.5
 # 0 means all of them.
 @export var required_kills: int = 0
+## How long to keep looking for targets before saying so out loud.
+@export var empty_warn_after: float = 6.0
 
 var _watched: Array[Node3D] = []
 var _timer: float = 0.0
 var _killed: int = 0
+var _empty_for: float = 0.0
+var _warned_empty: bool = false
 
 
 func _on_objective_ready() -> void:
@@ -59,12 +63,27 @@ func progress() -> Array:
 
 
 func _process(delta: float) -> void:
-	if completed or failed or not active or _watched.is_empty():
+	if completed or failed or not active:
 		return
 	_timer += delta
 	if _timer < poll_interval:
 		return
 	_timer = 0.0
+
+	# TARGETS ARRIVE AFTER THE LEVEL DOES. EnemyForceSpawner builds the hostile
+	# force during Campaign.on_level_loaded, and an Area3D cannot report bodies
+	# the physics server has not processed yet — so capturing once at activation
+	# caught nothing, _watched stayed empty, and this function used to return
+	# here forever. The objective sat at 0/1 for the whole mission with no
+	# error. Keep asking until the zone answers.
+	if _watched.is_empty():
+		_capture_targets()
+		if _watched.is_empty():
+			_empty_for += poll_interval
+			if _empty_for >= empty_warn_after and not _warned_empty:
+				_warned_empty = true
+				push_warning("EliminateObjective '%s' has found no targets after %.0fs. Check the zone actually covers where the enemy force spawns, or assign `targets` directly." % [id, empty_warn_after])
+			return
 
 	var down := 0
 	for t in _watched:

@@ -269,6 +269,7 @@ func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 		if soldier == null:
 			continue
 		level.add_child(soldier)
+		@warning_ignore("integer_division")
 		var row := i / 2
 		var side := 1.0 if i % 2 == 0 else -1.0
 		var offset := Vector3(side * player_spacing * (float(row) * 0.5 + 0.5), 0.0, float(row) * player_spacing)

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://bbdorqb3bt61p"]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" uid="uid://cheli0000001" path="res://Character/characters/ai/enemy_helicopter.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"gunship"
+display_name = "Gunship Chassis"
+description = "Rotary frame. Holds station above the fight and ignores terrain entirely."
+scene = ExtResource("2_scene")
+cost = 220
+base_health = 100
+base_speed = 1.0
+base_accuracy = 0.7
+base_sensor_range = 60.0
+weapon_slots = 1
+equipment_slots = 1
+module_slots = 2
+required_rank = 2

@@ -92,9 +92,11 @@ class Readout:
 # ── SIGNALS ───────────────────────────────────
 signal equipped
 signal unequipped
+@warning_ignore("unused_signal")
 signal used                          # one discrete use happened
 signal charges_changed               # HUD should re-read get_readout()
 signal wants_revert                  # empty, and reverts_when_empty is set
+@warning_ignore("unused_signal")
 signal denied(reason: String)        # tried to use it and couldn't
 
 # ── RUNTIME ───────────────────────────────────

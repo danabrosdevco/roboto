@@ -26,8 +26,8 @@ class EquipmentContext:
 @export var cooldown: float = 8.0
 
 # Subclasses implement these
-func can_use(context: EquipmentContext) -> bool:
+func can_use(_context: EquipmentContext) -> bool:
 	return false
 
-func execute(context: EquipmentContext) -> void:
+func execute(_context: EquipmentContext) -> void:
 	pass

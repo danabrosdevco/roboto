@@ -1,4 +1,4 @@
-[gd_scene load_steps=104 format=4 uid="uid://rnm8xsxcwbsx"]
+[gd_scene load_steps=107 format=4 uid="uid://rnm8xsxcwbsx"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_afbfh"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_6gcxp"]
@@ -6,13 +6,14 @@
 [ext_resource type="Material" uid="uid://ddn1lbfngn07t" path="res://textures/PSX_Textures/concrete_1.tres" id="4_4d1j4"]
 [ext_resource type="Material" uid="uid://11xvdmcfu4pi" path="res://textures/PSX_Textures/concrete_7.tres" id="5_ape54"]
 [ext_resource type="Texture2D" uid="uid://b6q2mm5c6hi4i" path="res://textures/PSX_Textures/concrete_6.png" id="6_exybl"]
-[ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="8_tebvu"]
-[ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="9_rgdym"]
-[ext_resource type="PackedScene" uid="uid://62y43tyd5sx6" path="res://Env/world_objects/squad_objective_point.tscn" id="12_y5xdw"]
 [ext_resource type="PackedScene" uid="uid://cyslwv078g4sk" path="res://Env/world_objects/cover_point_spawner.tscn" id="13_3t0w6"]
 [ext_resource type="Script" path="res://Env/world_objects/cover_point.gd" id="14_jydu6"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="32_12g0t"]
 [ext_resource type="Shader" path="res://Env/new_sky_oct.16.gdshader" id="33_rebam"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="90_exit"]
+[ext_resource type="PackedScene" uid="uid://62y43tyd5sx6" path="res://Env/world_objects/squad_objective_point.tscn" id="91_objpt"]
+[ext_resource type="Script" path="res://Campaign/eliminate_objective.gd" id="92_elim"]
+[ext_resource type="Script" path="res://Campaign/reach_objective.gd" id="93_reach"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_b87a8"]
 vertices = PackedVector3Array(-25, 2, -33, -24.5, 2, -33, -23.75, 2, -34.25, -25, 2, -42.5, -23, 2, -34.25, -20.25, 2, -37, -20.25, 2, -37.75, -19, 2, -38.5, -19, 2, -42.5, -15.5, 2, -34.5, -14.5, 2, -33.5, -13.75, 2, -34.25, -15.5, 2, -35.5, -12.75, 2, -34.25, -10.25, 2, -36.75, -10.25, 2, -37.75, -18.5, 2, -38.5, -9.25, 2, -38.5, -9.25, 2, -42.5, -9.75, 2, -31, -7, 2, -33.75, 3.5, 2, -38.25, 4.5, 2, -38.5, 4.5, 2, -39.25, 3.5, 2, -39.5, -3.25, 2, -39.75, -3.75, 2, -39.25, -3.5, 2, -38.5, -8.5, 2, -38.5, -5.75, 2, -35.5, -5.5, 2, -38.25, -5.25, 2, -39.25, -5.5, 2, -42.5, 3.5, 2, -42.5, -3.25, 2, -42.5, -3.25, 2, -35, 3.5, 2, -35, -5, 5, -42.5, -5, 5, -34, 5, 5, -34, 5, 5, -42.5, 5.75, 2, -39.75, 5.75, 2, -38.25, 8.5, 2, -38.5, 5.75, 2, -42.5, 9.5, 2, -38.5, 10.25, 2, -37.75, 15.5, 2, -35.5, 18.5, 2, -38.5, 19, 2, -42.5, 13.75, 2, -34.25, 14.5, 2, -33.5, 15.5, 2, -34.5, 10.25, 2, -36.75, 12.75, 2, -34.25, 5.75, 2, -35.75, 7, 2, -33.75, 9.75, 2, -31, 19, 2, -38.5, 23.75, 2, -34.25, 24.5, 2, -33, 25.5, 2, -33, 20.25, 2, -37.75, 20.25, 2, -37, 23, 2, -34.25, 25.5, 2, -42.5, -16.25, 2, -33.75, -17.25, 2, -33.75, -14, 2, -32, -19.75, 2, -31.25, -19.75, 2, -30.5, -18, 2, -26.5, -16.75, 2, -26.5, 16.25, 2, -33.75, 14.5, 2, -32.5, 17.25, 2, -33.75, 19.75, 2, -31.25, 18.25, 2, -26.5, 19.75, 2, -30.5, 16.75, 2, -26.5, -5.25, 2, -33.75, -5.5, 2, -34.5, -6.25, 2, -33.75, -4.25, 2, -32.75, -4.5, 2, -33.75, -10, 2, -30, -9.25, 2, -28.5, -8.5, 2, -28.5, 8.5, 2, -28.5, 9.25, 2, -28.5, 10, 2, -30, 5.5, 2, -34.25, 4.25, 2, -32.75, -5.5, 2, -25.25, 5.5, 2, -25.25, -24.5, 2, -32.5, -25, 2, -23.75, -24.5, 2, -23.75, -24.5, 2, -26.25, -20.5, 2, -29.5, -18.5, 2, -26.25, -21.5, 2, -29.5, -22.5, 2, -26.5, -22.25, 2, -23.5, -18.5, 2, -23.25, 24.5, 2, -32.5, 20.5, 2, -29.5, 18.75, 2, -26.25, 24.5, 2, -26.5, 21.5, 2, -29.5, 22.5, 2, -26.25, 24.75, 2, -22.75, 25.5, 2, -22.75, 18.75, 2, -23.5, 22.5, 2, -23.25, 10.25, 2, -27.75, 11.5, 2, -29.5, 13, 2, -24.25, 13.75, 2, -24.25, 10.25, 2, -27, 14.5, 2, -23, 16.5, 2, -23, -10.25, 2, -27.75, -11.5, 2, -29.5, -16.25, 2, -26.25, -16.25, 2, -23, -14.5, 2, -23, -13.75, 2, -24.25, -10.25, 2, -27, -13, 2, -24.25, -3.25, 2, -19.5, -5.5, 2, -24.75, -6.25, 2, -23.75, -9.75, 2, -21.25, -10, 2, -20, -4.25, 2, -18.5, -7.25, 2, -23.75, 6.25, 2, -23.75, 5.5, 2, -24.75, 3.25, 2, -19.5, 4.25, 2, -18.5, 10, 2, -20, 9.75, 2, -21.25, 7.25, 2, -23.75, -2.5, 2, -19.5, -0.25, 2, -17, 0.25, 2, -17, 2.5, 2, -19.5, -25, 2, -16, -24.5, 2, -16, -24.5, 2, -18.25, -24.25, 2, -21.25, -18.5, 2, -18.25, -17.25, 2, -18.5, -17.5, 2, -21.25, -18.5, 2, -21.5, -22.25, 2, -21.75, -22.75, 2, -21.25, -22.25, 2, -18.25, 24.5, 2, -18.5, 24.75, 2, -17.25, 25.5, 2, -17.25, 24.25, 2, -21.25, 18.75, 2, -21.75, 22.75, 2, -21.25, 17.5, 2, -21.25, 17.5, 2, -18.5, 18.75, 2, -18.25, 22.5, 2, -18.25, -14.5, 2, -22.5, -16.25, 2, -21.75, -11.5, 2, -19.5, -16.25, 2, -18.25, -16.25, 2, -13.75, -12.25, 2, -10, -10, 2, -10, -10, 2, -10.75, -12.5, 2, -11, -17.25, 2, -13.25, -16.75, 2, -11, -9.5, 2, -11, 14.5, 2, -22.5, 16.5, 2, -21.5, 9.5, 2, -11, 9.75, 2, -10, 11.5, 2, -10, 11.75, 2, -11, 4.25, 2, -17.75, 1, 2, -14.75, 4.5, 2, -10.75, 11.5, 2, -19.5, 16.25, 2, -11, 17.5, 2, -13.25, 16.5, 2, -13.5, 16.5, 2, -18.25, -4.25, 2, -17.75, -4.75, 2, -10.75, -1, 2, -14.75, -18.25, 2, -10, -17.5, 2, -10, -17.5, 2, -10.75, -18.5, 2, -11, -22.25, 2, -13.75, -18.5, 2, -13.5, -25, 2, -9.75, -23.5, 2, -9.75, -23.25, 2, -11, -24.5, 2, -13.5, -22.75, 2, -13.25, 23, 2, -11, 23, 2, -9, 25.5, 2, -8.75, 24.75, 2, -13.75, 24.25, 2, -13.25, 18.5, 2, -13.5, 22.75, 2, -13.25, 18.75, 2, -11, 4, 2, -2.5, 5.5, 2, -3.25, 5.5, 2, -4.5, 5.25, 2, -8.75, 4.5, 2, -9, 2, 2, -2.25, -6, 2, -5, -5.75, 2, -3.5, -3.75, 2, -2.5, -1.75, 2, -2.25, -4.75, 2, -9.25, -5.25, 2, -8.75, -7.25, 2, -8.75, -7.5, 2, -5, -1.75, 2, 0.5, 2, 2, 0.75, 24, 2, -5, 24.25, 2, -4, 25.5, 2, -4, 18, 2, -10.75, 16.75, 2, -10.75, 16.75, 2, -4, 19, 2, -3.75, 19.25, 2, -5, 18.25, 2, -8.75, 16.5, 2, -9, 16.5, 2, -5, -17.25, 2, -8.75, -18.75, 2, -8.75, -20.75, 2, -8.75, -21, 2, -5, -19.5, 2, -5, -19.25, 2, -4, -17.5, 2, -3.75, -17.25, 2, -5, -14.25, 2, -5, -14.5, 2, -8.75, -12.25, 2, -4, -11, 2, -3.75, -10.75, 2, -5, -12.5, 2, -5, -12.75, 2, -8.75, -9.75, 2, -8.75, 10.5, 2, -5, 10.75, 2, -3.75, 11.5, 2, -3.75, 11.75, 2, -5, 9.25, 2, -8.75, 5.75, 2, -5, 11.75, 2, -8.75, -25, 2, 4, -24.5, 2, 4, -24.25, 2, 3, -24.25, 2, -2.75, -24.5, 2, -4.75, -23.25, 2, -8.75, -21.25, 2, 3, -21.5, 2, -2.75, -19.5, 2, 3, -19.25, 2, 4, -17.5, 2, 4, -17.25, 2, 3, -19.75, 2, -2.75, -17.25, 2, -2.75, -15.5, 2, 3, -15.5, 2, -2.75, -10.75, 2, -2.75, -12.75, 2, -2.75, -12.5, 2, 3, -12.5, 2, 5, -11, 2, 5, -11, 2, 3.25, -12.25, 2, 10, -10, 2, 10.25, -9.75, 2, 9, -12.5, 2, 9, -8, 2, 5.25, -7.75, 2, 9, -9, 2, 3, -9, 2, -2.75, 16.5, 2, -3, 16.5, 2, 3, 16.75, 2, 4, 19, 2, 4, 19.25, 2, 3, 19.25, 2, -2.75, 21, 2, 3, 21, 2, -2.75, 24, 2, 3, 24.25, 2, 4, 25.5, 2, 4, 23.75, 2, -2.75, 10.5, 2, 3, 10.75, 2, 4, 11.5, 2, 4, 11.75, 2, 3, 5.75, 2, -2.75, 4.25, 2, 2.25, 5.75, 2, 3, 10.25, 2, -2.75, 11.75, 2, -2.75, 3.75, 2, 2.75, 5.5, 2, 3.5, -6, 2, 3, -5.75, 2, 3.5, -3.75, 2, 2.75, -6.25, 2, -2.75, -5.75, 2, 4.75, -2.25, 2, 2.75, 5.5, 2, 5, 2, 2, 2.5, 4.75, 2, 9, -6.25, 2, 5.25, -5, 2, 9, -1, 2, 14.75, 4.5, 2, 11, -1.75, 2, 2.25, 1, 2, 14.75, 7, 2, 9, 7.25, 2, 5.25, -4.75, 2, 10.5, -18.5, 2, 9, -18.25, 2, 10, -17.5, 2, 10, -17.25, 2, 9, -17.25, 2, 5.25, -24.25, 2, 5.25, -25, 2, 10, -23.5, 2, 10, -23.25, 2, 9, -19.75, 2, 5.25, 11.75, 2, 5.25, 10.25, 2, 5.25, 9.5, 2, 9, 9.75, 2, 10, 11.5, 2, 10.25, 11.75, 2, 9, 14.75, 2, 9, 14.5, 2, 5.25, 16.75, 2, 10, 18, 2, 10.25, 18.25, 2, 9, 16.5, 2, 9, 20.5, 2, 9, 20.75, 2, 5.25, 19.25, 2, 5.25, 16.25, 2, 5.25, 23.75, 2, 5.25, 23.25, 2, 10.75, 22.25, 2, 11.25, 22.75, 2, 13.5, 24.25, 2, 13.75, 23.25, 2, 9.25, 24.25, 2, 16.5, 25.5, 2, 16.75, -23.5, 2, 11, -24.5, 2, 13.75, -24, 2, 13.5, -23, 2, 11.25, -25, 2, 24, -24.5, 2, 24, -24.25, 2, 21.5, -24.5, 2, 18.5, -22.5, 2, 21.5, -22.5, 2, 18.5, -19, 2, 21.75, -17.75, 2, 21.5, -18, 2, 18.75, -19, 2, 18.5, -22.25, 2, 23.5, -19, 2, 23.5, -17.5, 2, 11, -18.75, 2, 11.25, -22.25, 2, 13.75, -19, 2, 13.75, -16.5, 2, 11.25, -16.75, 2, 13.75, -16.75, 2, 23, -15, 2, 23, -15, 2, 22.5, -16.75, 2, 21.75, -12, 2, 19.5, -10.5, 2, 20, -10.25, 2, 20, -16.75, 2, 18.25, -10, 2, 11, -12.75, 2, 11.25, -9.5, 2, 11.25, 11.5, 2, 11, 9.25, 2, 11.25, 11, 2, 19.5, 12.5, 2, 21, 12.5, 2, 11.25, 4.25, 2, 17.75, 4.25, 2, 18.5, 10.25, 2, 19.5, 24.25, 2, 18.25, 18.25, 2, 11.25, 16.25, 2, 11.25, 18, 2, 21.5, 22, 2, 18.5, 22, 2, 13.75, 24, 2, 21.5, 24.25, 2, 23.5, 25.5, 2, 23.25, 14, 2, 23, 16, 2, 23, 16.25, 2, 21.5, 18.25, 2, 23.5, 22, 2, 23.5, 22.25, 2, 21.5, 23.75, 2, 18.75, -5.25, 2, 11.25, -4.25, 2, 18.5, -4.25, 2, 17.75, 2.5, 2, 19.5, 0.25, 2, 17, -0.25, 2, 17, -2.5, 2, 19.5, -3.25, 2, 19.5, -6, 2, 24.75, 5, 2, 24.75, 3.25, 2, 19.5, 5, 2, 25.25, -6, 2, 25.25, -10.25, 2, 21.25, -6.75, 2, 23.75, -13.5, 2, 24.25, -10.75, 2, 27, -7.75, 2, 23.75, 5.75, 2, 23.75, 9.25, 2, 20.25, 9.25, 2, 21.25, 6.75, 2, 23.75, 9.75, 2, 27, 12.5, 2, 24.25, -16.75, 2, 33.75, -16, 2, 34.5, -14.75, 2, 33.75, -15, 2, 32.5, -20.25, 2, 30.25, -20.25, 2, 31, -17.5, 2, 33.75, -10.5, 2, 30, -9.75, 2, 28.5, -10.75, 2, 27.75, -12, 2, 29.5, -17.25, 2, 26.75, -14.25, 2, 24.25, -16.75, 2, 26.25, -18.5, 2, 26.75, 14, 2, 33.5, 15, 2, 34.5, 15.75, 2, 33.75, 14, 2, 32.5, 16.5, 2, 33.75, 9.75, 2, 27.75, 8.75, 2, 28.5, 9.5, 2, 30, 11, 2, 29.5, 19.25, 2, 30.5, 17.5, 2, 26.75, 16, 2, 26.5, 19.25, 2, 31, 13.25, 2, 24.25, 24, 2, 32.5, 24, 2, 33, 25.5, 2, 33, 24.25, 2, 26.25, 20, 2, 29.5, 18.25, 2, 26.25, 23.75, 2, 26.75, 21, 2, 29.5, 22.25, 2, 26.75, -24.5, 2, 26.5, -25, 2, 32.5, -21, 2, 29.5, -19, 2, 26.5, -22.25, 2, 26.25, -22.75, 2, 26.75, -22, 2, 29.5, -6, 2, 35, -5.5, 2, 35, -5.5, 2, 34.25, -6.75, 2, 33.75, 4.5, 2, 33, 8, 2, 28.5, -9, 2, 28.5, -4.25, 2, 33, -4.5, 2, 34, 4.75, 2, 34, 6.5, 2, 33.75, 9.25, 2, 31, -10.25, 2, 31, -7.5, 2, 33.75, -19.5, 2, 42.5, -19.5, 2, 38.5, -20.75, 2, 37.75, -20.75, 2, 36.75, -23.25, 2, 34.25, -24.25, 2, 34.25, -25, 2, 33.5, -25, 2, 42.5, -16, 2, 35.5, -13.25, 2, 34.25, -10.75, 2, 37.75, -10.75, 2, 36.75, -19, 2, 38.5, -9.5, 2, 42.5, -9.5, 2, 38.5, 13.25, 2, 34.25, 15, 2, 35.5, 12.25, 2, 34.25, 9.75, 2, 36.75, 9.75, 2, 37.75, 18.5, 2, 42.5, 18.5, 2, 38.5, 18, 2, 38.5, 8.75, 2, 38.5, 8.75, 2, 42.5, 23.25, 2, 34.25, 19.75, 2, 37.75, 22.25, 2, 34.25, 19.75, 2, 36.75, 25.5, 2, 42.5, -5, 5, 34, -5, 5, 42.5, 5, 5, 42.5, 5, 5, 34, -6, 2, 35.5, -5.25, 2, 38.75, 8, 2, 38.5, 5.75, 2, 36.25, 5.75, 2, 38.25, 5.25, 2, 38.75, -3.25, 2, 38.25, -3.75, 2, 38.75, -3.25, 2, 39.75, 5.75, 2, 39.75, -9, 2, 38.5, -5.5, 2, 42.5, -5.25, 2, 39.5, 5.75, 2, 42.5, -3.25, 2, 42.5, 3.5, 2, 42.5, 3.75, 2, 39.5, 3.75, 2, 38.75, 3.5, 2, 35.25, -3.25, 2, 35.25)
@@ -335,6 +336,12 @@ background_energy_multiplier = 1.5
 sky = SubResource("Sky_siqjn")
 ambient_light_color = Color(0.176471, 0.219608, 0.054902, 1)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_arena_zone"]
+size = Vector3(60, 24, 92)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_arena_extract"]
+size = Vector3(7, 5, 7)
+
 [node name="ArenaLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region", "func_godot_map")]
 script = ExtResource("1_afbfh")
 spawn_point = NodePath("SpawnPoint")
@@ -611,70 +618,6 @@ shape = SubResource("ConvexPolygonShape3D_vth8c")
 [node name="entity_0_brush_82_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_0_worldspawn"]
 shape = SubResource("ConvexPolygonShape3D_rttq4")
 
-[node name="Squad2" parent="NavigationRegion3D" node_paths=PackedStringArray("squad_members", "target_objective") instance=ExtResource("9_rgdym")]
-squad_members = [NodePath("Soldier_Shotgun"), NodePath("Soldier_Shotgun2"), NodePath("Soldier_Shotgun3"), NodePath("Soldier_Shotgun4"), NodePath("Soldier_Shotgun5")]
-target_objective = NodePath("../../OBJ1")
-default_objective = 2
-
-[node name="Soldier_Shotgun" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_tebvu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9608, 2.69966, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-faction = 2
-
-[node name="Soldier_Shotgun2" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_tebvu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.69966, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-faction = 2
-
-[node name="Soldier_Shotgun3" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_tebvu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.78838, 2.69966, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-faction = 2
-
-[node name="Soldier_Shotgun4" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_tebvu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5778, 2.69966, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-faction = 2
-
-[node name="Soldier_Shotgun5" parent="NavigationRegion3D/Squad2" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_tebvu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.7513, 2.69966, -38.5643)
-particle_effects_die = []
-particle_effects_hit = []
-faction = 2
-
-[node name="Squad" parent="NavigationRegion3D" node_paths=PackedStringArray("squad_members", "target_objective") instance=ExtResource("9_rgdym")]
-squad_members = [NodePath("Soldier_Shotgun"), NodePath("Soldier_Shotgun2"), NodePath("Soldier_Shotgun3"), NodePath("Soldier_Shotgun4"), NodePath("Soldier_Shotgun5")]
-target_objective = NodePath("../../OBJ1")
-
-[node name="Soldier_Shotgun" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_tebvu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.73589, 2.70758, 37.0445)
-particle_effects_die = []
-particle_effects_hit = []
-
-[node name="Soldier_Shotgun2" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_tebvu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.04741, 2.70758, 37.0445)
-particle_effects_die = []
-particle_effects_hit = []
-
-[node name="Soldier_Shotgun3" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_tebvu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.70758, 37.0445)
-particle_effects_die = []
-particle_effects_hit = []
-
-[node name="Soldier_Shotgun4" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_tebvu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.4553, 2.70758, 39.6005)
-particle_effects_die = []
-particle_effects_hit = []
-
-[node name="Soldier_Shotgun5" parent="NavigationRegion3D/Squad" node_paths=PackedStringArray("particle_effects_die", "particle_effects_hit") instance=ExtResource("8_tebvu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6501, 2.70758, 39.6005)
-particle_effects_die = []
-particle_effects_hit = []
-
 [node name="WorldEnvironment" parent="." instance=ExtResource("32_12g0t")]
 environment = SubResource("Environment_6x7du")
 
@@ -685,10 +628,10 @@ light_indirect_energy = 0.35
 light_angular_distance = 0.5
 shadow_opacity = 0.6
 
-[node name="OBJ1" parent="." instance=ExtResource("12_y5xdw")]
+[node name="OBJ1" parent="." instance=ExtResource("91_objpt")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.992464, 2.51753, -38.6296)
 
-[node name="OBJ2" parent="." instance=ExtResource("12_y5xdw")]
+[node name="OBJ2" parent="." instance=ExtResource("91_objpt")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.992464, 2.51753, 38.3165)
 objective_name = "Objective2"
 
@@ -3172,5 +3115,41 @@ cover_direction = Vector3(-0.996546, 0, -0.0830455)
 is_crouch_cover = true
 metadata/cover_direction = Vector3(-0.996546, 0, -0.0830455)
 metadata/is_crouch_cover = true
+
+[node name="HostileMuster" parent="." instance=ExtResource("91_objpt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 18)
+objective_name = "Arena Floor"
+tag = &"obj_arena_hostiles"
+
+[node name="EliminateObjective" type="Node3D" parent="." node_paths=PackedStringArray("zone")]
+script = ExtResource("92_elim")
+zone = NodePath("Zone")
+id = &"arena_clear"
+display_name = "Arena Floor"
+reward_resources = 20
+
+[node name="Zone" type="Area3D" parent="EliminateObjective"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EliminateObjective/Zone"]
+shape = SubResource("BoxShape3D_arena_zone")
+
+[node name="LevelExit" parent="." instance=ExtResource("90_exit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 36)
+requires_objectives_complete = true
+
+[node name="ReachObjective" type="Node3D" parent="LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+script = ExtResource("93_reach")
+area = NodePath("Area3D")
+squad_radius = 30.0
+id = &"arena_extract"
+display_name = ""
+prerequisites = [NodePath("../../EliminateObjective")]
+is_extraction = true
+
+[node name="Area3D" type="Area3D" parent="LevelExit/ReachObjective"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LevelExit/ReachObjective/Area3D"]
+shape = SubResource("BoxShape3D_arena_extract")
 
 [editable path="WorldEnvironment"]

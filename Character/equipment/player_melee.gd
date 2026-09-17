@@ -13,6 +13,9 @@ class_name PlayerMelee
 # ─────────────────────────────────────────────
 
 @export var damage: int = 40
+# `range` shadows the built-in range() function. Renaming it would churn every
+# melee scene that stores the value, so the warning is silenced by name instead.
+@warning_ignore("shadowed_global_identifier")
 @export var range: float = 2.2
 @export var swing_time: float = 0.45
 # When the damage lands within the swing, as a fraction of swing_time. Damage o"res://Character/equipment/player_melee.gd"n

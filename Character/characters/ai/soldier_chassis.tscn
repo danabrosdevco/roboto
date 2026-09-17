@@ -15,11 +15,11 @@
 [ext_resource type="Texture2D" uid="uid://o8ik6rntdl2v" path="res://2d_assets/metal textures poly.com/metal_plate_02_disp_4k.png" id="10_tx84r"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
 [ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="11_n4p1p"]
-[ext_resource type="Script" path="res://Character/faction_livery.gd" id="14_agla4"]
+[ext_resource type="Script" path="res://faction_livery.gd" id="14_agla4"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_jvj2e"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5j6jh"]
 render_priority = 0
 shader = ExtResource("8_27chb")
 shader_parameter/use_normal_map = false
@@ -77,7 +77,7 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
-material_override = SubResource("ShaderMaterial_jvj2e")
+material_override = SubResource("ShaderMaterial_5j6jh")
 mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
 

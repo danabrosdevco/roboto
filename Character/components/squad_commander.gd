@@ -11,8 +11,7 @@ class_name SquadCommander
 #              friendly  → select that robot's squad
 #              ground    → ASSAULT that position
 #              nothing   → CONTACT callout down the sightline
-# HOLD T   — opens the verb wheel. Mouse left/right picks, release commits.
-#            Camera is frozen while the wheel is open.
+# HOLD T   — FOLLOW. Fires the moment the hold threshold passes.
 # TAB      — cycle which squad you're commanding.
 #
 # WHY THREE VERBS
@@ -45,7 +44,6 @@ class_name SquadCommander
 @export var command_ray_mask: int = 0xFFFFFFFF
 
 @export var hold_threshold: float = 0.22
-@export var wheel_sensitivity: float = 0.006
 
 # How often the squad registry is rebuilt. It used to be built exactly once in
 # _ready(), so a squad that spawned later never became commandable and a wiped
@@ -73,18 +71,15 @@ var commandable_squads: Array[Squad] = []
 var selected_index: int = 0
 
 var _hold_time: float = 0.0
-var _wheel_open: bool = false
-var _wheel_accum: float = 0.0
-var _wheel_index: int = 0
+# True once a hold has already issued FOLLOW, so releasing does not then also
+# fire a tap order on the way out.
+var _hold_fired: bool = false
 var _markers: Dictionary = {}   # Squad -> CommandMarker
 var _preview: CommandMarker = null
 var _registry_timer: float = 0.0
 
 signal squad_selected(squad: Squad)
 signal squads_refreshed(squads: Array)
-signal wheel_opened(verbs: Array, index: int)
-signal wheel_moved(index: int)
-signal wheel_closed()
 signal order_issued(squad: Squad, verb: int, position: Vector3, target: Node)
 signal contact_called(position: Vector3, target: Node)
 
@@ -181,18 +176,6 @@ func get_nearby_squads(radius: float = 120.0) -> Array:
 # ─────────────────────────────────────────────
 # INPUT
 # ─────────────────────────────────────────────
-func _input(event: InputEvent) -> void:
-	# While the wheel is open we eat mouse motion so the camera holds still and
-	# the same gesture drives selection instead.
-	if _wheel_open and event is InputEventMouseMotion:
-		_wheel_accum += event.relative.x * wheel_sensitivity
-		var verbs := _available_verbs()
-		var idx = wrapi(int(round(_wheel_accum)), 0, verbs.size())
-		if idx != _wheel_index:
-			_wheel_index = idx
-			wheel_moved.emit(_wheel_index)
-		get_viewport().set_input_as_handled()
-
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -211,51 +194,26 @@ func _process(delta: float) -> void:
 
 	if Input.is_action_pressed("command"):
 		_hold_time += delta
-		if not _wheel_open and _hold_time >= hold_threshold:
-			_open_wheel()
-		# Live preview: while the wheel is open the marker tracks the crosshair
-		# and recolours as you scrub verbs, so you can see where the order will
-		# land BEFORE you commit it.
-		if _wheel_open:
-			_update_preview()
+		# HOLD IS FOLLOW, and it fires the moment the threshold is crossed
+		# rather than waiting for release. There is nothing left to choose —
+		# the wheel offered exactly two verbs and ADVANCE is already the tap —
+		# so holding for a decision you are not making is dead latency. "Come
+		# to me" should land when you ask for it.
+		if not _hold_fired and _hold_time >= hold_threshold:
+			_hold_fired = true
+			_issue_order(Verb.FOLLOW)
 		return
 
 	if Input.is_action_just_released("command") or (_hold_time > 0.0 and not Input.is_action_pressed("command")):
-		if _wheel_open:
-			_commit_wheel()
-		elif _hold_time > 0.0:
+		# Released before the threshold: it was a tap, and the verb comes from
+		# whatever the crosshair is on.
+		if not _hold_fired and _hold_time > 0.0:
 			_issue_contextual_order()
 		_hold_time = 0.0
+		_hold_fired = false
 
 
 # CONTACT is deliberately absent — it's the tap, not a wheel entry.
-func _available_verbs() -> Array:
-	return [Verb.ADVANCE, Verb.FOLLOW]
-
-
-func _open_wheel() -> void:
-	if get_selected_squad() == null:
-		return
-	_wheel_open = true
-	_wheel_accum = 0.0
-	_wheel_index = 0
-	_spawn_preview()
-	var labels: Array = []
-	for v in _available_verbs():
-		labels.append(VERB_LABELS[v])
-	wheel_opened.emit(labels, _wheel_index)
-
-
-func _commit_wheel() -> void:
-	_wheel_open = false
-	_clear_preview()
-	wheel_closed.emit()
-	var verbs := _available_verbs()
-	if _wheel_index < 0 or _wheel_index >= verbs.size():
-		return
-	_issue_order(verbs[_wheel_index])
-
-
 # ─────────────────────────────────────────────
 # AIM RESOLUTION
 # One raycast, then branch on what it hit. The old version masked to layer 1
@@ -405,15 +363,12 @@ func _update_preview() -> void:
 		_spawn_preview()
 		if _preview == null:
 			return
-	var verbs := _available_verbs()
-	var verb: int = verbs[_wheel_index] if _wheel_index >= 0 and _wheel_index < verbs.size() else Verb.ADVANCE
-	# FOLLOW has no aim point — park the preview at the player's feet so the
-	# ring still reads as "this order is about you", not about the crosshair.
-	if verb == Verb.FOLLOW and player != null:
-		_preview.global_position = _snap_to_ground(player.global_position)
-	else:
-		_preview.global_position = _snap_to_ground(get_aim_point())
-	_preview.set_order(verb, str(VERB_LABELS.get(verb, "")))
+	# The preview only ever shows ADVANCE now. FOLLOW fires the instant the hold
+	# threshold passes and drops its own marker through _place_marker, so there
+	# is nothing to preview for it — you are not choosing between two things any
+	# more, so there is no decision to show you first.
+	_preview.global_position = _snap_to_ground(get_aim_point())
+	_preview.set_order(Verb.ADVANCE, str(VERB_LABELS.get(Verb.ADVANCE, "")))
 
 
 func _clear_preview() -> void:

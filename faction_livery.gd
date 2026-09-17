@@ -72,6 +72,8 @@ func _collect() -> void:
 
 
 func _gather(node: Node) -> void:
+	if node == null:
+		return
 	if node is CSGMesh3D:
 		_meshes.append(node)
 	for child in node.get_children():

@@ -34,6 +34,7 @@ func slot_position(index: int) -> Vector3:
 	if index < slot_markers.size() and slot_markers[index] != null:
 		return slot_markers[index].global_position
 	# Arc behind the spawn point, alternating left and right of centre.
+	@warning_ignore("integer_division")
 	var row := index / 2
 	var side := 1.0 if index % 2 == 0 else -1.0
 	var offset := Vector3(side * spacing * (float(row) * 0.5 + 0.5), 0.0, float(row) * spacing)

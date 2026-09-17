@@ -45,6 +45,9 @@ var active: bool = false
 signal objective_activated(objective: MissionObjective)
 signal objective_completed(objective: MissionObjective)
 signal objective_failed(objective: MissionObjective)
+# Emitted by the subclasses (interact/eliminate/reach), connected by
+# ObjectiveTracker. The base class never emits it itself.
+@warning_ignore("unused_signal")
 signal progress_changed(objective: MissionObjective, current: int, target: int)
 
 

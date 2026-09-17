@@ -25,6 +25,17 @@ signal force_deployed(squads: int, hostiles: int)
 
 var _squads: Array[Squad] = []
 
+# RESERVE squads, keyed by the reinforcement_tag that wakes them.
+#
+# THE TAG IS AN OBJECTIVE ID. A reserve tagged "valley_garrison_cap_2" comes in
+# when that objective is completed, so escalation is triggered by what the
+# PLAYER did rather than by a clock — which is the whole point of the posture.
+# No new field on MissionDefinition and no threshold table: the tag says which
+# moment it answers.
+var _reserves: Dictionary = {}
+
+signal reinforcements_woken(tag: StringName, squads: int)
+
 
 # Every early return here used to be silent, which meant "no enemies spawned"
 # and "no warnings" arrived together and told you nothing. They all talk now.
@@ -51,7 +62,47 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 		if squad != null:
 			_squads.append(squad)
 			hostiles += squad.squad_members.size()
+			if spec.posture == EnemySquadSpec.Posture.RESERVE:
+				if spec.reinforcement_tag == &"":
+					push_warning("EnemyForceSpawner: RESERVE squad '%s' has no reinforcement_tag, so nothing can ever wake it. It will sit inert for the whole mission." % spec.callsign)
+				else:
+					if not _reserves.has(spec.reinforcement_tag):
+						_reserves[spec.reinforcement_tag] = []
+					_reserves[spec.reinforcement_tag].append({"squad": squad, "spec": spec})
 	force_deployed.emit(_squads.size(), hostiles)
+
+
+# Called by Campaign when an objective completes. Flips any reserve holding
+# that tag from inert to ADVANCE on its post.
+#
+# Returns how many squads it woke, so the caller can tell "no reserves for this
+# objective" from "the trigger never fired" — the two look identical otherwise
+# and that is exactly the kind of silence this project keeps getting bitten by.
+func wake(tag: StringName) -> int:
+	if tag == &"" or not _reserves.has(tag):
+		return 0
+	var entries: Array = _reserves[tag]
+	# Erase FIRST. A reserve wakes once; leaving the entry in place would send
+	# them in again if the objective re-completed, and a repeatable mission can
+	# do exactly that.
+	_reserves.erase(tag)
+
+	var woken := 0
+	for entry in entries:
+		var squad: Squad = entry["squad"]
+		if squad == null or not is_instance_valid(squad):
+			continue
+		var spec: EnemySquadSpec = entry["spec"]
+		var post := _find_point(spec.post_tag)
+		var destination := post.global_position if post != null else squad.get_center()
+		squad.target_objective = post
+		squad.set_objective(Squad.SquadObjective.ADVANCE, destination, true)
+		woken += 1
+
+	if woken > 0:
+		print("[EnemyForce] reinforcements woken by '%s': %d squad(s)" % [tag, woken])
+		reinforcements_woken.emit(tag, woken)
+	return woken
 
 
 func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
@@ -210,3 +261,6 @@ func _is_hostile_squad(squad: Squad) -> bool:
 # Drops references only. The level unload frees the nodes.
 func clear() -> void:
 	_squads.clear()
+	# Holds hard references to squads the level unload is about to free, and a
+	# stale entry would wake a corpse on the next mission's objective.
+	_reserves.clear()

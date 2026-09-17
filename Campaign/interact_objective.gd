@@ -70,14 +70,14 @@ func get_prompt() -> String:
 	if completed:
 		return "%s — done" % label()
 	var target := target_count()
-	var progress := ""
+	var progress_text := ""
 	if target > 1:
-		progress = "  (%d/%d)" % [_done.size(), target]
+		progress_text = "  (%d/%d)" % [_done.size(), target]
 	if channel_duration > 0.0:
 		if _channelling != null:
-			return "%s%s  %d%%" % [label(), progress, int(channel_fraction() * 100.0)]
-		return "Hold — %s%s" % [label(), progress]
-	return "%s%s" % [label(), progress]
+			return "%s%s  %d%%" % [label(), progress_text, int(channel_fraction() * 100.0)]
+		return "Hold — %s%s" % [label(), progress_text]
+	return "%s%s" % [label(), progress_text]
 
 
 func channel_fraction() -> float:

@@ -1,13 +1,14 @@
 [gd_scene load_steps=13 format=3 uid="uid://d2qtk67sm0w38"]
 
-[ext_resource type="Script" path="res://Character/characters/ai/enemy.gd" id="1_3hqvp"]
+[ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_3hqvp"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_ddssu"]
 [ext_resource type="AudioStream" uid="uid://cmkbne2h7vucj" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__24.wav" id="3_sn28p"]
-[ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_1hh83"]
+[ext_resource type="Material" uid="uid://dym8xecxayc67" path="res://Campaign/faction_material_shader.tres" id="4_ltbyc"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_hss0i"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="7_o8of3"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="8_43qi4"]
 [ext_resource type="PackedScene" uid="uid://gymujiepqrjl" path="res://Character/weapon/ai-wep_melee.tscn" id="8_tcfqy"]
+[ext_resource type="Script" path="res://faction_livery.gd" id="9_kop2h"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 height = 1.0
@@ -15,9 +16,6 @@ height = 1.0
 [sub_resource type="TubeTrailMesh" id="TubeTrailMesh_y58w7"]
 radius = 0.45
 section_length = 0.1
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_negfm"]
-albedo_texture = ExtResource("6_1hh83")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 25.0
@@ -32,13 +30,13 @@ detection = NodePath("Detection")
 particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
 particle_effects_hit = [NodePath("SparkBurst")]
 visible_pieces = [NodePath("CSGMesh3D"), NodePath("ai_world_weapon")]
-move_speed = 3.0
+health = 45
+max_health = 45
+move_speed = 9.0
+acceleration = 11.0
 reposition_distance = 0.0
 advance_distance = 5.0
 fallback_distance = 0.0
-max_fire_distance = 2.0
-max_accuracy = 1.0
-min_accuracy = 1.0
 bits = 5
 combat_recon_time = 0.9
 AllowedMovementOptions = Array[int]([3, 0])
@@ -55,7 +53,7 @@ bark_clips = Array[AudioStream]([ExtResource("3_sn28p")])
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
 mesh = SubResource("TubeTrailMesh_y58w7")
-material = SubResource("StandardMaterial3D_negfm")
+material = ExtResource("4_ltbyc")
 
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
@@ -77,6 +75,11 @@ transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0.0244
 [node name="SparkBurst" parent="." instance=ExtResource("7_o8of3")]
 
 [node name="OilSpray" parent="." instance=ExtResource("8_43qi4")]
+
+[node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("9_kop2h")
+base_material = ExtResource("4_ltbyc")
+pieces = [NodePath("../CSGMesh3D")]
 
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

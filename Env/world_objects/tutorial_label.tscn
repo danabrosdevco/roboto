@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Env/world_objects/tutorial_label.gd" id="1_label"]
+
+[node name="TutorialLabel" type="Label3D"]
+pixel_size = 0.008
+billboard = 1
+shaded = false
+fixed_size = false
+modulate = Color(0.62, 0.95, 0.66, 1)
+outline_modulate = Color(0, 0, 0, 1)
+text = "HOLD F TO CAPTURE"
+font_size = 128
+outline_size = 9
+script = ExtResource("1_label")
+reveal_distance = 14.0
+full_distance = 8.0
+fade_speed = 6.0
+palette_color = 1
+face_camera = true

@@ -1,11 +1,21 @@
-[gd_scene load_steps=6 format=3 uid="uid://c28bwsb1wj5sh"]
+[gd_scene load_steps=8 format=3 uid="uid://c28bwsb1wj5sh"]
 
 [ext_resource type="Script" path="res://Campaign/mission_terminal.gd" id="1_onjnb"]
 [ext_resource type="PackedScene" uid="uid://bk13ou262jq2t" path="res://Env/world_objects/components/template_interactible.tscn" id="2_m144y"]
-[ext_resource type="PackedScene" uid="uid://cqwr1eg01xfqc" path="res://3d_assets/HackerRoom/FBX/PersonalComputer.fbx" id="3_vw5a2"]
 [ext_resource type="AudioStream" uid="uid://ds57hoihm1xto" path="res://sounds/sfx/psx ui sfx/ConfirmK.wav" id="4_qr3ls"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_8rj18"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_qkbfn"]
+size = Vector3(0.8, 0.9, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4vbaq"]
+albedo_color = Color(0.22, 0.24, 0.24, 1)
+metallic = 0.4
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_weeg7"]
+size = Vector3(0.7, 0.45, 0.08)
 
 [node name="MissionTerminal" type="Node3D" node_paths=PackedStringArray("interactible", "label", "select_sound")]
 script = ExtResource("1_onjnb")
@@ -23,12 +33,26 @@ destroy_on_use = false
 transform = Transform3D(1.38711, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.108154, 0)
 shape = SubResource("BoxShape3D_8rj18")
 
-[node name="PersonalComputer" parent="." instance=ExtResource("3_vw5a2")]
-
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.937929, 0)
 
 [node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]
 stream = ExtResource("4_qr3ls")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0393525, 0)
+mesh = SubResource("BoxMesh_qkbfn")
+surface_material_override/0 = SubResource("StandardMaterial3D_4vbaq")
+
+[node name="Screen" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.94, 0.34, 0, -0.34, 0.94, 0, 0.560647, 0.12)
+mesh = SubResource("BoxMesh_weeg7")
+surface_material_override/0 = SubResource("StandardMaterial3D_4vbaq")
+
+[node name="Indicator" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0.25)
+light_color = Color(0.45, 0.85, 0.55, 1)
+light_energy = 1.6
+omni_range = 3.5
 
 [editable path="Interactible"]

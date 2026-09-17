@@ -22,6 +22,10 @@ class_name ObjectiveHUD
 @export var panel_margin: Vector2 = Vector2(28, 26)
 @export var panel_width: float = 380.0
 @export var refresh_interval: float = 0.2
+# The payout card stays up longer than an objective ping — it is the last thing
+# you see before the level unloads, and it is the only place the mission's
+# reward is ever shown.
+@export var reward_toast_seconds: float = 6.0
 
 const COL_DIM    := HUDPalette.DIM
 const COL_BRIGHT := HUDPalette.BRIGHT
@@ -52,6 +56,7 @@ func _ready() -> void:
 	if _campaign != null:
 		_campaign.deployed.connect(func(_m): _bind_tracker())
 		_campaign.returned_to_base.connect(func(): _bind_tracker())
+		_campaign.extracted.connect(_on_extracted)
 
 
 func _bind_tracker() -> void:
@@ -104,29 +109,102 @@ func _build_ui() -> void:
 	_toast = _make_label("", COL_WARN, font_size_header)
 	_toast.anchor_left = 0.5
 	_toast.anchor_right = 0.5
-	_toast.offset_left = -300
-	_toast.offset_right = 300
-	_toast.offset_top = 150
-	_toast.offset_bottom = 180
+	_toast.offset_left = -360
+	_toast.offset_right = 360
+	# Tall enough for the multi-line payout card, not just a one-line ping. At
+	# the old 30px the extraction summary was clipped to its first line.
+	_toast.offset_top = 140
+	_toast.offset_bottom = 300
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_toast.visible = false
 	add_child(_toast)
 
 
-func _make_label(text: String, col: Color, size: int = -1) -> Label:
-	if size < 0:
-		size = font_size_body
+func _make_label(text: String, col: Color, font_px: int = -1) -> Label:
+	if font_px < 0:
+		font_px = font_size_body
 	var l := Label.new()
 	l.text = text
 	l.add_theme_color_override("font_color", col)
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", font_px)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
 
 
+# ─────────────────────────────────────────────
+# EXTRACTION MARKER
+# A shaft of light with a chevron on the end, hanging over the exit once the
+# work is done. Drawn rather than modelled so it needs no art and cannot be
+# left unassigned in a scene.
+#
+# It appears ONLY when every required objective is complete. Before that the
+# exit is not where you should be going, and pointing at it would be telling
+# the player to leave.
+# ─────────────────────────────────────────────
+@export var extract_marker_enabled: bool = true
+## Metres above the exit the arrow floats.
+@export var extract_marker_height: float = 14.0
+@export var extract_marker_size: float = 34.0
+
+var _extract_objective: MissionObjective = null
+
+
+func _find_extraction() -> MissionObjective:
+	if tracker == null:
+		return null
+	for objective in tracker.objectives():
+		if objective != null and objective.is_extraction:
+			return objective
+	return null
+
+
+func _draw() -> void:
+	if not extract_marker_enabled:
+		return
+	if tracker == null or not tracker.all_required_complete():
+		return
+	if _extract_objective == null or not is_instance_valid(_extract_objective):
+		return
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return
+
+	var world_top: Vector3 = _extract_objective.global_position + Vector3.UP * extract_marker_height
+	# Behind the camera unprojects to a mirrored on-screen point, which would
+	# draw an arrow pointing at empty sky behind the player.
+	if cam.is_position_behind(world_top):
+		return
+
+	var tip: Vector2 = cam.unproject_position(_extract_objective.global_position + Vector3.UP * 2.0)
+	var top: Vector2 = cam.unproject_position(world_top)
+
+	# Pulse so it reads as a signal rather than scenery.
+	var pulse: float = 0.65 + 0.35 * sin(Time.get_ticks_msec() / 260.0)
+	var col: Color = COL_DONE
+	col.a = pulse
+
+	var size: float = maxf(10.0, extract_marker_size * clampf(
+		1.0 - (top.distance_to(tip) / 900.0), 0.35, 1.0))
+
+	draw_line(top, tip, col, 3.0)
+	draw_polyline(PackedVector2Array([
+		tip + Vector2(-size, -size),
+		tip,
+		tip + Vector2(size, -size),
+	]), col, 4.0)
+	var label_pos: Vector2 = top - Vector2(38.0, 12.0)
+	draw_string(ThemeDB.fallback_font, label_pos, "EXTRACT",
+		HORIZONTAL_ALIGNMENT_LEFT, -1, font_size_body, col)
+
+
 func _process(delta: float) -> void:
 	_ensure_full_rect()
+	# Cheap, and the tracker's contents change on every level load.
+	if extract_marker_enabled:
+		_extract_objective = _find_extraction()
+		queue_redraw()
 	if _toast_time > 0.0:
 		_toast_time -= delta
 		if _toast_time <= 0.0:
@@ -185,9 +263,9 @@ func _make_row(objective: MissionObjective) -> Control:
 
 	# label(), not display_name — carries the verb and never renders the bare
 	# placeholder "Objective" for a node whose name was never authored.
-	var name := objective.label()
+	var label_text := objective.label()
 	if objective.optional:
-		name = "(%s)" % name
+		label_text = "(%s)" % label_text
 	var suffix := ""
 	if target > 1:
 		suffix = "  %d/%d" % [current, target]
@@ -203,7 +281,7 @@ func _make_row(objective: MissionObjective) -> Control:
 	elif not objective.optional:
 		col = COL_BRIGHT
 
-	var row := _make_label("%s  %s%s" % [mark, name, suffix], col)
+	var row := _make_label("%s  %s%s" % [mark, label_text, suffix], col)
 	if objective.completed:
 		# Struck through rather than removed, so progress is legible.
 		row.add_theme_constant_override("line_spacing", 0)
@@ -215,6 +293,13 @@ func _on_refreshed(_objectives: Array) -> void:
 
 
 func _on_changed(objective: MissionObjective) -> void:
+	# The extraction objective is not worth announcing on its own: completing it
+	# IS the end of the mission, and _on_extracted puts the payout on screen a
+	# moment later. Two toasts in a row, the first saying nothing useful, buried
+	# the one that mattered.
+	if objective.is_extraction:
+		_rebuild()
+		return
 	if objective.completed:
 		_show_toast("OBJECTIVE COMPLETE : %s" % objective.label().to_upper(), COL_DONE)
 	elif objective.failed:
@@ -222,13 +307,59 @@ func _on_changed(objective: MissionObjective) -> void:
 	_rebuild()
 
 
+# What you actually earned, shown where the objective pings were.
+#
+# `result` comes from Campaign.extract():
+#   reward            the mission's own payout, zero if it was not a success
+#   objective_reward  bonus objectives, paid whether or not the mission was
+#   survivors / lost  squad, read back off the bodies at extraction
+func _on_extracted(mission: MissionDefinition, result: Dictionary) -> void:
+	var mission_reward := int(result.get("reward", 0))
+	var bonus := int(result.get("objective_reward", 0))
+	var total := mission_reward + bonus
+	var survivors := int(result.get("survivors", 0))
+	var lost := int(result.get("lost", 0))
+
+	var lines: PackedStringArray = []
+	if total > 0:
+		lines.append("MISSION COMPLETE")
+		# Only break the total down when there is genuinely something to break
+		# down — "+90 (90 MISSION + 0 BONUS)" is noise.
+		if bonus > 0 and mission_reward > 0:
+			lines.append("+%d    %d MISSION  +  %d BONUS" % [total, mission_reward, bonus])
+		else:
+			lines.append("+%d" % total)
+	else:
+		lines.append("EXTRACTED")
+		lines.append("NO PAYOUT")
+
+	if lost > 0:
+		lines.append("%d RECOVERED   %d LOST" % [survivors, lost])
+	else:
+		lines.append("%d RECOVERED" % survivors)
+
+	# Promotions go on the card because this is the only moment veterancy is
+	# visible. A rank that changes silently in a menu nobody opened may as well
+	# not have happened.
+	var promoted: Array = result.get("ranked_up", [])
+	for record in promoted:
+		if record != null:
+			lines.append("%s PROMOTED — %s" % [
+				record.display_name.to_upper(), record.rank_title().to_upper()])
+
+	if mission != null:
+		lines.append(mission.display_name.to_upper())
+
+	_show_toast("\n".join(lines), COL_DONE if total > 0 else COL_WARN, reward_toast_seconds)
+
+
 func _on_all_complete() -> void:
 	_show_toast("ALL OBJECTIVES COMPLETE — EXTRACT", COL_DONE)
 	_rebuild()
 
 
-func _show_toast(text: String, col: Color) -> void:
+func _show_toast(text: String, col: Color, seconds: float = 3.0) -> void:
 	_toast.text = text
 	_toast.add_theme_color_override("font_color", col)
 	_toast.visible = true
-	_toast_time = 3.0
+	_toast_time = seconds

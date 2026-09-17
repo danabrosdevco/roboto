@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=6 format=3 uid="uid://3jioym1uw0m6"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://rnm8xsxcwbsx" path="res://maps/arena_level.tscn" id="3_arena"]
+[ext_resource type="PackedScene" uid="uid://bjnmbvul1677q" path="res://Character/characters/ai/enemy_chaser.tscn" id="4_melee"]
+
+[sub_resource type="Resource" id="S_melee"]
+script = ExtResource("2_espec")
+callsign = "SCRAP"
+count = 4
+chassis = ExtResource("4_melee")
+posture = 2
+route_tag = &""
+post_tag = &"obj_arena_hostiles"
+spawn_tag = &"obj_arena_hostiles"
+always_active = true
+faction = 1
+reinforcement_tag = &""
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"arena_1_contact"
+display_name = "Arena: First Contact"
+briefing = "Four chassis loose on the arena floor. No ranged weapons on them. Clear it and walk out."
+level_scene = ExtResource("3_arena")
+map_position = Vector2(-260, -40)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_melee")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"arena_clear", &"arena_extract"])
+reward_resources = 45
+unlocks = Array[StringName]([])
+repeatable = true
+requires = Array[StringName]([])

@@ -60,13 +60,27 @@ func equip_weapon_scene(scene: PackedScene) -> void:
 @export var bound_when_outranged: bool = true
 # How much further they'll detour for a covered position, as a multiple of the
 # direct step. Above ~2 they start taking absurd routes.
+## Leap window, in metres. Absolute rather than a fraction of weapon range —
+## a melee frame reaches 1.5m and would otherwise never qualify. Too close and
+## the leap overshoots; too far and it lands short in the open.
+@export var leap_min_distance: float = 5.0
+@export var leap_max_distance: float = 16.0
 @export var bound_detour_limit: float = 1.8
 @export var fallback_distance: float = 1.25
 @export var bits: int = 10
 @export var equipment_slots: Array[AIEquipmentSlot] = []
 @export var combat_recon_time: float = 1.65
 # Display name shown in the debug label — e.g. "Shotgun Grunt", "Sniper", "Heavy"
+#
+# NOTE: this is now PLAYER-FACING as well. The comms log prints it when a
+# squadmate calls a contact or a kill, so "Grunt_ShotgunFrag" reads badly on
+# screen. Name these the way a soldier would say them out loud.
 @export var soldier_name: String = "Enemy"
+
+# Kills this body has confirmed THIS MISSION. Read back onto the SoldierRecord
+# at extraction and added to the career total there — the node is destroyed
+# between missions, the record is not.
+var confirmed_kills: int = 0
 
 # ── ACCURACY ──────────────────────────────────
 # accuracy_skill: static per-character. How close this AI shoots to the
@@ -324,6 +338,10 @@ func _stagger_ai_timers() -> void:
 	targeting_time = randf() * targeting_recon_time
 	_investigate_timer = randf() * 0.5
 	_sidestep_timer = randf() * 0.5
+	# Without this a squad spawned in one loop resolves its paths in lockstep
+	# forever, which is the spike the global budget then has to absorb every
+	# single frame instead of it being spread out.
+	_nav_think_timer = randf() * nav_think_interval
 
 
 func sight_range() -> float:
@@ -342,8 +360,8 @@ func _tick_vision(delta: float) -> void:
 	_vision_timer -= delta
 	if _vision_timer > 0.0:
 		return
-	var scale: float = lod_scale()
-	var elapsed: float = vision_interval * scale
+	var lod: float = lod_scale()
+	var elapsed: float = vision_interval * lod
 	_vision_timer = elapsed
 
 	var reach := sight_range()
@@ -359,6 +377,13 @@ func _tick_vision(delta: float) -> void:
 	var reach_sq: float = reach * reach
 	var peripheral_sq: float = peripheral_range * peripheral_range
 	for candidate in _visible_candidates():
+		# queue_free() is deferred, so a body can be freed between the frame the
+		# candidate list was built and the frame it is read — most obviously on
+		# level unload, which crashed here. The list is also cached upstream, so
+		# this loop cannot assume anything it was handed is still alive.
+		if candidate == null or not is_instance_valid(candidate):
+			_awareness.erase(candidate)
+			continue
 		var offset: Vector3 = candidate.global_position - global_position
 		var dist_sq: float = offset.length_squared()
 		if dist_sq > reach_sq:
@@ -470,6 +495,20 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 # ── MANAGER REFS ──────────────────────────────
 var player: Player
 var ai_manager: AIManager
+
+
+# NOTHING WAS EVER DEREGISTERING. register_enemy() is called by the spawner, but
+# deregister_enemy() had no callers anywhere in the project — the only cleanup
+# was reset_all_reg_enemies() at level load. So every robot destroyed mid-mission
+# stayed in all_ai as a freed reference, and the next get_nearest_hostile() walked
+# over it and read `alive` off a corpse:
+#   "Invalid access to property 'alive' on a base object of type 'previously freed'"
+#
+# It also meant all_ai grew for the whole mission, so the O(n) hostile scan got
+# steadily slower the more things you killed.
+func _exit_tree() -> void:
+	if ai_manager != null and is_instance_valid(ai_manager):
+		ai_manager.deregister_enemy(self)
 var stimulus_manager: StimulusManager
 
 # ── WORKING DATA ──────────────────────────────
@@ -548,6 +587,8 @@ var alive: bool = true
 
 var _settle_timer: float = 0.0
 var _settling: bool = false
+var _crashing: bool = false
+var _crash_timeout: float = 0.0
 var _settled: bool = false
 var _settle_rest_y: float = 0.0
 var _collider_rest: Transform3D
@@ -671,6 +712,21 @@ func _physics_process(delta: float) -> void:
 	# rather than a permanent _process each. This branch is why enter_downed()
 	# leaves physics running instead of switching it off immediately.
 	if downed:
+		# A WRECK THAT DIED IN THE AIR HAS TO FALL FIRST. _begin_settle() records
+		# the body's current height as the rest height and sinks from there, so
+		# a leaper killed mid-leap or a gunship shot out of the sky settled into
+		# thin air and hung there. Crash, land, and only then start settling.
+		if _crashing:
+			velocity.y -= gravity * delta
+			velocity.x = lerp(velocity.x, 0.0, 1.0 - exp(-1.5 * delta))
+			velocity.z = lerp(velocity.z, 0.0, 1.0 - exp(-1.5 * delta))
+			move_and_slide()
+			if is_on_floor() or _crash_timeout <= 0.0:
+				_crashing = false
+				_on_crash_landed()
+				_begin_settle()
+			_crash_timeout -= delta
+			return
 		if _settling:
 			_tick_settle(delta)
 		else:
@@ -950,7 +1006,8 @@ func handle_movement(delta):
 			_stuck_timer = 0.0
 			_stuck_retry_count = 0
 		MovementState.MOVING:
-			if nav_agent.is_navigation_finished():
+			_tick_nav(delta)
+			if _nav_finished:
 				var dist_to_target = global_position.distance_to(movement_target)
 				if dist_to_target < 2.0:
 					# Actually arrived — normal completion
@@ -993,6 +1050,7 @@ func move_to(pos: Vector3):
 		_has_pending_move = true
 		return
 	nav_agent.set_target_position(pos)
+	_nav_think_timer = 0.0  # new destination: refresh the cached direction now
 	movement_target = pos
 	movement_state = MovementState.MOVING
 	movement_time = 0
@@ -1000,9 +1058,70 @@ func move_to(pos: Vector3):
 	_stuck_last_position = global_position
 	_stuck_retry_count = 0
 
+# NAV QUERIES ARE TICKED OUT, NOT RUN EVERY FRAME.
+#
+# get_next_path_position() is where NavigationAgent3D actually resolves the
+# path, and this used to call it once per moving robot per frame. Profiled at
+# 381ms across 25 calls — roughly 15ms each — because a chasing melee unit
+# re-resolves against a moving target and an agent standing off the navmesh
+# searches hard before giving up.
+#
+# The direction is refreshed on a stagger instead and steered along in between.
+# At 0.15s and 4.5 m/s a robot travels 0.67m between refreshes, which is well
+# inside the 0.15m arrival threshold's tolerance and invisible in motion.
+#
+# TWO gates, because either alone leaves a hole: a per-robot interval (scaled by
+# lod_scale, so distant robots refresh far less often) and a global per-frame
+# budget so a single frame can never contain more than a fixed number of path
+# resolutions no matter how many robots want one.
+@export var nav_think_interval: float = 0.15
+## Path resolutions allowed across ALL robots in one physics frame. Anything
+## over budget steers on its cached direction and asks again next frame.
+@export var nav_queries_per_frame: int = 8
+
+static var _nav_budget: int = 0
+static var _nav_budget_frame: int = -1
+
+var _nav_dir: Vector3 = Vector3.ZERO
+var _nav_think_timer: float = 0.0
+var _nav_finished: bool = false
+
+
+# BOTH nav queries live here, and nothing else may call the agent per frame.
+#
+# is_navigation_finished() is not a cheap flag read — it calls the agent's
+# _update_navigation() internally, exactly like get_next_path_position(). The
+# first version of this throttled the position query and left its twin running
+# every frame at the top of the MOVING branch, which halved the per-call cost
+# and left the other half intact. Keeping them together is the only way the
+# budget means anything.
+func _tick_nav(delta: float) -> void:
+	_nav_think_timer -= delta
+	if _nav_think_timer > 0.0:
+		return
+	if not _take_nav_query(nav_queries_per_frame):
+		return
+	_nav_think_timer = nav_think_interval * lod_scale()
+	_nav_finished = nav_agent.is_navigation_finished()
+	var fresh: Vector3 = nav_agent.get_next_path_position() - global_position
+	fresh.y = 0
+	_nav_dir = fresh
+
+
+static func _take_nav_query(budget: int) -> bool:
+	var frame := Engine.get_physics_frames()
+	if frame != _nav_budget_frame:
+		_nav_budget_frame = frame
+		_nav_budget = maxi(1, budget)
+	if _nav_budget <= 0:
+		return false
+	_nav_budget -= 1
+	return true
+
+
 func move_along_nav(delta):
-	var path_dir = nav_agent.get_next_path_position() - global_position
-	path_dir.y = 0
+	# Queries happen in _tick_nav only; this just steers on the cached result.
+	var path_dir = _nav_dir
 	var t = 1.0 - exp(-acceleration * delta)
 	if path_dir.length() < 0.15:
 		velocity.x = lerp(velocity.x, 0.0, t)
@@ -1031,7 +1150,9 @@ func handle_chasing(delta):
 	if chasing_time >= chasing_recon_time:
 		chasing_time = 0
 		nav_agent.set_target_position(combat_target.global_position)
+		_nav_think_timer = 0.0  # new destination: refresh the cached direction now
 
+	_tick_nav(delta)
 	move_along_nav(delta)
 	_check_stuck(delta)
 
@@ -1143,10 +1264,26 @@ func _prefire_threshold() -> float:
 func _can_fire_without_los() -> bool:
 	return false
 
+# How far away this robot considers itself able to engage.
+#
+# A MELEE weapon's reach is melee_range, NOT max_effective_range — ai-wep_melee
+# overrides neither, so it inherited AIWeapon's 70m default and every chaser and
+# leaper decided it was "in range" at 49m (_max_range * 0.7), stopped dead, and
+# swung a knife at nothing. They never closed, and the leaper never got near
+# enough to leap either.
 func _max_range() -> float:
-	return weapon.max_effective_range if weapon != null else 30.0
+	if weapon == null:
+		return 30.0
+	if weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
+		return maxf(weapon.melee_range, 1.0)
+	return weapon.max_effective_range
 
 func _on_reload_started() -> void:
+	# Deliberately kept for hostiles and filtered out for friendlies in the
+	# BarkSet: an ally announcing a reload is noise, an ENEMY announcing one
+	# tells the player to push. Same clip, opposite value.
+	if bark != null:
+		bark.bark(BarkSet.Line.RELOAD)
 	# Break contact while vulnerable rather than standing in the open.
 	weapon_state = WeaponState.RELOAD
 	_burst_left = 0
@@ -1288,7 +1425,13 @@ func _score_movement_option(option: int) -> float:
 		MovementOptions.LEAP:
 			if combat_target == null or not _has_los:
 				return 0.0
-			if range_ratio > 0.6 or range_ratio < 0.1:
+			# Gated on ABSOLUTE distance, not range_ratio. Everything else here
+			# reasons in fractions of weapon range, which is meaningless for a
+			# leaper: its weapon reaches 1.5m, so range_ratio is above 0.6 at
+			# any distance worth leaping from and LEAP could never be chosen.
+			# A leap is a mid-range closer — too near and it overshoots, too far
+			# and it lands short in the open.
+			if dist < leap_min_distance or dist > leap_max_distance:
 				return 0.1
 			w = 1.5
 		MovementOptions.CHASE:
@@ -1312,6 +1455,7 @@ func _handle_path_blocked() -> void:
 		var step = global_position + lateral_dir * 3.0 + to_target * 1.5
 		var nav_point = NavigationServer3D.map_get_closest_point(nav_map, step)
 		nav_agent.set_target_position(nav_point)
+		_nav_think_timer = 0.0  # new destination: refresh the cached direction now
 		return
 
 	if _stuck_retry_count == 2:
@@ -1322,6 +1466,7 @@ func _handle_path_blocked() -> void:
 		var step = global_position + lateral_dir * 4.0
 		var nav_point = NavigationServer3D.map_get_closest_point(nav_map, step)
 		nav_agent.set_target_position(nav_point)
+		_nav_think_timer = 0.0  # new destination: refresh the cached direction now
 		return
 
 	# Third block — path is genuinely impassable from here
@@ -1453,7 +1598,28 @@ func reconsider_target() -> void:
 
 # Extracted from reconsider_target so the close-threat check shares one source
 # of truth for "who is hostile and nearby".
+#
+# MEMOISED FOR THE FRAME. reconsider_target() asks twice in a single call: once
+# through _check_close_threat(), and again at the bottom when that returns
+# false. Nothing between them moves a robot or changes a faction, so the second
+# scan re-derived an answer it already had — and the scan is O(every registered
+# AI). The memo cannot go stale within a frame, which is the only window it
+# covers. Computing eagerly at the top of reconsider_target() instead would be
+# worse: the common "keep current target" path returns before ever needing it.
+var _nearest_cache: CharacterBody3D = null
+var _nearest_cache_frame: int = -1
+
 func _nearest_hostile() -> CharacterBody3D:
+	var frame := Engine.get_physics_frames()
+	if _nearest_cache_frame == frame:
+		if _nearest_cache == null or is_instance_valid(_nearest_cache):
+			return _nearest_cache
+	_nearest_cache_frame = frame
+	_nearest_cache = _compute_nearest_hostile()
+	return _nearest_cache
+
+
+func _compute_nearest_hostile() -> CharacterBody3D:
 	if ai_manager != null:
 		return ai_manager.get_nearest_hostile(self)
 	if player != null and _is_hostile(player) and player.is_targetable():
@@ -1535,7 +1701,8 @@ func reconsider_patrol():
 		return
 	if patrol_path == null or patrol_path.points.is_empty():
 		return
-	if nav_agent.is_navigation_finished():
+	_tick_nav(get_physics_process_delta_time())
+	if _nav_finished:
 		var next_point = patrol_path.get_next_point(self)
 		if next_point:
 			move_to(next_point.global_position)
@@ -1547,6 +1714,8 @@ func reconsider_patrol():
 # Previously a declared-but-unreachable state.
 # ─────────────────────────────────────────────
 func _enter_search() -> void:
+	if bark != null:
+		bark.bark(BarkSet.Line.SEARCH)
 	if last_seen_point.is_empty():
 		# Nothing to search. A squad member drops to IDLE and lets the squad
 		# decide; PATROL here was putting follow squadmates into a state whose
@@ -1736,7 +1905,7 @@ func perform_action(action: CombatOptions):
 			var movement = _pick_movement_option()
 			if movement < 0:
 				return
-			previous_movement_option = movement
+			previous_movement_option = movement as MovementOptions
 			match movement:
 				MovementOptions.LEAP:
 					if combat_target != null:
@@ -1942,9 +2111,20 @@ func apply_damage(damage, source) -> void:
 				StimulusManager.StimulusType.ALLY_SHOT,
 				global_position, faction, source)
 	if bark != null:
-		bark.bark()
+		bark.bark(BarkSet.Line.HURT)
 	health -= damage
 	if health <= 0:
+		# Kill credit. apply_damage has always carried the attributor; die()
+		# discarded it, which is why nothing could report a kill — and why XP
+		# has nowhere to come from. The killer speaks, not the victim.
+		if source != null and is_instance_valid(source) and source != self:
+			# Guarded with `in` rather than a type check: the killer may be a
+			# Soldier, the Player, or anything else that deals damage, and only
+			# some of those carry a counter.
+			if "confirmed_kills" in source:
+				source.confirmed_kills += 1
+			if "bark" in source and source.bark != null:
+				source.bark.bark(BarkSet.Line.KILL, soldier_name)
 		die()
 		return
 	for i in particle_effects_hit:
@@ -1966,6 +2146,11 @@ func die():
 func enter_downed() -> void:
 	if downed:
 		return
+	# The one line that is pure information rather than flavour — it is how the
+	# player learns a squadmate is recoverable rather than gone. BarkDirector
+	# lets DOWNED skip the channel budget for exactly this reason.
+	if bark != null:
+		bark.bark(BarkSet.Line.DOWNED)
 	downed = true
 	alive = false
 	health = downed_health
@@ -1990,8 +2175,27 @@ func enter_downed() -> void:
 			StimulusManager.StimulusType.ALLY_DIED,
 			global_position, faction, self)
 	_collapse_pieces()
-	_begin_settle()
+	# Airborne when it died — fall before settling. The timeout is a safety net
+	# so a wreck that lands somewhere is_on_floor() never reports (a slope it
+	# slides along, geometry it clips into) still settles rather than falling
+	# forever with its physics tick alive.
+	if not is_on_floor():
+		_crashing = true
+		_crash_timeout = 6.0
+		_on_crash_started()
+	else:
+		_begin_settle()
 	went_down.emit()
+
+
+# Subclass hooks for whatever a particular frame does on the way down. Base
+# robots have nothing to add; a helicopter kills its rotor.
+func _on_crash_started() -> void:
+	pass
+
+
+func _on_crash_landed() -> void:
+	pass
 
 
 # Actually gone. Kept for can_be_downed = false, and as the place a finishing
@@ -2480,6 +2684,12 @@ func trigger_combat(body: AI):
 		return
 	if not body.alive:
 		return
+	# Only the TRANSITION into combat is worth announcing. Re-triggering on an
+	# already-engaged target would call contact every time the target moved.
+	# The director throttles per squad on top of this, so four robots acquiring
+	# the same enemy still produce one call.
+	if bark != null and ai_state != AIState.COMBAT:
+		bark.bark(BarkSet.Line.CONTACT, body.soldier_name if "soldier_name" in body else "")
 	change_combat_target(body)
 	movement_target = Vector3.ZERO
 	change_ai_state(AIState.COMBAT)

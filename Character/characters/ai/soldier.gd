@@ -127,10 +127,17 @@ func find_best_cover_point() -> CoverPoint:
 	var best_score: float = -INF
 	var target_pos = combat_target.global_position if combat_target else global_position
 
+	# CHEAPEST REJECT FIRST. This used to call is_occupied() on every cover point
+	# in the level before the distance test, so each soldier seeking cover made
+	# ~130 method calls and ~130 sqrt distance checks to find the handful in
+	# range — with ten soldiers in contact that was 1400 calls a frame, which is
+	# what the profiler was showing. Squared distance also drops the sqrt.
+	var radius_sq := cover_search_radius * cover_search_radius
+	var here := global_position
 	for cp in cover_points:
-		if not cp is CoverPoint or cp.is_occupied():
+		if here.distance_squared_to(cp.global_position) > radius_sq:
 			continue
-		if global_position.distance_to(cp.global_position) > cover_search_radius:
+		if not cp is CoverPoint or cp.is_occupied():
 			continue
 		var score = cp.score_for(global_position, target_pos)
 		if score > best_score:
@@ -210,7 +217,8 @@ func tick_bounding() -> void:
 				change_soldier_state(SoldierState.NONE)
 				bound_step_complete.emit(self)
 		return
-	if nav_agent.is_navigation_finished():
+	_tick_nav(get_physics_process_delta_time())
+	if _nav_finished:
 		change_soldier_state(SoldierState.NONE)
 		bound_step_complete.emit(self)
 
@@ -281,6 +289,16 @@ func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false)
 	# not answering the radio is the e-warfare system doing its job.
 	if not _can_receive_orders():
 		return
+
+	# NO ORDER_ACK HERE. `force` does not mean "the player said so" — Squad
+	# passes force = true from eleven internal call sites (formation holds, cover
+	# moves, bounding, regroups), so acknowledging here meant the squad answered
+	# orders nobody gave, constantly. Worse, every one of those stamped the
+	# shared per-squad and per-speaker cooldowns, which starved contact, kill
+	# and hurt lines entirely.
+	#
+	# The acknowledgement belongs where a PLAYER order actually arrives:
+	# Squad.receive_player_order() and Squad.follow().
 
 	# Cover is released either way; you can't hold it and walk.
 	if force:

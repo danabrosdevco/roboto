@@ -5,7 +5,12 @@ extends StaticBody3D
 @export var obstacle = true
 var alive: bool = true
 
-func apply_damage(damage):
+# `_source` is unused but has to be ACCEPTED. Every damage source in the
+# project passes an attributor — ai_weapon, hud_weapon_template, player_melee
+# and Explosion all call apply_damage(amount, source) — so the old one-argument
+# signature raised "too many arguments" instead of taking damage. Shooting a
+# crate errored rather than breaking it.
+func apply_damage(damage, _source = null):
 	if alive == false:
 		return
 	health -= damage

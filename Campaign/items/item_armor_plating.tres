@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"armor_plating"
+display_name = "Armour Plating"
+short_name = "Plating"
+description = "Bolted-on plate. Twenty-five more points of frame before anything vital is reached."
+kind = 2
+cost = 60
+usable_by_player = true
+usable_by_ai = true
+health_bonus = 25
+required_rank = 0

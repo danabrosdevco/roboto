@@ -79,7 +79,7 @@ func activate_interactible(interactible: Interactible):
 		Enums.InteractTypes.OBJECTIVE:
 			# The console doesn't own the objective — InteractObjective holds an
 			# array of them and tags each one on _ready, so ask the tag.
-			var objective = interactible.get_meta("mission_objective", null)
+			var objective := _objective_tag(interactible)
 			interact_label.text = "F | %s" % _prompt_from(objective, "Interact")
 		Enums.InteractTypes.HEALTH:
 			interact_label.text = "F | Repair  +%d" % value
@@ -108,6 +108,21 @@ func _prompt_from(source, fallback: String) -> String:
 			return text
 	return fallback
 
+
+# Godot's get_meta(name, default) only honours the default when it is NOT null:
+# a null default takes the same ERR_FAIL path as passing no default at all, so
+# asking an untagged console for its objective printed an error every frame you
+# looked at a standalone terminal. has_meta first is the only quiet way to ask.
+func _objective_tag(source: Object) -> Object:
+	if source == null or not is_instance_valid(source):
+		return null
+	if not source.has_meta("mission_objective"):
+		return null
+	var tag = source.get_meta("mission_objective")
+	if tag is Object and is_instance_valid(tag):
+		return tag
+	return null
+
 # Kept so the channel percentage counts up while you hold F. The player script
 # only pushes a new interactible when the raycast target CHANGES, so without
 # this the prompt would sit at 0% for the whole capture.
@@ -121,8 +136,8 @@ func _process(_delta: float) -> void:
 		return
 	if _current_interactible.get_type() != Enums.InteractTypes.OBJECTIVE:
 		return
-	var objective = _current_interactible.get_meta("mission_objective", null)
-	if objective != null and is_instance_valid(objective) and objective.has_method("is_channelling"):
+	var objective := _objective_tag(_current_interactible)
+	if objective != null and objective.has_method("is_channelling"):
 		if objective.is_channelling():
 			interact_label.text = "F | %s" % _prompt_from(objective, "Interact")
 

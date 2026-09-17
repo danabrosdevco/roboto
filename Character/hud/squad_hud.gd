@@ -47,7 +47,6 @@ class_name SquadHUD
 @export var font_size_header: int = 24
 @export var font_size_body: int = 20
 @export var font_size_nearby: int = 18
-@export var font_size_wheel: int = 22
 @export var font_size_toast: int = 22
 @export var font_size_marker: int = 16
 
@@ -56,8 +55,6 @@ class_name SquadHUD
 @export var panel_size: Vector2 = Vector2(460, 420)
 # Wheel position, measured from the TOP-LEFT of the squad panel. Positive x
 # pushes it right of the roster, negative y lifts it above the panel top.
-@export var wheel_offset: Vector2 = Vector2(500, -40)
-@export var wheel_size: Vector2 = Vector2(560, 60)
 @export var bar_size: Vector2 = Vector2(70, 12)
 
 @export var marker_range: float = 150.0
@@ -96,13 +93,11 @@ var _panel: VBoxContainer
 var _squad_header: Label
 var _roster: VBoxContainer
 var _nearby: VBoxContainer
-var _wheel: HBoxContainer
 var _toast: Label
 
 var _timer: float = 0.0
 var _toast_time: float = 0.0
 var _pulse: float = 0.0
-var _wheel_labels: Array = []
 
 
 func _ready() -> void:
@@ -130,9 +125,6 @@ func _ready() -> void:
 		commander.squad_selected.connect(_on_squad_selected)
 		commander.order_issued.connect(_on_order_issued)
 		commander.contact_called.connect(_on_contact_called)
-		commander.wheel_opened.connect(_on_wheel_opened)
-		commander.wheel_moved.connect(_on_wheel_moved)
-		commander.wheel_closed.connect(_on_wheel_closed)
 
 
 # Unassigned exports are the single most likely reason nothing shows up, and
@@ -205,20 +197,6 @@ func _build_ui() -> void:
 	_roster.add_theme_constant_override("separation", 1)
 	_panel.add_child(_roster)
 
-	# Verb wheel. Anchored to the same bottom-left corner as the roster panel
-	# and then offset from the panel's top-left, so wheel_offset shifts it
-	# relative to the roster rather than relative to screen centre.
-	_wheel = HBoxContainer.new()
-	_wheel.anchor_left = 0.0
-	_wheel.anchor_right = 0.0
-	_wheel.anchor_top = 1.0
-	_wheel.anchor_bottom = 1.0
-	_wheel.alignment = BoxContainer.ALIGNMENT_BEGIN
-	_wheel.add_theme_constant_override("separation", 14)
-	_wheel.visible = false
-	_wheel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_wheel)
-	_layout_wheel()
 
 	_toast = _make_label("", COL_BRIGHT, font_size_toast)
 	_toast.anchor_left = 0.5
@@ -234,23 +212,14 @@ func _build_ui() -> void:
 	add_child(_toast)
 
 
-func _layout_wheel() -> void:
-	if _wheel == null:
-		return
-	var panel_top := -(panel_margin.y + panel_size.y)
-	_wheel.offset_left = panel_margin.x + wheel_offset.x
-	_wheel.offset_right = panel_margin.x + wheel_offset.x + wheel_size.x
-	_wheel.offset_top = panel_top + wheel_offset.y
-	_wheel.offset_bottom = panel_top + wheel_offset.y + wheel_size.y
 
-
-func _make_label(text: String, col: Color, size: int = -1) -> Label:
-	if size < 0:
-		size = font_size_body
+func _make_label(text: String, col: Color, font_px: int = -1) -> Label:
+	if font_px < 0:
+		font_px = font_size_body
 	var l := Label.new()
 	l.text = text
 	l.add_theme_color_override("font_color", col)
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", font_px)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
 
@@ -271,8 +240,6 @@ func _process(delta: float) -> void:
 		if _toast_time <= 0.0:
 			_toast.visible = false
 
-	if _wheel != null and _wheel.visible:
-		_layout_wheel()
 
 	_pulse += delta
 
@@ -496,11 +463,11 @@ func _draw() -> void:
 		var width: float = 2.6 if critical else (2.0 if hurt else 1.5)
 
 		# Chevron
-		var size := clampf(10.0 - dist * 0.03, 4.0, 10.0)
+		var marker_size := clampf(10.0 - dist * 0.03, 4.0, 10.0)
 		var pts := PackedVector2Array([
-			p + Vector2(-size, -size * 0.7),
-			p + Vector2(0, size * 0.5),
-			p + Vector2(size, -size * 0.7),
+			p + Vector2(-marker_size, -marker_size * 0.7),
+			p + Vector2(0, marker_size * 0.5),
+			p + Vector2(marker_size, -marker_size * 0.7),
 		])
 		draw_polyline(pts, col, width)
 
@@ -509,7 +476,7 @@ func _draw() -> void:
 		if critical:
 			var halo: Color = col
 			halo.a = alpha * 0.35
-			var hs: float = size * 1.6
+			var hs: float = marker_size * 1.6
 			draw_polyline(PackedVector2Array([
 				p + Vector2(-hs, -hs * 0.7),
 				p + Vector2(0, hs * 0.5),
@@ -521,7 +488,7 @@ func _draw() -> void:
 		if hurt and dist < 90.0:
 			var bar_w: float = marker_bar_width * clampf(1.0 - dist / 160.0, 0.45, 1.0)
 			var bar_h: float = marker_bar_height
-			var bar_top: float = p.y - size * 1.05 - bar_h - 2.0
+			var bar_top: float = p.y - marker_size * 1.05 - bar_h - 2.0
 			var back: Color = COL_DIM
 			back.a = alpha * 0.45
 			draw_rect(Rect2(p.x - bar_w * 0.5, bar_top, bar_w, bar_h), back, true)
@@ -535,12 +502,12 @@ func _draw() -> void:
 		if is_downed and dist < 90.0:
 			var down_col := COL_CRIT
 			down_col.a = alpha
-			draw_string(ThemeDB.fallback_font, p + Vector2(size + 3, 2),
+			draw_string(ThemeDB.fallback_font, p + Vector2(marker_size + 3, 2),
 				"DOWNED", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size_marker, down_col)
 		elif dist < 60.0 and m.soldier_state == Soldier.SoldierState.SUPPRESSED:
 			var warn := COL_WARN
 			warn.a = alpha
-			draw_string(ThemeDB.fallback_font, p + Vector2(size + 3, 2),
+			draw_string(ThemeDB.fallback_font, p + Vector2(marker_size + 3, 2),
 				STATE_PINNED, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size_marker, warn)
 
 
@@ -572,30 +539,6 @@ func _on_contact_called(_position: Vector3, target: Node) -> void:
 		what = "CONTACT: %s" % (target as Enemy).soldier_name.to_upper()
 	_show_toast(what, COL_WARN)
 
-
-func _on_wheel_opened(labels: Array, index: int) -> void:
-	_clear(_wheel)
-	_wheel_labels.clear()
-	for i in labels.size():
-		var l := _make_label(labels[i], COL_DIM, font_size_wheel)
-		_wheel.add_child(l)
-		_wheel_labels.append(l)
-	_wheel.visible = true
-	_on_wheel_moved(index)
-
-
-func _on_wheel_moved(index: int) -> void:
-	order_ux_sound.play()
-	for i in _wheel_labels.size():
-		var l: Label = _wheel_labels[i]
-		l.add_theme_color_override("font_color", COL_BRIGHT if i == index else COL_DIM)
-		l.add_theme_font_size_override("font_size",
-			font_size_wheel + 3 if i == index else font_size_wheel)
-	
-
-
-func _on_wheel_closed() -> void:
-	_wheel.visible = false
 
 func _show_toast(text: String, col: Color) -> void:
 	_toast.text = text

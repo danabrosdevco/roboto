@@ -24,6 +24,13 @@ class_name Master
 
 const FILTER_SHADER := preload("res://Character/hud/signal_filter.gdshader")
 
+# The same two clips the squad manager uses, so the menus and the management
+# screen sound like one interface rather than two. Preloaded rather than
+# exported for the same reason everything else here is built in code: there is
+# no inspector slot to leave blank.
+const SFX_HOVER := preload("res://sounds/sfx/psx ui sfx/squad_manager/HoverG.ogg")
+const SFX_CONFIRM := preload("res://sounds/sfx/psx ui sfx/ConfirmH.wav")
+
 @export_group("Skip")
 # The switch asked for: straight to play, no splash and no menu.
 @export var skip_splash: bool = false
@@ -81,12 +88,18 @@ var _paused_by_us: bool = false
 # menu — there is nothing behind it, and treating them the same meant ESC
 # started the game.
 var _menu: String = ""
+var _sfx_hover: AudioStreamPlayer
+var _sfx_confirm: AudioStreamPlayer
+# Cleared by real mouse movement, so a menu appearing under the cursor does not
+# chirp for a button you never moved to.
+var _suppress_hover: bool = true
 
 
 func _ready() -> void:
 	# Survives get_tree().paused, which the splash and the pause menu both set.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_pin_children_pausable()
+	_build_audio()
 	_build_overlay()
 	if skip_splash:
 		_teardown_overlay()
@@ -113,6 +126,22 @@ func _ready() -> void:
 func _pin_children_pausable() -> void:
 	for child in get_children():
 		child.process_mode = Node.PROCESS_MODE_PAUSABLE
+
+
+# Parented to MASTER, not to the overlay. Pressing START tears the overlay down
+# in the same frame the confirm plays, and a freed AudioStreamPlayer stops dead
+# — the click would be cut off exactly when it should be landing.
+func _build_audio() -> void:
+	_sfx_hover = AudioStreamPlayer.new()
+	_sfx_hover.stream = SFX_HOVER
+	_sfx_hover.max_polyphony = 2
+	_sfx_hover.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_sfx_hover)
+
+	_sfx_confirm = AudioStreamPlayer.new()
+	_sfx_confirm.stream = SFX_CONFIRM
+	_sfx_confirm.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_sfx_confirm)
 
 
 func _build_overlay() -> void:
@@ -210,7 +239,11 @@ func _run_boot() -> void:
 	_hold_pause()
 	_show_mouse()
 
-	await _play_card(presents_text, company_text, "", company_seconds, HUDPalette.DIM, HUDPalette.BRIGHT)
+	# "presents" goes in the SUFFIX slot, not the `above` slot — the studio name
+	# is the headline and "presents" is the thing it does, so it reads
+	# "DANA ENTERTAINMENT PRODUCTS presents" top to bottom. In the `above` slot
+	# it read as "presents DANA ENTERTAINMENT PRODUCTS", which is backwards.
+	await _play_card("", company_text, presents_text, company_seconds, HUDPalette.DIM, HUDPalette.DIM)
 	if _booting:
 		await _play_card("", title_text, title_suffix, title_seconds, HUDPalette.BRIGHT, HUDPalette.WARN)
 
@@ -251,15 +284,19 @@ func _play_card(above: String, headline: String, suffix: String, seconds: float,
 		tail.modulate.a = 0.0
 		box.add_child(tail)
 
+	# Tweens are created FROM the node they animate, not from Master. A tween
+	# bound to a node dies with it; one owned by Master outlived the card's
+	# labels and logged "Target object freed before starting" every transition.
+	#
 	# CRT power-on: the shader's own boot uniform ramps 1 -> 0.
 	_filter_material.set_shader_parameter("boot", 1.0)
-	var boot_tween := create_tween()
+	var boot_tween := _filter.create_tween()
 	boot_tween.tween_method(
 		func(v: float): _filter_material.set_shader_parameter("boot", v),
 		1.0, 0.0, minf(0.8, seconds * 0.4))
 
 	var reveal := maxf(0.35, seconds * 0.35)
-	var type_tween := create_tween()
+	var type_tween := head.create_tween()
 	type_tween.tween_property(head, "visible_ratio", 1.0, reveal)
 	if tail != null:
 		type_tween.tween_property(tail, "modulate:a", 1.0, 0.35)
@@ -268,7 +305,7 @@ func _play_card(above: String, headline: String, suffix: String, seconds: float,
 
 	# Fade the card out, unless the player is skipping — then cut.
 	if not _skip_requested:
-		var fade := create_tween()
+		var fade := _content.create_tween()
 		fade.tween_property(_content, "modulate:a", 0.0, fade_seconds)
 		await _wait(fade_seconds)
 	_content.modulate.a = 1.0
@@ -308,7 +345,7 @@ func _show_main_menu() -> void:
 	_build_menu(menu_title_text, [
 		{"text": "START", "action": _start_play},
 		{"text": "QUIT", "action": _quit},
-	], HUDPalette.BRIGHT)
+	], HUDPalette.BRIGHT, title_suffix)
 
 
 func _show_pause_menu() -> void:
@@ -326,7 +363,8 @@ func _show_pause_menu() -> void:
 	], HUDPalette.WARN)
 
 
-func _build_menu(title: String, entries: Array, title_col: Color) -> void:
+func _build_menu(title: String, entries: Array, title_col: Color,
+		subtitle: String = "") -> void:
 	_clear_content()
 	_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -337,6 +375,10 @@ func _build_menu(title: String, entries: Array, title_col: Color) -> void:
 	_content.add_child(box)
 
 	box.add_child(_centred_label(title, title_col, 56))
+	# The year, carried over from the title card so the menu is the same
+	# wordmark rather than a different one. WARN is the colour it uses there.
+	if subtitle != "":
+		box.add_child(_centred_label(subtitle, HUDPalette.WARN, 40))
 
 	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 24)
@@ -355,8 +397,25 @@ func _build_menu(title: String, entries: Array, title_col: Color) -> void:
 		button.add_theme_color_override("font_hover_color", Color(0.86, 1.0, 0.88))
 		button.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
 		button.add_theme_color_override("font_focus_color", HUDPalette.BRIGHT)
-		button.pressed.connect(entry["action"])
+		button.mouse_entered.connect(_on_menu_hover)
+		# Confirm BEFORE the action: START and CONTINUE both tear the overlay
+		# down, and the sound has to be away before its button stops existing.
+		var action: Callable = entry["action"]
+		button.pressed.connect(func():
+			_sfx_confirm.play()
+			action.call())
 		box.add_child(button)
+
+	# A menu built under a stationary cursor fires mouse_entered on whatever
+	# happens to be beneath it, which chirps at you for a button you did not
+	# move to. Same guard the squad manager uses.
+	_suppress_hover = true
+
+
+func _on_menu_hover() -> void:
+	if _suppress_hover:
+		return
+	_sfx_hover.play()
 
 
 func _start_play() -> void:
@@ -383,6 +442,11 @@ func _input(event: InputEvent) -> void:
 	# dead whenever the tree was paused (squad manager open, splash, pause menu)
 	# or the player was in spectator mode. Master runs on PROCESS_MODE_ALWAYS,
 	# so F works everywhere.
+	# A real mouse movement re-arms hover audio after a menu is built underneath
+	# a stationary cursor.
+	if event is InputEventMouseMotion:
+		_suppress_hover = false
+
 	if event.is_action_pressed("fullscreen") and not event.is_echo():
 		get_viewport().set_input_as_handled()
 		_toggle_fullscreen()

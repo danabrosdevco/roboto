@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://dkmjutumnfq6a"]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" uid="uid://d2qtk67sm0w38" path="res://Character/characters/ai/enemy_nest-chaser.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"hopper"
+display_name = "Hopper Chassis"
+description = "Leaping frame. Closes ground fast and ignores cover lines, at the cost of armour and reach."
+scene = ExtResource("2_scene")
+cost = 70
+base_health = 45
+base_speed = 1.2
+base_accuracy = 0.8
+base_sensor_range = 40.0
+weapon_slots = 1
+equipment_slots = 1
+module_slots = 2
+required_rank = 0

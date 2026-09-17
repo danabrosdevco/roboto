@@ -24,11 +24,20 @@ func register_enemy(new_enemy: AI) -> void:
 
 func deregister_enemy(enemy: AI) -> void:
 	all_ai.erase(enemy)
+	# The cache holds hard references to the bodies it listed. Leaving it intact
+	# after removing one meant it kept handing out a node that was about to be
+	# freed — and on level unload that is EVERY node, for up to
+	# HOSTILE_CACHE_LIFETIME. Any robot that ticked vision in that window
+	# dereferenced a corpse: "Invalid access to property 'global_position' on a
+	# base object of type 'previously freed'". A cache must never outlive the
+	# roster it was built from.
+	_hostile_cache.clear()
 	if stimulus_manager != null:
 		stimulus_manager.deregister_ai(enemy)
 
 func reset_all_reg_enemies() -> void:
 	all_ai = []
+	_hostile_cache.clear()
 	if stimulus_manager != null:
 		stimulus_manager.clear()
 
@@ -91,6 +100,9 @@ func get_nearest_hostile(requesting_ai: AI) -> CharacterBody3D:
 
 	# Check all other registered AI
 	for ai in all_ai:
+		# Belt to the _exit_tree brace: a freed entry must never reach .alive.
+		if ai == null or not is_instance_valid(ai):
+			continue
 		if ai == requesting_ai:
 			continue
 		if not ai.alive:
@@ -120,6 +132,8 @@ func get_hostiles_in_radius(requesting_ai: AI, radius: float) -> Array:
 				result.append(player)
 
 	for ai in all_ai:
+		if ai == null or not is_instance_valid(ai):
+			continue
 		if ai == requesting_ai or not ai.alive or not ai is Enemy:
 			continue
 		if Enums.are_hostile(req_faction, (ai as Enemy).faction):

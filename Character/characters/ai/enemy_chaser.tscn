@@ -1,15 +1,17 @@
-[gd_scene load_steps=16 format=3 uid="uid://bjnmbvul1677q"]
+[gd_scene load_steps=18 format=3 uid="uid://bjnmbvul1677q"]
 
-[ext_resource type="Script" path="res://Character/characters/ai/enemy.gd" id="1_omglo"]
+[ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_omglo"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_gg277"]
 [ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_biu6s"]
 [ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ape12"]
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_ukn8i"]
-[ext_resource type="Texture2D" uid="uid://0q2kihgi41nt" path="res://2d_assets/Kenney Prototype Textures/PNG/Red/texture_08.png" id="6_x173h"]
+[ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="6_5gj2i"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_2u31t"]
+[ext_resource type="Material" uid="uid://dym8xecxayc67" path="res://Campaign/faction_material_shader.tres" id="7_4gcnj"]
 [ext_resource type="PackedScene" uid="uid://gymujiepqrjl" path="res://Character/weapon/ai-wep_melee.tscn" id="8_nvx10"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_sjywf"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_itigm"]
+[ext_resource type="Script" path="res://faction_livery.gd" id="11_ct7gf"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
@@ -17,14 +19,14 @@
 radius = 0.45
 section_length = 0.3
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_negfm"]
-albedo_texture = ExtResource("6_x173h")
-
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_ift78"]
 radius = 0.2
 height = 0.6
 radial_segments = 6
 rings = 6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cqn6r"]
+albedo_texture = ExtResource("6_5gj2i")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 25.0
@@ -39,14 +41,13 @@ detection = NodePath("Detection")
 particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
 particle_effects_hit = [NodePath("SparkBurst")]
 visible_pieces = [NodePath("CSGMesh3D"), NodePath("CSGMesh3D2"), NodePath("ai_world_weapon")]
-move_speed = 5.5
-acceleration = 1.85
+health = 60
+max_health = 60
+move_speed = 8.0
+acceleration = 11.0
 reposition_distance = 0.0
 advance_distance = 5.0
 fallback_distance = 0.0
-max_fire_distance = 2.0
-max_accuracy = 1.0
-min_accuracy = 1.0
 bits = 5
 combat_recon_time = 0.7
 AllowedMovementOptions = Array[int]([4])
@@ -62,11 +63,12 @@ bark_clips = Array[AudioStream]([ExtResource("3_biu6s"), ExtResource("4_ape12"),
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
 mesh = SubResource("TubeTrailMesh_y58w7")
-material = SubResource("StandardMaterial3D_negfm")
+material = ExtResource("7_4gcnj")
 
 [node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.310242)
 mesh = SubResource("CapsuleMesh_ift78")
+material = SubResource("StandardMaterial3D_cqn6r")
 
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
@@ -88,6 +90,11 @@ transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0.4155
 [node name="SparkBurst" parent="." instance=ExtResource("9_sjywf")]
 
 [node name="OilSpray" parent="." instance=ExtResource("10_itigm")]
+
+[node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("11_ct7gf")
+base_material = ExtResource("7_4gcnj")
+pieces = [NodePath("../CSGMesh3D")]
 
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

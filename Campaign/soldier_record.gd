@@ -113,6 +113,14 @@ func all_fitted_ids() -> Array[StringName]:
 
 # ── HISTORY ───────────────────────────────────
 @export var missions_survived: int = 0
+# Career total, accumulated at extraction from the body's per-mission count.
+# Kept on the RECORD because that is the thing that outlives the robot — the
+# node is destroyed between missions.
+@export var confirmed_kills: int = 0
+# Kills from the mission just finished. NOT saved — it exists only long enough
+# for the extraction to turn it into XP, because read_from() folds the body's
+# count into the career total and zeroes the body on the way past.
+var confirmed_kills_this_mission: int = 0
 
 # Authored quantity per equipment slot, captured the first time we see it. The
 # slot's own `quantity` is overwritten with what's left at extraction, so
@@ -238,6 +246,14 @@ func read_from(soldier: Soldier) -> void:
 		return
 	damage = clampi(max_health - soldier.health, 0, max_health)
 	signal_integrity = soldier.signal_integrity
+
+	# Career total. Zeroed on the body after reading so a second read_from in
+	# the same mission cannot count the same kills twice — write_back runs once
+	# per extraction today, but this is not a thing to leave depending on that.
+	if "confirmed_kills" in soldier:
+		confirmed_kills_this_mission = soldier.confirmed_kills
+		confirmed_kills += soldier.confirmed_kills
+		soldier.confirmed_kills = 0
 	if not soldier.alive:
 		status = Status.DESTROYED
 		damage = max_health
@@ -279,6 +295,7 @@ func to_dict() -> Dictionary:
 		"signal_integrity": signal_integrity,
 		"status": int(status),
 		"missions_survived": missions_survived,
+		"confirmed_kills": confirmed_kills,
 		"equipment": kit,
 		"equipment_max": equipment_max,
 		"chassis_id": String(chassis_id),
@@ -299,6 +316,7 @@ static func from_dict(data: Dictionary) -> SoldierRecord:
 	r.signal_integrity = float(data.get("signal_integrity", 1.0))
 	r.status = int(data.get("status", 0)) as Status
 	r.missions_survived = int(data.get("missions_survived", 0))
+	r.confirmed_kills = int(data.get("confirmed_kills", 0))
 
 	var chassis := str(data.get("chassis", ""))
 	if chassis != "" and ResourceLoader.exists(chassis):

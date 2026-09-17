@@ -64,6 +64,8 @@ var reload_timer: float = 0.0
 # PhysicsShapeQueryParameters3D on every single shot.
 var _near_miss_shape: SphereShape3D
 var _near_miss_query: PhysicsShapeQueryParameters3D
+# Reused across the four friendly-fire passes rather than reallocated per pass.
+var _ff_query: PhysicsRayQueryParameters3D
 var _melee_shape: SphereShape3D
 var _melee_query: PhysicsShapeQueryParameters3D
 
@@ -199,13 +201,24 @@ func friendly_in_line(weapon_target: Vector3) -> bool:
 	if shooter is CollisionObject3D:
 		exclusion.append((shooter as CollisionObject3D).get_rid())
 
+	# Both hoisted out of the loop. The space state cannot change between passes,
+	# and the query was being reallocated four times per shot — with thirty
+	# robots firing, that is the second-hottest path in the game allocating for
+	# no reason. Everything else in this file already caches its query object;
+	# this was the one that didn't.
+	var space := space_state_or_null()
+	if space == null:
+		return false
+	if _ff_query == null:
+		_ff_query = PhysicsRayQueryParameters3D.new()
+	var to_point := from + direction * distance
+
 	for _pass in 4:
-		var query := PhysicsRayQueryParameters3D.create(from, from + direction * distance)
+		var query := _ff_query
+		query.from = from
+		query.to = to_point
 		query.exclude = exclusion
-		var result = space_state_or_null()
-		if result == null:
-			return false
-		var hit = result.intersect_ray(query)
+		var hit = space.intersect_ray(query)
 		if not hit:
 			return false
 		var collider = hit.collider
@@ -223,7 +236,7 @@ func friendly_in_line(weapon_target: Vector3) -> bool:
 	return false
 
 
-func space_state_or_null():
+func space_state_or_null() -> PhysicsDirectSpaceState3D:
 	var world := get_world_3d()
 	return world.direct_space_state if world != null else null
 

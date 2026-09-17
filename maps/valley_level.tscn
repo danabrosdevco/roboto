@@ -322,7 +322,6 @@ map_settings = ExtResource("8_yapom")
 collision_mask = 0
 
 [node name="entity_0_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap2/entity_0_worldspawn"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 mesh = SubResource("ArrayMesh_2cfg7")
 
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="NavigationRegion3D/FuncGodotMap2/entity_0_worldspawn"]
@@ -6179,7 +6178,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 152.177, -9.98749, 164.894)
 script = ExtResource("16_5dtxd")
 interactibles = [NodePath("Interactible")]
 id = &"valley_garrison_cap_1"
-display_name = "Garrison"
+display_name = "West Garrison"
 reward_resources = 30
 linked_squad_point = NodePath("../EnemySquadObjs/Valley_Garrison")
 
@@ -6223,7 +6222,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 193.479, -9.98749, 186.666)
 script = ExtResource("16_5dtxd")
 interactibles = [NodePath("Interactible")]
 id = &"valley_garrison_cap_2"
-display_name = "Garrison"
+display_name = "South Garrison"
 reward_resources = 30
 linked_squad_point = NodePath("../EnemySquadObjs/Valley_Garrison")
 
@@ -6267,7 +6266,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 241.128, -9.98749, 102.015)
 script = ExtResource("16_5dtxd")
 interactibles = [NodePath("Interactible")]
 id = &"valley_garrison_cap_3"
-display_name = "Garrison"
+display_name = "North Garrison"
 reward_resources = 30
 linked_squad_point = NodePath("../EnemySquadObjs/Valley_Garrison")
 

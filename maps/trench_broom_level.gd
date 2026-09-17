@@ -1,7 +1,7 @@
 @icon ("res://addons/plenticons/icons/64x-hidpi/3d/torus-red.png")
 extends Node3D
 class_name TrenchBroomLevel
-@onready var World = get_parent()
+@onready var world_root = get_parent()
 @export var spawn_point: Node3D
 @export var nav_region: NavigationRegion3D
 @export var func_godot_map: FuncGodotMap

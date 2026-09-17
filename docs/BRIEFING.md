@@ -50,6 +50,14 @@ Everything that survives a mission.
 - `Squad` — objectives, roles, contact tracking, formation holds.
 - `AIManager` — registry, cached hostile lists. `StimulusManager` — sound events.
 - `PatrolPath` / `PatrolPoint` — level-authored routes with editor preview.
+- **`EnemyHelicopter extends Soldier`** — a flying frame. Overrides only
+  `handle_gravity`, `handle_movement`, `_apply_motion`, `move_to` and
+  `_update_facing`; everything else is inherited. It extends *Soldier* rather
+  than Enemy because `Squad.squad_members` is `Array[Soldier]` and
+  `EnemyForceSpawner` casts with `as Soldier` — an Enemy-rooted scene cannot be
+  a squad chassis at all.
+- `enemy_chaser` (melee) and `enemy_nest-chaser` (leaper) now use `soldier.gd`
+  for the same reason. There is no `appx/` folder any more.
 
 ### Equipment (`Character/equipment/`)
 
@@ -62,6 +70,25 @@ Everything that survives a mission.
 
 All code-built and self-wiring, because unassigned exports fail silently.
 `squad_hud.gd`, `objective_hud.gd`, `squad_manager_ui.gd`, `hud.gd`.
+
+- `comms_log.gd` — friendly radio traffic as text, bottom right. Driven by
+  `BarkDirector`, so it prints exactly what was *heard* and never more.
+- `objective_hud.gd` also owns the extraction marker and the payout card
+  (reward, promotions, squad recovered/lost) shown on `Campaign.extracted`.
+- Screen corners are divided deliberately: squad top-left, objectives top-right,
+  comms bottom-right, health bottom-centre. Keep it that way or they overlap.
+
+### Boot and audio
+
+- **`Master` (`Managers/master.gd`)** — the only thing above `World`. Splash →
+  FPO main menu → play, plus the ESC pause screen and the fullscreen toggle
+  (which lives here because `_physics_process` is dead while paused). Exported
+  `skip_splash` bypasses all of it.
+- **`BarkDirector`** — a static arbiter that owns the voice channel. Every bark
+  is a *request*; it elects one speaker per burst and drops the rest. Barking
+  is a property of the CHANNEL, not of a robot — see §5.
+- **`BarkSet`** — one `.tres` holding the clips per line, shared by every robot,
+  so a voice is authored once instead of per chassis scene.
 
 ---
 
@@ -138,6 +165,64 @@ listener. If you add a signal, wire it or delete it.
 **GDScript gotcha:** `"%s" % some_array` treats the array as a format argument
 *list*. Wrap it or use `str()`.
 
+**`PROCESS_MODE_ALWAYS` is INHERITED.** Setting it on a node hands it to every
+descendant using the default `PROCESS_MODE_INHERIT`. Setting it on `Master`
+alone made the entire game unpausable — the squad manager, level loading and the
+pause menu all still set `get_tree().paused` and none of them did anything.
+`Master._pin_children_pausable()` holds `World` back to `PAUSABLE` for exactly
+this. Anything under World that must run while paused sets ALWAYS on itself.
+
+**A cache must never outlive the roster it was built from.** `AIManager`'s
+per-faction hostile cache held hard references for 0.4s after the bodies were
+freed, so level unload produced *"Invalid access to property 'global_position'
+on a base object of type 'previously freed'"*. Clear the cache wherever the
+roster changes, and guard every loop over `all_ai` with `is_instance_valid`.
+
+**Register implies deregister.** `register_enemy()` had been called by the
+spawner since day one and `deregister_enemy()` had **no callers at all** — so
+every robot destroyed mid-mission stayed in `all_ai` as a dangling reference and
+the O(n) hostile scan got slower with every kill. `Enemy._exit_tree()` now
+deregisters. If you add a registry, add the removal at the same time.
+
+**Mutate fully, THEN emit.** `ledger_changed` is wired straight to a synchronous
+UI rebuild, so emitting halfway through a change means the panel redraws from a
+half-applied state and then never corrects. This bit four times — `buy_item`,
+`buy_chassis`, `sell_item` and `repair_soldier` all emitted before the armoury
+or the record had caught up. Use `_allocate_quiet()` and emit once at the end.
+
+**A deferred builder cannot be protected by `_clear()`.** `_add_slot_group()`
+awaits a frame before adding its children, so when a second rebuild cleared the
+panel there was nothing there to remove yet and both continuations then added a
+full set. That is the duplicated WEAPON/EQUIPMENT/MODULES blocks — not the
+`queue_free` deferral above. It is fixed with a generation counter: a stale
+continuation checks the number and aborts.
+
+**Nav queries are budgeted; nothing may call the agent directly.**
+`get_next_path_position()` AND `is_navigation_finished()` both resolve the path
+internally — they are twins, and throttling only one halves the cost and leaves
+the other. All of it goes through `Enemy._tick_nav()`, gated by a per-robot
+interval scaled by `lod_scale()` and a global per-frame budget. If you add a
+call to `nav_agent`, put it there.
+
+**Weapon range is not `max_effective_range` for melee.** `ai-wep_melee` never
+overrode it, so it inherited `AIWeapon`'s 70m default and every chaser decided
+it was "in range" at 49m, stopped, and swung at air. `_max_range()` returns
+`melee_range` for `AIWeaponTypes.MELEE`. Anything reasoning in *fractions* of
+weapon range (`range_ratio`) is meaningless for a melee frame — gate on absolute
+distance instead, as `MovementOptions.LEAP` now does.
+
+**Whatever `viewmodel` / `weapon_model` points at is owned by the pose system.**
+`PlayerEquipment` writes its `position` and `rotation` every frame, so authored
+orientation on that node is discarded. Put the model's orientation on a PARENT
+holder and point the export at the child inside — see `m4_hud_weapon.tscn`,
+`shotgun_hud_weapon.tscn` and the repair tool's `Holster`. Compounded by the
+units bug in §6.
+
+**Two-argument `apply_damage`.** Every damage source passes an attributor:
+`apply_damage(amount, source)`. A one-parameter implementation raises "too many
+arguments" instead of taking damage — which is why crates were never breakable.
+Accept `_source = null` even when unused.
+
 ---
 
 ## 5. Systems worth knowing in detail
@@ -172,21 +257,48 @@ always — you're looking right at them.
 
 ## 6. Open threads
 
-- **Shop screen.** `buy_item`, `buy_chassis`, `sell_item` all work and are
-  tested; there's no UI. Plan: one list of unlocked items with a BUY button,
-  chassis in the soldier detail panel, ammo as a single priced service button.
+- **Shop screen.** *Buying and selling are in* — `[-]` and `[+]` on the armoury
+  rows, selling at half what was paid. Still to do: chassis in the soldier
+  detail panel (`buy_chassis` works, it has no UI) and ammo as a single priced
+  service button.
+- **TWO CATALOGUES EXIST.** `world.tscn` loads
+  `Campaign/items & catalogue/test_item_catalogue.tres`. The other one,
+  `Campaign/item_catalogue.tres`, is loaded by nothing and has drifted — it has
+  `optics`, the live one has `dmr`. Edit the wrong file and your change silently
+  does nothing. Pick a winner, repoint `world.tscn`, delete the other, and get
+  it out of a folder whose name contains a space and an `&`.
 - **Resources.** Intended split: *shards* (matter — weapons, repairs, ammo),
-  *neural bits* (cognition — modules, player upgrades), and **compute** as a
-  capacity rather than a currency, gating squad size and chassis tier. Currently
-  one undifferentiated `earned` pool.
+  *neural bits* (cognition — modules, high-tier chassis), and **compute** as a
+  capacity rather than a currency, gating squad size, chassis tier *and the
+  player's own skill tree* — so upgrading yourself competes with fielding
+  another robot. Compute should be won, never bought, or that choice
+  evaporates. Currently one undifferentiated `earned` pool, and changing it
+  changes the save format.
 - **Aggressive/cautious stance.** Designed, not built. It's what gives back the
   expressiveness lost when three verbs became two.
 - **Reinforcement director.** `EnemySquadSpec.Posture.RESERVE` exists as the
   hook. Escalation should trigger on player *actions*, not a clock.
 - **Ammo resupply.** `restock_roster()` is currently free on return to base.
   Charging for it is the decision that makes ammunition a campaign resource.
-- **Scanner** has no item definition, so it's absent from the player loadout.
-- **DMR and carbine** point at the M4's scenes; they need their own.
+- **DMR and carbine** point at the M4's scenes; they need their own. Buying
+  either currently gives you an Ancient Rifle. Waiting on art.
+- **Viewmodel pose has a units bug.** `PlayerEquipment` writes
+  `viewmodel.rotation_degrees = viewmodel.rotation` — a radians property
+  assigned into a degrees one, then read back as radians next frame. So
+  `base_rotation` never lands where you set it. Weapons work around it by
+  putting the model's orientation on a *parent* holder node the pose system
+  never touches (see `m4_hud_weapon.tscn` and `shotgun_hud_weapon.tscn`).
+  Fixing it properly changes the resting pose of every weapon at once.
+- **Suppression only degrades aim.** `receive_signal_damage` raises spread via
+  `get_aim_spread_multiplier`, and that is the whole intended effect for now.
+  `Soldier.enter_suppressed()` and `SoldierState.SUPPRESSED` exist but nothing
+  calls them, deliberately — `Enemy._on_signal_damaged` is an unused hook.
+- **Dead code, known and left alone:** `set_nco` (the NCO slot isn't the plan),
+  `resume_objective`, `remove_ai_from_squad`, `get_living_soldiers` (duplicate
+  of `get_living_members`), `force_check_detection`, and
+  `compute_leap_velocity` (superseded by `compute_leap_velocity_fixed_speed`).
+- **`_check_chokepoint` is a stub** that always returns false, so grenades never
+  consider chokepoints.
 
 ---
 
@@ -199,7 +311,12 @@ always — you're looking right at them.
   In practice, run `bash tools/check.sh --changed` instead — it wraps this over
   every changed script, filters both kinds of noise, and also validates scene
   and resource integrity.
+- `bash tools/test.sh` runs the headless logic suites (`tools/test_*.gd`). The
+  ledger has one; four ledger bugs shipped in two days before it existed.
+- `bash tools/smoke.sh` boots the game headless and fails on runtime errors.
+  check.sh proves scripts *parse*; this proves they *run*.
 - `.tscn`/`.tres` edits: verify `ext_resource` ids are all declared and used, and
-  that `load_steps` equals ext + sub + 1.
+  that `load_steps` equals ext + sub + 1. Godot does not reliably pick up an
+  externally edited `.tres` until the project is closed and reopened.
 - When fixing a bug, ask whether the same class of thing exists elsewhere. Most
   of the bugs in this project came in families.
