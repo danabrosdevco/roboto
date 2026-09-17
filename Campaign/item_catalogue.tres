@@ -1,21 +1,19 @@
-[gd_resource type="Resource" script_class="ItemCatalogue" load_steps=15 format=3 uid="uid://citemcatalogue1"]
+[gd_resource type="Resource" script_class="ItemCatalogue" load_steps=13 format=3 uid="uid://citemcatalogue1"]
 
 [ext_resource type="Script" path="res://Campaign/item_catalogue.gd" id="1_cat"]
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="2_itemdef"]
 [ext_resource type="Resource" uid="uid://citemm4rifle1" path="res://Campaign/items/item_m4.tres" id="3_m4"]
 [ext_resource type="Resource" uid="uid://citempistol01" path="res://Campaign/items/item_pistol.tres" id="4_pistol"]
 [ext_resource type="Resource" uid="uid://citemshotgun01" path="res://Campaign/items/item_shotgun.tres" id="5_shotgun"]
-[ext_resource type="Resource" uid="uid://citemgrenade01" path="res://Campaign/items/item_grenade.tres" id="8_grenade"]
 [ext_resource type="Resource" uid="uid://citemrepairkit" path="res://Campaign/items/item_repair_kit.tres" id="9_repair"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="6_chassisdef"]
 [ext_resource type="Resource" uid="uid://vw46h82csp7a" path="res://Campaign/chassis/chassis_soldier.tres" id="7_soldier"]
 [ext_resource type="Resource" uid="uid://citemcarbine01" path="res://Campaign/items/item_carbine.tres" id="10_carbine"]
 [ext_resource type="Resource" uid="uid://citemdmr00001" path="res://Campaign/items/item_dmr.tres" id="11_dmr"]
 [ext_resource type="Resource" uid="uid://citemfragplyr1" path="res://Campaign/items/item_frag.tres" id="12_frag"]
-[ext_resource type="Resource" uid="uid://citemfieldrep1" path="res://Campaign/items/item_field_repair.tres" id="13_repair"]
 [ext_resource type="Resource" uid="uid://citemoptics001" path="res://Campaign/items/item_optics.tres" id="14_optics"]
 
 [resource]
 script = ExtResource("1_cat")
-items = Array[ExtResource("2_itemdef")]([ExtResource("3_m4"), ExtResource("4_pistol"), ExtResource("5_shotgun"), ExtResource("8_grenade"), ExtResource("9_repair"), ExtResource("10_carbine"), ExtResource("11_dmr"), ExtResource("12_frag"), ExtResource("13_repair"), ExtResource("14_optics")])
+items = Array[ExtResource("2_itemdef")]([ExtResource("3_m4"), ExtResource("4_pistol"), ExtResource("5_shotgun"), ExtResource("9_repair"), ExtResource("10_carbine"), ExtResource("11_dmr"), ExtResource("12_frag"), ExtResource("14_optics")])
 chassis = Array[ExtResource("6_chassisdef")]([ExtResource("7_soldier")])
