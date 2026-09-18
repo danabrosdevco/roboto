@@ -5,5 +5,5 @@
 [resource]
 script = ExtResource("1_pmnwa")
 ammo_type = &"grenade"
-amount = 50
-capacity = 50
+amount = 3
+capacity = 3

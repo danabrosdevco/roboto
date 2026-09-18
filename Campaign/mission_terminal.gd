@@ -34,8 +34,8 @@ class_name MissionTerminal
 @export var select_sound: AudioStreamPlayer3D
 
 @export_group("Screen")
-## The briefing sentence under the status line. Turn off if your terminal panel
-## is too small to carry four lines.
+## The "EXPECTED ENEMY SQUADS" line under the status line. Turn off if your
+## terminal panel is too small to carry it.
 @export var show_briefing: bool = true
 ## Wrap column for the screen text, in Label3D width units (multiplied by
 ## pixel_size to get metres). Only applied if the label is still at Godot's
@@ -119,16 +119,6 @@ func _clear_suffix(m: MissionDefinition) -> String:
 	return " [CLEARED x%d]" % n
 
 
-# Long form for the terminal screen itself.
-func _status_of(m: MissionDefinition) -> String:
-	var n := _clears(m)
-	if n <= 0:
-		return "NEW"
-	if n == 1:
-		return "CLEARED"
-	return "CLEARED x%d" % n
-
-
 # The display name of the first unmet prerequisite. Telling the player the
 # mission is locked without saying what opens it just reads as a dead end.
 func _lock_reason(m: MissionDefinition) -> String:
@@ -139,27 +129,6 @@ func _lock_reason(m: MissionDefinition) -> String:
 			var prereq: MissionDefinition = Campaign.get_mission(req)
 			return prereq.display_name if prereq != null else String(req)
 	return ""
-
-
-# Missions held behind an unmet prerequisite. Shown as a count so the player
-# can see there IS more campaign past whatever is currently on offer.
-func _locked_count() -> int:
-	if Campaign == null or Campaign.state == null:
-		return 0
-	# This reads `requires` directly rather than going through
-	# available_missions(), so it would happily report "4 LOCKED" next to a
-	# list that is currently offering all four.
-	if Campaign.unlock_all_missions:
-		return 0
-	var n := 0
-	for m in Campaign.missions:
-		if m == null:
-			continue
-		for req in m.requires:
-			if not Campaign.state.completed_missions.has(req):
-				n += 1
-				break
-	return n
 
 
 # Where the cycle should land on the first press after coming home. Pointing it
@@ -237,46 +206,53 @@ func _refresh_pinned(selected: MissionDefinition) -> void:
 			mission.display_name.to_upper(), tail], unavailable_color)
 		return
 	var is_selected: bool = selected != null and selected.id == mission.id
-	_set_label("%s\n%s\n%s - %d RES%s" % [
+	_set_label("%s\n%s\n%s" % [
 		mission.display_name.to_upper(),
 		"► SELECTED" if is_selected else "press F to queue",
-		_status_of(mission),
-		mission.reward_resources,
-		_brief_line(mission),
+		_detail_lines(mission),
 	], selected_color if is_selected else idle_color)
 
 
 func _refresh_cycling(selected: MissionDefinition) -> void:
 	var available: Array[MissionDefinition] = Campaign.available_missions()
-	var locked := _locked_count()
-	var locked_tail := (" - %d LOCKED" % locked) if locked > 0 else ""
 
 	if selected == null:
 		if available.is_empty():
 			_set_label("OPERATIONS\nNO OPERATIONS AVAILABLE", unavailable_color)
 			return
-		_set_label("OPERATIONS\n%d AVAILABLE%s\npress F to cycle" % [
-			available.size(), locked_tail], idle_color)
+		_set_label("OPERATIONS\n%d AVAILABLE\npress F to cycle" % available.size(), idle_color)
 		return
 
 	# find() is by reference, and available_missions() hands back the same
 	# MissionDefinition instances every call, so this is stable.
 	var pos := available.find(selected)
 	var counter := ("%d/%d" % [pos + 1, available.size()]) if pos >= 0 else "-"
-	_set_label("OPERATIONS  %s\n► %s\n%s - %d RES%s%s" % [
+	_set_label("OPERATIONS: %s\n%s\n%s" % [
 		counter,
 		selected.display_name.to_upper(),
-		_status_of(selected),
-		selected.reward_resources,
-		locked_tail,
-		_brief_line(selected),
+		_detail_lines(selected),
 	], selected_color)
 
 
-func _brief_line(m: MissionDefinition) -> String:
-	if not show_briefing or m == null or m.briefing.strip_edges() == "":
-		return ""
-	return "\n" + m.briefing
+# One fact per line, in the order you weigh them:
+#
+#   SOLO                        (only when the op limits your squad)
+#   EXPECTED ENEMY SQUADS: 1
+#   REWARDS: 45 RESOURCES
+#
+# A mission with no force of its own falls back on the level's garrison, which
+# it can't count, so the squad line says nothing rather than "0". The briefing
+# prose lives on the deploy screen; a paragraph here read as a wall of text.
+func _detail_lines(m: MissionDefinition) -> String:
+	var lines: PackedStringArray = []
+	var squad := m.squad_label()
+	if squad != "":
+		lines.append(squad)
+	var squads := m.enemy_squad_count()
+	if show_briefing and squads > 0:
+		lines.append("EXPECTED ENEMY SQUADS: %d" % squads)
+	lines.append("REWARDS: %d RESOURCES" % m.reward_resources)
+	return "\n".join(lines)
 
 
 # The screen used to hold two short lines and now holds up to four, one of

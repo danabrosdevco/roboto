@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://cheli0000001"]
+[gd_scene load_steps=17 format=3 uid="uid://cheli0000001"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/enemy_helicopter.gd" id="1_nty0a"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
@@ -7,7 +7,6 @@
 [ext_resource type="Resource" uid="uid://cavuq6s132jy8" path="res://Character/characters/ai/equipment/ai_equipment_grenade.tres" id="3_3i6e3"]
 [ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ic4jn"]
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t0xuv"]
-[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_t1gg6"]
 [ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
 [ext_resource type="PackedScene" uid="uid://v11ihb3rf0ny" path="res://3d_assets/chatgptg/drone_variant_02_interceptor.glb" id="8_sbw46"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
@@ -22,12 +21,11 @@ radius = 1.15
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 25.0
 
-[node name="Enemy_Helicopter" type="CharacterBody3D" node_paths=PackedStringArray("rotor_loop", "nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+[node name="Enemy_Helicopter" type="CharacterBody3D" node_paths=PackedStringArray("rotor_loop", "nav_agent", "weapon", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
 script = ExtResource("1_nty0a")
 rotor_loop = NodePath("RotorLoop")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("aiweapon")
-label = NodePath("DebugLabel")
 bark = NodePath("Bark")
 detection = NodePath("Detection")
 particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
@@ -52,14 +50,6 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 
 [node name="drone_variant_02_interceptor" parent="." instance=ExtResource("8_sbw46")]
 transform = Transform3D(-8.74228e-08, -2, 8.74228e-08, 0, -8.74228e-08, -2, 2, -8.74228e-08, 3.82137e-15, 0, 0.376845, 0)
-
-[node name="DebugLabel" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.22588, 0)
-visible = false
-billboard = 1
-text = "Text"
-font_size = 48
-script = ExtResource("7_t1gg6")
 
 [node name="Detection" type="Area3D" parent="."]
 

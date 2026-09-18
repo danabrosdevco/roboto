@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3 uid="uid://4qxk4fpf5rou"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://rnm8xsxcwbsx" path="res://maps/arena_level.tscn" id="3_arena"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="5_hopper"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="6_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="8_rifle"]
+
+[sub_resource type="Resource" id="S_line"]
+script = ExtResource("2_espec")
+callsign = "LINE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("8_rifle"), ExtResource("8_rifle")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_arena_hostiles"
+spawn_tag = &"obj_arena_hostiles"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+
+[sub_resource type="Resource" id="S_pack"]
+script = ExtResource("2_espec")
+callsign = "PACK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("6_chaser"), ExtResource("6_chaser")])
+count = 0
+posture = 2
+route_tag = &""
+post_tag = &"obj_arena_hostiles"
+spawn_tag = &"obj_arena_hostiles"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+
+[sub_resource type="Resource" id="S_ward"]
+script = ExtResource("2_espec")
+callsign = "WARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("8_rifle")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_arena_hostiles"
+spawn_tag = &"obj_arena_hostiles"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"arena_5_proving"
+display_name = "Arena: Proving Ground"
+briefing = "Everything the valley will throw at you, in one bowl: a dug-in line with rifles, a second post behind it, and a pack of runners and hoppers. Three of your squad go in. Clear it and the whole squad goes to the valley."
+level_scene = ExtResource("3_arena")
+map_position = Vector2(-80, -40)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_line"), SubResource("S_pack"), SubResource("S_ward")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"arena_clear", &"arena_extract"])
+reward_resources = 110
+unlocks = Array[StringName]([])
+squad_size = 3
+repeatable = false
+requires = Array[StringName]([&"arena_4_pack_hunt"])

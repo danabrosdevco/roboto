@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://ib6m72545n75"]
+[gd_scene load_steps=21 format=3 uid="uid://ib6m72545n75"]
 
 [ext_resource type="PackedScene" uid="uid://b4n2skq3ovhu6" path="res://Character/hud/scan_effect.tscn" id="1_80vuv"]
 [ext_resource type="Script" path="res://Character/hud/hud.gd" id="1_nopku"]
@@ -18,6 +18,7 @@
 [ext_resource type="AudioStream" uid="uid://hmnqik84omfy" path="res://sounds/sfx/psx ui sfx/squad_manager/DropI.ogg" id="15_4nw2x"]
 [ext_resource type="AudioStream" uid="uid://bh7ralx5afru3" path="res://sounds/sfx/psx ui sfx/squad_manager/PageA.ogg" id="16_cnjdy"]
 [ext_resource type="AudioStream" uid="uid://1dtcl250xe7c" path="res://sounds/sfx/psx ui sfx/squad_manager/PageB.ogg" id="17_34lhm"]
+[ext_resource type="Script" path="res://Character/hud/weapon_bar.gd" id="20_wepbar"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bvcf1"]
 shader = ExtResource("8_21qk7")
@@ -26,6 +27,7 @@ shader_parameter/signal_height = 360.0
 shader_parameter/cell_average = true
 shader_parameter/chroma_divisor = 2.0
 shader_parameter/exposure = 1.05
+shader_parameter/gamma = 1.0
 shader_parameter/contrast = 1.12
 shader_parameter/black_lift = 0.05
 shader_parameter/luma_levels = 10.0
@@ -34,7 +36,7 @@ shader_parameter/saturation = 0.9
 shader_parameter/shadow_tint = Color(0.05, 0.11, 0.12, 1)
 shader_parameter/mid_tint = Color(0.3, 0.46, 0.38, 1)
 shader_parameter/high_tint = Color(0.87, 0.94, 0.72, 1)
-shader_parameter/palette_strength = 1.0
+shader_parameter/palette_strength = 0.6
 shader_parameter/edge_color = Color(0.02, 0.06, 0.06, 1)
 shader_parameter/edge_strength = 0.75
 shader_parameter/edge_threshold = 0.06
@@ -118,14 +120,13 @@ offset_top = 388.0
 offset_right = 24.0
 offset_bottom = 428.0
 script = ExtResource("9_n3ibl")
-order_ux_sound = NodePath("OrderUXSoundCycle")
-order_ux_sound_confirm = NodePath("OrderUXSoundConfirm")
 font_size_header = 16
 font_size_body = 14
 font_size_nearby = 14
 font_size_toast = 14
 font_size_marker = 14
-panel_margin = Vector2(0, -150)
+order_ux_sound = NodePath("OrderUXSoundCycle")
+order_ux_sound_confirm = NodePath("OrderUXSoundConfirm")
 
 [node name="OrderUXSoundCycle" type="AudioStreamPlayer" parent="SquadHud"]
 stream = ExtResource("7_raese")
@@ -180,3 +181,14 @@ stream = ExtResource("17_34lhm")
 [node name="CommsLog" type="Control" parent="."]
 anchors_preset = 0
 script = ExtResource("13_comms")
+
+[node name="WeaponBar" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("20_wepbar")
+idle_alpha = 0.25

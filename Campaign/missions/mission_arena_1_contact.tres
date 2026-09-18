@@ -4,17 +4,18 @@
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
 [ext_resource type="PackedScene" uid="uid://rnm8xsxcwbsx" path="res://maps/arena_level.tscn" id="3_arena"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
-[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="5_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
 
-[sub_resource type="Resource" id="S_melee"]
+[sub_resource type="Resource" id="S_shot"]
 script = ExtResource("2_espec")
-callsign = "SCRAP"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_chaser"), ExtResource("5_chaser"), ExtResource("5_chaser"), ExtResource("5_chaser")])
+callsign = "PICKET"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot")])
 count = 0
-posture = 2
+posture = 1
 route_tag = &""
 post_tag = &"obj_arena_hostiles"
 spawn_tag = &"obj_arena_hostiles"
+spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
 reinforcement_tag = &""
@@ -23,13 +24,14 @@ reinforcement_tag = &""
 script = ExtResource("1_missdef")
 id = &"arena_1_contact"
 display_name = "Arena: First Contact"
-briefing = "Four chassis loose on the arena floor. No ranged weapons on them. Clear it and walk out."
+briefing = "Two chassis dug in on the arena floor, both carrying pumps. They hit hard up close and not much further. Clear it and walk out."
 level_scene = ExtResource("3_arena")
 map_position = Vector2(-260, -40)
-enemy_force = Array[ExtResource("2_espec")]([SubResource("S_melee")])
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_shot")])
 replace_level_enemies = true
 active_objectives = Array[StringName]([&"arena_clear", &"arena_extract"])
 reward_resources = 45
 unlocks = Array[StringName]([])
+squad_size = 0
 repeatable = false
 requires = Array[StringName]([])

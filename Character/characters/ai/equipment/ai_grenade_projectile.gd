@@ -25,10 +25,17 @@ var _thrower: Node = null  # set by AIGrenade so we don't damage ourselves
 
 
 func _ready() -> void:
+	# explode_on_bounce was DEAD. body_entered is connected in the scene, but a
+	# RigidBody3D only emits it with contact_monitor on and a nonzero contact
+	# budget, and this scene set neither — so the signal never fired and no
+	# grenade in the game could detonate on impact. Harmless to enable for the
+	# fused kind: with explode_on_bounce off it only counts bounces.
+	contact_monitor = true
+	max_contacts_reported = maxi(max_contacts_reported, 4)
 	# Spawn landing indicator
 	if indicator_scene != null:
 		_indicator_instance = indicator_scene.instantiate()
-		get_tree().current_scene.add_child(_indicator_instance)
+		_level().add_child(_indicator_instance)
 	explosion_sfx.finished.connect(queue_free)
 func setup(thrower: Node) -> void:
 	_thrower = thrower
@@ -58,6 +65,11 @@ func _on_body_entered(body: Node) -> void:
 		return
 	if body == _thrower or body == self:
 		return
+	# Never on another grenade. Two charges touching in the air is not an
+	# impact with anything, and a stick of impact-fused bombs released on one
+	# trajectory used to set each other off the instant they left the drone.
+	if body.get_script() == get_script():
+		return
 
 	_bounce_count += 1
 
@@ -84,8 +96,21 @@ func _explode() -> void:
 			blast.source_actor = _thrower
 			if _thrower.has_method("get_faction"):
 				blast.source_faction = _thrower.get_faction()
-		get_tree().current_scene.add_child(blast)
+		_level().add_child(blast)
 		blast.global_position = global_position
 		explosion_sfx.play()
 		mesh.queue_free()
 		freeze = true
+
+
+# Whatever this grenade was dropped INTO — the level — rather than
+# get_tree().current_scene, which in this project is Master. Parenting the blast
+# and the landing marker to Master put them above World, so they outlived the
+# level they belonged to, and made both depend on there being a current scene
+# at all.
+func _level() -> Node:
+	if get_parent() != null:
+		return get_parent()
+	if get_tree().current_scene != null:
+		return get_tree().current_scene
+	return get_tree().root

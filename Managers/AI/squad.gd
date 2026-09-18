@@ -108,6 +108,12 @@ var _follow_reissue_t: float = 0.0
 # ASSAULT keeps advancing under fire; the leash tracks the objective rather than
 # a fixed post, so "engage along the way" falls out of it.
 @export var assault_combat_leash: float = 14.0
+# RUSHERS GET A LONG LEASH. A chaser or hopper with a live target may run this
+# far from its post or formation slot to reach it — the 9m defend leash
+# recalled a garrisoned hopper every time it went for someone 10m away. Once
+# the target is dead or lost, the ordinary leash walks it back. Sicced, then
+# called off.
+@export var aggressive_chase_radius: float = 45.0
 
 # Seconds between forced recalls of the same soldier. order_move_to(pos, true)
 # CLEARS combat_target and releases cover — that's what makes "fall back" work
@@ -450,6 +456,11 @@ func _enforce_leash(radius: float, defensive: bool) -> void:
 		var gap: float = soldier.global_position.distance_to(anchor)
 		if gap <= radius:
 			continue   # in bounds — leave them to fight
+		# A rusher on a live target runs on the long leash instead.
+		if soldier.aggressive and gap <= aggressive_chase_radius:
+			var t = soldier.combat_target
+			if t != null and is_instance_valid(t) and t.alive:
+				continue
 
 		# Just outside and shooting something they can hit: let them finish.
 		# Yanking a soldier out of a winning exchange is worse than a loose
@@ -1095,8 +1106,13 @@ func _on_combat_triggered(triggered_ai: AI) -> void:
 
 	squad_combat_target = triggered_ai.combat_target
 
-	# Alert all members not yet in combat.
+	# Alert all members not yet in combat — and WAKE all of them. trigger_combat
+	# alone hands a passive robot a target it cannot act on: distance culling
+	# returns from its physics tick before movement ever runs. So a squad shot at
+	# long range used to answer with one member while the rest stood beside it.
 	for ai in get_orderable_members():
+		if ai.has_method("wake"):
+			ai.wake(ai.wake_on_damage_seconds)
 		if ai.ai_state != Enemy.AIState.COMBAT:
 			ai.trigger_combat(triggered_ai.combat_target)
 

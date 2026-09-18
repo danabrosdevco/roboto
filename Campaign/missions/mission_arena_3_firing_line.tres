@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=8 format=3 uid="uid://bkty15qc166vb"]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=10 format=3 uid="uid://bkty15qc166vb"]
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
@@ -6,16 +6,32 @@
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
 [ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
 [ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="7_chaser"]
 
 [sub_resource type="Resource" id="S_shot"]
 script = ExtResource("2_espec")
 callsign = "PICKET"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle")])
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
 posture = 1
 route_tag = &""
 post_tag = &"obj_arena_hostiles"
 spawn_tag = &"obj_arena_hostiles"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+
+[sub_resource type="Resource" id="S_melee"]
+script = ExtResource("2_espec")
+callsign = "SCRAP"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_chaser")])
+count = 0
+posture = 2
+route_tag = &""
+post_tag = &"obj_arena_hostiles"
+spawn_tag = &"obj_arena_hostiles"
+spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
 reinforcement_tag = &""
@@ -24,13 +40,14 @@ reinforcement_tag = &""
 script = ExtResource("1_missdef")
 id = &"arena_3_firing_line"
 display_name = "Arena: Firing Line"
-briefing = "Four dug in on the floor, all of them armed — and one of them is carrying a rifle out of an old American armoury. It will reach you long before the pumps do."
+briefing = "Four dug in on the floor — two pumps and two rifles out of an old American armoury, and the rifles will reach you long before the pumps do. One runner loose in front of them. Two of your squad go in with you: send them forward, or keep them on you."
 level_scene = ExtResource("3_arena")
 map_position = Vector2(-170, -40)
-enemy_force = Array[ExtResource("2_espec")]([SubResource("S_shot")])
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_shot"), SubResource("S_melee")])
 replace_level_enemies = true
 active_objectives = Array[StringName]([&"arena_clear", &"arena_extract"])
 reward_resources = 80
 unlocks = Array[StringName]([])
+squad_size = 2
 repeatable = false
 requires = Array[StringName]([&"arena_2_mixed"])

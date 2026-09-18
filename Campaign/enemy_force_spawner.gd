@@ -196,7 +196,15 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 
 	var squad: Squad = null
 	if squad_scene != null:
-		squad = squad_scene.instantiate() as Squad
+		# Freed if it is not a Squad. world.tscn had a robot scene in this slot:
+		# the cast failed, the fallback below took over, and every hostile squad
+		# of every mission left a whole orphaned robot behind — never in the
+		# tree, never freed, and the thing the engine tripped over on quit.
+		var built := squad_scene.instantiate()
+		squad = built as Squad
+		if squad == null:
+			push_warning("EnemyForceSpawner: squad_scene '%s' is not a Squad; using a plain one." % squad_scene.resource_path)
+			built.free()
 	if squad == null:
 		squad = Squad.new()
 	squad.name = "Hostile_%s" % spec.callsign

@@ -28,6 +28,8 @@ class_name SquadManagerUI
 @export var font_size_header: int = 26
 @export var font_size_body: int = 17
 @export var slot_size: Vector2 = Vector2(58, 58)
+## Width of the ACTIVE / BENCHED toggle at the end of each roster row.
+@export var bench_toggle_width: float = 92.0
 
 # ── AUDIO ─────────────────────────────────────
 # Assign AudioStreamPlayers in the inspector; every one is optional and the UI
@@ -95,6 +97,10 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	z_index = 100
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# The INTERFACE slider in the options, not EFFECTS.
+	for p in [sfx_hover, sfx_pick_up, sfx_drop, sfx_denied, sfx_select, sfx_open, sfx_close]:
+		if p != null:
+			p.bus = AudioBuses.INTERFACE
 
 	# Build FIRST, unconditionally. The previous version bailed out here when it
 	# couldn't find the campaign, which is guaranteed at this point: in
@@ -147,6 +153,13 @@ func _input(event: InputEvent) -> void:
 	if not InputMap.has_action(open_action):
 		return
 	if event.is_action_pressed(open_action):
+		# Not behind another screen. This node runs while paused, so TAB used to
+		# open it UNDER the pause menu (and now the options screen, where TAB is
+		# the first key anyone tries) — invisible there, holding its own pause,
+		# and waiting to appear the moment the menu closed. Master's hold covers
+		# the splash, main menu, pause and options; "briefing" the briefing and map.
+		if not visible and (PauseHold.is_held(&"master") or PauseHold.is_held(&"briefing")):
+			return
 		get_viewport().set_input_as_handled()
 		toggle()
 
@@ -165,7 +178,7 @@ func open() -> void:
 	visible = true
 	# A management screen with the mouse captured is unusable.
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	get_tree().paused = true
+	PauseHold.take(&"squad_manager")
 	_apply_cursors()
 	_hide_other_hud(true)
 	_play(sfx_open)
@@ -189,7 +202,7 @@ func _roster_has(record: SoldierRecord) -> bool:
 func close() -> void:
 	visible = false
 	release_pending = true
-	get_tree().paused = false
+	PauseHold.release(&"squad_manager")
 	_hide_other_hud(false)
 	_clear_cursors()
 	_play(sfx_close)
@@ -315,7 +328,9 @@ func _build_ui() -> void:
 	# the old ratio there was not room for them beside the name.
 	_armoury_list = _make_column("ARMOURY", 2)
 
-	var hint := _label("drag from ARMOURY onto a slot  ·  right-click a slot to remove  ·  click the name to rename the squad", COL_DIM, font_size_body)
+	var hint := _label("drag from ARMOURY onto a slot  ·  right-click a slot to remove  ·  ACTIVE / BENCHED picks who deploys  ·  click the name to rename the squad", COL_DIM, font_size_body)
+	# Wraps rather than running off the right edge now that it is longer.
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(hint)
 
 
@@ -438,9 +453,10 @@ func _do_rebuild() -> void:
 	var shown: Array[ItemDefinition] = []
 	if catalogue != null:
 		for entry in catalogue.items:
-			if entry != null:
+			# Retired items (in_shop off) only show while you still own one,
+			# so it can be fitted or sold — never offered to buy.
+			if entry != null and (entry.in_shop or state.armoury.spare(entry.id) > 0):
 				shown.append(entry)
-		shown.sort_custom(func(a, b): return a.display_name < b.display_name)
 	else:
 		# Catalogue unresolved. Fall back to stock so the panel still shows what
 		# you own, but say why the buyable-but-unowned rows are missing rather
@@ -452,6 +468,7 @@ func _do_rebuild() -> void:
 			var owned := _item(item_id)
 			if owned != null:
 				shown.append(owned)
+	shown.sort_custom(_shop_order)
 	if shown.is_empty():
 		_armoury_list.add_child(_label("nothing in stores", COL_DIM))
 	for def in shown:
@@ -460,9 +477,38 @@ func _do_rebuild() -> void:
 	_rebuild_detail()
 
 
+# Weapons, then equipment, then modules — the order you kit a robot in — and
+# cheapest first within each, so what you can afford sits at the top. Name
+# breaks ties so the list never reshuffles between rebuilds.
+static func _shop_order(a: ItemDefinition, b: ItemDefinition) -> bool:
+	if a.kind != b.kind:
+		return a.kind < b.kind
+	if a.cost != b.cost:
+		return a.cost < b.cost
+	return a.display_name < b.display_name
+
+
 func _make_roster_row(record: SoldierRecord) -> Control:
+	# The row, then the bench toggle beside it. The player always deploys, so
+	# their row gets an empty gap the same width — the columns stay lined up.
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 6)
 	var row := Button.new()
 	row.custom_minimum_size = Vector2(0, 34)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Clip rather than grow: a long name must not shove the toggle out of the
+	# column, where it could no longer be clicked.
+	row.clip_text = true
+	line.add_child(row)
+	if state.is_player_record(record):
+		var gap := Control.new()
+		gap.custom_minimum_size = Vector2(bench_toggle_width, 0)
+		line.add_child(gap)
+	else:
+		line.add_child(_make_bench_toggle(record))
+		# Benched rows recede, so the squad that is going reads at a glance.
+		if record.benched:
+			row.modulate.a = 0.5
 	# flat = true still draws hover, pressed and focus styleboxes — those are
 	# the horizontal lines lighting up the whole row. Blanking all five leaves
 	# only the font colour to carry selection, which is what you want.
@@ -488,7 +534,39 @@ func _make_roster_row(record: SoldierRecord) -> Control:
 		_play(sfx_select)
 		_rebuild())
 	row.mouse_entered.connect(func(): _play_hover())
-	return row
+	return line
+
+
+# ACTIVE / BENCHED, right on the row. Choosing who deploys is one pass down the
+# list — making it a trip into each soldier's page first was two clicks a robot
+# for the most common thing you do here before an op. Shows NOT FIT for a wreck
+# that isn't benched: it won't deploy either way, and "ACTIVE" would be a lie.
+func _make_bench_toggle(record: SoldierRecord) -> Button:
+	var b := Button.new()
+	_strip_button_styles(b)
+	b.custom_minimum_size = Vector2(bench_toggle_width, 34)
+	b.add_theme_font_size_override("font_size", font_size_body)
+	var col := COL_DIM
+	if record.benched:
+		b.text = "BENCHED"
+		col = COL_WARN
+	elif record.will_deploy():
+		b.text = "ACTIVE"
+	else:
+		b.text = "NOT FIT"
+		col = COL_CRIT
+	b.add_theme_color_override("font_color", col)
+	b.add_theme_color_override("font_hover_color", COL_BRIGHT)
+	b.add_theme_color_override("font_pressed_color", COL_BRIGHT)
+	b.tooltip_text = "Click to bring %s back into the squad." % record.display_name \
+		if record.benched else "Click to leave %s at base when the squad deploys." % record.display_name
+	# roster_changed rebuilds this whole list (and saves, at base), so there is
+	# nothing else to update here.
+	b.pressed.connect(func():
+		_play(sfx_select)
+		state.set_benched(record, not record.benched))
+	b.mouse_entered.connect(func(): _play_hover())
+	return b
 
 
 # Godot draws a stylebox for each state whether or not the button is flat.
@@ -657,6 +735,11 @@ func _rebuild_detail() -> void:
 		_selected.confirmed_kills,
 		_selected.missions_survived,
 		"" if _selected.missions_survived == 1 else "S"], COL_DIM))
+	# What the bench toggle on the roster row actually means — said once, here,
+	# where there is room for it. Mid-mission it only changes the next deploy.
+	if _selected.benched and not state.is_player_record(_selected):
+		var when := "  ·  FROM NEXT DEPLOY" if campaign != null and bool(campaign.get("in_mission")) else ""
+		_detail.add_child(_label("BENCHED  ·  STAYS AT BASE, EARNS NO XP%s" % when, COL_WARN))
 
 	# Repair is just resources. A wrecked 0/60 frame costs more per point than a
 	# dented one, but it's the same transaction — nobody is permanently lost

@@ -49,12 +49,27 @@ func _ready() -> void:
 	z_index = 45
 	_build_ui()
 	BarkDirector.add_listener(_on_reported)
+	Settings.add_listener(_on_setting_changed)
 
 
 func _exit_tree() -> void:
 	# The director holds callables across level loads; a freed log left
 	# registered would be called on a dead object every time the squad spoke.
 	BarkDirector.remove_listener(_on_reported)
+	Settings.remove_listener(_on_setting_changed)
+
+
+# Switching subtitles off mid-mission clears what is already up, rather than
+# leaving five lines to fade out on their own.
+func _on_setting_changed(key: String) -> void:
+	if key != "audio.subtitles" or Settings.get_bool("audio.subtitles"):
+		return
+	for entry in _entries:
+		var label: Label = entry["label"]
+		if is_instance_valid(label):
+			_list.remove_child(label)
+			label.queue_free()
+	_entries.clear()
 
 
 func _build_ui() -> void:
@@ -104,6 +119,9 @@ func _process(delta: float) -> void:
 # election, it is not in the log either, which is what keeps text and audio
 # telling the same story.
 func _on_reported(who: String, line: int, context: String) -> void:
+	# SUBTITLES in the options. This panel is the game's subtitles.
+	if not Settings.get_bool("audio.subtitles"):
+		return
 	var text := _compose(who, line, context)
 	if text == "":
 		return

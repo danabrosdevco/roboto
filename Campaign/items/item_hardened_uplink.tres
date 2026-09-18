@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3 uid="uid://citemuplink01"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"hardened_uplink"
+display_name = "Hardened Uplink"
+short_name = "Uplink"
+description = "Shielded command link. Suppression and EMP do half as much, so this one keeps taking orders when the others stop. Robots only — you have no link to jam."
+kind = 2
+cost = 55
+usable_by_player = false
+usable_by_ai = true
+signal_resistance_bonus = 1.0
+required_rank = 0

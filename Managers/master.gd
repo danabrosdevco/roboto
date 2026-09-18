@@ -31,6 +31,9 @@ const FILTER_SHADER := preload("res://Character/hud/signal_filter.gdshader")
 const SFX_HOVER := preload("res://sounds/sfx/psx ui sfx/squad_manager/HoverG.ogg")
 const SFX_CONFIRM := preload("res://sounds/sfx/psx ui sfx/ConfirmH.wav")
 const SFX_DRONE := preload("res://sounds/sfx/darkdrone/Dark Drone_SI 03.wav")
+# By path: a new class_name can be missing from an open editor's class list,
+# and this script failing to compile takes the whole front end with it.
+const _TutorialLibrary := preload("res://Character/hud/tutorial_library.gd")
 
 @export_group("Skip")
 # The switch asked for: straight to play, no splash and no menu.
@@ -86,6 +89,14 @@ const SFX_DRONE := preload("res://sounds/sfx/darkdrone/Dark Drone_SI 03.wav")
 @export var menu_title_text: String = "DATA CENTER WARS"
 @export var pause_enabled: bool = true
 
+@export_group("Mission briefing")
+## Show the baked map and objective list when deploying. Off falls straight
+## into the level the way it always did.
+@export var show_mission_briefing: bool = true
+## Key that opens the map mid-mission. Defaults to M, registered at runtime if
+## the project does not already define an action by this name.
+@export var map_action: StringName = &"map"
+
 # ── runtime ───────────────────────────────────
 var _layer: CanvasLayer
 var _backdrop: ColorRect
@@ -96,13 +107,20 @@ var _filter_material: ShaderMaterial
 var _booting: bool = false
 var _skip_requested: bool = false
 var _paused_by_us: bool = false
-# "", "main" or "pause". ESC closes the pause screen but must NOT close the main
-# menu — there is nothing behind it, and treating them the same meant ESC
-# started the game.
+# "", "main", "pause", "options", "tutorials" or "dead". ESC closes the pause
+# screen but must NOT close the main menu — there is nothing behind it, and
+# treating them the same meant ESC started the game. On "dead" it does nothing.
 var _menu: String = ""
+var _options: OptionsMenu
+var _tutorials: _TutorialLibrary
+# The menu the options screen goes back to: "main" or "pause".
+var _options_from: String = ""
 var _sfx_hover: AudioStreamPlayer
 var _sfx_confirm: AudioStreamPlayer
 var _drone: AudioStreamPlayer
+var _briefing: MissionBriefing
+var _briefing_layer: CanvasLayer
+var _campaign_hooked: bool = false
 # Whether the drone is *meant* to be running. Checked by the finished handler,
 # so a stop() never gets undone by a loop that was already in flight.
 var _drone_wanted: bool = false
@@ -111,11 +129,37 @@ var _drone_wanted: bool = false
 var _suppress_hover: bool = true
 
 
+# The earliest point in the boot: _enter_tree runs parent-first, so this lands
+# before anything under World has entered the tree. The saved window mode is
+# up before the splash, and AudioBuses' routing is already listening when the
+# level's sounds arrive.
+func _enter_tree() -> void:
+	Settings.apply_display()
+	Settings.add_listener(_on_setting_changed)
+
+
+func _exit_tree() -> void:
+	Settings.remove_listener(_on_setting_changed)
+
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_APPLICATION_FOCUS_OUT:
+			Settings.set_window_focused(false)
+		NOTIFICATION_APPLICATION_FOCUS_IN:
+			Settings.set_window_focused(true)
+		NOTIFICATION_WM_CLOSE_REQUEST:
+			# Closing the window with the options screen still open.
+			Settings.save_if_dirty()
+
+
 func _ready() -> void:
 	# Survives get_tree().paused, which the splash and the pause menu both set.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_pin_children_pausable()
 	_build_audio()
+	_build_briefing()
+	_hook_world()
 	_build_overlay()
 	if skip_splash:
 		_teardown_overlay()
@@ -144,23 +188,35 @@ func _pin_children_pausable() -> void:
 		child.process_mode = Node.PROCESS_MODE_PAUSABLE
 
 
+# Only here to connect the briefing to Campaign, which loads after Master.
+# Stops doing anything at all the moment it succeeds.
+func _process(_delta: float) -> void:
+	if not _campaign_hooked:
+		_hook_campaign()
+
+
 # Parented to MASTER, not to the overlay. Pressing START tears the overlay down
 # in the same frame the confirm plays, and a freed AudioStreamPlayer stops dead
 # — the click would be cut off exactly when it should be landing.
 func _build_audio() -> void:
+	# Buses set BEFORE add_child, so AudioBuses' default routing sees them
+	# already claimed and leaves them alone.
 	_sfx_hover = AudioStreamPlayer.new()
 	_sfx_hover.stream = SFX_HOVER
 	_sfx_hover.max_polyphony = 2
+	_sfx_hover.bus = AudioBuses.INTERFACE
 	_sfx_hover.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_sfx_hover)
 
 	_sfx_confirm = AudioStreamPlayer.new()
 	_sfx_confirm.stream = SFX_CONFIRM
+	_sfx_confirm.bus = AudioBuses.INTERFACE
 	_sfx_confirm.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_sfx_confirm)
 
 	_drone = AudioStreamPlayer.new()
 	_drone.stream = SFX_DRONE
+	_drone.bus = AudioBuses.MUSIC
 	_drone.volume_db = title_music_volume_db
 	# ALWAYS for the same reason as the click sounds: the splash and the menu
 	# both run with the tree paused.
@@ -173,6 +229,71 @@ func _build_audio() -> void:
 		if _drone_wanted:
 			_drone.play())
 	add_child(_drone)
+
+
+# ─────────────────────────────────────────────
+# MISSION BRIEFING
+#
+# On its OWN CanvasLayer rather than inside the splash overlay, because
+# _teardown_overlay() frees that one the moment play starts — and the briefing
+# has to survive to be shown on every later deploy, not just the first.
+# ─────────────────────────────────────────────
+func _build_briefing() -> void:
+	_briefing_layer = CanvasLayer.new()
+	_briefing_layer.layer = 90
+	_briefing_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_briefing_layer)
+
+	_briefing = MissionBriefing.new()
+	# The blip is the menu hover click. It is short, dry and already in the
+	# project's voice, which is all a radar return needs to be.
+	_briefing.blip_sound = _sfx_hover
+	_briefing_layer.add_child(_briefing)
+	_briefing.finished.connect(_on_briefing_finished)
+
+	# Registered at runtime rather than authored into project.godot: an
+	# InputMap entry there is a wall of serialised InputEventKey and getting one
+	# character wrong breaks input silently. A real action of the same name in
+	# project.godot still wins, so this is only a default. Settings registers
+	# &"map" too, because it must exist before key bindings load — whichever
+	# runs first makes it, and this then finds it already there.
+	if not InputMap.has_action(map_action):
+		InputMap.add_action(map_action)
+		var ev := InputEventKey.new()
+		ev.physical_keycode = KEY_M
+		InputMap.action_add_event(map_action, ev)
+
+
+# Campaign lives under World, which is loaded after Master, so there is nothing
+# to connect to in _ready. Polled until it answers rather than relying on a
+# one-shot deferred call that would silently miss if World took a frame longer.
+func _hook_campaign() -> void:
+	if _campaign_hooked:
+		return
+	var c := get_tree().get_first_node_in_group("campaign")
+	if c == null or not c.has_signal("deployed"):
+		return
+	if not c.is_connected("deployed", _on_deployed):
+		c.connect("deployed", _on_deployed)
+	_campaign_hooked = true
+
+
+func _on_deployed(mission) -> void:
+	if not show_mission_briefing or _briefing == null:
+		return
+	# ITS OWN named hold. This fires from inside world.gd's level load, which
+	# holds "level_load" and releases it once the level is in — and that
+	# release used to unpause the game while the briefing was still waiting
+	# for a keypress. With separate holds the tree stays paused until BOTH are
+	# gone, so the level can finish loading behind a briefing that is still up.
+	PauseHold.take(&"briefing")
+	_show_mouse()
+	_briefing.brief(mission)
+
+
+func _on_briefing_finished() -> void:
+	PauseHold.release(&"briefing")
+	_capture_mouse()
 
 
 func _build_overlay() -> void:
@@ -227,9 +348,12 @@ func _make_filter_material() -> ShaderMaterial:
 	mat.set_shader_parameter("edge_threshold", 0.06)
 	mat.set_shader_parameter("dither_strength", splash_dither)
 	mat.set_shader_parameter("signal_fps", 8.0)
-	mat.set_shader_parameter("grain", splash_grain)
-	mat.set_shader_parameter("dropout", splash_dropout)
-	mat.set_shader_parameter("block_glitch", splash_block_glitch)
+	# Scaled by the SCREEN NOISE option, same as the HUD's filter — see
+	# _apply_screen_noise.
+	var noise := Settings.get_float("display.screen_noise")
+	mat.set_shader_parameter("grain", splash_grain * noise)
+	mat.set_shader_parameter("dropout", splash_dropout * noise)
+	mat.set_shader_parameter("block_glitch", splash_block_glitch * noise)
 	mat.set_shader_parameter("block_size", 8.0)
 	mat.set_shader_parameter("damage", 0.0)
 	mat.set_shader_parameter("boot", 0.0)
@@ -255,6 +379,8 @@ func _teardown_overlay() -> void:
 
 
 func _clear_content() -> void:
+	# The options screen lives in here too; whatever clears it, it is gone.
+	_options = null
 	if not is_instance_valid(_content):
 		return
 	for child in _content.get_children():
@@ -384,6 +510,7 @@ func _show_main_menu() -> void:
 	_show_mouse()
 	_build_menu(menu_title_text, [
 		{"text": "START", "action": _start_play},
+		{"text": "OPTIONS", "action": _open_options},
 		{"text": "QUIT", "action": _quit},
 	], HUDPalette.BRIGHT, title_suffix)
 
@@ -399,8 +526,124 @@ func _show_pause_menu() -> void:
 	_show_mouse()
 	_build_menu("PAUSED", [
 		{"text": "CONTINUE", "action": _resume_from_pause},
+		{"text": "TUTORIALS", "action": _open_tutorials},
+		{"text": "OPTIONS", "action": _open_options},
 		{"text": "QUIT", "action": _quit},
 	], HUDPalette.WARN)
+
+
+# ─────────────────────────────────────────────
+# DEATH
+# YOU DIED, then CONTINUE or EXIT. The same overlay, filter and pause hold as
+# the pause menu, so the world freezes behind it exactly as it does there. ESC
+# does nothing on this screen: there is no game to go back to until you pick.
+# ─────────────────────────────────────────────
+func _hook_world() -> void:
+	var world := _world()
+	if world != null and not world.player_killed.is_connected(_show_death_menu):
+		world.player_killed.connect(_show_death_menu)
+
+
+func _world() -> World:
+	for child in get_children():
+		if child is World:
+			return child
+	return null
+
+
+func _show_death_menu() -> void:
+	if _layer == null:
+		_build_overlay()
+	_menu = "dead"
+	_backdrop.color = Color(0.06, 0.01, 0.01, 0.86)
+	_hold_pause()
+	_show_mouse()
+	_build_menu("YOU DIED", [
+		{"text": "CONTINUE", "action": _continue_after_death},
+		{"text": "EXIT", "action": _quit},
+	], HUDPalette.CRIT)
+
+
+# Back to base: a failed extraction if you were on an operation, a fresh start
+# at the spawn point if you were already home.
+func _continue_after_death() -> void:
+	_teardown_overlay()
+	var world := _world()
+	if world != null:
+		world.return_home_after_death()
+
+
+# ─────────────────────────────────────────────
+# TUTORIALS
+# Every homebase lesson on one screen. Pause menu only: it is where the base's
+# one remaining sign sends a returning player, and it has to work mid-mission,
+# when the signs themselves are not loaded.
+# ─────────────────────────────────────────────
+func _open_tutorials() -> void:
+	if not is_instance_valid(_content):
+		return
+	_menu = "tutorials"
+	_clear_content()
+	_tutorials = _TutorialLibrary.new()
+	_tutorials.hover_sound = _sfx_hover
+	_tutorials.confirm_sound = _sfx_confirm
+	# Deferred for the same reason as the options screen: BACK closes it from
+	# inside its own button's pressed signal.
+	_tutorials.closed.connect(_close_tutorials, CONNECT_DEFERRED)
+	_content.add_child(_tutorials)
+
+
+func _close_tutorials() -> void:
+	if _menu != "tutorials":
+		return
+	_tutorials = null
+	_show_pause_menu()
+
+
+# ─────────────────────────────────────────────
+# OPTIONS
+# Built into the same overlay as the menu that opened it, so it is under the
+# same filter and the same pause hold. The pause hold is already taken by the
+# menu; the options screen changes nothing about it. Returning rebuilds that
+# menu from scratch, exactly as ESC-ing into it would.
+# ─────────────────────────────────────────────
+func _open_options() -> void:
+	if not is_instance_valid(_content):
+		return
+	_options_from = _menu
+	_menu = "options"
+	_clear_content()
+	_options = OptionsMenu.new()
+	_options.hover_sound = _sfx_hover
+	_options.confirm_sound = _sfx_confirm
+	# DEFERRED. BACK closes this screen from inside its own button's pressed
+	# signal, and rebuilding the menu frees that button mid-emit.
+	_options.closed.connect(_close_options, CONNECT_DEFERRED)
+	_content.add_child(_options)
+
+
+func _close_options() -> void:
+	if _menu != "options":
+		return
+	_options = null
+	Settings.save_if_dirty()
+	if _options_from == "pause":
+		_show_pause_menu()
+	else:
+		_show_main_menu()
+
+
+# SCREEN NOISE reaches this overlay's filter live, so turning it down in the
+# options screen visibly calms the screen you are looking at.
+func _on_setting_changed(key: String) -> void:
+	if key != "display.screen_noise" and key != "*":
+		return
+	if _filter_material == null:
+		return
+	var noise := Settings.get_float("display.screen_noise")
+	_filter_material.set_shader_parameter("grain", splash_grain * noise)
+	_filter_material.set_shader_parameter("dropout", splash_dropout * noise)
+	_filter_material.set_shader_parameter("block_glitch", splash_block_glitch * noise)
 
 
 func _build_menu(title: String, entries: Array, title_col: Color,
@@ -511,6 +754,12 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		_suppress_hover = false
 
+	# Rebinding a key: whatever is pressed next belongs to the options screen,
+	# even if it is the fullscreen key or ESC. OptionsMenu sees input first
+	# (deeper in the tree) and takes it; this is the brace to that belt.
+	if is_instance_valid(_options) and _options.is_capturing():
+		return
+
 	if event.is_action_pressed("fullscreen") and not event.is_echo():
 		get_viewport().set_input_as_handled()
 		_toggle_fullscreen()
@@ -526,11 +775,43 @@ func _input(event: InputEvent) -> void:
 			_skip_requested = true
 		return
 
+	# THE MAP. Checked before the pause handling below, and only while actually
+	# on an operation — there is nothing to show at base, and the briefing
+	# screen must not be openable on top of itself.
+	if event.is_action_pressed(map_action) and not _booting and _menu == "":
+		if _briefing != null and _briefing.is_open():
+			get_viewport().set_input_as_handled()
+			return
+		var c := get_tree().get_first_node_in_group("campaign")
+		if c != null and bool(c.get("in_mission")) and _briefing != null:
+			get_viewport().set_input_as_handled()
+			# Same hold as the briefing: they are one screen in two modes, and
+			# _on_briefing_finished releases it whichever one closed.
+			PauseHold.take(&"briefing")
+			_show_mouse()
+			_briefing.open_map(c.get("current_mission"))
+			return
+
+	var esc: bool = event is InputEventKey and event.pressed and not event.echo \
+		and event.keycode == KEY_ESCAPE
+
+	# ESC in the options screen is BACK, to whichever menu opened it. Ahead of
+	# the pause_enabled check: the main menu's options screen still needs a way
+	# out with pausing switched off.
+	if esc and _menu == "options":
+		get_viewport().set_input_as_handled()
+		if is_instance_valid(_options):
+			_options.back()
+		return
+	if esc and _menu == "tutorials":
+		get_viewport().set_input_as_handled()
+		if is_instance_valid(_tutorials):
+			_tutorials.back()
+		return
+
 	if not pause_enabled:
 		return
-	if not (event is InputEventKey and event.pressed and not event.echo):
-		return
-	if event.keycode != KEY_ESCAPE:
+	if not esc:
 		return
 
 	# The main menu deliberately ignores ESC: there is no game behind it yet, so
@@ -557,32 +838,31 @@ func _input(event: InputEvent) -> void:
 # during level loads and the squad manager pauses while it is open; clearing
 # those from here would resume the game underneath them.
 # ─────────────────────────────────────────────
+# The splash, main menu and pause menu share one hold, because only one of
+# them is ever up at a time. The briefing and map take their OWN (see
+# _on_deployed) — sharing this one meant closing either would release both.
 func _hold_pause() -> void:
 	if _paused_by_us:
 		return
 	_paused_by_us = true
-	get_tree().paused = true
+	PauseHold.take(&"master")
 
 
 func _release_pause() -> void:
 	if not _paused_by_us:
 		return
 	_paused_by_us = false
-	get_tree().paused = false
+	PauseHold.release(&"master")
 
 
-# Borderless fullscreen, explicitly. WINDOW_MODE_FULLSCREEN is already the
-# borderless one in Godot 4 (EXCLUSIVE_FULLSCREEN is the other), but the
-# BORDERLESS flag is set as well so returning to windowed cannot leave the
-# window without its frame.
+# Windowed <-> borderless, through Settings so the choice is remembered and the
+# options screen shows it. Settings does the actual window work (flag and mode
+# together, so returning to windowed cannot leave a window with no frame).
+# Saved immediately: nobody expects a hotkey to need an options screen to stick.
 func _toggle_fullscreen() -> void:
-	var is_full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-	if is_full:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
-	else:
-		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	var windowed := Settings.get_string("display.window_mode") == "windowed"
+	Settings.set_value("display.window_mode", "borderless" if windowed else "windowed")
+	Settings.save()
 
 
 func _show_mouse() -> void:

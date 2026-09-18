@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3 uid="uid://citemnanite01"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"nanite_reboot"
+display_name = "Nanite Reboot"
+short_name = "Nanites"
+description = "Once per deployment, a downed frame rebuilds itself and stands back up after ten seconds. A repair tool still gets there first if you are close. Robots only."
+kind = 2
+cost = 80
+usable_by_player = false
+usable_by_ai = true
+self_revive_seconds = 10.0
+required_rank = 0

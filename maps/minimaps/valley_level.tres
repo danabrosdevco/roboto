@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_yslhb"]
+
+[resource]
+script = ExtResource("1_yslhb")
+level_scene_path = "res://maps/valley_level.tscn"
+image_path = "res://maps/minimaps/valley_level.png"
+world_min = Vector2(-99.8722, -105.686)
+world_max = Vector2(379.5, 373.686)
+objective_ids = Array[StringName]([&"valley_extract", &"valley_garrison_cap_1", &"valley_garrison_cap_2", &"valley_garrison_cap_3"])
+objective_names = Array[String](["Objective", "West Garrison", "South Garrison", "North Garrison"])
+objective_positions = Array[Vector3]([Vector3(300.683, -10.805, 136.7), Vector3(152.177, -9.98749, 164.894), Vector3(193.479, -9.98749, 186.666), Vector3(241.128, -9.98749, 102.015)])
+objective_kinds = Array[StringName]([&"extract", &"capture", &"capture", &"capture"])
+insertion_positions = Array[Vector3]([Vector3(-54.7272, -9.59233, 143.246)])

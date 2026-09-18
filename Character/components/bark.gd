@@ -39,6 +39,11 @@ var squad: Node = null
 var _bags: Dictionary = {}
 
 
+func _ready() -> void:
+	# Radio chatter has its own VOICE slider in the options.
+	audio_player.bus = AudioBuses.VOICE
+
+
 # Ask to speak. The director may well say no — that is the entire point, and
 # callers should not care.
 # `context` is whatever the line needs to read as a sentence — the name of the

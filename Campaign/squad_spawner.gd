@@ -79,14 +79,18 @@ func deploy_into(level: Node, records: Array[SoldierRecord]) -> Squad:
 		push_warning("SquadSpawner: no SquadSpawnPoint in '%s' — your squad will not deploy here." % level.name)
 		return null
 
+	# will_deploy, not is_deployable: benched robots stay home even if a caller
+	# hands over the whole roster rather than CampaignState.deployable().
 	var to_deploy: Array[SoldierRecord] = []
 	for r in records:
-		if r != null and r.is_deployable():
+		if r != null and r.will_deploy():
 			to_deploy.append(r)
 		if point.max_slots > 0 and to_deploy.size() >= point.max_slots:
 			break
 	if to_deploy.is_empty():
-		push_warning("SquadSpawner: no deployable soldiers in the roster (%d total). Check Campaign starting_* exports, and delete user://campaign.json if you changed them." % records.size())
+		# Everyone benched is a legitimate choice (a solo run), so it is only a
+		# warning, and the message says the bench is one reason it can happen.
+		push_warning("SquadSpawner: nobody to deploy (%d offered). Either every robot is benched or wrecked in the squad manager, or the roster is empty — check Campaign starting_* exports, and delete user://campaign.json if you changed them." % records.size())
 		return null
 
 	var members: Array[Soldier] = []
@@ -186,6 +190,11 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 	soldier.move_speed *= record.effective_speed
 	soldier.sensor_range = record.effective_sensor_range
 	soldier.sensor_bonus = 0.0   # already folded into the record's value
+	# ADDED to the chassis' own value rather than assigned, the same rule as
+	# accuracy: a frame may already carry resistance of its own, and a module
+	# that replaced it could make a sturdy chassis worse.
+	soldier.signal_resistance += record.effective_signal_resistance_bonus
+	soldier.self_revive_seconds = record.effective_self_revive
 	if record.effective_signal_bonus != 0.0:
 		soldier.signal_integrity = clampf(
 			soldier.signal_integrity + record.effective_signal_bonus, 0.0, 1.0)
@@ -266,10 +275,10 @@ func _gather_points(node: Node, out: Array[SquadSpawnPoint]) -> void:
 func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 	var to_deploy: Array[SoldierRecord] = []
 	for r in records:
-		if r != null and r.is_deployable():
+		if r != null and r.will_deploy():
 			to_deploy.append(r)
 	if to_deploy.is_empty():
-		push_warning("SquadSpawner: no deployable soldiers to form up on the player.")
+		push_warning("SquadSpawner: nobody to form up on the player — every robot is benched or wrecked.")
 		return null
 
 	var basis := player.global_transform.basis
@@ -339,10 +348,23 @@ func sync_record(record: SoldierRecord) -> Soldier:
 			existing.revive()
 		return existing
 
-	# Not in the world. If they're deployable now, they should be.
-	if record.is_deployable():
+	# Not in the world. If they're deployable now, they should be — unless they
+	# are benched: repairing a benched wreck mid-mission must not drop it into a
+	# fight the player chose to leave it out of.
+	if record.will_deploy():
 		return spawn_one(record)
 	return null
+
+
+## Every record that had a body this mission: deployed at the start, or
+## repaired back in part-way. Only these earned anything from it. Read before
+## clear(), which forgets them.
+func deployed_records() -> Array[SoldierRecord]:
+	var out: Array[SoldierRecord] = []
+	for record in _spawned.values():
+		if record != null and not out.has(record):
+			out.append(record)
+	return out
 
 
 func find_body(record: SoldierRecord) -> Soldier:

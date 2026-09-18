@@ -77,8 +77,14 @@ var _recharge_t: float = 0.0
 
 
 func _on_initialize() -> void:
-	slot = Slot.EQUIPMENT
+	# The slot is NOT forced here any more. The tool lives on key 3 now — the
+	# player scene places it in the MELEE slot as a permanent item — and forcing
+	# EQUIPMENT at this point overrode that and left key 3 empty. The default
+	# is still EQUIPMENT, and apply_record() sets it explicitly for anything it
+	# builds from a record.
 	consumes_charge = true
+	# Used pressed up against the robot you are fixing, so it never swings aside.
+	lowers_when_obstructed = false
 	# Don't yank it out of their hands the instant the reservoir empties —
 	# they're probably mid-repair and it refills.
 	reverts_when_empty = false

@@ -43,9 +43,19 @@ enum Status { ACTIVE, WOUNDED, DESTROYED }
 @export var effective_speed: float = 1.0
 @export var effective_signal_bonus: float = 0.0
 @export var effective_sensor_range: float = 45.0
+# Summed from modules. Added to the soldier's own signal_resistance at spawn.
+@export var effective_signal_resistance_bonus: float = 0.0
+# Longest self-revive among fitted modules; 0 = none. Longest rather than
+# summed: two nanite modules are one soldier getting up, not getting up twice.
+@export var effective_self_revive: float = 0.0
 @export var damage: int = 0
 @export var signal_integrity: float = 1.0
 @export var status: Status = Status.ACTIVE
+# BENCHED — still on the roster, still repaired, restocked and kitted like
+# anyone else, but left at base when the squad deploys. Toggled in the squad
+# manager. A choice the player made, so it is saved, and it is never cleared
+# for them.
+@export var benched: bool = false
 
 # ── KIT ───────────────────────────────────────
 # Same resource type the AI already uses, so the armoury UI is dragging these
@@ -163,6 +173,8 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 	var speed := chassis.base_speed
 	var signal_gain := 0.0
 	var sensors := chassis.base_sensor_range
+	var resistance := 0.0
+	var self_revive := 0.0
 	for module_id in module_ids:
 		if module_id == &"":
 			continue
@@ -174,12 +186,16 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 		speed *= module.speed_multiplier
 		signal_gain += module.signal_bonus
 		sensors += module.sensor_bonus
+		resistance += module.signal_resistance_bonus
+		self_revive = maxf(self_revive, module.self_revive_seconds)
 
 	max_health = maxi(1, health)
 	effective_accuracy = accuracy
 	effective_speed = speed
 	effective_signal_bonus = signal_gain
 	effective_sensor_range = maxf(4.0, sensors)
+	effective_signal_resistance_bonus = resistance
+	effective_self_revive = self_revive
 	# Pulling a health module must not leave someone on negative health.
 	damage = clampi(damage, 0, max_health)
 
@@ -207,8 +223,14 @@ func current_health() -> int:
 	return maxi(0, max_health - damage)
 
 
+## Fit to fight — COULD deploy. Repairs and revives go by this.
 func is_deployable() -> bool:
 	return status != Status.DESTROYED and current_health() > 0
+
+
+## WILL deploy: fit to fight and not benched. This is what picks the squad.
+func will_deploy() -> bool:
+	return is_deployable() and not benched
 
 
 func health_fraction() -> float:
@@ -294,6 +316,7 @@ func to_dict() -> Dictionary:
 		"damage": damage,
 		"signal_integrity": signal_integrity,
 		"status": int(status),
+		"benched": benched,
 		"missions_survived": missions_survived,
 		"confirmed_kills": confirmed_kills,
 		"equipment": kit,
@@ -315,6 +338,8 @@ static func from_dict(data: Dictionary) -> SoldierRecord:
 	r.damage = int(data.get("damage", 0))
 	r.signal_integrity = float(data.get("signal_integrity", 1.0))
 	r.status = int(data.get("status", 0)) as Status
+	# Saves from before the bench existed have no key: everyone deploys.
+	r.benched = bool(data.get("benched", false))
 	r.missions_survived = int(data.get("missions_survived", 0))
 	r.confirmed_kills = int(data.get("confirmed_kills", 0))
 

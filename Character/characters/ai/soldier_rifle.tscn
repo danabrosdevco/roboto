@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://crifle0000001"]
+[gd_scene load_steps=23 format=3 uid="uid://crifle0000001"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_nty0a"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
@@ -7,7 +7,6 @@
 [ext_resource type="Resource" uid="uid://cavuq6s132jy8" path="res://Character/characters/ai/equipment/ai_equipment_grenade.tres" id="3_3i6e3"]
 [ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ic4jn"]
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t0xuv"]
-[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_t1gg6"]
 [ext_resource type="Shader" path="res://Character/faction_metal.gdshader" id="8_27chb"]
 [ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
 [ext_resource type="PackedScene" uid="uid://caiwepm4rifle1" path="res://Character/weapon/ai-wep_m4.tscn" id="8_utu75"]
@@ -52,11 +51,10 @@ rings = 6
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6qgus"]
 albedo_texture = ExtResource("11_n4p1p")
 
-[node name="Soldier_Rifle" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+[node name="Soldier_Rifle" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
 script = ExtResource("1_nty0a")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("aiweapon")
-label = NodePath("DebugLabel")
 bark = NodePath("Bark")
 detection = NodePath("Detection")
 particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
@@ -83,14 +81,6 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 material_override = SubResource("ShaderMaterial_bejot")
 mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
-
-[node name="DebugLabel" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.22588, 0)
-visible = false
-billboard = 1
-text = "Text"
-font_size = 48
-script = ExtResource("7_t1gg6")
 
 [node name="aiweapon" parent="." instance=ExtResource("8_utu75")]
 transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.553111, 0.221401, 0)

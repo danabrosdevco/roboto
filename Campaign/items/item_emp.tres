@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" path="res://Character/weapon/emp/emp_grenade_hud_weapon.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://Character/weapon/emp/ai_emp_grenade.tscn" id="3_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"emp"
+display_name = "EMP Grenade"
+short_name = "EMP"
+description = "Kills the signal, not the frame. Anything caught at the centre freezes solid for a few seconds, and everything nearby stops taking orders. Detonates where it lands. Your own squad takes a quarter of it — throw it past them."
+kind = 1
+cost = 45
+player_scene = ExtResource("2_player")
+ai_scene = ExtResource("3_ai")
+usable_by_player = true
+usable_by_ai = true
+quantity = 2
+required_rank = 0

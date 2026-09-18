@@ -50,10 +50,20 @@ var coyote_time = 0.12
 const SPEED := 6.0
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENS := 0.002
-@export var use_gravity = true
+# TYPED on purpose. As a bare `= true` the export took any Variant, and when the
+# editor saved world.tscn while this script failed to compile it wrote
+# `use_gravity = null` onto the player — which `if use_gravity == true` read as
+# "no gravity". A typed bool rejects the null and keeps its default.
+@export var use_gravity: bool = true
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-@export var health = 50
+@export var health = 100
 @export var max_health = 100
+## Every hit on the player is scaled by this, whatever it came from. A third:
+## the body is 100 HP so the numbers read plainly, but it soaks like 300.
+@export var damage_taken_scale: float = 1.0 / 3.0
+# The fraction a scaled hit leaves over, carried into the next one so chip
+# damage still adds up instead of rounding to nothing.
+var _damage_carry: float = 0.0
 var shards = 0
 var bits = 0
 const LEAN_ANGLE := 0.35
@@ -92,6 +102,8 @@ const SPECTATOR_FAST_MULT: float = 3.0
 
 # WEAPONS #
 var is_ads := false
+# Toggle-aim state. Only meaningful with AIM MODE set to TOGGLE.
+var _aim_latched := false
 var target_lean := 0.0
 var move_factor := 0.0
 
@@ -149,12 +161,58 @@ func _bind_campaign() -> void:
 		return
 	var apply_loadout := func():
 		loadout.apply_record(campaign.state.player_record, campaign.get("catalogue"))
+		_apply_module_stats(campaign.state.player_record, campaign.get("catalogue"))
 	apply_loadout.call()
 	# Re-applied on roster changes, so a rifle fitted at base is in your hands
 	# before you reach the train rather than next mission.
 	campaign.state.roster_changed.connect(apply_loadout)
 	if campaign.has_signal("returned_to_base"):
 		campaign.returned_to_base.connect(func(): loadout.refill())
+
+
+# ─────────────────────────────────────────────
+# MODULES ON YOURSELF
+#
+# Squadmates get module stats through SoldierRecord.recompute_stats at spawn.
+# The player never did: _bind_campaign rebuilt the loadout and nothing else, so
+# every module ever fitted to yourself — the armour plating included — changed
+# nothing about your body. It fit, it cost resources, and it did not work.
+#
+# Layered ON TOP of the authored values rather than replacing them. The player
+# is authored at 100 HP (taking a third of every hit, so it soaks like 300);
+# deriving it from a chassis the way squadmates are would have dropped you to
+# 60 the first time you opened the armoury.
+# ─────────────────────────────────────────────
+var _base_max_health: int = -1
+var _speed_mult: float = 1.0
+
+
+func _apply_module_stats(record, catalogue) -> void:
+	if record == null or catalogue == null:
+		return
+	if _base_max_health < 0:
+		_base_max_health = int(max_health)
+	var hp_bonus := 0
+	var spd := 1.0
+	for id in record.module_ids:
+		if id == &"":
+			continue
+		var m = catalogue.item(id)
+		# fits_player() so a squad-only module sitting in your slot somehow
+		# (an old save, a hand-edit) still does nothing rather than half-works.
+		if m == null or not m.fits_player():
+			continue
+		hp_bonus += m.health_bonus
+		spd *= m.speed_multiplier
+
+	var old_max := int(max_health)
+	max_health = maxi(1, _base_max_health + hp_bonus)
+	# Keep the damage you have TAKEN constant, the same rule squadmates follow:
+	# fitting +25 armour at 300/500 leaves you at 325/525, not 300/525. Never
+	# lets unfitting a module kill you, though.
+	health = clampi(int(health) + (int(max_health) - old_max), 1, int(max_health))
+	_speed_mult = spd
+	update_status()
 
 
 func _on_readout_changed(_readout: PlayerEquipment.Readout) -> void:
@@ -179,9 +237,13 @@ func current_weapon() -> PlayerWeapon:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		look_direction.y -= event.relative.x * MOUSE_SENS
+		# MOUSE_SENS is the base; the options screen scales it, and scales it
+		# again while aiming (Settings.look_scale).
+		var sens := MOUSE_SENS * Settings.look_scale(is_ads)
+		var pitch: float = event.relative.y * (-1.0 if Settings.get_bool("controls.invert_y") else 1.0)
+		look_direction.y -= event.relative.x * sens
 		look_direction.x = clamp(
-			look_direction.x - event.relative.y * MOUSE_SENS,
+			look_direction.x - pitch * sens,
 			-1.5,
 			1.5
 		)
@@ -347,7 +409,15 @@ func handle_input(_delta: float) -> void:
 	if Input.is_action_just_pressed("jump") and can_coyote_jump():
 		velocity.y = JUMP_VELOCITY
 
-	is_ads = Input.is_action_pressed("aim")
+	# AIM MODE in the options: TOGGLE latches on a click, for anyone who finds
+	# holding a mouse button for a whole firefight a strain.
+	if Settings.get_bool("controls.toggle_aim"):
+		if Input.is_action_just_pressed("aim"):
+			_aim_latched = not _aim_latched
+		is_ads = _aim_latched
+	else:
+		_aim_latched = false
+		is_ads = Input.is_action_pressed("aim")
 
 	if Input.is_action_pressed("lean_left"):
 		target_lean = LEAN_ANGLE
@@ -368,7 +438,9 @@ func handle_movement(_delta: float) -> void:
 	# Channelling the repair tool slows you rather than rooting you. Being able
 	# to shuffle into cover mid-repair is most of what makes the channel feel
 	# like a decision instead of a punishment.
-	var speed := SPEED * _move_scale()
+	# _speed_mult is the Overclock Servos module (and anything else with a
+	# speed_multiplier). SPEED is a const, so this is the one place it can bend.
+	var speed := SPEED * _move_scale() * _speed_mult
 
 	if dir.length_squared() > 0.001:
 		dir = dir.normalized() * speed
@@ -395,7 +467,8 @@ func _move_scale() -> float:
 # recoil applies twice.
 func handle_camera(delta: float) -> void:
 	# FOV adjustment
-	var target_fov = ADS_FOV if Input.is_action_pressed("zoom") else HIP_FOV
+	# HIP_FOV is only the default now — FIELD OF VIEW in the options sets it.
+	var target_fov = ADS_FOV if Input.is_action_pressed("zoom") else Settings.get_float("display.fov")
 	var weapon := current_weapon()
 	if weapon != null:
 		if is_ads and Input.is_action_pressed("zoom"):
@@ -514,7 +587,10 @@ func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
 func apply_damage(damage, _source):
 	if alive == false:
 		return
-	health -= damage
+	_damage_carry += float(damage) * damage_taken_scale
+	var whole := int(floor(_damage_carry))
+	_damage_carry -= whole
+	health -= whole
 	# Taking fire breaks a repair channel. Progress survives for resume_grace
 	# seconds, so ducking into cover and resuming doesn't start from zero.
 	if loadout != null:
@@ -566,6 +642,7 @@ func reset():
 	set_process_unhandled_input(true)
 	alive = true
 	health = max_health
+	_damage_carry = 0.0
 	# Was: hud_weapon.magazine_capacity = hud_weapon.magazine_size, which
 	# refilled one gun and nothing else. refill() resets every reserve from the
 	# starting AmmoStock list.

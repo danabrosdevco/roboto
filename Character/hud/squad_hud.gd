@@ -56,9 +56,12 @@ class_name SquadHUD
 ## or down as a unit. It was 20, which put the roster directly on top of the
 ## player's own health readout; that bottom strip needs roughly 200px.
 @export var panel_margin: Vector2 = Vector2(24, 210)
-## X is the panel width. Y is only a MINIMUM height — the panel sizes itself to
-## its contents and grows upward past this when there is more to show.
+## X is the panel width. Y is no longer used for height at all — the panel sizes
+## itself to its contents. See min_panel_height.
 @export var panel_size: Vector2 = Vector2(460, 420)
+## Smallest the panel may shrink to. Only guards against the container
+## reporting a zero minimum before its first layout, which blanked the HUD.
+@export var min_panel_height: float = 90.0
 # Wheel position, measured from the TOP-LEFT of the squad panel. Positive x
 # pushes it right of the roster, negative y lifts it above the panel top.
 @export var bar_size: Vector2 = Vector2(70, 12)
@@ -137,6 +140,10 @@ func _ready() -> void:
 	# The HUD's SignalFilter ColorRect is a full-screen sibling; later siblings
 	# draw on top, so sit above it or the filter buries the panel.
 	z_index = 50
+	# Order clicks are interface sounds: the INTERFACE slider, not EFFECTS.
+	for p in [order_ux_sound, order_ux_sound_confirm]:
+		if p != null:
+			p.bus = AudioBuses.INTERFACE
 	_autowire()
 	_build_ui()
 
@@ -193,13 +200,18 @@ func _size_panel_to_content() -> void:
 	if _panel == null:
 		return
 	var needed: float = _panel.get_combined_minimum_size().y
-	# panel_size.y is a FLOOR, never the target. Sizing purely to content made
-	# the whole HUD disappear: get_combined_minimum_size() reports 0 before the
-	# container has ever been laid out, and again whenever the roster is empty,
-	# so the panel collapsed to zero height and took the header with it.
-	var h: float = maxf(panel_size.y, needed)
+	# A SMALL floor, not panel_size.y.
+	#
+	# Sizing purely to content made the whole HUD vanish, because
+	# get_combined_minimum_size() reports 0 before the container has ever been
+	# laid out and again whenever the roster is empty. But flooring at
+	# panel_size.y (420) was the opposite mistake: the panel then ALWAYS
+	# occupied 420px, and since it hangs from its bottom edge, lifting it clear
+	# of the health readout pushed its top up to the top of the screen. It only
+	# needs to be tall enough that it cannot disappear.
+	var h: float = maxf(min_panel_height, needed)
 	# And never taller than the screen it has to fit on.
-	h = minf(h, maxf(panel_size.y, size.y - panel_margin.y * 2.0))
+	h = minf(h, maxf(min_panel_height, size.y - panel_margin.y - 20.0))
 	_panel.offset_top = -(panel_margin.y + h)
 	_panel.offset_bottom = -panel_margin.y
 

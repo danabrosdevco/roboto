@@ -34,6 +34,9 @@ uniform float chroma_divisor : hint_range(1.0, 4.0) = 2.0;  // 2.0 ≈ 4:2:0
 
 // ── TONE ─────────────────────────────────────────────────────
 uniform float exposure      : hint_range(0.2, 2.5) = 1.05;
+// The BRIGHTNESS option (Settings display.brightness). A gamma on luma, so it
+// lifts shadows far more than highlights. 1.0 is the image as authored.
+uniform float gamma         : hint_range(0.5, 2.0) = 1.0;
 uniform float contrast      : hint_range(0.5, 2.0) = 1.12;
 uniform float black_lift    : hint_range(0.0, 0.25) = 0.05;  // stops crushed blacks
 uniform float luma_levels   : hint_range(3.0, 32.0) = 10.0;
@@ -93,7 +96,7 @@ vec3 fetch(vec2 p) {
 // Luma after the tone curve — used by the edge pass so it detects
 // the same steps the visible image has.
 float graded_luma(vec2 p) {
-	float x = luma_of(fetch(p) * exposure);
+	float x = pow(max(luma_of(fetch(p) * exposure), 0.0), 1.0 / gamma);
 	x = (x - 0.5) * contrast + 0.5;
 	return black_lift + x * (1.0 - black_lift);
 }
@@ -144,7 +147,7 @@ void fragment() {
 	vec3 chroma = cbase - vec3(luma_of(cbase));
 
 	// ── tone curve ───────────────────────────────────────────
-	float l = luma_of(base);
+	float l = pow(max(luma_of(base), 0.0), 1.0 / gamma);
 	l = (l - 0.5) * contrast + 0.5;
 	l = black_lift + l * (1.0 - black_lift);
 

@@ -43,6 +43,9 @@ var _list: VBoxContainer
 var _toast: Label
 var _timer: float = 0.0
 var _toast_time: float = 0.0
+# Toasts waiting for the one on screen to finish: YOU WON follows MISSION
+# COMPLETE rather than replacing it before it can be read.
+var _toast_queue: Array = []
 
 
 func _ready() -> void:
@@ -209,6 +212,9 @@ func _process(delta: float) -> void:
 		_toast_time -= delta
 		if _toast_time <= 0.0:
 			_toast.visible = false
+			if not _toast_queue.is_empty():
+				var next: Array = _toast_queue.pop_front()
+				_show_toast(next[0], next[1], next[2])
 
 	# Channel progress and kill counts change between signals, so poll the
 	# numbers rather than rebuilding the whole list every frame.
@@ -320,9 +326,18 @@ func _on_extracted(mission: MissionDefinition, result: Dictionary) -> void:
 	var survivors := int(result.get("survivors", 0))
 	var lost := int(result.get("lost", 0))
 
+	# The operation's name leads, on the headline itself. It used to be the LAST
+	# line, under the money and the promotions, which read as a footnote rather
+	# than as "this is what you just finished".
+	var named := ": %s" % mission.display_name.to_upper() if mission != null else ""
+
 	var lines: PackedStringArray = []
-	if total > 0:
-		lines.append("MISSION COMPLETE")
+	if not bool(result.get("success", true)):
+		# You died out there. Bonus objectives still pay, so say what came home.
+		lines.append("MISSION FAILED%s" % named)
+		lines.append(("+%d BONUS" % bonus) if bonus > 0 else "NO PAYOUT")
+	elif total > 0:
+		lines.append("MISSION COMPLETE%s" % named)
 		# Only break the total down when there is genuinely something to break
 		# down — "+90 (90 MISSION + 0 BONUS)" is noise.
 		if bonus > 0 and mission_reward > 0:
@@ -330,7 +345,7 @@ func _on_extracted(mission: MissionDefinition, result: Dictionary) -> void:
 		else:
 			lines.append("+%d" % total)
 	else:
-		lines.append("EXTRACTED")
+		lines.append("EXTRACTED%s" % named)
 		lines.append("NO PAYOUT")
 
 	if lost > 0:
@@ -347,10 +362,14 @@ func _on_extracted(mission: MissionDefinition, result: Dictionary) -> void:
 			lines.append("%s PROMOTED — %s" % [
 				record.display_name.to_upper(), record.rank_title().to_upper()])
 
-	if mission != null:
-		lines.append(mission.display_name.to_upper())
+	var good: bool = total > 0 and bool(result.get("success", true))
+	_show_toast("\n".join(lines), COL_DONE if good else COL_WARN, reward_toast_seconds)
 
-	_show_toast("\n".join(lines), COL_DONE if total > 0 else COL_WARN, reward_toast_seconds)
+	# The last operation, cleared for the first time. After the payout, not
+	# instead of it.
+	if bool(result.get("won", false)):
+		_toast_queue.append(["YOU WON\nEVERY OPERATION IS NOW OPEN AT THE TERMINAL",
+			COL_DONE, reward_toast_seconds])
 
 
 func _on_all_complete() -> void:

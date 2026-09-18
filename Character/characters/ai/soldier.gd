@@ -242,7 +242,12 @@ func tick_bounding() -> void:
 # block any movement that would leave cover.
 # ─────────────────────────────────────────────
 func perform_action(action: CombatOptions) -> void:
-	if defensive_mode and action == CombatOptions.MOVE:
+	# NOT for rushers. This is what pinned a garrisoned hopper: DEFEND sets
+	# defensive_mode on arrival at the post, and every MOVE — every chase, every
+	# leap — came back as AIM or FIRE. A melee frame aiming at something 10m
+	# away swipes at air forever. Rushers hold a post until something shows up,
+	# then they go; the squad leash lets them off for exactly that.
+	if defensive_mode and action == CombatOptions.MOVE and not aggressive:
 		# Only allow repositioning within the defence perimeter
 		# Explicitly block advance, chase, leap by re-rolling as AIM
 		var roll = randi_range(0, 1)
@@ -255,8 +260,6 @@ func perform_action(action: CombatOptions) -> void:
 
 func trigger_combat(body: AI) -> void:
 	super(body)
-	if soldier_state != SoldierState.NONE:
-		return
 	# A rusher that has seen you closes. Every time.
 	#
 	# This branch used to send EVERY non-defensive soldier to the nearest cover
@@ -264,7 +267,15 @@ func trigger_combat(body: AI) -> void:
 	# walking sideways to a wall instead of at the thing it exists to reach.
 	# Staying in NONE leaves the movement roll free to pick CHASE or LEAP on the
 	# very next tick.
+	#
+	# BEFORE the soldier_state check, and it clears whatever state it finds. A
+	# garrison hopper is already in a cover or hold state when contact arrives,
+	# and the early return below used to leave it there — dug in, with a knife.
 	if aggressive:
+		if soldier_state != SoldierState.NONE:
+			change_soldier_state(SoldierState.NONE)
+		return
+	if soldier_state != SoldierState.NONE:
 		return
 	if defensive_mode:
 		# Already in position — suppress from here rather than seeking new cover
@@ -425,7 +436,6 @@ func die() -> void:
 	release_cover()
 	if squad != null:
 		squad.notify_member_died(self)
-	reset_debug_label()
 	super()
 
 
@@ -441,16 +451,3 @@ func reset() -> void:
 	suppress_timer = 0.0
 	suppressed_timer = 0.0
 	super()
-
-
-# ─────────────────────────────────────────────
-# OVERRIDE: update_debug_label
-# ─────────────────────────────────────────────
-func update_debug_label() -> void:
-	super()
-	if label != null:
-		label.text += "\n%s" % SoldierRole.keys()[squad_role]
-
-func reset_debug_label() -> void:
-	if label != null:
-		label.text = "DEAD"

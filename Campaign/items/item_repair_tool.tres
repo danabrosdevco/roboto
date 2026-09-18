@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3 uid="uid://citemfieldrep1"]
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3 uid="uid://dem27fwsmwrci"]
 
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
 [ext_resource type="PackedScene" uid="uid://dyy7uujbxb11q" path="res://Character/weapon/repair tool_hud_weapon.tscn" id="2_player"]
-[ext_resource type="PackedScene" uid="uid://cairepairkit01" path="res://Character/characters/ai/equipment/ai_repair_kit.tscn" id="3_ai"]
+[ext_resource type="PackedScene" uid="uid://cstlobvhx2x41" path="res://Character/characters/ai/equipment/ai_repair_kit.tscn" id="3_ai"]
 
 [resource]
 script = ExtResource("1_itemdef")
@@ -14,7 +14,21 @@ kind = 1
 cost = 45
 player_scene = ExtResource("2_player")
 ai_scene = ExtResource("3_ai")
-usable_by_player = true
+player_mount_offset = Vector3(0, 0, 0)
+player_mount_rotation_degrees = Vector3(0, 0, 0)
+ammo_type = &""
+weapon_damage = 0
+usable_by_player = false
 usable_by_ai = true
+in_shop = false
 quantity = 3
+health_bonus = 0
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+sensor_bonus = 0.0
+signal_resistance_bonus = 0.0
+self_revive_seconds = 0.0
 required_rank = 0
+chassis_whitelist = Array[StringName]([])

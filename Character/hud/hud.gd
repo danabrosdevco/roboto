@@ -21,6 +21,39 @@ var interact_textures: Dictionary = {
 	Enums.InteractTypes.BITS: preload("res://2d_assets/icon_neural-bit.png")
 }
 
+# ── OPTIONS ───────────────────────────────────
+# BRIGHTNESS and SCREEN NOISE both land on the SignalFilter's material. The
+# authored noise values are captured once, so the option SCALES what the scene
+# says rather than replacing it — retune the material in hud.tscn and the
+# option follows along.
+var _filter_mat: ShaderMaterial
+var _base_noise: Dictionary = {}
+
+
+func _ready() -> void:
+	var filter := get_node_or_null("SignalFilter") as CanvasItem
+	if filter != null and filter.material is ShaderMaterial:
+		_filter_mat = filter.material
+		for p in ["grain", "dropout", "block_glitch"]:
+			var v = _filter_mat.get_shader_parameter(p)
+			_base_noise[p] = float(v) if v != null else 0.0
+	Settings.add_listener(_on_setting_changed)
+	_on_setting_changed("*")
+
+
+func _exit_tree() -> void:
+	Settings.remove_listener(_on_setting_changed)
+
+
+func _on_setting_changed(_key: String) -> void:
+	if _filter_mat == null:
+		return
+	_filter_mat.set_shader_parameter("gamma", Settings.get_float("display.brightness"))
+	var noise := Settings.get_float("display.screen_noise")
+	for p in _base_noise:
+		_filter_mat.set_shader_parameter(p, _base_noise[p] * noise)
+
+
 func activate_scan_effect(time: float):
 	var new_scan_effect_scene = scan_effect_scene.instantiate()
 	add_child(new_scan_effect_scene)

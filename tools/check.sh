@@ -111,10 +111,12 @@ function grab(s, pre, arr,   i, rest, q) {
 		s = substr(rest, q + 1)
 	}
 }
-function report(path,   id, problems, n, expected, missing) {
+function report(path,   id, problems, n, expected, missing, k) {
 	n = 0
 	for (id in used)     if (!(id in declared)) { problems[++n] = "undeclared ExtResource: " id }
 	for (id in sub_used) if (!(id in sub_dec))  { problems[++n] = "undeclared SubResource: " id }
+	for (k = 1; k <= nn; k++)
+		problems[++n] = "saved as null: \"" nulls[k] "\" (written by the editor while the node script failed to compile; delete the line)"
 	if (load_steps != "") {
 		expected = count(declared) + count(sub_dec) + 1
 		if (load_steps + 0 != expected)
@@ -133,7 +135,7 @@ function report(path,   id, problems, n, expected, missing) {
 	}
 }
 function count(arr,   k, c) { c = 0; for (k in arr) c++; return c }
-function reset() { delete declared; delete used; delete sub_dec; delete sub_used; delete paths; load_steps = "" }
+function reset() { delete declared; delete used; delete sub_dec; delete sub_used; delete paths; delete nulls; nn = 0; load_steps = "" }
 BEGIN { bad = 0; files = 0 }
 {
 	path = $0
@@ -157,6 +159,13 @@ BEGIN { bad = 0; files = 0 }
 		grab(line, "ExtResource(\"", used)
 		grab(line, "SubResource(\"", sub_used)
 		grab(line, "path=\"res://", paths)
+		# EXPORTS SAVED AS NULL. When a node'"'"'s script fails to compile inside the
+		# editor (e.g. it names a class_name the editor has not registered yet),
+		# saving the scene writes every export on that node as `prop = null`.
+		# Typed exports reject the null and quietly use their defaults; untyped
+		# ones take it — that is how `use_gravity = null` switched off the
+		# player'"'"'s gravity. Nothing in this project is null on purpose.
+		if (line ~ /^[A-Za-z_][A-Za-z0-9_\/]* = null$/) nulls[++nn] = line
 	}
 	close(path)
 	report(path)

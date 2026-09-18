@@ -78,6 +78,9 @@ var _fire_held: bool = false
 # update/input out of the transition, and never carry held-trigger state from an
 # old instance into the replacement instance.
 var _rebuilding: bool = false
+# True while `current` is the loadout's own automatic pick rather than
+# something the player selected. See _ready and apply_record.
+var _auto_opened: bool = false
 var _block_fire_until_release: bool = false
 
 
@@ -116,6 +119,11 @@ func _ready() -> void:
 			break
 	if current == null and not _all.is_empty():
 		equip_item(_all[0])
+	# Whatever that was, nobody chose it. At this point only the hand-placed
+	# permanent item exists — the record's guns are built later by
+	# apply_record() — so this is almost always the key-3 tool, and it must
+	# not be mistaken for what the player was holding.
+	_auto_opened = true
 
 
 func _collect() -> void:
@@ -180,6 +188,7 @@ func item_for_slot(index: int) -> PlayerEquipment:
 
 
 func equip_slot(index: int) -> void:
+	_auto_opened = false
 	var item := item_for_slot(index)
 	if not _is_live(item):
 		denied.emit("EMPTY SLOT")
@@ -350,7 +359,12 @@ func apply_record(record, catalogue) -> void:
 
 	# Preserve the logical slot, not the old Node. If the PRIMARY is replaced by
 	# another PRIMARY, the player should come out holding the new PRIMARY.
-	var held_slot := _slot_index_for_item(current)
+	#
+	# Unless nobody chose it. On spawn, _ready opens on the only thing that
+	# exists yet — the permanent key-3 tool — and "keep the held slot" then
+	# spawned you holding the repair tool (and before it, the knife) instead
+	# of your gun. An automatic pick is not a choice to preserve.
+	var held_slot := -1 if _auto_opened else _slot_index_for_item(current)
 
 	# Finish the outgoing item's input/equip lifecycle while it is still alive.
 	if _is_live(current):
@@ -425,6 +439,10 @@ func apply_record(record, catalogue) -> void:
 			item.wants_revert.connect(_on_wants_revert.bind(item))
 			item.denied.connect(func(reason: String): denied.emit(reason))
 
+	# Before choosing what to hold: an empty grenade slot cannot be equipped,
+	# and whether it is empty depends on this.
+	_scale_thrown_capacity()
+
 	# Prefer the newly-built item occupying the slot that was held before the
 	# swap. If that slot no longer exists or cannot equip, use the normal fallback.
 	var opener: PlayerEquipment = null
@@ -440,7 +458,23 @@ func apply_record(record, catalogue) -> void:
 	else:
 		_on_charges_changed()
 
+	_auto_opened = false
 	_rebuilding = false
+
+
+# Two frags fitted is twice the frags carried. Thrown items only: guns share a
+# reserve by calibre on purpose, and a second rifle is not a second bandolier.
+func _scale_thrown_capacity() -> void:
+	if ammo == null:
+		return
+	var carriers := {}
+	for item in _all:
+		if _is_live(item) and item is PlayerGrenade:
+			var t: StringName = (item as PlayerGrenade).ammo_type
+			carriers[t] = int(carriers.get(t, 0)) + 1
+	for stock in ammo.starting_ammo:
+		if stock != null and stock.ammo_type != &"":
+			ammo.set_carriers(stock.ammo_type, int(carriers.get(stock.ammo_type, 1)))
 
 
 func _build_item(catalogue, item_id: StringName) -> PlayerEquipment:

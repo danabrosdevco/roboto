@@ -20,6 +20,12 @@ signal ammo_changed(ammo_type: StringName, count: int)
 
 var _counts: Dictionary = {}      # StringName -> int
 var _capacities: Dictionary = {}  # StringName -> int (0 = unlimited)
+# PER CARRIER. A stock's capacity is what ONE fitted item carries; the loadout
+# says how many items draw on each type (set_carriers), and the real capacity
+# is the product. Two frag slots used to share one three-grenade pouch, so the
+# second slot added nothing but a second way to throw the same grenades.
+var _base_capacities: Dictionary = {}  # StringName -> int
+var _carriers: Dictionary = {}         # StringName -> int, at least 1
 
 
 func _ready() -> void:
@@ -29,12 +35,40 @@ func _ready() -> void:
 func reset() -> void:
 	_counts.clear()
 	_capacities.clear()
+	_base_capacities.clear()
 	for stock in starting_ammo:
 		if stock == null or stock.ammo_type == &"":
 			continue
-		_capacities[stock.ammo_type] = stock.capacity
-		_counts[stock.ammo_type] = stock.amount
-		ammo_changed.emit(stock.ammo_type, stock.amount)
+		var n := _carriers_of(stock.ammo_type)
+		_base_capacities[stock.ammo_type] = stock.capacity
+		_capacities[stock.ammo_type] = stock.capacity * n
+		_counts[stock.ammo_type] = stock.amount * n
+		ammo_changed.emit(stock.ammo_type, stock.amount * n)
+
+
+func _carriers_of(ammo_type: StringName) -> int:
+	return maxi(1, int(_carriers.get(ammo_type, 1)))
+
+
+## How many fitted items draw on `ammo_type`. Capacity scales with it, and a
+## newly fitted item brings its own load: fitting a second frag slot adds three
+## grenades, it does not just raise the ceiling on the three you had. Removing
+## one trims whatever no longer fits. Unlimited types (capacity 0) are left
+## alone — there is no ceiling to scale.
+func set_carriers(ammo_type: StringName, n: int) -> void:
+	n = maxi(1, n)
+	var old := _carriers_of(ammo_type)
+	_carriers[ammo_type] = n
+	if n == old or not _base_capacities.has(ammo_type):
+		return
+	var base := int(_base_capacities[ammo_type])
+	if base <= 0:
+		return
+	_capacities[ammo_type] = base * n
+	var have := get_count(ammo_type)
+	var count := mini(have + base * (n - old), base * n) if n > old else mini(have, base * n)
+	_counts[ammo_type] = count
+	ammo_changed.emit(ammo_type, count)
 
 
 func get_count(ammo_type: StringName) -> int:

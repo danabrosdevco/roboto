@@ -38,6 +38,14 @@ const SAVE_VERSION := 1
 ## keys always come back as String. Mixing the two silently misses every lookup
 ## after the first load.
 @export var mission_clears: Dictionary = {}
+## Set when the player reaches the end of the base tutorial (the GO FORTH sign).
+## From then on the base's signs stand down and the lessons live in the pause
+## menu. A save from before this existed reads as false, so it gets the
+## tutorial once more. Hand-editable in campaign.json to see it again.
+@export var completed_tutorial: bool = false
+## Set when the last operation is cleared. Opens every mission at the terminal
+## for good, and the win is only announced the once.
+@export var campaign_won: bool = false
 @export var unlocked: Array[StringName] = []
 @export var selected_mission_id: StringName = &""
 
@@ -168,12 +176,28 @@ func get_soldier(id: StringName) -> SoldierRecord:
 	return null
 
 
+# Who goes: fit to fight and not benched. Roster order still decides who fills
+# a spawn point's slots when there are more of them than it holds.
 func deployable() -> Array[SoldierRecord]:
 	var out: Array[SoldierRecord] = []
 	for r in roster:
-		if r.is_deployable():
+		if r.will_deploy():
 			out.append(r)
 	return out
+
+
+# THE BENCH. Keeps a soldier at base when the squad deploys — to rest a veteran,
+# to save the repair bill on a wreck you are not fielding, or just to bring a
+# smaller squad. The player always goes, so their record can't be benched.
+# roster_changed rebuilds the squad manager, and at base it is also what saves.
+# Mid-mission it only changes the NEXT deploy: nobody vanishes from the field.
+func set_benched(record: SoldierRecord, benched: bool) -> void:
+	if record == null or is_player_record(record) or not roster.has(record):
+		return
+	if record.benched == benched:
+		return
+	record.benched = benched
+	roster_changed.emit()
 
 
 # ── REPAIR ────────────────────────────────────
@@ -539,6 +563,8 @@ func to_dict() -> Dictionary:
 		"roster": records,
 		"completed_missions": missions,
 		"mission_clears": mission_clears.duplicate(),
+		"completed_tutorial": completed_tutorial,
+		"campaign_won": campaign_won,
 		"unlocked": unlocks,
 		"selected_mission_id": String(selected_mission_id),
 		"next_id": _next_id,
@@ -578,6 +604,8 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	for k in raw_clears:
 		clears[str(k)] = int(raw_clears[k])
 	s.mission_clears = clears
+	s.completed_tutorial = bool(data.get("completed_tutorial", false))
+	s.campaign_won = bool(data.get("campaign_won", false))
 
 	var unlocks: Array[StringName] = []
 	for u in data.get("unlocked", []):

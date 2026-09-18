@@ -1,26 +1,5 @@
 [gd_resource type="Resource" script_class="MissionDefinition" load_steps=10 format=3 uid="uid://ctestheli0001"]
 
-; ─────────────────────────────────────────────
-; TEST MISSION — helicopter reinforcement rig.
-;
-; Not campaign content. Exists to isolate one question: do RESERVE squads
-; actually arrive when their objective completes?
-;
-; The ground force is deliberately EMPTY. Garrison captures are hold-F
-; terminals, so with replace_level_enemies on you can walk the valley
-; unopposed, cap each relay in turn and watch for the wave. Anything that goes
-; wrong here is the reinforcement system, not a firefight you lost.
-;
-;   PATROL   1 gunship, live from mission start — proves a helicopter flies,
-;            navigates and engages at all, independent of the wake path.
-;   WAVE-1/2/3   1 gunship each, held until their garrison objective fires.
-;
-; So: one aircraft in the air immediately, then exactly one more per capture.
-; If you see four at the start, reserves are spawning early. If you cap a relay
-; and nothing comes, the wake path is broken. The two failures look identical
-; in the valley missions and completely different here.
-; ─────────────────────────────────────────────
-
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
 [ext_resource type="PackedScene" uid="uid://bry0vr0coxyl4" path="res://maps/valley_level.tscn" id="3_valley"]
@@ -36,6 +15,7 @@ posture = 0
 route_tag = &"patrol_valley_mid"
 post_tag = &""
 spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
 reinforcement_tag = &""

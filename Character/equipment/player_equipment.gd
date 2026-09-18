@@ -72,6 +72,10 @@ class Readout:
 @export var base_rotation: Vector3 = Vector3(-0.3, 6.0, 2.8)
 @export var obstructed_position: Vector3 = Vector3(-0.5, -0.425, -1.0)
 @export var obstructed_rotation: Vector3 = Vector3(0.3, 270.0, 3.0)
+## Swing aside when something is right in front of the camera. Off for items
+## used up close: the repair tool's whole job is standing against a robot,
+## which is exactly what the obstruction ray sees.
+@export var lowers_when_obstructed: bool = true
 @export var pose_speed: float = 10.0
 @export var bob_speed: float = 1.1
 @export var bob_amount: float = 0.015
@@ -107,13 +111,15 @@ var ammo: AmmoPool = null
 var is_equipped: bool = false
 var move_factor: float = 0.0
 var is_obstructed: bool = false
+var _rest_pose_read: bool = false
 var is_ads: bool = false
 
 var _bob_time: float = 0.0
 var _equip_timer: float = 0.0
 
 
-# Called once by EquipmentLoadout. Don't do this in _ready — the item needs
+# Called by EquipmentLoadout — again on every rebuild, for permanent items.
+# Don't do this in _ready: the item needs
 # references it can't find on its own, and _ready order isn't guaranteed.
 func initialize(p_player: Node, p_cam: Camera3D, p_ammo: AmmoPool) -> void:
 	player = p_player
@@ -123,9 +129,16 @@ func initialize(p_player: Node, p_cam: Camera3D, p_ammo: AmmoPool) -> void:
 	# (HUDWeapon forwards its own weapon_model export into it) and set_hidden
 	# needs it to already be there or the model starts visible.
 	_on_initialize()
-	if use_default_position == false:
+	# The authored pose, read ONCE. "Called once" above is not true of a
+	# permanent item: the loadout re-initializes everything when it rebuilds
+	# from the save, and by then the item may already have been drawn — which
+	# snaps the model to the obstructed pose. Re-reading here recorded that
+	# off-screen spot as the rest pose, and the repair tool sat beside your head
+	# where no scale would ever bring it into view.
+	if use_default_position == false and not _rest_pose_read:
 		base_position = viewmodel.position
 		base_rotation = viewmodel.rotation
+		_rest_pose_read = true
 	set_hidden(true)
 
 
@@ -283,7 +296,7 @@ func get_readout() -> Readout:
 # and reload via _get_pose_target().
 func update_view(delta: float, p_move_factor: float, p_obstructed: bool, p_ads: bool) -> void:
 	move_factor = p_move_factor
-	is_obstructed = p_obstructed
+	is_obstructed = p_obstructed and lowers_when_obstructed
 	is_ads = p_ads
 
 	if _equip_timer > 0.0:

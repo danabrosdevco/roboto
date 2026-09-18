@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Character/weapon/hatchling/hatchling_payload.gd" id="1_payload"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/enemy_nest-chaser.tscn" id="2_hopper"]
+
+[node name="HatchlingPayload" type="Node3D"]
+script = ExtResource("1_payload")
+unit_scene = ExtResource("2_hopper")

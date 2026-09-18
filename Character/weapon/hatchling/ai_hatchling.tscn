@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://Character/characters/ai/equipment/ai_grenade.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://Character/weapon/hatchling/hatchling_canister.tscn" id="2_proj"]
+
+[node name="AI_Hatchling" instance=ExtResource("1_base")]
+grenade_scene = ExtResource("2_proj")

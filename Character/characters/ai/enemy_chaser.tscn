@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://bjnmbvul1677q"]
+[gd_scene load_steps=17 format=3 uid="uid://bjnmbvul1677q"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_omglo"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_gg277"]
@@ -6,7 +6,6 @@
 [ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ape12"]
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_ukn8i"]
 [ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="6_5gj2i"]
-[ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_2u31t"]
 [ext_resource type="Material" uid="uid://dym8xecxayc67" path="res://Campaign/faction_material_shader.tres" id="7_4gcnj"]
 [ext_resource type="PackedScene" uid="uid://gymujiepqrjl" path="res://Character/weapon/ai-wep_melee.tscn" id="8_nvx10"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_sjywf"]
@@ -31,11 +30,10 @@ albedo_texture = ExtResource("6_5gj2i")
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 25.0
 
-[node name="Enm_Chaser" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+[node name="Enm_Chaser" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
 script = ExtResource("1_omglo")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("ai_world_weapon")
-label = NodePath("Label3D")
 bark = NodePath("Bark")
 detection = NodePath("Detection")
 particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
@@ -70,14 +68,6 @@ material = ExtResource("7_4gcnj")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.310242)
 mesh = SubResource("CapsuleMesh_ift78")
 material = SubResource("StandardMaterial3D_cqn6r")
-
-[node name="Label3D" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
-visible = false
-billboard = 1
-text = "Text"
-font_size = 48
-script = ExtResource("7_2u31t")
 
 [node name="Detection" type="Area3D" parent="."]
 

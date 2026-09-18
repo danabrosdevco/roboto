@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3 uid="uid://citemoverclk1"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"overclock_servos"
+display_name = "Overclock Servos"
+short_name = "Overclock"
+description = "Leg actuators run past their rated limit. Twenty percent faster on the ground, and they will not last the century."
+kind = 2
+cost = 50
+usable_by_player = true
+usable_by_ai = true
+speed_multiplier = 1.2
+required_rank = 0

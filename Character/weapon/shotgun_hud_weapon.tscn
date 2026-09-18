@@ -30,7 +30,8 @@ firemode = 2
 pump_sound = NodePath("Pump")
 damage = 45
 FIRE_RATE = 0.28
-ads_position = Vector3(0.4, -0.2, -1.077)
+ads_position = Vector3(0, 0, 0)
+ads_rotation = Vector3(0, 0, 0)
 click_stream_player = NodePath("Click")
 display_name = "Shotgun"
 viewmodel = NodePath("Holder/Shotgun_22")
@@ -40,7 +41,7 @@ obstructed_position = Vector3(0.3, 0, 3)
 obstructed_rotation = Vector3(0.3, 90, 3)
 
 [node name="Holder" type="Node3D" parent="."]
-transform = Transform3D(-1.44248e-08, 0, 0.33, 0, 0.33, 0, -0.33, 0, -1.44248e-08, 0.0223675, -0.0411878, -0.143221)
+transform = Transform3D(-1.44248e-08, 0, 0.33, 0, 0.33, 0, -0.33, 0, -1.44248e-08, 0.0244774, -0.103499, -0.560673)
 
 [node name="Shotgun_22" parent="Holder" instance=ExtResource("4_model")]
 

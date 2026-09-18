@@ -35,6 +35,9 @@ class_name AIWeaponGrenadeLauncher
 ## Fuse override. Left at 0 the projectile keeps its own.
 @export var fuse_override: float = 0.0
 
+# Bombs from the current stick still in the air. See drop_bomb().
+var _recent_bombs: Array = []
+
 
 func check_damage(weapon_target: Vector3) -> void:
 	if grenade_scene == null:
@@ -53,10 +56,51 @@ func _release_salvo(weapon_target: Vector3) -> void:
 				return
 
 
-func _release_one(weapon_target: Vector3, index: int) -> void:
+## A TRUE DROP, for a bombing run. Released with the carrier's own velocity and
+## nothing added — no aim, no lead, no forward shove.
+##
+## _release_one() aims: it computes a throw that lands on a point. That is the
+## right model for something hovering and lobbing. A bomber that is already
+## flying fast and straight does not aim its bombs at all; it lets go at the
+## right MOMENT and physics carries them forward onto the target. The drone
+## decides the moment, so this only has to let go.
+func drop_bomb() -> void:
+	if grenade_scene == null:
+		return
 	var origin: Vector3 = muzzle_origin.global_position if muzzle_origin != null else global_position
-	var grenade := grenade_scene.instantiate()
+	var grenade := _spawn_charge(origin)
+	# IMPACT-FUSED. The release point is computed so the bomb LANDS on the
+	# target — but on the stock 3s fuse it landed after ~1.7s and then skidded
+	# and bounced at run speed for the rest, detonating a median 18m downrange.
+	# The aim was right; the bombs just did not stay where they were aimed.
+	if "explode_on_bounce" in grenade:
+		grenade.explode_on_bounce = true
+		grenade.bounce_before_explode = 0
 
+	# STICK-MATES MUST NOT TOUCH. Each bomb leaves one stick_interval after the
+	# last, on the same trajectory, having fallen only ~10cm — so it spawns on
+	# top of the previous one. Impact-fused, the two detonated each other at
+	# the moment of release, fourteen metres up, and every stick "missed" by
+	# exactly the release distance. Excepted against every bomb still falling,
+	# not just the last, since three in a row can still overlap.
+	_recent_bombs = _recent_bombs.filter(func(b): return b != null and is_instance_valid(b))
+	if grenade is PhysicsBody3D:
+		for b in _recent_bombs:
+			if b is PhysicsBody3D:
+				(grenade as PhysicsBody3D).add_collision_exception_with(b)
+	_recent_bombs.append(grenade)
+	if grenade is RigidBody3D:
+		(grenade as RigidBody3D).linear_velocity = shooter_velocity()
+		(grenade as RigidBody3D).angular_velocity = Vector3(
+			randf_range(-3.0, 3.0), randf_range(-3.0, 3.0), randf_range(-3.0, 3.0))
+	play_shot_audio()
+
+
+# Builds one charge at `origin`, owned by the carrier and unable to collide with
+# it. Shared by the aimed throw and the bombing drop so neither can drift from
+# the other on attribution or on the self-collision fix.
+func _spawn_charge(origin: Vector3) -> Node:
+	var grenade := grenade_scene.instantiate()
 	# setup() BEFORE the tree, same contract the thrown grenade uses — the
 	# projectile hands its thrower to the Explosion, which is what makes a
 	# grenade kill count for somebody and what stops the gunship blast-killing
@@ -66,16 +110,34 @@ func _release_one(weapon_target: Vector3, index: int) -> void:
 		grenade.setup(shooter)
 	if fuse_override > 0.0 and "fuse_time" in grenade:
 		grenade.fuse_time = fuse_override
-
-	get_tree().current_scene.add_child(grenade)
+	_charge_parent(shooter).add_child(grenade)
 	grenade.global_position = origin
-
 	# A released charge must never collide with the thing that let go of it.
-	# The drop spawns at the muzzle, which is INSIDE the gunship's own collider,
-	# so move_and_slide() resolved the overlap by shoving the aircraft sideways
-	# — it knocked itself off its flight path with every round in the salvo.
+	# The drop spawns at the muzzle, which is INSIDE the carrier's own collider,
+	# so move_and_slide() resolved the overlap by shoving the aircraft sideways.
 	if shooter is PhysicsBody3D and grenade is PhysicsBody3D:
 		(grenade as PhysicsBody3D).add_collision_exception_with(shooter)
+	return grenade
+
+
+# The carrier's LEVEL, not get_tree().current_scene. In this project the
+# current scene is Master, so charges were parented above World and outlived
+# the level they were dropped into — a bomb in the air at extraction came home
+# with you. Parenting to the carrier's parent keeps them level-scoped, and
+# does not depend on there being a current scene at all.
+func _charge_parent(shooter: Node) -> Node:
+	if shooter != null and shooter.get_parent() != null:
+		return shooter.get_parent()
+	if get_tree().current_scene != null:
+		return get_tree().current_scene
+	return get_tree().root
+
+
+func _release_one(weapon_target: Vector3, index: int) -> void:
+	var origin: Vector3 = muzzle_origin.global_position if muzzle_origin != null else global_position
+	# Same spawn as the bombing drop — ownership, attribution, level-scoped
+	# parenting and the self-collision exception all live in _spawn_charge().
+	var grenade := _spawn_charge(origin)
 
 	if grenade is RigidBody3D:
 		(grenade as RigidBody3D).linear_velocity = _release_velocity(origin, weapon_target, index)

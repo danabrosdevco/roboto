@@ -150,6 +150,38 @@ func _repair_roster() -> void:
 		if state.player_record.chassis_id == &"" or catalogue.chassis_def(state.player_record.chassis_id) == null:
 			state.player_record.display_name = CampaignState.PLAYER_DEFAULT_NAME
 			state.player_record.set_chassis(frame, catalogue)
+	_return_unusable_player_kit()
+
+
+# Anything fitted to the PLAYER that no longer fits the player comes off and
+# goes back to stores. The case this exists for: the Repair Tool became built
+# in (key 3, permanent), and a save with one fitted in an equipment slot would
+# otherwise build a second copy on key 4 or 5. Back in stores it is not lost —
+# a squadmate can still carry it.
+#
+# Done in place rather than through unfit_item(), which announces roster_changed
+# and — at base — saves. Loading should not write the save on its own; the fix
+# rides along with the next save that happens for a real reason, and until then
+# it simply reapplies on each load.
+func _return_unusable_player_kit() -> void:
+	var rec := state.player_record
+	if rec == null or catalogue == null:
+		return
+	var changed := false
+	for field in ["weapon_ids", "equipment_ids", "module_ids"]:
+		var ids: Array = rec.get(field)
+		for i in ids.size():
+			var id_value: StringName = ids[i]
+			if id_value == &"":
+				continue
+			var item: ItemDefinition = catalogue.item(id_value)
+			if item != null and not item.fits_player():
+				ids[i] = &""
+				state.armoury.add(id_value)
+				changed = true
+				print("[Campaign] %s no longer fits the player; returned it to stores." % item.display_name)
+	if changed:
+		rec.recompute_stats(catalogue)
 
 
 func _seed_new_campaign() -> void:
@@ -349,10 +381,21 @@ func get_mission(id: StringName) -> MissionDefinition:
 	return null
 
 
+## The campaign's last operation: the last entry in `missions`, which is the
+## order the terminal offers them in.
+func is_final_mission(m: MissionDefinition) -> bool:
+	if m == null:
+		return false
+	for i in range(missions.size() - 1, -1, -1):
+		if missions[i] != null:
+			return missions[i].id == m.id
+	return false
+
+
 func available_missions() -> Array[MissionDefinition]:
 	var out: Array[MissionDefinition] = []
 	for m in missions:
-		if unlock_all_missions:
+		if unlock_all_missions or (state != null and state.campaign_won):
 			# Both filters skipped, not just the gate: dropping only `requires`
 			# would still retire each non-repeatable mission the moment you
 			# cleared it, so you could reach Valley Siege but not run it twice.
@@ -425,6 +468,19 @@ func begin_deploy() -> void:
 		deployed.emit(current_mission)
 
 
+# Who deploys on `mission`: everyone ACTIVE (fit and not benched), cut to the
+# mission's squad_size. Roster order fills the places, so benching is how you
+# choose who goes when the op only takes one or two.
+func squad_for(mission: MissionDefinition) -> Array[SoldierRecord]:
+	var going: Array[SoldierRecord] = state.deployable() if state != null else []
+	if mission == null or mission.squad_size < 0 or going.size() <= mission.squad_size:
+		return going
+	var capped: Array[SoldierRecord] = []
+	for i in mission.squad_size:
+		capped.append(going[i])
+	return capped
+
+
 # Called by World once the new level is in the tree and its spawn point exists.
 func on_level_loaded(level: Node) -> void:
 	if level == null:
@@ -445,7 +501,13 @@ func on_level_loaded(level: Node) -> void:
 	if in_mission and current_mission == null:
 		push_warning("Campaign: in a mission but current_mission is null. Nothing will spawn. Either deploy from base, or set Campaign.debug_mission while iterating.")
 	if spawner != null:
-		spawner.deploy_into(level, state.deployable())
+		var going := squad_for(current_mission if in_mission else null)
+		if going.is_empty():
+			# A solo op, or nobody active. Clear rather than deploy_into([]),
+			# which would warn about an empty roster that is empty on purpose.
+			spawner.clear()
+		else:
+			spawner.deploy_into(level, going)
 	# Objectives filter themselves in _ready, but that runs before
 	# debug_mission is adopted on a direct launch — and before current_mission
 	# exists at all if anything loads the level out of band. Re-run it here,
@@ -479,9 +541,16 @@ func _award_experience(success: bool) -> Array:
 	var promoted: Array = []
 	if state == null:
 		return promoted
+	# ONLY THE ONES WHO WENT. This walked the whole roster, so a robot left at
+	# base — benched, or past a spawn point's slot count — was paid "survived"
+	# XP for a mission it never saw, which is exactly backwards for the pillar
+	# above. The spawner knows who had a body; with no spawner, nobody deployed.
+	var went: Array[SoldierRecord] = spawner.deployed_records() if spawner != null else []
 	for record in state.roster:
 		if record == null or record.status == SoldierRecord.Status.DESTROYED:
 			continue   # lost robots earn nothing; there is nobody to promote
+		if not went.has(record):
+			continue
 		var before := record.rank
 		var gained := XP_PER_KILL * record.confirmed_kills_this_mission
 		gained += XP_SURVIVED
@@ -519,7 +588,7 @@ func _write_back_player() -> void:
 
 # Success path. Collect the squad, pay out, save, and head home.
 func extract(success: bool = true) -> Dictionary:
-	var result := {"survivors": 0, "lost": 0, "reward": 0}
+	var result := {"survivors": 0, "lost": 0, "reward": 0, "success": success}
 	if spawner != null:
 		var counts := spawner.write_back()
 		result["survivors"] = counts["survivors"]
@@ -557,6 +626,12 @@ func extract(success: bool = true) -> Dictionary:
 		for u in current_mission.unlocks:
 			if not state.unlocked.has(u):
 				state.unlocked.append(u)
+		# THE END. Clearing the last operation wins the campaign, once: the
+		# HUD follows MISSION COMPLETE with YOU WON, and from then on every
+		# operation is open at the terminal to replay in any order.
+		if is_final_mission(current_mission) and not state.campaign_won:
+			state.campaign_won = true
+			result["won"] = true
 
 	extracted.emit(current_mission, result)
 	in_mission = false

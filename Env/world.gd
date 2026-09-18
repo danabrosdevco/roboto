@@ -13,7 +13,7 @@ var world_states: Enums.WorldStates
 @export var objective_tracker: ObjectiveTracker
 @export var Campaign : CampaignManager
 @export var enemy_spawner: EnemyForceSpawner
-var player_corpse_scene = preload("res://Env/world_objects/components/player_corpse.tscn")
+
 
 func _ready():
 	await get_tree().process_frame
@@ -58,15 +58,20 @@ func _register_exits() -> void:
 		elif Campaign.in_mission:
 			exit.next_level = Campaign.base_level
 	Campaign.register_departure_exits(departures)
-func load_next_level(next_level_scene: PackedScene) -> void:
-	get_tree().paused = true
+## `success` is only read when leaving an operation: false is a failed one (the
+## player died), which pays nothing and does not count as a clear.
+func load_next_level(next_level_scene: PackedScene, success: bool = true) -> void:
+	# A named hold rather than get_tree().paused: the mission briefing opens
+	# INSIDE this load (begin_deploy below fires it), and the old direct write
+	# at the end unpaused the game out from under it. See PauseHold.
+	PauseHold.take(&"level_load")
 	await get_tree().process_frame
 
 	# Campaign lifecycle happens HERE, before anything is freed. Extraction has
 	# to read the squad's surviving state off nodes that still exist — run it
 	# after deload and every record comes home marked destroyed.
 	if Campaign.in_mission:
-		Campaign.extract(true)
+		Campaign.extract(success)
 	else:
 		Campaign.begin_deploy()
 	if current_level:
@@ -79,7 +84,7 @@ func load_next_level(next_level_scene: PackedScene) -> void:
 		player.global_transform = spawn_transform
 		player.last_bonfire = current_level.spawn_point.global_position
 	await get_tree().process_frame
-	get_tree().paused = false
+	PauseHold.release(&"level_load")
 	register_world_objects(current_level)
 	_register_exits()
 	# Arriving somewhere new. in_mission was already flipped above.
@@ -103,32 +108,32 @@ func register_world_objects(_level:TrenchBroomLevel):
 		if child is PickUp:
 			pass
 
-func reset_level():
-	game_manager.reset_level()
-
-func respawn_player():
-	if player.last_bonfire is Bonfire == true:
-		player.global_position = player.last_bonfire.global_position
-		return
-	elif player.last_bonfire is Vector3 == true:
-		player.global_position = player.last_bonfire
-	player.reset()
-	pass
-
 func _on_next_level_requested(next_level_scene: PackedScene) -> void:
-	#print("Received signal to load next level.")
 	load_next_level(next_level_scene)
 
-func _on_player_died(value: int, pos) -> void:
-	reset_level()
-	player.bits = 0
-	player.update_status()
-	respawn_player()
-	create_corpse(value, pos)
 
-func create_corpse(value: int, pos: Vector3):
-	var new_corpse = player_corpse_scene.instantiate()
-	current_level.add_child(new_corpse)
-	new_corpse.activate(value)
-	new_corpse.global_position = pos
-	pass
+# ─────────────────────────────────────────────
+# DEATH
+# The player's `died` lands here. It used to run the old souls-style respawn —
+# reset the level, respawn at a bonfire, drop a corpse — and the reset called
+# into enemies GameManager had listed at boot, most of them freed by then,
+# which is where the crash on death came from. Now it only announces the death:
+# Master puts up YOU DIED, and CONTINUE comes back to return_home_after_death().
+# ─────────────────────────────────────────────
+signal player_killed
+
+
+func _on_player_died(_value: int, _pos) -> void:
+	player_killed.emit()
+
+
+## CONTINUE on the death screen. On an operation it is a failed extraction —
+## the squad comes home as it stands, nothing is paid, the op stays uncleared —
+## and then the base loads. At base there is nothing to leave, so the player
+## simply gets up at the spawn point.
+func return_home_after_death() -> void:
+	player.reset()
+	if Campaign != null and Campaign.in_mission and Campaign.base_level != null:
+		await load_next_level(Campaign.base_level, false)
+	elif current_level != null and current_level.spawn_point != null:
+		player.global_transform = current_level.spawn_point.global_transform

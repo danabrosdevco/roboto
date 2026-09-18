@@ -66,6 +66,12 @@ enum Kind {
 
 @export var usable_by_player: bool = true
 @export var usable_by_ai: bool = true
+## Listed in the armoury to buy. Off retires an item without breaking saves:
+## anyone who already owns one still sees its row (to fit or sell it), but a
+## campaign that has none never sees it offered. The player's Repair Tool went
+## this way when it became built in — as a squad item it only duplicated the
+## Field Repair Kit.
+@export var in_shop: bool = true
 # EQUIPMENT only: how many uses one of these grants.
 @export var quantity: int = 1
 
@@ -81,6 +87,15 @@ enum Kind {
 # Additive metres of sight. The module that lets a rifle squad actually use its
 # range — see Enemy.sensor_range for why that gap exists on purpose.
 @export var sensor_bonus: float = 0.0
+# Added to Enemy.signal_resistance, which DIVIDES every point of incoming
+# signal damage. 1.0 is stock, so +1.0 halves what suppression and EMP do. Not
+# the same thing as signal_bonus, which raises a starting value that is already
+# at its 1.0 ceiling — see effect_summary for why that one reads as nothing.
+@export var signal_resistance_bonus: float = 0.0
+# Seconds after going down before this soldier gets itself back up, once per
+# deployment. 0 means never. A capability rather than a stat, but kept as a
+# plain number for the same reason as the rest: the UI can print it.
+@export var self_revive_seconds: float = 0.0
 
 # Gating. A module can require a rank before it will fit — that's what makes
 # rank matter more than raw level.
@@ -120,6 +135,13 @@ func fits_player() -> bool:
 # Items both sides can use, and all modules, show nothing.
 func carrier_tag() -> String:
 	if kind == Kind.MODULE:
+		# Most modules fit anyone. One that does not — a self-revive, which
+		# means nothing to a player who respawns at a bonfire — has to SAY so,
+		# or the refused drag reads as a bug. That is this function's whole job.
+		if not usable_by_player:
+			return "[SQUAD]"
+		if not usable_by_ai:
+			return "[YOU]"
 		return ""
 	if fits_ai() and fits_player():
 		return ""
@@ -158,6 +180,13 @@ func effect_summary() -> String:
 		parts.append("%+.0fm SENSOR" % sensor_bonus)
 	if not is_equal_approx(speed_multiplier, 1.0):
 		parts.append("%+.0f%% SPD" % ((speed_multiplier - 1.0) * 100.0))
+	if signal_resistance_bonus != 0.0:
+		# Shown as the reduction you actually get, not the raw divisor —
+		# "+100% RES" means nothing, "-50% JAM" means something.
+		var cut: float = 1.0 - 1.0 / (1.0 + signal_resistance_bonus)
+		parts.append("-%.0f%% JAM" % (cut * 100.0))
+	if self_revive_seconds > 0.0:
+		parts.append("SELF-REVIVE %.0fs" % self_revive_seconds)
 	if kind == Kind.EQUIPMENT and quantity > 0:
 		parts.append("x%d" % quantity)
 	return ", ".join(parts)

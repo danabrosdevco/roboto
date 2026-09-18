@@ -42,7 +42,39 @@ class_name MissionDefinition
 @export var reward_resources: int = 0
 @export var unlocks: Array[StringName] = []
 
+# ── SQUAD ─────────────────────────────────────
+## How many of your squad deploy with you. -1 is everyone who is ACTIVE (the
+## spawn point's own cap still applies); 0 is a solo op. This is the campaign's
+## pacing: the first ops are yours alone, then allies arrive one at a time, so
+## commanding is learned one robot at a time rather than four at once. Roster
+## order decides who fills the places — bench someone to choose.
+@export var squad_size: int = -1
+
 # ── REPLAYABILITY ─────────────────────────────
 @export var repeatable: bool = false
 # Missions that must be completed before this one appears.
 @export var requires: Array[StringName] = []
+
+
+## "SOLO", "MAX 1 ALLY", "MAX 3 ALLIES" — or "" when there is no limit, which is
+## the normal case and not worth a word: once the roster fills out, you choose
+## how many go by benching, not the mission. Shown on the terminal and the
+## briefing, so leaving your squad at base reads as the op's rule rather than
+## as the game losing them.
+func squad_label() -> String:
+	if squad_size < 0:
+		return ""
+	if squad_size == 0:
+		return "SOLO"
+	return "MAX 1 ALLY" if squad_size == 1 else "MAX %d ALLIES" % squad_size
+
+
+## How many hostile squads the op fields, reserves included. This is what the
+## mission terminal shows instead of the briefing prose: one number the player
+## can weigh against their own squad, with the detail left to the briefing.
+func enemy_squad_count() -> int:
+	var n := 0
+	for spec in enemy_force:
+		if spec != null:
+			n += 1
+	return n

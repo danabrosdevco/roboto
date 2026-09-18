@@ -29,7 +29,6 @@ func equip_weapon_scene(scene: PackedScene) -> void:
 	weapon = instance as AIWeapon
 	if weapon == null:
 		push_warning("%s is not an AIWeapon scene." % scene.resource_path)
-@export var label: Label3D
 @export var bark: Bark
 @export var detection: Area3D
 @export var particle_effects_die: Array[ParticleEffect]
@@ -65,12 +64,19 @@ func equip_weapon_scene(scene: PackedScene) -> void:
 ## the leap overshoots; too far and it lands short in the open.
 @export var leap_min_distance: float = 5.0
 @export var leap_max_distance: float = 16.0
+## Seconds after LANDING before another leap is allowed. The gap is spent
+## closing on foot, which is what makes a hopper read as a predator that pounces
+## rather than a ball bouncing around the sky.
+@export var leap_cooldown: float = 2.4
+## Highest point of any leap, in metres above the straight line to the target.
+## Long leaps get faster and flatter instead of taller. 0 disables the cap.
+@export var leap_max_apex: float = 1.3
 @export var bound_detour_limit: float = 1.8
 @export var fallback_distance: float = 1.25
 @export var bits: int = 10
 @export var equipment_slots: Array[AIEquipmentSlot] = []
 @export var combat_recon_time: float = 1.65
-# Display name shown in the debug label — e.g. "Shotgun Grunt", "Sniper", "Heavy"
+# Display name — e.g. "Shotgun Grunt", "Sniper", "Heavy"
 #
 # NOTE: this is now PLAYER-FACING as well. The comms log prints it when a
 # squadmate calls a contact or a kill, so "Grunt_ShotgunFrag" reads badly on
@@ -81,6 +87,12 @@ func equip_weapon_scene(scene: PackedScene) -> void:
 # at extraction and added to the career total there — the node is destroyed
 # between missions, the record is not.
 var confirmed_kills: int = 0
+# Whose kills these really are. A hatchling is a thrown weapon that happens to
+# have legs: it lives 25 seconds and has no record, so a kill credited to it was
+# a kill nobody got. HatchlingPayload points this at the thrower, and a victim's
+# apply_damage follows it — the player or squadmate who threw the canister gets
+# the kill (and the bark, if it has a voice).
+var credit_kills_to: Node = null
 
 # ── ACCURACY ──────────────────────────────────
 # accuracy_skill: static per-character. How close this AI shoots to the
@@ -251,6 +263,17 @@ var _investigate_timer: float = 0.0
 
 # Never enters passive mode — set true on soldiers with active squad objectives
 @export var always_active: bool = false
+## Seconds after going down before this robot gets back up by itself, once per
+## deployment. Set from the Nanite Reboot module at spawn; 0 is never.
+@export var self_revive_seconds: float = 0.0
+var _self_revive_used: bool = false
+var _self_revive_gen: int = 0
+# Seconds of blocked signal recovery left. See lock_signal().
+var _signal_locked_t: float = 0.0
+## Seconds a shot robot (and its squad) stays exempt from distance culling.
+## Long enough to close on whoever is shooting and actually fight them.
+@export var wake_on_damage_seconds: float = 20.0
+var _woken_t: float = 0.0
 # ── CLOSE THREAT ───────────────────────────────
 # Opportunistic retargeting. The detection Area3D handles long-range
 # acquisition; this handles "something is right next to me", which the old code
@@ -491,6 +514,10 @@ const SIGNAL_EKILL: float    = 0.01  # below here: fully disabled
 
 # ── CONST ─────────────────────────────────────
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+## Falling faster than this (m/s) means the robot has left the level: it goes
+## down rather than falling forever. 0 disables.
+@export var fell_out_speed: float = 50.0
+var _leap_cooldown_t: float = 0.0
 
 # ── MANAGER REFS ──────────────────────────────
 var player: Player
@@ -778,8 +805,16 @@ func _physics_process(delta: float) -> void:
 	# because faction cannot be missed by a future code path that forgets to
 	# set it. Hostiles are deliberately left culled; they are the population
 	# that makes distance culling worth having.
+	#
+	# WOKEN robots are exempt too. Player hitscan reaches 250m and a chaser's
+	# activation distance is 75m, so anything between the two could be shot to
+	# death without ever running a physics tick: apply_damage is not gated by
+	# physics, but everything that would make it RESPOND is. It died standing
+	# still. Being shot now wakes it, and its squad, for wake_on_damage_seconds.
+	if _woken_t > 0.0:
+		_woken_t = maxf(0.0, _woken_t - delta)
 	var dist_sq = global_position.distance_squared_to(player.global_position)
-	if dist_sq > activation_distance_sq and not _is_player_side():
+	if dist_sq > activation_distance_sq and not _is_player_side() and _woken_t <= 0.0:
 		enter_passive_mode()
 		_apply_motion()
 		return
@@ -794,8 +829,6 @@ func _physics_process(delta: float) -> void:
 	_update_facing(delta)
 	handle_weapon_logic(delta)
 	_apply_motion()
-	if label != null:
-		update_debug_label()
 
 
 # ─────────────────────────────────────────────
@@ -816,6 +849,11 @@ func _apply_motion() -> void:
 	if movement_state == MovementState.LEAPING and is_on_floor() and velocity.y <= 0.0:
 		movement_state = MovementState.NONE
 		velocity = Vector3.ZERO
+		# Started on LANDING, not on takeoff, so the flight itself never eats
+		# into the gap. Without it the roll below picked LEAP again the instant
+		# they touched down — nothing stopped a hopper chaining leap after leap
+		# for as long as the target stayed in band.
+		_leap_cooldown_t = leap_cooldown
 		roll_combat_action()
 
 
@@ -856,6 +894,14 @@ func _is_player_side() -> bool:
 	return faction == Enums.Factions.PLAYER or faction == Enums.Factions.ALLIED
 
 
+## Exempt from distance culling for `seconds`. Called on taking damage, and by
+## Squad on every member when any one of them enters combat — so shooting one
+## robot at long range brings its whole squad, rather than one reaction and a
+## group of statues standing beside it.
+func wake(seconds: float) -> void:
+	_woken_t = maxf(_woken_t, seconds)
+
+
 func enter_passive_mode():
 	if ai_state == AIState.PASSIVE:
 		return
@@ -881,6 +927,8 @@ func exit_passive_mode():
 # TIME PASSING
 # ─────────────────────────────────────────────
 func handle_time_passing(delta):
+	if _leap_cooldown_t > 0.0:
+		_leap_cooldown_t = maxf(0.0, _leap_cooldown_t - delta)
 	weapon_time += delta
 	targeting_time += delta
 	if movement_state == MovementState.MOVING:
@@ -948,6 +996,14 @@ func handle_gravity(delta: float) -> void:
 			velocity.y = 0.0
 	else:
 		velocity.y -= gravity * delta
+		# FELL OUT OF THE WORLD. Nothing else catches this: a leaper that
+		# clips through the floor falls forever, still `alive`, and an
+		# EliminateObjective waits on it for the rest of the mission — the
+		# arena reading 7/8 with nothing left standing. No leap or crash comes
+		# near this speed; five seconds of free fall does.
+		if fell_out_speed > 0.0 and velocity.y < -fell_out_speed and alive:
+			push_warning("%s fell out of the world at %s; counting it as down." % [name, global_position])
+			die()
 
 # ─────────────────────────────────────────────
 # HOLD STILL
@@ -1469,6 +1525,11 @@ func _score_movement_option(option: int) -> float:
 		MovementOptions.LEAP:
 			if combat_target == null or not _has_los:
 				return 0.0
+			# Recovering from the last one. Zero rather than merely low: a
+			# small weight still wins a roll sometimes, and one extra leap
+			# straight off a landing is exactly the chain being prevented.
+			if _leap_cooldown_t > 0.0:
+				return 0.0
 			# Gated on ABSOLUTE distance, not range_ratio. Everything else here
 			# reasons in fractions of weapon range, which is meaningless for a
 			# leaper: its weapon reaches 1.5m, so range_ratio is above 0.6 at
@@ -1592,6 +1653,9 @@ func reconsider_combat():
 
 func reconsider_target() -> void:
 	targeting_time = 0
+	# Set when the target is dropped because it went DOWN, not because it was
+	# lost. Decides whether "lost contact, searching" is the right thing to say.
+	var target_down := false
 
 	# Checked BEFORE the keep-current-target early return below. That return is
 	# exactly what made a point-blank contact invisible — it fired whenever the
@@ -1620,6 +1684,7 @@ func reconsider_target() -> void:
 		if resumed != null:
 			change_combat_target(resumed)
 			return
+		target_down = true
 
 	var new_target: CharacterBody3D = _nearest_hostile()
 
@@ -1641,8 +1706,10 @@ func reconsider_target() -> void:
 		if movement_target != Vector3.ZERO:
 			look_target = movement_target
 		if ai_state == AIState.COMBAT:
-			# Lost them — go look, rather than instantly forgetting.
-			_enter_search()
+			# Lost them — go look, rather than instantly forgetting. Unless the
+			# target went DOWN: then nobody lost anything, and a squadmate has
+			# usually just confirmed the kill.
+			_enter_search(target_down)
 
 # Extracted from reconsider_target so the close-threat check shares one source
 # of truth for "who is hostile and nearby".
@@ -1761,15 +1828,20 @@ func reconsider_patrol():
 # SEARCH
 # Previously a declared-but-unreachable state.
 # ─────────────────────────────────────────────
-func _enter_search() -> void:
-	if bark != null:
-		bark.bark(BarkSet.Line.SEARCH)
+# "LOST CONTACT, SEARCHING" is only said when it is true: the target slipped out
+# of sight AND there is somewhere to look. It used to be barked first, always —
+# so a squad whose target a squadmate had just killed announced they had lost
+# it, and a robot with no lead at all said "searching" and then stood down.
+func _enter_search(target_down: bool = false) -> void:
 	if last_seen_point.is_empty():
 		# Nothing to search. A squad member drops to IDLE and lets the squad
 		# decide; PATROL here was putting follow squadmates into a state whose
 		# tick restarts movement.
 		change_ai_state(AIState.IDLE if squad_directed else AIState.PATROL)
 		return
+	# Older leads can still be worth checking after a kill — quietly.
+	if bark != null and not target_down:
+		bark.bark(BarkSet.Line.SEARCH)
 	change_ai_state(AIState.SEARCH)
 	search_time = 0.0
 	_search_look_timer = 0.0
@@ -2117,9 +2189,21 @@ func compute_leap_velocity_fixed_speed(target: Vector3, speed: float) -> Vector3
 	if distance < 0.01:
 		return Vector3.ZERO
 	var time = distance / speed
+
+	# CAP THE ARC. With horizontal speed fixed, a longer leap means more time in
+	# the air, and time in the air is what makes the arc tall: on flat ground
+	# the apex is g*t^2/8. A 24m leap at 16.5 m/s hung for 1.45s and peaked
+	# around 2.6m — a lob, not a pounce, and it read as the robot bouncing
+	# around the sky. Shortening the flight time to fit under leap_max_apex
+	# makes long leaps FASTER and flatter instead of higher, which is what a
+	# lunge at someone actually looks like.
+	if leap_max_apex > 0.0 and gravity > 0.0:
+		var max_time: float = sqrt(8.0 * leap_max_apex / gravity)
+		time = minf(time, max_time)
+
 	var direction = horiz.normalized()
 	var vy = (displacement.y / time) + (0.5 * gravity * time)
-	return Vector3(direction.x * speed, vy, direction.z * speed)
+	return Vector3(direction.x * distance / time, vy, direction.z * distance / time)
 
 
 # ─────────────────────────────────────────────
@@ -2145,6 +2229,9 @@ func apply_damage(damage, source) -> void:
 		# Already on the floor. Shooting a wreck does nothing — if you want a
 		# finishing blow, call destroy() from here instead.
 		return
+	# Whatever else happens, a robot being shot is not asleep. See the passive
+	# gate in _physics_process for the bug this closes.
+	wake(wake_on_damage_seconds)
 	if source is Player:
 		player = source
 		damaged_by_player = true
@@ -2171,14 +2258,19 @@ func apply_damage(damage, source) -> void:
 		# Kill credit. apply_damage has always carried the attributor; die()
 		# discarded it, which is why nothing could report a kill — and why XP
 		# has nowhere to come from. The killer speaks, not the victim.
-		if source != null and is_instance_valid(source) and source != self:
+		var killer = source
+		# Kills made on someone's behalf (a hatchling's) go to that someone.
+		if killer != null and is_instance_valid(killer) and "credit_kills_to" in killer \
+				and killer.credit_kills_to != null and is_instance_valid(killer.credit_kills_to):
+			killer = killer.credit_kills_to
+		if killer != null and is_instance_valid(killer) and killer != self:
 			# Guarded with `in` rather than a type check: the killer may be a
 			# Soldier, the Player, or anything else that deals damage, and only
 			# some of those carry a counter.
-			if "confirmed_kills" in source:
-				source.confirmed_kills += 1
-			if "bark" in source and source.bark != null:
-				source.bark.bark(BarkSet.Line.KILL, soldier_name)
+			if "confirmed_kills" in killer:
+				killer.confirmed_kills += 1
+			if "bark" in killer and killer.bark != null:
+				killer.bark.bark(BarkSet.Line.KILL, soldier_name)
 		die()
 		return
 	for i in particle_effects_hit:
@@ -2197,6 +2289,35 @@ func die():
 
 
 # The wreck stays in the world, visible and repairable.
+# ─────────────────────────────────────────────
+# SELF-REVIVE (the Nanite Reboot module)
+#
+# A real timer, not a countdown in _physics_process: the downed branch switches
+# physics OFF once the wreck has settled, so anything ticked there would simply
+# stop and the robot would never get up.
+#
+# Guarded by a generation counter. Without it a timer armed by an EARLIER
+# downing — one the player revived by hand — would still fire later and pull
+# the robot up in the middle of its second downing, long before its own timer.
+# ─────────────────────────────────────────────
+func _arm_self_revive() -> void:
+	if self_revive_seconds <= 0.0 or _self_revive_used:
+		return
+	_self_revive_gen += 1
+	var gen := _self_revive_gen
+	# process_always = false: a squad manager opened mid-fight pauses the game,
+	# and the countdown should pause with it.
+	var timer := get_tree().create_timer(self_revive_seconds, false)
+	timer.timeout.connect(func():
+		if not is_instance_valid(self) or gen != _self_revive_gen or not downed:
+			return
+		_self_revive_used = true
+		# No bark: BarkSet has no revive line, and borrowing KILL would
+		# announce a kill that did not happen. The robot visibly standing back
+		# up is the cue.
+		revive())
+
+
 func enter_downed() -> void:
 	if downed:
 		return
@@ -2208,6 +2329,7 @@ func enter_downed() -> void:
 	downed = true
 	alive = false
 	health = downed_health
+	_arm_self_revive()
 	change_ai_state(AIState.DEAD)
 	velocity = Vector3.ZERO
 	if nav_agent != null:
@@ -2296,6 +2418,9 @@ func apply_healing(amount: int) -> void:
 func revive() -> void:
 	if not downed:
 		return
+	# Cancels any nanite timer still running. If a squadmate or the player got
+	# here first, the charge was not spent and stays available for next time.
+	_self_revive_gen += 1
 	downed = false
 	alive = true
 	health = maxi(health, int(ceil(max_health * revive_at_fraction)))
@@ -2338,6 +2463,38 @@ func _begin_settle() -> void:
 	set_physics_process(true)
 
 
+# The settle depths were tuned on the standard 2m frame. A hopper is a 1m
+# capsule, and sinking it the same 0.7m put it almost entirely through the deck
+# — so the sink scales with the body's own height. A 2m robot is unchanged.
+const SETTLE_REFERENCE_HEIGHT := 2.0
+
+
+func _settle_scale() -> float:
+	var h := _body_height()
+	if h <= 0.0:
+		return 1.0
+	return clampf(h / SETTLE_REFERENCE_HEIGHT, 0.25, 1.5)
+
+
+# From the body's own collider rather than its mesh: every frame has one, and
+# flattening only ROTATES it, so its height still describes the robot standing.
+# Basis scale, not rotation, so a flattened capsule still measures correctly.
+func _body_height() -> float:
+	if _collision_shape == null or _collision_shape.shape == null:
+		return 0.0
+	var k: float = absf(_collision_shape.global_transform.basis.get_scale().y)
+	var s := _collision_shape.shape
+	if s is CapsuleShape3D:
+		return (s as CapsuleShape3D).height * k
+	if s is CylinderShape3D:
+		return (s as CylinderShape3D).height * k
+	if s is BoxShape3D:
+		return (s as BoxShape3D).size.y * k
+	if s is SphereShape3D:
+		return (s as SphereShape3D).radius * 2.0 * k
+	return 0.0
+
+
 func _tick_settle(delta: float) -> void:
 	if not _settling:
 		return
@@ -2348,6 +2505,7 @@ func _tick_settle(delta: float) -> void:
 	var depth: float = settle_depth
 	if Enums.are_hostile(Enums.Factions.PLAYER, faction):
 		depth = settle_depth_hostile
+	depth *= _settle_scale()
 
 	var progress: float = clampf((_settle_timer - settle_after) / maxf(settle_duration, 0.01), 0.0, 1.0)
 	global_position.y = _settle_rest_y - depth * progress
@@ -2483,7 +2641,12 @@ func reset():
 	# Was never reset — squads set this true and nothing ever set it back,
 	# so every squad member ran full physics forever.
 	always_active = false
+	# A level reset is a fresh start, so the nanite charge comes back with it.
+	_self_revive_used = false
+	_self_revive_gen += 1
 	signal_integrity = 1.0
+	_signal_locked_t = 0.0
+	_woken_t = 0.0
 	_signal_stutter_timer = 0.0
 	_equipment_cooldowns.clear()
 	_target_stationary_time = 0.0
@@ -2603,9 +2766,26 @@ func _enter_ekill() -> void:
 	_burst_left = 0
 	_aim_tracking = 0.0
 
+## Hold signal where it is for `seconds` — no passive recovery.
+##
+## What turns an EMP from a flicker into a stun. E-KILL is a threshold at 0.01
+## and recovery is 0.08/s, so a robot knocked flat to zero climbed back out of
+## E-KILL in about an eighth of a second: it twitched and carried on. Locked, it
+## stays down for the duration, then climbs back through CRITICAL, DEGRADED and
+## FUZZED the ordinary way — so the whole disruption lasts several seconds and
+## tapers rather than switching off.
+##
+## Divided by signal_resistance, the same as the damage itself: a Hardened
+## Uplink shortens the lock as well as softening the hit.
+func lock_signal(seconds: float) -> void:
+	_signal_locked_t = maxf(_signal_locked_t, seconds / maxf(signal_resistance, 0.01))
+
+
 func _tick_signal(delta: float) -> void:
-	# Passive signal recovery
-	if signal_integrity < 1.0:
+	# Passive signal recovery, unless something is holding it down.
+	if _signal_locked_t > 0.0:
+		_signal_locked_t = maxf(0.0, _signal_locked_t - delta)
+	elif signal_integrity < 1.0:
 		signal_integrity = minf(1.0, signal_integrity + signal_recovery_rate * delta)
 
 	# DEGRADED: movement hesitation — occasional stutter
@@ -2652,18 +2832,6 @@ func is_path_clear(from: Vector3, to: Vector3, ignore: Node3D = null) -> bool:
 		exclusion.append((ignore as CollisionObject3D).get_rid())
 	query.exclude = exclusion
 	return not space_state.intersect_ray(query)
-
-func update_debug_label():
-	var sig_str = SignalState.keys()[get_signal_state()]
-	var faction_str = Enums.Factions.keys()[faction]
-	label.text = "%s | %s\nHP: %d  Sig: %s\n%s" % [
-		soldier_name,
-		faction_str,
-		health,
-		sig_str,
-		AIState.keys()[ai_state]
-	]
-
 
 func force_check_detection():
 	if detection == null or detection.get_child_count() == 0:
