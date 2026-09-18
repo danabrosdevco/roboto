@@ -617,6 +617,18 @@ var frame_waited: bool = false
 
 # ── EQUIPMENT ─────────────────────────────────
 var _equipment_cooldowns: Dictionary = {}
+# Last equipment use, for the squad HUD readout. See the assignment in the
+# equipment block for why this is a timestamp rather than a state.
+var _last_equipment_ms: int = -100000
+var _last_equipment_label: String = ""
+
+
+func seconds_since_equipment() -> float:
+	return (Time.get_ticks_msec() - _last_equipment_ms) / 1000.0
+
+
+func last_equipment_label() -> String:
+	return _last_equipment_label
 var _target_stationary_time: float = 0.0
 var _target_last_position: Vector3 = Vector3.ZERO
 const EQUIPMENT_RECON_TIME: float = 1.5
@@ -750,8 +762,24 @@ func _physics_process(delta: float) -> void:
 		_apply_motion()
 		return
 
+	# The player's own side is never culled. Passive mode zeroes velocity and
+	# points the nav agent at the unit's own feet, so a soldier who falls more
+	# than activation_distance (75m) behind can never close the gap on his own
+	# — he stands there until the player happens to walk back to him. Order him
+	# to a far objective and he freezes partway.
+	#
+	# The check has to be HERE rather than inside enter_passive_mode(), which
+	# already honours always_active: the return below skips handle_movement,
+	# handle_weapon_logic and _update_facing, so gating only the state change
+	# leaves the unit's flags correct while its brain still stops running.
+	#
+	# Faction rather than always_active because reset() clears that flag, so a
+	# soldier respawned or repaired since his last order was unprotected — and
+	# because faction cannot be missed by a future code path that forgets to
+	# set it. Hostiles are deliberately left culled; they are the population
+	# that makes distance culling worth having.
 	var dist_sq = global_position.distance_squared_to(player.global_position)
-	if dist_sq > activation_distance_sq:
+	if dist_sq > activation_distance_sq and not _is_player_side():
 		enter_passive_mode()
 		_apply_motion()
 		return
@@ -822,10 +850,16 @@ func _remember_last_seen(pos: Vector3) -> void:
 # ─────────────────────────────────────────────
 # PASSIVE MODE
 # ─────────────────────────────────────────────
+# Anything fighting on the player's side. NEUTRAL is deliberately excluded —
+# scenery robots are exactly the thing distance culling exists for.
+func _is_player_side() -> bool:
+	return faction == Enums.Factions.PLAYER or faction == Enums.Factions.ALLIED
+
+
 func enter_passive_mode():
 	if ai_state == AIState.PASSIVE:
 		return
-	if always_active:
+	if always_active or _is_player_side():
 		return
 	change_ai_state(AIState.PASSIVE)
 	velocity.x = 0
@@ -1362,6 +1396,16 @@ func _score_combat_option(option: int) -> float:
 			if pinned:
 				w *= 0.6
 		CombatOptions.FIRE:
+			# A MELEE weapon out of reach has nothing to swing at.
+			#
+			# Both melee chassis allow only MOVE and FIRE, and at 30m the
+			# scoring gave MOVE ~6 against FIRE ~3.5 — so better than a third of
+			# every action roll was "attack" from far outside a 1.5m reach, and
+			# the robot simply stopped and swiped at nothing. That is the
+			# standing-around; it was never a movement problem.
+			if weapon != null and weapon.weapon_type == Enums.AIWeaponTypes.MELEE:
+				if dist > weapon.melee_range * 1.25:
+					return 0.0
 			if not _has_los and not _can_fire_without_los():
 				return 0.1
 			w += 2.5
@@ -1433,7 +1477,11 @@ func _score_movement_option(option: int) -> float:
 			# and it lands short in the open.
 			if dist < leap_min_distance or dist > leap_max_distance:
 				return 0.1
-			w = 1.5
+			# Was a flat 1.5, competing against ADVANCE at 0.4 + range_ratio*3.0
+			# — which for a melee unit pins range_ratio at its 2.0 ceiling, so
+			# ADVANCE scored 6.4 and the leaper walked instead of leaping. In
+			# band, the leap IS the attack, so it should win clearly.
+			w = 7.0
 		MovementOptions.CHASE:
 			w = 0.3 + range_ratio * 2.0
 			if not _has_los:
@@ -1865,6 +1913,12 @@ func _evaluate_equipment_use() -> void:
 			get_tree().current_scene.add_child(equipment)
 			equipment.execute(context)
 			slot.consume()
+			# Recorded for the squad HUD. Equipment use is instantaneous —
+			# instantiate, execute, free — so there is no "currently using" state
+			# to read anywhere; a timestamp is the only way the readout can say
+			# what a squadmate just did.
+			_last_equipment_ms = Time.get_ticks_msec()
+			_last_equipment_label = slot.label if slot.label != "" else "EQUIPMENT"
 			_equipment_cooldowns[i] = equipment.cooldown
 			if equipment.is_inside_tree():
 				equipment.queue_free()

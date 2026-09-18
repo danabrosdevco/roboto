@@ -43,13 +43,14 @@ particle_effects_hit = [NodePath("SparkBurst")]
 visible_pieces = [NodePath("CSGMesh3D"), NodePath("CSGMesh3D2"), NodePath("ai_world_weapon")]
 health = 60
 max_health = 60
-move_speed = 8.0
+move_speed = 12.0
 acceleration = 11.0
 reposition_distance = 0.0
 advance_distance = 5.0
 fallback_distance = 0.0
 bits = 5
-combat_recon_time = 0.7
+combat_recon_time = 0.35
+aggressive = true
 AllowedMovementOptions = Array[int]([4])
 AllowedCombatOptions = Array[int]([0, 2])
 
@@ -95,6 +96,8 @@ transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0.4155
 script = ExtResource("11_ct7gf")
 base_material = ExtResource("7_4gcnj")
 pieces = [NodePath("../CSGMesh3D")]
+paint_blend = 1.0
+marker_energy = 6.0
 
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

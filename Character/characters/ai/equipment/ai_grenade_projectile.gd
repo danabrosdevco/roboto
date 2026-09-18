@@ -19,7 +19,6 @@ class_name AIGrenadeProjectile
 
 var _fuse_timer: float = 0.0
 var _bounce_count: int = 0
-var _armed: bool = false
 var _exploded: bool = false
 var _indicator_instance: Node3D = null
 var _thrower: Node = null  # set by AIGrenade so we don't damage ourselves

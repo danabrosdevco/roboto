@@ -61,7 +61,7 @@ func _release_one(weapon_target: Vector3, index: int) -> void:
 	# projectile hands its thrower to the Explosion, which is what makes a
 	# grenade kill count for somebody and what stops the gunship blast-killing
 	# its own escorts at full damage.
-	var shooter := get_parent()
+	var shooter := _owner_body()
 	if grenade.has_method("setup"):
 		grenade.setup(shooter)
 	if fuse_override > 0.0 and "fuse_time" in grenade:
@@ -69,6 +69,13 @@ func _release_one(weapon_target: Vector3, index: int) -> void:
 
 	get_tree().current_scene.add_child(grenade)
 	grenade.global_position = origin
+
+	# A released charge must never collide with the thing that let go of it.
+	# The drop spawns at the muzzle, which is INSIDE the gunship's own collider,
+	# so move_and_slide() resolved the overlap by shoving the aircraft sideways
+	# — it knocked itself off its flight path with every round in the salvo.
+	if shooter is PhysicsBody3D and grenade is PhysicsBody3D:
+		(grenade as PhysicsBody3D).add_collision_exception_with(shooter)
 
 	if grenade is RigidBody3D:
 		(grenade as RigidBody3D).linear_velocity = _release_velocity(origin, weapon_target, index)
@@ -107,7 +114,7 @@ func _release_velocity(origin: Vector3, weapon_target: Vector3, index: int) -> V
 
 # The carrier's motion, if whatever is holding this has any.
 func shooter_velocity() -> Vector3:
-	var shooter := get_parent()
+	var shooter := _owner_body()
 	if shooter != null and "velocity" in shooter:
 		return shooter.velocity
 	return Vector3.ZERO

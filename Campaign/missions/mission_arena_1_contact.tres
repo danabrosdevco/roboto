@@ -1,15 +1,16 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=6 format=3 uid="uid://3jioym1uw0m6"]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3 uid="uid://3jioym1uw0m6"]
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
 [ext_resource type="PackedScene" uid="uid://rnm8xsxcwbsx" path="res://maps/arena_level.tscn" id="3_arena"]
-[ext_resource type="PackedScene" uid="uid://bjnmbvul1677q" path="res://Character/characters/ai/enemy_chaser.tscn" id="4_melee"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="5_chaser"]
 
 [sub_resource type="Resource" id="S_melee"]
 script = ExtResource("2_espec")
 callsign = "SCRAP"
-count = 4
-chassis = ExtResource("4_melee")
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_chaser"), ExtResource("5_chaser"), ExtResource("5_chaser"), ExtResource("5_chaser")])
+count = 0
 posture = 2
 route_tag = &""
 post_tag = &"obj_arena_hostiles"
@@ -30,5 +31,5 @@ replace_level_enemies = true
 active_objectives = Array[StringName]([&"arena_clear", &"arena_extract"])
 reward_resources = 45
 unlocks = Array[StringName]([])
-repeatable = true
+repeatable = false
 requires = Array[StringName]([])

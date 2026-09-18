@@ -29,6 +29,15 @@ const SAVE_VERSION := 1
 # "unit:soldier_04" or "kit:bravo2:slot0".
 @export var allocations: Dictionary = {}
 @export var completed_missions: Array[StringName] = []
+## How many times each mission has been cleared, keyed by mission id as a
+## String. completed_missions only answers "ever", which is not enough when
+## every arena mission is repeatable — a player standing at the terminal needs
+## to see that he has already run this one twice.
+##
+## String keys, not StringName: this round-trips through JSON, and JSON object
+## keys always come back as String. Mixing the two silently misses every lookup
+## after the first load.
+@export var mission_clears: Dictionary = {}
 @export var unlocked: Array[StringName] = []
 @export var selected_mission_id: StringName = &""
 
@@ -497,6 +506,22 @@ func _next_purchase() -> int:
 # ─────────────────────────────────────────────
 # SAVE / LOAD
 # ─────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# MISSION CLEARS
+# ─────────────────────────────────────────────
+func clears_of(id: StringName) -> int:
+	return int(mission_clears.get(String(id), 0))
+
+
+func record_clear(id: StringName) -> void:
+	var key := String(id)
+	mission_clears[key] = int(mission_clears.get(key, 0)) + 1
+
+
+func has_cleared(id: StringName) -> bool:
+	return clears_of(id) > 0
+
+
 func to_dict() -> Dictionary:
 	var records: Array = []
 	for r in roster:
@@ -513,6 +538,7 @@ func to_dict() -> Dictionary:
 		"allocations": allocations,
 		"roster": records,
 		"completed_missions": missions,
+		"mission_clears": mission_clears.duplicate(),
 		"unlocked": unlocks,
 		"selected_mission_id": String(selected_mission_id),
 		"next_id": _next_id,
@@ -544,6 +570,14 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	for m in data.get("completed_missions", []):
 		missions.append(StringName(str(m)))
 	s.completed_missions = missions
+
+	# Rebuilt key by key rather than assigned wholesale: JSON hands back floats
+	# for every number, and a float clear-count formats as "CLEARED x2.0".
+	var clears: Dictionary = {}
+	var raw_clears: Dictionary = data.get("mission_clears", {})
+	for k in raw_clears:
+		clears[str(k)] = int(raw_clears[k])
+	s.mission_clears = clears
 
 	var unlocks: Array[StringName] = []
 	for u in data.get("unlocked", []):

@@ -5,5 +5,7 @@
 
 [node name="Master" type="Node"]
 script = ExtResource("2_master")
+company_seconds = 5.0
+title_seconds = 5.0
 
 [node name="World" parent="." instance=ExtResource("1_dsoqm")]

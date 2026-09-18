@@ -108,6 +108,10 @@ func deploy_into(level: Node, records: Array[SoldierRecord]) -> Squad:
 		return null
 
 	active_squad = _build_squad(point, members)
+	print("[SquadSpawner] %d deployed at spawn point '%s' (%s, objective %d)" % [
+		members.size(), point.callsign, str(point.global_position.round()),
+		point.default_objective,
+	])
 	level.add_child(active_squad)
 	squad_deployed.emit(active_squad, members.size())
 	return active_squad
@@ -168,10 +172,18 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 	# Module health is already folded into record.max_health by
 	# recompute_stats(), so adding it again here would double-count it. What's
 	# left are the stats the record can't express as a single number.
-	if "accuracy_multiplier" in soldier:
-		soldier.accuracy_multiplier = record.effective_accuracy
-	if "speed_multiplier" in soldier:
-		soldier.speed_multiplier = record.effective_speed
+	# These wrote to accuracy_multiplier and speed_multiplier, neither of which
+	# exists on any character script — the `in` guard meant both assignments
+	# were skipped every single time, silently, so the armoury's accuracy and
+	# speed stats have never done anything at all.
+	#
+	# MULTIPLY, don't assign. accuracy_skill is authored per chassis (0.75 on a
+	# line trooper) and the record's effective_accuracy is a 1.0-baseline
+	# modifier; assigning it would hand every squad member a flat accuracy
+	# upgrade the moment this started working. Multiplying is a no-op at 1.0,
+	# so current balance is untouched and only fitted modules move the number.
+	soldier.accuracy_skill *= record.effective_accuracy
+	soldier.move_speed *= record.effective_speed
 	soldier.sensor_range = record.effective_sensor_range
 	soldier.sensor_bonus = 0.0   # already folded into the record's value
 	if record.effective_signal_bonus != 0.0:

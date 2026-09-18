@@ -15,18 +15,41 @@ class_name TutorialLabel
 # Deliberately NOT tied to objectives. A sign that says "HOLD F TO CAPTURE" is
 # teaching a verb, not tracking a mission — wire `hide_when` yourself if you
 # want it to disappear on some condition.
+#
+# ── LEGIBILITY ────────────────────────────────
+# These are read THROUGH the HUD's CRT/signal filter, which is the whole reason
+# the defaults here are so aggressive. That filter adds scanlines and noise and
+# eats exactly two things: saturated mid-tone colour, and thin strokes. The old
+# defaults were a palette green at Godot's stock 12px outline, held at partial
+# alpha for most of their visible range — three separate ways of being hard to
+# read, stacked. Near-white, a hard black edge, unshaded, drawn over geometry,
+# and at full brightness well before you are close enough to care.
 # ─────────────────────────────────────────────
 
 ## Fade in within this distance. 0 disables proximity entirely and the label is
 ## simply always visible.
-@export var reveal_distance: float = 12
-## Full opacity by here. Between this and reveal_distance it fades.
-@export var full_distance: float = 8
+@export var reveal_distance: float = 34.0
+## Full opacity by here. Between this and reveal_distance it fades. Kept close
+## to reveal_distance on purpose: a sign spends its whole life either readable
+## or absent, never at the half-alpha that made these unreadable.
+@export var full_distance: float = 26.0
 @export var fade_speed: float = 6.0
 
 @export_group("Style")
+## Sign colour. Near-white rather than a palette hue — see LEGIBILITY above.
+@export var text_color: Color = Color(0.95, 1.0, 0.97)
+## Black outline thickness, in font pixels. Godot's stock 12 vanishes against
+## bright terrain; a hard edge is what keeps text readable over ANY background
+## without needing a panel behind it.
+@export var outline_px: int = 36
+## Render over geometry. A tutorial sign half-buried in a wall teaches nothing,
+## and these are the one thing in a level that should always be readable.
+@export var draw_through_walls: bool = true
+## Ignore scene lighting. A teaching sign in shadow is just a darker sign.
+@export var unshaded: bool = true
+## Legacy. Only consulted when custom_color and text_color are both left alone.
 @export var palette_color: HUDPalette.HudColors = HUDPalette.HudColors.BRIGHT
-## Overrides palette_color when not fully transparent. For the odd sign that
+## Overrides text_color when not fully transparent. For the odd sign that
 ## needs to be red.
 @export var custom_color: Color = Color(0, 0, 0, 0)
 ## Faces the camera. Off for signs painted flat onto a surface.
@@ -38,10 +61,10 @@ var _player: Node3D = null
 
 func _ready() -> void:
 	billboard = BaseMaterial3D.BILLBOARD_ENABLED if face_camera else BaseMaterial3D.BILLBOARD_DISABLED
-	# Signs are read through walls more often than not in a tutorial, and a
-	# label z-fighting with the wall it is mounted on reads as a bug.
-	no_depth_test = false
+	no_depth_test = draw_through_walls
+	shaded = not unshaded
 	_apply_color()
+	_apply_outline()
 	if reveal_distance > 0.0:
 		modulate.a = 0.0
 		set_process(true)
@@ -49,12 +72,12 @@ func _ready() -> void:
 		set_process(false)
 
 
-# Applies the palette ONLY to a label that has not been coloured by hand.
+# Applies the sign colour ONLY to a label that has not been coloured by hand.
 #
 # This used to overwrite modulate unconditionally in _ready, which meant any
 # colour set in the inspector was thrown away the moment the scene ran — so the
-# assignment got commented out, and with it the palette stopped working at all.
-# Checking for untouched white keeps both: palette by default, inspector wins.
+# assignment got commented out, and with it the styling stopped working at all.
+# Checking for untouched white keeps both: styling by default, inspector wins.
 func _apply_color() -> void:
 	if custom_color.a > 0.0:
 		modulate = Color(custom_color.r, custom_color.g, custom_color.b, modulate.a)
@@ -62,8 +85,17 @@ func _apply_color() -> void:
 	# Pure white is Label3D's default, i.e. "nobody has picked a colour".
 	if not modulate.is_equal_approx(Color.WHITE):
 		return
-	var col: Color = HUDPalette.get_hud_color(palette_color)
+	var col: Color = text_color
 	modulate = Color(col.r, col.g, col.b, modulate.a)
+
+
+# The outline is what does the actual work. Only applied when the label is
+# still at Godot's stock 12, so a sign deliberately styled in the inspector
+# keeps whatever it was given.
+func _apply_outline() -> void:
+	if outline_size == 12:
+		outline_size = outline_px
+	outline_modulate = Color(0, 0, 0, 1)
 
 
 func _process(delta: float) -> void:

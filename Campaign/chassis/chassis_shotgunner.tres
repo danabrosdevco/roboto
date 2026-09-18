@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://cchassisshotgn1"]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"shotgunner"
+display_name = "Shotgun Trooper"
+description = "Close-quarters line infantry. Has to close to 45m to matter, which is why they come in numbers."
+scene = ExtResource("2_scene")
+cost = 0
+base_health = 100
+base_speed = 1.0
+base_accuracy = 0.75
+base_sensor_range = 45.0
+weapon_slots = 1
+equipment_slots = 2
+module_slots = 2
+required_rank = 0

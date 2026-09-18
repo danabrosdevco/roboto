@@ -1,6 +1,6 @@
-[gd_scene load_steps=18 format=3 uid="uid://cheli0000001"]
+[gd_scene load_steps=24 format=3 uid="uid://crifle0000001"]
 
-[ext_resource type="Script" path="res://Character/characters/ai/enemy_helicopter.gd" id="1_nty0a"]
+[ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_nty0a"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
 [ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="2_8p1te"]
 [ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_0ci13"]
@@ -8,23 +8,52 @@
 [ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ic4jn"]
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t0xuv"]
 [ext_resource type="Script" path="res://Character/components/char_debug_label.gd" id="7_t1gg6"]
+[ext_resource type="Shader" path="res://Character/faction_metal.gdshader" id="8_27chb"]
 [ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
-[ext_resource type="PackedScene" uid="uid://v11ihb3rf0ny" path="res://3d_assets/chatgptg/drone_variant_02_interceptor.glb" id="8_sbw46"]
+[ext_resource type="PackedScene" uid="uid://caiwepm4rifle1" path="res://Character/weapon/ai-wep_m4.tscn" id="8_utu75"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
+[ext_resource type="Texture2D" uid="uid://bvk26224sihon" path="res://2d_assets/metal textures poly.com/metal_plate_02_diff_4k.jpg" id="9_qbqh2"]
+[ext_resource type="Texture2D" uid="uid://o8ik6rntdl2v" path="res://2d_assets/metal textures poly.com/metal_plate_02_disp_4k.png" id="10_tx84r"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
+[ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="11_n4p1p"]
 [ext_resource type="Script" path="res://faction_livery.gd" id="14_agla4"]
-[ext_resource type="AudioStream" uid="uid://dw0e386o42h2o" path="res://sounds/sfx/quadcopter loop/freesound_community-mini-quadcopter-flying-loop-80330.mp3" id="14_pou81"]
-[ext_resource type="PackedScene" uid="uid://cyssps1ojdxmr" path="res://Character/weapon/ai-wep_grenade_launcher.tscn" id="20_gl"]
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_cusma"]
-radius = 1.15
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bejot"]
+render_priority = 0
+shader = ExtResource("8_27chb")
+shader_parameter/use_normal_map = false
+shader_parameter/normal_scale = 1.0
+shader_parameter/derive_mask_from_albedo = true
+shader_parameter/paint_band_center = 0.45
+shader_parameter/paint_band_width = 0.425
+shader_parameter/base_tint = Color(1, 1, 1, 1)
+shader_parameter/metallic = 0.4
+shader_parameter/roughness = 0.85
+shader_parameter/faction_color = Color(0.7, 0.35, 0.02, 1)
+shader_parameter/paint_blend = 1.0
+shader_parameter/marker_energy = 6.0
+shader_parameter/shutdown = 0.0
+shader_parameter/albedo_tex = ExtResource("9_qbqh2")
+shader_parameter/normal_tex = ExtResource("10_tx84r")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_jrkgo"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 25.0
 
-[node name="Enemy_Helicopter" type="CharacterBody3D" node_paths=PackedStringArray("rotor_loop", "nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_3rhyt"]
+radius = 0.2
+height = 0.6
+radial_segments = 6
+rings = 6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6qgus"]
+albedo_texture = ExtResource("11_n4p1p")
+
+[node name="Soldier_Rifle" type="CharacterBody3D" node_paths=PackedStringArray("nav_agent", "weapon", "label", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
 script = ExtResource("1_nty0a")
-rotor_loop = NodePath("RotorLoop")
 nav_agent = NodePath("NavigationAgent3D")
 weapon = NodePath("aiweapon")
 label = NodePath("DebugLabel")
@@ -32,26 +61,28 @@ bark = NodePath("Bark")
 detection = NodePath("Detection")
 particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
 particle_effects_hit = [NodePath("SparkBurst")]
-visible_pieces = [NodePath("drone_variant_02_interceptor")]
+visible_pieces = [NodePath("CSGMesh3D"), NodePath("aiweapon"), NodePath("CSGMesh3D2")]
 activation_distance = 250
 health = 100
 max_health = 100
-move_speed = 14.0
+move_speed = 6.0
 equipment_slots = Array[ExtResource("2_8p1te")]([ExtResource("3_3i6e3")])
-soldier_name = "Gunship"
+soldier_name = "Rifleman"
 AllowedMovementOptions = Array[int]([0, 1])
 AllowedCombatOptions = Array[int]([0, 1, 2])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-shape = SubResource("SphereShape3D_cusma")
+shape = SubResource("CapsuleShape3D_mygdm")
 
 [node name="Bark" parent="." instance=ExtResource("2_7mr33")]
 bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"), ExtResource("5_t0xuv")])
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
-[node name="drone_variant_02_interceptor" parent="." instance=ExtResource("8_sbw46")]
-transform = Transform3D(-8.74228e-08, -2, 8.74228e-08, 0, -8.74228e-08, -2, 2, -8.74228e-08, 3.82137e-15, 0, 0.376845, 0)
+[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+material_override = SubResource("ShaderMaterial_bejot")
+mesh = SubResource("CapsuleMesh_jrkgo")
+material = ExtResource("8_pr6gp")
 
 [node name="DebugLabel" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.22588, 0)
@@ -61,10 +92,18 @@ text = "Text"
 font_size = 48
 script = ExtResource("7_t1gg6")
 
+[node name="aiweapon" parent="." instance=ExtResource("8_utu75")]
+transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.553111, 0.221401, 0)
+
 [node name="Detection" type="Area3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
 shape = SubResource("SphereShape3D_mkxqd")
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.403749)
+mesh = SubResource("CapsuleMesh_3rhyt")
+material = SubResource("StandardMaterial3D_6qgus")
 
 [node name="SparkBurst" parent="." instance=ExtResource("9_pm84i")]
 
@@ -73,23 +112,9 @@ shape = SubResource("SphereShape3D_mkxqd")
 [node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
 script = ExtResource("14_agla4")
 base_material = ExtResource("8_pr6gp")
-pieces = [NodePath("../drone_variant_02_interceptor/world/body_core"), NodePath("../drone_variant_02_interceptor/world/body_roof"), NodePath("../drone_variant_02_interceptor/world/nose_shell"), NodePath("../drone_variant_02_interceptor/world/arm_1"), NodePath("../drone_variant_02_interceptor/world/arm_0"), NodePath("../drone_variant_02_interceptor/world/arm_2"), NodePath("../drone_variant_02_interceptor/world/arm_3"), NodePath("../drone_variant_02_interceptor/world/arm_armor_0"), NodePath("../drone_variant_02_interceptor/world/arm_armor_2"), NodePath("../drone_variant_02_interceptor/world/arm_armor_1"), NodePath("../drone_variant_02_interceptor/world/arm_armor_3"), NodePath("../drone_variant_02_interceptor/world/side_armor_-1"), NodePath("../drone_variant_02_interceptor/world/side_armor_1"), NodePath("../drone_variant_02_interceptor/world/underside_frame")]
+pieces = [NodePath("../CSGMesh3D")]
 paint_blend = 1.0
 marker_energy = 6.0
 
-[node name="RotorLoop" type="AudioStreamPlayer3D" parent="."]
-stream = ExtResource("14_pou81")
-volume_db = -6.0
-unit_size = 30.0
-max_db = -5.0
-pitch_scale = 0.5
-autoplay = true
-max_distance = 160.0
-
-[node name="aiweapon" parent="." instance=ExtResource("20_gl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, 0)
-
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]
-
-[editable path="drone_variant_02_interceptor"]

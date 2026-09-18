@@ -135,6 +135,15 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		_suppress_hover_until_mouse_moves = false
 
+	# ESC closes. Master's own ESC handler bails out whenever the tree is
+	# already paused — which this screen does on open — so the key did nothing
+	# at all in here and TAB was the only way back out.
+	if visible and event is InputEventKey and event.pressed and not event.echo \
+			and event.keycode == KEY_ESCAPE:
+		get_viewport().set_input_as_handled()
+		close()
+		return
+
 	if not InputMap.has_action(open_action):
 		return
 	if event.is_action_pressed(open_action):
@@ -160,7 +169,21 @@ func open() -> void:
 	_apply_cursors()
 	_hide_other_hud(true)
 	_play(sfx_open)
+	# Opening onto "select a soldier" costs a click every single time and reads
+	# as an empty screen rather than a management one. The player record always
+	# exists and is what you most often came in to change. Re-checked on every
+	# open because a previously selected soldier can be gone by the next one.
+	if not _roster_has(_selected):
+		_selected = state.player_record
 	_rebuild()
+
+
+func _roster_has(record: SoldierRecord) -> bool:
+	if state == null or record == null:
+		return false
+	if record == state.player_record:
+		return true
+	return state.roster.has(record)
 
 
 func close() -> void:

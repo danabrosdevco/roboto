@@ -32,6 +32,15 @@ class_name MissionTerminal
 @export var idle_color: Color = Color(0.75, 0.75, 0.75)
 @export var unavailable_color: Color = Color(0.5, 0.35, 0.35)
 @export var select_sound: AudioStreamPlayer3D
+
+@export_group("Screen")
+## The briefing sentence under the status line. Turn off if your terminal panel
+## is too small to carry four lines.
+@export var show_briefing: bool = true
+## Wrap column for the screen text, in Label3D width units (multiplied by
+## pixel_size to get metres). Only applied if the label is still at Godot's
+## default AUTOWRAP_OFF, so anything you set in the inspector wins.
+@export var label_width: float = 420.0
 # Was get_parent().get_parent().Campaign, which assumes this node sits exactly
 # two levels under World. Nest it one deeper and Campaign is null, _ready throws
 # on the state_loaded connect, and the terminal goes quiet with no error you'd
@@ -56,6 +65,7 @@ func _ready() -> void:
 		interactible.type = Enums.InteractTypes.MISSION
 	else:
 		push_warning("MissionTerminal '%s' has no Interactible child." % name)
+	_style_label()
 	if Campaign != null:
 		Campaign.state_loaded.connect(_refresh)
 		# Coming home blanks the selection, so the label has to catch up — and
@@ -79,11 +89,87 @@ func get_prompt() -> String:
 	if Campaign == null:
 		return "Terminal offline"
 	if mission != null:
-		return "Brief: %s" % mission.display_name
+		return "Brief: %s%s" % [mission.display_name, _clear_suffix(mission)]
 	var queued: MissionDefinition = Campaign.selected_mission()
 	if queued != null:
-		return "Next Op: %s" % queued.display_name
+		return "Next Op: %s%s" % [queued.display_name, _clear_suffix(queued)]
 	return "Select Mission"
+
+
+# ─────────────────────────────────────────────
+# STATUS — every mission here is repeatable, so "have I done this?" is a
+# question the player genuinely cannot answer from the world. Without it the
+# obvious thing to do at the terminal is press F once and deploy, which means
+# replaying mission one forever and never seeing the rest of the campaign.
+# ─────────────────────────────────────────────
+
+func _clears(m: MissionDefinition) -> int:
+	if Campaign == null or Campaign.state == null or m == null:
+		return 0
+	return Campaign.state.clears_of(m.id)
+
+
+# Short form for the HUD's F-prompt, which has one line to work with.
+func _clear_suffix(m: MissionDefinition) -> String:
+	var n := _clears(m)
+	if n <= 0:
+		return ""
+	if n == 1:
+		return " [CLEARED]"
+	return " [CLEARED x%d]" % n
+
+
+# Long form for the terminal screen itself.
+func _status_of(m: MissionDefinition) -> String:
+	var n := _clears(m)
+	if n <= 0:
+		return "NEW"
+	if n == 1:
+		return "CLEARED"
+	return "CLEARED x%d" % n
+
+
+# The display name of the first unmet prerequisite. Telling the player the
+# mission is locked without saying what opens it just reads as a dead end.
+func _lock_reason(m: MissionDefinition) -> String:
+	if Campaign == null or Campaign.state == null or m == null:
+		return ""
+	for req in m.requires:
+		if not Campaign.state.completed_missions.has(req):
+			var prereq: MissionDefinition = Campaign.get_mission(req)
+			return prereq.display_name if prereq != null else String(req)
+	return ""
+
+
+# Missions held behind an unmet prerequisite. Shown as a count so the player
+# can see there IS more campaign past whatever is currently on offer.
+func _locked_count() -> int:
+	if Campaign == null or Campaign.state == null:
+		return 0
+	# This reads `requires` directly rather than going through
+	# available_missions(), so it would happily report "4 LOCKED" next to a
+	# list that is currently offering all four.
+	if Campaign.unlock_all_missions:
+		return 0
+	var n := 0
+	for m in Campaign.missions:
+		if m == null:
+			continue
+		for req in m.requires:
+			if not Campaign.state.completed_missions.has(req):
+				n += 1
+				break
+	return n
+
+
+# Where the cycle should land on the first press after coming home. Pointing it
+# at unplayed content makes "press F once and go" advance the campaign instead
+# of repeating the top of the list.
+func _first_unplayed_index(available: Array[MissionDefinition]) -> int:
+	for i in available.size():
+		if _clears(available[i]) <= 0:
+			return i
+	return 0
 
 
 func _on_interacted(_source: Interactible) -> void:
@@ -103,6 +189,11 @@ func _on_interacted(_source: Interactible) -> void:
 			_set_label("%s\nLOCKED" % mission.display_name.to_upper(), unavailable_color)
 			return
 		chosen = mission
+	elif _cycle_index < 0:
+		# First press since returning to base. Land on something unplayed
+		# rather than on whatever happens to sit at index 0.
+		_cycle_index = _first_unplayed_index(available)
+		chosen = available[_cycle_index]
 	else:
 		_cycle_index = (_cycle_index + 1) % available.size()
 		chosen = available[_cycle_index]
@@ -133,21 +224,71 @@ func _refresh() -> void:
 	var selected: MissionDefinition = Campaign.selected_mission()
 
 	if mission != null:
-		var is_selected: bool = selected != null and selected.id == mission.id
-		var locked: bool = not Campaign.available_missions().has(mission)
-		if locked:
-			_set_label("%s\n[LOCKED]" % mission.display_name.to_upper(), unavailable_color)
-		else:
-			_set_label("%s\n%s" % [
-				mission.display_name.to_upper(),
-				"► SELECTED" if is_selected else "%d RES" % mission.reward_resources
-			], selected_color if is_selected else idle_color)
+		_refresh_pinned(selected)
+	else:
+		_refresh_cycling(selected)
+
+
+func _refresh_pinned(selected: MissionDefinition) -> void:
+	if not Campaign.available_missions().has(mission):
+		var reason := _lock_reason(mission)
+		var tail := ("needs %s" % reason) if reason != "" else "unavailable"
+		_set_label("%s\n[LOCKED]\n%s" % [
+			mission.display_name.to_upper(), tail], unavailable_color)
 		return
+	var is_selected: bool = selected != null and selected.id == mission.id
+	_set_label("%s\n%s\n%s - %d RES%s" % [
+		mission.display_name.to_upper(),
+		"► SELECTED" if is_selected else "press F to queue",
+		_status_of(mission),
+		mission.reward_resources,
+		_brief_line(mission),
+	], selected_color if is_selected else idle_color)
+
+
+func _refresh_cycling(selected: MissionDefinition) -> void:
+	var available: Array[MissionDefinition] = Campaign.available_missions()
+	var locked := _locked_count()
+	var locked_tail := (" - %d LOCKED" % locked) if locked > 0 else ""
 
 	if selected == null:
-		_set_label("OPERATIONS\nno op selected", idle_color)
-	else:
-		_set_label("OPERATIONS\n► %s" % selected.display_name.to_upper(), selected_color)
+		if available.is_empty():
+			_set_label("OPERATIONS\nNO OPERATIONS AVAILABLE", unavailable_color)
+			return
+		_set_label("OPERATIONS\n%d AVAILABLE%s\npress F to cycle" % [
+			available.size(), locked_tail], idle_color)
+		return
+
+	# find() is by reference, and available_missions() hands back the same
+	# MissionDefinition instances every call, so this is stable.
+	var pos := available.find(selected)
+	var counter := ("%d/%d" % [pos + 1, available.size()]) if pos >= 0 else "-"
+	_set_label("OPERATIONS  %s\n► %s\n%s - %d RES%s%s" % [
+		counter,
+		selected.display_name.to_upper(),
+		_status_of(selected),
+		selected.reward_resources,
+		locked_tail,
+		_brief_line(selected),
+	], selected_color)
+
+
+func _brief_line(m: MissionDefinition) -> String:
+	if not show_briefing or m == null or m.briefing.strip_edges() == "":
+		return ""
+	return "\n" + m.briefing
+
+
+# The screen used to hold two short lines and now holds up to four, one of
+# which is a whole sentence. An unwrapped Label3D renders that as a single run
+# metres wide. Only touched when the label is still at AUTOWRAP_OFF, so styling
+# done in the inspector is never clobbered.
+func _style_label() -> void:
+	if label == null:
+		return
+	if label.autowrap_mode == TextServer.AUTOWRAP_OFF:
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		label.width = label_width
 
 
 func _set_label(text: String, color: Color) -> void:

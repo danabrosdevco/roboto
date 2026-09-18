@@ -112,6 +112,20 @@ func _process(delta: float) -> void:
 func can_fire() -> bool:
 	return not is_reloading and magazine_current > 0
 
+
+# When a round last left this weapon.
+#
+# The squad HUD used to read ai_state == COMBAT as "FIRING", which is really
+# "has a target" — so a soldier who had acquired someone and then spent ten
+# seconds walking, reloading or waiting for a shot still read FIRING the whole
+# time. That is the status getting stuck. A recency window on actual shots is
+# the only honest answer to "is this one shooting".
+var _last_fired_ms: int = -100000
+
+
+func seconds_since_fired() -> float:
+	return (Time.get_ticks_msec() - _last_fired_ms) / 1000.0
+
 func needs_reload() -> bool:
 	return not infinite_ammo and magazine_current <= 0 and not is_reloading
 
@@ -126,6 +140,7 @@ func fire(weapon_target: Vector3) -> void:
 	if not can_fire():
 		return
 
+	_last_fired_ms = Time.get_ticks_msec()
 	if not infinite_ammo:
 		magazine_current -= 1
 
@@ -160,8 +175,40 @@ func calculate_damage(distance: float) -> int:
 	var t = clamp((distance - damage_falloff_start) / range_beyond, 0.0, 1.0)
 	return int(lerp(float(base_damage), float(min_damage), t))
 
+# The owning character, not merely the node this weapon hangs off.
+#
+# Baked chassis scenes park the weapon directly on the CharacterBody3D, so
+# get_parent() was right for them — and every enemy in the game is baked.
+# equip_weapon_scene() parents a RUNTIME-fitted weapon to weapon_mount instead,
+# a bare Node3D, and every runtime-fitted weapon belongs to the player's squad.
+#
+# That single difference cost four things, all of them silent:
+#   - no confirmed_kills on the mount, so squad kill credit was dropped
+#   - no bark, so squad members never called out a kill
+#   - no get_faction(), so _owner_faction() returned null, _is_friendly()
+#     answered false for everybody, and they would happily shoot you
+#   - not a CollisionObject3D, so their own body was never excluded from their
+#     raycast
+#
+# Cached because this runs per shot and thirty robots fire at once.
+var _owner_cache: Node = null
+
+
+func _owner_body() -> Node:
+	if _owner_cache != null and is_instance_valid(_owner_cache):
+		return _owner_cache
+	var n: Node = get_parent()
+	while n != null:
+		if n is CharacterBody3D:
+			_owner_cache = n
+			return n
+		n = n.get_parent()
+	_owner_cache = get_parent()
+	return _owner_cache
+
+
 func _owner_faction():
-	var p = get_parent()
+	var p = _owner_body()
 	if p != null and p.has_method("get_faction"):
 		return p.get_faction()
 	return null
@@ -197,7 +244,7 @@ func friendly_in_line(weapon_target: Vector3) -> bool:
 	var direction: Vector3 = to_target / distance
 
 	var exclusion: Array[RID] = []
-	var shooter = get_parent()
+	var shooter = _owner_body()
 	if shooter is CollisionObject3D:
 		exclusion.append((shooter as CollisionObject3D).get_rid())
 
@@ -250,7 +297,7 @@ func check_damage(weapon_target: Vector3) -> void:
 	var direction = (weapon_target - from).normalized()
 
 	var exclusion: Array[RID] = []
-	var shooter = get_parent()
+	var shooter = _owner_body()
 	if shooter is CollisionObject3D:
 		exclusion.append((shooter as CollisionObject3D).get_rid())
 
@@ -294,7 +341,7 @@ func _apply_near_miss_suppression(shot_pos: Vector3) -> void:
 	_near_miss_query.collision_mask = character_mask
 	var results = space_state.intersect_shape(_near_miss_query, 8)
 	var suppression_amount = suppression_per_shot / 100.0
-	var shooter = get_parent()
+	var shooter = _owner_body()
 	for hit in results:
 		var body = hit.collider
 		if body == null:
@@ -319,7 +366,7 @@ func check_melee_damage() -> void:
 	_melee_query.transform = Transform3D(Basis(), global_position + get_forward_vector() * melee_range)
 	_melee_query.collision_mask = character_mask
 	var exclusion: Array[RID] = []
-	var shooter = get_parent()
+	var shooter = _owner_body()
 	if shooter is CollisionObject3D:
 		exclusion.append((shooter as CollisionObject3D).get_rid())
 	_melee_query.exclude = exclusion

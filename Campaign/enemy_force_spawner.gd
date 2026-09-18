@@ -34,6 +34,10 @@ var _squads: Array[Squad] = []
 # moment it answers.
 var _reserves: Dictionary = {}
 
+# The level reserves will be built into when their tag fires. Held because the
+# bodies no longer exist at deploy time, so wake() has nothing else to parent to.
+var _level: Node = null
+
 signal reinforcements_woken(tag: StringName, squads: int)
 
 
@@ -47,6 +51,7 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 	if mission == null:
 		push_warning("EnemyForceSpawner: no current mission. Campaign.current_mission is null, which usually means the level was launched directly instead of deployed to from base. See Campaign.debug_mission.")
 		return
+	_level = level
 	if mission.replace_level_enemies:
 		_clear_level_hostiles(level)
 	if mission.enemy_force.is_empty():
@@ -56,19 +61,42 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 
 	var hostiles := 0
 	for spec in mission.enemy_force:
-		if spec == null or spec.count <= 0:
+		if spec == null:
 			continue
+		if spec.body_count() <= 0:
+			# Was `spec.count <= 0`, which skipped every roster-form spec.
+			# Warned rather than silent: an empty spec is always an authoring
+			# mistake, and the failure it produces is a map with no enemies on
+			# it, which looks like the spawner being broken.
+			push_warning("EnemyForceSpawner: spec '%s' describes 0 bodies (roster empty and count %d). Skipped." % [spec.callsign, spec.count])
+			continue
+		# RESERVES ARE NOT SPAWNED YET.
+		#
+		# They used to be built at mission start and merely given a NONE squad
+		# objective. That is inert at the SQUAD level only — each body was still
+		# a live AI with working sensors, sitting in the world on always_active,
+		# so the whole reserve engaged the moment the player wandered into
+		# sensor range. Every helicopter arrived at once, hours before the
+		# objective that was supposed to call them.
+		#
+		# Holding the spec and building the bodies in wake() is the only way the
+		# posture means what it says. It also stops the player finding parked
+		# aircraft at a garrison and shooting them down before they ever fly.
+		if spec.posture == EnemySquadSpec.Posture.RESERVE:
+			if spec.reinforcement_tag == &"":
+				push_warning("EnemyForceSpawner: RESERVE squad '%s' has no reinforcement_tag, so nothing can ever wake it. It will never appear." % spec.callsign)
+				continue
+			if not _reserves.has(spec.reinforcement_tag):
+				_reserves[spec.reinforcement_tag] = []
+			_reserves[spec.reinforcement_tag].append(spec)
+			continue
+
 		var squad := _spawn_squad(level, spec)
 		if squad != null:
 			_squads.append(squad)
 			hostiles += squad.squad_members.size()
-			if spec.posture == EnemySquadSpec.Posture.RESERVE:
-				if spec.reinforcement_tag == &"":
-					push_warning("EnemyForceSpawner: RESERVE squad '%s' has no reinforcement_tag, so nothing can ever wake it. It will sit inert for the whole mission." % spec.callsign)
-				else:
-					if not _reserves.has(spec.reinforcement_tag):
-						_reserves[spec.reinforcement_tag] = []
-					_reserves[spec.reinforcement_tag].append({"squad": squad, "spec": spec})
+	if not _reserves.is_empty():
+		print("[EnemyForce] reserves held: %s" % str(pending_reserve_tags()))
 	force_deployed.emit(_squads.size(), hostiles)
 
 
@@ -78,6 +106,17 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 # Returns how many squads it woke, so the caller can tell "no reserves for this
 # objective" from "the trigger never fired" — the two look identical otherwise
 # and that is exactly the kind of silence this project keeps getting bitten by.
+# Which objective ids still have reinforcements waiting on them. Exposed so a
+# completed objective that wakes nothing can say WHY: "no reserve is listening
+# for this id" and "the completion never reached the spawner" are the same
+# silence otherwise, and telling them apart is most of debugging this system.
+func pending_reserve_tags() -> Array:
+	var out: Array = []
+	for t in _reserves:
+		out.append(String(t))
+	return out
+
+
 func wake(tag: StringName) -> int:
 	if tag == &"" or not _reserves.has(tag):
 		return 0
@@ -87,12 +126,18 @@ func wake(tag: StringName) -> int:
 	# do exactly that.
 	_reserves.erase(tag)
 
+	if _level == null or not is_instance_valid(_level):
+		push_warning("EnemyForceSpawner: '%s' called for reinforcements but the level is gone." % tag)
+		return 0
+
 	var woken := 0
-	for entry in entries:
-		var squad: Squad = entry["squad"]
-		if squad == null or not is_instance_valid(squad):
+	for spec in entries:
+		# Built HERE, not at mission start. See the RESERVE branch in
+		# deploy_force() for why.
+		var squad := _spawn_squad(_level, spec)
+		if squad == null:
 			continue
-		var spec: EnemySquadSpec = entry["spec"]
+		_squads.append(squad)
 		var post := _find_point(spec.post_tag)
 		var destination := post.global_position if post != null else squad.get_center()
 		squad.target_objective = post
@@ -117,23 +162,31 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 			_known_tags("patrol_paths"), _known_tags("squad_objective_points")])
 		return null
 
-	var scene: PackedScene = spec.chassis if spec.chassis != null else default_chassis
-	if scene == null:
+	# One entry per body, whichever form the spec used.
+	var bodies: Array[ChassisDefinition] = _bodies_of(spec)
+	if bodies.is_empty():
 		push_error("EnemyForceSpawner: no chassis for '%s' and no default_chassis." % spec.callsign)
 		return null
 
 	var members: Array[Soldier] = []
-	for i in spec.count:
-		var soldier := scene.instantiate() as Soldier
+	for i in bodies.size():
+		var frame: ChassisDefinition = bodies[i]
+		if frame == null or frame.scene == null:
+			push_error("EnemyForceSpawner: '%s' roster slot %d has no scene." % [spec.callsign, i])
+			continue
+		var soldier := frame.scene.instantiate() as Soldier
 		if soldier == null:
-			push_error("EnemyForceSpawner: %s is not a Soldier scene." % scene.resource_path)
-			break
+			push_error("EnemyForceSpawner: %s is not a Soldier scene." % frame.scene.resource_path)
+			continue
 		# Before add_child — AI._ready() runs initialize() and reads these.
 		soldier.faction = spec.faction
 		soldier.always_active = spec.always_active
+		# Numbered across the whole squad rather than per type, so a mixed
+		# garrison reads RELAY-1..RELAY-6 instead of RELAY-L-1 / RELAY-M-1.
 		soldier.soldier_name = "%s-%d" % [spec.callsign, i + 1]
+		_apply_frame(soldier, frame)
 		level.add_child(soldier)
-		soldier.global_position = anchor + _ring_offset(i, spec.count)
+		soldier.global_position = anchor + _ring_offset(i, bodies.size())
 		if ai_manager != null:
 			ai_manager.register_enemy(soldier)
 		members.append(soldier)
@@ -156,6 +209,48 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 
 	_apply_posture(squad, spec, route, post)
 	return squad
+
+
+# Flattens either spec form into one entry per body, so the spawn loop has a
+# single shape to deal with.
+func _bodies_of(spec: EnemySquadSpec) -> Array[ChassisDefinition]:
+	var out: Array[ChassisDefinition] = []
+	if not spec.roster.is_empty():
+		for frame in spec.roster:
+			if frame != null:
+				out.append(frame)
+		return out
+
+	# Legacy count + chassis. Wrapped in a throwaway definition whose stat
+	# fields are all zero, which _apply_frame reads as "not specified" and
+	# leaves the scene's authored values untouched — the old behaviour exactly.
+	var scene: PackedScene = spec.chassis if spec.chassis != null else default_chassis
+	if scene == null:
+		return out
+	var legacy := ChassisDefinition.new()
+	legacy.scene = scene
+	legacy.base_health = 0
+	legacy.base_accuracy = 0.0
+	legacy.base_sensor_range = 0.0
+	for _i in spec.count:
+		out.append(legacy)
+	return out
+
+
+# Stats from the frame, where the frame specifies them.
+#
+# base_speed is deliberately NOT applied: the enemy scenes author move_speed
+# directly (a chaser is 8 m/s, a gunship 14), while base_speed is a multiplier
+# from the player-roster side. Multiplying one by the other would quietly make
+# every chaser 35% faster than it has ever been.
+func _apply_frame(soldier: Soldier, frame: ChassisDefinition) -> void:
+	if frame.base_health > 0:
+		soldier.max_health = frame.base_health
+		soldier.health = frame.base_health
+	if frame.base_accuracy > 0.0:
+		soldier.accuracy_skill = frame.base_accuracy
+	if frame.base_sensor_range > 0.0:
+		soldier.sensor_range = frame.base_sensor_range
 
 
 # Posture is applied AFTER the squad is in the tree, because set_patrol and
@@ -182,6 +277,18 @@ func _apply_posture(squad: Squad, spec: EnemySquadSpec, route: PatrolPath, post:
 
 
 func _resolve_anchor(spec: EnemySquadSpec, route: PatrolPath, post: SquadObjectivePoint) -> Vector3:
+	var base := _anchor_point(spec, route, post)
+	if base == Vector3.INF:
+		return base
+	# Every tag in a level marks a spot on the GROUND, because every tag was
+	# written for infantry. Air reinforcements arriving at ground level on top
+	# of the position they are meant to attack is both odd to watch and a bad
+	# fight. The offset lets a spec say "start well out and well up" without
+	# needing a second set of map nodes just for aircraft.
+	return base + spec.spawn_offset
+
+
+func _anchor_point(spec: EnemySquadSpec, route: PatrolPath, post: SquadObjectivePoint) -> Vector3:
 	if spec.spawn_tag != &"":
 		var explicit := _find_point(spec.spawn_tag)
 		if explicit != null:
@@ -261,6 +368,7 @@ func _is_hostile_squad(squad: Squad) -> bool:
 # Drops references only. The level unload frees the nodes.
 func clear() -> void:
 	_squads.clear()
-	# Holds hard references to squads the level unload is about to free, and a
-	# stale entry would wake a corpse on the next mission's objective.
+	# Holds specs waiting on an objective that will never fire now, and a stale
+	# entry would send the next mission's reinforcements into the wrong level.
 	_reserves.clear()
+	_level = null

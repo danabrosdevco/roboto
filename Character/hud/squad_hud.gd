@@ -51,7 +51,13 @@ class_name SquadHUD
 @export var font_size_marker: int = 16
 
 # ── LAYOUT ────────────────────────────────────
-@export var panel_margin: Vector2 = Vector2(24, 20)   # from bottom-left corner
+## Gap from the bottom-left corner of the screen. **Y IS THE LIFT** — the whole
+## panel hangs off its bottom edge, so this is the one number that moves it up
+## or down as a unit. It was 20, which put the roster directly on top of the
+## player's own health readout; that bottom strip needs roughly 200px.
+@export var panel_margin: Vector2 = Vector2(24, 210)
+## X is the panel width. Y is only a MINIMUM height — the panel sizes itself to
+## its contents and grows upward past this when there is more to show.
 @export var panel_size: Vector2 = Vector2(460, 420)
 # Wheel position, measured from the TOP-LEFT of the squad panel. Positive x
 # pushes it right of the roster, negative y lifts it above the panel top.
@@ -73,6 +79,23 @@ class_name SquadHUD
 @export var marker_bar_width: float = 22.0
 @export var marker_bar_height: float = 3.0
 @export var nearby_radius: float = 120.0
+## How many squads the IN RANGE strip will list. The panel is a fixed height
+## holding this strip AND the roster, so an unbounded list used to push the
+## roster off the bottom — the rows past the edge simply never appeared, which
+## read as the strip refusing to update. Bounded explicitly and sorted nearest
+## first, so what falls off the end is always the furthest squad.
+@export var max_nearby: int = 12
+
+# ── STATUS RECENCY ────────────────────────────
+# FIRING and the equipment callout are recent EVENTS, not states — there is no
+# "currently shooting" flag to read, and equipment use is instantaneous. These
+# are how long each one stays on the readout after it happens. Long enough to
+# catch the eye, short enough that it always clears itself.
+@export var firing_state_seconds: float = 1.0
+@export var equipment_state_seconds: float = 2.0
+## Print hostile squad sizes as a number instead of LIGHT/SQUAD/HEAVY/MASSED.
+## Your own squads always show an exact count either way.
+@export var exact_hostile_counts: bool = false
 @export var refresh_interval: float = 0.15
 
 # Pulled from HUDPalette so the player's own bars in ui.gd stay in step.
@@ -88,6 +111,8 @@ const STATE_MOVING := "MOVING"
 const STATE_FIRING := "FIRING"
 const STATE_PINNED := "PINNED"
 const STATE_HOLDING := "HOLDING"
+const STATE_RELOADING := "RELOADING"
+const STATE_DOWN := "DOWN"
 
 var _panel: VBoxContainer
 var _squad_header: Label
@@ -150,6 +175,33 @@ func _ensure_full_rect() -> void:
 	offset_top = 0.0
 	offset_right = 0.0
 	offset_bottom = 0.0
+	_size_panel_to_content()
+
+
+# THE PANEL GROWS UPWARD. Its bottom edge is pinned at panel_margin.y above the
+# screen bottom and the top edge rises to fit whatever is in it.
+#
+# It used to have a fixed height, with the IN RANGE strip as the FIRST child of
+# the VBox — so every extra squad in range pushed the roster DOWNWARD, out of
+# the panel and into the player's own health readout. Walk into a fight with
+# eight squads nearby and the thing you actually needed, your own squad, was the
+# thing that got shoved off the bottom.
+#
+# Sizing to content instead means new rows can only ever extend into empty
+# screen above, and the roster never moves.
+func _size_panel_to_content() -> void:
+	if _panel == null:
+		return
+	var needed: float = _panel.get_combined_minimum_size().y
+	# panel_size.y is a FLOOR, never the target. Sizing purely to content made
+	# the whole HUD disappear: get_combined_minimum_size() reports 0 before the
+	# container has ever been laid out, and again whenever the roster is empty,
+	# so the panel collapsed to zero height and took the header with it.
+	var h: float = maxf(panel_size.y, needed)
+	# And never taller than the screen it has to fit on.
+	h = minf(h, maxf(panel_size.y, size.y - panel_margin.y * 2.0))
+	_panel.offset_top = -(panel_margin.y + h)
+	_panel.offset_bottom = -panel_margin.y
 
 
 func _find_first(node: Node, cls: String):
@@ -224,8 +276,14 @@ func _make_label(text: String, col: Color, font_px: int = -1) -> Label:
 	return l
 
 
+# remove_child BEFORE queue_free. queue_free is deferred to the end of the
+# frame, so a container cleared and immediately refilled still holds the dying
+# children while the new ones go in — the roster and the IN RANGE strip both
+# render doubled for that frame, and at a 0.15s refresh that is most of them.
+# Same bug that duplicated equipment rows in the squad manager.
 func _clear(node: Node) -> void:
 	for c in node.get_children():
+		node.remove_child(c)
 		c.queue_free()
 
 
@@ -329,16 +387,34 @@ func _state_text(m: Soldier) -> String:
 	if sig == Enemy.SignalState.CRITICAL:
 		return "NO LINK"
 
-	match m.soldier_state:
-		Soldier.SoldierState.SUPPRESSED:
-			return STATE_PINNED
-		Soldier.SoldierState.SUPPRESSING:
-			return STATE_FIRING
-		Soldier.SoldierState.BOUNDING, Soldier.SoldierState.COVER_SEEKING:
-			return STATE_MOVING
+	# ORDERED BY WHAT THE PLAYER WOULD ACT ON, most urgent first.
+	#
+	# The old version read `ai_state == COMBAT` as FIRING. COMBAT means "has a
+	# target", not "is shooting" — so a soldier who acquired someone and then
+	# spent ten seconds walking, reloading or waiting for a firing line still
+	# read FIRING the entire time. It was a state that latched on and never let
+	# go, which is why it looked broken.
+	#
+	# Everything below is either a live fact (reloading right now) or a recent
+	# event (a round left the barrel in the last second), so every line can go
+	# away on its own.
+	if "downed" in m and m.downed:
+		return STATE_DOWN
 
-	if m.ai_state == Enemy.AIState.COMBAT:
+	# What they just did beats what they are doing: throwing a grenade is the
+	# single most useful thing to know about a squadmate in the moment.
+	if m.seconds_since_equipment() <= equipment_state_seconds:
+		return m.last_equipment_label().to_upper().left(9)
+
+	if m.weapon != null and m.weapon.is_reloading:
+		return STATE_RELOADING
+
+	if m.soldier_state == Soldier.SoldierState.SUPPRESSED:
+		return STATE_PINNED
+
+	if m.weapon != null and m.weapon.seconds_since_fired() <= firing_state_seconds:
 		return STATE_FIRING
+
 	if m.movement_state != Enemy.MovementState.NONE:
 		return STATE_MOVING
 	return STATE_HOLDING
@@ -364,8 +440,11 @@ func _refresh_nearby() -> void:
 	if squads.is_empty():
 		return
 
-	_nearby.add_child(_make_label("IN RANGE", COL_DIM, font_size_nearby))
-	for s in squads:
+	var shown: int = squads.size() if max_nearby <= 0 else mini(squads.size(), max_nearby)
+	var header := "IN RANGE" if shown >= squads.size() else "IN RANGE (%d/%d)" % [shown, squads.size()]
+	_nearby.add_child(_make_label(header, COL_DIM, font_size_nearby))
+	for i in shown:
+		var s = squads[i]
 		var squad := s as Squad
 		var hostile := _is_hostile_squad(squad)
 		var col := COL_CRIT if hostile else COL_DIM
@@ -377,10 +456,30 @@ func _refresh_nearby() -> void:
 		var mark := "*" if squad == selected else " "
 		var side := "HOSTILE" if hostile else "FRIENDLY"
 		_nearby.add_child(_make_label(
-			"%s%-8s %-8s %3dm  %d" % [
+			"%s%-8s %-8s %3dm  %s" % [
 				mark, squad.get_display_name().left(8).to_upper(), side,
-				int(dist), squad.get_living_members().size()],
+				int(dist), _strength_text(squad, hostile)],
 			col, font_size_nearby))
+
+
+# You know your own squad exactly. You ESTIMATE theirs.
+#
+# An exact headcount on a hostile squad is a lot of certainty to hand the player
+# for free, and it reads as a spreadsheet rather than a contact report. A
+# sensor return that says "something heavy, 60m that way" is the same decision
+# with better texture — and it is what a robot picking up signatures through
+# terrain would plausibly get.
+func _strength_text(squad: Squad, hostile: bool) -> String:
+	var n: int = squad.get_living_members().size()
+	if not hostile or exact_hostile_counts:
+		return str(n)
+	if n <= 2:
+		return "LIGHT"
+	if n <= 5:
+		return "SQUAD"
+	if n <= 9:
+		return "HEAVY"
+	return "MASSED"
 
 
 func _is_hostile_squad(squad: Squad) -> bool:

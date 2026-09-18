@@ -155,6 +155,12 @@ const CONTACT_GRACE: float = 6.0
 var _since_contact: float = CONTACT_GRACE
 
 var squad_combat_target: CharacterBody3D = null
+
+# Throttled rather than per-frame: this is O(members) per squad, and a valley
+# mission runs seven squads at once. Four times a second is far quicker than a
+# rusher can cross the ground anyway.
+const AGGRESSIVE_PULL_INTERVAL := 0.25
+var _aggressive_pull_timer: float = 0.0
 var nco: Soldier = null
 var bound_pairs: Array = []
 
@@ -211,11 +217,63 @@ func _process(delta: float) -> void:
 	_tick_defend()
 	_tick_assault()
 	_tick_contact(delta)
+	_tick_aggressive_pull(delta)
 	match context:
 		SquadContext.ENGAGED:
 			_tick_engaged(delta)
 		SquadContext.UNENGAGED:
 			_tick_unengaged(delta)
+
+
+# ─────────────────────────────────────────────
+# AGGRESSIVE PULL
+# If anyone in the squad is fighting, the rushers are already running.
+#
+# Target sharing existed, but it PUSHED once: _on_combat_triggered fires only on
+# the transition into combat. A chaser that spawned late, lost its target, or
+# simply stood outside the 20m ALLY_SHOT radius was never told a fight had
+# started — and with combat_target null, perform_action(CHASE) cannot set a
+# movement state at all, so it stood still at distance while its squadmates
+# traded fire ten metres away. That is the "stuck".
+#
+# Pulling every tick instead covers all three cases, and deliberately does NOT
+# require line of sight: a rusher committing to a contact it cannot personally
+# see is the entire point of the chassis. Ranged members are untouched — they
+# still need to see what they shoot at.
+# ─────────────────────────────────────────────
+func _tick_aggressive_pull(delta: float) -> void:
+	_aggressive_pull_timer -= delta
+	if _aggressive_pull_timer > 0.0:
+		return
+	_aggressive_pull_timer = AGGRESSIVE_PULL_INTERVAL
+
+	var contact := _current_contact()
+	if contact == null:
+		return
+	for ai in get_living_members():
+		if not (ai is Soldier) or not ai.aggressive:
+			continue
+		var t = ai.combat_target
+		if t != null and is_instance_valid(t) and t.alive:
+			continue
+		ai.trigger_combat(contact)
+
+
+# Whoever the squad is actually fighting. squad_combat_target is cleared on
+# several paths, so fall back to asking the members directly rather than going
+# quiet the moment it is null.
+func _current_contact() -> AI:
+	if squad_combat_target != null and is_instance_valid(squad_combat_target) \
+			and squad_combat_target.alive:
+		# `as AI` rather than a bare return: everything that becomes a combat
+		# target is an AI (Player extends it too), and a cast that fails yields
+		# null, which the caller already handles.
+		return squad_combat_target as AI
+	for ai in get_living_members():
+		var t = ai.combat_target
+		if t != null and is_instance_valid(t) and t.alive:
+			return t as AI
+	return null
 
 
 # ─────────────────────────────────────────────
@@ -706,6 +764,27 @@ func get_living_soldiers() -> Array:
 
 func is_wiped() -> bool:
 	return get_living_members().is_empty()
+
+
+# Bodies that still exist — alive OR downed.
+#
+# enter_downed() sets alive = false while downed = true, so a downed robot is
+# absent from get_living_members(). That makes is_wiped() true the moment the
+# last member goes down, which is correct for "can this squad still fight" and
+# badly wrong for "does this squad still exist".
+func get_recoverable_members() -> Array:
+	return squad_members.filter(func(ai):
+		return ai != null and is_instance_valid(ai) and (ai.alive or ("downed" in ai and ai.downed)))
+
+
+# Gone for good: nothing left to walk over and repair.
+#
+# Use THIS, not is_wiped(), to decide whether a squad should still be listed or
+# commanded. The commander used is_wiped() and so dropped a squad the instant
+# everyone was down — the HUD went to "NO SQUAD IN COMMAND" and the downed
+# markers vanished at the exact moment they were the only thing you needed.
+func is_lost() -> bool:
+	return get_recoverable_members().is_empty()
 
 # Members the squad is still allowed to give orders to.
 func get_orderable_members() -> Array:

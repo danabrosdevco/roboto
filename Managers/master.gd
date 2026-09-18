@@ -30,6 +30,7 @@ const FILTER_SHADER := preload("res://Character/hud/signal_filter.gdshader")
 # no inspector slot to leave blank.
 const SFX_HOVER := preload("res://sounds/sfx/psx ui sfx/squad_manager/HoverG.ogg")
 const SFX_CONFIRM := preload("res://sounds/sfx/psx ui sfx/ConfirmH.wav")
+const SFX_DRONE := preload("res://sounds/sfx/darkdrone/Dark Drone_SI 03.wav")
 
 @export_group("Skip")
 # The switch asked for: straight to play, no splash and no menu.
@@ -48,10 +49,21 @@ const SFX_CONFIRM := preload("res://sounds/sfx/psx ui sfx/ConfirmH.wav")
 @export var title_suffix: String = "2109"
 @export var presents_text: String = "presents"
 
+@export_group("Title music")
+@export var title_music_volume_db: float = -6.0
+## Seconds to fade out when the player starts the game.
+@export var title_music_fade_out: float = 1.5
+
 @export_group("Splash timing")
 @export var company_seconds: float = 2.4
 @export var title_seconds: float = 3.4
 @export var fade_seconds: float = 0.45
+## How long the suffix takes to fade up ("2109" on the title card, "presents" on
+## the company card). It starts only after the headline has finished typing, and
+## is clamped so it always completes before the card leaves — raise it past what
+## a card has time for and you get that card's maximum rather than a fade that
+## gets cut off mid-way.
+@export var suffix_fade_seconds: float = 1.6
 
 @export_group("Splash filter")
 # The splash runs a GENTLER version of the HUD's filter. At the HUD's own
@@ -90,6 +102,10 @@ var _paused_by_us: bool = false
 var _menu: String = ""
 var _sfx_hover: AudioStreamPlayer
 var _sfx_confirm: AudioStreamPlayer
+var _drone: AudioStreamPlayer
+# Whether the drone is *meant* to be running. Checked by the finished handler,
+# so a stop() never gets undone by a loop that was already in flight.
+var _drone_wanted: bool = false
 # Cleared by real mouse movement, so a menu appearing under the cursor does not
 # chirp for a button you never moved to.
 var _suppress_hover: bool = true
@@ -142,6 +158,21 @@ func _build_audio() -> void:
 	_sfx_confirm.stream = SFX_CONFIRM
 	_sfx_confirm.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_sfx_confirm)
+
+	_drone = AudioStreamPlayer.new()
+	_drone.stream = SFX_DRONE
+	_drone.volume_db = title_music_volume_db
+	# ALWAYS for the same reason as the click sounds: the splash and the menu
+	# both run with the tree paused.
+	_drone.process_mode = Node.PROCESS_MODE_ALWAYS
+	# The clip is ~22s and a player can sit on the menu indefinitely. The WAV is
+	# imported with loop_mode=Forward so this should never fire, but a reimport
+	# that resets loop_mode would otherwise silently kill the music partway
+	# through the menu — and that is a hard thing to notice.
+	_drone.finished.connect(func() -> void:
+		if _drone_wanted:
+			_drone.play())
+	add_child(_drone)
 
 
 func _build_overlay() -> void:
@@ -238,6 +269,9 @@ func _run_boot() -> void:
 	_booting = true
 	_hold_pause()
 	_show_mouse()
+	# From the company card onward — it carries the whole sequence through the
+	# title and under the main menu, and only lets go when the player starts.
+	_start_title_music()
 
 	# "presents" goes in the SUFFIX slot, not the `above` slot — the studio name
 	# is the headline and "presents" is the thing it does, so it reads
@@ -299,7 +333,13 @@ func _play_card(above: String, headline: String, suffix: String, seconds: float,
 	var type_tween := head.create_tween()
 	type_tween.tween_property(head, "visible_ratio", 1.0, reveal)
 	if tail != null:
-		type_tween.tween_property(tail, "modulate:a", 1.0, 0.35)
+		# Chained AFTER the headline types, so the time still available is
+		# `seconds` minus the reveal. Clamped to that, less a little headroom,
+		# because the company card is the short one: an unclamped 1.6s fade
+		# there would still be climbing when the card started fading out, and
+		# "presents" would never reach full brightness.
+		var suffix_fade := minf(suffix_fade_seconds, maxf(0.15, seconds - reveal - 0.15))
+		type_tween.tween_property(tail, "modulate:a", 1.0, suffix_fade)
 
 	await _wait(seconds)
 
@@ -419,7 +459,31 @@ func _on_menu_hover() -> void:
 
 
 func _start_play() -> void:
+	_stop_title_music()
 	_teardown_overlay()
+
+
+func _start_title_music() -> void:
+	if _drone == null:
+		return
+	_drone_wanted = true
+	_drone.volume_db = title_music_volume_db
+	_drone.play()
+
+
+# Fades rather than cuts. The drone is still going under the menu when the
+# player presses START, and killing it on the same frame the world appears
+# reads as a glitch rather than a transition.
+func _stop_title_music() -> void:
+	if _drone == null or not _drone_wanted:
+		return
+	_drone_wanted = false
+	if title_music_fade_out <= 0.0:
+		_drone.stop()
+		return
+	var tween := create_tween()
+	tween.tween_property(_drone, "volume_db", -60.0, title_music_fade_out)
+	tween.tween_callback(_drone.stop)
 
 
 func _resume_from_pause() -> void:

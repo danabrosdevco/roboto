@@ -36,6 +36,15 @@ class_name CampaignManager
 # it finds itself in a level that isn't base. Leave null for shipping builds.
 @export var debug_mission: MissionDefinition
 
+## Every mission selectable at the terminal from a fresh campaign, ignoring both
+## the `requires` chain and the "non-repeatable, already cleared" filter — so a
+## mission stays on the list after you finish it and you can keep cycling.
+##
+## For testing a late mission without replaying the ones before it. Leave OFF in
+## anything you send out: with this on, the arena → valley progression doesn't
+## exist and the first press of F can drop you straight into Valley Siege.
+@export var unlock_all_missions: bool = false
+
 # ── STARTING ROSTER ───────────────────────────
 # A brand new CampaignState has an empty roster, so without this nothing ever
 # deploys and the spawner silently does nothing — which looks exactly like the
@@ -82,6 +91,12 @@ func _ready() -> void:
 	# which fail silently.
 	add_to_group("campaign")
 
+	# Loud on purpose. A dev flag that removes the entire mission progression is
+	# exactly the kind of thing that ships enabled because nobody could see it
+	# was on — the terminal looks normal, it just offers everything.
+	if unlock_all_missions:
+		push_warning("Campaign: unlock_all_missions is ON. Every mission is selectable and none ever retire. Turn this off before exporting a build.")
+
 	state = CampaignState.load_from_disk()
 	if state == null:
 		state = CampaignState.new()
@@ -89,6 +104,13 @@ func _ready() -> void:
 	state.catalogue = catalogue
 	if not state.soldier_repaired.is_connected(_on_soldier_repaired):
 		state.soldier_repaired.connect(_on_soldier_repaired)
+
+	# Armoury transactions write straight through, so a crash at base can never
+	# cost you a purchase you already paid for.
+	if not state.ledger_changed.is_connected(_queue_base_save):
+		state.ledger_changed.connect(_queue_base_save)
+	if not state.roster_changed.is_connected(_queue_base_save):
+		state.roster_changed.connect(_queue_base_save)
 	_repair_roster()
 	state.recompute_roster()
 	state_loaded.emit()
@@ -177,6 +199,35 @@ func register_spawner(s: SquadSpawner) -> void:
 
 # A repair has to reach the body, not just the record — and a rebuilt soldier
 # who wasn't deployable at level load has to actually turn up.
+# Write-through for base-side changes, coalesced to one write per frame.
+#
+# GATED ON BEING AT BASE, deliberately. ledger_changed and roster_changed also
+# fire throughout a mission — every kill, repair and XP award — and writing on
+# each would churn the disk for no benefit AND persist a half-dead roster over
+# the healthy one you deployed with, so a crash mid-mission would cost you the
+# squad instead of costing you nothing.
+#
+# Coalesced because one purchase emits both signals; without this, every buy
+# would write the file twice.
+var _save_queued: bool = false
+
+
+func _queue_base_save() -> void:
+	if in_mission or not autosave or _save_queued:
+		return
+	_save_queued = true
+	_flush_base_save.call_deferred()
+
+
+func _flush_base_save() -> void:
+	_save_queued = false
+	# Re-checked: a deferred call lands a frame later, and that frame may be
+	# the one begin_deploy() ran in.
+	if in_mission or not autosave:
+		return
+	state.save_to_disk()
+
+
 func _on_soldier_repaired(record: SoldierRecord) -> void:
 	if spawner != null:
 		spawner.sync_record(record)
@@ -201,7 +252,16 @@ func _on_objective_changed(objective: MissionObjective) -> void:
 	# The reserve's reinforcement_tag IS an objective id, so completing that
 	# objective is the whole trigger condition. wake() is a no-op for any
 	# objective no reserve is waiting on.
-	enemy_spawner.wake(objective.id)
+	var woken: int = enemy_spawner.wake(objective.id)
+	# Says which failure it is when nothing arrives. A completed objective that
+	# wakes nothing while reserves are still queued means the ids don't match —
+	# almost always a typo between a mission's reinforcement_tag and the
+	# level's objective id, which is otherwise completely silent.
+	if woken == 0:
+		var pending: Array = enemy_spawner.pending_reserve_tags()
+		if not pending.is_empty():
+			print("[Campaign] objective '%s' completed but no reserve answers to it. Still waiting on: %s" % [
+				objective.id, str(pending)])
 
 
 func register_enemy_spawner(s: EnemyForceSpawner) -> void:
@@ -292,6 +352,13 @@ func get_mission(id: StringName) -> MissionDefinition:
 func available_missions() -> Array[MissionDefinition]:
 	var out: Array[MissionDefinition] = []
 	for m in missions:
+		if unlock_all_missions:
+			# Both filters skipped, not just the gate: dropping only `requires`
+			# would still retire each non-repeatable mission the moment you
+			# cleared it, so you could reach Valley Siege but not run it twice.
+			if m != null:
+				out.append(m)
+			continue
 		if not m.repeatable and state.completed_missions.has(m.id):
 			continue
 		var gated := false
@@ -335,6 +402,24 @@ func next_destination() -> PackedScene:
 # ─────────────────────────────────────────────
 func begin_deploy() -> void:
 	current_mission = selected_mission()
+
+	# SAVE BEFORE LEAVING BASE.
+	#
+	# The first write after an armoury trip used to be extract(), which only
+	# runs if you finish the mission. Anything else — a mission that crashes,
+	# hangs, spawns no enemies, or that you alt-F4 out of — threw away every
+	# purchase and every refit made since the last extraction, so testing a
+	# broken mission meant rebuying the same kit on every attempt.
+	#
+	# Safe to take here because in_mission and current_mission live on this
+	# node, not on CampaignState: a save written at deploy has no idea a
+	# mission was starting, so it always reloads at base with the kit intact.
+	# Written before deployed.emit() so a listener that fails can't cost you
+	# the purchases either.
+	if autosave:
+		if not state.save_to_disk():
+			push_warning("Campaign: could not save before deploying to '%s'. Purchases made since the last extraction are at risk if this mission does not finish cleanly." % (current_mission.id if current_mission != null else &"?"))
+
 	in_mission = true
 	if current_mission != null:
 		deployed.emit(current_mission)
@@ -353,6 +438,8 @@ func on_level_loaded(level: Node) -> void:
 		print("[Campaign] debug_mission active: '%s'. Base flow was skipped." % debug_mission.id)
 
 	if not in_mission and debug_mission == null and base_level != null:
+		if level == base_level:
+			return
 		push_warning("Campaign: level loaded but in_mission is false, so NO enemy force will spawn and the objective HUD will stay hidden. If you launched this level directly, set Campaign.debug_mission.")
 
 	if in_mission and current_mission == null:
@@ -463,6 +550,10 @@ func extract(success: bool = true) -> Dictionary:
 		result["reward"] = current_mission.reward_resources
 		if not state.completed_missions.has(current_mission.id):
 			state.completed_missions.append(current_mission.id)
+		# Separate from completed_missions because that array is a set: running
+		# the arena a third time must not append a duplicate id, but it does
+		# need to bump the counter the terminal reads.
+		state.record_clear(current_mission.id)
 		for u in current_mission.unlocks:
 			if not state.unlocked.has(u):
 				state.unlocked.append(u)

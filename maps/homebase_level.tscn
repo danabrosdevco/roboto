@@ -1078,7 +1078,7 @@ transform = Transform3D(2.72158, 0, 0, 0, 1.97621, 0, 0, 0, 3.11484, -15.5288, 1
 is_departure = true
 
 [node name="MissionTerminal" parent="." instance=ExtResource("15_mby7b")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4232, 2.07874, 13.7727)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4232, 1.67238, 13.7727)
 
 [node name="BreakablePanel" parent="." instance=ExtResource("17_uiq1d")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.411, 1.4746, 90)
@@ -1102,11 +1102,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.7202, 1.4746, 90)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.673, 1.4746, 83.3043)
 
 [node name="TutorialLabel" type="Label3D" parent="."]
-transform = Transform3D(0.998511, 0, -0.0545667, 0, 1, 0, 0.0545667, 0, 0.998511, -14.7065, 3.27395, 22.9194)
+transform = Transform3D(0.998511, 0, -0.0545667, 0, 1, 0, 0.0545667, 0, 0.998511, -14.7065, 2.37905, 22.9194)
 text = "TUTORIAL IS ON BACK WALL,
 OPPOSITE TRAIN TRACKS
 MOUSE - LOOK AROUND, AIM
-W/A/S/D - MOVE"
+W/A/S/D - MOVE
+SPACEBAR - JUMP"
 font_size = 50
 script = ExtResource("18_5ehbc")
 
@@ -1187,6 +1188,7 @@ text = "1 - Select weapon
 4/5 - select equipment
 M1 - fire
 m2 - Aim
+R - RELOAD
 HOLD SHIFT - ZOOM"
 font_size = 50
 script = ExtResource("18_5ehbc")
@@ -1198,6 +1200,7 @@ text = "1 - Select weapon
 4/5 - select equipment
 M1 - fire
 m2 - Aim
+R - RELOAD
 HOLD SHIFT - ZOOM"
 font_size = 50
 script = ExtResource("18_5ehbc")

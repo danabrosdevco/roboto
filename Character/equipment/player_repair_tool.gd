@@ -30,6 +30,17 @@ class_name PlayerRepairTool
 # half-angle around the sightline.
 @export var revive_aim_tolerance: float = 0.82
 @export var revive_reach_bonus: float = 1.5
+
+## Hurt allies within this range stop moving while the repair button is held,
+## so you can actually get the crosshair on one mid-fight.
+@export var assist_radius: float = 9.0
+@export var assist_allies: bool = true
+# Everyone frozen by _assist_hold(), so the releases can be matched exactly.
+var _assisted: Array = []
+# Who the CHANNEL is pinning, tracked separately from _target. Re-pressing on
+# the same patient used to call hold_still() again without a matching release,
+# leaving them stuck until max_hold_time expired thirty seconds later.
+var _held_target: Node = null
 # Reservoir units spent per point of health restored.
 @export var cost_per_health: float = 1.0
 
@@ -120,6 +131,8 @@ func get_move_scale() -> float:
 
 func _on_unequip() -> void:
 	_stop_channel()
+	# Stowing the tool must never leave the squad frozen where they stood.
+	_assist_release()
 
 
 # ─────────────────────────────────────────────
@@ -131,15 +144,57 @@ func primary_pressed() -> void:
 	if not has_charge():
 		denied.emit("NO CHARGE")
 		return
+	# Freeze the ward BEFORE trying to acquire. A hurt robot is still fighting —
+	# strafing, bounding, chasing — and putting a crosshair on a moving ally
+	# while you are also being shot at is most of why the repair tool felt
+	# broken. Holding the button says "hold still, all of you", which is a thing
+	# a squad leader can plausibly order and makes the aim a formality.
+	_assist_hold()
 	_start_channel()
 
 
 func primary_released() -> void:
 	_stop_channel()
+	_assist_release()
+
+
+# ─────────────────────────────────────────────
+# ASSIST HOLD
+# Paired strictly with _assist_release(). hold_still() is reference counted, so
+# an unmatched call pins a robot until max_hold_time (30s) bails it out.
+# ─────────────────────────────────────────────
+func _assist_hold() -> void:
+	if not assist_allies or player == null:
+		return
+	_assist_release()
+	var origin: Vector3 = player.global_position
+	var r_sq: float = assist_radius * assist_radius
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if node == player or not (node is Node3D):
+			continue
+		if not _is_repairable_ally(node):
+			continue
+		if _is_full(node):
+			continue
+		if origin.distance_squared_to((node as Node3D).global_position) > r_sq:
+			continue
+		if node.has_method("hold_still"):
+			node.hold_still()
+			_assisted.append(node)
+
+
+func _assist_release() -> void:
+	for node in _assisted:
+		if node != null and is_instance_valid(node) and node.has_method("release_hold"):
+			node.release_hold()
+	_assisted.clear()
 
 
 # Call from the player's apply_damage. Progress survives for resume_grace.
 func interrupt() -> void:
+	# Released unconditionally: being shot mid-repair is exactly when a frozen
+	# squad standing still around you is worst.
+	_assist_release()
 	if _channelling:
 		_stop_channel()
 		denied.emit("REPAIR INTERRUPTED")
@@ -206,14 +261,28 @@ func _start_channel() -> void:
 	_grace_t = 0.0
 	if loop_sound != null and not loop_sound.playing:
 		loop_sound.play()
-	if _target != player:
+	if _target != player and _held_target != _target:
 		# Pin them. Without this the patient walks off mid-channel, the
 		# crosshair loses them, and _tick_channel drops the repair a frame
 		# later — which is the "putzing around" problem.
+		#
+		# Guarded on _held_target: clicking again on the same patient used to
+		# add a second reference-counted hold that nothing ever released.
+		_release_channel_hold()
 		if _target.has_method("hold_still"):
 			_target.hold_still()
+			_held_target = _target
 		repair_target_pinned.emit(_target)
 	channel_started.emit(_target)
+
+
+func _release_channel_hold() -> void:
+	if _held_target == null:
+		return
+	if is_instance_valid(_held_target) and _held_target.has_method("release_hold"):
+		_held_target.release_hold()
+		repair_target_released.emit(_held_target)
+	_held_target = null
 
 
 func _stop_channel() -> void:
@@ -224,10 +293,7 @@ func _stop_channel() -> void:
 	_recharge_t = recharge_delay
 	if loop_sound != null:
 		loop_sound.stop()
-	if _target != null and is_instance_valid(_target) and _target != player:
-		if _target.has_method("release_hold"):
-			_target.release_hold()
-		repair_target_released.emit(_target)
+	_release_channel_hold()
 	channel_ended.emit(_target)
 
 
@@ -244,6 +310,14 @@ func _tick_channel(delta: float) -> void:
 	if _target != player and _acquire_target() != _target:
 		_stop_channel()
 		return
+	# BACK ON ITS FEET, BACK IN THE FIGHT. revive() happens partway through the
+	# channel — health only comes back to revive_at_fraction — so the tool kept
+	# topping them up afterwards with the pin still on. That is the "revived and
+	# then paralysed for four seconds": they were repaired and standing, and
+	# being held the whole time. Healing continues; the hold does not.
+	if _held_target != null and "downed" in _held_target and not _held_target.downed:
+		_release_channel_hold()
+
 	if _is_full(_target):
 		if complete_sound != null:
 			complete_sound.play()

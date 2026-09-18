@@ -121,7 +121,9 @@ func refresh_squads() -> void:
 		if not s is Squad:
 			continue
 		var squad := s as Squad
-		if squad.is_wiped():
+		# is_lost(), not is_wiped(): an all-downed squad is recoverable and must
+		# stay commandable so its markers keep drawing.
+		if squad.is_lost():
 			continue
 		if squad.player_commandable or _is_friendly_squad(squad):
 			commandable_squads.append(squad)
@@ -158,18 +160,26 @@ func cycle_squad(dir: int = 1) -> void:
 
 
 # Squads within radius of the player, for the "squads around you" HUD readout.
+# Nearest first. Group order is arbitrary and stable, so an unsorted list meant
+# that whenever there were more squads in range than the HUD could show, the
+# visible ones were an arbitrary fixed subset — the strip looked frozen while
+# you walked past squads it never mentioned. Sorting makes the cut meaningful:
+# whatever gets dropped is always the furthest away.
 func get_nearby_squads(radius: float = 120.0) -> Array:
 	var result: Array = []
 	if player == null:
 		return result
+	var origin := player.global_position
 	for s in get_tree().get_nodes_in_group("squads"):
 		if not s is Squad:
 			continue
 		var squad := s as Squad
 		if squad.is_wiped():
 			continue
-		if player.global_position.distance_to(squad.get_center()) <= radius:
+		if origin.distance_to(squad.get_center()) <= radius:
 			result.append(squad)
+	result.sort_custom(func(a: Squad, b: Squad) -> bool:
+		return origin.distance_squared_to(a.get_center()) < origin.distance_squared_to(b.get_center()))
 	return result
 
 
@@ -386,7 +396,9 @@ func _refresh_registry_quietly() -> void:
 		if not s is Squad:
 			continue
 		var squad := s as Squad
-		if squad.is_wiped():
+		# is_lost(), not is_wiped(). This runs every 2s, so it was the one that
+		# actually dropped your squad mid-fight once the last member went down.
+		if squad.is_lost():
 			continue
 		if squad.player_commandable or _is_friendly_squad(squad):
 			commandable_squads.append(squad)

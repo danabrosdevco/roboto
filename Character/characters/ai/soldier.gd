@@ -38,6 +38,15 @@ var defensive_mode: bool = false
 # ── Cover ──
 var current_cover_point: CoverPoint = null
 var at_cover: bool = false
+## Never takes cover, never suppresses, never falls back. On contact it just
+## comes at you, and a hit only makes it shift its approach rather than break
+## it off. For melee rushers — a chaser that walks to a wall when it spots you
+## has stopped being a chaser.
+##
+## Deliberately not inferred from weapon type: a shotgunner could reasonably be
+## built this way too, and a knife unit could reasonably be made cautious.
+@export var aggressive: bool = false
+
 @export var cover_arrival_threshold: float = 1.2
 @export var cover_search_radius: float = 25.0
 
@@ -248,6 +257,15 @@ func trigger_combat(body: AI) -> void:
 	super(body)
 	if soldier_state != SoldierState.NONE:
 		return
+	# A rusher that has seen you closes. Every time.
+	#
+	# This branch used to send EVERY non-defensive soldier to the nearest cover
+	# point the instant it acquired a target, which for a melee chassis meant
+	# walking sideways to a wall instead of at the thing it exists to reach.
+	# Staying in NONE leaves the movement roll free to pick CHASE or LEAP on the
+	# very next tick.
+	if aggressive:
+		return
 	if defensive_mode:
 		# Already in position — suppress from here rather than seeking new cover
 		if at_cover:
@@ -320,6 +338,15 @@ func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false)
 func assign_role(role: SoldierRole) -> void:
 	# CRITICAL or E-KILL: ignores squad role assignments
 	if not _can_receive_orders():
+		return
+	# The squad's fire-and-manoeuvre roles are the OTHER way a rusher ends up
+	# standing still: SUPPRESSOR plants it to lay covering fire, FALLBACK walks
+	# it backwards. Neither means anything to something with a knife, so an
+	# aggressive chassis takes every role as "go forward".
+	if aggressive:
+		squad_role = SoldierRole.ADVANCER
+		if combat_target != null:
+			movement_state = MovementState.CHASING
 		return
 	squad_role = role
 	match role:
