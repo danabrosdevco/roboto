@@ -1,6 +1,9 @@
 extends PlayerEquipment
 class_name PlayerGrenade
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ─────────────────────────────────────────────
 # PLAYER GRENADE
 #
@@ -173,6 +176,7 @@ func _release_grenade() -> void:
 		g.setup(player)
 
 	consume_charge()
+	_Analytics.throw(player, display_name)
 	thrown.emit(g)
 	used.emit()
 	_notify_spent()

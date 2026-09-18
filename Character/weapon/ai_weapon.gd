@@ -1,6 +1,9 @@
 extends Node3D
 class_name AIWeapon
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ── EXPORTS ───────────────────────────────────
 @export var weapon_type: Enums.AIWeaponTypes
 @export var fire_cooldown: float = 1.35
@@ -143,6 +146,8 @@ func fire(weapon_target: Vector3) -> void:
 	_last_fired_ms = Time.get_ticks_msec()
 	if not infinite_ammo:
 		magazine_current -= 1
+	# Before the hit resolves, so the log can pair the two (same physics frame).
+	_Analytics.shot(_owner_body())
 
 	play_shot_audio()
 

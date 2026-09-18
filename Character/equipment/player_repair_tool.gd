@@ -359,7 +359,7 @@ func _tick_channel(delta: float) -> void:
 
 func _apply_repair(target: Node, amount: int) -> void:
 	if target.has_method("apply_healing"):
-		target.apply_healing(amount)
+		target.apply_healing(amount, player)
 	elif "health" in target and "max_health" in target:
 		target.health = mini(int(target.max_health), int(target.health) + amount)
 	repaired.emit(target, amount)

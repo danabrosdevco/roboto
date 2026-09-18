@@ -1,11 +1,13 @@
-[gd_scene load_steps=3 format=3 uid="uid://bw1jh4dftjbaa"]
+[gd_scene load_steps=4 format=3 uid="uid://bw1jh4dftjbaa"]
 
 [ext_resource type="PackedScene" uid="uid://bnygpdpgt07ir" path="res://Env/world.tscn" id="1_dsoqm"]
 [ext_resource type="Script" path="res://Managers/master.gd" id="2_master"]
+[ext_resource type="Resource" uid="uid://cv7h132xfrny7" path="res://Campaign/lab/plans/squad_orders.tres" id="3_labplan"]
 
 [node name="Master" type="Node"]
 script = ExtResource("2_master")
 company_seconds = 5.0
 title_seconds = 5.0
+lab_plan = ExtResource("3_labplan")
 
 [node name="World" parent="." instance=ExtResource("1_dsoqm")]

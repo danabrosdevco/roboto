@@ -34,6 +34,9 @@ const SFX_DRONE := preload("res://sounds/sfx/darkdrone/Dark Drone_SI 03.wav")
 # By path: a new class_name can be missing from an open editor's class list,
 # and this script failing to compile takes the whole front end with it.
 const _TutorialLibrary := preload("res://Character/hud/tutorial_library.gd")
+const _Analytics := preload("res://Managers/analytics.gd")
+const _Lab := preload("res://Managers/lab.gd")
+const _LabResults := preload("res://Character/hud/lab_results.gd")
 
 @export_group("Skip")
 # The switch asked for: straight to play, no splash and no menu.
@@ -97,6 +100,15 @@ const _TutorialLibrary := preload("res://Character/hud/tutorial_library.gd")
 ## the project does not already define an action by this name.
 @export var map_action: StringName = &"map"
 
+@export_group("Laboratory")
+## Skip the game and run AI-vs-AI fights in the arena instead, watched from a
+## ghost camera, with the results on screen at the end. Nothing is saved.
+## Only from the editor: an exported build ignores it, so it cannot ship on.
+@export var lab_mode: bool = false
+## Which fights: a LabPlan .tres from Campaign/lab/plans. Typed as Resource so
+## this script never waits on the class list (see analytics.gd).
+@export var lab_plan: Resource
+
 # ── runtime ───────────────────────────────────
 var _layer: CanvasLayer
 var _backdrop: ColorRect
@@ -107,9 +119,10 @@ var _filter_material: ShaderMaterial
 var _booting: bool = false
 var _skip_requested: bool = false
 var _paused_by_us: bool = false
-# "", "main", "pause", "options", "tutorials" or "dead". ESC closes the pause
-# screen but must NOT close the main menu — there is nothing behind it, and
-# treating them the same meant ESC started the game. On "dead" it does nothing.
+# "", "main", "pause", "options", "tutorials", "dead" or "lab". ESC closes the
+# pause screen but must NOT close the main menu — there is nothing behind it,
+# and treating them the same meant ESC started the game. On "dead" and "lab"
+# (the results screen) it does nothing.
 var _menu: String = ""
 var _options: OptionsMenu
 var _tutorials: _TutorialLibrary
@@ -127,6 +140,7 @@ var _drone_wanted: bool = false
 # Cleared by real mouse movement, so a menu appearing under the cursor does not
 # chirp for a button you never moved to.
 var _suppress_hover: bool = true
+var _lab: Node = null
 
 
 # The earliest point in the boot: _enter_tree runs parent-first, so this lands
@@ -159,8 +173,22 @@ func _ready() -> void:
 	_pin_children_pausable()
 	_build_audio()
 	_build_briefing()
+	# Editor runs only. The flag is saved into master.tscn, and a build sent
+	# out with it still ticked would boot testers straight into the lab.
+	if lab_mode and not OS.has_feature("editor"):
+		push_warning("Master: lab_mode is ticked but this is an exported build; starting the game normally.")
+		lab_mode = false
+	if lab_mode:
+		# Lab sessions keep their data apart from playtest sessions.
+		if _Analytics.dir_override == "":
+			_Analytics.dir_override = "user://lab"
+	_build_analytics()
 	_hook_world()
 	_build_overlay()
+	if lab_mode:
+		_teardown_overlay()
+		_start_lab.call_deferred()
+		return
 	if skip_splash:
 		_teardown_overlay()
 		return
@@ -510,6 +538,7 @@ func _show_main_menu() -> void:
 	_show_mouse()
 	_build_menu(menu_title_text, [
 		{"text": "START", "action": _start_play},
+		{"text": "PLAYTEST DATA", "action": _open_playtest_data},
 		{"text": "OPTIONS", "action": _open_options},
 		{"text": "QUIT", "action": _quit},
 	], HUDPalette.BRIGHT, title_suffix)
@@ -527,6 +556,7 @@ func _show_pause_menu() -> void:
 	_build_menu("PAUSED", [
 		{"text": "CONTINUE", "action": _resume_from_pause},
 		{"text": "TUTORIALS", "action": _open_tutorials},
+		{"text": "PLAYTEST DATA", "action": _open_playtest_data},
 		{"text": "OPTIONS", "action": _open_options},
 		{"text": "QUIT", "action": _quit},
 	], HUDPalette.WARN)
@@ -538,6 +568,73 @@ func _show_pause_menu() -> void:
 # the pause menu, so the world freezes behind it exactly as it does there. ESC
 # does nothing on this screen: there is no game to go back to until you pick.
 # ─────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# PLAYTEST DATA
+# The recorder lives here, above World, so it outlives every level load. It
+# switches itself off for headless and --script runs. The menu button opens its
+# folder, so a playtester can find the files to send back without being told
+# where Godot keeps user data.
+# ─────────────────────────────────────────────
+func _build_analytics() -> void:
+	var recorder := _Analytics.new()
+	recorder.name = "Analytics"
+	add_child(recorder)
+
+
+func _open_playtest_data() -> void:
+	DirAccess.make_dir_recursive_absolute(_Analytics.ROOT)
+	OS.shell_open(_Analytics.folder())
+
+
+# ─────────────────────────────────────────────
+# LABORATORY
+# lab_mode replaces the game with Lab: AI-vs-AI fights from lab_plan, watched
+# from a ghost camera, scored by the analytics recorder, and summed up on the
+# results screen below. ESC still pauses; QUIT ends it.
+# ─────────────────────────────────────────────
+func _start_lab() -> void:
+	# World finishes its own boot a frame or two after ours (it awaits a frame
+	# in _ready, then loads the base); the lab takes over from there.
+	for _i in 10:
+		await get_tree().process_frame
+	if lab_plan == null:
+		push_warning("Master: lab_mode is on but no lab_plan is set. Pick one from Campaign/lab/plans.")
+		return
+	_lab = _Lab.new()
+	_lab.name = "Lab"
+	_lab.plan = lab_plan
+	_lab.world = _world()
+	_lab.recorder = get_node_or_null("Analytics")
+	add_child(_lab)
+	_lab.finished.connect(_show_lab_results)
+	_capture_mouse()
+	_lab.run()
+
+
+func _show_lab_results(report_path: String) -> void:
+	if _layer == null:
+		_build_overlay()
+	_menu = "lab"
+	_backdrop.color = Color(0.02, 0.03, 0.03, 0.82)
+	_hold_pause()
+	_show_mouse()
+	_clear_content()
+	var screen = _LabResults.new()
+	screen.title = str(lab_plan.get("title"))
+	screen.rows = _lab.summary()
+	screen.report_path = report_path
+	screen.hover_sound = _sfx_hover
+	screen.confirm_sound = _sfx_confirm
+	screen.run_again.connect(func() -> void:
+		_teardown_overlay()
+		_lab.run(), CONNECT_DEFERRED)
+	screen.open_report.connect(func() -> void:
+		if report_path != "":
+			OS.shell_open(report_path.get_base_dir()))
+	screen.quit_game.connect(_quit)
+	_content.add_child(screen)
+
+
 func _hook_world() -> void:
 	var world := _world()
 	if world != null and not world.player_killed.is_connected(_show_death_menu):

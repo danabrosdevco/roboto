@@ -1,6 +1,9 @@
 extends Node
 class_name CampaignManager
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ─────────────────────────────────────────────
 # CAMPAIGN — the autoload that owns state across level loads.
 #
@@ -277,6 +280,7 @@ func register_objective_tracker(t: ObjectiveTracker) -> void:
 
 
 func _on_objective_changed(objective: MissionObjective) -> void:
+	_Analytics.objective(objective)
 	if objective == null or not objective.completed:
 		return
 	if enemy_spawner == null:
@@ -522,6 +526,8 @@ func on_level_loaded(level: Node) -> void:
 	# activates, and the squad should already be in the world by then.
 	if objectives != null:
 		objectives.refresh()
+	# Everyone is on the map now: the playtest log takes its squad snapshot.
+	_Analytics.level_loaded()
 
 
 # XP weighting is deliberate. SURVIVING is worth more than killing, because the

@@ -1,6 +1,9 @@
 extends Node
 class_name AmmoPool
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ─────────────────────────────────────────────
 # AMMO POOL — the player's carried reserves, keyed by ammo type.
 #
@@ -95,6 +98,8 @@ func take(ammo_type: StringName, amount: int) -> int:
 		return 0
 	_counts[ammo_type] = have - granted
 	ammo_changed.emit(ammo_type, have - granted)
+	if have - granted == 0:
+		_Analytics.ammo("ran_out", ammo_type)
 	return granted
 
 

@@ -1,6 +1,9 @@
 extends RigidBody3D
 class_name AIGrenadeProjectile
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ─────────────────────────────────────────────
 # AI GRENADE PROJECTILE
 # Physics-based grenade. Thrown with a computed
@@ -96,6 +99,9 @@ func _explode() -> void:
 			blast.source_actor = _thrower
 			if _thrower.has_method("get_faction"):
 				blast.source_faction = _thrower.get_faction()
+		# So the playtest log scores the blast as a frag, not as whatever the
+		# thrower happens to be holding by the time it goes off.
+		blast.set_meta(&"analytics_cause", _Analytics.label_for_scene(scene_file_path))
 		_level().add_child(blast)
 		blast.global_position = global_position
 		explosion_sfx.play()

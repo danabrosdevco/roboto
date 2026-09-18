@@ -34,7 +34,7 @@ func execute(context: EquipmentContext) -> void:
 	if patient == null:
 		return
 	if patient.has_method("apply_healing"):
-		patient.apply_healing(heal_amount)
+		patient.apply_healing(heal_amount, context.owner_ai)
 	elif "health" in patient and "max_health" in patient:
 		patient.health = mini(int(patient.max_health), int(patient.health) + heal_amount)
 	if use_sound != null:

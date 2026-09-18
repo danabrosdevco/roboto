@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=11 format=3 uid="uid://cv7h132xfrny7"]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="4_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "ADVANCE onto the garrison"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("4_chaser")])
+hostile_order = 0
+distance = 35.0
+repeats = 6
+time_limit = 120.0
+swap_sides = false
+hostiles_on_post = true
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "ATTACK a target"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+ally_order = 2
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("4_chaser")])
+hostile_order = 0
+distance = 35.0
+repeats = 6
+time_limit = 120.0
+swap_sides = false
+hostiles_on_post = true
+
+[sub_resource type="Resource" id="M3"]
+script = ExtResource("2_match")
+label = "MOVE & HOLD onto them (tap)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+ally_order = 3
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("4_chaser")])
+hostile_order = 0
+distance = 35.0
+repeats = 6
+time_limit = 120.0
+swap_sides = false
+hostiles_on_post = true
+
+[sub_resource type="Resource" id="M4"]
+script = ExtResource("2_match")
+label = "HOLD at range"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+ally_order = 0
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("4_chaser")])
+hostile_order = 0
+distance = 35.0
+repeats = 6
+time_limit = 120.0
+swap_sides = false
+hostiles_on_post = true
+
+[resource]
+script = ExtResource("1_plan")
+title = "Squad orders"
+question = "Four rifles against a dug-in garrison (2 shotguns, 2 rifles, 1 chaser), 35m out. Which order gets the most out of them: pushing in, focusing a target, the player's tap onto the enemy, or holding at range and trading shots?"
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2"), SubResource("M3"), SubResource("M4")])
+repeats_override = 0
+speed = 2.0

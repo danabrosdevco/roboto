@@ -1,6 +1,9 @@
 extends AIEquipment
 class_name AIGrenade
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ─────────────────────────────────────────────
 # AI GRENADE
 # Extends AIEquipment. Handles tactical decision
@@ -63,6 +66,7 @@ func execute(context: AIEquipment.EquipmentContext) -> void:
 	var spawn_pos = context.owner_ai.global_position + Vector3.UP * 1.5
 	grenade.global_position = spawn_pos
 	grenade.setup(context.owner_ai)
+	_Analytics.throw(context.owner_ai, _Analytics.label_for_scene(grenade_scene.resource_path))
 
 	# Compute arc velocity toward target
 	var throw_vel = _compute_throw_velocity(

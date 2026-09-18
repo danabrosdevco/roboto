@@ -35,7 +35,6 @@ health_sfx = NodePath("HealthSFX")
 shards_sfx = NodePath("ShardSFX")
 loadout = NodePath("EquipmentLoadout")
 ammo = NodePath("AmmoPool")
-health = 100
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_8ja6s")

@@ -120,13 +120,13 @@ offset_top = 388.0
 offset_right = 24.0
 offset_bottom = 428.0
 script = ExtResource("9_n3ibl")
+order_ux_sound = NodePath("OrderUXSoundCycle")
+order_ux_sound_confirm = NodePath("OrderUXSoundConfirm")
 font_size_header = 16
 font_size_body = 14
 font_size_nearby = 14
 font_size_toast = 14
 font_size_marker = 14
-order_ux_sound = NodePath("OrderUXSoundCycle")
-order_ux_sound_confirm = NodePath("OrderUXSoundConfirm")
 
 [node name="OrderUXSoundCycle" type="AudioStreamPlayer" parent="SquadHud"]
 stream = ExtResource("7_raese")

@@ -1,6 +1,9 @@
 extends AI
 class_name Enemy
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ── NODE REFERENCES ───────────────────────────
 @export var patrol_path: PatrolPath
 @export var nav_agent: NavigationAgent3D
@@ -2254,6 +2257,7 @@ func apply_damage(damage, source) -> void:
 	if bark != null:
 		bark.bark(BarkSet.Line.HURT)
 	health -= damage
+	_Analytics.damage(self, damage, damage, source, health <= 0)
 	if health <= 0:
 		# Kill credit. apply_damage has always carried the attributor; die()
 		# discarded it, which is why nothing could report a kill — and why XP
@@ -2312,6 +2316,7 @@ func _arm_self_revive() -> void:
 		if not is_instance_valid(self) or gen != _self_revive_gen or not downed:
 			return
 		_self_revive_used = true
+		_Analytics.self_revive(self)
 		# No bark: BarkSet has no revive line, and borrowing KILL would
 		# announce a kill that did not happen. The robot visibly standing back
 		# up is the cue.
@@ -2407,12 +2412,17 @@ func destroy():
 # ─────────────────────────────────────────────
 # Called by PlayerRepairTool. Works on a standing robot (topping them up) and on
 # a downed one (bringing them back), so the tool needs no special case.
-func apply_healing(amount: int) -> void:
+## `healer` is whoever did it, for the playtest log: the player's repair tool
+## or a squadmate's kit. Optional — nothing else reads it.
+func apply_healing(amount: int, healer: Node = null) -> void:
 	if ai_state == AIState.DEAD and not downed:
 		return   # properly destroyed, nothing to repair
+	var before: int = health
+	var was_down := downed
 	health = mini(max_health, health + amount)
 	if downed and health >= int(ceil(max_health * revive_at_fraction)):
 		revive()
+	_Analytics.heal(self, health - before, healer, was_down and not downed)
 
 
 func revive() -> void:

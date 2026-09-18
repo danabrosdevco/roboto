@@ -1,6 +1,9 @@
 extends PlayerEquipment
 class_name PlayerWeapon
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ─────────────────────────────────────────────
 # PLAYER WEAPON — the gun half of the split.
 #
@@ -223,6 +226,9 @@ func try_fire() -> void:
 		_dry_fire()
 		return
 	fire_cooldown = FIRE_RATE
+	# Counted before the shot resolves: a hit lands inside _fire_shot, and
+	# the log pairs it with the shot fired in the same physics frame.
+	_Analytics.shot(player, display_name)
 	_fire_shot()
 	loaded = maxi(0, loaded - 1)
 	# Cycle even on the last round: you rack the empty gun, and the reload picks
@@ -241,6 +247,7 @@ func try_fire() -> void:
 
 
 func _dry_fire() -> void:
+	_Analytics.ammo("dry_fire", ammo_type, display_name)
 	fire_cooldown = FIRE_RATE
 	if click_stream_player != null:
 		click_stream_player.play()
@@ -261,6 +268,7 @@ func start_reload() -> void:
 	if loaded >= magazine_size:
 		return
 	if reserve() <= 0:
+		_Analytics.ammo("no_reserve", ammo_type, display_name)
 		if click_stream_player != null:
 			click_stream_player.play()
 		denied.emit("NO AMMO")

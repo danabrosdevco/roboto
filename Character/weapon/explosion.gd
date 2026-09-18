@@ -1,5 +1,8 @@
 extends Node3D
 class_name Explosion
+
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
 @export var effects: Array[GPUParticles3D]
 @export var audio: AudioStreamPlayer3D
 @export var damage_value:=  20
@@ -43,6 +46,7 @@ func _on_area_3d_body_entered(body: Node3D) -> void:
 	if source_actor != null and is_instance_valid(source_actor):
 		attacker = source_actor
 
+	_Analytics.set_cause(str(get_meta(&"analytics_cause", "Explosion")))
 	if body.has_method("apply_damage"):
 		body.apply_damage(_damage_for(body), attacker)
 		damaged[body] = true
@@ -51,6 +55,7 @@ func _on_area_3d_body_entered(body: Node3D) -> void:
 		# two-argument signature — a runtime error every time it was reached.
 		body.get_parent().apply_damage(_damage_for(body.get_parent()), attacker)
 		damaged[body.get_parent()] = true
+	_Analytics.clear_cause()
 
 
 func _damage_for(body: Node) -> int:

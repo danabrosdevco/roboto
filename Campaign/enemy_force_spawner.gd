@@ -185,6 +185,10 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		# garrison reads RELAY-1..RELAY-6 instead of RELAY-L-1 / RELAY-M-1.
 		soldier.soldier_name = "%s-%d" % [spec.callsign, i + 1]
 		_apply_frame(soldier, frame)
+		# For the playtest log: "Chaser", not "enemy_chaser". Legacy count-form
+		# frames are built on the fly and have no name worth reporting.
+		if frame.resource_path != "":
+			soldier.set_meta(&"analytics_kind", frame.display_name)
 		level.add_child(soldier)
 		soldier.global_position = anchor + _ring_offset(i, bodies.size())
 		if ai_manager != null:

@@ -1,6 +1,9 @@
 extends AI
 class_name Player
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ─────────────────────────────────────────────
 # PLAYER
 #
@@ -584,13 +587,15 @@ func _on_scanner_highlight_target(target: Node3D, duration: float) -> void:
 	highlight_enemy.emit(target, duration)
 
 
-func apply_damage(damage, _source):
+func apply_damage(damage, source):
 	if alive == false:
 		return
 	_damage_carry += float(damage) * damage_taken_scale
 	var whole := int(floor(_damage_carry))
 	_damage_carry -= whole
 	health -= whole
+	# Both numbers: what the hit was, and what it cost after the scaling.
+	_Analytics.damage(self, int(damage), whole, source, health <= 0)
 	# Taking fire breaks a repair channel. Progress survives for resume_grace
 	# seconds, so ducking into cover and resuming doesn't start from zero.
 	if loadout != null:
@@ -605,11 +610,13 @@ func apply_damage(damage, _source):
 	pass
 
 
-func apply_healing(healing):
+func apply_healing(healing, healer: Node = null):
+	var before := int(health)
 	var new_health = health + healing
 	if new_health >= max_health:
 		new_health = max_health
 	health = new_health
+	_Analytics.heal(self, int(health) - before, healer)
 	#if health_sfx != null:
 		#health_sfx.play()
 	update_status()
