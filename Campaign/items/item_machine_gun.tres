@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_machine_gun.tscn" id="2_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"machine_gun"
+display_name = "Ancient Machine Gun"
+short_name = "MG"
+description = "Belt-fed, from before the collapse. Long bursts that keep heads down. Mounts on a rover's turret."
+kind = 0
+cost = 120
+ai_scene = ExtResource("2_ai")
+usable_by_player = false
+usable_by_ai = true
+chassis_whitelist = Array[StringName]([&"rover"])

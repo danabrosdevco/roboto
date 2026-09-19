@@ -114,6 +114,10 @@ func _init() -> void:
 	var events := _events_in(dir + "/events.jsonl")
 	_check("every line of events.jsonl parses", events.size() > 5, str(events.size()))
 	_check("the session is opened", _of(events, "session_start").size() == 1)
+	var build_label: String = preload("res://Managers/build_version.gd").label()
+	_check("...and says which build it is (+dev from the editor)", _of(events, "session_start").size() == 1
+		and _of(events, "session_start")[0].get("version") == build_label and build_label.ends_with("+dev"),
+		str(_of(events, "session_start")[0].get("version")) if _of(events, "session_start").size() == 1 else "")
 	var start := _of(events, "mission_start")
 	_check("the mission start records the op and the player's kit",
 		start.size() == 1 and start[0].get("m") == "arena_3_firing_line" and start[0].has("player"))
@@ -157,6 +161,7 @@ func _init() -> void:
 		and report.contains("## What hurts the player most?") and report.contains("## Which player weapons work?")
 		and report.contains("## Follow vs. advance"))
 	_check("...and says the attempt ended in a death", report.contains("died **1**"))
+	_check("...and which build the session was", report.contains("Build %s." % build_label))
 	var rebuilt: String = _Report.build(events, "roundtrip")
 	_check("the report rebuilds from the parsed file alone", rebuilt.contains("Mission attempts: **1**"))
 

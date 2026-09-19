@@ -102,6 +102,16 @@ func earned_objective_rewards() -> int:
 	return total
 
 
+## Completed objectives that carry compute, as {id, compute}. The campaign pays
+## each one once per campaign, so replaying a mission cannot farm it.
+func earned_compute() -> Array:
+	var out: Array = []
+	for o in _objectives:
+		if o.completed and o.compute_reward > 0:
+			out.append({"id": String(o.id), "compute": o.compute_reward})
+	return out
+
+
 func clear() -> void:
 	_objectives.clear()
 	_announced = false

@@ -18,9 +18,12 @@ class_name WeaponBar
 # refresh only ever changes text and colour. That sidesteps the deferred
 # queue_free() trap that has bitten every other rebuilding panel in this HUD.
 #
-# ICON-READY, TEXT-FIRST. PlayerEquipment already has an `icon` field and
-# nothing in the project assigns one yet, so every chip reserves the box and
-# hides it until there is art. Dropping textures in later changes no layout.
+# ICONS FIRST. Each chip shows the item's line-art icon (res://icons, baked from
+# its model), with the key and the ammo along the top. The item is found by the
+# scene it was built from — the catalogue lists each item's player_scene —
+# which covers the built-in repair tool as well as everything fitted. An icon
+# set on the PlayerEquipment itself wins; anything with no icon at all shows
+# its name in the same place instead.
 #
 # PRESENCE: it rests at almost nothing and flashes to full on a switch or a
 # refused press, holding a beat before fading back. Never hidden outright —
@@ -33,9 +36,11 @@ class_name WeaponBar
 ## width of the screen. The bottom-left corner already carries that readout and
 ## the squad panel, and this is the third thing that wanted to live there.
 @export var bottom_margin: float = 104.0
-@export var chip_size: Vector2 = Vector2(132, 44)
+@export var chip_size: Vector2 = Vector2(120, 62)
 @export var chip_gap: float = 8.0
-@export var icon_size: Vector2 = Vector2(28, 28)
+## The baked "m" icons' size (icon_art.gd): shown at exactly this, so the line
+## stays one pixel wide instead of blurring into a blob.
+@export var icon_size: Vector2 = Vector2(96, 36)
 
 @export_group("Presence")
 ## Resting opacity. Barely there on purpose: the bar answers a question you
@@ -62,8 +67,11 @@ const COL_BRIGHT := HUDPalette.BRIGHT
 const COL_DIM := HUDPalette.DIM
 const COL_WARN := HUDPalette.WARN
 const COL_CRIT := HUDPalette.CRIT
+const _Icons := preload("res://Character/hud/icons/icons.gd")
 
 var _loadout: EquipmentLoadout = null
+# Scene path -> icon (or null), so the catalogue is searched once per item.
+var _icon_cache: Dictionary = {}
 var _row: HBoxContainer = null
 var _chips: Array[Dictionary] = []
 var _highlight: float = 0.0
@@ -103,51 +111,76 @@ func _make_chip(index: int) -> Dictionary:
 	panel.add_theme_stylebox_override("panel", style)
 	_row.add_child(panel)
 
-	var box := HBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(box)
+	# Key and ammo along the top, the picture under them.
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(col)
+	var top := HBoxContainer.new()
+	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(top)
 
 	var key := Label.new()
 	key.text = str(index + 1)
 	key.add_theme_font_size_override("font_size", font_size_key)
 	key.add_theme_color_override("font_color", COL_BRIGHT)
-	key.custom_minimum_size = Vector2(12, 0)
-	key.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	key.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	key.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(key)
-
-	# Reserved even when empty — see ICON-READY above.
-	var icon := TextureRect.new()
-	icon.custom_minimum_size = icon_size
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.visible = false
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(icon)
-
-	var text := VBoxContainer.new()
-	text.add_theme_constant_override("separation", 0)
-	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(text)
-
-	var name_label := Label.new()
-	name_label.add_theme_font_size_override("font_size", font_size_name)
-	name_label.add_theme_color_override("font_color", COL_DIM)
-	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text.add_child(name_label)
+	top.add_child(key)
 
 	var ammo_label := Label.new()
 	ammo_label.add_theme_font_size_override("font_size", font_size_ammo)
 	ammo_label.add_theme_color_override("font_color", COL_DIM)
+	ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	ammo_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text.add_child(ammo_label)
+	top.add_child(ammo_label)
+
+	# At its baked size, never scaled: see icon_size. Behind it, clipped to the
+	# charge, the icon's own shape filled solid — so something that recharges
+	# (the repair tool) fills with green left to right, and drains right to
+	# left as it is used.
+	var holder := Control.new()
+	holder.custom_minimum_size = icon_size
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(holder)
+	var fill_clip := Control.new()
+	fill_clip.clip_contents = true
+	fill_clip.position = Vector2.ZERO
+	fill_clip.size = Vector2(0, icon_size.y)
+	fill_clip.visible = false
+	fill_clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(fill_clip)
+	var fill := TextureRect.new()
+	fill.size = icon_size
+	fill.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fill.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	fill.modulate = Color(COL_BRIGHT, 0.55)
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fill_clip.add_child(fill)
+	var icon := TextureRect.new()
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	icon.visible = false
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(icon)
+
+	# Stands in for the icon when there is none, in the same space.
+	var name_label := Label.new()
+	name_label.add_theme_font_size_override("font_size", font_size_name)
+	name_label.add_theme_color_override("font_color", COL_DIM)
+	name_label.custom_minimum_size = Vector2(0, icon_size.y)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.clip_text = true
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(name_label)
 
 	return {
 		"panel": panel, "style": style, "key": key, "icon": icon,
-		"name": name_label, "ammo": ammo_label,
+		"name": name_label, "ammo": ammo_label, "holder": holder,
+		"fill_clip": fill_clip, "fill": fill,
 	}
 
 
@@ -266,10 +299,8 @@ func _refresh() -> void:
 	for i in _chips.size():
 		var chip: Dictionary = _chips[i]
 		var item = _loadout.item_for_slot(i)
-		var style: StyleBoxFlat = chip["style"]
 		var name_label: Label = chip["name"]
 		var ammo_label: Label = chip["ammo"]
-		var key_label: Label = chip["key"]
 		var icon: TextureRect = chip["icon"]
 
 		if item == null or not is_instance_valid(item):
@@ -277,43 +308,142 @@ func _refresh() -> void:
 			# chips around and teach nothing. A visible dead slot says "this
 			# key is bound to nothing", which is the actual fact.
 			name_label.text = "—"
+			name_label.visible = true
 			ammo_label.text = ""
 			icon.visible = false
-			_paint(style, key_label, name_label, ammo_label, COL_DIM, 0.40, 0.30)
+			(chip["holder"] as Control).visible = false
+			_paint(chip, COL_DIM, 0.40, 0.30)
 			continue
 
 		name_label.text = item.display_name.to_upper()
 		var ammo := _ammo_text(item)
 		# A knife's readout label IS its name, so the chip printed it twice.
 		ammo_label.text = "" if ammo.to_upper() == name_label.text else ammo
-		icon.texture = item.icon
-		icon.visible = item.icon != null
+		var tex := _icon_for(item)
+		icon.texture = tex
+		icon.visible = tex != null
+		(chip["holder"] as Control).visible = tex != null
+		name_label.visible = tex == null
+		_show_charge(chip, item, tex)
 
 		var is_current: bool = item == current
 		var usable: bool = item.can_equip()
 		if i == _deny_slot and _deny_time > 0.0:
-			_paint(style, key_label, name_label, ammo_label, COL_CRIT, 0.80, 1.0)
+			_paint(chip, COL_CRIT, 0.80, 1.0)
 		elif is_current:
-			_paint(style, key_label, name_label, ammo_label, COL_BRIGHT, 0.80, 1.0)
+			_paint(chip, COL_BRIGHT, 0.80, 1.0)
 		elif not usable:
 			# There IS something here, and pressing the key will refuse. That
 			# has to look different from both "ready" and "empty".
-			_paint(style, key_label, name_label, ammo_label, COL_WARN, 0.62, 0.70)
+			_paint(chip, COL_WARN, 0.62, 0.70)
 		else:
-			_paint(style, key_label, name_label, ammo_label, COL_DIM, 0.62, 0.85)
+			_paint(chip, COL_DIM, 0.62, 0.85)
 
 
-func _paint(style: StyleBoxFlat, key_label: Label, name_label: Label,
-		ammo_label: Label, col: Color, bg: float, text: float) -> void:
+func _paint(chip: Dictionary, col: Color, bg: float, text: float) -> void:
+	var style: StyleBoxFlat = chip["style"]
 	style.border_color = Color(col.r, col.g, col.b, clampf(text + 0.1, 0.0, 1.0))
 	# A DARK backing, not a tinted one. Tinting the background with the state
 	# colour left pale chips sitting on pale terrain, and the bar was unreadable
 	# over anything bright. The colour belongs on the border and the text.
 	style.bg_color = Color(0.02, 0.03, 0.04, bg)
 	var c := Color(col.r, col.g, col.b, text)
-	key_label.add_theme_color_override("font_color", c)
-	name_label.add_theme_color_override("font_color", c)
-	ammo_label.add_theme_color_override("font_color", Color(col.r, col.g, col.b, text * 0.8))
+	(chip["key"] as Label).add_theme_color_override("font_color", c)
+	(chip["name"] as Label).add_theme_color_override("font_color", c)
+	(chip["ammo"] as Label).add_theme_color_override("font_color", Color(col.r, col.g, col.b, text * 0.8))
+	# The icon is white line art: tinting it is its whole colour.
+	(chip["icon"] as TextureRect).modulate = c
+
+
+# A CHANNEL item's charge (the repair tool's reservoir) as its icon filling up:
+# the icon's own shape, solid green, clipped to the charge from the left.
+func _show_charge(chip: Dictionary, item, tex: Texture2D) -> void:
+	var clip: Control = chip["fill_clip"]
+	var r = item.get_readout() if tex != null and item.has_method("get_readout") else null
+	if r == null or r.mode != PlayerEquipment.ReadoutMode.CHANNEL:
+		clip.visible = false
+		return
+	var fill: TextureRect = chip["fill"]
+	if fill.texture == null or fill.get_meta(&"source", null) != tex:
+		fill.texture = _solid_of(tex)
+		fill.set_meta(&"source", tex)
+	clip.visible = fill.texture != null
+	clip.size = Vector2(icon_size.x * clampf(r.fraction, 0.0, 1.0), icon_size.y)
+
+
+# The inside of a line icon, filled: everything its outline encloses. Made once
+# from the icon itself rather than baked, so the two always line up. The
+# outside is whatever transparency the edges of the image can reach; the rest is
+# the shape.
+var _solids: Dictionary = {}
+
+
+func _solid_of(tex: Texture2D) -> Texture2D:
+	if _solids.has(tex):
+		return _solids[tex]
+	var img := tex.get_image()
+	if img == null or img.is_empty():
+		push_warning("WeaponBar: could not read %s to fill it; the charge will not show." % tex.resource_path)
+		_solids[tex] = null
+		return null
+	img = img.duplicate()
+	if img.is_compressed():
+		img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	var w := img.get_width()
+	var h := img.get_height()
+	var outside := PackedByteArray()
+	outside.resize(w * h)
+	var todo: Array[Vector2i] = []
+	for x in w:
+		todo.append(Vector2i(x, 0))
+		todo.append(Vector2i(x, h - 1))
+	for y in h:
+		todo.append(Vector2i(0, y))
+		todo.append(Vector2i(w - 1, y))
+	while not todo.is_empty():
+		var p: Vector2i = todo.pop_back()
+		if p.x < 0 or p.y < 0 or p.x >= w or p.y >= h:
+			continue
+		var i := p.y * w + p.x
+		if outside[i] == 1 or img.get_pixelv(p).a > 0.25:
+			continue
+		outside[i] = 1
+		todo.append(p + Vector2i.RIGHT)
+		todo.append(p + Vector2i.LEFT)
+		todo.append(p + Vector2i.DOWN)
+		todo.append(p + Vector2i.UP)
+	var solid := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	for y in h:
+		for x in w:
+			if outside[y * w + x] == 0:
+				solid.set_pixel(x, y, Color.WHITE)
+	var out := ImageTexture.create_from_image(solid)
+	_solids[tex] = out
+	return out
+
+
+# The item's line art, found through the catalogue entry whose player_scene
+# this item was built from. The built-in repair tool is placed in the player
+# scene rather than built from a record, and is found the same way.
+func _icon_for(item) -> Texture2D:
+	if item.icon != null:
+		return item.icon
+	var scene_path: String = item.scene_file_path
+	if scene_path == "":
+		return null
+	if _icon_cache.has(scene_path):
+		return _icon_cache[scene_path]
+	var found: Texture2D = null
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	var catalogue = campaign.get("catalogue") if campaign != null else null
+	if catalogue != null:
+		for def in catalogue.items:
+			if def != null and def.player_scene != null and def.player_scene.resource_path == scene_path:
+				found = _Icons.item(def, "m")
+				break
+	_icon_cache[scene_path] = found
+	return found
 
 
 func _ammo_text(item) -> String:

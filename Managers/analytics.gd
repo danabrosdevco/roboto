@@ -175,7 +175,8 @@ func _ready() -> void:
 	_open()
 	_active = self
 	_emit("session_start", {
-		"version": str(ProjectSettings.get_setting("application/config/version", "")),
+		# "v0.003a" from an export, "v0.003a+dev" from the editor.
+		"version": preload("res://Managers/build_version.gd").label(),
 		"date": Time.get_datetime_string_from_system(),
 		"os": OS.get_name(),
 		"fov": Settings.get_float("display.fov"),
@@ -381,6 +382,11 @@ func _end_attempt(outcome: String, result: Dictionary) -> void:
 	_in_mission = false
 	_mission = null
 	_write_report()
+	# The debrief pauses the game as the mission ends, and the flush in _process
+	# is pausable — so the whole mission sat in the buffer until the debrief was
+	# closed. It is complete now; put it on disk.
+	if _file != null:
+		_file.flush()
 
 
 func _on_damage(victim: Node, raw: int, applied: int, source: Node, lethal: bool) -> void:

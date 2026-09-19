@@ -37,7 +37,9 @@ LOG="$(mktemp 2>/dev/null || echo ./.smoke.log)"
 echo "── Booting headless for ${SECONDS_TO_RUN}s ──"
 # The game never exits on its own, so it is killed after the window. A non-zero
 # status from timeout's SIGTERM is the EXPECTED outcome; only the log matters.
-timeout "${SECONDS_TO_RUN}s" "$GODOT" --headless --path . > "$LOG" 2>&1
+# `-- --no-save`: the game saves on reaching base, and this boots the real
+# game, so without it every smoke run rewrote the player's campaign.json.
+timeout "${SECONDS_TO_RUN}s" "$GODOT" --headless --path . -- --no-save > "$LOG" 2>&1
 boot_status=$?
 
 # Real failures. Godot prints runtime script problems as SCRIPT ERROR / ERROR,

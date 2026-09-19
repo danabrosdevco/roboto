@@ -31,6 +31,8 @@ const COL_DIM    := HUDPalette.DIM
 const COL_BRIGHT := HUDPalette.BRIGHT
 const COL_WARN   := HUDPalette.WARN
 const COL_DONE   := HUDPalette.SIGNAL
+const _Debrief := preload("res://Character/hud/debrief_screen.gd")
+const _Wallet := preload("res://Character/hud/wallet_hud.gd")
 
 var tracker: ObjectiveTracker
 # Same reasoning as LevelExit: resolved by path so hud.tscn stays loadable
@@ -59,7 +61,19 @@ func _ready() -> void:
 	if _campaign != null:
 		_campaign.deployed.connect(func(_m): _bind_tracker())
 		_campaign.returned_to_base.connect(func(): _bind_tracker())
-		_campaign.extracted.connect(_on_extracted)
+	# The debrief (mission complete / failed) and, at base, the resources and
+	# compute in this corner: both built here rather than placed in hud.tscn.
+	# Deferred, because the HUD is still readying its children.
+	var host := get_parent()
+	if host != null:
+		var debrief := _Debrief.new()
+		debrief.name = "DebriefScreen"
+		host.add_child.call_deferred(debrief)
+		var wallet := _Wallet.new()
+		wallet.name = "WalletHUD"
+		host.add_child.call_deferred(wallet)
+	else:
+		push_warning("ObjectiveHUD: no parent to put the debrief and wallet in.")
 
 
 func _bind_tracker() -> void:
@@ -313,63 +327,9 @@ func _on_changed(objective: MissionObjective) -> void:
 	_rebuild()
 
 
-# What you actually earned, shown where the objective pings were.
-#
-# `result` comes from Campaign.extract():
-#   reward            the mission's own payout, zero if it was not a success
-#   objective_reward  bonus objectives, paid whether or not the mission was
-#   survivors / lost  squad, read back off the bodies at extraction
-func _on_extracted(mission: MissionDefinition, result: Dictionary) -> void:
-	var mission_reward := int(result.get("reward", 0))
-	var bonus := int(result.get("objective_reward", 0))
-	var total := mission_reward + bonus
-	var survivors := int(result.get("survivors", 0))
-	var lost := int(result.get("lost", 0))
-
-	# The operation's name leads, on the headline itself. It used to be the LAST
-	# line, under the money and the promotions, which read as a footnote rather
-	# than as "this is what you just finished".
-	var named := ": %s" % mission.display_name.to_upper() if mission != null else ""
-
-	var lines: PackedStringArray = []
-	if not bool(result.get("success", true)):
-		# You died out there. Bonus objectives still pay, so say what came home.
-		lines.append("MISSION FAILED%s" % named)
-		lines.append(("+%d BONUS" % bonus) if bonus > 0 else "NO PAYOUT")
-	elif total > 0:
-		lines.append("MISSION COMPLETE%s" % named)
-		# Only break the total down when there is genuinely something to break
-		# down — "+90 (90 MISSION + 0 BONUS)" is noise.
-		if bonus > 0 and mission_reward > 0:
-			lines.append("+%d    %d MISSION  +  %d BONUS" % [total, mission_reward, bonus])
-		else:
-			lines.append("+%d" % total)
-	else:
-		lines.append("EXTRACTED%s" % named)
-		lines.append("NO PAYOUT")
-
-	if lost > 0:
-		lines.append("%d RECOVERED   %d LOST" % [survivors, lost])
-	else:
-		lines.append("%d RECOVERED" % survivors)
-
-	# Promotions go on the card because this is the only moment veterancy is
-	# visible. A rank that changes silently in a menu nobody opened may as well
-	# not have happened.
-	var promoted: Array = result.get("ranked_up", [])
-	for record in promoted:
-		if record != null:
-			lines.append("%s PROMOTED — %s" % [
-				record.display_name.to_upper(), record.rank_title().to_upper()])
-
-	var good: bool = total > 0 and bool(result.get("success", true))
-	_show_toast("\n".join(lines), COL_DONE if good else COL_WARN, reward_toast_seconds)
-
-	# The last operation, cleared for the first time. After the payout, not
-	# instead of it.
-	if bool(result.get("won", false)):
-		_toast_queue.append(["YOU WON\nEVERY OPERATION IS NOW OPEN AT THE TERMINAL",
-			COL_DONE, reward_toast_seconds])
+# The payout used to be a toast here. It is the debrief screen now
+# (debrief_screen.gd), which this HUD adds beside itself in _ready: the squad,
+# what each robot killed, XP, resources and compute counting up, and unlocks.
 
 
 func _on_all_complete() -> void:

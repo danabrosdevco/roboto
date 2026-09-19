@@ -3,6 +3,7 @@ class_name Enemy
 
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
+const _KillKinds := preload("res://Campaign/kill_kinds.gd")
 
 # ── NODE REFERENCES ───────────────────────────
 @export var patrol_path: PatrolPath
@@ -50,6 +51,11 @@ func equip_weapon_scene(scene: PackedScene) -> void:
 @export var acceleration := 8.0
 ## Turn response rate, same curve as acceleration.
 @export var rotation_speed := 7.0
+## How near a destination counts as there once the path runs out. Further off
+## than this and the path is taken to be blocked. Keep it above the nav agent's
+## target_desired_distance, or every arrival reads as a blockage — which is why
+## a vehicle, that cannot creep onto an exact spot, sets both larger.
+@export var arrival_radius: float = 2.0
 @export var reposition_distance: float = 2.0
 @export var advance_distance: float = 3.0
 # Fraction of the weapon's effective range to hold at. 0.8 keeps a rifle out at
@@ -90,6 +96,9 @@ func equip_weapon_scene(scene: PackedScene) -> void:
 # at extraction and added to the career total there — the node is destroyed
 # between missions, the record is not.
 var confirmed_kills: int = 0
+# The same kills by what they were (Campaign/kill_kinds.gd): frame id -> count.
+# Read and cleared at extraction, like confirmed_kills.
+var kills_by_kind: Dictionary = {}
 # Whose kills these really are. A hatchling is a thrown weapon that happens to
 # have legs: it lives 25 seconds and has no record, so a kill credited to it was
 # a kill nobody got. HatchlingPayload points this at the thrower, and a victim's
@@ -391,7 +400,7 @@ func _tick_vision(delta: float) -> void:
 	_vision_timer = elapsed
 
 	var reach := sight_range()
-	var forward: Vector3 = -global_transform.basis.z
+	var forward: Vector3 = _sight_forward()
 	forward.y = 0.0
 	if forward.length_squared() < 0.01:
 		forward = Vector3.FORWARD
@@ -458,6 +467,19 @@ func _tick_vision(delta: float) -> void:
 		elif not has_live_target():
 			change_combat_target(candidate)
 		return   # one contact per tick is plenty
+
+
+# How near its slot counts as in position, given the squad's own tolerance. A
+# robot on legs walks onto the spot; something that cannot creep onto an exact
+# point answers with how near it parks, or the squad re-orders it forever.
+func slot_tolerance(squad_tolerance: float) -> float:
+	return squad_tolerance
+
+
+# Which way this robot is looking. The body's facing for anything that turns its
+# whole self to look; a vehicle looks with its turret, not its hull.
+func _sight_forward() -> Vector3:
+	return -global_transform.basis.z
 
 
 # 1.0 close to the player, rising to lod_far_multiplier out at lod_far_distance.
@@ -619,6 +641,9 @@ var _settle_timer: float = 0.0
 var _settling: bool = false
 var _crashing: bool = false
 var _crash_timeout: float = 0.0
+# What a wreck has been let fall through — whatever it went down standing on
+# that is not the level itself. Given back when it stands up.
+var _fell_through: Array[PhysicsBody3D] = []
 var _settled: bool = false
 var _settle_rest_y: float = 0.0
 var _collider_rest: Transform3D
@@ -763,7 +788,8 @@ func _physics_process(delta: float) -> void:
 			velocity.x = lerp(velocity.x, 0.0, 1.0 - exp(-1.5 * delta))
 			velocity.z = lerp(velocity.z, 0.0, 1.0 - exp(-1.5 * delta))
 			move_and_slide()
-			if is_on_floor() or _crash_timeout <= 0.0:
+			var landed := is_on_floor() and not _step_off_bodies()
+			if landed or _crash_timeout <= 0.0:
 				_crashing = false
 				_on_crash_landed()
 				_begin_settle()
@@ -1102,7 +1128,7 @@ func handle_movement(delta):
 			_tick_nav(delta)
 			if _nav_finished:
 				var dist_to_target = global_position.distance_to(movement_target)
-				if dist_to_target < 2.0:
+				if dist_to_target < arrival_radius:
 					# Actually arrived — normal completion
 					reconsider_movement()
 					_stuck_timer = 0.0
@@ -1253,6 +1279,17 @@ func _update_facing(delta: float) -> void:
 	# The core fix for "faces where it walks while shooting sideways".
 	# In combat the body tracks the target; movement direction is
 	# independent, which gives strafing and backpedalling for free.
+	var face_dir := _desired_facing()
+	if face_dir == Vector3.ZERO:
+		return   # nothing to look at and never moved: keep the facing it has
+	var target_yaw = atan2(-face_dir.x, -face_dir.z)
+	var t = 1.0 - exp(-rotation_speed * delta)
+	rotation.y = lerp_angle(rotation.y, target_yaw, t)
+
+# Which way to look, flat and normalised, or ZERO for nowhere in particular.
+# The target in a fight, else what it was told to watch, else where it last
+# walked. Shared with anything that aims a part of itself rather than its body.
+func _desired_facing() -> Vector3:
 	var face_dir := Vector3.ZERO
 	if ai_state == AIState.COMBAT and combat_target != null and combat_target.alive:
 		face_dir = combat_target.global_position - global_position
@@ -1262,14 +1299,11 @@ func _update_facing(delta: float) -> void:
 		face_dir = look_target - global_position
 	elif _last_move_dir.length_squared() > 0.0001:
 		face_dir = _last_move_dir
-
 	face_dir.y = 0.0
 	if face_dir.length_squared() < 0.0001:
-		return
-	face_dir = face_dir.normalized()
-	var target_yaw = atan2(-face_dir.x, -face_dir.z)
-	var t = 1.0 - exp(-rotation_speed * delta)
-	rotation.y = lerp_angle(rotation.y, target_yaw, t)
+		return Vector3.ZERO
+	return face_dir.normalized()
+
 
 func _is_moving() -> bool:
 	return Vector2(velocity.x, velocity.z).length() > 0.6
@@ -1336,6 +1370,8 @@ func handle_weapon_logic(delta):
 			# a real pause before a long shot.
 			if _burst_left <= 0 and _aim_tracking < _prefire_threshold():
 				return
+			if not _weapon_on_target():
+				return   # still slewing onto it
 			weapon_state = WeaponState.FIRE
 		WeaponState.FIRE:
 			if fire_time <= 0.0:
@@ -1344,6 +1380,14 @@ func handle_weapon_logic(delta):
 				if _burst_left > 0:
 					_burst_left -= 1
 				weapon_state = WeaponState.AIM
+
+# Whether the gun is actually pointing at weapon_target. A robot turns its whole
+# body and fires down its facing, so for one of those it always is. A turret
+# has to traverse onto the target first, and firing while it swings is what
+# would make one read as fake.
+func _weapon_on_target() -> bool:
+	return true
+
 
 func _prefire_threshold() -> float:
 	if weapon == null:
@@ -1897,7 +1941,7 @@ func _tick_idle_scan(delta: float) -> void:
 	if movement_state != MovementState.NONE:
 		return
 	if _idle_scan_base.length_squared() < 0.01:
-		var facing := -global_transform.basis.z
+		var facing := _sight_forward()
 		facing.y = 0.0
 		_idle_scan_base = facing.normalized() if facing.length_squared() > 0.01 else Vector3.FORWARD
 
@@ -2062,7 +2106,14 @@ func _enter_aim_stance() -> void:
 ## FIRE used to be `pass`. It now means: commit to a burst from wherever
 ## you are — if you were moving, keep moving and eat the accuracy penalty.
 func _commit_burst() -> void:
-	_burst_left = randi_range(burst_min, max(burst_min, burst_max))
+	var lo := burst_min
+	var hi := burst_max
+	# A weapon with a rhythm of its own keeps it whatever it is bolted to: a
+	# machine gun talks in long bursts, a grenade launcher in twos and threes.
+	if weapon != null and weapon.burst_min > 0:
+		lo = weapon.burst_min
+		hi = weapon.burst_max
+	_burst_left = randi_range(lo, maxi(lo, hi))
 
 func find_reposition_target():
 	if combat_target == null:
@@ -2273,6 +2324,10 @@ func apply_damage(damage, source) -> void:
 			# some of those carry a counter.
 			if "confirmed_kills" in killer:
 				killer.confirmed_kills += 1
+			# And WHAT it was, for the debrief: "2 CHASERS, 1 RIFLE TROOPER".
+			if "kills_by_kind" in killer:
+				var kind := _KillKinds.kind_of(self)
+				killer.kills_by_kind[kind] = int(killer.kills_by_kind.get(kind, 0)) + 1
 			if "bark" in killer and killer.bark != null:
 				killer.bark.bark(BarkSet.Line.KILL, soldier_name)
 		die()
@@ -2360,10 +2415,17 @@ func enter_downed() -> void:
 	# so a wreck that lands somewhere is_on_floor() never reports (a slope it
 	# slides along, geometry it clips into) still settles rather than falling
 	# forever with its physics tick alive.
-	if not is_on_floor():
+	#
+	# Standing on something that can move counts as airborne. A hopper that
+	# died perched on your head settled up there and hung in mid-air once you
+	# walked out from under it — as did a wreck on a wreck, when the one below
+	# settled and switched its collider off.
+	if not is_on_floor() or _step_off_bodies():
 		_crashing = true
 		_crash_timeout = 6.0
 		_on_crash_started()
+		# The downed branch of _physics_process drives the fall.
+		set_physics_process(true)
 	else:
 		_begin_settle()
 	went_down.emit()
@@ -2437,6 +2499,7 @@ func revive() -> void:
 	_restore_pieces()
 	_unsettle()
 	_restore_collider()
+	_stop_falling_through()
 	if _collision_shape != null:
 		_collision_shape.set_deferred("disabled", false)
 	if weapon != null:
@@ -2486,23 +2549,16 @@ func _settle_scale() -> float:
 	return clampf(h / SETTLE_REFERENCE_HEIGHT, 0.25, 1.5)
 
 
-# From the body's own collider rather than its mesh: every frame has one, and
-# flattening only ROTATES it, so its height still describes the robot standing.
-# Basis scale, not rotation, so a flattened capsule still measures correctly.
+# From the body's own collider rather than its mesh: every frame has one. Measured
+# on the collider as it STANDS — its rest transform once flattening has rotated
+# it — so a wreck still measures as the robot it was. The vertical extent, not
+# the shape's own height: a vehicle's capsule lies along its length, and its
+# "height" is how long it is.
 func _body_height() -> float:
 	if _collision_shape == null or _collision_shape.shape == null:
 		return 0.0
-	var k: float = absf(_collision_shape.global_transform.basis.get_scale().y)
-	var s := _collision_shape.shape
-	if s is CapsuleShape3D:
-		return (s as CapsuleShape3D).height * k
-	if s is CylinderShape3D:
-		return (s as CylinderShape3D).height * k
-	if s is BoxShape3D:
-		return (s as BoxShape3D).size.y * k
-	if s is SphereShape3D:
-		return (s as SphereShape3D).radius * 2.0 * k
-	return 0.0
+	var standing := _collider_rest if _collider_flattened else _collision_shape.transform
+	return (standing * _shape_box(_collision_shape.shape)).size.y * absf(global_transform.basis.get_scale().y)
 
 
 func _tick_settle(delta: float) -> void:
@@ -2552,11 +2608,14 @@ func _flatten_collider() -> void:
 	_collider_rest = _collision_shape.transform
 	_collider_flattened = true
 
-	var lying := _collider_rest
-	lying = lying.rotated_local(Vector3.RIGHT, deg_to_rad(90.0))
-	# Drop it so the now-horizontal shape rests on the deck instead of floating
-	# at the old centre height.
-	lying.origin.y = _prone_height()
+	var lying := _collider_rest.rotated_local(Vector3.RIGHT, deg_to_rad(90.0))
+	# Its underside stays where the standing shape's was, on the deck. This used
+	# to put the centre one radius above the body's ORIGIN, as if the origin were
+	# the feet — it is the middle of the capsule. So a wreck's collider hung a
+	# metre in the air, and a robot that died airborne fell until that reached
+	# the deck, taking the body a metre into the floor. Hoppers die mid-leap more
+	# than anything else does; they vanished into the ground.
+	lying.origin.y += _feet_y() - _shape_bottom(lying)
 	_collision_shape.transform = lying
 
 
@@ -2567,19 +2626,61 @@ func _restore_collider() -> void:
 	_collider_flattened = false
 
 
-# Half the thickness of the shape once it's on its side, so it sits on the
-# ground rather than sinking or hovering.
-func _prone_height() -> float:
-	var shape := _collision_shape.shape
+# Lets a wreck fall through whatever it is standing on that is not the level —
+# a robot, the player, another wreck — and says whether there was anything.
+# None of those stays put: it walks off, or settles and turns its collider off,
+# and a wreck resting on it is left hanging in the air.
+func _step_off_bodies() -> bool:
+	var found := false
+	for i in get_slide_collision_count():
+		var hit := get_slide_collision(i)
+		var body := hit.get_collider() as PhysicsBody3D
+		if body == null or body is StaticBody3D or hit.get_angle(0, up_direction) > floor_max_angle + 0.01:
+			continue   # the level, or a wall — not something it is standing on
+		if not _fell_through.has(body):
+			add_collision_exception_with(body)
+			_fell_through.append(body)
+		found = true
+	return found
+
+
+func _stop_falling_through() -> void:
+	for body in _fell_through:
+		if is_instance_valid(body):
+			remove_collision_exception_with(body)
+	_fell_through.clear()
+
+
+# The underside of the STANDING collider, in the body's own space: where the
+# deck is under a robot on its feet. Not zero — the origin is the middle of the
+# capsule, so it is -1.0 on a 2m frame and about -0.47 on a hopper.
+func _feet_y() -> float:
+	if _collision_shape == null:
+		push_warning("%s: no collider, so its feet are taken to be at its origin." % name)
+		return 0.0
+	return _shape_bottom(_collider_rest if _collider_flattened else _collision_shape.transform)
+
+
+# The lowest point of the body's collision shape, were it placed at `at`.
+func _shape_bottom(at: Transform3D) -> float:
+	return (at * _shape_box(_collision_shape.shape)).position.y
+
+
+func _shape_box(shape: Shape3D) -> AABB:
 	if shape is CapsuleShape3D:
-		return (shape as CapsuleShape3D).radius
+		var c := shape as CapsuleShape3D
+		return AABB(Vector3(-c.radius, -c.height * 0.5, -c.radius), Vector3(c.radius * 2.0, c.height, c.radius * 2.0))
 	if shape is CylinderShape3D:
-		return (shape as CylinderShape3D).radius
+		var y := shape as CylinderShape3D
+		return AABB(Vector3(-y.radius, -y.height * 0.5, -y.radius), Vector3(y.radius * 2.0, y.height, y.radius * 2.0))
 	if shape is SphereShape3D:
-		return (shape as SphereShape3D).radius
+		var r := (shape as SphereShape3D).radius
+		return AABB(Vector3.ONE * -r, Vector3.ONE * r * 2.0)
 	if shape is BoxShape3D:
-		return (shape as BoxShape3D).size.z * 0.5
-	return 0.4
+		var b := (shape as BoxShape3D).size
+		return AABB(b * -0.5, b)
+	# Anything else is measured off the outline the editor draws for it.
+	return shape.get_debug_mesh().get_aabb() if shape != null else AABB()
 
 
 func _collapse_pieces() -> void:
@@ -2592,6 +2693,43 @@ func _collapse_pieces() -> void:
 		t = t.rotated_local(Vector3.RIGHT, deg_to_rad(collapse_pitch_degrees))
 		t.origin.y -= collapse_drop
 		piece.transform = t
+	_keep_pieces_above_deck()
+
+
+# collapse_drop is tuned on the 2m frames: on its side a robot is thinner than
+# it was tall, and it has to come down half a metre to reach the deck. A hopper
+# is a puck — on its side it is TALLER — and the same half metre put it half
+# through the floor before it had started to settle. So the drop stops at the
+# deck, whatever the frame; settling is what takes a wreck into the ground.
+func _keep_pieces_above_deck() -> void:
+	var lowest := INF
+	for piece in _piece_rest.keys():
+		if piece != null and is_instance_valid(piece):
+			lowest = minf(lowest, _lowest_drawn(piece, global_transform.affine_inverse()))
+	if lowest == INF:
+		push_warning("%s: nothing drawn to measure, so the collapse is not checked against the deck." % name)
+		return
+	var lift := maxf(0.0, _feet_y() - lowest)
+	for piece in _piece_rest.keys():
+		if piece != null and is_instance_valid(piece):
+			piece.position.y += lift
+
+
+# The lowest point of anything drawn at or under `node`, in the body's space
+# (`to_body` takes world space there). Meshes and whole CSG shapes only — a
+# particle emitter's bounds are where its sparks might fly, not the body.
+func _lowest_drawn(node: Node, to_body: Transform3D) -> float:
+	if node is Node3D and not (node as Node3D).is_visible_in_tree():
+		return INF
+	if node is CSGShape3D or node is MeshInstance3D:
+		var box := (node as VisualInstance3D).get_aabb()
+		if box.size != Vector3.ZERO:
+			return (to_body * (node as Node3D).global_transform * box).position.y
+	var lowest := INF
+	if not node is CSGShape3D:   # a CSG shape's children are already part of it
+		for child in node.get_children():
+			lowest = minf(lowest, _lowest_drawn(child, to_body))
+	return lowest
 
 
 func _restore_pieces() -> void:
@@ -2651,6 +2789,7 @@ func reset():
 	# Was never reset — squads set this true and nothing ever set it back,
 	# so every squad member ran full physics forever.
 	always_active = false
+	_stop_falling_through()
 	# A level reset is a fresh start, so the nanite charge comes back with it.
 	_self_revive_used = false
 	_self_revive_gen += 1

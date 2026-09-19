@@ -3,6 +3,7 @@ class_name CampaignManager
 
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
+const _SoftwareTree := preload("res://Campaign/software_tree.gd")
 
 # ─────────────────────────────────────────────
 # CAMPAIGN — the autoload that owns state across level loads.
@@ -116,7 +117,28 @@ func _ready() -> void:
 		state.roster_changed.connect(_queue_base_save)
 	_repair_roster()
 	state.recompute_roster()
+	_pay_compute_owed()
+	_grant_owed_unlocks()
 	state_loaded.emit()
+
+
+# A save from before compute — or from before an op paid any — has cleared ops
+# it was never paid for. Each pays its first-clear compute now, once. Quietly:
+# loading must not write the save by itself, and the next save keeps it (the
+# claims and the compute are saved together, so nothing can be paid twice).
+func _pay_compute_owed() -> void:
+	var owed := 0
+	for m in missions:
+		if m != null and state.completed_missions.has(m.id):
+			owed += state.claim_compute(CampaignState.clear_compute_key(m.id), m.compute_reward)
+	if owed > 0:
+		state.compute_earned += owed
+		print("[Campaign] +%d compute for operations cleared before they paid it." % owed)
+	# A program the tree no longer has (renamed or cut in a patch) hands its
+	# compute back rather than holding it forever out of reach.
+	var dropped := state.release_unknown_software(_SoftwareTree.ids())
+	if not dropped.is_empty():
+		push_warning("Campaign: software %s is no longer in the tree; its compute was freed." % str(dropped))
 
 
 # The chassis every new soldier gets. Falls back to the FIRST chassis in the
@@ -188,6 +210,7 @@ func _return_unusable_player_kit() -> void:
 
 
 func _seed_new_campaign() -> void:
+	state.supply_cap = starting_squad_size
 	state.award(starting_resources)
 	for i in starting_squad_size:
 		var r := SoldierRecord.new()
@@ -542,6 +565,10 @@ const XP_PER_KILL := 6
 const XP_MISSION_SUCCESS := 15
 
 
+# Record -> [xp gained, rank before], for the debrief's cards.
+var _xp_this_mission: Dictionary = {}
+
+
 # Returns the soldiers who gained a rank, so the payout card can say so.
 func _award_experience(success: bool) -> Array:
 	var promoted: Array = []
@@ -563,9 +590,53 @@ func _award_experience(success: bool) -> Array:
 		if success:
 			gained += XP_MISSION_SUCCESS
 		record.add_xp(gained)
+		_xp_this_mission[record] = [gained, before]
 		if record.rank > before:
 			promoted.append(record)
 	return promoted
+
+
+# Who went, and what each did: the debrief's cards. You first — kills only,
+# since you have no rank — then every robot that had a body this mission, in
+# roster order, with its XP and whether it came home.
+func _debrief_squad() -> Array:
+	var out: Array = []
+	var you := state.player_record
+	if you != null:
+		out.append({"record": you, "player": true, "xp": 0, "rank_before": 0, "destroyed": false,
+			"kills": you.confirmed_kills_this_mission, "kinds": you.kills_by_kind_this_mission.duplicate()})
+	var went: Array = spawner.deployed_records() if spawner != null else []
+	for r in state.roster:
+		if r == null or not went.has(r):
+			continue
+		var xp: Array = _xp_this_mission.get(r, [0, r.rank])
+		out.append({"record": r, "player": false, "xp": xp[0], "rank_before": xp[1],
+			"destroyed": r.status == SoldierRecord.Status.DESTROYED,
+			"kills": r.confirmed_kills_this_mission, "kinds": r.kills_by_kind_this_mission.duplicate()})
+	return out
+
+
+## The operation that unlocks `id` (an item or a frame) while it is still
+## locked; null when it isn't locked. Only what an operation lists in its
+## `unlocks` is ever locked: everything else is simply available.
+func locked_by(id: StringName) -> MissionDefinition:
+	if state == null or id == &"" or state.unlocked.has(id):
+		return null
+	for m in missions:
+		if m != null and m.unlocks.has(id):
+			return m
+	return null
+
+
+# A save from before an operation unlocked something has cleared it without
+# being given it. Hand those over quietly on load (loading must not save).
+func _grant_owed_unlocks() -> void:
+	for m in missions:
+		if m == null or not state.completed_missions.has(m.id):
+			continue
+		for u in m.unlocks:
+			if not state.unlocked.has(u):
+				state.unlocked.append(u)
 
 
 # Pulls the live player body's condition onto their record.
@@ -589,12 +660,26 @@ func _write_back_player() -> void:
 		record.confirmed_kills += body.confirmed_kills
 		record.confirmed_kills_this_mission = body.confirmed_kills
 		body.confirmed_kills = 0
+	if "kills_by_kind" in body:
+		record.take_kills_by_kind(body.kills_by_kind)
 	record.missions_survived += 1
 
 
 # Success path. Collect the squad, pay out, save, and head home.
 func extract(success: bool = true) -> Dictionary:
 	var result := {"survivors": 0, "lost": 0, "reward": 0, "success": success}
+	# Before anything is paid: the debrief counts up from these.
+	result["resources_before"] = state.available()
+	result["compute_before"] = state.compute_free()
+	# This mission's tallies start empty for everyone, so a robot that sat it
+	# out never shows the last mission's kills.
+	var everyone: Array = state.roster.duplicate()
+	everyone.append(state.player_record)
+	for r in everyone:
+		if r != null:
+			r.confirmed_kills_this_mission = 0
+			r.kills_by_kind_this_mission = {}
+	_xp_this_mission.clear()
 	if spawner != null:
 		var counts := spawner.write_back()
 		result["survivors"] = counts["survivors"]
@@ -615,9 +700,15 @@ func extract(success: bool = true) -> Dictionary:
 	# Bonus objectives pay out whether or not the mission itself succeeded —
 	# you did the work, and withholding it makes players avoid optional content.
 	var objective_reward := 0
+	var compute := 0
 	if objectives != null:
 		objective_reward = objectives.earned_objective_rewards()
 		state.award(objective_reward)
+		# Compute objectives pay once per campaign, success or not — the same
+		# "you did the work" rule as bonus resources, minus the farming.
+		for o in objectives.earned_compute():
+			var key := "%s:%s" % [String(current_mission.id) if current_mission != null else "", o["id"]]
+			compute += state.claim_compute(key, int(o["compute"]))
 	result["objective_reward"] = objective_reward
 
 	if success and current_mission != null:
@@ -625,13 +716,21 @@ func extract(success: bool = true) -> Dictionary:
 		result["reward"] = current_mission.reward_resources
 		if not state.completed_missions.has(current_mission.id):
 			state.completed_missions.append(current_mission.id)
+		# FIRST clear only. Compute grows the squad; replaying the arena must
+		# not be a way to buy an army. A claim rather than "was it completed",
+		# so an op cleared before it paid anything still pays (on load).
+		compute += state.claim_compute(CampaignState.clear_compute_key(current_mission.id),
+			current_mission.compute_reward)
 		# Separate from completed_missions because that array is a set: running
 		# the arena a third time must not append a duplicate id, but it does
 		# need to bump the counter the terminal reads.
 		state.record_clear(current_mission.id)
+		var newly: Array[StringName] = []
 		for u in current_mission.unlocks:
 			if not state.unlocked.has(u):
 				state.unlocked.append(u)
+				newly.append(u)
+		result["unlocked"] = newly
 		# THE END. Clearing the last operation wins the campaign, once: the
 		# HUD follows MISSION COMPLETE with YOU WON, and from then on every
 		# operation is open at the terminal to replay in any order.
@@ -639,8 +738,17 @@ func extract(success: bool = true) -> Dictionary:
 			state.campaign_won = true
 			result["won"] = true
 
+	state.award_compute(compute)
+	result["compute"] = compute
+	result["resources_after"] = state.available()
+	result["squad"] = _debrief_squad()
+
 	extracted.emit(current_mission, result)
 	in_mission = false
+	# Home repaired, whatever happened out there — only the destroyed need a
+	# rebuild. After extracted, so anything reading the mission's damage (the
+	# playtest data) saw it first; before the save below, so it sticks.
+	state.heal_survivors()
 
 	# Clear the selection HERE rather than in on_returned_to_base(), because
 	# World calls _register_exits() — and therefore _push_destination() — before

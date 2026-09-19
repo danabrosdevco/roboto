@@ -37,6 +37,8 @@ const _TutorialLibrary := preload("res://Character/hud/tutorial_library.gd")
 const _Analytics := preload("res://Managers/analytics.gd")
 const _Lab := preload("res://Managers/lab.gd")
 const _LabResults := preload("res://Character/hud/lab_results.gd")
+# Which export this is; tools/export.ps1 writes it.
+const _Build := preload("res://Managers/build_version.gd")
 
 @export_group("Skip")
 # The switch asked for: straight to play, no splash and no menu.
@@ -170,6 +172,11 @@ func _notification(what: int) -> void:
 func _ready() -> void:
 	# Survives get_tree().paused, which the splash and the pause menu both set.
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# The build on the taskbar and in the log. The window title would otherwise
+	# be the project's name, "Roboto" — and renaming the project instead would
+	# move user:// and lose everyone's save.
+	get_window().title = "%s %s  %s" % [title_text, title_suffix, _Build.label()]
+	print("[Build] %s" % _Build.label())
 	_pin_children_pausable()
 	_build_audio()
 	_build_briefing()
@@ -785,6 +792,12 @@ func _build_menu(title: String, entries: Array, title_col: Color,
 			_sfx_confirm.play()
 			action.call())
 		box.add_child(button)
+
+	# Which build this is, in the corner of every menu, so a playtester's
+	# screenshot or bug report says which export it came from.
+	var build := _centred_label(_Build.label(), HUDPalette.DIM, 20)
+	_content.add_child(build)
+	build.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 18)
 
 	# A menu built under a stationary cursor fires mouse_entered on whatever
 	# happens to be beneath it, which chirps at you for a button you did not

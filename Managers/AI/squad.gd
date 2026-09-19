@@ -335,13 +335,14 @@ func _tick_defend() -> void:
 
 		var post: Vector3 = _defend_post_for(soldier)
 		var gap: float = soldier.global_position.distance_to(post)
+		var tolerance: float = soldier.slot_tolerance(defend_post_tolerance)
 
 		# Travelling: don't hug cover en route or they stop every few metres and
 		# never arrive. defensive_mode goes on when they get there.
-		if gap > defend_post_tolerance:
+		if gap > tolerance:
 			soldier.defensive_mode = false
 
-		if gap <= defend_post_tolerance:
+		if gap <= tolerance:
 			# In cover. Static, apart from the head — _tick_idle_scan turns
 			# look_target and never touches movement.
 			if soldier.ai_state != Enemy.AIState.IDLE:
@@ -502,7 +503,7 @@ func _hold_follow_formation() -> void:
 		var slot: Vector3 = objective_position + _formation_offset(ai)
 		var gap: float = robot.global_position.distance_to(slot)
 
-		if gap <= follow_slot_tolerance:
+		if gap <= robot.slot_tolerance(follow_slot_tolerance):
 			# In position. Force the STATE as well as the movement — leaving
 			# them in PATROL or SEARCH is what let the state machine restart a
 			# move a frame later.
@@ -562,7 +563,8 @@ func _issue_follow_orders() -> void:
 		var slot: Vector3 = objective_position + _formation_offset(ai)
 		# Already standing in their slot — stop, don't re-path. Re-issuing a
 		# move to a spot you occupy is what produces the pivot-in-place shuffle.
-		if ai.global_position.distance_to(slot) <= follow_slot_tolerance:
+		var tolerance: float = (ai as Enemy).slot_tolerance(follow_slot_tolerance) if ai is Enemy else follow_slot_tolerance
+		if ai.global_position.distance_to(slot) <= tolerance:
 			if ai is Enemy:
 				(ai as Enemy).halt()
 			continue

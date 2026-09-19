@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/vehicle_rover.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"rover"
+display_name = "Rover Chassis"
+description = "Six wheels and a turret that tracks on its own. It drives rather than walks: no turning on the spot, and it backs up to reach what is behind it. Takes turret weapons only."
+scene = ExtResource("2_scene")
+cost = 150
+purchasable = true
+supply = 2
+starting_weapon_id = &"machine_gun"
+base_health = 180
+base_speed = 1.0
+base_accuracy = 1.0
+base_sensor_range = 55.0
+weapon_slots = 1
+turret = true
+equipment_slots = 0
+module_slots = 3
+required_rank = 0

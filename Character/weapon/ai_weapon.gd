@@ -39,6 +39,10 @@ const _Analytics := preload("res://Managers/analytics.gd")
 @export var friendly_fire_multiplier: float = 0.34
 
 # Magazine
+## Rounds per committed burst, whoever carries it. 0 leaves it to the robot's
+## own burst_min/burst_max — set it where the weapon has a rhythm of its own.
+@export var burst_min: int = 0
+@export var burst_max: int = 0
 @export var magazine_size: int = 30          # rounds per magazine
 @export var reload_time: float = 2.8         # seconds to reload
 @export var infinite_ammo: bool = false      # useful for turrets / bosses
@@ -197,6 +201,19 @@ func calculate_damage(distance: float) -> int:
 #
 # Cached because this runs per shot and thirty robots fire at once.
 var _owner_cache: Node = null
+
+
+# Where what this weapon leaves behind goes: the level its carrier stands in.
+# get_tree().current_scene is Master in the game — above World, so anything put
+# there outlives the level — and in a headless test there is none, which is
+# where every tracer failed with "add_child on a null value".
+func _level_node() -> Node:
+	var shooter := _owner_body()
+	if shooter != null and shooter.get_parent() != null:
+		return shooter.get_parent()
+	if get_tree().current_scene != null:
+		return get_tree().current_scene
+	return get_tree().root
 
 
 func _owner_body() -> Node:
@@ -408,7 +425,7 @@ func fire_tracer_to(from: Vector3, to: Vector3) -> void:
 	if tracer_scene == null:
 		return
 	var new_tracer = tracer_scene.instantiate()
-	get_tree().current_scene.add_child(new_tracer)
+	_level_node().add_child(new_tracer)
 
 	var end_point = to
 	if tracer_jitter_degrees > 0.0:

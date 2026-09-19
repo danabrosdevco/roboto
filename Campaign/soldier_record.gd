@@ -131,6 +131,11 @@ func all_fitted_ids() -> Array[StringName]:
 # for the extraction to turn it into XP, because read_from() folds the body's
 # count into the career total and zeroes the body on the way past.
 var confirmed_kills_this_mission: int = 0
+## Career kills by WHAT was killed: frame id -> count ("chaser": 3). See
+## Campaign/kill_kinds.gd.
+@export var kills_by_kind: Dictionary = {}
+## The same for the mission just finished, for the debrief. Not saved.
+var kills_by_kind_this_mission: Dictionary = {}
 
 # Authored quantity per equipment slot, captured the first time we see it. The
 # slot's own `quantity` is overwritten with what's left at extraction, so
@@ -203,19 +208,67 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 # Slots and stats both come from the chassis, so they change together. Returns
 # any item ids a smaller frame can't hold, for the caller to return to stores —
 # dropping them silently would be theft.
+#
+# Modules first, equipment last: a Utility Harness that survives the move
+# still counts toward the equipment slots of the new frame.
 func set_chassis(chassis: ChassisDefinition, catalogue: ItemCatalogue) -> Array[StringName]:
 	var displaced: Array[StringName] = []
 	if chassis == null:
 		return displaced
-	for pair in [[weapon_ids, chassis.weapon_slots], [equipment_ids, chassis.equipment_slots], [module_ids, chassis.module_slots]]:
+	for pair in [[weapon_ids, chassis.weapon_slots], [module_ids, chassis.module_slots]]:
 		var slots: Array = pair[0]
 		var keep: int = pair[1]
 		for i in range(slots.size() - 1, keep - 1, -1):
 			if slots[i] != &"":
 				displaced.append(slots[i])
-	resize_slots(chassis)
+	chassis_id = chassis.id
+	weapon_ids.resize(chassis.weapon_slots)
+	module_ids.resize(chassis.module_slots)
+	# A module can only be kept by a frame it fits. The harness is Soldier-only,
+	# so moving onto a chaser hands it back rather than leaving a slot the frame
+	# is not supposed to have.
+	for i in module_ids.size():
+		var module = catalogue.item(module_ids[i]) if catalogue != null and module_ids[i] != &"" else null
+		if module != null and not module.fits_chassis(chassis.id):
+			displaced.append(module_ids[i])
+			module_ids[i] = &""
+	# The frame is passed in, not looked up: with no catalogue the row must
+	# still come out the frame's size, as resize_slots always made it.
+	displaced.append_array(fit_equipment_capacity(catalogue, chassis))
 	chassis_scene = chassis.scene
 	recompute_stats(catalogue)
+	return displaced
+
+
+## Equipment slots: the frame's, plus whatever the fitted modules add. `frame`
+## defaults to this record's own, looked up in the catalogue.
+func equipment_capacity(catalogue: ItemCatalogue, frame: ChassisDefinition = null) -> int:
+	if frame == null and catalogue != null:
+		frame = catalogue.chassis_def(chassis_id)
+	# No frame, no base to add to: keep the row as it is. Adding a module's
+	# bonus to the CURRENT size instead would grow it on every settle.
+	if frame == null:
+		return equipment_ids.size()
+	var n: int = frame.equipment_slots
+	if catalogue != null:
+		for module_id in module_ids:
+			if module_id == &"":
+				continue
+			var module := catalogue.item(module_id)
+			if module != null:
+				n += module.equipment_slot_bonus
+	return maxi(0, n)
+
+
+## Grows or shrinks the equipment slots to capacity. Returns what a shrink
+## pushed out, for the caller to put back in stores.
+func fit_equipment_capacity(catalogue: ItemCatalogue, frame: ChassisDefinition = null) -> Array[StringName]:
+	var displaced: Array[StringName] = []
+	var capacity := equipment_capacity(catalogue, frame)
+	for i in range(equipment_ids.size() - 1, capacity - 1, -1):
+		if equipment_ids[i] != &"":
+			displaced.append(equipment_ids[i])
+	equipment_ids.resize(capacity)
 	return displaced
 
 
@@ -276,6 +329,8 @@ func read_from(soldier: Soldier) -> void:
 		confirmed_kills_this_mission = soldier.confirmed_kills
 		confirmed_kills += soldier.confirmed_kills
 		soldier.confirmed_kills = 0
+	if "kills_by_kind" in soldier:
+		take_kills_by_kind(soldier.kills_by_kind)
 	if not soldier.alive:
 		status = Status.DESTROYED
 		damage = max_health
@@ -289,6 +344,23 @@ func read_from(soldier: Soldier) -> void:
 	for i in mini(equipment.size(), soldier.equipment_slots.size()):
 		if equipment[i] != null and soldier.equipment_slots[i] != null:
 			equipment[i].quantity = soldier.equipment_slots[i].remaining()
+
+
+# JSON wants string keys; kinds are StringNames.
+static func _kills_to_dict(kinds: Dictionary) -> Dictionary:
+	var out := {}
+	for kind in kinds:
+		out[String(kind)] = int(kinds[kind])
+	return out
+
+
+## A body's kills-by-kind at extraction: kept as this mission's, added to the
+## career, and cleared on the body so a second read cannot count them twice.
+func take_kills_by_kind(from_body: Dictionary) -> void:
+	kills_by_kind_this_mission = from_body.duplicate()
+	for kind in from_body:
+		kills_by_kind[kind] = int(kills_by_kind.get(kind, 0)) + int(from_body[kind])
+	from_body.clear()
 
 
 # ─────────────────────────────────────────────
@@ -319,6 +391,7 @@ func to_dict() -> Dictionary:
 		"benched": benched,
 		"missions_survived": missions_survived,
 		"confirmed_kills": confirmed_kills,
+		"kills_by_kind": _kills_to_dict(kills_by_kind),
 		"equipment": kit,
 		"equipment_max": equipment_max,
 		"chassis_id": String(chassis_id),
@@ -342,6 +415,9 @@ static func from_dict(data: Dictionary) -> SoldierRecord:
 	r.benched = bool(data.get("benched", false))
 	r.missions_survived = int(data.get("missions_survived", 0))
 	r.confirmed_kills = int(data.get("confirmed_kills", 0))
+	var kinds: Dictionary = data.get("kills_by_kind", {})
+	for kind in kinds:
+		r.kills_by_kind[StringName(str(kind))] = int(kinds[kind])
 
 	var chassis := str(data.get("chassis", ""))
 	if chassis != "" and ResourceLoader.exists(chassis):

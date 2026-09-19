@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"utility_harness"
+display_name = "Utility Harness"
+short_name = "Harness"
+description = "A webbing rig with one more hardpoint. An extra equipment slot while fitted; take it off and whatever hung there goes back to stores."
+kind = 2
+cost = 80
+usable_by_player = true
+usable_by_ai = true
+equipment_slot_bonus = 1
+required_rank = 0
+chassis_whitelist = Array[StringName]([&"soldier"])

@@ -31,6 +31,37 @@ func _find(n: Node, cls: String) -> Node:
 	return null
 
 
+# Lowest and highest point of what is drawn of a robot, in world space. Measured
+# here from the meshes, not with the robot's own helpers — those are what is
+# under test.
+func _drawn_span(body: Soldier) -> Vector2:
+	var lo := INF
+	var hi := -INF
+	var stack: Array = body.visible_pieces.duplicate()
+	while not stack.is_empty():
+		var n = stack.pop_back()
+		if n == null or not (n is Node3D) or not (n as Node3D).is_visible_in_tree():
+			continue
+		if n is CSGShape3D or n is MeshInstance3D:
+			var box: AABB = (n as Node3D).global_transform * (n as VisualInstance3D).get_aabb()
+			lo = minf(lo, box.position.y)
+			hi = maxf(hi, box.end.y)
+			continue
+		stack.append_array(n.get_children())
+	return Vector2(lo, hi)
+
+
+func _deck_under(body: Node3D, also_ignore: Array = []) -> float:
+	var q := PhysicsRayQueryParameters3D.create(body.global_position + Vector3.UP * 5.0,
+		body.global_position + Vector3.DOWN * 20.0)
+	var skip: Array[RID] = [body.get_rid()]
+	for other in also_ignore:
+		skip.append(other.get_rid())
+	q.exclude = skip
+	var hit := body.get_world_3d().direct_space_state.intersect_ray(q)
+	return hit.position.y if hit else NAN
+
+
 func _chaser(level: Node, mgr: Node, at: Vector3) -> Soldier:
 	var c: Soldier = load("res://Character/characters/ai/enemy_chaser.tscn").instantiate()
 	c.faction = Enums.Factions.ENEMY
@@ -151,6 +182,71 @@ func _init() -> void:
 	var sunk: float = hopper._settle_rest_y - hopper.global_position.y
 	print("      dead hopper sank %.2fm (a 2m frame sinks 0.70m)" % sunk)
 	_check("a dead hopper sinks in proportion to its size", sunk > 0.25 and sunk < 0.45, "%.2fm" % sunk)
+
+	# ...AND MOST OF IT STAYS ABOVE THE DECK. Scaling the sink was not enough:
+	# the collapse dropped every wreck a flat 0.5m before it began to settle, and
+	# a hopper stands 0.47m. One shot MID-LEAP — the usual way a hopper dies —
+	# was worse: it landed on a collider laid out at its middle instead of its
+	# feet, half a metre further down. Either way nothing was left showing.
+	var span: Vector2 = _drawn_span(hopper)
+	var deck: float = _deck_under(hopper)
+	print("      settled hopper: drawn %+.2f .. %+.2f of the deck" % [span.x - deck, span.y - deck])
+	_check("a settled hopper still shows above the deck", span.y - deck > 0.4,
+		"top %+.2fm" % (span.y - deck))
+
+	var leaper: Soldier = load("res://Character/characters/ai/enemy_nest-chaser.tscn").instantiate()
+	leaper.faction = Enums.Factions.ENEMY
+	level.add_child(leaper)
+	leaper.global_position = ground_at.call(post.x - 8.0, post.z) + Vector3.UP * 3.5
+	await physics_frame
+	await physics_frame
+	# In the air, and knows it — the state a hopper is in halfway through a leap.
+	leaper.velocity = Vector3.ZERO
+	leaper.move_and_slide()
+	leaper.apply_damage(9999, player)
+	for _i in 60:
+		await physics_frame
+	span = _drawn_span(leaper)
+	deck = _deck_under(leaper)
+	print("      hopper killed in the air, landed: drawn %+.2f .. %+.2f of the deck" % [span.x - deck, span.y - deck])
+	_check("a hopper killed in the air lands on the deck, not in it", absf(span.x - deck) < 0.12,
+		"bottom %+.2fm" % (span.x - deck))
+	for _i in 180:
+		await physics_frame
+	span = _drawn_span(leaper)
+	deck = _deck_under(leaper)
+	_check("...and settles like one that died on its feet", span.y - deck > 0.4, "top %+.2fm" % (span.y - deck))
+
+	# ...AND ONE THAT DIES PERCHED ON SOMEONE COMES DOWN OFF THEM. It went down
+	# "on the floor" — the floor being whoever it stood on — settled up there,
+	# and hung in the air once they walked out from under it.
+	var someone := CharacterBody3D.new()
+	var capsule := CollisionShape3D.new()
+	capsule.shape = CapsuleShape3D.new()
+	(capsule.shape as CapsuleShape3D).height = 1.8
+	someone.add_child(capsule)
+	level.add_child(someone)
+	someone.global_position = ground_at.call(post.x + 8.0, post.z) + Vector3.UP * 0.9
+	var percher: Soldier = load("res://Character/characters/ai/enemy_nest-chaser.tscn").instantiate()
+	percher.faction = Enums.Factions.ENEMY
+	level.add_child(percher)
+	percher.set_physics_process(false)   # it would leap at you; this is only about where it ends up
+	percher.global_position = someone.global_position + Vector3.UP * 1.45
+	for _i in 20:
+		percher.velocity = Vector3.DOWN * 2.0
+		percher.move_and_slide()
+		await physics_frame
+	_check("(setup) the hopper is standing on someone's head", percher.is_on_floor()
+		and percher.global_position.y > someone.global_position.y + 1.2)
+	percher.apply_damage(9999, player)
+	for _i in 60:
+		await physics_frame
+	span = _drawn_span(percher)
+	deck = _deck_under(percher, [someone])
+	print("      hopper killed on someone's head: drawn %+.2f .. %+.2f of the deck" % [span.x - deck, span.y - deck])
+	_check("a hopper killed on someone's head comes down to the deck", absf(span.x - deck) < 0.12,
+		"bottom %+.2fm" % (span.x - deck))
+	someone.queue_free()
 
 	# ── ONE THAT FALLS OUT OF THE WORLD ─────────
 	# Nothing used to catch this: it fell forever, still alive, and held an

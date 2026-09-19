@@ -6310,6 +6310,7 @@ initial_velocity_max = 1.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -49.8136, -9.11588, 143.785)
 script = ExtResource("20_vd3ju")
 callsign = "BRAVO"
+max_slots = 999
 
 [node name="EnemySquadObjs" type="Node" parent="."]
 

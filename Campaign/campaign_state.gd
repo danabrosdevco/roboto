@@ -49,6 +49,38 @@ const SAVE_VERSION := 1
 @export var unlocked: Array[StringName] = []
 @export var selected_mission_id: StringName = &""
 
+# ── COMPUTE AND SUPPLY ────────────────────────
+# COMPUTE IS CAPACITY, NOT A CURRENCY (docs/BRIEFING.md §6). It is won — first
+# clears, hidden objectives — never bought, and it is never spent, only HELD:
+# by a seat (one more robot can deploy) or by installed software. Giving either
+# back frees all of it again, at any time. Same shape as the resource ledger:
+# a total that only goes up, and a list of what is holding it.
+
+## Compute ever won. Never goes down.
+@export var compute_earned: int = 0
+## What holds compute now: "seat:<n>" and "software:<id>", each at what it
+## held when it was taken. A refund erases the entry.
+@export var compute_held: Dictionary = {}
+## Seats a campaign starts with. The rest are held with compute.
+const BASE_SEATS := 4
+
+## Compute free to put somewhere: earned minus held. Read-only — award it with
+## award_compute(); hold and free it with seats and software.
+var compute: int:
+	get:
+		return compute_free()
+	set(_value):
+		push_error("CampaignState.compute is derived (earned - held). Use award_compute(), buy_supply() or install_software().")
+## The cap on the ACTIVE squad, like supply in an RTS: every active robot takes
+## its frame's supply, benched ones take none. Recruit as many robots as you
+## like — supply only limits how many you field.
+@export var supply_cap: int = 4
+## "mission_id:objective_id" for every objective whose compute has been paid,
+## so each is paid once per campaign.
+@export var compute_claimed: Array[String] = []
+## Compute for one more point of supply.
+const SUPPLY_COMPUTE_COST := 1
+
 # Monotonic counter behind mint_id(). Persisted, because regenerating ids on
 # load would break every allocation key that references a soldier.
 @export var _next_id: int = 1
@@ -191,13 +223,206 @@ func deployable() -> Array[SoldierRecord]:
 # smaller squad. The player always goes, so their record can't be benched.
 # roster_changed rebuilds the squad manager, and at base it is also what saves.
 # Mid-mission it only changes the NEXT deploy: nobody vanishes from the field.
-func set_benched(record: SoldierRecord, benched: bool) -> void:
+#
+# Coming OFF the bench takes supply, and is refused when there is none: that is
+# the whole supply cap. Returns whether the change happened.
+func set_benched(record: SoldierRecord, benched: bool) -> bool:
 	if record == null or is_player_record(record) or not roster.has(record):
-		return
+		return false
 	if record.benched == benched:
-		return
+		return true
+	if not benched and supply_of(record) > supply_free():
+		return false
 	record.benched = benched
 	roster_changed.emit()
+	return true
+
+
+# ── SUPPLY ────────────────────────────────────
+func supply_of(record: SoldierRecord) -> int:
+	var frame := catalogue.chassis_def(record.chassis_id) if catalogue != null and record != null else null
+	return frame.supply if frame != null else 1
+
+
+## Supply taken by the active squad. The player is not counted: you are not a
+## unit you field, you are the one fielding them.
+func supply_used() -> int:
+	var used := 0
+	for r in roster:
+		if not r.benched:
+			used += supply_of(r)
+	return used
+
+
+func supply_free() -> int:
+	return supply_cap - supply_used()
+
+
+func compute_free() -> int:
+	var held := 0
+	for amount in compute_held.values():
+		held += int(amount)
+	return compute_earned - held
+
+
+func award_compute(amount: int) -> void:
+	if amount <= 0:
+		return
+	compute_earned += amount
+	ledger_changed.emit()
+
+
+func seats_held() -> int:
+	var n := 0
+	for key in compute_held:
+		if str(key).begins_with("seat:"):
+			n += 1
+	return n
+
+
+# The most recent of a kind, by the number on its key: the seat you add last
+# is the first one given back.
+func _newest_held(prefix: String) -> String:
+	var newest := ""
+	var newest_n := -1
+	for key in compute_held:
+		var k := str(key)
+		if k.begins_with(prefix) and int(k.trim_prefix(prefix)) > newest_n:
+			newest_n = int(k.trim_prefix(prefix))
+			newest = k
+	return newest
+
+
+## Marks `key` as paid and returns `amount`, or 0 if it was paid before. Every
+## compute source is a one-off — an op's first clear ("clear:<op>"), a hidden
+## objective ("<op>:<objective>") — so replays cannot farm it. The caller adds
+## the total with award_compute(), which announces it once.
+func claim_compute(key: String, amount: int) -> int:
+	if amount <= 0 or compute_claimed.has(key):
+		return 0
+	compute_claimed.append(key)
+	return amount
+
+
+static func clear_compute_key(mission_id: StringName) -> String:
+	return "clear:%s" % mission_id
+
+
+func clear_compute_paid(mission_id: StringName) -> bool:
+	return compute_claimed.has(clear_compute_key(mission_id))
+
+
+func buy_supply() -> bool:
+	if compute_free() < SUPPLY_COMPUTE_COST:
+		return false
+	compute_held["seat:%d" % _next_purchase()] = SUPPLY_COMPUTE_COST
+	supply_cap += 1
+	ledger_changed.emit()
+	return true
+
+
+## A held seat given back for all its compute. Only an empty one: taking away
+## a seat someone is in would field a robot with nowhere to sit, so the answer
+## is to bench someone first. The starting seats were never held and stay.
+func refund_supply() -> bool:
+	var key := _newest_held("seat:")
+	if key == "":
+		return false
+	if supply_free() < 1:
+		return false
+	compute_held.erase(key)
+	supply_cap -= 1
+	ledger_changed.emit()
+	return true
+
+
+# ── SOFTWARE ──────────────────────────────────
+# Which programs a node needs first, and what each costs, is the software
+# tree's business (Campaign/software_tree.gd); this only holds the compute.
+func is_installed(id: StringName) -> bool:
+	return compute_held.has("software:%s" % id)
+
+
+func install_software(id: StringName, cost: int) -> bool:
+	if id == &"" or cost <= 0 or is_installed(id) or compute_free() < cost:
+		return false
+	compute_held["software:%s" % id] = cost
+	ledger_changed.emit()
+	return true
+
+
+## Always a full refund: of whatever it held when installed, even if the
+## program's price has changed since.
+func uninstall_software(id: StringName) -> bool:
+	if not is_installed(id):
+		return false
+	compute_held.erase("software:%s" % id)
+	ledger_changed.emit()
+	return true
+
+
+func installed_software() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for key in compute_held:
+		var k := str(key)
+		if k.begins_with("software:"):
+			out.append(StringName(k.trim_prefix("software:")))
+	return out
+
+
+## Programs a save holds that the tree no longer has give their compute back,
+## quietly (loading must not save by itself). Returns what was dropped.
+func release_unknown_software(known: Array) -> Array[StringName]:
+	var dropped: Array[StringName] = []
+	for id in installed_software():
+		if not known.has(id):
+			compute_held.erase("software:%s" % id)
+			dropped.append(id)
+	return dropped
+
+
+# ── RECRUITMENT ───────────────────────────────
+## A new robot, born in `chassis`, for the frame's cost. It joins the active
+## squad if there is supply for it and the bench if not — buying is never
+## blocked by supply, only fielding is. A Soldier comes with its frame's
+## starting weapon (a pistol) and otherwise empty slots; a Chaser or Hopper
+## fights with what it was built with. Returns the new record, or null if it
+## could not be paid for.
+func recruit(chassis: ChassisDefinition) -> SoldierRecord:
+	if chassis == null or not chassis.purchasable:
+		return null
+	var record := SoldierRecord.new()
+	record.id = mint_id()
+	if not _allocate_quiet("unit:%s" % record.id, chassis.cost):
+		return null
+	record.display_name = _recruit_name(chassis)
+	record.set_chassis(chassis, catalogue)
+	# Issued with the frame, not taken from stores. Take it off and it goes to
+	# stores like anything else, and sells like issued stock (half its price).
+	if chassis.starting_weapon_id != &"" and not record.weapon_ids.is_empty():
+		record.weapon_ids[0] = chassis.starting_weapon_id
+		record.recompute_stats(catalogue)
+	record.benched = supply_of(record) > supply_free()
+	roster.append(record)
+	ledger_changed.emit()
+	roster_changed.emit()
+	return record
+
+
+# "Chaser-2": the frame's first word and the next number free for it, so a
+# roster of recruits reads at a glance. Renameable like anyone else.
+func _recruit_name(chassis: ChassisDefinition) -> String:
+	var word := chassis.display_name.split(" ", false)[0] if chassis.display_name != "" else "Unit"
+	var n := 1
+	var taken := true
+	while taken:
+		taken = false
+		for r in roster:
+			if r.display_name == "%s-%d" % [word, n]:
+				taken = true
+				n += 1
+				break
+	return "%s-%d" % [word, n]
 
 
 # ── REPAIR ────────────────────────────────────
@@ -249,6 +474,21 @@ func repair_soldier(record: SoldierRecord) -> bool:
 	return true
 
 
+## The end of every mission, won or lost: everyone who came home standing is
+## repaired for free — the player too. Only the destroyed (anyone still down
+## when it ended) stay broken, for a paid REBUILD. Quiet: extract() saves
+## straight after, and nothing is on screen to redraw.
+func heal_survivors() -> void:
+	var everyone: Array = roster.duplicate()
+	everyone.append(player_record)
+	for r in everyone:
+		if r == null or r.status == SoldierRecord.Status.DESTROYED:
+			continue
+		r.damage = 0
+		r.signal_integrity = 1.0
+		r.status = SoldierRecord.Status.ACTIVE
+
+
 # Free full repair. Kept for debug and for a future "between campaigns" reset.
 func repair_all() -> void:
 	for r in roster:
@@ -259,8 +499,8 @@ func repair_all() -> void:
 	roster_changed.emit()
 
 
-# Called on arrival at base. Ammunition and equipment only — leaving damage
-# alone is what keeps the repair tool meaningful between missions.
+# Called on arrival at base. Ammunition and equipment only: damage was already
+# dealt with at the end of the mission (heal_survivors).
 func restock_roster() -> void:
 	for r in roster:
 		r.restock()
@@ -317,7 +557,9 @@ func can_fit(record: SoldierRecord, item: ItemDefinition) -> bool:
 		return false
 	if armoury.spare(item.id) <= 0:
 		return false
-	if record.rank < item.required_rank:
+	# Rank gates squadmates only. You have no rank — you are the one spending
+	# the resources and the compute, not a soldier working your way up.
+	if not is_player_record(record) and record.rank < item.required_rank:
 		return false
 	# Which implementation is required depends on WHO is carrying it. The pump
 	# shotgun has no HUDWeapon, so it can arm a squadmate and not you.
@@ -326,7 +568,10 @@ func can_fit(record: SoldierRecord, item: ItemDefinition) -> bool:
 			return false
 	elif not item.fits_ai():
 		return false
-	return item.fits_chassis(record.chassis_id)
+	# The frame decides, so a turret can refuse a rifle as well as an item
+	# refusing a frame.
+	var frame := catalogue.chassis_def(record.chassis_id) if catalogue != null else null
+	return frame.takes(item) if frame != null else item.fits_chassis(record.chassis_id)
 
 
 # Puts `item` in `slot_index` of the matching slot group. Anything already there
@@ -343,6 +588,7 @@ func fit_item(record: SoldierRecord, item: ItemDefinition, slot_index: int) -> b
 	if displaced != &"":
 		armoury.add(displaced)
 	slots[slot_index] = item.id
+	_settle_equipment_slots(record)
 	record.recompute_stats(catalogue)
 	roster_changed.emit()
 	return true
@@ -357,9 +603,18 @@ func unfit_item(record: SoldierRecord, kind: int, slot_index: int) -> bool:
 		return false
 	slots[slot_index] = &""
 	armoury.add(id_value)
+	_settle_equipment_slots(record)
 	record.recompute_stats(catalogue)
 	roster_changed.emit()
 	return true
+
+
+# A module can add equipment slots (the Utility Harness), so fitting or pulling
+# one grows or shrinks the equipment row. What a shrink pushes out goes back to
+# stores, never into thin air.
+func _settle_equipment_slots(record: SoldierRecord) -> void:
+	for pushed in record.fit_equipment_capacity(catalogue):
+		armoury.add(pushed)
 
 
 # A soldier who doesn't come home hands their kit back. This is the "modules are
@@ -392,8 +647,10 @@ func set_chassis(record: SoldierRecord, chassis: ChassisDefinition) -> bool:
 # a freshly loaded save has whatever was cached when it was written.
 func recompute_roster() -> void:
 	for r in roster:
+		_settle_equipment_slots(r)
 		r.recompute_stats(catalogue)
 	if player_record != null:
+		_settle_equipment_slots(player_record)
 		player_record.recompute_stats(catalogue)
 	roster_changed.emit()
 
@@ -565,6 +822,10 @@ func to_dict() -> Dictionary:
 		"mission_clears": mission_clears.duplicate(),
 		"completed_tutorial": completed_tutorial,
 		"campaign_won": campaign_won,
+		"compute_earned": compute_earned,
+		"compute_held": compute_held.duplicate(),
+		"supply_cap": supply_cap,
+		"compute_claimed": compute_claimed.duplicate(),
 		"unlocked": unlocks,
 		"selected_mission_id": String(selected_mission_id),
 		"next_id": _next_id,
@@ -606,6 +867,34 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	s.mission_clears = clears
 	s.completed_tutorial = bool(data.get("completed_tutorial", false))
 	s.campaign_won = bool(data.get("campaign_won", false))
+	s.supply_cap = int(data.get("supply_cap", BASE_SEATS))
+	# A save from before supply existed never benches anyone for it.
+	var active := 0
+	for r in s.roster:
+		if not r.benched:
+			active += 1
+	s.supply_cap = maxi(s.supply_cap, active)
+	if data.has("compute_earned"):
+		s.compute_earned = int(data["compute_earned"])
+		var held: Dictionary = {}
+		var raw_held: Dictionary = data.get("compute_held", {})
+		for k in raw_held:
+			held[str(k)] = int(raw_held[k])
+		s.compute_held = held
+	else:
+		# A save from when compute was a plain balance: what was left, plus a
+		# seat held for every one bought above the starting four. Counted from
+		# the cap the save RECORDED — a save from before seats existed has
+		# none, and a cap raised above to seat everyone already active was
+		# never bought, so it must not become compute you can take back.
+		var bought := maxi(0, int(data["supply_cap"]) - BASE_SEATS) if data.has("supply_cap") else 0
+		for i in bought:
+			s.compute_held["seat:%d" % s._next_purchase()] = SUPPLY_COMPUTE_COST
+		s.compute_earned = int(data.get("compute", 0)) + bought * SUPPLY_COMPUTE_COST
+	var claimed: Array[String] = []
+	for c in data.get("compute_claimed", []):
+		claimed.append(str(c))
+	s.compute_claimed = claimed
 
 	var unlocks: Array[StringName] = []
 	for u in data.get("unlocked", []):
@@ -615,6 +904,14 @@ static func from_dict(data: Dictionary) -> CampaignState:
 
 
 func save_to_disk(path: String = SAVE_PATH) -> bool:
+	# `-- --no-save` on the command line: a run that boots the real game to
+	# look for errors (tools/smoke.sh) must never write the player's save. The
+	# game saves on reaching base, so without this every smoke run did.
+	if OS.get_cmdline_user_args().has("--no-save"):
+		if not _no_save_said:
+			print("[Campaign] --no-save: not writing %s this run." % path)
+			_no_save_said = true
+		return true
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_error("CampaignState: could not open %s for writing (%s)" % [
@@ -623,6 +920,9 @@ func save_to_disk(path: String = SAVE_PATH) -> bool:
 	file.store_string(JSON.stringify(to_dict(), "\t"))
 	file.close()
 	return true
+
+
+var _no_save_said: bool = false
 
 
 # Returns null when there's no save yet — the caller decides whether that means

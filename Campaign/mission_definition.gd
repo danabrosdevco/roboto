@@ -40,6 +40,9 @@ class_name MissionDefinition
 # only ever accumulates and spending is derived from allocations, this is the
 # single place resources enter the game.
 @export var reward_resources: int = 0
+## Compute for the first clear only — replays pay resources, never compute.
+## Compute is spent on squad supply (and, later, the skill tree).
+@export var compute_reward: int = 0
 @export var unlocks: Array[StringName] = []
 
 # ── SQUAD ─────────────────────────────────────

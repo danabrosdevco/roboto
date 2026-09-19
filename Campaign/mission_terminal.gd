@@ -238,7 +238,7 @@ func _refresh_cycling(selected: MissionDefinition) -> void:
 #
 #   SOLO                        (only when the op limits your squad)
 #   EXPECTED ENEMY SQUADS: 1
-#   REWARDS: 45 RESOURCES
+#   REWARDS: 45 RESOURCES       (+ N COMPUTE until the first clear pays it)
 #
 # A mission with no force of its own falls back on the level's garrison, which
 # it can't count, so the squad line says nothing rather than "0". The briefing
@@ -251,7 +251,13 @@ func _detail_lines(m: MissionDefinition) -> String:
 	var squads := m.enemy_squad_count()
 	if show_briefing and squads > 0:
 		lines.append("EXPECTED ENEMY SQUADS: %d" % squads)
-	lines.append("REWARDS: %d RESOURCES" % m.reward_resources)
+	var rewards := "REWARDS: %d RESOURCES" % m.reward_resources
+	# Compute is paid on the FIRST clear only (Campaign.extract), so it is
+	# listed only until then — the same claim extract checks.
+	if m.compute_reward > 0 and Campaign != null and Campaign.state != null \
+			and not Campaign.state.clear_compute_paid(m.id):
+		rewards += " + %d COMPUTE" % m.compute_reward
+	lines.append(rewards)
 	return "\n".join(lines)
 
 

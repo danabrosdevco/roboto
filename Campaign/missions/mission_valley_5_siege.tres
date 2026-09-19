@@ -119,6 +119,7 @@ enemy_force = Array[ExtResource("2_espec")]([SubResource("S1"), SubResource("S2"
 replace_level_enemies = true
 active_objectives = Array[StringName]([&"valley_garrison_cap_1", &"valley_garrison_cap_2", &"valley_garrison_cap_3", &"valley_extract"])
 reward_resources = 300
+compute_reward = 1
 unlocks = Array[StringName]([])
 squad_size = -1
 repeatable = false

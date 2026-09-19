@@ -416,7 +416,8 @@ func _write_report() -> String:
 	if str(plan.question) != "":
 		o.append("> %s" % str(plan.question).replace("\n", "\n> "))
 		o.append("")
-	o.append("Generated %s. Win rates are from the ALLIES' side; \"winner survivors\" and \"winner HP\" say how close the wins were (100%% = untouched)." % Time.get_datetime_string_from_system())
+	o.append("Generated %s on %s. Win rates are from the ALLIES' side; \"winner survivors\" and \"winner HP\" say how close the wins were (100%% = untouched)." % [
+		Time.get_datetime_string_from_system(), preload("res://Managers/build_version.gd").label()])
 	o.append("")
 	o.append("## Results")
 	o.append("")

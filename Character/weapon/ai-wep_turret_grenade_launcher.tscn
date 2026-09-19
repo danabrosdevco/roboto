@@ -1,0 +1,47 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Character/weapon/ai_weapon_grenade_launcher.gd" id="1_fnjvf"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/equipment/ai_grenade_projectile.tscn" id="2_tkpop"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/grenade_launcher_model.tscn" id="3_wajf3"]
+[ext_resource type="PackedScene" path="res://Character/weapon/muzzle_flash.tscn" id="4_giarb"]
+[ext_resource type="AudioStream" path="res://sounds/sfx/grenade launcher/freesound_community-grenade-launcher-106342.mp3" id="5_0p1ok"]
+
+[node name="ai_weapon_turret_grenade_launcher" type="Node3D" node_paths=PackedStringArray("muzzle_flash", "muzzle_origin", "shot_audio")]
+script = ExtResource("1_fnjvf")
+grenade_scene = ExtResource("2_tkpop")
+inherit_carrier_velocity = 0.0
+salvo = 1
+salvo_scatter = 0.0
+lob_speed = 32.0
+impact_fused = true
+weapon_type = 2
+fire_cooldown = 0.55
+base_damage = 20
+min_damage = 20
+damage_falloff_start = 999.0
+min_effective_range = 9.0
+max_effective_range = 55.0
+ai_spread_mrad = 28.0
+suppression_per_shot = 0.0
+burst_min = 2
+burst_max = 3
+magazine_size = 12
+reload_time = 5.5
+muzzle_flash = NodePath("MuzzleFlash")
+muzzle_origin = NodePath("Muzzle")
+shot_audio = NodePath("Shot")
+
+[node name="Model" parent="." instance=ExtResource("3_wajf3")]
+
+[node name="Muzzle" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.84, 0, 0)
+
+[node name="MuzzleFlash" parent="." instance=ExtResource("4_giarb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.84, 0, 0)
+visible = false
+
+[node name="Shot" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("5_0p1ok")
+volume_db = -10.0
+unit_size = 26.0
+pitch_scale = 0.85

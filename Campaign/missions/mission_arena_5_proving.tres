@@ -62,6 +62,7 @@ enemy_force = Array[ExtResource("2_espec")]([SubResource("S_line"), SubResource(
 replace_level_enemies = true
 active_objectives = Array[StringName]([&"arena_clear", &"arena_extract"])
 reward_resources = 110
+compute_reward = 1
 unlocks = Array[StringName]([])
 squad_size = 3
 repeatable = false

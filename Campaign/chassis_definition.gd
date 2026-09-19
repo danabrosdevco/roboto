@@ -17,6 +17,16 @@ class_name ChassisDefinition
 # The Soldier scene instantiated for this frame.
 @export var scene: PackedScene
 @export var cost: int = 0
+## Offered for RECRUITMENT in the squad manager: a new robot, born in this
+## frame, for `cost` resources.
+@export var purchasable: bool = false
+## Squad supply this frame occupies while ACTIVE. Every frame is 1 for now;
+## bigger machines (a gunship, an APC) will cost more.
+@export var supply: int = 1
+## The weapon a robot built in this frame comes with, issued with it rather
+## than taken from stores, so it can fight the moment it is built. Empty for
+## frames with nothing to hold (claws are part of the body).
+@export var starting_weapon_id: StringName = &""
 
 # ── BASE STATS ────────────────────────────────
 @export var base_health: int = 30
@@ -29,9 +39,22 @@ class_name ChassisDefinition
 # ── SLOTS ─────────────────────────────────────
 # Weapon slots are almost always 1; kept configurable for a future heavy frame.
 @export var weapon_slots: int = 1
+## The weapon slot is a TURRET: it takes weapons made for this frame — ones that
+## name it in their chassis_whitelist — and not a rifle off the rack.
+@export var turret: bool = false
 @export var equipment_slots: int = 2
 @export var module_slots: int = 2
 
 # Ranks this chassis can be crewed by, if you want to gate frames behind
 # experience as well as cost. 0 means no requirement.
 @export var required_rank: int = 0
+
+
+## Whether `item` goes on this frame at all: the item's whitelist allows the
+## frame, and a turret takes only what was made for it.
+func takes(item: ItemDefinition) -> bool:
+	if item == null:
+		return false
+	if not item.fits_chassis(id):
+		return false
+	return not (turret and item.kind == ItemDefinition.Kind.WEAPON and not item.chassis_whitelist.has(id))

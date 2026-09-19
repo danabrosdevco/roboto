@@ -25,6 +25,9 @@ class_name MissionObjective
 @export var optional: bool = false
 # Paid on extraction, on top of the mission's own reward.
 @export var reward_resources: int = 0
+## Compute for completing this, once per campaign — a bonus or hidden
+## objective is the other way compute is earned besides first clears.
+@export var compute_reward: int = 0
 
 # Optional ordering target so you can send a squad to this objective.
 @export var linked_squad_point: SquadObjectivePoint

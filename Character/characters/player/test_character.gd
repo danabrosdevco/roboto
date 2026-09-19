@@ -95,6 +95,8 @@ var alive = true
 # by checking `"confirmed_kills" in source` — the Player is a source like any
 # other, and without this field the player's own kills were silently dropped.
 var confirmed_kills: int = 0
+# The same kills by what they were, for the debrief (Campaign/kill_kinds.gd).
+var kills_by_kind: Dictionary = {}
 var last_bonfire
 
 # ── SPECTATOR MODE ────────────────────────────

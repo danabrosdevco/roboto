@@ -34,6 +34,13 @@ class_name AIWeaponGrenadeLauncher
 @export var salvo_scatter: float = 2.5
 ## Fuse override. Left at 0 the projectile keeps its own.
 @export var fuse_override: float = 0.0
+## FROM THE GROUND. Above zero, each round leaves the muzzle at this speed on
+## the low ballistic arc that comes down on the target — a launcher on a
+## turret, lobbing over cover. Zero is the gunship's drop from altitude.
+@export var lob_speed: float = 0.0
+## Goes off on the first thing it hits instead of on the fuse: a launched
+## round, not a hand grenade rolling about at the far end.
+@export var impact_fused: bool = false
 
 # Bombs from the current stick still in the air. See drop_bomb().
 var _recent_bombs: Array = []
@@ -138,11 +145,38 @@ func _release_one(weapon_target: Vector3, index: int) -> void:
 	# Same spawn as the bombing drop — ownership, attribution, level-scoped
 	# parenting and the self-collision exception all live in _spawn_charge().
 	var grenade := _spawn_charge(origin)
+	if impact_fused and "explode_on_bounce" in grenade:
+		grenade.explode_on_bounce = true
+		grenade.bounce_before_explode = 0
 
 	if grenade is RigidBody3D:
-		(grenade as RigidBody3D).linear_velocity = _release_velocity(origin, weapon_target, index)
-		(grenade as RigidBody3D).angular_velocity = Vector3(
+		var body := grenade as RigidBody3D
+		if lob_speed > 0.0:
+			# The arc is solved without drag; the project's default damping
+			# would drop every round a few metres short at range.
+			body.linear_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
+			body.linear_damp = 0.0
+			body.linear_velocity = _lob_velocity(origin, weapon_target)
+		else:
+			body.linear_velocity = _release_velocity(origin, weapon_target, index)
+		body.angular_velocity = Vector3(
 			randf_range(-4.0, 4.0), randf_range(-4.0, 4.0), randf_range(-4.0, 4.0))
+
+
+# The low arc, at lob_speed, from the muzzle onto the target. Out of reach, it
+# throws at 45 degrees — as far as it can — and lands short.
+func _lob_velocity(origin: Vector3, weapon_target: Vector3) -> Vector3:
+	var g: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
+	var flat := Vector3(weapon_target.x - origin.x, 0.0, weapon_target.z - origin.z)
+	var d := flat.length()
+	var dir := flat / d if d > 0.01 else global_transform.basis.x   # weapons point down +X
+	dir.y = 0.0
+	dir = dir.normalized()
+	var h := weapon_target.y - origin.y
+	var v := lob_speed
+	var disc := v * v * v * v - g * (g * d * d + 2.0 * h * v * v)
+	var angle := deg_to_rad(45.0) if disc < 0.0 else atan2(v * v - sqrt(disc), g * d)
+	return dir * cos(angle) * v + Vector3.UP * sin(angle) * v
 
 
 # Lead the target by however long the round spends falling. Without this the

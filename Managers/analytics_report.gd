@@ -36,6 +36,16 @@ static func build(events: Array, title: String) -> String:
 	o.append("Generated %s from %d events. Times are play time: pauses, menus and the briefing are excluded." % [
 		Time.get_datetime_string_from_system(), events.size()])
 	o.append("")
+	# Which export(s) the sessions came from. A merged report can span builds,
+	# and a number that moved between two builds is worth knowing about.
+	var builds := PackedStringArray()
+	for e in events:
+		var v := str(e.get("version", "")) if str(e.get("ev", "")) == "session_start" else ""
+		if v != "" and not builds.has(v):
+			builds.append(v)
+	if not builds.is_empty():
+		o.append("%s %s." % ["Build" if builds.size() == 1 else "Builds", ", ".join(builds)])
+		o.append("")
 	_glance(o, d)
 	_missions(o, d)
 	_deaths(o, d)
@@ -516,6 +526,10 @@ static func _allies(o: PackedStringArray, d: Dictionary) -> void:
 			var al: Dictionary = a["allies"][name]
 			var kit: Dictionary = al["kit"]
 			var tags: Array = []
+			# The frame first: a chaser has no weapon or equipment rows, so
+			# without this it would only show up as "Module: (none)".
+			if str(kit.get("chassis", "")) != "":
+				tags.append("Frame: %s" % str(kit["chassis"]).capitalize())
 			for w in kit.get("weapons", []):
 				tags.append("Weapon: %s" % w)
 			for e in kit.get("equipment", []):

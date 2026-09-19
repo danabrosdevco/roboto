@@ -189,6 +189,8 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		# frames are built on the fly and have no name worth reporting.
 		if frame.resource_path != "":
 			soldier.set_meta(&"analytics_kind", frame.display_name)
+			# What a kill of this one counts as in the debrief (kill_kinds.gd).
+			soldier.set_meta(&"chassis_id", frame.id)
 		level.add_child(soldier)
 		soldier.global_position = anchor + _ring_offset(i, bodies.size())
 		if ai_manager != null:

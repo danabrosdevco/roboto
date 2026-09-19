@@ -34,6 +34,26 @@ func _find(n: Node, cls: String) -> Node:
 	return null
 
 
+func _find_named(n: Node, node_name: String) -> Node:
+	if n.name == node_name:
+		return n
+	for c in n.get_children():
+		var f := _find_named(c, node_name)
+		if f != null:
+			return f
+	return null
+
+
+# Whether any label or button under `n` says `text`.
+func _says(n: Node, text: String) -> bool:
+	if (n is Label and (n as Label).text.contains(text)) or (n is Button and (n as Button).text.contains(text)):
+		return true
+	for c in n.get_children():
+		if _says(c, text):
+			return true
+	return false
+
+
 func _init() -> void:
 	Settings.path = "user://settings_endings_test.json"
 	await process_frame
@@ -48,7 +68,6 @@ func _init() -> void:
 		await physics_frame
 	var world: World = master._world()
 	var player: Player = world.player
-	var hud: ObjectiveHUD = _find(root, "ObjectiveHUD")
 
 	# ── DEPLOY ───────────────────────────────────
 	var op: MissionDefinition = cm.get_mission(&"arena_1_contact")
@@ -75,30 +94,63 @@ func _init() -> void:
 		await physics_frame
 	_check("CONTINUE goes home", world.current_level.scene_file_path == cm.base_level.resource_path,
 		world.current_level.scene_file_path)
-	_check("...off the operation, unpaused", not cm.in_mission and not paused and master._menu == "")
+	# Home, and the debrief is up over it: MISSION FAILED, paused until read.
+	var debrief = _find_named(root, "DebriefScreen")
+	_check("home to the debrief, saying the mission failed", debrief != null and debrief.visible
+		and _says(debrief, "MISSION FAILED"), "debrief=%s" % debrief)
+	_check("...with the game paused behind it", paused)
+	if debrief != null:
+		debrief.close()
+	await process_frame
+	_check("...and CONTINUE lets you go, off the operation", not cm.in_mission and not paused and master._menu == "")
 	_check("...alive, on full health", player.alive and int(player.health) == int(player.max_health),
 		"alive=%s hp=%s/%s" % [player.alive, player.health, player.max_health])
 	_check("...and the mission was not counted as cleared", cm.state.clears_of(op.id) == clears_before)
-	_check("...and the HUD says it failed", hud != null and hud._toast.text.contains("MISSION FAILED"),
-		hud._toast.text if hud != null else "no hud")
 
 	# ── WIN ──────────────────────────────────────
 	var final_op: MissionDefinition = cm.missions.back()
 	cm.state.campaign_won = false
+	# COMPUTE: a first clear pays the mission's, and a completed hidden
+	# objective pays its own — each once per campaign. The save on this machine
+	# may have cleared the last op already, so make this its first clear.
+	cm.state.completed_missions.erase(final_op.id)
+	cm.state.compute_claimed.erase(CampaignState.clear_compute_key(final_op.id))
+	cm.state.compute_claimed.erase("%s:compute_test_bonus" % final_op.id)
+	var bonus := MissionObjective.new()
+	bonus.id = &"compute_test_bonus"
+	bonus.optional = true
+	bonus.compute_reward = 1
+	bonus.completed = true
+	cm.objectives._objectives.append(bonus)
+	var compute_before: int = cm.state.compute
 	cm.current_mission = final_op
 	cm.in_mission = true
 	var result: Dictionary = cm.extract(true)
+	var paid: int = final_op.compute_reward + 1
+	_check("the last op pays compute for its first clear and the hidden objective",
+		int(result.get("compute", 0)) == paid and cm.state.compute == compute_before + paid,
+		"result=%s compute %d -> %d, expected +%d" % [result.get("compute"), compute_before, cm.state.compute, paid])
 	var all_missions := cm.missions.filter(func(m): return m != null).size()
 	_check("clearing the last operation wins the campaign", bool(result.get("won", false)) and cm.state.campaign_won)
 	_check("...and opens every operation at the terminal", cm.available_missions().size() == all_missions,
 		"%d of %d" % [cm.available_missions().size(), all_missions])
-	_check("...with YOU WON queued behind MISSION COMPLETE", hud != null
-		and hud._toast.text.contains("MISSION COMPLETE") and hud._toast_queue.size() == 1
-		and str(hud._toast_queue[0][0]).contains("YOU WON"))
+	cm.on_returned_to_base()
+	await process_frame
+	_check("back at base, the debrief says MISSION COMPLETE", debrief != null and debrief.visible
+		and _says(debrief, "MISSION COMPLETE"))
+	_check("...shows the compute it paid", debrief != null and _says(debrief, "+%d" % paid))
+	_check("...and that the campaign is won", debrief != null and _says(debrief, "CAMPAIGN WON"))
+	_check("...with a card for you", debrief != null and _says(debrief, "YOU"))
+	if debrief != null:
+		debrief.close()
 	cm.current_mission = final_op
 	cm.in_mission = true
 	result = cm.extract(true)
 	_check("...and a second clear does not announce it again", not result.has("won"))
+	_check("...nor pay its compute again, mission or objective", int(result.get("compute", -1)) == 0,
+		"compute=%s" % result.get("compute"))
+	cm.objectives._objectives.erase(bonus)
+	bonus.free()
 
 	master.queue_free()
 	for _i in 5:

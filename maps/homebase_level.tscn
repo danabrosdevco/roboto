@@ -1204,11 +1204,10 @@ in_library = false
 [node name="TutorialLabel4" type="Label3D" parent="."]
 transform = Transform3D(-0.999667, 0, -0.0257932, 0, 1, 0, 0.0257932, 0, -0.999667, -3.07773, 2.65656, 42.4119)
 text = "{squad_manager} - SQUAD MANAGER
-CLICK TO SELECT A SOLDIER, OR YOURSELF.
 
-TRY BUYING AN ANCIENT RIFLE AND EQUIPPING IT BY DRAGGING IT ONTO THE PLAYER'S WEAPON SLOT.
-
-CLICK AND DRAG ANCIENT RIFLE ONTO YOUR WEAPON SLOT TO GET A GUN."
+ARMORER: BUY AN ANCIENT RIFLE.
+THEN SQUAD: CLICK YOURSELF, CLICK YOUR WEAPON SLOT,
+AND CLICK THE RIFLE TO FIT IT."
 font_size = 50
 script = ExtResource("18_5ehbc")
 
@@ -1311,11 +1310,12 @@ light_size = 1.0
 light_specular = 0.0
 
 [node name="PlayerSpawnSquad" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.7649, 3.22166, 34.2386)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.6824, 3.22166, 21.2061)
 script = ExtResource("80_sqspawn")
 callsign = "BRAVO"
+max_slots = 999
 default_objective = 2
-spacing = 1.0
+spacing = 2.5
 
 [node name="TutorialLabel" type="Label3D" parent="PlayerSpawnSquad"]
 transform = Transform3D(-0.831974, 0, 0.554816, 0, 1, 0, -0.554816, 0, -0.831974, 0, 1.81223, 0)

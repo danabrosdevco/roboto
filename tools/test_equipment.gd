@@ -11,6 +11,8 @@ extends SceneTree
 # armour plating unnoticed.
 # ─────────────────────────────────────────────
 
+const Icons := preload("res://Character/hud/icons/icons.gd")
+
 var _fails := 0
 
 
@@ -136,6 +138,56 @@ func _init() -> void:
 	for _i in 3:
 		await physics_frame
 
+	# ── UTILITY HARNESS: A THIRD THROWABLE, ON 6 ─
+	# The record grows the slot; the loadout has to turn it into a key.
+	var harnessed := SoldierRecord.new()
+	harnessed.set_chassis(cat.chassis_def(&"soldier"), cat)
+	harnessed.weapon_ids[0] = &"m4"
+	harnessed.module_ids[0] = &"utility_harness"
+	harnessed.fit_equipment_capacity(cat)
+	_check("a harness gives the player three equipment slots", harnessed.equipment_ids.size() == 3,
+		str(harnessed.equipment_ids.size()))
+	harnessed.equipment_ids = [&"frag", &"emp", &"hatchling"] as Array[StringName]
+	player.loadout.apply_record(harnessed, cat)
+	for _i in 3:
+		await physics_frame
+	var on_six: PlayerEquipment = player.loadout.item_for_slot(5)
+	_check("...and the third is on key 6", on_six != null and on_six.display_name.to_lower().contains("hatch"),
+		str(on_six.display_name if on_six != null else null))
+	player.loadout.equip_slot(5)
+	for _i in 3:
+		await physics_frame
+	_check("...which pressing 6 draws", player.loadout.current == on_six, str(player.loadout.current))
+	# ── WEAPON BAR ICONS ────────────────────────
+	# Keys 1-6 show each item's line art, found by the scene it was built from.
+	var bar = _find(root, "WeaponBar")
+	for _i in 3:
+		await process_frame
+	var chip_icon := func(i: int) -> Texture2D:
+		var rect: TextureRect = bar._chips[i]["icon"]
+		return rect.texture if rect.visible else null
+	_check("the weapon bar shows the rifle's icon on 1",
+		bar != null and chip_icon.call(0) == Icons.item(cat.item(&"m4"), "m"))
+	_check("...the built-in repair tool's on 3", bar != null and chip_icon.call(2) != null
+		and chip_icon.call(2) == Icons.item(cat.item(&"repair_tool"), "m"))
+	_check("...and each throwable its own on 4, 5 and 6", bar != null
+		and chip_icon.call(3) == Icons.item(cat.item(&"frag"), "m")
+		and chip_icon.call(4) == Icons.item(cat.item(&"emp"), "m")
+		and chip_icon.call(5) == Icons.item(cat.item(&"hatchling"), "m"))
+	_check("...in place of the name", bar != null and not (bar._chips[0]["name"] as Label).visible)
+	var tool_clip: Control = bar._chips[2]["fill_clip"]
+	var charge: float = player.loadout.item_for_slot(2).get_readout().fraction
+	_check("the repair tool's icon fills with its charge", tool_clip.visible
+		and is_equal_approx(tool_clip.size.x, bar.icon_size.x * charge),
+		"visible=%s width=%s charge=%s" % [tool_clip.visible, tool_clip.size.x, charge])
+	_check("...and the rifle's, which has no charge, does not", not (bar._chips[0]["fill_clip"] as Control).visible)
+	# Back to this machine's own kit for the rest of the run.
+	var cm_node: Node = world_scene.get_node("CampaignManager")
+	player.loadout.apply_record(cm_node.state.player_record, cat)
+	player.loadout.equip_slot(0)
+	for _i in 3:
+		await physics_frame
+
 	# ── SELF-REVIVE ──────────────────────────────
 	var nano := _spawn(level, mgr, player, Enums.Factions.PLAYER, player.global_position + Vector3(8, 0, 0))
 	nano.self_revive_seconds = 0.4
@@ -224,6 +276,8 @@ func _init() -> void:
 		_check("...and its kills are credited to whoever threw it",
 			player.confirmed_kills == kills_before + 1 and pup.confirmed_kills == 0,
 			"player %d -> %d, hatchling %d" % [kills_before, player.confirmed_kills, pup.confirmed_kills])
+		_check("...by what was killed, too (a shotgun trooper)", int(player.kills_by_kind.get(&"shotgunner", 0)) >= 1,
+			str(player.kills_by_kind))
 		for _i in 80:
 			await physics_frame
 		_check("...and shuts down when its time is up", not is_instance_valid(pup) or not pup.alive)

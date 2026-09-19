@@ -36,6 +36,19 @@ func _initialize() -> void:
 	test_old_save_repair_tool_comes_off_the_player()
 	test_squad_size_caps_the_deploy()
 	test_the_ally_ramp()
+	test_recruiting()
+	test_supply_caps_the_active_squad()
+	test_compute_buys_supply()
+	test_supply_survives_save()
+	test_old_saves_are_paid_for_past_clears()
+	test_utility_harness_adds_a_slot()
+	test_everyone_standing_comes_home_repaired()
+	test_compute_is_capacity()
+	test_software_is_held_compute()
+	test_old_compute_saves_become_a_ledger()
+	test_kills_by_kind()
+	test_unlocks_wait_for_their_operation()
+	test_the_player_has_no_rank()
 
 	print("")
 	if _failures == 0:
@@ -331,3 +344,332 @@ func names(records: Array) -> Array:
 	for r in records:
 		out.append(r.display_name)
 	return out
+
+
+# ── RECRUITING, SUPPLY, COMPUTE ──────────────
+# Robots are bought in their own frames, for resources. SUPPLY caps how many
+# are ACTIVE (benched ones take none), and COMPUTE buys more supply.
+func real_catalogue() -> ItemCatalogue:
+	return load("res://Campaign/items & catalogue/test_item_catalogue.tres")
+
+
+func test_recruiting() -> void:
+	var cat := real_catalogue()
+	var state := make_state(500)
+	state.catalogue = cat
+	var soldier_frame := cat.chassis_def(&"soldier")
+	var chaser_frame := cat.chassis_def(&"chaser")
+	var hopper_frame := cat.chassis_def(&"hopper")
+	var soldier := state.recruit(soldier_frame)
+	var chaser := state.recruit(chaser_frame)
+	var hopper := state.recruit(hopper_frame)
+	check("recruits are paid for", state.available() == 500 - soldier_frame.cost - chaser_frame.cost - hopper_frame.cost,
+		str(state.available()))
+	invariant(state, "after recruiting")
+	check("recruits join the roster", state.roster.size() == 3)
+	check("recruits are named for their frame", names([soldier, chaser, hopper]) == ["Soldier-1", "Chaser-1", "Hopper-1"],
+		str(names([soldier, chaser, hopper])))
+	check("...and numbered", state.recruit(chaser_frame).display_name == "Chaser-2")
+	check("a soldier arrives with its pistol and otherwise empty slots",
+		soldier.weapon_ids.size() == 1 and soldier.equipment_ids.size() == 2 and soldier.module_ids.size() == 2
+		and soldier.all_fitted_ids() == [&"pistol"], str(soldier.all_fitted_ids()))
+	check("...issued with the frame, not taken from stores", state.armoury.spare(&"pistol") == 0)
+	check("a chaser has no weapon or equipment slots, one module",
+		chaser.weapon_ids.is_empty() and chaser.equipment_ids.is_empty() and chaser.module_ids.size() == 1)
+	check("...a hopper, two modules",
+		hopper.weapon_ids.is_empty() and hopper.equipment_ids.is_empty() and hopper.module_ids.size() == 2)
+	check("...and nothing can hand a chaser a gun", not state.fit_item(chaser, cat.item(&"m4"), 0))
+	check("each fights in its own body", chaser.chassis_scene == chaser_frame.scene and hopper.chassis_scene == hopper_frame.scene
+		and chaser.chassis_scene != null and hopper.chassis_scene != null)
+	check("each frame's health is its own", chaser.max_health == chaser_frame.base_health
+		and hopper.max_health == hopper_frame.base_health, "%d %d" % [chaser.max_health, hopper.max_health])
+
+	var poor := make_state(20)
+	poor.catalogue = cat
+	check("a recruit you cannot afford is refused", poor.recruit(soldier_frame) == null and poor.roster.is_empty())
+	invariant(poor, "after a refused recruit")
+	var not_for_sale := ChassisDefinition.new()
+	not_for_sale.id = &"gunship"
+	check("a frame that is not for sale cannot be recruited", state.recruit(not_for_sale) == null)
+
+
+func test_supply_caps_the_active_squad() -> void:
+	var cat := real_catalogue()
+	var state := make_state(1000)
+	state.catalogue = cat
+	state.supply_cap = 2
+	var a := state.recruit(cat.chassis_def(&"soldier"))
+	var b := state.recruit(cat.chassis_def(&"chaser"))
+	check("recruits join the squad while there is supply", not a.benched and not b.benched)
+	check("...each taking its frame's supply", state.supply_used() == 2 and state.supply_free() == 0,
+		"used=%d free=%d" % [state.supply_used(), state.supply_free()])
+	var c := state.recruit(cat.chassis_def(&"hopper"))
+	check("buying is never blocked by supply: the next joins the bench", c != null and c.benched)
+	check("...where it takes none", state.supply_used() == 2)
+	check("coming off the bench with no supply free is refused", not state.set_benched(c, false) and c.benched)
+	check("benching someone frees theirs", state.set_benched(a, true) and state.supply_free() == 1)
+	check("...which the bench can then use", state.set_benched(c, false) and not c.benched and state.supply_free() == 0)
+	check("benching is never refused", state.set_benched(b, true) and b.benched)
+	check("the player takes no supply", state.player_record != null and not state.roster.has(state.player_record)
+		and state.supply_used() == 1)
+
+
+func test_compute_buys_supply() -> void:
+	var state := make_state()
+	var changes := [0]
+	state.ledger_changed.connect(func(): changes[0] += 1)
+	var cap := state.supply_cap
+	check("no compute, no supply", not state.buy_supply() and state.supply_cap == cap)
+	state.award_compute(2)
+	check("compute is awarded, and announced", state.compute == 2 and changes[0] == 1)
+	check("compute buys supply", state.buy_supply() and state.supply_cap == cap + 1
+		and state.compute == 2 - CampaignState.SUPPLY_COMPUTE_COST)
+	check("...announced, so the header updates", changes[0] == 2)
+	state.award_compute(0)
+	check("awarding nothing is not a change", changes[0] == 2)
+	invariant(state, "compute never touches resources")
+
+
+func test_supply_survives_save() -> void:
+	var state := make_state()
+	state.award_compute(5)
+	state.buy_supply()
+	state.buy_supply()
+	state.supply_cap = 6
+	state.compute_claimed.append("valley_3_push:hidden_cache")
+	var back := CampaignState.from_dict(state.to_dict())
+	check("compute, supply and claimed objectives survive a save", back.compute == 3 and back.supply_cap == 6
+		and back.compute_claimed.size() == 1 and back.compute_claimed.has("valley_3_push:hidden_cache"))
+
+	# A save from before supply: five active robots must all stay active.
+	var old_state := make_state()
+	for n in ["A", "B", "C", "D", "E"]:
+		make_soldier(old_state, n)
+	var old_save := old_state.to_dict()
+	for key in ["compute_earned", "compute_held", "supply_cap", "compute_claimed"]:
+		old_save.erase(key)
+	var loaded := CampaignState.from_dict(old_save)
+	check("an old save gets supply for everyone it had active", loaded.supply_cap == 5 and loaded.supply_free() == 0,
+		"cap=%d used=%d" % [loaded.supply_cap, loaded.supply_used()])
+	check("...and no compute", loaded.compute == 0)
+
+
+# The end of a mission, won or lost: everyone still standing is repaired for
+# nothing; the destroyed wait for a paid rebuild.
+func test_everyone_standing_comes_home_repaired() -> void:
+	var state := make_state()
+	var dented := make_soldier(state, "DENTED")
+	dented.damage = 40
+	dented.status = SoldierRecord.Status.WOUNDED
+	dented.signal_integrity = 0.3
+	var wreck := make_soldier(state, "WRECK")
+	wreck.damage = wreck.max_health
+	wreck.status = SoldierRecord.Status.DESTROYED
+	state.player_record.damage = 25
+	var before := state.available()
+	state.heal_survivors()
+	check("a damaged robot comes home repaired", dented.damage == 0 and dented.status == SoldierRecord.Status.ACTIVE
+		and is_equal_approx(dented.signal_integrity, 1.0))
+	check("...and so do you", state.player_record.damage == 0)
+	check("a destroyed one stays destroyed", wreck.status == SoldierRecord.Status.DESTROYED and wreck.damage == wreck.max_health)
+	check("...still with a rebuild to pay for", state.repair_cost(wreck) > 0)
+	check("repairing the rest costs nothing", state.available() == before)
+	invariant(state, "after the end-of-mission repair")
+
+
+# COMPUTE IS CAPACITY. Seats and software HOLD it; giving either back frees all
+# of it, any time. The compute twin of the resource invariant:
+#   compute_free() == compute_earned - sum(compute_held)
+func compute_invariant(state: CampaignState, label: String) -> void:
+	var held := 0
+	for v in state.compute_held.values():
+		held += int(v)
+	check("%s: compute free == earned - held" % label, state.compute_free() == state.compute_earned - held,
+		"free=%d earned=%d held=%d" % [state.compute_free(), state.compute_earned, held])
+
+
+func test_compute_is_capacity() -> void:
+	var state := make_state()
+	state.award_compute(3)
+	check("compute won is compute free", state.compute_free() == 3 and state.compute_earned == 3)
+	check("a seat holds compute", state.buy_supply() and state.compute_free() == 2 and state.supply_cap == 5
+		and state.seats_held() == 1)
+	check("...and gives all of it back", state.refund_supply() and state.compute_free() == 3 and state.supply_cap == 4)
+	check("the starting seats were never held, so they stay", not state.refund_supply() and state.supply_cap == 4)
+	state.buy_supply()
+	for n in ["A", "B", "C", "D", "E"]:
+		make_soldier(state, n)
+	check("a seat with a robot in it cannot be given back", not state.refund_supply() and state.supply_cap == 5,
+		"free=%d" % state.supply_free())
+	state.set_benched(state.roster[4], true)
+	check("...until someone is benched", state.refund_supply() and state.supply_cap == 4)
+	check("giving compute back never touches what was won", state.compute_earned == 3)
+	compute_invariant(state, "after seats")
+	invariant(state, "compute never touches resources")
+
+
+func test_software_is_held_compute() -> void:
+	var T = load("res://Campaign/software_tree.gd")
+	var state := make_state()
+	state.award_compute(4)
+	check("the tree has four branches of six programs", T.ids().size() == 24, str(T.ids().size()))
+	check("a tier 2 program needs a tier 1 in its branch first",
+		T.install_block(state, &"command_2a").begins_with("NEEDS A TIER 1") and not T.install(state, &"command_2a"))
+	check("a tier 1 program installs, holding 1", T.install(state, &"command_1a") and state.compute_free() == 3)
+	check("...which opens tier 2, holding 2", T.install(state, &"command_2a") and state.compute_free() == 1)
+	check("a tier 1 in another branch opens nothing here", T.install_block(state, &"signal_2a").begins_with("NEEDS A TIER 1"))
+	check("tier 3 needs tier 2, and 3 compute", T.install_block(state, &"command_3a") == "NEEDS 3 COMPUTE")
+	check("the program a higher tier stands on cannot be uninstalled",
+		not T.uninstall(state, &"command_1a") and state.is_installed(&"command_1a"))
+	check("...until the higher one comes out, and each gives back all it held",
+		T.uninstall(state, &"command_2a") and T.uninstall(state, &"command_1a") and state.compute_free() == 4)
+	T.install(state, &"combat_1b")
+	state.buy_supply()
+	var back := CampaignState.from_dict(state.to_dict())
+	check("installed programs and held seats survive a save", back.is_installed(&"combat_1b")
+		and back.seats_held() == 1 and back.compute_free() == state.compute_free(),
+		"free %d vs %d" % [back.compute_free(), state.compute_free()])
+	back.compute_held["software:cut_in_a_patch"] = 2
+	var dropped := back.release_unknown_software(T.ids())
+	check("a program the tree no longer has gives its compute back",
+		dropped.size() == 1 and dropped[0] == &"cut_in_a_patch" and back.compute_free() == state.compute_free())
+	compute_invariant(state, "after software")
+	compute_invariant(back, "after a reload")
+
+
+func test_old_compute_saves_become_a_ledger() -> void:
+	# Before compute was capacity, a save kept a balance and a seat count.
+	var state := make_state()
+	var old_save := state.to_dict()
+	old_save.erase("compute_earned")
+	old_save.erase("compute_held")
+	old_save["compute"] = 2
+	old_save["supply_cap"] = 6
+	var loaded := CampaignState.from_dict(old_save)
+	check("an old save's two bought seats become held seats", loaded.seats_held() == 2 and loaded.supply_cap == 6)
+	check("...its balance stays free", loaded.compute_free() == 2)
+	check("...and what the seats held is counted as won", loaded.compute_earned == 4)
+	check("...so a seat given back returns its compute", loaded.refund_supply() and loaded.compute_free() == 3)
+	compute_invariant(loaded, "after converting an old save")
+
+
+# WHAT they killed, not just how many: the debrief's "2 CHASERS" comes from here.
+func test_kills_by_kind() -> void:
+	var r := SoldierRecord.new()
+	var body := {&"chaser": 2, &"rifleman": 1}
+	r.take_kills_by_kind(body)
+	check("a mission's kills by kind are kept for the debrief",
+		int(r.kills_by_kind_this_mission.get(&"chaser", 0)) == 2 and int(r.kills_by_kind_this_mission.get(&"rifleman", 0)) == 1)
+	check("...added to the career, and cleared on the body", int(r.kills_by_kind.get(&"chaser", 0)) == 2 and body.is_empty())
+	r.take_kills_by_kind({&"chaser": 1})
+	check("the career adds up across missions", int(r.kills_by_kind[&"chaser"]) == 3 and int(r.kills_by_kind[&"rifleman"]) == 1)
+	check("...while the debrief shows only this one", int(r.kills_by_kind_this_mission.get(&"rifleman", 0)) == 0)
+	var back := SoldierRecord.from_dict(r.to_dict())
+	check("career kills by kind survive a save", int(back.kills_by_kind.get(&"chaser", 0)) == 3
+		and int(back.kills_by_kind.get(&"rifleman", 0)) == 1, str(back.kills_by_kind))
+	var kinds = load("res://Campaign/kill_kinds.gd")
+	check("a kind reads as its frame, without the word chassis",
+		kinds.name_of(&"chaser") == "CHASER" and kinds.name_of(&"rifleman") == "RIFLE TROOPER", kinds.name_of(&"chaser"))
+
+
+func test_unlocks_wait_for_their_operation() -> void:
+	var state := make_state()
+	var campaign := CampaignManager.new()
+	campaign.state = state
+	var op := MissionDefinition.new()
+	op.id = &"op_pack"
+	op.unlocks = [&"hopper"] as Array[StringName]
+	campaign.missions = [op] as Array[MissionDefinition]
+	check("a frame an operation unlocks is locked until it is cleared", campaign.locked_by(&"hopper") == op)
+	check("anything no operation unlocks is never locked", campaign.locked_by(&"soldier") == null)
+	state.completed_missions.append(&"op_pack")
+	campaign._grant_owed_unlocks()
+	check("a save that already cleared it is handed the unlock on load",
+		campaign.locked_by(&"hopper") == null and state.unlocked.has(&"hopper"))
+	campaign.free()
+
+
+# You spend the resources and the compute; you don't earn rank.
+func test_the_player_has_no_rank() -> void:
+	var cat := real_catalogue()
+	var state := make_state()
+	state.catalogue = cat
+	var gated := make_item(&"veterans_only", 10)
+	gated.kind = ItemDefinition.Kind.MODULE
+	gated.required_rank = 2
+	state.armoury.add(&"veterans_only")
+	state.player_record.set_chassis(cat.chassis_def(&"soldier"), cat)
+	var squaddie := make_soldier(state, "NEW")
+	squaddie.set_chassis(cat.chassis_def(&"soldier"), cat)
+	check("rank never gates you", state.can_fit(state.player_record, gated))
+	check("...it still gates a squadmate", not state.can_fit(squaddie, gated))
+
+
+# Compute arrived after people had saves. An op cleared before it paid compute
+# pays it when the save loads — once, and without writing the save.
+func test_old_saves_are_paid_for_past_clears() -> void:
+	var state := make_state()
+	var paid_op := MissionDefinition.new()
+	paid_op.id = &"op_paid"
+	paid_op.compute_reward = 2
+	var free_op := MissionDefinition.new()
+	free_op.id = &"op_free"
+	var later_op := MissionDefinition.new()
+	later_op.id = &"op_later"
+	later_op.compute_reward = 1
+	state.completed_missions = [&"op_paid", &"op_free"] as Array[StringName]
+	var campaign := CampaignManager.new()
+	campaign.state = state
+	campaign.missions = [paid_op, free_op, later_op] as Array[MissionDefinition]
+	var announced := [0]
+	state.ledger_changed.connect(func(): announced[0] += 1)
+	campaign._pay_compute_owed()
+	check("a save that cleared an op before it paid compute is paid on load", state.compute == 2, str(state.compute))
+	check("...only for what it cleared", state.clear_compute_paid(&"op_paid") and not state.clear_compute_paid(&"op_later"))
+	check("...without announcing it (no save on load)", announced[0] == 0)
+	campaign._pay_compute_owed()
+	check("...and only once", state.compute == 2, str(state.compute))
+	var again := CampaignManager.new()
+	again.state = CampaignState.from_dict(state.to_dict())
+	again.missions = campaign.missions
+	again._pay_compute_owed()
+	check("...even across a save and reload", again.state.compute == 2, str(again.state.compute))
+	campaign.free()
+	again.free()
+
+
+func test_utility_harness_adds_a_slot() -> void:
+	var cat := real_catalogue()
+	var state := make_state(1000)
+	state.catalogue = cat
+	var s := state.recruit(cat.chassis_def(&"soldier"))
+	for id in [&"utility_harness", &"emp", &"frag", &"hatchling"]:
+		state.buy_item(cat.item(id))
+	check("a soldier has two equipment slots", s.equipment_ids.size() == 2)
+	check("the harness fits", state.fit_item(s, cat.item(&"utility_harness"), 0))
+	check("...and adds a third slot", s.equipment_ids.size() == 3, str(s.equipment_ids.size()))
+	state.fit_item(s, cat.item(&"frag"), 0)
+	state.fit_item(s, cat.item(&"hatchling"), 1)
+	check("...which takes kit like the others", state.fit_item(s, cat.item(&"emp"), 2) and s.equipment_ids[2] == &"emp")
+	check("taking the harness off takes the slot away", state.unfit_item(s, ItemDefinition.Kind.MODULE, 0)
+		and s.equipment_ids.size() == 2)
+	check("...and what hung there goes back to stores", state.armoury.spare(&"emp") == 1
+		and state.armoury.spare(&"utility_harness") == 1)
+	check("...while the other two stay fitted", s.equipment_ids[0] == &"frag" and s.equipment_ids[1] == &"hatchling")
+	invariant(state, "after the harness comes off")
+	var chaser := state.recruit(cat.chassis_def(&"chaser"))
+	check("a chaser cannot wear a harness", not state.fit_item(chaser, cat.item(&"utility_harness"), 0))
+
+	# A frame the catalogue does not know gives no base to add to, so the row
+	# must stay put rather than grow on every settle.
+	var stray := SoldierRecord.new()
+	stray.chassis_id = &"not_in_the_catalogue"
+	stray.equipment_ids.resize(2)
+	stray.module_ids = [&"utility_harness"] as Array[StringName]
+	stray.fit_equipment_capacity(cat)
+	stray.fit_equipment_capacity(cat)
+	check("an unknown frame's equipment row never grows", stray.equipment_ids.size() == 2, str(stray.equipment_ids.size()))
+	# And with no catalogue at all a frame still sizes the row, as it always did.
+	var bare := SoldierRecord.new()
+	bare.set_chassis(cat.chassis_def(&"soldier"), null)
+	check("set_chassis sizes equipment without a catalogue", bare.equipment_ids.size() == 2, str(bare.equipment_ids.size()))

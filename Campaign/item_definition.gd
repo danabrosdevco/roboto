@@ -96,6 +96,9 @@ enum Kind {
 # deployment. 0 means never. A capability rather than a stat, but kept as a
 # plain number for the same reason as the rest: the UI can print it.
 @export var self_revive_seconds: float = 0.0
+## Extra equipment slots while fitted. Taking the module off hands whatever
+## sat in the slot back to stores.
+@export var equipment_slot_bonus: int = 0
 
 # Gating. A module can require a rank before it will fit — that's what makes
 # rank matter more than raw level.
@@ -185,6 +188,8 @@ func effect_summary() -> String:
 		# "+100% RES" means nothing, "-50% JAM" means something.
 		var cut: float = 1.0 - 1.0 / (1.0 + signal_resistance_bonus)
 		parts.append("-%.0f%% JAM" % (cut * 100.0))
+	if equipment_slot_bonus != 0:
+		parts.append("%+d EQUIP SLOT" % equipment_slot_bonus)
 	if self_revive_seconds > 0.0:
 		parts.append("SELF-REVIVE %.0fs" % self_revive_seconds)
 	if kind == Kind.EQUIPMENT and quantity > 0:
