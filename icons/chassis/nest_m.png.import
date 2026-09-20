@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cgfdocy3y6cbn"
-path="res://.godot/imported/hopper_m.png-549554ec6fb083d204f62059cfd58dc2.ctex"
+uid="uid://c1jx2457ggg1v"
+path="res://.godot/imported/nest_m.png-6b981a8b1e61c77c895c7a2dca68489a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://icons/chassis/hopper_m.png"
-dest_files=["res://.godot/imported/hopper_m.png-549554ec6fb083d204f62059cfd58dc2.ctex"]
+source_file="res://icons/chassis/nest_m.png"
+dest_files=["res://.godot/imported/nest_m.png-6b981a8b1e61c77c895c7a2dca68489a.ctex"]
 
 [params]
 

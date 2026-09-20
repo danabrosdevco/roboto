@@ -5,8 +5,8 @@
 
 [resource]
 script = ExtResource("1_chassisdef")
-id = &"hopper"
-display_name = "Hopper Chassis"
+id = &"leaper"
+display_name = "Leaper Chassis"
 description = "Leaping frame. Clears walls in one jump and goes for the weakest target. Built-in claws, no guns, no equipment. Modules only."
 scene = ExtResource("2_scene")
 cost = 70
@@ -18,6 +18,10 @@ base_speed = 1.0
 base_accuracy = 0.8
 base_sensor_range = 60.0
 weapon_slots = 0
+built_in = "CLAWS"
+turret = false
+vehicle = false
+drives = false
 equipment_slots = 0
 module_slots = 2
 required_rank = 0

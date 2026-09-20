@@ -1,0 +1,216 @@
+[gd_scene load_steps=25 format=3 uid="uid://cnest00000001"]
+
+[ext_resource type="Script" path="res://Character/characters/ai/enemy_nest.gd" id="1_nest"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_bark"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="2_vw1p3"]
+[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_voice"]
+[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="4_voice2"]
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="5_metal"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="6_sparks"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="7_oil"]
+[ext_resource type="Script" path="res://faction_livery.gd" id="8_livery"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="9_chaser"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="10_hopper"]
+[ext_resource type="AudioStream" uid="uid://hnl8e7n2tuid" path="res://sounds/sfx/psx ui sfx/DropB.wav" id="11_hatch"]
+
+[sub_resource type="BoxShape3D" id="Hull"]
+size = Vector3(2.6, 2.2, 2.6)
+
+[sub_resource type="SphereShape3D" id="Sense"]
+radius = 30.0
+
+[sub_resource type="StandardMaterial3D" id="DarkMat"]
+albedo_color = Color(0.1, 0.12, 0.11, 1)
+metallic = 0.45
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="HatchLitMat"]
+albedo_color = Color(1, 0.55, 0.12, 1)
+emission_enabled = true
+emission = Color(1, 0.45, 0.08, 1)
+emission_energy_multiplier = 3.5
+
+[sub_resource type="BoxMesh" id="VentMesh"]
+size = Vector3(1.6, 0.06, 0.14)
+
+[sub_resource type="CylinderMesh" id="MastMesh"]
+top_radius = 0.05
+bottom_radius = 0.07
+height = 0.5
+radial_segments = 8
+rings = 1
+
+[sub_resource type="BoxMesh" id="DishMesh"]
+size = Vector3(0.9, 0.06, 0.5)
+
+[sub_resource type="Gradient" id="FireGrad"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(1, 0.86, 0.35, 1, 1, 0.42, 0.08, 0.85, 0.25, 0.14, 0.11, 0)
+
+[sub_resource type="GradientTexture1D" id="FireRamp"]
+gradient = SubResource("FireGrad")
+
+[sub_resource type="ParticleProcessMaterial" id="FireProc"]
+emission_shape = 1
+emission_sphere_radius = 0.55
+direction = Vector3(0, 1, 0)
+spread = 18.0
+initial_velocity_min = 1.2
+initial_velocity_max = 2.6
+gravity = Vector3(0, 1.4, 0)
+scale_min = 0.35
+scale_max = 0.85
+color_ramp = SubResource("FireRamp")
+
+[sub_resource type="StandardMaterial3D" id="FireMat"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 0.75, 0.35, 1)
+disable_receive_shadows = true
+billboard_mode = 3
+billboard_keep_scale = true
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="QuadMesh" id="FireQuad"]
+material = SubResource("FireMat")
+size = Vector2(0.7, 0.7)
+
+[node name="Enemy_Nest" type="CharacterBody3D" node_paths=PackedStringArray("dish", "flames", "hatch_light", "hatch_sound", "nav_agent", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+script = ExtResource("1_nest")
+hatchlings = Array[ExtResource("2_vw1p3")]([ExtResource("9_chaser"), ExtResource("10_hopper")])
+dish = NodePath("Rig/Mast/Dish")
+flames = [NodePath("FireHatch"), NodePath("FireVent"), NodePath("FireMast")]
+hatch_light = NodePath("Rig/HatchLight")
+hatch_sound = NodePath("HatchSound")
+nav_agent = NodePath("NavigationAgent3D")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("Rig")]
+activation_distance = 200
+health = 500
+max_health = 500
+bits = 40
+soldier_name = "Nest"
+can_be_downed = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("Hull")
+
+[node name="Bark" parent="." instance=ExtResource("2_bark")]
+bark_clips = Array[AudioStream]([ExtResource("3_voice"), ExtResource("4_voice2")])
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
+shape = SubResource("Sense")
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Plinth" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.85, 0)
+size = Vector3(3, 0.5, 3)
+material = ExtResource("5_metal")
+
+[node name="Body" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+size = Vector3(2.4, 1.4, 2.4)
+material = ExtResource("5_metal")
+
+[node name="Cap" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+size = Vector3(2, 0.4, 2)
+material = ExtResource("5_metal")
+
+[node name="Hatch" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, -1.21)
+size = Vector3(1.3, 0.9, 0.14)
+material = SubResource("DarkMat")
+
+[node name="HatchLight" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, -1.3)
+visible = false
+size = Vector3(1.1, 0.12, 0.05)
+material = SubResource("HatchLitMat")
+
+[node name="VentA" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 1.21)
+material_override = SubResource("DarkMat")
+mesh = SubResource("VentMesh")
+
+[node name="VentB" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 1.21)
+material_override = SubResource("DarkMat")
+mesh = SubResource("VentMesh")
+
+[node name="VentC" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 1.21)
+material_override = SubResource("DarkMat")
+mesh = SubResource("VentMesh")
+
+[node name="Mast" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+material_override = SubResource("DarkMat")
+mesh = SubResource("MastMesh")
+
+[node name="Dish" type="Node3D" parent="Rig/Mast"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+
+[node name="Plate" type="MeshInstance3D" parent="Rig/Mast/Dish"]
+transform = Transform3D(1, 0, 0, 0, 0.866025, -0.5, 0, 0.5, 0.866025, 0, 0.05, 0.16)
+material_override = SubResource("DarkMat")
+mesh = SubResource("DishMesh")
+
+[node name="SparkBurst" parent="." instance=ExtResource("6_sparks")]
+
+[node name="OilSpray" parent="." instance=ExtResource("7_oil")]
+
+[node name="HatchSound" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, -1.4)
+stream = ExtResource("11_hatch")
+volume_db = -4.0
+max_distance = 45.0
+
+[node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("8_livery")
+base_material = ExtResource("5_metal")
+pieces = [NodePath("../Rig/Body"), NodePath("../Rig/Cap"), NodePath("../Rig/Plinth")]
+paint_blend = 1.0
+marker_energy = 6.0
+
+[node name="FireHatch" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, -1.25)
+emitting = false
+amount = 14
+lifetime = 1.4
+randomness = 0.4
+process_material = SubResource("FireProc")
+draw_pass_1 = SubResource("FireQuad")
+
+[node name="FireVent" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 1.4, 0.6)
+emitting = false
+amount = 12
+lifetime = 1.6
+randomness = 0.45
+process_material = SubResource("FireProc")
+draw_pass_1 = SubResource("FireQuad")
+
+[node name="FireMast" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 2.1, 0.2)
+emitting = false
+amount = 10
+lifetime = 1.2
+randomness = 0.5
+process_material = SubResource("FireProc")
+draw_pass_1 = SubResource("FireQuad")
+
+[connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
+[connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

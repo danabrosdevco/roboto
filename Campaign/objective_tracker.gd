@@ -26,6 +26,14 @@ func refresh() -> void:
 	for node in get_tree().get_nodes_in_group("mission_objectives"):
 		if not (node is MissionObjective):
 			continue
+		# NOT THE ONES ALREADY ON THEIR WAY OUT. Campaign frees every objective
+		# the current operation didn't ask for, and queue_free() is deferred —
+		# so a node pruned earlier this frame is still in the group when this
+		# runs, gets adopted here, and is a dangling reference by the next
+		# frame. That was an error per objective per frame, for the whole
+		# mission, out of counts_toward_extraction().
+		if node.is_queued_for_deletion():
+			continue
 		var obj := node as MissionObjective
 		_objectives.append(obj)
 		if not obj.objective_completed.is_connected(_on_completed):
@@ -71,6 +79,11 @@ func objectives() -> Array[MissionObjective]:
 func required() -> Array[MissionObjective]:
 	var out: Array[MissionObjective] = []
 	for o in _objectives:
+		# Belt and braces alongside the queue_free guard in refresh(): an
+		# objective can still go at any time, and asking a freed one whether it
+		# counts is an error rather than a false.
+		if o == null or not is_instance_valid(o):
+			continue
 		if o.counts_toward_extraction():
 			out.append(o)
 	return out

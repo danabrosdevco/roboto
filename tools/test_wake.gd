@@ -143,6 +143,10 @@ func _init() -> void:
 	var post: Vector3 = ground_at.call(200.0, 120.0)
 	var hopper: Soldier = load("res://Character/characters/ai/enemy_nest-chaser.tscn").instantiate()
 	hopper.faction = Enums.Factions.ENEMY
+	# Exempt from distance culling, the way a woken reinforcement is. Without
+	# it the hopper is culled at this range and never takes up the post it is
+	# being tested on.
+	hopper.never_culled = true
 	level.add_child(hopper)
 	hopper.global_position = post
 	if mgr != null:

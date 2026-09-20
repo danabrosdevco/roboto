@@ -367,7 +367,88 @@ func _init() -> void:
 		_mgr.deregister_enemy(lobber)
 	lobber.queue_free()
 
+	# ── A PACK OF THEM ───────────────────────────
+	# Four rovers in one squad, which is how they get used — armour pooled and
+	# moved together. They used to converge on slots 2.6m apart (infantry
+	# spacing, for a 1.5m hull that counts as parked anywhere within 3.5m),
+	# find each other only by collision, and spend the move shunting apart:
+	# _is_wall() ignores CharacterBody3D, so nothing steered around a
+	# squadmate and the first sign of one was a three-point turn starting.
+	#
+	# The measure is the closest any two got at any point, and how much of the
+	# move was spent reversing out of each other instead of driving.
+	var pack: Array[Soldier] = []
+	for i in 4:
+		var spot: Vector3 = ground_at.call(292.0 + i * 3.0, 205.0 + (i % 2) * 2.0)
+		pack.append(_spawn(level, spot + Vector3.UP * 0.9, PI))
+	var pack_squad := Squad.new()
+	pack_squad.callsign = "PACKTEST"
+	pack_squad.squad_members = pack
+	level.add_child(pack_squad)
+	player.global_position = ground_at.call(296.0, 200.0) + Vector3.UP
+	for _i in 20:
+		await physics_frame
+	pack_squad.follow(player)
+	# Two numbers, because they start in a clump on purpose — that is how they
+	# come off a spawn point. `closest` covers the untangle as well, `settled`
+	# only once they have had two seconds to sort themselves out.
+	var closest := INF
+	var settled := INF
+	var closest_at := 0
+	var shunting := 0
+	var start_gap: float = _flat(pack[0].global_position - player.global_position).length()
+	for i in 900:
+		# Walk them up the valley, far enough that they have to drive rather
+		# than shuffle in place.
+		player.global_position = ground_at.call(296.0, 200.0 - i / 900.0 * 45.0) + Vector3.UP
+		await physics_frame
+		for a in pack.size():
+			if pack[a]._manoeuvre_t > 0.0 or pack[a]._pinned_t > 0.0:
+				shunting += 1
+			for b in range(a + 1, pack.size()):
+				var gap: float = _flat(pack[a].global_position - pack[b].global_position).length()
+				if gap < closest:
+					closest = gap
+					closest_at = i
+				if i >= 120:
+					settled = minf(settled, gap)
+	var trailing := 0.0
+	for r in pack:
+		trailing = maxf(trailing, _flat(r.global_position - player.global_position).length())
+	var shunt_share: float = float(shunting) / (900.0 * pack.size())
+	# Every rover's nearest neighbour once they are where they were going: the
+	# number the wider slots move. Measured, not guessed — with infantry-width
+	# slots a pack of four settles about 4.7m apart and trails the squad by
+	# 38m; with vehicle-width slots it is 6.8m apart and 22m back.
+	var spread := 0.0
+	for a in pack.size():
+		var nearest := INF
+		for b in pack.size():
+			if a != b:
+				nearest = minf(nearest, _flat(pack[a].global_position - pack[b].global_position).length())
+		spread += nearest
+	spread /= float(pack.size())
+	print("      a pack of 4: closest %.1fm at frame %d (%.1fm once sorted out), %.1fm apart at the end, %.0f%% shunting, furthest %.0fm behind"
+		% [closest, closest_at, settled, spread, shunt_share * 100.0, trailing])
+	_check("a pack of rovers stands off each other rather than sharing a slot",
+		spread > 5.5, "%.1fm between hulls" % spread)
+	_check("...never hull to hull, even untangling from a clump", closest > 1.7,
+		"closest %.1fm" % closest)
+	_check("...without spending the move reversing out of each other", shunt_share < 0.25,
+		"%.0f%% of the move" % (shunt_share * 100.0))
+	_check("...and still moves as a pack rather than scattering", trailing < 30.0,
+		"furthest %.0fm behind, started %.0fm" % [trailing, start_gap])
+	for r in pack:
+		if _mgr != null:
+			_mgr.deregister_enemy(r)
+		r.queue_free()
+	pack_squad.queue_free()
+	player.global_position = ground_at.call(290.0, 160.0) + Vector3.UP
+	for _i in 20:
+		await physics_frame
+
 	# ── KNOCKED OUT ──────────────────────────────
+	var live_turret: float = rover.turret.rotation.y
 	rover.apply_damage(99999, player)
 	for _i in 20:
 		await physics_frame
@@ -391,8 +472,23 @@ func _init() -> void:
 	print("      knocked out: deepest wheel %.2fm into the ground, belly %+.2fm, drawn top %+.2fm" % [sunk, belly, span.y - deck])
 	_check("a knocked-out rover is down, not destroyed", rover.downed)
 	_check("...its collider still lying along the hull, not stood on end", not rover._collider_flattened)
-	_check("...and it sits on the deck, not in it or above it", sunk < 0.12 and hovering < 0.15 and belly < 0.3,
-		"wheel %.2fm in, nearest wheel %.2fm up, belly %+.2fm" % [sunk, hovering, belly])
+	# A WRECK LEANS. It goes over on one side now, so the low wheels dig in and
+	# the high ones sit proud — every wheel exactly on the deck is what a
+	# PARKED rover looks like, which was the whole complaint. What still has to
+	# hold is that nothing floats and the hull is not buried in the terrain,
+	# because hiding the model in the ground is the trick this replaced.
+	_check("...and it lies on the deck at an angle, neither floating nor buried",
+		sunk < 0.3 and hovering < 0.2 and belly < 0.3 and belly > -0.45,
+		"deepest wheel %.2fm in, nearest %.2fm up, belly %+.2fm" % [sunk, hovering, belly])
+	var lean := rad_to_deg(rover.rig.global_transform.basis.y.angle_to(Vector3.UP))
+	_check("...canted over, so the silhouette is not a rover waiting for orders",
+		lean > 6.0, "%.0f degrees off level" % lean)
+	_check("...its turret knocked off the bearing it was aiming on",
+		absf(rad_to_deg(wrapf(rover.turret.rotation.y - live_turret, -PI, PI))) > 30.0,
+		"%.0f degrees" % rad_to_deg(wrapf(rover.turret.rotation.y - live_turret, -PI, PI)))
+	_check("...and the barrel dropped below anything it could aim at alive",
+		rover.gun_pivot.rotation.x < deg_to_rad(rover.gun_min_pitch_degrees),
+		"%.0f degrees, live limit %.0f" % [rad_to_deg(rover.gun_pivot.rotation.x), rover.gun_min_pitch_degrees])
 	for _i in 180:
 		await physics_frame
 	span = _drawn_span(rover)

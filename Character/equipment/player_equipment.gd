@@ -344,6 +344,18 @@ func _get_pose_target() -> Array:
 	return [base_position, base_rotation]
 
 
+## The field of view this item aims down to, or 0 for something that cannot be
+## aimed — a scanner, a repair tool, a grenade in your hand.
+##
+## Asked of whatever is HELD rather than read off PlayerWeapon, because aiming
+## is not a property of being a gun. The launcher is a PlayerEquipment with a
+## sight on the tube; before this, Player.current_weapon() cast the held item
+## to PlayerWeapon, got null, and the aim button did nothing at all with a
+## recoilless rifle up.
+func ads_fov() -> float:
+	return 0.0
+
+
 func _apply_bob() -> bool:
 	return true
 

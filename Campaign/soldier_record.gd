@@ -127,6 +127,12 @@ func all_fitted_ids() -> Array[StringName]:
 # Kept on the RECORD because that is the thing that outlives the robot — the
 # node is destroyed between missions.
 @export var confirmed_kills: int = 0
+## Career total of squadmates this one got back on their feet — the repair
+## tool, a mechanic's kit, a reclaimer's welder. A robot standing itself up on
+## a nanite charge is not a revive: nobody did it for them.
+@export var revives: int = 0
+## The same for the mission just finished. Not saved.
+var revives_this_mission: int = 0
 # Kills from the mission just finished. NOT saved — it exists only long enough
 # for the extraction to turn it into XP, because read_from() folds the body's
 # count into the career total and zeroes the body on the way past.
@@ -331,6 +337,10 @@ func read_from(soldier: Soldier) -> void:
 		soldier.confirmed_kills = 0
 	if "kills_by_kind" in soldier:
 		take_kills_by_kind(soldier.kills_by_kind)
+	if "revives" in soldier:
+		revives_this_mission = soldier.revives
+		revives += soldier.revives
+		soldier.revives = 0
 	if not soldier.alive:
 		status = Status.DESTROYED
 		damage = max_health
@@ -391,6 +401,7 @@ func to_dict() -> Dictionary:
 		"benched": benched,
 		"missions_survived": missions_survived,
 		"confirmed_kills": confirmed_kills,
+		"revives": revives,
 		"kills_by_kind": _kills_to_dict(kills_by_kind),
 		"equipment": kit,
 		"equipment_max": equipment_max,
@@ -415,9 +426,13 @@ static func from_dict(data: Dictionary) -> SoldierRecord:
 	r.benched = bool(data.get("benched", false))
 	r.missions_survived = int(data.get("missions_survived", 0))
 	r.confirmed_kills = int(data.get("confirmed_kills", 0))
+	r.revives = int(data.get("revives", 0))
 	var kinds: Dictionary = data.get("kills_by_kind", {})
 	for kind in kinds:
-		r.kills_by_kind[StringName(str(kind))] = int(kinds[kind])
+		# Through the rename table, so a career tally does not split into two
+		# columns when a frame is renamed. See CampaignState.RENAMED.
+		var id: StringName = CampaignState._renamed(StringName(str(kind)))
+		r.kills_by_kind[id] = int(r.kills_by_kind.get(id, 0)) + int(kinds[kind])
 
 	var chassis := str(data.get("chassis", ""))
 	if chassis != "" and ResourceLoader.exists(chassis):

@@ -1,0 +1,147 @@
+[gd_scene load_steps=25 format=3]
+
+[ext_resource type="Script" path="res://Character/characters/ai/mechanic.gd" id="1_mech"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="2_8p1te"]
+[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_0ci13"]
+[ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ic4jn"]
+[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t0xuv"]
+[ext_resource type="Shader" path="res://Character/faction_metal.gdshader" id="8_27chb"]
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
+[ext_resource type="Texture2D" uid="uid://bvk26224sihon" path="res://2d_assets/metal textures poly.com/metal_plate_02_diff_4k.jpg" id="9_qbqh2"]
+[ext_resource type="Texture2D" uid="uid://o8ik6rntdl2v" path="res://2d_assets/metal textures poly.com/metal_plate_02_disp_4k.png" id="10_tx84r"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
+[ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="11_n4p1p"]
+[ext_resource type="Script" path="res://faction_livery.gd" id="14_agla4"]
+[ext_resource type="PackedScene" uid="uid://ctq8hcpag4egl" path="res://3d_assets/chatgptg/frontline_maintainer_arcwelder_tool_v2.glb" id="15_welder"]
+[ext_resource type="AudioStream" uid="uid://b2hibouhtggt2" path="res://sounds/sfx/free cinematic sfx/freesound_community-gear-spinning-loop-6981.mp3" id="16_loop"]
+[ext_resource type="AudioStream" uid="uid://d4b8iip21llg" path="res://sounds/sfx/psx ui sfx/ScoreG-loop.wav" id="17_done"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5j6jh"]
+render_priority = 0
+shader = ExtResource("8_27chb")
+shader_parameter/use_normal_map = false
+shader_parameter/normal_scale = 1.0
+shader_parameter/derive_mask_from_albedo = true
+shader_parameter/paint_band_center = 0.45
+shader_parameter/paint_band_width = 0.425
+shader_parameter/base_tint = Color(1, 1, 1, 1)
+shader_parameter/metallic = 0.4
+shader_parameter/roughness = 0.85
+shader_parameter/faction_color = Color(0.7, 0.35, 0.02, 1)
+shader_parameter/paint_blend = 1.0
+shader_parameter/marker_energy = 6.0
+shader_parameter/shutdown = 0.0
+shader_parameter/albedo_tex = ExtResource("9_qbqh2")
+shader_parameter/normal_tex = ExtResource("10_tx84r")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_jrkgo"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
+radius = 25.0
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_3rhyt"]
+radius = 0.2
+height = 0.6
+radial_segments = 6
+rings = 6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6qgus"]
+albedo_texture = ExtResource("11_n4p1p")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tank"]
+albedo_color = Color(0.86, 0.66, 0.14, 1)
+metallic = 0.35
+roughness = 0.55
+
+[node name="Mechanic_Chassis" type="CharacterBody3D" node_paths=PackedStringArray("weld_sparks", "weld_loop", "weld_done", "nav_agent", "weapon_mount", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+script = ExtResource("1_mech")
+weld_sparks = NodePath("WeldSparks")
+weld_loop = NodePath("WeldLoop")
+weld_done = NodePath("WeldDone")
+nav_agent = NodePath("NavigationAgent3D")
+weapon_mount = NodePath("WeaponMount")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("CSGMesh3D"), NodePath("WeaponMount"), NodePath("CSGMesh3D2"), NodePath("TankL"), NodePath("TankR")]
+health = 60
+max_health = 60
+equipment_slots = Array[ExtResource("2_8p1te")]([])
+soldier_name = "Mechanic"
+formation_trail = 6.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_mygdm")
+
+[node name="Bark" parent="." instance=ExtResource("2_7mr33")]
+bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"), ExtResource("5_t0xuv")])
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+material_override = SubResource("ShaderMaterial_5j6jh")
+mesh = SubResource("CapsuleMesh_jrkgo")
+material = ExtResource("8_pr6gp")
+
+[node name="WeaponMount" type="Node3D" parent="."]
+transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.553111, 0.221401, 0)
+
+[node name="Welder" parent="WeaponMount" instance=ExtResource("15_welder")]
+transform = Transform3D(7, 0, 0, 0, 0, 7, 0, -7, 0, 0.8, 0, 0)
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
+shape = SubResource("SphereShape3D_mkxqd")
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0204602, 0.283315, -0.403749)
+mesh = SubResource("CapsuleMesh_3rhyt")
+material = SubResource("StandardMaterial3D_6qgus")
+
+[node name="TankL" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.43, 0.3, 0.3)
+radius = 0.13
+height = 0.74
+sides = 10
+material = SubResource("StandardMaterial3D_tank")
+
+[node name="TankR" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.43, 0.3, 0.3)
+radius = 0.13
+height = 0.74
+sides = 10
+material = SubResource("StandardMaterial3D_tank")
+
+[node name="SparkBurst" parent="." instance=ExtResource("9_pm84i")]
+
+[node name="WeldSparks" parent="." instance=ExtResource("9_pm84i")]
+transform = Transform3D(0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0.553, 0.22, -0.52)
+
+[node name="OilSpray" parent="." instance=ExtResource("10_ukmfb")]
+
+[node name="WeldLoop" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.553, 0.22, -0.3)
+stream = ExtResource("16_loop")
+volume_db = -8.0
+max_distance = 30.0
+
+[node name="WeldDone" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("17_done")
+volume_db = -2.0
+max_distance = 40.0
+
+[node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("14_agla4")
+base_material = ExtResource("8_pr6gp")
+pieces = [NodePath("../CSGMesh3D")]
+paint_blend = 1.0
+marker_energy = 6.0
+
+[connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
+[connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

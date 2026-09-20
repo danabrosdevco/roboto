@@ -61,9 +61,10 @@ const MOUSE_SENS := 0.002
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var health = 100
 @export var max_health = 100
-## Every hit on the player is scaled by this, whatever it came from. A third:
-## the body is 100 HP so the numbers read plainly, but it soaks like 300.
-@export var damage_taken_scale: float = 1.0 / 3.0
+## Every hit on the player is scaled by this, whatever it came from. A half:
+## the body is 100 HP so the numbers read plainly, but it soaks like 200. It
+## was a third, which made a rifle round read as almost nothing.
+@export var damage_taken_scale: float = 0.5
 # The fraction a scaled hit leaves over, carried into the next one so chip
 # damage still adds up instead of rounding to nothing.
 var _damage_carry: float = 0.0
@@ -97,6 +98,9 @@ var alive = true
 var confirmed_kills: int = 0
 # The same kills by what they were, for the debrief (Campaign/kill_kinds.gd).
 var kills_by_kind: Dictionary = {}
+# Squadmates picked back up with the repair tool this mission. Enemy
+# .apply_healing credits it the same way it credits a kill.
+var revives: int = 0
 var last_bonfire
 
 # ── SPECTATOR MODE ────────────────────────────
@@ -474,12 +478,18 @@ func handle_camera(delta: float) -> void:
 	# FOV adjustment
 	# HIP_FOV is only the default now — FIELD OF VIEW in the options sets it.
 	var target_fov = ADS_FOV if Input.is_action_pressed("zoom") else Settings.get_float("display.fov")
-	var weapon := current_weapon()
-	if weapon != null:
+	# WHATEVER IS HELD, not whatever is a gun. This used to go through
+	# current_weapon(), which casts to PlayerWeapon — so anything aimable that
+	# is not a gun (the recoilless rifle) got no zoom and no sight picture.
+	var held: PlayerEquipment = loadout.current if loadout != null else null
+	var held_fov: float = 0.0
+	if held != null and is_instance_valid(held) and not held.is_queued_for_deletion():
+		held_fov = held.ads_fov()
+	if held_fov > 0.0:
 		if is_ads and Input.is_action_pressed("zoom"):
-			target_fov = weapon.ADS_FOV * 0.6
+			target_fov = held_fov * 0.6
 		elif is_ads:
-			target_fov = weapon.ADS_FOV
+			target_fov = held_fov
 
 	cam.fov = lerp(cam.fov, target_fov, delta * ADS_SPEED)
 	cam.rotation.z = lerp(cam.rotation.z, target_lean, delta * LEAN_SPEED)

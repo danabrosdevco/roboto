@@ -161,9 +161,13 @@ static func _resolve(channel: int) -> void:
 	var winner: Dictionary = _pending[channel]
 	_pending.erase(channel)
 
-	var speaker: Node3D = winner["speaker"]
-	if speaker == null or not is_instance_valid(speaker):
+	# Untyped until checked. The speaker can be freed inside the window — a level
+	# unload, a body taken off the field — and assigning a freed instance to a
+	# typed variable is itself an error, before this check could catch it.
+	var candidate = winner["speaker"]
+	if candidate == null or not is_instance_valid(candidate):
 		return
+	var speaker: Node3D = candidate
 	if not speaker.has_method("bark_now"):
 		push_warning("BarkDirector: %s has no bark_now(); nothing will be heard." % speaker.name)
 		return

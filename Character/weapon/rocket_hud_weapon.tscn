@@ -1,0 +1,83 @@
+[gd_scene load_steps=10 format=3 uid="uid://xiii8p74jwm3"]
+
+[ext_resource type="Script" path="res://Character/equipment/player_rocket.gd" id="1_rocket"]
+[ext_resource type="PackedScene" uid="uid://crocket00001" path="res://Character/weapon/rocket_projectile.tscn" id="2_proj"]
+[ext_resource type="AudioStream" uid="uid://b2hibouhtggt2" path="res://sounds/sfx/free cinematic sfx/freesound_community-gear-spinning-loop-6981.mp3" id="3_launch"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="4_click"]
+[ext_resource type="PackedScene" uid="uid://wru2f77au1xv" path="res://3d_assets/Rockets Missiles and Bombs - AurynSky/FBX/Rocket2.fbx" id="5_warhead"]
+
+[sub_resource type="StandardMaterial3D" id="TubeMat"]
+albedo_color = Color(0.17, 0.2, 0.18, 1)
+metallic = 0.5
+roughness = 0.55
+
+[sub_resource type="CylinderMesh" id="TubeMesh"]
+top_radius = 0.062
+bottom_radius = 0.062
+height = 0.92
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="ConeMesh"]
+top_radius = 0.105
+bottom_radius = 0.062
+height = 0.18
+radial_segments = 12
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="GripMat"]
+albedo_color = Color(0.09, 0.1, 0.1, 1)
+metallic = 0.2
+roughness = 0.8
+
+[node name="RocketLauncher" type="Node3D" node_paths=PackedStringArray("launch_sound", "viewmodel")]
+script = ExtResource("1_rocket")
+rocket_scene = ExtResource("2_proj")
+launch_sound = NodePath("Launch")
+display_name = "Recoilless"
+equipment_order = 2
+viewmodel = NodePath("Tube")
+use_default_position = false
+bob_speed = 0.7
+bob_amount = 0.008
+
+[node name="Tube" type="Node3D" parent="."]
+transform = Transform3D(0.996195, 0, -0.0871557, 0, 1, 0, 0.0871557, 0, 0.996195, 0.3, -0.25, -0.62)
+
+[node name="Barrel" type="MeshInstance3D" parent="Tube"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+material_override = SubResource("TubeMat")
+mesh = SubResource("TubeMesh")
+
+[node name="Blast" type="MeshInstance3D" parent="Tube"]
+transform = Transform3D(1, 0, 0, 0, 4.37114e-08, 1, 0, -1, 4.37114e-08, 0, 0, 0.52)
+material_override = SubResource("TubeMat")
+mesh = SubResource("ConeMesh")
+
+[node name="Grip" type="MeshInstance3D" parent="Tube"]
+transform = Transform3D(0.055, 0, 0, 0, 0.11, 0, 0, 0, 0.065, 0, -0.1, -0.12)
+material_override = SubResource("GripMat")
+mesh = SubResource("TubeMesh")
+
+[node name="SightBlock" type="MeshInstance3D" parent="Tube"]
+transform = Transform3D(0.03, 0, 0, 0, 0.075, 0, 0, 0, 0.075, 0, 0.105, -0.07)
+material_override = SubResource("GripMat")
+mesh = SubResource("TubeMesh")
+
+[node name="SightPost" type="MeshInstance3D" parent="Tube"]
+transform = Transform3D(0.012, 0, 0, 0, 0.095, 0, 0, 0, 0.012, 0, 0.15, -0.38)
+material_override = SubResource("GripMat")
+mesh = SubResource("TubeMesh")
+
+[node name="Warhead" parent="Tube" instance=ExtResource("5_warhead")]
+transform = Transform3D(0.042, 0, 0, 0, -1.83588e-09, -0.042, 0, 0.042, -1.83588e-09, 0, 0, -0.34)
+
+[node name="Launch" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("3_launch")
+volume_db = -2.0
+unit_size = 30.0
+max_distance = 200.0
+
+[node name="Click" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("4_click")
+volume_db = -6.0

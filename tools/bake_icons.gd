@@ -95,8 +95,13 @@ func _run() -> void:
 			continue
 		for size_name in _Art.SIZES["frame"]:
 			var size: Vector2i = _Art.SIZES["frame"][size_name]
+			# Frames are drawn as outlines at every size, small ones included.
+			# Filled, the 40px cut is a green blob — a row of them on the squad
+			# cards and the debrief says nothing about what each robot IS, and
+			# a rover and a soldier read as the same smudge. Items keep the
+			# fill: at 16px their lines really do run together.
 			var img: Image = await studio.render_model(frame.scene, size, _Studio.Framing.THREE_QUARTER,
-				false, false, 1.0 if size_name == "s" else 0.0)
+				false, false, 0.0)
 			if img == null:
 				skipped.append("%s (%s)" % [frame.id, size_name])
 				continue

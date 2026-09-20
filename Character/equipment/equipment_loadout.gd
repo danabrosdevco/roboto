@@ -469,9 +469,22 @@ func _scale_thrown_capacity() -> void:
 		return
 	var carriers := {}
 	for item in _all:
-		if _is_live(item) and item is PlayerGrenade:
-			var t: StringName = (item as PlayerGrenade).ammo_type
-			carriers[t] = int(carriers.get(t, 0)) + 1
+		if not _is_live(item):
+			continue
+		# ANYTHING IN AN EQUIPMENT SLOT THAT CARRIES ITS OWN AMMO — frags,
+		# hatchling charges, and the recoilless rifle's rockets. The slot is
+		# what excludes guns, which is the rule the comment above describes.
+		# This used to be a `is PlayerGrenade` check, so the launcher (a
+		# PlayerEquipment, not a grenade) was the one thrown weapon in the game
+		# where fitting two did not mean carrying twice as many.
+		if item.slot != PlayerEquipment.Slot.EQUIPMENT:
+			continue
+		if not ("ammo_type" in item):
+			continue
+		var t: StringName = item.ammo_type
+		if t == &"":
+			continue
+		carriers[t] = int(carriers.get(t, 0)) + 1
 	for stock in ammo.starting_ammo:
 		if stock != null and stock.ammo_type != &"":
 			ammo.set_carriers(stock.ammo_type, int(carriers.get(stock.ammo_type, 1)))

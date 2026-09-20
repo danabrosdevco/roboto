@@ -139,6 +139,13 @@ func _find_axis() -> void:
 	d.y = 0.0
 	_dir = d.normalized() if d.length() > 1.0 else Vector3.BACK
 	_mid = _anchor.lerp(insertion, 0.5)
+	# Open ground somewhere else on the map, chosen in the plan. A side told to
+	# hold holds where it starts: there is no post out there.
+	if plan.site != Vector3.ZERO:
+		_post = null
+		_mid = plan.site
+		_dir = Vector3.FORWARD.rotated(Vector3.UP, deg_to_rad(plan.site_heading))
+		_anchor = _mid
 
 
 # ─────────────────────────────────────────────
@@ -146,8 +153,8 @@ func _find_axis() -> void:
 # ─────────────────────────────────────────────
 func _fight(m, r: int, n: int) -> Dictionary:
 	var place := _starts(m, r)
-	var allies := _spawn_side(m.allies, Enums.Factions.ALLIED, place["ally"], "ALLY")
-	var hostiles := _spawn_side(m.hostiles, Enums.Factions.ENEMY, place["hostile"], "HOSTILE")
+	var allies := _spawn_side(m.allies, Enums.Factions.ALLIED, place["ally"], place["hostile"], "ALLY")
+	var hostiles := _spawn_side(m.hostiles, Enums.Factions.ENEMY, place["hostile"], place["ally"], "HOSTILE")
 	var a_members: Array = allies.squad_members.duplicate() if allies != null else []
 	var h_members: Array = hostiles.squad_members.duplicate() if hostiles != null else []
 	await get_tree().physics_frame
@@ -218,9 +225,16 @@ func _starts(m, r: int) -> Dictionary:
 	return out
 
 
-func _spawn_side(roster: Array, faction: int, center: Vector3, callsign: String) -> Squad:
+func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, callsign: String) -> Squad:
 	var members: Array[Soldier] = []
 	var n := roster.size()
+	# The ring turned to face the other side. Laid out in world space it put
+	# the same roster slot in front at one end of the line and at the back at
+	# the other, so a mirror matchup was not a mirror: in the valley the second
+	# robot on the list was always the first one shot on one side only.
+	var toward := facing - center
+	toward.y = 0.0
+	var turn := Basis.looking_at(toward.normalized(), Vector3.UP) if toward.length() > 0.1 else Basis.IDENTITY
 	for i in n:
 		var frame = roster[i]
 		if frame == null or frame.scene == null:
@@ -231,11 +245,20 @@ func _spawn_side(roster: Array, faction: int, center: Vector3, callsign: String)
 		s.faction = faction
 		s.always_active = true
 		s.soldier_name = "%s-%d" % [callsign, i + 1]
+		# A frame whose scene carries no gun (a rover: its turret takes whatever
+		# is fitted, and only shows a stand-in until then) goes in with the one
+		# it is issued, as a recruit would. Otherwise it drove into every fight
+		# unarmed.
+		if frame.starting_weapon_id != &"" and s.weapon_mount != null \
+				and not s.weapon_mount.get_children().any(func(c): return c is AIWeapon):
+			var issued := _issued_weapon(frame)
+			if issued != null:
+				s.equip_weapon_scene(issued)
 		if world.enemy_spawner != null:
 			world.enemy_spawner._apply_frame(s, frame)
 		s.set_meta(&"analytics_kind", frame.display_name)
 		_level.add_child(s)
-		s.global_position = _ground(center + _ring(i, n))
+		s.global_position = _ground(center + turn * _ring(i, n))
 		if world.ai_manager != null:
 			world.ai_manager.register_enemy(s)
 		s.wake(AWAKE_FOR)
@@ -249,6 +272,17 @@ func _spawn_side(roster: Array, faction: int, center: Vector3, callsign: String)
 	squad.squad_members = members
 	_level.add_child(squad)
 	return squad
+
+
+func _issued_weapon(frame) -> PackedScene:
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	var cat = campaign.get("catalogue") if campaign != null else null
+	var item = cat.item(frame.starting_weapon_id) if cat != null else null
+	if item == null or item.ai_scene == null:
+		push_warning("Laboratory: %s is issued '%s', which the catalogue cannot build; it fights unarmed." % [
+			frame.display_name, frame.starting_weapon_id])
+		return null
+	return item.ai_scene
 
 
 func _order(squad: Squad, order: int, own: Vector3, other: Vector3, enemy: Squad, on_post: bool) -> void:

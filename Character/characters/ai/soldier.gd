@@ -46,6 +46,10 @@ var at_cover: bool = false
 ## Deliberately not inferred from weapon type: a shotgunner could reasonably be
 ## built this way too, and a knife unit could reasonably be made cautious.
 @export var aggressive: bool = false
+## How far behind its squad's line this robot walks, along the way the squad is
+## going. 0 for anything that fights. The Mechanic walks at the back: in the
+## front rank it was the first thing every fight found.
+@export var formation_trail: float = 0.0
 
 @export var cover_arrival_threshold: float = 1.2
 @export var cover_search_radius: float = 25.0
@@ -129,6 +133,12 @@ func tick_cover_seeking() -> void:
 		current_cover_point.mark_occupied(self)
 		change_soldier_state(SoldierState.NONE)
 		reached_cover.emit(self)
+
+## Whether this robot is sent to cover points. A vehicle does not fit behind one:
+## told to hold somewhere, it parks on the spot instead.
+func takes_cover() -> bool:
+	return true
+
 
 func find_best_cover_point() -> CoverPoint:
 	var cover_points = get_tree().get_nodes_in_group("cover_points")
@@ -220,7 +230,10 @@ func tick_bounding() -> void:
 	if movement_state == MovementState.CHASING:
 		if combat_target != null:
 			var dist = global_position.distance_to(combat_target.global_position)
-			if dist <= weapon.max_effective_range * 0.6:
+			# Nothing in the hands (a robot sent out with NO WEAPON, a rover
+			# before its turret is fitted): no range to close to, so the step
+			# is over now rather than a crash on weapon.max_effective_range.
+			if weapon == null or dist <= weapon.max_effective_range * 0.6:
 				# Close enough to engage — stop advancing
 				movement_state = MovementState.NONE
 				change_soldier_state(SoldierState.NONE)

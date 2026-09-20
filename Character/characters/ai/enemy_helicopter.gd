@@ -7,7 +7,7 @@ class_name EnemyHelicopter
 # (The class keeps its old name because scenes and missions reference it. The
 # model is drone_variant_02_interceptor and the behaviour is a drone's.)
 #
-# WHAT IT USED TO DO, AND WHY IT FAILED. It was built as a gunship: on contact
+# WHAT IT USED TO DO, AND WHY IT FAILED. It was built as a quadcopter bomber: on contact
 # it flew to a point 26m off the target and HOVERED there. Three things went
 # wrong at once:
 #   - hovering made it a sitting duck, so every one was shot down

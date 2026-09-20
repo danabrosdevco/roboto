@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://cytfo2gu6p5a1"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
-[ext_resource type="PackedScene" path="res://Character/characters/ai/vehicle_rover.tscn" id="2_scene"]
+[ext_resource type="PackedScene" uid="uid://csdiwa6ujc6q7" path="res://Character/characters/ai/vehicle_rover.tscn" id="2_scene"]
 
 [resource]
 script = ExtResource("1_chassisdef")
@@ -18,7 +18,10 @@ base_speed = 1.0
 base_accuracy = 1.0
 base_sensor_range = 55.0
 weapon_slots = 1
+built_in = "CLAWS"
 turret = true
+vehicle = true
+drives = true
 equipment_slots = 0
 module_slots = 3
 required_rank = 0

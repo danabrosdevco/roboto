@@ -50,4 +50,14 @@ static func _apply() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return
-	tree.paused = not _holds.is_empty()
+	var held: bool = not _holds.is_empty()
+	tree.paused = held
+	# AND THE BATTLEFIELD GOES QUIET WITH IT.
+	#
+	# tree.paused stops nodes; it does not stop AudioServer. Every loop playing
+	# at the moment you hit escape carried on underneath the menu — a leaper's
+	# attack loop, a rover's engine, a firefight — which sounds exactly like
+	# the game still running, and is why a paused screen felt like something
+	# was going crazy out there. Effects and voices are held; INTERFACE is not,
+	# because the menu you just opened needs its own clicks.
+	AudioBuses.set_paused(held)

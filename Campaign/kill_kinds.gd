@@ -16,9 +16,15 @@ const FRAMES := {
 	&"shotgunner": "res://Campaign/chassis/chassis_shotgunner.tres",
 	&"soldier": "res://Campaign/chassis/chassis_soldier.tres",
 	&"chaser": "res://Campaign/chassis/chassis_chaser.tres",
-	&"hopper": "res://Campaign/chassis/chassis_hopper.tres",
+	&"leaper": "res://Campaign/chassis/chassis_hopper.tres",
+	# The quadcopter bomber's id is still `gunship`. It is what career tallies
+	# in campaign.json were written under, and renaming it would orphan every
+	# one of them. The name the player reads comes off the frame, not the key.
 	&"gunship": "res://Campaign/chassis/chassis_helicopter.tres",
 	&"rover": "res://Campaign/chassis/chassis_rover.tres",
+	&"nest": "res://Campaign/chassis/chassis_nest.tres",
+	&"reclaimer": "res://Campaign/chassis/chassis_reclaimer.tres",
+	&"mechanic": "res://Campaign/chassis/chassis_mechanic.tres",
 }
 
 ## Scene file (no extension) -> frame id, for robots with no frame of record.
@@ -27,11 +33,14 @@ const SCENES := {
 	"soldier_shotgun": &"shotgunner",
 	"enemy_shotgun": &"shotgunner",
 	"enemy_chaser": &"chaser",
-	"enemy_nest-chaser": &"hopper",
+	"enemy_nest-chaser": &"leaper",
 	"enemy_helicopter": &"gunship",
 	"vehicle_rover": &"rover",
 	"soldier_chassis": &"soldier",
 	"boss_guardian": &"guardian",
+	"enemy_nest": &"nest",
+	"vehicle_reclaimer": &"reclaimer",
+	"mechanic_chassis": &"mechanic",
 }
 
 

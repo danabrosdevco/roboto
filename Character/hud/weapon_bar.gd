@@ -37,6 +37,20 @@ class_name WeaponBar
 ## the squad panel, and this is the third thing that wanted to live there.
 @export var bottom_margin: float = 104.0
 @export var chip_size: Vector2 = Vector2(120, 62)
+
+
+## How far up from the bottom of the screen this bar reaches, for anything that
+## has to sit clear of it: the order toast and the comms log both did their own
+## arithmetic and both got it slightly wrong when the chips changed size.
+## `beside` is any node under the same HUD; without a bar there, the defaults
+## above stand in.
+static func lift_beside(beside: Node) -> float:
+	var parent := beside.get_parent() if beside != null else null
+	if parent != null:
+		for sibling in parent.get_children():
+			if sibling is WeaponBar:
+				return (sibling as WeaponBar).bottom_margin + (sibling as WeaponBar).chip_size.y
+	return 104.0 + 62.0
 @export var chip_gap: float = 8.0
 ## The baked "m" icons' size (icon_art.gd): shown at exactly this, so the line
 ## stays one pixel wide instead of blurring into a blob.
@@ -141,6 +155,10 @@ func _make_chip(index: int) -> Dictionary:
 	# left as it is used.
 	var holder := Control.new()
 	holder.custom_minimum_size = icon_size
+	# Exactly icon_size, never stretched to the column. The icon centres itself
+	# in whatever it is given and the fill sits at 0,0: stretched wider, the
+	# fill came out shifted left of the outline it is meant to fill.
+	holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(holder)
 	var fill_clip := Control.new()

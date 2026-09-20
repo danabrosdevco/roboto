@@ -20,6 +20,11 @@ class_name EnemyForceSpawner
 @export var squad_scene: PackedScene
 # Ring the squad spawns in around its anchor.
 @export var spawn_spread: float = 2.0
+## How far a spawn point may be dragged onto the navmesh before the spawner
+## gives up and says so. Big enough to fix an offset that overshot the edge of
+## the walkable ground, small enough that a squad never silently appears in a
+## different part of the map from the one it was authored into.
+@export var max_spawn_snap: float = 45.0
 
 signal force_deployed(squads: int, hostiles: int)
 
@@ -39,6 +44,27 @@ var _reserves: Dictionary = {}
 var _level: Node = null
 
 signal reinforcements_woken(tag: StringName, squads: int)
+
+# ── LOSSES ────────────────────────────────────
+# What the force has lost, and the waves waiting on that number. A reserve can
+# name an objective (the tag IS the objective id) or a body count; this is the
+# second kind, so escalation can answer a grinding fight as well as a captured
+# point.
+#
+# Downs and destructions both count, once per body: an enemy Mechanic standing
+# one of them back up does not un-ring the bell.
+var _losses: int = 0
+var _counted: Dictionary = {}
+var _kill_waves: Array = []        # [{"after": int, "tag": StringName}]
+## Reserves listening for this tag come in when any nest is destroyed. A
+## convention rather than a field: a mission names the wave, the building does
+## not have to know about it.
+const NEST_DOWN_TAG := &"nest_down"
+
+
+## How many hostiles this force has lost so far.
+func losses() -> int:
+	return _losses
 
 
 # Every early return here used to be silent, which meant "no enemies spawned"
@@ -89,6 +115,8 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 			if not _reserves.has(spec.reinforcement_tag):
 				_reserves[spec.reinforcement_tag] = []
 			_reserves[spec.reinforcement_tag].append(spec)
+			if spec.wake_after_kills > 0:
+				_kill_waves.append({"after": spec.wake_after_kills, "tag": spec.reinforcement_tag})
 			continue
 
 		var squad := _spawn_squad(level, spec)
@@ -142,6 +170,13 @@ func wake(tag: StringName) -> int:
 		var destination := post.global_position if post != null else squad.get_center()
 		squad.target_objective = post
 		squad.set_objective(Squad.SquadObjective.ADVANCE, destination, true)
+		# They come in from outside activation_distance on purpose, so they are
+		# exempt from the culling that would otherwise freeze them where they
+		# landed until the player walked out to meet them. Only reinforcements
+		# get this: see the note on the gate in Enemy._physics_process.
+		for member in squad.squad_members:
+			if member != null and is_instance_valid(member):
+				member.never_culled = true
 		woken += 1
 
 	if woken > 0:
@@ -191,10 +226,23 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 			soldier.set_meta(&"analytics_kind", frame.display_name)
 			# What a kill of this one counts as in the debrief (kill_kinds.gd).
 			soldier.set_meta(&"chassis_id", frame.id)
+		# PLACED BEFORE IT ENTERS THE TREE.
+		#
+		# Adding first and positioning after leaves the body at the level's
+		# origin for the frame it readies in — and every robot spawned that
+		# frame, both sides, is standing in the same spot. Their 25m Detection
+		# areas all overlap, _on_detection_body_entered fills each empty
+		# combat_target with whoever it found, and nothing ever clears it
+		# because there is no line of sight to lose. The result was the entire
+		# hostile force locked onto one of the player's robots from 150m+ away
+		# before the mission started: every squad ENGAGED on the first frame,
+		# so the picket never walked its patrol and the garrisons were already
+		# fighting something they could not see.
+		soldier.position = level.to_local(anchor + _ring_offset(i, bodies.size()))
 		level.add_child(soldier)
-		soldier.global_position = anchor + _ring_offset(i, bodies.size())
 		if ai_manager != null:
 			ai_manager.register_enemy(soldier)
+		_watch_losses(soldier)
 		members.append(soldier)
 
 	if members.is_empty():
@@ -227,6 +275,65 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 
 # Flattens either spec form into one entry per body, so the spawn loop has a
 # single shape to deal with.
+# One body, watched for the moment it leaves the fight. Both signals, because
+# a robot that can be downed emits went_down and a building emits destroyed,
+# and a body that goes down and is then destroyed must only count once.
+func _watch_losses(body: Enemy) -> void:
+	if body == null:
+		return   # nothing spawned to watch
+	body.went_down.connect(_on_body_lost.bind(body))
+	body.destroyed.connect(_on_body_lost.bind(body))
+
+
+func _on_body_lost(body: Enemy) -> void:
+	if body == null or not is_instance_valid(body):
+		return   # gone before we could look at it
+	var id := body.get_instance_id()
+	if _counted.has(id):
+		return   # already on the tally: downed first, destroyed after
+	_counted[id] = true
+	_losses += 1
+	# A nest going down is its own call for help, whatever the body count is.
+	if body.has_signal(&"hatched_body"):
+		wake(NEST_DOWN_TAG)
+	# So is losing a whole squad. "The patrol stopped answering" is the most
+	# natural trigger a mission has, and it needs no new field: a reserve just
+	# tags itself with the callsign it is answering for, the same way one tags
+	# itself with an objective id.
+	_check_squad_wiped(body)
+	var due: Array = []
+	for wave in _kill_waves:
+		if int(wave["after"]) <= _losses:
+			due.append(wave)
+	for wave in due:
+		_kill_waves.erase(wave)
+		print("[EnemyForce] %d lost: calling in '%s'" % [_losses, wave["tag"]])
+		wake(wave["tag"])
+
+
+# The tag a squad fires when the last of it goes down: "PICKET" -> "picket_down".
+static func squad_down_tag(callsign: String) -> StringName:
+	return StringName(callsign.to_lower().replace(" ", "_") + "_down")
+
+
+# Was that the last of someone? Checked off the body that just fell rather than
+# polled, and only for the squad it belonged to.
+func _check_squad_wiped(body: Enemy) -> void:
+	for squad in _squads:
+		if squad == null or not is_instance_valid(squad):
+			continue
+		if not squad.squad_members.has(body):
+			continue
+		for member in squad.squad_members:
+			if member != null and is_instance_valid(member) and member.alive:
+				return   # someone is still up
+		var tag := squad_down_tag(squad.callsign)
+		if _reserves.has(tag):
+			print("[EnemyForce] '%s' is gone: calling in '%s'" % [squad.callsign, tag])
+			wake(tag)
+		return
+
+
 func _bodies_of(spec: EnemySquadSpec) -> Array[ChassisDefinition]:
 	var out: Array[ChassisDefinition] = []
 	if not spec.roster.is_empty():
@@ -254,10 +361,43 @@ func _bodies_of(spec: EnemySquadSpec) -> Array[ChassisDefinition]:
 # Stats from the frame, where the frame specifies them.
 #
 # base_speed is deliberately NOT applied: the enemy scenes author move_speed
-# directly (a chaser is 8 m/s, a gunship 14), while base_speed is a multiplier
+# directly (a chaser is 8 m/s, a quadcopter bomber 14), while base_speed is a multiplier
 # from the player-roster side. Multiplying one by the other would quietly make
 # every chaser 35% faster than it has ever been.
+# The catalogue, for frames that come with a gun. Looked up through the
+# campaign group rather than wired, the same way squad_spawner.gd does it.
+var _cat: ItemCatalogue = null
+
+
+func _catalogue() -> ItemCatalogue:
+	if _cat != null:
+		return _cat
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	if campaign != null:
+		_cat = campaign.get("catalogue")
+	return _cat
+
+
+# A frame whose robots are issued a weapon gets it here. Only the rover today,
+# and only when its mount is empty — a scene with a gun wired in keeps that
+# one. The lab already did this (Lab._issued_weapon) and missions did not, so
+# every hostile rover a mission spawned drove out with nothing to shoot with.
+func _issue_weapon(soldier: Soldier, frame: ChassisDefinition) -> void:
+	if frame.starting_weapon_id == &"" or soldier.weapon_mount == null:
+		return   # nothing to issue, or nowhere to put it
+	for child in soldier.weapon_mount.get_children():
+		if child is AIWeapon:
+			return   # already carrying one from its scene
+	var cat := _catalogue()
+	var item: ItemDefinition = cat.item(frame.starting_weapon_id) if cat != null else null
+	if item == null or item.ai_scene == null:
+		push_warning("EnemyForceSpawner: %s should come with '%s', which the catalogue does not have as an AI weapon." % [frame.display_name, frame.starting_weapon_id])
+		return
+	soldier.equip_weapon_scene(item.ai_scene)
+
+
 func _apply_frame(soldier: Soldier, frame: ChassisDefinition) -> void:
+	_issue_weapon(soldier, frame)
 	if frame.base_health > 0:
 		soldier.max_health = frame.base_health
 		soldier.health = frame.base_health
@@ -299,7 +439,24 @@ func _resolve_anchor(spec: EnemySquadSpec, route: PatrolPath, post: SquadObjecti
 	# of the position they are meant to attack is both odd to watch and a bad
 	# fight. The offset lets a spec say "start well out and well up" without
 	# needing a second set of map nodes just for aircraft.
-	return base + spec.spawn_offset
+	var out: Vector3 = base + spec.spawn_offset
+	# AND THE OFFSET HAS TO LAND SOMEWHERE WALKABLE. A reinforcement that comes
+	# in far enough out to be worth watching is, by definition, a long way from
+	# the tag it was measured off — and nothing checked that the far end of
+	# that offset was still on the navmesh. Off it, the squad spawns fine, can
+	# path nowhere, and stands in the desert for the rest of the mission.
+	#
+	# Only the ground position is snapped: the height the spec asked for is
+	# what makes an air arrival an air arrival, so that is kept as authored.
+	var map: RID = get_tree().root.world_3d.navigation_map
+	var on_mesh: Vector3 = NavigationServer3D.map_get_closest_point(map, Vector3(out.x, base.y, out.z))
+	if on_mesh == Vector3.ZERO:
+		return out   # no navmesh to ask (a test rig, an unbaked level)
+	var pulled := Vector2(on_mesh.x - out.x, on_mesh.z - out.z).length()
+	if pulled > max_spawn_snap:
+		push_warning("EnemyForceSpawner: '%s' spawns %.0fm off the navmesh — nearest walkable ground is further than %.0fm, so it is being left where it was authored and may not be able to move." % [spec.callsign, pulled, max_spawn_snap])
+		return out
+	return Vector3(on_mesh.x, on_mesh.y + spec.spawn_offset.y, on_mesh.z)
 
 
 func _anchor_point(spec: EnemySquadSpec, route: PatrolPath, post: SquadObjectivePoint) -> Vector3:
@@ -381,6 +538,9 @@ func _is_hostile_squad(squad: Squad) -> bool:
 
 # Drops references only. The level unload frees the nodes.
 func clear() -> void:
+	_losses = 0
+	_counted.clear()
+	_kill_waves.clear()
 	_squads.clear()
 	# Holds specs waiting on an objective that will never fire now, and a stale
 	# entry would send the next mission's reinforcements into the wrong level.

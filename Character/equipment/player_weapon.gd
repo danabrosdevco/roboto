@@ -367,3 +367,8 @@ func _bob_amount_now() -> float:
 
 func _apply_bob() -> bool:
 	return not is_reloading
+
+
+# A gun aims to its own ADS_FOV. See PlayerEquipment.ads_fov.
+func ads_fov() -> float:
+	return ADS_FOV

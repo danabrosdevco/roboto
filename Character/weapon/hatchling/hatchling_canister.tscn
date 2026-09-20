@@ -1,13 +1,21 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="PackedScene" path="res://Character/characters/ai/equipment/ai_grenade_projectile.tscn" id="1_base"]
 [ext_resource type="PackedScene" path="res://Character/weapon/hatchling/hatchling_payload.tscn" id="2_payload"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/hatchling_canister_model.tscn" id="3_model"]
 
-[node name="Hatchling_Canister" instance=ExtResource("1_base")]
+[node name="Hatchling_Canister" node_paths=PackedStringArray("mesh") instance=ExtResource("1_base")]
 explosion_scene = ExtResource("2_payload")
 explode_on_bounce = true
 bounce_before_explode = 0
+mesh = NodePath("Canister")
+
+[node name="Frag_West" parent="."]
+visible = false
 
 [node name="ExplosionSound" parent="."]
 pitch_scale = 1.7
 volume_db = -6.0
+
+[node name="Canister" parent="." instance=ExtResource("3_model")]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, 0, 0)

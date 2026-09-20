@@ -25,15 +25,16 @@ var damaged: = {}
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-
+	# Same rule as the projectile that spawned it: see ai_grenade_projectile.
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 	for i in effects:
 		i.emitting = true
 	audio.pitch_scale = randf_range(0.9, 1.1)   # ±10% pitch change
 	if get_parent() is not World:
 		audio.play()
-	await get_tree().create_timer(0.3).timeout
+	await get_tree().create_timer(0.3, false).timeout
 	damage_area.monitoring = false
-	await get_tree().create_timer(2).timeout
+	await get_tree().create_timer(2, false).timeout
 	queue_free()
 
 

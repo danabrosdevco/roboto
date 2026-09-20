@@ -43,6 +43,10 @@ const _Build := preload("res://Managers/build_version.gd")
 @export_group("Skip")
 # The switch asked for: straight to play, no splash and no menu.
 @export var skip_splash: bool = false
+## The PLAYTEST DATA entry in the main and pause menus. Off, so an exported
+## build does not ship a button that opens a folder of logs. Running from the
+## editor shows it anyway; tick this for a build going out to playtesters.
+@export var show_playtest_data: bool = false
 # Let a key or click cut the splash short. Independent of skip_splash so you can
 # keep the splash but not be trapped in it while iterating.
 @export var allow_input_skip: bool = true
@@ -543,12 +547,12 @@ func _show_main_menu() -> void:
 	_menu = "main"
 	_hold_pause()
 	_show_mouse()
-	_build_menu(menu_title_text, [
-		{"text": "START", "action": _start_play},
-		{"text": "PLAYTEST DATA", "action": _open_playtest_data},
-		{"text": "OPTIONS", "action": _open_options},
-		{"text": "QUIT", "action": _quit},
-	], HUDPalette.BRIGHT, title_suffix)
+	var items: Array = [{"text": "START", "action": _start_play}]
+	if _playtest_data_shown():
+		items.append({"text": "PLAYTEST DATA", "action": _open_playtest_data})
+	items.append({"text": "OPTIONS", "action": _open_options})
+	items.append({"text": "QUIT", "action": _quit})
+	_build_menu(menu_title_text, items, HUDPalette.BRIGHT, title_suffix)
 
 
 func _show_pause_menu() -> void:
@@ -560,13 +564,13 @@ func _show_pause_menu() -> void:
 	_backdrop.color = Color(0.02, 0.03, 0.03, 0.82)
 	_hold_pause()
 	_show_mouse()
-	_build_menu("PAUSED", [
-		{"text": "CONTINUE", "action": _resume_from_pause},
-		{"text": "TUTORIALS", "action": _open_tutorials},
-		{"text": "PLAYTEST DATA", "action": _open_playtest_data},
-		{"text": "OPTIONS", "action": _open_options},
-		{"text": "QUIT", "action": _quit},
-	], HUDPalette.WARN)
+	var items: Array = [{"text": "CONTINUE", "action": _resume_from_pause},
+		{"text": "TUTORIALS", "action": _open_tutorials}]
+	if _playtest_data_shown():
+		items.append({"text": "PLAYTEST DATA", "action": _open_playtest_data})
+	items.append({"text": "OPTIONS", "action": _open_options})
+	items.append({"text": "QUIT", "action": _quit})
+	_build_menu("PAUSED", items, HUDPalette.WARN)
 
 
 # ─────────────────────────────────────────────
@@ -575,6 +579,12 @@ func _show_pause_menu() -> void:
 # the pause menu, so the world freezes behind it exactly as it does there. ESC
 # does nothing on this screen: there is no game to go back to until you pick.
 # ─────────────────────────────────────────────
+# Shown when this build is meant to collect data: an editor run always, an
+# export only if it was built for playtesting.
+func _playtest_data_shown() -> bool:
+	return show_playtest_data or OS.is_debug_build()
+
+
 # ─────────────────────────────────────────────
 # PLAYTEST DATA
 # The recorder lives here, above World, so it outlives every level load. It

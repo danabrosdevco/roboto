@@ -26,6 +26,7 @@ class_name CommandMarker
 	Color(0.35, 0.62, 0.95),   # ADVANCE — blue, "go here and hold"
 	Color(0.55, 0.85, 0.55),   # FOLLOW  — green, "stay with me"
 	Color(0.90, 0.90, 0.90),   # CONTACT — white, a report not an order
+	Color(0.95, 0.42, 0.25),   # ATTACK  — red, armour sent after one target
 ]
 
 @export var ring_radius: float = 1.1
@@ -58,6 +59,11 @@ class_name CommandMarker
 var preview: bool = false:
 	set(value):
 		preview = value
+		_apply_color()
+# The order of a team you are not commanding right now: still there, quieter.
+var dimmed: bool = false:
+	set(value):
+		dimmed = value
 		_apply_color()
 
 var _pivot: Node3D
@@ -155,6 +161,8 @@ func _age_fraction() -> float:
 func _apply_color() -> void:
 	var aged := _age_fraction()
 	var a: float = 0.45 if preview else lerpf(0.9, 0.9 * aged_alpha, aged)
+	if dimmed:
+		a *= 0.35
 	var col := Color(_color.r, _color.g, _color.b, a)
 	if _mat_ring != null:
 		_mat_ring.albedo_color = col
@@ -169,6 +177,8 @@ func _apply_color() -> void:
 		else:
 			# Fades over the first slice of the lifetime, then stays gone.
 			label_a = clampf(1.0 - (aged / maxf(label_fade_fraction, 0.01)), 0.0, 1.0)
+		if dimmed:
+			label_a *= 0.35
 		_label.modulate = Color(_color.r, _color.g, _color.b, label_a)
 		_label.visible = label_a > 0.01
 

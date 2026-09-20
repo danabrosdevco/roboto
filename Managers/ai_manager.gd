@@ -111,7 +111,9 @@ func get_nearest_hostile(requesting_ai: AI) -> CharacterBody3D:
 			continue
 		var enemy := ai as Enemy
 		if Enums.are_hostile(req_faction, enemy.faction):
-			var d = requesting_ai.global_position.distance_squared_to(enemy.global_position)
+			# Squared distance, so the priority goes in squared too.
+			var prio := maxf(enemy.target_priority, 0.01)
+			var d = requesting_ai.global_position.distance_squared_to(enemy.global_position) / (prio * prio)
 			if d < best_dist:
 				best_dist = d
 				best = enemy

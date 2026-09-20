@@ -1,10 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=6 format=3 uid="uid://dix8qaf44x7kn"]
 
 [ext_resource type="Script" path="res://Character/weapon/ai_weapon_grenade_launcher.gd" id="1_fnjvf"]
-[ext_resource type="PackedScene" path="res://Character/characters/ai/equipment/ai_grenade_projectile.tscn" id="2_tkpop"]
+[ext_resource type="PackedScene" uid="uid://b1d0y44phe80" path="res://Character/characters/ai/equipment/ai_grenade_projectile.tscn" id="2_tkpop"]
 [ext_resource type="PackedScene" path="res://Character/weapon/models/grenade_launcher_model.tscn" id="3_wajf3"]
-[ext_resource type="PackedScene" path="res://Character/weapon/muzzle_flash.tscn" id="4_giarb"]
-[ext_resource type="AudioStream" path="res://sounds/sfx/grenade launcher/freesound_community-grenade-launcher-106342.mp3" id="5_0p1ok"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="4_giarb"]
+[ext_resource type="AudioStream" uid="uid://3ps2c3e6sglw" path="res://sounds/sfx/grenade launcher/freesound_community-grenade-launcher-106342.mp3" id="5_0p1ok"]
 
 [node name="ai_weapon_turret_grenade_launcher" type="Node3D" node_paths=PackedStringArray("muzzle_flash", "muzzle_origin", "shot_audio")]
 script = ExtResource("1_fnjvf")
@@ -19,8 +19,8 @@ fire_cooldown = 0.55
 base_damage = 20
 min_damage = 20
 damage_falloff_start = 999.0
-min_effective_range = 9.0
-max_effective_range = 55.0
+min_effective_range = 5.0
+max_effective_range = 90.0
 ai_spread_mrad = 28.0
 suppression_per_shot = 0.0
 burst_min = 2

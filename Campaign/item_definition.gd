@@ -66,6 +66,9 @@ enum Kind {
 
 @export var usable_by_player: bool = true
 @export var usable_by_ai: bool = true
+## Goes on a frame that drives (ChassisDefinition.drives). False for anything
+## written for a robot on legs: nanites rebuild a body, not a hull.
+@export var fits_vehicles: bool = true
 ## Listed in the armoury to buy. Off retires an item without breaking saves:
 ## anyone who already owns one still sees its row (to fit or sell it), but a
 ## campaign that has none never sees it offered. The player's Repair Tool went

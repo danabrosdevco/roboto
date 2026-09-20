@@ -21,7 +21,7 @@ class_name ChassisDefinition
 ## frame, for `cost` resources.
 @export var purchasable: bool = false
 ## Squad supply this frame occupies while ACTIVE. Every frame is 1 for now;
-## bigger machines (a gunship, an APC) will cost more.
+## bigger machines (a quadcopter bomber, an APC) will cost more.
 @export var supply: int = 1
 ## The weapon a robot built in this frame comes with, issued with it rather
 ## than taken from stores, so it can fight the moment it is built. Empty for
@@ -39,9 +39,19 @@ class_name ChassisDefinition
 # ── SLOTS ─────────────────────────────────────
 # Weapon slots are almost always 1; kept configurable for a future heavy frame.
 @export var weapon_slots: int = 1
+## What a frame with no weapon slot works with, built into the body: shown where
+## the gun would be on its card. A chaser's claws, a mechanic's welder.
+@export var built_in: String = "CLAWS"
 ## The weapon slot is a TURRET: it takes weapons made for this frame — ones that
 ## name it in their chassis_whitelist — and not a rifle off the rack.
 @export var turret: bool = false
+## Drives rather than walks. Vehicles go into the field as a team of their own,
+## ARMOR, so they can be given orders apart from the robots on foot.
+@export var vehicle: bool = false
+## Wheels or tracks rather than legs. Separate from `vehicle`, which is about
+## which TEAM the frame joins: the Reclaimer drives but rides with the
+## infantry, and kit written for robots on foot still has no business on it.
+@export var drives: bool = false
 @export var equipment_slots: int = 2
 @export var module_slots: int = 2
 
@@ -57,4 +67,6 @@ func takes(item: ItemDefinition) -> bool:
 		return false
 	if not item.fits_chassis(id):
 		return false
+	if drives and not item.fits_vehicles:
+		return false   # made for a frame with legs and a body to rebuild
 	return not (turret and item.kind == ItemDefinition.Kind.WEAPON and not item.chassis_whitelist.has(id))

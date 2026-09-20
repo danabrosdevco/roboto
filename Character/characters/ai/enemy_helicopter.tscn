@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://cheli0000001"]
+[gd_scene load_steps=23 format=3 uid="uid://cheli0000001"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/enemy_helicopter.gd" id="1_nty0a"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
@@ -9,14 +9,42 @@
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t0xuv"]
 [ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
 [ext_resource type="PackedScene" uid="uid://v11ihb3rf0ny" path="res://3d_assets/chatgptg/drone_variant_02_interceptor.glb" id="8_sbw46"]
+[ext_resource type="Shader" path="res://Character/faction_metal.gdshader" id="9_4s073"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
+[ext_resource type="Texture2D" uid="uid://bvk26224sihon" path="res://2d_assets/metal textures poly.com/metal_plate_02_diff_4k.jpg" id="10_gmfse"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
+[ext_resource type="Texture2D" uid="uid://o8ik6rntdl2v" path="res://2d_assets/metal textures poly.com/metal_plate_02_disp_4k.png" id="11_vf535"]
 [ext_resource type="Script" path="res://faction_livery.gd" id="14_agla4"]
 [ext_resource type="AudioStream" uid="uid://dw0e386o42h2o" path="res://sounds/sfx/quadcopter loop/freesound_community-mini-quadcopter-flying-loop-80330.mp3" id="14_pou81"]
 [ext_resource type="PackedScene" uid="uid://cyssps1ojdxmr" path="res://Character/weapon/ai-wep_grenade_launcher.tscn" id="20_gl"]
+[ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="21_eyes"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_cusma"]
-radius = 1.15
+radius = 0.6
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0210s"]
+render_priority = 0
+shader = ExtResource("9_4s073")
+shader_parameter/use_normal_map = false
+shader_parameter/normal_scale = 1.0
+shader_parameter/derive_mask_from_albedo = true
+shader_parameter/paint_band_center = 0.45
+shader_parameter/paint_band_width = 0.425
+shader_parameter/base_tint = Color(1, 1, 1, 1)
+shader_parameter/metallic = 0.4
+shader_parameter/roughness = 0.85
+shader_parameter/faction_color = Color(0.7, 0.35, 0.02, 1)
+shader_parameter/paint_blend = 1.0
+shader_parameter/marker_energy = 6.0
+shader_parameter/shutdown = 0.0
+shader_parameter/albedo_tex = ExtResource("10_gmfse")
+shader_parameter/normal_tex = ExtResource("11_vf535")
+
+[sub_resource type="StandardMaterial3D" id="EyeMat"]
+albedo_texture = ExtResource("21_eyes")
+emission_enabled = true
+emission = Color(0.7, 0.85, 0.9, 1)
+emission_energy_multiplier = 0.6
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mkxqd"]
 radius = 25.0
@@ -36,7 +64,7 @@ health = 100
 max_health = 100
 move_speed = 14.0
 equipment_slots = Array[ExtResource("2_8p1te")]([ExtResource("3_3i6e3")])
-soldier_name = "Gunship"
+soldier_name = "Bomber Drone"
 AllowedMovementOptions = Array[int]([0, 1])
 AllowedCombatOptions = Array[int]([0, 1, 2])
 
@@ -50,6 +78,60 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 
 [node name="drone_variant_02_interceptor" parent="." instance=ExtResource("8_sbw46")]
 transform = Transform3D(-8.74228e-08, -2, 8.74228e-08, 0, -8.74228e-08, -2, 2, -8.74228e-08, 3.82137e-15, 0, 0.376845, 0)
+
+[node name="body_core" parent="drone_variant_02_interceptor/world" index="0"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="body_roof" parent="drone_variant_02_interceptor/world" index="1"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="nose_shell" parent="drone_variant_02_interceptor/world" index="2"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="sensor_core" parent="drone_variant_02_interceptor/world" index="9"]
+material_override = SubResource("EyeMat")
+
+[node name="slit_L" parent="drone_variant_02_interceptor/world" index="10"]
+material_override = SubResource("EyeMat")
+
+[node name="slit_R" parent="drone_variant_02_interceptor/world" index="11"]
+material_override = SubResource("EyeMat")
+
+[node name="side_armor_-1" parent="drone_variant_02_interceptor/world" index="12"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="side_armor_1" parent="drone_variant_02_interceptor/world" index="15"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="underside_frame" parent="drone_variant_02_interceptor/world" index="18"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="underside_sensor" parent="drone_variant_02_interceptor/world" index="20"]
+material_override = SubResource("EyeMat")
+
+[node name="arm_0" parent="drone_variant_02_interceptor/world" index="23"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="arm_armor_0" parent="drone_variant_02_interceptor/world" index="24"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="arm_1" parent="drone_variant_02_interceptor/world" index="34"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="arm_armor_1" parent="drone_variant_02_interceptor/world" index="35"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="arm_2" parent="drone_variant_02_interceptor/world" index="45"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="arm_armor_2" parent="drone_variant_02_interceptor/world" index="46"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="arm_3" parent="drone_variant_02_interceptor/world" index="56"]
+material_override = SubResource("ShaderMaterial_0210s")
+
+[node name="arm_armor_3" parent="drone_variant_02_interceptor/world" index="57"]
+material_override = SubResource("ShaderMaterial_0210s")
 
 [node name="Detection" type="Area3D" parent="."]
 

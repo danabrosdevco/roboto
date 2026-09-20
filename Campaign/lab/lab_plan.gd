@@ -17,6 +17,12 @@ class_name LabPlan
 @export var matchups: Array[Resource] = []
 ## The map to fight on. Empty uses the arena.
 @export var level: PackedScene
+## Where to fight on a map without the arena's hostile post: the middle of the
+## line the two sides start on. Left at zero, the map's post and insertion
+## point set the line, as in the arena.
+@export var site: Vector3 = Vector3.ZERO
+## Which way that line runs, in degrees round from -Z.
+@export var site_heading: float = 0.0
 ## Overrides every matchup's repeats when above 0 — for a quick look at a big
 ## plan, or a long soak of a small one.
 @export var repeats_override: int = 0

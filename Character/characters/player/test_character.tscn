@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://bgj56y7q1pyxr"]
+[gd_scene load_steps=21 format=3 uid="uid://bgj56y7q1pyxr"]
 
 [ext_resource type="Script" path="res://Character/characters/player/test_character.gd" id="1_xw2ar"]
 [ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/components/command.tscn" id="2_ysmyv"]
@@ -18,6 +18,7 @@
 [ext_resource type="Resource" path="res://Character/equipment/ammo/ammo_12ga.tres" id="23_a12ga"]
 [ext_resource type="Resource" path="res://Character/equipment/ammo/ammo_emp.tres" id="90_aemp"]
 [ext_resource type="Resource" path="res://Character/equipment/ammo/ammo_hatchling.tres" id="91_ahat"]
+[ext_resource type="Resource" uid="uid://brocketammo01" path="res://Character/equipment/ammo/ammo_rocket.tres" id="92_arkt"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8ja6s"]
 radius = 0.25
@@ -88,7 +89,7 @@ marker_scene = ExtResource("2_ysmyv")
 
 [node name="AmmoPool" type="Node" parent="."]
 script = ExtResource("15_pool")
-starting_ammo = Array[ExtResource("17_stock")]([ExtResource("19_a556"), ExtResource("20_a9mm"), ExtResource("21_agrn"), ExtResource("22_arep"), ExtResource("23_a12ga"), ExtResource("90_aemp"), ExtResource("91_ahat")])
+starting_ammo = Array[ExtResource("17_stock")]([ExtResource("19_a556"), ExtResource("20_a9mm"), ExtResource("21_agrn"), ExtResource("22_arep"), ExtResource("23_a12ga"), ExtResource("90_aemp"), ExtResource("91_ahat"), ExtResource("92_arkt")])
 
 [node name="EquipmentLoadout" type="Node" parent="." node_paths=PackedStringArray("player", "cam", "ammo", "permanent_items")]
 script = ExtResource("16_load")

@@ -18,17 +18,18 @@ const SIZES := {
 	"frame": {"s": Vector2i(40, 40), "m": Vector2i(64, 64), "l": Vector2i(128, 128)},
 }
 
-## Icons drawn from a different model than the item uses in the game. EMP and
-## hatchling reuse the frag's model when thrown, and three identical grenades
-## in a list say nothing: the EMP borrows the flashbang from the same pack, and
-## the hatchling is drawn as what hatches out of it, the hopper.
+## Icons drawn from a different model than the item uses in the game. The EMP
+## reuses the frag's model when thrown, and two identical grenades in a list say
+## nothing, so it borrows the flashbang from the same pack.
 const MODEL_OVERRIDES := {
 	&"emp": "res://3d_assets/Flat Grenades_FBX/Flashbang_West.fbx",
-	&"hatchling": "res://Character/characters/ai/enemy_nest-chaser.tscn",
-	# The turret guns are built from primitives, so there is no model file in
-	# their scenes for model_in() to find.
+	# Built from primitives, so there is no model file in their scenes for
+	# model_in() to find.
 	&"machine_gun": "res://Character/weapon/models/machine_gun_model.tscn",
 	&"grenade_launcher": "res://Character/weapon/models/grenade_launcher_model.tscn",
+	&"shotgun": "res://Character/weapon/models/pump_shotgun_model.tscn",
+	&"hatchling": "res://Character/weapon/models/hatchling_canister_model.tscn",
+	&"recoilless": "res://Character/weapon/models/recoilless_model.tscn",
 }
 
 ## Orientation fixes, found by looking: [mirror left-right, mirror up-down].
@@ -36,10 +37,14 @@ const MODEL_OVERRIDES := {
 const FLIPS := {}
 
 ## How an item is framed when it is not the default for its kind (weapons are
-## "side", everything else "upright"). The repair tool is held like a gun; the
-## hatchling is a robot, framed like the robots ("three_quarter").
+## "side", everything else "upright"). The repair tool is held like a gun. The
+## hatchling canister is seen from above a little ("three_quarter"): side on,
+## its pull ring is edge-on and the pod reads as a bell with a T on top.
 const FRAMINGS := {
 	&"repair_tool": "side",
+	# A launcher reads as a tube, which means lengthways like a gun, not
+	# stood on end like a canister.
+	&"recoilless": "side",
 	&"hatchling": "three_quarter",
 }
 

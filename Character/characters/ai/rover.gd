@@ -52,10 +52,58 @@ extends Soldier
 ## How much room it wants ahead of the nose (or behind, reversing) before it
 ## commits to turning there, plus a little more per metre per second.
 @export var bumper_clearance: float = 0.6
+
+# ── PACK SPACING ──────────────────────────────
+# A rover used to notice another one only by hitting it. _is_wall() ignores
+# CharacterBody3D on purpose — a robot moves, and shoving one is caught as
+# pinned — so nothing steered around a squadmate, and the first sign of one was
+# _pinned_t tripping and a three-point turn starting. In a pack of four that is
+# four rovers reversing into each other at once, which is how they ended up
+# welded together in a heap in the middle of a field.
+#
+# So they keep station instead. A hull off to one side pushes this one's
+# steering away from it; a hull close ahead going the same way takes the
+# throttle off rather than shunting it; two nose to nose both go right, the way
+# anything with a steering wheel does. All of it through the steering, so they
+# peel apart like cars and the pack STAYS a pack — which is the whole point of
+# fielding them together.
+## How far out another vehicle starts pushing this one aside.
+@export var spacing_radius: float = 9.0
+## How hard that push steers, at its strongest, as a fraction of full lock.
+@export var spacing_steer: float = 0.8
+## A hull nearer than this, dead ahead and going the same way, is followed
+## rather than rammed: the throttle comes off in proportion to how close it is.
+@export var follow_gap: float = 6.0
+## Lateral room this frame asks for in a formation line (Squad._line_spacing).
+##
+## This is the one that decides whether a pack looks like a pack or a scrum.
+## Steering only keeps them off each other on the way; where they END UP is
+## whatever the squad handed them, and at infantry spacing four rovers settle
+## about 4.7m apart — close enough that they read as piled up and close enough
+## that the next order has them shuffling round each other. At 8m the four of
+## them hold a 24m frontage, which is an armoured line rather than a queue.
+@export var line_spacing: float = 8.0
 ## Legs one order may take. Past that it stops where it is and lets whoever
 ## gave the order give another.
 @export var max_manoeuvres: int = 10
 @export var reverse_lamps: Array[Node3D] = []
+
+# ── WRECKED ───────────────────────────────────
+# What a dead one looks like. See _collapse_pieces: a hull this size cannot
+# just sink, so it goes over on one side instead.
+## How far it rolls onto the side it went over on.
+@export var wreck_roll_degrees: float = 14.0
+## And how far it goes down at the nose.
+@export var wreck_nose_degrees: float = 6.0
+## Belly clearance it gives up, as a multiple of belly_drop — down on its frame
+## with the suspension gone. NOT a way to hide the model in the ground: at 2.2
+## the hull sat 60cm under the deck, which is the sinking trick that does not
+## work on something this size. The lean and the splayed wheels carry it.
+@export var wreck_settle: float = 1.0
+## How far the wheels on the low side drop, as if the suspension let go.
+@export var wreck_wheel_sag: float = 0.12
+## Where the barrel ends up. Past gun_min_pitch_degrees deliberately.
+@export var wreck_barrel_degrees: float = -30.0
 
 # ── TURRET ────────────────────────────────────
 @export var turret_traverse_degrees: float = 95.0   # per second
@@ -226,6 +274,10 @@ func move_along_nav(delta):
 			steer_to = err * 1.8 + (_whisker(1.0, speed) - _whisker(-1.0, speed)) * max_steer
 			var sharp := clampf(absf(err) / deg_to_rad(90.0), 0.0, 1.0)
 			target_speed = move_speed * lerpf(1.0, cornering_speed, sharp)
+			# And room for the rest of the pack.
+			var pack := _pack_spacing(fwd)
+			steer_to += pack.x * max_steer
+			target_speed = minf(target_speed, pack.y)
 			# Come off the throttle for the end of the path rather than
 			# arriving flat out and rolling on past it.
 			if _path_fresh and _nav_end != Vector3.INF:
@@ -307,6 +359,55 @@ func _whisker(side: float, speed: float) -> float:
 	return 1.0 - from.distance_to(hit.position) / reach
 
 
+# What the neighbouring hulls want of this one:
+#   x  steer bias, -1..1 of full lock, + is left (same sign as _steer)
+#   y  a speed cap, INF when nothing is in the way
+#
+# Only vehicles count. Infantry are small, they give way on their own, and a
+# rover that flinched off every soldier walking past would never drive in a
+# straight line through its own squad.
+func _pack_spacing(fwd: Vector3) -> Vector2:
+	var bias := 0.0
+	var cap := INF
+	# By script rather than a class_name: rover.gd has never declared one, and
+	# adding a global class an open editor has not indexed yet is how you take
+	# the whole front end down (see the note in master.gd).
+	for other in get_tree().get_nodes_in_group("enemies"):
+		if other == self or not is_instance_valid(other) or other.get_script() != get_script():
+			continue
+		var them: Soldier = other
+		if not them.alive:
+			continue   # a wreck is terrain, and the whiskers already see it
+		var away: Vector3 = global_position - them.global_position
+		away.y = 0.0
+		var gap := away.length()
+		if gap < 0.01 or gap > spacing_radius:
+			continue
+		var to_them := -away / gap
+		var ahead := fwd.dot(to_them)
+		if ahead < -0.2:
+			continue   # behind: their problem to solve, not this one's
+		var strength := (1.0 - gap / spacing_radius) * spacing_steer
+		# Beside, and getting nearer: steer off it. sin of the bearing, so
+		# something square on the flank pushes hardest and something dead ahead
+		# not at all — that case is the two below.
+		var bearing := fwd.signed_angle_to(to_them, Vector3.UP)
+		bias -= sin(bearing) * strength
+		if ahead <= 0.75:
+			continue
+		if fwd.dot(them._hull_forward()) > 0.3:
+			# Nose to tail, both going the same way: fall in behind it. Easing
+			# to a stop at contact rather than braking late, so a column
+			# concertinas instead of rear-ending itself.
+			cap = minf(cap, move_speed * clampf(gap / maxf(follow_gap, 0.1), 0.0, 1.0))
+		else:
+			# Nose to nose. Both of them read it the same way and both go
+			# right, which is the one rule that resolves it without the two
+			# agreeing on anything first.
+			bias -= strength
+	return Vector2(bias, cap)
+
+
 func _is_wall(hit: Dictionary) -> bool:
 	if hit.is_empty() or hit.collider is CharacterBody3D:
 		return false
@@ -344,13 +445,42 @@ func _handle_path_blocked() -> void:
 # near counts as there. At the squad's 1.6m a parked rover was never in its slot
 # and got re-ordered every tick.
 func slot_tolerance(squad_tolerance: float) -> float:
+	# UNLESS IT IS PARKED ON A SQUADMATE. 3.5m of slack either side means two
+	# neighbours can both stop three metres off their slots towards each other
+	# and both call it arrived, which is how an 8m line collapses back into a
+	# huddle. Crowded, it wants the slot it was actually given, so the squad
+	# keeps sending it there until it has room.
+	if _crowded():
+		return maxf(squad_tolerance, 1.0)
 	return maxf(squad_tolerance, arrival_radius)
+
+
+# A line of these stands wider than a line of infantry, or they park in each
+# other's slots. See Squad._line_spacing.
+func formation_width() -> float:
+	return line_spacing
+
+
+# Another hull near enough that standing here is standing in its way.
+func _crowded() -> bool:
+	for other in get_tree().get_nodes_in_group("enemies"):
+		if other == self or not is_instance_valid(other) or other.get_script() != get_script():
+			continue
+		if not (other as Soldier).alive:
+			continue
+		if _flat_gap((other as Node3D).global_position) < line_spacing * 0.5:
+			return true
+	return false
 
 
 # Vehicles do not take cover; they are cover. The cover points in a level are
 # sized for a robot on foot, and this one would park on top of them.
 func enter_cover_seeking() -> void:
 	change_soldier_state(SoldierState.NONE)
+
+
+func takes_cover() -> bool:
+	return false
 
 
 func _hull_forward() -> Vector3:
@@ -565,20 +695,34 @@ func _collapse_pieces() -> void:
 	for p in parts:
 		if p != null and not _piece_rest.has(p):
 			_piece_rest[p] = p.transform
+	# WHICH WAY IT WENT OVER.
+	#
+	# A rover is too much model to read as dead by sinking: sunk a little it is
+	# just a rover parked in a dip, and sunk a lot it is a rover in a hole. So
+	# it goes over instead. One side takes the weight — the hull rolls that
+	# way, and the wheels on that side sag under it — which breaks the level,
+	# symmetrical, on-its-wheels silhouette that made it look like it was
+	# waiting for orders. Everything below is chosen to be visible in a glance
+	# from across a field, because that is where you will be looking from.
+	var over := 1.0 if randf() < 0.5 else -1.0
 	if rig != null:
 		# Posed over the ground as it is, not from the lean it had on the move.
 		# Started from that, a rover caught braking stayed pitched onto its nose
 		# and the collapse tipped it further: front wheels 20cm into the dirt.
 		var fit := _terrain_fit(_ground_under_wheels())
 		var pose := _rig_rest
-		pose.origin.y += fit.y - belly_drop
-		pose.basis = Basis.from_euler(Vector3(fit.x + deg_to_rad(-2.5), 0.0,
-			fit.z + deg_to_rad(randf_range(-3.5, 3.5)))) * pose.basis
+		pose.origin.y += fit.y - belly_drop * wreck_settle
+		pose.basis = Basis.from_euler(Vector3(fit.x + deg_to_rad(-wreck_nose_degrees), 0.0,
+			fit.z + deg_to_rad(wreck_roll_degrees * over + randf_range(-2.5, 2.5)))) * pose.basis
 		rig.transform = pose
 	if turret != null:
-		turret.rotation.y += deg_to_rad(randf_range(-30.0, 30.0))
+		# Knocked round off its bearing rather than parked facing front. A
+		# turret still pointed where it was aiming reads as a live gun.
+		turret.rotation.y += deg_to_rad(randf_range(50.0, 125.0)) * (1.0 if randf() < 0.5 else -1.0)
 	if gun_pivot != null:
-		gun_pivot.rotation.x = deg_to_rad(gun_min_pitch_degrees)
+		# And the barrel goes down into the dirt, well past the elevation limit
+		# it honours while it is alive: nothing is holding it up any more.
+		gun_pivot.rotation.x = deg_to_rad(wreck_barrel_degrees)
 	for i in wheels.size():
 		var w := wheels[i]
 		if w == null:
@@ -588,7 +732,16 @@ func _collapse_pieces() -> void:
 		w.position = _wheel_rest[i]
 		w.position.y += _ground_gap(w)
 		var outward := 1.0 if _wheel_rest[i].x < 0.0 else -1.0   # +Z roll tips a top towards -X
-		w.rotation.z = deg_to_rad(randf_range(10.0, 16.0)) * outward
+		w.rotation.z = deg_to_rad(randf_range(26.0, 36.0)) * outward
+		# The side it went over on has collapsed under it.
+		if signf(_wheel_rest[i].x) == over:
+			w.position.y -= wreck_wheel_sag
+	# Nothing is running any more. The lamps are driven from the wheel speed in
+	# _tick_rig, which stops with the rest of the brain, so whatever they were
+	# doing at the moment of death is what they would have kept doing.
+	for lamp in reverse_lamps:
+		if lamp != null:
+			lamp.visible = false
 
 
 # How far a wheel has to move up (+) or down (-) for its tyre to sit on the

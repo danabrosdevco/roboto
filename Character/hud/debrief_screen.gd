@@ -26,6 +26,8 @@ var _column: VBoxContainer
 var _resources: Label
 var _compute: Label
 var _counting := 0.0
+var _page: int = 0
+var _result_now: Dictionary = {}
 
 
 func _ready() -> void:
@@ -61,7 +63,51 @@ func is_open() -> bool:
 	return visible
 
 
+# ─────────────────────────────────────────────
+# PAGES
+# ─────────────────────────────────────────────
+# The debrief is up to three screens, each closed with the same CONTINUE:
+#
+#   1. what the operation paid and what the squad did
+#   2. anything it unlocked, if it unlocked something
+#   3. the campaign being over, if it just ended
+#
+# They used to be one page, with the unlocks as a chip beside the payout and
+# the win as a line of text above the squad. Both are the biggest thing that
+# can happen on that screen and both read as footnotes — a new frame arriving
+# is the reason you played the mission, and it was smaller than the XP.
+#
+# One screen and one pause hold throughout: this rebuilds itself rather than
+# handing off to another node, so nothing else has to know the flow exists.
+const PAGE_RESULTS := &"results"
+const PAGE_UNLOCKS := &"unlocks"
+const PAGE_WON := &"won"
+
+
+func _pages() -> Array:
+	var out: Array = [PAGE_RESULTS]
+	var unlocked: Array = _result_now.get("unlocked", [])
+	if not unlocked.is_empty() and _unlocks(unlocked) != null:
+		out.append(PAGE_UNLOCKS)
+	if bool(_result_now.get("won", false)):
+		out.append(PAGE_WON)
+	return out
+
+
+## CONTINUE, and the keyboard. Moves to the next page, or leaves if that was
+## the last one.
+func advance() -> void:
+	var pages := _pages()
+	if _page + 1 < pages.size():
+		_page += 1
+		_build(_mission, _result_now)
+		return
+	close()
+
+
 func show_result(mission: MissionDefinition, result: Dictionary) -> void:
+	_page = 0
+	_result_now = result
 	_build(mission, result)
 	visible = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -87,7 +133,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo \
 			and event.keycode in [KEY_ESCAPE, KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
 		get_viewport().set_input_as_handled()
-		close()
+		advance()
 
 
 # The two numbers count up to where the mission left them. Physics, not
@@ -96,10 +142,11 @@ func _physics_process(delta: float) -> void:
 	_counting += delta
 	var t := clampf(_counting / COUNT_SECONDS, 0.0, 1.0)
 	t = 1.0 - pow(1.0 - t, 3.0)
-	if _resources != null and _resources.has_meta(&"from"):
-		_resources.text = str(int(round(lerpf(_resources.get_meta(&"from"), _resources.get_meta(&"to"), t))))
-	if _compute != null and _compute.has_meta(&"from"):
-		_compute.text = str(int(round(lerpf(_compute.get_meta(&"from"), _compute.get_meta(&"to"), t))))
+	for counter in [_resources, _compute]:
+		if counter == null or not counter.has_meta(&"from"):
+			continue
+		var now := int(round(lerpf(counter.get_meta(&"from"), counter.get_meta(&"to"), t)))
+		counter.text = str(counter.get_meta(&"prefix", "")) + str(now)
 	if t >= 1.0:
 		set_physics_process(false)
 
@@ -125,17 +172,30 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 	_column.offset_bottom = -22
 	add_child(_column)
 
+	var page: StringName = _pages()[mini(_page, _pages().size() - 1)]
 	var success := bool(result.get("success", true))
 	var head := Kit.hbox(14)
 	var titles := Kit.vbox(0)
-	titles.add_child(Kit.label("MISSION COMPLETE" if success else "MISSION FAILED",
-		Kit.BRIGHT if success else Kit.PROBLEM, 32, true))
+	var heading := "MISSION COMPLETE" if success else "MISSION FAILED"
+	if page == PAGE_UNLOCKS:
+		heading = "NEW HARDWARE"
+	elif page == PAGE_WON:
+		heading = "CAMPAIGN WON"
+	titles.add_child(Kit.label(heading,
+		Kit.BRIGHT if success or page != PAGE_RESULTS else Kit.PROBLEM, 32, true))
 	if mission != null:
 		titles.add_child(Kit.label(mission.display_name.to_upper(), Kit.DIM, Kit.HEADING))
+	# A failed run is rolled back to the state it deployed in, so everything
+	# below reads as a report rather than a bill: wrecks are shown because they
+	# happened, and the payout is zero because none of it was kept. Say so, or
+	# the zeros and the write-offs look like something broken.
+	if bool(result.get("rewound", false)):
+		titles.add_child(Kit.label("RUN VOIDED · THE SQUAD AND THE STORES ARE AS YOU LEFT BASE",
+			Kit.BRIGHT, Kit.SMALL, true))
 	head.add_child(titles)
 	head.add_child(Kit.fill())
 	var go := Kit.button("CONTINUE", Kit.BRIGHT, 20)
-	go.pressed.connect(close)
+	go.pressed.connect(advance)
 	head.add_child(go)
 	_column.add_child(head)
 	var rule := ColorRect.new()
@@ -143,9 +203,14 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 	rule.custom_minimum_size = Vector2(0, 1)
 	_column.add_child(rule)
 
+	if page == PAGE_UNLOCKS:
+		_build_unlocks(result)
+		return
+	if page == PAGE_WON:
+		_build_won()
+		return
+
 	_column.add_child(_rewards(result))
-	if bool(result.get("won", false)):
-		_column.add_child(Kit.label("CAMPAIGN WON · EVERY OPERATION IS NOW OPEN AT THE TERMINAL", Kit.BRIGHT, 18, true))
 
 	var squad: Array = result.get("squad", [])
 	var lost := 0
@@ -164,7 +229,16 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for entry in squad:
 		grid.add_child(_card(entry))
-	_column.add_child(grid)
+	# Ten robots is four rows of cards, and the screen has room for three: the
+	# last row ran off the bottom with no way to reach it. The cards scroll;
+	# everything above them — the payout, the unlocks — stays put.
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(grid)
+	_column.add_child(scroll)
 
 
 # RESOURCES and COMPUTE counting up, then anything the operation unlocked.
@@ -174,14 +248,25 @@ func _rewards(result: Dictionary) -> Control:
 	var after := int(result.get("resources_after", before))
 	var mission_pay := int(result.get("reward", 0))
 	var bonus := int(result.get("objective_reward", 0))
+	var salvage := int(result.get("salvage", 0))
 	var parts := PackedStringArray()
 	if mission_pay > 0:
 		parts.append("%d MISSION" % mission_pay)
 	if bonus > 0:
 		parts.append("%d BONUS" % bonus)
-	var money := _counter("RESOURCES", before, after, Kit.MONEY,
-		("+%d · %s" % [after - before, " + ".join(parts)]) if after > before else "NO PAYOUT")
+	if salvage > 0:
+		parts.append("%d SALVAGE" % salvage)
+	# WHAT YOU EARNED IS THE HEADLINE, not what you happen to be holding.
+	#
+	# The big number used to be the balance, with the payout as a footnote
+	# beside the breakdown — so the screen you get for finishing a mission led
+	# with a number that barely moved. The take is the thing you did; the
+	# balance is context for it, and goes underneath.
+	var earned := after - before
+	var money := _counter("EARNED", 0, earned, Kit.MONEY,
+		" + ".join(parts) if earned > 0 else "NO PAYOUT", "+")
 	_resources = money.get_meta(&"number")
+	money.add_child(Kit.label("%d IN THE BANK" % after, Kit.DIM, Kit.SMALL))
 	row.add_child(money)
 	var gained := int(result.get("compute", 0))
 	if gained > 0:
@@ -189,19 +274,20 @@ func _rewards(result: Dictionary) -> Control:
 		var brain := _counter("COMPUTE", c_before, c_before + gained, Kit.COMPUTE, "+%d" % gained)
 		_compute = brain.get_meta(&"number")
 		row.add_child(brain)
-	var unlocked: Array = result.get("unlocked", [])
-	var shown := _unlocks(unlocked)
-	if shown != null:
-		row.add_child(shown)
+	# Unlocks are NOT here any more. They get the whole screen after this one —
+	# a chip beside the payout was the smallest thing on the page and it was
+	# the reason you ran the operation.
 	return row
 
 
-func _counter(title: String, from: int, to: int, color: Color, note: String) -> Control:
+func _counter(title: String, from: int, to: int, color: Color, note: String, prefix: String = "") -> Control:
 	var col := Kit.vbox(0)
 	col.add_child(Kit.label(title, Kit.DIM, Kit.SMALL, true))
-	var number := Kit.label(str(from), color, 34, true)
+	var number := Kit.label(prefix + str(from), color, 34, true)
 	number.set_meta(&"from", float(from))
 	number.set_meta(&"to", float(to))
+	# A counter that counts a GAIN reads as a gain: "+490", not "490".
+	number.set_meta(&"prefix", prefix)
 	col.add_child(number)
 	col.add_child(Kit.label(note, Kit.DIM, Kit.SMALL))
 	col.set_meta(&"number", number)
@@ -209,26 +295,68 @@ func _counter(title: String, from: int, to: int, color: Color, note: String) -> 
 
 
 # Gear and frames only — the next operation opening is the terminal's news.
-func _unlocks(ids: Array) -> Control:
+# PAGE 2. What the operation opened up, big, on its own, with where to go and
+# get it. The same tiles as the old chip, scaled up and centred.
+func _build_unlocks(result: Dictionary) -> void:
+	var ids: Array = result.get("unlocked", [])
+	var body := Kit.vbox(18)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.alignment = BoxContainer.ALIGNMENT_CENTER
+	var line := Kit.label("%s CLEARED. THE FOLLOWING IS NOW AVAILABLE TO YOU."
+		% (_mission.display_name.to_upper() if _mission != null else "THE OPERATION"),
+		Kit.DIM, Kit.HEADING)
+	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.add_child(line)
+	var tiles := _unlocks(ids, true)
+	if tiles != null:
+		tiles.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		body.add_child(tiles)
+	var hint := Kit.label("FIT IT BEFORE YOU DEPLOY AGAIN", Kit.BRIGHT, Kit.SMALL, true)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.add_child(hint)
+	_column.add_child(body)
+
+
+# PAGE 3. The end of the campaign, which was a line of text above the squad
+# grid and is now the screen it deserves.
+func _build_won() -> void:
+	var body := Kit.vbox(16)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.alignment = BoxContainer.ALIGNMENT_CENTER
+	for text in ["THE VALLEY IS YOURS.",
+			"EVERY OPERATION IS NOW OPEN AT THE TERMINAL, IN ANY ORDER.",
+			"TAKE THE SQUAD BACK OUT WHENEVER YOU LIKE."]:
+		var bright: bool = text.begins_with("THE VALLEY")
+		var line := Kit.label(text, Kit.BRIGHT if bright else Kit.DIM, 26 if bright else Kit.HEADING, bright)
+		line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		body.add_child(line)
+	_column.add_child(body)
+
+
+func _unlocks(ids: Array, large: bool = false) -> Control:
 	var catalogue = _campaign.get("catalogue") if _campaign != null else null
 	if catalogue == null or ids.is_empty():
 		return null
 	var col := Kit.vbox(4)
-	col.add_child(Kit.label("UNLOCKED", Kit.DIM, Kit.SMALL, true))
-	var row := Kit.hbox(14)
+	if not large:
+		col.add_child(Kit.label("UNLOCKED", Kit.DIM, Kit.SMALL, true))
+	var row := Kit.hbox(34 if large else 14)
 	for id in ids:
 		var item: ItemDefinition = catalogue.item(id)
 		var frame: ChassisDefinition = catalogue.chassis_def(id)
-		var tile := Kit.vbox(2)
+		var tile := Kit.vbox(6 if large else 2)
 		if item != null:
 			var wide := item.kind == ItemDefinition.Kind.WEAPON
-			tile.add_child(Kit.icon(Icons.item(item, "m"), Kit.BRIGHT, Vector2(96, 36) if wide else Vector2(36, 36)))
-			tile.add_child(Kit.label(item.display_name.to_upper(), Kit.BRIGHT, Kit.SMALL, true))
-			tile.add_child(Kit.label("AT THE ARMORER", Kit.DIM, 11))
+			var size := Vector2(232, 88) if wide else Vector2(88, 88)
+			tile.add_child(Kit.icon(Icons.item(item, "l" if large else "m"), Kit.BRIGHT,
+				size if large else (Vector2(96, 36) if wide else Vector2(36, 36))))
+			tile.add_child(Kit.label(item.display_name.to_upper(), Kit.BRIGHT, Kit.HEADING if large else Kit.SMALL, true))
+			tile.add_child(Kit.label("AT THE ARMORER", Kit.DIM, Kit.SMALL if large else 11))
 		elif frame != null:
-			tile.add_child(Kit.icon(Icons.chassis(frame, "m"), Kit.BRIGHT, Vector2(64, 64)))
-			tile.add_child(Kit.label(Kit.frame_word(frame), Kit.BRIGHT, Kit.SMALL, true))
-			tile.add_child(Kit.label("AT THE FACTORY", Kit.DIM, 11))
+			tile.add_child(Kit.icon(Icons.chassis(frame, "l" if large else "m"), Kit.BRIGHT,
+				Vector2(128, 128) if large else Vector2(64, 64)))
+			tile.add_child(Kit.label(Kit.frame_word(frame), Kit.BRIGHT, Kit.HEADING if large else Kit.SMALL, true))
+			tile.add_child(Kit.label("AT THE FACTORY", Kit.DIM, Kit.SMALL if large else 11))
 		else:
 			continue
 		row.add_child(tile)
@@ -260,6 +388,16 @@ func _card(entry: Dictionary) -> Control:
 	var status := "YOU" if is_player else ("DESTROYED" if destroyed else "CAME HOME")
 	who.add_child(Kit.label(status, Kit.PROBLEM if destroyed else Kit.DIM, Kit.SMALL, destroyed))
 	top.add_child(who)
+	# THE COUNT, between who it was and what they got for it. The kinds below
+	# say what they killed and the icons take a moment to read; this is the one
+	# number you actually compare squadmates on, so it goes in the header.
+	var tally := int(entry.get("kills", 0))
+	var score := Kit.vbox(0)
+	score.add_child(Kit.label(str(tally), Kit.BRIGHT if tally > 0 else Kit.DIM, 26, true))
+	score.add_child(Kit.label("KILLS" if tally != 1 else "KILL", Kit.DIM, Kit.SMALL))
+	for line in score.get_children():
+		(line as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	top.add_child(score)
 	if not is_player:
 		var xp_col := Kit.vbox(0)
 		var gained := int(entry.get("xp", 0))
@@ -281,14 +419,32 @@ func _card(entry: Dictionary) -> Control:
 
 # What it killed, by kind: the enemy's frame and a count. A kind with no icon
 # yet still reads, by name.
+#
+# WRAPPED, NOT ONE LONG ROW. The cards sit in a three-column grid, and a grid
+# sizes its columns to the widest card in them — so a player who came home with
+# seven kinds on their tally stretched their card until the other two columns
+# ran off the right of the screen. The cards only scroll DOWN, so what went off
+# the side was gone rather than reachable. Four to a row caps how wide any card
+# can ever ask to be; the card grows downwards instead, which the scroll covers.
+const KILLS_PER_ROW := 4
+
+
 func _kills(kinds: Dictionary, total: int) -> Control:
-	var row := Kit.hbox(10)
+	var box := Kit.vbox(4)
 	if kinds.is_empty():
-		row.add_child(Kit.label("NO KILLS" if total == 0 else "%d KILLS" % total, Kit.DIM, Kit.SMALL))
-		return row
+		# The header carries the count now, so an empty tally says nothing
+		# rather than saying "NO KILLS" directly under a "0 KILLS".
+		if total > 0:
+			box.add_child(Kit.label("%d KILLS" % total, Kit.DIM, Kit.SMALL))
+		return box
 	var ordered: Array = kinds.keys()
 	ordered.sort_custom(func(a, b): return int(kinds[a]) > int(kinds[b]))
-	for kind in ordered:
+	var row: HBoxContainer = null
+	for i in ordered.size():
+		if i % KILLS_PER_ROW == 0:
+			row = Kit.hbox(10)
+			box.add_child(row)
+		var kind = ordered[i]
 		var pair := Kit.hbox(3)
 		var frame := KillKinds.frame_of(kind)
 		var tex := Icons.chassis(frame, "s") if frame != null else null
@@ -300,4 +456,4 @@ func _kills(kinds: Dictionary, total: int) -> Control:
 		pair.tooltip_text = KillKinds.name_of(kind)
 		pair.mouse_filter = Control.MOUSE_FILTER_PASS
 		row.add_child(pair)
-	return row
+	return box

@@ -6,8 +6,8 @@
 [resource]
 script = ExtResource("1_chassisdef")
 id = &"gunship"
-display_name = "Gunship Chassis"
-description = "Rotary frame. Holds station above the fight and ignores terrain entirely."
+display_name = "Quadcopter Bomber"
+description = "Quadcopter frame. Holds station above the fight, ignores terrain entirely, and drops its ordnance from altitude."
 scene = ExtResource("2_scene")
 cost = 220
 purchasable = false
@@ -18,6 +18,10 @@ base_speed = 1.0
 base_accuracy = 0.7
 base_sensor_range = 60.0
 weapon_slots = 1
+built_in = "CLAWS"
+turret = false
+vehicle = false
+drives = false
 equipment_slots = 1
 module_slots = 2
 required_rank = 2

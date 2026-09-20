@@ -99,6 +99,9 @@ var confirmed_kills: int = 0
 # The same kills by what they were (Campaign/kill_kinds.gd): frame id -> count.
 # Read and cleared at extraction, like confirmed_kills.
 var kills_by_kind: Dictionary = {}
+# Squadmates this one got back on their feet this mission. Credited in
+# apply_healing, read and cleared at extraction like the kills above.
+var revives: int = 0
 # Whose kills these really are. A hatchling is a thrown weapon that happens to
 # have legs: it lives 25 seconds and has no record, so a kill credited to it was
 # a kill nobody got. HatchlingPayload points this at the thrower, and a victim's
@@ -275,6 +278,13 @@ var _investigate_timer: float = 0.0
 
 # Never enters passive mode — set true on soldiers with active squad objectives
 @export var always_active: bool = false
+# Exempt from distance culling entirely: it has somewhere to be and a long way
+# to go. Set by EnemyForceSpawner.wake() on reinforcements, which spawn well
+# outside activation_distance and have to advance from there. A plain var
+# rather than an export so it cannot be set per scene by accident, and so
+# Enemy does not grow another property for an open editor to write into every
+# robot scene in the game.
+var never_culled: bool = false
 ## Seconds after going down before this robot gets back up by itself, once per
 ## deployment. Set from the Nanite Reboot module at spawn; 0 is never.
 @export var self_revive_seconds: float = 0.0
@@ -297,6 +307,15 @@ var _woken_t: float = 0.0
 # robots don't start aggroing across the level from the targeting tick; the
 # Area3D still owns everything beyond a few metres.
 @export var close_threat_range: float = 6.0
+## How much more this robot is worth shooting than its distance says. Target
+## choice divides distance by it, so at 1.15 something 11.5m away is picked like
+## something 10m away.
+##
+## Tried on the Mechanic and taken off again: fights open with everyone about
+## the same distance away, so even 1.15 made it every gun's first pick, and in
+## the valley lab it was down inside two seconds, before anyone needed fixing.
+## Left in for a frame that should draw fire.
+@export var target_priority: float = 1.0
 # How much closer the new contact has to be before it's worth switching. Without
 # a margin two hostiles at similar range make the AI oscillate between them
 # every targeting tick and it never shoots anything.
@@ -381,6 +400,19 @@ func _stagger_ai_timers() -> void:
 
 func sight_range() -> float:
 	return maxf(4.0, sensor_range + sensor_bonus)
+
+
+## How far a robot that has just lost its target will look for the next one.
+## A little past what it can see, so it does not drop a target that stepped one
+## metre behind a rock, and nowhere near far enough to pick a fight with
+## something on the other side of the map. A constant rather than an export:
+## Enemy is the base of every robot scene in the game, and a new property on it
+## makes an open editor rewrite the default into all of them.
+const REACQUIRE_SIGHT_SCALE := 1.25
+
+
+func reacquire_range() -> float:
+	return sight_range() * REACQUIRE_SIGHT_SCALE
 
 
 # Polled rather than event-driven, because "can I see them" changes when EITHER
@@ -474,6 +506,13 @@ func _tick_vision(delta: float) -> void:
 # point answers with how near it parks, or the squad re-orders it forever.
 func slot_tolerance(squad_tolerance: float) -> float:
 	return squad_tolerance
+
+
+# How much lateral room this frame needs in a formation line. 0 means "the
+# squad's own spacing is fine", which is true of anything that walks. A wide
+# hull answers with what it actually needs; see Squad._line_spacing.
+func formation_width() -> float:
+	return 0.0
 
 
 # Which way this robot is looking. The body's facing for anything that turns its
@@ -641,6 +680,12 @@ var _settle_timer: float = 0.0
 var _settling: bool = false
 var _crashing: bool = false
 var _crash_timeout: float = 0.0
+## How much of its speed a robot killed in mid-air keeps on the way down, and
+## how fast the rest bleeds off (per second). Constants rather than exports:
+## adding a property to Enemy makes an open editor rewrite defaults into every
+## robot scene in the game, and nothing here wants tuning per frame.
+const CRASH_MOMENTUM: float = 0.85
+const CRASH_DRAG: float = 0.6
 # What a wreck has been let fall through — whatever it went down standing on
 # that is not the level itself. Given back when it stands up.
 var _fell_through: Array[PhysicsBody3D] = []
@@ -654,6 +699,10 @@ var _piece_rest: Dictionary = {}   # Node3D -> original Transform3D
 
 signal went_down
 signal revived
+## Gone for good, not merely on the floor: what a director counts when it is
+## watching for losses. enter_downed() emits went_down instead, and a robot
+## that cannot be downed (a building) only ever gets here.
+signal destroyed
 
 var combat_time: float = 0.0
 var movement_time: float = 0.0
@@ -781,12 +830,12 @@ func _physics_process(delta: float) -> void:
 	if downed:
 		# A WRECK THAT DIED IN THE AIR HAS TO FALL FIRST. _begin_settle() records
 		# the body's current height as the rest height and sinks from there, so
-		# a leaper killed mid-leap or a gunship shot out of the sky settled into
+		# a leaper killed mid-leap or a quadcopter bomber shot out of the sky settled into
 		# thin air and hung there. Crash, land, and only then start settling.
 		if _crashing:
 			velocity.y -= gravity * delta
-			velocity.x = lerp(velocity.x, 0.0, 1.0 - exp(-1.5 * delta))
-			velocity.z = lerp(velocity.z, 0.0, 1.0 - exp(-1.5 * delta))
+			velocity.x = lerp(velocity.x, 0.0, 1.0 - exp(-CRASH_DRAG * delta))
+			velocity.z = lerp(velocity.z, 0.0, 1.0 - exp(-CRASH_DRAG * delta))
 			move_and_slide()
 			var landed := is_on_floor() and not _step_off_bodies()
 			if landed or _crash_timeout <= 0.0:
@@ -842,8 +891,21 @@ func _physics_process(delta: float) -> void:
 	# still. Being shot now wakes it, and its squad, for wake_on_damage_seconds.
 	if _woken_t > 0.0:
 		_woken_t = maxf(0.0, _woken_t - delta)
+	# AND SO IS ANYTHING MARKED never_culled.
+	#
+	# Reinforcements are spawned 90m out precisely so you watch them come, and
+	# they stood exactly where they landed until the player walked within 75m
+	# of them: enter_passive_mode() honours a flag, but the `return` below
+	# skipped handle_movement regardless, so the freeze happened anyway.
+	#
+	# This is deliberately NOT always_active, which every EnemySquadSpec in
+	# every mission sets — hanging the exemption on that made all seventy
+	# robots in the Foundry tick from the far side of the valley, for the
+	# benefit of the five squads that needed it. EnemyForceSpawner.wake() sets
+	# this on the squads it sends in, and nothing else does.
 	var dist_sq = global_position.distance_squared_to(player.global_position)
-	if dist_sq > activation_distance_sq and not _is_player_side() and _woken_t <= 0.0:
+	if dist_sq > activation_distance_sq and not _is_player_side() \
+			and not never_culled and _woken_t <= 0.0:
 		enter_passive_mode()
 		_apply_motion()
 		return
@@ -1734,6 +1796,20 @@ func reconsider_target() -> void:
 		target_down = true
 
 	var new_target: CharacterBody3D = _nearest_hostile()
+	# AND NOT FROM ACROSS THE VALLEY.
+	#
+	# _nearest_hostile() asks the AI manager, which searches the whole level —
+	# it answers "nearest", never "near". Handed straight to a robot in COMBAT,
+	# one trigger anywhere ended with robots holding a target 150m away through
+	# a hill, and a squad with a target is ENGAGED, and an ENGAGED squad does
+	# not patrol. A whole valley's worth of hostiles stood locked onto one of
+	# the player's robots from the first frame of the mission, picket included.
+	#
+	# Out of reach is the same as no target: fall through to the branch below,
+	# which is the one that goes and looks. Return fire is unaffected —
+	# apply_damage assigns the shooter directly, at any range.
+	if new_target != null and global_position.distance_to(new_target.global_position) > reacquire_range():
+		new_target = null
 
 	if new_target != null:
 		if ai_state == AIState.COMBAT:
@@ -2029,7 +2105,11 @@ func _evaluate_equipment_use() -> void:
 		if equipment == null:
 			continue
 		if equipment.can_use(context):
-			get_tree().current_scene.add_child(equipment)
+			# The running scene when there is one; the level this robot is in
+			# when the tree was started by a script (the tests, a lab run from
+			# the command line), which has none — the grenade was never thrown.
+			var host: Node = get_tree().current_scene if get_tree().current_scene != null else get_parent()
+			host.add_child(equipment)
 			equipment.execute(context)
 			slot.consume()
 			# Recorded for the squad HUD. Equipment use is instantaneous —
@@ -2318,7 +2398,11 @@ func apply_damage(damage, source) -> void:
 		if killer != null and is_instance_valid(killer) and "credit_kills_to" in killer \
 				and killer.credit_kills_to != null and is_instance_valid(killer.credit_kills_to):
 			killer = killer.credit_kills_to
-		if killer != null and is_instance_valid(killer) and killer != self:
+		# Only kills of the OTHER side count. Bravo-2 put a burst through a
+		# rover in the valley and came home with it on their tally, with the
+		# rover's silhouette in the debrief beside their real kills — a record
+		# of a mistake, scored as an achievement.
+		if killer != null and is_instance_valid(killer) and killer != self and _is_hostile(killer):
 			# Guarded with `in` rather than a type check: the killer may be a
 			# Soldier, the Player, or anything else that deals damage, and only
 			# some of those carry a counter.
@@ -2391,6 +2475,10 @@ func enter_downed() -> void:
 	health = downed_health
 	_arm_self_revive()
 	change_ai_state(AIState.DEAD)
+	# Held for the crash path at the end of this function: something killed in
+	# mid-air should carry on the way it was going. Anything that died standing
+	# on the ground stops where it fell, which is what zeroing is for.
+	var carried := velocity
 	velocity = Vector3.ZERO
 	if nav_agent != null:
 		nav_agent.set_target_position(global_position)
@@ -2421,6 +2509,12 @@ func enter_downed() -> void:
 	# walked out from under it — as did a wreck on a wreck, when the one below
 	# settled and switched its collider off.
 	if not is_on_floor() or _step_off_bodies():
+		# A KILL DOES NOT CANCEL MOMENTUM. Zeroing velocity above turned a
+		# quadcopter bomber doing 27 m/s into a brick that dropped straight
+		# down the instant it died — it read as the game switching the thing
+		# off rather than shooting it down. It keeps most of what it had and
+		# flies its own wreck into the ground somewhere ahead of you.
+		velocity = carried * CRASH_MOMENTUM
 		_crashing = true
 		_crash_timeout = 6.0
 		_on_crash_started()
@@ -2457,7 +2551,9 @@ func destroy():
 	for i in particle_effects_die:
 		i.activate()
 	nav_agent.set_target_position(global_position)
-	if damaged_by_player and player != null:
+	# Salvage off the other side only, for the same reason the kill tally is:
+	# shooting your own robot is not a payday.
+	if damaged_by_player and player != null and Enums.are_hostile(faction, player.faction):
 		player.add_bits(bits)
 	if _collision_shape == null:
 		_collision_shape = _find_collision_shape()
@@ -2467,6 +2563,7 @@ func destroy():
 	hide_body()
 	if weapon != null:
 		weapon.hide()
+	destroyed.emit()
 
 
 # ─────────────────────────────────────────────
@@ -2484,6 +2581,15 @@ func apply_healing(amount: int, healer: Node = null) -> void:
 	health = mini(max_health, health + amount)
 	if downed and health >= int(ceil(max_health * revive_at_fraction)):
 		revive()
+	# WHO GOT THEM BACK UP. Every revive in the game comes through here — the
+	# player's repair tool, a mechanic's kit, a reclaimer's welder — so this is
+	# the one place that has to count it. Guarded with `in` for the same reason
+	# kill credit is: a healer may be the Player, a Soldier or a pickup, and
+	# only some of those carry a tally. A robot standing itself back up on a
+	# nanite charge never reaches this, which is right: nobody did it for them.
+	if was_down and not downed and healer != null and is_instance_valid(healer) \
+			and healer != self and "revives" in healer:
+		healer.revives += 1
 	_Analytics.heal(self, health - before, healer, was_down and not downed)
 
 

@@ -29,6 +29,9 @@ var slot_index: int = 0
 
 var _left: VBoxContainer
 var _detail: VBoxContainer
+# The roster has a vehicle, so the squad goes out as two teams and every card
+# says which one it is in.
+var _show_teams := false
 
 
 func setup(owner_ui) -> void:
@@ -167,6 +170,9 @@ func _build_roster() -> void:
 			Kit.BRIGHT, Kit.SMALL, true))
 	_left.add_child(head)
 
+	_show_teams = state.roster.any(func(r: SoldierRecord) -> bool:
+		var f := _frame(r)
+		return f != null and f.vehicle)
 	var active := _grid()
 	active.add_child(_card(state.player_record, going, capped, op))
 	for r in state.roster:
@@ -214,7 +220,14 @@ func _card(record: SoldierRecord, going: Array, capped: bool, op: MissionDefinit
 	var row := Kit.hbox(10)
 	card.add_child(row)
 	var tint := Kit.PROBLEM if destroyed else Kit.BRIGHT
-	row.add_child(Kit.icon(Icons.chassis(frame, "s"), tint, Vector2(40, 40)))
+	# Under the icon, what the frame and its modules add up to: the number you
+	# are actually comparing when you pick who goes.
+	var mugshot := Kit.vbox(2)
+	mugshot.add_child(Kit.icon(Icons.chassis(frame, "s"), tint, Vector2(40, 40)))
+	var hp := Kit.label("%d HP" % record.max_health, Kit.DIM, 11)
+	hp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	mugshot.add_child(hp)
+	row.add_child(mugshot)
 
 	var mid := Kit.vbox(4)
 	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -229,10 +242,29 @@ func _card(record: SoldierRecord, going: Array, capped: bool, op: MissionDefinit
 	# Choosing who goes is one pass down the list, so the switch is on the card.
 	# A wreck on the bench has nothing to deploy with until it is rebuilt.
 	if not state.is_player_record(record) and not (destroyed and record.benched):
-		row.add_child(_bench_button(record, true))
+		var bench := _bench_button(record, true)
+		if _show_teams:
+			# Down in the corner opposite the status line, clear of the team tag.
+			bench.size_flags_vertical = Control.SIZE_SHRINK_END
+		row.add_child(bench)
+	# You command both teams, so your own card has none.
+	if _show_teams and not state.is_player_record(record):
+		card.add_child(_team_tag(frame))
 	if record.benched:
 		card.modulate = Color(1, 1, 1, 0.62)
 	return card
+
+
+# Which team a robot goes out in: a vehicle as ARMOR, anything on foot as
+# INFANTRY (SquadSpawner splits them the same way). Laid over the card rather
+# than in its row: the card fits every child to its padded box, and the shrink
+# flags pin this one to the top-right corner.
+func _team_tag(frame: ChassisDefinition) -> Control:
+	var armor := frame != null and frame.vehicle
+	var tag := Kit.label(String(Squad.TEAM_ARMOR if armor else Squad.TEAM_INFANTRY), Kit.DIM, Kit.SMALL)
+	tag.size_flags_horizontal = Control.SIZE_SHRINK_END
+	tag.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	return tag
 
 
 # One word for "can this robot do its job?"
@@ -254,7 +286,7 @@ func _status(record: SoldierRecord, going: Array, capped: bool, op: MissionDefin
 func _armed(record: SoldierRecord) -> bool:
 	var frame := _frame(record)
 	if frame != null and frame.weapon_slots == 0:
-		return true   # claws
+		return true   # claws, a welder: built in
 	for id in record.weapon_ids:
 		if id != &"":
 			return true
@@ -262,11 +294,12 @@ func _armed(record: SoldierRecord) -> bool:
 
 
 # The card's gear as small icons, in slot order. Built-in things (the player's
-# repair tool, a chaser's claws) sit in the row too, marked as fixed.
+# repair tool, a chaser's claws, a mechanic's welder) sit in the row too,
+# marked as fixed.
 func _strip(record: SoldierRecord, frame: ChassisDefinition) -> Control:
 	var row := Kit.hbox(3)
 	if frame != null and frame.weapon_slots == 0:
-		row.add_child(_mini(null, true, "CLAWS", true))
+		row.add_child(_mini(null, true, frame.built_in, true))
 	for id in record.weapon_ids:
 		row.add_child(_mini(ui.item(id), true, "", false, id == &""))
 	if ui.state.is_player_record(record):
@@ -359,13 +392,25 @@ func _build_detail() -> void:
 	name_edit.focus_exited.connect(func():
 		if is_instance_valid(name_edit) and not ui.is_rebuilding():
 			commit.call(name_edit.text))
-	who.add_child(name_edit)
+	# The frame's health beside the name: the one number a refit changes that
+	# the slot tiles below do not show.
+	var name_row := Kit.hbox(10)
+	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_row.add_child(name_edit)
+	name_row.add_child(Kit.label("%d HP" % r.max_health, Kit.DIM, 18, true))
+	who.add_child(name_row)
 	var rank_row := Kit.hbox(6)
 	rank_row.add_child(Kit.label(_frame_line(r), Kit.DIM, Kit.SMALL))
 	if not is_player:
 		rank_row.add_child(Kit.chevrons(r.rank))
 	who.add_child(rank_row)
-	who.add_child(Kit.label("%d KILLS · %d OPS" % [r.confirmed_kills, r.missions_survived], Kit.DIM, Kit.SMALL))
+	# Revives only appear once there are some. A repair tool that has never been
+	# used would otherwise put "0 REVIVES" on every rifleman in the squad, which
+	# is a line of noise on the frames that can't do it in the first place.
+	var history := "%d KILLS · %d OPS" % [r.confirmed_kills, r.missions_survived]
+	if r.revives > 0:
+		history += " · %d REVIVES" % r.revives
+	who.add_child(Kit.label(history, Kit.DIM, Kit.SMALL))
 	_detail.add_child(head)
 
 	if destroyed:
@@ -394,7 +439,7 @@ func _build_detail() -> void:
 	# below room for barely one row.
 	var weapon_row := Kit.hbox(12)
 	if frame != null and frame.weapon_slots == 0:
-		weapon_row.add_child(_group("WEAPON", [_fixed_tile(null, "CLAWS")]))
+		weapon_row.add_child(_group("WEAPON", [_fixed_tile(null, frame.built_in)]))
 	else:
 		# Named for what it takes, so a rifle refused by a rover reads as a rule.
 		var slot_name := "TURRET" if frame != null and frame.turret else "WEAPON"
@@ -528,12 +573,16 @@ func _stores() -> void:
 		offered += 1
 	if offered == 0:
 		list.add_child(Kit.label("NOTHING IN STORES FOR THIS SLOT", Kit.DIM, Kit.SMALL))
-		var go := Kit.button("BUY AT THE ARMORER", Kit.BRIGHT, Kit.SMALL)
-		go.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		go.mouse_entered.connect(ui.hover)
-		var kind := slot_kind
-		go.pressed.connect(func(): ui.show_tab(&"armorer", {"kind": kind}))
-		list.add_child(go)
+	# THE WAY TO THE SHOP IS ALWAYS THERE. It used to appear only when stores
+	# were empty for this slot, which is exactly backwards: having one spare
+	# rifle is the moment you are most likely to want a second, and the button
+	# vanished the instant you owned anything at all.
+	var go := Kit.button("BUY AT THE ARMORER", Kit.BRIGHT, Kit.SMALL)
+	go.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	go.mouse_entered.connect(ui.hover)
+	var kind := slot_kind
+	go.pressed.connect(func(): ui.show_tab(&"armorer", {"kind": kind}))
+	list.add_child(go)
 
 
 func _store_row(item: ItemDefinition, reason: String) -> Control:
@@ -577,6 +626,11 @@ func _cannot_fit(record: SoldierRecord, item: ItemDefinition) -> String:
 		return "not on this frame"
 	var frame := _frame(record)
 	if frame != null and not frame.takes(item):
+		# Two rules end up here, and they are not the same refusal: a turret
+		# takes weapons made for it, and a frame that drives has no use for kit
+		# written for legs (nanites). Say which one stopped it.
+		if frame.drives and not item.fits_vehicles:
+			return "not on this frame"
 		return "turret weapons only"
 	return ""
 

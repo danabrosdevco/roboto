@@ -70,6 +70,10 @@ func _squad_present() -> bool:
 	for squad in get_tree().get_nodes_in_group("squads"):
 		if not (squad is Squad) or not squad.player_commandable:
 			continue
+		# Only the teams coming with you. One you sent to hold a ridge is doing
+		# what you told it, and does not keep you from the objective.
+		if squad.objective != Squad.SquadObjective.FOLLOW:
+			continue
 		for member in squad.get_living_members():
 			if centre.distance_to(member.global_position) > squad_radius:
 				return false

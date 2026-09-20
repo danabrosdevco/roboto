@@ -107,6 +107,7 @@ const BINDINGS := [
 	[&"5",             "SLOT 5",        "EQUIPMENT"],
 	[&"6",             "SLOT 6",        "EQUIPMENT"],
 	[&"command",       "SQUAD ORDER",   "SQUAD"],
+	[&"switch_team",   "SWITCH TEAM",   "SQUAD"],
 	[&"squad_manager", "SQUAD MANAGER", "SQUAD"],
 	[&"map",           "MAP",           "SQUAD"],
 	[&"fullscreen",    "FULLSCREEN",    "SYSTEM"],
@@ -622,6 +623,13 @@ static func _ensure_runtime_actions() -> void:
 		var ev := InputEventKey.new()
 		ev.physical_keycode = KEY_M
 		InputMap.action_add_event(&"map", ev)
+	# Which of your teams T orders — G, under the T it goes with. SquadCommander
+	# makes it too if it runs first.
+	if not InputMap.has_action(&"switch_team"):
+		InputMap.add_action(&"switch_team")
+		var team_ev := InputEventKey.new()
+		team_ev.physical_keycode = KEY_G
+		InputMap.action_add_event(&"switch_team", team_ev)
 
 
 # Once per run. The InputMap as project.godot authored it IS the defaults, so

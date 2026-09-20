@@ -100,17 +100,26 @@ func _init() -> void:
 	_check("a squad-only module does nothing on the player",
 		int(player.max_health) == base_max and is_equal_approx(player._speed_mult, 1.0))
 
-	# ── THE PLAYER TAKES A THIRD OF EVERY HIT ────
+	# ── THE PLAYER TAKES A FRACTION OF EVERY HIT ─
+	# The fraction is a tuning dial (`damage_taken_scale`, a third once, a half
+	# now), so it is read off the player rather than written out twice. What
+	# matters here is that scaling happens at all and that the leftovers are
+	# carried instead of rounded away — three 1-damage chips have to add up to
+	# something, or chip damage is free.
 	player.health = player.max_health
 	player._damage_carry = 0.0
+	var scale: float = player.damage_taken_scale
 	var hp_before: int = int(player.health)
 	player.apply_damage(30, null)
-	_check("a 30-damage hit costs the player 10", hp_before - int(player.health) == 10,
+	var want := int(round(30.0 * scale))
+	_check("a 30-damage hit costs the player %d" % want, hp_before - int(player.health) == want,
 		"%d -> %d" % [hp_before, int(player.health)])
 	hp_before = int(player.health)
 	for _i in 3:
 		player.apply_damage(1, null)
-	_check("...and three 1-damage chips still cost 1 between them", hp_before - int(player.health) == 1,
+	var chips := int(floor(3.0 * scale))
+	_check("...and three 1-damage chips still cost %d between them" % chips,
+		hp_before - int(player.health) == chips,
 		"%d -> %d" % [hp_before, int(player.health)])
 	player.health = player.max_health
 
@@ -308,6 +317,25 @@ func _init() -> void:
 	_check("...and unfitting one trims back to a single load",
 		pool.get_capacity(&"grenade") == per_frag and pool.get_count(&"grenade") == per_frag,
 		"%d/%d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])
+
+	# The recoilless rifle is the same rule. It was the exception because the
+	# scaler tested for PlayerGrenade and the launcher is not one, so a second
+	# tube was two ways to fire the same pair of rockets.
+	var per_tube: int = 0
+	for stock in pool.starting_ammo:
+		if stock != null and stock.ammo_type == &"rocket":
+			per_tube = stock.capacity
+	kit.equipment_ids = [&"recoilless"] as Array[StringName]
+	player.loadout.apply_record(kit, cat)
+	pool.refill_all()
+	_check("one recoilless carries its own rockets", per_tube > 0
+		and pool.get_capacity(&"rocket") == per_tube, "%d/%d" % [pool.get_count(&"rocket"), pool.get_capacity(&"rocket")])
+	kit.equipment_ids = [&"recoilless", &"recoilless"] as Array[StringName]
+	player.loadout.apply_record(kit, cat)
+	pool.refill_all()
+	_check("...and two of them carry twice as many, like frags do",
+		pool.get_capacity(&"rocket") == per_tube * 2 and pool.get_count(&"rocket") == per_tube * 2,
+		"%d/%d" % [pool.get_count(&"rocket"), pool.get_capacity(&"rocket")])
 
 	print("")
 	print("ALL EQUIPMENT CHECKS PASS" if _fails == 0 else "%d EQUIPMENT CHECK(S) FAILED" % _fails)

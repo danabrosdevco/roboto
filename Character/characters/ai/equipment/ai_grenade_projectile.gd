@@ -28,6 +28,12 @@ var _thrower: Node = null  # set by AIGrenade so we don't damage ourselves
 
 
 func _ready() -> void:
+	# A LIVE ROUND STOPS WHEN THE GAME DOES. Pause behaviour is inherited
+	# from whatever this ended up parented to, and the fallback parent when a
+	# thrower has no world is the current scene, which is Master, and Master
+	# is PROCESS_MODE_ALWAYS so its menus answer while paused. A grenade that
+	# landed there kept counting its fuse and went off behind the pause screen.
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 	# explode_on_bounce was DEAD. body_entered is connected in the scene, but a
 	# RigidBody3D only emits it with contact_monitor on and a nonzero contact
 	# budget, and this scene set neither — so the signal never fired and no

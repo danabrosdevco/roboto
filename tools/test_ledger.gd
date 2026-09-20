@@ -359,7 +359,7 @@ func test_recruiting() -> void:
 	state.catalogue = cat
 	var soldier_frame := cat.chassis_def(&"soldier")
 	var chaser_frame := cat.chassis_def(&"chaser")
-	var hopper_frame := cat.chassis_def(&"hopper")
+	var hopper_frame := cat.chassis_def(&"leaper")
 	var soldier := state.recruit(soldier_frame)
 	var chaser := state.recruit(chaser_frame)
 	var hopper := state.recruit(hopper_frame)
@@ -367,7 +367,7 @@ func test_recruiting() -> void:
 		str(state.available()))
 	invariant(state, "after recruiting")
 	check("recruits join the roster", state.roster.size() == 3)
-	check("recruits are named for their frame", names([soldier, chaser, hopper]) == ["Soldier-1", "Chaser-1", "Hopper-1"],
+	check("recruits are named for their frame", names([soldier, chaser, hopper]) == ["Soldier-1", "Chaser-1", "Leaper-1"],
 		str(names([soldier, chaser, hopper])))
 	check("...and numbered", state.recruit(chaser_frame).display_name == "Chaser-2")
 	check("a soldier arrives with its pistol and otherwise empty slots",
@@ -403,7 +403,7 @@ func test_supply_caps_the_active_squad() -> void:
 	check("recruits join the squad while there is supply", not a.benched and not b.benched)
 	check("...each taking its frame's supply", state.supply_used() == 2 and state.supply_free() == 0,
 		"used=%d free=%d" % [state.supply_used(), state.supply_free()])
-	var c := state.recruit(cat.chassis_def(&"hopper"))
+	var c := state.recruit(cat.chassis_def(&"leaper"))
 	check("buying is never blocked by supply: the next joins the bench", c != null and c.benched)
 	check("...where it takes none", state.supply_used() == 2)
 	check("coming off the bench with no supply free is refused", not state.set_benched(c, false) and c.benched)
@@ -578,14 +578,14 @@ func test_unlocks_wait_for_their_operation() -> void:
 	campaign.state = state
 	var op := MissionDefinition.new()
 	op.id = &"op_pack"
-	op.unlocks = [&"hopper"] as Array[StringName]
+	op.unlocks = [&"leaper"] as Array[StringName]
 	campaign.missions = [op] as Array[MissionDefinition]
-	check("a frame an operation unlocks is locked until it is cleared", campaign.locked_by(&"hopper") == op)
+	check("a frame an operation unlocks is locked until it is cleared", campaign.locked_by(&"leaper") == op)
 	check("anything no operation unlocks is never locked", campaign.locked_by(&"soldier") == null)
 	state.completed_missions.append(&"op_pack")
 	campaign._grant_owed_unlocks()
 	check("a save that already cleared it is handed the unlock on load",
-		campaign.locked_by(&"hopper") == null and state.unlocked.has(&"hopper"))
+		campaign.locked_by(&"leaper") == null and state.unlocked.has(&"leaper"))
 	campaign.free()
 
 

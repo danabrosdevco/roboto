@@ -454,7 +454,8 @@ func rename_squad(new_name: String) -> void:
 	state.squad_name = cleaned
 	for squad in get_tree().get_nodes_in_group("squads"):
 		if squad is Squad and (squad as Squad).player_commandable:
-			(squad as Squad).callsign = state.squad_name
+			# Each team keeps its word: TOMMYSQUAD, TOMMYSQUAD ARMOR.
+			(squad as Squad).callsign = Squad.callsign_for(state.squad_name, (squad as Squad).team)
 			(squad as Squad).notify_roster_changed()
 	_play(sfx_select)
 	# squad_name is not on a record, so nothing else announces it.

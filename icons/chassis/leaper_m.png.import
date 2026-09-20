@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://45wpcaumjqsh"
-path="res://.godot/imported/hopper_l.png-13805a70a81bff9012426544df631849.ctex"
+uid="uid://cgwymqk6guhdf"
+path="res://.godot/imported/leaper_m.png-9d208e39f31f6cea4d7f623e57b566f7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://icons/chassis/hopper_l.png"
-dest_files=["res://.godot/imported/hopper_l.png-13805a70a81bff9012426544df631849.ctex"]
+source_file="res://icons/chassis/leaper_m.png"
+dest_files=["res://.godot/imported/leaper_m.png-9d208e39f31f6cea4d7f623e57b566f7.ctex"]
 
 [params]
 

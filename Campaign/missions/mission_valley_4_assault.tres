@@ -23,6 +23,7 @@ spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
 reinforcement_tag = &""
+wake_after_kills = 0
 
 [sub_resource type="Resource" id="S2"]
 script = ExtResource("2_espec")
@@ -37,6 +38,7 @@ spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
 reinforcement_tag = &""
+wake_after_kills = 0
 
 [sub_resource type="Resource" id="S3"]
 script = ExtResource("2_espec")
@@ -51,6 +53,7 @@ spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
 reinforcement_tag = &""
+wake_after_kills = 0
 
 [sub_resource type="Resource" id="S4"]
 script = ExtResource("2_espec")
@@ -65,6 +68,7 @@ spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
 reinforcement_tag = &""
+wake_after_kills = 0
 
 [sub_resource type="Resource" id="S_heli_1"]
 script = ExtResource("2_espec")
@@ -79,6 +83,7 @@ spawn_offset = Vector3(105, 45, 55)
 always_active = true
 faction = 1
 reinforcement_tag = &"valley_garrison_cap_1"
+wake_after_kills = 0
 
 [sub_resource type="Resource" id="S_heli_2"]
 script = ExtResource("2_espec")
@@ -93,6 +98,7 @@ spawn_offset = Vector3(115, 52, -55)
 always_active = true
 faction = 1
 reinforcement_tag = &"valley_garrison_cap_2"
+wake_after_kills = 0
 
 [resource]
 script = ExtResource("1_missdef")
@@ -104,9 +110,9 @@ map_position = Vector2(210, -40)
 enemy_force = Array[ExtResource("2_espec")]([SubResource("S1"), SubResource("S2"), SubResource("S3"), SubResource("S4"), SubResource("S_heli_1"), SubResource("S_heli_2")])
 replace_level_enemies = true
 active_objectives = Array[StringName]([&"valley_garrison_cap_1", &"valley_garrison_cap_2", &"valley_extract"])
-reward_resources = 220
+reward_resources = 225
 compute_reward = 1
-unlocks = Array[StringName]([&"dmr"])
+unlocks = Array[StringName]([&"reclaimer"])
 squad_size = -1
 repeatable = false
 requires = Array[StringName]([&"valley_3_push"])

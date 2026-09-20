@@ -79,6 +79,27 @@ func _init() -> void:
 	_check("(setup) deployed to the arena", cm.in_mission
 		and world.current_level.scene_file_path == op.level_scene.resource_path)
 
+	# ── SOMETHING TO LOSE ────────────────────────
+	# The rollback needs damage to undo. This operation deploys no squad
+	# (squad_size 0), so rather than lose a body it stages what losing one does
+	# to the campaign — a record written off and the wallet moved — which is
+	# exactly the state a real extraction would leave behind. What proves the
+	# rewind is the field-for-field comparison further down, not this staging.
+	var before_deploy := JSON.stringify(cm.state.to_dict())
+	var before_cash: int = cm.state.available()
+	var victim: SoldierRecord = cm.state.roster[0] if not cm.state.roster.is_empty() else null
+	if victim != null:
+		victim.status = SoldierRecord.Status.DESTROYED
+		victim.damage = victim.max_health
+		victim.confirmed_kills += 7
+	cm.state.award(500)
+	for _i in 10:
+		await physics_frame
+	_check("(setup) a squadmate is written off and 500 came in",
+		victim != null and victim.status == SoldierRecord.Status.DESTROYED
+		and cm.state.available() == before_cash + 500,
+		"victim=%s cash=%d" % [victim, cm.state.available()])
+
 	# ── DIE ──────────────────────────────────────
 	player.apply_damage(100000, null)
 	# die() waits half a REAL second for its effects before announcing. Headless
@@ -99,6 +120,8 @@ func _init() -> void:
 	_check("home to the debrief, saying the mission failed", debrief != null and debrief.visible
 		and _says(debrief, "MISSION FAILED"), "debrief=%s" % debrief)
 	_check("...with the game paused behind it", paused)
+	# Read while it is still up; the checks that use it come after it closes.
+	var said_voided: bool = debrief != null and _says(debrief, "RUN VOIDED")
 	if debrief != null:
 		debrief.close()
 	await process_frame
@@ -106,6 +129,37 @@ func _init() -> void:
 	_check("...alive, on full health", player.alive and int(player.health) == int(player.max_health),
 		"alive=%s hp=%s/%s" % [player.alive, player.health, player.max_health])
 	_check("...and the mission was not counted as cleared", cm.state.clears_of(op.id) == clears_before)
+
+	# ── THE RUN IS VOIDED ────────────────────────
+	# Dying costs the time, not the squad: the campaign goes back to the
+	# dictionary taken at deployment. The DEBRIEF still reports the wreck,
+	# because that is what happened out there — it just did not stick.
+	var written_off := 0
+	for r in cm.state.roster:
+		if r != null and r.status == SoldierRecord.Status.DESTROYED:
+			written_off += 1
+	_check("dying voids the run: nobody is written off", written_off == 0,
+		"%d destroyed" % written_off)
+	_check("...and the stores are as they were at deployment", cm.state.available() == before_cash,
+		"%d, deployed with %d" % [cm.state.available(), before_cash])
+	# Everything but the selection, which extract() clears on the way home.
+	var after := cm.state.to_dict()
+	var before_dict: Dictionary = JSON.parse_string(before_deploy)
+	after.erase("selected_mission_id")
+	before_dict.erase("selected_mission_id")
+	_check("...the whole campaign is what deployed, field for field",
+		JSON.stringify(after) == JSON.stringify(before_dict))
+	_check("...and the debrief said so rather than showing empty payouts", said_voided)
+
+	# The rewind copies fields across by hand. This is what catches one being
+	# missed when a field is added to to_dict() later.
+	var snap := cm.state.to_dict()
+	cm.state.award(777)
+	cm.state.squad_name = "SCRATCH"
+	cm.state.restore_from(snap)
+	_check("restore_from puts a campaign back exactly as it was",
+		JSON.stringify(cm.state.to_dict()) == JSON.stringify(snap),
+		"squad_name=%s" % cm.state.squad_name)
 
 	# ── WIN ──────────────────────────────────────
 	var final_op: MissionDefinition = cm.missions.back()
@@ -139,8 +193,18 @@ func _init() -> void:
 	_check("back at base, the debrief says MISSION COMPLETE", debrief != null and debrief.visible
 		and _says(debrief, "MISSION COMPLETE"))
 	_check("...shows the compute it paid", debrief != null and _says(debrief, "+%d" % paid))
-	_check("...and that the campaign is won", debrief != null and _says(debrief, "CAMPAIGN WON"))
 	_check("...with a card for you", debrief != null and _says(debrief, "YOU"))
+	# The end of the campaign is its own screen now, after the results and
+	# after anything the operation unlocked: CONTINUE walks them.
+	var walked := 0
+	while debrief != null and debrief.visible and not _says(debrief, "CAMPAIGN WON") and walked < 4:
+		debrief.advance()
+		await process_frame
+		walked += 1
+	_check("...and CONTINUE reaches a screen that says the campaign is won",
+		debrief != null and debrief.visible and _says(debrief, "CAMPAIGN WON"),
+		"after %d presses" % walked)
+	_check("...which tells you the terminal is open", debrief != null and _says(debrief, "TERMINAL"))
 	if debrief != null:
 		debrief.close()
 	cm.current_mission = final_op

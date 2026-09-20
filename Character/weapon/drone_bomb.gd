@@ -38,5 +38,5 @@ func _on_body_shape_entered(_body_rid: RID, body: Node, _body_shape_index: int, 
 	print ("BOMB TOUCHED!")
 	if body != self:
 		explode()
-		await get_tree().create_timer(0.75).timeout
+		await get_tree().create_timer(0.75, false).timeout
 		queue_free()

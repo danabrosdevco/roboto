@@ -64,5 +64,7 @@ script = ExtResource("1_plan")
 title = "Squad orders"
 question = "Four rifles against a dug-in garrison (2 shotguns, 2 rifles, 1 chaser), 35m out. Which order gets the most out of them: pushing in, focusing a target, the player's tap onto the enemy, or holding at range and trading shots?"
 matchups = Array[Resource]([SubResource("M1"), SubResource("M2"), SubResource("M3"), SubResource("M4")])
+site = Vector3(0, 0, 0)
+site_heading = 0.0
 repeats_override = 0
 speed = 2.0

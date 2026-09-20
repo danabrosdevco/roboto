@@ -129,9 +129,15 @@ func _init() -> void:
 		kills.size() == 1 and kills[0]["vic"]["side"] == "enemy" and kills[0]["w"] != "unknown",
 		str(kills))
 	var hurt := _of(events, "damage").filter(func(e): return e["vic"]["side"] == "player")
+	# What a hit COSTS is a tuning number and has already moved once (a third,
+	# then a half), so read the scale off the player rather than restating it.
+	# What is being checked is that the event carries both the raw hit and what
+	# it actually took off, not that the dial sits at any one value.
+	var want := int(round(30.0 * player.damage_taken_scale))
 	_check("hits on the player say what hit them, and what it cost after scaling",
 		hurt.size() == 2 and hurt[0]["atk"]["side"] == "enemy" and hurt[0]["atk"]["kind"] != ""
-		and int(hurt[0]["raw"]) == 30 and int(hurt[0]["dmg"]) == 10, str(hurt))
+		and int(hurt[0]["raw"]) == 30 and int(hurt[0]["dmg"]) == want,
+		"%s (expected %d off a raw 30)" % [str(hurt), want])
 	var death := _of(events, "player_death")
 	_check("the death names its killer and the damage before it",
 		death.size() == 1 and death[0]["killer"]["side"] == "enemy" and death[0]["recent"].size() >= 1)

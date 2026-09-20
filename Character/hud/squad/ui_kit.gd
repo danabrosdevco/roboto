@@ -95,12 +95,15 @@ static func card(border: Color, on_click: Callable, hover: Callable, pad: float 
 
 ## A baked icon at its own size, tinted. Null textures give an empty box of
 ## the same size, so a layout never jumps when an icon is missing.
-static func icon(tex: Texture2D, tint: Color, size: Vector2) -> TextureRect:
+## `fit` scales the art down to the box instead of drawing it at its own size
+## and cropping: how a larger icon (the outline cuts, "m" and "l") is shown
+## small. Without it a 64px icon in a 40px box loses its edges.
+static func icon(tex: Texture2D, tint: Color, size: Vector2, fit: bool = false) -> TextureRect:
 	var t := TextureRect.new()
 	t.texture = tex
 	t.custom_minimum_size = size
 	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	t.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED if fit else TextureRect.STRETCH_KEEP_CENTERED
 	t.modulate = tint
 	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return t

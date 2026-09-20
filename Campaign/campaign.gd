@@ -86,6 +86,23 @@ var departure_exits: Array[LevelExit] = []
 
 # True while the player is on a mission map rather than at base.
 var in_mission: bool = false
+# The campaign as it stood when this deployment left base, for putting back if
+# the player dies out there. Empty outside a mission, and empty for a level
+# launched directly — see the void in extract().
+var _pre_run: Dictionary = {}
+
+# Resources a Reclaimer has ground out of enemy wrecks on this mission. Held
+# here rather than paid as it comes in, so the debrief can show it as its own
+# line and a mission abandoned halfway still pays it the same way.
+var salvage_this_mission: int = 0
+
+
+## A Reclaimer finished grinding a wreck worth `amount`. Counted only on a
+## mission: a fight in the lab, or anything at base, pays nobody.
+func add_salvage(amount: int) -> void:
+	if not in_mission or amount <= 0:
+		return   # not on a mission, or a wreck worth nothing: nothing to pay out
+	salvage_this_mission += amount
 
 
 func _ready() -> void:
@@ -176,6 +193,39 @@ func _repair_roster() -> void:
 			state.player_record.display_name = CampaignState.PLAYER_DEFAULT_NAME
 			state.player_record.set_chassis(frame, catalogue)
 	_return_unusable_player_kit()
+	_return_unfittable_squad_kit()
+
+
+# Anything fitted to a SQUADMATE that its frame no longer takes comes off and
+# goes back to stores. A rule can change under a save — nanites stopped fitting
+# frames that drive — and the alternative is a module that quietly still works
+# on a frame the armourer will not let you fit it to.
+#
+# In place, for the same reason as the player's version below: loading should
+# not write the save on its own.
+func _return_unfittable_squad_kit() -> void:
+	if catalogue == null:
+		return
+	for rec in state.roster:
+		var frame := catalogue.chassis_def(rec.chassis_id)
+		if frame == null:
+			continue   # repaired above, or a frame this build no longer has
+		var changed := false
+		for field in ["weapon_ids", "equipment_ids", "module_ids"]:
+			var ids: Array = rec.get(field)
+			for i in ids.size():
+				var id_value: StringName = ids[i]
+				if id_value == &"":
+					continue
+				var item: ItemDefinition = catalogue.item(id_value)
+				if item != null and not frame.takes(item):
+					ids[i] = &""
+					state.armoury.add(id_value)
+					changed = true
+					print("[Campaign] %s no longer fits %s (%s); returned it to stores."
+						% [item.display_name, rec.display_name, frame.display_name])
+		if changed:
+			rec.recompute_stats(catalogue)
 
 
 # Anything fitted to the PLAYER that no longer fits the player comes off and
@@ -491,6 +541,9 @@ func begin_deploy() -> void:
 			push_warning("Campaign: could not save before deploying to '%s'. Purchases made since the last extraction are at risk if this mission does not finish cleanly." % (current_mission.id if current_mission != null else &"?"))
 
 	in_mission = true
+	salvage_this_mission = 0
+	# What to put back if you die out there. See the void in extract().
+	_pre_run = state.to_dict()
 	if current_mission != null:
 		deployed.emit(current_mission)
 
@@ -518,6 +571,8 @@ func on_level_loaded(level: Node) -> void:
 		current_mission = debug_mission
 		state.selected_mission_id = debug_mission.id
 		in_mission = true
+		salvage_this_mission = 0
+		_pre_run = state.to_dict()
 		print("[Campaign] debug_mission active: '%s'. Base flow was skipped." % debug_mission.id)
 
 	if not in_mission and debug_mission == null and base_level != null:
@@ -662,6 +717,10 @@ func _write_back_player() -> void:
 		body.confirmed_kills = 0
 	if "kills_by_kind" in body:
 		record.take_kills_by_kind(body.kills_by_kind)
+	if "revives" in body:
+		record.revives_this_mission = body.revives
+		record.revives += body.revives
+		body.revives = 0
 	record.missions_survived += 1
 
 
@@ -711,6 +770,13 @@ func extract(success: bool = true) -> Dictionary:
 			compute += state.claim_compute(key, int(o["compute"]))
 	result["objective_reward"] = objective_reward
 
+	# Salvage pays the same way: the wrecks were ground whether or not the
+	# mission came off.
+	var salvage := salvage_this_mission
+	salvage_this_mission = 0
+	state.award(salvage)
+	result["salvage"] = salvage
+
 	if success and current_mission != null:
 		state.award(current_mission.reward_resources)
 		result["reward"] = current_mission.reward_resources
@@ -743,12 +809,46 @@ func extract(success: bool = true) -> Dictionary:
 	result["resources_after"] = state.available()
 	result["squad"] = _debrief_squad()
 
+	# ─────────────────────────────────────────────
+	# A DEATH DOES NOT COUNT.
+	#
+	# Dying used to cost you the run AND the squad: five robots written off in
+	# one bad push, with nothing to show for it, and the only way back was to
+	# rebuild them. So a failed run is now VOIDED — the campaign goes back to
+	# the dictionary taken at deployment, which is the same one save_to_disk
+	# writes, so the roster, the stores, the armoury, the XP and the compute
+	# are all exactly as you left base with. You lost the time, not the squad.
+	#
+	# The DEBRIEF still tells you what happened out there, wrecks and all: it
+	# holds the record objects this run used, and those are discarded by the
+	# restore rather than written back. What it must not do is claim you were
+	# paid, so the payouts are zeroed here to match the state the player
+	# actually goes home with.
+	#
+	# Nothing to restore (a level launched directly, no begin_deploy) means the
+	# old behaviour, because there is no "before" to go back to.
+	var rewound := not success and not _pre_run.is_empty()
+	if rewound:
+		state.restore_from(_pre_run)
+		result["rewound"] = true
+		result["reward"] = 0
+		result["objective_reward"] = 0
+		result["compute"] = 0
+		result["resources_after"] = result["resources_before"]
+		result["ranked_up"] = []
+	_pre_run = {}
+
 	extracted.emit(current_mission, result)
 	in_mission = false
 	# Home repaired, whatever happened out there — only the destroyed need a
 	# rebuild. After extracted, so anything reading the mission's damage (the
 	# playtest data) saw it first; before the save below, so it sticks.
-	state.heal_survivors()
+	#
+	# Skipped on a voided run: those records came back from the snapshot in the
+	# state they deployed in, and healing them here would quietly rebuild a
+	# wreck you are meant to pay for.
+	if not rewound:
+		state.heal_survivors()
 
 	# Clear the selection HERE rather than in on_returned_to_base(), because
 	# World calls _register_exits() — and therefore _push_destination() — before

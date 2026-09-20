@@ -1,10 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=6 format=3 uid="uid://i3o5u526bc1b"]
 
 [ext_resource type="Script" path="res://Character/weapon/ai_weapon.gd" id="1_ubsma"]
-[ext_resource type="PackedScene" path="res://Character/weapon/tracer.tscn" id="2_cachd"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_cachd"]
 [ext_resource type="PackedScene" path="res://Character/weapon/models/machine_gun_model.tscn" id="3_uhoa6"]
-[ext_resource type="PackedScene" path="res://Character/weapon/muzzle_flash.tscn" id="4_6sxv4"]
-[ext_resource type="AudioStream" path="res://sounds/sfx/weapons/ar15/rifle_fire_1 (3).wav" id="5_0jsj1"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="4_6sxv4"]
+[ext_resource type="AudioStream" uid="uid://bk8kw2165y7rv" path="res://sounds/sfx/weapons/ar15/rifle_fire_1 (3).wav" id="5_0jsj1"]
 
 [node name="ai_weapon_machine_gun" type="Node3D" node_paths=PackedStringArray("muzzle_flash", "muzzle_origin", "shot_audio")]
 script = ExtResource("1_ubsma")
@@ -13,7 +13,7 @@ fire_cooldown = 0.13
 base_damage = 15
 min_damage = 9
 damage_falloff_start = 30.0
-max_effective_range = 75.0
+max_effective_range = 99.0
 ai_spread_mrad = 24.0
 suppression_per_shot = 5.0
 near_miss_radius = 3.0
@@ -38,6 +38,6 @@ visible = false
 
 [node name="Shot" type="AudioStreamPlayer3D" parent="."]
 stream = ExtResource("5_0jsj1")
-volume_db = -3.0
-unit_size = 30.0
-pitch_scale = 0.78
+volume_db = -13.0
+unit_size = 17.0
+attenuation_filter_cutoff_hz = 3600.0

@@ -22,6 +22,7 @@ spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
 reinforcement_tag = &""
+wake_after_kills = 0
 
 [sub_resource type="Resource" id="S_pack"]
 script = ExtResource("2_espec")
@@ -36,6 +37,7 @@ spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
 reinforcement_tag = &""
+wake_after_kills = 0
 
 [sub_resource type="Resource" id="S_ward"]
 script = ExtResource("2_espec")
@@ -50,6 +52,7 @@ spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
 reinforcement_tag = &""
+wake_after_kills = 0
 
 [resource]
 script = ExtResource("1_missdef")
@@ -61,9 +64,9 @@ map_position = Vector2(-80, -40)
 enemy_force = Array[ExtResource("2_espec")]([SubResource("S_line"), SubResource("S_pack"), SubResource("S_ward")])
 replace_level_enemies = true
 active_objectives = Array[StringName]([&"arena_clear", &"arena_extract"])
-reward_resources = 110
+reward_resources = 150
 compute_reward = 1
-unlocks = Array[StringName]([])
+unlocks = Array[StringName]([&"nanite_reboot", &"utility_harness"])
 squad_size = 3
 repeatable = false
 requires = Array[StringName]([&"arena_4_pack_hunt"])

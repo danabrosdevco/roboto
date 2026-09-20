@@ -1,10 +1,18 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="PackedScene" path="res://Character/weapon/grenade_hud_weapon.tscn" id="1_base"]
 [ext_resource type="PackedScene" path="res://Character/weapon/hatchling/hatchling_canister.tscn" id="2_proj"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/hatchling_canister_model.tscn" id="3_model"]
 
-[node name="Hatchling" instance=ExtResource("1_base")]
+[node name="Hatchling" node_paths=PackedStringArray("viewmodel") instance=ExtResource("1_base")]
 grenade_scene = ExtResource("2_proj")
 ammo_type = &"hatchling"
 display_name = "Hatchling"
 equipment_order = 3
+viewmodel = NodePath("Canister")
+
+[node name="Frag_West" parent="."]
+visible = false
+
+[node name="Canister" parent="." instance=ExtResource("3_model")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0237351, -0.473094)

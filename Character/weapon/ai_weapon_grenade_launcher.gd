@@ -2,7 +2,7 @@ extends AIWeapon
 class_name AIWeaponGrenadeLauncher
 
 # ─────────────────────────────────────────────
-# GRENADE DROP-LAUNCHER — the gunship's ordnance.
+# GRENADE DROP-LAUNCHER — the quadcopter bomber's ordnance.
 #
 # Extends AIWeapon rather than AIWorldWeapon. There are two weapon base classes
 # in this project and only AIWeapon is the one Enemy.weapon is typed against;
@@ -36,7 +36,7 @@ class_name AIWeaponGrenadeLauncher
 @export var fuse_override: float = 0.0
 ## FROM THE GROUND. Above zero, each round leaves the muzzle at this speed on
 ## the low ballistic arc that comes down on the target — a launcher on a
-## turret, lobbing over cover. Zero is the gunship's drop from altitude.
+## turret, lobbing over cover. Zero is the quadcopter bomber's drop from altitude.
 @export var lob_speed: float = 0.0
 ## Goes off on the first thing it hits instead of on the fuse: a launched
 ## round, not a hand grenade rolling about at the far end.
@@ -57,8 +57,8 @@ func _release_salvo(weapon_target: Vector3) -> void:
 	for i in maxi(1, salvo):
 		_release_one(weapon_target, i)
 		if salvo_spacing > 0.0 and i < salvo - 1:
-			await get_tree().create_timer(salvo_spacing).timeout
-			# The launcher can be freed mid-salvo when the gunship is shot down.
+			await get_tree().create_timer(salvo_spacing, false).timeout
+			# The launcher can be freed mid-salvo when the quadcopter bomber is shot down.
 			if not is_inside_tree():
 				return
 
@@ -110,7 +110,7 @@ func _spawn_charge(origin: Vector3) -> Node:
 	var grenade := grenade_scene.instantiate()
 	# setup() BEFORE the tree, same contract the thrown grenade uses — the
 	# projectile hands its thrower to the Explosion, which is what makes a
-	# grenade kill count for somebody and what stops the gunship blast-killing
+	# grenade kill count for somebody and what stops the quadcopter bomber blast-killing
 	# its own escorts at full damage.
 	var shooter := _owner_body()
 	if grenade.has_method("setup"):
@@ -180,7 +180,7 @@ func _lob_velocity(origin: Vector3, weapon_target: Vector3) -> Vector3:
 
 
 # Lead the target by however long the round spends falling. Without this the
-# gunship drops on where the target WAS and never hits anything that moves.
+# bomber drops on where the target WAS and never hits anything that moves.
 func _release_velocity(origin: Vector3, weapon_target: Vector3, index: int) -> Vector3:
 	var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 	var drop: float = maxf(origin.y - weapon_target.y, 0.0)

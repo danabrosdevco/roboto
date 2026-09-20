@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Character/weapon/ai_weapon.gd" id="1_cg26h"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_fgv2f"]
-[ext_resource type="PackedScene" uid="uid://vwg10a8rgqjf" path="res://3d_assets/gun_pack/Blends/Shotgun_2.blend" id="3_nn2c5"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/pump_shotgun_model.tscn" id="3_nn2c5"]
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="4_j4rxt"]
 [ext_resource type="AudioStream" uid="uid://ber1keqk8ky8h" path="res://sounds/sfx/weapons/shotgun/shotgun_fire_1 (3).wav" id="5_0gjjf"]
 [ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="6_nqw0o"]

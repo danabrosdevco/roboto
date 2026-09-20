@@ -1,15 +1,61 @@
-[gd_scene load_steps=4 format=3 uid="uid://big5ms541m2j7"]
+[gd_scene load_steps=13 format=3 uid="uid://big5ms541m2j7"]
 
 [ext_resource type="Script" path="res://Env/world_objects/level_exit.gd" id="1_l5cdk"]
+[ext_resource type="Shader" path="res://Env/world_objects/exit_beacon.gdshader" id="2_beacon"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_fxyc7"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7d6oy"]
-albedo_color = Color(0.607843, 0.607843, 0.607843, 0.494118)
+[sub_resource type="ShaderMaterial" id="VolumeMat"]
+shader = ExtResource("2_beacon")
+shader_parameter/tint = Color(0.45, 0.95, 0.62, 1)
+shader_parameter/pulse_hz = 0.5
+shader_parameter/low = 0.55
+shader_parameter/energy = 0.9
+shader_parameter/alpha = 0.3
+shader_parameter/volume = 1.0
 
-[node name="LevelExit" type="Node3D" node_paths=PackedStringArray("area") groups=["levelexit"]]
+[sub_resource type="ShaderMaterial" id="BeaconMat"]
+shader = ExtResource("2_beacon")
+shader_parameter/tint = Color(1, 0.68, 0.18, 1)
+shader_parameter/pulse_hz = 0.9
+shader_parameter/low = 0.15
+shader_parameter/energy = 2.4
+shader_parameter/alpha = 1.0
+shader_parameter/volume = 0.0
+
+[sub_resource type="ShaderMaterial" id="ChevronMat"]
+shader = ExtResource("2_beacon")
+shader_parameter/tint = Color(1, 0.68, 0.18, 1)
+shader_parameter/pulse_hz = 0.45
+shader_parameter/low = 0.3
+shader_parameter/energy = 1.4
+shader_parameter/alpha = 0.95
+shader_parameter/volume = 0.0
+
+[sub_resource type="StandardMaterial3D" id="FrameMat"]
+albedo_color = Color(0.12, 0.15, 0.13, 1)
+metallic = 0.4
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="PostMesh"]
+size = Vector3(0.07, 1, 0.07)
+
+[sub_resource type="BoxMesh" id="RailMesh"]
+size = Vector3(1, 0.07, 0.07)
+
+[sub_resource type="BoxMesh" id="BeaconMesh"]
+size = Vector3(0.12, 0.1, 0.12)
+
+[sub_resource type="BoxMesh" id="PadMesh"]
+size = Vector3(1, 0.02, 1)
+
+[sub_resource type="BoxMesh" id="ChevronMesh"]
+size = Vector3(0.34, 0.015, 0.05)
+
+[node name="LevelExit" type="Node3D" node_paths=PackedStringArray("area", "live_parts") groups=["levelexit"]]
 script = ExtResource("1_l5cdk")
 area = NodePath("Area3D")
+live_parts = [NodePath("ChevronN"), NodePath("ChevronE"), NodePath("ChevronS"), NodePath("ChevronW"), NodePath("BeaconA"), NodePath("BeaconB"), NodePath("BeaconC"), NodePath("BeaconD")]
 
 [node name="Area3D" type="Area3D" parent="."]
 
@@ -17,6 +63,123 @@ area = NodePath("Area3D")
 shape = SubResource("BoxShape3D_fxyc7")
 
 [node name="CSGBox3D" type="CSGBox3D" parent="."]
-material = SubResource("StandardMaterial3D_7d6oy")
+material = SubResource("VolumeMat")
+
+[node name="Pad" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.49, 0)
+material_override = SubResource("VolumeMat")
+mesh = SubResource("PadMesh")
+
+[node name="PostA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.5)
+material_override = SubResource("FrameMat")
+mesh = SubResource("PostMesh")
+
+[node name="PostB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, -0.5)
+material_override = SubResource("FrameMat")
+mesh = SubResource("PostMesh")
+
+[node name="PostC" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, 0.5)
+material_override = SubResource("FrameMat")
+mesh = SubResource("PostMesh")
+
+[node name="PostD" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0.5)
+material_override = SubResource("FrameMat")
+mesh = SubResource("PostMesh")
+
+[node name="RailFront" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -0.5)
+material_override = SubResource("FrameMat")
+mesh = SubResource("RailMesh")
+
+[node name="RailBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0.5)
+material_override = SubResource("FrameMat")
+mesh = SubResource("RailMesh")
+
+[node name="RailLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -0.5, 0.5, 0)
+material_override = SubResource("FrameMat")
+mesh = SubResource("RailMesh")
+
+[node name="RailRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0.5, 0.5, 0)
+material_override = SubResource("FrameMat")
+mesh = SubResource("RailMesh")
+
+[node name="BeaconA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.55, -0.5)
+material_override = SubResource("BeaconMat")
+mesh = SubResource("BeaconMesh")
+
+[node name="BeaconB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.55, -0.5)
+material_override = SubResource("BeaconMat")
+mesh = SubResource("BeaconMesh")
+
+[node name="BeaconC" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.55, 0.5)
+material_override = SubResource("BeaconMat")
+mesh = SubResource("BeaconMesh")
+
+[node name="BeaconD" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.55, 0.5)
+material_override = SubResource("BeaconMat")
+mesh = SubResource("BeaconMesh")
+
+[node name="ChevronN" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.46, 0)
+
+[node name="BarL" type="MeshInstance3D" parent="ChevronN"]
+transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.7071, 0, 0.7071, -0.06, 0, -0.38)
+material_override = SubResource("ChevronMat")
+mesh = SubResource("ChevronMesh")
+
+[node name="BarR" type="MeshInstance3D" parent="ChevronN"]
+transform = Transform3D(0.7071, 0, -0.7071, 0, 1, 0, 0.7071, 0, 0.7071, 0.06, 0, -0.38)
+material_override = SubResource("ChevronMat")
+mesh = SubResource("ChevronMesh")
+
+[node name="ChevronE" type="Node3D" parent="."]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, -0.46, 0)
+
+[node name="BarL" type="MeshInstance3D" parent="ChevronE"]
+transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.7071, 0, 0.7071, -0.06, 0, -0.38)
+material_override = SubResource("ChevronMat")
+mesh = SubResource("ChevronMesh")
+
+[node name="BarR" type="MeshInstance3D" parent="ChevronE"]
+transform = Transform3D(0.7071, 0, -0.7071, 0, 1, 0, 0.7071, 0, 0.7071, 0.06, 0, -0.38)
+material_override = SubResource("ChevronMat")
+mesh = SubResource("ChevronMesh")
+
+[node name="ChevronS" type="Node3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, -0.46, 0)
+
+[node name="BarL" type="MeshInstance3D" parent="ChevronS"]
+transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.7071, 0, 0.7071, -0.06, 0, -0.38)
+material_override = SubResource("ChevronMat")
+mesh = SubResource("ChevronMesh")
+
+[node name="BarR" type="MeshInstance3D" parent="ChevronS"]
+transform = Transform3D(0.7071, 0, -0.7071, 0, 1, 0, 0.7071, 0, 0.7071, 0.06, 0, -0.38)
+material_override = SubResource("ChevronMat")
+mesh = SubResource("ChevronMesh")
+
+[node name="ChevronW" type="Node3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, -0.46, 0)
+
+[node name="BarL" type="MeshInstance3D" parent="ChevronW"]
+transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.7071, 0, 0.7071, -0.06, 0, -0.38)
+material_override = SubResource("ChevronMat")
+mesh = SubResource("ChevronMesh")
+
+[node name="BarR" type="MeshInstance3D" parent="ChevronW"]
+transform = Transform3D(0.7071, 0, -0.7071, 0, 1, 0, 0.7071, 0, 0.7071, 0.06, 0, -0.38)
+material_override = SubResource("ChevronMat")
+mesh = SubResource("ChevronMesh")
 
 [connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]

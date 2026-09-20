@@ -60,7 +60,10 @@ func execute(context: AIEquipment.EquipmentContext) -> void:
 		return
 
 	var grenade = grenade_scene.instantiate() as AIGrenadeProjectile
-	get_tree().current_scene.add_child(grenade)
+	# The running scene, or the thrower's level when the tree was started by a
+	# script and has none (the tests, a lab run from the command line).
+	var host: Node = get_tree().current_scene if get_tree().current_scene != null else context.owner_ai.get_parent()
+	host.add_child(grenade)
 
 	# Spawn at the AI's position, slightly above head height
 	var spawn_pos = context.owner_ai.global_position + Vector3.UP * 1.5

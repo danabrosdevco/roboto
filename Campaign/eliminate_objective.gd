@@ -1,6 +1,10 @@
 extends MissionObjective
 class_name EliminateObjective
 
+# By path rather than class_name: this is loaded while the level is loading,
+# and a global class an open editor has not indexed yet takes the level with it.
+const _KillKinds := preload("res://Campaign/kill_kinds.gd")
+
 # ─────────────────────────────────────────────
 # ELIMINATE OBJECTIVE — destroy specific targets, or clear an area.
 #
@@ -15,6 +19,12 @@ class_name EliminateObjective
 # Everything hostile inside this counts, captured once when the objective
 # activates so reinforcements walking in later don't extend the objective.
 @export var zone: Area3D
+## Whole squads that have to go, by the callsign on the mission's
+## EnemySquadSpec ("HIVE-SOUTH"). Exact, and it needs no geometry in the level:
+## a zone round a hive would also count everything the hive is busy hatching,
+## and would have to be drawn to fit a garrison it knows nothing about. The
+## squad already IS the unit of "these ones" — a nest is a squad of one.
+@export var squad_callsigns: Array[StringName] = []
 @export var poll_interval: float = 0.5
 # 0 means all of them.
 @export var required_kills: int = 0
@@ -49,6 +59,14 @@ func _capture_targets() -> void:
 			if body is Enemy and Enums.are_hostile(Enums.Factions.PLAYER, body.faction):
 				if not _watched.has(body):
 					_watched.append(body)
+	for callsign in squad_callsigns:
+		for node in get_tree().get_nodes_in_group("squads"):
+			var squad := node as Squad
+			if squad == null or StringName(squad.callsign) != callsign:
+				continue
+			for member in squad.squad_members:
+				if member != null and is_instance_valid(member) and not _watched.has(member):
+					_watched.append(member)
 	progress_changed.emit(self, 0, maxi(1, target_count()))
 
 

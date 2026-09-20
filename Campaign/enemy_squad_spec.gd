@@ -77,6 +77,13 @@ enum Posture {
 # Held back until a director calls for them. RESERVE squads are spawned but
 # inert; this is the hook reinforcements will hang off.
 @export var reinforcement_tag: StringName = &""
+## Wakes itself once this many hostiles have been lost, instead of waiting for
+## an objective of that name. 0 leaves it on the objective alone.
+##
+## Counted across the whole enemy force, downs and destructions together, so
+## "after ten of ours are down" is one number rather than a table of triggers.
+## The tag still has to be set: it is what the wave is called in the log.
+@export var wake_after_kills: int = 0
 
 
 ## How many bodies this spec describes, whichever form it was authored in.

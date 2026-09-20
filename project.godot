@@ -44,6 +44,7 @@ campaign=""
 
 [gui]
 
+theme/custom="res://Character/hud/ui_theme.tres"
 theme/custom_font="res://2d_assets/fonts/DS-Digital/DS-DIGII.TTF"
 
 [importer_defaults]

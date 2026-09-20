@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" uid="uid://cnest00000001" path="res://Character/characters/ai/enemy_nest.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"nest"
+display_name = "Nest"
+description = "Enemy building. Bolted down, unarmed, and busy: once the shooting starts it opens its hatch every ten to twenty seconds and puts out a chaser or a leaper, up to six at a time. Not something to leave standing behind you."
+scene = ExtResource("2_scene")
+cost = 0
+purchasable = false
+supply = 0
+base_health = 500
+base_speed = 0.0
+base_accuracy = 0.0
+base_sensor_range = 60.0
+weapon_slots = 0
+built_in = "HATCH"
+turret = false
+vehicle = false
+drives = false
+equipment_slots = 0
+module_slots = 0
+required_rank = 0

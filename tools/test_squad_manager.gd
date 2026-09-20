@@ -49,7 +49,7 @@ func _run() -> void:
 	var b4 := _robot(cat, &"soldier", "Bravo-4", &"pistol")
 	var chaser := _robot(cat, &"chaser", "Chaser-1", &"")
 	chaser.benched = true
-	var wreck := _robot(cat, &"hopper", "Hopper-1", &"")
+	var wreck := _robot(cat, &"leaper", "Hopper-1", &"")
 	wreck.benched = true
 	wreck.status = SoldierRecord.Status.DESTROYED
 	wreck.damage = wreck.max_health
@@ -86,6 +86,26 @@ func _run() -> void:
 	_check("an unarmed robot says so on its card", _says(_card("BRAVO-3"), "NO WEAPON"))
 	_check("...an armed one that it is ready", _says(_card("BRAVO-1"), "READY"))
 	_check("...and a wreck that it is destroyed", _says(_card("HOPPER-1"), "DESTROYED"))
+
+	# ── TEAMS ────────────────────────────────────
+	# One squad until there is a vehicle, so until then no card names a team.
+	_check("with nothing but robots on foot, no card names a team", not _says(_card("BRAVO-1"), "INFANTRY"))
+	var rover := _robot(cat, &"rover", "Rover-1", &"machine_gun")
+	rover.benched = true
+	squad.rebuild()
+	await process_frame
+	_check("with a rover in the roster, each card says which team it goes out in",
+		_says(_card("BRAVO-1"), "INFANTRY") and _says(_card("CHASER-1"), "INFANTRY")
+		and _says(_card("ROVER-1"), "ARMOR"))
+	_check("...all but yours: you command both", not _says(_card("PLAYER"), "INFANTRY")
+		and not _says(_card("PLAYER"), "ARMOR"))
+	var rover_card := _card("ROVER-1")
+	var tag := _label_in(rover_card, "ARMOR")
+	_check("...in the card's top-right corner", tag != null and tag.get_parent() == rover_card
+		and absf(tag.get_rect().end.x - (rover_card.size.x - 8.0)) < 1.5 and absf(tag.position.y - 8.0) < 1.5,
+		"tag %s in a card %s" % [tag.get_rect() if tag != null else Rect2(), rover_card.size if rover_card != null else Vector2()])
+	state.roster.erase(rover)
+	squad.rebuild()
 	_check("no prices anywhere on the squad page", not _says(squad, str(cat.item(&"m4").cost)))
 
 	_click(_card("BRAVO-3"))
@@ -257,6 +277,18 @@ func _panel_with(node: Node, text: String) -> Control:
 		return up as Control
 	for c in node.get_children():
 		var found := _panel_with(c, text)
+		if found != null:
+			return found
+	return null
+
+
+func _label_in(node: Node, text: String) -> Label:
+	if node == null:
+		return null
+	if node is Label and (node as Label).text == text:
+		return node
+	for c in node.get_children():
+		var found := _label_in(c, text)
 		if found != null:
 			return found
 	return null

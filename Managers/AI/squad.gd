@@ -32,6 +32,15 @@ enum SquadObjective { NONE, ADVANCE, DEFEND, WITHDRAW, ATTACK, FOLLOW, PATROL }
 # True if this squad answers to the player's command layer.
 @export var player_commandable: bool = false
 
+# ── TEAMS ─────────────────────────────────────
+# The player's robots go into the field as up to two squads — the ones on foot,
+# and the vehicles — so a rover can be sent one way while the infantry goes
+# another. SquadSpawner splits the roster by frame. Empty on every squad that
+# is not one of the player's teams.
+const TEAM_INFANTRY := &"INFANTRY"
+const TEAM_ARMOR := &"ARMOR"
+var team: StringName = &""
+
 # Assign a SquadObjectivePoint in the inspector to give the squad
 # a destination before contact is made.
 @export var target_objective: SquadObjectivePoint
@@ -61,10 +70,12 @@ var follow_leader: Node3D = null
 #    taken from the leader's MOVEMENT and latched: stand still and turn on the
 #    spot and the squad ignores you.
 #
-# 2. _formation_offset derives its lateral axis from (objective_position -
+# 2. _formation_offset derived its lateral axis from (objective_position -
 #    get_center()). Standing at the anchor makes that vector near zero, so its
 #    direction flips frame to frame and every soldier's slot spins around them.
-#    It now falls back to the latched heading instead.
+#    It now takes the latched heading while following, and otherwise the
+#    way the squad was sent, taken once when the order is given
+#    (_formation_axis, _latch_axis).
 #
 # Minimum seconds between re-issues, whatever the distance. Backstop against
 # a leader jittering across the threshold.
@@ -364,6 +375,10 @@ func _tick_defend() -> void:
 func _defend_post_for(soldier: Soldier) -> Vector3:
 	if _defend_posts.has(soldier):
 		return _defend_posts[soldier]
+	if not soldier.takes_cover():
+		var parkers: Array = get_orderable_soldiers().filter(func(s): return not s.takes_cover())
+		_defend_posts[soldier] = _parking_post(soldier, parkers)
+		return _defend_posts[soldier]
 	var cover := soldier.find_best_cover_point()
 	var post: Vector3
 	if cover != null and cover.global_position.distance_to(objective_position) < 25.0:
@@ -500,7 +515,7 @@ func _hold_follow_formation() -> void:
 			continue
 
 		robot.always_active = true
-		var slot: Vector3 = objective_position + _formation_offset(ai)
+		var slot: Vector3 = _on_ground(objective_position + _formation_offset(ai), robot)
 		var gap: float = robot.global_position.distance_to(slot)
 
 		if gap <= robot.slot_tolerance(follow_slot_tolerance):
@@ -522,6 +537,19 @@ func _hold_follow_formation() -> void:
 				(robot as Soldier).change_soldier_state(Soldier.SoldierState.NONE)
 			else:
 				robot.move_to(slot)
+
+
+# A follow slot takes its height from the leader, and on a slope the ground
+# under a slot a few metres away is not at the leader's height. Measured against
+# that, a robot standing in its slot was a couple of metres "out" of it and
+# walked about trying to reach a point in the air: worst for a robot that trails
+# the line (formation_trail), six metres further down the hill. On the navmesh,
+# a slot is somewhere a robot can actually stand.
+func _on_ground(slot: Vector3, robot: Node) -> Vector3:
+	if not (robot is Enemy) or (robot as Enemy).nav_agent == null:
+		return slot
+	var p := NavigationServer3D.map_get_closest_point((robot as Enemy).nav_agent.get_navigation_map(), slot)
+	return slot if p == Vector3.ZERO else p
 
 
 # Latched from the leader's actual motion, not their facing. Turning on the spot
@@ -560,7 +588,7 @@ func _follow_anchor(delta: float) -> Vector3:
 func _issue_follow_orders() -> void:
 	for ai in get_orderable_members():
 		ai.always_active = true
-		var slot: Vector3 = objective_position + _formation_offset(ai)
+		var slot: Vector3 = _on_ground(objective_position + _formation_offset(ai), ai)
 		# Already standing in their slot — stop, don't re-path. Re-issuing a
 		# move to a spot you occupy is what produces the pivot-in-place shuffle.
 		var tolerance: float = (ai as Enemy).slot_tolerance(follow_slot_tolerance) if ai is Enemy else follow_slot_tolerance
@@ -634,6 +662,7 @@ func _tick_patrol(delta: float) -> void:
 	var next_point := patrol_route.point_at(patrol_index)
 	if next_point != null:
 		objective_position = next_point.global_position
+		_latch_axis()
 		_issue_patrol_orders(true)
 
 
@@ -819,6 +848,18 @@ func get_center() -> Vector3:
 func get_display_name() -> String:
 	return callsign if callsign != "" else String(name)
 
+## "INFANTRY", "ARMOR" — or the callsign, for a squad that is not one of the
+## player's teams.
+func team_name() -> String:
+	return String(team) if team != &"" else get_display_name().to_upper()
+
+
+## A team's callsign from the squad's name: the infantry carry it as it is, the
+## armour add a word, so a toast or a log line says which team it means.
+static func callsign_for(squad_name: String, team_id: StringName) -> String:
+	return "%s ARMOR" % squad_name if team_id == TEAM_ARMOR else squad_name
+
+
 func notify_roster_changed() -> void:
 	roster_changed.emit(self)
 
@@ -851,6 +892,7 @@ func set_objective(
 
 	objective = new_objective
 	objective_position = position
+	_latch_axis()
 	objective_changed.emit(self)
 
 	# The squad's own reasoning doesn't interrupt a firefight with a move order.
@@ -927,6 +969,21 @@ func _issue_attack_orders() -> void:
 # a clump that a single grenade deletes.
 # ─────────────────────────────────────────────
 const FORMATION_SPACING: float = 2.6
+var _axis := Vector3.ZERO   # see _formation_axis and _latch_axis
+
+## Where the members who walk in the line are, leaving out any that trail it
+## (formation_trail). The whole squad when nobody walks in it.
+func line_center(members: Array = get_orderable_members()) -> Vector3:
+	var sum := Vector3.ZERO
+	var n := 0
+	for m in members:
+		if m is Soldier and (m as Soldier).formation_trail > 0.0:
+			continue
+		if m is Node3D and is_instance_valid(m):
+			sum += (m as Node3D).global_position
+			n += 1
+	return sum / n if n > 0 else get_center()
+
 
 func _formation_offset(member: Node) -> Vector3:
 	var members = get_orderable_members()
@@ -934,18 +991,7 @@ func _formation_offset(member: Node) -> Vector3:
 	if idx < 0:
 		return Vector3.ZERO
 
-	var advance_dir = (objective_position - get_center())
-	advance_dir.y = 0.0
-	# Near the objective this vector collapses and its direction becomes noise,
-	# spinning every slot around. Fall back to the latched follow heading (or a
-	# fixed axis) so the formation holds its shape when the squad has arrived.
-	if advance_dir.length_squared() < 0.25:
-		if _follow_heading.length_squared() > 0.01:
-			advance_dir = _follow_heading
-		else:
-			advance_dir = Vector3.FORWARD
-	advance_dir = advance_dir.normalized()
-
+	var advance_dir := _formation_axis(members)
 	var lateral = advance_dir.cross(Vector3.UP).normalized()
 
 	# Slot order: centre, right, left, right2, left2 ...
@@ -955,7 +1001,57 @@ func _formation_offset(member: Node) -> Vector3:
 		slot = int((idx + 1) / 2)
 		if idx % 2 == 0:
 			slot = -slot
-	return lateral * (slot * FORMATION_SPACING)
+	var offset: Vector3 = lateral * (slot * _line_spacing(members))
+	# Anything that does not fight walks behind the line, not in it. In the
+	# slot itself, so the follow formation's every-frame slot check agrees with
+	# where it was sent; a robot heading anywhere else was re-ordered every frame.
+	if member is Soldier and (member as Soldier).formation_trail > 0.0:
+		offset -= advance_dir * (member as Soldier).formation_trail
+	return offset
+
+
+# HOW WIDE THE LINE STANDS.
+#
+# 2.6m between slots is right for something 0.6m across and nowhere near enough
+# for a rover: a 1.5m hull that counts as parked anywhere within its 3.5m
+# arrival radius lands in its neighbour's slot, and a pack of them spent the
+# whole approach shunting each other apart. The line takes its spacing from the
+# WIDEST frame in it rather than per-member, so the slots stay evenly spaced —
+# mixed spacing interleaves a soldier's slot inside a vehicle's and puts them
+# back in the same heap.
+func _line_spacing(members: Array) -> float:
+	var widest := FORMATION_SPACING
+	for m in members:
+		if m is Enemy:
+			widest = maxf(widest, (m as Enemy).formation_width())
+	return widest
+
+
+# Which way the line faces: the leader's heading when following, otherwise the
+# way the squad was sent, taken once when it was sent (_latch_axis).
+#
+# It used to be the way to the objective from the squad's own centre, fresh
+# every frame. Near the objective that is a metre or two long and points
+# wherever the robots happen to stand — past it, once they overshoot — so every
+# step anyone took turned the line, which moved the slots, which moved the
+# robots. Rifles hid it inside their slot tolerance; a Mechanic six metres
+# behind the line (formation_trail) was on a long enough lever that it ended up
+# at the front.
+func _formation_axis(_members: Array) -> Vector3:
+	if objective == SquadObjective.FOLLOW and _follow_heading.length_squared() > 0.01:
+		return _follow_heading.normalized()
+	if _axis == Vector3.ZERO:
+		_latch_axis()
+	return _axis
+
+
+func _latch_axis() -> void:
+	var to := objective_position - line_center()
+	to.y = 0.0
+	if to.length() > 1.0:
+		_axis = to.normalized()
+	elif _axis == Vector3.ZERO:
+		_axis = Vector3.FORWARD
 
 # ─────────────────────────────────────────────
 # PLAYER ORDER — the single entry point for the command layer
@@ -1019,15 +1115,20 @@ func _issue_defend_orders() -> void:
 	# Get all candidate cover points near the objective
 	var candidates = _get_cover_points_near(objective_position, 25.0)
 
+	# Cover points only for robots that take cover. A vehicle parks on the spot
+	# it was sent to (see _parking_post).
+	var takers: Array = soldiers.filter(func(s): return s.takes_cover())
+	var parkers: Array = soldiers.filter(func(s): return not s.takes_cover())
+
 	# Use farthest-point sampling to spread soldiers out:
 	# Pick the first point closest to the objective, then each
 	# subsequent pick is the point farthest from all chosen points.
-	var chosen: Array = _select_spread_cover(candidates, soldiers.size())
+	var chosen: Array = _select_spread_cover(candidates, takers.size())
 
 	_defend_posts.clear()
 
-	for i in soldiers.size():
-		var soldier: Soldier = soldiers[i]
+	for i in takers.size():
+		var soldier: Soldier = takers[i]
 		if soldier.has_method("enter_passive_mode"):
 			soldier.always_active = true
 		soldier.defensive_mode = true
@@ -1039,10 +1140,27 @@ func _issue_defend_orders() -> void:
 			_defend_posts[soldier] = cp.global_position
 		else:
 			# More soldiers than cover points — spread in a ring around objective
-			var angle = (TAU / soldiers.size()) * i
+			var angle = (TAU / takers.size()) * i
 			var spread = Vector3(cos(angle), 0, sin(angle)) * 6.0
 			soldier.order_move_to(objective_position + spread, true, true)
 			_defend_posts[soldier] = objective_position + spread
+
+	for soldier: Soldier in parkers:
+		if soldier.has_method("enter_passive_mode"):
+			soldier.always_active = true
+		soldier.defensive_mode = true
+		var post := _parking_post(soldier, parkers)
+		soldier.order_move_to(post, true, true)
+		_defend_posts[soldier] = post
+
+
+# Where a vehicle holds: the spot itself, or spread round it when there is more
+# than one of them.
+func _parking_post(soldier: Soldier, parkers: Array) -> Vector3:
+	if parkers.size() <= 1:
+		return objective_position
+	var angle: float = (TAU / parkers.size()) * maxi(0, parkers.find(soldier))
+	return objective_position + Vector3(cos(angle), 0.0, sin(angle)) * 5.0
 
 func _select_spread_cover(candidates: Array, count: int) -> Array:
 	# Farthest-point sampling: maximises minimum distance between chosen points.

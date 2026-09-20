@@ -16,10 +16,21 @@ extends VBoxContainer
 const Kit := preload("res://Character/hud/squad/ui_kit.gd")
 const Icons := preload("res://Character/hud/icons/icons.gd")
 
+## Every card the same width, so the row reads as one object however many
+## frames are unlocked — and so a card is never squeezed to fit.
+const CARD_WIDTH: float = 300.0
+## Pixels per wheel notch along the row: about one card.
+const WHEEL_STEP: int = 320
+
 var ui
 ## What the last BUILD made, said under the cards until the next rebuild of
 ## something else.
 var _last_built := ""
+## Where along the row you were. Building a frame rebuilds this page from
+## scratch, and a row that jumps back to the left every time loses your place
+## right after the click that needed it.
+var _scroll_x := 0
+var _restore_x := 0
 
 
 func setup(owner_ui) -> void:
@@ -32,6 +43,7 @@ func on_open() -> void:
 
 
 func rebuild() -> void:
+	_restore_x = _scroll_x
 	Kit.clear(self)
 	var state: CampaignState = ui.state
 	add_child(_hangar(state))
@@ -40,10 +52,54 @@ func rebuild() -> void:
 	frames.add_theme_constant_override("separation", 14)
 	for frame in ui.buildable_frames():
 		frames.add_child(_frame_card(frame))
-	add_child(frames)
+	add_child(_scroller(frames))
 
 	if _last_built != "":
 		add_child(Kit.label(_last_built, Kit.BRIGHT, Kit.HEADING, true))
+
+
+# A row you run along, rather than a row that runs off the screen. Every frame
+# built so far fitted across; the sixth did not, and a row that does not fit is
+# one with a card cut in half at the edge and no way to reach it. The HANGAR
+# strip stays above it, so the seats and their buttons never scroll away — and
+# with the row at its left end, the first card lines up under them.
+func _scroller(row: Control) -> Control:
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.follow_focus = true
+	# The wheel moves it sideways. There is nothing to scroll downward here, and
+	# a wheel that does nothing reads as a page that is stuck.
+	scroll.gui_input.connect(func(event: InputEvent) -> void: _wheel(scroll, event))
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(row)
+	var bar := scroll.get_h_scroll_bar()
+	bar.value_changed.connect(func(v: float) -> void: _scroll_x = int(v))
+	# Put the row back where it was — but only once the bar knows how far it
+	# reaches. Set any earlier and scroll_horizontal clamps to a range the
+	# freshly built row does not have yet, which is the same as not setting it.
+	bar.changed.connect(func() -> void:
+		if _restore_x > 0:
+			scroll.scroll_horizontal = _restore_x
+			_restore_x = 0)
+	return scroll
+
+
+func _wheel(scroll: ScrollContainer, event: InputEvent) -> void:
+	var button := event as InputEventMouseButton
+	if button == null or not button.pressed:
+		return   # not a wheel notch
+	var step := 0
+	match button.button_index:
+		MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_RIGHT:
+			step = 1
+		MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_LEFT:
+			step = -1
+		_:
+			return   # a click, not the wheel: leave it for the cards
+	scroll.scroll_horizontal += step * WHEEL_STEP
+	scroll.accept_event()
 
 
 func _hangar(state: CampaignState) -> Control:
@@ -89,7 +145,11 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 	var state: CampaignState = ui.state
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", Kit.box(Kit.LINE, Kit.PANEL, 1, 12.0))
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Fixed width, not EXPAND_FILL: inside the scroller the row is as wide as
+	# its cards, and expanding ones would stretch to the viewport and never let
+	# it scroll.
+	card.size_flags_horizontal = Control.SIZE_FILL
+	card.custom_minimum_size.x = CARD_WIDTH
 	var col := Kit.vbox(8)
 	card.add_child(col)
 
@@ -152,7 +212,7 @@ func _slot_layout(frame: ChassisDefinition) -> Control:
 	var row := Kit.hbox(4)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	if frame.weapon_slots == 0:
-		row.add_child(_tile("CLAWS", 52))
+		row.add_child(_tile(frame.built_in, 52))
 	for i in frame.weapon_slots:
 		row.add_child(_tile("TURRET" if frame.turret else "GUN", 64 if frame.turret else 52))
 	for i in frame.equipment_slots:

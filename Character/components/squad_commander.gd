@@ -7,12 +7,20 @@ class_name SquadCommander
 #
 # TAP T    — contextual order at the crosshair. The verb is inferred from what
 #            you're looking at, so the common case costs one keypress:
-#              hostile   → ASSAULT that target
-#              friendly  → select that robot's squad
-#              ground    → ASSAULT that position
+#              hostile   → CONTACT callout; with ARMOR selected, ATTACK it
+#              friendly  → select that robot's team
+#              ground    → ADVANCE to that position and hold
 #              nothing   → CONTACT callout down the sightline
 # HOLD T   — FOLLOW. Fires the moment the hold threshold passes.
-# TAB      — cycle which squad you're commanding.
+# G        — switch the team T orders: INFANTRY <-> ARMOR.
+#
+# TEAMS
+# Your robots go in as up to two squads, the ones on foot and the vehicles
+# (SquadSpawner splits them by frame), so a rover can hold a ridge while the
+# infantry follow you in. Orders go to one team at a time, the infantry to start
+# with, and G flips to the other: no ALL to step through, so a switch is always
+# one press. With one team nothing is different from before. (Cycling used to
+# hang off Tab, which the squad manager takes first; it never fired.)
 #
 # WHY THREE VERBS
 # The wheel used to carry MOVE TO / DEFEND / ATTACK / FALL BACK / CONTACT. Those
@@ -59,13 +67,16 @@ class_name SquadCommander
 # in. Taking ground becomes a sequence of orders you issue rather than a
 # judgement call the AI gets wrong. Bounding a squad forward is now YOUR job,
 # which is the whole appeal of a squad game.
-enum Verb { ADVANCE, FOLLOW, CONTACT }
+enum Verb { ADVANCE, FOLLOW, CONTACT, ATTACK }
 
 const VERB_LABELS := {
 	Verb.ADVANCE: "ADVANCE",
 	Verb.FOLLOW:  "FOLLOW",
 	Verb.CONTACT: "CONTACT",
+	Verb.ATTACK:  "ATTACK",
 }
+
+const SWITCH_TEAM_ACTION := &"switch_team"
 
 var commandable_squads: Array[Squad] = []
 var selected_index: int = 0
@@ -82,10 +93,21 @@ signal squad_selected(squad: Squad)
 signal squads_refreshed(squads: Array)
 signal order_issued(squad: Squad, verb: int, position: Vector3, target: Node)
 signal contact_called(position: Vector3, target: Node)
+## Which team the orders now go to changed: "INFANTRY", "ARMOR" — or a callsign.
+signal team_selected(label: String)
+## G with no other team in the field to switch to.
+signal no_team_to_switch
 
 
 func _ready() -> void:
 	_autowire()
+	# Settings registers G for this when it loads the bindings; whichever of us
+	# is first makes it, so the key works before anyone opens the options.
+	if not InputMap.has_action(SWITCH_TEAM_ACTION):
+		InputMap.add_action(SWITCH_TEAM_ACTION)
+		var ev := InputEventKey.new()
+		ev.physical_keycode = KEY_G
+		InputMap.action_add_event(SWITCH_TEAM_ACTION, ev)
 	# Squads add themselves to the group in their own _ready, which may not have
 	# run yet. Wait a frame before the first sweep.
 	await get_tree().process_frame
@@ -128,6 +150,10 @@ func refresh_squads() -> void:
 		if squad.player_commandable or _is_friendly_squad(squad):
 			commandable_squads.append(squad)
 	selected_index = clampi(selected_index, 0, maxi(0, commandable_squads.size() - 1))
+	# Your infantry first, not whichever squad the group happened to list first.
+	var teams := team_squads()
+	if not teams.is_empty() and not teams.has(get_selected_squad()):
+		selected_index = commandable_squads.find(teams[0])
 	squads_refreshed.emit(commandable_squads)
 	squad_selected.emit(get_selected_squad())
 
@@ -149,14 +175,70 @@ func get_selected_squad() -> Squad:
 		return null
 	if selected_index >= commandable_squads.size():
 		selected_index = 0
-	return commandable_squads[selected_index]
+	var squad = commandable_squads[selected_index]
+	# A level unload frees its squads before the registry's next sweep (up to
+	# registry_refresh_interval later) takes them out of the list.
+	if not is_instance_valid(squad):
+		return null
+	return squad
 
 
 func cycle_squad(dir: int = 1) -> void:
 	if commandable_squads.size() <= 1:
 		return
 	selected_index = wrapi(selected_index + dir, 0, commandable_squads.size())
+	_refresh_marker_dimming()
 	squad_selected.emit(get_selected_squad())
+
+
+# ─────────────────────────────────────────────
+# TEAMS
+# ─────────────────────────────────────────────
+## Your own squads, infantry before armour: the ones SquadSpawner deployed.
+func team_squads() -> Array[Squad]:
+	var out: Array[Squad] = []
+	for squad in commandable_squads:
+		if not is_instance_valid(squad):
+			continue
+		if squad.player_commandable and squad.team != &"":
+			out.append(squad)
+	out.sort_custom(func(a: Squad, b: Squad) -> bool:
+		return a.team == Squad.TEAM_INFANTRY and b.team != Squad.TEAM_INFANTRY)
+	return out
+
+
+## More than one team in the field — the only time there is anything to choose,
+## and the only time the HUD says who the orders are for.
+func has_teams() -> bool:
+	return team_squads().size() > 1
+
+
+## "INFANTRY", "ARMOR" — or a callsign, for someone else's squad you are
+## ordering.
+func selection_label() -> String:
+	var squad := get_selected_squad()
+	return squad.team_name() if squad != null else "NOBODY"
+
+
+## G: the other team, INFANTRY <-> ARMOR. From someone else's squad, back to
+## your first. In a level whose squads were placed by hand rather than deployed
+## as teams, it steps through those squads instead — the job Tab was meant to do.
+func cycle_team() -> void:
+	var teams := team_squads()
+	if teams.is_empty() and commandable_squads.size() > 1:
+		cycle_squad(1)
+		return
+	var at := teams.find(get_selected_squad())
+	if teams.is_empty() or (teams.size() == 1 and at == 0):
+		# Nothing to switch between. Said on the HUD rather than the key doing
+		# nothing, which reads as a broken binding.
+		no_team_to_switch.emit()
+		return
+	var next: Squad = teams[(at + 1) % teams.size()] if at >= 0 else teams[0]
+	selected_index = commandable_squads.find(next)
+	_refresh_marker_dimming()
+	squad_selected.emit(next)
+	team_selected.emit(selection_label())
 
 
 # Squads within radius of the player, for the "squads around you" HUD readout.
@@ -187,12 +269,6 @@ func get_nearby_squads(radius: float = 120.0) -> Array:
 # INPUT
 # ─────────────────────────────────────────────
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_TAB:
-			cycle_squad(1)
-
-
 func _process(delta: float) -> void:
 	if player == null or not player.alive:
 		return
@@ -201,6 +277,9 @@ func _process(delta: float) -> void:
 	if _registry_timer >= registry_refresh_interval:
 		_registry_timer = 0.0
 		_refresh_registry_quietly()
+
+	if Input.is_action_just_pressed(SWITCH_TEAM_ACTION):
+		cycle_team()
 
 	if Input.is_action_pressed("command"):
 		_hold_time += delta
@@ -252,12 +331,14 @@ func _issue_contextual_order() -> void:
 
 	var collider = hit.get("collider")
 
-	# Friendly robot under the crosshair — select their squad, don't order.
+	# Friendly robot under the crosshair — select their team, don't order.
 	if collider is Soldier and not Enums.are_hostile(Enums.Factions.PLAYER, collider.faction):
 		var s: Squad = collider.squad
 		if s != null and commandable_squads.has(s):
 			selected_index = commandable_squads.find(s)
+			_refresh_marker_dimming()
 			squad_selected.emit(s)
+			team_selected.emit(selection_label())
 			return
 
 	# Hostile under the crosshair. With no assault verb there's nothing to send
@@ -294,6 +375,14 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 	match verb:
 		Verb.CONTACT:
 			_call_contact(pos, target)
+			# A report, for everyone in earshot — and with ARMOR selected, a
+			# target: the one order that suits a vehicle and not a rifleman.
+			# Sent after the callout so the toast says ATTACK.
+			if target is Enemy and squad.team == Squad.TEAM_ARMOR:
+				squad.receive_player_order(Squad.SquadObjective.ATTACK, pos, target)
+				_place_marker(squad, Verb.ATTACK, pos)
+				_refresh_marker_dimming()
+				order_issued.emit(squad, Verb.ATTACK, pos, target)
 			return
 		Verb.ADVANCE:
 			# Maps to SquadObjective.DEFEND — go there and hold. The enum keeps
@@ -311,6 +400,7 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 			return
 
 	_place_marker(squad, verb, pos)
+	_refresh_marker_dimming()
 	order_issued.emit(squad, verb, pos, target)
 
 
@@ -405,9 +495,27 @@ func _refresh_registry_quietly() -> void:
 	if previous != null and commandable_squads.has(previous):
 		selected_index = commandable_squads.find(previous)
 	else:
-		selected_index = clampi(selected_index, 0, maxi(0, commandable_squads.size() - 1))
+		# The team you had picked is gone — a new mission, or it was wiped.
+		# Orders go to your first team rather than to whatever slid into its slot.
+		var teams := team_squads()
+		if not teams.is_empty():
+			selected_index = commandable_squads.find(teams[0])
+		else:
+			selected_index = clampi(selected_index, 0, maxi(0, commandable_squads.size() - 1))
 		if get_selected_squad() != previous:
 			squad_selected.emit(get_selected_squad())
+			team_selected.emit(selection_label())
+	# Markers sit in the World, which outlives every level: one whose squad is
+	# gone (the last mission's, a wiped team) comes down with it. Untyped keys,
+	# because a freed squad cannot be passed to _clear_marker(squad: Squad).
+	for key in _markers.keys():
+		if is_instance_valid(key) and commandable_squads.has(key):
+			continue
+		var marker = _markers[key]
+		if marker != null and is_instance_valid(marker):
+			marker.queue_free()
+		_markers.erase(key)
+	_refresh_marker_dimming()
 
 
 # ─────────────────────────────────────────────
@@ -435,7 +543,20 @@ func _place_marker(squad: Squad, verb: int, pos: Vector3) -> void:
 	marker.global_position = _snap_to_ground(pos)
 	marker.rotation = Vector3.ZERO
 	if marker.has_method("set_order"):
-		marker.set_order(verb, VERB_LABELS.get(verb, ""))
+		var text: String = VERB_LABELS.get(verb, "")
+		if has_teams():
+			text = "%s : %s" % [squad.team_name(), text]
+		marker.set_order(verb, text)
+
+
+# The orders of the team you are not commanding right now stay on the map,
+# quieter.
+func _refresh_marker_dimming() -> void:
+	var selected := get_selected_squad()
+	for squad in _markers.keys():
+		var marker = _markers[squad]
+		if marker != null and is_instance_valid(marker):
+			marker.set("dimmed", squad != selected)
 
 
 func _clear_marker(squad: Squad) -> void:

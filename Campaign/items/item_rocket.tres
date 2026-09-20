@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" uid="uid://crocketlauncher1" path="res://Character/weapon/rocket_hud_weapon.tscn" id="2_player"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"recoilless"
+display_name = "Recoilless Rifle"
+short_name = "Recoilless"
+description = "Two rockets, fired flat and fast, each with a blast wide enough to take a group with it. Nothing else in the squad hits this hard, and nothing else runs out this quickly: the tube reloads for two seconds between them."
+kind = 1
+cost = 110
+player_scene = ExtResource("2_player")
+player_mount_offset = Vector3(0, 0, 0)
+player_mount_rotation_degrees = Vector3(0, 0, 0)
+ammo_type = &"rocket"
+weapon_damage = 0
+usable_by_player = true
+usable_by_ai = false
+quantity = 2
+health_bonus = 0
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+sensor_bonus = 0.0
+required_rank = 0
+chassis_whitelist = Array[StringName]([])

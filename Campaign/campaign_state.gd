@@ -898,9 +898,60 @@ static func from_dict(data: Dictionary) -> CampaignState:
 
 	var unlocks: Array[StringName] = []
 	for u in data.get("unlocked", []):
-		unlocks.append(StringName(str(u)))
+		unlocks.append(_renamed(StringName(str(u))))
 	s.unlocked = unlocks
 	return s
+
+
+# FRAMES THAT CHANGED NAME. A save holds ids as plain strings — what you have
+# unlocked, what your squad killed — so renaming a frame in the project orphans
+# both: the unlock stops matching and the career tally grows a second column
+# under the new name. Old id -> new id, applied on the way in.
+const RENAMED := {
+	&"hopper": &"leaper",
+}
+
+
+static func _renamed(id: StringName) -> StringName:
+	return RENAMED.get(id, id)
+
+
+# Become the campaign this dictionary describes, WITHOUT becoming a different
+# object. from_dict() builds a new CampaignState, and half the game is holding a
+# reference to this one — the squad manager, the HUDs, every screen — so handing
+# them a replacement would leave them wired to a state nobody updates. This
+# parses through from_dict all the same and then moves the fields across, so
+# there is exactly one place that knows how to read a save.
+#
+# `catalogue` deliberately stays: it is wiring, not campaign progress, and a
+# freshly parsed state has none.
+#
+# Used by a failed run — see Campaign.extract(). If a field is ever added to
+# to_dict() and not to this list, the run would quietly keep it across a
+# rewind; test_endings covers that by round-tripping a state through here and
+# comparing the dictionaries.
+func restore_from(data: Dictionary) -> void:
+	var was := CampaignState.from_dict(data)
+	earned = was.earned
+	allocations = was.allocations
+	roster = was.roster
+	completed_missions = was.completed_missions
+	mission_clears = was.mission_clears
+	completed_tutorial = was.completed_tutorial
+	campaign_won = was.campaign_won
+	compute_earned = was.compute_earned
+	compute_held = was.compute_held
+	compute_claimed = was.compute_claimed
+	supply_cap = was.supply_cap
+	unlocked = was.unlocked
+	selected_mission_id = was.selected_mission_id
+	squad_name = was.squad_name
+	player_record = was.player_record
+	armoury = was.armoury
+	_next_id = was._next_id
+	_purchase_counter = was._purchase_counter
+	ledger_changed.emit()
+	roster_changed.emit()
 
 
 func save_to_disk(path: String = SAVE_PATH) -> bool:

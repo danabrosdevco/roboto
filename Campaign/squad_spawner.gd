@@ -48,13 +48,73 @@ enum SpawnMode { SPAWN_POINT, PLAYER, NEAREST_ELSE_PLAYER }
 signal squad_deployed(squad: Squad, count: int)
 signal squad_collected(survivors: int, lost: int)
 
+# The first team this deployment made — the infantry, if there are any. What
+# everything that expects one squad is handed.
 var active_squad: Squad = null
+# Every team deployed: the robots on foot and the vehicles go in as separate
+# squads (Squad.TEAM_*), so a rover can be ordered apart from the infantry.
+var squads: Array[Squad] = []
 # Soldier node -> the record it was built from.
 var _spawned: Dictionary = {}
+# The name this deployment's teams were called by when the campaign has none
+# set — what a team formed mid-mission is named from too.
+var _callsign_base: String = "ALPHA"
+
+## How far behind you the armour follows — well back of the infantry, so the
+## two formations do not end up on the same patch of ground.
+@export var armor_follow_distance: float = 10.0
 
 
 func has_squad() -> bool:
-	return active_squad != null and is_instance_valid(active_squad)
+	for squad in squads:
+		if squad != null and is_instance_valid(squad):
+			return true
+	return false
+
+
+# Which team a robot goes in with: vehicles are armour, everything else infantry.
+func _team_of(record: SoldierRecord) -> StringName:
+	var cat := _catalogue()
+	var frame: ChassisDefinition = cat.chassis_def(record.chassis_id) if cat != null and record != null else null
+	return Squad.TEAM_ARMOR if frame != null and frame.vehicle else Squad.TEAM_INFANTRY
+
+
+# The deployed bodies by team, infantry first. Teams with nobody in them are
+# left out, so a roster without vehicles deploys exactly as it always did.
+func _split_by_team(members: Array[Soldier]) -> Array:
+	var out := []
+	for team_id in [Squad.TEAM_INFANTRY, Squad.TEAM_ARMOR]:
+		var team_members: Array[Soldier] = []
+		for soldier in members:
+			if _team_of(_spawned.get(soldier)) == team_id:
+				team_members.append(soldier)
+		if not team_members.is_empty():
+			out.append([team_id, team_members])
+	return out
+
+
+func _squad_of_team(team_id: StringName) -> Squad:
+	for squad in squads:
+		if squad != null and is_instance_valid(squad) and squad.team == team_id:
+			return squad
+	return null
+
+
+func _new_squad(team_id: StringName, members: Array[Soldier], fallback_name: String) -> Squad:
+	var squad: Squad = null
+	if squad_scene != null:
+		squad = squad_scene.instantiate() as Squad
+	if squad == null:
+		squad = Squad.new()
+	squad.name = "PlayerArmor" if team_id == Squad.TEAM_ARMOR else "PlayerSquad"
+	squad.team = team_id
+	squad.callsign = Squad.callsign_for(_squad_name(fallback_name), team_id)
+	if team_id == Squad.TEAM_ARMOR:
+		squad.follow_distance = armor_follow_distance
+	# Set membership BEFORE the node enters the tree — Squad._ready() connects
+	# every member's signals and would connect to an empty array otherwise.
+	squad.squad_members = members
+	return squad
 
 
 # ─────────────────────────────────────────────
@@ -98,8 +158,12 @@ func deploy_into(level: Node, records: Array[SoldierRecord]) -> Squad:
 		var soldier := _build_soldier(to_deploy[i])
 		if soldier == null:
 			continue
+		# Placed before it enters the tree: see the note in
+		# enemy_force_spawner.gd. A body that readies at the level origin shares
+		# that spot with everything else spawned this frame, and their Detection
+		# areas hand each other combat targets they will never be able to see.
+		soldier.position = level.to_local(point.slot_position(i))
 		level.add_child(soldier)
-		soldier.global_position = point.slot_position(i)
 		if ai_manager != null:
 			ai_manager.register_enemy(soldier)
 		# Back-reference by id. Renaming a record has to reach the body that was
@@ -111,12 +175,16 @@ func deploy_into(level: Node, records: Array[SoldierRecord]) -> Squad:
 	if members.is_empty():
 		return null
 
-	active_squad = _build_squad(point, members)
-	print("[SquadSpawner] %d deployed at spawn point '%s' (%s, objective %d)" % [
+	_callsign_base = point.callsign
+	for part in _split_by_team(members):
+		var squad := _build_squad(point, part[1], part[0])
+		level.add_child(squad)
+		squads.append(squad)
+	active_squad = squads[0]
+	print("[SquadSpawner] %d deployed at spawn point '%s' (%s, objective %d), %d team(s)" % [
 		members.size(), point.callsign, str(point.global_position.round()),
-		point.default_objective,
+		point.default_objective, squads.size(),
 	])
-	level.add_child(active_squad)
 	squad_deployed.emit(active_squad, members.size())
 	return active_squad
 
@@ -221,20 +289,13 @@ func _catalogue() -> ItemCatalogue:
 	return catalogue
 
 
-func _build_squad(point: SquadSpawnPoint, members: Array[Soldier]) -> Squad:
-	var squad: Squad = null
-	if squad_scene != null:
-		squad = squad_scene.instantiate() as Squad
-	if squad == null:
-		squad = Squad.new()
-	squad.name = "PlayerSquad"
-	squad.callsign = _squad_name(point.callsign)
+# Every team takes the spawn point's orders, so at the start they all set off
+# for the same objective, as one squad used to.
+func _build_squad(point: SquadSpawnPoint, members: Array[Soldier], team_id: StringName) -> Squad:
+	var squad := _new_squad(team_id, members, point.callsign)
 	squad.player_commandable = point.player_commandable
 	squad.default_objective = point.default_objective
 	squad.target_objective = point.target_objective
-	# Set membership BEFORE the node enters the tree — Squad._ready() connects
-	# every member's signals and would connect to an empty array otherwise.
-	squad.squad_members = members
 	return squad
 
 
@@ -289,12 +350,13 @@ func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 		var soldier := _build_soldier(to_deploy[i])
 		if soldier == null:
 			continue
-		level.add_child(soldier)
 		@warning_ignore("integer_division")
 		var row := i / 2
 		var side := 1.0 if i % 2 == 0 else -1.0
 		var offset := Vector3(side * player_spacing * (float(row) * 0.5 + 0.5), 0.0, float(row) * player_spacing)
-		soldier.global_position = anchor + (basis * offset)
+		# Placed before it enters the tree, same as above.
+		soldier.position = level.to_local(anchor + (basis * offset))
+		level.add_child(soldier)
 		if ai_manager != null:
 			ai_manager.register_enemy(soldier)
 		# Back-reference by id. Renaming a record has to reach the body that was
@@ -306,23 +368,19 @@ func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 	if members.is_empty():
 		return null
 
-	var squad: Squad = null
-	if squad_scene != null:
-		squad = squad_scene.instantiate() as Squad
-	if squad == null:
-		squad = Squad.new()
-	squad.name = "PlayerSquad"
-	squad.callsign = _squad_name("ALPHA")
-	squad.player_commandable = true
-	squad.default_objective = Squad.SquadObjective.FOLLOW
-	squad.squad_members = members
-	level.add_child(squad)
-	# Straight onto the player's hip, which is the point of spawning here.
-	squad.follow(player)
-	active_squad = squad
-	squad_deployed.emit(squad, members.size())
-	print("[SquadSpawner] %d deployed on the player (no spawn point used)" % members.size())
-	return squad
+	_callsign_base = "ALPHA"
+	for part in _split_by_team(members):
+		var squad := _new_squad(part[0], part[1], _callsign_base)
+		squad.player_commandable = true
+		squad.default_objective = Squad.SquadObjective.FOLLOW
+		level.add_child(squad)
+		# Straight onto the player's hip, which is the point of spawning here.
+		squad.follow(player)
+		squads.append(squad)
+	active_squad = squads[0]
+	squad_deployed.emit(active_squad, members.size())
+	print("[SquadSpawner] %d deployed on the player (no spawn point used), %d team(s)" % [members.size(), squads.size()])
+	return active_squad
 
 
 # ─────────────────────────────────────────────
@@ -378,27 +436,48 @@ func find_body(record: SoldierRecord) -> Soldier:
 func spawn_one(record: SoldierRecord) -> Soldier:
 	if not has_squad():
 		return null
-	var level := active_squad.get_parent()
+	var any_team: Squad = active_squad if active_squad != null and is_instance_valid(active_squad) else _squad_of_team(Squad.TEAM_INFANTRY)
+	if any_team == null:
+		any_team = _squad_of_team(Squad.TEAM_ARMOR)
+	var level := any_team.get_parent() if any_team != null else null
 	if level == null:
+		push_warning("SquadSpawner: no team of yours is in a level, so %s has nowhere to rejoin." % record.display_name)
 		return null
 
 	var soldier := _build_soldier(record)
 	if soldier == null:
 		return null
+	# Back into its own team. If that team never went in this mission — a rover
+	# repaired back into a fight it started out of — the team is made now and
+	# falls in on you.
+	_spawned[soldier] = record
+	var team_id := _team_of(record)
+	var squad := _squad_of_team(team_id)
+	var fresh := squad == null
+	if fresh:
+		var none: Array[Soldier] = []
+		squad = _new_squad(team_id, none, _callsign_base)
+		squad.player_commandable = true
+		level.add_child(squad)
+		squads.append(squad)
 	level.add_child(soldier)
-	soldier.global_position = _rejoin_position()
+	soldier.global_position = _rejoin_position(squad)
 	soldier.set_meta("record_id", record.id)
 	if ai_manager != null:
 		ai_manager.register_enemy(soldier)
-	_spawned[soldier] = record
-	active_squad.add_ai_to_squad(soldier)
-	active_squad.notify_roster_changed()
+	squad.add_ai_to_squad(soldier)
+	if fresh and player != null:
+		squad.follow(player)
+	squad.notify_roster_changed()
 	return soldier
 
 
-# Beside the squad, or beside the player if the squad is empty.
-func _rejoin_position() -> Vector3:
-	var anchor := active_squad.get_center()
+# Beside its team, or beside the player if the team is empty.
+func _rejoin_position(squad: Squad) -> Vector3:
+	var anchor := squad.get_center() if not squad.get_living_members().is_empty() else Vector3.ZERO
+	if anchor == Vector3.ZERO and active_squad != null and is_instance_valid(active_squad) \
+			and not active_squad.get_living_members().is_empty():
+		anchor = active_squad.get_center()
 	if anchor == Vector3.ZERO and player != null:
 		anchor = player.global_position
 	var angle := randf() * TAU
@@ -437,6 +516,8 @@ func write_back() -> Dictionary:
 # nodes themselves.
 func clear() -> void:
 	_spawned.clear()
-	if has_squad():
-		active_squad.queue_free()
+	for squad in squads:
+		if squad != null and is_instance_valid(squad):
+			squad.queue_free()
+	squads.clear()
 	active_squad = null

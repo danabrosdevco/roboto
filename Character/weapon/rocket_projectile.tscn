@@ -1,0 +1,31 @@
+[gd_scene load_steps=6 format=3 uid="uid://crocket00001"]
+
+[ext_resource type="Script" path="res://Character/weapon/rocket_projectile.gd" id="1_rocket"]
+[ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="2_blast"]
+[ext_resource type="PackedScene" uid="uid://wru2f77au1xv" path="res://3d_assets/Rockets Missiles and Bombs - AurynSky/FBX/Rocket2.fbx" id="3_model"]
+[ext_resource type="AudioStream" uid="uid://kj7m1ra6ev18" path="res://sounds/sfx/superior soundfx/Explosion2.wav" id="4_boom"]
+
+[sub_resource type="CapsuleShape3D" id="Body"]
+radius = 0.09
+height = 0.5
+
+[node name="Rocket_Projectile" type="RigidBody3D" node_paths=PackedStringArray("explosion_sfx", "mesh")]
+gravity_scale = 0.0
+continuous_cd = true
+script = ExtResource("1_rocket")
+explosion_scene = ExtResource("2_blast")
+explosion_sfx = NodePath("ExplosionSound")
+mesh = NodePath("Rocket2")
+
+[node name="Rocket2" parent="." instance=ExtResource("3_model")]
+transform = Transform3D(0.12, 0, 0, 0, -5.24537e-09, -0.12, 0, 0.12, -5.24537e-09, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+shape = SubResource("Body")
+
+[node name="ExplosionSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("4_boom")
+volume_db = 2.0
+unit_size = 40.0
+max_distance = 220.0

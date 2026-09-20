@@ -27,6 +27,11 @@ class_name CommsLog
 # divide cleanly: squad top-left, objectives top-right, comms bottom-right,
 # health bottom-centre.
 @export var bottom_offset: float = 150.0
+## Lines sit clear of the weapon bar rather than on top of its chips. The
+## bar reaches further up than bottom_offset once the chips are their full
+## size, and replies landed across them.
+@export var clear_weapon_bar: bool = true
+@export var weapon_bar_gap: float = 10.0
 @export var panel_height: float = 150.0
 @export var max_lines: int = 5
 @export var line_seconds: float = 7.0
@@ -80,8 +85,11 @@ func _build_ui() -> void:
 	_list.anchor_bottom = 1.0
 	_list.offset_left = -(panel_margin.x + panel_width)
 	_list.offset_right = -panel_margin.x
-	_list.offset_bottom = -bottom_offset
-	_list.offset_top = -(bottom_offset + panel_height)
+	var lift := bottom_offset
+	if clear_weapon_bar:
+		lift = maxf(lift, WeaponBar.lift_beside(self) + weapon_bar_gap)
+	_list.offset_bottom = -lift
+	_list.offset_top = -(lift + panel_height)
 	# Anchored to the bottom-right corner, so the box grows leftward and upward
 	# with the screen rather than drifting across the middle on an ultrawide.
 	_list.grow_horizontal = Control.GROW_DIRECTION_BEGIN

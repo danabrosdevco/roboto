@@ -8,7 +8,9 @@ class_name SquadHUD
 #
 # THREE LAYERS
 #   1. Roster panel (bottom left): the squad you're commanding, one row per
-#      robot — callsign, health, signal integrity, current state.
+#      robot — callsign, health, signal integrity, current state. With a rover
+#      in the field that is both teams, the one you are not ordering dimmed;
+#      switching (G) says ORDERS > ARMOR just above the weapon bar.
 #
 # WHY THE ROLE COLUMN IS GONE
 # Rows used to carry a role tag (SUP/ADV/FLK/FBK/OVW) AND a state
@@ -25,8 +27,9 @@ class_name SquadHUD
 # now. The debug overlay is the right place for them.
 #   2. Squad strip (above roster): other squads in range and their posture, so
 #      you can see who else is on the field before you cycle to them.
-#   3. World markers: a chevron over each member of the selected squad, drawn
-#      through geometry at low alpha.
+#   3. World markers: a chevron over each member of your teams (or the
+#      selected squad), drawn through geometry at low alpha; quieter still for
+#      the team you are not ordering.
 #
 # NOTE ON THE MARKERS — this is what put the chevrons under the terrain:
 # unproject_position() returns VIEWPORT coordinates, but _draw() paints in this
@@ -65,6 +68,9 @@ class_name SquadHUD
 # Wheel position, measured from the TOP-LEFT of the squad panel. Positive x
 # pushes it right of the roster, negative y lifts it above the panel top.
 @export var bar_size: Vector2 = Vector2(70, 12)
+
+## Space between a toast and the top of the weapon bar it sits over.
+@export var toast_gap: float = 8.0
 
 @export var marker_range: float = 150.0
 
@@ -116,6 +122,8 @@ const STATE_PINNED := "PINNED"
 const STATE_HOLDING := "HOLDING"
 const STATE_RELOADING := "RELOADING"
 const STATE_DOWN := "DOWN"
+const STATE_REPAIRING := "REPAIRING"
+const STATE_SALVAGING := "SALVAGING"
 
 var _panel: VBoxContainer
 var _squad_header: Label
@@ -157,6 +165,8 @@ func _ready() -> void:
 		commander.squad_selected.connect(_on_squad_selected)
 		commander.order_issued.connect(_on_order_issued)
 		commander.contact_called.connect(_on_contact_called)
+		commander.team_selected.connect(_on_team_selected)
+		commander.no_team_to_switch.connect(_on_no_team_to_switch)
 
 
 # Unassigned exports are the single most likely reason nothing shows up, and
@@ -262,19 +272,30 @@ func _build_ui() -> void:
 	_panel.add_child(_roster)
 
 
+	# Command feedback (ORDERS > ARMOR, INFANTRY : ADVANCE) sits directly above
+	# the weapon bar: bottom-centre, where the eye goes on a switch, and out of
+	# the middle of the screen, where it covered what you were aiming at.
 	_toast = _make_label("", COL_BRIGHT, font_size_toast)
 	_toast.anchor_left = 0.5
 	_toast.anchor_right = 0.5
-	_toast.anchor_top = 0.0
-	_toast.anchor_bottom = 0.0
+	_toast.anchor_top = 1.0
+	_toast.anchor_bottom = 1.0
 	_toast.offset_left = -320
 	_toast.offset_right = 320
-	_toast.offset_top = 110
-	_toast.offset_bottom = 140
+	_toast.offset_bottom = -(_weapon_bar_lift() + toast_gap)
+	_toast.offset_top = _toast.offset_bottom - 30
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	# Down there it sits over the ground, not the sky: a dark edge keeps the pale
+	# green readable on pale terrain, as the order markers' labels have.
+	_toast.add_theme_constant_override("outline_size", 6)
+	_toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.65))
 	_toast.visible = false
 	add_child(_toast)
 
+
+func _weapon_bar_lift() -> float:
+	return WeaponBar.lift_beside(self)
 
 
 func _make_label(text: String, col: Color, font_px: int = -1) -> Label:
@@ -326,12 +347,37 @@ func _refresh_roster() -> void:
 	_clear(_roster)
 	if commander == null:
 		return
-	var squad := commander.get_selected_squad()
-	if squad == null:
+	var shown := _shown_squads()
+	if shown.is_empty():
 		_squad_header.text = "NO SQUAD IN COMMAND"
 		_squad_header.add_theme_color_override("font_color", COL_DIM)
 		return
 
+	# One block per team, the one you are not ordering dimmed. The first header
+	# is the panel's own; the rest go in with the rows.
+	var selected := commander.get_selected_squad()
+	for i in shown.size():
+		var squad: Squad = shown[i]
+		var quiet := shown.size() > 1 and squad != selected
+		var header: Label = _squad_header
+		if i > 0:
+			header = _make_label("", COL_BRIGHT, font_size_header)
+			_roster.add_child(header)
+		_fill_header(header, squad, quiet)
+		var seen := {}
+		for m in squad.squad_members:
+			if m == null or not is_instance_valid(m):
+				continue
+			if seen.has(m.get_instance_id()):
+				continue
+			seen[m.get_instance_id()] = true
+			var row := _make_member_row(m)
+			if quiet:
+				row.modulate.a = 0.45
+			_roster.add_child(row)
+
+
+func _fill_header(header: Label, squad: Squad, quiet: bool) -> void:
 	# Read live contact rather than `context`. Three states, not two — "CLEAR"
 	# on its own covered both "nothing has happened yet" and "the shooting just
 	# stopped", which is why it looked stuck.
@@ -349,18 +395,20 @@ func _refresh_roster() -> void:
 	var living := squad.get_living_members().size()
 	var total := squad.squad_members.size()
 
-	_squad_header.text = "%s  [%d/%d]  %s  %s" % [
+	header.text = "%s  [%d/%d]  %s  %s" % [
 		squad.get_display_name().to_upper(), living, total, obj, ctx]
-	_squad_header.add_theme_color_override("font_color", ctx_col)
+	header.add_theme_color_override("font_color", Color(ctx_col, 0.45) if quiet else ctx_col)
 
-	var seen := {}
-	for m in squad.squad_members:
-		if m == null or not is_instance_valid(m):
-			continue
-		if seen.has(m.get_instance_id()):
-			continue
-		seen[m.get_instance_id()] = true
-		_roster.add_child(_make_member_row(m))
+
+# Your teams, both of them, whichever you are ordering: the other one dimmed.
+# Someone else's squad, picked by aiming at one of its robots, shows on its own;
+# so does a hand-placed squad in a level that deployed no teams.
+func _shown_squads() -> Array:
+	var selected := commander.get_selected_squad()
+	var teams := commander.team_squads()
+	if not teams.is_empty() and (selected == null or selected.team != &""):
+		return teams
+	return [selected] if selected != null else []
 
 
 func _make_member_row(m: Soldier) -> Control:
@@ -424,6 +472,14 @@ func _state_text(m: Soldier) -> String:
 	if m.soldier_state == Soldier.SoldierState.SUPPRESSED:
 		return STATE_PINNED
 
+	# A Mechanic at work. Standing still over a wreck otherwise reads HOLDING,
+	# which is the one thing it is not doing.
+	if m.has_method("is_repairing") and m.is_repairing():
+		return STATE_REPAIRING
+	# A Reclaimer with its drum in a wreck: working, not holding.
+	if m.has_method("is_salvaging") and m.is_salvaging():
+		return STATE_SALVAGING
+
 	if m.weapon != null and m.weapon.seconds_since_fired() <= firing_state_seconds:
 		return STATE_FIRING
 
@@ -447,7 +503,6 @@ func _refresh_nearby() -> void:
 	_clear(_nearby)
 	if commander == null:
 		return
-	var selected := commander.get_selected_squad()
 	var squads := commander.get_nearby_squads(nearby_radius)
 	if squads.is_empty():
 		return
@@ -455,6 +510,9 @@ func _refresh_nearby() -> void:
 	var shown: int = squads.size() if max_nearby <= 0 else mini(squads.size(), max_nearby)
 	var header := "IN RANGE" if shown >= squads.size() else "IN RANGE (%d/%d)" % [shown, squads.size()]
 	_nearby.add_child(_make_label(header, COL_DIM, font_size_nearby))
+	# Starred and bright: whoever the next order goes to.
+	var selected := commander.get_selected_squad()
+	var by_team := commander.has_teams()
 	for i in shown:
 		var s = squads[i]
 		var squad := s as Squad
@@ -467,9 +525,12 @@ func _refresh_nearby() -> void:
 			dist = player.global_position.distance_to(squad.get_center())
 		var mark := "*" if squad == selected else " "
 		var side := "HOSTILE" if hostile else "FRIENDLY"
+		# With two teams, yours go by team: cut to eight letters, TOMMYSQUAD and
+		# TOMMYSQUAD ARMOR read the same.
+		var who: String = squad.team_name() if by_team and squad.team != &"" else squad.get_display_name().to_upper()
 		_nearby.add_child(_make_label(
 			"%s%-8s %-8s %3dm  %s" % [
-				mark, squad.get_display_name().left(8).to_upper(), side,
+				mark, who.left(8), side,
 				int(dist), _strength_text(squad, hostile)],
 			col, font_size_nearby))
 
@@ -506,23 +567,29 @@ func _is_hostile_squad(squad: Squad) -> bool:
 func _draw() -> void:
 	if commander == null or player == null:
 		return
-	var squad := commander.get_selected_squad()
-	if squad == null:
+	var shown := _shown_squads()
+	if shown.is_empty():
 		return
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return
 
+	# One chevron per body. squad_members can hold the same Soldier twice after
+	# an add_ai_to_squad/roster shuffle, and a body that has died still sits in
+	# the world as a corpse — both produced doubled arrows.
+	var drawn := {}
+	var selected := commander.get_selected_squad()
+	for squad: Squad in shown:
+		# The team you are not ordering right now: still marked, quieter.
+		_draw_squad(squad, camera, drawn, shown.size() > 1 and squad != selected)
+
+
+func _draw_squad(squad: Squad, camera: Camera3D, drawn: Dictionary, quiet: bool) -> void:
 	# unproject_position() is viewport space, _draw() is local space.
 	# Subtracting global_position converts between the two — this is the fix for
 	# chevrons landing far below their robots.
 	var origin := global_position
 	var view_rect := Rect2(Vector2.ZERO, get_viewport_rect().size)
-
-	# One chevron per body. squad_members can hold the same Soldier twice after
-	# an add_ai_to_squad/roster shuffle, and a body that has died still sits in
-	# the world as a corpse — both produced doubled arrows.
-	var drawn := {}
 
 	# Living members PLUS anyone downed — a wreck you can revive is exactly the
 	# thing you most need to be able to find across a map.
@@ -553,6 +620,8 @@ func _draw() -> void:
 		p -= origin
 
 		var alpha: float = clampf(1.0 - (dist / marker_range), 0.25, 0.9)
+		if quiet:
+			alpha *= 0.4
 
 		# Same helper the roster bars use, so the chevron and the bar can never
 		# disagree about whether someone is in trouble.
@@ -630,9 +699,24 @@ func _on_roster_changed(_squad: Squad) -> void:
 
 
 func _on_squad_selected(squad: Squad) -> void:
-	if squad != null:
+	# With two teams, team_selected follows and says who the orders go to — one
+	# toast rather than two landing on top of each other.
+	if squad != null and not commander.has_teams():
 		_show_toast("COMMANDING %s" % squad.get_display_name().to_upper(), COL_BRIGHT)
 	_refresh_roster()
+	_refresh_nearby()
+
+
+# G, or tapping one of your robots.
+func _on_team_selected(label: String) -> void:
+	if commander.has_teams():
+		_show_toast("ORDERS > %s" % label, COL_BRIGHT)
+	_refresh_roster()
+	_refresh_nearby()
+
+
+func _on_no_team_to_switch() -> void:
+	_show_toast("NO OTHER TEAM", COL_DIM)
 
 
 func _on_order_issued(squad: Squad, verb: int, _position: Vector3, target: Node) -> void:
@@ -640,7 +724,9 @@ func _on_order_issued(squad: Squad, verb: int, _position: Vector3, target: Node)
 	var suffix := ""
 	if target != null and target is Enemy:
 		suffix = " > %s" % (target as Enemy).soldier_name.to_upper()
-	_show_toast("%s : %s%s" % [squad.get_display_name().to_upper(), verb_text, suffix], COL_BRIGHT)
+	# Who it went to: with two teams, the team.
+	var who := squad.team_name() if commander.has_teams() else squad.get_display_name().to_upper()
+	_show_toast("%s : %s%s" % [who, verb_text, suffix], COL_BRIGHT)
 	order_ux_sound_confirm.play()
 
 
