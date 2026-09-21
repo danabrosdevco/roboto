@@ -34,6 +34,22 @@ class_name AIWeaponGrenadeLauncher
 @export var salvo_scatter: float = 2.5
 ## Fuse override. Left at 0 the projectile keeps its own.
 @export var fuse_override: float = 0.0
+## What the playtest log calls this launcher's blasts. Left empty they are
+## scored by the round's own scene, which is the hand grenade's, so every
+## launcher in the game reported zero damage and its kills showed up under
+## Frag. Set it to whatever the weapon is called and the shots and the damage
+## land in the same row.
+@export var analytics_label: String = ""
+## Fires on the HIGH solution instead of the low one: the same speed, the other
+## root of the same equation, steep up and steep down. That is what a mortar
+## is — over a wall and down behind it, where a flat lob would hit the wall.
+@export var high_arc: bool = false
+## Widens the round's blast, in metres. 0 keeps the round's own.
+@export var blast_radius_override: float = 0.0
+## Blast override, passed to the round. Left at 0 the projectile keeps its own,
+## which is the hand grenade's. A launcher that puts two of these downrange on
+## every pull should not each hit as hard as the one you throw by hand.
+@export var blast_override: int = 0
 ## FROM THE GROUND. Above zero, each round leaves the muzzle at this speed on
 ## the low ballistic arc that comes down on the target — a launcher on a
 ## turret, lobbing over cover. Zero is the quadcopter bomber's drop from altitude.
@@ -117,6 +133,12 @@ func _spawn_charge(origin: Vector3) -> Node:
 		grenade.setup(shooter)
 	if fuse_override > 0.0 and "fuse_time" in grenade:
 		grenade.fuse_time = fuse_override
+	if blast_override > 0 and "blast_damage" in grenade:
+		grenade.blast_damage = blast_override
+	if analytics_label != "" and "analytics_label" in grenade:
+		grenade.analytics_label = analytics_label
+	if blast_radius_override > 0.0 and "blast_radius" in grenade:
+		grenade.blast_radius = blast_radius_override
 	_charge_parent(shooter).add_child(grenade)
 	grenade.global_position = origin
 	# A released charge must never collide with the thing that let go of it.
@@ -157,14 +179,27 @@ func _release_one(weapon_target: Vector3, index: int) -> void:
 			body.linear_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
 			body.linear_damp = 0.0
 			body.linear_velocity = _lob_velocity(origin, weapon_target)
+			# How long it will be up, for a round that wants to know: the
+			# mortar's whistles for the last second or so of it.
+			if "flight_time" in grenade:
+				grenade.flight_time = _flight_time(origin, weapon_target, body.linear_velocity)
 		else:
 			body.linear_velocity = _release_velocity(origin, weapon_target, index)
 		body.angular_velocity = Vector3(
 			randf_range(-4.0, 4.0), randf_range(-4.0, 4.0), randf_range(-4.0, 4.0))
 
 
-# The low arc, at lob_speed, from the muzzle onto the target. Out of reach, it
-# throws at 45 degrees — as far as it can — and lands short.
+# The velocity a round would leave `origin` with to land on `target`. Public so
+# whatever carries the launcher can point the tube along it before it fires —
+# the Reclaimer's boom does, so the mortar is visibly elevated for the shot it
+# is about to take.
+func launch_velocity(origin: Vector3, target: Vector3) -> Vector3:
+	return _lob_velocity(origin, target)
+
+
+# The arc at lob_speed, from the muzzle onto the target: the low one, or the
+# high one if high_arc. Out of reach, it throws at 45 degrees — as far as it
+# can — and lands short.
 func _lob_velocity(origin: Vector3, weapon_target: Vector3) -> Vector3:
 	var g: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 	var flat := Vector3(weapon_target.x - origin.x, 0.0, weapon_target.z - origin.z)
@@ -175,8 +210,21 @@ func _lob_velocity(origin: Vector3, weapon_target: Vector3) -> Vector3:
 	var h := weapon_target.y - origin.y
 	var v := lob_speed
 	var disc := v * v * v * v - g * (g * d * d + 2.0 * h * v * v)
-	var angle := deg_to_rad(45.0) if disc < 0.0 else atan2(v * v - sqrt(disc), g * d)
+	var root := sqrt(disc) if disc >= 0.0 else 0.0
+	var angle := deg_to_rad(45.0) if disc < 0.0 \
+		else atan2(v * v + (root if high_arc else -root), g * d)
 	return dir * cos(angle) * v + Vector3.UP * sin(angle) * v
+
+
+# Seconds from leaving `origin` at `v` to coming back down to `target`'s
+# height: the later root of y(t) = target.y. Zero if the arc never gets that
+# low, which a round fired at a target it can reach cannot do.
+func _flight_time(origin: Vector3, target: Vector3, v: Vector3) -> float:
+	var g: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
+	var disc := v.y * v.y + 2.0 * g * (origin.y - target.y)
+	if disc < 0.0:
+		return 0.0   # the target is above anything the arc reaches: no time to give
+	return (v.y + sqrt(disc)) / g
 
 
 # Lead the target by however long the round spends falling. Without this the

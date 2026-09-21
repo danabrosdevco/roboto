@@ -3,6 +3,12 @@ class_name Enemy
 
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
+# By path, not by class_name: Enemy is the base of every robot scene, and a
+# class_name reference to a NEW script fails to compile until Godot has
+# rebuilt its global class list — which turns every robot in the game into a
+# placeholder. A preload never waits on the class list. Same reasoning as
+# tutorial_label.gd's _Toast.
+const _SignalArc := preload("res://Character/weapon/appx/signal_arc.gd")
 const _KillKinds := preload("res://Campaign/kill_kinds.gd")
 
 # ── NODE REFERENCES ───────────────────────────
@@ -285,6 +291,37 @@ var _investigate_timer: float = 0.0
 # Enemy does not grow another property for an open editor to write into every
 # robot scene in the game.
 var never_culled: bool = false
+## SHOOT WITHOUT WAITING FOR THE SIGHT PICTURE. Set from a module at spawn.
+##
+## Normally a robot holds its trigger until _aim_tracking passes
+## _prefire_threshold(). That is why infantry that has stopped fires steadily
+## at its cooldown and infantry on the move barely fires at all — the rover's
+## machine gun only reads as "bursting" because a vehicle never stops long
+## enough to settle, so a committed burst is the only way it can shoot.
+##
+## This makes that the normal state: open up anyway, in long bursts, with a
+## breath between them. The spread for firing unsettled is 1/aim_floor (2.9x),
+## and 3x again if moving, so this is volume and suppression, not kills.
+##
+## A plain var, not an export: Enemy is the base of every robot scene in the
+## game and a new export on it makes an open editor write the default into all
+## of them. Same reasoning as never_culled above.
+var suppressive_fire: bool = false
+## How long a suppressive robot breathes between bursts. Without this it
+## re-commits the instant one runs out and fires forever in a flat line, which
+## is neither a burst nor suppression, just a slower laser.
+const SUPPRESSIVE_PAUSE := 0.45
+## Bursts are longer when you are not aiming them.
+const SUPPRESSIVE_BURST_SCALE := 2
+## INSIDE a burst the trigger is held down, so rounds come at the weapon's
+## CYCLIC rate rather than at the pace it takes aimed shots. fire_cooldown is
+## the latter — 0.35s on the rifle, which is a marksman squeezing them off, not
+## a weapon on automatic. A burst at that pace does not read as a burst at all.
+const SUPPRESSIVE_CYCLIC := 0.3
+## ...but never faster than this, or a weapon that is already quick (the
+## machine gun at 0.13s) empties a hundred-round belt in three seconds.
+const SUPPRESSIVE_FLOOR := 0.08
+var _suppress_pause: float = 0.0
 ## Seconds after going down before this robot gets back up by itself, once per
 ## deployment. Set from the Nanite Reboot module at spawn; 0 is never.
 @export var self_revive_seconds: float = 0.0
@@ -292,6 +329,16 @@ var _self_revive_used: bool = false
 var _self_revive_gen: int = 0
 # Seconds of blocked signal recovery left. See lock_signal().
 var _signal_locked_t: float = 0.0
+# The arcs coming off this one while its signal is down. Made on demand, freed
+# when it recovers. See _tick_signal_vfx.
+var _signal_arc: Node3D = null
+# Edge flag for `ekilled` — the E-KILL check runs every frame.
+var _ekill_announced: bool = false
+# Set on the way down through SIGNAL_EKILL, cleared only on the way back up
+# through SIGNAL_EKILL_RECOVER. See _update_ekill_latch.
+var _ekill_latched: bool = false
+# Whoever last put signal damage into this robot, so an e-kill can be credited.
+var _signal_source: Node = null
 ## Seconds a shot robot (and its squad) stays exempt from distance culling.
 ## Long enough to close on whoever is shooting and actually fight them.
 @export var wake_on_damage_seconds: float = 20.0
@@ -566,11 +613,25 @@ enum CombatOptions { MOVE, AIM, FIRE }
 enum MovementOptions { ADVANCE, REPOSITION, FALLBACK, LEAP, CHASE }
 
 # Signal degradation stages
+## Emitted on the FRAME a robot crosses into E-KILL, once, with whoever last
+## put signal damage into it. AIManager relays this so the HUD and the playtest
+## log can hear about every robot in the level from one place.
+signal ekilled(victim: Enemy, by: Node)
+
 enum SignalState { CLEAN, FUZZED, DEGRADED, CRITICAL, EKILL }
 const SIGNAL_FUZZED: float   = 0.75  # below here: accuracy penalty kicks in
 const SIGNAL_DEGRADED: float = 0.50  # below here: sensors halved, movement stutters
 const SIGNAL_CRITICAL: float = 0.25  # below here: ignores squad orders, erratic
 const SIGNAL_EKILL: float    = 0.01  # below here: fully disabled
+## ...and it STAYS disabled until signal has climbed back to here. The same
+## shape as revive_at_fraction on a downed robot: going out takes one threshold,
+## coming back takes another. Without it an e-kill was a flinch — recovery is
+## 0.08/s, so a robot knocked to zero ticked back over 0.01 in an eighth of a
+## second once its lock ran out and was fighting again. Now it is out for about
+## six seconds after the lock, and it comes back at the top of DEGRADED — in
+## practice FUZZED, since release is the first frame at or over 0.50 and
+## DEGRADED ends at exactly 0.50 — then climbs to CLEAN the ordinary way.
+const SIGNAL_EKILL_RECOVER: float = 0.50
 
 @export var DefaultAIState: AIState
 @export var AllowedMovementOptions: Array[MovementOptions]
@@ -1379,6 +1440,8 @@ func _is_moving() -> bool:
 func handle_weapon_logic(delta):
 	if fire_time > 0.0:
 		fire_time -= delta
+	if _suppress_pause > 0.0:
+		_suppress_pause -= delta
 	if weapon == null:
 		return
 	if ai_state != AIState.COMBAT:
@@ -1431,7 +1494,12 @@ func handle_weapon_logic(delta):
 			# sight picture proportional to range — snap shots up close,
 			# a real pause before a long shot.
 			if _burst_left <= 0 and _aim_tracking < _prefire_threshold():
-				return
+				# SUPPRESSIVE FIRE does not wait for a sight picture — it is
+				# the whole point of the module. Everything else about the
+				# engagement still applies: line of sight, range, ammunition.
+				if not suppressive_fire or _suppress_pause > 0.0:
+					return
+				_commit_burst()
 			if not _weapon_on_target():
 				return   # still slewing onto it
 			weapon_state = WeaponState.FIRE
@@ -1441,6 +1509,14 @@ func handle_weapon_logic(delta):
 				fire_time = weapon.fire_cooldown
 				if _burst_left > 0:
 					_burst_left -= 1
+					if suppressive_fire:
+						if _burst_left > 0:
+							# Still on the trigger: cyclic rate, not aimed pace.
+							fire_time = maxf(weapon.fire_cooldown * SUPPRESSIVE_CYCLIC,
+								SUPPRESSIVE_FLOOR)
+						else:
+							# Burst spent: breathe, then open up again.
+							_suppress_pause = SUPPRESSIVE_PAUSE
 				weapon_state = WeaponState.AIM
 
 # Whether the gun is actually pointing at weapon_target. A robot turns its whole
@@ -2193,6 +2269,9 @@ func _commit_burst() -> void:
 	if weapon != null and weapon.burst_min > 0:
 		lo = weapon.burst_min
 		hi = weapon.burst_max
+	if suppressive_fire:
+		lo *= SUPPRESSIVE_BURST_SCALE
+		hi *= SUPPRESSIVE_BURST_SCALE
 	_burst_left = randi_range(lo, maxi(lo, hi))
 
 func find_reposition_target():
@@ -2465,6 +2544,7 @@ func _arm_self_revive() -> void:
 func enter_downed() -> void:
 	if downed:
 		return
+	_quiet_signal_arc()
 	# The one line that is pure information rather than flavour — it is how the
 	# player learns a squadmate is recoverable rather than gone. BarkDirector
 	# lets DOWNED skip the channel budget for exactly this reason.
@@ -2539,6 +2619,7 @@ func _on_crash_landed() -> void:
 # blow or a salvage system would eventually call into.
 func destroy():
 	force_release_hold()
+	_quiet_signal_arc()
 	downed = false
 	if stimulus_manager != null:
 		stimulus_manager.emit_stimulus(
@@ -2988,7 +3069,9 @@ func receive_stimulus(
 # SIGNAL INTEGRITY
 # ─────────────────────────────────────────────
 func get_signal_state() -> SignalState:
-	if signal_integrity <= SIGNAL_EKILL:
+	# Latched OR at the floor: the second covers a frame where signal was set
+	# directly and the latch has not been updated yet.
+	if _ekill_latched or signal_integrity <= SIGNAL_EKILL:
 		return SignalState.EKILL
 	elif signal_integrity <= SIGNAL_CRITICAL:
 		return SignalState.CRITICAL
@@ -2999,13 +3082,33 @@ func get_signal_state() -> SignalState:
 	return SignalState.CLEAN
 
 # Called by near-miss suppression, EMP grenades, jamming, etc.
-func receive_signal_damage(amount: float) -> void:
+#
+# `source` is whoever did it, so an e-kill can be credited to the robot that
+# suppressed them or the hand that threw the EMP. Optional, and remembered
+# rather than passed on: signal damage arrives in dozens of tiny helpings and
+# the one that tips a robot over is rarely the interesting one — what the
+# player wants told is who had been working on them.
+func receive_signal_damage(amount: float, source: Node = null) -> void:
+	if source != null:
+		_signal_source = source
 	var actual = amount / maxf(signal_resistance, 0.01)
 	var before = signal_integrity
 	signal_integrity = maxf(0.0, signal_integrity - actual)
 	_on_signal_damaged(before, signal_integrity)
+	_update_ekill_latch()
 	if signal_integrity <= SIGNAL_EKILL:
 		_enter_ekill()
+
+
+# In at SIGNAL_EKILL, out only at SIGNAL_EKILL_RECOVER. Updated where signal
+# goes down (receive_signal_damage) and where it comes back (_tick_signal),
+# rather than inside get_signal_state(), which half the game calls every frame
+# and which should not have side effects.
+func _update_ekill_latch() -> void:
+	if signal_integrity <= SIGNAL_EKILL:
+		_ekill_latched = true
+	elif _ekill_latched and signal_integrity >= SIGNAL_EKILL_RECOVER:
+		_ekill_latched = false
 
 ## Hook for subclasses. Soldier uses this to enter SUPPRESSED.
 func _on_signal_damaged(_before: float, _after: float) -> void:
@@ -3013,7 +3116,8 @@ func _on_signal_damaged(_before: float, _after: float) -> void:
 
 func _enter_ekill() -> void:
 	# Robot is electronically disabled — physically intact, non-functional.
-	# Recovers automatically when signal_integrity rises above SIGNAL_EKILL.
+	# Recovers automatically once signal_integrity climbs back to
+	# SIGNAL_EKILL_RECOVER -- not merely back over SIGNAL_EKILL; see the latch.
 	movement_state = MovementState.NONE
 	velocity.x = 0
 	velocity.z = 0
@@ -3042,6 +3146,7 @@ func _tick_signal(delta: float) -> void:
 		_signal_locked_t = maxf(0.0, _signal_locked_t - delta)
 	elif signal_integrity < 1.0:
 		signal_integrity = minf(1.0, signal_integrity + signal_recovery_rate * delta)
+	_update_ekill_latch()
 
 	# DEGRADED: movement hesitation — occasional stutter
 	if get_signal_state() == SignalState.DEGRADED:
@@ -3051,6 +3156,64 @@ func _tick_signal(delta: float) -> void:
 			if randf() < 0.35:  # 35% chance to stutter each interval
 				velocity.x = 0
 				velocity.z = 0
+
+	_tick_signal_vfx(delta)
+	_tick_ekill_edge()
+
+
+# Arcs off the chassis, heavier the worse the signal is. Driven from here
+# rather than from _enter_ekill(), which is called EVERY PHYSICS FRAME while a
+# robot is down — anything spawned in there fires sixty times a second.
+#
+# The whole ramp is one effect at one dial. Suppression is a meter the player
+# is filling, and it should look like one: nothing at all while clean, a
+# flicker at FUZZED, spitting at CRITICAL, and a robot standing in its own
+# short circuit at E-KILL.
+#
+# BUILT ONCE, THEN ONLY DIMMED. The first version built a particle system each
+# time signal dipped under FUZZED and freed it each time it climbed back — and a
+# robot under suppression does not sit at 0.2, it hovers right on the 0.75 line,
+# pushed under by near-misses and pulled back by recovery. That was a whole
+# ParticleProcessMaterial, CurveTexture, QuadMesh and material allocated and
+# thrown away on every crossing. Now it is made the first time it is needed and
+# just stops emitting on recovery; the node goes when the robot does.
+func _tick_signal_vfx(delta: float) -> void:
+	if signal_integrity >= SIGNAL_FUZZED or not alive:
+		_quiet_signal_arc()
+		return
+	if _signal_arc == null or not is_instance_valid(_signal_arc):
+		_signal_arc = _SignalArc.new()
+		add_child(_signal_arc)
+		_signal_arc.position = Vector3(0, 0.9, 0)
+	# 0 at the FUZZED threshold, 1 at dead. Held at full for the whole of an
+	# e-kill, recovery included: a continuous crackle is how you tell a robot
+	# that is still out from one that is merely hurting.
+	var level: float = 1.0 if _ekill_latched else inverse_lerp(SIGNAL_FUZZED, 0.0, signal_integrity)
+	_signal_arc.tick(delta, level)
+
+
+# Stops the arcs without freeing anything. Called on recovery, and on death:
+# the downed branch of _physics_process switches physics OFF before
+# _tick_signal_vfx can run again, so without a call here a robot that went down
+# while suppressed kept sparking as a wreck — through the fall, the settle and
+# the reclaimer — and a sparking wreck reads as a robot that is still alive.
+func _quiet_signal_arc() -> void:
+	# Every clean robot that was ever suppressed comes through here every
+	# frame; only the first one after recovery has anything to do.
+	if _signal_arc != null and is_instance_valid(_signal_arc) and _signal_arc._intensity > 0.0:
+		_signal_arc.set_intensity(0.0)
+
+
+# ONE announcement per e-kill, not one per frame. Cleared when the robot climbs
+# back out, so a robot knocked down twice is two events — which is right, it
+# was taken out of the fight twice.
+func _tick_ekill_edge() -> void:
+	var down: bool = get_signal_state() == SignalState.EKILL and alive
+	if down == _ekill_announced:
+		return
+	_ekill_announced = down
+	if down:
+		ekilled.emit(self, _signal_source)
 
 func _can_receive_orders() -> bool:
 	# CRITICAL or E-KILL: robot ignores squad orders

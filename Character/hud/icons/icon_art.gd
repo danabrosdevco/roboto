@@ -30,6 +30,9 @@ const MODEL_OVERRIDES := {
 	&"shotgun": "res://Character/weapon/models/pump_shotgun_model.tscn",
 	&"hatchling": "res://Character/weapon/models/hatchling_canister_model.tscn",
 	&"recoilless": "res://Character/weapon/models/recoilless_model.tscn",
+	# The tube on the Reclaimer's boom is a pipe with rings on it; drawn on a
+	# baseplate and bipod at 45 degrees, it reads as a mortar at 15 pixels.
+	&"mortar": "res://Character/weapon/models/mortar_icon_model.tscn",
 }
 
 ## Orientation fixes, found by looking: [mirror left-right, mirror up-down].
@@ -58,18 +61,31 @@ const DRAWINGS := {
 	&"overclock_servos": "M9 16a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M16 5V9 M16 23V27 M5 16H9 M23 16H27 M8.2 8.2L11 11 M21 21L23.8 23.8 M8.2 23.8L11 21 M21 11L23.8 8.2 M17 11.5L14.5 16H17.5L15 20.5",
 	&"hardened_uplink": "M16 28V13 M11 28H21 M14.5 11.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0 M11 7Q8 11.5 11 16 M21 7Q24 11.5 21 16 M8 4Q3 11.5 8 19 M24 4Q29 11.5 24 19",
 	&"nanite_reboot": "M11 11L13.5 6.7H18.5L21 11L18.5 15.3H13.5Z M5.5 21L8 16.7H13L15.5 21L13 25.3H8Z M16.5 21L19 16.7H24L26.5 21L24 25.3H19Z",
+	# The Sensor Relay. Its id is still &"optics" and stays that way: ids are
+	# keys into saved allocations, fitted module_ids and unlock lists, and only
+	# the first of those has a rename table. Renaming it would strand a bought
+	# one and its 70 resources in every campaign in progress.
 	&"optics": "M6 13H26V19H6Z M26 12H29V20H26 M3 14H6V18H3 M11 13V10H15V13 M17 13V10H21V13",
 	&"utility_harness": "M9 4L23 28 M23 4L9 28 M4 13H10V20H4Z M22 13H28V20H22Z M13 24H19V29H13Z",
+	# Cyclic Feed: a belt of rounds running into a feed throat. The rounds are
+	# the point — this is the module that decides you would rather spend them.
+	&"cyclic_feed": "M4 12H20V20H4Z M20 11L28 8V24L20 21Z M8 12V20 M12 12V20 M16 12V20 M6 24H18",
 }
 
 ## Anything without a model or a drawing gets a plain crate.
 const FALLBACK_DRAWING := "M6 9H26V25H6Z M6 9L10 5H30L26 9 M30 5V21L26 25"
 
 
-## Which size class an item's icons are baked in: anything shaped like a gun
-## is wide, whatever slot it goes in.
+## Which size class an item's icons are baked in: THE SLOT DECIDES, not the
+## shape of the thing.
+##
+## This used to bake anything side-framed wide, which put a 96x36 recoilless
+## into the 36x36 gear tile — and Kit.icon draws at native size, so it simply
+## hung out over both sides of the card. Framing and size class are separate
+## questions: the tube is still drawn lengthways, it is just drawn lengthways
+## inside a square. Only a weapon gets a wide slot, so only a weapon is wide.
 static func size_class(item: ItemDefinition) -> String:
-	if item.kind == ItemDefinition.Kind.WEAPON or FRAMINGS.get(item.id, "") == "side":
+	if item.kind == ItemDefinition.Kind.WEAPON:
 		return "wide"
 	return "square"
 

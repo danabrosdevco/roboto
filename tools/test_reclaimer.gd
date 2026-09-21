@@ -100,9 +100,11 @@ func _init() -> void:
 
 	# ── THE FRAME ────────────────────────────────
 	var frame := cat.chassis_def(&"reclaimer")
-	_check("the Reclaimer is in the catalogue: two seats, no gun slot, a welder built in",
-		frame != null and frame.purchasable and frame.supply == 2 and frame.weapon_slots == 0
-		and frame.built_in == "WELDER" and frame.scene != null)
+	# The one slot is the boom's: empty, the welder is on it (test_mortar.gd has
+	# the tube that can go there instead). Nothing is fitted to it here.
+	_check("the Reclaimer is in the catalogue: two seats, a welder built in, one slot it stands in for",
+		frame != null and frame.purchasable and frame.supply == 2 and frame.weapon_slots == 1
+		and frame.weapon_replaces_built_in and frame.built_in == "WELDER" and frame.scene != null)
 	_check("...and it is not a vehicle to the squad: it rides with the infantry",
 		frame != null and not frame.vehicle)
 

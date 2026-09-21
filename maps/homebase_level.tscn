@@ -1203,7 +1203,7 @@ in_library = false
 
 [node name="TutorialLabel4" type="Label3D" parent="."]
 transform = Transform3D(-0.999667, 0, -0.0257932, 0, 1, 0, 0.0257932, 0, -0.999667, -3.07773, 2.65656, 42.4119)
-text = "{squad_manager} - SQUAD MANAGER
+text = "PRESS {squad_manager} FOR THE SQUAD MANAGER
 
 ARMORER: BUY AN ANCIENT RIFLE.
 THEN SQUAD: CLICK YOURSELF, CLICK YOUR WEAPON SLOT,
@@ -1266,24 +1266,24 @@ completes_tutorial = true
 
 [node name="TutorialLabel3" type="Label3D" parent="."]
 transform = Transform3D(-0.596113, 0, -0.8029, 0, 1, 0, 0.8029, 0, -0.596113, 2.83059, 2.8769, 50.7981)
-text = "{1} - Select weapon
-{3} - repair tool
-{4}/{5} - select equipment
-{fire} - fire
-{aim} - Aim
-{reload} - RELOAD
+text = "PRESS {1} - SELECT WEAPON
+PRESS {3} - REPAIR TOOL
+PRESS {4}/{5} - SELECT EQUIPMENT
+PRESS {fire} - FIRE
+PRESS {aim} - AIM
+PRESS {reload} - RELOAD
 HOLD {zoom} - ZOOM"
 font_size = 50
 script = ExtResource("18_5ehbc")
 
 [node name="TutorialLabel13" type="Label3D" parent="."]
 transform = Transform3D(0.16775, 0, 0.98583, 0, 1, 0, -0.98583, 0, 0.16775, -8.69247, 2.8769, 50.7981)
-text = "{1} - Select weapon
-{3} - repair tool
-{4}/{5} - select equipment
-{fire} - fire
-{aim} - Aim
-{reload} - RELOAD
+text = "PRESS {1} - SELECT WEAPON
+PRESS {3} - REPAIR TOOL
+PRESS {4}/{5} - SELECT EQUIPMENT
+PRESS {fire} - FIRE
+PRESS {aim} - AIM
+PRESS {reload} - RELOAD
 HOLD {zoom} - ZOOM"
 font_size = 50
 script = ExtResource("18_5ehbc")

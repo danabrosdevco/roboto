@@ -36,6 +36,10 @@ const _Analytics := preload("res://Managers/analytics.gd")
 @export var arm_seconds: float = 0.06
 
 var _fired_by: Node = null
+## What the playtest log calls this rocket's blast. Set by whatever fired it,
+## so the damage lands in the same row as the firings. See rocket_projectile's
+## note in _detonate.
+var analytics_label: String = ""
 var _exploded := false
 var _age := 0.0
 var _last_at := Vector3.ZERO
@@ -138,7 +142,11 @@ func _explode() -> void:
 		blast.source_actor = _fired_by
 		if _fired_by.has_method("get_faction"):
 			blast.source_faction = _fired_by.get_faction()
-	blast.set_meta(&"analytics_cause", _Analytics.label_for_scene(scene_file_path))
+	# Named for the WEAPON, not for the round. The launcher logs its firings as
+	# throws under "Recoilless Rifle"; scoring the blast by its own scene filed
+	# the damage under "Rocket Projectile" and split one weapon over two rows.
+	blast.set_meta(&"analytics_cause", analytics_label if analytics_label != ""
+		else _Analytics.label_for_scene(scene_file_path))
 	var host: Node = get_tree().current_scene if get_tree().current_scene != null else get_parent()
 	host.add_child(blast)
 	blast.global_position = global_position

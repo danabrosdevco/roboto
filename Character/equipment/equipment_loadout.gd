@@ -78,6 +78,8 @@ var _fire_held: bool = false
 # update/input out of the transition, and never carry held-trigger state from an
 # old instance into the replacement instance.
 var _rebuilding: bool = false
+# The ids the last applied record carried, for spotting what a refit ADDED.
+var _last_ids: Array = []
 # True while `current` is the loadout's own automatic pick rather than
 # something the player selected. See _ready and apply_record.
 var _auto_opened: bool = false
@@ -366,6 +368,29 @@ func apply_record(record, catalogue) -> void:
 	# of your gun. An automatic pick is not a choice to preserve.
 	var held_slot := -1 if _auto_opened else _slot_index_for_item(current)
 
+	# WHATEVER YOU JUST FITTED GOES IN YOUR HANDS.
+	#
+	# Buying your first rifle and walking away still holding the repair tool is
+	# the wrong answer to "I just bought a rifle" â and there is no other way to
+	# find out you own it until you happen to press the key. The record is
+	# diffed against the one before it, so this needs nothing from the caller:
+	# anything in the new record that was not in the old one is what you just
+	# did, and it wins over the slot you were holding.
+	var ids_now: Array = []
+	for id in record.weapon_ids:
+		ids_now.append(id)
+	for id in record.equipment_ids:
+		ids_now.append(id)
+	var fresh_ids: Array = []
+	var seen := _last_ids.duplicate()
+	for id in ids_now:
+		var at := seen.find(id)
+		if at >= 0:
+			seen.remove_at(at)   # already had one of these
+		else:
+			fresh_ids.append(id)
+	_last_ids = ids_now
+
 	# Finish the outgoing item's input/equip lifecycle while it is still alive.
 	if _is_live(current):
 		if _fire_held:
@@ -446,7 +471,15 @@ func apply_record(record, catalogue) -> void:
 	# Prefer the newly-built item occupying the slot that was held before the
 	# swap. If that slot no longer exists or cannot equip, use the normal fallback.
 	var opener: PlayerEquipment = null
-	if held_slot >= 0:
+	for item in _all:
+		if not _is_live(item) or not item.has_meta(&"item_id"):
+			continue
+		if not fresh_ids.has(item.get_meta(&"item_id")):
+			continue
+		if item.can_equip():
+			opener = item
+			break
+	if opener == null and held_slot >= 0:
 		opener = item_for_slot(held_slot)
 		if not _is_live(opener) or not opener.can_equip():
 			opener = null
@@ -508,6 +541,8 @@ func _build_item(catalogue, item_id: StringName) -> PlayerEquipment:
 		node.queue_free()
 		return null
 	search_root.add_child(node)
+	# Which catalogue entry this came from, so a refit can tell what is NEW.
+	node.set_meta(&"item_id", item_id)
 	_record_built.append(node)
 
 	# Alignment and per-item stats come from the definition. Applied AFTER

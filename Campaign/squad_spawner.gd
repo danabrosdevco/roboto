@@ -263,6 +263,7 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 	# that replaced it could make a sturdy chassis worse.
 	soldier.signal_resistance += record.effective_signal_resistance_bonus
 	soldier.self_revive_seconds = record.effective_self_revive
+	soldier.suppressive_fire = record.effective_suppressive
 	if record.effective_signal_bonus != 0.0:
 		soldier.signal_integrity = clampf(
 			soldier.signal_integrity + record.effective_signal_bonus, 0.0, 1.0)

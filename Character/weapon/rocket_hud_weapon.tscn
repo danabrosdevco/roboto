@@ -1,8 +1,8 @@
-[gd_scene load_steps=10 format=3 uid="uid://xiii8p74jwm3"]
+[gd_scene load_steps=14 format=3 uid="uid://xiii8p74jwm3"]
 
 [ext_resource type="Script" path="res://Character/equipment/player_rocket.gd" id="1_rocket"]
 [ext_resource type="PackedScene" uid="uid://crocket00001" path="res://Character/weapon/rocket_projectile.tscn" id="2_proj"]
-[ext_resource type="AudioStream" uid="uid://b2hibouhtggt2" path="res://sounds/sfx/free cinematic sfx/freesound_community-gear-spinning-loop-6981.mp3" id="3_launch"]
+[ext_resource type="AudioStream" uid="uid://3ps2c3e6sglw" path="res://sounds/sfx/grenade launcher/freesound_community-grenade-launcher-106342.mp3" id="4_272kr"]
 [ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="4_click"]
 [ext_resource type="PackedScene" uid="uid://wru2f77au1xv" path="res://3d_assets/Rockets Missiles and Bombs - AurynSky/FBX/Rocket2.fbx" id="5_warhead"]
 
@@ -30,6 +30,26 @@ albedo_color = Color(0.09, 0.1, 0.1, 1)
 metallic = 0.2
 roughness = 0.8
 
+[sub_resource type="StandardMaterial3D" id="SightMat"]
+albedo_color = Color(0.16, 0.175, 0.17, 1)
+metallic = 0.65
+roughness = 0.38
+
+[sub_resource type="TorusMesh" id="RingMesh"]
+inner_radius = 0.049
+outer_radius = 0.058
+rings = 24
+ring_segments = 8
+
+[sub_resource type="TorusMesh" id="PipMesh"]
+inner_radius = 0.013
+outer_radius = 0.019
+rings = 16
+ring_segments = 6
+
+[sub_resource type="BoxMesh" id="CrossMesh"]
+size = Vector3(0.005, 0.098, 0.005)
+
 [node name="RocketLauncher" type="Node3D" node_paths=PackedStringArray("launch_sound", "viewmodel")]
 script = ExtResource("1_rocket")
 rocket_scene = ExtResource("2_proj")
@@ -39,7 +59,7 @@ equipment_order = 2
 viewmodel = NodePath("Tube")
 use_default_position = false
 bob_speed = 0.7
-bob_amount = 0.008
+bob_amount = 0.001
 
 [node name="Tube" type="Node3D" parent="."]
 transform = Transform3D(0.996195, 0, -0.0871557, 0, 1, 0, 0.0871557, 0, 0.996195, 0.3, -0.25, -0.62)
@@ -59,21 +79,36 @@ transform = Transform3D(0.055, 0, 0, 0, 0.11, 0, 0, 0, 0.065, 0, -0.1, -0.12)
 material_override = SubResource("GripMat")
 mesh = SubResource("TubeMesh")
 
-[node name="SightBlock" type="MeshInstance3D" parent="Tube"]
-transform = Transform3D(0.03, 0, 0, 0, 0.075, 0, 0, 0, 0.075, 0, 0.105, -0.07)
-material_override = SubResource("GripMat")
+[node name="SightPost" type="MeshInstance3D" parent="Tube"]
+transform = Transform3D(0.13, 0, 0, 0, 0.163, 0, 0, 0, 0.13, 0, 0.13, -0.36)
+material_override = SubResource("SightMat")
 mesh = SubResource("TubeMesh")
 
-[node name="SightPost" type="MeshInstance3D" parent="Tube"]
-transform = Transform3D(0.012, 0, 0, 0, 0.095, 0, 0, 0, 0.012, 0, 0.15, -0.38)
-material_override = SubResource("GripMat")
-mesh = SubResource("TubeMesh")
+[node name="SightRing" type="MeshInstance3D" parent="Tube"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0.205, -0.36)
+material_override = SubResource("SightMat")
+mesh = SubResource("RingMesh")
+
+[node name="SightPip" type="MeshInstance3D" parent="Tube"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0.205, -0.36)
+material_override = SubResource("SightMat")
+mesh = SubResource("PipMesh")
+
+[node name="SightCrossV" type="MeshInstance3D" parent="Tube"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.205, -0.36)
+material_override = SubResource("SightMat")
+mesh = SubResource("CrossMesh")
+
+[node name="SightCrossH" type="MeshInstance3D" parent="Tube"]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0, 0.205, -0.36)
+material_override = SubResource("SightMat")
+mesh = SubResource("CrossMesh")
 
 [node name="Warhead" parent="Tube" instance=ExtResource("5_warhead")]
 transform = Transform3D(0.042, 0, 0, 0, -1.83588e-09, -0.042, 0, 0.042, -1.83588e-09, 0, 0, -0.34)
 
 [node name="Launch" type="AudioStreamPlayer3D" parent="."]
-stream = ExtResource("3_launch")
+stream = ExtResource("4_272kr")
 volume_db = -2.0
 unit_size = 30.0
 max_distance = 200.0

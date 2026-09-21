@@ -81,7 +81,7 @@ func _pulse() -> void:
 		if _is_friendly(n):
 			amount *= friendly_multiplier
 			lock *= friendly_multiplier
-		n.receive_signal_damage(amount)
+		n.receive_signal_damage(amount, source_actor)
 		if n.has_method("lock_signal"):
 			n.lock_signal(lock)
 		hits += 1

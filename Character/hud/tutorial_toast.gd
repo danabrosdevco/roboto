@@ -53,6 +53,9 @@ var _current: Node3D = null
 var _linger: float = 0.0
 var _target_alpha: float = 0.0
 var _blip: AudioStreamPlayer
+## Seconds left on an announce(). While this is running the signs do not get a
+## look in — a lesson the game chose to give you outranks one you walked past.
+var _pinned: float = 0.0
 
 
 ## Signs call this from _ready. Creates the toast the first time it is needed.
@@ -70,6 +73,26 @@ static func register(sign_node: Node3D) -> void:
 
 static func unregister(sign_node: Node3D) -> void:
 	_signs.erase(sign_node)
+
+
+## A LESSON THAT IS NOT A PLACE.
+##
+## Every sign in the base is a spot you walk to, and every one of them retires
+## the moment completed_tutorial is set — which is exactly wrong for something
+## you earn hours later by unlocking a frame. This puts one on screen on
+## demand, for `seconds`, over the top of any sign, and it does not care
+## whether the player is a veteran. Same panel, same blip, same key expansion.
+##
+## Creates the toast if no sign ever did, which for a veteran is every time.
+static func announce(tree: SceneTree, raw: String, seconds: float = 10.0) -> void:
+	if tree == null or raw.strip_edges() == "":
+		return
+	var toast = tree.root.get_node_or_null(NODE_NAME)
+	if toast == null:
+		toast = TutorialToast.new()
+		toast.name = NODE_NAME
+		tree.root.add_child(toast)
+	toast._pin(raw, seconds)
 
 
 ## "{reload} - RELOAD" -> "R - RELOAD", from the live bindings.
@@ -152,6 +175,15 @@ func _process(delta: float) -> void:
 		_panel.modulate.a = 0.0
 		_panel.visible = false
 		return
+	if _pinned > 0.0:
+		_pinned -= delta
+		if _pinned <= 0.0:
+			_target_alpha = 0.0
+			_current = null
+		_panel.modulate.a = lerpf(_panel.modulate.a, _target_alpha, clampf(fade_speed * delta, 0.0, 1.0))
+		_panel.visible = _panel.modulate.a > 0.01
+		return
+
 	var want := _pick_sign()
 	if want != _current:
 		if want != null:
@@ -204,6 +236,19 @@ func _show(sign_node: Node3D) -> void:
 	var raw: String = expand_keys(str(sign_node.toast_text)).strip_edges()
 	if just_finished:
 		raw += "\n\n" + FINISHED_LINE
+	_put(raw)
+
+
+# Held on screen for a while rather than for as long as you stand somewhere.
+func _pin(raw: String, seconds: float) -> void:
+	_current = null
+	_pinned = maxf(seconds, 0.5)
+	_put(expand_keys(raw).strip_edges())
+
+
+# First line is the headline, the rest is the body. Shared by the signs and by
+# announce() so a lesson reads the same however it was triggered.
+func _put(raw: String) -> void:
 	var lines := raw.split("\n")
 	_headline.text = lines[0].strip_edges().to_upper()
 	var rest: PackedStringArray = []

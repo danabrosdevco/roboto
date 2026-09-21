@@ -114,7 +114,10 @@ func _default_slot() -> void:
 	if frame != null and frame.weapon_slots == 0:
 		slot_kind = ItemDefinition.Kind.MODULE
 		return
-	if selected.weapon_ids.has(&"") or selected.weapon_ids.is_empty():
+	# An empty slot that falls back to a built-in (the Reclaimer's welder) is
+	# not a gap to point at first.
+	var gap := selected.weapon_ids.has(&"") and not (frame != null and frame.weapon_replaces_built_in)
+	if gap or selected.weapon_ids.is_empty():
 		return
 	for kind in [ItemDefinition.Kind.EQUIPMENT, ItemDefinition.Kind.MODULE]:
 		var slots: Array = _slots(selected, kind)
@@ -285,8 +288,8 @@ func _status(record: SoldierRecord, going: Array, capped: bool, op: MissionDefin
 
 func _armed(record: SoldierRecord) -> bool:
 	var frame := _frame(record)
-	if frame != null and frame.weapon_slots == 0:
-		return true   # claws, a welder: built in
+	if frame != null and (frame.weapon_slots == 0 or frame.weapon_replaces_built_in):
+		return true   # claws, a welder: built in, and the Reclaimer's until a mortar replaces it
 	for id in record.weapon_ids:
 		if id != &"":
 			return true
@@ -296,28 +299,64 @@ func _armed(record: SoldierRecord) -> bool:
 # The card's gear as small icons, in slot order. Built-in things (the player's
 # repair tool, a chaser's claws, a mechanic's welder) sit in the row too,
 # marked as fixed.
+# THE KIT ON A CARD IS A WAY IN, not a picture of one.
+#
+# These tiles show exactly what the detail panel edits, and they used to ignore
+# the mouse entirely â so the route to "change this robot's grenade" was click
+# the robot, then find the grenade again on the right. Clicking the tile does
+# both: it selects the robot AND lands on that slot, whatever kind it is.
+#
+# Fixed tiles (a turret's built-in gun, your own repair tool) stay dead,
+# because there is nothing on the other side of that click to change.
 func _strip(record: SoldierRecord, frame: ChassisDefinition) -> Control:
 	var row := Kit.hbox(3)
 	if frame != null and frame.weapon_slots == 0:
 		row.add_child(_mini(null, true, frame.built_in, true))
-	for id in record.weapon_ids:
-		row.add_child(_mini(ui.item(id), true, "", false, id == &""))
+	# An empty slot a built-in stands in for shows the built-in, and is still a
+	# way in: click it to put something in the built-in's place.
+	var stand_in := frame.built_in if frame != null and frame.weapon_replaces_built_in else ""
+	for i in record.weapon_ids.size():
+		var id: StringName = record.weapon_ids[i]
+		row.add_child(_mini(ui.item(id), true, stand_in, false, id == &"" and stand_in == "",
+			record, ItemDefinition.Kind.WEAPON, i))
 	if ui.state.is_player_record(record):
 		row.add_child(_mini(ui.item(REPAIR_TOOL), true, "", true))
-	for id in record.equipment_ids:
-		row.add_child(_mini(ui.item(id), false))
-	for id in record.module_ids:
-		row.add_child(_mini(ui.item(id), false))
+	for i in record.equipment_ids.size():
+		row.add_child(_mini(ui.item(record.equipment_ids[i]), false, "", false, false,
+			record, ItemDefinition.Kind.EQUIPMENT, i))
+	for i in record.module_ids.size():
+		row.add_child(_mini(ui.item(record.module_ids[i]), false, "", false, false,
+			record, ItemDefinition.Kind.MODULE, i))
 	return row
 
 
+## Select `record` and land on one of its slots, from a click on a roster card.
+func open_at(record: SoldierRecord, kind: int, index: int) -> void:
+	if record == null:
+		return
+	if selected != record:
+		_select(record, false)
+	slot_kind = kind
+	slot_index = maxi(index, 0)
+	ui.play(&"select")
+	rebuild()
+
+
 func _mini(item: ItemDefinition, wide: bool, text: String = "", fixed: bool = false,
-		missing: bool = false) -> Control:
+		missing: bool = false, record: SoldierRecord = null, kind: int = -1, index: int = -1) -> Control:
 	var tile := PanelContainer.new()
 	var border := Kit.PROBLEM if missing else (Kit.LINE if item != null or text != "" else Kit.FAINT)
 	tile.add_theme_stylebox_override("panel", Kit.box(border, Color(0, 0, 0, 0.25), 1, 1.0))
 	tile.custom_minimum_size = Vector2(46 if wide else 22, 21)
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if record != null and kind >= 0 and not fixed:
+		tile.mouse_filter = Control.MOUSE_FILTER_STOP
+		tile.tooltip_text = "EDIT THIS SLOT"
+		tile.mouse_entered.connect(ui.hover)
+		tile.gui_input.connect(func(e: InputEvent):
+			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+				accept_event()
+				open_at(record, kind, index))
 	var tint := Kit.DIM if fixed else Kit.BRIGHT
 	if item != null:
 		var tex := Icons.item(item, "s")
@@ -442,7 +481,11 @@ func _build_detail() -> void:
 		weapon_row.add_child(_group("WEAPON", [_fixed_tile(null, frame.built_in)]))
 	else:
 		# Named for what it takes, so a rifle refused by a rover reads as a rule.
-		var slot_name := "TURRET" if frame != null and frame.turret else "WEAPON"
+		var slot_name := "WEAPON"
+		if frame != null and frame.turret:
+			slot_name = "TURRET"
+		elif frame != null and frame.weapon_replaces_built_in:
+			slot_name = "TOOL"   # the Reclaimer's boom: the welder, or a mortar in its place
 		weapon_row.add_child(_group(slot_name, _tiles(ItemDefinition.Kind.WEAPON, r.weapon_ids)))
 	if is_player and ui.item(REPAIR_TOOL) != null:
 		weapon_row.add_child(_group("BUILT IN · KEY 3", [_fixed_tile(ui.item(REPAIR_TOOL), "")]))
@@ -525,10 +568,13 @@ func _slot_tile(kind: int, index: int, item_id: StringName) -> Control:
 		col.add_child(l)
 		tile.tooltip_text = "%s\n%s\nRight-click to take it off." % [item.display_name, item.effect_summary()]
 	else:
-		var l := Kit.label("EMPTY", Kit.PROBLEM if missing else Kit.DIM, 12)
+		var frame := _frame(selected)
+		var stand_in := frame.built_in if wide and frame != null and frame.weapon_replaces_built_in else ""
+		var l := Kit.label(stand_in if stand_in != "" else "EMPTY", Kit.PROBLEM if missing else Kit.DIM, 12)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		col.add_child(l)
-		tile.tooltip_text = "Empty. Pick something from stores below."
+		tile.tooltip_text = "Empty. Pick something from stores below." if stand_in == "" \
+			else "The %s, built in. Anything fitted here takes its place." % stand_in.to_lower()
 	return tile
 
 

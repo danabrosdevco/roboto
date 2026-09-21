@@ -20,6 +20,12 @@ const _Analytics := preload("res://Managers/analytics.gd")
 # Spread — in milliradians. At distance D, spread = mrad * D / 1000 metres.
 @export var ai_spread_mrad: float = 6.0
 
+# Rounds per shot. 1 is a rifle; a shotgun is several, each carrying its share
+# of base_damage and thrown wide by pellet_spread_mrad. The pattern is what
+# makes a shotgun fall off with range, so there is no separate falloff to tune.
+@export var pellets: int = 1
+@export var pellet_spread_mrad: float = 0.0
+
 # Suppression — signal_integrity damage applied to enemies near each shot.
 @export var suppression_per_shot: float = 3.0   # signal_integrity units × 100
 @export var near_miss_radius: float = 2.5       # metres
@@ -313,16 +319,50 @@ func space_state_or_null() -> PhysicsDirectSpaceState3D:
 signal friendly_hit(body: Node)
 
 
+# A SHOT MAY BE MORE THAN ONE ROUND.
+#
+# A shotgun firing a single ray for its whole damage is a slow rifle: it either
+# lands all 45 or none of it, and at range it behaves exactly like every other
+# hitscan. Pellets give it the shape it should have had — everything lands in
+# your face, half of it lands across a room, almost none of it lands at forty
+# metres — without a range table, because the pattern does it.
+#
+# `base_damage` stays the damage of a WHOLE shell; each pellet carries its
+# share, so retuning the weapon is still one number.
 func check_damage(weapon_target: Vector3) -> void:
-	var space_state = get_world_3d().direct_space_state
-	var from = muzzle_origin.global_position
-	var direction = (weapon_target - from).normalized()
-
-	var exclusion: Array[RID] = []
+	var count: int = maxi(pellets, 1)
+	var from: Vector3 = muzzle_origin.global_position
+	var centre := (weapon_target - from).normalized()
 	var shooter = _owner_body()
+	var exclusion: Array[RID] = []
 	if shooter is CollisionObject3D:
 		exclusion.append((shooter as CollisionObject3D).get_rid())
 
+	# Split so the parts add up to the whole: the remainder rides on the first
+	# pellet rather than being rounded away.
+	var each: int = int(floor(float(base_damage) / float(count)))
+	var spare: int = base_damage - each * count
+
+	var centre_impact := from + centre * max_effective_range
+	for i in count:
+		var dir := centre
+		if count > 1 and pellet_spread_mrad > 0.0:
+			dir = scatter(centre, pellet_spread_mrad)
+		var impact := _one_round(from, dir, exclusion, shooter, each + (spare if i == 0 else 0))
+		if i == 0:
+			centre_impact = impact
+
+	# One tracer for the shot, down the middle of the pattern.
+	fire_tracer_to(from, centre_impact)
+
+	if suppression_per_shot > 0.0:
+		_apply_near_miss_suppression(centre_impact)
+
+
+# One round down one line. Returns where it stopped.
+func _one_round(from: Vector3, direction: Vector3, exclusion: Array[RID],
+		shooter, share: int) -> Vector3:
+	var space_state = get_world_3d().direct_space_state
 	var impact = from + direction * max_effective_range
 	var hit_body: Node = null
 	var hit_dist: float = max_effective_range
@@ -344,17 +384,16 @@ func check_damage(weapon_target: Vector3) -> void:
 		hit_body = damageable
 
 	if hit_body != null:
-		var dealt: int = calculate_damage(hit_dist)
+		# calculate_damage works off base_damage, so scale its falloff onto this
+		# round's share of the shell.
+		var full: float = maxf(float(base_damage), 1.0)
+		var dealt: int = maxi(1, int(round(calculate_damage(hit_dist) * float(share) / full)))
 		if _is_friendly(hit_body):
 			dealt = maxi(1, int(round(float(dealt) * friendly_fire_multiplier)))
 			friendly_hit.emit(hit_body)
 		hit_body.apply_damage(dealt, shooter)
+	return impact
 
-	# One tracer, along the line the round actually took.
-	fire_tracer_to(from, impact)
-
-	if suppression_per_shot > 0.0:
-		_apply_near_miss_suppression(impact)
 
 func _apply_near_miss_suppression(shot_pos: Vector3) -> void:
 	var space_state = get_world_3d().direct_space_state
@@ -378,26 +417,51 @@ func _apply_near_miss_suppression(shot_pos: Vector3) -> void:
 			continue
 		if "signal_integrity" in body:
 			if body.has_method("receive_signal_damage"):
-				body.receive_signal_damage(suppression_amount)
+				body.receive_signal_damage(suppression_amount, shooter)
 			else:
 				body.signal_integrity = maxf(0.0, body.signal_integrity - suppression_amount)
 
+# A SWING GOES WHERE IT IS LOOKING, not down the weapon node's own X axis.
+#
+# The sphere used to be placed at `global_position + basis.x * melee_range`.
+# That axis is whatever rotation the weapon was given in its scene, and the
+# chaser's is yawed ninety degrees — so the swing landed a metre and a half to
+# the SIDE of whatever it was attacking, and a metre above it, because the
+# weapon is mounted high on the body. A chaser could stand on your feet, in
+# COMBAT, cycling its attack, and never once touch you.
+#
+# Aimed at the target instead, so the sphere is always on the line between the
+# two. The arc is still measured against the BODY's facing, which is what stops
+# it hitting something behind it.
 func check_melee_damage() -> void:
 	var space_state = get_world_3d().direct_space_state
+	var shooter = _owner_body()
+	var swing := _melee_direction(shooter)
 	_melee_shape.radius = melee_radius
-	_melee_query.transform = Transform3D(Basis(), global_position + get_forward_vector() * melee_range)
+	_melee_query.transform = Transform3D(Basis(), global_position + swing * melee_range)
 	_melee_query.collision_mask = character_mask
 	var exclusion: Array[RID] = []
-	var shooter = _owner_body()
 	if shooter is CollisionObject3D:
 		exclusion.append((shooter as CollisionObject3D).get_rid())
 	_melee_query.exclude = exclusion
+	var facing := swing
+	if shooter is Node3D:
+		var nose: Vector3 = -(shooter as Node3D).global_transform.basis.z
+		if nose.length_squared() > 0.0001:
+			facing = nose.normalized()
 
 	var results = space_state.intersect_shape(_melee_query, 16)
 	for result in results:
 		var collider = result.collider
-		var to_target = (collider.global_position - global_position).normalized()
-		if rad_to_deg(acos(clampf(get_forward_vector().dot(to_target), -1.0, 1.0))) > melee_arc_angle:
+		# ON THE FLAT. The arc says "is this in front of me", and a weapon mounted
+		# high on a chaser looks DOWN at something standing next to it — that tilt
+		# alone was most of the sixty degrees, so a target dead ahead measured 63
+		# and was thrown away. Height is the sphere's business, not the arc's.
+		var to_target := _flat(collider.global_position - global_position)
+		var flat_facing := _flat(facing)
+		if to_target == Vector3.ZERO or flat_facing == Vector3.ZERO:
+			continue
+		if rad_to_deg(acos(clampf(flat_facing.dot(to_target), -1.0, 1.0))) > melee_arc_angle:
 			continue
 		var damageable: Node = null
 		if collider.has_method("apply_damage"):
@@ -407,6 +471,25 @@ func check_melee_damage() -> void:
 		if damageable == null or _is_friendly(damageable):
 			continue
 		damageable.apply_damage(base_damage, shooter)
+
+# Where a swing is aimed: at what the owner is fighting, or at whatever it was
+# last told to shoot at. Falls back to the weapon's own axis when it has
+# neither, which is the old behaviour and fine for a swing at nothing.
+func _melee_direction(shooter: Node) -> Vector3:
+	var aim_points: Array = []
+	if shooter != null and is_instance_valid(shooter):
+		var target = shooter.get("combat_target")
+		if target != null and is_instance_valid(target) and target is Node3D:
+			aim_points.append((target as Node3D).global_position)
+		var spot = shooter.get("weapon_target")
+		if spot is Vector3 and (spot as Vector3) != Vector3.ZERO:
+			aim_points.append(spot)
+	for point in aim_points:
+		var to: Vector3 = (point as Vector3) - global_position
+		if to.length_squared() > 0.0001:
+			return to.normalized()
+	return get_forward_vector()
+
 
 func get_forward_vector() -> Vector3:
 	return muzzle_origin.global_transform.basis.x.normalized()
@@ -444,3 +527,24 @@ func fire_tracer_to(from: Vector3, to: Vector3) -> void:
 		new_tracer.global_position = from
 		new_tracer.direction = (end_point - from).normalized()
 		new_tracer.look_at(from + new_tracer.direction, Vector3.UP)
+
+
+# One pellet's line, thrown off `centre` by up to `mrad` milliradians on each
+# of the two axes across the line. Static, and the player's own shotgun calls
+# it too — a pattern that differs depending on who pulled the trigger is a bug
+# waiting to be argued about.
+static func scatter(centre: Vector3, mrad: float) -> Vector3:
+	var spread := mrad / 1000.0
+	var side := centre.cross(Vector3.UP)
+	if side.length_squared() < 0.0001:
+		side = centre.cross(Vector3.RIGHT)
+	side = side.normalized()
+	var up := side.cross(centre).normalized()
+	return (centre + side * randf_range(-spread, spread)
+		+ up * randf_range(-spread, spread)).normalized()
+
+
+# Horizontal only, for arc tests between bodies standing on the same ground.
+static func _flat(v: Vector3) -> Vector3:
+	var out := Vector3(v.x, 0.0, v.z)
+	return out.normalized() if out.length_squared() > 0.0001 else Vector3.ZERO

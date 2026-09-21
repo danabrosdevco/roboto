@@ -1,10 +1,18 @@
-[gd_scene load_steps=6 format=3 uid="uid://bq3ky68ibirr6"]
+[gd_scene load_steps=8 format=3 uid="uid://bq3ky68ibirr6"]
 
 [ext_resource type="Texture2D" uid="uid://ctw7y7lxnanuc" path="res://2d_assets/image_part_001 Background Removed.png" id="1_2vqki"]
+[ext_resource type="Shader" path="res://Character/weapon/muzzle_flash.gdshader" id="6_heat"]
 [ext_resource type="Script" path="res://Character/weapon/muzzle_flash.gd" id="1_u12us"]
 [ext_resource type="Texture2D" uid="uid://xy2afgtqrrh3" path="res://2d_assets/image_part_002 Background Removed.png" id="2_n46ad"]
 [ext_resource type="Texture2D" uid="uid://l17fny5rktro" path="res://2d_assets/image_part_003 Background Removed.png" id="3_eufnm"]
 [ext_resource type="Texture2D" uid="uid://4e4fep7idusq" path="res://2d_assets/image_part_004 Background Removed.png" id="4_m06pc"]
+
+[sub_resource type="ShaderMaterial" id="HeatMat"]
+shader = ExtResource("6_heat")
+shader_parameter/edge_colour = Color(0.9, 0.16, 0.03, 1)
+shader_parameter/mid_colour = Color(1, 0.55, 0.08, 1)
+shader_parameter/core_colour = Color(1, 0.94, 0.74, 1)
+shader_parameter/strength = 0.8
 
 [node name="MuzzleFlash" type="Node3D"]
 script = ExtResource("1_u12us")
@@ -12,7 +20,7 @@ flash_textures = Array[Texture2D]([ExtResource("1_2vqki"), ExtResource("2_n46ad"
 
 [node name="Sprite3D" type="Sprite3D" parent="."]
 transform = Transform3D(0.65, 0, 0, 0, 0.65, 0, 0, 0, 0.65, 0, 0, 0)
-modulate = Color(1, 1, 1, 0.627451)
+material_override = SubResource("HeatMat")
 billboard = 1
 texture = ExtResource("1_2vqki")
 

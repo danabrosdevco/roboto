@@ -58,6 +58,13 @@ class_name HUDWeapon
 
 @export var hitscan_range: float = 250.0
 
+# Rounds per shot. 1 is a rifle; a shotgun is several, each carrying its share
+# of `damage` and thrown wide by pellet_spread_mrad, so the pattern — not a
+# range table — is what makes it fall off. Mirrors AIWeapon's pellets, so the
+# shotgun behaves the same whichever side of it you are on.
+@export var pellets: int = 1
+@export var pellet_spread_mrad: float = 0.0
+
 # How far this weapon is heard. Suppressed or small-calibre weapons should carry
 # less; -1 uses StimulusManager's default for GUNSHOT_HEARD.
 @export var noise_radius: float = 34.0
@@ -139,12 +146,8 @@ func _fire_shot() -> void:
 		return
 
 	from = cam.global_position
-	to = from + tracer_origin.global_transform.basis.x.normalized() * hitscan_range
-
-	var query := PhysicsRayQueryParameters3D.new()
-	query.from = from
-	query.to = to
-	query.exclude = [self, player] if player != null else [self]
+	var centre := tracer_origin.global_transform.basis.x.normalized()
+	to = from + centre * hitscan_range
 
 	if rifle_stream_player != null:
 		rifle_stream_player.play()
@@ -156,17 +159,18 @@ func _fire_shot() -> void:
 	if muzzle_flash != null:
 		muzzle_flash.play_flash()
 	#DebugDraw3D.draw_line(from, to, Color(1,0,0), 50)
-	var result := get_world_3d().direct_space_state.intersect_ray(query)
-	if result:
-		var collider = result.collider
-		var victim = collider
-		if not victim.has_method("apply_damage") and victim.get_parent() != null:
-			victim = victim.get_parent()
-		# The player's rounds had NO faction check — walking your own squad into
-		# your line of fire simply killed them. Same are_hostile() test the AI
-		# uses, so both sides agree on who can be shot.
-		if victim.has_method("apply_damage"):
-			victim.apply_damage(_damage_for(victim), player)
+
+	# Split so the parts add up to the whole: the remainder rides on the first
+	# round rather than being rounded away.
+	var count: int = maxi(pellets, 1)
+	var each: int = int(floor(float(damage) / float(count)))
+	var spare: int = damage - each * count
+	var exclude: Array = [self, player] if player != null else [self]
+	for i in count:
+		var dir := centre
+		if count > 1 and pellet_spread_mrad > 0.0:
+			dir = AIWeapon.scatter(centre, pellet_spread_mrad)
+		_one_round(from, dir, exclude, each + (spare if i == 0 else 0))
 
 	if tracer:
 		fire_tracer()
@@ -174,13 +178,32 @@ func _fire_shot() -> void:
 	request_status.emit()
 
 
-func _damage_for(victim: Node) -> int:
+# One round down one line, carrying `share` of the shot's damage.
+func _one_round(origin: Vector3, direction: Vector3, exclude: Array, share: int) -> void:
+	var query := PhysicsRayQueryParameters3D.new()
+	query.from = origin
+	query.to = origin + direction * hitscan_range
+	query.exclude = exclude
+	var result := get_world_3d().direct_space_state.intersect_ray(query)
+	if not result:
+		return
+	var victim = result.collider
+	if not victim.has_method("apply_damage") and victim.get_parent() != null:
+		victim = victim.get_parent()
+	# The player's rounds had NO faction check — walking your own squad into
+	# your line of fire simply killed them. Same are_hostile() test the AI
+	# uses, so both sides agree on who can be shot.
+	if victim.has_method("apply_damage"):
+		victim.apply_damage(_damage_for(victim, share), player)
+
+
+func _damage_for(victim: Node, share: int) -> int:
 	if not victim.has_method("get_faction"):
-		return damage   # scenery and props take it full
+		return share   # scenery and props take it full
 	var mine: int = player.faction if player != null and "faction" in player else Enums.Factions.PLAYER
 	if Enums.are_hostile(mine, victim.get_faction()):
-		return damage
-	return maxi(1, int(round(float(damage) * friendly_fire_multiplier)))
+		return share
+	return maxi(1, int(round(float(share) * friendly_fire_multiplier)))
 
 
 func fire_tracer() -> void:

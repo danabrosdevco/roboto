@@ -77,8 +77,23 @@ extends "res://Character/characters/ai/mechanic.gd"
 @export var upper_arm_length: float = 1.05
 ## Elbow to the tip of the welding head, with the wrist straight.
 @export var forearm_length: float = 1.2
-@export var arm_yaw_rate_degrees: float = 180.0
-@export var arm_joint_rate_degrees: float = 200.0
+## HOW FAST THE BOOM GETS THERE, which is the whole of the difference between
+## this and the Mechanic at the same job.
+##
+## Measured at the old 180/200: the Mechanic has its welder in its hands and is
+## putting health back 0.32s after it picks a patient up; this one took 2.15s,
+## every single time, because the stick is jackknifed back over the boom when
+## stowed and the elbow has 233 degrees to travel before the torch is anywhere
+## near. It welds HARDER once it starts (20/s against 15/s) and still lost,
+## because a repair crew spends its day starting.
+##
+## The other half of that 2.15s was driving: weld_reach was 1.1m in the scene,
+## so a machine with a 2.25m boom still parked on top of its patient. It is
+## 1.7m now and the torch still lands 0.16m off the weld point — a boom arm's
+## entire point is not having to pull alongside. Together: 2.15s down to 1.08s,
+## and the Reclaimer now finishes a patient faster than the Mechanic does.
+@export var arm_yaw_rate_degrees: float = 340.0
+@export var arm_joint_rate_degrees: float = 420.0
 ## Folded for the road: the boom angled up over the nose, the stick jackknifed
 ## back along the top of it, and the torch resting on the mast.
 # ── WRECKED ───────────────────────────────────
@@ -99,6 +114,24 @@ extends "res://Character/characters/ai/mechanic.gd"
 @export var stow_shoulder_degrees: float = 15.0
 @export var stow_elbow_degrees: float = 163.0
 @export var stow_wrist_degrees: float = 92.0
+
+@export_group("Mortar")
+## How often it looks for something to shell.
+@export var mortar_think: float = 0.5
+## Metres of scatter on each round, so a barrage walks around a position rather
+## than stacking every shell in one crater.
+@export var mortar_scatter: float = 2.5
+## No round is aimed within this of one of ours — the player, a squadmate, or a
+## squadmate already down. Kept above scatter plus blast radius so a round that
+## drifts to the edge of its scatter still cannot reach them.
+@export var danger_close: float = 9.0
+## How far off the launch line the tube can be and still fire. The boom slews
+## round and the tube lays before anything leaves it.
+@export var mortar_lay_degrees: float = 6.0
+## The boom's firing pose: raised, the stick level, the tube out on the end of
+## it where the welding head was. The mount lays the tube itself.
+@export var mortar_shoulder_degrees: float = 50.0
+@export var mortar_elbow_degrees: float = -50.0
 
 @export_group("Parts")
 @export var rig: Node3D
@@ -161,6 +194,25 @@ var _wr := 0.0
 var _drum_turn := 0.0
 var _reach_t := 0.0                # seconds the arm has been reaching for the patient
 
+# The mortar, when one is fitted. See _tick_mortar.
+var _mortar_mount: Node3D = null   # on the wrist, where the welding head was
+var _mortar_target: Node3D = null
+var _mortar_offset := Vector3.ZERO  # this round's scatter, off wherever the target is
+var _mortar_aim := Vector3.INF      # where this round goes: the target plus the scatter
+var _mortar_think_t := 0.0
+var _mortar_cool := 0.0
+var _mortar_kick := 0.0             # 1 on the round leaving, back to 0 as the tube settles
+# Metres the tube jumps back down its own axis on each round, and how fast
+# (fractions of it a second) it comes home. Plain consts: the scene has no
+# reason to tune them, and an export here is one more default for an open
+# editor to write into vehicle_reclaimer.tscn.
+const MORTAR_KICK := 0.14
+const MORTAR_KICK_RETURN := 4.0
+# The tube at rest on the wrist: muzzle UP with the arm folded. Hung the other
+# way it pointed into the hull when stowed, and swung through half a circle
+# every time it came up to fire.
+const MORTAR_REST := Basis(Vector3.RIGHT, PI)
+
 
 func _ready() -> void:
 	if rig != null:
@@ -193,6 +245,8 @@ func _physics_process(delta: float) -> void:
 	if not alive or not frame_waited or ai_state == AIState.PASSIVE \
 			or get_signal_state() == SignalState.EKILL:
 		_drop_wreck(false)
+		_mortar_target = null
+		_mortar_aim = Vector3.INF
 		return
 	_scan_t -= delta
 	if _scan_t <= 0.0:
@@ -205,6 +259,10 @@ func _physics_process(delta: float) -> void:
 	_tick_bite(delta)
 	_tick_pinned(delta)
 	_tick_rig(delta)
+	# The mortar is the ARM's job and the hull never waits on it: the tracks
+	# carry on grinding or following orders while the boom shells whatever the
+	# squad has in its sights. Before _tick_arm, which poses to its target.
+	_tick_mortar(delta)
 	_tick_arm(delta)
 
 
@@ -720,6 +778,15 @@ func _tick_arm(delta: float) -> void:
 		want_el = -bend
 		want_wr = 0.0
 		_reach_t += delta
+	elif _mortar_aim != Vector3.INF:
+		# Up, and round to the bearing. The tube rides the end of the boom and
+		# _lay_tube points it down the launch line once the arm is there.
+		var local := arm_base.get_parent_node_3d().global_transform.affine_inverse() * _mortar_aim - arm_base.position
+		yaw = atan2(-local.x, -local.z)
+		want_sh = deg_to_rad(mortar_shoulder_degrees)
+		want_el = deg_to_rad(mortar_elbow_degrees)
+		want_wr = 0.0
+		_reach_t = 0.0
 	else:
 		_reach_t = 0.0
 	# The turntable takes the short way round. The joints do not: folded, the
@@ -731,6 +798,7 @@ func _tick_arm(delta: float) -> void:
 	_el = move_toward(_el, want_el, rate)
 	_wr = move_toward(_wr, want_wr, rate)
 	_pose_arm()
+	_lay_tube(delta)
 
 
 func _pose_arm() -> void:
@@ -745,14 +813,16 @@ func _pose_arm() -> void:
 
 
 # Nothing is welded until the torch is on the patient: the boom unfolds and
-# swings round first, which takes it about a second. Stretched as far as it
-# goes and still short, it welds anyway rather than stand there.
+# swings round first, which takes it about half a second. Stretched as far as
+# it goes and still short, it welds anyway rather than stand there — and the
+# wait before it gives up came down with the arm rate, since three seconds of
+# a fast arm standing still is just the old bug wearing a different hat.
 func _tool_on(p: Enemy) -> bool:
 	if weld_tip == null or shoulder == null:
 		return true   # nothing to reach with: it welds from where it stands
 	if weld_tip.global_position.distance_to(_weld_point(p)) <= 0.45:
 		return true
-	return _reach_t > 3.0
+	return _reach_t > 1.5
 
 
 # The point of the patient nearest the boom's shoulder, a little up off the
@@ -767,6 +837,199 @@ func _weld_point(p: Enemy) -> Vector3:
 	var q := Vector3(clampf(s.x, box.position.x, box.end.x), clampf(s.y, box.position.y, box.end.y),
 		clampf(s.z, box.position.z, box.end.z))
 	return q + Vector3.UP * 0.1
+
+
+# ─────────────────────────────────────────────
+# THE MORTAR
+#
+# A 60mm tube in place of the welding head, on the end of the boom. It shells
+# what its SIDE can see, not what it can: every friendly robot's current target
+# that it has a line of sight to, this one's included. So it can sit behind a
+# wall while the squad does the spotting — which is the whole point of a mortar,
+# and why this reads the squad rather than its own eyes.
+#
+# Of what is spotted and in range, it takes the tightest knot of them, and never
+# one within danger_close of anyone on its own side. Each round is scattered a
+# little so a barrage walks around a position instead of stacking in a crater.
+#
+# Everything here is the arm's. The hull goes on grinding wrecks and taking
+# orders; the Mechanic's welding brain is simply switched off (_choose_patient).
+# ─────────────────────────────────────────────
+
+# Fitted at spawn, BEFORE the body enters the tree — so the mount is made here,
+# on demand, rather than in _ready. The arm's node references are resolved by
+# instantiate(), so the wrist is already there to hang it on.
+func equip_weapon_scene(scene: PackedScene) -> void:
+	if weapon_mount == null and wrist != null:
+		_mortar_mount = Node3D.new()
+		_mortar_mount.name = "MortarMount"
+		_mortar_mount.basis = MORTAR_REST
+		wrist.add_child(_mortar_mount)
+		weapon_mount = _mortar_mount
+	super(scene)
+	_show_welder(weapon == null)
+
+
+# The welding head and torch go when the mortar takes their place.
+func _show_welder(on: bool) -> void:
+	if wrist == null:
+		return   # no arm wired: warned about in _ready
+	for part in ["Head", "Torch"]:
+		var n := wrist.get_node_or_null(part) as Node3D
+		if n != null:
+			n.visible = on
+
+
+# ARMED, IT DOES NOT WELD: there is nothing on the end of the boom to repair
+# anyone with. Leaving the patient empty drops the Mechanic's loop straight
+# through to _keep_back, so it still keeps behind its squad in a fight.
+func _choose_patient() -> void:
+	if weapon != null:
+		_set_patient(null)
+		return
+	super()
+
+
+func _tick_mortar(delta: float) -> void:
+	if weapon == null:
+		return   # a welder frame: nothing to fire
+	_mortar_cool = maxf(0.0, _mortar_cool - delta)
+	# The target can die or leave between thinks; stand the tube down at once
+	# rather than lob one more round at a wreck.
+	if _mortar_target != null and (not is_instance_valid(_mortar_target) \
+			or not _mortar_target.get("alive")):
+		_mortar_target = null
+	_mortar_think_t -= delta
+	if _mortar_think_t <= 0.0:
+		_mortar_think_t = mortar_think
+		var picked := _pick_mortar_target()
+		# A fresh spot in the scatter for a new target, and for the same one if
+		# the old spot has come within danger close of a friendly: kept, the
+		# tube would hold on it for as long as the target stayed picked.
+		if picked != _mortar_target or (picked != null and _danger_close(picked.global_position + _mortar_offset)):
+			_mortar_target = picked
+			_mortar_offset = _scatter()
+	# Laid on where the target IS rather than where it was when the last round
+	# went: the spotters keep calling it, and the boom follows between rounds.
+	_mortar_aim = _mortar_target.global_position + _mortar_offset if _mortar_target != null else Vector3.INF
+	if _mortar_aim == Vector3.INF:
+		return   # nothing spotted in range, or nothing safe to fire at
+	if _mortar_cool > 0.0 or not weapon.can_fire() or not _laid_on():
+		return   # between rounds, reloading, or still laying the tube
+	if _danger_close(_mortar_aim):
+		return   # a friendly has walked in since the think: held, re-scattered on the next
+	weapon.fire(_mortar_aim)
+	_mortar_cool = weapon.fire_cooldown
+	_mortar_kick = 1.0
+	_mortar_offset = _scatter()   # the next round goes somewhere else in the scatter
+
+
+# What this robot's side currently has in its sights. Not a radar: it is what
+# the squad is actually looking at, which is also what a mortar crew would be
+# told to hit.
+func _spotted() -> Array:
+	var out: Array = []
+	for n in get_tree().get_nodes_in_group("enemies"):
+		var f := n as Enemy
+		if f == null or not is_instance_valid(f) or not f.alive:
+			continue
+		if _is_hostile(f):
+			continue   # theirs, spotting for the other side
+		var t = f.combat_target
+		if t == null or not is_instance_valid(t) or not f._has_los:
+			continue
+		if not t.get("alive") or not _is_hostile(t):
+			continue
+		if not out.has(t):
+			out.append(t)
+	return out
+
+
+# In range, clear of our own, and the biggest knot of them.
+func _pick_mortar_target() -> Node3D:
+	var lo: float = weapon.min_effective_range
+	var hi: float = weapon.max_effective_range
+	var blast: float = maxf(float(weapon.get("blast_radius_override")), 2.5)
+	var spotted := _spotted()
+	var best: Node3D = null
+	var best_score := -INF
+	for t in spotted:
+		var d := Vector2(t.global_position.x - global_position.x,
+			t.global_position.z - global_position.z).length()
+		if d < lo or d > hi:
+			continue   # inside the minimum, or past what the tube can reach
+		if _danger_close(t.global_position):
+			continue   # one of ours is too close to it to shell
+		var crowd := 0
+		for o in spotted:
+			if o.global_position.distance_to(t.global_position) <= blast:
+				crowd += 1
+		var score := float(crowd) * 100.0 - d * 0.1
+		if score > best_score:
+			best_score = score
+			best = t
+	return best
+
+
+# Anyone on our side within danger_close of `at` — the player, a squadmate, or
+# a squadmate already down, who is exactly the last thing to shell.
+func _danger_close(at: Vector3) -> bool:
+	var r2 := danger_close * danger_close
+	for n in get_tree().get_nodes_in_group("enemies"):
+		var f := n as Enemy
+		if f == null or not is_instance_valid(f) or f == self:
+			continue
+		if not f.alive and not f.downed:
+			continue   # destroyed: nothing left to hurt
+		if _is_hostile(f):
+			continue
+		if f.global_position.distance_squared_to(at) < r2:
+			return true
+	if player != null and is_instance_valid(player) and not _is_hostile(player) \
+			and player.global_position.distance_squared_to(at) < r2:
+		return true
+	return false
+
+
+func _scatter() -> Vector3:
+	var a := randf() * TAU
+	var r := sqrt(randf()) * mortar_scatter   # sqrt: even over the disc, not bunched at the middle
+	return Vector3(cos(a) * r, 0.0, sin(a) * r)
+
+
+# Tube down the launch line once the boom is up; eased there, so it visibly
+# lays rather than snapping. Stood down to the mount's rest with no target.
+func _lay_tube(delta: float) -> void:
+	if _mortar_mount == null or weapon == null:
+		return   # a welder frame: no tube to lay
+	# The kick: back down its own axis on each round, and eased home again.
+	_mortar_kick = move_toward(_mortar_kick, 0.0, MORTAR_KICK_RETURN * delta)
+	_mortar_mount.position = _mortar_mount.basis.z * (_mortar_kick * MORTAR_KICK)
+	var ease := clampf(delta * 6.0, 0.0, 1.0)
+	if _mortar_aim == Vector3.INF:
+		# Orthonormalized first: laid through global_basis, the mount picks up a
+		# hair of scale from the joints above it, and slerp will not take a
+		# basis that is not a pure rotation (it errors, every frame).
+		_mortar_mount.basis = _mortar_mount.basis.orthonormalized().slerp(MORTAR_REST, ease)
+		return   # nothing to lay on: settling back to rest
+	var want := _launch_dir()
+	var up := Vector3.UP if absf(want.y) < 0.995 else Vector3.FORWARD
+	var from_q := _mortar_mount.global_basis.orthonormalized().get_rotation_quaternion()
+	var to_q := Basis.looking_at(want, up).get_rotation_quaternion()
+	_mortar_mount.global_basis = Basis(from_q.slerp(to_q, ease))
+
+
+func _launch_dir() -> Vector3:
+	var muzzle: Vector3 = weapon.muzzle_origin.global_position
+	return weapon.launch_velocity(muzzle, _mortar_aim).normalized()
+
+
+# The tube is down the launch line, near enough. Nothing leaves it before.
+func _laid_on() -> bool:
+	if _mortar_mount == null or _mortar_aim == Vector3.INF:
+		return false
+	var have := -_mortar_mount.global_basis.z.normalized()
+	return rad_to_deg(have.angle_to(_launch_dir())) <= mortar_lay_degrees
 
 
 # ─────────────────────────────────────────────

@@ -214,7 +214,10 @@ func _slot_layout(frame: ChassisDefinition) -> Control:
 	if frame.weapon_slots == 0:
 		row.add_child(_tile(frame.built_in, 52))
 	for i in frame.weapon_slots:
-		row.add_child(_tile("TURRET" if frame.turret else "GUN", 64 if frame.turret else 52))
+		var what := "TURRET" if frame.turret else "GUN"
+		if frame.weapon_replaces_built_in:
+			what = frame.built_in   # comes with it, and the slot can swap it out
+		row.add_child(_tile(what, 64 if frame.turret else 52))
 	for i in frame.equipment_slots:
 		row.add_child(_tile("GEAR", 38))
 	for i in frame.module_slots:

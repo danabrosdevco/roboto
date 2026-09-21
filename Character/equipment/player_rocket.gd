@@ -157,13 +157,18 @@ func ads_fov() -> float:
 	return ADS_FOV
 
 
-# Shouldered, obstructed, or carried. Reloading keeps the carry pose: the tube
-# comes off the shoulder to take a rocket, and holding a sight picture through
-# a two-second reload would be a lie.
+# Shouldered, obstructed, or carried.
+#
+# THE SIGHT STAYS UP THROUGH THE SHOT. Dropping to the carry pose on firing and
+# holding it across the reload was meant to read as the tube coming down to take
+# a rocket — what it actually did was throw your aim off the thing you had just
+# hit, every time, a fifth of a second after you pulled. You are still holding
+# the aim button; the weapon should still be aimed. The kick and the recovery in
+# tick() are what say a rocket left the tube.
 func _get_pose_target() -> Array:
 	if is_obstructed:
 		return [obstructed_position, obstructed_rotation]
-	if is_ads and _reload_t <= 0.0 and not _firing:
+	if is_ads:
 		return [ads_position, ads_rotation]
 	return [base_position, base_rotation]
 
@@ -197,6 +202,11 @@ func _launch() -> void:
 		(rocket as RigidBody3D).linear_velocity = dir * launch_speed
 	if rocket.has_method("setup"):
 		rocket.setup(player)
+	# The log counts firing this as a throw under display_name; tell the blast
+	# to call itself the same thing, or the weapon shows up twice with half its
+	# story in each row.
+	if "analytics_label" in rocket:
+		rocket.analytics_label = display_name
 
 	consume_charge()
 	_reload_t = reload_time

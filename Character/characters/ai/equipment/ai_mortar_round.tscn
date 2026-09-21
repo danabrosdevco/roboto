@@ -1,0 +1,121 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/mortar_round.gd" id="1_round"]
+[ext_resource type="PackedScene" path="res://Character/weapon/explosion_mortar.tscn" id="2_blast"]
+[ext_resource type="AudioStream" uid="uid://kj7m1ra6ev18" path="res://sounds/sfx/superior soundfx/Explosion2.wav" id="3_bang"]
+
+[sub_resource type="StandardMaterial3D" id="OliveMat"]
+albedo_color = Color(0.27, 0.3, 0.2, 1)
+metallic = 0.3
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="BandMat"]
+albedo_color = Color(0.85, 0.72, 0.12, 1)
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="FinMat"]
+albedo_color = Color(0.15, 0.16, 0.14, 1)
+metallic = 0.5
+roughness = 0.5
+
+[sub_resource type="CylinderMesh" id="NoseMesh"]
+top_radius = 0.006
+bottom_radius = 0.042
+height = 0.1
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="BodyMesh"]
+top_radius = 0.042
+bottom_radius = 0.042
+height = 0.14
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="BandMesh"]
+top_radius = 0.0435
+bottom_radius = 0.0435
+height = 0.016
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="TaperMesh"]
+top_radius = 0.042
+bottom_radius = 0.017
+height = 0.06
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="BoomMesh"]
+top_radius = 0.016
+bottom_radius = 0.016
+height = 0.1
+radial_segments = 8
+rings = 1
+
+[sub_resource type="BoxMesh" id="FinMeshA"]
+size = Vector3(0.11, 0.006, 0.07)
+
+[sub_resource type="BoxMesh" id="FinMeshB"]
+size = Vector3(0.006, 0.11, 0.07)
+
+[sub_resource type="SphereShape3D" id="Shape"]
+radius = 0.1
+
+[node name="AI_Mortar_Round" type="RigidBody3D" node_paths=PackedStringArray("whistle", "explosion_sfx", "mesh")]
+script = ExtResource("1_round")
+whistle = NodePath("Whistle")
+explosion_scene = ExtResource("2_blast")
+explosion_sfx = NodePath("ExplosionSound")
+mesh = NodePath("Round")
+
+[node name="Round" type="Node3D" parent="."]
+
+[node name="Nose" type="MeshInstance3D" parent="Round"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, -0.14)
+material_override = SubResource("OliveMat")
+mesh = SubResource("NoseMesh")
+
+[node name="Body" type="MeshInstance3D" parent="Round"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, -0.02)
+material_override = SubResource("OliveMat")
+mesh = SubResource("BodyMesh")
+
+[node name="Band" type="MeshInstance3D" parent="Round"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, -0.07)
+material_override = SubResource("BandMat")
+mesh = SubResource("BandMesh")
+
+[node name="Taper" type="MeshInstance3D" parent="Round"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0.08)
+material_override = SubResource("OliveMat")
+mesh = SubResource("TaperMesh")
+
+[node name="Boom" type="MeshInstance3D" parent="Round"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0.16)
+material_override = SubResource("FinMat")
+mesh = SubResource("BoomMesh")
+
+[node name="FinA" type="MeshInstance3D" parent="Round"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.19)
+material_override = SubResource("FinMat")
+mesh = SubResource("FinMeshA")
+
+[node name="FinB" type="MeshInstance3D" parent="Round"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.19)
+material_override = SubResource("FinMat")
+mesh = SubResource("FinMeshB")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape")
+
+[node name="ExplosionSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("3_bang")
+unit_size = 18.0
+
+[node name="Whistle" type="AudioStreamPlayer3D" parent="."]
+volume_db = -3.0
+unit_size = 14.0
+max_distance = 120.0
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

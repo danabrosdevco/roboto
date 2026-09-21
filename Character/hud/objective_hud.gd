@@ -33,6 +33,7 @@ const COL_WARN   := HUDPalette.WARN
 const COL_DONE   := HUDPalette.SIGNAL
 const _Debrief := preload("res://Character/hud/debrief_screen.gd")
 const _Wallet := preload("res://Character/hud/wallet_hud.gd")
+const _Lessons := preload("res://Character/hud/lesson_prompts.gd")
 
 var tracker: ObjectiveTracker
 # Same reasoning as LevelExit: resolved by path so hud.tscn stays loadable
@@ -72,6 +73,12 @@ func _ready() -> void:
 		var wallet := _Wallet.new()
 		wallet.name = "WalletHUD"
 		host.add_child.call_deferred(wallet)
+		# The lessons you earn by unlocking something, rather than by walking
+		# past a sign. Built here for the same reason as the two above: an
+		# unassigned export in hud.tscn fails silently.
+		var lessons := _Lessons.new()
+		lessons.name = "LessonPrompts"
+		host.add_child.call_deferred(lessons)
 	else:
 		push_warning("ObjectiveHUD: no parent to put the debrief and wallet in.")
 
@@ -151,21 +158,32 @@ func _make_label(text: String, col: Color, font_px: int = -1) -> Label:
 
 
 # ─────────────────────────────────────────────
-# EXTRACTION MARKER
-# A shaft of light with a chevron on the end, hanging over the exit once the
-# work is done. Drawn rather than modelled so it needs no art and cannot be
-# left unassigned in a scene.
+# THE WAY OUT
+# A shaft of light with a chevron on the end and a word over it, hanging over
+# whichever door you are meant to walk through. Drawn rather than modelled so
+# it needs no art and cannot be left unassigned in a scene.
 #
-# It appears ONLY when every required objective is complete. Before that the
-# exit is not where you should be going, and pointing at it would be telling
-# the player to leave.
+# TWO DOORS, ONE MARKER. On a mission it is the extraction pad, and only once
+# every required objective is done — before that the exit is not where you
+# should be going, and pointing at it would be telling the player to leave. At
+# base it is the departure gate, and only once an operation is selected, which
+# is the same rule: the gate refuses to fire with no destination set, so
+# pointing at it beforehand would be pointing at a locked door.
+#
+# The base half of this did not exist. Selecting a mission lit four corner
+# beacons on the pad itself and nothing else, which is no use at all from the
+# far side of the base — the whole point of a marker you can see through walls
+# is that it tells you where to go from where you are standing.
 # ─────────────────────────────────────────────
-@export var extract_marker_enabled: bool = true
-## Metres above the exit the arrow floats.
+@export var exit_marker_enabled: bool = true
+## Metres above the extraction pad the arrow floats.
 @export var extract_marker_height: float = 14.0
-@export var extract_marker_size: float = 34.0
+## And above the departure gate, which is indoors and has a roof on it.
+@export var deploy_marker_height: float = 6.0
+@export var exit_marker_size: float = 34.0
 
-var _extract_objective: MissionObjective = null
+# [Node3D, label] for wherever the player should be heading, or [] for nowhere.
+var _marker: Array = []
 
 
 func _find_extraction() -> MissionObjective:
@@ -177,24 +195,45 @@ func _find_extraction() -> MissionObjective:
 	return null
 
 
-func _draw() -> void:
-	if not extract_marker_enabled:
-		return
+# The train at base, once the terminal has written a destination into it.
+# next_level is null until a mission is picked, which is exactly the gate we
+# want, and it is the same field LevelExit itself checks before it will fire.
+func _find_departure() -> Node3D:
+	for exit in get_tree().get_nodes_in_group("departure_exits"):
+		if exit is Node3D and is_instance_valid(exit) and exit.get("next_level") != null:
+			return exit
+	return null
+
+
+func _find_marker() -> Array:
+	if _campaign == null:
+		return []
+	if not _campaign.in_mission:
+		var gate := _find_departure()
+		return [gate, "START MISSION", deploy_marker_height] if gate != null else []
 	if tracker == null or not tracker.all_required_complete():
+		return []
+	var pad := _find_extraction()
+	return [pad, "EXTRACT", extract_marker_height] if pad != null else []
+
+
+func _draw() -> void:
+	if not exit_marker_enabled or _marker.is_empty():
 		return
-	if _extract_objective == null or not is_instance_valid(_extract_objective):
+	var target: Node3D = _marker[0]
+	if target == null or not is_instance_valid(target):
 		return
 	var cam := get_viewport().get_camera_3d()
 	if cam == null:
 		return
 
-	var world_top: Vector3 = _extract_objective.global_position + Vector3.UP * extract_marker_height
+	var world_top: Vector3 = target.global_position + Vector3.UP * float(_marker[2])
 	# Behind the camera unprojects to a mirrored on-screen point, which would
 	# draw an arrow pointing at empty sky behind the player.
 	if cam.is_position_behind(world_top):
 		return
 
-	var tip: Vector2 = cam.unproject_position(_extract_objective.global_position + Vector3.UP * 2.0)
+	var tip: Vector2 = cam.unproject_position(target.global_position + Vector3.UP * 2.0)
 	var top: Vector2 = cam.unproject_position(world_top)
 
 	# Pulse so it reads as a signal rather than scenery.
@@ -202,7 +241,7 @@ func _draw() -> void:
 	var col: Color = COL_DONE
 	col.a = pulse
 
-	var size: float = maxf(10.0, extract_marker_size * clampf(
+	var size: float = maxf(10.0, exit_marker_size * clampf(
 		1.0 - (top.distance_to(tip) / 900.0), 0.35, 1.0))
 
 	draw_line(top, tip, col, 3.0)
@@ -211,17 +250,25 @@ func _draw() -> void:
 		tip,
 		tip + Vector2(size, -size),
 	]), col, 4.0)
-	var label_pos: Vector2 = top - Vector2(38.0, 12.0)
-	draw_string(ThemeDB.fallback_font, label_pos, "EXTRACT",
+	# Centred on the shaft by measuring it. The old -38 was hand-fitted to the
+	# width of "EXTRACT" and put anything longer off to one side.
+	var text: String = _marker[1]
+	var font := ThemeDB.fallback_font
+	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size_body).x
+	draw_string(font, top - Vector2(width * 0.5, 12.0), text,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, font_size_body, col)
 
 
 func _process(delta: float) -> void:
 	_ensure_full_rect()
 	# Cheap, and the tracker's contents change on every level load.
-	if extract_marker_enabled:
-		_extract_objective = _find_extraction()
+	if exit_marker_enabled:
+		_marker = _find_marker()
 		queue_redraw()
+	# The AIManager is rebuilt with each level, so this re-binds rather than
+	# being wired once in _ready.
+	_bind_ekills()
+	_flush_ekills(delta)
 	if _toast_time > 0.0:
 		_toast_time -= delta
 		if _toast_time <= 0.0:
@@ -335,6 +382,72 @@ func _on_changed(objective: MissionObjective) -> void:
 func _on_all_complete() -> void:
 	_show_toast("ALL OBJECTIVES COMPLETE — EXTRACT", COL_DONE)
 	_rebuild()
+
+
+# ─────────────────────────────────────────────
+# SIGNAL KILLS
+# Suppression is the one system in this game with no feedback at either end:
+# the player cannot see it working and the playtest log does not record it. A
+# robot that has been shot flat just stops, which reads as the AI breaking.
+#
+# So: say so, but only when it was YOURS that did it, and only for a hostile.
+# An enemy EMP knocking out your own squad is worth knowing too, but it is not
+# an achievement and it does not belong in the same line.
+#
+# COALESCED. One EMP can drop five robots inside a frame, and five toasts in a
+# row is one toast you can read and four you cannot.
+const EKILL_GATHER := 0.4
+var _ekill_count: int = 0
+var _ekill_gather: float = 0.0
+var _ai_manager: Node
+
+
+func _bind_ekills() -> void:
+	if _ai_manager != null and is_instance_valid(_ai_manager):
+		return
+	_ai_manager = get_tree().get_first_node_in_group("ai_manager")
+	if _ai_manager == null:
+		var root_node := get_tree().root
+		_ai_manager = _find_manager(root_node)
+	if _ai_manager != null and _ai_manager.has_signal(&"ekilled") \
+			and not _ai_manager.ekilled.is_connected(_on_ekill):
+		_ai_manager.ekilled.connect(_on_ekill)
+
+
+func _find_manager(n: Node) -> Node:
+	if n is AIManager:
+		return n
+	for c in n.get_children():
+		var f := _find_manager(c)
+		if f != null:
+			return f
+	return null
+
+
+func _on_ekill(victim: Node, by: Node) -> void:
+	if victim == null or by == null or not is_instance_valid(victim) or not is_instance_valid(by):
+		return
+	if not victim.has_method("get_faction") or not by.has_method("get_faction"):
+		return
+	# Ours did it, to one of theirs.
+	if by.get_faction() != Enums.Factions.PLAYER:
+		return
+	if not Enums.are_hostile(Enums.Factions.PLAYER, victim.get_faction()):
+		return
+	_ekill_count += 1
+	_ekill_gather = EKILL_GATHER
+
+
+func _flush_ekills(delta: float) -> void:
+	if _ekill_gather <= 0.0:
+		return
+	_ekill_gather -= delta
+	if _ekill_gather > 0.0:
+		return
+	# Plain ASCII: the UI font has no arrows or bullets.
+	var line := "SIGNAL KILL" if _ekill_count <= 1 else "%d SIGNAL KILLS" % _ekill_count
+	_ekill_count = 0
+	_show_toast(line, COL_DONE, 2.4)
 
 
 func _show_toast(text: String, col: Color, seconds: float = 3.0) -> void:

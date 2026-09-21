@@ -9,6 +9,7 @@
 script = ExtResource("1_gl")
 grenade_scene = ExtResource("2_grenade")
 fuse_override = 2.2
+analytics_label = "Bomb"
 weapon_type = 2
 fire_cooldown = 3.2
 base_damage = 45

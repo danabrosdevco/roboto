@@ -92,8 +92,13 @@ func _init() -> void:
 	prec.chassis_id = &"soldier"
 	prec.module_ids = [&"armor_plating", &"overclock_servos"] as Array[StringName]
 	player._apply_module_stats(prec, cat)
+	# Off the item, not a copy of its number: this is testing that the bonus
+	# ARRIVES, and hardcoding it meant retuning the module broke the test that
+	# had nothing to do with the tuning.
+	var plate: int = cat.item(&"armor_plating").health_bonus
 	_check("armour plating reaches the player's body",
-		int(player.max_health) == base_max + 25, "%d -> %d" % [base_max, int(player.max_health)])
+		int(player.max_health) == base_max + plate,
+		"%d -> %d, expected +%d" % [base_max, int(player.max_health), plate])
 	_check("overclock reaches the player's legs", is_equal_approx(player._speed_mult, 1.2))
 	prec.module_ids = [&"hardened_uplink"] as Array[StringName]
 	player._apply_module_stats(prec, cat)

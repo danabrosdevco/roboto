@@ -12,7 +12,7 @@ extends RefCounted
 # open editor has registered the script yet.
 # ─────────────────────────────────────────────
 
-const VERSION := "0.006a"
+const VERSION := "0.007a"
 const EXPORTED := "2026-09-20"
 
 

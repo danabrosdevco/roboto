@@ -48,6 +48,10 @@ enum Status { ACTIVE, WOUNDED, DESTROYED }
 # Longest self-revive among fitted modules; 0 = none. Longest rather than
 # summed: two nanite modules are one soldier getting up, not getting up twice.
 @export var effective_self_revive: float = 0.0
+# True if any fitted module says "shoot without waiting for the sight picture".
+# A flag rather than a sum: one of these is a doctrine, two is still the same
+# doctrine.
+@export var effective_suppressive: bool = false
 @export var damage: int = 0
 @export var signal_integrity: float = 1.0
 @export var status: Status = Status.ACTIVE
@@ -186,6 +190,7 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 	var sensors := chassis.base_sensor_range
 	var resistance := 0.0
 	var self_revive := 0.0
+	var suppressive := false
 	for module_id in module_ids:
 		if module_id == &"":
 			continue
@@ -199,6 +204,7 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 		sensors += module.sensor_bonus
 		resistance += module.signal_resistance_bonus
 		self_revive = maxf(self_revive, module.self_revive_seconds)
+		suppressive = suppressive or module.suppressive_fire
 
 	max_health = maxi(1, health)
 	effective_accuracy = accuracy
@@ -207,6 +213,7 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 	effective_sensor_range = maxf(4.0, sensors)
 	effective_signal_resistance_bonus = resistance
 	effective_self_revive = self_revive
+	effective_suppressive = suppressive
 	# Pulling a health module must not leave someone on negative health.
 	damage = clampi(damage, 0, max_health)
 

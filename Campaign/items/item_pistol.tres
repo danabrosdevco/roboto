@@ -20,6 +20,7 @@ ammo_type = &"9mm"
 weapon_damage = 0
 usable_by_player = true
 usable_by_ai = true
+fits_vehicles = false
 quantity = 1
 health_bonus = 0
 accuracy_bonus = 0.0

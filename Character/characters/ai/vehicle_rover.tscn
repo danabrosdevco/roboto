@@ -151,6 +151,8 @@ shape = SubResource("CapsuleShape3D_1i158")
 
 [node name="Bark" parent="." instance=ExtResource("3_yfi7w")]
 bark_clips = Array[AudioStream]([ExtResource("4_jgdiy"), ExtResource("5_t5o1c")])
+pitch_min = 0.8
+pitch_max = 0.88
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 path_desired_distance = 3.0

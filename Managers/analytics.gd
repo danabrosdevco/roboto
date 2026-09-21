@@ -560,7 +560,9 @@ func _weapon_of(n: Node) -> String:
 	if "credit_kills_to" in n and n.get("credit_kills_to") != null:
 		return "Hatchling"
 	var record = _record_of(n)
-	if record != null and not record.weapon_ids.is_empty():
+	# An EMPTY first slot is not a weapon called "": a Reclaimer on its welder
+	# has one, and falls through to its chassis like any frame without a gun.
+	if record != null and not record.weapon_ids.is_empty() and record.weapon_ids[0] != &"":
 		return _item_name(record.weapon_ids[0])
 	# A robot with no record is its chassis: the chassis decides the weapon.
 	if n.has_meta(&"analytics_kind"):

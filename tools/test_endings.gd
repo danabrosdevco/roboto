@@ -142,11 +142,14 @@ func _init() -> void:
 		"%d destroyed" % written_off)
 	_check("...and the stores are as they were at deployment", cm.state.available() == before_cash,
 		"%d, deployed with %d" % [cm.state.available(), before_cash])
-	# Everything but the selection, which extract() clears on the way home.
+	# Everything but the two fields that legitimately change on the way home:
+	# the selection, which extract() clears, and the lessons, which are marked
+	# when you walk back in and are not part of the run's ledger.
 	var after := cm.state.to_dict()
 	var before_dict: Dictionary = JSON.parse_string(before_deploy)
-	after.erase("selected_mission_id")
-	before_dict.erase("selected_mission_id")
+	for changes_at_home in ["selected_mission_id", "lessons_seen"]:
+		after.erase(changes_at_home)
+		before_dict.erase(changes_at_home)
 	_check("...the whole campaign is what deployed, field for field",
 		JSON.stringify(after) == JSON.stringify(before_dict))
 	_check("...and the debrief said so rather than showing empty payouts", said_voided)

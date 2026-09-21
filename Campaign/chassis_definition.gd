@@ -42,6 +42,11 @@ class_name ChassisDefinition
 ## What a frame with no weapon slot works with, built into the body: shown where
 ## the gun would be on its card. A chaser's claws, a mechanic's welder.
 @export var built_in: String = "CLAWS"
+## The weapon slot, filled, takes the built-in's PLACE: the Reclaimer's mortar
+## goes on the end of the boom where its welder was. Left empty, the built-in is
+## what it works with — so an empty slot on this frame is not an unarmed robot,
+## and the cards show the built-in in it rather than asking for a weapon.
+@export var weapon_replaces_built_in: bool = false
 ## The weapon slot is a TURRET: it takes weapons made for this frame — ones that
 ## name it in their chassis_whitelist — and not a rifle off the rack.
 @export var turret: bool = false

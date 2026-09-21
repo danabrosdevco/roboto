@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3 uid="uid://citemcyclic001"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"cyclic_feed"
+display_name = "Cyclic Feed"
+short_name = "Cyclic"
+description = "Suppressive fire. A robot normally holds its trigger until its aim has settled, which is why one that is walking barely shoots at all. This one opens up regardless, in long bursts, on the move or standing still. It will hit far less and put a great deal more lead past them."
+kind = 2
+cost = 55
+usable_by_player = false
+usable_by_ai = true
+suppressive_fire = true
+required_rank = 0

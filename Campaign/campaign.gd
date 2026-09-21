@@ -188,12 +188,25 @@ func _repair_roster() -> void:
 	for r in state.roster:
 		if r.chassis_id == &"" or catalogue.chassis_def(r.chassis_id) == null:
 			r.set_chassis(frame, catalogue)
+		_grow_weapon_slots(r)
 	if state.player_record != null:
 		if state.player_record.chassis_id == &"" or catalogue.chassis_def(state.player_record.chassis_id) == null:
 			state.player_record.display_name = CampaignState.PLAYER_DEFAULT_NAME
 			state.player_record.set_chassis(frame, catalogue)
 	_return_unusable_player_kit()
 	_return_unfittable_squad_kit()
+
+
+# A frame can GAIN a weapon slot under a save — the Reclaimer's boom took one
+# for the mortar — and a robot saved before has no slot to fit it into: fitting
+# checks the record's own array, which the frame's new size never reaches until
+# something resizes it. Grown only, empty, in place: nothing fitted moves, and
+# loading still writes nothing.
+func _grow_weapon_slots(r: SoldierRecord) -> void:
+	var frame := catalogue.chassis_def(r.chassis_id)
+	if frame == null or r.weapon_ids.size() >= frame.weapon_slots:
+		return   # a frame this build lacks (repaired above), or already big enough
+	r.weapon_ids.resize(frame.weapon_slots)
 
 
 # Anything fitted to a SQUADMATE that its frame no longer takes comes off and

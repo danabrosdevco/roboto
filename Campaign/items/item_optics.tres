@@ -5,12 +5,12 @@
 [resource]
 script = ExtResource("1_itemdef")
 id = &"optics"
-display_name = "Optics Package"
-short_name = "Optics"
-description = "Extends sensor range. Lets a long weapon see as far as it shoots."
+display_name = "Sensor Relay"
+short_name = "Relay"
+description = "Adds 30m of sensor range to a robot. Every weapon longer than a shotgun already shoots further than its chassis can see; this is what closes that gap. Nothing for you to carry - you have eyes."
 kind = 2
 cost = 70
-usable_by_player = true
+usable_by_player = false
 usable_by_ai = true
 sensor_bonus = 30.0
 required_rank = 0

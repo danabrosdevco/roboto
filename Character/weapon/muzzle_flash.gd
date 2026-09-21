@@ -11,8 +11,22 @@ var active := false
 var prev_number
 
 func _ready():
+	_tint()
 	if get_parent() is World:
 		play_flash()
+
+
+# The heat shader draws the texture, not the Sprite3D, so it has to be handed
+# whichever star was picked. Sprite3D still owns the quad and its size; the
+# override only owns how it is coloured. Nothing here if the material is a
+# plain one — the flash then looks the way it always did.
+func _tint() -> void:
+	if sprite == null or sprite.texture == null:
+		return
+	var mat := sprite.material_override as ShaderMaterial
+	if mat == null:
+		return
+	mat.set_shader_parameter(&"flash", sprite.texture)
 
 func play_flash() -> void:
 	var number = randi_range(0, flash_textures.size() -1)
@@ -24,6 +38,7 @@ func play_flash() -> void:
 			sprite.texture = flash_textures[number + 1]
 	else:
 		sprite.texture = flash_textures[number]
+	_tint()
 	visible = true
 	if light:
 		light.visible = true

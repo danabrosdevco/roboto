@@ -13,6 +13,12 @@ const _Analytics := preload("res://Managers/analytics.gd")
 
 @export var explosion_scene: PackedScene
 @export var explosion_sfx: AudioStreamPlayer3D
+## Overrides the blast's own damage_value. Left at 0 the explosion keeps what
+## its scene says. One projectile scene is shared by the hand grenade, the
+## launcher, the turret and the bombers, so a round that should hit softer
+## dials it here rather than forking explosion.tscn and letting the two copies
+## drift apart the next time the VFX change.
+@export var blast_damage: int = 0
 @export var fuse_time: float = 3.0         # seconds before exploding regardless
 @export var explode_on_bounce: bool = false # if true, explodes on first geometry hit
 @export var bounce_before_explode: int = 1  # bounces to allow before arming
@@ -25,6 +31,17 @@ var _bounce_count: int = 0
 var _exploded: bool = false
 var _indicator_instance: Node3D = null
 var _thrower: Node = null  # set by AIGrenade so we don't damage ourselves
+## What the playtest log should call this round's blast. Empty means "whatever
+## my scene is", which for a thrown grenade is right. A launcher sets its own
+## so its damage files under the same name as its shots. A plain var rather
+## than an export on purpose: this scene is instanced by six other scenes, and
+## an editor left open writes a new export's default into every one of them.
+var analytics_label: String = ""
+## Overrides how far the blast reaches. 0 keeps the explosion's own — a hand
+## grenade's. Set by a launcher, and a plain var for the same reason as
+## analytics_label. Widens the damage area only: scaling the explosion node
+## itself scales its debris too, into building-sized wedges.
+var blast_radius: float = 0.0
 
 
 func _ready() -> void:
@@ -41,6 +58,15 @@ func _ready() -> void:
 	# fused kind: with explode_on_bounce off it only counts bounces.
 	contact_monitor = true
 	max_contacts_reported = maxi(max_contacts_reported, 4)
+	# AND THE CONTACT HAS TO HAPPEN AT ALL. Without continuous collision a
+	# round covers its speed/60 per physics tick, and whenever that is more
+	# than it is thick it can be above a surface one tick and below it the
+	# next, touching nothing. The valley floor is a heightmap with no thickness
+	# at all. The mortar round (0.2m across, down at 29 m/s: 0.48m a tick) went
+	# through the ground about half the time — no bang, gone. The Rover's
+	# launcher (32 m/s), the bombers' drops and every EMP and hatchling pod
+	# are this scene too, and a slope or a wall facing them is the same miss.
+	continuous_cd = true
 	# Spawn landing indicator
 	if indicator_scene != null:
 		_indicator_instance = indicator_scene.instantiate()
@@ -96,6 +122,10 @@ func _explode() -> void:
 
 	if explosion_scene != null:
 		var blast = explosion_scene.instantiate()
+		if blast_damage > 0:
+			blast.damage_value = blast_damage
+		if blast_radius > 0.0:
+			_widen(blast)
 		# Hand the blast its owner BEFORE it enters the tree — the damage area
 		# can fire on the same frame it is added. Without this the explosion
 		# credited itself, so nobody scored the kill, and source_faction stayed
@@ -107,7 +137,15 @@ func _explode() -> void:
 				blast.source_faction = _thrower.get_faction()
 		# So the playtest log scores the blast as a frag, not as whatever the
 		# thrower happens to be holding by the time it goes off.
-		blast.set_meta(&"analytics_cause", _Analytics.label_for_scene(scene_file_path))
+		#
+		# UNLESS SOMETHING LAUNCHED IT. This scene is the round for the hand
+		# grenade AND for both launchers, so scoring it by its own filename
+		# credited every launcher blast to "Frag" — which is why the ally
+		# weapon table read "Grenade Launcher: 807 shots, 0 damage, 0 kills"
+		# while Frag showed 132 kills off 32 throws. The shots were filed under
+		# the weapon and the damage under the round, and the two never met.
+		blast.set_meta(&"analytics_cause", analytics_label if analytics_label != ""
+			else _Analytics.label_for_scene(scene_file_path))
 		_level().add_child(blast)
 		blast.global_position = global_position
 		explosion_sfx.play()
@@ -120,6 +158,23 @@ func _explode() -> void:
 # and the landing marker to Master put them above World, so they outlived the
 # level they belonged to, and made both depend on there being a current scene
 # at all.
+# The damage sphere at blast_radius, on this blast only. The shape is shared by
+# every explosion instanced from the scene, so it is duplicated before it is
+# touched — resizing the original would widen every frag in the level.
+func _widen(blast: Node) -> void:
+	var area: Area3D = blast.get("damage_area")
+	if area == null:
+		return   # an explosion with no damage area: nothing to widen
+	for child in area.get_children():
+		var shape := child as CollisionShape3D
+		if shape == null or shape.shape == null:
+			continue
+		var own := shape.shape.duplicate()
+		if own is SphereShape3D:
+			(own as SphereShape3D).radius = blast_radius
+		shape.shape = own
+
+
 func _level() -> Node:
 	if get_parent() != null:
 		return get_parent()

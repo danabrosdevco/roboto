@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_mortar.tscn" id="2_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"mortar"
+display_name = "60mm Mortar"
+short_name = "Mortar"
+description = "Replaces the Reclaimer's welder. High-explosive rounds on a steep arc, over walls and down behind them, at anything your squad can see — the Reclaimer never needs its own line of sight. Too slow to catch a runner; murder on anyone holding a position. Won't fire danger-close to your own. It still grinds wrecks. It no longer repairs."
+kind = 0
+cost = 175
+ai_scene = ExtResource("2_ai")
+usable_by_player = false
+usable_by_ai = true
+chassis_whitelist = Array[StringName]([&"reclaimer"])
+required_rank = 0

@@ -115,6 +115,9 @@ var _rest_pose_read: bool = false
 var is_ads: bool = false
 
 var _bob_time: float = 0.0
+## What bob added to viewmodel.position last frame, taken back out before the
+## pose lerp runs again. See the note in update_view().
+var _last_bob: Vector3 = Vector3.ZERO
 var _equip_timer: float = 0.0
 
 
@@ -317,6 +320,20 @@ func update_view(delta: float, p_move_factor: float, p_obstructed: bool, p_ads: 
 	var target_pos: Vector3 = target[0]
 	var target_rot: Vector3 = target[1]
 
+	# TAKE LAST FRAME'S BOB BACK OUT BEFORE LERPING.
+	#
+	# Bob used to be added straight into viewmodel.position, and the next
+	# frame's lerp then read that as where the weapon actually was. The
+	# vertical term is abs(sin()) — never negative — so every frame shoved the
+	# model up and the lerp only pulled back `delta * pose_speed` of it. It
+	# settled bob_amount / (delta * pose_speed) above its own pose: 6mm on the
+	# recoilless at the 60Hz physics tick this runs on. Six millimetres is
+	# nothing on a rifle you never look down, and everything on an iron sight
+	# 0.41m from the eye — it is 0.8 degrees, which puts the rocket a metre low
+	# at 65m while the ring looks like it is on the target.
+	viewmodel.position -= _last_bob
+	_last_bob = Vector3.ZERO
+
 	if viewmodel.position.distance_to(target_pos) > 0.001:
 		viewmodel.position = viewmodel.position.lerp(target_pos, delta * pose_speed)
 	if viewmodel.rotation.distance_to(target_rot) > 0.001:
@@ -324,6 +341,7 @@ func update_view(delta: float, p_move_factor: float, p_obstructed: bool, p_ads: 
 
 	if _apply_bob():
 		viewmodel.position += bob_offset
+		_last_bob = bob_offset
 
 	var bob_rotation := Vector3(
 		sin(_bob_time * 2.0) * amount * 20.0,

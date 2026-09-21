@@ -233,7 +233,7 @@ hubs_right = [NodePath("Rig/HubR0"), NodePath("Rig/HubR1"), NodePath("Rig/HubR2"
 grind_sparks = NodePath("Rig/GrindSparks")
 grind_loop = NodePath("Rig/GrindLoop")
 weld_per_second = 20.0
-weld_reach = 1.1
+weld_reach = 1.7
 weld_sparks = NodePath("Rig/ArmBase/Shoulder/Elbow/Wrist/WeldTip/WeldSparks")
 weld_loop = NodePath("Rig/ArmBase/Shoulder/Elbow/Wrist/WeldTip/WeldLoop")
 weld_done = NodePath("WeldDone")
@@ -261,6 +261,8 @@ shape = SubResource("BoxShape3D_ecj6v")
 
 [node name="Bark" parent="." instance=ExtResource("3_ch5dl")]
 bark_clips = Array[AudioStream]([ExtResource("4_7rccs"), ExtResource("5_ifcs8")])
+pitch_min = 0.7
+pitch_max = 0.78
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 target_desired_distance = 0.5

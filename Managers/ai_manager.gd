@@ -8,11 +8,19 @@ class_name AIManager
 # All registered AI bodies in the current level
 var all_ai: Array[AI] = []
 
+## Relayed from every robot in the level. Enemy emits its own `ekilled` on the
+## frame it goes down; this is the one place that sees all of them, so the HUD
+## and the playtest log can each connect once instead of chasing bodies that
+## spawn and die throughout a mission.
+signal ekilled(victim: Node, by: Node)
+
 func register_enemy(new_enemy: AI) -> void:
 	if new_enemy in all_ai:
 		return
 	all_ai.append(new_enemy)
 	new_enemy.player = player
+	if new_enemy.has_signal(&"ekilled") and not new_enemy.ekilled.is_connected(_relay_ekill):
+		new_enemy.ekilled.connect(_relay_ekill)
 	new_enemy.ai_manager = self
 	if stimulus_manager != null:
 		new_enemy.stimulus_manager = stimulus_manager
@@ -34,6 +42,9 @@ func deregister_enemy(enemy: AI) -> void:
 	_hostile_cache.clear()
 	if stimulus_manager != null:
 		stimulus_manager.deregister_ai(enemy)
+
+func _relay_ekill(victim: Node, by: Node) -> void:
+	ekilled.emit(victim, by)
 
 func reset_all_reg_enemies() -> void:
 	all_ai = []

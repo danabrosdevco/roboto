@@ -53,6 +53,8 @@ func _run() -> void:
 	wreck.benched = true
 	wreck.status = SoldierRecord.Status.DESTROYED
 	wreck.damage = wreck.max_health
+	var recl := _robot(cat, &"reclaimer", "Reclaimer-1", &"")
+	recl.benched = true
 	state.armoury.add(&"m4")
 	state.armoury.add(&"frag")
 
@@ -88,6 +90,27 @@ func _run() -> void:
 	_check("...and a wreck that it is destroyed", _says(_card("HOPPER-1"), "DESTROYED"))
 
 	# ── TEAMS ────────────────────────────────────
+	# A CARD'S KIT IS A WAY IN.
+	# Clicking the gear on someone else's card should select them AND open that
+	# slot, rather than making you find it again in the panel on the right.
+	squad._select(state.player_record, false)
+	squad.rebuild()
+	await process_frame
+	var other := _card("BRAVO-1")
+	var tiles: Array = []
+	_clickable_tiles(other, tiles)
+	_check("the kit on a roster card takes clicks", not tiles.is_empty(), "%d clickable" % tiles.size())
+	if not tiles.is_empty():
+		var press := InputEventMouseButton.new()
+		press.button_index = MOUSE_BUTTON_LEFT
+		press.pressed = true
+		tiles[0].gui_input.emit(press)
+		await process_frame
+		_check("...and opens that robot on the slot you clicked",
+			squad.selected != null and squad.selected.display_name.to_upper().begins_with("BRAVO-1")
+			and squad.slot_kind == ItemDefinition.Kind.WEAPON,
+			"selected %s, kind %d" % [squad.selected.display_name if squad.selected else "-", squad.slot_kind])
+
 	# One squad until there is a vehicle, so until then no card names a team.
 	_check("with nothing but robots on foot, no card names a team", not _says(_card("BRAVO-1"), "INFANTRY"))
 	var rover := _robot(cat, &"rover", "Rover-1", &"machine_gun")
@@ -144,6 +167,14 @@ func _run() -> void:
 	_press(squad._detail, "REBUILD")
 	_check("REBUILD brings a wreck back", wreck.status == SoldierRecord.Status.ACTIVE and wreck.damage == 0)
 	_check("...for its price", state.available() < before)
+
+	# THE RECLAIMER'S SLOT IS ITS BOOM. Empty, the welder is on it — so an empty
+	# slot there is not an unarmed robot, and the slot says what is in it.
+	_check("a Reclaimer on its welder is not an unarmed robot", _card("RECLAIMER-1") != null
+		and not _says(_card("RECLAIMER-1"), "NO WEAPON"))
+	_click(_card("RECLAIMER-1"))
+	_check("...its empty slot shows the welder, and is a slot to fill",
+		_says(squad._detail, "WELDER") and _says(squad._detail, "TOOL"))
 
 	_click(_card("CHASER-1"))
 	_check("a chaser has no weapon slot to pick", _says(squad._detail, "CLAWS"))
@@ -330,3 +361,14 @@ func _click(target: Control, button: int = MOUSE_BUTTON_LEFT) -> void:
 
 func _right_click(target: Control) -> void:
 	_click(target, MOUSE_BUTTON_RIGHT)
+
+
+# Every kit tile on a card that is wired for clicks, in order.
+func _clickable_tiles(node: Node, out: Array) -> void:
+	if node == null:
+		return
+	if node is PanelContainer and (node as Control).mouse_filter == Control.MOUSE_FILTER_STOP \
+			and (node as Control).tooltip_text == "EDIT THIS SLOT":
+		out.append(node)
+	for c in node.get_children():
+		_clickable_tiles(c, out)

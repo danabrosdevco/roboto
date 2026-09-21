@@ -1,0 +1,62 @@
+[gd_resource type="ShaderMaterial" load_steps=11 format=3]
+
+[ext_resource type="Shader" path="res://Env/terrain/terrain.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" uid="uid://juhkwxffuy6r" path="res://textures/Set4All/Dirt/Dirt_Silt_01_Grey_1.png" id="2_ground"]
+[ext_resource type="Texture2D" uid="uid://lw4dubeibxxj" path="res://textures/Set4All/Grass/Grass_02_Green_1.png" id="3_growth"]
+[ext_resource type="Texture2D" uid="uid://bgqrs06b1fxxe" path="res://textures/Set4All/Rockface/Rock_Grey_01.png" id="4_rock"]
+[ext_resource type="Texture2D" uid="uid://d1vudjfqvx2ij" path="res://textures/Set4All/Dirt/Dirt_Rocks_01_Grey_1.png" id="5_rubble"]
+[ext_resource type="Texture2D" uid="uid://co6usgo0e4yji" path="res://textures/Set4All/Gravel/Gravel_01_Grey_1.png" id="6_road"]
+[ext_resource type="Texture2D" uid="uid://d1o0shxck6o5h" path="res://textures/Set4All/Concrete/Concrete_01_Grey_1.png" id="7_pad"]
+[ext_resource type="Texture2D" uid="uid://bxf1u775gjf5t" path="res://textures/Set4All/Dirt/Dirt_Cracked_01_Black_1.png" id="8_scorch"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_vary"]
+frequency = 0.012
+fractal_octaves = 4
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_vary"]
+width = 256
+height = 256
+seamless = true
+noise = SubResource("FastNoiseLite_vary")
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/ground_texture = ExtResource("2_ground")
+shader_parameter/ground_tint = Color(0.34, 0.3, 0.25, 1)
+shader_parameter/ground_scale = 7.0
+shader_parameter/growth_texture = ExtResource("3_growth")
+shader_parameter/growth_tint = Color(0.45, 0.42, 0.28, 1)
+shader_parameter/growth_scale = 5.0
+shader_parameter/growth_amount = 0.3
+shader_parameter/growth_max_slope = 24.0
+shader_parameter/rock_texture = ExtResource("4_rock")
+shader_parameter/rock_tint = Color(0.52, 0.52, 0.55, 1)
+shader_parameter/rock_scale = 10.0
+shader_parameter/rock_slope_start = 24.0
+shader_parameter/rock_slope_full = 36.0
+shader_parameter/mountain_rock = 0.75
+shader_parameter/rubble_texture = ExtResource("5_rubble")
+shader_parameter/rubble_tint = Color(0.4, 0.38, 0.36, 1)
+shader_parameter/rubble_scale = 4.0
+shader_parameter/rubble_in_hollows = 1.2
+shader_parameter/road_texture = ExtResource("6_road")
+shader_parameter/road_tint = Color(0.5, 0.48, 0.45, 1)
+shader_parameter/road_scale = 3.0
+shader_parameter/pad_texture = ExtResource("7_pad")
+shader_parameter/pad_tint = Color(0.45, 0.44, 0.42, 1)
+shader_parameter/pad_scale = 4.0
+shader_parameter/scorch_texture = ExtResource("8_scorch")
+shader_parameter/scorch_tint = Color(1, 0.92, 0.85, 1)
+shader_parameter/scorch_scale = 5.0
+shader_parameter/variation_noise = SubResource("NoiseTexture2D_vary")
+shader_parameter/variation_scale = 170.0
+shader_parameter/variation_strength = 0.35
+shader_parameter/hollow_darkening = 0.45
+shader_parameter/hollow_wetness = 0.3
+shader_parameter/ash_tint = Color(0.6, 0.59, 0.57, 1)
+shader_parameter/peak_ash = 0.25
+shader_parameter/saturation = 0.6
+shader_parameter/brightness = 1.0
+shader_parameter/roughness = 0.95
+shader_parameter/specular = 0.15

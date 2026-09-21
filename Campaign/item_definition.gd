@@ -102,6 +102,13 @@ enum Kind {
 ## Extra equipment slots while fitted. Taking the module off hands whatever
 ## sat in the slot back to stores.
 @export var equipment_slot_bonus: int = 0
+## Fires without waiting for the sight picture. A robot normally holds its
+## trigger until _aim_tracking has climbed past _prefire_threshold(), which is
+## why infantry that has stopped shoots steadily and anything on the move
+## barely shoots at all. This drops that condition: it opens up regardless, in
+## long bursts, at the spread that comes of firing unsettled. Volume and
+## suppression, not accuracy.
+@export var suppressive_fire: bool = false
 
 # Gating. A module can require a rank before it will fit — that's what makes
 # rank matter more than raw level.
@@ -195,6 +202,8 @@ func effect_summary() -> String:
 		parts.append("%+d EQUIP SLOT" % equipment_slot_bonus)
 	if self_revive_seconds > 0.0:
 		parts.append("SELF-REVIVE %.0fs" % self_revive_seconds)
+	if suppressive_fire:
+		parts.append("SUPPRESSIVE FIRE")
 	if kind == Kind.EQUIPMENT and quantity > 0:
 		parts.append("x%d" % quantity)
 	return ", ".join(parts)

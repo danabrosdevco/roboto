@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="TerrainRecipe" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="1_recipe"]
+[ext_resource type="Texture2D" path="res://Env/terrain/sketches/coast.png" id="2_sketch"]
+
+[resource]
+script = ExtResource("1_recipe")
+size_x = 1408.0
+size_z = 512.0
+random_seed = 3
+cell_size = 2.0
+layout = 2
+floor_at_zero = true
+floor_roughness = 0.35
+border_sides = 0
+border_width = 120.0
+border_ruggedness = 0.6
+hills_height = 6.0
+hills_scale = 220.0
+hills_octaves = 5
+hills_warp = 50.0
+ridge_height = 5.0
+ridge_scale = 300.0
+ridge_on_floor = 0.2
+detail_height = 0.9
+detail_scale = 14.0
+crater_count = 12
+crater_radius_min = 2.5
+crater_radius_max = 9.0
+crater_depth = 0.3
+crater_rim = 0.1
+craters_on_floor = true
+thermal_passes = 3
+talus_angle = 40.0
+hydraulic_strength = 0.5
+smooth_passes = 1
+sketch_metres_per_pixel = 8.0
+sketch_blend = 20.0
+sketch_edge_noise = 16.0
+urban_block = Vector2(40, 32)
+urban_street = 8.0
+urban_angle = 0.0
+water_level = -1.5
+sketch_mountain_height = 26.0
+water_depth = 7.0
+water_bank = 30.0
+urban_ruin = 0.3
+shelling_per_hectare = 35.0
+rough_height = 8.0
+sketch = ExtResource("2_sketch")

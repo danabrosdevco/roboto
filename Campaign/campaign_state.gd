@@ -43,6 +43,17 @@ const SAVE_VERSION := 1
 ## menu. A save from before this existed reads as false, so it gets the
 ## tutorial once more. Hand-editable in campaign.json to see it again.
 @export var completed_tutorial: bool = false
+## Lessons that are not places. The base's signs teach by being stood next to,
+## and they all retire once completed_tutorial is set — which is exactly wrong
+## for something you earn hours later by unlocking a frame. Each of those is
+## shown once and its id recorded here. See LessonPrompts.
+##
+## NOT rolled back by restore_from(), and not part of "what deployed". Dying
+## voids a run's purchases and repairs; it does not un-read something you were
+## told on the way in the door. They are marked on returned_to_base, which is
+## after extract() has already rewound, so a rollback that DID cover them would
+## be undoing a write that had not happened yet and then permitting it twice.
+@export var lessons_seen: Array[StringName] = []
 ## Set when the last operation is cleared. Opens every mission at the terminal
 ## for good, and the win is only announced the once.
 @export var campaign_won: bool = false
@@ -256,6 +267,16 @@ func supply_used() -> int:
 
 func supply_free() -> int:
 	return supply_cap - supply_used()
+
+
+## Records that a one-off lesson has been shown. True only the first time, so
+## the caller can use it as the "should I show this" test and the "remember
+## that I did" write in one call and never get them out of step.
+func mark_lesson(id: StringName) -> bool:
+	if id == &"" or lessons_seen.has(id):
+		return false
+	lessons_seen.append(id)
+	return true
 
 
 func compute_free() -> int:
@@ -821,6 +842,7 @@ func to_dict() -> Dictionary:
 		"completed_missions": missions,
 		"mission_clears": mission_clears.duplicate(),
 		"completed_tutorial": completed_tutorial,
+		"lessons_seen": lessons_seen.map(func(l): return String(l)),
 		"campaign_won": campaign_won,
 		"compute_earned": compute_earned,
 		"compute_held": compute_held.duplicate(),
@@ -866,6 +888,10 @@ static func from_dict(data: Dictionary) -> CampaignState:
 		clears[str(k)] = int(raw_clears[k])
 	s.mission_clears = clears
 	s.completed_tutorial = bool(data.get("completed_tutorial", false))
+	var lessons: Array[StringName] = []
+	for l in data.get("lessons_seen", []):
+		lessons.append(StringName(str(l)))
+	s.lessons_seen = lessons
 	s.campaign_won = bool(data.get("campaign_won", false))
 	s.supply_cap = int(data.get("supply_cap", BASE_SEATS))
 	# A save from before supply existed never benches anyone for it.

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemCatalogue" load_steps=29 format=3 uid="uid://ciftj4gygiyem"]
+[gd_resource type="Resource" script_class="ItemCatalogue" load_steps=31 format=3 uid="uid://ciftj4gygiyem"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_ek13f"]
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="2_rbiaw"]
@@ -10,12 +10,11 @@
 [ext_resource type="Resource" uid="uid://dem3kb8hrww4b" path="res://Campaign/items/item_repair_kit.tres" id="8_sbvkc"]
 [ext_resource type="Resource" uid="uid://bykbsxox15dea" path="res://Campaign/items/item_carbine.tres" id="9_q2nvs"]
 [ext_resource type="Resource" uid="uid://d27mhtm3hsroa" path="res://Campaign/items/item_frag.tres" id="10_rds4x"]
-[ext_resource type="Resource" uid="uid://citemoptics001" path="res://Campaign/items/item_optics.tres" id="28_optics"]
 [ext_resource type="Resource" uid="uid://dem27fwsmwrci" path="res://Campaign/items/item_repair_tool.tres" id="11_w7u5d"]
 [ext_resource type="Resource" uid="uid://2ubvbe8rduwc" path="res://Campaign/items/item_scanner.tres" id="12_scanner"]
 [ext_resource type="Resource" path="res://Campaign/items/item_armor_plating.tres" id="13_plating"]
-[ext_resource type="Resource" path="res://Campaign/items/item_overclock_servos.tres" id="14_overclock"]
-[ext_resource type="Resource" path="res://Campaign/items/item_hardened_uplink.tres" id="15_uplink"]
+[ext_resource type="Resource" uid="uid://citemoverclk1" path="res://Campaign/items/item_overclock_servos.tres" id="14_overclock"]
+[ext_resource type="Resource" uid="uid://citemuplink01" path="res://Campaign/items/item_hardened_uplink.tres" id="15_uplink"]
 [ext_resource type="Resource" uid="uid://bc1yudn1blvkc" path="res://Campaign/items/item_nanite_reboot.tres" id="16_nanite"]
 [ext_resource type="Resource" path="res://Campaign/items/item_emp.tres" id="17_emp"]
 [ext_resource type="Resource" path="res://Campaign/items/item_hatchling.tres" id="18_hatchling"]
@@ -28,8 +27,11 @@
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="25_mechanic"]
 [ext_resource type="Resource" uid="uid://c543tvfyia5hs" path="res://Campaign/chassis/chassis_reclaimer.tres" id="26_reclaimer"]
 [ext_resource type="Resource" path="res://Campaign/items/item_rocket.tres" id="27_rocket"]
+[ext_resource type="Resource" uid="uid://dem3hndplyemi" path="res://Campaign/items/item_optics.tres" id="28_optics"]
+[ext_resource type="Resource" uid="uid://dem24vusriemi" path="res://Campaign/items/item_cyclic_feed.tres" id="29_cyclic"]
+[ext_resource type="Resource" path="res://Campaign/items/item_mortar.tres" id="30_mortar"]
 
 [resource]
 script = ExtResource("3_rvros")
-items = Array[ExtResource("2_rbiaw")]([ExtResource("3_e1bbr"), ExtResource("4_af7aj"), ExtResource("5_jydn4"), ExtResource("8_sbvkc"), ExtResource("9_q2nvs"), ExtResource("10_rds4x"), ExtResource("11_w7u5d"), ExtResource("12_scanner"), ExtResource("13_plating"), ExtResource("14_overclock"), ExtResource("15_uplink"), ExtResource("16_nanite"), ExtResource("17_emp"), ExtResource("18_hatchling"), ExtResource("19_harness"), ExtResource("22_mg"), ExtResource("23_gl"), ExtResource("27_rocket"), ExtResource("28_optics")])
+items = Array[ExtResource("2_rbiaw")]([ExtResource("3_e1bbr"), ExtResource("4_af7aj"), ExtResource("5_jydn4"), ExtResource("8_sbvkc"), ExtResource("9_q2nvs"), ExtResource("10_rds4x"), ExtResource("11_w7u5d"), ExtResource("12_scanner"), ExtResource("13_plating"), ExtResource("14_overclock"), ExtResource("15_uplink"), ExtResource("16_nanite"), ExtResource("17_emp"), ExtResource("18_hatchling"), ExtResource("19_harness"), ExtResource("22_mg"), ExtResource("23_gl"), ExtResource("27_rocket"), ExtResource("28_optics"), ExtResource("29_cyclic"), ExtResource("30_mortar")])
 chassis = Array[ExtResource("1_ek13f")]([ExtResource("2_u52tr"), ExtResource("20_chaser"), ExtResource("21_hopper"), ExtResource("25_mechanic"), ExtResource("26_reclaimer"), ExtResource("24_rover")])

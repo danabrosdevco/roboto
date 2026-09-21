@@ -176,7 +176,47 @@ func _bind_campaign() -> void:
 	# before you reach the train rather than next mission.
 	campaign.state.roster_changed.connect(apply_loadout)
 	if campaign.has_signal("returned_to_base"):
-		campaign.returned_to_base.connect(func(): loadout.refill())
+		campaign.returned_to_base.connect(func():
+			loadout.refill()
+			_repair_at_base(campaign))
+	# AND AGAIN ON THE WAY OUT.
+	#
+	# Coming home topped you up, but the whole of base sits between that and
+	# the next drop: two rockets put into a wall to see what they do, or a
+	# magazine emptied at nothing, were still spent when the doors opened on
+	# the next mission — and there is no way to get them back, because the
+	# armoury sells kit, not ammunition. You leave full, every time. What you
+	# do at base costs nothing.
+	if campaign.has_signal("deployed"):
+		campaign.deployed.connect(func(_mission):
+			loadout.refill()
+			_repair_at_base(campaign))
+
+
+# HOME REPAIRS YOU TOO.
+#
+# CampaignState.heal_survivors() clears the damage on every RECORD when the
+# operation ends, the player's included — but the player is a body that lives
+# across levels, not one rebuilt from its record each mission, so nothing ever
+# put that back on you. Squadmates came home mended and you came home on
+# whatever was left of you, for the rest of the campaign.
+#
+# Read off the record rather than set to max_health directly: the record is
+# what the heal touched, and it carries the module bonuses with it.
+func _repair_at_base(campaign: Node) -> void:
+	health = max_health
+	# And the record with it, so the two cannot disagree about how hurt you are.
+	#
+	# FULL, not "whatever the record says". A voided run (dying) rolls the
+	# campaign back to the state it deployed in — which is right for the roster
+	# and the stores, and wrong for you: it would hand you back the health you
+	# left base with, so dying at 60% would return you at 60%, and again, and
+	# again. Home repairs everything that comes back standing; that is what it
+	# does for the squad and there is no reason you are the exception.
+	var record: SoldierRecord = campaign.state.player_record if campaign.state != null else null
+	if record != null:
+		record.damage = 0
+		record.signal_integrity = 1.0
 
 
 # ─────────────────────────────────────────────

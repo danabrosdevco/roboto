@@ -336,7 +336,10 @@ func test_the_ally_ramp() -> void:
 			chained = false
 		prev = m.id
 	check("each op unlocks the next, arena 1 through the first valley op", chained)
-	check("allies ramp 0, 0, 2, 2, 3, then uncapped from the first valley op", sizes == [0, 0, 2, 2, 3, -1], str(sizes))
+	# You go alone twice, and from the third op the cap comes off entirely:
+	# after that it is your supply, bought with compute at the Factory, that
+	# decides how many go in with you — not the mission.
+	check("alone twice, then everyone you can supply", sizes == [0, 0, -1, -1, -1, -1], str(sizes))
 
 
 func names(records: Array) -> Array:
