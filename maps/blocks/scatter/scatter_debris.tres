@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="TerrainScatterLayer" load_steps=8 format=3]
+
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_rubble_pile.tscn" id="1_gqp2a"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_concrete_blocks.tscn" id="2_sxqt8"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_tank_trap.tscn" id="3_vmok8"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_barrels.tscn" id="4_22edx"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_crates.tscn" id="5_rq7q4"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_jersey_barrier.tscn" id="6_xtcjq"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter_layer.gd" id="7_m07f2"]
+
+[resource]
+script = ExtResource("7_m07f2")
+scenes = Array[PackedScene]([ExtResource("1_gqp2a"), ExtResource("2_sxqt8"), ExtResource("3_vmok8"), ExtResource("4_22edx"), ExtResource("5_rq7q4"), ExtResource("6_xtcjq")])
+per_hectare = 3.0
+clumping = 0.7
+clump_size = 50.0
+min_scale = 0.9
+max_scale = 1.1
+align_to_ground = 0.2
+sink = 0.1
+max_slope = 20.0
+max_mountain = 0.3
+max_paint = 0.35
+collision_radius = 1.0
+collision_height = 2.0
+visibility_range_end = 400.0

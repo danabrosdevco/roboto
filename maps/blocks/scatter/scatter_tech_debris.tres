@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TerrainScatterLayer" load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_racks_toppled.tscn" id="1_31ume"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_cable_run.tscn" id="2_hl8q2"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_network_cabinet.tscn" id="3_q3e2d"]
+[ext_resource type="PackedScene" path="res://maps/blocks/solar/solar_drone_dock.tscn" id="4_ik3ji"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter_layer.gd" id="5_5r3vf"]
+
+[resource]
+script = ExtResource("5_5r3vf")
+scenes = Array[PackedScene]([ExtResource("1_31ume"), ExtResource("2_hl8q2"), ExtResource("3_q3e2d"), ExtResource("4_ik3ji")])
+per_hectare = 1.5
+clumping = 0.6
+clump_size = 60.0
+align_to_ground = 0.3
+sink = 0.05
+max_slope = 15.0
+max_mountain = 0.3
+max_paint = 0.5
+collision_radius = 1.2
+collision_height = 2.0
+visibility_range_end = 400.0

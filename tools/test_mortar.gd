@@ -257,6 +257,42 @@ func _init() -> void:
 	_check("armed, it does not weld a hurt squadmate beside it", _rec._patient == null and _spotter.health <= 20,
 		"patient %s, rifle at %d" % [str(_rec._patient), _spotter.health])
 
+	# ── NOTHING IN THE AIR ───────────────────────
+	# A drone in range and in the rifle's sights, and nothing else to shoot at:
+	# the tube stays down. Held where it is put, with its guns off.
+	var drone: Soldier = load("res://Campaign/chassis/chassis_helicopter.tres").scene.instantiate()
+	valley.add_child(drone)
+	drone.faction = Enums.Factions.ENEMY
+	var drone_at := base + Vector3(55, 22, 20)
+	drone.global_position = drone_at
+	ai.register_enemy(drone)
+	await physics_frame
+	if drone.weapon != null:
+		drone.weapon.queue_free()
+		drone.weapon = null
+	drone.max_health = HUGE
+	drone.health = HUGE
+	_spot_at = _ground(space, base + Vector3(25, 0, 12))
+	var at_drone := 0
+	var saw_drone := false
+	last = _rec.weapon._last_fired_ms
+	for f in 420:
+		_rec.global_position = _rec_at
+		_spotter.global_position = _spot_at
+		drone.global_position = drone_at
+		if f % 60 == 0:
+			_spotter.trigger_combat(drone)
+		await physics_frame
+		if _spotter.combat_target == drone and _spotter._has_los:
+			saw_drone = true
+		if _rec.weapon._last_fired_ms != last:
+			last = _rec.weapon._last_fired_ms
+			at_drone += 1
+	_check("(setup) the rifle has a drone in its sights, in the tube's range", saw_drone)
+	_check("the mortar never shells a drone", at_drone == 0, "%d rounds at it" % at_drone)
+	drone.queue_free()
+	_spot_at = _rec_at + Vector3(2.0, 0, 0)   # back beside it: the squad's line is what a wreck is judged from
+
 	# ── STILL GRINDS ─────────────────────────────
 	var wreck: Soldier = cat.chassis_def(&"soldier").scene.instantiate()
 	valley.add_child(wreck)

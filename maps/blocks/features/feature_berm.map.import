@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dgrt8xswk8q"
+path="res://.godot/imported/feature_berm.map-4cb82e1d17cef82437172b40a113d71d.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_berm.map"
+dest_files=["res://.godot/imported/feature_berm.map-4cb82e1d17cef82437172b40a113d71d.tres"]
+
+[params]
+

@@ -1,0 +1,118 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=16 format=3 uid="uid://dk2k2jl44nf7"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://bxg8i8eoyk2hu" path="res://maps/valley_basin_level.tscn" id="3_valley"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="7_hopper"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="8_chaser"]
+[ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="9_heli"]
+
+[sub_resource type="Resource" id="S1"]
+script = ExtResource("2_espec")
+callsign = "WATCH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser")])
+count = 0
+posture = 0
+route_tag = &"patrol_valley_mid"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S2"]
+script = ExtResource("2_espec")
+callsign = "RELAY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("7_hopper"), ExtResource("8_chaser")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_valley_garrison_1"
+spawn_tag = &"obj_valley_garrison_1"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S3"]
+script = ExtResource("2_espec")
+callsign = "SPUR"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_valley_garrison_2"
+spawn_tag = &"obj_valley_garrison_2"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S4"]
+script = ExtResource("2_espec")
+callsign = "HAMMER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("8_chaser"), ExtResource("8_chaser")])
+count = 0
+posture = 2
+route_tag = &""
+post_tag = &"obj_valley_garrison_3"
+spawn_tag = &"obj_valley_garrison_3"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_heli_1"]
+script = ExtResource("2_espec")
+callsign = "GRACH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_heli")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_valley_garrison_1"
+spawn_tag = &"obj_valley_garrison_3"
+spawn_offset = Vector3(105, 45, 55)
+always_active = true
+faction = 1
+reinforcement_tag = &"valley_garrison_cap_1"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_heli_2"]
+script = ExtResource("2_espec")
+callsign = "KORSHUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_heli"), ExtResource("9_heli")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_valley_garrison_2"
+spawn_tag = &"obj_valley_garrison_3"
+spawn_offset = Vector3(115, 52, -55)
+always_active = true
+faction = 1
+reinforcement_tag = &"valley_garrison_cap_2"
+wake_after_kills = 0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"valley_basin_4_assault"
+display_name = "Valley Assault (Basin)"
+briefing = "Two relays this time, a unit that comes to meet you, and air support once the first one falls."
+level_scene = ExtResource("3_valley")
+map_position = Vector2(210, -40)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S1"), SubResource("S2"), SubResource("S3"), SubResource("S4"), SubResource("S_heli_1"), SubResource("S_heli_2")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"valley_garrison_cap_1", &"valley_garrison_cap_2", &"valley_extract"])
+reward_resources = 225
+compute_reward = 1
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = false
+requires = Array[StringName]([&"valley_basin_3_push"])

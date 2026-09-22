@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://07skgqycf8px"
+path="res://.godot/imported/building_house_small.map-8e0413bf2c5710667daa70db9926e9e3.tres"
+
+[deps]
+
+source_file="res://maps/blocks/building_house_small.map"
+dest_files=["res://.godot/imported/building_house_small.map-8e0413bf2c5710667daa70db9926e9e3.tres"]
+
+[params]
+

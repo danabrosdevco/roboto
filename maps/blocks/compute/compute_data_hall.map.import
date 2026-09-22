@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cfdmq6prg2af3"
+path="res://.godot/imported/compute_data_hall.map-fbe747f72f6b872678278035322ea892.tres"
+
+[deps]
+
+source_file="res://maps/blocks/compute/compute_data_hall.map"
+dest_files=["res://.godot/imported/compute_data_hall.map-fbe747f72f6b872678278035322ea892.tres"]
+
+[params]
+

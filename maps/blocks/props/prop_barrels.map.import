@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://v8kqpadyc2ev"
+path="res://.godot/imported/prop_barrels.map-6a87818d609c3924c87f14e115f1ddab.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_barrels.map"
+dest_files=["res://.godot/imported/prop_barrels.map-6a87818d609c3924c87f14e115f1ddab.tres"]
+
+[params]
+

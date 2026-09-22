@@ -1,0 +1,377 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3 uid="uid://xmjjinhqkvrq"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://be3pa15jtbg7" path="res://maps/wip.terrain_template_level.tscn" id="3_coast"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="7_hopper"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="8_chaser"]
+[ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="9_rover"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="10_mech"]
+[ext_resource type="Resource" uid="uid://c543tvfyia5hs" path="res://Campaign/chassis/chassis_reclaimer.tres" id="11_recl"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="12_nest"]
+[ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="13_bomber"]
+
+[sub_resource type="Resource" id="S_drift"]
+script = ExtResource("2_espec")
+callsign = "DRIFT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser")])
+count = 0
+posture = 0
+route_tag = &"patrol_coast_west"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_surf"]
+script = ExtResource("2_espec")
+callsign = "SURF"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser")])
+count = 0
+posture = 0
+route_tag = &"patrol_coast_beach"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_ridge"]
+script = ExtResource("2_espec")
+callsign = "RIDGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper")])
+count = 0
+posture = 0
+route_tag = &"patrol_coast_north"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_ford"]
+script = ExtResource("2_espec")
+callsign = "FORD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_ford"
+spawn_tag = &"obj_coast_ford"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_bridge"]
+script = ExtResource("2_espec")
+callsign = "BRIDGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_bridge"
+spawn_tag = &"obj_coast_bridge"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hive_bridge"]
+script = ExtResource("2_espec")
+callsign = "HIVE-BRIDGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_bridge"
+spawn_tag = &"obj_coast_bridge"
+spawn_offset = Vector3(12, 0, -10)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_crater"]
+script = ExtResource("2_espec")
+callsign = "CRATER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser"), ExtResource("11_recl")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_craters"
+spawn_tag = &"obj_coast_craters"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hive_crater"]
+script = ExtResource("2_espec")
+callsign = "HIVE-CRATER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_craters"
+spawn_tag = &"obj_coast_craters"
+spawn_offset = Vector3(-8, 0, -12)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_centre"]
+script = ExtResource("2_espec")
+callsign = "CENTRE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_centre"
+spawn_tag = &"obj_coast_centre"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hill"]
+script = ExtResource("2_espec")
+callsign = "HILL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("7_hopper")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_hill"
+spawn_tag = &"obj_coast_hill"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hive_hill"]
+script = ExtResource("2_espec")
+callsign = "HIVE-HILL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_hill"
+spawn_tag = &"obj_coast_hill"
+spawn_offset = Vector3(-10, 0, -6)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_town_w"]
+script = ExtResource("2_espec")
+callsign = "TOWN-WEST"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_town_w"
+spawn_tag = &"obj_coast_town_w"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_town"]
+script = ExtResource("2_espec")
+callsign = "TOWN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_town"
+spawn_tag = &"obj_coast_town"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hive_town"]
+script = ExtResource("2_espec")
+callsign = "HIVE-TOWN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_town"
+spawn_tag = &"obj_coast_town"
+spawn_offset = Vector3(14, 0, -12)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_town_e"]
+script = ExtResource("2_espec")
+callsign = "TOWN-EAST"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser"), ExtResource("11_recl")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_town_e"
+spawn_tag = &"obj_coast_town_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_gate"]
+script = ExtResource("2_espec")
+callsign = "GATE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_coast_gate"
+spawn_tag = &"obj_coast_gate"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_kites"]
+script = ExtResource("2_espec")
+callsign = "KITES"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_coast_bridge"
+spawn_tag = &"obj_coast_centre"
+spawn_offset = Vector3(40, 28, -60)
+always_active = true
+faction = 1
+reinforcement_tag = &"coast_relay_bridge"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_counter"]
+script = ExtResource("2_espec")
+callsign = "COUNTER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("11_recl")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_coast_craters"
+spawn_tag = &"obj_coast_centre"
+spawn_offset = Vector3(40, 0, 40)
+always_active = true
+faction = 1
+reinforcement_tag = &"coast_relay_craters"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_flood"]
+script = ExtResource("2_espec")
+callsign = "FLOOD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_coast_bridge"
+spawn_tag = &"obj_coast_ford_hills"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"coast_flood"
+wake_after_kills = 20
+
+[sub_resource type="Resource" id="S_surge"]
+script = ExtResource("2_espec")
+callsign = "SURGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("7_hopper"), ExtResource("7_hopper"), ExtResource("6_rifle")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_coast_centre"
+spawn_tag = &"obj_coast_north_in"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"coast_surge"
+wake_after_kills = 45
+
+[sub_resource type="Resource" id="S_swarm"]
+script = ExtResource("2_espec")
+callsign = "SWARM"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("7_hopper"), ExtResource("7_hopper"), ExtResource("6_rifle")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_coast_bridge"
+spawn_tag = &"obj_coast_ford"
+spawn_offset = Vector3(40, 0, -30)
+always_active = true
+faction = 1
+reinforcement_tag = &"nest_down"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_vultures"]
+script = ExtResource("2_espec")
+callsign = "VULTURES"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber"), ExtResource("13_bomber")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_coast_town"
+spawn_tag = &"obj_coast_east_in"
+spawn_offset = Vector3(40, 30, -40)
+always_active = true
+faction = 1
+reinforcement_tag = &"coast_relay_town"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_last"]
+script = ExtResource("2_espec")
+callsign = "LAST-STAND"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("10_mech")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_coast_gate"
+spawn_tag = &"obj_coast_east_in"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"coast_relay_town"
+wake_after_kills = 0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"coast_1_road"
+display_name = "Coast Road"
+briefing = "The coast road east, and everything dug in along it. Land in the flats, take the relays at the bridge, the crater field and the town, and get out at the east end. Four hives, armour at every relay, repair crews behind their line. Each relay you take calls something in: bombers for the bridge, armour for the craters, and everything they have left for the town."
+level_scene = ExtResource("3_coast")
+map_position = Vector2(360, 30)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_drift"), SubResource("S_surf"), SubResource("S_ridge"), SubResource("S_ford"), SubResource("S_bridge"), SubResource("S_hive_bridge"), SubResource("S_crater"), SubResource("S_hive_crater"), SubResource("S_centre"), SubResource("S_hill"), SubResource("S_hive_hill"), SubResource("S_town_w"), SubResource("S_town"), SubResource("S_hive_town"), SubResource("S_town_e"), SubResource("S_gate"), SubResource("S_kites"), SubResource("S_counter"), SubResource("S_flood"), SubResource("S_surge"), SubResource("S_swarm"), SubResource("S_vultures"), SubResource("S_last")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"coast_relay_bridge", &"coast_relay_craters", &"coast_relay_town", &"coast_hive_bridge", &"coast_hive_craters", &"coast_hive_hill", &"coast_hive_town", &"coast_extract"])
+reward_resources = 500
+compute_reward = 1
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = false
+requires = Array[StringName]([&"valley_6_foundry"])

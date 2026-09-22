@@ -13,8 +13,9 @@ class_name LessonPrompts
 #
 # So these are keyed to the unlock instead. Come home with a Mechanic in the
 # roster for the first time and the game tells you what the Factory is for.
-# Come home with a Rover and it tells you those deploy as their own team and
-# which key picks between them. Once each, recorded in the save.
+# Come home with a Rover and it tells you it deploys as a team of its own, where
+# teams are made, and which key picks between them. Once each, recorded in the
+# save.
 #
 # TIMING. It waits for the tree to unpause before it speaks. The debrief holds
 # a pause while it is up, so this lands after the player has finished reading
@@ -39,9 +40,9 @@ const LESSONS: Array[Dictionary] = [
 	{
 		"id": &"fireteams",
 		"needs": &"rover",
-		"text": "{switch_team} SWITCHES FIRETEAMS\n"
-			+ "VEHICLES GO IN AS THEIR OWN TEAM, SEPARATE FROM YOUR INFANTRY. "
-			+ "{switch_team} PICKS WHICH OF THEM YOUR ORDERS GO TO.",
+		"text": "{switch_team} SWITCHES TEAMS\n"
+			+ "YOUR ROVER GOES IN AS A TEAM OF ITS OWN. DRAG ROBOTS BETWEEN TEAMS ON "
+			+ "THE SQUAD PAGE, {squad_manager}. {switch_team} PICKS WHICH TEAM YOUR ORDERS GO TO.",
 	},
 ]
 

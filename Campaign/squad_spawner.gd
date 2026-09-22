@@ -19,6 +19,10 @@ class_name SquadSpawner
 # records, deploy, shoot one, write_back, redeploy, and check the damage stuck.
 # ─────────────────────────────────────────────
 
+## Stands each deployed robot on the real ground: see ground_snap.gd. By path,
+## not class_name, so an open editor never compiles this before it exists.
+const _Ground := preload("res://Campaign/ground_snap.gd")
+
 @export var world: Node3D
 @export var ai_manager: AIManager
 # Used when a record has no chassis_scene of its own.
@@ -48,21 +52,24 @@ enum SpawnMode { SPAWN_POINT, PLAYER, NEAREST_ELSE_PLAYER }
 signal squad_deployed(squad: Squad, count: int)
 signal squad_collected(survivors: int, lost: int)
 
-# The first team this deployment made — the infantry, if there are any. What
-# everything that expects one squad is handed.
+# Your first team in the field. What everything that expects one squad is
+# handed.
 var active_squad: Squad = null
-# Every team deployed: the robots on foot and the vehicles go in as separate
-# squads (Squad.TEAM_*), so a rover can be ordered apart from the infantry.
+# Every team deployed: one squad per team on the squad page (CampaignState
+# .teams), in its order, so each can be given orders of its own.
 var squads: Array[Squad] = []
 # Soldier node -> the record it was built from.
 var _spawned: Dictionary = {}
-# The name this deployment's teams were called by when the campaign has none
-# set — what a team formed mid-mission is named from too.
+# What a team is called if the campaign has no name for it — only a robot the
+# campaign does not know about, a test rig's, ever needs this.
 var _callsign_base: String = "ALPHA"
 
-## How far behind you the armour follows — well back of the infantry, so the
-## two formations do not end up on the same patch of ground.
+## How far behind you a team of vehicles follows at the least — well back of
+## the robots on foot, so a rover is not threading through their line.
 @export var armor_follow_distance: float = 10.0
+## Each team in the field follows this much further back than the one before
+## it, so their formations do not end up on the same patch of ground.
+@export var team_follow_step: float = 5.0
 
 
 func has_squad() -> bool:
@@ -72,24 +79,50 @@ func has_squad() -> bool:
 	return false
 
 
-# Which team a robot goes in with: vehicles are armour, everything else infantry.
+func _state() -> CampaignState:
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	return campaign.get("state") as CampaignState if campaign != null else null
+
+
+# Which team a robot goes in with: the one it is in on the squad page. A record
+# the campaign does not hold keeps whatever team it names.
 func _team_of(record: SoldierRecord) -> StringName:
-	var cat := _catalogue()
-	var frame: ChassisDefinition = cat.chassis_def(record.chassis_id) if cat != null and record != null else null
-	return Squad.TEAM_ARMOR if frame != null and frame.vehicle else Squad.TEAM_INFANTRY
+	var state := _state()
+	if state != null and record != null and state.roster.has(record):
+		return state.team_of(record)
+	return record.team_id if record != null and record.team_id != &"" else &"t1"
 
 
-# The deployed bodies by team, infantry first. Teams with nobody in them are
-# left out, so a roster without vehicles deploys exactly as it always did.
+# Where a team comes in the squad page's list. One the campaign does not know
+# goes after all of those.
+func _team_rank(team_id: StringName) -> int:
+	var state := _state()
+	var at := state.team_ids().find(team_id) if state != null else -1
+	return at if at >= 0 else CampaignState.MAX_TEAMS
+
+
+func _team_label(team_id: StringName) -> String:
+	var state := _state()
+	var label := state.team_name(team_id) if state != null else ""
+	return label if label != "" else _callsign_base
+
+
+# The deployed bodies by team, in the squad page's order. Teams with nobody
+# deployed are left out.
 func _split_by_team(members: Array[Soldier]) -> Array:
+	var by_team := {}
+	var order: Array[StringName] = []
+	for soldier in members:
+		var team_id := _team_of(_spawned.get(soldier))
+		if not by_team.has(team_id):
+			var crew: Array[Soldier] = []
+			by_team[team_id] = crew
+			order.append(team_id)
+		(by_team[team_id] as Array).append(soldier)
+	order.sort_custom(func(a: StringName, b: StringName) -> bool: return _team_rank(a) < _team_rank(b))
 	var out := []
-	for team_id in [Squad.TEAM_INFANTRY, Squad.TEAM_ARMOR]:
-		var team_members: Array[Soldier] = []
-		for soldier in members:
-			if _team_of(_spawned.get(soldier)) == team_id:
-				team_members.append(soldier)
-		if not team_members.is_empty():
-			out.append([team_id, team_members])
+	for team_id in order:
+		out.append([team_id, by_team[team_id]])
 	return out
 
 
@@ -100,21 +133,53 @@ func _squad_of_team(team_id: StringName) -> Squad:
 	return null
 
 
-func _new_squad(team_id: StringName, members: Array[Soldier], fallback_name: String) -> Squad:
+func _new_squad(team_id: StringName, members: Array[Soldier]) -> Squad:
 	var squad: Squad = null
 	if squad_scene != null:
 		squad = squad_scene.instantiate() as Squad
 	if squad == null:
 		squad = Squad.new()
-	squad.name = "PlayerArmor" if team_id == Squad.TEAM_ARMOR else "PlayerSquad"
+	squad.name = "PlayerTeam_%s" % team_id
 	squad.team = team_id
-	squad.callsign = Squad.callsign_for(_squad_name(fallback_name), team_id)
-	if team_id == Squad.TEAM_ARMOR:
-		squad.follow_distance = armor_follow_distance
+	# What it follows at before its place in the order is added: _style_teams
+	# works from this every time, rather than from what it last set.
+	squad.set_meta(&"own_follow_distance", squad.follow_distance)
 	# Set membership BEFORE the node enters the tree — Squad._ready() connects
 	# every member's signals and would connect to an empty array otherwise.
 	squad.squad_members = members
 	return squad
+
+
+# Everything about a team's squad that comes from the squad page: its name, its
+# place in the order, how far back it follows you and whether it is all
+# vehicles. After any change to who is in which squad, and after a rename.
+func _style_teams() -> void:
+	var live: Array[Squad] = []
+	for squad in squads:
+		if squad != null and is_instance_valid(squad):
+			live.append(squad)
+	live.sort_custom(func(a: Squad, b: Squad) -> bool: return _team_rank(a.team) < _team_rank(b.team))
+	for i in live.size():
+		var squad := live[i]
+		squad.callsign = _team_label(squad.team)
+		squad.team_rank = _team_rank(squad.team)
+		squad.vehicles_only = _all_vehicles(squad)
+		var back: float = float(squad.get_meta(&"own_follow_distance", squad.follow_distance)) + team_follow_step * i
+		squad.follow_distance = maxf(back, armor_follow_distance) if squad.vehicles_only else back
+
+
+func _all_vehicles(squad: Squad) -> bool:
+	var cat := _catalogue()
+	var any := false
+	for m in squad.squad_members:
+		if m == null or not is_instance_valid(m):
+			continue
+		var record: SoldierRecord = _spawned.get(m)
+		var frame: ChassisDefinition = cat.chassis_def(record.chassis_id) if cat != null and record != null else null
+		if frame == null or not frame.vehicle:
+			return false
+		any = true
+	return any
 
 
 # ─────────────────────────────────────────────
@@ -162,7 +227,9 @@ func deploy_into(level: Node, records: Array[SoldierRecord]) -> Squad:
 		# enemy_force_spawner.gd. A body that readies at the level origin shares
 		# that spot with everything else spawned this frame, and their Detection
 		# areas hand each other combat targets they will never be able to see.
-		soldier.position = level.to_local(point.slot_position(i))
+		# ...and stood on the ground there: the slots are laid out flat behind the
+		# marker, and on a slope the far ones started underground.
+		soldier.position = level.to_local(_Ground.stand(point.slot_position(i), soldier, level))
 		level.add_child(soldier)
 		if ai_manager != null:
 			ai_manager.register_enemy(soldier)
@@ -180,6 +247,7 @@ func deploy_into(level: Node, records: Array[SoldierRecord]) -> Squad:
 		var squad := _build_squad(point, part[1], part[0])
 		level.add_child(squad)
 		squads.append(squad)
+	_style_teams()
 	active_squad = squads[0]
 	print("[SquadSpawner] %d deployed at spawn point '%s' (%s, objective %d), %d team(s)" % [
 		members.size(), point.callsign, str(point.global_position.round()),
@@ -269,18 +337,6 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 			soldier.signal_integrity + record.effective_signal_bonus, 0.0, 1.0)
 
 
-# CampaignState.squad_name wins over whatever the level author typed on the
-# spawn point — it's what the player set, so it has to be what they see in the
-# roster header and in every order toast.
-func _squad_name(fallback: String) -> String:
-	var campaign := get_tree().get_first_node_in_group("campaign")
-	if campaign != null and campaign.state != null:
-		var chosen: String = campaign.state.squad_name
-		if chosen != "":
-			return chosen
-	return fallback
-
-
 func _catalogue() -> ItemCatalogue:
 	if catalogue != null:
 		return catalogue
@@ -293,7 +349,7 @@ func _catalogue() -> ItemCatalogue:
 # Every team takes the spawn point's orders, so at the start they all set off
 # for the same objective, as one squad used to.
 func _build_squad(point: SquadSpawnPoint, members: Array[Soldier], team_id: StringName) -> Squad:
-	var squad := _new_squad(team_id, members, point.callsign)
+	var squad := _new_squad(team_id, members)
 	squad.player_commandable = point.player_commandable
 	squad.default_objective = point.default_objective
 	squad.target_objective = point.target_objective
@@ -356,7 +412,7 @@ func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 		var side := 1.0 if i % 2 == 0 else -1.0
 		var offset := Vector3(side * player_spacing * (float(row) * 0.5 + 0.5), 0.0, float(row) * player_spacing)
 		# Placed before it enters the tree, same as above.
-		soldier.position = level.to_local(anchor + (basis * offset))
+		soldier.position = level.to_local(_Ground.stand(anchor + (basis * offset), soldier, level))
 		level.add_child(soldier)
 		if ai_manager != null:
 			ai_manager.register_enemy(soldier)
@@ -371,13 +427,16 @@ func _deploy_on_player(level: Node, records: Array[SoldierRecord]) -> Squad:
 
 	_callsign_base = "ALPHA"
 	for part in _split_by_team(members):
-		var squad := _new_squad(part[0], part[1], _callsign_base)
+		var squad := _new_squad(part[0], part[1])
 		squad.player_commandable = true
 		squad.default_objective = Squad.SquadObjective.FOLLOW
 		level.add_child(squad)
+		squads.append(squad)
+	# Named and spaced before they fall in, so each takes its own distance.
+	_style_teams()
+	for squad in squads:
 		# Straight onto the player's hip, which is the point of spawning here.
 		squad.follow(player)
-		squads.append(squad)
 	active_squad = squads[0]
 	squad_deployed.emit(active_squad, members.size())
 	print("[SquadSpawner] %d deployed on the player (no spawn point used), %d team(s)" % [members.size(), squads.size()])
@@ -433,14 +492,38 @@ func find_body(record: SoldierRecord) -> Soldier:
 	return null
 
 
+# The level your teams are standing in, or null if none of them is.
+func _level_of_squads() -> Node:
+	if active_squad != null and is_instance_valid(active_squad) and active_squad.get_parent() != null:
+		return active_squad.get_parent()
+	for squad in squads:
+		if squad != null and is_instance_valid(squad) and squad.get_parent() != null:
+			return squad.get_parent()
+	return null
+
+
+# A team's squad for a robot to join, made if that team is not in the field
+# yet — made falling in on you, since it has no orders of its own.
+func _squad_to_join(team_id: StringName, level: Node) -> Squad:
+	var squad := _squad_of_team(team_id)
+	if squad != null:
+		return squad
+	var none: Array[Soldier] = []
+	squad = _new_squad(team_id, none)
+	squad.player_commandable = true
+	level.add_child(squad)
+	squads.append(squad)
+	_style_teams()
+	if player != null:
+		squad.follow(player)
+	return squad
+
+
 # Adds one soldier to the squad that's already deployed, beside the others.
 func spawn_one(record: SoldierRecord) -> Soldier:
 	if not has_squad():
 		return null
-	var any_team: Squad = active_squad if active_squad != null and is_instance_valid(active_squad) else _squad_of_team(Squad.TEAM_INFANTRY)
-	if any_team == null:
-		any_team = _squad_of_team(Squad.TEAM_ARMOR)
-	var level := any_team.get_parent() if any_team != null else null
+	var level := _level_of_squads()
 	if level == null:
 		push_warning("SquadSpawner: no team of yours is in a level, so %s has nowhere to rejoin." % record.display_name)
 		return null
@@ -448,29 +531,64 @@ func spawn_one(record: SoldierRecord) -> Soldier:
 	var soldier := _build_soldier(record)
 	if soldier == null:
 		return null
-	# Back into its own team. If that team never went in this mission — a rover
-	# repaired back into a fight it started out of — the team is made now and
-	# falls in on you.
+	# Back into its own team — which, if it never went in this mission (a robot
+	# repaired back into a fight it started out of), is made now.
 	_spawned[soldier] = record
-	var team_id := _team_of(record)
-	var squad := _squad_of_team(team_id)
-	var fresh := squad == null
-	if fresh:
-		var none: Array[Soldier] = []
-		squad = _new_squad(team_id, none, _callsign_base)
-		squad.player_commandable = true
-		level.add_child(squad)
-		squads.append(squad)
+	var squad := _squad_to_join(_team_of(record), level)
 	level.add_child(soldier)
 	soldier.global_position = _rejoin_position(squad)
 	soldier.set_meta("record_id", record.id)
 	if ai_manager != null:
 		ai_manager.register_enemy(soldier)
 	squad.add_ai_to_squad(soldier)
-	if fresh and player != null:
-		squad.follow(player)
+	_style_teams()
 	squad.notify_roster_changed()
 	return soldier
+
+
+## Brings the squads standing in the world into line with the squad page: a
+## robot moved to another team changes squad where it stands and takes up that
+## team's orders; a team made for it falls in on you; a renamed team is renamed.
+## At base as much as in a mission. Not the bench — benching mid-mission only
+## changes the next deploy, so nobody vanishes from a fight.
+func regroup() -> void:
+	var level := _level_of_squads()
+	if level == null:
+		return   # nobody deployed: the next deploy reads the teams afresh
+	var joined: Array[Squad] = []
+	var left: Array[Squad] = []
+	for body in _spawned.keys():
+		if body == null or not is_instance_valid(body):
+			continue
+		var soldier := body as Soldier
+		var want := _team_of(_spawned[body])
+		var from: Squad = soldier.squad if soldier.squad != null and is_instance_valid(soldier.squad) else null
+		if from != null and from.team == want:
+			continue
+		var to := _squad_to_join(want, level)
+		if from != null:
+			from.remove_ai_from_squad(soldier)
+			left.append(from)
+		to.add_ai_to_squad(soldier)
+		if not joined.has(to):
+			joined.append(to)
+	# A team whose last robot left is gone from the field with it.
+	for squad in left:
+		if is_instance_valid(squad) and squad.squad_members.is_empty():
+			squads.erase(squad)
+			squad.queue_free()
+	_style_teams()
+	if active_squad == null or not is_instance_valid(active_squad) or not squads.has(active_squad):
+		active_squad = null
+		for squad in squads:
+			if active_squad == null or squad.team_rank < active_squad.team_rank:
+				active_squad = squad
+	for squad in joined:
+		# The newcomer takes its part in whatever its team is doing: a post of its
+		# own on a DEFEND, a place in the line on a FOLLOW.
+		squad.resume_objective()
+	for squad in squads:
+		squad.notify_roster_changed()
 
 
 # Beside its team, or beside the player if the team is empty.

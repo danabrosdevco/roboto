@@ -56,6 +56,7 @@ static func build(events: Array, title: String) -> String:
 	_allies(o, d)
 	_orders(o, d)
 	_equipment(o, d)
+	_signal(o, d)
 	o.append("---")
 	o.append("Raw data: `events.jsonl` in the same folder, one JSON object per line. Every line has `ev` (event type) and `t` (seconds into the session); lines during a mission add `m` (mission id), `a` (attempt number) and `mt` (seconds into the mission).")
 	return "\n".join(o)
@@ -71,6 +72,7 @@ static func _digest(events: Array) -> Dictionary:
 		"deaths": [], "ran_out": {}, "dry": {}, "no_reserve": {},
 		"healed_by": {}, "revives": {}, "throws": {}, "blast_kills": {},
 		"order_time": {}, "order_ally": {}, "player_orders": {},
+		"signal": {}, "ekill_by": {}, "ekilled": {},
 	}
 	for e in events:
 		if typeof(e) != TYPE_DICTIONARY:
@@ -102,6 +104,7 @@ static func _digest(events: Array) -> Dictionary:
 					att["max_hp"] = int(e.get("max_hp", -1))
 					att["shots"] = e.get("shots", {})
 					att["hits"] = e.get("hits", {})
+					att["signal"] = e.get("signal", {})
 					att["orders"] = e.get("orders", {})
 					att["ammo"] = e.get("ammo", {})
 					att["won"] = bool(e.get("won", false))
@@ -136,6 +139,14 @@ static func _digest(events: Array) -> Dictionary:
 			"order":
 				if bool(e.get("by_player", false)):
 					_bump(d["player_orders"], str(e.get("to", "?")))
+			"ekill":
+				var by: Dictionary = e.get("atk", {})
+				var vic: Dictionary = e.get("vic", {})
+				# An enemy's row is its frame, as its signal is keyed (see _shot_key).
+				var by_side := str(by.get("side", "world"))
+				_bump(d["ekill_by"], _signal_source(by_side, str(by.get("kind", "?")),
+					"" if by_side == "enemy" else str(e.get("w", "?"))))
+				_bump(d["ekilled"], "%s|%s" % [str(vic.get("side", "?")), str(vic.get("kind", "?"))])
 		if not att.is_empty() and e.has("mt"):
 			att["last_mt"] = maxf(float(att["last_mt"]), float(e["mt"]))
 
@@ -165,6 +176,21 @@ static func _digest(events: Array) -> Dictionary:
 					var en := _enemy(d, parts[1])
 					en["shots"] += int(att["shots"][k])
 					en["hits"] += int(att["hits"].get(k, 0))
+		# Signal arrives keyed like shots; allies fold together by weapon, so
+		# "Squad: Machine Gun" is one row however many rovers carried one.
+		for k in att.get("signal", {}):
+			var parts := str(k).split("|")
+			var src := ""
+			match parts[0]:
+				"player":
+					src = _signal_source("player", "player", parts[1])
+				"ally":
+					src = _signal_source("ally", "", parts[2] if parts.size() > 2 else "?")
+				"enemy":
+					src = _signal_source("enemy", parts[1], "")
+				_:
+					src = _signal_source("world", "", parts[1] if parts.size() > 1 else "?")
+			d["signal"][src] = float(d["signal"].get(src, 0.0)) + float(att["signal"][k])
 	return d
 
 
@@ -613,6 +639,47 @@ static func _equipment(o: PackedStringArray, d: Dictionary) -> void:
 	else:
 		o.append(_table(["Item", "Thrown by", "Times", "Per attempt", "Kills"], rows))
 	o.append("")
+
+
+static func _signal(o: PackedStringArray, d: Dictionary) -> void:
+	o.append("## Signal and e-kills")
+	o.append("")
+	var sources := {}
+	for s in d["signal"]:
+		sources[s] = true
+	for s in d["ekill_by"]:
+		sources[s] = true
+	if sources.is_empty():
+		o.append("No signal damage recorded.")
+		o.append("")
+		return
+	var rows: Array = []
+	for s in sources:
+		rows.append([s, _f(float(d["signal"].get(s, 0.0))), int(d["ekill_by"].get(s, 0))])
+	rows.sort_custom(func(a, b): return float(a[1]) > float(b[1]))
+	o.append(_table(["Source", "Signal taken off", "E-kills"], rows))
+	o.append("")
+	var fell := PackedStringArray()
+	for k in d["ekilled"]:
+		var parts := str(k).split("|")
+		fell.append("%d %s%s" % [d["ekilled"][k], parts[1], " (yours)" if parts[0] == "ally" or parts[0] == "player" else ""])
+	if not fell.is_empty():
+		o.append("E-killed: %s." % ", ".join(fell))
+		o.append("")
+	o.append("Signal is a robot's link to its commander. Suppression and EMPs wear it down; at zero the robot is e-killed — frozen, no orders, no fire — until it recovers to half. 1.0 is one robot's whole signal. Suppression is credited to the gun that fired, an EMP to the EMP.")
+	o.append("")
+
+
+# "You: EMP", "Squad: Machine Gun", "Enemy: Rover".
+static func _signal_source(side: String, kind: String, w: String) -> String:
+	match side:
+		"player":
+			return "You: %s" % w
+		"ally":
+			return "Squad: %s" % w
+		"enemy":
+			return "Enemy: %s" % (kind if w == "" or w == "?" or w == "unknown" else w)
+	return "Other: %s" % w
 
 
 # ─────────────────────────────────────────────

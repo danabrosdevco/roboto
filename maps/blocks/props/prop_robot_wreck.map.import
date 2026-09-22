@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://db8oyjkil0tvq"
+path="res://.godot/imported/prop_robot_wreck.map-fdda89ae3e76b370e43d6acf48c16f08.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_robot_wreck.map"
+dest_files=["res://.godot/imported/prop_robot_wreck.map-fdda89ae3e76b370e43d6acf48c16f08.tres"]
+
+[params]
+

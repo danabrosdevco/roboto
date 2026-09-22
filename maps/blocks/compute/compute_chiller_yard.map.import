@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cvmhxma14rxt2"
+path="res://.godot/imported/compute_chiller_yard.map-8f7e6f22146d5dc7e05db43e8680a2b7.tres"
+
+[deps]
+
+source_file="res://maps/blocks/compute/compute_chiller_yard.map"
+dest_files=["res://.godot/imported/compute_chiller_yard.map-8f7e6f22146d5dc7e05db43e8680a2b7.tres"]
+
+[params]
+

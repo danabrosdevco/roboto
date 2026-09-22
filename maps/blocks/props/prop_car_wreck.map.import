@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cp2dj2p8hdib"
+path="res://.godot/imported/prop_car_wreck.map-8a92b996fb3a24a9df45441fb7bb8ae2.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_car_wreck.map"
+dest_files=["res://.godot/imported/prop_car_wreck.map-8a92b996fb3a24a9df45441fb7bb8ae2.tres"]
+
+[params]
+

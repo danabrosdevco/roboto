@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dw2kq15bbjcw1"
+path="res://.godot/imported/feature_rock_spire.map-c227271c0e5ca2656a1e970b33eb1a98.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_rock_spire.map"
+dest_files=["res://.godot/imported/feature_rock_spire.map-c227271c0e5ca2656a1e970b33eb1a98.tres"]
+
+[params]
+

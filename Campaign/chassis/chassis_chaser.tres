@@ -19,6 +19,7 @@ base_accuracy = 0.6
 base_sensor_range = 55.0
 weapon_slots = 0
 built_in = "CLAWS"
+weapon_replaces_built_in = false
 turret = false
 vehicle = false
 drives = false

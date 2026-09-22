@@ -8,9 +8,9 @@ class_name SquadHUD
 #
 # THREE LAYERS
 #   1. Roster panel (bottom left): the squad you're commanding, one row per
-#      robot — callsign, health, signal integrity, current state. With a rover
-#      in the field that is both teams, the one you are not ordering dimmed;
-#      switching (G) says ORDERS > ARMOR just above the weapon bar.
+#      robot — callsign, health, signal integrity, current state. With more
+#      than one team in the field that is all of them, the ones you are not
+#      ordering dimmed; switching (G) says ORDERS > ARMOR above the weapon bar.
 #
 # WHY THE ROLE COLUMN IS GONE
 # Rows used to carry a role tag (SUP/ADV/FLK/FBK/OVW) AND a state
@@ -400,7 +400,7 @@ func _fill_header(header: Label, squad: Squad, quiet: bool) -> void:
 	header.add_theme_color_override("font_color", Color(ctx_col, 0.45) if quiet else ctx_col)
 
 
-# Your teams, both of them, whichever you are ordering: the other one dimmed.
+# Your teams, all of them, whichever you are ordering: the others dimmed.
 # Someone else's squad, picked by aiming at one of its robots, shows on its own;
 # so does a hand-placed squad in a level that deployed no teams.
 func _shown_squads() -> Array:
@@ -525,12 +525,12 @@ func _refresh_nearby() -> void:
 			dist = player.global_position.distance_to(squad.get_center())
 		var mark := "*" if squad == selected else " "
 		var side := "HOSTILE" if hostile else "FRIENDLY"
-		# With two teams, yours go by team: cut to eight letters, TOMMYSQUAD and
-		# TOMMYSQUAD ARMOR read the same.
+		# Yours go by team name, ten letters at most (CampaignState.TEAM_NAME_MAX)
+		# so none is cut short.
 		var who: String = squad.team_name() if by_team and squad.team != &"" else squad.get_display_name().to_upper()
 		_nearby.add_child(_make_label(
-			"%s%-8s %-8s %3dm  %s" % [
-				mark, who.left(8), side,
+			"%s%-10s %-8s %3dm  %s" % [
+				mark, who.left(10), side,
 				int(dist), _strength_text(squad, hostile)],
 			col, font_size_nearby))
 
@@ -699,7 +699,7 @@ func _on_roster_changed(_squad: Squad) -> void:
 
 
 func _on_squad_selected(squad: Squad) -> void:
-	# With two teams, team_selected follows and says who the orders go to — one
+	# With teams, team_selected follows and says who the orders go to — one
 	# toast rather than two landing on top of each other.
 	if squad != null and not commander.has_teams():
 		_show_toast("COMMANDING %s" % squad.get_display_name().to_upper(), COL_BRIGHT)

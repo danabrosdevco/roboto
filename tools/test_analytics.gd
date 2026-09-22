@@ -97,6 +97,12 @@ func _init() -> void:
 	enemies[0].apply_damage(99999, player)
 	_Analytics.shot(enemies[1])
 	player.apply_damage(30, enemies[1])
+	# Signal: a suppressing near-miss off the player's gun, then an EMP — named
+	# as a blast names itself — that takes the rest and e-kills.
+	enemies[1].receive_signal_damage(0.2, player)
+	_Analytics.set_cause("EMP")
+	enemies[1].receive_signal_damage(1.2, player)
+	_Analytics.clear_cause()
 	var squad: Squad = cm.spawner.active_squad if cm.spawner != null else null
 	if squad != null:
 		squad.receive_player_order(Squad.SquadObjective.ADVANCE, player.global_position + Vector3(0, 0, -10))
@@ -159,6 +165,22 @@ func _init() -> void:
 			advance += float(end[0]["orders"][sq].get("ADVANCE", 0.0))
 		_check("time under each order is totalled", advance > 0.3, str(end[0]["orders"]))
 		_check("ammo left is snapshotted", not (end[0]["ammo"] as Dictionary).is_empty())
+		var sig: Dictionary = end[0].get("signal", {})
+		var by_gun := 0.0
+		var by_emp := 0.0
+		for k in sig:
+			if str(k) == "player|EMP":
+				by_emp = float(sig[k])
+			elif str(k).begins_with("player|"):
+				by_gun = float(sig[k])
+		_check("signal taken off is totalled per weapon: the gun's near-miss and the EMP apart",
+			is_equal_approx(by_gun, 0.2) and is_equal_approx(by_emp, 0.8), str(sig))
+		_check("...and the e-kill is counted to the EMP", int((end[0].get("ekills", {}) as Dictionary).get("player|EMP", 0)) == 1,
+			str(end[0].get("ekills", {})))
+	var ek := _of(events, "ekill")
+	_check("the e-kill is logged, credited to the EMP rather than the gun in the thrower's hands",
+		ek.size() == 1 and ek[0]["w"] == "EMP" and ek[0]["atk"]["side"] == "player" and ek[0]["vic"]["side"] == "enemy",
+		str(ek))
 	_check("mission time is play time, and it moved", end.size() == 1 and float(end[0]["duration"]) > 0.3)
 
 	# ── THE REPORT ───────────────────────────────
@@ -168,6 +190,8 @@ func _init() -> void:
 		and report.contains("## Follow vs. advance"))
 	_check("...and says the attempt ended in a death", report.contains("died **1**"))
 	_check("...and which build the session was", report.contains("Build %s." % build_label))
+	_check("...and what wore down their signal, and who was e-killed", report.contains("## Signal and e-kills")
+		and report.contains("You: EMP") and report.contains("E-killed: 1"))
 	var rebuilt: String = _Report.build(events, "roundtrip")
 	_check("the report rebuilds from the parsed file alone", rebuilt.contains("Mission attempts: **1**"))
 

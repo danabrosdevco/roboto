@@ -119,13 +119,19 @@ signal rebuilt
 		water_material = value
 		if _ready_done:
 			_build_water()
+## Stand a plain concrete deck on every bridge span (see get_bridges()) until
+## real bridge models exist. Solid, walkable, and picked up by navmesh bakes.
+@export var bridge_blockouts: bool = true:
+	set(value):
+		bridge_blockouts = value
+		_queue_rebuild()
 
 @export_group("Editor")
-## Outline the building lots of painted urban areas in the editor viewport:
-## blue for clean lots, orange for rubble. Never shown in the game.
-@export var show_lots: bool = true:
+## Outline painted building lots (blue clean, orange rubble) and bridge spans
+## (yellow) in the editor viewport. Never shown in the game.
+@export var show_markers: bool = true:
 	set(value):
-		show_lots = value
+		show_markers = value
 		_queue_rebuild()
 
 @export_group("Collision")
@@ -249,8 +255,9 @@ func rebuild() -> void:
 		_build_collision(root)
 	if boundary_walls:
 		_build_boundary(root)
+	_build_bridges(root)
 	_build_water()
-	_build_lots_overlay(root)
+	_build_markers(root)
 	rebuilt.emit()
 
 
@@ -362,11 +369,53 @@ func get_water_surface_count() -> int:
 	return _water_instances.size()
 
 
-# Editor-only outlines of the building lots, all in one line surface: a mesh
-# has at most 256 surfaces, and a big painted town has more lots than that.
-func _build_lots_overlay(root: Node3D) -> void:
-	if not (Engine.is_editor_hint() and show_lots) or _data.lots.is_empty():
-		return   # only drawn in the editor, and only when there are lots to show
+const BRIDGE_THICKNESS := 1.0
+## How far a blockout deck runs onto each bank, lapping over the road's end.
+const BRIDGE_LAP := 3.0
+
+
+func _build_bridges(root: Node3D) -> void:
+	if not bridge_blockouts or _data.bridges.is_empty():
+		return   # switched off, or no road crosses water
+	var body := StaticBody3D.new()
+	body.name = "Bridges"
+	body.collision_layer = collision_layer
+	body.collision_mask = collision_mask
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.3, 0.3, 0.31)
+	mat.roughness = 0.95
+	for b in _data.bridges:
+		var a: Vector3 = b.start
+		var e: Vector3 = b.end
+		var span := e - a
+		if Vector2(span.x, span.z).length() < 0.5:
+			continue   # both banks at one spot: nothing to span
+		var deck := BoxMesh.new()
+		deck.size = Vector3(float(b.width), BRIDGE_THICKNESS, span.length() + BRIDGE_LAP * 2.0)
+		var turn := Basis.looking_at(span.normalized(), Vector3.UP)
+		# Top face on the road line, so the deck meets the road at both ends.
+		var place := Transform3D(turn, (a + e) * 0.5 - turn.y * (BRIDGE_THICKNESS * 0.5))
+		var mi := MeshInstance3D.new()
+		mi.mesh = deck
+		mi.material_override = mat
+		mi.transform = place
+		_chunk_meshes.append(deck)   # the same headless free-order care as the chunks
+		body.add_child(mi)
+		var box := BoxShape3D.new()
+		box.size = deck.size
+		var shape := CollisionShape3D.new()
+		shape.shape = box
+		shape.transform = place
+		body.add_child(shape)
+	root.add_child(body)
+
+
+# Editor-only outlines of building lots and bridge spans, all in one line
+# surface: a mesh has at most 256 surfaces, and a big painted town has more
+# lots than that.
+func _build_markers(root: Node3D) -> void:
+	if not (Engine.is_editor_hint() and show_markers) or (_data.lots.is_empty() and _data.bridges.is_empty()):
+		return   # only drawn in the editor, and only when there is something to mark
 	var im := ImmediateMesh.new()
 	im.surface_begin(Mesh.PRIMITIVE_LINES)
 	for lot in _data.lots:
@@ -378,22 +427,31 @@ func _build_lots_overlay(root: Node3D) -> void:
 		for c in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
 			var p := turn * Vector3(c.x * half.x, 0.0, c.y * half.y)
 			corners.append(Vector3(centre.x + p.x, y, centre.y + p.z))
-		var colour := Color(1.0, 0.55, 0.2) if lot.ruined else Color(0.4, 0.9, 1.0)
-		for e in 4:
-			im.surface_set_color(colour)
-			im.surface_add_vertex(corners[e])
-			im.surface_set_color(colour)
-			im.surface_add_vertex(corners[(e + 1) % 4])
+		_outline(im, corners, Color(1.0, 0.55, 0.2) if lot.ruined else Color(0.4, 0.9, 1.0))
+	for b in _data.bridges:
+		var a: Vector3 = b.start
+		var e: Vector3 = b.end
+		var across := Vector3(e.z - a.z, 0.0, a.x - e.x).normalized() * float(b.width) * 0.5
+		var up := Vector3(0.0, 0.3, 0.0)
+		_outline(im, [a + across + up, e + across + up, e - across + up, a - across + up], Color(1.0, 0.9, 0.2))
 	im.surface_end()
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.vertex_color_use_as_albedo = true
 	var mi := MeshInstance3D.new()
-	mi.name = "LotOutlines"
+	mi.name = "Markers"
 	mi.mesh = im
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(mi)
+
+
+static func _outline(im: ImmediateMesh, corners: Array, colour: Color) -> void:
+	for e in corners.size():
+		im.surface_set_color(colour)
+		im.surface_add_vertex(corners[e])
+		im.surface_set_color(colour)
+		im.surface_add_vertex(corners[(e + 1) % corners.size()])
 
 
 func _apply_render_settings() -> void:
@@ -653,6 +711,19 @@ func get_lots() -> Array:
 		var centre: Vector2 = lot.centre
 		var local := Transform3D(Basis(Vector3.UP, float(lot.angle)), Vector3(centre.x, float(lot.height), centre.y))
 		out.append({"transform": global_transform * local, "size": lot.size, "ruined": lot.ruined})
+	return out
+
+
+## Where roads cross drawn water, in world space. Each is {start: Vector3,
+## end: Vector3 — the road's end on either bank, at road height; width: float}.
+## Place real bridges here; bridge_blockouts stands a plain deck on each until
+## then. Empty when no road crosses water.
+func get_bridges() -> Array:
+	var out: Array = []
+	if _data == null:
+		return out
+	for b in _data.bridges:
+		out.append({"start": to_global(b.start), "end": to_global(b.end), "width": float(b.width)})
 	return out
 
 

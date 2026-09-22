@@ -25,6 +25,9 @@ class_name EnemyForceSpawner
 ## the walkable ground, small enough that a squad never silently appears in a
 ## different part of the map from the one it was authored into.
 @export var max_spawn_snap: float = 45.0
+## Stands each spawned body on the real ground: see ground_snap.gd. By path,
+## not class_name, so an open editor never compiles this before it exists.
+const _Ground := preload("res://Campaign/ground_snap.gd")
 
 signal force_deployed(squads: int, hostiles: int)
 
@@ -238,7 +241,10 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		# before the mission started: every squad ENGAGED on the first frame,
 		# so the picket never walked its patrol and the garrisons were already
 		# fighting something they could not see.
-		soldier.position = level.to_local(anchor + _ring_offset(i, bodies.size()))
+		var at := anchor + _ring_offset(i, bodies.size())
+		if spec.spawn_offset.y <= 0.0:
+			at = _Ground.stand(at, soldier, level)   # aircraft keep the height they were given
+		soldier.position = level.to_local(at)
 		level.add_child(soldier)
 		if ai_manager != null:
 			ai_manager.register_enemy(soldier)

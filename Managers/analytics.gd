@@ -64,6 +64,8 @@ var _died: bool = false
 var _squad_pending: bool = false
 var _shots: Dictionary = {}           # attacker key -> rounds fired
 var _hits: Dictionary = {}            # attacker key -> rounds that connected
+var _signal: Dictionary = {}          # attacker key -> signal taken off the other side (1.0 = one robot's full signal)
+var _ekills: Dictionary = {}          # attacker key -> robots electronically killed
 var _last_shot_frame: Dictionary = {}
 var _last_hit_frame: Dictionary = {}
 var _order_time: Dictionary = {}      # squad callsign -> {ORDER: seconds}
@@ -112,6 +114,29 @@ static func self_revive(robot: Node) -> void:
 static func objective(o: Node) -> void:
 	if _active != null:
 		_active._on_objective(o)
+
+
+## Signal integrity `source` took off `victim` (suppression, an EMP), after the
+## victim's resistance. Totalled per attacker and weapon for mission_end rather
+## than logged per hit: near-miss suppression lands on almost every burst.
+static func signal_damage(victim: Node, amount: float, source: Node) -> void:
+	if _active != null and amount > 0.0:
+		_active._on_signal(victim, amount, source)
+
+
+## `victim` has just been electronically killed. `cause` is what did it, as it
+## was named when the signal damage landed ("EMP"); empty asks the source what
+## it is holding, the way a damage event does.
+static func ekill(victim: Node, source: Node, cause: String = "") -> void:
+	if _active != null:
+		_active._on_ekill(victim, source, cause)
+
+
+## What damage is being credited to right now (a blast sets it around its
+## hits). Read by a robot as signal damage lands, so an e-kill it registers a
+## frame later still names the EMP, not the rifle its thrower has gone back to.
+static func cause() -> String:
+	return _cause
 
 
 ## Campaign calls this once the level, the squad and the enemy force are all in.
@@ -265,6 +290,8 @@ func lab_begin(label: String, info: Dictionary) -> void:
 	_mission_time = 0.0
 	_shots.clear()
 	_hits.clear()
+	_signal.clear()
+	_ekills.clear()
 	_last_shot_frame.clear()
 	_last_hit_frame.clear()
 	_order_time.clear()
@@ -280,6 +307,8 @@ func lab_end(outcome: String, info: Dictionary) -> Dictionary:
 	e["duration"] = snappedf(_mission_time, 0.01)
 	e["shots"] = counts["shots"]
 	e["hits"] = counts["hits"]
+	e["signal"] = _signal_totals()
+	e["ekills"] = _ekills.duplicate()
 	_emit("lab_end", e)
 	_in_mission = false
 	_lab_label = ""
@@ -296,6 +325,8 @@ func _on_deployed(mission: MissionDefinition) -> void:
 	_mission_time = 0.0
 	_shots.clear()
 	_hits.clear()
+	_signal.clear()
+	_ekills.clear()
 	_last_shot_frame.clear()
 	_last_hit_frame.clear()
 	_order_time.clear()
@@ -373,6 +404,8 @@ func _end_attempt(outcome: String, result: Dictionary) -> void:
 		"ammo": ammo,
 		"shots": _shots.duplicate(),
 		"hits": _hits.duplicate(),
+		"signal": _signal_totals(),
+		"ekills": _ekills.duplicate(),
 		"orders": _order_time.duplicate(true),
 	})
 	for squad in _watched_squads:
@@ -434,6 +467,31 @@ func _on_shot(shooter: Node, weapon: String) -> void:
 	var key := _shot_key(shooter, atk, w)
 	_shots[key] = int(_shots.get(key, 0)) + 1
 	_last_shot_frame[key] = Engine.get_physics_frames()
+
+
+func _on_signal(_victim: Node, amount: float, source: Node) -> void:
+	if not _in_mission:
+		return   # between missions: nothing to total it against
+	var atk := _describe(source)
+	var key := _shot_key(source, atk, _weapon_of(source))
+	_signal[key] = float(_signal.get(key, 0.0)) + amount
+
+
+func _on_ekill(victim: Node, source: Node, cause: String) -> void:
+	var atk := _describe(source)
+	var w := cause if cause != "" else _weapon_of(source)
+	_emit("ekill", {"atk": atk, "w": w, "vic": _describe(victim)})
+	if _in_mission:
+		var key := _shot_key(source, atk, w)
+		_ekills[key] = int(_ekills.get(key, 0)) + 1
+
+
+# Rounded for the log: the running totals are sums of small fractions.
+func _signal_totals() -> Dictionary:
+	var out := {}
+	for k in _signal:
+		out[k] = snappedf(float(_signal[k]), 0.01)
+	return out
 
 
 func _on_heal(target: Node, amount: int, healer: Node, revived: bool) -> void:

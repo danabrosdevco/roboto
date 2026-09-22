@@ -22,7 +22,7 @@
 [sub_resource type="SphereShape3D" id="SphereShape3D_cusma"]
 radius = 0.6
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_tuv3b"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_shshy"]
 render_priority = 0
 shader = ExtResource("9_4s073")
 shader_parameter/use_normal_map = false
@@ -80,13 +80,13 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 transform = Transform3D(-8.74228e-08, -2, 8.74228e-08, 0, -8.74228e-08, -2, 2, -8.74228e-08, 3.82137e-15, 0, 0.376845, 0)
 
 [node name="body_core" parent="drone_variant_02_interceptor/world" index="0"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="body_roof" parent="drone_variant_02_interceptor/world" index="1"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="nose_shell" parent="drone_variant_02_interceptor/world" index="2"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="sensor_core" parent="drone_variant_02_interceptor/world" index="9"]
 material_override = SubResource("EyeMat")
@@ -98,40 +98,40 @@ material_override = SubResource("EyeMat")
 material_override = SubResource("EyeMat")
 
 [node name="side_armor_-1" parent="drone_variant_02_interceptor/world" index="12"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="side_armor_1" parent="drone_variant_02_interceptor/world" index="15"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="underside_frame" parent="drone_variant_02_interceptor/world" index="18"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="underside_sensor" parent="drone_variant_02_interceptor/world" index="20"]
 material_override = SubResource("EyeMat")
 
 [node name="arm_0" parent="drone_variant_02_interceptor/world" index="23"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="arm_armor_0" parent="drone_variant_02_interceptor/world" index="24"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="arm_1" parent="drone_variant_02_interceptor/world" index="34"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="arm_armor_1" parent="drone_variant_02_interceptor/world" index="35"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="arm_2" parent="drone_variant_02_interceptor/world" index="45"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="arm_armor_2" parent="drone_variant_02_interceptor/world" index="46"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="arm_3" parent="drone_variant_02_interceptor/world" index="56"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="arm_armor_3" parent="drone_variant_02_interceptor/world" index="57"]
-material_override = SubResource("ShaderMaterial_tuv3b")
+material_override = SubResource("ShaderMaterial_shshy")
 
 [node name="Detection" type="Area3D" parent="."]
 

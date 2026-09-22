@@ -7,20 +7,21 @@ class_name SquadCommander
 #
 # TAP T    — contextual order at the crosshair. The verb is inferred from what
 #            you're looking at, so the common case costs one keypress:
-#              hostile   → CONTACT callout; with ARMOR selected, ATTACK it
+#              hostile   → CONTACT callout; with a team of vehicles selected,
+#                          ATTACK it
 #              friendly  → select that robot's team
 #              ground    → ADVANCE to that position and hold
 #              nothing   → CONTACT callout down the sightline
 # HOLD T   — FOLLOW. Fires the moment the hold threshold passes.
-# G        — switch the team T orders: INFANTRY <-> ARMOR.
+# G        — switch the team T orders to the next one.
 #
 # TEAMS
-# Your robots go in as up to two squads, the ones on foot and the vehicles
-# (SquadSpawner splits them by frame), so a rover can hold a ridge while the
-# infantry follow you in. Orders go to one team at a time, the infantry to start
-# with, and G flips to the other: no ALL to step through, so a switch is always
-# one press. With one team nothing is different from before. (Cycling used to
-# hang off Tab, which the squad manager takes first; it never fired.)
+# Your robots go in as one squad per team you made on the squad page, so a
+# rover can hold a ridge while the rest follow you in. Orders go to one team at
+# a time, your first to start with, and G steps to the next in the page's order
+# and round again: no ALL to step through, so with two teams a switch is always
+# one press. With one team nothing is different. (Cycling used to hang off Tab,
+# which the squad manager takes first; it never fired.)
 #
 # WHY THREE VERBS
 # The wheel used to carry MOVE TO / DEFEND / ATTACK / FALL BACK / CONTACT. Those
@@ -93,7 +94,7 @@ signal squad_selected(squad: Squad)
 signal squads_refreshed(squads: Array)
 signal order_issued(squad: Squad, verb: int, position: Vector3, target: Node)
 signal contact_called(position: Vector3, target: Node)
-## Which team the orders now go to changed: "INFANTRY", "ARMOR" — or a callsign.
+## Which team the orders now go to changed: the team's name — or a callsign.
 signal team_selected(label: String)
 ## G with no other team in the field to switch to.
 signal no_team_to_switch
@@ -112,6 +113,14 @@ func _ready() -> void:
 	# run yet. Wait a frame before the first sweep.
 	await get_tree().process_frame
 	refresh_squads()
+
+
+# Teams are made and emptied on the squad page, which pauses the game while it
+# is open. Sweep on the first frame after, rather than up to two seconds later:
+# a team you just made has to be on G the moment you are back.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_UNPAUSED:
+		_registry_timer = registry_refresh_interval
 
 
 # `world` and `hud` are not set in test_character.tscn. _place_marker() bails on
@@ -150,7 +159,7 @@ func refresh_squads() -> void:
 		if squad.player_commandable or _is_friendly_squad(squad):
 			commandable_squads.append(squad)
 	selected_index = clampi(selected_index, 0, maxi(0, commandable_squads.size() - 1))
-	# Your infantry first, not whichever squad the group happened to list first.
+	# Your first team, not whichever squad the group happened to list first.
 	var teams := team_squads()
 	if not teams.is_empty() and not teams.has(get_selected_squad()):
 		selected_index = commandable_squads.find(teams[0])
@@ -194,7 +203,7 @@ func cycle_squad(dir: int = 1) -> void:
 # ─────────────────────────────────────────────
 # TEAMS
 # ─────────────────────────────────────────────
-## Your own squads, infantry before armour: the ones SquadSpawner deployed.
+## Your own squads, in the squad page's order: the teams SquadSpawner deployed.
 func team_squads() -> Array[Squad]:
 	var out: Array[Squad] = []
 	for squad in commandable_squads:
@@ -202,8 +211,7 @@ func team_squads() -> Array[Squad]:
 			continue
 		if squad.player_commandable and squad.team != &"":
 			out.append(squad)
-	out.sort_custom(func(a: Squad, b: Squad) -> bool:
-		return a.team == Squad.TEAM_INFANTRY and b.team != Squad.TEAM_INFANTRY)
+	out.sort_custom(func(a: Squad, b: Squad) -> bool: return a.team_rank < b.team_rank)
 	return out
 
 
@@ -213,16 +221,16 @@ func has_teams() -> bool:
 	return team_squads().size() > 1
 
 
-## "INFANTRY", "ARMOR" — or a callsign, for someone else's squad you are
-## ordering.
+## The team's name — or a callsign, for someone else's squad you are ordering.
 func selection_label() -> String:
 	var squad := get_selected_squad()
 	return squad.team_name() if squad != null else "NOBODY"
 
 
-## G: the other team, INFANTRY <-> ARMOR. From someone else's squad, back to
-## your first. In a level whose squads were placed by hand rather than deployed
-## as teams, it steps through those squads instead — the job Tab was meant to do.
+## G: the next team, and round from the last to the first. From someone else's
+## squad, back to your first. In a level whose squads were placed by hand rather
+## than deployed as teams, it steps through those squads instead — the job Tab
+## was meant to do.
 func cycle_team() -> void:
 	var teams := team_squads()
 	if teams.is_empty() and commandable_squads.size() > 1:
@@ -375,10 +383,10 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 	match verb:
 		Verb.CONTACT:
 			_call_contact(pos, target)
-			# A report, for everyone in earshot — and with ARMOR selected, a
-			# target: the one order that suits a vehicle and not a rifleman.
-			# Sent after the callout so the toast says ATTACK.
-			if target is Enemy and squad.team == Squad.TEAM_ARMOR:
+			# A report, for everyone in earshot — and with a team of vehicles
+			# selected, a target: the one order that suits a vehicle and not a
+			# rifleman. Sent after the callout so the toast says ATTACK.
+			if target is Enemy and squad.vehicles_only:
 				squad.receive_player_order(Squad.SquadObjective.ATTACK, pos, target)
 				_place_marker(squad, Verb.ATTACK, pos)
 				_refresh_marker_dimming()

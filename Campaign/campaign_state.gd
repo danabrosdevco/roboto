@@ -109,10 +109,20 @@ const SUPPLY_COMPUTE_COST := 1
 const PLAYER_DEFAULT_NAME := "PLAYER"
 
 # ── IDENTITY ──────────────────────────────────
-# The single source of truth for what the player's squad is called. The spawner
-# reads it onto the Squad node, so the roster header, the command HUD and the
-# order toasts all agree.
+# What the squad was called before it was split into named teams. Nothing shows
+# it any more: a save from before teams names its first team with it (see
+# _first_team_name), and it is still written so an older build can read the save.
 @export var squad_name: String = "NAMELESS"
+
+# ── TEAMS ─────────────────────────────────────
+# The squad goes into the field as these teams, in this order, each one a squad
+# you order on its own (G switches between them). {"id": StringName, "name":
+# String}; a robot names its team by id (SoldierRecord.team_id), so a rename
+# touches nothing else. A team lasts while anyone is in it, benched included, so
+# resting a whole team does not lose its name. Replaced squad_name, which is
+# kept only to name the first team of a save from before teams.
+const MAX_TEAMS := 4
+var teams: Array[Dictionary] = []
 
 # The player's own loadout, held as a record so the management screen can treat
 # them as one more row. Their chassis is whatever you make the player frame —
@@ -128,6 +138,10 @@ var catalogue: ItemCatalogue
 
 signal ledger_changed
 signal roster_changed
+## A robot changed team, or a team was made, renamed or emptied. Also comes
+## with roster_changed; this one is for whoever keeps bodies in the world in
+## step (CampaignManager hands it to the spawner).
+signal teams_changed
 # Emitted after a paid repair. CampaignManager listens and tells the spawner to
 # push the new health onto the live body, or bring a rebuilt soldier into the
 # world if they were too wrecked to deploy when the level loaded.
@@ -209,6 +223,7 @@ func add_soldier(record: SoldierRecord) -> void:
 	if record.id == &"":
 		record.id = mint_id()
 	roster.append(record)
+	team_of(record)
 	roster_changed.emit()
 
 
@@ -267,6 +282,193 @@ func supply_used() -> int:
 
 func supply_free() -> int:
 	return supply_cap - supply_used()
+
+
+# ─────────────────────────────────────────────
+# TEAMS
+# ─────────────────────────────────────────────
+## Longest team name. The field's IN RANGE strip gives a name ten letters.
+const TEAM_NAME_MAX := 10
+
+
+func team_ids() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for t in teams:
+		out.append(t["id"])
+	return out
+
+
+func has_team(id: StringName) -> bool:
+	return _team_index(id) >= 0
+
+
+func _team_index(id: StringName) -> int:
+	for i in teams.size():
+		if teams[i]["id"] == id:
+			return i
+	return -1
+
+
+## A team's name as the field shows it, or "" for no such team.
+func team_name(id: StringName) -> String:
+	var i := _team_index(id)
+	return String(teams[i]["name"]) if i >= 0 else ""
+
+
+## The team a robot goes in with. A robot with none, or whose team is gone,
+## is given the one its frame belongs in, and keeps it.
+func team_of(record: SoldierRecord) -> StringName:
+	if record == null:
+		return &""
+	if not has_team(record.team_id):
+		record.team_id = _default_team_for(record)
+	return record.team_id
+
+
+## Everyone in a team, in roster order. `with_benched` false leaves out the
+## ones resting on the bench.
+func members_of(id: StringName, with_benched: bool = true) -> Array[SoldierRecord]:
+	var out: Array[SoldierRecord] = []
+	for r in roster:
+		if r.team_id == id and (with_benched or not r.benched):
+			out.append(r)
+	return out
+
+
+## Puts a robot in a team — off the bench, if it was on it, which is refused
+## like DEPLOY when there is no seat (or it is a wreck). Returns whether it
+## happened.
+func move_to_team(record: SoldierRecord, id: StringName) -> bool:
+	if record == null or is_player_record(record) or not roster.has(record) or not has_team(id):
+		return false   # you command every team; and there is no such robot or team
+	if record.team_id == id and not record.benched:
+		return true
+	if record.benched and not can_field(record):
+		return false
+	record.team_id = id
+	record.benched = false
+	_prune_empty_teams()
+	roster_changed.emit()
+	teams_changed.emit()
+	return true
+
+
+## A new team with just this robot in it, named TEAM 3 or whatever number is
+## free. Refused at MAX_TEAMS, and when the robot could not come off the bench.
+func move_to_new_team(record: SoldierRecord) -> bool:
+	if record == null or is_player_record(record) or not roster.has(record):
+		return false   # you command every team; and there is no such robot
+	if teams.size() >= MAX_TEAMS or (record.benched and not can_field(record)):
+		return false
+	return move_to_team(record, _add_team(_next_team_name()))
+
+
+## Whether a benched robot could deploy now: in one piece, with a seat free.
+func can_field(record: SoldierRecord) -> bool:
+	return record != null and record.is_deployable() and supply_of(record) <= supply_free()
+
+
+## Upper case, cut to TEAM_NAME_MAX. A blank name is refused rather than saved,
+## since a team with no name has nothing to be called in the field — and so is
+## another team's, since two by one name could not be told apart there.
+func rename_team(id: StringName, new_name: String) -> bool:
+	var i := _team_index(id)
+	var cleaned := new_name.strip_edges().to_upper().left(TEAM_NAME_MAX)
+	if i < 0 or cleaned == "":
+		return false   # no such team, or nothing to call it
+	if cleaned == teams[i]["name"]:
+		return true
+	if teams.any(func(t: Dictionary) -> bool: return t["id"] != id and t["name"] == cleaned):
+		return false   # taken by another team
+	teams[i]["name"] = cleaned
+	roster_changed.emit()
+	teams_changed.emit()
+	return true
+
+
+## Makes sure every robot has a team that exists. For a save from before teams
+## that means building the two the game used to split the squad into by itself:
+## everyone on foot in the first (named after the squad, if you had named it),
+## vehicles in ARMOR. Needs the catalogue to tell a vehicle, so it runs once
+## that is set. Quiet: it only fills in what was missing.
+func ensure_teams() -> void:
+	# Robots on foot first, so the infantry is the first team, as it was.
+	for vehicles in [false, true]:
+		for r in roster:
+			if _is_vehicle(r) == vehicles:
+				team_of(r)
+	_prune_empty_teams()
+	if teams.is_empty():
+		_add_team(_first_team_name())
+
+
+# A robot with no team goes in by its frame, as the squad used to split: a
+# vehicle with the other vehicles — a new ARMOR if there are none — and
+# anything on foot with the first team that is not all vehicles.
+func _default_team_for(record: SoldierRecord) -> StringName:
+	var vehicle := _is_vehicle(record)
+	for t in teams:
+		var crew := members_of(t["id"])
+		crew.erase(record)
+		if not crew.is_empty() and crew.all(func(r: SoldierRecord) -> bool: return _is_vehicle(r)) == vehicle:
+			return t["id"]
+	if teams.size() < MAX_TEAMS:
+		return _add_team(_free_name("ARMOR" if vehicle else _first_team_name()))
+	return teams[0]["id"]
+
+
+func _is_vehicle(record: SoldierRecord) -> bool:
+	var frame := catalogue.chassis_def(record.chassis_id) if catalogue != null and record != null else null
+	return frame != null and frame.vehicle
+
+
+# The first team of a save from before teams: the squad's own name if you gave
+# it one, else what the field called the robots on foot.
+func _first_team_name() -> String:
+	var named := squad_name.strip_edges().to_upper()
+	return named.left(TEAM_NAME_MAX) if named != "" and named != "NAMELESS" else "INFANTRY"
+
+
+# `wanted`, or with a number after it if another team is called that already:
+# two teams with one name could not be told apart in the field.
+func _free_name(wanted: String) -> String:
+	var taken := teams.map(func(t: Dictionary) -> String: return String(t["name"]))
+	var cleaned := wanted.to_upper().left(TEAM_NAME_MAX)
+	var n := 2
+	var candidate := cleaned
+	while taken.has(candidate):
+		var tail := " %d" % n
+		candidate = cleaned.left(TEAM_NAME_MAX - tail.length()) + tail
+		n += 1
+	return candidate
+
+
+# A team you start by dragging a robot out on its own: TEAM 3 when it makes
+# three, or the next number no team is using.
+func _next_team_name() -> String:
+	var taken := teams.map(func(t: Dictionary) -> String: return String(t["name"]))
+	var n := teams.size() + 1
+	while taken.has("TEAM %d" % n):
+		n += 1
+	return "TEAM %d" % n
+
+
+# Quiet: the caller announces. Ids are never shown, and reused once free.
+func _add_team(team_name_text: String) -> StringName:
+	var n := 1
+	while has_team(StringName("t%d" % n)):
+		n += 1
+	var id := StringName("t%d" % n)
+	teams.append({"id": id, "name": team_name_text})
+	return id
+
+
+# A team nobody is in any more — the last robot dragged out of it — is gone.
+# One always stays, so there is somewhere for the next robot to go.
+func _prune_empty_teams() -> void:
+	for i in range(teams.size() - 1, -1, -1):
+		if teams.size() > 1 and members_of(teams[i]["id"]).is_empty():
+			teams.remove_at(i)
 
 
 ## Records that a one-off lesson has been shown. True only the first time, so
@@ -425,6 +627,7 @@ func recruit(chassis: ChassisDefinition) -> SoldierRecord:
 		record.recompute_stats(catalogue)
 	record.benched = supply_of(record) > supply_free()
 	roster.append(record)
+	team_of(record)
 	ledger_changed.emit()
 	roster_changed.emit()
 	return record
@@ -600,6 +803,8 @@ func can_fit(record: SoldierRecord, item: ItemDefinition) -> bool:
 func fit_item(record: SoldierRecord, item: ItemDefinition, slot_index: int) -> bool:
 	if not can_fit(record, item):
 		return false
+	if item.one_per_robot and holds_elsewhere(record, item, slot_index):
+		return false   # one per robot, and it already has one in another slot
 	var slots := _slots_for(record, item.kind)
 	if slots == null or slot_index < 0 or slot_index >= slots.size():
 		return false
@@ -674,6 +879,20 @@ func recompute_roster() -> void:
 		_settle_equipment_slots(player_record)
 		player_record.recompute_stats(catalogue)
 	roster_changed.emit()
+
+
+## Whether `record` already carries `item` in any slot other than `slot_index`
+## of the item's own kind — the one a fit is about to fill, where it would be a
+## swap rather than a second copy.
+func holds_elsewhere(record: SoldierRecord, item: ItemDefinition, slot_index: int) -> bool:
+	if record == null or item == null:
+		return false   # nothing to hold, or nothing held
+	for kind in [ItemDefinition.Kind.WEAPON, ItemDefinition.Kind.EQUIPMENT, ItemDefinition.Kind.MODULE]:
+		var slots := _slots_for(record, kind)
+		for i in slots.size():
+			if slots[i] == item.id and not (kind == item.kind and i == slot_index):
+				return true
+	return false
 
 
 func _slots_for(record: SoldierRecord, kind: int) -> Array:
@@ -852,6 +1071,8 @@ func to_dict() -> Dictionary:
 		"selected_mission_id": String(selected_mission_id),
 		"next_id": _next_id,
 		"squad_name": squad_name,
+		"teams": teams.map(func(t: Dictionary) -> Dictionary:
+			return {"id": String(t["id"]), "name": String(t["name"])}),
 		"purchase_counter": _purchase_counter,
 		"armoury": armoury.to_dict(),
 		"player_record": player_record.to_dict(),
@@ -864,6 +1085,15 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	s.allocations = data.get("allocations", {})
 	s._next_id = int(data.get("next_id", 1))
 	s.squad_name = str(data.get("squad_name", "NAMELESS"))
+	# A save from before teams has none; ensure_teams builds them once the
+	# catalogue can tell a vehicle.
+	for entry in data.get("teams", []):
+		if not (entry is Dictionary):
+			continue   # not a team: a hand-edited save
+		var id := StringName(str(entry.get("id", "")))
+		var team_name_text := str(entry.get("name", "")).strip_edges().to_upper()
+		if id != &"" and team_name_text != "" and not s.has_team(id):
+			s.teams.append({"id": id, "name": team_name_text})
 	s._purchase_counter = int(data.get("purchase_counter", 0))
 	s.armoury = Armoury.from_dict(data.get("armoury", {}))
 	if data.has("player_record"):
@@ -972,6 +1202,7 @@ func restore_from(data: Dictionary) -> void:
 	unlocked = was.unlocked
 	selected_mission_id = was.selected_mission_id
 	squad_name = was.squad_name
+	teams = was.teams
 	player_record = was.player_record
 	armoury = was.armoury
 	_next_id = was._next_id

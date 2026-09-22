@@ -1,11 +1,19 @@
 extends HBoxContainer
 
 # ─────────────────────────────────────────────
-# SQUAD — who goes, and what they carry.
+# SQUAD — who goes, in which team, and what they carry.
 #
 # Every robot is a card: its frame, its name, its gear as icons, and one word
 # that answers "is it ready?" — READY, NO WEAPON, DESTROYED. The DEPLOYING row
-# has a seat for each point of supply; the BENCH takes none.
+# up top has a seat for each point of supply; the BENCH takes none.
+#
+# TEAMS. The squad goes into the field as teams, each one ordered on its own
+# (G picks which). Each is a section with its robots' cards under its name:
+# click the name to rename it, click the rest of its header to fold it away.
+# Drag a card to another team to move it, onto the strip under the teams to
+# start a new one, or onto the bench to leave it at base. A team goes when the
+# last robot leaves it. Nothing else: no buttons for making or deleting teams.
+# The bench has its own scroll, so it is on screen however long the teams run.
 #
 # Select a card and its slots open on the right. Click a slot, and the list
 # under it is what you have IN STORES that fits it — no prices on this page,
@@ -21,6 +29,8 @@ const Kit := preload("res://Character/hud/squad/ui_kit.gd")
 const Icons := preload("res://Character/hud/icons/icons.gd")
 const DETAIL_WIDTH := 400.0
 const REPAIR_TOOL := &"repair_tool"
+## What a dragged card carries: {DRAG_KEY: the robot's record}.
+const DRAG_KEY := "squad_page_robot"
 
 var ui   # the SquadManagerUI; untyped because it preloads this script
 var selected: SoldierRecord
@@ -28,22 +38,54 @@ var slot_kind: int = ItemDefinition.Kind.WEAPON
 var slot_index: int = 0
 
 var _left: VBoxContainer
+var _head: VBoxContainer
+var _teams: VBoxContainer
+var _bench_head: HBoxContainer
+var _bench_panel: PanelContainer
+var _bench: VBoxContainer
+var _bench_scroll: ScrollContainer
+var _teams_scroll: ScrollContainer
 var _detail: VBoxContainer
-# The roster has a vehicle, so the squad goes out as two teams and every card
-# says which one it is in.
-var _show_teams := false
+# Every card on the page, so a click can re-light them in place (see _pick).
+var _cards: Array[Control] = []
+var _lit_card: Control = null
+# Team id -> folded away. Kept while the game runs, not saved.
+var _folded := {}
+# What can take a dropped card, by _key(where), and the one lit up under it.
+var _targets := {}
+var _hot: Control = null
+# Who the next operation takes, when it takes fewer than everyone.
+var _op: MissionDefinition = null
+var _capped := false
+var _going: Array = []
 
 
 func setup(owner_ui) -> void:
 	ui = owner_ui
 	add_theme_constant_override("separation", 22)
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	add_child(scroll)
 	_left = Kit.vbox(8)
 	_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_left)
+	add_child(_left)
+	# Pinned: the seats are what every move on this page is spent against.
+	_head = Kit.vbox(4)
+	_left.add_child(_head)
+	_teams_scroll = _scroll()
+	# The teams take whatever the bench leaves: see _build_bench.
+	_left.add_child(_teams_scroll)
+	_teams = Kit.vbox(10)
+	_teams.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_teams_scroll.add_child(_teams)
+	_bench_head = Kit.hbox(10)
+	_left.add_child(_bench_head)
+	_bench_panel = PanelContainer.new()
+	_bench_panel.size_flags_vertical = Control.SIZE_FILL
+	_drop_target(_bench_panel, {"kind": &"bench"})
+	_left.add_child(_bench_panel)
+	_bench_scroll = _scroll()
+	_bench_panel.add_child(_bench_scroll)
+	_bench = Kit.vbox(8)
+	_bench.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_bench_scroll.add_child(_bench)
 
 	var side := PanelContainer.new()
 	var line := StyleBoxFlat.new()
@@ -80,8 +122,20 @@ func focus_kind(kind: int) -> void:
 func rebuild() -> void:
 	if not _listed(selected):
 		_select(ui.state.player_record, false)
-	Kit.clear(_left)
-	_build_roster()
+	# Quiet, and nothing to do once every robot has a team: here for a roster
+	# that gained robots some other way than the Factory (a test rig).
+	ui.state.ensure_teams()
+	for area in [_head, _teams, _bench_head, _bench]:
+		Kit.clear(area)
+	_cards.clear()
+	_lit_card = null
+	_targets.clear()
+	_targets[_key({"kind": &"bench"})] = _bench_panel
+	_hot = null
+	_style_target(_bench_panel, false)
+	_build_head()
+	_build_teams()
+	_build_bench()
 	_rebuild_detail()
 
 
@@ -101,6 +155,20 @@ func _select(record: SoldierRecord, announce: bool = true) -> void:
 	if announce:
 		ui.play(&"select")
 		rebuild()
+
+
+# A click on a card selects it WHERE IT IS: the cards are re-lit and the panel
+# on the right rebuilt, and the list is left standing. Rebuilding it freed the
+# card under the mouse on the press, so the same press could never go on to
+# become a drag.
+func _pick(record: SoldierRecord) -> void:
+	selected = record
+	_default_slot()
+	ui.play(&"select")
+	for card in _cards:
+		if is_instance_valid(card):
+			_style_card(card, card == _lit_card)
+	_rebuild_detail()
 
 
 # The slot most worth looking at: the weapon if there is none, then the first
@@ -129,75 +197,157 @@ func _default_slot() -> void:
 
 
 # ─────────────────────────────────────────────
-# ROSTER — the cards
+# ROSTER — the seats, the teams, the bench
 # ─────────────────────────────────────────────
-func _build_roster() -> void:
+func _build_head() -> void:
 	var state: CampaignState = ui.state
-
-	# The squad's name: the page's title, and editable. It is what the spawner
-	# puts on the squad, so renaming it renames it everywhere.
-	var name_edit := LineEdit.new()
-	name_edit.text = state.squad_name
-	name_edit.flat = true
-	name_edit.max_length = 16
-	name_edit.placeholder_text = "NAMELESS"
-	name_edit.add_theme_font_override("font", Kit.FONT_BOLD)
-	name_edit.add_theme_font_size_override("font_size", 28)
-	name_edit.add_theme_color_override("font_color", Kit.BRIGHT)
-	name_edit.custom_minimum_size = Vector2(320, 0)
-	name_edit.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	name_edit.tooltip_text = "Rename the squad"
-	name_edit.text_submitted.connect(func(text: String): ui.rename_squad(text))
-	name_edit.focus_exited.connect(func():
-		if is_instance_valid(name_edit) and not ui.is_rebuilding():
-			ui.rename_squad(name_edit.text))
-	_left.add_child(name_edit)
-
 	if ui.in_field():
-		_left.add_child(Kit.label("IN THE FIELD: CHANGES TAKE EFFECT FROM THE NEXT DEPLOY", Kit.DIM, Kit.SMALL))
+		_head.add_child(Kit.text_block(
+			"IN THE FIELD: TEAM MOVES TAKE EFFECT NOW, EVERYTHING ELSE FROM THE NEXT DEPLOY", Kit.DIM, Kit.SMALL))
 
 	# Who the next operation actually takes, when it caps the squad.
-	var op: MissionDefinition = ui.next_op()
-	var going: Array = []
-	var capped := op != null and op.squad_size >= 0
-	if capped:
-		going = ui.campaign.squad_for(op)
+	_op = ui.next_op()
+	_capped = _op != null and _op.squad_size >= 0
+	_going = ui.campaign.squad_for(_op) if _capped else []
 
 	var head := Kit.hbox(10)
 	head.add_child(Kit.heading("DEPLOYING"))
 	head.add_child(Kit.seats(state.supply_used(), state.supply_cap))
 	head.add_child(Kit.label("%d / %d SEATS" % [state.supply_used(), state.supply_cap], Kit.DIM, Kit.SMALL))
-	if capped:
+	if _capped:
 		head.add_child(Kit.fill())
-		head.add_child(Kit.label("NEXT OP: %s" % (op.squad_label() if op.squad_label() != "" else "WHOLE SQUAD"),
+		head.add_child(Kit.label("NEXT OP: %s" % (_op.squad_label() if _op.squad_label() != "" else "WHOLE SQUAD"),
 			Kit.BRIGHT, Kit.SMALL, true))
-	_left.add_child(head)
+	_head.add_child(head)
 
-	_show_teams = state.roster.any(func(r: SoldierRecord) -> bool:
-		var f := _frame(r)
-		return f != null and f.vehicle)
-	var active := _grid()
-	active.add_child(_card(state.player_record, going, capped, op))
-	for r in state.roster:
-		if not r.benched:
-			active.add_child(_card(r, going, capped, op))
-	_left.add_child(active)
 
-	_left.add_child(Kit.spacer(0, 6))
-	var bench_head := Kit.hbox(10)
-	bench_head.add_child(Kit.heading("BENCH"))
-	bench_head.add_child(Kit.label("TAKES NO SEATS", Kit.DIM, Kit.SMALL))
-	_left.add_child(bench_head)
-	var benched := _grid()
-	var any := false
+func _build_teams() -> void:
+	var state: CampaignState = ui.state
+	# You are in no team: you order all of them.
+	var you := _grid()
+	you.add_child(_card(state.player_record))
+	_teams.add_child(you)
+	for id in state.team_ids():
+		_teams.add_child(_team_section(id))
+	if state.teams.size() < CampaignState.MAX_TEAMS:
+		_teams.add_child(_new_team_strip())
+
+
+# A team: its name and how many are in it, and under that their cards. The
+# whole of it takes a dropped card, folded or open.
+func _team_section(id: StringName) -> Control:
+	var state: CampaignState = ui.state
+	var where := {"kind": &"team", "id": id}
+	var section := PanelContainer.new()
+	_drop_target(section, where)
+	var col := Kit.vbox(8)
+	section.add_child(col)
+
+	var going := state.members_of(id, false)
+	var resting := state.members_of(id).size() - going.size()
+	var open: bool = not _folded.get(id, false)
+	# The header folds and opens the team, except the name, which is for
+	# renaming it. A dropped card lands in the team wherever it lets go.
+	var head := Kit.hbox(8)
+	head.mouse_filter = Control.MOUSE_FILTER_STOP
+	head.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	head.tooltip_text = "Fold this team away" if open else "Show this team"
+	head.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			head.accept_event()
+			_folded[id] = open
+			ui.play(&"select")
+			rebuild())
+	head.set_drag_forwarding(Callable(), _can_drop_fn(where), _drop_fn(where))
+	head.add_child(Kit.caret(open))
+	head.add_child(_team_name_edit(id, where))
+	var count := "%d ROBOT%s" % [going.size(), "" if going.size() == 1 else "S"]
+	if resting > 0:
+		count += " · %d BENCHED" % resting
+	head.add_child(Kit.label(count, Kit.DIM, Kit.SMALL))
+	head.add_child(Kit.fill())
+	col.add_child(head)
+
+	if open:
+		if going.is_empty():
+			col.add_child(Kit.label("EVERYONE IN THIS TEAM IS ON THE BENCH", Kit.DIM, Kit.SMALL))
+		else:
+			var grid := _grid()
+			for r in going:
+				grid.add_child(_card(r, where))
+			col.add_child(grid)
+	return section
+
+
+func _team_name_edit(id: StringName, where: Dictionary) -> LineEdit:
+	var state: CampaignState = ui.state
+	var edit := LineEdit.new()
+	edit.text = state.team_name(id)
+	edit.flat = true
+	edit.max_length = CampaignState.TEAM_NAME_MAX
+	edit.select_all_on_focus = true
+	edit.add_theme_font_override("font", Kit.FONT_BOLD)
+	edit.add_theme_font_size_override("font_size", 20)
+	edit.add_theme_color_override("font_color", Kit.BRIGHT)
+	# As wide as its name, so the count sits right after it.
+	edit.custom_minimum_size = Vector2(40, 0)
+	edit.expand_to_text_length = true
+	edit.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	edit.tooltip_text = "Rename this team"
+	var commit := func(text: String):
+		if text.strip_edges().to_upper() == state.team_name(id):
+			return   # unchanged
+		if state.rename_team(id, text):
+			ui.play(&"select")
+		elif is_instance_valid(edit):
+			# Blank: a team has to be called something in the field.
+			edit.text = state.team_name(id)
+			ui.play(&"denied")
+	edit.text_submitted.connect(commit)
+	edit.focus_exited.connect(func():
+		if is_instance_valid(edit) and not ui.is_rebuilding():
+			commit.call(edit.text))
+	# A card let go over the name still lands in the team.
+	edit.set_drag_forwarding(Callable(), _can_drop_fn(where), _drop_fn(where))
+	return edit
+
+
+# Under the teams: where a robot goes to start a team of its own. Only while
+# there is room for another.
+func _new_team_strip() -> Control:
+	var strip := PanelContainer.new()
+	_drop_target(strip, {"kind": &"new"})
+	strip.custom_minimum_size = Vector2(0, 44)
+	var l := Kit.label("DRAG A ROBOT HERE TO START A NEW TEAM", Kit.DIM, Kit.SMALL)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	strip.add_child(l)
+	return strip
+
+
+func _build_bench() -> void:
+	var state: CampaignState = ui.state
+	_bench_head.add_child(Kit.heading("BENCH"))
+	_bench_head.add_child(Kit.label("TAKES NO SEATS", Kit.DIM, Kit.SMALL))
+	var resting: Array[SoldierRecord] = []
 	for r in state.roster:
 		if r.benched:
-			benched.add_child(_card(r, going, capped, op))
-			any = true
-	if any:
-		_left.add_child(benched)
-	else:
-		_left.add_child(Kit.label("NOBODY ON THE BENCH", Kit.DIM, Kit.SMALL))
+			resting.append(r)
+	if resting.is_empty():
+		_bench_scroll.custom_minimum_size = Vector2(0, 22)
+		_bench.add_child(Kit.label("NOBODY ON THE BENCH. DRAG A ROBOT HERE TO LEAVE IT AT BASE", Kit.DIM, Kit.SMALL))
+		return
+	var grid := _grid()
+	for r in resting:
+		grid.add_child(_card(r, {"kind": &"bench"}))
+	_bench.add_child(grid)
+	# As tall as what is on it, up to two rows of cards: past that it scrolls,
+	# and the teams above keep the rest of the page. Measured, not guessed —
+	# a card is as tall as what is on it too.
+	var rows := ceili(resting.size() / 2.0)
+	var tall := grid.get_combined_minimum_size().y
+	var gap := float(grid.get_theme_constant("v_separation"))
+	_bench_scroll.custom_minimum_size = Vector2(0, tall if rows <= 2 else (tall + gap) * 2.0 / rows - gap)
 
 
 func _grid() -> GridContainer:
@@ -209,16 +359,48 @@ func _grid() -> GridContainer:
 	return g
 
 
-func _card(record: SoldierRecord, going: Array, capped: bool, op: MissionDefinition) -> Control:
+func _scroll() -> ScrollContainer:
+	var s := ScrollContainer.new()
+	s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	s.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	s.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	return s
+
+
+# A robot's card. `where` is the team or the bench it sits in: a card let go
+# over another card lands wherever that one is.
+func _card(record: SoldierRecord, where: Dictionary = {}) -> Control:
 	var state: CampaignState = ui.state
 	var frame := _frame(record)
-	var status := _status(record, going, capped, op)
+	var status := _status(record)
 	var destroyed := record.status == SoldierRecord.Status.DESTROYED
-	var border := Kit.BRIGHT if record == selected else (Kit.PROBLEM if destroyed else Kit.LINE)
-	var card := Kit.card(border, func(): _select(record), ui.hover)
+	var is_player := state.is_player_record(record)
+	var card := PanelContainer.new()
+	card.set_meta(&"record", record)
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.custom_minimum_size = Vector2(0, 76)
-	card.tooltip_text = _frame_line(record)
+	card.tooltip_text = _frame_line(record) if is_player \
+		else "%s\nDrag to another team, or to the bench." % _frame_line(record)
+	_style_card(card, false)
+	card.mouse_entered.connect(func():
+		_lit_card = card
+		_style_card(card, true)
+		ui.hover())
+	card.mouse_exited.connect(func():
+		if _lit_card == card:
+			_lit_card = null
+		_style_card(card, false))
+	card.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			card.accept_event()
+			_pick(record))
+	# You go wherever the squad goes: yours is the one card that does not move.
+	if not is_player:
+		card.set_drag_forwarding(func(_at: Vector2) -> Variant: return _drag(record, card),
+			_can_drop_fn(where), _drop_fn(where))
+	_cards.append(card)
 
 	var row := Kit.hbox(10)
 	card.add_child(row)
@@ -244,34 +426,132 @@ func _card(record: SoldierRecord, going: Array, capped: bool, op: MissionDefinit
 
 	# Choosing who goes is one pass down the list, so the switch is on the card.
 	# A wreck on the bench has nothing to deploy with until it is rebuilt.
-	if not state.is_player_record(record) and not (destroyed and record.benched):
-		var bench := _bench_button(record, true)
-		if _show_teams:
-			# Down in the corner opposite the status line, clear of the team tag.
-			bench.size_flags_vertical = Control.SIZE_SHRINK_END
-		row.add_child(bench)
-	# You command both teams, so your own card has none.
-	if _show_teams and not state.is_player_record(record):
-		card.add_child(_team_tag(frame))
+	if not is_player and not (destroyed and record.benched):
+		row.add_child(_bench_button(record, true))
 	if record.benched:
 		card.modulate = Color(1, 1, 1, 0.62)
 	return card
 
 
-# Which team a robot goes out in: a vehicle as ARMOR, anything on foot as
-# INFANTRY (SquadSpawner splits them the same way). Laid over the card rather
-# than in its row: the card fits every child to its padded box, and the shrink
-# flags pin this one to the top-right corner.
-func _team_tag(frame: ChassisDefinition) -> Control:
-	var armor := frame != null and frame.vehicle
-	var tag := Kit.label(String(Squad.TEAM_ARMOR if armor else Squad.TEAM_INFANTRY), Kit.DIM, Kit.SMALL)
-	tag.size_flags_horizontal = Control.SIZE_SHRINK_END
-	tag.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	return tag
+# Selected: a bright, heavier border. Under the mouse: bright. A wreck keeps
+# its red either way, so hovering one never reads as it being ready.
+func _style_card(card: Control, lit: bool) -> void:
+	var record: SoldierRecord = card.get_meta(&"record")
+	var mine := record == selected
+	var border := Kit.BRIGHT if mine else (Kit.PROBLEM if record.status == SoldierRecord.Status.DESTROYED else Kit.LINE)
+	if lit and border != Kit.PROBLEM:
+		border = Kit.BRIGHT
+	card.add_theme_stylebox_override("panel", Kit.box(border, Kit.PANEL, 2 if mine else 1, 8.0))
+
+
+# ─────────────────────────────────────────────
+# DRAG AND DROP — the only way a robot changes team
+# ─────────────────────────────────────────────
+func _drag(record: SoldierRecord, card: Control) -> Variant:
+	var ghost := PanelContainer.new()
+	ghost.add_theme_stylebox_override("panel", Kit.box(Kit.BRIGHT, Kit.PANEL, 2, 8.0))
+	var row := Kit.hbox(8)
+	row.add_child(Kit.icon(Icons.chassis(_frame(record), "s"), Kit.BRIGHT, Vector2(28, 28), true))
+	row.add_child(Kit.label(record.display_name.to_upper(), Kit.BRIGHT, 18, true))
+	ghost.add_child(row)
+	ghost.modulate.a = 0.85
+	card.set_drag_preview(ghost)
+	return {DRAG_KEY: record}
+
+
+# The robot a drag is carrying, or null for anything else being dragged (a word
+# out of a name field) or a robot no longer on the roster.
+func _dragged(data: Variant) -> SoldierRecord:
+	if not (data is Dictionary) or not (data as Dictionary).has(DRAG_KEY):
+		return null
+	var record = data[DRAG_KEY]
+	return record if record is SoldierRecord and ui.state.roster.has(record) else null
+
+
+# Whether letting go here would change anything that is allowed. A benched
+# robot takes a seat to come off the bench, so without one no team takes it —
+# and a wreck on the bench has to be rebuilt first, as with its DEPLOY button.
+func _accepts(record: SoldierRecord, where: Dictionary) -> bool:
+	var state: CampaignState = ui.state
+	match where.get("kind", &""):
+		&"bench":
+			return not record.benched
+		&"team":
+			return state.can_field(record) if record.benched else record.team_id != where["id"]
+		&"new":
+			return state.teams.size() < CampaignState.MAX_TEAMS and (not record.benched or state.can_field(record))
+	return false
+
+
+func _can_drop_fn(where: Dictionary) -> Callable:
+	return func(_at: Vector2, data: Variant) -> bool:
+		var record := _dragged(data)
+		var ok := record != null and _accepts(record, where)
+		_light(_targets.get(_key(where)) if ok else null)
+		return ok
+
+
+func _drop_fn(where: Dictionary) -> Callable:
+	return func(_at: Vector2, data: Variant) -> void:
+		_light(null)
+		var record := _dragged(data)
+		if record == null or not _accepts(record, where):
+			ui.play(&"denied")
+			return
+		var state: CampaignState = ui.state
+		var done := false
+		match where.get("kind", &""):
+			&"bench":
+				done = state.set_benched(record, true)
+			&"team":
+				done = state.move_to_team(record, where["id"])
+			&"new":
+				done = state.move_to_new_team(record)
+		ui.play(&"fit" if done else &"denied")
+
+
+# Registers something that takes a dropped card, and gives it the box it wears
+# at rest and while a card is held over it.
+func _drop_target(target: Control, where: Dictionary) -> void:
+	target.set_drag_forwarding(Callable(), _can_drop_fn(where), _drop_fn(where))
+	target.set_meta(&"where", where)
+	_targets[_key(where)] = target
+	_style_target(target, false)
+
+
+func _style_target(target: Control, lit: bool) -> void:
+	var kind: StringName = (target.get_meta(&"where", {}) as Dictionary).get("kind", &"")
+	var rest_line := Kit.LINE if kind == &"team" else Kit.FAINT
+	var fill := Color(0, 0, 0, 0.18) if kind == &"team" else Color(0, 0, 0, 0)
+	var box := Kit.box(Kit.BRIGHT if lit else rest_line, Color(Kit.BRIGHT, 0.06) if lit else fill, 2 if lit else 1, 10.0)
+	target.add_theme_stylebox_override("panel", box)
+
+
+# Lights the target a held card would land in; null puts the last one out.
+func _light(target: Control) -> void:
+	if target == _hot:
+		return
+	if _hot != null and is_instance_valid(_hot):
+		_style_target(_hot, false)
+	_hot = target if target != null and is_instance_valid(target) else null
+	if _hot != null:
+		_style_target(_hot, true)
+
+
+func _key(where: Dictionary) -> String:
+	return "%s:%s" % [where.get("kind", &""), where.get("id", &"")]
+
+
+# However a drag ends — dropped, let go over nothing, cancelled — nothing is
+# left lit.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_DRAG_END:
+		_light(null)
+
 
 
 # One word for "can this robot do its job?"
-func _status(record: SoldierRecord, going: Array, capped: bool, op: MissionDefinition) -> Array:
+func _status(record: SoldierRecord) -> Array:
 	var state: CampaignState = ui.state
 	if record.status == SoldierRecord.Status.DESTROYED:
 		return ["DESTROYED", Kit.PROBLEM]
@@ -281,8 +561,8 @@ func _status(record: SoldierRecord, going: Array, capped: bool, op: MissionDefin
 		return ["ALWAYS GOES", Kit.DIM]
 	if record.benched:
 		return ["BENCHED", Kit.DIM]
-	if capped and not going.has(record):
-		return ["STAYS BEHIND: NEXT OP TAKES %d" % op.squad_size, Kit.DIM]
+	if _capped and not _going.has(record):
+		return ["STAYS BEHIND: NEXT OP TAKES %d" % _op.squad_size, Kit.DIM]
 	return ["READY", Kit.BRIGHT]
 
 
@@ -389,7 +669,7 @@ func _bench_button(record: SoldierRecord, compact: bool) -> Button:
 			b.tooltip_text = "Every seat is taken. Bench someone, or add a seat at the Factory."
 	else:
 		b = Kit.button("DEPLOY", Kit.BRIGHT, Kit.SMALL)
-		b.tooltip_text = "Bring %s back into the squad." % record.display_name
+		b.tooltip_text = "Bring %s back into %s." % [record.display_name, state.team_name(state.team_of(record))]
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b.mouse_entered.connect(ui.hover)
 	b.pressed.connect(func():
@@ -670,6 +950,8 @@ func _cannot_fit(record: SoldierRecord, item: ItemDefinition) -> String:
 		return "you only"
 	if not item.fits_chassis(record.chassis_id):
 		return "not on this frame"
+	if item.one_per_robot and state.holds_elsewhere(record, item, slot_index):
+		return "one per robot"
 	var frame := _frame(record)
 	if frame != null and not frame.takes(item):
 		# Two rules end up here, and they are not the same refusal: a turret

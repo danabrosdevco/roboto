@@ -1,15 +1,15 @@
 [gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_omfdk"]
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_8yjmf"]
 
 [resource]
-script = ExtResource("1_omfdk")
+script = ExtResource("1_8yjmf")
 level_scene_path = "res://maps/arena_level.tscn"
 image_path = "res://maps/minimaps/arena_level.png"
-world_min = Vector2(-68.1495, -68.3995)
-world_max = Vector2(68.6495, 68.3995)
+world_min = Vector2(-68.6574, -68.9074)
+world_max = Vector2(69.1574, 68.9074)
 objective_ids = Array[StringName]([&"arena_clear", &"arena_extract"])
 objective_names = Array[String](["Arena Floor", ""])
 objective_positions = Array[Vector3]([Vector3(0, 0, 0), Vector3(0, 2, 36)])
 objective_kinds = Array[StringName]([&"capture", &"extract"])
-insertion_positions = Array[Vector3]([Vector3(-0.586159, 2.82468, -38.5556)])
+insertion_positions = Array[Vector3]([Vector3(-0.586159, 2.82468, -39.514)])

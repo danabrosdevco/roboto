@@ -12,7 +12,7 @@ extends RefCounted
 #   shape (layout, mountains, hills, ridges, detail; painted mountains and
 #   rough ground) → painted flat/urban levelled → terraces → erosion
 #   → craters, painted shelling → smoothing → shift floor to y=0
-#   → painted flat, urban and water finishing → MODIFIERS → hollows
+#   → painted flat, urban, water, then roads → MODIFIERS → hollows
 # Craters come after erosion because they are fresh — this is a war, not
 # geology. The floor shift comes BEFORE the modifiers because a TerrainStamp
 # flattens to its own authored Y; shifting afterwards would leave every
@@ -71,6 +71,9 @@ const CH_HOLLOW := 3
 ## a road with a wide embankment still has a crisp edge to its gravel.
 const PAINT_EDGE := 1.5
 
+## Grade of the approach where a road climbs to a bridge: rise per metre.
+const BRIDGE_RAMP := 0.1
+
 
 ## Runs a recipe. `modifiers` are TerrainStamp/TerrainPath dictionaries, applied
 ## in order (later wins). `cache`, when passed, carries the pre-modifier terrain
@@ -119,6 +122,8 @@ static func generate(recipe: Recipe, modifiers: Array = [], cache: Dictionary = 
 	var zone: PackedByteArray = (base.zone as PackedByteArray).duplicate()
 	var half_x := cells_x * cell * 0.5
 	var half_z := cells_z * cell * 0.5
+	var water: PackedByteArray = base.get("water", PackedByteArray())
+	var bridges: Array = (base.get("bridges", []) as Array).duplicate(true)
 
 	for m in modifiers:
 		if not (m is Dictionary):
@@ -128,7 +133,9 @@ static func generate(recipe: Recipe, modifiers: Array = [], cache: Dictionary = 
 			"stamp":
 				_apply_stamp(m, heights, control, sx, sz, cell, half_x, half_z)
 			"path":
-				_apply_path(m, heights, control, sx, sz, cell, half_x, half_z)
+				# A hand-drawn road over painted water bridges it like a painted one.
+				bridges.append_array(_apply_path(m, heights, control, sx, sz, cell, half_x, half_z, water,
+						float(base.get("water_level", 0.0)) + recipe.bridge_clearance))
 			_:
 				push_warning("TerrainGenerator: unknown modifier type '%s' from %s — skipped." % [m.get("type", ""), m.get("source", "?")])
 
@@ -152,8 +159,9 @@ static func generate(recipe: Recipe, modifiers: Array = [], cache: Dictionary = 
 	data.min_height = lo
 	data.max_height = hi
 	data.water_level = float(base.get("water_level", 0.0))
-	data.water = (base.get("water", PackedByteArray()) as PackedByteArray).duplicate()
+	data.water = water.duplicate()
 	data.lots = (base.get("lots", []) as Array).duplicate(true)
+	data.bridges = bridges
 	data.recipe = recipe.duplicate()
 	data.lod_errors = MeshBuilder.compute_lod_errors(data)
 	var t_end := Time.get_ticks_msec()
@@ -162,7 +170,9 @@ static func generate(recipe: Recipe, modifiers: Array = [], cache: Dictionary = 
 		Recipe.Layout.keys()[recipe.layout],
 		(", sketch %s" % (recipe.sketch.resource_path.get_file() if recipe.sketch.resource_path != "" else "(embedded)")) if recipe.sketch != null else "",
 		modifiers.size(), lo, hi,
-		(", water at %.1f m, %d lot(s)" % [data.water_level, data.lots.size()]) if data.has_water() else (", %d lot(s)" % data.lots.size() if not data.lots.is_empty() else ""),
+		((", water at %.1f m" % data.water_level) if data.has_water() else "")
+				+ ((", %d lot(s)" % data.lots.size()) if not data.lots.is_empty() else "")
+				+ ((", %d bridge(s)" % data.bridges.size()) if not data.bridges.is_empty() else ""),
 		Time.get_datetime_string_from_system(false, true), (t_end - t_start) / 1000.0,
 		"cached" if cached else "%.1f s" % ((t_base - t_start) / 1000.0)]
 	return data
@@ -216,11 +226,15 @@ static func _generate_base(r: Recipe, cells_x: int, cells_z: int, cell: float) -
 	# below is skipped, so a recipe without one generates exactly as it did
 	# before sketches existed — maps baked back then regenerate unchanged.
 	var sk := {}
+	var roads: Array = []
+	var sketch_px := Vector2i.ZERO
 	if r.sketch != null:
 		var img := Sketch.load_image(r.sketch)
 		if img != null:
 			sk = Sketch.grid_masks(img, cells_x, cells_z, cell, r.sketch_blend, r.sketch_edge_noise, s)
-			if sk.is_empty():
+			roads = Sketch.trace_roads(img)
+			sketch_px = img.get_size()
+			if sk.is_empty() and roads.is_empty():
 				push_warning("TerrainGenerator: the sketch has no painted colours in it, so the recipe decides everything.")
 	var sk_mtn: PackedFloat32Array = sk.get(Sketch.MOUNTAIN, PackedFloat32Array())
 	var sk_rough: PackedFloat32Array = sk.get(Sketch.ROUGH, PackedFloat32Array())
@@ -393,9 +407,15 @@ static func _generate_base(r: Recipe, cells_x: int, cells_z: int, cell: float) -
 	var water := PackedByteArray()
 	if has_water:
 		water = _flood(r, heights, control, sk_water, sx, sz, cell)
+	# Roads last: they cut through towns and bridge the finished water.
+	var bridges: Array = []
+	if not roads.is_empty():
+		bridges = _sketch_roads(r, roads, sketch_px, heights, control, water, sx, sz, cell, half_x, half_z)
+		if not lots.is_empty():
+			lots = _drop_blocked_lots(lots, heights, control, sx, sz, cell, half_x, half_z)
 
 	return {"heights": heights, "control": control, "zone": zone,
-			"water": water, "water_level": r.water_level, "lots": lots}
+			"water": water, "water_level": r.water_level, "lots": lots, "bridges": bridges}
 
 
 ## A wide, cheap blur: two box passes of `radius_m`, whatever the radius.
@@ -804,6 +824,107 @@ static func _urbanise(r: Recipe, h: PackedFloat32Array, control: PackedByteArray
 	return lots
 
 
+## Magenta: every traced stroke becomes a graded ROAD path — the same cut and
+## fill a TerrainPath does — `road_width` metres for each pixel of stroke
+## thickness, bridged over painted water. Returns the bridge spans.
+static func _sketch_roads(r: Recipe, roads: Array, sketch_px: Vector2i, h: PackedFloat32Array, control: PackedByteArray, water: PackedByteArray, sx: int, sz: int, cell: float, half_x: float, half_z: float) -> Array:
+	var mpp := Vector2(half_x * 2.0 / sketch_px.x, half_z * 2.0 / sketch_px.y)
+	var bridges: Array = []
+	for road in roads:
+		var line := PackedVector2Array()
+		for p: Vector2 in road.pixels:
+			line.append(Vector2(p.x * mpp.x - half_x, p.y * mpp.y - half_z))
+		# Pixel centres make a staircase on every diagonal: round it off,
+		# then space the points evenly so grading treats every metre alike.
+		var smooth := _chaikin(line, 3)
+		var m := {
+			"type": "path",
+			"source": "sketch road",
+			"mode": PATH_ROAD,
+			"points": _resample(smooth, maxf(cell, 2.0)),
+			"width": r.road_width * float(road.width_px),
+			"falloff": r.road_falloff,
+			"depth": 0.0,
+			"follow_terrain": true,
+			"smoothing": r.road_smoothing,
+			"paint": true,
+		}
+		bridges.append_array(_apply_path(m, h, control, sx, sz, cell, half_x, half_z, water, r.water_level + r.bridge_clearance))
+	return bridges
+
+
+## Chaikin corner cutting. Keeps both end points, so roads that meet at a
+## junction still meet after smoothing.
+static func _chaikin(p: PackedVector2Array, iterations: int) -> PackedVector2Array:
+	for _i in iterations:
+		if p.size() < 3:
+			return p
+		var out := PackedVector2Array([p[0]])
+		for k in p.size() - 1:
+			out.append(p[k].lerp(p[k + 1], 0.25))
+			out.append(p[k].lerp(p[k + 1], 0.75))
+		out.append(p[p.size() - 1])
+		p = out
+	return p
+
+
+## A polyline as points `spacing` metres apart (x, 0, z), ends included.
+static func _resample(line: PackedVector2Array, spacing: float) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	if line.size() < 2:
+		for p in line:
+			out.append(Vector3(p.x, 0.0, p.y))
+		return out
+	out.append(Vector3(line[0].x, 0.0, line[0].y))
+	var carry := 0.0
+	for k in line.size() - 1:
+		var a := line[k]
+		var b := line[k + 1]
+		var seg := a.distance_to(b)
+		var t := spacing - carry
+		while t < seg:
+			var p := a.lerp(b, t / seg)
+			out.append(Vector3(p.x, 0.0, p.y))
+			t += spacing
+		carry = seg - (t - spacing)
+	var last := line[line.size() - 1]
+	if Vector2(out[out.size() - 1].x, out[out.size() - 1].z).distance_to(last) > spacing * 0.25:
+		out.append(Vector3(last.x, 0.0, last.y))
+	return out
+
+
+## Drops building lots a road has run through: a lot must still be level at
+## its recorded height and carry no road paint well inside its edges.
+static func _drop_blocked_lots(lots: Array, h: PackedFloat32Array, control: PackedByteArray, sx: int, sz: int, cell: float, half_x: float, half_z: float) -> Array:
+	var kept: Array = []
+	for lot in lots:
+		var centre: Vector2 = lot.centre
+		var size: Vector2 = lot.size
+		var angle := float(lot.angle)
+		# Inset a little over a cell: the streets round a block are painted
+		# road too, and a nearest-sample lookup at the very edge would hit them.
+		var inset := Vector2(minf(cell * 1.25 + 0.5, size.x * 0.4), minf(cell * 1.25 + 0.5, size.y * 0.4))
+		var half := size * 0.5 - inset
+		var ca := cos(angle)
+		var sa := sin(angle)
+		var clear := true
+		for s in [Vector2(0, 0), Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1), Vector2(0, -1), Vector2(1, 0), Vector2(0, 1), Vector2(-1, 0)]:
+			var o := Vector2(s.x * half.x, s.y * half.y)
+			# Basis(UP, angle) turns local x toward (cos, -sin) in x/z.
+			var p := centre + Vector2(o.x * ca + o.y * sa, -o.x * sa + o.y * ca)
+			if absf(sample_height(h, sx, sz, cell, p.x, p.y) - float(lot.height)) > 0.05:
+				clear = false
+				break
+			var i := clampi(roundi((p.x + half_x) / cell), 0, sx - 1)
+			var j := clampi(roundi((p.y + half_z) / cell), 0, sz - 1)
+			if control[(j * sx + i) * Data.CONTROL_STRIDE + CH_ROAD] > 128:
+				clear = false
+				break
+		if clear:
+			kept.append(lot)
+	return kept
+
+
 ## Whether a block is rubble: fixed per block and seed, independent of scan order.
 static func _ruined(key: Vector2i, r: Recipe) -> bool:
 	return absi(hash(Vector3i(key.x, key.y, r.random_seed))) % 1000 < int(r.urban_ruin * 1000.0)
@@ -825,8 +946,8 @@ static func _flood(r: Recipe, h: PackedFloat32Array, control: PackedByteArray, m
 	if wet == 0:
 		push_warning("TerrainGenerator: the blue (water) paint is too small to survive blending — paint it bigger or lower sketch_blend.")
 		return PackedByteArray()
-	var to_shore := _chamfer(inside, 0, sx, sz)    # inside: cells to the nearest dry sample
-	var to_water := _chamfer(inside, 1, sx, sz)    # outside: cells to the nearest wet sample
+	var to_shore := Sketch.chamfer(inside, 0, sx, sz)    # inside: cells to the nearest dry sample
+	var to_water := Sketch.chamfer(inside, 1, sx, sz)    # outside: cells to the nearest wet sample
 	var level := r.water_level
 	var bank := maxf(r.water_bank, 0.0)
 	var surface := PackedByteArray()
@@ -850,43 +971,6 @@ static func _flood(r: Recipe, h: PackedFloat32Array, control: PackedByteArray, m
 			surface[k] = 255   # a sliver of bank under the surface: a clean waterline
 		control[c] = maxi(control[c], int((1.0 - smoothstep(0.0, 6.0, d)) * 200.0))
 	return surface
-
-
-## Two-pass chamfer distance, in cells, from every sample to the nearest
-## sample whose `mask` value is `target`.
-static func _chamfer(mask: PackedByteArray, target: int, sx: int, sz: int) -> PackedFloat32Array:
-	const DIAG := 1.41421356
-	var d := PackedFloat32Array()
-	d.resize(sx * sz)
-	for k in d.size():
-		d[k] = 0.0 if mask[k] == target else 1e9
-	for j in sz:
-		for i in sx:
-			var k := j * sx + i
-			var v := d[k]
-			if i > 0:
-				v = minf(v, d[k - 1] + 1.0)
-			if j > 0:
-				v = minf(v, d[k - sx] + 1.0)
-				if i > 0:
-					v = minf(v, d[k - sx - 1] + DIAG)
-				if i < sx - 1:
-					v = minf(v, d[k - sx + 1] + DIAG)
-			d[k] = v
-	for j in range(sz - 1, -1, -1):
-		for i in range(sx - 1, -1, -1):
-			var k := j * sx + i
-			var v := d[k]
-			if i < sx - 1:
-				v = minf(v, d[k + 1] + 1.0)
-			if j < sz - 1:
-				v = minf(v, d[k + sx] + 1.0)
-				if i < sx - 1:
-					v = minf(v, d[k + sx + 1] + DIAG)
-				if i > 0:
-					v = minf(v, d[k + sx - 1] + DIAG)
-			d[k] = v
-	return d
 
 
 # ── Modifiers ────────────────────────────────────────────────────────────────
@@ -951,12 +1035,20 @@ static func _apply_stamp(m: Dictionary, h: PackedFloat32Array, control: PackedBy
 				control[c] = maxi(control[c], int(_edge_weight(d, paint_edge) * strength * 255.0))
 
 
-static func _apply_path(m: Dictionary, h: PackedFloat32Array, control: PackedByteArray, sx: int, sz: int, cell: float, half_x: float, half_z: float) -> void:
+## Cuts one path into the ground. Returns its bridge spans: when `water` (a
+## TerrainData.water coverage array) is given and the path is a ROAD, the road
+## is carried across every stretch of drawn water at the height of its banks —
+## at least `deck`, climbing to it on embankments where the banks are lower —
+## and the water itself is left alone: no causeway dammed across the river.
+## Each span is {start: Vector3, end: Vector3, width: float}, terrain-local,
+## from the last dry road point before the water to the first one after it.
+## Without water, or for any other mode, this cuts exactly as it always has.
+static func _apply_path(m: Dictionary, h: PackedFloat32Array, control: PackedByteArray, sx: int, sz: int, cell: float, half_x: float, half_z: float, water: PackedByteArray = PackedByteArray(), deck: float = -INF) -> Array:
 	var pts: PackedVector3Array = m.get("points", PackedVector3Array())
 	var source := str(m.get("source", "path"))
 	if pts.size() < 2:
 		push_warning("TerrainGenerator: %s has %d point(s); a path needs at least 2 — skipped." % [source, pts.size()])
-		return
+		return []
 	var mode := int(m.get("mode", PATH_ROAD))
 	var half_w := maxf(float(m.get("width", 8.0)), 0.1) * 0.5
 	var falloff := maxf(float(m.get("falloff", 6.0)), 0.0)
@@ -965,6 +1057,7 @@ static func _apply_path(m: Dictionary, h: PackedFloat32Array, control: PackedByt
 	var smoothing := maxf(float(m.get("smoothing", 40.0)), 0.0)
 	var paint := bool(m.get("paint", true))
 	var count := pts.size()
+	var bridging := mode == PATH_ROAD and not water.is_empty()
 
 	# 1. Height profile along the path: the ground under it, or the curve's own Y.
 	var ys := PackedFloat32Array()
@@ -974,12 +1067,28 @@ static func _apply_path(m: Dictionary, h: PackedFloat32Array, control: PackedByt
 		ys[p] = sample_height(h, sx, sz, cell, pts[p].x, pts[p].z) if follow else pts[p].y
 		if p > 0:
 			length += Vector2(pts[p].x - pts[p - 1].x, pts[p].z - pts[p - 1].z).length()
+	var wet := PackedByteArray()
+	if bridging:
+		wet.resize(count)
+		for p in count:
+			wet[p] = 1 if _water_at(water, sx, sz, cell, half_x, half_z, pts[p].x, pts[p].z) else 0
+	var spacing := maxf(length / (count - 1), 0.01)
+	if bridging and follow:
+		# Under water the ground is the river bottom: carry the road over
+		# at the height of its banks, as a bridge would. Banks sit barely
+		# above the waterline, so lift the span to the deck as well — a
+		# bridge level with the water has its girders in it.
+		_span_wet_runs(ys, wet)
+		_lift_over_water(ys, wet, deck, spacing)
 	if follow and smoothing > 0.0 and count > 2:
 		# A road that copied every bump of the ground would be a roller coaster.
-		var spacing := maxf(length / (count - 1), 0.01)
 		var win := clampi(int(smoothing / spacing * 0.5), 1, count)
 		for _pass in 2:
 			ys = _smooth_1d(ys, win)
+		if bridging:
+			# Smoothing sags the deck toward its lower approaches. Lift again
+			# so the clearance holds exactly rather than roughly.
+			_lift_over_water(ys, wet, deck, spacing)
 
 	# 2. What each point wants the ground to become.
 	var offset := 0.0
@@ -1004,7 +1113,7 @@ static func _apply_path(m: Dictionary, h: PackedFloat32Array, control: PackedByt
 	var rj1 := mini(sz - 1, ceili((hi.y + reach + half_z) / cell))
 	if ri0 > ri1 or rj0 > rj1:
 		push_warning("TerrainGenerator: %s lies entirely off the map — skipped." % source)
-		return
+		return []
 	var rw := ri1 - ri0 + 1
 	var rh := rj1 - rj0 + 1
 	var best_d := PackedFloat32Array()
@@ -1049,6 +1158,8 @@ static func _apply_path(m: Dictionary, h: PackedFloat32Array, control: PackedByt
 			if w <= 0.0:
 				continue
 			var k := j * sx + i
+			if bridging and water[k] > 0:
+				continue   # leave the water to the bridge
 			var ty := best_y[r]
 			match mode:
 				PATH_ROAD:
@@ -1060,6 +1171,96 @@ static func _apply_path(m: Dictionary, h: PackedFloat32Array, control: PackedByt
 			if ch >= 0:
 				var c := k * Data.CONTROL_STRIDE + ch
 				control[c] = maxi(control[c], int(_edge_weight(d, paint_edge) * 255.0))
+
+	# 5. Bridge spans: every wet stretch with dry road at both ends. A road that
+	# runs INTO water and stops there is a slipway, not a bridge.
+	var spans: Array = []
+	if bridging:
+		var p := 0
+		while p < count:
+			if wet[p] == 0:
+				p += 1
+				continue
+			var first := p
+			while p < count and wet[p] == 1:
+				p += 1
+			if first > 0 and p < count:
+				spans.append({
+					"start": Vector3(pts[first - 1].x, ys[first - 1], pts[first - 1].z),
+					"end": Vector3(pts[p].x, ys[p], pts[p].z),
+					"width": half_w * 2.0,
+				})
+	return spans
+
+
+## Whether drawn water covers the nearest sample to a terrain-local (x, z).
+static func _water_at(water: PackedByteArray, sx: int, sz: int, cell: float, half_x: float, half_z: float, x: float, z: float) -> bool:
+	var i := clampi(roundi((x + half_x) / cell), 0, sx - 1)
+	var j := clampi(roundi((z + half_z) / cell), 0, sz - 1)
+	return water[j * sx + i] > 0
+
+
+## Replaces each wet stretch of a profile with a straight line between the
+## dry values either side (or the one dry side, at a path's end).
+static func _span_wet_runs(ys: PackedFloat32Array, wet: PackedByteArray) -> void:
+	var count := ys.size()
+	var p := 0
+	while p < count:
+		if wet[p] == 0:
+			p += 1
+			continue
+		var first := p
+		while p < count and wet[p] == 1:
+			p += 1
+		var before := ys[first - 1] if first > 0 else NAN
+		var after := ys[p] if p < count else NAN
+		if is_nan(before) and is_nan(after):
+			return   # the whole path is under water: nothing dry to carry it from
+		if is_nan(before):
+			before = after
+		if is_nan(after):
+			after = before
+		for q in range(first, p):
+			ys[q] = lerpf(before, after, float(q - first + 1) / float(p - first + 1))
+
+
+## Holds each bridged stretch of a profile at `deck` or above, and the road
+## either side at no less than a BRIDGE_RAMP climb up to it. Only stretches
+## with dry road at both ends count: a road that runs into the water and
+## stops is a slipway, and a slipway goes down to the water, not over it.
+## `spacing` is the distance between profile points, in metres.
+static func _lift_over_water(ys: PackedFloat32Array, wet: PackedByteArray, deck: float, spacing: float) -> void:
+	if is_inf(deck):
+		return   # no deck height asked for: the banks decide, as they always did
+	var count := ys.size()
+	var bridged := PackedByteArray()
+	bridged.resize(count)
+	var p := 0
+	var any := false
+	while p < count:
+		if wet[p] == 0:
+			p += 1
+			continue
+		var first := p
+		while p < count and wet[p] == 1:
+			p += 1
+		if first > 0 and p < count:
+			for q in range(first, p):
+				bridged[q] = 1
+			any = true
+	if not any:
+		return   # this road crosses no water bank to bank: nothing to lift
+	# Two sweeps: each point learns how far it is from the nearest bridged
+	# point behind it, then ahead of it. The ramp is a floor, never a cut.
+	var step := spacing * BRIDGE_RAMP
+	var floor_y := -INF
+	for q in count:
+		floor_y = deck if bridged[q] == 1 else floor_y - step
+		ys[q] = maxf(ys[q], floor_y)
+	floor_y = -INF
+	for q in range(count - 1, -1, -1):
+		floor_y = deck if bridged[q] == 1 else floor_y - step
+		ys[q] = maxf(ys[q], floor_y)
 
 
 ## 1 inside (d <= 0), easing to 0 at `falloff` metres outside.

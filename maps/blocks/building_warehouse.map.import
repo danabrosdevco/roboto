@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ceqpdu8kebryd"
+path="res://.godot/imported/building_warehouse.map-56f87083afcf31c5483746567a61feb4.tres"
+
+[deps]
+
+source_file="res://maps/blocks/building_warehouse.map"
+dest_files=["res://.godot/imported/building_warehouse.map-56f87083afcf31c5483746567a61feb4.tres"]
+
+[params]
+

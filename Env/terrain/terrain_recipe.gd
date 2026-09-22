@@ -170,7 +170,8 @@ const Sketch := preload("res://Env/terrain/terrain_sketch.gd")
 @export_group("Sketch")
 ## A small painted map that sets the layout. Paint on black; top = north.
 ##   white mountains · blue water · green flat · grey urban
-##   red shelled · yellow rough · black/transparent = recipe decides
+##   red shelled · yellow rough · magenta roads (drawn as lines)
+##   black/transparent = recipe decides
 ## Any paint program works. See docs/TERRAIN.md and Env/terrain/sketches/.
 @export var sketch: Texture2D:
 	set(v):
@@ -233,6 +234,23 @@ const Sketch := preload("res://Env/terrain/terrain_sketch.gd")
 ## Extra relief in yellow areas: broken hills and gullies to fight through.
 @export_range(0.0, 100.0, 0.5, "suffix:m") var rough_height: float = 8.0:
 	set(v): rough_height = v; emit_changed()
+
+@export_subgroup("Painted roads")
+## Road width for each pixel of stroke thickness in magenta: a 1-pixel line is a
+## track this wide, a 2-pixel line a road twice as wide.
+@export_range(1.0, 40.0, 0.5, "suffix:m") var road_width: float = 5.0:
+	set(v): road_width = v; emit_changed()
+## Width of the graded bank either side of a road.
+@export_range(0.0, 50.0, 0.5, "suffix:m") var road_falloff: float = 5.0:
+	set(v): road_falloff = v; emit_changed()
+## How far along a road its bumps are averaged out.
+@export_range(0.0, 300.0, 1.0, "suffix:m") var road_smoothing: float = 40.0:
+	set(v): road_smoothing = v; emit_changed()
+## Height of a bridge's road surface above water_level. Where the banks are
+## lower, the road climbs to it on an embankment. Applies to hand-placed
+## TerrainPath roads over painted water as well.
+@export_range(0.0, 20.0, 0.1, "suffix:m") var bridge_clearance: float = 2.0:
+	set(v): bridge_clearance = v; emit_changed()
 
 
 ## Changes whenever any generation parameter changes. GeneratedTerrain keys its

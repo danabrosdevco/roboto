@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ch15bdnuyvn1n"
+path="res://.godot/imported/feature_cliff_ledge.map-c1f5d9efb80062942d4b4ffb83706f73.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_cliff_ledge.map"
+dest_files=["res://.godot/imported/feature_cliff_ledge.map-c1f5d9efb80062942d4b4ffb83706f73.tres"]
+
+[params]
+

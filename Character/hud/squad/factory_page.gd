@@ -242,8 +242,10 @@ func _build(frame: ChassisDefinition) -> void:
 		ui.play(&"denied")
 		return
 	ui.play(&"fit")
+	# Which team it went into, since that is the one it will take orders with.
 	_last_built = "%s BUILT · %s" % [record.display_name.to_upper(),
-		"ON THE BENCH: %s" % _seat_shortfall(frame.supply) if record.benched else "JOINED THE SQUAD"]
+		"ON THE BENCH: %s" % _seat_shortfall(frame.supply) if record.benched
+			else "JOINED %s" % ui.state.team_name(record.team_id)]
 	rebuild()
 
 

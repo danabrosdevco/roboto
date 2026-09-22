@@ -50,12 +50,14 @@ class_name ChassisDefinition
 ## The weapon slot is a TURRET: it takes weapons made for this frame — ones that
 ## name it in their chassis_whitelist — and not a rifle off the rack.
 @export var turret: bool = false
-## Drives rather than walks. Vehicles go into the field as a team of their own,
-## ARMOR, so they can be given orders apart from the robots on foot.
+## Drives rather than walks. A new one joins a team of vehicles — ARMOR, made
+## for it if need be — so it can be given orders apart from the robots on foot,
+## and a team of nothing else is sent at a hostile you tap. Dragged into another
+## team on the squad page, it goes with that one.
 @export var vehicle: bool = false
 ## Wheels or tracks rather than legs. Separate from `vehicle`, which is about
-## which TEAM the frame joins: the Reclaimer drives but rides with the
-## infantry, and kit written for robots on foot still has no business on it.
+## which TEAM the frame joins by default: the Reclaimer drives but rides with
+## the infantry, and kit written for robots on foot still has no business on it.
 @export var drives: bool = false
 @export var equipment_slots: int = 2
 @export var module_slots: int = 2

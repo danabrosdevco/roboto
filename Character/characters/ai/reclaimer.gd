@@ -940,6 +940,11 @@ func _spotted() -> Array:
 			continue
 		if not t.get("alive") or not _is_hostile(t):
 			continue
+		# NOTHING IN THE AIR. A round six seconds on its arc lands where a drone
+		# was, on the ground under it; and counted into a crowd, a drone over a
+		# squad would draw the tube onto them for the drone's sake.
+		if (t as Node).is_in_group(&"air"):
+			continue
 		if not out.has(t):
 			out.append(t)
 	return out

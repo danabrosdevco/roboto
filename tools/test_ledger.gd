@@ -663,6 +663,38 @@ func test_utility_harness_adds_a_slot() -> void:
 	var chaser := state.recruit(cat.chassis_def(&"chaser"))
 	check("a chaser cannot wear a harness", not state.fit_item(chaser, cat.item(&"utility_harness"), 0))
 
+	# ONE PER ROBOT. Two Sensor Relays added their range together; a second
+	# Cyclic Feed did nothing at all. Neither goes on twice.
+	var relay := cat.item(&"optics")
+	var feed := cat.item(&"cyclic_feed")
+	check("(setup) the Sensor Relay and Cyclic Feed are one per robot", relay.one_per_robot and feed.one_per_robot)
+	var a := state.recruit(cat.chassis_def(&"soldier"))
+	var b := state.recruit(cat.chassis_def(&"soldier"))
+	for id in [&"optics", &"optics", &"optics", &"cyclic_feed", &"cyclic_feed"]:
+		state.buy_item(cat.item(id))
+	check("a Sensor Relay fits", state.fit_item(a, relay, 0))
+	check("...but not a second on the same robot", not state.fit_item(a, relay, 1) and a.module_ids[1] == &"",
+		str(a.module_ids))
+	check("...while another robot can have its own", state.fit_item(b, relay, 0))
+	check("refitting the slot it is in is a swap, not a second copy", state.fit_item(a, relay, 0)
+		and state.armoury.spare(&"optics") == 1)
+	check("one Cyclic Feed per robot too", state.fit_item(a, feed, 1) and not state.fit_item(a, feed, 0)
+		and a.module_ids[0] == &"optics")
+	invariant(state, "after the one-per-robot fits")
+
+	# A save from before the rule: the second copy comes off on load, into stores.
+	var doubled := state.recruit(cat.chassis_def(&"soldier"))
+	doubled.module_ids = [&"optics", &"optics"] as Array[StringName]
+	var campaign := CampaignManager.new()
+	campaign.state = state
+	campaign.catalogue = cat
+	var spare_before := state.armoury.spare(&"optics")
+	campaign._return_unfittable_squad_kit()
+	check("an old save's second Sensor Relay comes off on load", doubled.module_ids[0] == &"optics"
+		and doubled.module_ids[1] == &"", str(doubled.module_ids))
+	check("...and goes back to stores", state.armoury.spare(&"optics") == spare_before + 1)
+	campaign.free()
+
 	# A frame the catalogue does not know gives no base to add to, so the row
 	# must stay put rather than grow on every settle.
 	var stray := SoldierRecord.new()

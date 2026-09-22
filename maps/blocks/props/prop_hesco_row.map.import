@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c3xsxfsgsjku3"
+path="res://.godot/imported/prop_hesco_row.map-76fc4f9ee1465146f81c9e1c6154d219.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_hesco_row.map"
+dest_files=["res://.godot/imported/prop_hesco_row.map-76fc4f9ee1465146f81c9e1c6154d219.tres"]
+
+[params]
+

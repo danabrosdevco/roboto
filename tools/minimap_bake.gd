@@ -23,11 +23,16 @@ const MARGIN := 1.06
 const OBJECTIVE_PADDING := 1.9
 ## Never zoom in tighter than this many metres across.
 const MIN_SPAN := 110.0
+# By path: see the note on class names at the top of tutorial_label.gd.
+const _TutorialLabel := preload("res://Env/world_objects/tutorial_label.gd")
+const _TutorialToast := preload("res://Character/hud/tutorial_toast.gd")
 
 var _levels := [
 	"res://maps/valley_level.tscn",
 	"res://maps/arena_level.tscn",
 	"res://maps/homebase_level.tscn",
+	"res://maps/wip.terrain_template_level.tscn",
+	"res://maps/mutaha_level.tscn"
 ]
 
 
@@ -64,6 +69,8 @@ func _bake(path: String) -> void:
 		print("FAIL  could not load %s" % path)
 		return
 	var level: Node = packed.instantiate()
+	# Out BEFORE the level enters the tree — see _strip_tutorial_signs.
+	var signs := _strip_tutorial_signs(level)
 
 	# RENDERS THROUGH THE MAIN WINDOW, not a SubViewport.
 	#
@@ -78,6 +85,8 @@ func _bake(path: String) -> void:
 	# itself current — the first attempt rendered the arena's sky from head
 	# height. Anything that can claim the viewport has to go before ours does.
 	var stripped := _strip_conflicts(level)
+	var texts := _hide_world_text(level)
+	_drop_toast()
 	await process_frame
 
 	# FRAMED ON THE OBJECTIVES, RENDERED FROM THE GEOMETRY.
@@ -191,6 +200,8 @@ func _bake(path: String) -> void:
 	# settles a frame or two behind that.
 	for _i in 8:
 		await process_frame
+	_drop_toast()   # and once more, in case anything announced a lesson meanwhile
+	await process_frame
 	await RenderingServer.frame_post_draw
 
 	var img: Image = root.get_texture().get_image()
@@ -214,9 +225,10 @@ func _bake(path: String) -> void:
 	data.world_max = Vector2(centre.x + half, centre.z + half)
 	ResourceSaver.save(data, "%s/%s.tres" % [OUT_DIR, base])
 
-	print("OK    %-20s %5.0f m across  img %dx%d  %d obj  %d insertion  framed on %s -> %s" % [
+	print("OK    %-20s %5.0f m across  img %dx%d  %d obj  %d insertion  framed on %s -> %s%s" % [
 		base, span, img.get_width(), img.get_height(),
-		data.objective_count(), data.insertion_positions.size(), framed_on, png.get_file()])
+		data.objective_count(), data.insertion_positions.size(), framed_on, png.get_file(),
+		("  (%d tutorial signs, %d other labels left out)" % [signs, texts]) if signs + texts > 0 else ""])
 
 	_discard(cam)
 	_discard(sun)
@@ -254,6 +266,55 @@ func _gather_conflicts(node: Node, out: Array[Node]) -> void:
 		return
 	for c in node.get_children():
 		_gather_conflicts(c, out)
+
+
+# TUTORIAL SIGNS COME OUT OF THE LEVEL BEFORE IT ENTERS THE TREE.
+#
+# In the tree, a sign bricks the map two ways. It is text drawn over everything,
+# billboarded and with no depth test — and with the level's camera stripped it
+# finds no player in its first frame and switches itself on for good. And it
+# registers with TutorialToast, which stands the camera in for a missing player
+# and measures FLAT distance: from straight overhead, any sign near the middle
+# of the frame counted as stood next to, and its full-screen lesson panel was
+# baked into the picture. Removed before _ready, a sign never draws, never
+# registers, and never makes the toast at all.
+func _strip_tutorial_signs(node: Node) -> int:
+	var signs: Array[Node] = []
+	_gather_signs(node, signs)
+	for s in signs:
+		s.get_parent().remove_child(s)
+		s.queue_free()
+	return signs.size()
+
+
+func _gather_signs(node: Node, out: Array[Node]) -> void:
+	if node is _TutorialLabel:
+		out.append(node)
+		return   # its children go with it
+	for c in node.get_children():
+		_gather_signs(c, out)
+
+
+# Any other words in the world — a plain Label3D sign, a debug label a node
+# makes for itself in _ready — are text at 3D scale on a map that has none of
+# its own. Hidden once the level is in, so the ones made in _ready are caught.
+func _hide_world_text(node: Node) -> int:
+	var n := 0
+	if node is Label3D and (node as Label3D).visible:
+		(node as Label3D).visible = false
+		n += 1
+	for c in node.get_children():
+		n += _hide_world_text(c)
+	return n
+
+
+# The toast hangs off the root, not the level, so it would outlive one level
+# and show over the next. With the signs gone nothing should make one; this is
+# for anything else that announces a lesson while the bake is looking.
+func _drop_toast() -> void:
+	var toast := root.get_node_or_null(_TutorialToast.NODE_NAME)
+	if toast != null:
+		_discard(toast)
 
 
 # Merged AABB of everything that draws. Includes CSG, which FuncGodot leaves

@@ -149,6 +149,22 @@ static func seats(used: int, cap: int) -> Control:
 	return c
 
 
+## A section's open/shut mark: a small triangle, pointing down while it is open
+## and right while it is shut. Drawn, because the font has no arrows. Only a
+## picture: the row it sits in takes the click.
+static func caret(open: bool, color: Color = BRIGHT) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(14, 14)
+	c.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.draw.connect(func():
+		var m := c.size * 0.5
+		var tip := PackedVector2Array([m + Vector2(-5, -3), m + Vector2(5, -3), m + Vector2(0, 3)]) if open \
+			else PackedVector2Array([m + Vector2(-3, -5), m + Vector2(3, 0), m + Vector2(-3, 5)])
+		c.draw_colored_polygon(tip, color))
+	return c
+
+
 ## Rank as chevrons: none for a new robot, one per rank after that. A word
 ## here ("RECRUIT") read as the button for buying robots.
 static func chevrons(rank: int) -> Control:

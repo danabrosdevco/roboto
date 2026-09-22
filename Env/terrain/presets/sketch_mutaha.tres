@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="TerrainRecipe" load_steps=3 format=3 uid="uid://ccsvc8ni3ucj6"]
+
+[ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="1_recipe"]
+[ext_resource type="Texture2D" uid="uid://df2hyjm8b4dnl" path="res://Env/terrain/sketches/mutaha.png" id="2_sketch"]
+
+[resource]
+script = ExtResource("1_recipe")
+size_x = 1024.0
+size_z = 1024.0
+cell_size = 2.0
+random_seed = 21
+layout = 2
+floor_at_zero = true
+floor_width = 150.0
+floor_shoulder = 150.0
+floor_depth = 4.0
+floor_roughness = 0.3
+floor_edge_noise = 0.35
+meander = 90.0
+meander_scale = 650.0
+border_sides = 0
+border_height = 75.0
+border_width = 120.0
+border_noise = 70.0
+border_ruggedness = 0.6
+hills_height = 5.0
+hills_scale = 240.0
+hills_octaves = 5
+hills_warp = 50.0
+ridge_height = 4.0
+ridge_scale = 320.0
+ridge_on_floor = 0.2
+detail_height = 0.8
+detail_scale = 14.0
+terrace_step = 0.0
+terrace_strength = 0.75
+crater_count = 10
+crater_radius_min = 2.5
+crater_radius_max = 8.0
+crater_depth = 0.3
+crater_rim = 0.1
+craters_on_floor = true
+thermal_passes = 3
+talus_angle = 40.0
+hydraulic_strength = 0.5
+smooth_passes = 1
+sketch = ExtResource("2_sketch")
+sketch_metres_per_pixel = 8.0
+sketch_blend = 20.0
+sketch_edge_noise = 14.0
+sketch_mountain_height = 20.0
+water_level = -1.5
+water_depth = 3.0
+water_bank = 20.0
+urban_block = Vector2(34, 26)
+urban_street = 7.0
+urban_angle = 0.0
+urban_ruin = 0.3
+shelling_per_hectare = 30.0
+rough_height = 9.0
+road_width = 5.0
+road_falloff = 5.0
+road_smoothing = 40.0
+bridge_clearance = 2.0

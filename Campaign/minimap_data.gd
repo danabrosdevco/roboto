@@ -101,6 +101,13 @@ static func for_mission(mission: MissionDefinition) -> MinimapData:
 ## the ones in its active_objectives (all of them when it lists none), goals
 ## first and extraction last, because that is the order you do them in.
 ##
+## Goals go in the order you reach them crossing the map: sorted by how far
+## along the line from insertion to extraction each one lies, which runs left
+## to right on the valley and Coast Road. The order the level lists its nodes in
+## numbered Coast Road's first bridge 1, the far town 3 and the first bridge
+## again 4. With no line to follow — no insertion baked, no extraction, or the
+## two in one place — it falls back to plain left to right.
+##
 ## The bake holds every objective the level could ever need, so drawing all of
 ## them told the valley's first op it had three garrisons to take when it has
 ## one.
@@ -114,8 +121,31 @@ func objective_order(active: Array[StringName] = []) -> Array[int]:
 			exits.append(i)
 		else:
 			goals.append(i)
+	var axis := _route_axis(exits)
+	var along := func(i: int) -> float:
+		return objective_positions[i].x * axis.x + objective_positions[i].z * axis.y
+	# Ties fall back to bake order, so the numbering never shuffles between two
+	# looks at the same board.
+	goals.sort_custom(func(a: int, b: int) -> bool:
+		var da: float = along.call(a)
+		var db: float = along.call(b)
+		return da < db if not is_equal_approx(da, db) else a < b)
 	goals.append_array(exits)
 	return goals
+
+
+# Which way the op runs across the map, as a unit XZ direction: insertion to the
+# first extraction. Plain +X — left to right on the image — when there is no such
+# line to follow.
+func _route_axis(exits: Array[int]) -> Vector2:
+	if insertion_positions.is_empty() or exits.is_empty():
+		return Vector2.RIGHT
+	var from := insertion_positions[0]
+	var to := objective_positions[exits[0]]
+	var d := Vector2(to.x - from.x, to.z - from.z)
+	if d.length() < 1.0:
+		return Vector2.RIGHT
+	return d.normalized()
 
 
 ## What to print beside objective i. An extraction nobody named says

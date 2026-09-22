@@ -64,8 +64,10 @@ if [ "${1:-}" = "--changed" ]; then
 	            git diff --cached --name-only HEAD -- '*.tscn' '*.tres'
 	            git ls-files --others --exclude-standard -- '*.tscn' '*.tres'; } 2>/dev/null )
 else
-	FILES=$(find . -name '*.gd' -not -path './addons/*' -not -path './.godot/*')
-	SCENES=$(find . \( -name '*.tscn' -o -name '*.tres' \) -not -path './addons/*' -not -path './.godot/*')
+	# Not .claude/: Claude Code keeps its git worktrees there, each a whole second
+	# copy of the project at some other commit, and no part of this one.
+	FILES=$(find . -name '*.gd' -not -path './addons/*' -not -path './.godot/*' -not -path './.claude/*')
+	SCENES=$(find . \( -name '*.tscn' -o -name '*.tres' \) -not -path './addons/*' -not -path './.godot/*' -not -path './.claude/*')
 fi
 
 # ── GDScript parse check ─────────────────────────────────────────────────────

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cu1vkt8we1t3s"
+path="res://.godot/imported/solar_tracker_row.map-8d7434fb67dda58ee8b1fa81f1908b9e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_tracker_row.map"
+dest_files=["res://.godot/imported/solar_tracker_row.map-8d7434fb67dda58ee8b1fa81f1908b9e.tres"]
+
+[params]
+

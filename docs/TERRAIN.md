@@ -33,6 +33,11 @@ To decide the layout yourself, whether an island, a coast, a river through a
 town, or a north–south map, **paint a sketch**. See
 [Sketch maps](#sketch-maps) below.
 
+**`maps/mutaha_level.tscn`** is a finished sketch-built level: a scaled-down
+take on Squad's Mutaha, with a braided river through a town, highways meeting
+at a crossroads, six bridges, and farmland. Open it next to
+`Env/terrain/sketches/mutaha.png` to see how the sketch becomes the map.
+
 ---
 
 ## The pieces
@@ -80,6 +85,7 @@ All are sized against the valley mission: about 1.4 km × 0.5 km, with around
 | `sketch_coast` | 1408 × 512 m | From `sketches/coast.png`: sea along the south with a bay, a harbour town, a river off the northern range, and a shelled landing beach. |
 | `sketch_river_town` | 512 × 1408 m | From `sketches/river_town.png`: **north–south**. A river through a town between two ranges, fields to the north, and a shelled front to the south. |
 | `sketch_island` | 896 × 896 m | From `sketches/island.png`: an island with a ridge, an inland tarn, an airstrip, and a town on the south-west shore. |
+| `sketch_mutaha` | 1024 × 1024 m | From `sketches/mutaha.png`: a scaled-down Mutaha (after the Squad map). A river braids north–south through a town on both banks, with a district between the channels. Highways from the north and west meet at a central crossroads. Dirt tracks, farmland, ponds, and low desert hills round the edge. `maps/mutaha_level.tscn` is built from it. |
 
 **Assigning a preset in the inspector makes a local copy**, so tuning one level
 never edits the preset that other levels start from. Only inspector
@@ -117,6 +123,7 @@ a small image, made in any paint program, that goes in the recipe's
 | grey | 128, 128, 128 | **Urban blocks.** A street grid (`urban_block`, `urban_street`, `urban_angle`), each block levelled to its own height so hillside towns step down in terraces, some left as rubble (`urban_ruin`). Every block wholly inside the paint becomes a **building lot**. |
 | red | 255, 0, 0 | **Shelled ground.** Craters at `shelling_per_hectare`, scorched, sized by the Craters group. |
 | yellow | 255, 255, 0 | **Rough ground.** Broken hills and gullies, `rough_height` of extra relief. |
+| magenta | 255, 0, 255 | **Roads.** Lines, not areas. Each stroke becomes a graded road, `road_width` metres wide for every pixel of stroke thickness. Where a road crosses blue it becomes a **bridge**. See [Roads and bridges](#roads-and-bridges). |
 | black / transparent | 0, 0, 0 | **No preference.** The rest of the recipe decides. |
 
 **Size and orientation.** Set `sketch_metres_per_pixel`, and the map takes its
@@ -139,10 +146,48 @@ generator warns if the aspect ratios disagree.
 - **Mixing with the recipe:** paint only what you care about. A lake and a
   town on an otherwise procedural valley works. For full control, set the
   layout to OPEN and `border_sides` to 0, as the `sketch_*` presets do.
-- **Stamps and paths** still apply on top, so you can lay a road through a
-  painted town or flatten a pad on painted rough ground.
+- **Stamps and paths** still apply on top, so you can flatten a pad on painted
+  rough ground, or lay a curve too precise to paint.
 - **Iterating:** turn on **auto_regenerate**, keep the PNG open in your paint
   program, and save it. Godot re-imports it and the terrain regenerates.
+- **Hills, not mesas:** with the OPEN layout, painted white also rises by
+  `floor_depth` before `sketch_mountain_height` goes on top. At the default
+  28 m, small white blobs come out as sheer-sided table mountains. For rolling
+  hills, set `floor_depth` to a few metres, as `sketch_mutaha` does.
+
+### Roads and bridges
+
+Draw roads in magenta with a **hard pencil**, not a brush.
+
+- **Width:** stroke thickness sets it. A 1-pixel line is a track `road_width`
+  metres wide (5 m by default), and a 2-pixel line is a road twice that.
+- **Junctions:** lines that touch or cross join into junctions by themselves.
+- **Stray pixels:** a lone magenta dot is ignored, with a warning.
+- **Grading:** the road is graded like a `TerrainPath` ROAD. It cuts and fills
+  to a level bed, has a `road_falloff` bank either side, and averages out the
+  bumps over `road_smoothing` metres.
+- **Colours under the road:** a road across a town keeps the town under it,
+  and a road over a river keeps the river. You don't have to paint around
+  them.
+- **Building lots:** any lot a road runs through is dropped.
+
+**Bridges.** Wherever a road crosses painted water, the generator records a
+bridge:
+
+- **The river stays open.** It is left untouched under the bridge, not
+  dammed.
+- **The road climbs to a deck.** Its surface sits `bridge_clearance` above
+  `water_level` (2 m by default), reached on embankments at a 10% grade.
+- **Slipways stay low.** A road that runs into the water and stops isn't
+  lifted.
+- **Hand-placed roads count too.** A `TerrainPath` ROAD over painted water is
+  bridged the same way.
+- **Blockout decks:** with **bridge_blockouts** on (the default), each bridge
+  gets a plain box deck with collision. You can walk and drive across it, and
+  a navmesh bake covers it. Turn the blockouts off once you have a bridge
+  model to place.
+- **Placing models:** `get_bridges()` returns each span in world space:
+  `{start, end, width}`, with both ends at road height on the banks.
 
 **Water is visual only.** The surface is drawn, but nothing about navigation
 or movement changes. The navmesh includes the bed, so robots and the player
@@ -152,18 +197,21 @@ decide what water does in play (wading, damage, a barrier), hook it up in game
 code. `get_paint_at()` and `TerrainData.water_at_local()` say where water is.
 
 **Building lots.** The editor outlines each lot on the ground, blue for clean
-and orange for rubble. From code, `get_lots()` returns each lot's world
-transform (centred on the levelled block, X along the street grid), its size,
-and whether it is ruined. The same transforms can drive a building spawner
-later.
+and orange for rubble, and each bridge span in yellow. **show_markers** turns
+the outlines off. From code, `get_lots()` returns each lot's world transform
+(centred on the levelled block, X along the street grid), its size, and
+whether it is ruined. The same transforms can drive a building spawner later.
 
 **Examples** live in `Env/terrain/sketches/`, one per `sketch_*` preset. Open
 them next to the maps they make. Godot imports a new sketch PNG when the editor
 next scans. Headless tools, such as `terrain_bake.gd` on a sketch level, need
 the project to have been opened in the editor once since the PNG was added.
 
-Generation times on this machine: a 1408 × 512 m map at 2 m takes about 2 s.
-The 1024 × 512 m crater field at 1 m takes about 2.5 s.
+Generation times on this machine:
+
+- a 1408 × 512 m map at 2 m: about 2 s;
+- the 1024 × 512 m crater field at 1 m: about 2.5 s;
+- Mutaha, 1024 m square with a town and 18 road segments: about 4 s.
 
 ---
 
@@ -228,6 +276,21 @@ Generate.** The navmesh doesn't follow the ground by itself.
 Keep `filter_baking_aabb` over the playable area only. The template's covers
 about 1.1 km × 280 m and bakes in about 6 s. Its `agent_radius` / `agent_max_climb`
 match the valley mission's.
+
+A town-sized map makes a much bigger navmesh, because every block, street and
+embankment is a separate walkable surface. Mutaha's covers 910 m square. At
+Godot's default detail settings it came to 24,000 polygons, 1.2 MB of scene
+text. Its navmesh uses these settings instead:
+
+- `edge_max_error` 2.5
+- `region_merge_size` 40
+- `region_min_size` 8
+- `detail_sample_max_error` 2
+
+That gives 13,000 polygons and bakes in about 12 s. It also sits closer to the
+ground than the default: at most 0.15 m below it, against 0.39 m. That matters
+because `EnemyForceSpawner` spawns units at navmesh height. Use the same
+settings for other big sketch maps.
 
 ---
 
@@ -297,7 +360,9 @@ writes every script property out, and flattens instanced scenes. So:
 - **Don't hand-edit `TerrainData`.** Generate writes it.
 - **Duplicating a level is safe.** Generate always writes to a file named after
   the current scene, never back to the data file the scene happens to point
-  at. The template's navmesh is embedded, so it copies with the scene.
+  at. The template's and Mutaha's navmeshes are embedded, so they copy with
+  the scene. A navmesh saved as its own `.res` would be shared by both copies,
+  and baking one would overwrite the other.
 - **Built nodes are not internal children.** They're ordinary unowned
   children, because `NavigationRegion3D` only parses `get_children()`.
 - **The build is synchronous in `_ready`.** `world.gd` places the player right

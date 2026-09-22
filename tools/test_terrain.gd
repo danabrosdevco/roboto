@@ -11,7 +11,8 @@ extends SceneTree
 # so a triangulation or orientation mismatch shows up as a number, not a hunch.
 #
 # Also: same recipe → same heights (levels are authored on top of them), stamps
-# and paths do exactly what they say, and the template level loads playable.
+# and paths do exactly what they say, and the template and Mutaha levels load
+# playable.
 #
 # Scripts are reached by preload, not class_name, so this runs before the editor
 # has ever scanned the new classes.
@@ -28,6 +29,9 @@ const ScatterScript := preload("res://Env/terrain/terrain_scatter.gd")
 const LayerScript := preload("res://Env/terrain/terrain_scatter_layer.gd")
 const Sketch := preload("res://Env/terrain/terrain_sketch.gd")
 const TEMPLATE := "res://maps/terrain_template_level.tscn"
+const MUTAHA := "res://maps/mutaha_level.tscn"
+const MUTAHA_DATA := "res://maps/terrain_data/mutaha_level_terrain.res"
+const MUTAHA_SKETCH := "res://Env/terrain/sketches/mutaha.png"
 const TMP_DATA := "user://test_terrain_roundtrip.res"
 ## A script error inside a check ends that coroutine without reaching quit(),
 ## and a headless SceneTree then idles for ever — test.sh has no timeout of
@@ -110,7 +114,9 @@ func _initialize() -> void:
 	await _test_collision_matches_surface()
 	await _test_scatter()
 	await _test_sketch_terrain_node()
+	await _test_sketch_roads()
 	await _test_template_level()
+	await _test_mutaha_level()
 	print("")
 	print("ALL TERRAIN CHECKS PASS" if _fails == 0 else "%d TERRAIN CHECK(S) FAILED" % _fails)
 	quit(1 if _fails > 0 else 0)
@@ -535,6 +541,121 @@ func _test_sketch() -> void:
 	_check("editing the sketch invalidates the cached base", not redone.generated_info.contains("base cached") and redone.heights != d.heights)
 
 
+# Roads: a 1-px road (row 8) and a 3-px road (rows 20–22) across a north–south
+# river (x 30–33), and a 1-px road (x 47) joining them through a town.
+func _road_sketch() -> Image:
+	var img := Image.create(SK_W, SK_H, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 1))
+	img.fill_rect(Rect2i(38, 10, 24, 10), Color(0.5, 0.5, 0.5))
+	img.fill_rect(Rect2i(30, 0, 4, 32), Color(0, 0, 1))
+	img.fill_rect(Rect2i(0, 8, 64, 1), Color(1, 0, 1))
+	img.fill_rect(Rect2i(0, 20, 64, 3), Color(1, 0, 1))
+	img.fill_rect(Rect2i(47, 9, 1, 11), Color(1, 0, 1))
+	return img
+
+
+## A straight TerrainPath-style road along z, as the modifier dictionary the
+## node would hand the generator.
+func _road_path(z: float, x0: float, x1: float) -> Dictionary:
+	var pts := PackedVector3Array()
+	var x := x0
+	while x <= x1 + 0.01:
+		pts.append(Vector3(x, 0.0, z))
+		x += 2.0
+	return {"type": "path", "source": "test road", "mode": Generator.PATH_ROAD, "points": pts,
+			"width": 6.0, "falloff": 4.0, "depth": 0.0, "follow_terrain": true, "smoothing": 20.0, "paint": true}
+
+
+func _test_sketch_roads() -> void:
+	_check("sketch palette: magenta is road", Sketch.classify(Color(1, 0, 1)) == Sketch.ROAD)
+	var traced: Array = Sketch.trace_roads(_road_sketch())
+	var widest := 0.0
+	var narrowest := INF
+	for road in traced:
+		widest = maxf(widest, road.width_px)
+		narrowest = minf(narrowest, road.width_px)
+	_check("roads are traced into centrelines, split at junctions", traced.size() >= 5, "%d road(s)" % traced.size())
+	_check("stroke thickness is measured per road", widest == 3.0 and narrowest == 1.0, "widths %.0f … %.0f px" % [narrowest, widest])
+
+	var d: Data = Generator.generate(_sketch_recipe(_road_sketch()))
+	_check("both roads over the river become bridges", d.bridges.size() == 2, "%d bridge(s)" % d.bridges.size())
+	var opposite := true
+	var river_open := true
+	for b in d.bridges:
+		var s: Vector3 = b.start
+		var e: Vector3 = b.end
+		if not ((s.x < -8.0 and e.x > 8.0) or (s.x > 8.0 and e.x < -8.0)):
+			opposite = false
+		var mid := (s + e) * 0.5
+		if not d.water_at_local(0.0, mid.z) or d.height_at_local(0.0, mid.z) > d.water_level - 0.5:
+			river_open = false
+	_check("each bridge runs from one bank to the other", opposite)
+	_check("the river stays open under every bridge", river_open)
+	var deck := d.water_level + float(d.recipe.bridge_clearance)
+	var lifted := true
+	for b in d.bridges:
+		# The span ends are the last dry road points, one ramp step short of the deck.
+		if minf((b.start as Vector3).y, (b.end as Vector3).y) < deck - 0.25:
+			lifted = false
+	_check("bridges clear the water by bridge_clearance", lifted, "deck %.2f, spans %s" % [deck, str(d.bridges)])
+
+	# Hand-placed roads over painted water: a crossing is bridged and climbs to
+	# its deck; a road that stops in the river is a slipway and stays low.
+	var placed: Data = Generator.generate(_sketch_recipe(_road_sketch()), [_road_path(50.0, -60.0, 60.0), _road_path(-50.0, -60.0, 0.0)])
+	_check("a hand-placed road across painted water is bridged", placed.bridges.size() == d.bridges.size() + 1,
+			"%d bridge(s), %d from the sketch" % [placed.bridges.size(), d.bridges.size()])
+	_check("its approach climbs to the deck", placed.height_at_local(-15.0, 50.0) >= deck - 0.3,
+			"%.2f at the bank, deck %.2f" % [placed.height_at_local(-15.0, 50.0), deck])
+	_check("a road that ends in the water is not lifted", placed.height_at_local(-15.0, -50.0) < deck - 0.6,
+			"%.2f at the bank, deck %.2f" % [placed.height_at_local(-15.0, -50.0), deck])
+
+	var thin_z := 8.5 * SK_MPP - SK_H * SK_MPP * 0.5
+	var thick_z := 21.5 * SK_MPP - SK_H * SK_MPP * 0.5
+	_check("roads are painted", d.control_at_local(-100.0, thin_z).r > 0.8 and d.control_at_local(-100.0, thick_z).r > 0.8)
+	var thin_w := 0
+	var thick_w := 0
+	for z in range(-50, 50, 1):
+		if d.control_at_local(-100.0, z).r > 0.5:
+			if absf(z - thin_z) < 10.0:
+				thin_w += 1
+			elif absf(z - thick_z) < 16.0:
+				thick_w += 1
+	_check("a 3-pixel stroke makes a road three times as wide", thick_w >= thin_w * 2, "%d m vs %d m of paint" % [thick_w, thin_w])
+	var graded := true
+	var prev := d.height_at_local(-124.0, thin_z)
+	for x in range(-120, -16, 4):
+		var hh := d.height_at_local(float(x), thin_z)
+		if absf(hh - prev) > 0.6:
+			graded = false
+		prev = hh
+	_check("road beds are graded, not copies of the bumps", graded)
+	var road_x := 47.5 * SK_MPP - SK_W * SK_MPP * 0.5
+	var clear := not d.lots.is_empty()
+	for lot in d.lots:
+		var c: Vector2 = lot.centre
+		if absf(c.x - road_x) < float(lot.size.x) * 0.5 + 1.0:
+			clear = false
+	_check("lots a road runs through are dropped, the rest kept", clear, "%d lot(s)" % d.lots.size())
+
+	var terrain: Node3D = TerrainScript.new()
+	terrain.data = d
+	terrain.position = Vector3(-60, 5, 40)
+	root.add_child(terrain)
+	await physics_frame
+	await physics_frame
+	var decks := terrain.get_node_or_null(^"_Built/Bridges")
+	_check("blockout decks stand on the bridge spans", decks != null and decks.find_children("*", "MeshInstance3D", false, false).size() == 2)
+	var standing := true
+	for b in terrain.get_bridges():
+		var mid: Vector3 = ((b.start as Vector3) + (b.end as Vector3)) * 0.5
+		var hit := terrain.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(mid + Vector3.UP * 20.0, mid + Vector3.DOWN * 20.0))
+		if hit.is_empty() or absf((hit.position as Vector3).y - mid.y) > 0.15:
+			standing = false
+	_check("you can stand on a blockout deck at road height", standing and terrain.get_bridges().size() == 2)
+	terrain.queue_free()
+	await process_frame
+
+
 func _test_sketch_terrain_node() -> void:
 	var d: Data = Generator.generate(_sketch_recipe(_sketch_image()))
 	var terrain: Node3D = TerrainScript.new()
@@ -706,6 +827,75 @@ func _test_template_level() -> void:
 	var rect: Rect2 = terrain.get_playable_rect()
 	_check("spawn and exit are inside the boundary walls",
 			rect.has_point(Vector2(spawn.global_position.x, spawn.global_position.z)) and rect.has_point(Vector2(exit.global_position.x, exit.global_position.z)))
+	root.remove_child(level)
+	level.queue_free()
+	await process_frame
+
+
+## Whether the editor has imported a source asset in this checkout. A PNG added
+## since the editor last looked has no imported copy yet, and any resource that
+## references it fails to load at all until it has one.
+func _imported(source: String) -> bool:
+	var cfg := ConfigFile.new()
+	if cfg.load(source + ".import") != OK:
+		return false
+	return FileAccess.file_exists(str(cfg.get_value("remap", "path", "")))
+
+
+# Mutaha, the example sketch level: a town on a braided river. The baked data
+# is checked first, which needs nothing imported; then the level itself.
+func _test_mutaha_level() -> void:
+	var d := load(MUTAHA_DATA) as Data
+	_check("mutaha data loads", d != null and d.is_valid("test"))
+	if d == null:
+		return
+	_check("mutaha is 1024 m square", absf(d.width() - 1024.0) < 0.1 and absf(d.depth() - 1024.0) < 0.1, "%s × %s" % [d.width(), d.depth()])
+	_check("mutaha relief is valley-mission scale (< 70 m)", d.max_height - d.min_height < 70.0, "%.1f m" % (d.max_height - d.min_height))
+	_check("mutaha has its river, town and bridges", d.has_water() and not d.lots.is_empty() and not d.bridges.is_empty(),
+			"%d lot(s), %d bridge(s)" % [d.lots.size(), d.bridges.size()])
+	var cleared := d.recipe != null
+	for b in d.bridges:
+		if cleared and minf((b.start as Vector3).y, (b.end as Vector3).y) < d.water_level + float(d.recipe.bridge_clearance) - 0.25:
+			cleared = false
+	_check("every mutaha bridge clears the river", cleared)
+
+	if not _imported(MUTAHA_SKETCH):
+		print("SKIP  mutaha level scene: %s is not imported in this checkout yet, so the level cannot load. Open the project in the editor once, then rerun." % MUTAHA_SKETCH)
+		return
+	var packed: PackedScene = load(MUTAHA)
+	_check("mutaha level loads", packed != null)
+	if packed == null:
+		return
+	var level := packed.instantiate()
+	root.add_child(level)
+	# The navigation map picks the region up on a physics frame, not at once.
+	for _i in 6:
+		await physics_frame
+	var terrain := level.get_node_or_null(^"NavigationRegion3D/Terrain") as Node3D
+	_check("mutaha has its terrain, with baked data", terrain != null and terrain.data != null)
+	if terrain == null or terrain.data == null:
+		root.remove_child(level)
+		level.queue_free()
+		return
+	var spawn := level.get_node(^"SpawnPoint") as Node3D
+	var squad := level.get_node(^"SquadSpawnPoint") as Node3D
+	var exit := level.get_node(^"NavigationRegion3D/LevelExit") as Node3D
+	var space: PhysicsDirectSpaceState3D = spawn.get_world_3d().direct_space_state
+	var hit: Dictionary = space.intersect_ray(PhysicsRayQueryParameters3D.create(spawn.global_position + Vector3.UP, spawn.global_position + Vector3.DOWN * 50.0))
+	_check("there is ground under the mutaha spawn point", not hit.is_empty() and hit.position.y < spawn.global_position.y)
+	_check("the mutaha squad spawn and exit stand on the ground",
+			absf(terrain.get_height_at(squad.global_position) - squad.global_position.y) < 0.25
+			and absf(terrain.get_height_at(exit.global_position) - exit.global_position.y) < 0.25)
+	var region := level.get_node(^"NavigationRegion3D") as NavigationRegion3D
+	var nm := region.navigation_mesh
+	_check("mutaha navmesh is baked", nm != null and nm.get_polygon_count() > 100,
+			"%d polygons" % (nm.get_polygon_count() if nm else 0))
+	var rect: Rect2 = terrain.get_playable_rect()
+	_check("mutaha spawn and exit are inside the boundary walls",
+			rect.has_point(Vector2(spawn.global_position.x, spawn.global_position.z)) and rect.has_point(Vector2(exit.global_position.x, exit.global_position.z)))
+	var route := NavigationServer3D.map_get_path(region.get_navigation_map(), squad.global_position, exit.global_position, true)
+	_check("the squad can walk from its spawn to the exit", route.size() > 1 and route[route.size() - 1].distance_to(exit.global_position) < 2.0,
+			"%d path point(s)" % route.size())
 	root.remove_child(level)
 	level.queue_free()
 	await process_frame

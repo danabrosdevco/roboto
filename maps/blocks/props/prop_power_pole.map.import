@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://duskmrr11u5q1"
+path="res://.godot/imported/prop_power_pole.map-e4d79363c95ecbed40d5a84d3f22e5f6.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_power_pole.map"
+dest_files=["res://.godot/imported/prop_power_pole.map-e4d79363c95ecbed40d5a84d3f22e5f6.tres"]
+
+[params]
+

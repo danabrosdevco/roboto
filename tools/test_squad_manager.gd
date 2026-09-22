@@ -111,23 +111,80 @@ func _run() -> void:
 			and squad.slot_kind == ItemDefinition.Kind.WEAPON,
 			"selected %s, kind %d" % [squad.selected.display_name if squad.selected else "-", squad.slot_kind])
 
-	# One squad until there is a vehicle, so until then no card names a team.
-	_check("with nothing but robots on foot, no card names a team", not _says(_card("BRAVO-1"), "INFANTRY"))
+	# The robots on foot are one team until you make more. You are in none: you
+	# order them all.
+	_check("the squad is one team to start, INFANTRY, with its robots' cards under its name",
+		_team_names() == ["INFANTRY"] and _panel_with(_team_section("INFANTRY"), "BRAVO-1") != null)
+	_check("...your card stands above the teams, in none of them", _card("PLAYER") != null
+		and _panel_with(_team_section("INFANTRY"), "PLAYER") == null)
+	_check("...and the benched are on the bench, not in their team", _panel_with(squad._bench, "CHASER-1") != null
+		and _panel_with(_team_section("INFANTRY"), "CHASER-1") == null)
+	_check("...nothing on a card names a team: where it sits says it", not _says(_card("BRAVO-1"), "INFANTRY"))
 	var rover := _robot(cat, &"rover", "Rover-1", &"machine_gun")
 	rover.benched = true
 	squad.rebuild()
 	await process_frame
-	_check("with a rover in the roster, each card says which team it goes out in",
-		_says(_card("BRAVO-1"), "INFANTRY") and _says(_card("CHASER-1"), "INFANTRY")
-		and _says(_card("ROVER-1"), "ARMOR"))
-	_check("...all but yours: you command both", not _says(_card("PLAYER"), "INFANTRY")
-		and not _says(_card("PLAYER"), "ARMOR"))
-	var rover_card := _card("ROVER-1")
-	var tag := _label_in(rover_card, "ARMOR")
-	_check("...in the card's top-right corner", tag != null and tag.get_parent() == rover_card
-		and absf(tag.get_rect().end.x - (rover_card.size.x - 8.0)) < 1.5 and absf(tag.position.y - 8.0) < 1.5,
-		"tag %s in a card %s" % [tag.get_rect() if tag != null else Rect2(), rover_card.size if rover_card != null else Vector2()])
+	_check("a rover joins a team of vehicles, ARMOR, made for it", _team_names() == ["INFANTRY", "ARMOR"])
+	_check("...benched, it keeps that team, which says so", _says(_team_section("ARMOR"), "EVERYONE IN THIS TEAM IS ON THE BENCH")
+		and _panel_with(squad._bench, "ROVER-1") != null)
 	state.roster.erase(rover)
+	squad.rebuild()
+	_check("...and a team nobody is in any more is gone", _team_names() == ["INFANTRY"])
+
+	# ── DRAG AND DROP ────────────────────────────
+	# Through the same calls the cards and targets are wired to for a drag.
+	var card := _card("BRAVO-3")
+	_click(card)
+	_check("clicking a card selects it where it is, so the same press can go on to drag it",
+		squad.selected == b3 and is_instance_valid(card) and card.is_inside_tree())
+	_check("under the teams, a strip to drop a robot on for a new team",
+		_panel_with(squad._teams, "DRAG A ROBOT HERE TO START A NEW TEAM") != null)
+	_drop({"kind": &"new"}, b2)
+	_check("dropping one there starts TEAM 2 with it", _team_names() == ["INFANTRY", "TEAM 2"]
+		and _panel_with(_team_section("TEAM 2"), "BRAVO-2") != null and _panel_with(_team_section("INFANTRY"), "BRAVO-2") == null)
+	var t1: StringName = state.teams[0]["id"]
+	var t2: StringName = state.teams[1]["id"]
+	_check("a robot is not offered back to the team it is in", not _can({"kind": &"team", "id": t2}, b2))
+	_check("...any other team takes it", _can({"kind": &"team", "id": t1}, b2))
+	_drop({"kind": &"team", "id": t2}, b1)
+	_check("dropping one on a team moves it there", b1.team_id == t2 and _panel_with(_team_section("TEAM 2"), "BRAVO-1") != null)
+	_check("...and the team says how many are in it", _says(_team_section("TEAM 2"), "2 ROBOTS"))
+	_drop({"kind": &"bench"}, b1)
+	_check("dropping one on the bench benches it, still in its team", b1.benched and b1.team_id == t2
+		and _panel_with(squad._bench, "BRAVO-1") != null and _says(_team_section("TEAM 2"), "1 BENCHED"))
+	_check("...which frees its seat", state.supply_free() == 1, str(state.supply_free()))
+	_drop({"kind": &"team", "id": t1}, chaser)
+	_check("a benched robot dropped on a team comes off the bench into it, taking the seat",
+		not chaser.benched and chaser.team_id == t1 and state.supply_free() == 0)
+	_check("...with no seat left, no team takes another from the bench", not _can({"kind": &"team", "id": t1}, recl)
+		and not _can({"kind": &"new"}, recl))
+	_check("...nor a wreck, which has to be rebuilt first", not _can({"kind": &"team", "id": t1}, wreck))
+	_check("...and yours is no robot to move: you order every team", not _can({"kind": &"team", "id": t1}, state.player_record)
+		and not _can({"kind": &"bench"}, state.player_record))
+	# Back as it was, for everything below.
+	_drop({"kind": &"bench"}, chaser)
+	_drop({"kind": &"team", "id": t1}, b1)
+	_drop({"kind": &"team", "id": t1}, b2)
+	_check("moving everyone out of a team ends it", _team_names() == ["INFANTRY"] and not b1.benched and chaser.benched,
+		str(_team_names()))
+
+	# ── FOLDING AND NAMING ───────────────────────
+	_click(_name_edit("INFANTRY").get_parent())
+	_check("clicking a team's header folds it: name and count stay, the cards go",
+		_team_section("INFANTRY") != null and _says(_team_section("INFANTRY"), "ROBOTS")
+		and _panel_with(_team_section("INFANTRY"), "BRAVO-3") == null)
+	_click(_name_edit("INFANTRY").get_parent())
+	_check("...and again opens it", _panel_with(_team_section("INFANTRY"), "BRAVO-3") != null)
+	var edit := _name_edit("INFANTRY")
+	edit.text = "rifles"
+	edit.text_submitted.emit(edit.text)
+	_check("typing a team's name renames it, upper case", state.team_name(t1) == "RIFLES" and _team_section("RIFLES") != null)
+	edit = _name_edit("RIFLES")
+	edit.text = "   "
+	edit.text_submitted.emit(edit.text)
+	_check("...a blank name is refused, and the old one stays", state.team_name(t1) == "RIFLES"
+		and _name_edit("RIFLES") != null)
+	state.rename_team(t1, "INFANTRY")
 	squad.rebuild()
 	_check("no prices anywhere on the squad page", not _says(squad, str(cat.item(&"m4").cost)))
 
@@ -249,10 +306,6 @@ func _run() -> void:
 	ui.show_tab(&"squad")
 	_check("compute is in the header on every page", ui._compute.visible and ui._compute.text == "COMPUTE %d" % state.compute)
 
-	# ── NAME ─────────────────────────────────────
-	ui.rename_squad("  hammer  ")
-	_check("renaming the squad sticks, upper case", state.squad_name == "HAMMER")
-
 	ui.close()
 	_check("closing releases the pause", not PauseHold.is_held(&"squad_manager"))
 	ui.queue_free()
@@ -327,6 +380,43 @@ func _label_in(node: Node, text: String) -> Label:
 
 func _card(robot_name: String) -> Control:
 	return _panel_with(ui._pages[&"squad"]._left, robot_name)
+
+
+func _team_names() -> Array:
+	return state.teams.map(func(t: Dictionary) -> String: return t["name"])
+
+
+# The name field heading a team's section on the squad page.
+func _name_edit(team: String, node: Node = null) -> LineEdit:
+	if node == null:
+		node = ui._pages[&"squad"]._teams
+	if node is LineEdit and (node as LineEdit).text == team:
+		return node
+	for c in node.get_children():
+		var found := _name_edit(team, c)
+		if found != null:
+			return found
+	return null
+
+
+# A team's whole section: the box its name heads.
+func _team_section(team: String) -> Control:
+	var up: Node = _name_edit(team)
+	while up != null and not (up is PanelContainer):
+		up = up.get_parent()
+	return up as Control
+
+
+# What letting go of a dragged card over `where` does, and whether it would be
+# taken there: the calls the cards and the targets are wired to.
+func _drop(where: Dictionary, record: SoldierRecord) -> void:
+	var page = ui._pages[&"squad"]
+	page._drop_fn(where).call(Vector2.ZERO, {page.DRAG_KEY: record})
+
+
+func _can(where: Dictionary, record: SoldierRecord) -> bool:
+	var page = ui._pages[&"squad"]
+	return page._can_drop_fn(where).call(Vector2.ZERO, {page.DRAG_KEY: record})
 
 
 func _button_in(node: Node, text: String) -> Button:

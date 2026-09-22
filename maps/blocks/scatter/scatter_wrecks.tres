@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TerrainScatterLayer" load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_car_wreck.tscn" id="1_jr2as"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_robot_wreck.tscn" id="2_emfup"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter_layer.gd" id="3_ipa0h"]
+
+[resource]
+script = ExtResource("3_ipa0h")
+scenes = Array[PackedScene]([ExtResource("1_jr2as"), ExtResource("2_emfup")])
+per_hectare = 0.6
+clumping = 0.4
+clump_size = 80.0
+align_to_ground = 0.5
+sink = 0.1
+max_slope = 15.0
+max_mountain = 0.2
+max_paint = 1.0
+collision_radius = 1.5
+collision_height = 1.6

@@ -33,13 +33,17 @@ enum SquadObjective { NONE, ADVANCE, DEFEND, WITHDRAW, ATTACK, FOLLOW, PATROL }
 @export var player_commandable: bool = false
 
 # ── TEAMS ─────────────────────────────────────
-# The player's robots go into the field as up to two squads — the ones on foot,
-# and the vehicles — so a rover can be sent one way while the infantry goes
-# another. SquadSpawner splits the roster by frame. Empty on every squad that
-# is not one of the player's teams.
-const TEAM_INFANTRY := &"INFANTRY"
-const TEAM_ARMOR := &"ARMOR"
+# The player's robots go into the field as one squad per team — the teams made
+# on the squad page (CampaignState.teams) — so each can be sent its own way.
+# `team` is the team's id, and its name is the callsign. Empty on every squad
+# that is not one of the player's teams.
 var team: StringName = &""
+## Where the team comes in the player's list: the order the squad page shows
+## them, and the order G steps through them.
+var team_rank: int = 0
+## Every robot in it drives (ChassisDefinition.vehicle): a team of rovers. Tapping
+## a hostile sends it at the target, which suits a vehicle and not a rifleman.
+var vehicles_only: bool = false
 
 # Assign a SquadObjectivePoint in the inspector to give the squad
 # a destination before contact is made.
@@ -848,16 +852,9 @@ func get_center() -> Vector3:
 func get_display_name() -> String:
 	return callsign if callsign != "" else String(name)
 
-## "INFANTRY", "ARMOR" — or the callsign, for a squad that is not one of the
-## player's teams.
+## What the HUD calls the squad: a team's name, or any other squad's callsign.
 func team_name() -> String:
-	return String(team) if team != &"" else get_display_name().to_upper()
-
-
-## A team's callsign from the squad's name: the infantry carry it as it is, the
-## armour add a word, so a toast or a log line says which team it means.
-static func callsign_for(squad_name: String, team_id: StringName) -> String:
-	return "%s ARMOR" % squad_name if team_id == TEAM_ARMOR else squad_name
+	return get_display_name().to_upper()
 
 
 func notify_roster_changed() -> void:

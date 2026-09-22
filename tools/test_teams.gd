@@ -1,16 +1,18 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# TEAMS — a rover goes into the field as a team of its own, ARMOR, and G picks
-# which team T orders.
+# TEAMS — the squad goes into the field as the teams made on the squad page,
+# each a squad of its own, and G picks which one T orders.
 #
-# Deploys a real roster (two robots on foot and a rover) through SquadSpawner,
-# then drives the commander the way the keys do — cycle_team() is G, and
-# _issue_order() is what a tap or a hold resolves to — and reads back where each
-# order landed, what the HUD says and which markers are dimmed.
+# Deploys a real roster (three robots on foot and a rover) through SquadSpawner,
+# moves robots between teams the way the squad page does, and drives the
+# commander the way the keys do — cycle_team() is G, and _issue_order() is what
+# a tap or a hold resolves to — reading back where each order landed, what the
+# HUD says and which markers are dimmed.
 #
-# Boots the real world with autosave off: it reads the save on this machine
-# and never writes it. Everything happens at base, beside the player.
+# Boots the real world with autosave off. Its campaign is this machine's save,
+# loaded into memory: the test swaps in a roster of its own there and never
+# writes it. Everything happens at base, beside the player.
 # ─────────────────────────────────────────────
 
 const ROVER_SCRIPT := "res://Character/characters/ai/rover.gd"
@@ -38,11 +40,13 @@ func _flat_dist(a: Vector3, b: Vector3) -> float:
 	return Vector2(a.x - b.x, a.z - b.z).length()
 
 
-func _recruit(state: CampaignState, frame: ChassisDefinition, record_name: String) -> SoldierRecord:
-	var rec := state.recruit(frame)
-	rec.display_name = record_name
-	rec.benched = false
-	return rec
+func _robot(state: CampaignState, frame: ChassisDefinition, record_name: String) -> SoldierRecord:
+	var r := SoldierRecord.new()
+	r.display_name = record_name
+	r.set_chassis(frame, state.catalogue)
+	r.recompute_stats(state.catalogue)
+	state.add_soldier(r)
+	return r
 
 
 func _marker_text(commander: SquadCommander, squad: Squad) -> String:
@@ -50,6 +54,25 @@ func _marker_text(commander: SquadCommander, squad: Squad) -> String:
 	if marker == null or not is_instance_valid(marker) or marker._label == null:
 		return "<no marker>"
 	return marker._label.text
+
+
+func _names(state: CampaignState) -> Array:
+	return state.teams.map(func(t: Dictionary) -> String: return t["name"])
+
+
+# Same things in the same order. By element, because a typed array and an
+# untyped one holding the same things need not compare equal.
+func _same(a: Array, b: Array) -> bool:
+	if a.size() != b.size():
+		return false
+	for i in a.size():
+		if a[i] != b[i]:
+			return false
+	return true
+
+
+func _body(spawner: SquadSpawner, record: SoldierRecord) -> Soldier:
+	return spawner.find_body(record)
 
 
 # The bodies a deployment stood up go with it. clear() leaves them to the level
@@ -87,52 +110,83 @@ func _init() -> void:
 		return
 
 	var cat: ItemCatalogue = cm.catalogue
-	var state := CampaignState.new()
-	state.armoury = Armoury.new()
-	state.catalogue = cat
-	state.award(5000)
 	var foot := cat.chassis_def(&"soldier")
-	var ada := _recruit(state, foot, "Ada")
-	var bo := _recruit(state, foot, "Bo")
-	var rolly := _recruit(state, cat.chassis_def(&"rover"), "Rolly")
-	var base_name: String = cm.state.squad_name if cm.state.squad_name != "" else "ALPHA"
+	var wheels := cat.chassis_def(&"rover")
+
+	# ── A SAVE FROM BEFORE TEAMS ─────────────────
+	var old := CampaignState.new()
+	old.catalogue = cat
+	_robot(old, foot, "Old-1")
+	_robot(old, wheels, "Old-2")
+	var data := old.to_dict()
+	data.erase("teams")
+	for entry in data["roster"]:
+		entry.erase("team")
+	data["squad_name"] = "HAMMER"
+	var loaded := CampaignState.from_dict(data)
+	loaded.catalogue = cat
+	loaded.ensure_teams()
+	_check("a save from before teams is split as the game used to split it: on foot first, the rover in ARMOR",
+		_names(loaded) == ["HAMMER", "ARMOR"] and loaded.team_name(loaded.roster[1].team_id) == "ARMOR"
+		and loaded.team_name(loaded.roster[0].team_id) == "HAMMER", str(loaded.teams))
+	_check("...the first team named after the squad, since it was named", _names(loaded)[0] == "HAMMER")
+	data["squad_name"] = "NAMELESS"
+	var unnamed := CampaignState.from_dict(data)
+	unnamed.catalogue = cat
+	unnamed.ensure_teams()
+	_check("...and INFANTRY when it never was", _names(unnamed) == ["INFANTRY", "ARMOR"], str(unnamed.teams))
+	var round_trip := CampaignState.from_dict(loaded.to_dict())
+	_check("teams and who is in them survive a save and a load", round_trip.teams == loaded.teams
+		and round_trip.roster[1].team_id == loaded.roster[1].team_id, str(round_trip.teams))
+
+	# ── THIS TEST'S ROSTER ───────────────────────
+	# In memory only: autosave is off, and nothing here deploys or goes home.
+	var state: CampaignState = cm.state
+	state.roster.clear()
+	state.teams.clear()
+	state.supply_cap = 20
+	var ada := _robot(state, foot, "Ada")
+	var bo := _robot(state, foot, "Bo")
+	var cy := _robot(state, foot, "Cy")
+	var rolly := _robot(state, wheels, "Rolly")
+	_check("robots join by frame: on foot the first team, a rover a team of vehicles", _names(state) == ["INFANTRY", "ARMOR"]
+		and ada.team_id == state.teams[0]["id"] and rolly.team_id == state.teams[1]["id"], str(state.teams))
 
 	# ── DEPLOYMENT ───────────────────────────────
 	_withdraw(spawner, ai)
 	spawner.spawn_mode = SquadSpawner.SpawnMode.PLAYER
-	var roster: Array[SoldierRecord] = [ada, bo, rolly]
+	var roster: Array[SoldierRecord] = [ada, bo, cy, rolly]
 	spawner.deploy_into(level, roster)
 	for _i in 10:
 		await physics_frame
 	commander._refresh_registry_quietly()
 	var teams := spawner.squads
-	_check("a roster with a rover goes in as two teams", teams.size() == 2, "%d squads" % teams.size())
+	_check("the squad goes in as one squad per team", teams.size() == 2, "%d squads" % teams.size())
 	if teams.size() != 2:
 		quit(1)
 		return
 	var infantry: Squad = teams[0]
 	var armor: Squad = teams[1]
-	var rover: Soldier = armor.squad_members[0] if armor.squad_members.size() == 1 else null
-	_check("...the robots on foot as INFANTRY", infantry.team == Squad.TEAM_INFANTRY
-		and infantry.squad_members.size() == 2, "%s with %d" % [infantry.team, infantry.squad_members.size()])
-	_check("...the rover as ARMOR, on its own", armor.team == Squad.TEAM_ARMOR and rover != null
+	var rover: Soldier = _body(spawner, rolly)
+	_check("...each named after its team", infantry.callsign == "INFANTRY" and armor.callsign == "ARMOR",
+		"%s / %s" % [infantry.callsign, armor.callsign])
+	_check("...the robots on foot together", infantry.squad_members.size() == 3 and not infantry.vehicles_only)
+	_check("...the rover on its own, a team of vehicles", _same(armor.squad_members, [rover]) and armor.vehicles_only
 		and rover.get_script().resource_path == ROVER_SCRIPT)
-	_check("team names come from the squad's name", infantry.callsign == base_name
-		and armor.callsign == base_name + " ARMOR", "%s / %s" % [infantry.callsign, armor.callsign])
-	_check("both fall in on you, the armour further back", infantry.objective == Squad.SquadObjective.FOLLOW
+	_check("both fall in on you, the vehicles further back", infantry.objective == Squad.SquadObjective.FOLLOW
 		and armor.objective == Squad.SquadObjective.FOLLOW and armor.follow_distance > infantry.follow_distance)
-	_check("whatever wants one squad is handed the infantry", spawner.active_squad == infantry)
+	_check("whatever wants one squad is handed the first team", spawner.active_squad == infantry)
 
 	# ── WHO THE ORDERS GO TO ─────────────────────
 	var heard: Array = []
 	commander.team_selected.connect(func(label: String) -> void: heard.append(label))
-	_check("orders start out going to the infantry", commander.has_teams()
+	_check("orders start out going to the first team", commander.has_teams()
 		and commander.get_selected_squad() == infantry and commander.selection_label() == "INFANTRY")
 	hud._refresh_roster()
 	var shown := hud._shown_squads()
-	_check("...the roster lists both teams, one header each, the armour dimmed", shown.size() == 2
-		and shown[0] == infantry and shown[1] == armor and hud._roster.get_child_count() == 4
-		and hud._roster.get_child(0).modulate.a > 0.99 and hud._roster.get_child(3).modulate.a < 0.5,
+	_check("...the roster lists both teams, one header each, the other dimmed", shown.size() == 2
+		and shown[0] == infantry and shown[1] == armor and hud._roster.get_child_count() == 5
+		and hud._roster.get_child(0).modulate.a > 0.99 and hud._roster.get_child(4).modulate.a < 0.5,
 		"%d shown, %d roster rows" % [shown.size(), hud._roster.get_child_count()])
 	hud._refresh_nearby()
 	var strip: Array = hud._nearby.get_children().map(func(l): return (l as Label).text)
@@ -153,7 +207,7 @@ func _init() -> void:
 		"toast %s, bar row %s, '%s'" % [toast, row, hud._toast.text])
 	strip = hud._nearby.get_children().map(func(l): return (l as Label).text)
 	_check("...the roster and IN RANGE follow at once", hud._roster.get_child(0).modulate.a < 0.5
-		and hud._roster.get_child(3).modulate.a > 0.99
+		and hud._roster.get_child(4).modulate.a > 0.99
 		and strip.any(func(t): return t.begins_with("*ARMOR")) and strip.any(func(t): return t.begins_with(" INFANTRY")),
 		str(strip))
 	commander.cycle_team()
@@ -206,19 +260,12 @@ func _init() -> void:
 		armor.objective == Squad.SquadObjective.DEFEND and armor.ordered_target != foe)
 	commander.cycle_team()   # ARMOR
 	commander._issue_order(SquadCommander.Verb.CONTACT, foe.global_position, foe)
-	_check("with ARMOR selected, tapping a hostile sends the rover at it",
+	_check("with a team of vehicles selected, tapping a hostile sends it at it",
 		armor.objective == Squad.SquadObjective.ATTACK and armor.ordered_target == foe)
 	_check("...the toast and the marker say ARMOR : ATTACK", hud._toast.text.begins_with("ARMOR : ATTACK")
 		and _marker_text(commander, armor) == "ARMOR : ATTACK", "%s / %s" % [hud._toast.text, _marker_text(commander, armor)])
 	_check("...and the infantry stay where they were sent", infantry.objective == Squad.SquadObjective.DEFEND
 		and _flat_dist(infantry.objective_position, spot_a) < 1.0)
-	# A second before it goes. A robot freed within a frame or so of spawning
-	# crashes the engine on the way out when stdout is a pipe, as test.sh has
-	# it: a shutdown quirk, not the code under test, and nothing in the game
-	# frees a robot that fast.
-	for _i in 60:
-		await physics_frame
-	foe.queue_free()
 
 	commander._issue_order(SquadCommander.Verb.FOLLOW)   # ARMOR is selected
 	await physics_frame
@@ -256,37 +303,103 @@ func _init() -> void:
 	armor.follow(player)
 	_check("(reach) ...but one following you does", not zone._squad_present())
 	zone.queue_free()
+	for squad in [infantry, armor]:
+		for m in squad.get_living_members():
+			m.global_position = here + Vector3(randf_range(-4.0, 4.0), 1.0, randf_range(-4.0, 4.0))
+	await physics_frame
 
-	# ── RENAME ───────────────────────────────────
-	var manager: SquadManagerUI = _find(root, "SquadManagerUI")
-	if manager != null and manager._resolve_campaign():
-		var was: String = cm.state.squad_name
-		manager.rename_squad("TEAMTEST")
-		_check("renaming the squad renames both teams", infantry.callsign == "TEAMTEST"
-			and armor.callsign == "TEAMTEST ARMOR", "%s / %s" % [infantry.callsign, armor.callsign])
-		cm.state.squad_name = was
-	else:
-		_check("(setup) found the squad manager to rename through", false)
+	# ── MOVING ROBOTS BETWEEN TEAMS ──────────────
+	# What dragging a card does on the squad page. The campaign hands every change
+	# to the spawner, so the robots standing here change squad on the spot.
+	_check("a robot let go on the strip under the teams starts a team of its own",
+		state.move_to_new_team(cy) and _names(state) == ["INFANTRY", "ARMOR", "TEAM 3"], str(state.teams))
+	await physics_frame
+	var third: Squad = _body(spawner, cy).squad
+	_check("...which is in the field at once, with it in it", spawner.squads.size() == 3 and third != null
+		and third.callsign == "TEAM 3" and _same(third.squad_members, [_body(spawner, cy)])
+		and not infantry.squad_members.has(_body(spawner, cy)))
+	_check("...falling in on you, behind the others", third.objective == Squad.SquadObjective.FOLLOW
+		and third.follow_leader == player and third.follow_distance > armor.follow_distance)
+	# As the squad page leaves it: the game paused while it was open.
+	paused = true
+	await process_frame
+	paused = false
+	await process_frame
+	await process_frame
+	_check("...and on G the moment the game runs again", _same(commander.team_squads(), [infantry, armor, third]),
+		str(commander.team_squads().map(func(s): return s.callsign)))
+	var round_the_teams: Array = []
+	for _i in 3:
+		commander.cycle_team()
+		round_the_teams.append(commander.selection_label())
+	_check("G steps through them all in the page's order, and round", round_the_teams == ["ARMOR", "TEAM 3", "INFANTRY"],
+		str(round_the_teams))
+
+	_check("a team can be renamed, upper case", state.rename_team(third.team, "snipers")
+		and state.team_name(third.team) == "SNIPERS")
+	_check("...and is renamed where it stands", third.callsign == "SNIPERS" and third.team_name() == "SNIPERS")
+	_check("...but not to another team's name, nor to nothing", not state.rename_team(third.team, "armor")
+		and not state.rename_team(third.team, "  ") and state.team_name(third.team) == "SNIPERS")
+
+	commander.selected_index = commander.commandable_squads.find(third)
+	commander._issue_order(SquadCommander.Verb.ADVANCE, spot_b)
+	await physics_frame
+	_check("(orders) SNIPERS sent to hold a point", third.objective == Squad.SquadObjective.DEFEND)
+	_check("a robot dropped on another team joins it", state.move_to_team(bo, third.team)
+		and _body(spawner, bo).squad == third and third.squad_members.size() == 2
+		and _same(infantry.squad_members, [_body(spawner, ada)]))
+	_check("...and takes up what that team is doing: a post of its own on the point",
+		third._defend_posts.has(_body(spawner, bo)), str(third._defend_posts.keys()))
+
+	_check("the rover dropped in with robots on foot", state.move_to_team(rolly, infantry.team))
+	await physics_frame
+	_check("...empties ARMOR, and a team nobody is in is gone: from the page", _names(state) == ["INFANTRY", "SNIPERS"],
+		str(state.teams))
+	_check("...and from the field", not is_instance_valid(armor) and _body(spawner, rolly).squad == infantry)
+	_check("a team of robots on foot and a rover is not a team of vehicles", not infantry.vehicles_only)
+	commander._refresh_registry_quietly()
+	commander.selected_index = commander.commandable_squads.find(infantry)
+	commander._issue_order(SquadCommander.Verb.CONTACT, foe.global_position, foe)
+	_check("...so a hostile tapped with it selected is only called out", infantry.objective != Squad.SquadObjective.ATTACK)
+
+	_check("the bench keeps a robot's team: benched, it is still in it", state.set_benched(ada, true)
+		and ada.team_id == infantry.team and state.members_of(infantry.team, false).size() == 1)
+	_check("...and DEPLOY puts it back there", state.set_benched(ada, false) and ada.team_id == infantry.team)
+	_check("you are in no team, and cannot be moved into one", not state.move_to_team(state.player_record, infantry.team)
+		and not state.move_to_new_team(state.player_record))
+
+	# ── MAKING TEAMS UP TO THE LIMIT ─────────────
+	var extra: Array[SoldierRecord] = []
+	for i in 3:
+		extra.append(_robot(state, foot, "Extra-%d" % i))
+	var made := 0
+	for r in extra:
+		if state.move_to_new_team(r):
+			made += 1
+	_check("at most %d teams: the one past that is refused" % CampaignState.MAX_TEAMS,
+		made == CampaignState.MAX_TEAMS - 2 and state.teams.size() == CampaignState.MAX_TEAMS, "%d made" % made)
+	for r in extra:
+		state.move_to_team(r, infantry.team)
+	_check("...and moving them back out ends those teams", _names(state) == ["INFANTRY", "SNIPERS"], str(state.teams))
+	for r in extra:
+		state.roster.erase(r)
 
 	# ── ONE TEAM ─────────────────────────────────
-	# Left with orders standing for both teams, as a mission ends.
+	# Left with orders standing, as a mission ends.
 	commander._issue_order(SquadCommander.Verb.ADVANCE, spot_a)
-	commander.cycle_team()
-	commander._issue_order(SquadCommander.Verb.ADVANCE, spot_b)
 	var standing: Array = commander._markers.values()
 	_withdraw(spawner, ai)
-	var on_foot: Array[SoldierRecord] = [ada, bo]
-	spawner.deploy_into(level, on_foot)
+	var just_bo: Array[SoldierRecord] = [bo]
+	spawner.deploy_into(level, just_bo)
 	for _i in 10:
 		await physics_frame
 	commander._refresh_registry_quietly()
 	await process_frame
-	_check("the last deployment's markers come down with its teams", standing.size() == 2
+	_check("the last deployment's markers come down with its teams", not standing.is_empty()
 		and commander._markers.is_empty() and standing.all(func(m): return not is_instance_valid(m)),
 		"%d standing, %d left" % [standing.size(), commander._markers.size()])
-	_check("(one team) a roster without vehicles goes in as one squad, as it always did",
-		spawner.squads.size() == 1 and spawner.squads[0].team == Squad.TEAM_INFANTRY
-		and spawner.squads[0].callsign == base_name)
+	_check("(one team) only the team that has anyone deployed goes in", spawner.squads.size() == 1
+		and spawner.squads[0].callsign == "SNIPERS")
 	hud._refresh_roster()
 	_check("(one team) nothing to choose: one squad on the roster, and yours to order",
 		not commander.has_teams() and hud._shown_squads().size() == 1
@@ -304,25 +417,26 @@ func _init() -> void:
 	# ── REPAIRED BACK IN ─────────────────────────
 	var back := spawner.spawn_one(rolly)
 	await physics_frame
-	var new_armor: Squad = spawner._squad_of_team(Squad.TEAM_ARMOR)
-	_check("a rover repaired back in comes back as ARMOR, making the team",
-		back != null and new_armor != null and new_armor.squad_members.has(back) and spawner.squads.size() == 2)
-	_check("...named like the rest, and falling in on you", new_armor != null
-		and new_armor.callsign == base_name + " ARMOR" and new_armor.objective == Squad.SquadObjective.FOLLOW
-		and new_armor.follow_leader == player)
-	var cy := _recruit(state, foot, "Cy")
-	var back_on_foot := spawner.spawn_one(cy)
+	var rejoined: Squad = back.squad if back != null else null
+	_check("a robot repaired back in comes back in its own team, making it if it is not out",
+		back != null and rejoined != null and rejoined.team == rolly.team_id and spawner.squads.size() == 2)
+	_check("...named like the rest, and falling in on you", rejoined != null
+		and rejoined.callsign == "INFANTRY" and rejoined.objective == Squad.SquadObjective.FOLLOW
+		and rejoined.follow_leader == player)
+	var back_too := spawner.spawn_one(cy)
 	await physics_frame
-	_check("a robot on foot repaired back in rejoins the infantry",
-		back_on_foot != null and spawner.squads[0].squad_members.has(back_on_foot)
-		and spawner.squads[0].squad_members.size() == 3)
+	_check("one whose team is out rejoins that team", back_too != null and back_too.squad == spawner.squads[0]
+		and spawner.squads[0].squad_members.size() == 2)
 	commander._refresh_registry_quietly()
-	_check("...and once the rover is back there are two teams to order", commander.has_teams())
+	_check("...and with two teams out there are two to order", commander.has_teams())
 
-	# The two just repaired in were spawned a frame ago: a second before they go
-	# too, for the same reason as the hostile above.
+	# The ones just repaired in and the hostile were spawned a moment ago: a
+	# second before they go. A robot freed within a frame or so of spawning
+	# crashes the engine on the way out when stdout is a pipe, as test.sh has
+	# it: a shutdown quirk, not the code under test.
 	for _i in 60:
 		await physics_frame
+	foe.queue_free()
 	_withdraw(spawner, ai)
 	# Let everything in flight finish before quitting: the frees, the last order's
 	# confirm sound and the bark election it opened. Quitting under them leaked

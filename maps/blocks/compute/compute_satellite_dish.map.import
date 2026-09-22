@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cdtgvgvj3i1k6"
+path="res://.godot/imported/compute_satellite_dish.map-1ee41bab8344c90315abb57f20c49fc8.tres"
+
+[deps]
+
+source_file="res://maps/blocks/compute/compute_satellite_dish.map"
+dest_files=["res://.godot/imported/compute_satellite_dish.map-1ee41bab8344c90315abb57f20c49fc8.tres"]
+
+[params]
+

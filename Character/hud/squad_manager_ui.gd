@@ -4,7 +4,7 @@ class_name SquadManagerUI
 # ─────────────────────────────────────────────
 # SQUAD MANAGER — three pages behind one key, each with one job:
 #
-#   SQUAD     who goes, and what they carry           squad/squad_page.gd
+#   SQUAD     who goes, in which team, what they carry  squad/squad_page.gd
 #   ARMORER   buying and selling gear                 squad/armorer_page.gd
 #   FACTORY   building robots, adding seats           squad/factory_page.gd
 #
@@ -439,24 +439,3 @@ func carriers_of(item_id: StringName) -> PackedStringArray:
 		if r != null and r.all_fitted_ids().has(item_id):
 			out.append(r.display_name.to_upper())
 	return out
-
-
-## The squad's name is CampaignState.squad_name, which the spawner puts on the
-## Squad node. A squad already standing at base is renamed on the spot.
-func rename_squad(new_name: String) -> void:
-	if state == null:
-		return
-	var cleaned := new_name.strip_edges().to_upper()
-	if cleaned == "":
-		cleaned = "NAMELESS"
-	if cleaned == state.squad_name:
-		return
-	state.squad_name = cleaned
-	for squad in get_tree().get_nodes_in_group("squads"):
-		if squad is Squad and (squad as Squad).player_commandable:
-			# Each team keeps its word: TOMMYSQUAD, TOMMYSQUAD ARMOR.
-			(squad as Squad).callsign = Squad.callsign_for(state.squad_name, (squad as Squad).team)
-			(squad as Squad).notify_roster_changed()
-	_play(sfx_select)
-	# squad_name is not on a record, so nothing else announces it.
-	_rebuild()

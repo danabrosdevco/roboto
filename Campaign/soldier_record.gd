@@ -60,6 +60,10 @@ enum Status { ACTIVE, WOUNDED, DESTROYED }
 # manager. A choice the player made, so it is saved, and it is never cleared
 # for them.
 @export var benched: bool = false
+# TEAM — which of the player's teams this robot goes into the field with, by
+# CampaignState team id. Kept while benched, so DEPLOY puts it back where it
+# was. Empty until CampaignState.ensure_teams gives it one by its frame.
+@export var team_id: StringName = &""
 
 # ── KIT ───────────────────────────────────────
 # Same resource type the AI already uses, so the armoury UI is dragging these
@@ -406,6 +410,7 @@ func to_dict() -> Dictionary:
 		"signal_integrity": signal_integrity,
 		"status": int(status),
 		"benched": benched,
+		"team": String(team_id),
 		"missions_survived": missions_survived,
 		"confirmed_kills": confirmed_kills,
 		"revives": revives,
@@ -431,6 +436,8 @@ static func from_dict(data: Dictionary) -> SoldierRecord:
 	r.status = int(data.get("status", 0)) as Status
 	# Saves from before the bench existed have no key: everyone deploys.
 	r.benched = bool(data.get("benched", false))
+	# Saves from before teams have none: ensure_teams gives one by frame.
+	r.team_id = StringName(str(data.get("team", "")))
 	r.missions_survived = int(data.get("missions_survived", 0))
 	r.confirmed_kills = int(data.get("confirmed_kills", 0))
 	r.revives = int(data.get("revives", 0))

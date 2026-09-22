@@ -10,6 +10,7 @@ const _Analytics := preload("res://Managers/analytics.gd")
 # tutorial_label.gd's _Toast.
 const _SignalArc := preload("res://Character/weapon/appx/signal_arc.gd")
 const _KillKinds := preload("res://Campaign/kill_kinds.gd")
+const _Ground := preload("res://Campaign/ground_snap.gd")
 
 # ── NODE REFERENCES ───────────────────────────
 @export var patrol_path: PatrolPath
@@ -339,6 +340,9 @@ var _ekill_announced: bool = false
 var _ekill_latched: bool = false
 # Whoever last put signal damage into this robot, so an e-kill can be credited.
 var _signal_source: Node = null
+# ...and what the playtest log was crediting at that moment ("EMP"), since the
+# e-kill itself registers a frame later, when the blast has long cleared it.
+var _signal_cause: String = ""
 ## Seconds a shot robot (and its squad) stays exempt from distance culling.
 ## Long enough to close on whoever is shooting and actually fight them.
 @export var wake_on_damage_seconds: float = 20.0
@@ -855,6 +859,19 @@ func initialize():
 	activation_distance_sq = activation_distance * activation_distance
 	_self_rid = get_rid()
 	_collision_shape = _find_collision_shape()
+
+	# PATH POINTS ARE JUDGED AT BODY HEIGHT. The nav agent counts a point
+	# reached within path_desired_distance in 3D, from this node's origin —
+	# the middle of a soldier's capsule, a metre above its feet — to a point on
+	# the navmesh, which lies anywhere from just under the real ground to most
+	# of a metre over it. A point under the ground was more than a metre away
+	# with the robot standing on it, so it was never reached: the robot stopped
+	# dead on it, and every squadmate whose path ran through the same point
+	# queued up behind. That was Coast Road's whole squad, stuck on open
+	# ground. Lifting the path by the depth of the feet leaves only the
+	# navmesh's own height error in the gap.
+	if nav_agent != null:
+		nav_agent.path_height_offset = -_Ground.foot_depth(self)
 
 	# Desynchronise decision cadence per character. Without this every
 	# soldier in a squad re-rolls on exactly the same frame.
@@ -3091,9 +3108,13 @@ func get_signal_state() -> SignalState:
 func receive_signal_damage(amount: float, source: Node = null) -> void:
 	if source != null:
 		_signal_source = source
+		_signal_cause = _Analytics.cause()
 	var actual = amount / maxf(signal_resistance, 0.01)
 	var before = signal_integrity
 	signal_integrity = maxf(0.0, signal_integrity - actual)
+	# What was actually taken off, not what was thrown at it: a robot already
+	# at zero loses nothing to a second EMP.
+	_Analytics.signal_damage(self, before - signal_integrity, source)
 	_on_signal_damaged(before, signal_integrity)
 	_update_ekill_latch()
 	if signal_integrity <= SIGNAL_EKILL:
@@ -3214,6 +3235,7 @@ func _tick_ekill_edge() -> void:
 	_ekill_announced = down
 	if down:
 		ekilled.emit(self, _signal_source)
+		_Analytics.ekill(self, _signal_source, _signal_cause)
 
 func _can_receive_orders() -> bool:
 	# CRITICAL or E-KILL: robot ignores squad orders

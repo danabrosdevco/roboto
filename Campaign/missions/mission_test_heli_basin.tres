@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=10 format=3 uid="uid://c6ub8cvgfmhvm"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://bxg8i8eoyk2hu" path="res://maps/valley_basin_level.tscn" id="3_valley"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="5_heli"]
+
+[sub_resource type="Resource" id="S_patrol"]
+script = ExtResource("2_espec")
+callsign = "PATROL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_heli")])
+count = 0
+posture = 0
+route_tag = &"patrol_valley_mid"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+
+[sub_resource type="Resource" id="S_wave1"]
+script = ExtResource("2_espec")
+callsign = "WAVE-1"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_heli")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_valley_garrison_1"
+spawn_tag = &"obj_valley_garrison_5"
+spawn_offset = Vector3(60, 45, 40)
+always_active = true
+faction = 1
+reinforcement_tag = &"valley_garrison_cap_1"
+
+[sub_resource type="Resource" id="S_wave2"]
+script = ExtResource("2_espec")
+callsign = "WAVE-2"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_heli")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_valley_garrison_2"
+spawn_tag = &"obj_valley_garrison_5"
+spawn_offset = Vector3(75, 50, -30)
+always_active = true
+faction = 1
+reinforcement_tag = &"valley_garrison_cap_2"
+
+[sub_resource type="Resource" id="S_wave3"]
+script = ExtResource("2_espec")
+callsign = "WAVE-3"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_heli")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_valley_garrison_3"
+spawn_tag = &"obj_valley_garrison_5"
+spawn_offset = Vector3(55, 55, -65)
+always_active = true
+faction = 1
+reinforcement_tag = &"valley_garrison_cap_3"
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"test_heli_basin"
+display_name = "TEST: Helicopters (Basin)"
+briefing = "Test rig. One quadcopter bomber on patrol, one more per relay you capture. No ground troops."
+level_scene = ExtResource("3_valley")
+map_position = Vector2(0, 120)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_patrol"), SubResource("S_wave1"), SubResource("S_wave2"), SubResource("S_wave3")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"valley_garrison_cap_1", &"valley_garrison_cap_2", &"valley_garrison_cap_3", &"valley_extract"])
+reward_resources = 0
+unlocks = Array[StringName]([])
+repeatable = true
+requires = Array[StringName]([])

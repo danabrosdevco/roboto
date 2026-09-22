@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dwskmdtpm7v4s"
+path="res://.godot/imported/feature_container_stack.map-0ab71667ce6d2d8ae133c94f62e519f5.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_container_stack.map"
+dest_files=["res://.godot/imported/feature_container_stack.map-0ab71667ce6d2d8ae133c94f62e519f5.tres"]
+
+[params]
+

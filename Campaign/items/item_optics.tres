@@ -12,5 +12,6 @@ kind = 2
 cost = 70
 usable_by_player = false
 usable_by_ai = true
+one_per_robot = true
 sensor_bonus = 30.0
 required_rank = 0

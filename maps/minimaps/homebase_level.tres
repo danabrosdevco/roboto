@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_2npm4"]
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_23n4u"]
 
 [resource]
-script = ExtResource("1_2npm4")
+script = ExtResource("1_23n4u")
 level_scene_path = "res://maps/homebase_level.tscn"
 image_path = "res://maps/minimaps/homebase_level.png"
 world_min = Vector2(-70.7549, -14.1356)
@@ -12,4 +12,4 @@ objective_ids = Array[StringName]([])
 objective_names = Array[String]([])
 objective_positions = Array[Vector3]([])
 objective_kinds = Array[StringName]([])
-insertion_positions = Array[Vector3]([Vector3(-14.883, 4.02917, 24.6401)])
+insertion_positions = Array[Vector3]([Vector3(-14.883, 4.02917, 24.6401), Vector3(-33.6824, 3.22166, 21.2061)])

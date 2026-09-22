@@ -69,6 +69,11 @@ enum Kind {
 ## Goes on a frame that drives (ChassisDefinition.drives). False for anything
 ## written for a robot on legs: nanites rebuild a body, not a hull.
 @export var fits_vehicles: bool = true
+## At most one on any robot. For modules where a second copy is either nothing
+## (Cyclic Feed is on or off) or a stack no frame was balanced for (two Sensor
+## Relays added their range together): fitting refuses the second, and a save
+## that already holds two hands the spare back to stores on load.
+@export var one_per_robot: bool = false
 ## Listed in the armoury to buy. Off retires an item without breaking saves:
 ## anyone who already owns one still sees its row (to fit or sell it), but a
 ## campaign that has none never sees it offered. The player's Repair Tool went

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b1401laehnt4u"
+path="res://.godot/imported/solar_drone_dock.map-65d9460d1e240bbc70a72f9039c3c285.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_drone_dock.map"
+dest_files=["res://.godot/imported/solar_drone_dock.map-65d9460d1e240bbc70a72f9039c3c285.tres"]
+
+[params]
+

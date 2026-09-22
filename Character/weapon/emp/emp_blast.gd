@@ -1,6 +1,9 @@
 extends Node3D
 class_name EmpBlast
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ─────────────────────────────────────────────
 # EMP BLAST — the EMP grenade's payload. Attacks the signal, not the frame.
 #
@@ -65,6 +68,8 @@ func _detonate() -> void:
 # the "enemies" group — the player's squad too — so this is exact and immediate.
 func _pulse() -> void:
 	var hits := 0
+	# Credited to the EMP, not the thrower's gun: see Enemy._signal_cause.
+	_Analytics.set_cause("EMP")
 	for n in get_tree().get_nodes_in_group("enemies"):
 		if not (n is Node3D) or not is_instance_valid(n):
 			continue
@@ -85,6 +90,7 @@ func _pulse() -> void:
 		if n.has_method("lock_signal"):
 			n.lock_signal(lock)
 		hits += 1
+	_Analytics.clear_cause()
 	# One line per blast, worth having while tuning radius and falloff.
 	print("[EMP] pulse hit %d robot(s) within %.0fm" % [hits, radius])
 

@@ -12,6 +12,7 @@ grenade_scene = ExtResource("2_tkpop")
 inherit_carrier_velocity = 0.0
 salvo = 1
 salvo_scatter = 0.0
+fuse_override = 8.0
 analytics_label = "Grenade Launcher"
 blast_override = 75
 lob_speed = 32.0

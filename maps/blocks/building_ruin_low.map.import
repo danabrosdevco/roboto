@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://tyqygmrc32wf"
+path="res://.godot/imported/building_ruin_low.map-105731f0bf71a7a8b8cf1e0ebc28b39c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/building_ruin_low.map"
+dest_files=["res://.godot/imported/building_ruin_low.map-105731f0bf71a7a8b8cf1e0ebc28b39c.tres"]
+
+[params]
+

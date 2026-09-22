@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://drv4rj6vhw4go"
+path="res://.godot/imported/compute_cable_run.map-b9d60d728c2c64c26982005b180f427d.tres"
+
+[deps]
+
+source_file="res://maps/blocks/compute/compute_cable_run.map"
+dest_files=["res://.godot/imported/compute_cable_run.map-b9d60d728c2c64c26982005b180f427d.tres"]
+
+[params]
+

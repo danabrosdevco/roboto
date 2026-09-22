@@ -134,6 +134,11 @@ func _ready() -> void:
 		state.roster_changed.connect(_queue_base_save)
 	_repair_roster()
 	state.recompute_roster()
+	# After the catalogue: a save from before teams gets its INFANTRY and ARMOR
+	# built from what each robot's frame is.
+	state.ensure_teams()
+	if not state.teams_changed.is_connected(_on_teams_changed):
+		state.teams_changed.connect(_on_teams_changed)
 	_pay_compute_owed()
 	_grant_owed_unlocks()
 	state_loaded.emit()
@@ -224,6 +229,7 @@ func _return_unfittable_squad_kit() -> void:
 		if frame == null:
 			continue   # repaired above, or a frame this build no longer has
 		var changed := false
+		var held := {}   # one-per-robot items already counted on this robot
 		for field in ["weapon_ids", "equipment_ids", "module_ids"]:
 			var ids: Array = rec.get(field)
 			for i in ids.size():
@@ -237,6 +243,16 @@ func _return_unfittable_squad_kit() -> void:
 					changed = true
 					print("[Campaign] %s no longer fits %s (%s); returned it to stores."
 						% [item.display_name, rec.display_name, frame.display_name])
+				elif item != null and item.one_per_robot:
+					# Saved before the rule: the second copy of a one-per-robot
+					# module comes off, the first stays where it was.
+					if held.has(id_value):
+						ids[i] = &""
+						state.armoury.add(id_value)
+						changed = true
+						print("[Campaign] %s had a second %s; returned it to stores."
+							% [rec.display_name, item.display_name])
+					held[id_value] = true
 		if changed:
 			rec.recompute_stats(catalogue)
 
@@ -352,6 +368,14 @@ func _flush_base_save() -> void:
 func _on_soldier_repaired(record: SoldierRecord) -> void:
 	if spawner != null:
 		spawner.sync_record(record)
+
+
+# A robot moved to another team in the squad manager changes squad where it
+# stands — at base or in the middle of a mission — and a new or renamed team is
+# named in the field at once. The bench still waits for the next deploy.
+func _on_teams_changed() -> void:
+	if spawner != null:
+		spawner.regroup()
 
 
 func register_objective_tracker(t: ObjectiveTracker) -> void:

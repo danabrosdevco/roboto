@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://d4ev6yl4xmbvw"
+path="res://.godot/imported/prop_crates.map-db60dda9dbba2d637baf23f4d4b73452.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_crates.map"
+dest_files=["res://.godot/imported/prop_crates.map-db60dda9dbba2d637baf23f4d4b73452.tres"]
+
+[params]
+

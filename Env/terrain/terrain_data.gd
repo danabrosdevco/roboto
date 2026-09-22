@@ -52,6 +52,10 @@ const CONTROL_STRIDE := 4
 ## {centre: Vector2 (x, z), size: Vector2, angle: float (radians, for
 ## Basis(Vector3.UP, angle)), height: float, ruined: bool}.
 @export var lots: Array = []
+## Where roads cross drawn water, terrain-local. Each is {start: Vector3,
+## end: Vector3, width: float}: the road ends on either bank, at road height,
+## with the water left open between them for a bridge.
+@export var bridges: Array = []
 @export var min_height: float = 0.0
 @export var max_height: float = 0.0
 ## The recipe that made this, snapshotted. Reproducibility, not live input.
@@ -152,6 +156,7 @@ func copy_from(other: TerrainData) -> void:
 	water_level = other.water_level
 	water = other.water
 	lots = other.lots
+	bridges = other.bridges
 	min_height = other.min_height
 	max_height = other.max_height
 	recipe = other.recipe
