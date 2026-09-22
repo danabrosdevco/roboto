@@ -189,12 +189,28 @@ bridge:
 - **Placing models:** `get_bridges()` returns each span in world space:
   `{start, end, width}`, with both ends at road height on the banks.
 
-**Water is visual only.** The surface is drawn, but nothing about navigation
-or movement changes. The navmesh includes the bed, so robots and the player
-can walk into water along the bottom. The water surfaces are deliberately not
-nodes, so a navmesh bake can't mistake them for a walkable floor. When you
-decide what water does in play (wading, damage, a barrier), hook it up in game
-code. `get_paint_at()` and `TerrainData.water_at_local()` say where water is.
+**Nothing walks in the water.** A river is only a river if the squad has to
+cross it on something, so the bed is not navigable. The bake can't tell a bed
+from any other dip and paves it, and `Env/terrain/water_navmesh.gd` takes it
+back out: when a level loads, `GeneratedTerrain._ready()` drops every navmesh
+polygon standing in the water mask below the waterline. Pittsburgh loses about
+4,300 polygons that way.
+
+It runs *after* the bake on purpose, so it holds however the navmesh was made
+— including from the editor's **Bake NavigationMesh** button, and on the levels
+that bake from the terrain's heightmap colliders rather than its chunk meshes.
+Two consequences:
+- **In the editor the navmesh still covers the water.** That is the raw bake,
+  and it is left alone rather than rewritten behind your back. The game strips
+  it at load; `tools/test_water_navmesh.gd` proves it.
+- **A crossing needs something to cross on.** Take a bridge out and the far
+  bank may become unreachable, which is the point, but check what it cuts off.
+
+Anything above the waterline survives, so bridge decks are unaffected. Movement
+is otherwise untouched — no wading, no damage; hook those up in game code if you
+want them. The water surfaces are also deliberately not nodes, so a bake can't
+mistake the surface itself for a walkable floor. `get_paint_at()` and
+`TerrainData.water_at_local()` say where water is.
 
 **Building lots.** The editor outlines each lot on the ground, blue for clean
 and orange for rubble, and each bridge span in yellow. **show_markers** turns

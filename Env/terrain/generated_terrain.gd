@@ -35,6 +35,7 @@ const Recipe := preload("res://Env/terrain/terrain_recipe.gd")
 const Data := preload("res://Env/terrain/terrain_data.gd")
 const Generator := preload("res://Env/terrain/terrain_generator.gd")
 const MeshBuilder := preload("res://Env/terrain/terrain_mesh_builder.gd")
+const WaterNavmesh := preload("res://Env/terrain/water_navmesh.gd")
 const DEFAULT_MATERIAL := preload("res://Env/terrain/terrain_material.tres")
 const DEFAULT_WATER_MATERIAL := preload("res://Env/terrain/water_material.tres")
 
@@ -201,6 +202,23 @@ func _ready() -> void:
 	if recipe != null and Engine.is_editor_hint() and not recipe.changed.is_connected(_on_recipe_changed):
 		recipe.changed.connect(_on_recipe_changed)
 	rebuild()
+	_unpave_the_river()
+
+
+## Rivers are not navigable. The bake cannot tell a river bed from any other
+## dip, so it paves it and the squad wades across; see water_navmesh.gd. Done
+## in play only: in the editor the bake is the human's to look at, and rewriting
+## the region's navmesh there would dirty the scene behind their back.
+func _unpave_the_river() -> void:
+	if Engine.is_editor_hint():
+		return
+	if _data == null or not _data.has_water():
+		return   # dry level — the whole question does not arise
+	var region := get_parent() as NavigationRegion3D
+	if region == null:
+		push_warning("%s has water but does not sit under a NavigationRegion3D, so its river bed stays walkable" % name)
+		return
+	WaterNavmesh.strip(region, self)
 
 
 func _notification(what: int) -> void:
