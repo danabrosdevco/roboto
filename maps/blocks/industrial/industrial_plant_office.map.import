@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dk78jrcuiacf2"
+path="res://.godot/imported/industrial_plant_office.map-9aba71c49766cc831af423efaf30501b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_plant_office.map"
+dest_files=["res://.godot/imported/industrial_plant_office.map-9aba71c49766cc831af423efaf30501b.tres"]
+
+[params]
+

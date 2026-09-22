@@ -76,6 +76,9 @@ enum Posture {
 
 # Held back until a director calls for them. RESERVE squads are spawned but
 # inert; this is the hook reinforcements will hang off.
+## What wakes a RESERVE: an objective id (on completion), "nest_down" (any
+## hive destroyed), "<callsign>_down" (the last of that squad gone), or
+## "<callsign>_engaged" (that squad's first contact, e.g. "port_engaged").
 @export var reinforcement_tag: StringName = &""
 ## Wakes itself once this many hostiles have been lost, instead of waiting for
 ## an objective of that name. 0 leaves it on the objective alone.

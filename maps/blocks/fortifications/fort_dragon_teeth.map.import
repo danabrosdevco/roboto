@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b7jy3pbg0djan"
+path="res://.godot/imported/fort_dragon_teeth.map-6a6092bac721c770ff807e4aa9855250.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_dragon_teeth.map"
+dest_files=["res://.godot/imported/fort_dragon_teeth.map-6a6092bac721c770ff807e4aa9855250.tres"]
+
+[params]
+

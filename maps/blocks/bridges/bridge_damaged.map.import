@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ccw3jl2bb0hwn"
+path="res://.godot/imported/bridge_damaged.map-49b1849dc966c25d7375f2340b43fa22.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bridges/bridge_damaged.map"
+dest_files=["res://.godot/imported/bridge_damaged.map-49b1849dc966c25d7375f2340b43fa22.tres"]
+
+[params]
+

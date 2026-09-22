@@ -1,0 +1,407 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=39 format=3 uid="uid://4ctfgm8cxpe7"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://r8jyom1thto0" path="res://maps/pittsburgh_level.tscn" id="3_pitt"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="7_hopper"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="8_chaser"]
+[ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="9_rover"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="10_mech"]
+[ext_resource type="Resource" uid="uid://c543tvfyia5hs" path="res://Campaign/chassis/chassis_reclaimer.tres" id="11_recl"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="12_nest"]
+[ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="13_bomber"]
+
+[sub_resource type="Resource" id="S_rail"]
+script = ExtResource("2_espec")
+callsign = "RAIL-YARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_rail"
+spawn_tag = &"obj_pitt_rail"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_ohio"]
+script = ExtResource("2_espec")
+callsign = "OHIO-WORKS"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_ohio"
+spawn_tag = &"obj_pitt_ohio"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_dam"]
+script = ExtResource("2_espec")
+callsign = "DAM"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_dam"
+spawn_tag = &"obj_pitt_dam"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_island"]
+script = ExtResource("2_espec")
+callsign = "ISLAND"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("7_hopper")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_island"
+spawn_tag = &"obj_pitt_island"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hive_island"]
+script = ExtResource("2_espec")
+callsign = "HIVE-ISLAND"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_island"
+spawn_tag = &"obj_pitt_island"
+spawn_offset = Vector3(3, 0, 9)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_shore"]
+script = ExtResource("2_espec")
+callsign = "NORTH-SHORE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("11_recl")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_shore"
+spawn_tag = &"obj_pitt_shore"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_point"]
+script = ExtResource("2_espec")
+callsign = "POINT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("8_chaser")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_point"
+spawn_tag = &"obj_pitt_point"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_strip"]
+script = ExtResource("2_espec")
+callsign = "STRIP"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_strip"
+spawn_tag = &"obj_pitt_strip"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_bridge"]
+script = ExtResource("2_espec")
+callsign = "BRIDGEHEAD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("7_hopper")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_bridge"
+spawn_tag = &"obj_pitt_bridge"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hive_bridge"]
+script = ExtResource("2_espec")
+callsign = "HIVE-BRIDGEHEAD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_bridge"
+spawn_tag = &"obj_pitt_bridge"
+spawn_offset = Vector3(9, 0, 11)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_port"]
+script = ExtResource("2_espec")
+callsign = "PORT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("11_recl")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_port"
+spawn_tag = &"obj_pitt_port"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_furnace"]
+script = ExtResource("2_espec")
+callsign = "FURNACE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_furnace"
+spawn_tag = &"obj_pitt_furnace"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_coke"]
+script = ExtResource("2_espec")
+callsign = "COKE-WORKS"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("7_hopper"), ExtResource("11_recl")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_coke"
+spawn_tag = &"obj_pitt_coke"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hive_coke"]
+script = ExtResource("2_espec")
+callsign = "HIVE-COKE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_coke"
+spawn_tag = &"obj_pitt_coke"
+spawn_offset = Vector3(-6, 0, 9)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_exit"]
+script = ExtResource("2_espec")
+callsign = "EAST-CLIFF"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pitt_exit"
+spawn_tag = &"obj_pitt_exit"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_lock"]
+script = ExtResource("2_espec")
+callsign = "LOCK-KEEPERS"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("7_hopper")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pitt_dam"
+spawn_tag = &"obj_pitt_in_nw"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"pitt_relay_dam"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_shore_res"]
+script = ExtResource("2_espec")
+callsign = "SHORE-RESERVE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("7_hopper")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pitt_shore"
+spawn_tag = &"obj_pitt_in_shore"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"pitt_relay_shore"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_plateau"]
+script = ExtResource("2_espec")
+callsign = "PLATEAU-ARMOUR"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("10_mech")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pitt_strip"
+spawn_tag = &"obj_pitt_in_ne"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"pitt_relay_strip"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_mon"]
+script = ExtResource("2_espec")
+callsign = "MON-RESERVE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("11_recl")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pitt_furnace"
+spawn_tag = &"obj_pitt_in_mon"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"pitt_relay_furnace"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_swarm"]
+script = ExtResource("2_espec")
+callsign = "SWARM"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("7_hopper"), ExtResource("7_hopper"), ExtResource("7_hopper")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pitt_point"
+spawn_tag = &"obj_pitt_in_south"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"pitt_swarm"
+wake_after_kills = 40
+
+[sub_resource type="Resource" id="S_column"]
+script = ExtResource("2_espec")
+callsign = "COLUMN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("10_mech")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pitt_exit"
+spawn_tag = &"obj_pitt_in_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"pitt_column"
+wake_after_kills = 100
+
+[sub_resource type="Resource" id="S_air_dam"]
+script = ExtResource("2_espec")
+callsign = "KESTREL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pitt_dam"
+spawn_tag = &"obj_pitt_dam"
+spawn_offset = Vector3(-60, 40, -170)
+always_active = true
+faction = 1
+reinforcement_tag = &"dam_engaged"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_air_shore"]
+script = ExtResource("2_espec")
+callsign = "HARRIER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pitt_shore"
+spawn_tag = &"obj_pitt_shore"
+spawn_offset = Vector3(40, 40, 190)
+always_active = true
+faction = 1
+reinforcement_tag = &"north-shore_engaged"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_air_strip"]
+script = ExtResource("2_espec")
+callsign = "OSPREY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber"), ExtResource("13_bomber")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pitt_strip"
+spawn_tag = &"obj_pitt_strip"
+spawn_offset = Vector3(170, 40, -110)
+always_active = true
+faction = 1
+reinforcement_tag = &"strip_engaged"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_air_furnace"]
+script = ExtResource("2_espec")
+callsign = "BUZZARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber"), ExtResource("13_bomber")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pitt_furnace"
+spawn_tag = &"obj_pitt_furnace"
+spawn_offset = Vector3(-60, 40, -190)
+always_active = true
+faction = 1
+reinforcement_tag = &"furnace_engaged"
+wake_after_kills = 0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"pitt_1_rivers"
+display_name = "Three Rivers"
+briefing = "Three rivers and a fort on every bend. Land in the south-west hills and come up the rail valley to the Ohio. Four relays hold the valleys: the lock on the Ohio dam, the North Shore command post, the Strip, and the furnace on the Monongahela. Take all four and get out at the east end of the road. Their gunships sit over the ridges and every big garrison calls them in the moment it is hit, so choose where you start each fight. Each relay you take brings that valley's reserve down on you. Three hives, armour in every fort, and more of them the longer it goes."
+level_scene = ExtResource("3_pitt")
+map_position = Vector2(430, 0)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_rail"), SubResource("S_ohio"), SubResource("S_dam"), SubResource("S_island"), SubResource("S_hive_island"), SubResource("S_shore"), SubResource("S_point"), SubResource("S_strip"), SubResource("S_bridge"), SubResource("S_hive_bridge"), SubResource("S_port"), SubResource("S_furnace"), SubResource("S_coke"), SubResource("S_hive_coke"), SubResource("S_exit"), SubResource("S_lock"), SubResource("S_shore_res"), SubResource("S_plateau"), SubResource("S_mon"), SubResource("S_swarm"), SubResource("S_column"), SubResource("S_air_dam"), SubResource("S_air_shore"), SubResource("S_air_strip"), SubResource("S_air_furnace")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"pitt_relay_dam", &"pitt_relay_shore", &"pitt_relay_strip", &"pitt_relay_furnace", &"pitt_relay_port", &"pitt_hive_island", &"pitt_hive_bridge", &"pitt_hive_coke", &"pitt_extract"])
+reward_resources = 650
+compute_reward = 1
+unlocks = Array[StringName]([&"cyclic_feed"])
+squad_size = -1
+repeatable = false
+requires = Array[StringName]([&"coast_1_road"])

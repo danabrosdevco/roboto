@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cfsu37inwyvux"
+path="res://.godot/imported/fort_sentry_turret.map-25e630789224fe96e69d3dd72258bf13.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_sentry_turret.map"
+dest_files=["res://.godot/imported/fort_sentry_turret.map-25e630789224fe96e69d3dd72258bf13.tres"]
+
+[params]
+

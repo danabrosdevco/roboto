@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dvrad8mxdiqc0"
+path="res://.godot/imported/machine_lathe.map-cd9d2ff88e47b0201fcaac8d1213c77f.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_lathe.map"
+dest_files=["res://.godot/imported/machine_lathe.map-cd9d2ff88e47b0201fcaac8d1213c77f.tres"]
+
+[params]
+

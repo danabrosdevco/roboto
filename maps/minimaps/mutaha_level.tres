@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_jg4ww"]
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_f2hq2"]
 
 [resource]
-script = ExtResource("1_jg4ww")
+script = ExtResource("1_f2hq2")
 level_scene_path = "res://maps/mutaha_level.tscn"
 image_path = "res://maps/minimaps/mutaha_level.png"
-world_min = Vector2(-485.745, -485.745)
-world_max = Vector2(485.745, 485.745)
+world_min = Vector2(-484.155, -484.155)
+world_max = Vector2(484.155, 484.155)
 objective_ids = Array[StringName]([])
 objective_names = Array[String]([])
 objective_positions = Array[Vector3]([])

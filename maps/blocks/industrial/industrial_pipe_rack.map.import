@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c3tiagea45xwh"
+path="res://.godot/imported/industrial_pipe_rack.map-bbe6fe24111f58ca915750ae0b547670.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_pipe_rack.map"
+dest_files=["res://.godot/imported/industrial_pipe_rack.map-bbe6fe24111f58ca915750ae0b547670.tres"]
+
+[params]
+

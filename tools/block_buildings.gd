@@ -49,6 +49,9 @@ const SLAB := {"top": DECK, "side": FRAME, "bottom": FRAME}   # anything walked 
 const STAIR := {"top": DECK, "side": FRAME, "bottom": FRAME}
 
 var _brushes: Array = []
+## Where the piece's no-collision brushes start, or -1 for none. See
+## no_collision().
+var _ghost_from := -1
 
 
 func _initialize() -> void:
@@ -89,6 +92,7 @@ func _initialize() -> void:
 			skipped += 1
 			continue
 		_brushes = []
+		_ghost_from = -1
 		(made[name] as Callable).call()
 		var f := FileAccess.open(path, FileAccess.WRITE)
 		if f == null:
@@ -645,37 +649,60 @@ func _ruin_low() -> void:
 
 # ── Output ───────────────────────────────────────────────────────────────────
 
+## Everything built after this call builds with NO collision: the brushes go
+## into a func_detail_illusionary entity instead of worldspawn, so FuncGodot
+## gives them a mesh and no collision shape.
+##
+## For ground detail the squad should walk over rather than into. Rail track is
+## the case that forced it: 0.35 m of rail and sleeper is higher than the 0.25 m
+## an agent climbs, so every track baked as a wall and cut the yard's navmesh
+## into strips. Nothing tall belongs in here — a wall with no collision is a
+## hole the squad walks through.
+func no_collision() -> void:
+	_ghost_from = _brushes.size()
+
+
 func _map_text() -> String:
+	var solid := _brushes.size() if _ghost_from < 0 else _ghost_from
 	var lines := PackedStringArray(["// Game: Roboto", "// Format: Valve", "// entity 0", "{",
 			"\"mapversion\" \"220\"", "\"wad\" \"\"", "\"classname\" \"worldspawn\""])
-	for b in _brushes.size():
-		lines.append("// brush %d" % b)
-		lines.append("{")
-		for face: Dictionary in _brushes[b]:
-			var p: Array = face.poly
-			var n: Vector3 = face.n
-			var u: Vector3
-			var v: Vector3
-			if absf(n.z) > 0.999:
-				u = Vector3(signf(n.z), 0, 0)
-				v = Vector3(0, -1, 0)
-			else:
-				u = Vector3(0, 0, 1).cross(n).normalized()
-				v = u.cross(n).normalized()
-			# Plane points as FuncGodot and TrenchBroom read them: the normal is
-			# (p2 - p0) × (p1 - p0), so an outward-wound face goes in as v0 v2 v1.
-			# "name@0.3" asks for a texture scale other than 1: fine detail such
-			# as solar cells, which at 8 m a repeat would be the size of doors.
-			var tex: String = face.tex
-			var scale := "1 1"
-			var at := tex.find("@")
-			if at >= 0:
-				scale = "%s %s" % [tex.substr(at + 1), tex.substr(at + 1)]
-				tex = tex.substr(0, at)
-			lines.append("%s %s %s %s [ %s 0 ] [ %s 0 ] 0 %s" % [_pt(p[0]), _pt(p[2]), _pt(p[1]), tex, _axis(u), _axis(v), scale])
-		lines.append("}")
+	for b in range(0, solid):
+		lines.append_array(_brush_text(b))
 	lines.append("}")
+	if solid < _brushes.size():
+		lines.append_array(["// entity 1", "{", "\"classname\" \"func_detail_illusionary\""])
+		for b in range(solid, _brushes.size()):
+			lines.append_array(_brush_text(b))
+		lines.append("}")
 	return "\n".join(lines) + "\n"
+
+
+func _brush_text(b: int) -> PackedStringArray:
+	var lines := PackedStringArray(["// brush %d" % b, "{"])
+	for face: Dictionary in _brushes[b]:
+		var p: Array = face.poly
+		var n: Vector3 = face.n
+		var u: Vector3
+		var v: Vector3
+		if absf(n.z) > 0.999:
+			u = Vector3(signf(n.z), 0, 0)
+			v = Vector3(0, -1, 0)
+		else:
+			u = Vector3(0, 0, 1).cross(n).normalized()
+			v = u.cross(n).normalized()
+		# Plane points as FuncGodot and TrenchBroom read them: the normal is
+		# (p2 - p0) × (p1 - p0), so an outward-wound face goes in as v0 v2 v1.
+		# "name@0.3" asks for a texture scale other than 1: fine detail such
+		# as solar cells, which at 8 m a repeat would be the size of doors.
+		var tex: String = face.tex
+		var scale := "1 1"
+		var at := tex.find("@")
+		if at >= 0:
+			scale = "%s %s" % [tex.substr(at + 1), tex.substr(at + 1)]
+			tex = tex.substr(0, at)
+		lines.append("%s %s %s %s [ %s 0 ] [ %s 0 ] 0 %s" % [_pt(p[0]), _pt(p[2]), _pt(p[1]), tex, _axis(u), _axis(v), scale])
+	lines.append("}")
+	return lines
 
 
 func _pt(v: Vector3) -> String:

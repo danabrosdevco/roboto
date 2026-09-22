@@ -707,7 +707,7 @@ func _on_squad_selected(squad: Squad) -> void:
 	_refresh_nearby()
 
 
-# G, or tapping one of your robots.
+# G.
 func _on_team_selected(label: String) -> void:
 	if commander.has_teams():
 		_show_toast("ORDERS > %s" % label, COL_BRIGHT)

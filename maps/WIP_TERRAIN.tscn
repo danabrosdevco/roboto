@@ -1,0 +1,217 @@
+[gd_scene load_steps=22 format=3 uid="uid://doyp4vhth0hpo"]
+
+[ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_i5iho"]
+[ext_resource type="PackedScene" uid="uid://g7fmy28elpah" path="res://Env/world_objects/spawn_point.tscn" id="2_xf5pc"]
+[ext_resource type="Script" path="res://Campaign/squad_spawn_point.gd" id="3_yuc17"]
+[ext_resource type="Script" path="res://Env/terrain/generated_terrain.gd" id="4_iufgx"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="5_y3s10"]
+[ext_resource type="Texture2D" uid="uid://din3t548ed33s" path="res://Env/terrain/sketches/pittsburgh.png" id="6_3xr5w"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_stamp.gd" id="7_4aqb4"]
+[ext_resource type="Resource" uid="uid://cgj1bm30870er" path="res://maps/terrain_data/WIP_TERRAIN_terrain.res" id="7_njjxc"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_path.gd" id="8_3sro3"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter.gd" id="9_qd02q"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="10_fsfp4"]
+[ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="11_djtp4"]
+[ext_resource type="Shader" path="res://Env/new_sky_oct.16.gdshader" id="12_v448c"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_template"]
+agent_radius = 0.4
+agent_max_climb = 0.6
+filter_baking_aabb = AABB(-560, -30, -140, 1110, 100, 280)
+
+[sub_resource type="Resource" id="Resource_wc85w"]
+script = ExtResource("5_y3s10")
+size_x = 1408.0
+size_z = 896.0
+cell_size = 2.0
+random_seed = 7
+layout = 2
+floor_at_zero = true
+floor_width = 150.0
+floor_shoulder = 150.0
+floor_depth = 20.0
+floor_roughness = 0.3
+floor_edge_noise = 0.35
+meander = 90.0
+meander_scale = 650.0
+border_sides = 0
+border_height = 75.0
+border_width = 170.0
+border_noise = 70.0
+border_ruggedness = 0.7
+hills_height = 1.5
+hills_scale = 150.0
+hills_octaves = 5
+hills_warp = 40.0
+ridge_height = 2.0
+ridge_scale = 220.0
+ridge_on_floor = 0.1
+detail_height = 0.6
+detail_scale = 14.0
+terrace_step = 0.0
+terrace_strength = 0.75
+crater_count = 15
+crater_radius_min = 2.0
+crater_radius_max = 6.0
+crater_depth = 0.3
+crater_rim = 0.1
+craters_on_floor = true
+thermal_passes = 2
+talus_angle = 38.0
+hydraulic_strength = 1.5
+smooth_passes = 1
+sketch = ExtResource("6_3xr5w")
+sketch_metres_per_pixel = 4.0
+sketch_blend = 6.0
+sketch_edge_noise = 4.0
+sketch_mountain_height = 3.0
+water_level = -3.5
+water_depth = 4.0
+water_bank = 12.0
+urban_block = Vector2(28, 22)
+urban_street = 6.0
+urban_angle = 25.0
+urban_ruin = 0.25
+shelling_per_hectare = 30.0
+rough_height = 6.0
+road_width = 6.0
+road_falloff = 4.0
+road_smoothing = 30.0
+bridge_clearance = 2.5
+
+[sub_resource type="Curve3D" id="Curve3D_road"]
+bake_interval = 1.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -520, -0.05, 18, -39.6, 0, 5.28, 39.6, 0, -5.28, -440, -0.1, 12, -46.2, 0, 3.52, 46.2, 0, -3.52, -340, 0.8, -6, -48.4, 0, -3.96, 48.4, 0, 3.96, -230, -0.2, -4, -48.4, 0, -4.84, 48.4, 0, 4.84, -120, 0.3, 12, -48.4, 0, 0.88, 48.4, 0, -0.88, -10, 0, 18, -48.4, 0, 7.04, 48.4, 0, -7.04, 100, 0.2, 8, -50.6, 0, 3.08, 50.6, 0, -3.08, 210, -0.4, -14, -48.4, 0, -5.72, 48.4, 0, 5.72, 330, 0, -6, -38.5, 0, -5.72, 38.5, 0, 5.72, 430, 0.2, 12, 0, 0, 0, 0, 0, 0, 505, -0.3, 20),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+}
+point_count = 11
+
+[sub_resource type="Curve3D" id="Curve3D_trench_n"]
+bake_interval = 1.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 60, 1.5, -110, -0.88, 0, -12.76, 0.88, 0, 12.76, 52, 0.8, -80, -0.88, 0, -12.32, 0.88, 0, 12.32, 64, 0.9, -52, 0, 0, 0, 0, 0, 0, 56, 0.25, -24),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_trench_s"]
+bake_interval = 1.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 58, 0.7, 38, 0.88, 0, -11.88, -0.88, 0, 11.88, 66, 0.35, 64, 0.88, 0, -11.88, -0.88, 0, 11.88, 54, 0.2, 92, 0, 0, 0, 0, 0, 0, 62, 1.05, 118),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
+shader = ExtResource("12_v448c")
+shader_parameter/top_color = Color(0.14, 0.15, 0.17, 1)
+shader_parameter/bottom_color = Color(0.4, 0.38, 0.35, 1)
+shader_parameter/fog_color = Color(0.35, 0.33, 0.3, 1)
+shader_parameter/horizon_falloff = 1.5
+shader_parameter/fog_amount = 0.6
+shader_parameter/fog_falloff = 3.0
+shader_parameter/brightness = 0.7
+
+[sub_resource type="Sky" id="Sky_dark"]
+sky_material = SubResource("ShaderMaterial_sky")
+radiance_size = 0
+
+[sub_resource type="Environment" id="Environment_dark"]
+background_mode = 2
+sky = SubResource("Sky_dark")
+ambient_light_source = 3
+ambient_light_color = Color(0.3, 0.29, 0.27, 1)
+ambient_light_sky_contribution = 0.6
+ambient_light_energy = 0.6
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.33, 0.31, 0.29, 1)
+fog_density = 0.0015
+fog_sky_affect = 0.35
+
+[node name="TerrainTemplateLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region", "level_exits")]
+script = ExtResource("1_i5iho")
+spawn_point = NodePath("SpawnPoint")
+nav_region = NodePath("NavigationRegion3D")
+level_exits = [NodePath("NavigationRegion3D/LevelExit")]
+
+[node name="SpawnPoint" parent="." instance=ExtResource("2_xf5pc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -500, 1.15, 18)
+
+[node name="SquadSpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -486, -0.3, 28)
+script = ExtResource("3_yuc17")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_template")
+
+[node name="Terrain" type="Node3D" parent="NavigationRegion3D"]
+script = ExtResource("4_iufgx")
+recipe = SubResource("Resource_wc85w")
+data = ExtResource("7_njjxc")
+
+[node name="Stamps" type="Node3D" parent="NavigationRegion3D/Terrain"]
+
+[node name="OutpostPad" type="Node3D" parent="NavigationRegion3D/Terrain/Stamps"]
+transform = Transform3D(0.990268, 0, 0.139173, 0, 1, 0, -0.139173, 0, 0.990268, -190, -0.15, -44)
+script = ExtResource("7_4aqb4")
+footprint = 1
+size = Vector2(48, 32)
+falloff = 10.0
+
+[node name="CompoundPad" type="Node3D" parent="NavigationRegion3D/Terrain/Stamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 250, -1.2, 62)
+script = ExtResource("7_4aqb4")
+radius = 26.0
+falloff = 12.0
+
+[node name="ExtractionPad" type="Node3D" parent="NavigationRegion3D/Terrain/Stamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 505, -0.8, 20)
+script = ExtResource("7_4aqb4")
+radius = 16.0
+
+[node name="ImpactCrater" type="Node3D" parent="NavigationRegion3D/Terrain/Stamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, -0.15, -70)
+script = ExtResource("7_4aqb4")
+shape = 3
+radius = 18.0
+amount = 6.0
+paint = 3
+
+[node name="Road" type="Path3D" parent="NavigationRegion3D/Terrain"]
+curve = SubResource("Curve3D_road")
+script = ExtResource("8_3sro3")
+width = 7.0
+
+[node name="TrenchNorth" type="Path3D" parent="NavigationRegion3D/Terrain"]
+curve = SubResource("Curve3D_trench_n")
+script = ExtResource("8_3sro3")
+mode = 1
+width = 4.0
+falloff = 1.5
+smoothing = 10.0
+
+[node name="TrenchSouth" type="Path3D" parent="NavigationRegion3D/Terrain"]
+curve = SubResource("Curve3D_trench_s")
+script = ExtResource("8_3sro3")
+mode = 1
+width = 4.0
+falloff = 1.5
+smoothing = 10.0
+
+[node name="Scatter" type="Node3D" parent="NavigationRegion3D/Terrain"]
+script = ExtResource("9_qd02q")
+
+[node name="LevelExit" parent="NavigationRegion3D" instance=ExtResource("10_fsfp4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 505, -0.8, 20)
+
+[node name="WorldEnvironment" parent="." instance=ExtResource("11_djtp4")]
+environment = SubResource("Environment_dark")
+
+[node name="Sun" parent="WorldEnvironment" index="0"]
+transform = Transform3D(0.788011, 0.353129, -0.50432, 0, 0.819152, 0.573576, 0.615662, -0.451984, 0.645501, 0, 0, 0)
+shadow_opacity = 0.85
+directional_shadow_max_distance = 300.0
+
+[editable path="WorldEnvironment"]

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://r2f30bsn348x"
+path="res://.godot/imported/bridge_causeway.map-3279092cfe8209abc9f4f870562642fd.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bridges/bridge_causeway.map"
+dest_files=["res://.godot/imported/bridge_causeway.map-3279092cfe8209abc9f4f870562642fd.tres"]
+
+[params]
+

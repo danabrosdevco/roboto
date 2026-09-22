@@ -85,10 +85,10 @@ func _init() -> void:
 		await physics_frame
 	var cm: CampaignManager = world_scene.get_node("CampaignManager")
 	var unlocked_by := cm.missions.filter(func(m): return m != null and m.unlocks.has(&"mechanic"))
-	# Unlocked by the last arena op, on its own: it arrives before the valley
-	# does, so the first mission with a real squad can already take a medic.
-	_check("...unlocked by clearing the arena, one operation before the valley",
-		unlocked_by.size() == 1 and unlocked_by[0].id == &"arena_4_pack_hunt",
+	# Unlocked by the first squad op in the arena, so the Proving Ground and
+	# then the basin, the first long mission, can both take a medic.
+	_check("...unlocked by Firing Line, two operations before the basin",
+		unlocked_by.size() == 1 and unlocked_by[0].id == &"arena_3_firing_line",
 		str(unlocked_by.map(func(m): return str(m.id))))
 
 	var player: Node3D = _find(root, "Player")

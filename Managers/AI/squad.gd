@@ -87,6 +87,15 @@ var follow_leader: Node3D = null
 # A member already this close to their slot isn't given a new order. Without it
 # they re-path to a spot they're standing on and pivot in place.
 @export var follow_slot_tolerance: float = 1.6
+# How far a follower's standing order may fall behind its slot before a fresh
+# path is worth it. Your slot moves with you and never stops drifting, so at
+# the tolerance above every member re-pathed every few frames for as long as
+# you walked. See _hold_follow_formation.
+@export var follow_repath_distance: float = 4.0
+# How far the slot may drift before its navmesh snap is measured again. The
+# snap is a whole-map query (see _on_ground); between refreshes the correction
+# it produced is carried along with the moving slot.
+@export var follow_snap_refresh: float = 2.5
 # How fast the leader must move for their heading to count. Below this they're
 # considered stationary and the last heading is kept.
 @export var follow_heading_min_speed: float = 0.6
@@ -94,6 +103,9 @@ var follow_leader: Node3D = null
 @export var follow_anchor_smoothing: float = 6.0
 
 var _last_follow_issue: Vector3 = Vector3.ZERO
+# Per member: where its slot was when the navmesh snap was last measured, and
+# the correction that came back. See _slot_for.
+var _slot_cache: Dictionary = {}
 var _follow_heading: Vector3 = Vector3.ZERO
 var _follow_anchor_smoothed: Vector3 = Vector3.INF
 var _follow_reissue_t: float = 0.0
@@ -156,7 +168,16 @@ var patrol_index: int = 0
 var _patrol_forward: bool = true
 var _patrol_dwell_t: float = 0.0
 
-var context: SquadContext = SquadContext.UNENGAGED
+var context: SquadContext = SquadContext.UNENGAGED:
+	set(value):
+		var was := context
+		context = value
+		# The one place the transition happens, so anything that cares when a
+		# squad first comes under fire hears it however it got there: four code
+		# paths set ENGAGED and none of them used to say so. EnemyForceSpawner
+		# wakes "<callsign>_engaged" reserves off this.
+		if value == SquadContext.ENGAGED and was != SquadContext.ENGAGED:
+			engaged.emit(self)
 var objective: SquadObjective = SquadObjective.NONE
 var objective_position: Vector3 = Vector3.ZERO
 
@@ -194,6 +215,8 @@ var ordered_target: CharacterBody3D = null
 
 signal objective_changed(squad: Squad)
 signal roster_changed(squad: Squad)
+## Out of contact into contact: emitted on each transition, not every frame.
+signal engaged(squad: Squad)
 
 # How often to re-check whether combat is over (seconds)
 const DISENGAGE_CHECK_INTERVAL: float = 2.0
@@ -468,11 +491,18 @@ func _may_recall(soldier: Soldier) -> bool:
 func _enforce_leash(radius: float, defensive: bool) -> void:
 	if radius <= 0.0:
 		return
-	for ai in get_orderable_members():
+	var members: Array = get_orderable_members()
+	# Slots for the whole line at once: this runs every frame while a squad
+	# fights on a leash, and one call per member rebuilt the line each time.
+	var offsets: Array = _formation_offsets(members) \
+		if objective == SquadObjective.FOLLOW or objective == SquadObjective.PATROL else []
+	for i in members.size():
+		var ai = members[i]
 		if not (ai is Soldier):
 			continue
 		var soldier := ai as Soldier
-		var anchor: Vector3 = _anchor_for(soldier)
+		var anchor: Vector3 = objective_position + (offsets[i] as Vector3) if not offsets.is_empty() \
+			else _anchor_for(soldier)
 		var gap: float = soldier.global_position.distance_to(anchor)
 		if gap <= radius:
 			continue   # in bounds — leave them to fight
@@ -509,8 +539,28 @@ func _anchor_for(soldier: Soldier) -> Vector3:
 
 # Runs every frame while following and out of contact. Cheap: one distance check
 # per member, and orders only when something actually needs to change.
+# WHAT FOLLOW USED TO COST. This runs every frame for every member, and two
+# lines of it were map-wide work:
+#
+#   * `_on_ground()` is NavigationServer3D.map_get_closest_point, which walks
+#     every polygon in the map. Twenty-two followers asked for it twenty-two
+#     times a frame — including everyone standing still in their slot, who
+#     needed no answer at all. It is cached as an OFFSET now (`_slot_for`) and
+#     re-measured only when the slot has drifted `follow_snap_refresh`.
+#   * re-issuing a move the moment the slot drifted `follow_slot_tolerance`
+#     (1.6 m) sent every member through a fresh path resolve every few frames,
+#     because the slot moves with you and never stops drifting. A standing
+#     order may now go `follow_repath_distance` stale first.
+#
+# Measured on Three Rivers with 17 robots, walking: FOLLOW cost 12.5 ms a
+# physics frame against ADVANCE's 8.7 before this.
 func _hold_follow_formation() -> void:
-	for ai in get_orderable_members():
+	var members: Array = get_orderable_members()
+	if _slot_cache.size() > members.size() * 2:
+		_slot_cache.clear()   # members come and go; don't let their slots pile up
+	var offsets: Array = _formation_offsets(members)
+	for i in members.size():
+		var ai = members[i]
 		if not (ai is Enemy):
 			continue
 		var robot := ai as Enemy
@@ -519,8 +569,12 @@ func _hold_follow_formation() -> void:
 			continue
 
 		robot.always_active = true
-		var slot: Vector3 = _on_ground(objective_position + _formation_offset(ai), robot)
-		var gap: float = robot.global_position.distance_to(slot)
+		var raw: Vector3 = objective_position + (offsets[i] as Vector3)
+		var slot: Vector3 = _slot_for(robot, raw)
+		# On the ground plane: a slot takes its height from the leader, and
+		# measured in 3D a robot standing in its own slot partway down a hill
+		# reads as metres out of it.
+		var gap: float = _flat_gap(robot.global_position, slot)
 
 		if gap <= robot.slot_tolerance(follow_slot_tolerance):
 			# In position. Force the STATE as well as the movement — leaving
@@ -532,9 +586,10 @@ func _hold_follow_formation() -> void:
 				robot.halt()
 			continue
 
-		# Out of position, and not already on their way there.
+		# Out of position, and either not on their way at all or walking to a
+		# spot the squad has since left well behind.
 		if robot.movement_state == Enemy.MovementState.NONE \
-				or robot.movement_target.distance_to(slot) > follow_slot_tolerance:
+				or _flat_gap(robot.movement_target, slot) > follow_repath_distance:
 			if robot is Soldier:
 				(robot as Soldier).defensive_mode = false
 				(robot as Soldier).order_move_to(slot, true, true)
@@ -554,6 +609,25 @@ func _on_ground(slot: Vector3, robot: Node) -> Vector3:
 		return slot
 	var p := NavigationServer3D.map_get_closest_point((robot as Enemy).nav_agent.get_navigation_map(), slot)
 	return slot if p == Vector3.ZERO else p
+
+
+# The snap above, at a price a squad can pay every frame. What `_on_ground`
+# really answers is "how far is this slot off the walkable ground", and that
+# correction barely changes while the slot slides a couple of metres with the
+# leader — so it is measured once and carried, and re-measured when the slot
+# has moved `follow_snap_refresh` from wherever it was measured.
+func _slot_for(robot: Enemy, raw: Vector3) -> Vector3:
+	var key := robot.get_instance_id()
+	var seen: Dictionary = _slot_cache.get(key, {})
+	if seen.is_empty() or _flat_gap(seen["at"], raw) > follow_snap_refresh:
+		seen = {"at": raw, "fix": _on_ground(raw, robot) - raw}
+		_slot_cache[key] = seen
+	return raw + (seen["fix"] as Vector3)
+
+
+# Distance on the ground plane, ignoring height.
+static func _flat_gap(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x - b.x, a.z - b.z).length()
 
 
 # Latched from the leader's actual motion, not their facing. Turning on the spot
@@ -987,18 +1061,32 @@ func _formation_offset(member: Node) -> Vector3:
 	var idx = members.find(member)
 	if idx < 0:
 		return Vector3.ZERO
+	return _slot_offset(idx, member, _formation_axis(members), _line_spacing(members))
 
+
+# THE WHOLE LINE IN ONE PASS. Asking _formation_offset() for each member in
+# turn rebuilt the roster, the axis and the spacing every time — that work
+# squared, every frame, for the two loops that walk the squad (the follow
+# formation and the combat leash).
+func _formation_offsets(members: Array) -> Array:
 	var advance_dir := _formation_axis(members)
-	var lateral = advance_dir.cross(Vector3.UP).normalized()
+	var spacing := _line_spacing(members)
+	var out: Array = []
+	for i in members.size():
+		out.append(_slot_offset(i, members[i], advance_dir, spacing))
+	return out
 
-	# Slot order: centre, right, left, right2, left2 ...
+
+# Slot order: centre, right, left, right2, left2 ...
+func _slot_offset(idx: int, member: Node, advance_dir: Vector3, spacing: float) -> Vector3:
+	var lateral = advance_dir.cross(Vector3.UP).normalized()
 	var slot := 0
 	if idx > 0:
 		@warning_ignore("integer_division")
 		slot = int((idx + 1) / 2)
 		if idx % 2 == 0:
 			slot = -slot
-	var offset: Vector3 = lateral * (slot * _line_spacing(members))
+	var offset: Vector3 = lateral * (slot * spacing)
 	# Anything that does not fight walks behind the line, not in it. In the
 	# slot itself, so the follow formation's every-frame slot check agrees with
 	# where it was sent; a robot heading anywhere else was re-ordered every frame.

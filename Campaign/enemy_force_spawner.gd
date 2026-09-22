@@ -179,7 +179,7 @@ func wake(tag: StringName) -> int:
 		# get this: see the note on the gate in Enemy._physics_process.
 		for member in squad.squad_members:
 			if member != null and is_instance_valid(member):
-				member.never_culled = true
+				member.exempt_from_culling()
 		woken += 1
 
 	if woken > 0:
@@ -206,7 +206,9 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		push_error("EnemyForceSpawner: no chassis for '%s' and no default_chassis." % spec.callsign)
 		return null
 
-	var members: Array[Soldier] = []
+	# Built first and placed after, so the ring can be laid out knowing how
+	# much room each body takes (see _ring_offsets).
+	var made: Array[Soldier] = []
 	for i in bodies.size():
 		var frame: ChassisDefinition = bodies[i]
 		if frame == null or frame.scene == null:
@@ -229,6 +231,12 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 			soldier.set_meta(&"analytics_kind", frame.display_name)
 			# What a kill of this one counts as in the debrief (kill_kinds.gd).
 			soldier.set_meta(&"chassis_id", frame.id)
+		made.append(soldier)
+
+	var members: Array[Soldier] = []
+	var ring := _ring_offsets(made)
+	for i in made.size():
+		var soldier := made[i]
 		# PLACED BEFORE IT ENTERS THE TREE.
 		#
 		# Adding first and positioning after leaves the body at the level's
@@ -241,7 +249,7 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		# before the mission started: every squad ENGAGED on the first frame,
 		# so the picket never walked its patrol and the garrisons were already
 		# fighting something they could not see.
-		var at := anchor + _ring_offset(i, bodies.size())
+		var at: Vector3 = anchor + ring[i]
 		if spec.spawn_offset.y <= 0.0:
 			at = _Ground.stand(at, soldier, level)   # aircraft keep the height they were given
 		soldier.position = level.to_local(at)
@@ -274,6 +282,7 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 	# member's signals and would otherwise connect to an empty array.
 	squad.squad_members = members
 	level.add_child(squad)
+	squad.engaged.connect(_on_squad_engaged)
 
 	_apply_posture(squad, spec, route, post)
 	return squad
@@ -320,6 +329,24 @@ func _on_body_lost(body: Enemy) -> void:
 # The tag a squad fires when the last of it goes down: "PICKET" -> "picket_down".
 static func squad_down_tag(callsign: String) -> StringName:
 	return StringName(callsign.to_lower().replace(" ", "_") + "_down")
+
+
+# The tag a squad fires when it first comes into contact: "PORT" -> "port_engaged".
+# The other end of the story from "_down": a position that calls for help the
+# moment it is hit, not once it is gone — air support that answers a fight
+# wherever the player chose to start it, rather than a captured objective.
+static func squad_engaged_tag(callsign: String) -> StringName:
+	return StringName(callsign.to_lower().replace(" ", "_") + "_engaged")
+
+
+func _on_squad_engaged(squad: Squad) -> void:
+	if squad == null or not is_instance_valid(squad):
+		return   # freed between the emit and here
+	var tag := squad_engaged_tag(squad.callsign)
+	if not _reserves.has(tag):
+		return   # nobody is waiting on this squad's contact
+	print("[EnemyForce] '%s' is in contact: calling in '%s'" % [squad.callsign, tag])
+	wake(tag)
 
 
 # Was that the last of someone? Checked off the body that just fell rather than
@@ -479,11 +506,37 @@ func _anchor_point(spec: EnemySquadSpec, route: PatrolPath, post: SquadObjective
 	return Vector3.INF
 
 
-func _ring_offset(index: int, total: int) -> Vector3:
-	if total <= 1:
-		return Vector3.ZERO
-	var angle := TAU * (float(index) / float(total))
-	return Vector3(cos(angle), 0.0, sin(angle)) * spawn_spread
+## Clear ground left between neighbours on a spawn ring, flat.
+const RING_GAP := 0.5
+
+
+# A ring round the anchor with room for everyone on it. The old one spaced a
+# squad evenly on a fixed 2m circle, which put nine bodies 1.4m apart and, at
+# Pittsburgh's North Shore, a Rover and a Reclaimer side by side: overlapping
+# hulls, which the physics settled by pushing the Reclaimer down through the
+# ground and out of the world. Each body gets an arc as wide as it is, the ring
+# grows until they all fit, and spare room is shared out evenly as before.
+func _ring_offsets(built: Array) -> Array:
+	var out: Array = []
+	if built.size() <= 1:
+		for _b in built:
+			out.append(Vector3.ZERO)
+		return out   # one body stands on the anchor itself
+	var widths: Array = []
+	var circumference := 0.0
+	for body in built:
+		var w: float = maxf(_Ground.half_width(body), 0.5) * 2.0 + RING_GAP
+		widths.append(w)
+		circumference += w
+	var radius := maxf(spawn_spread, circumference / TAU)
+	var stretch := TAU * radius / circumference
+	var along := 0.0
+	for i in built.size():
+		along += float(widths[i]) * 0.5 * stretch
+		var angle := along / radius
+		out.append(Vector3(cos(angle), 0.0, sin(angle)) * radius)
+		along += float(widths[i]) * 0.5 * stretch
+	return out
 
 
 # ─────────────────────────────────────────────

@@ -292,6 +292,12 @@ var _investigate_timer: float = 0.0
 # Enemy does not grow another property for an open editor to write into every
 # robot scene in the game.
 var never_culled: bool = false
+## Seconds of that exemption left, for one given by exempt_from_culling().
+var _exempt_left: float = 0.0
+## How long a reinforcement may keep it if it never reaches you: long enough to
+## walk in from 90 m out at any speed, nowhere near long enough to last a
+## mission.
+const CULL_EXEMPT_SECONDS := 90.0
 ## SHOOT WITHOUT WAITING FOR THE SIGHT PICTURE. Set from a module at spawn.
 ##
 ## Normally a robot holds its trigger until _aim_tracking passes
@@ -322,6 +328,16 @@ const SUPPRESSIVE_CYCLIC := 0.3
 ## ...but never faster than this, or a weapon that is already quick (the
 ## machine gun at 0.13s) empties a hundred-round belt in three seconds.
 const SUPPRESSIVE_FLOOR := 0.08
+## How much wider it shoots, for as long as it is on the trigger.
+##
+## Skipping the sight picture was meant to be the cost, and it is not one: the
+## aim goes on settling WHILE the burst fires, so a second in, the robot was
+## putting out three rounds for one at a full sight picture. A rifleman with a
+## Cyclic Feed came home ahead of a rover. The module's own description is what
+## it should do — "It will hit far less and put a great deal more lead past
+## them" — so the spread stays wide the whole time. Roughly: a third of the
+## hits at three times the rate, which is suppression rather than damage.
+const SUPPRESSIVE_SPREAD := 3.0
 var _suppress_pause: float = 0.0
 ## Seconds after going down before this robot gets back up by itself, once per
 ## deployment. Set from the Nanite Reboot module at spawn; 0 is never.
@@ -872,6 +888,7 @@ func initialize():
 	# navmesh's own height error in the gap.
 	if nav_agent != null:
 		nav_agent.path_height_offset = -_Ground.foot_depth(self)
+		_path_height_base = nav_agent.path_height_offset
 
 	# Desynchronise decision cadence per character. Without this every
 	# soldier in a squad re-rolls on exactly the same frame.
@@ -982,6 +999,18 @@ func _physics_process(delta: float) -> void:
 	# benefit of the five squads that needed it. EnemyForceSpawner.wake() sets
 	# this on the squads it sends in, and nothing else does.
 	var dist_sq = global_position.distance_squared_to(player.global_position)
+	# A reinforcement keeps its exemption only until it ARRIVES, or until the
+	# walk it was given runs out. It is there so it can come in from 90 m
+	# without being frozen on the way, not so it ticks for the rest of the
+	# mission wherever the fight goes: Coast Road wakes 39 of them, and every
+	# one was still running a full brain — and asking for paths across 1.3 km
+	# of map — at the extraction. A flag set by hand (a test rig) is left alone.
+	if never_culled and _exempt_left > 0.0:
+		_exempt_left = maxf(0.0, _exempt_left - delta)
+		if _exempt_left <= 0.0:
+			never_culled = false
+	if never_culled and dist_sq <= activation_distance_sq:
+		never_culled = false
 	if dist_sq > activation_distance_sq and not _is_player_side() \
 			and not never_culled and _woken_t <= 0.0:
 		enter_passive_mode()
@@ -1069,6 +1098,14 @@ func _is_player_side() -> bool:
 ## group of statues standing beside it.
 func wake(seconds: float) -> void:
 	_woken_t = maxf(_woken_t, seconds)
+
+
+## Walk in from wherever you were dropped without being frozen on the way:
+## distance culling lets this one alone until it reaches the player, or until
+## the time runs out. EnemyForceSpawner gives it to the reserves it sends in.
+func exempt_from_culling(seconds: float = CULL_EXEMPT_SECONDS) -> void:
+	never_culled = true
+	_exempt_left = maxf(_exempt_left, seconds)
 
 
 func enter_passive_mode():
@@ -1337,13 +1374,26 @@ func move_to(pos: Vector3):
 ## Path resolutions allowed across ALL robots in one physics frame. Anything
 ## over budget steers on its cached direction and asks again next frame.
 @export var nav_queries_per_frame: int = 8
+## ...and the milliseconds of NavigationServer time they may take between them.
+## A count is no budget when one query can cost 90 ms: eight of those made a
+## 240 ms frame at the end of a Coast Road run, where a path can cross 1.3 km
+## of map. The first query of a frame always runs, so nothing ever stops
+## getting one; the rest steer on their cached direction and ask again next
+## frame, which is what the interval above already assumes.
+@export var nav_query_budget_ms: float = 6.0
 
 static var _nav_budget: int = 0
 static var _nav_budget_frame: int = -1
+static var _nav_spent_us: int = 0
 
 var _nav_dir: Vector3 = Vector3.ZERO
 var _nav_think_timer: float = 0.0
 var _nav_finished: bool = false
+## The agent's path_height_offset as initialize() set it; _tick_nav levels it
+## with a point underfoot for one query at a time and puts this back.
+var _path_height_base: float = 0.0
+## A path point this close, flat, is the one the robot is standing on.
+const NAV_UNDERFOOT := 0.35
 
 
 # BOTH nav queries live here, and nothing else may call the agent per frame.
@@ -1358,22 +1408,43 @@ func _tick_nav(delta: float) -> void:
 	_nav_think_timer -= delta
 	if _nav_think_timer > 0.0:
 		return
-	if not _take_nav_query(nav_queries_per_frame):
+	if not _take_nav_query(nav_queries_per_frame, int(nav_query_budget_ms * 1000.0)):
 		return
 	_nav_think_timer = nav_think_interval * lod_scale()
+	var asked := Time.get_ticks_usec()
 	_nav_finished = nav_agent.is_navigation_finished()
-	var fresh: Vector3 = nav_agent.get_next_path_position() - global_position
+	var next: Vector3 = nav_agent.get_next_path_position()
+	_nav_spent_us += Time.get_ticks_usec() - asked
+	var fresh: Vector3 = next - global_position
 	fresh.y = 0
+	# A POINT UNDERFOOT THAT NEVER COUNTS AS REACHED. The agent judges path
+	# points in 3D from the origin, and where the navmesh sits a metre off the
+	# real ground — or the path starts on the body's own origin, which the
+	# offset above lifts exactly path_desired_distance clear — the point the
+	# robot stands on stays ahead of it forever. It steered at nothing and
+	# stopped dead with a whole path in hand: three of four robots on
+	# Pittsburgh's staging ground. Level the offset with that point (the
+	# returned position already has the offset taken off) so the next query
+	# lets go of it; the base goes back once there is somewhere to walk to.
+	if not _nav_finished and fresh.length() < NAV_UNDERFOOT:
+		nav_agent.path_height_offset += next.y - global_position.y
+		_nav_think_timer = 0.0   # ask again next frame: that query moves the path on
+	elif nav_agent.path_height_offset != _path_height_base:
+		nav_agent.path_height_offset = _path_height_base
 	_nav_dir = fresh
 
 
-static func _take_nav_query(budget: int) -> bool:
+static func _take_nav_query(budget: int, spend_us: int) -> bool:
 	var frame := Engine.get_physics_frames()
-	if frame != _nav_budget_frame:
+	var first := frame != _nav_budget_frame
+	if first:
 		_nav_budget_frame = frame
 		_nav_budget = maxi(1, budget)
+		_nav_spent_us = 0
 	if _nav_budget <= 0:
-		return false
+		return false   # this frame has had its share of resolutions
+	if _nav_spent_us >= spend_us and not first:
+		return false   # and its share of the time they took
 	_nav_budget -= 1
 	return true
 
@@ -2572,6 +2643,7 @@ func enter_downed() -> void:
 	health = downed_health
 	_arm_self_revive()
 	change_ai_state(AIState.DEAD)
+	_watch_for_targets(false)
 	# Held for the crash path at the end of this function: something killed in
 	# mid-air should carry on the way it was going. Anything that died standing
 	# on the ground stops where it fell, which is what zeroing is for.
@@ -2646,6 +2718,7 @@ func destroy():
 	set_process(false)
 	alive = false
 	change_ai_state(AIState.DEAD)
+	_watch_for_targets(false)
 	for i in particle_effects_die:
 		i.activate()
 	nav_agent.set_target_position(global_position)
@@ -2699,6 +2772,7 @@ func revive() -> void:
 	_self_revive_gen += 1
 	downed = false
 	alive = true
+	_watch_for_targets(true)
 	health = maxi(health, int(ceil(max_health * revive_at_fraction)))
 	_restore_pieces()
 	_unsettle()
@@ -3242,6 +3316,16 @@ func _can_receive_orders() -> bool:
 	var state = get_signal_state()
 	return state != SignalState.CRITICAL and state != SignalState.EKILL
 
+# A wreck notices nothing, so it stops testing for company. Its detection
+# sphere is 20-25 m across and kept pairing with every body on the map: at the
+# end of a Coast Road run that is hundreds of broad-phase pairs a frame for
+# robots that are out of the fight. Put back on revive.
+func _watch_for_targets(on: bool) -> void:
+	if detection == null or not is_instance_valid(detection):
+		return   # no sensor area on this frame (a nest, a test rig)
+	detection.set_deferred("monitoring", on)
+
+
 func get_effective_detection_radius() -> float:
 	match get_signal_state():
 		SignalState.FUZZED:    return detection_radius * 0.85
@@ -3393,4 +3477,6 @@ func get_aim_spread_multiplier() -> float:
 		mult = 1.0 / maxf(lerp(aim_floor, 1.0, t), 0.01)
 	if _is_moving():
 		mult *= moving_accuracy_penalty
+	if suppressive_fire:
+		mult *= SUPPRESSIVE_SPREAD
 	return mult

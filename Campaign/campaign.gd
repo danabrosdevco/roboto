@@ -696,15 +696,19 @@ func _debrief_squad() -> Array:
 	var you := state.player_record
 	if you != null:
 		out.append({"record": you, "player": true, "xp": 0, "rank_before": 0, "destroyed": false,
-			"kills": you.confirmed_kills_this_mission, "kinds": you.kills_by_kind_this_mission.duplicate()})
+			"kills": you.confirmed_kills_this_mission, "kinds": you.kills_by_kind_this_mission.duplicate(),
+			"revives": you.revives_this_mission, "team": state.team_of(you)})
 	var went: Array = spawner.deployed_records() if spawner != null else []
 	for r in state.roster:
 		if r == null or not went.has(r):
 			continue
 		var xp: Array = _xp_this_mission.get(r, [0, r.rank])
+		# The team it went in with, and who it stood back up: the debrief lists
+		# the squad by team, and a Mechanic's whole mission is its revives.
 		out.append({"record": r, "player": false, "xp": xp[0], "rank_before": xp[1],
 			"destroyed": r.status == SoldierRecord.Status.DESTROYED,
-			"kills": r.confirmed_kills_this_mission, "kinds": r.kills_by_kind_this_mission.duplicate()})
+			"kills": r.confirmed_kills_this_mission, "kinds": r.kills_by_kind_this_mission.duplicate(),
+			"revives": r.revives_this_mission, "team": r.team_id})
 	return out
 
 

@@ -336,6 +336,11 @@ func _make_row(objective: MissionObjective) -> Control:
 	var suffix := ""
 	if target > 1:
 		suffix = "  %d/%d" % [current, target]
+	# A timed capture counts up here too. The console's own prompt only shows
+	# while you look at it, and holding a capture point means turning round to
+	# shoot whoever is coming up the ramp.
+	if objective is InteractObjective and (objective as InteractObjective).is_channelling():
+		suffix += "  %d%%" % int((objective as InteractObjective).channel_fraction() * 100.0)
 
 	var col := COL_DIM
 	var mark := "□"

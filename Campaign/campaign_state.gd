@@ -327,8 +327,16 @@ func team_of(record: SoldierRecord) -> StringName:
 
 ## Everyone in a team, in roster order. `with_benched` false leaves out the
 ## ones resting on the bench.
+##
+## YOU ARE IN ONE OF THEM. You used to stand above every team, in no team at
+## all — which left the debrief counting your kills in a bucket of one and the
+## squad page showing your card off to the side. You lead from inside a team
+## now, so you are listed with them here (never benched, and never deployed as
+## a robot: the spawner builds its bodies from `roster`, which you are not in).
 func members_of(id: StringName, with_benched: bool = true) -> Array[SoldierRecord]:
 	var out: Array[SoldierRecord] = []
+	if player_record != null and id != &"" and player_record.team_id == id:
+		out.append(player_record)
 	for r in roster:
 		if r.team_id == id and (with_benched or not r.benched):
 			out.append(r)
@@ -339,8 +347,10 @@ func members_of(id: StringName, with_benched: bool = true) -> Array[SoldierRecor
 ## like DEPLOY when there is no seat (or it is a wreck). Returns whether it
 ## happened.
 func move_to_team(record: SoldierRecord, id: StringName) -> bool:
-	if record == null or is_player_record(record) or not roster.has(record) or not has_team(id):
-		return false   # you command every team; and there is no such robot or team
+	if record == null or not has_team(id):
+		return false   # no such robot or team
+	if not is_player_record(record) and not roster.has(record):
+		return false
 	if record.team_id == id and not record.benched:
 		return true
 	if record.benched and not can_field(record):
@@ -356,8 +366,8 @@ func move_to_team(record: SoldierRecord, id: StringName) -> bool:
 ## A new team with just this robot in it, named TEAM 3 or whatever number is
 ## free. Refused at MAX_TEAMS, and when the robot could not come off the bench.
 func move_to_new_team(record: SoldierRecord) -> bool:
-	if record == null or is_player_record(record) or not roster.has(record):
-		return false   # you command every team; and there is no such robot
+	if record == null or (not is_player_record(record) and not roster.has(record)):
+		return false   # no such robot
 	if teams.size() >= MAX_TEAMS or (record.benched and not can_field(record)):
 		return false
 	return move_to_team(record, _add_team(_next_team_name()))

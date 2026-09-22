@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://o6if3d7acuj1"
+path="res://.godot/imported/machine_robot_arm.map-03554f0f53c3331b528039daef7f1a09.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_robot_arm.map"
+dest_files=["res://.godot/imported/machine_robot_arm.map-03554f0f53c3331b528039daef7f1a09.tres"]
+
+[params]
+

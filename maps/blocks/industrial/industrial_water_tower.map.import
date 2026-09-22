@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bv0avb71c41pq"
+path="res://.godot/imported/industrial_water_tower.map-02765cd2cfd89743c3729d1f196d718d.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_water_tower.map"
+dest_files=["res://.godot/imported/industrial_water_tower.map-02765cd2cfd89743c3729d1f196d718d.tres"]
+
+[params]
+

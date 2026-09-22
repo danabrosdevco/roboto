@@ -316,12 +316,12 @@ func test_squad_size_caps_the_deploy() -> void:
 	campaign.free()
 
 
-# The campaign's pacing, as data: follow the unlock chain from the first op and
-# the ally cap should climb 0, 0, 2, 2, 3 and then come off entirely (-1) once
-# the roster is full and benching is how you choose who goes.
+# The campaign's pacing, as data: follow the unlock chain from the first op.
+# The first one is alone; from then on the ally cap is off (-1) and benching is
+# how you choose who goes.
 func test_the_ally_ramp() -> void:
-	var files := ["arena_1_contact", "arena_2_mixed", "arena_3_firing_line",
-		"arena_4_pack_hunt", "arena_5_proving", "valley_3_push"]
+	var files := ["arena_1_contact", "arena_3_firing_line", "arena_5_proving",
+		"basin_1_anchor", "coast_1_road", "pitt_1_rivers"]
 	var by_id: Dictionary = {}
 	for f in files:
 		var m: MissionDefinition = load("res://Campaign/missions/mission_%s.tres" % f)
@@ -335,11 +335,11 @@ func test_the_ally_ramp() -> void:
 		if prev != &"" and not m.requires.has(prev):
 			chained = false
 		prev = m.id
-	check("each op unlocks the next, arena 1 through the first valley op", chained)
-	# You go alone twice, and from the third op the cap comes off entirely:
+	check("each op unlocks the next, arena 1 through the basin and the coast to the three rivers", chained)
+	# You go alone once, and from the second op the cap comes off entirely:
 	# after that it is your supply, bought with compute at the Factory, that
 	# decides how many go in with you — not the mission.
-	check("alone twice, then everyone you can supply", sizes == [0, 0, -1, -1, -1, -1], str(sizes))
+	check("alone once, then everyone you can supply", sizes == [0, -1, -1, -1, -1, -1], str(sizes))
 
 
 func names(records: Array) -> Array:

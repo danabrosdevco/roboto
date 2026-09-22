@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bskxy1yh6akvc"
+path="res://.godot/imported/industrial_parking_deck.map-93614c781f8e1be6a212d80375dfe955.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_parking_deck.map"
+dest_files=["res://.godot/imported/industrial_parking_deck.map-93614c781f8e1be6a212d80375dfe955.tres"]
+
+[params]
+

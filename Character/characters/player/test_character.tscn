@@ -22,7 +22,7 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8ja6s"]
 radius = 0.25
-height = 1.5
+height = 1.7
 
 [node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("cam", "scanner", "commander", "obstruction_raycast", "interact_raycast", "health_sfx", "shards_sfx", "loadout", "ammo")]
 script = ExtResource("1_xw2ar")
@@ -41,6 +41,7 @@ ammo = NodePath("AmmoPool")
 shape = SubResource("CapsuleShape3D_8ja6s")
 
 [node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
 doppler_tracking = 2
 far = 2500.0
 script = ExtResource("6_umrcu")

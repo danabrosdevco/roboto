@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bf2elp5ei7k0n"
+path="res://.godot/imported/bridge_arch.map-1adff6d347c3bb7390c01745c843be83.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bridges/bridge_arch.map"
+dest_files=["res://.godot/imported/bridge_arch.map-1adff6d347c3bb7390c01745c843be83.tres"]
+
+[params]
+

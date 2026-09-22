@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://clexckp7q5btd"
+path="res://.godot/imported/fort_hesco_wall.map-7ba675dfeaff70db886de39be837c7ac.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_hesco_wall.map"
+dest_files=["res://.godot/imported/fort_hesco_wall.map-7ba675dfeaff70db886de39be837c7ac.tres"]
+
+[params]
+

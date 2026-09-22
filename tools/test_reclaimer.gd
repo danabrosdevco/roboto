@@ -115,7 +115,8 @@ func _init() -> void:
 		await physics_frame
 	var cm: CampaignManager = world_scene.get_node("CampaignManager")
 	var unlocked_by := cm.missions.filter(func(m): return m != null and m.unlocks.has(&"reclaimer"))
-	_check("...unlocked by Valley Assault", unlocked_by.size() == 1 and unlocked_by[0].id == &"valley_4_assault")
+	_check("...unlocked by Proving Ground, in time for the basin", unlocked_by.size() == 1 and unlocked_by[0].id == &"arena_5_proving",
+		str(unlocked_by.map(func(m): return str(m.id))))
 
 	var player: Node3D = _find(root, "Player")
 	_level = player.get_parent()

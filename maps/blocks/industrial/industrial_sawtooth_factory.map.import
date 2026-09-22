@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c813s2tc5gplr"
+path="res://.godot/imported/industrial_sawtooth_factory.map-5e17c1fa7fc41ac7b5553c1d454022f4.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_sawtooth_factory.map"
+dest_files=["res://.godot/imported/industrial_sawtooth_factory.map-5e17c1fa7fc41ac7b5553c1d454022f4.tres"]
+
+[params]
+

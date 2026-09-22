@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dw2lmpnn3hst7"
+path="res://.godot/imported/machine_bulldozer.map-74c9070e070df61483efb330608312ed.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_bulldozer.map"
+dest_files=["res://.godot/imported/machine_bulldozer.map-74c9070e070df61483efb330608312ed.tres"]
+
+[params]
+

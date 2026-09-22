@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://qh14pusy7ysc"
+path="res://.godot/imported/industrial_rail_boxcar.map-875ae6ae6ee0427e275894f1f9c10a34.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_rail_boxcar.map"
+dest_files=["res://.godot/imported/industrial_rail_boxcar.map-875ae6ae6ee0427e275894f1f9c10a34.tres"]
+
+[params]
+

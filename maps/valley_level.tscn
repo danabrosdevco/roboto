@@ -204,14 +204,14 @@ shader_parameter/fog_amount = 0.45
 shader_parameter/fog_falloff = 3.0
 shader_parameter/brightness = 0.7
 
-[sub_resource type="Sky" id="Sky_siqjn"]
+[sub_resource type="Sky" id="Sky_8r8oe"]
 sky_material = SubResource("ShaderMaterial_7a55h")
 radiance_size = 0
 
 [sub_resource type="Environment" id="Environment_6x7du"]
 background_mode = 2
 background_energy_multiplier = 1.5
-sky = SubResource("Sky_siqjn")
+sky = SubResource("Sky_8r8oe")
 ambient_light_color = Color(0.176471, 0.219608, 0.054902, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ybliv"]

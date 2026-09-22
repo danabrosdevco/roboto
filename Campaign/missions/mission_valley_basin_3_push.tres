@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=14 format=3 uid="uid://rthgym7y6a64"]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=14 format=3 uid="uid://b23ladkkbncc2"]
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
-[ext_resource type="PackedScene" uid="uid://bxg8i8eoyk2hu" path="res://maps/valley_basin_level.tscn" id="3_valley"]
+[ext_resource type="PackedScene" path="res://maps/valley_basin_level.tscn" id="3_valley"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
 [ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
 [ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]

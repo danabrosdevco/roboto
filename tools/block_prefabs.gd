@@ -79,15 +79,20 @@ func _initialize() -> void:
 		root.add_child(fgm)
 		fgm.verify_and_build()
 		var invented: Array = []
+		var meshes := 0
 		for mi: MeshInstance3D in fgm.find_children("*", "MeshInstance3D", true, false):
 			if mi.mesh == null:
 				continue
+			meshes += 1
 			for s in mi.mesh.get_surface_count():
 				var mat := mi.mesh.surface_get_material(s)
 				if mat == null or mat.resource_path == "":
 					invented.append(mi.mesh.surface_get_name(s))
 		var shapes := fgm.find_children("*", "CollisionShape3D", true, false).size()
-		if shapes == 0:
+		# Geometry OR collision. A func_detail_illusionary piece — rail track —
+		# is all mesh and no shape on purpose, and counting shapes alone called
+		# that a broken map.
+		if shapes == 0 and meshes == 0:
 			print("FAIL  %s built nothing — is it a valid map?" % f)
 			root.remove_child(fgm)
 			fgm.free()
@@ -115,7 +120,8 @@ func _initialize() -> void:
 		w.store_string("\n".join(kept))
 		w.close()
 		made += 1
-		print("      %-30s %3d brush(es)%s" % [base + ".tscn", shapes,
+		print("      %-30s %3d brush(es)%s%s" % [base + ".tscn", shapes,
+				"   no collision (func_detail_illusionary)" if shapes == 0 else "",
 				("   WARNING no material for %s — one was made up and embedded" % ", ".join(invented)) if not invented.is_empty() else ""])
 	print("BLOCK PREFABS DONE: %d built%s" % [made, (", %d skipped" % skipped) if skipped > 0 else ""])
 	quit()

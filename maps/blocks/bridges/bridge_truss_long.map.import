@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c855t6iw8vvoq"
+path="res://.godot/imported/bridge_truss_long.map-91c3a2a297fd8d461e734e8d47539cd2.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bridges/bridge_truss_long.map"
+dest_files=["res://.godot/imported/bridge_truss_long.map-91c3a2a297fd8d461e734e8d47539cd2.tres"]
+
+[params]
+

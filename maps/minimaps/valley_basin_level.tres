@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_5own0"]
+
+[resource]
+script = ExtResource("1_5own0")
+level_scene_path = "res://maps/valley_basin_level.tscn"
+image_path = "res://maps/minimaps/valley_basin_level.png"
+world_min = Vector2(-40.7028, -85.7028)
+world_max = Vector2(400.703, 355.703)
+objective_ids = Array[StringName]([&"valley_extract", &"basin_extract", &"valley_garrison_cap_1", &"valley_garrison_cap_2", &"valley_garrison_cap_3", &"valley_hive_south", &"valley_hive_north", &"basin_anchor"])
+objective_names = Array[String](["Objective", "Objective", "West Garrison", "South Garrison", "North Garrison", "South Hive", "North Hive", "Tether Anchor"])
+objective_positions = Array[Vector3]([Vector3(322, -11.4841, 139), Vector3(322, -11.4841, 139), Vector3(152.177, -9.98749, 164.894), Vector3(193.479, -9.98749, 186.666), Vector3(241.128, -9.98749, 102.015), Vector3(201.584, -9.84348, 161.597), Vector3(234.952, -9.84348, 111.058), Vector3(195, -1.7, 135.5)])
+objective_kinds = Array[StringName]([&"extract", &"extract", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture"])
+insertion_positions = Array[Vector3]([Vector3(12, -9.83978, 140)])

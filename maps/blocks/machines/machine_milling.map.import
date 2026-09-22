@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cw3seepkmfwer"
+path="res://.godot/imported/machine_milling.map-a3bc1a1512a5d9a79686598f95f042ab.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_milling.map"
+dest_files=["res://.godot/imported/machine_milling.map-a3bc1a1512a5d9a79686598f95f042ab.tres"]
+
+[params]
+

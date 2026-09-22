@@ -102,8 +102,11 @@ func _init() -> void:
 		await physics_frame
 	var cm: CampaignManager = world_scene.get_node("CampaignManager")
 	var unlocked_by := cm.missions.filter(func(m): return m != null and m.unlocks.has(&"mortar"))
-	_check("unlocked with the Reclaimer, by Valley Assault",
-		unlocked_by.size() == 1 and unlocked_by[0].id == &"valley_4_assault" and unlocked_by[0].unlocks.has(&"reclaimer"))
+	# Well after the Reclaimer itself: the frame arrives before the basin, the
+	# tube is one of the late, high-power unlocks.
+	_check("unlocked by Coast Road, long after the Reclaimer",
+		unlocked_by.size() == 1 and unlocked_by[0].id == &"coast_1_road" and not unlocked_by[0].unlocks.has(&"reclaimer"),
+		str(unlocked_by.map(func(m): return str(m.id))))
 
 	# A Reclaimer saved before its boom had a slot has nothing to fit the tube
 	# into until loading grows it one.

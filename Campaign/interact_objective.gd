@@ -66,9 +66,13 @@ func progress() -> Array:
 # What the HUD shows next to the F prompt. "F | 0" told the player nothing —
 # this says which objective the console belongs to, how far through the set they
 # are, and whether it's a tap or a hold.
+#
+# The HUD refreshes this every frame you look at the console, so it has to
+# read right in every state, not just while counting: it used to freeze on the
+# last count, 99%, once a capture resolved. ASCII only (see the HUD font).
 func get_prompt() -> String:
 	if completed:
-		return "%s — done" % label()
+		return "%s captured" % (display_name if has_authored_name() else DEFAULT_DISPLAY_NAME)
 	var target := target_count()
 	var progress_text := ""
 	if target > 1:
@@ -76,7 +80,11 @@ func get_prompt() -> String:
 	if channel_duration > 0.0:
 		if _channelling != null:
 			return "%s%s  %d%%" % [label(), progress_text, int(channel_fraction() * 100.0)]
-		return "Hold — %s%s" % [label(), progress_text]
+		if _grace_t > 0.0 and _channel_t > 0.0:
+			# Stepped out of range: the count is kept for a moment, and pressing
+			# again picks it up where it stopped.
+			return "%s%s  %d%% : paused" % [label(), progress_text, int(channel_fraction() * 100.0)]
+		return "%s%s : hold %ds" % [label(), progress_text, ceili(channel_duration)]
 	return "%s%s" % [label(), progress_text]
 
 

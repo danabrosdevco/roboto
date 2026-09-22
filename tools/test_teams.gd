@@ -26,6 +26,26 @@ func _check(label: String, ok: bool, detail: String = "") -> void:
 		_fails += 1
 
 
+func _find_named(n: Node, node_name: String) -> Node:
+	if n.name == node_name:
+		return n
+	for c in n.get_children():
+		var f := _find_named(c, node_name)
+		if f != null:
+			return f
+	return null
+
+
+# Whether any label or button under `n` says `text`.
+func _says(n: Node, text: String) -> bool:
+	if (n is Label and (n as Label).text.contains(text)) or (n is Button and (n as Button).text.contains(text)):
+		return true
+	for c in n.get_children():
+		if _says(c, text):
+			return true
+	return false
+
+
 func _find(n: Node, cls: String) -> Node:
 	if n.get_script() != null and n.get_script().get_global_name() == cls:
 		return n
@@ -247,23 +267,57 @@ func _init() -> void:
 	commander.cycle_team()   # INFANTRY
 	_check("...and switching swaps which one", not inf_marker.dimmed and armor_marker.dimmed)
 
-	# ── ATTACK ───────────────────────────────────
-	# Not registered with the AIManager, so it stands there and does nothing:
-	# only the order is under test.
+	# ── A TAP AT A UNIT IS STILL JUST ADVANCE ────
+	# Aimed at a hostile, a hive or one of your own robots, the tap used to
+	# pick that robot's team, call a contact, or send a team of vehicles at it:
+	# a unit where you were pointing hijacked the move. It only ever advances
+	# the selected team now, to the ground under what you aimed at.
+	# Not registered with the AIManager, so it stands there and does nothing.
+	# Put where the crosshair can reach it: the base has walls, and your own
+	# robots stand ahead of you.
 	var foe: Soldier = load("res://Character/characters/ai/soldier_rifle.tscn").instantiate()
 	foe.faction = Enums.Factions.ENEMY
 	level.add_child(foe)
-	foe.global_position = here + ahead * 40.0
+	var side := ahead.cross(Vector3.UP)
+	var in_sight := false
+	for dir in [-ahead, side, -side, (-ahead + side).normalized(), (-ahead - side).normalized()]:
+		for dist in [8.0, 5.0]:
+			foe.global_position = here + dir * dist
+			await physics_frame
+			commander.cam.look_at(foe.global_position)
+			if commander._aim_result().get("collider") == foe:
+				in_sight = true
+				break
+		if in_sight:
+			break
+	commander.cycle_team()   # ARMOR, a team of vehicles
+	var switches := heard.size()
+	commander.cam.look_at(foe.global_position)
+	_check("(setup) the crosshair is on the hostile", commander._aim_result().get("collider") == foe,
+		str(commander._aim_result().get("collider")))
+	commander._issue_contextual_order()
 	await physics_frame
-	commander._issue_order(SquadCommander.Verb.CONTACT, foe.global_position, foe)
-	_check("calling out a hostile with INFANTRY selected is only a callout: the rover stays on its post",
-		armor.objective == Squad.SquadObjective.DEFEND and armor.ordered_target != foe)
-	commander.cycle_team()   # ARMOR
-	commander._issue_order(SquadCommander.Verb.CONTACT, foe.global_position, foe)
-	_check("with a team of vehicles selected, tapping a hostile sends it at it",
-		armor.objective == Squad.SquadObjective.ATTACK and armor.ordered_target == foe)
-	_check("...the toast and the marker say ARMOR : ATTACK", hud._toast.text.begins_with("ARMOR : ATTACK")
-		and _marker_text(commander, armor) == "ARMOR : ATTACK", "%s / %s" % [hud._toast.text, _marker_text(commander, armor)])
+	_check("a tap at a hostile with ARMOR selected advances ARMOR to it, targeting nothing",
+		armor.objective == Squad.SquadObjective.DEFEND and armor.ordered_target == null
+		and _flat_dist(armor.objective_position, foe.global_position) < 1.5,
+		"%s at %s" % [armor.objective, armor.objective_position])
+	_check("...to the ground under it, not the point on its chest",
+		armor.objective_position.y < foe.global_position.y - 0.5,
+		"order at y %.2f, hostile at %.2f" % [armor.objective_position.y, foe.global_position.y])
+	_check("...the toast and the marker say ARMOR : ADVANCE", hud._toast.text == "ARMOR : ADVANCE"
+		and _marker_text(commander, armor) == "ARMOR : ADVANCE", "%s / %s" % [hud._toast.text, _marker_text(commander, armor)])
+	var mine: Soldier = infantry.squad_members[0]
+	commander.cam.look_at(mine.global_position)
+	var aimed = commander._aim_result().get("collider")
+	_check("(setup) the crosshair is on one of your robots", aimed is Soldier
+		and not Enums.are_hostile(Enums.Factions.PLAYER, (aimed as Soldier).faction), str(aimed))
+	commander._issue_contextual_order()
+	await physics_frame
+	_check("a tap at one of your robots advances the selected team there",
+		armor.objective == Squad.SquadObjective.DEFEND and aimed is Node3D
+		and _flat_dist(armor.objective_position, (aimed as Node3D).global_position) < 1.5)
+	_check("...and does not change which team the orders go to",
+		commander.get_selected_squad() == armor and heard.size() == switches, "%d switches" % (heard.size() - switches))
 	_check("...and the infantry stay where they were sent", infantry.objective == Squad.SquadObjective.DEFEND
 		and _flat_dist(infantry.objective_position, spot_a) < 1.0)
 
@@ -359,14 +413,17 @@ func _init() -> void:
 	_check("a team of robots on foot and a rover is not a team of vehicles", not infantry.vehicles_only)
 	commander._refresh_registry_quietly()
 	commander.selected_index = commander.commandable_squads.find(infantry)
-	commander._issue_order(SquadCommander.Verb.CONTACT, foe.global_position, foe)
-	_check("...so a hostile tapped with it selected is only called out", infantry.objective != Squad.SquadObjective.ATTACK)
 
+	# Robots only: you are in a team too now, and which one depends on the save.
+	var robots_in := func(id: StringName) -> Array:
+		return state.members_of(id, false).filter(func(r): return not state.is_player_record(r))
 	_check("the bench keeps a robot's team: benched, it is still in it", state.set_benched(ada, true)
-		and ada.team_id == infantry.team and state.members_of(infantry.team, false).size() == 1)
+		and ada.team_id == infantry.team and robots_in.call(infantry.team).size() == 1,
+		"%s benched=%s, team holds %s" % [ada.display_name, str(ada.benched),
+			str(state.members_of(infantry.team, false).map(func(r): return r.display_name))])
 	_check("...and DEPLOY puts it back there", state.set_benched(ada, false) and ada.team_id == infantry.team)
-	_check("you are in no team, and cannot be moved into one", not state.move_to_team(state.player_record, infantry.team)
-		and not state.move_to_new_team(state.player_record))
+	_check("the bench is the one place you cannot be put", not state.set_benched(state.player_record, true)
+		and not state.player_record.benched)
 
 	# ── MAKING TEAMS UP TO THE LIMIT ─────────────
 	var extra: Array[SoldierRecord] = []
@@ -429,6 +486,58 @@ func _init() -> void:
 		and spawner.squads[0].squad_members.size() == 2)
 	commander._refresh_registry_quietly()
 	_check("...and with two teams out there are two to order", commander.has_teams())
+
+	# ── THE DEBRIEF, BY TEAM ─────────────────────
+	# What each team did rather than one flat run of cards, and a robot that
+	# killed nothing but stood squadmates back up counted for that instead of
+	# reading "0 KILLS".
+	var debrief := _find_named(root, "DebriefScreen")
+	# You fight WITH a team rather than above them all, so you are counted in
+	# whichever one you joined — there is no group of your own on the screen.
+	_check("you go in a team like anyone else", state.move_to_team(state.player_record, ada.team_id)
+		and state.player_record.team_id == ada.team_id
+		and state.members_of(ada.team_id).has(state.player_record), str(state.player_record.team_id))
+	var rows := [
+		{"record": state.player_record, "player": true, "xp": 0, "rank_before": 0, "destroyed": false,
+			"kills": 3, "kinds": {}, "revives": 0, "team": state.player_record.team_id},
+		{"record": ada, "player": false, "xp": 10, "rank_before": 0, "destroyed": false,
+			"kills": 0, "kinds": {}, "revives": 2, "team": ada.team_id},
+		{"record": bo, "player": false, "xp": 10, "rank_before": 0, "destroyed": false,
+			"kills": 0, "kinds": {}, "revives": 0, "team": bo.team_id},
+		{"record": rolly, "player": false, "xp": 10, "rank_before": 0, "destroyed": false,
+			"kills": 5, "kinds": {}, "revives": 1, "team": rolly.team_id},
+	]
+	var groups: Array = debrief._by_team(rows)
+	var labels: Array = groups.map(func(g): return str(g["label"]))
+	_check("the debrief lists the squad by team, with no group of your own", not labels.has("YOU")
+		and labels.all(func(l): return _names(state).has(l)), "%s of %s" % [str(labels), str(_names(state))])
+	# Whoever ada and rolly are teamed with by now, their numbers land in it.
+	var ada_group: Dictionary = {}
+	var rolly_group: Dictionary = {}
+	for g in groups:
+		if (g["entries"] as Array).any(func(e): return e["record"] == ada):
+			ada_group = g
+		if (g["entries"] as Array).any(func(e): return e["record"] == rolly):
+			rolly_group = g
+	_check("...with each team's kills and revives", int(ada_group.get("revives", -1)) >= 2
+		and int(rolly_group.get("kills", -1)) >= 5, "%s / %s" % [str(ada_group.get("revives")), str(rolly_group.get("kills"))])
+	var you_group: Dictionary = {}
+	for g in groups:
+		if (g["entries"] as Array).any(func(e): return bool(e.get("player", false))):
+			you_group = g
+	_check("...and your own kills counted in the team you went in with",
+		str(you_group.get("id", "")) == str(ada_group.get("id", "-")) and int(you_group.get("kills", -1)) >= 3,
+		"%s: %s kills" % [str(you_group.get("label")), str(you_group.get("kills"))])
+	_check("a robot that killed nothing and stood two back up counts the revives, not 0 kills",
+		debrief._tally_text(0, 2) == "2 REVIVES", debrief._tally_text(0, 2))
+	_check("...one that did both says both", debrief._tally_text(5, 1) == "5 KILLS : 1 REVIVE", debrief._tally_text(5, 1))
+	_check("...and neither is still 0 kills", debrief._tally_text(0, 0) == "0 KILLS", debrief._tally_text(0, 0))
+	debrief.show_result(null, {"success": true, "squad": rows})
+	await process_frame
+	_check("the screen draws a heading per team, and the squad's whole tally",
+		labels.all(func(l): return _says(debrief, l)) and _says(debrief, "8 KILLS : 3 REVIVES"), str(labels))
+	debrief.close()
+	await process_frame
 
 	# The ones just repaired in and the hostile were spawned a moment ago: a
 	# second before they go. A robot freed within a frame or so of spawning

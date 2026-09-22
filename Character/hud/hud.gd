@@ -113,7 +113,7 @@ func activate_interactible(interactible: Interactible):
 			# The console doesn't own the objective — InteractObjective holds an
 			# array of them and tags each one on _ready, so ask the tag.
 			var objective := _objective_tag(interactible)
-			interact_label.text = "F | %s" % _prompt_from(objective, "Interact")
+			interact_label.text = _objective_prompt(objective)
 		Enums.InteractTypes.HEALTH:
 			interact_label.text = "F | Repair  +%d" % value
 		Enums.InteractTypes.SHARDS:
@@ -156,23 +156,32 @@ func _objective_tag(source: Object) -> Object:
 		return tag
 	return null
 
-# Kept so the channel percentage counts up while you hold F. The player script
-# only pushes a new interactible when the raycast target CHANGES, so without
-# this the prompt would sit at 0% for the whole capture.
+# "F | Capture Lock Relay  40%" while it counts, and no F once it is taken:
+# there is nothing left to press there.
+func _objective_prompt(objective: Object) -> String:
+	var text := _prompt_from(objective, "Interact")
+	if objective != null and is_instance_valid(objective) and objective.get("completed") == true:
+		return text
+	return "F | %s" % text
+
+
+# Kept so the prompt follows a capture while you look at the console. The
+# player script only pushes a new interactible when the raycast target CHANGES,
+# so without this the prompt sat at 0% for the whole capture — and refreshing
+# only WHILE it counted froze it on the last count, 99%, once it resolved.
 var _current_interactible: Interactible
 
 
 func _process(_delta: float) -> void:
 	if _current_interactible == null or not is_instance_valid(_current_interactible):
-		return
+		return   # looking at nothing
 	if not interact_box.visible:
-		return
+		return   # no prompt up to keep current
 	if _current_interactible.get_type() != Enums.InteractTypes.OBJECTIVE:
-		return
-	var objective := _objective_tag(_current_interactible)
-	if objective != null and objective.has_method("is_channelling"):
-		if objective.is_channelling():
-			interact_label.text = "F | %s" % _prompt_from(objective, "Interact")
+		return   # only objective consoles change while you look at them
+	var text := _objective_prompt(_objective_tag(_current_interactible))
+	if interact_label.text != text:
+		interact_label.text = text
 
 
 func deactivate_interaction():

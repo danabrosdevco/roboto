@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://pds03bug0cug"
+path="res://.godot/imported/industrial_gantry_crane.map-7695b8c40896f1e12f8cd7b90abfdbb5.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_gantry_crane.map"
+dest_files=["res://.godot/imported/industrial_gantry_crane.map-7695b8c40896f1e12f8cd7b90abfdbb5.tres"]
+
+[params]
+

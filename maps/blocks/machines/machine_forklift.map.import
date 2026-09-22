@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dxxqasw6hlik0"
+path="res://.godot/imported/machine_forklift.map-57a7743840360eb7291bfc831d2a42c1.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_forklift.map"
+dest_files=["res://.godot/imported/machine_forklift.map-57a7743840360eb7291bfc831d2a42c1.tres"]
+
+[params]
+

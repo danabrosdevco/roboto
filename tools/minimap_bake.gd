@@ -29,10 +29,12 @@ const _TutorialToast := preload("res://Character/hud/tutorial_toast.gd")
 
 var _levels := [
 	"res://maps/valley_level.tscn",
+	"res://maps/valley_basin_level.tscn",
 	"res://maps/arena_level.tscn",
 	"res://maps/homebase_level.tscn",
-	"res://maps/wip.terrain_template_level.tscn",
-	"res://maps/mutaha_level.tscn"
+	"res://maps/coastal-road_level.tscn",
+	"res://maps/mutaha_level.tscn",
+	"res://maps/pittsburgh_level.tscn"
 ]
 
 

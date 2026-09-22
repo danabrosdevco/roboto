@@ -5,13 +5,11 @@ class_name SquadCommander
 # SQUAD COMMANDER
 # Child of Player. Owns the "command" input (T) and everything downstream of it.
 #
-# TAP T    — contextual order at the crosshair. The verb is inferred from what
-#            you're looking at, so the common case costs one keypress:
-#              hostile   → CONTACT callout; with a team of vehicles selected,
-#                          ATTACK it
-#              friendly  → select that robot's team
-#              ground    → ADVANCE to that position and hold
-#              nothing   → CONTACT callout down the sightline
+# TAP T    — ADVANCE to the crosshair and hold, whatever is under it: ground,
+#            one of your robots or a hostile (a hive included) all mean "go
+#            there", to the ground it stands on. The tap never picks a team or
+#            a target — G picks the team, and the squad fights what it meets.
+#            Open sky → CONTACT callout down the sightline.
 # HOLD T   — FOLLOW. Fires the moment the hold threshold passes.
 # G        — switch the team T orders to the next one.
 #
@@ -337,27 +335,16 @@ func _issue_contextual_order() -> void:
 		_call_contact(far_point, null)
 		return
 
+	# ADVANCE, WHATEVER IS UNDER THE CROSSHAIR. One of your robots used to switch
+	# the orders to its team, and a hostile (a hive included) got a callout, or
+	# a vehicle team sent at it, instead of the move you asked for: a unit in
+	# the way of where you were pointing hijacked the order. Aimed at a body,
+	# "there" is the ground it stands on, not the point on its chest.
+	var pos: Vector3 = hit.position
 	var collider = hit.get("collider")
-
-	# Friendly robot under the crosshair — select their team, don't order.
-	if collider is Soldier and not Enums.are_hostile(Enums.Factions.PLAYER, collider.faction):
-		var s: Squad = collider.squad
-		if s != null and commandable_squads.has(s):
-			selected_index = commandable_squads.find(s)
-			_refresh_marker_dimming()
-			squad_selected.emit(s)
-			team_selected.emit(selection_label())
-			return
-
-	# Hostile under the crosshair. With no assault verb there's nothing to send
-	# them AT, so mark it instead — the squad gets a contact call and picks it
-	# up themselves if it's in reach.
-	if collider is Enemy and Enums.are_hostile(Enums.Factions.PLAYER, collider.faction):
-		_issue_order(Verb.CONTACT, hit.position, collider)
-		return
-
-	# Ground. Move there and hold.
-	_issue_order(Verb.ADVANCE, hit.position)
+	if collider is CharacterBody3D or collider is RigidBody3D:
+		pos = _snap_to_ground(pos)
+	_issue_order(Verb.ADVANCE, pos)
 
 
 func _issue_order(verb: int, position = null, target: Node = null) -> void:
@@ -365,32 +352,20 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 	if squad == null:
 		return
 
-	# Resolve a position if the caller didn't supply one (wheel path).
+	# Resolve a position if the caller didn't supply one (hold, and the old
+	# wheel path).
 	var pos: Vector3
 	if position == null:
 		var hit := _aim_result()
-		if hit.is_empty():
-			pos = player.global_position
-		else:
-			pos = hit.position
-			if verb == Verb.ADVANCE and target == null:
-				var c = hit.get("collider")
-				if c is Enemy and Enums.are_hostile(Enums.Factions.PLAYER, c.faction):
-					target = c
+		pos = player.global_position if hit.is_empty() else hit.position
 	else:
 		pos = position
 
 	match verb:
 		Verb.CONTACT:
+			# A report for everyone in earshot, never an order: no team is sent
+			# at anything by it.
 			_call_contact(pos, target)
-			# A report, for everyone in earshot — and with a team of vehicles
-			# selected, a target: the one order that suits a vehicle and not a
-			# rifleman. Sent after the callout so the toast says ATTACK.
-			if target is Enemy and squad.vehicles_only:
-				squad.receive_player_order(Squad.SquadObjective.ATTACK, pos, target)
-				_place_marker(squad, Verb.ATTACK, pos)
-				_refresh_marker_dimming()
-				order_issued.emit(squad, Verb.ATTACK, pos, target)
 			return
 		Verb.ADVANCE:
 			# Maps to SquadObjective.DEFEND — go there and hold. The enum keeps
@@ -575,14 +550,23 @@ func _clear_marker(squad: Squad) -> void:
 
 
 # The old code forced marker.y = 0, which drops the marker to world origin
-# height — fine on a flat arena, wrong on anything with terrain.
+# height — fine on a flat arena, wrong on anything with terrain. Robots stand
+# on layer 1 with the level, so the ray looks through bodies to the surface
+# under them; otherwise an order aimed at a robot sat on its head.
 func _snap_to_ground(pos: Vector3) -> Vector3:
 	if player == null:
-		return pos
+		return pos   # no world to look in (a test rig)
 	var query := PhysicsRayQueryParameters3D.create(
 		pos + Vector3.UP * 3.0, pos + Vector3.DOWN * 30.0)
 	query.collision_mask = 1
-	var hit: Dictionary = _space().intersect_ray(query)
-	if hit.is_empty():
-		return pos
-	return hit.position + Vector3.UP * 0.05
+	var skip: Array[RID] = []
+	for _i in 4:
+		query.exclude = skip
+		var hit: Dictionary = _space().intersect_ray(query)
+		if hit.is_empty():
+			return pos   # nothing under it within reach: keep the point as given
+		if hit.collider is CharacterBody3D or hit.collider is RigidBody3D:
+			skip.append(hit.rid)
+			continue
+		return hit.position + Vector3.UP * 0.05
+	return pos   # four bodies deep and still no ground: keep the point as given

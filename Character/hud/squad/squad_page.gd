@@ -223,10 +223,14 @@ func _build_head() -> void:
 
 func _build_teams() -> void:
 	var state: CampaignState = ui.state
-	# You are in no team: you order all of them.
-	var you := _grid()
-	you.add_child(_card(state.player_record))
-	_teams.add_child(you)
+	# You are IN a team — `members_of` puts your card in it — and `team_of`
+	# picks one for you the first time, the same way it does for a robot. The
+	# loose card above the teams is only for a campaign that somehow has none.
+	var yours := state.team_of(state.player_record) if state.player_record != null else &""
+	if not state.has_team(yours):
+		var you := _grid()
+		you.add_child(_card(state.player_record))
+		_teams.add_child(you)
 	for id in state.team_ids():
 		_teams.add_child(_team_section(id))
 	if state.teams.size() < CampaignState.MAX_TEAMS:
@@ -381,7 +385,7 @@ func _card(record: SoldierRecord, where: Dictionary = {}) -> Control:
 	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.custom_minimum_size = Vector2(0, 76)
-	card.tooltip_text = _frame_line(record) if is_player \
+	card.tooltip_text = "%s\nDrag to another team." % _frame_line(record) if is_player \
 		else "%s\nDrag to another team, or to the bench." % _frame_line(record)
 	_style_card(card, false)
 	card.mouse_entered.connect(func():
@@ -396,10 +400,10 @@ func _card(record: SoldierRecord, where: Dictionary = {}) -> Control:
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			card.accept_event()
 			_pick(record))
-	# You go wherever the squad goes: yours is the one card that does not move.
-	if not is_player:
-		card.set_drag_forwarding(func(_at: Vector2) -> Variant: return _drag(record, card),
-			_can_drop_fn(where), _drop_fn(where))
+	# You go wherever the squad goes — but you go WITH a team, so your card
+	# moves between them like any other. The bench is what it cannot reach.
+	card.set_drag_forwarding(func(_at: Vector2) -> Variant: return _drag(record, card),
+		_can_drop_fn(where), _drop_fn(where))
 	_cards.append(card)
 
 	var row := Kit.hbox(10)
@@ -465,7 +469,11 @@ func _dragged(data: Variant) -> SoldierRecord:
 	if not (data is Dictionary) or not (data as Dictionary).has(DRAG_KEY):
 		return null
 	var record = data[DRAG_KEY]
-	return record if record is SoldierRecord and ui.state.roster.has(record) else null
+	if not (record is SoldierRecord):
+		return null
+	# You are draggable too — into a team, never onto the bench — and you are
+	# not on the roster, so the roster test alone would drop your card.
+	return record if ui.state.roster.has(record) or ui.state.is_player_record(record) else null
 
 
 # Whether letting go here would change anything that is allowed. A benched
@@ -475,7 +483,7 @@ func _accepts(record: SoldierRecord, where: Dictionary) -> bool:
 	var state: CampaignState = ui.state
 	match where.get("kind", &""):
 		&"bench":
-			return not record.benched
+			return not record.benched and not state.is_player_record(record)   # you always go
 		&"team":
 			return state.can_field(record) if record.benched else record.team_id != where["id"]
 		&"new":

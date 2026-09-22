@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://p81svpwlegk1"
+path="res://.godot/imported/machine_cnc.map-9d10778758b5c723459d564044cb582c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_cnc.map"
+dest_files=["res://.godot/imported/machine_cnc.map-9d10778758b5c723459d564044cb582c.tres"]
+
+[params]
+

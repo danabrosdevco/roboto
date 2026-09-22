@@ -22,6 +22,11 @@ extends RefCounted
 ## surface. Above is kept short so nobody lands on a wall.
 const LOOK_UP := 1.5
 const LOOK_DOWN := 2.5
+## Wider than this, flat, and a body is seated on the highest ground under its
+## corners rather than under its middle: a hull set down level on a slope has
+## its uphill edge in the hill, and starting underground it falls through. A
+## soldier's capsule (0.5) stays on the one probe under its centre.
+const WIDE := 0.75
 
 
 ## Where `body` should be put to stand at `p`, in the world `place` is in.
@@ -34,18 +39,49 @@ static func stand(p: Vector3, body: Node3D, place: Node) -> Vector3:
 	var on_mesh := NavigationServer3D.map_get_closest_point(world.navigation_map, p)
 	if on_mesh != Vector3.ZERO and Vector2(on_mesh.x - p.x, on_mesh.z - p.z).length() < 3.0:
 		spot = on_mesh
-	var q := PhysicsRayQueryParameters3D.create(spot + Vector3.UP * LOOK_UP, spot + Vector3.DOWN * LOOK_DOWN)
+	var ground := _surface(world, spot)
+	if is_nan(ground):
+		return spot + Vector3.UP * (foot + 0.3)   # no surface close to the navmesh here: trust the navmesh
+	# A Reclaimer in a dip at Pittsburgh's North Shore: level at its middle,
+	# buried at one side, gone through the terrain half a second later.
+	var reach := half_width(body)
+	if reach > WIDE:
+		for corner in [Vector3(reach, 0, reach), Vector3(-reach, 0, reach), Vector3(reach, 0, -reach), Vector3(-reach, 0, -reach)]:
+			var under := _surface(world, spot + corner)
+			if not is_nan(under):
+				ground = maxf(ground, under)
+	return Vector3(spot.x, ground + foot + 0.05, spot.z)
+
+
+# The real surface near `at`, looked for from just above to a little below;
+# NAN where there is none. Bodies are looked through: a robot spawned a moment
+# ago, or a round, has the ground under it.
+static func _surface(world: World3D, at: Vector3) -> float:
+	var q := PhysicsRayQueryParameters3D.create(at + Vector3.UP * LOOK_UP, at + Vector3.DOWN * LOOK_DOWN)
 	var skip: Array[RID] = []
 	for _i in 4:
 		q.exclude = skip
 		var hit := world.direct_space_state.intersect_ray(q)
 		if hit.is_empty():
-			break   # no surface close to the navmesh here: trust the navmesh
+			return NAN   # nothing within reach of this spot
 		if hit.collider is CharacterBody3D or hit.collider is RigidBody3D:
-			skip.append(hit.rid)   # a robot spawned a moment ago, or a round: the ground is under it
+			skip.append(hit.rid)
 			continue
-		return hit.position + Vector3.UP * (foot + 0.05)
-	return spot + Vector3.UP * (foot + 0.3)
+		return (hit.position as Vector3).y
+	return NAN   # four bodies deep and still no ground: treat as none
+
+
+## How far out from its origin a body reaches, flat: the widest half-extent of
+## its collision shapes. A capsule's radius; half a hull's length.
+static func half_width(body: Node3D) -> float:
+	var widest := 0.0
+	for child in body.get_children():
+		var cs := child as CollisionShape3D
+		if cs == null or cs.shape == null or cs.disabled:
+			continue
+		var box := cs.transform * _shape_box(cs.shape)
+		widest = maxf(widest, maxf(maxf(absf(box.position.x), absf(box.end.x)), maxf(absf(box.position.z), absf(box.end.z))))
+	return widest
 
 
 ## How far below its origin a body reaches — its feet, tracks, wheels or base.

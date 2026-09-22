@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dtpce4ikje1ey"
+path="res://.godot/imported/fort_checkpoint.map-a1c860f0f8eb48d555f2769b59dd5985.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_checkpoint.map"
+dest_files=["res://.godot/imported/fort_checkpoint.map-a1c860f0f8eb48d555f2769b59dd5985.tres"]
+
+[params]
+

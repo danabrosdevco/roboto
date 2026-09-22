@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bu688keu3thkv"
+path="res://.godot/imported/bridge_short.map-e1e385e9aa26ef0d9c310e7d163b4534.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bridges/bridge_short.map"
+dest_files=["res://.godot/imported/bridge_short.map-e1e385e9aa26ef0d9c310e7d163b4534.tres"]
+
+[params]
+

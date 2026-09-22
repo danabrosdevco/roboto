@@ -115,9 +115,37 @@ func _init() -> void:
 	var p_mate := mate.global_position
 	var p_ctrl := control.global_position
 
+	# CONTACT CALLS FOR HELP. A reserve tagged "<callsign>_engaged" waits on
+	# this squad's first contact (Pittsburgh's bombing runs): held the way
+	# deploy_force holds one, and heard the way _spawn_squad listens.
+	var spawner: EnemyForceSpawner = _find(root, "EnemyForceSpawner")
+	var help := EnemySquadSpec.new()
+	help.callsign = "TEST-HELP"
+	help.roster = [load("res://Campaign/chassis/chassis_chaser.tres")] as Array[ChassisDefinition]
+	help.count = 0
+	help.posture = EnemySquadSpec.Posture.RESERVE
+	help.post_tag = &"obj_valley_mid"
+	help.spawn_tag = &"obj_valley_mid"
+	help.reinforcement_tag = EnemyForceSpawner.squad_engaged_tag(squad.callsign)
+	spawner._level = valley
+	spawner._reserves[help.reinforcement_tag] = [help]
+	var heard := [0]
+	squad.engaged.connect(func(_s): heard[0] += 1)
+	squad.engaged.connect(spawner._on_squad_engaged)
+
 	shot.apply_damage(5, player)
 	for _i in 180:
 		await physics_frame
+
+	_check("a squad says so the moment it comes under fire", heard[0] >= 1, "%d" % heard[0])
+	var helpers: Array = get_nodes_in_group("enemies").filter(func(e): return String(e.get("soldier_name")).begins_with("TEST-HELP"))
+	_check("...and the reserve waiting on '%s' comes in" % help.reinforcement_tag,
+		not spawner._reserves.has(help.reinforcement_tag) and helpers.size() == 1,
+		"still held %s, %d in the field" % [str(spawner._reserves.has(help.reinforcement_tag)), helpers.size()])
+	for h in helpers:
+		if mgr != null:
+			mgr.deregister_enemy(h)
+		h.queue_free()
 
 	var flat := func(a: Vector3, b: Vector3) -> float: return Vector2(a.x - b.x, a.z - b.z).length()
 	var moved_shot: float = flat.call(shot.global_position, p_shot)

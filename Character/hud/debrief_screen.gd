@@ -214,21 +214,39 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 
 	var squad: Array = result.get("squad", [])
 	var lost := 0
+	var kills := 0
+	var lifts := 0
 	for entry in squad:
 		if bool(entry.get("destroyed", false)):
 			lost += 1
+		kills += int(entry.get("kills", 0))
+		lifts += int(entry.get("revives", 0))
 	var squad_head := Kit.hbox(10)
 	squad_head.add_child(Kit.heading("SQUAD"))
 	squad_head.add_child(Kit.label("%d CAME HOME%s" % [squad.size() - lost, " · %d LOST" % lost if lost > 0 else ""],
 		Kit.PROBLEM if lost > 0 else Kit.DIM, Kit.SMALL))
+	squad_head.add_child(Kit.fill())
+	squad_head.add_child(Kit.label(_tally_text(kills, lifts), Kit.BRIGHT, Kit.SMALL, true))
 	_column.add_child(squad_head)
-	var grid := GridContainer.new()
-	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
+	# BY TEAM, the way you sent them in: you first, then each team under its
+	# own name with what it did. One grid per team — a single grid would line
+	# the cards up across the headings.
+	var grid := Kit.vbox(10)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for entry in squad:
-		grid.add_child(_card(entry))
+	for group in _by_team(squad):
+		var team_head := Kit.hbox(8)
+		team_head.add_child(Kit.label(str(group["label"]), Kit.BRIGHT, Kit.BODY, true))
+		team_head.add_child(Kit.fill())
+		team_head.add_child(Kit.label(_tally_text(int(group["kills"]), int(group["revives"])), Kit.DIM, Kit.SMALL))
+		grid.add_child(team_head)
+		var row := GridContainer.new()
+		row.columns = 3
+		row.add_theme_constant_override("h_separation", 10)
+		row.add_theme_constant_override("v_separation", 10)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		for entry in group["entries"]:
+			row.add_child(_card(entry))
+		grid.add_child(row)
 	# Ten robots is four rows of cards, and the screen has room for three: the
 	# last row ran off the bottom with no way to reach it. The cards scroll;
 	# everything above them — the payout, the unlocks — stays put.
@@ -237,7 +255,13 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(grid)
+	# Clear of the scrollbar: the team headings carry a tally on the right, and
+	# the bar sat over it.
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_right", 14)
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pad.add_child(grid)
+	scroll.add_child(pad)
 	_column.add_child(scroll)
 
 
@@ -367,6 +391,68 @@ func _unlocks(ids: Array, large: bool = false) -> Control:
 
 
 # One robot: its frame, whether it came home, what it killed and its XP.
+# The squad split the way it was sent in: one group per team in the squad
+# page's order, then anything with no team (a save from before teams).
+#
+# You are counted in YOUR team, not in a group of your own. A bucket labelled
+# YOU meant the team you fought with was always short its best gun in the
+# tally, and read as though you had been somewhere else.
+func _by_team(squad: Array) -> Array:
+	var groups: Array = []
+	var index := {}
+	for entry in squad:
+		var id := StringName(str(entry.get("team", "")))
+		if not index.has(id):
+			index[id] = {"label": _team_label(id), "id": id, "entries": [], "kills": 0, "revives": 0}
+			groups.append(index[id])
+		var group: Dictionary = index[id]
+		# Your card leads the team you are in, wherever you sit in the roster.
+		if bool(entry.get("player", false)):
+			(group["entries"] as Array).push_front(entry)
+		else:
+			(group["entries"] as Array).append(entry)
+		group["kills"] = int(group["kills"]) + int(entry.get("kills", 0))
+		group["revives"] = int(group["revives"]) + int(entry.get("revives", 0))
+	var order: Array = _team_order()
+	groups.sort_custom(func(a, b): return _rank_of(order, a["id"]) < _rank_of(order, b["id"]))
+	return groups
+
+
+func _team_order() -> Array:
+	var state = _campaign.get("state") if _campaign != null else null
+	var out: Array = []
+	if state == null or not ("teams" in state):
+		return out   # no campaign state to ask: first seen, first listed
+	for team in state.teams:
+		out.append(StringName(str(team.get("id", ""))))
+	return out
+
+
+func _rank_of(order: Array, id) -> int:
+	var at := order.find(id)
+	return at if at >= 0 else order.size()   # a team the page no longer lists goes last
+
+
+func _team_label(id: StringName) -> String:
+	var state = _campaign.get("state") if _campaign != null else null
+	if state != null and id != &"" and state.has_method("team_name"):
+		var name: String = state.team_name(id)
+		if name != "":
+			return name.to_upper()
+	return "SQUAD"
+
+
+# "12 KILLS", "12 KILLS : 3 REVIVES", "3 REVIVES" — and "0 KILLS" when there
+# was neither, which is a result too.
+func _tally_text(kills: int, revives: int) -> String:
+	var parts: Array[String] = []
+	if kills > 0 or revives == 0:
+		parts.append("%d KILL%s" % [kills, "" if kills == 1 else "S"])
+	if revives > 0:
+		parts.append("%d REVIVE%s" % [revives, "" if revives == 1 else "S"])
+	return " : ".join(parts)
+
+
 func _card(entry: Dictionary) -> Control:
 	var record: SoldierRecord = entry["record"]
 	var catalogue = _campaign.get("catalogue") if _campaign != null else null
@@ -392,9 +478,19 @@ func _card(entry: Dictionary) -> Control:
 	# say what they killed and the icons take a moment to read; this is the one
 	# number you actually compare squadmates on, so it goes in the header.
 	var tally := int(entry.get("kills", 0))
+	var lifts := int(entry.get("revives", 0))
 	var score := Kit.vbox(0)
-	score.add_child(Kit.label(str(tally), Kit.BRIGHT if tally > 0 else Kit.DIM, 26, true))
-	score.add_child(Kit.label("KILLS" if tally != 1 else "KILL", Kit.DIM, Kit.SMALL))
+	# What this one did. A Mechanic that killed nothing and stood four
+	# squadmates back up read "0 KILLS", which said nothing about its mission:
+	# with no kills, its revives take the number. Neither is still 0 KILLS.
+	if tally > 0 or lifts == 0:
+		score.add_child(Kit.label(str(tally), Kit.BRIGHT if tally > 0 else Kit.DIM, 26, true))
+		score.add_child(Kit.label("KILLS" if tally != 1 else "KILL", Kit.DIM, Kit.SMALL))
+		if lifts > 0:
+			score.add_child(Kit.label("+%d REVIVED" % lifts, Kit.BRIGHT, Kit.SMALL))
+	else:
+		score.add_child(Kit.label(str(lifts), Kit.BRIGHT, 26, true))
+		score.add_child(Kit.label("REVIVES" if lifts != 1 else "REVIVE", Kit.DIM, Kit.SMALL))
 	for line in score.get_children():
 		(line as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	top.add_child(score)

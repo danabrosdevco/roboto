@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=26 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
@@ -19,20 +19,12 @@
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="16_oqoj0"]
 [ext_resource type="Resource" uid="uid://ciftj4gygiyem" path="res://Campaign/items & catalogue/test_item_catalogue.tres" id="18_kolru"]
 [ext_resource type="Script" path="res://Campaign/enemy_force_spawner.gd" id="18_r3yq3"]
-[ext_resource type="Resource" uid="uid://nfku527pk0fi" path="res://Campaign/missions/mission_valley_3_push.tres" id="92_v3"]
-[ext_resource type="Resource" uid="uid://bfaurydji1ldk" path="res://Campaign/missions/mission_valley_4_assault.tres" id="93_v4"]
-[ext_resource type="Resource" uid="uid://dlwh4ct0km20w" path="res://Campaign/missions/mission_valley_5_siege.tres" id="94_v5"]
-[ext_resource type="Resource" uid="uid://bdmdcux88x8tl" path="res://Campaign/missions/mission_valley_6_foundry.tres" id="94_v6"]
-[ext_resource type="Resource" uid="uid://rthgym7y6a64" path="res://Campaign/missions/mission_valley_basin_3_push.tres" id="94_b3"]
-[ext_resource type="Resource" uid="uid://dk2k2jl44nf7" path="res://Campaign/missions/mission_valley_basin_4_assault.tres" id="94_b4"]
-[ext_resource type="Resource" uid="uid://b1sajnc3ibgt0" path="res://Campaign/missions/mission_valley_basin_5_siege.tres" id="94_b5"]
-[ext_resource type="Resource" uid="uid://eniorsomgpln" path="res://Campaign/missions/mission_valley_basin_6_foundry.tres" id="94_b6"]
 [ext_resource type="Resource" uid="uid://3jioym1uw0m6" path="res://Campaign/missions/mission_arena_1_contact.tres" id="95_a1"]
-[ext_resource type="Resource" uid="uid://i2oix2hsb317" path="res://Campaign/missions/mission_arena_2_mixed.tres" id="96_a2"]
 [ext_resource type="Resource" uid="uid://bkty15qc166vb" path="res://Campaign/missions/mission_arena_3_firing_line.tres" id="97_a3"]
 [ext_resource type="Resource" uid="uid://xmjjinhqkvrq" path="res://Campaign/missions/mission_coast_1_road.tres" id="98_c1"]
-[ext_resource type="Resource" uid="uid://bey8lqsw30kgh" path="res://Campaign/missions/mission_arena_4_pack_hunt.tres" id="99_a4"]
 [ext_resource type="Resource" uid="uid://4qxk4fpf5rou" path="res://Campaign/missions/mission_arena_5_proving.tres" id="99_a5"]
+[ext_resource type="Resource" uid="uid://oem8mh562jhf" path="res://Campaign/missions/mission_basin_1_anchor.tres" id="100_b1"]
+[ext_resource type="Resource" uid="uid://4ctfgm8cxpe7" path="res://Campaign/missions/mission_pitt_1_rivers.tres" id="101_p1"]
 
 [node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "squad_spawner", "objective_tracker", "Campaign", "enemy_spawner")]
 script = ExtResource("1_2t272")
@@ -92,7 +84,7 @@ script = ExtResource("12_1xc4a")
 [node name="CampaignManager" type="Node" parent="." groups=["campaign"]]
 script = ExtResource("15_3b3cm")
 base_level = ExtResource("16_oio3q")
-missions = Array[ExtResource("16_oqoj0")]([ExtResource("95_a1"), ExtResource("96_a2"), ExtResource("97_a3"), ExtResource("99_a4"), ExtResource("99_a5"), ExtResource("92_v3"), ExtResource("93_v4"), ExtResource("94_v5"), ExtResource("94_v6"), ExtResource("94_b3"), ExtResource("94_b4"), ExtResource("94_b5"), ExtResource("94_b6"), ExtResource("98_c1")])
+missions = Array[ExtResource("16_oqoj0")]([ExtResource("95_a1"), ExtResource("97_a3"), ExtResource("99_a5"), ExtResource("100_b1"), ExtResource("98_c1"), ExtResource("101_p1")])
 catalogue = ExtResource("18_kolru")
 starting_chassis = ExtResource("11_6rcry")
 starting_resources = 300

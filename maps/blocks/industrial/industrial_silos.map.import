@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c0g3fk4gn7cej"
+path="res://.godot/imported/industrial_silos.map-307cc4f9e31133c946791cde2891a370.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_silos.map"
+dest_files=["res://.godot/imported/industrial_silos.map-307cc4f9e31133c946791cde2891a370.tres"]
+
+[params]
+

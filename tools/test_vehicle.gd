@@ -515,9 +515,14 @@ func _init() -> void:
 	_check("a rover with one free seat waits on the bench", second != null and second.benched,
 		"%d of %d seats used" % [state.supply_used(), state.supply_cap])
 	var unlocks_it := cm.missions.filter(func(m): return m != null and m.unlocks.has(&"rover"))
-	_check("the rover is unlocked by clearing Valley Push, with its guns",
-		unlocks_it.size() == 1 and unlocks_it[0].id == &"valley_3_push"
-		and unlocks_it[0].unlocks.has(&"machine_gun") and unlocks_it[0].unlocks.has(&"grenade_launcher"))
+	_check("the rover is unlocked by clearing the basin, with the gun it comes with",
+		unlocks_it.size() == 1 and unlocks_it[0].id == &"basin_1_anchor"
+		and unlocks_it[0].unlocks.has(&"machine_gun"), str(unlocks_it.map(func(m): return str(m.id))))
+	# The grenade launcher is one of the late, high-power unlocks, not a
+	# second gun that arrives with the rover.
+	var gl_from := cm.missions.filter(func(m): return m != null and m.unlocks.has(&"grenade_launcher"))
+	_check("...its grenade launcher comes later, from Coast Road",
+		gl_from.size() == 1 and gl_from[0].id == &"coast_1_road", str(gl_from.map(func(m): return str(m.id))))
 	var soldier_body: Soldier = load("res://Character/characters/ai/soldier_rifle.tscn").instantiate()
 	_check("in a squad it counts as in its slot where it parks", rover.slot_tolerance(1.6) >= rover.arrival_radius
 		and soldier_body.slot_tolerance(1.6) == 1.6)
