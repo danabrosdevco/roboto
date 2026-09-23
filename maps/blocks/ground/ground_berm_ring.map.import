@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://duqib8bb705qm"
+path="res://.godot/imported/ground_berm_ring.map-1dfde584fedb2668cbc670e43e2872a3.tres"
+
+[deps]
+
+source_file="res://maps/blocks/ground/ground_berm_ring.map"
+dest_files=["res://.godot/imported/ground_berm_ring.map-1dfde584fedb2668cbc670e43e2872a3.tres"]
+
+[params]
+

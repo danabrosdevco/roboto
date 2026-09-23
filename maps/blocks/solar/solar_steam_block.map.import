@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://58wpylbemrjl"
+path="res://.godot/imported/solar_steam_block.map-62d843203a89ca21eb067242cc0272f0.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_steam_block.map"
+dest_files=["res://.godot/imported/solar_steam_block.map-62d843203a89ca21eb067242cc0272f0.tres"]
+
+[params]
+

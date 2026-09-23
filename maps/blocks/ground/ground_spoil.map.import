@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://deak288qtjhv4"
+path="res://.godot/imported/ground_spoil.map-792b485b2ad14a38b45dbec2f0892be1.tres"
+
+[deps]
+
+source_file="res://maps/blocks/ground/ground_spoil.map"
+dest_files=["res://.godot/imported/ground_spoil.map-792b485b2ad14a38b45dbec2f0892be1.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dk5o0se7yl5tj"
+path="res://.godot/imported/solar_canopy_long.map-b67473ea6edb9d493dd646e0b5f4e360.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_canopy_long.map"
+dest_files=["res://.godot/imported/solar_canopy_long.map-b67473ea6edb9d493dd646e0b5f4e360.tres"]
+
+[params]
+

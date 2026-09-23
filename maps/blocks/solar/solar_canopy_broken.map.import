@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bdcoopkqict37"
+path="res://.godot/imported/solar_canopy_broken.map-24c4cc7fb28a61a3eaaa68a09565590e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_canopy_broken.map"
+dest_files=["res://.godot/imported/solar_canopy_broken.map-24c4cc7fb28a61a3eaaa68a09565590e.tres"]
+
+[params]
+

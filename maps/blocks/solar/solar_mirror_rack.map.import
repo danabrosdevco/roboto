@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://biqcch0g8qdni"
+path="res://.godot/imported/solar_mirror_rack.map-017da16e427c1e7ccf06a2b31f961f29.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_mirror_rack.map"
+dest_files=["res://.godot/imported/solar_mirror_rack.map-017da16e427c1e7ccf06a2b31f961f29.tres"]
+
+[params]
+

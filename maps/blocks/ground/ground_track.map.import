@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://5qq83hlo3ytm"
+path="res://.godot/imported/ground_track.map-8c90a0262043458ac03b208e2bb7e47b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/ground/ground_track.map"
+dest_files=["res://.godot/imported/ground_track.map-8c90a0262043458ac03b208e2bb7e47b.tres"]
+
+[params]
+

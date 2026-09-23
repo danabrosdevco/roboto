@@ -26,8 +26,16 @@ extends SceneTree
 # prop, and a squad sent to it either cannot get there or gets there and
 # cannot leave. A prop is SUSPECT if its carve is much less than its footprint
 # plus twice the agent radius, which means the mesh is running over its skirt.
-const PROP := "res://maps/blocks/props/%s.tscn"
-const HALF := 12.0
+## Which folder to sweep. props by default; the ground kit is the other one
+## worth running, and it is read the other way round — a micro-terrain piece
+## SHOULD have area on top and a walk close to straight, because you go over
+## it rather than round it.
+var folder := "res://maps/blocks/%s" % (OS.get_environment("FOLDER") if OS.get_environment("FOLDER") != "" else "props")
+const HALF := 16.0
+## Where the crossing starts and ends. Well clear of the piece: the ground kit
+## runs to 26 m across and endpoints at 8 m landed ON the piece, which read as
+## a split map when the ground was continuous.
+const FROM := 13.0
 
 var region: NavigationRegion3D
 
@@ -37,7 +45,7 @@ func _initialize() -> void:
 	var radius := float(OS.get_environment("RADIUS")) if OS.get_environment("RADIUS") != "" else 0.5
 	var names := OS.get_environment("PROPS").split(",") if OS.get_environment("PROPS") != "" else _all_props()
 	print("   agent radius %.2f m, climb 0.25 m, slope 45 deg, cell 0.25 m, region_min_size %s" % [radius, OS.get_environment("MINREGION") if OS.get_environment("MINREGION") != "" else "2"])
-	print("   %-24s %8s %8s %9s %7s  %s" % ["prop", "on top", "carve", "footprint", "walk", "highest"])
+	print("   %-22s %8s %8s %9s %7s %-8s %s" % ["prop", "on top", "carve", "footprint", "walk", "across?", "highest"])
 	for n: String in names:
 		await _measure(n.strip_edges(), radius)
 	quit()
@@ -69,7 +77,7 @@ func _measure(prop_name: String, radius: float) -> void:
 	cs.position = Vector3(0.0, -0.5, 0.0)
 	floor_body.add_child(cs)
 
-	var packed := load(PROP % prop_name) as PackedScene
+	var packed := load(folder.path_join(prop_name + ".tscn")) as PackedScene
 	if packed == null:
 		print("   %-24s could not load" % prop_name)
 		world.queue_free()
@@ -119,22 +127,23 @@ func _measure(prop_name: String, radius: float) -> void:
 	# axis? Sample the navmesh along a line through the middle.
 	var map := region.get_navigation_map()
 	var gap := 0.0
-	for i in 241:
-		var x: float = -6.0 + i * 0.05
+	for i in 481:
+		var x: float = -12.0 + i * 0.05
 		var p := Vector3(x, 0.0, 0.0)
 		var near := NavigationServer3D.map_get_closest_point(map, p)
 		if Vector2(near.x - p.x, near.z - p.z).length() > 0.2:
 			gap += 0.05
 
 	# And does a walk across it go round, or is it simply not in the way?
-	var from := NavigationServer3D.map_get_closest_point(map, Vector3(-8.0, 0.0, 0.0))
-	var to := NavigationServer3D.map_get_closest_point(map, Vector3(8.0, 0.0, 0.0))
+	var from := NavigationServer3D.map_get_closest_point(map, Vector3(-FROM, 0.0, 0.0))
+	var to := NavigationServer3D.map_get_closest_point(map, Vector3(FROM, 0.0, 0.0))
 	var route := NavigationServer3D.map_get_path(map, from, to, true)
 	var walked := 0.0
 	for i in route.size() - 1:
 		walked += route[i].distance_to(route[i + 1])
-	print("   %-24s %6.1f m2 %6.2f m %6.2f m  %5.1f m  up to %.1f m" % [
-			prop_name, above, gap, foot, walked, high - floor_y])
+	var reached: bool = route.size() > 0 and (route[route.size() - 1] as Vector3).distance_to(to) < 2.0
+	print("   %-22s %6.1f m2 %6.2f m %6.2f m  %5.1f m %-8s up to %.1f m" % [
+			prop_name, above, gap, foot, walked, "" if reached else "SPLIT IT", high - floor_y])
 	world.queue_free()
 	await process_frame
 
@@ -160,7 +169,7 @@ func _footprint(prop: Node3D) -> float:
 ## Every prop in the folder, so the default run is a sweep.
 func _all_props() -> PackedStringArray:
 	var out := PackedStringArray()
-	for f in DirAccess.get_files_at("res://maps/blocks/props"):
+	for f in DirAccess.get_files_at(folder):
 		if f.ends_with(".tscn"):
 			out.append(f.get_basename())
 	return out

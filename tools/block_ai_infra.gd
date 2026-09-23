@@ -59,10 +59,19 @@ func _initialize() -> void:
 		"solar_tracker_row": _solar_tracker_row,
 		"solar_field_lot": _solar_field_lot,
 		"solar_heliostat": _solar_heliostat,
+		"solar_canopy": _solar_canopy,
+		"solar_canopy_long": _solar_canopy_long,
+		"solar_canopy_broken": _solar_canopy_broken,
 		"solar_tower_field": _solar_tower_field,
 		"solar_battery_container": _battery_container,
 		"solar_inverter_skid": _inverter_skid,
 		"solar_drone_dock": _drone_dock,
+		"solar_salt_tanks": _salt_tanks,
+		"solar_steam_block": _steam_block,
+		"solar_wash_bay": _wash_bay,
+		"solar_heliostat_wrecked": _heliostat_wrecked,
+		"solar_heliostat_stowed": _heliostat_stowed,
+		"solar_mirror_rack": _mirror_rack,
 	}
 	var compute := {
 		"compute_server_rack": _server_rack,
@@ -98,6 +107,9 @@ func _initialize() -> void:
 				skipped += 1
 				continue
 			_brushes = []
+			# A piece that called no_collision() must not hand the flag to the next.
+			_ghost_from = -1
+			_entities = []
 			(made[name] as Callable).call()
 			var f := FileAccess.open(path, FileAccess.WRITE)
 			if f == null:
@@ -233,6 +245,76 @@ func inverter_at(c: Vector3) -> void:
 func _solar_panel_row() -> void:
 	panel_row(0.0, -8.0, 8.0, 2.6, 25.0, 0.8, 8)
 	pipe(Vector3(1.35, -8.0, 0.45), Vector3(1.35, 8.0, 0.45), 0.08, RUBBER, 6)
+
+
+## A canopy array: one big roof of panels carried high enough on columns that
+## the squad walks underneath it. `w` by `d` metres of panels in `strips` runs,
+## `clear` metres up, on an `nx` by `ny` grid of columns.
+##
+## ONLY THE COLUMNS ARE SOLID. The deck and the panels are built after
+## no_collision(), for two reasons: a 40 m panel roof with collision bakes a
+## navmesh island seven metres up that nothing can reach and an order can still
+## snap to, and a field of them would fill the map with floors. What is left
+## for the navmesh is a handful of 1.2 m columns — cover to stand behind, and
+## nothing else.
+func canopy(w: float, d: float, clear: float, nx: int, ny: int, strips: int, lean: bool = false) -> void:
+	for ix in nx:
+		for iy in ny:
+			var x := lerpf(-w * 0.5 + 4.0, w * 0.5 - 4.0, float(ix) / maxf(1.0, nx - 1.0))
+			var y := lerpf(-d * 0.5 + 3.0, d * 0.5 - 3.0, float(iy) / maxf(1.0, ny - 1.0))
+			if lean and ix == 0 and iy == 0:
+				# One column knocked off true, still holding its corner up.
+				beam(Vector3(x - 1.6, y, -0.5), Vector3(x, y, clear + 0.2), 0.6, METAL)
+				continue
+			box(Vector3(x - 0.6, y - 0.6, -0.5), Vector3(x + 0.6, y + 0.6, clear + 0.2), METAL)
+	no_collision()
+	# The deck the panels sit on, and the panels: strips tilted 12° to the sun.
+	for s: float in [-1.0, 1.0]:
+		beam(Vector3(-w * 0.5, s * (d * 0.5 - 3.0), clear + 0.35),
+				Vector3(w * 0.5, s * (d * 0.5 - 3.0), clear + 0.35), 0.35, METAL)
+	var pitch := w / strips
+	for i in strips:
+		var cx := -w * 0.5 + pitch * (i + 0.5)
+		if lean and i == strips - 1:
+			continue   # the strip over the bent column came down
+		panel_strip(cx, -d * 0.5, d * 0.5, pitch - 1.0, 12.0, clear + 0.6)
+	if lean:
+		# What is left of it, hanging off the frame.
+		var cx := w * 0.5 - pitch * 0.5
+		chunk(Vector3(cx, -d * 0.25, clear - 1.5), Vector3(pitch - 1.5, 5.0, 0.2), 64.0, METAL)
+		chunk(Vector3(cx - 2.0, d * 0.2, 0.2), Vector3(4.0, 6.0, 0.2), 8.0, METAL)
+
+
+## One run of panels, without the legs panel_row puts under it: a canopy
+## carries its own.
+func panel_strip(cx: float, y0: float, y1: float, depth: float, tilt: float, low: float) -> void:
+	var run := depth * cos(deg_to_rad(tilt))
+	var rise := depth * sin(deg_to_rad(tilt))
+	var modules := maxi(2, int((y1 - y0) / 3.0))
+	var wmod := (y1 - y0) / modules
+	for i in modules:
+		flight(cx - run * 0.5, y0 + i * wmod + 0.05, cx + run * 0.5, y0 + (i + 1) * wmod - 0.05,
+				low, low + rise, "+x", 0.08, PANEL)
+	for t in [0.15, 0.85]:
+		var z: float = low + rise * t - 0.14
+		beam(Vector3(lerpf(cx - run * 0.5, cx + run * 0.5, t), y0, z),
+				Vector3(lerpf(cx - run * 0.5, cx + run * 0.5, t), y1, z), 0.1, METAL)
+
+
+## The big one: 40 by 28 m of panels, 7 m up on six columns.
+func _solar_canopy() -> void:
+	canopy(40.0, 28.0, 7.0, 3, 2, 5)
+
+
+## A longer, narrower canopy for running along a road or a field edge.
+func _solar_canopy_long() -> void:
+	canopy(72.0, 16.0, 6.5, 4, 2, 8)
+
+
+## The same array with a column bent and a strip down: the machines have not
+## got round to this one.
+func _solar_canopy_broken() -> void:
+	canopy(40.0, 28.0, 7.0, 3, 2, 5, true)
 
 
 ## Twenty metres of single-axis tracker: panels on a torque tube, turned 30°.
@@ -662,3 +744,154 @@ func deadman_at(c: Vector3) -> void:
 	solid(pts, CONCRETE)
 	cylinder(c + Vector3(0, 0, 3.5), 1.4, 1.2, 8, METAL)
 	cylinder(c + Vector3(0, 0, 3.9), 1.55, 0.4, 8, GLOW)
+
+
+## THE SALT TANKS. Two insulated tanks and the pipe bridge between them, on a
+## kerbed bund — the piece that says what the mirror field is FOR. A tower
+## plant stores its heat as molten salt: a cold tank, a hot tank, and the
+## receiver up the tower moving it from one to the other. At 42 m across it is
+## the second landmark on a heliostat map after the tower itself.
+func _salt_tanks() -> void:
+	box(Vector3(-21.0, -13.0, -0.2), Vector3(21.0, 13.0, 0.1), PAD)
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-21.0, s * 12.4, 0.1), Vector3(21.0, s * 13.0, 1.1), CONCRETE)
+		box(Vector3(s * 20.4, -13.0, 0.1), Vector3(s * 21.0, 13.0, 1.1), CONCRETE)
+	for x: float in [-10.5, 10.5]:
+		_salt_tank(Vector3(x, 0.0, 0.1), 8.0, 13.0)
+	for z: float in [9.5, 11.0]:
+		pipe(Vector3(-10.5, 0.8, z), Vector3(10.5, 0.8, z), 0.45, CLAD, 8)
+	pipe(Vector3(-10.5, -0.8, 10.2), Vector3(10.5, -0.8, 10.2), 0.3, RUST, 8)
+	for x: float in [-3.5, 0.0, 3.5]:
+		post(x, 0.0, 0.1, 9.2, 0.3, METAL)
+		box(Vector3(x - 1.4, -1.4, 9.2), Vector3(x + 1.4, 1.4, 9.35), GRATING)
+	pipe(Vector3(10.5, -9.0, 4.0), Vector3(10.5, -18.0, 4.0), 0.55, CLAD, 8)
+	for y: float in [-14.0, -17.0]:
+		post(10.5, y, 0.1, 3.5, 0.28, METAL)
+
+
+## One insulated tank: a clad drum with a domed cap, rings of stiffener, and a
+## stair spiralling it in eight flights.
+func _salt_tank(c: Vector3, r: float, h: float) -> void:
+	cylinder(c, r + 0.4, 0.6, 16, CONCRETE)
+	cylinder(c + Vector3(0, 0, 0.6), r, h, 16, CLAD)
+	for z: float in [3.5, 7.0, 10.5]:
+		cylinder(c + Vector3(0, 0, z), r + 0.25, 0.3, 16, RUST)
+	cylinder(c + Vector3(0, 0, h + 0.6), r - 0.8, 1.2, 16, RUST_PANEL, r - 3.4)
+	cylinder(c + Vector3(0, 0, h + 1.8), 1.2, 0.8, 8, METAL)
+	for i in 8:
+		var a0 := TAU * i / 8.0 - PI * 0.5
+		var a1 := TAU * (i + 1) / 8.0 - PI * 0.5
+		var z0: float = 0.6 + i * (h / 8.0)
+		var pts: Array = []
+		for a: float in [a0, a1]:
+			var z: float = z0 if a == a0 else z0 + h / 8.0
+			for rr: float in [r + 0.05, r + 1.3]:
+				pts.append(c + Vector3(cos(a) * rr, sin(a) * rr, z))
+				pts.append(c + Vector3(cos(a) * rr, sin(a) * rr, z - 0.9))
+		solid(pts, GRATING, 2)
+
+
+## THE STEAM BLOCK: a turbine hall with the air-cooled condenser bank beside
+## it. A tower plant in a desert cannot spare water to condense with, so it
+## blows air through a hillside of finned tube — the tallest thing on the site
+## after the tower, and readable from right across the field.
+func _steam_block() -> void:
+	box(Vector3(-13.0, -9.0, -0.3), Vector3(13.0, 9.0, 0.2), PAD)
+	box(Vector3(-12.0, -8.0, 0.2), Vector3(4.0, 8.0, 8.5), CLAD)
+	box(Vector3(-12.4, -8.4, 8.5), Vector3(4.4, 8.4, 9.0), RUST_PANEL)
+	for y: float in [-6.0, -2.0, 2.0, 6.0]:
+		box(Vector3(-12.1, y - 1.2, 1.0), Vector3(-12.0, y + 1.2, 6.0), GRATING)
+	box(Vector3(-8.0, -8.1, 0.2), Vector3(-4.0, -8.0, 4.2), SHUTTER)
+	for x: float in [6.0, 10.5]:
+		for y: float in [-6.0, -2.0, 2.0, 6.0]:
+			post(x, y, 0.2, 7.0, 0.35, METAL)
+	for i in 4:
+		var y: float = -6.0 + i * 4.0
+		var pts: Array = []
+		for yy: float in [y - 1.9, y + 1.9]:
+			pts.append(Vector3(4.6, yy, 7.0))
+			pts.append(Vector3(12.0, yy, 7.0))
+			pts.append(Vector3(8.3, yy, 10.6))
+		solid(pts, GRATING, 2)
+		cylinder(Vector3(8.3, y, 6.1), 1.7, 0.8, 12, METAL)
+	pipe(Vector3(4.0, 0.0, 6.0), Vector3(6.4, 0.0, 6.0), 0.5, CLAD, 8)
+	pipe(Vector3(-12.0, 4.5, 3.0), Vector3(-17.0, 4.5, 3.0), 0.4, CLAD, 8)
+	post(-16.0, 4.5, -0.2, 2.6, 0.25, METAL)
+
+
+## THE WASH BAY. A field of mirrors in a desert is a field of mirrors under
+## dust, so a plant like this washes them on a rota: a drive-through frame
+## with brush heads, a water tank on a stand, and a drain down the lane.
+func _wash_bay() -> void:
+	box(Vector3(-7.0, -4.5, -0.2), Vector3(7.0, 4.5, 0.12), {"top": SCORCH, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(-6.4, -0.5, 0.12), Vector3(6.4, 0.5, 0.2), GRATING)
+	for s: float in [-1.0, 1.0]:
+		for x: float in [-3.6, 3.6]:
+			post(x, s * 3.4, 0.12, 5.2, 0.22, METAL)
+		box(Vector3(-3.9, s * 3.4 - 0.25, 5.2), Vector3(3.9, s * 3.4 + 0.25, 5.5), METAL)
+		for x: float in [-2.2, 1.6]:
+			box(Vector3(x - 0.3, s * 1.2, 1.2), Vector3(x + 0.3, s * 3.4, 1.5), METAL)
+			cylinder(Vector3(x, s * 1.2, 0.5), 0.55, 3.4, 10, RUBBER)
+	box(Vector3(-4.2, -3.6, 5.5), Vector3(4.2, 3.6, 5.8), RUST_PANEL)
+	for c: Array in [[-1.5, -1.5], [1.5, -1.5], [1.5, 1.5], [-1.5, 1.5]]:
+		post(8.6 + float(c[0]), float(c[1]), -0.2, 3.4, 0.2, METAL)
+	cylinder(Vector3(8.6, 0.0, 3.4), 2.2, 3.0, 12, RUST)
+	cylinder(Vector3(8.6, 0.0, 6.4), 2.0, 0.5, 12, RUST_PANEL, 1.0)
+	pipe(Vector3(8.6, 0.0, 3.4), Vector3(8.6, 0.0, 1.0), 0.18, METAL, 6)
+	pipe(Vector3(8.6, 0.0, 1.0), Vector3(4.0, 0.0, 1.0), 0.18, METAL, 6)
+
+
+## A HELIOSTAT THAT CAME DOWN: the pylon snapped at the pedestal, the mirror
+## face-down and broken across its frame. One of these in a row of forty is
+## what stops a mirror field reading as wallpaper.
+func _heliostat_wrecked() -> void:
+	cylinder(Vector3(0, 0, -0.3), 0.4, 0.5, 8, CONCRETE)
+	cylinder(Vector3(0, 0, 0.2), 0.14, 0.45, 8, METAL)
+	beam(Vector3(0.0, 0.0, 0.5), Vector3(-1.6, 0.25, 0.35), 0.14, METAL)
+	beam(Vector3(-1.6, 0.25, 0.35), Vector3(-3.1, 0.1, 0.2), 0.13, RUST)
+	for c: Array in [[-2.6, 1.1, 8.0], [-3.9, -0.4, -14.0], [-2.1, -1.5, 25.0]]:
+		box_yawed(Vector3(float(c[0]) - 1.0, float(c[1]) - 0.8, 0.02),
+				Vector3(float(c[0]) + 1.0, float(c[1]) + 0.8, 0.09),
+				Vector3(float(c[0]), float(c[1]), 0.0), float(c[2]), MIRROR)
+	beam(Vector3(-1.8, 1.6, 0.14), Vector3(-4.4, -1.2, 0.14), 0.09, RUST)
+	beam(Vector3(-4.3, 1.3, 0.14), Vector3(-2.0, -1.7, 0.14), 0.08, RUST)
+	for c: Array in [[-1.2, -0.9], [-4.8, 0.7], [-3.2, 2.0]]:
+		box(Vector3(float(c[0]) - 0.25, float(c[1]) - 0.2, 0.0),
+				Vector3(float(c[0]) + 0.25, float(c[1]) + 0.2, 0.06), GLASS)
+
+
+## A HELIOSTAT STOWED FACE-UP, the way a field parks them in a storm or when
+## the plant is down. Same pedestal, mirror flat. Mixed into a field of tipped
+## ones it breaks the grain without breaking the pattern.
+func _heliostat_stowed() -> void:
+	cylinder(Vector3(0, 0, -0.3), 0.4, 0.5, 8, CONCRETE)
+	cylinder(Vector3(0, 0, 0.2), 0.14, 1.5, 8, METAL)
+	box(Vector3(-0.25, -0.25, 1.6), Vector3(0.25, 0.25, 1.95), RUST)
+	box(Vector3(-1.5, -1.5, 1.95), Vector3(1.5, 1.5, 2.03), MIRROR)
+	for s: float in [-1.0, 1.0]:
+		beam(Vector3(s * 1.4, -1.4, 1.9), Vector3(s * 1.4, 1.4, 1.9), 0.07, RUST)
+
+
+## A RACK OF SPARE MIRRORS on their edges in a steel frame, two broken ones
+## stacked flat and a crate of fixings. Where the plant keeps what it needs to
+## put a wrecked heliostat back up.
+func _mirror_rack() -> void:
+	box(Vector3(-3.4, -1.6, -0.15), Vector3(3.4, 1.6, 0.15), PAD)
+	for s: float in [-1.0, 1.0]:
+		post(-3.0, s * 1.2, 0.15, 2.6, 0.12, METAL)
+		post(3.0, s * 1.2, 0.15, 2.6, 0.12, METAL)
+		box(Vector3(-3.1, s * 1.2 - 0.1, 2.3), Vector3(3.1, s * 1.2 + 0.1, 2.5), METAL)
+	box(Vector3(-3.1, -1.35, 0.15), Vector3(3.1, -1.15, 0.35), METAL)
+	for i in 6:
+		var x: float = -2.6 + i * 1.04
+		var lean: float = 8.0 + i * 1.5
+		var pts: Array = []
+		for y: float in [-1.1, 1.1]:
+			pts.append(Vector3(x - 0.05, y, 0.3))
+			pts.append(Vector3(x + 0.05, y, 0.3))
+			pts.append(Vector3(x - 0.05 + sin(deg_to_rad(lean)) * 2.2, y, 0.3 + cos(deg_to_rad(lean)) * 2.2))
+			pts.append(Vector3(x + 0.05 + sin(deg_to_rad(lean)) * 2.2, y, 0.3 + cos(deg_to_rad(lean)) * 2.2))
+		solid(pts, MIRROR, 2)
+	for i in 2:
+		box(Vector3(-3.0, 0.4, 0.15 + i * 0.1), Vector3(-1.2, 1.4, 0.24 + i * 0.1), GLASS)
+	box(Vector3(1.4, 0.3, 0.15), Vector3(2.8, 1.4, 0.95), {"top": METAL, "side": SHUTTER, "bottom": METAL})
