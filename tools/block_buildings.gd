@@ -45,6 +45,12 @@ const INFILL := "PSX_Textures/concrete_tx_5"
 const SCORCH := "PSX_Textures/concrete_6"
 const RUBBLE := "PSX_Textures/concrete_3"
 
+## The map settings' clip texture. FuncGodot drops clip-textured faces from the
+## visual mesh and keeps them for collision, so a brush textured with this is
+## solid and never drawn: it is how a piece gets a collision shape that is not
+## the shape you can see.
+const CLIP := "special/clip"
+
 const SLAB := {"top": DECK, "side": FRAME, "bottom": FRAME}   # anything walked on
 const STAIR := {"top": DECK, "side": FRAME, "bottom": FRAME}
 
@@ -52,6 +58,8 @@ var _brushes: Array = []
 ## Where the piece's no-collision brushes start, or -1 for none. See
 ## no_collision().
 var _ghost_from := -1
+## Where each entity after worldspawn starts: [{at, classname}]. See entity().
+var _entities: Array = []
 
 
 func _initialize() -> void:
@@ -93,6 +101,7 @@ func _initialize() -> void:
 			continue
 		_brushes = []
 		_ghost_from = -1
+		_entities = []
 		(made[name] as Callable).call()
 		var f := FileAccess.open(path, FileAccess.WRITE)
 		if f == null:
@@ -659,19 +668,41 @@ func _ruin_low() -> void:
 ## into strips. Nothing tall belongs in here — a wall with no collision is a
 ## hole the squad walks through.
 func no_collision() -> void:
-	_ghost_from = _brushes.size()
+	entity("func_detail_illusionary")
+
+
+## Everything built after this call goes into its own entity of `classname`,
+## instead of worldspawn. Two reasons to want one:
+##
+##   - func_detail_illusionary, through no_collision() above, for detail with
+##     no collision at all.
+##   - func_detail, to break a big piece into several meshes. FuncGodot builds
+##     one mesh per entity, and this project renders in GL compatibility, which
+##     lights at most eight lights per mesh. A tower built as one mesh cannot
+##     have a lamp on each of twelve floors; a tower built as twelve can.
+##
+## Call it again to start the next one. `_ghost_from` still marks where the
+## first no-collision entity began, so a piece can have both.
+func entity(classname: String) -> void:
+	_entities.append({"at": _brushes.size(), "classname": classname})
+	if classname == "func_detail_illusionary" and _ghost_from < 0:
+		_ghost_from = _brushes.size()
 
 
 func _map_text() -> String:
-	var solid := _brushes.size() if _ghost_from < 0 else _ghost_from
 	var lines := PackedStringArray(["// Game: Roboto", "// Format: Valve", "// entity 0", "{",
 			"\"mapversion\" \"220\"", "\"wad\" \"\"", "\"classname\" \"worldspawn\""])
-	for b in range(0, solid):
+	var first: int = _brushes.size() if _entities.is_empty() else _entities[0].at
+	for b in range(0, first):
 		lines.append_array(_brush_text(b))
 	lines.append("}")
-	if solid < _brushes.size():
-		lines.append_array(["// entity 1", "{", "\"classname\" \"func_detail_illusionary\""])
-		for b in range(solid, _brushes.size()):
+	for i in _entities.size():
+		var e: Dictionary = _entities[i]
+		var until: int = _brushes.size() if i == _entities.size() - 1 else _entities[i + 1].at
+		if until <= e.at:
+			continue   # nothing was built for it; leave the entity out entirely
+		lines.append_array(["// entity %d" % (i + 1), "{", "\"classname\" \"%s\"" % e.classname])
+		for b in range(e.at, until):
 			lines.append_array(_brush_text(b))
 		lines.append("}")
 	return "\n".join(lines) + "\n"
@@ -728,3 +759,46 @@ func _extent_text() -> String:
 				lo = lo.min(p)
 				hi = hi.max(p)
 	return "x %.2f..%.2f  y %.2f..%.2f  z %.2f..%.2f m" % [lo.x / UPM, hi.x / UPM, lo.y / UPM, hi.y / UPM, lo.z / UPM, hi.z / UPM]
+
+
+## AN INVISIBLE COLLISION BLOCK, for a prop whose own shape the navmesh cannot
+## cope with. Vertical sides, nothing drawn, and slatted so that no walkable
+## surface can form on top of it.
+##
+## Two failures this exists to fix, both measured on a flat floor with a
+## level's own bake settings:
+##
+##   * A GENTLE SLOPE IS WALKABLE. Rubble heaps at about thirty degrees and
+##     Recast walks anything under forty-five, so the navmesh ran up the pile
+##     and left an island on top that nothing could climb to — and it carved
+##     only 2.75 m of the pile's 4.9 m footprint, so the squad walked into the
+##     skirt. Vertical sides are rejected outright and the carve covers the
+##     whole footprint.
+##   * A BATTERED FOOT IS A TOEHOLD. A jersey barrier's profile is widest at
+##     the ground and has a ledge 0.08 m up, inside the baker's 0.25 m climb,
+##     so the mesh crept onto the barrier's toe and bodies caught on the flare
+##     above it instead of walking round.
+##
+## SLATS, NOT A SOLID BOX. A flat top is walkable however high it is, so a
+## plain box grows an island of its own — 13.5 m2 of it on the rubble pile.
+## Recast erodes the walkable area by the agent's radius, so nothing narrower
+## than twice that survives: slats a quarter of a metre wide leave no strip
+## wide enough to stand on, on top or in the gaps between them, and the gaps
+## are still too narrow for anything to walk into. Teeth ABOVE the block would do the same
+## job and were the first attempt, but they stand proud of the prop you can
+## see and stop shots in mid-air. A top already narrower than `flat` is one
+## slat.
+func clip_block(c: Vector3, half: Vector2, h: float, flat: float = 0.9) -> void:
+	if half.x * 2.0 <= flat:
+		box(c + Vector3(-half.x, -half.y, 0.0), c + Vector3(half.x, half.y, h), CLIP)
+		return
+	# A slat one cell wide, not two. At the 0.25 m cell these levels bake at, a
+	# 0.4 m slat is two cells and eroding two cells off each side of it left a
+	# sliver behind — 1.9 m2 of navmesh still standing on the pile. 0.25 m
+	# slats at a 0.9 m pitch erode away cleanly and the 0.65 m gaps between
+	# them are still too narrow for anything to walk into.
+	var n := maxi(2, int(round(half.x * 2.0 / 0.9)) + 1)
+	var pitch: float = (half.x * 2.0 - 0.25) / (n - 1)
+	for i in n:
+		var x0: float = c.x - half.x + i * pitch
+		box(Vector3(x0, c.y - half.y, c.z), Vector3(x0 + 0.25, c.y + half.y, c.z + h), CLIP)

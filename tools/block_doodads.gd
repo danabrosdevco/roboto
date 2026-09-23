@@ -115,6 +115,9 @@ func _initialize() -> void:
 				skipped += 1
 				continue
 			_brushes = []
+			# A piece that called no_collision() must not hand the flag to the next.
+			_ghost_from = -1
+			_entities = []
 			(made[name] as Callable).call()
 			var f := FileAccess.open(path, FileAccess.WRITE)
 			if f == null:
@@ -651,6 +654,10 @@ func _boulder_c() -> void:
 
 ## Three flat slabs of rock, tilted a little: stepping stones or a rock shelf.
 func _rock_slabs() -> void:
+	# Slabs lying on the ground, ankle to knee high. No collision: the squad
+	# walks over these, and a knee-high stone with a collider punches a hole in
+	# the navmesh and fans triangles out across the whole field around it.
+	no_collision()
 	rock(Vector3(-0.9, -0.5, 0.0), Vector3(1.3, 1.0, 0.45), 111, ROCK, 12, 0.3)
 	rock(Vector3(1.0, 0.4, -0.05), Vector3(1.1, 0.9, 0.4), 112, ROCK, 12, 0.22)
 	rock(Vector3(0.1, 1.6, -0.1), Vector3(0.8, 0.7, 0.35), 113, ROCK, 10, 0.12)
@@ -680,7 +687,15 @@ func mound(c: Vector3, rx: float, ry: float, h: float, seed: int, tex: Variant) 
 
 
 ## Broken concrete heaped up with rebar sticking out of it.
+##
+## THE RUBBLE ITSELF IS NOT SOLID. A heap at thirty degrees is a walkable
+## slope as far as Recast is concerned, so the navmesh climbed the pile and
+## left an island on top nothing could reach, and it carved only 2.75 m of the
+## pile's 4.9 m footprint so the squad walked into the skirt. What is solid is
+## a clip block with vertical sides under it; the heap is dressing over it.
 func _rubble_pile() -> void:
+	clip_block(Vector3(0.0, 0.0, 0.0), Vector2(1.95, 1.75), 0.8)
+	no_collision()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 131
 	rock(Vector3(0, 0, -0.3), Vector3(2.0, 1.8, 1.0), 132, RUBBLE, 12)
@@ -699,7 +714,15 @@ func _rubble_pile() -> void:
 ## A 3 m jersey barrier.
 ## The profile is concave where the shallow lower slope meets the steep upper
 ## face, and a brush must be convex: two brushes, split at that line.
+##
+## AND NEITHER OF THEM IS SOLID. The profile is widest at the ground and has a
+## ledge 0.08 m up, inside the navmesh baker's 0.25 m climb, so the mesh crept
+## onto the barrier's toe and bodies caught on the flare above it instead of
+## walking round. A plain box with vertical sides is what collides; the
+## profile is what you see.
 func _jersey_barrier() -> void:
+	clip_block(Vector3(0.0, 0.0, -0.05), Vector2(0.32, 1.5), 0.88)
+	no_collision()
 	_extrude_y([Vector2(-0.3, -0.05), Vector2(0.3, -0.05), Vector2(0.3, 0.08), Vector2(0.15, 0.28),
 			Vector2(-0.15, 0.28), Vector2(-0.3, 0.08)], -1.5, 1.5, FRAME)
 	_extrude_y([Vector2(-0.15, 0.28), Vector2(0.15, 0.28), Vector2(0.08, 0.81), Vector2(-0.08, 0.81)], -1.5, 1.5, FRAME)

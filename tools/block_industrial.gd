@@ -161,6 +161,9 @@ func _initialize() -> void:
 				quit(1)
 				return
 			_brushes = []
+			# A piece that called no_collision() must not hand the flag to the next.
+			_ghost_from = -1
+			_entities = []
 			call(method)
 			var f := FileAccess.open(path, FileAccess.WRITE)
 			if f == null:
@@ -1557,7 +1560,21 @@ func _hesco_sangar() -> void:
 
 
 ## A jersey barrier 3 m long, placed: `c`, turned `yaw` (0 lies along Y).
+##
+## A CLIP BOX GOES ROUND IT. The profile is widest at the ground and has a
+## ledge 0.08 m up, inside the navmesh baker's 0.25 m climb, so the mesh crept
+## onto the barrier's toe and bodies caught on the flare above it instead of
+## walking round. A box a couple of centimetres wider than the profile, full
+## height, buries that ledge: the carve comes off the box's vertical sides and
+## nothing can stand on the toe. The profile stays solid — this is called from
+## inside bigger pieces, and no_collision() would take the rest of the piece
+## with it.
 func jersey_at(c: Vector3, yaw: float) -> void:
+	var hull: Array = []
+	for y: float in [-1.5, 1.5]:
+		for q: Vector2 in [Vector2(-0.32, -0.06), Vector2(0.32, -0.06), Vector2(0.32, 0.83), Vector2(-0.32, 0.83)]:
+			hull.append(Vector3(q.x, y, q.y))
+	psolid(c, yaw, hull, CLIP)
 	for prof: Array in [[Vector2(-0.3, -0.05), Vector2(0.3, -0.05), Vector2(0.3, 0.08), Vector2(0.15, 0.28), Vector2(-0.15, 0.28), Vector2(-0.3, 0.08)],
 			[Vector2(-0.15, 0.28), Vector2(0.15, 0.28), Vector2(0.08, 0.81), Vector2(-0.08, 0.81)]]:
 		var pts: Array = []
