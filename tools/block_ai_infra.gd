@@ -755,7 +755,13 @@ func _salt_tanks() -> void:
 	box(Vector3(-21.0, -13.0, -0.2), Vector3(21.0, 13.0, 0.1), PAD)
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(-21.0, s * 12.4, 0.1), Vector3(21.0, s * 13.0, 1.1), CONCRETE)
-		box(Vector3(s * 20.4, -13.0, 0.1), Vector3(s * 21.0, 13.0, 1.1), CONCRETE)
+		box(Vector3(20.4, s * 3.5, 0.1), Vector3(21.0, s * 13.0, 1.1), CONCRETE)
+	# THE WEST KERB HAS A GAP IN IT. A bund is built to hold a tank's contents
+	# and a 1.1 m kerb all the way round does that and also seals the tanks off
+	# from the squad — the level probe found the objective inside it unreachable.
+	# Seven metres of opening, which is how a real one takes a vehicle.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-21.0, s * 3.5, 0.1), Vector3(-20.4, s * 13.0, 1.1), CONCRETE)
 	for x: float in [-10.5, 10.5]:
 		_salt_tank(Vector3(x, 0.0, 0.1), 8.0, 13.0)
 	for z: float in [9.5, 11.0]:

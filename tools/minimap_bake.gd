@@ -44,7 +44,8 @@ var _levels := [
 	"res://maps/pittsburgh_level.tscn",
 	"res://maps/causeway_level.tscn",
 	"res://maps/depot_level.tscn",
-	"res://maps/proving_level.tscn"
+	"res://maps/proving_level.tscn",
+	"res://maps/heliostat_level.tscn"
 ]
 
 
