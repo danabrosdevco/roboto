@@ -1,15 +1,15 @@
 [gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_f2hq2"]
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_7tg7v"]
 
 [resource]
-script = ExtResource("1_f2hq2")
+script = ExtResource("1_7tg7v")
 level_scene_path = "res://maps/mutaha_level.tscn"
 image_path = "res://maps/minimaps/mutaha_level.png"
-world_min = Vector2(-484.155, -484.155)
-world_max = Vector2(484.155, 484.155)
-objective_ids = Array[StringName]([])
-objective_names = Array[String]([])
-objective_positions = Array[Vector3]([])
-objective_kinds = Array[StringName]([])
+world_min = Vector2(-565.775, -565.775)
+world_max = Vector2(565.775, 565.775)
+objective_ids = Array[StringName]([&"mutaha_extract", &"mutaha_relay_gate", &"mutaha_relay_server", &"mutaha_relay_compute", &"mutaha_relay_clock", &"mutaha_hive_fair", &"mutaha_hive_campus", &"mutaha_hive_clock", &"mutaha_listening"])
+objective_names = Array[String](["Get out north", "Gatehouse Relay", "Server Garden", "Compute Hall", "Clock Square", "Fairground Hive", "Campus Hive", "Clock Square Hive", "Listening Post"])
+objective_positions = Array[Vector3]([Vector3(11.5, -0.12, -420), Vector3(-14, -0.31, 112), Vector3(-4, -1.46024, -54), Vector3(-5, -1.3071, -107.5), Vector3(-238, 0.11, -217), Vector3(196, -0.53, -190), Vector3(5, -0.5, -99), Vector3(-248, 0.11, -205), Vector3(-42, -0.74, -196)])
+objective_kinds = Array[StringName]([&"extract", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture"])
 insertion_positions = Array[Vector3]([Vector3(91.5, 0.82, 420), Vector3(104, 0.48, 432)])

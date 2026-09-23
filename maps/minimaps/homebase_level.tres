@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_23n4u"]
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_k68lk"]
 
 [resource]
-script = ExtResource("1_23n4u")
+script = ExtResource("1_k68lk")
 level_scene_path = "res://maps/homebase_level.tscn"
 image_path = "res://maps/minimaps/homebase_level.png"
 world_min = Vector2(-70.7549, -14.1356)

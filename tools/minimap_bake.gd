@@ -23,6 +23,13 @@ const MARGIN := 1.06
 const OBJECTIVE_PADDING := 1.9
 ## Never zoom in tighter than this many metres across.
 const MIN_SPAN := 110.0
+## A roof is something you could stand under. Higher than this and the ray hit
+## a cliff, a tower or a gantry, not a ceiling.
+const CEILING_MAX := 40.0
+## And it is at least this far up, or it is furniture rather than a ceiling.
+const CEILING_MIN := 3.0
+## Wider than this across and it is a landscape, whatever the rays say.
+const INDOOR_SPAN := 200.0
 # By path: see the note on class names at the top of tutorial_label.gd.
 const _TutorialLabel := preload("res://Env/world_objects/tutorial_label.gd")
 const _TutorialToast := preload("res://Character/hud/tutorial_toast.gd")
@@ -34,7 +41,9 @@ var _levels := [
 	"res://maps/homebase_level.tscn",
 	"res://maps/coastal-road_level.tscn",
 	"res://maps/mutaha_level.tscn",
-	"res://maps/pittsburgh_level.tscn"
+	"res://maps/pittsburgh_level.tscn",
+	"res://maps/causeway_level.tscn",
+	"res://maps/depot_level.tscn"
 ]
 
 
@@ -183,6 +192,18 @@ func _bake(path: String) -> void:
 	cam.global_position = Vector3(centre.x, top, centre.z)
 	cam.make_current()
 
+	# Indoors, the near plane drops to just under the roof so the plan shows
+	# through it. See _ceiling_over().
+	var roofed := ""
+	# Only a level small enough to BE a room gets tested. Pittsburgh put seven
+	# of nine rays into bridges and rooftops and cut itself off at 5.5 m.
+	if nav.size != Vector3.ZERO and span < INDOOR_SPAN:
+		await physics_frame
+		var roof := _ceiling_over(level as Node3D, centre, nav)
+		if roof > 0.0:
+			cam.near = maxf(0.05, top - roof + 0.5)
+			roofed = "  (roof cut at %.1f m)" % roof
+
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-62.0, -38.0, 0.0)
 	sun.light_energy = 1.2
@@ -227,9 +248,9 @@ func _bake(path: String) -> void:
 	data.world_max = Vector2(centre.x + half, centre.z + half)
 	ResourceSaver.save(data, "%s/%s.tres" % [OUT_DIR, base])
 
-	print("OK    %-20s %5.0f m across  img %dx%d  %d obj  %d insertion  framed on %s -> %s%s" % [
+	print("OK    %-20s %5.0f m across  img %dx%d  %d obj  %d insertion  framed on %s -> %s%s%s" % [
 		base, span, img.get_width(), img.get_height(),
-		data.objective_count(), data.insertion_positions.size(), framed_on, png.get_file(),
+		data.objective_count(), data.insertion_positions.size(), framed_on, png.get_file(), roofed,
 		("  (%d tutorial signs, %d other labels left out)" % [signs, texts]) if signs + texts > 0 else ""])
 
 	_discard(cam)
@@ -247,6 +268,47 @@ func _discard(n: Node) -> void:
 	n.queue_free()
 
 
+
+
+
+## THE CEILING OVER THE WALKABLE FLOOR, or -1 where the sky is open.
+##
+## A level that is a building renders from straight overhead as a featureless
+## slab of roof — the old home base's minimap was exactly that, and so was the
+## depot's first bake. So: nine rays straight up over the frame. If seven of
+## them hit something within CEILING_MAX, this is a room rather than a
+## landscape, and the median hit is where the roof starts.
+##
+## Seven of nine, not one of one, because outdoors a single ray up the middle
+## can just as easily hit a bridge deck, a gantry or the underside of a tower,
+## and cutting a whole landscape in half over one overhang would be worse than
+## the roof it is trying to fix.
+func _ceiling_over(level: Node3D, centre: Vector3, nav: AABB) -> float:
+	var space := level.get_world_3d().direct_space_state
+	if space == null:
+		return -1.0
+	var ys: Array[float] = []
+	# Spread over the WALKABLE bounds, not over the picture frame: the frame has
+	# margin round it, and sampling at its corners put six of the nine rays
+	# outside the depot altogether, so an obvious roof read as open sky.
+	var reach: float = minf(nav.size.x, nav.size.z) * 0.25
+	for ix in 3:
+		for iz in 3:
+			# Start at head height, not at the floor: a ray from a metre up stops
+			# on the first crate it meets and the old home base got cut at 0.5 m,
+			# which showed a strip of rail and nothing else.
+			var from := Vector3(centre.x + (ix - 1) * reach, nav.position.y + CEILING_MIN,
+					centre.z + (iz - 1) * reach)
+			var q := PhysicsRayQueryParameters3D.create(from, from + Vector3.UP * CEILING_MAX)
+			var hit := space.intersect_ray(q)
+			if hit.has("position"):
+				ys.append((hit.position as Vector3).y)
+	if ys.size() < 7:
+		return -1.0
+	# The MEDIAN, not the lowest: a gantry or a hanging tray over one ray would
+	# otherwise pull the cut down through the whole level.
+	ys.sort()
+	return ys[ys.size() / 2]
 
 # Cameras and environments the level brought with it. A level's own Camera3D
 # will re-claim the viewport, and its WorldEnvironment would override the flat
