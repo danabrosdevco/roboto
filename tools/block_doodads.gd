@@ -649,7 +649,10 @@ func _boulder_b() -> void:
 
 
 func _boulder_c() -> void:
-	rock(Vector3(0, 0, 0.45), Vector3(1.9, 1.7, 1.55), 103, STRATA, 16)
+	# 26 facets, not 16, and half a metre taller in the crown. At sixteen the
+	# hull came out with a single top facet wide enough to carry navmesh — 1.2
+	# m2 of it, 1.7 m up a boulder nothing can climb.
+	rock(Vector3(0, 0, 0.45), Vector3(1.9, 1.7, 2.05), 103, STRATA, 26)
 
 
 ## Three flat slabs of rock, tilted a little: stepping stones or a rock shelf.
@@ -664,7 +667,14 @@ func _rock_slabs() -> void:
 
 
 ## A low earth hump, knee-high: enough to crouch behind.
+## THE MOUND IS NOT SOLID. Earth heaps at about twenty degrees and the navmesh
+## baker walks anything under forty-five, so the mesh climbed the dome and left
+## 2.3 m2 on the crest — connected to the floor, so no bake setting culls it,
+## and jittered enough that a body could not follow it. A clip block under it
+## is what collides; the dome is dressing. See clip_block().
 func _dirt_mound() -> void:
+	clip_block(Vector3(0.0, 0.0, 0.0), Vector2(2.15, 1.55), 0.65)
+	no_collision()
 	mound(Vector3.ZERO, 2.3, 1.7, 0.8, 121, DIRT)
 
 
@@ -742,10 +752,18 @@ func _extrude_y(profile: Array, y0: float, y1: float, tex: Variant) -> void:
 
 
 ## Three big concrete blocks, one knocked over.
+## Every top is bevelled. A 1.5 m square flat top is wide enough for the
+## navmesh baker to stand an agent on after it erodes, so these grew 2.9 m2 of
+## walkable island 1.3 m up that nothing could climb to. Bevelled in 0.4 m a
+## side over a 0.5 m rise, the faces are 51 degrees and the 0.7 m left in the
+## middle erodes away — and cast concrete with a bevelled edge is what it
+## should have looked like anyway.
 func _concrete_blocks() -> void:
 	box(Vector3(-1.6, -0.75, -0.1), Vector3(-0.1, 0.75, 1.4), CONCRETE)
+	bevel_top(-1.6, -0.75, -0.1, 0.75, 1.4, 0.4, 0.5, CONCRETE)
 	box(Vector3(0.1, -0.7, -0.1), Vector3(1.6, 0.8, 1.4), FRAME)
-	tipped_box(Vector3(0.2, 1.95, 0.55), Vector3(1.5, 1.5, 1.5), Vector3(28, 0, 12), CONCRETE)
+	bevel_top(0.1, -0.7, 1.6, 0.8, 1.4, 0.4, 0.5, FRAME)
+	tipped_box(Vector3(0.2, 1.95, 0.55), Vector3(1.5, 1.5, 1.5), Vector3(52, 0, 12), CONCRETE)
 
 
 ## Four metres of sandbag wall, four courses high.
@@ -768,6 +786,7 @@ func _hesco_row() -> void:
 	for i in 4:
 		var y := -1.65 + i * 1.1
 		box(Vector3(-0.53, y - 0.53, -0.1), Vector3(0.53, y + 0.53, 1.3), {"top": DIRT, "side": SANDBAG, "bottom": SANDBAG})
+		bevel_top(-0.53, y - 0.53, 0.53, y + 0.53, 1.3, 0.42, 0.5, DIRT)
 		for c in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
 			post(c.x * 0.53, y + c.y * 0.53, -0.1, 1.33, 0.05, METAL)
 
@@ -803,6 +822,10 @@ func _crates() -> void:
 func _car_wreck() -> void:
 	_hexa([Vector2(-0.9, -2.2), Vector2(0.9, -2.2), Vector2(0.9, 2.2), Vector2(-0.9, 2.2)],
 			[0.25, 0.25, 0.25, 0.25], [0.95, 0.95, 0.85, 0.85], RUST)
+	# The roof was narrowed once to stop the navmesh standing on it and that
+	# made it worse — 0.6 m2 became 1.5 m2, because what the cabin stopped
+	# covering was the body deck, which is flatter and wider than the roof ever
+	# was. A car is a flat-topped thing; see docs/BLOCKS.md.
 	solid([Vector3(-0.8, -1.1, 0.9), Vector3(0.8, -1.1, 0.9), Vector3(0.8, 1.2, 0.9), Vector3(-0.8, 1.2, 0.9),
 			Vector3(-0.65, -0.6, 1.5), Vector3(0.65, -0.6, 1.5), Vector3(0.65, 0.8, 1.5), Vector3(-0.65, 0.8, 1.5)], {"top": SCORCH, "side": SHUTTER, "bottom": RUST})
 	for c in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
@@ -851,13 +874,30 @@ func _concrete_pipes() -> void:
 
 
 ## A hollow pipe lying along Y: eight wedge segments round the bore.
-func _pipe(c: Vector3, outer: float, inner: float, length: float) -> void:
-	for i in 8:
-		var a0 := TAU * i / 8.0
-		var a1 := TAU * (i + 1) / 8.0
+func _pipe(c: Vector3, outer: float, inner: float, length: float, sides: int = 8) -> void:
+	for i in sides:
+		var a0 := TAU * i / float(sides)
+		var a1 := TAU * (i + 1) / float(sides)
 		var pts: Array = []
 		for y in [-length * 0.5, length * 0.5]:
 			for a in [a0, a1]:
 				for r in [inner, outer]:
 					pts.append(Vector3(c.x + cos(a) * r, c.y + y, c.z + outer + sin(a) * r))
 		solid(pts, FRAME)
+
+
+## A BEVELLED CAP on a flat top: the top face pulled in by `inset` and lifted
+## by `rise`, so the faces round it are steeper than 45 degrees.
+##
+## This is how a flat-topped prop stops growing navmesh on itself with no
+## invisible geometry anywhere. The baker erodes the walkable area by the
+## agent's radius, so a top narrower than twice that cannot be stood on: bevel
+## a 1.5 m block in by 0.35 m a side and the 0.8 m left in the middle goes.
+## The bevel must RISE more than it insets, or its own faces are walkable and
+## nothing is gained. Unlike clip_block() this is geometry you can see, so it
+## only suits a piece a bevel belongs on — cast concrete, a hesco crown, the
+## roof of a car.
+func bevel_top(x0: float, y0: float, x1: float, y1: float, z: float, inset: float, rise: float, tex: Variant) -> void:
+	solid([Vector3(x0, y0, z), Vector3(x1, y0, z), Vector3(x1, y1, z), Vector3(x0, y1, z),
+			Vector3(x0 + inset, y0 + inset, z + rise), Vector3(x1 - inset, y0 + inset, z + rise),
+			Vector3(x1 - inset, y1 - inset, z + rise), Vector3(x0 + inset, y1 - inset, z + rise)], tex)
