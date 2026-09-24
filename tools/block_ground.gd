@@ -104,37 +104,39 @@ func _initialize() -> void:
 	quit()
 
 
-## A SHALLOW RISE ON A SQUARE FOOTPRINT, built as steps so gentle the navmesh
-## reads them as one continuous slope.
+## A LOW PLATFORM WHOSE EDGES SLOPE TO THE GROUND. The whole family is built
+## out of this and nothing else.
 ##
-## Rings of boxes, each one smaller and 0.12 m higher than the last. A dome
-## hull would be smoother, but a hull's skirt meets the ground at a knife edge
-## the baker turns into a rim of unwalkable slivers; stepped boxes meet it
-## flush and each step is well inside the 0.25 m climb.
-func _terrace(hx: float, hy: float, steps: int, rise: float, tex: Variant) -> void:
-	for i in steps:
-		var t: float = float(i) / steps
-		box(Vector3(-hx * (1.0 - t * 0.82), -hy * (1.0 - t * 0.82), 0.0),
-				Vector3(hx * (1.0 - t * 0.82), hy * (1.0 - t * 0.82), rise * (i + 1)), tex)
+## These were stacked boxes first — courses 0.12 m apart, which the navmesh
+## baker joins happily because it climbs 0.25 m. The baker is not the one
+## walking: move_and_slide has no step-up, so a vertical face of ANY height is
+## a wall to a robot, and a piece the mesh says is walkable that the bodies
+## cannot get onto is worse than one they path round. Every riser here is a
+## slope now.
+##
+## `inset` is how far in the top sits, so the face is atan(rise / inset).
+## Keep it under about 20 degrees: the baker walks 45, but a body steering
+## while it climbs wants far less than its limit.
+func slope_slab(x0: float, y0: float, x1: float, y1: float, h: float, inset: float, tex: Variant) -> void:
+	solid([Vector3(x0, y0, 0.0), Vector3(x1, y0, 0.0), Vector3(x1, y1, 0.0), Vector3(x0, y1, 0.0),
+			Vector3(x0 + inset, y0 + inset, h), Vector3(x1 - inset, y0 + inset, h),
+			Vector3(x1 - inset, y1 - inset, h), Vector3(x0 + inset, y1 - inset, h)], tex)
 
 
 ## The plain one, and the one to use most: 30 x 22 m of ground that rises
-## 0.72 m in the middle. From inside it you cannot see the far side of a
-## field, which is the whole point of it.
+## 0.72 m in the middle, at 3 degrees. From inside it you cannot see the far
+## side of a field, which is the whole point of it.
 func _swell() -> void:
-	_terrace(15.0, 11.0, 6, 0.12, DUSTED)
+	slope_slab(-15.0, -11.0, 15.0, 11.0, 0.72, 11.0, DUSTED)
+	slope_slab(-9.0, -6.5, 9.0, 6.5, 0.9, 6.5, DUSTED)
 
 
-## A graded bank 32 m long: 0.72 m up, a 3 m crest, and back down. Walk over
-## it, or fight from behind it — from the low side it hides a standing rover's
-## wheels and nothing else, which is exactly the cover a field like this wants.
+## A graded bank 32 m long: 0.72 m up at 12 degrees, a 3 m crest, and back
+## down. Walk over it, or fight from behind it — from the low side it hides a
+## standing rover's wheels and nothing else, which is exactly the cover a
+## field like this wants.
 func _berm() -> void:
-	for i in 6:
-		var t: float = float(i) / 6.0
-		var w: float = 5.0 - t * 3.5
-		box(Vector3(-16.0 + t * 1.5, -w, 0.0), Vector3(16.0 - t * 1.5, w, 0.12 * (i + 1)), DUSTED)
-	# A scuff of grit along the crest, where the grader's blade finished.
-	box(Vector3(-13.0, -1.3, 0.72), Vector3(13.0, 1.3, 0.78), GRITTED)
+	slope_slab(-16.0, -5.0, 16.0, 5.0, 0.72, 3.4, {"top": GRIT, "side": DUST, "bottom": DUST})
 
 
 ## A ring of spoil 26 m across with a dished middle: what is left of a tank
@@ -146,7 +148,7 @@ func _berm_ring() -> void:
 		var a0 := TAU * i / n
 		var a1 := TAU * (i + 1) / n
 		for ring: Array in [[13.0, 11.6, 0.0, 0.28], [11.6, 10.2, 0.28, 0.56], [10.2, 8.8, 0.56, 0.7],
-				[8.8, 7.4, 0.7, 0.56], [7.4, 6.0, 0.56, 0.24]]:
+				[8.8, 7.4, 0.7, 0.56], [7.4, 6.0, 0.56, 0.24], [6.0, 4.6, 0.24, 0.0]]:
 			var pts: Array = []
 			for a: float in [a0, a1]:
 				for r: float in [ring[0], ring[1]]:
@@ -157,18 +159,14 @@ func _berm_ring() -> void:
 			solid(pts, DUSTED, 2)
 
 
-## A graded apron: 14 m of gentle climb onto a 10 x 12 m pad half a metre up.
+## A graded apron: 16 m of gentle climb onto a 10 x 11 m pad 0.72 m up.
 ## Somewhere to stand a machine, or to put a building on ground that is not
-## quite level.
+## quite level. One solid, so the pad's edge is a slope on all four sides and
+## there is no kerb anywhere to catch a wheel.
 func _apron() -> void:
-	for i in 5:
-		var t: float = float(i) / 5.0
-		box(Vector3(-11.0 + t * 11.0, -6.0 + t * 0.8, 0.0), Vector3(5.0, 6.0 - t * 0.8, 0.12 * (i + 1)), DUSTED)
-	box(Vector3(-5.0, -5.6, 0.6), Vector3(5.0, 5.6, 0.72), GRITTED)
-	# The lip where the pad was cut, kerbed on three sides and open to the ramp.
-	for s: float in [-1.0, 1.0]:
-		box(Vector3(-5.0, s * 5.6, 0.0), Vector3(5.2, s * 6.0, 0.8), CONCRETE)
-	box(Vector3(5.0, -6.0, 0.0), Vector3(5.2, 6.0, 0.8), CONCRETE)
+	solid([Vector3(-11.0, -6.0, 0.0), Vector3(6.2, -6.0, 0.0), Vector3(6.2, 6.0, 0.0), Vector3(-11.0, 6.0, 0.0),
+			Vector3(-5.0, -5.0, 0.72), Vector3(5.0, -5.0, 0.72),
+			Vector3(5.0, 5.0, 0.72), Vector3(-5.0, 5.0, 0.72)], GRITTED)
 
 
 ## A heap of dug material, 1.1 m. Unlike everything else here this is NOT
@@ -183,60 +181,48 @@ func _spoil() -> void:
 		mound(Vector3(float(c[0]), float(c[1]), 0.0), 1.2, 0.9, float(c[2]), 212, HEAPED)
 
 
-## A concrete pad that has settled: four slabs at four heights, none of them
-## more than 0.06 m apart, cracked along the joints and skirted with grit so
-## the edge is not a kerb. Forty years of a machine standing on soft ground.
+## A concrete pad that has settled. Four slabs, all at the SAME height with a
+## finger's width of crack between them — a settled pad wants its slabs at
+## four different heights and four different heights is three steps, so the
+## settling is in the cracks and the grit rather than in the levels.
 func _pad() -> void:
-	box(Vector3(-5.4, -5.4, 0.0), Vector3(5.4, 5.4, 0.06), GRITTED)
-	var h := [0.2, 0.15, 0.17, 0.12]
-	var i := 0
+	slope_slab(-6.2, -6.2, 6.2, 6.2, 0.1, 0.8, GRITTED)
 	for sx: float in [-1.0, 1.0]:
 		for sy: float in [-1.0, 1.0]:
-			box(Vector3(minf(0.0, sx * 4.8) + 0.08, minf(0.0, sy * 4.8) + 0.08,
-					0.0), Vector3(maxf(0.0, sx * 4.8) - 0.08, maxf(0.0, sy * 4.8) - 0.08, h[i]), SLABS)
-			i += 1
-	# Grit banked against the edge, so the pad is a change of surface rather
-	# than a step. Two courses, neither of them a lip.
-	for s: float in [-1.0, 1.0]:
-		box(Vector3(-6.2, s * 4.8, 0.0), Vector3(6.2, s * 6.2, 0.1), GRITTED)
-		box(Vector3(s * 4.8, -4.8, 0.0), Vector3(s * 6.2, 4.8, 0.1), GRITTED)
+			var x0: float = minf(0.09, sx * 4.9)
+			var x1: float = maxf(0.09, sx * 4.9)
+			var y0: float = minf(0.09, sy * 4.9)
+			var y1: float = maxf(0.09, sy * 4.9)
+			solid([Vector3(x0, y0, 0.0), Vector3(x1, y0, 0.0), Vector3(x1, y1, 0.0), Vector3(x0, y1, 0.0),
+					Vector3(x0 + sx * 0.0 + (0.5 if sx < 0.0 else 0.0), y0 + (0.5 if sy < 0.0 else 0.0), 0.2),
+					Vector3(x1 - (0.5 if sx > 0.0 else 0.0), y0 + (0.5 if sy < 0.0 else 0.0), 0.2),
+					Vector3(x1 - (0.5 if sx > 0.0 else 0.0), y1 - (0.5 if sy > 0.0 else 0.0), 0.2),
+					Vector3(x0 + (0.5 if sx < 0.0 else 0.0), y1 - (0.5 if sy > 0.0 else 0.0), 0.2)], SLABS)
 
 
 ## Where the runoff went: a bare channel 4 m wide between two low banks, 26 m
 ## of it. Read from the side it is a line across the ground; walked along, it
-## is a shallow lane that hides your feet.
-## The banks step INWARD as they fall, and the treads are 1.25 m. Two earlier
-## goes cut the map in two and the test caught both: treads 0.35 m wide erode
-## to nothing, because nothing narrower than twice the agent radius survives;
-## stacking them from a common inner edge leaves a half-metre wall along the
-## channel; and stacking them from a common OUTER edge leaves the same wall on
-## the field side, which sent the crossing 43 m round rather than 26 m over.
-## Each course is a trapezoid about the crest, so both faces are steps.
+## is a shallow lane that hides your feet. Each bank is one sloped solid, so
+## you cross it by walking over rather than by climbing a staircase.
 func _washout() -> void:
 	for s: float in [-1.0, 1.0]:
-		for i in 4:
-			var t: float = float(i) / 4.0
-			var w: float = 2.5 - t * 2.0
-			box(Vector3(-13.0 + t * 1.0, s * (4.5 - w), 0.0),
-					Vector3(13.0 - t * 1.0, s * (4.5 + w), 0.14 * (i + 1)), DUSTED)
-	box(Vector3(-13.0, -2.1, 0.0), Vector3(13.0, 2.1, 0.05), GRITTED)
+		solid([Vector3(-13.0, s * 2.0, 0.0), Vector3(13.0, s * 2.0, 0.0),
+				Vector3(13.0, s * 7.0, 0.0), Vector3(-13.0, s * 7.0, 0.0),
+				Vector3(-11.5, s * 3.4, 0.56), Vector3(11.5, s * 3.4, 0.56),
+				Vector3(11.5, s * 5.6, 0.56), Vector3(-11.5, s * 5.6, 0.56)], DUSTED)
 	# Stones washed out of the banks, left in the bed.
 	for c: Array in [[-8.5, 0.6], [-3.0, -0.8], [2.4, 0.9], [7.8, -0.5], [11.0, 0.3]]:
 		rock(Vector3(float(c[0]), float(c[1]), -0.12), Vector3(0.5, 0.4, 0.3), 220 + int(c[0]), ROCK, 8)
 
 
-## A worn vehicle track: two ruts pressed into the dust with a crown between
-## them and a shoulder of grit either side. 30 m of it, 0.1 m of relief — the
-## smallest piece here, and the one that does the most, because a field with a
-## track across it has been USED.
+## A worn vehicle track: a crown of dust between two grit shoulders, 30 m of
+## it and 0.14 m of relief. The smallest piece here, and the one that does the
+## most, because a field with a track across it has been USED.
 func _track() -> void:
-	box(Vector3(-15.0, -2.6, 0.0), Vector3(15.0, 2.6, 0.05), GRITTED)
-	box(Vector3(-15.0, -0.5, 0.0), Vector3(15.0, 0.5, 0.11), DUSTED)
-	for s: float in [-1.0, 1.0]:
-		box(Vector3(-15.0, s * 2.2, 0.0), Vector3(15.0, s * 3.1, 0.1), DUSTED)
-		box(Vector3(-15.0, s * 3.1, 0.0), Vector3(15.0, s * 3.5, 0.06), GRITTED)
+	slope_slab(-15.0, -3.5, 15.0, 3.5, 0.08, 1.1, GRITTED)
+	slope_slab(-15.0, -2.2, 15.0, 2.2, 0.14, 1.4, DUSTED)
 	# The dust thrown out of the ruts, in little ridges along the shoulder.
 	for i in 7:
 		var x: float = -13.0 + i * 4.3
 		for s: float in [-1.0, 1.0]:
-			box(Vector3(x - 1.1, s * 2.9, 0.0), Vector3(x + 1.1, s * 3.4, 0.16), DUSTED)
+			slope_slab(x - 1.3, s * 2.4, x + 1.3, s * 3.4, 0.18, 0.45, DUSTED)

@@ -554,9 +554,20 @@ func _data_hall() -> void:
 ## An AI compute node: a black six-sided obelisk 16 m tall with glowing
 ## seams, cooling fins round its foot, on four low steps, and three conduits
 ## running out across the ground.
+## THE BASE IS BATTERED, NOT STEPPED. It was four tiers with 0.25 m vertical
+## risers, which the navmesh baker joins because it climbs 0.25 — but
+## move_and_slide has no step-up, so a vertical face of any height is a wall
+## to a robot and the squad stood at the bottom of a plinth the mesh said they
+## were standing on. Each tier is a truncated cone now: same four rings, same
+## silhouette, every face between 14 and 17 degrees.
 func _obelisk() -> void:
 	for i in 4:
-		cylinder(Vector3(0, 0, -0.3 if i == 0 else i * 0.25), 6.8 - i * 1.0, 0.55 if i == 0 else 0.25, 6, PAD)
+		var r: float = 7.6 if i == 0 else 5.8 - (i - 1) * 1.0
+		# Each cone stops 0.2 m short of the next ring, so a flat annulus shows
+		# where the tier line was. You can still read four steps; none of them is
+		# a face a body has to climb.
+		var top_r: float = 6.0 if i == 0 else r - 0.8
+		cylinder(Vector3(0, 0, -0.3 if i == 0 else i * 0.25), r, 0.55 if i == 0 else 0.25, 6, PAD, top_r)
 	cylinder(Vector3(0, 0, 1.0), 1.8, 14.0, 6, GLASS, 0.9)
 	for k in 6:
 		var a := TAU * (k + 0.5) / 6.0

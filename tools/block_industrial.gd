@@ -519,7 +519,7 @@ func _gatehouse() -> void:
 func _parking_lot() -> void:
 	# 3/32 m: the lot's top on the grid, so each line stands one unit proud.
 	var top := 0.09375
-	box(Vector3(-12.0, -16.0, -0.35), Vector3(12.0, 16.0, top), LOT)
+	yard_slab(-12.0, -16.0, 12.0, 16.0, -0.35, top, LOT)
 	wall_run("x", Vector2(-12.0, -11.7), -16.0, 16.0, top, 0.25, [], CONCRETE)
 	wall_run("x", Vector2(11.7, 12.0), -16.0, 16.0, top, 0.25, [], CONCRETE)
 	for s: float in [-1.0, 1.0]:
@@ -550,7 +550,7 @@ func _parking_lot() -> void:
 ## ramp drops away. Six cars on the three levels, and lamps on the roof.
 func _parking_deck() -> void:
 	var top := 0.09375
-	box(Vector3(-12.5, -18.5, -0.35), Vector3(12.5, 18.5, top), LOT)
+	yard_slab(-12.5, -18.5, 12.5, 18.5, -0.35, top, LOT)
 	for x: float in [-12.0, -5.0, 5.0, 12.0]:
 		for y: float in [-18.0, -9.0, 0.0, 9.0, 18.0]:
 			post(x, y, top, 6.6, 0.6, FRAME)
@@ -608,7 +608,7 @@ func yard_container(c: Vector3, along_y: bool, tex: String) -> void:
 ## top of a single one for a lookout, and a floodlight.
 func _container_yard() -> void:
 	var top := 0.09375
-	box(Vector3(-12.0, -16.0, -0.3), Vector3(12.0, 16.0, top), PAD)
+	yard_slab(-12.0, -16.0, 12.0, 16.0, -0.3, top, PAD)
 	var colours := [GREEN, BLUE, RUST_PANEL, SHUTTER, GREEN, RUST_PANEL, BLUE, SHUTTER]
 	var stacks := [[-9.3, -6.4, 3], [-6.8, -6.4, 2], [-9.3, 6.4, 2], [-6.8, 6.4, 1],
 			[3.2, -6.4, 1], [5.7, -6.4, 2], [3.2, 6.4, 3], [5.7, 6.4, 2]]
@@ -632,7 +632,7 @@ func _container_yard() -> void:
 ## and girders sticking out of them, a pyramid of crushed cars, a material
 ## handler with its grab over the biggest heap, and sheet fencing on two sides.
 func _scrap_yard() -> void:
-	box(Vector3(-13.0, -13.0, -0.3), Vector3(13.0, 13.0, 0.05), {"top": DIRT, "side": DIRT, "bottom": DIRT})
+	yard_slab(-13.0, -13.0, 13.0, 13.0, -0.3, 0.05, {"top": DIRT, "side": DIRT, "bottom": DIRT})
 	mound(Vector3(-5.0, -4.0, 0.0), 5.5, 4.5, 3.2, 901, RUST)
 	mound(Vector3(5.0, 6.0, 0.0), 4.0, 5.0, 2.6, 902, RUST_PANEL)
 	mound(Vector3(6.5, -7.0, 0.0), 3.0, 3.5, 2.0, 903, RUST)
@@ -1832,3 +1832,21 @@ func _monolith() -> void:
 	for s: float in [-1.0, 1.0]:
 		beam(Vector3(s * 0.52, 0.0, 0.6), Vector3(s * 0.43, 0.0, 6.6), 0.14, GLOW)
 	box(Vector3(-0.4, -1.3, 7.0), Vector3(0.4, 1.3, 7.15), GLOW)
+
+
+## A YARD SLAB WITH ITS EDGES RAMPED TO THE GROUND. A 0.09 m lip round a
+## parking lot is nothing to look at and a wall to a robot: move_and_slide has
+## no step-up, so a vertical face of any height stops a body dead. The slab is
+## the same slab; it just arrives at the ground on a slope now.
+func yard_slab(x0: float, y0: float, x1: float, y1: float, z0: float, top: float, tex: Variant) -> void:
+	box(Vector3(x0, y0, z0), Vector3(x1, y1, top), tex)
+	var run: float = maxf(0.6, top * 6.0)
+	for s: float in [-1.0, 1.0]:
+		var yy: float = y0 if s < 0.0 else y1
+		solid([Vector3(x0, yy, 0.0), Vector3(x1, yy, 0.0),
+				Vector3(x1, yy - s * run, 0.0), Vector3(x0, yy - s * run, 0.0),
+				Vector3(x0, yy - s * run, top), Vector3(x1, yy - s * run, top)], tex)
+		var xx: float = x0 if s < 0.0 else x1
+		solid([Vector3(xx, y0, 0.0), Vector3(xx, y1, 0.0),
+				Vector3(xx - s * run, y1, 0.0), Vector3(xx - s * run, y0, 0.0),
+				Vector3(xx - s * run, y0, top), Vector3(xx - s * run, y1, top)], tex)
