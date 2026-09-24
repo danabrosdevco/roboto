@@ -901,3 +901,24 @@ func bevel_top(x0: float, y0: float, x1: float, y1: float, z: float, inset: floa
 	solid([Vector3(x0, y0, z), Vector3(x1, y0, z), Vector3(x1, y1, z), Vector3(x0, y1, z),
 			Vector3(x0 + inset, y0 + inset, z + rise), Vector3(x1 - inset, y0 + inset, z + rise),
 			Vector3(x1 - inset, y1 - inset, z + rise), Vector3(x0 + inset, y1 - inset, z + rise)], tex)
+
+
+## A LOW PLATFORM WHOSE EDGES SLOPE TO THE GROUND. The micro-terrain family is
+## built out of this and nothing else, and the level builders use it for
+## anything the squad is meant to walk onto.
+##
+## These were stacked boxes first — courses 0.12 m apart, which the navmesh
+## baker joins happily because it climbs 0.25 m. The baker is not the one
+## walking: move_and_slide has no step-up, so a vertical face of ANY height is
+## a wall to a robot, and a piece the mesh says is walkable that the bodies
+## cannot get onto is worse than one they path round. Every riser here is a
+## slope now.
+##
+## `inset` is how far in the top sits, so the face is atan((h - base) / inset).
+## Keep it under about 20 degrees: the baker walks 45, but a body steering
+## while it climbs wants far less than its limit. `base` is the surface it
+## stands on, for a marking painted on a deck rather than on the floor.
+func slope_slab(x0: float, y0: float, x1: float, y1: float, h: float, inset: float, tex: Variant, base: float = 0.0) -> void:
+	solid([Vector3(x0, y0, base), Vector3(x1, y0, base), Vector3(x1, y1, base), Vector3(x0, y1, base),
+			Vector3(x0 + inset, y0 + inset, h), Vector3(x1 - inset, y0 + inset, h),
+			Vector3(x1 - inset, y1 - inset, h), Vector3(x0 + inset, y1 - inset, h)], tex)

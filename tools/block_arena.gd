@@ -240,14 +240,17 @@ func _ground() -> void:
 ## They are plates 0.06 m proud, which is nothing to walk over and nothing to
 ## the navmesh, but reads as a worn path rather than as paint.
 func _lanes() -> void:
+	# Sloped to the grass, not stepped onto it. A 0.06 m lip is nothing to look
+	# at and a wall to a robot: move_and_slide has no step-up, so a vertical
+	# face of any height stops a body dead however low it is.
 	for y: float in [0.0, SIDE_MID, -SIDE_MID]:
 		var h: float = MID_HALF if y == 0.0 else SIDE_HALF
-		box(Vector3(-LANE_END, y - h, 0.0), Vector3(LANE_END, y + h, 0.06), PATH)
+		slope_slab(-LANE_END, y - h, LANE_END, y + h, 0.06, 0.4, PATH)
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(s * CROSS - 2.5, -SIDE_MID - SIDE_HALF, 0.0),
-				Vector3(s * CROSS + 2.5, SIDE_MID + SIDE_HALF, 0.06), PATH)
-		box(Vector3(s * BASE_IN - s * 3.0, -BASE_HALF + 2.0, 0.0),
-				Vector3(s * BASE_OUT, BASE_HALF - 2.0, 0.06), PATH)
+		slope_slab(s * CROSS - 2.5, -SIDE_MID - SIDE_HALF, s * CROSS + 2.5,
+				SIDE_MID + SIDE_HALF, 0.06, 0.4, PATH)
+		slope_slab(minf(s * BASE_IN - s * 3.0, s * BASE_OUT), -BASE_HALF + 2.0,
+				maxf(s * BASE_IN - s * 3.0, s * BASE_OUT), BASE_HALF - 2.0, 0.06, 0.4, PATH)
 
 
 ## THE TOWER. One landmark in the middle of the map, tall enough to see from

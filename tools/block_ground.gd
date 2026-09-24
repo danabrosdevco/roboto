@@ -104,25 +104,6 @@ func _initialize() -> void:
 	quit()
 
 
-## A LOW PLATFORM WHOSE EDGES SLOPE TO THE GROUND. The whole family is built
-## out of this and nothing else.
-##
-## These were stacked boxes first — courses 0.12 m apart, which the navmesh
-## baker joins happily because it climbs 0.25 m. The baker is not the one
-## walking: move_and_slide has no step-up, so a vertical face of ANY height is
-## a wall to a robot, and a piece the mesh says is walkable that the bodies
-## cannot get onto is worse than one they path round. Every riser here is a
-## slope now.
-##
-## `inset` is how far in the top sits, so the face is atan(rise / inset).
-## Keep it under about 20 degrees: the baker walks 45, but a body steering
-## while it climbs wants far less than its limit.
-func slope_slab(x0: float, y0: float, x1: float, y1: float, h: float, inset: float, tex: Variant) -> void:
-	solid([Vector3(x0, y0, 0.0), Vector3(x1, y0, 0.0), Vector3(x1, y1, 0.0), Vector3(x0, y1, 0.0),
-			Vector3(x0 + inset, y0 + inset, h), Vector3(x1 - inset, y0 + inset, h),
-			Vector3(x1 - inset, y1 - inset, h), Vector3(x0 + inset, y1 - inset, h)], tex)
-
-
 ## The plain one, and the one to use most: 30 x 22 m of ground that rises
 ## 0.72 m in the middle, at 3 degrees. From inside it you cannot see the far
 ## side of a field, which is the whole point of it.
@@ -212,7 +193,9 @@ func _washout() -> void:
 				Vector3(11.5, s * 5.6, 0.56), Vector3(-11.5, s * 5.6, 0.56)], DUSTED)
 	# Stones washed out of the banks, left in the bed.
 	for c: Array in [[-8.5, 0.6], [-3.0, -0.8], [2.4, 0.9], [7.8, -0.5], [11.0, 0.3]]:
-		rock(Vector3(float(c[0]), float(c[1]), -0.12), Vector3(0.5, 0.4, 0.3), 220 + int(c[0]), ROCK, 8)
+		# Sunk almost flush: a stone standing 0.18 m proud is a step, and the
+		# bed is somewhere the squad walks along.
+		rock(Vector3(float(c[0]), float(c[1]), -0.24), Vector3(0.5, 0.4, 0.3), 220 + int(c[0]), ROCK, 8)
 
 
 ## A worn vehicle track: a crown of dust between two grit shoulders, 30 m of
@@ -221,8 +204,7 @@ func _washout() -> void:
 func _track() -> void:
 	slope_slab(-15.0, -3.5, 15.0, 3.5, 0.08, 1.1, GRITTED)
 	slope_slab(-15.0, -2.2, 15.0, 2.2, 0.14, 1.4, DUSTED)
-	# The dust thrown out of the ruts, in little ridges along the shoulder.
-	for i in 7:
-		var x: float = -13.0 + i * 4.3
-		for s: float in [-1.0, 1.0]:
-			slope_slab(x - 1.3, s * 2.4, x + 1.3, s * 3.4, 0.18, 0.45, DUSTED)
+	# There were ridges of thrown-out dust along the shoulder. They are gone:
+	# wherever one crossed the crown's own slope the two made a face, and the
+	# step test kept finding it. A track reads from the change of surface, and
+	# nothing on a piece this low is worth a riser a body catches on.
