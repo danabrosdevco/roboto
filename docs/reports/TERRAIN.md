@@ -36,6 +36,69 @@ most wants and least often gets:
 
 ---
 
+## 2026-09-28 (3) — the obelisk's conduits, the canopy swap, and the island relaid
+
+**Landed** (`ab299118`).
+
+*The obelisk's ground conduits are mesh only.* The three that run out across
+the ground are 0.5 m tall — above the 0.25 m the navmesh baker climbs and above
+the 0.45 m a body steps over — so with collision each one cut the ground round
+the obelisk into wedges and bodies caught on them walking in. `no_collision()`
+goes in last in `_obelisk()`, after the plinth and shaft, so only the ducts lose
+their collider. Collision box 24 × 28 m → **15 × 13 m**; the visual is
+unchanged. `test_block_steps.gd` used to report 94 riser samples on it and now
+reports none. **Coast Road and the human's own `mutaha_level.tscn` instance the
+same prefab and get the fix without either file being touched.**
+
+*The solar tracker rows are out of the island.* 20 m long, 2.8 m tall and
+solid — a wall across an island only 90 m wide. `solar_canopy` carries the same
+array on legs 7 m up, so the squad walks under it. Two of them, turned to
+follow the block and overhanging the street at each end on purpose.
+
+*The island is laid out on its own grid.* The sketch paints it grey, so the
+generator had already levelled it into 34 × 26 m blocks on the town's 41 × 33 m
+period with a 7 m street down the spine — and the old dressing ignored all of
+it and sat in a thin line down the east bank. Six groups (Henge, Avenue,
+ServerGarden, Compute, Solar, DroneDocks) are replaced by six that read north to
+south as one sequence: **uplink, power, halls, the core, cooling, docks**.
+Column A (x = −65) stays the old town and its four houses stay with it; column
+B (x = −24) is the machines'. The obelisk moves to the middle of the island
+where the avenue runs into it. Also stripped: 32 orphaned sub-resources and
+five materials the old obelisk instance left behind in the scene.
+
+**A thing worth knowing about that piece.** `compute_obelisk`'s mass sits
+**3.9 m west of its origin** — the conduits are not symmetrical. Putting the
+origin on the island's spine put the obelisk itself 4 m off it and into the
+sandbags. Both that and the collider size are now in `docs/BLOCKS.md`.
+
+**Gates.** `check.sh --changed`: **PASS** — it caught the stale `load_steps`
+again after resources were added and removed. `smoke.sh`: **PASS**, booted
+clean, ran 15 s. `test.sh`: **not run**, nothing here touches its ground.
+`test_block_steps.gd FOLDER=compute`: the obelisk is off the list.
+Navmesh rebaked; every route in `probe_nav_mutaha_wip.gd` still walks and the
+old south crossing is still 876 m round for a 46 m gap.
+
+**Needs the human.**
+
+- **`glitch_tx_1` reads as magenta and green confetti up close.** It is on the
+  monoliths' light strips and it is the first thing you see standing in the new
+  plaza. Known problem — the depot's dado hit it and was fixed by scaling the
+  texture down. Same fix would work here but it is `compute_monolith`, which
+  other levels use, so I have not touched it. Screenshot 35 shows it.
+- `--force` on `block_prefabs.gd` takes a FOLDER, so rebuilding one prefab
+  re-randomised the resource IDs in all thirteen compute prefabs. Content
+  identical; I reverted the twelve I did not need. The tool wants an
+  `--only <name>` flag — small job, not done.
+- The island rework is a **judgement call I made from the brief** ("core data
+  area, the central compute hub"). It has not been walked. If the sequence
+  reads wrong, the whole thing is one script
+  (`tools/probe_place_mutaha_core.gd`) and cheap to redo.
+
+**Blocked / next.** Nothing blocking. Same queue as the last entry, plus: the
+monolith texture scale if that is wanted, and `block_prefabs.gd --only`.
+
+---
+
 ## 2026-09-28 (2) — sixteen big housing blocks, because the town was flat
 
 **Landed.** A new block family, `maps/blocks/estates/`, written by
