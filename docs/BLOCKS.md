@@ -13,6 +13,7 @@ built geometry saved under it, the same shape as `concrete_bridge.tscn`.
 | Folder | What |
 |---|---|
 | `maps/blocks/building_*` | Buildings for the 32 × 24 m sketch-map lots. |
+| `maps/blocks/estates/` | The big housing: five- to eight-storey slabs, towers, courtyard and U blocks, a deck-access block, a broken slab, a collapsed corner, an unfinished frame and a market hall. Each takes two or four lots. |
 | `maps/blocks/features/` | Set pieces placed by hand: rocks, a cliff ledge, berms, trench lining, a crater rim, a pillbox, a watchtower, containers, a pylon, fuel tanks. |
 | `maps/blocks/props/` | Small pieces for scattering or placing by hand: boulders, rubble, barriers, sandbags, hesco, tank traps, drums, crates, wrecks, poles, pipes. |
 | `maps/blocks/solar/` | AI-built solar: panel rows, a tracker, a field the size of a lot, heliostats and a solar tower, battery containers, inverters, drone docks, and canopy arrays big enough to walk under. |
@@ -135,6 +136,7 @@ godot --headless --path . --script res://tools/block_prefabs.gd -- maps/blocks/p
 | Tool | Writes |
 |---|---|
 | `tools/block_buildings.gd` | `building_*.map` |
+| `tools/block_estates.gd` | `estates/` maps — the big housing blocks (it extends the doodads tool) |
 | `tools/block_doodads.gd` | `features/` and `props/` maps (it extends the buildings tool's brush kit) |
 | `tools/block_ai_infra.gd` | `solar/`, `compute/` and `landmarks/` maps (it extends the doodads tool) |
 | `tools/block_industrial.gd` | `industrial/`, `machines/` and `fortifications/` maps, the clock tower and big wheel in `landmarks/` and the monolith in `compute/` (it extends the AI-infra tool). Name pieces after the folder to write only those. |
@@ -154,6 +156,7 @@ godot --headless --path . --script res://tools/block_fortress.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_homebase.gd -- maps
 godot --headless --path . --script res://tools/block_arena.gd -- maps
 godot --headless --path . --script res://tools/block_ground.gd -- maps/blocks
+godot --headless --path . --script res://tools/block_estates.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_prefabs.gd -- maps/blocks/features
 ```
 
@@ -308,6 +311,72 @@ Three ways a piece here fails, all found by that test and all worth knowing:
 - **warehouse:** loading dock and roof ramp.
 - **compound:** walled yard with a house and an outbuilding.
 - **ruin_shell, ruin_low:** for lots the generator marks as ruined.
+
+### Estates (two or four lots)
+
+The small buildings top out at four storeys on a 32 × 24 m lot, so a town built
+only from them is a field of sheds you can see straight across. These are the
+blocks that break a sightline. **Each one costs the lots it covers** — whatever
+places one has to leave the neighbours empty — and the sizes are set by the
+sketch grid, where two lots plus the street between them is 73 m one way and
+57 m the other:
+
+| Kind | Lots | Built extent | Pieces |
+|---|---|---|---|
+| wide | 2 × 1 | up to 72 × 24 m | slab_five, slab_stepped, slab_broken, gallery_block, slab_dogleg, podium_row |
+| deep | 1 × 2 | up to 32 × 56 m | twin_tower, point_tower, courtyard_wing |
+| big | 2 × 2 | up to 72 × 56 m | courtyard_block, u_block, microdistrict, slab_pair_bridge, frame_shell, collapsed_corner, market_hall |
+
+- **slab_five** (5 storeys, 18.8 m): 68 m of slab with two undercrofts through
+  the ground floor and a gallery along the back. Ground → gallery at 8.3 →
+  roof.
+- **slab_stepped** (3, 5 then 7 storeys): three roofs at 11.8, 18.8 and 25.8 m,
+  each reached from the one below. The best single piece for breaking a long
+  street: from any angle something is in the way.
+- **slab_broken:** the same slab with an 18 m bay brought down. Rubble climbs
+  to the second floor and a fallen slab carries on to the third, so the breach
+  is the way in and the two halves are cleared separately.
+- **gallery_block** (4 storeys): deck access — open walkways down the whole
+  back at 4.8 and 8.3 m, and the roof at 15.3. Three levels that all look down
+  on the street.
+- **slab_dogleg:** two wings offset across the street line with a stair core in
+  the elbow. Gives a street a corner instead of a flat run.
+- **podium_row:** two storeys of shops with a four-storey bar set back on their
+  roof. The podium roof is a 71 × 16 m terrace behind a parapet.
+- **twin_tower:** two seven-storey towers on a shared two-storey podium, the
+  podium roof a walled yard between them.
+- **point_tower:** eight storeys, 30 m to the parapet — the tallest piece here
+  that is not a landmark. Walkable skirt roof at 8.3 m wrapped round its foot.
+- **courtyard_wing:** an L round a yard with one way in, and a switchback ramp
+  up the yard to the roof at 15.3 m.
+- **courtyard_block:** a perimeter block round a 28 × 44 m courtyard you can
+  only reach through an archway, with a gallery ring at 8.3 m looking into it.
+- **u_block:** a U with a six-storey back and four-storey arms round a yard
+  that opens south.
+- **microdistrict:** two slabs at right angles with a single-storey shop block
+  between them — the buildings make the space rather than filling it.
+- **slab_pair_bridge:** two six-storey slabs facing each other, joined by a
+  bridge at the fourth floor that lands on a gallery each side, over a deck at
+  4.8 m.
+- **frame_shell:** columns, floors and a little shuttering, four decks of it
+  and no walls. You can see through it and still not shoot through it, which
+  nothing else here does.
+- **collapsed_corner:** one corner pancaked into a ramp of its own floors, up
+  to the third storey. A way in that is not a staircase.
+- **market_hall:** 46 m of clear-span roof at 12.3 m with a six-storey bar
+  behind it. The biggest single piece of high ground in the kit.
+
+**What you can climb.** Every deck called walkable above is reached by a ramp
+of 30° or less that starts on open ground or on the deck below. The TOP of a
+tall mass usually is NOT: a squad on a 30 m roof sees the whole town, which is
+the opposite of what these are for. `tools/test_block_steps.gd` with
+`FOLDER=estates` reports nothing on any of the sixteen.
+
+**The plinth bank is the thing to get right.** These started with a 1 m flare
+under a 1 m rise — a 45° skirt, which the navmesh baker walks and a body
+cannot, so fifteen of the sixteen had the squad standing at the foot of a bank
+the mesh said they were on. `pad()` in the tool flares 2 m and insets the
+plinth to keep the extent, which is the buildings tool's 27°.
 
 ### Features
 

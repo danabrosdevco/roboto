@@ -39,6 +39,14 @@ const SHOTS: Array = [
 	["19_island_tip_above", Vector3(-46.0, 96.0, 268.0), Vector3(-56.0, 0.0, 180.0), 64.0],
 	["20_map_from_above", Vector3(0.0, 900.0, 40.0), Vector3(0.0, 0.0, 0.0), 62.0],
 	["21_south_from_above", Vector3(-90.0, 400.0, 210.0), Vector3(-90.0, 0.0, 200.0), 66.0],
+	# The six estate blocks standing in the new quarter: what a five- to
+	# eight-storey block does to a street the small buildings cannot.
+	["22_estates_above", Vector3(-150.0, 170.0, 310.0), Vector3(-300.0, 8.0, 150.0), 60.0],
+	["23_estates_street", Vector3(-286.0, EYE, 128.5), Vector3(-372.0, 5.0, 128.5), 70.0],
+	["24_estates_from_approach", Vector3(-196.0, 3.0, 286.0), Vector3(-320.0, 12.0, 150.0), 66.0],
+	["25_frame_shell_inside", Vector3(-249.5, EYE, 196.0), Vector3(-249.5, 6.0, 130.0), 72.0],
+	["26_tower_and_gallery", Vector3(-214.0, EYE, 100.0), Vector3(-188.0, 12.0, 168.0), 70.0],
+	["27_courtyard_block_street", Vector3(-331.5, EYE, 240.0), Vector3(-331.5, 8.0, 170.0), 70.0],
 ]
 
 
