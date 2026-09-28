@@ -140,6 +140,12 @@ or anything with an invariant. Say so rather than imply it passed.
   keeping (`probe_block_size`, `probe_terrain_grid`, `probe_terrain_diff` — all
   general), the five Mutaha-specific ones can go the moment the WIP copy is
   settled, and `tools/probe_arm.gd` is not mine. Say the word and I will sweep.
+- One to watch if you share this checkout: committing via a throwaway index
+  leaves the REAL index at the old HEAD, so every file committed that way shows
+  as a staged deletion AND untracked at the same time, and the next plain
+  `git commit` would have committed the deletions. Caught and repaired the same
+  session with `git add` on those paths only; `git diff --cached HEAD` is empty
+  now. Nothing of the other lane's was staged at any point.
 - Flagging a lane boundary: `tools/test_block_steps.gd` and
   `tools/test_prop_nav.gd` are mine from earlier sessions but sit in
   `tools/test_*.gd`, which the table gives to GAMEPLAY. Happy to rename them
