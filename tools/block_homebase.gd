@@ -229,21 +229,19 @@ func _gallery() -> void:
 ## up so it reads as a place rather than as more floor. The step is 0.2 m —
 ## under the navmesh's 0.25 m climb, so the squad walks on and off it.
 func _muster() -> void:
-	# SLOPED TO THE FLOOR, not stepped onto it. The deck was a 0.2 m box and
-	# the navmesh climbed onto it happily — but move_and_slide has no step-up,
-	# so a vertical face of any height is a wall and the squad could be ordered
-	# onto a deck they could not reach.
-	slope_slab(DECK_X0, -DECK_HALF, DECK_X1, DECK_HALF, DECK_Z, 0.9, DECK_TEX)
+	box(Vector3(DECK_X0, -DECK_HALF, 0.0), Vector3(DECK_X1, DECK_HALF, DECK_Z), DECK_TEX)
 	# A painted border inset from the edge, closed at both ends.
 	for s: float in [-1.0, 1.0]:
-		slope_slab(DECK_X0 + 1.0, s * (DECK_HALF - 1.4) - 0.2, DECK_X1 - 1.0,
-				s * (DECK_HALF - 1.0) + 0.2, DECK_Z + 0.08, 0.28, MARK, DECK_Z)
+		box(Vector3(DECK_X0 + 1.0, s * (DECK_HALF - 1.4), DECK_Z),
+				Vector3(DECK_X1 - 1.0, s * (DECK_HALF - 1.0), DECK_Z + 0.08), MARK)
 		var x: float = DECK_X0 + 1.0 if s < 0.0 else DECK_X1 - 1.4
-		slope_slab(x - 0.2, -(DECK_HALF - 1.4), x + 0.6, DECK_HALF - 1.4, DECK_Z + 0.08, 0.28, MARK, DECK_Z)
+		box(Vector3(x, -(DECK_HALF - 1.4), DECK_Z),
+				Vector3(x + 0.4, DECK_HALF - 1.4, DECK_Z + 0.08), MARK)
 	# Rank lines every 4 m, so the formation has somewhere to stand.
 	for k in 5:
 		var x: float = DECK_X0 + 4.0 + k * 4.0
-		slope_slab(x - 0.3, -(DECK_HALF - 2.0), x + 0.3, DECK_HALF - 2.0, DECK_Z + 0.06, 0.24, MARK, DECK_Z)
+		box(Vector3(x - 0.12, -(DECK_HALF - 2.0), DECK_Z),
+				Vector3(x + 0.12, DECK_HALF - 2.0, DECK_Z + 0.06), MARK)
 
 
 ## The plinth at the foot of the ramp. The mission terminal stands on it: the
@@ -266,14 +264,14 @@ func _plinth() -> void:
 ## anything in the way of it.
 func _markings() -> void:
 	for s: float in [-1.0, 1.0]:
-		slope_slab(-28.0, s * 16.0 - 0.4, 13.0, s * 16.0 + 0.4, 0.06, 0.3, MARK)
-	slope_slab(-28.6, -16.0, -27.8, 16.0, 0.06, 0.3, MARK)
+		box(Vector3(-28.0, s * 16.0 - 0.18, 0.0), Vector3(13.0, s * 16.0 + 0.18, 0.06), MARK)
+	box(Vector3(-28.4, -16.0, 0.0), Vector3(-28.0, 16.0, 0.06), MARK)
 	# The spur to the portal, and a threshold across it.
-	slope_slab(11.8, -23.5, 12.6, -16.0, 0.06, 0.3, MARK)
-	slope_slab(PORTAL_X0 + 0.5, -HALL_Y - 0.7, PORTAL_X1 - 0.5, -HALL_Y + 0.3, 0.07, 0.3, MARK)
+	box(Vector3(12.0, -23.5, 0.0), Vector3(12.36, -16.0, 0.06), MARK)
+	box(Vector3(PORTAL_X0 + 0.5, -HALL_Y - 0.4, 0.0), Vector3(PORTAL_X1 - 0.5, -HALL_Y, 0.07), MARK)
 	# Hazard line across the mouth of each bay, on the hall side.
 	for cx: float in BAYS:
-		slope_slab(cx - BAY_HALF, HALL_Y - 1.4, cx + BAY_HALF, HALL_Y - 0.6, 0.06, 0.3, MARK)
+		box(Vector3(cx - BAY_HALF, HALL_Y - 1.2, 0.0), Vector3(cx + BAY_HALF, HALL_Y - 0.8, 0.06), MARK)
 
 ## The transit car at the west end, on its rail bed under a gantry. Built from
 ## brushes like everything else: two body lengths with a 5 m opening between
@@ -350,9 +348,9 @@ func _bay(cx: float) -> void:
 	box(Vector3(cx - w, face, BAY_HEAD), Vector3(cx + w, BAY_BACK, BAY_HEAD + WALL), CONCRETE)
 	# The stand: a plate on the floor low enough to drive onto, with a painted
 	# edge, so the bay reads as a display even while it is empty.
-	slope_slab(cx - 4.0, 27.0, cx + 4.0, 35.0, 0.12, 0.5, DECK_TEX)
+	box(Vector3(cx - 4.0, 27.0, 0.0), Vector3(cx + 4.0, 35.0, 0.12), DECK_TEX)
 	for s: float in [-1.0, 1.0]:
-		slope_slab(cx + s * 4.0 - 0.4, 27.0, cx + s * 4.0 + 0.2, 35.0, 0.18, 0.25, TRIM, 0.12)
+		box(Vector3(cx + s * 4.0 - 0.25, 27.0, 0.12), Vector3(cx + s * 4.0 + 0.05, 35.0, 0.18), TRIM)
 	# Lit back wall, ribs up the sides, and service gantries across the top.
 	box(Vector3(cx - 5.0, BAY_BACK - 0.25, 2.4), Vector3(cx + 5.0, BAY_BACK, 6.0), LAMP)
 	for s: float in [-1.0, 1.0]:
@@ -382,7 +380,7 @@ func _annexe() -> void:
 	box(Vector3(x0, back, ANNEX_Z), Vector3(x1, ANNEX_FACE, ANNEX_Z + WALL),
 			{"top": CONCRETE, "side": CONCRETE, "bottom": CEILING})
 	# The lane: scorched floor from the firing line down to the backstop.
-	slope_slab(ANNEX_X0 + 2.0, ANNEX_BACK + 2.6, ANNEX_X1 - 2.0, -31.0, 0.12, 0.5,
+	box(Vector3(ANNEX_X0 + 2.0, ANNEX_BACK + 2.6, 0.0), Vector3(ANNEX_X1 - 2.0, -31.0, 0.12),
 			{"top": SCORCH, "side": CONCRETE, "bottom": CONCRETE})
 	# The backstop the targets hang on, and the baffles standing off it.
 	box(Vector3(ANNEX_X0 + 1.0, ANNEX_BACK + 1.0, 0.0), Vector3(ANNEX_X1 - 1.0, ANNEX_BACK + 2.0, 5.0), TECH_WALL)
