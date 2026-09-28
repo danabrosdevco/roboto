@@ -111,12 +111,13 @@ func _run() -> void:
 			and squad.slot_kind == ItemDefinition.Kind.WEAPON,
 			"selected %s, kind %d" % [squad.selected.display_name if squad.selected else "-", squad.slot_kind])
 
-	# The robots on foot are one team until you make more. You are in none: you
-	# order them all.
+	# The robots on foot are one team until you make more, and you are IN it:
+	# you lead from inside a team rather than standing above them all, so the
+	# debrief can count your kills with the team you went in with.
 	_check("the squad is one team to start, INFANTRY, with its robots' cards under its name",
 		_team_names() == ["INFANTRY"] and _panel_with(_team_section("INFANTRY"), "BRAVO-1") != null)
-	_check("...your card stands above the teams, in none of them", _card("PLAYER") != null
-		and _panel_with(_team_section("INFANTRY"), "PLAYER") == null)
+	_check("...and your card sits in a team with them, not above the teams", _card("PLAYER") != null
+		and _panel_with(_team_section("INFANTRY"), "PLAYER") != null)
 	_check("...and the benched are on the bench, not in their team", _panel_with(squad._bench, "CHASER-1") != null
 		and _panel_with(_team_section("INFANTRY"), "CHASER-1") == null)
 	_check("...nothing on a card names a team: where it sits says it", not _says(_card("BRAVO-1"), "INFANTRY"))

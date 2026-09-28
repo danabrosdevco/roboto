@@ -17,6 +17,6 @@ sink = 0.05
 max_slope = 15.0
 max_mountain = 0.3
 max_paint = 0.5
-collision_radius = 1.2
+collision_radius = 1.1
 collision_height = 2.0
 visibility_range_end = 400.0

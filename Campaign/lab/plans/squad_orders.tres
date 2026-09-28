@@ -19,6 +19,7 @@ repeats = 6
 time_limit = 120.0
 swap_sides = false
 hostiles_on_post = true
+weapon_swaps = {}
 
 [sub_resource type="Resource" id="M2"]
 script = ExtResource("2_match")
@@ -32,6 +33,7 @@ repeats = 6
 time_limit = 120.0
 swap_sides = false
 hostiles_on_post = true
+weapon_swaps = {}
 
 [sub_resource type="Resource" id="M3"]
 script = ExtResource("2_match")
@@ -45,6 +47,7 @@ repeats = 6
 time_limit = 120.0
 swap_sides = false
 hostiles_on_post = true
+weapon_swaps = {}
 
 [sub_resource type="Resource" id="M4"]
 script = ExtResource("2_match")
@@ -58,6 +61,7 @@ repeats = 6
 time_limit = 120.0
 swap_sides = false
 hostiles_on_post = true
+weapon_swaps = {}
 
 [resource]
 script = ExtResource("1_plan")

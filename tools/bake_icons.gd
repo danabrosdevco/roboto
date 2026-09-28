@@ -39,7 +39,10 @@ func _run() -> void:
 		quit(1)
 		return
 	var args := OS.get_cmdline_user_args()
-	var out_dir: String = args[0] if args.size() > 0 else _Icons.DIR
+	# An EMPTY folder argument is not "use the default": String("") joined with
+	# "/items/x.png" is an absolute path, so it silently wrote fifteen icons to
+	# the root of the drive. Treat it as unsaid.
+	var out_dir: String = args[0] if args.size() > 0 and args[0].strip_edges() != "" else _Icons.DIR
 	var only: Array[StringName] = []
 	for i in range(1, args.size()):
 		only.append(StringName(args[i]))
@@ -70,7 +73,10 @@ func _run() -> void:
 				img = await studio.render_model(model, size, framing, flips[0], flips[1],
 					1.0 if size_name == "s" else 0.0)
 			else:
-				img = studio.render_svg(drawing, Vector2(32, 32), size)
+				# A WIDE SLOT GETS A WIDE DRAWING BOX. Handed a square view for
+				# a 96x36 icon the SVG is stretched to nearly three times its
+				# width, and every round thing on it comes out an ellipse.
+				img = studio.render_svg(drawing, _Art.drawing_box(cls), size)
 			if img == null:
 				skipped.append("%s (%s)" % [item.id, size_name])
 				continue
@@ -79,6 +85,29 @@ func _run() -> void:
 				made.append(file)
 				if size_name == "l":
 					sheet_parts.append([String(item.id), img])
+
+	# Built-in tools, into the same folder as items: they land in the same slot
+	# on the same rows, so they are the same kind of picture.
+	for built_in_id in _Art.BUILT_INS:
+		if not only.is_empty() and not only.has(built_in_id):
+			continue
+		var tool_model := load(_Art.BUILT_INS[built_in_id]) as PackedScene \
+			if ResourceLoader.exists(_Art.BUILT_INS[built_in_id]) else null
+		if tool_model == null:
+			skipped.append("%s (no model at %s)" % [built_in_id, _Art.BUILT_INS[built_in_id]])
+			continue
+		for size_name in _Art.SIZES["wide"]:
+			var size: Vector2i = _Art.SIZES["wide"][size_name]
+			var img: Image = await studio.render_model(tool_model, size, _Studio.Framing.SIDE,
+				false, false, 1.0 if size_name == "s" else 0.0)
+			if img == null:
+				skipped.append("%s (%s)" % [built_in_id, size_name])
+				continue
+			var file := "%s/items/%s_%s.png" % [out_dir, built_in_id, size_name]
+			if _save(img, file):
+				made.append(file)
+				if size_name == "l":
+					sheet_parts.append([String(built_in_id), img])
 
 	# The frames you can build, and the ones enemies are built from — the
 	# debrief draws what each robot killed.

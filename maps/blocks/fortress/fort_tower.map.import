@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://uitiykbqumbg"
+path="res://.godot/imported/fort_tower.map-853f603908040d0abd87f78af0c0f78b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortress/fort_tower.map"
+dest_files=["res://.godot/imported/fort_tower.map-853f603908040d0abd87f78af0c0f78b.tres"]
+
+[params]
+

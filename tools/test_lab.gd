@@ -86,7 +86,10 @@ func _init() -> void:
 		quit(1)
 		return
 	var world: World = master._world()
-	_check("the fights are in the arena", world.current_level.scene_file_path == "res://maps/arena_level.tscn",
+	# The sim arena, not the old one it replaced: the lab has to measure fights
+	# on the map the campaign actually uses, or its numbers describe geometry
+	# nobody plays on.
+	_check("the fights are in the sim arena", world.current_level.scene_file_path == "res://maps/proving_level.tscn",
 		world.current_level.scene_file_path)
 	_check("the player watches as a ghost, out of harm's way", world.player.spectator_mode
 		and world.player.damage_taken_scale == 0.0)

@@ -27,6 +27,12 @@ class_name ChassisDefinition
 ## than taken from stores, so it can fight the moment it is built. Empty for
 ## frames with nothing to hold (claws are part of the body).
 @export var starting_weapon_id: StringName = &""
+## What the COAX mount is DESIGNED AROUND, for a frame that has one — NOT what
+## the frame is issued with. A two-mount frame is bought half-armed on purpose:
+## the main gun comes with it, the coax is a purchase, and a second mount you
+## were simply handed is not a decision. Read by the laboratory, which fields a
+## complete frame because that is what a test bench is for.
+@export var coax_weapon_id: StringName = &""
 
 # ── BASE STATS ────────────────────────────────
 @export var base_health: int = 30

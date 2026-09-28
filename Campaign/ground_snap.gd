@@ -30,13 +30,19 @@ const WIDE := 0.75
 
 
 ## Where `body` should be put to stand at `p`, in the world `place` is in.
-static func stand(p: Vector3, body: Node3D, place: Node) -> Vector3:
+##
+## `pull` is the navmesh snap. It is what keeps a spot off a wall top, so it
+## stays on by default — but it moves a spot up to 3m, and where the walkable
+## ground near a post is one small patch it moves SEVERAL spots onto the same
+## point. A caller that has already spaced its bodies out on ground it checked
+## itself passes false to keep them spaced.
+static func stand(p: Vector3, body: Node3D, place: Node, pull: bool = true) -> Vector3:
 	var world: World3D = (place as Node3D).get_world_3d() if place is Node3D and place.is_inside_tree() else null
 	if world == null:
 		return p   # not in a world yet (a test rig): nothing to stand on
 	var foot := foot_depth(body)
 	var spot := p
-	var on_mesh := NavigationServer3D.map_get_closest_point(world.navigation_map, p)
+	var on_mesh := NavigationServer3D.map_get_closest_point(world.navigation_map, p) if pull else Vector3.ZERO
 	if on_mesh != Vector3.ZERO and Vector2(on_mesh.x - p.x, on_mesh.z - p.z).length() < 3.0:
 		spot = on_mesh
 	var ground := _surface(world, spot)

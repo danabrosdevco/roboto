@@ -41,3 +41,14 @@ static func _load(file: String) -> Texture2D:
 	if not ResourceLoader.exists(file):
 		return null
 	return load(file) as Texture2D
+
+
+## The picture for a frame's BUILT-IN tool — a Mechanic's welder, a Chaser's
+## claws — which belongs to no catalogue entry because there is nothing to buy
+## and nothing to take off. Named by ChassisDefinition.built_in, lowercased: a
+## built-in sharing its name with an item (the Spotter's OPTICS) simply finds
+## that item's icon, and one with no art at all comes back null like any other.
+static func built_in(name: String, size: String) -> Texture2D:
+	if name == "":
+		return null
+	return _load(path("items", StringName(name.to_lower()), size))

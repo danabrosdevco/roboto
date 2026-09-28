@@ -195,11 +195,11 @@ func _physics_process(delta: float) -> void:
 # seconds: cancelling the back-out each time (and move_to() restarting the
 # three-second stuck check each time) is how a rover stayed pinned to a wall for
 # as long as you were moving or fighting nearby.
-func move_to(pos: Vector3):
+func move_to(pos: Vector3, think_delay: float = 0.0):
 	if pos.distance_to(movement_target) > 6.0:
 		_manoeuvres = 0   # somewhere new, not the same spot again
 	_path_fresh = false
-	super(pos)
+	super(pos, think_delay)
 
 
 # The agent counts a path point reached within path_desired_distance in 3D,

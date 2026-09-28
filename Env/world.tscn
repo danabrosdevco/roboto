@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=27 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
@@ -15,7 +15,7 @@
 [ext_resource type="Script" path="res://Campaign/objective_tracker.gd" id="12_1xc4a"]
 [ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="12_nadmy"]
 [ext_resource type="Script" path="res://Campaign/campaign.gd" id="15_3b3cm"]
-[ext_resource type="PackedScene" uid="uid://lpptelhi4w0y" path="res://maps/homebase_level.tscn" id="16_oio3q"]
+[ext_resource type="PackedScene" uid="uid://ybbw8jcwtk4f" path="res://maps/depot_level.tscn" id="16_oio3q"]
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="16_oqoj0"]
 [ext_resource type="Resource" uid="uid://ciftj4gygiyem" path="res://Campaign/items & catalogue/test_item_catalogue.tres" id="18_kolru"]
 [ext_resource type="Script" path="res://Campaign/enemy_force_spawner.gd" id="18_r3yq3"]
@@ -25,6 +25,7 @@
 [ext_resource type="Resource" uid="uid://4qxk4fpf5rou" path="res://Campaign/missions/mission_arena_5_proving.tres" id="99_a5"]
 [ext_resource type="Resource" uid="uid://oem8mh562jhf" path="res://Campaign/missions/mission_basin_1_anchor.tres" id="100_b1"]
 [ext_resource type="Resource" uid="uid://4ctfgm8cxpe7" path="res://Campaign/missions/mission_pitt_1_rivers.tres" id="101_p1"]
+[ext_resource type="Resource" uid="uid://dvcpn14lofaxu" path="res://Campaign/missions/mission_mutaha_1_blocks.tres" id="102_m1"]
 
 [node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "squad_spawner", "objective_tracker", "Campaign", "enemy_spawner")]
 script = ExtResource("1_2t272")
@@ -84,7 +85,7 @@ script = ExtResource("12_1xc4a")
 [node name="CampaignManager" type="Node" parent="." groups=["campaign"]]
 script = ExtResource("15_3b3cm")
 base_level = ExtResource("16_oio3q")
-missions = Array[ExtResource("16_oqoj0")]([ExtResource("95_a1"), ExtResource("97_a3"), ExtResource("99_a5"), ExtResource("100_b1"), ExtResource("98_c1"), ExtResource("101_p1")])
+missions = Array[ExtResource("16_oqoj0")]([ExtResource("95_a1"), ExtResource("97_a3"), ExtResource("99_a5"), ExtResource("100_b1"), ExtResource("98_c1"), ExtResource("101_p1"), ExtResource("102_m1")])
 catalogue = ExtResource("18_kolru")
 starting_chassis = ExtResource("11_6rcry")
 starting_resources = 300

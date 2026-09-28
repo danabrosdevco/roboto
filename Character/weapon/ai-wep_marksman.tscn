@@ -1,0 +1,48 @@
+[gd_scene load_steps=7 format=3 uid="uid://caiwepmarksman1"]
+
+[ext_resource type="Script" path="res://Character/weapon/ai_weapon.gd" id="1_cg26h"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_fgv2f"]
+[ext_resource type="PackedScene" uid="uid://8fkw5u3xkdpp" path="res://3d_assets/gun_pack/Blends/SniperRifle_1.blend" id="3_nn2c5"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="4_j4rxt"]
+[ext_resource type="AudioStream" uid="uid://b46wwhkqbq3x2" path="res://sounds/sfx/weapons/ar15/best_rifle_fire_1 (2).wav" id="5_0gjjf"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="6_nqw0o"]
+
+[node name="ai_world_weapon_marksman" type="Node3D" node_paths=PackedStringArray("muzzle_flash", "muzzle_origin", "shot_audio")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 0)
+script = ExtResource("1_cg26h")
+weapon_type = 1
+fire_cooldown = 1.9
+base_damage = 48
+min_damage = 32
+damage_falloff_start = 70.0
+min_effective_range = 12.0
+max_effective_range = 130.0
+ai_spread_mrad = 5.0
+suppression_per_shot = 7.0
+burst_min = 1
+burst_max = 1
+magazine_size = 5
+reload_time = 3.6
+muzzle_flash = NodePath("SniperRifle_1/MuzzleFlash")
+muzzle_origin = NodePath("SniperRifle_1/Muzzle")
+shot_audio = NodePath("SniperRifle_1/Shot")
+tracer_scene = ExtResource("2_fgv2f")
+
+[node name="SniperRifle_1" parent="." instance=ExtResource("3_nn2c5")]
+
+[node name="Muzzle" type="Node3D" parent="SniperRifle_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.1, 0)
+
+[node name="MuzzleFlash" parent="SniperRifle_1" instance=ExtResource("4_j4rxt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.6, 0.1, 0)
+visible = false
+
+[node name="Shot" type="AudioStreamPlayer3D" parent="SniperRifle_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.03, 0.1)
+stream = ExtResource("5_0gjjf")
+volume_db = -1.0
+unit_size = 40.0
+
+[node name="Click" type="AudioStreamPlayer3D" parent="SniperRifle_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.03, 0.1)
+stream = ExtResource("6_nqw0o")

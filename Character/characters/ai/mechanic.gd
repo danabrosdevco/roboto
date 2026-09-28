@@ -154,7 +154,8 @@ func assign_role(_role: SoldierRole) -> void:
 # formation correction, nobody would ever be finished. In a fight it keeps
 # behind the squad instead of walking where the squad walks (_keep_back); either
 # way the order is kept, and carried out when it is free.
-func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false) -> void:
+func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false,
+		think_delay: float = 0.0) -> void:
 	# Welding ITSELF is no reason to stand still: it is always in its own
 	# reach, so it can carry the order out and patch its plating on the way.
 	if (_patient != null and _patient != self) or _keeping_back():
@@ -163,7 +164,7 @@ func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false)
 		return
 	_standing_order = Vector3.INF
 	_walk_goal = Vector3.INF
-	super(pos, force, keep_target)
+	super(pos, force, keep_target, think_delay)
 
 
 func enter_cover_seeking() -> void:

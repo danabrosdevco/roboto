@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://cmortartrack01"]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/vehicle_reclaimer.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"mortar_track"
+display_name = "Mortar Track"
+description = "A salvage tractor with a 60mm mortar where the welder should be. It sits two streets back, behind a terrace it never has to see over, and drops high explosive on whatever its infantry have eyes on. It repairs nothing and it will not defend itself."
+scene = ExtResource("2_scene")
+cost = 0
+purchasable = false
+supply = 2
+starting_weapon_id = &"mortar"
+base_health = 150
+base_speed = 1.0
+base_accuracy = 1.0
+base_sensor_range = 40.0
+weapon_slots = 1
+built_in = "WELDER"
+weapon_replaces_built_in = true
+turret = false
+vehicle = false
+drives = true
+equipment_slots = 0
+module_slots = 3
+required_rank = 0

@@ -5,6 +5,10 @@
 "mapversion" "220"
 "wad" ""
 "classname" "worldspawn"
+}
+// entity 1
+{
+"classname" "func_detail_illusionary"
 // brush 0
 {
 ( -40 -36 8 ) ( -36 4 8 ) ( -16 -20 8 ) PSX_Textures/rock_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1

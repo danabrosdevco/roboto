@@ -235,6 +235,7 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 
 	var members: Array[Soldier] = []
 	var ring := _ring_offsets(made)
+	var taken: Array = []   # the seats handed out so far: see _seat_is_free
 	for i in made.size():
 		var soldier := made[i]
 		# PLACED BEFORE IT ENTERS THE TREE.
@@ -251,7 +252,20 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		# fighting something they could not see.
 		var at: Vector3 = anchor + ring[i]
 		if spec.spawn_offset.y <= 0.0:
-			at = _Ground.stand(at, soldier, level)   # aircraft keep the height they were given
+			# aircraft keep the height they were given
+			var reach: float = maxf(_Ground.half_width(soldier), 0.5) + 0.2
+			at = _Ground.stand(_seat_for(at, soldier, level, anchor, taken), soldier, level)
+			# AFTER standing, not before. _Ground.stand snaps the seat to the
+			# nearest navmesh point, and where the walkable ground near a post
+			# is one small patch it pulls several seats onto the SAME spot —
+			# which is how three of Mutaha's north island garrison ended up
+			# inside one another with a good seat each.
+			var spread := _spread_from(at, reach, taken)
+			if spread != at:
+				# Re-seat on the surface it was pushed onto, WITHOUT the snap
+				# that pulled it back into the pile.
+				at = _Ground.stand(spread, soldier, level, false)
+			taken.append([at, reach])
 		soldier.position = level.to_local(at)
 		level.add_child(soldier)
 		if ai_manager != null:
@@ -416,11 +430,18 @@ func _catalogue() -> ItemCatalogue:
 # one. The lab already did this (Lab._issued_weapon) and missions did not, so
 # every hostile rover a mission spawned drove out with nothing to shoot with.
 func _issue_weapon(soldier: Soldier, frame: ChassisDefinition) -> void:
-	if frame.starting_weapon_id == &"" or soldier.weapon_mount == null:
-		return   # nothing to issue, or nowhere to put it
-	for child in soldier.weapon_mount.get_children():
-		if child is AIWeapon:
-			return   # already carrying one from its scene
+	if frame.starting_weapon_id == &"":
+		return   # nothing to issue
+	# NOT GUARDED ON weapon_mount. The Reclaimer has none until it is asked for
+	# a weapon: reclaimer.gd builds the mortar mount inside equip_weapon_scene,
+	# on the boom, because the arm only exists after instantiate(). Refusing to
+	# call it without a mount refused the one frame that makes its own — an
+	# enemy Mortar Track spawned carrying nothing at all. A frame with truly
+	# nowhere to put a gun warns from Enemy.equip_weapon_scene instead.
+	if soldier.weapon_mount != null:
+		for child in soldier.weapon_mount.get_children():
+			if child is AIWeapon:
+				return   # already carrying one from its scene
 	var cat := _catalogue()
 	var item: ItemDefinition = cat.item(frame.starting_weapon_id) if cat != null else null
 	if item == null or item.ai_scene == null:
@@ -508,6 +529,123 @@ func _anchor_point(spec: EnemySquadSpec, route: PatrolPath, post: SquadObjective
 
 ## Clear ground left between neighbours on a spawn ring, flat.
 const RING_GAP := 0.5
+
+## How far the search steps out when a seat on the ring is occupied, and how
+## many turns it tries at each step.
+const SEAT_STEP := 1.6
+const SEAT_TURNS := 8
+const SEAT_STEPS := 4
+
+
+# WHERE A BODY WILL ACTUALLY FIT.
+#
+# _ring_offsets gives everyone their own arc, but it draws the ring without
+# looking at the world: on a street grid a seat lands inside a wall, a rack row
+# or a parked hull often enough to matter. Godot settles an overlap by pushing
+# the pair apart every tick, and since each shove moves both, an overlapping
+# pair ACCELERATES — measured at 52 m/s across Mutaha, ending against the
+# boundary wall or out of the world, with the bodies counted as losses before
+# anyone had seen them. Enemy._damp_shoving caps how fast that goes wrong; this
+# stops it starting.
+#
+# Squadmates already placed are in the tree, so they are part of the test: the
+# search also keeps a squad from stacking on itself.
+func _seat_for(at: Vector3, soldier: Soldier, level: Node, anchor: Vector3, taken: Array) -> Vector3:
+	if not (level is Node3D) or not level.is_inside_tree():
+		return at
+	var space := (level as Node3D).get_world_3d().direct_space_state
+	if space == null:
+		return at
+	var reach: float = maxf(_Ground.half_width(soldier), 0.5) + 0.2
+	# Best: room on the ground AND nobody already sitting there.
+	for step in SEAT_STEPS:
+		var out := float(step) * SEAT_STEP
+		for turn in SEAT_TURNS:
+			var angle := TAU * float(turn) / float(SEAT_TURNS)
+			var candidate: Vector3 = at if step == 0 else at + Vector3(cos(angle), 0.0, sin(angle)) * out
+			if _seat_is_free(candidate, reach, taken) and _seat_is_clear(candidate, reach, space, level as Node3D):
+				return candidate
+			if step == 0:
+				break   # the drawn seat is one spot, not eight
+	# NOBODY STACKS, EVER. A post wedged between buildings can fail the clear
+	# test at every candidate — and falling back to one spot for all of them
+	# put three bodies inside each other at Mutaha's north island, which is
+	# precisely the pile this pass exists to prevent (see Enemy._damp_shoving
+	# for what an overlapping pair then does). Standing in a doorway is a bad
+	# spawn; standing INSIDE a squadmate is a broken one.
+	for step in SEAT_STEPS:
+		var out := float(step) * SEAT_STEP
+		for turn in SEAT_TURNS:
+			var angle := TAU * float(turn) / float(SEAT_TURNS)
+			var candidate: Vector3 = at if step == 0 else at + Vector3(cos(angle), 0.0, sin(angle)) * out
+			if _seat_is_free(candidate, reach, taken):
+				return candidate
+			if step == 0:
+				break
+	return at   # the ring drew this seat: at least it is spread like the others
+
+
+# Squadmates seated EARLIER THIS FRAME are invisible to a shape query: the
+# physics space has not stepped since they were added, so it reports their
+# seats empty and the whole squad piles onto the same few spots. The seats
+# handed out so far are therefore remembered and checked in code.
+func _seat_is_free(at: Vector3, reach: float, taken: Array) -> bool:
+	for seat in taken:
+		var other: Vector3 = seat[0]
+		var room: float = reach + float(seat[1])
+		if Vector2(other.x - at.x, other.z - at.z).length() < room:
+			return false
+	return true
+
+
+func _seat_is_clear(at: Vector3, reach: float, space: PhysicsDirectSpaceState3D, level: Node3D) -> bool:
+	var map: RID = level.get_world_3d().navigation_map
+	var on: Vector3 = NavigationServer3D.map_get_closest_point(map, at)
+	if on == Vector3.ZERO or Vector2(on.x - at.x, on.z - at.z).length() > 2.0:
+		return false   # no walkable ground here to stand on
+	var ball := SphereShape3D.new()
+	ball.radius = reach
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = ball
+	# A whole radius above the mesh, so the ground itself is not the hit.
+	q.transform = Transform3D(Basis(), Vector3(at.x, on.y + reach + 0.1, at.z))
+	q.collide_with_areas = false
+	return space.intersect_shape(q, 1).is_empty()
+
+
+# THE LAST WORD ON SPACING, SAID AFTER THE GROUND HAS ITS SAY.
+#
+# _seat_for hands every body its own spot, and _Ground.stand then pulls that
+# spot up to 3m onto the nearest navmesh point — so on a post whose walkable
+# ground is one small patch, several bodies that were properly spread arrive
+# on the SAME point anyway. That is what still had three of Mutaha's north
+# island garrison inside one another after the search was already working.
+# Pushing them apart here, in the plane and after the snap, is the only place
+# nothing downstream can undo it.
+func _spread_from(at: Vector3, reach: float, taken: Array) -> Vector3:
+	var here := at
+	for turn in SEAT_TURNS:
+		var push := Vector2.ZERO
+		for seat in taken:
+			var other: Vector3 = seat[0]
+			var room: float = reach + float(seat[1])
+			var gap := Vector2(here.x - other.x, here.z - other.z)
+			var span := gap.length()
+			if span >= room:
+				continue
+			var away := Vector2.ZERO
+			if span > 0.01:
+				away = gap / span
+			else:
+				# Exactly on top of one another leaves no direction to push
+				# along, so each body takes its own bearing off the ring.
+				var angle := TAU * float(taken.size() + turn) / float(SEAT_TURNS)
+				away = Vector2(cos(angle), sin(angle))
+			push += away * (room - span + RING_GAP * 0.5)
+		if push == Vector2.ZERO:
+			break   # clear of everyone: done
+		here = Vector3(here.x + push.x, here.y, here.z + push.y)
+	return here
 
 
 # A ring round the anchor with room for everyone on it. The old one spaced a

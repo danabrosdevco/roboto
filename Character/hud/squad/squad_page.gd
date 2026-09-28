@@ -184,8 +184,15 @@ func _default_slot() -> void:
 		return
 	# An empty slot that falls back to a built-in (the Reclaimer's welder) is
 	# not a gap to point at first.
-	var gap := selected.weapon_ids.has(&"") and not (frame != null and frame.weapon_replaces_built_in)
-	if gap or selected.weapon_ids.is_empty():
+	var stands_in: bool = frame != null and frame.weapon_replaces_built_in
+	var gap: int = -1 if stands_in else selected.weapon_ids.find(&"")
+	if gap >= 0:
+		# POINT AT THE GAP, NOT AT SLOT ONE. A two-mount frame is bought with its
+		# coax empty and its main gun already fitted, so opening on the first slot
+		# would land on the gun it came with and hide the only decision there is.
+		slot_index = gap
+		return
+	if selected.weapon_ids.is_empty():
 		return
 	for kind in [ItemDefinition.Kind.EQUIPMENT, ItemDefinition.Kind.MODULE]:
 		var slots: Array = _slots(selected, kind)

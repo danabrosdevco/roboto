@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://daikhvrvnhg7g"]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" uid="uid://dtlld5v15l6gl" path="res://Character/characters/ai/walker.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"walker"
+display_name = "Walker"
+description = "Two mounts on one traverse: a main gun that fights, and a coax that answers whatever gets close while the main one reloads. IT ARRIVES HALF-ARMED — the coax mount is empty until you buy something for it. It WALKS, so unlike a rover it takes kit built for legs: a Walker can carry a Nanite Reboot and stand itself back up. Get around the side faster than the turret and both guns are pointing the wrong way."
+scene = ExtResource("2_scene")
+cost = 320
+purchasable = true
+supply = 3
+starting_weapon_id = &"autocannon"
+coax_weapon_id = &"machine_gun"
+base_health = 320
+base_speed = 0.7
+base_accuracy = 1.0
+base_sensor_range = 60.0
+weapon_slots = 2
+built_in = "CLAWS"
+weapon_replaces_built_in = false
+turret = true
+vehicle = true
+drives = false
+equipment_slots = 0
+module_slots = 3
+required_rank = 2

@@ -1,0 +1,290 @@
+[gd_scene load_steps=29 format=3 uid="uid://dtlld5v15l6gl"]
+
+[ext_resource type="Script" path="res://Character/characters/ai/walker.gd" id="1_walker"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_bark"]
+[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_v1"]
+[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="4_v2"]
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="5_metal"]
+[ext_resource type="Shader" path="res://Character/faction_metal.gdshader" id="5_xsq0h"]
+[ext_resource type="Texture2D" uid="uid://bvk26224sihon" path="res://2d_assets/metal textures poly.com/metal_plate_02_diff_4k.jpg" id="6_opowf"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="6_spark"]
+[ext_resource type="Texture2D" uid="uid://o8ik6rntdl2v" path="res://2d_assets/metal textures poly.com/metal_plate_02_disp_4k.png" id="7_eaw7h"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="7_oil"]
+[ext_resource type="Script" path="res://faction_livery.gd" id="8_livery"]
+[ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="9_0jc21"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.85
+height = 3.0
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_detect"]
+radius = 25.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1u3qv"]
+render_priority = 0
+shader = ExtResource("5_xsq0h")
+shader_parameter/use_normal_map = false
+shader_parameter/normal_scale = 1.0
+shader_parameter/derive_mask_from_albedo = true
+shader_parameter/paint_band_center = 0.45
+shader_parameter/paint_band_width = 0.425
+shader_parameter/base_tint = Color(1, 1, 1, 1)
+shader_parameter/metallic = 0.4
+shader_parameter/roughness = 0.85
+shader_parameter/faction_color = Color(0.7, 0.35, 0.02, 1)
+shader_parameter/paint_blend = 1.0
+shader_parameter/marker_energy = 6.0
+shader_parameter/shutdown = 0.0
+shader_parameter/albedo_tex = ExtResource("6_opowf")
+shader_parameter/normal_tex = ExtResource("7_eaw7h")
+
+[sub_resource type="BoxMesh" id="BoxMesh_hull"]
+size = Vector3(1.5, 0.9, 1.75)
+
+[sub_resource type="StandardMaterial3D" id="Mat_lamp"]
+albedo_color = Color(1, 0.96, 0.88, 1)
+emission_enabled = true
+emission = Color(1, 0.94, 0.8, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_lamp"]
+size = Vector3(0.2, 0.12, 0.06)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ring"]
+bottom_radius = 0.54
+height = 0.12
+radial_segments = 12
+rings = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_turret"]
+size = Vector3(1.18, 0.6, 1.3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f0tia"]
+albedo_texture = ExtResource("9_0jc21")
+
+[sub_resource type="SphereMesh" id="SphereMesh_eye"]
+radius = 0.17
+height = 0.28
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxMesh" id="BoxMesh_antenna"]
+size = Vector3(0.03, 0.85, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_mantlet"]
+size = Vector3(0.5, 0.36, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hip"]
+size = Vector3(0.3, 0.3, 0.34)
+
+[sub_resource type="BoxMesh" id="BoxMesh_thigh"]
+size = Vector3(0.34, 0.74, 0.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_shin"]
+size = Vector3(0.26, 0.86, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_foot"]
+size = Vector3(0.4, 0.15, 0.86)
+
+[node name="Walker" type="CharacterBody3D" node_paths=PackedStringArray("rig", "hip_left", "knee_left", "hip_right", "knee_right", "foot_left", "foot_right", "turret", "gun_pivot", "nav_agent", "weapon_mount", "coax_mount", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+script = ExtResource("1_walker")
+rig = NodePath("Rig")
+hip_left = NodePath("Rig/HipL")
+knee_left = NodePath("Rig/HipL/KneeL")
+hip_right = NodePath("Rig/HipR")
+knee_right = NodePath("Rig/HipR/KneeR")
+foot_left = NodePath("Rig/HipL/KneeL/FootL")
+foot_right = NodePath("Rig/HipR/KneeR/FootR")
+turret = NodePath("Rig/Turret")
+gun_pivot = NodePath("Rig/Turret/GunPivot")
+nav_agent = NodePath("NavigationAgent3D")
+weapon_mount = NodePath("Rig/Turret/GunPivot/WeaponMount")
+coax_mount = NodePath("Rig/Turret/GunPivot/CoaxMount")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("Rig/Hull"), NodePath("Rig/Turret/TurretBody")]
+activation_distance = 200
+health = 320
+max_health = 320
+move_speed = 3.2
+soldier_name = "Walker"
+flatten_collider_when_downed = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Bark" parent="." instance=ExtResource("2_bark")]
+bark_clips = Array[AudioStream]([ExtResource("3_v1"), ExtResource("4_v2")])
+pitch_min = 0.72
+pitch_max = 0.8
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
+shape = SubResource("SphereShape3D_detect")
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Hull" type="CSGMesh3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_hull")
+material = ExtResource("5_metal")
+
+[node name="Glacis" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, -0.62, -1.06)
+material_override = SubResource("ShaderMaterial_1u3qv")
+operation = 2
+size = Vector3(2, 1, 1.4)
+
+[node name="ShoulderL" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(0.866025, -0.5, 0, 0.5, 0.866025, 0, 0, 0, 1, -0.98, 0.62, 0)
+material_override = SubResource("ShaderMaterial_1u3qv")
+operation = 2
+size = Vector3(1, 1, 2.2)
+
+[node name="ShoulderR" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(0.866025, 0.5, 0, -0.5, 0.866025, 0, 0, 0, 1, 0.98, 0.62, 0)
+material_override = SubResource("ShaderMaterial_1u3qv")
+operation = 2
+size = Vector3(1, 1, 2.2)
+
+[node name="Tail" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, -0.58, 1.12)
+material_override = SubResource("ShaderMaterial_1u3qv")
+operation = 2
+size = Vector3(2, 1, 1)
+
+[node name="LampL" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.42, 0.3, -0.87)
+material_override = SubResource("Mat_lamp")
+mesh = SubResource("BoxMesh_lamp")
+
+[node name="LampR" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.42, 0.3, -0.87)
+material_override = SubResource("Mat_lamp")
+mesh = SubResource("BoxMesh_lamp")
+
+[node name="TurretRing" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.76, 0)
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("CylinderMesh_ring")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="Turret" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+
+[node name="TurretBody" type="CSGMesh3D" parent="Rig/Turret"]
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_turret")
+material = ExtResource("5_metal")
+
+[node name="Cheek" type="CSGBox3D" parent="Rig/Turret/TurretBody"]
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, -0.44, -0.86)
+material_override = SubResource("ShaderMaterial_1u3qv")
+operation = 2
+size = Vector3(1.6, 0.8, 1)
+
+[node name="Brow" type="CSGBox3D" parent="Rig/Turret/TurretBody"]
+transform = Transform3D(1, 0, 0, 0, 0.906308, -0.422618, 0, 0.422618, 0.906308, 0, 0.5, -0.78)
+material_override = SubResource("ShaderMaterial_1u3qv")
+operation = 2
+size = Vector3(1.6, 0.6, 0.8)
+
+[node name="Eye" type="MeshInstance3D" parent="Rig/Turret"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.34, 0.14, -0.66)
+material_override = SubResource("StandardMaterial3D_f0tia")
+mesh = SubResource("SphereMesh_eye")
+
+[node name="Antenna" type="MeshInstance3D" parent="Rig/Turret"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.68, 0.48)
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_antenna")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="GunPivot" type="Node3D" parent="Rig/Turret"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, -0.5)
+
+[node name="Mantlet" type="MeshInstance3D" parent="Rig/Turret/GunPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.06, -0.1)
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_mantlet")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="WeaponMount" type="Node3D" parent="Rig/Turret/GunPivot"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -0.2, 0.06, -0.22)
+
+[node name="CoaxMount" type="Node3D" parent="Rig/Turret/GunPivot"]
+transform = Transform3D(-3.0598e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.0598e-08, 0.34, -0.05, -0.18)
+
+[node name="HipL" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, -0.2, 0)
+
+[node name="HipCapL" type="MeshInstance3D" parent="Rig/HipL"]
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_hip")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="ThighL" type="MeshInstance3D" parent="Rig/HipL"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, -0.32, 0.14)
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_thigh")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="KneeL" type="Node3D" parent="Rig/HipL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.62, 0.28)
+
+[node name="ShinL" type="MeshInstance3D" parent="Rig/HipL/KneeL"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, -0.38, -0.16)
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_shin")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="FootL" type="MeshInstance3D" parent="Rig/HipL/KneeL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.78, -0.46)
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_foot")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="HipR" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, -0.2, 0)
+
+[node name="HipCapR" type="MeshInstance3D" parent="Rig/HipR"]
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_hip")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="ThighR" type="MeshInstance3D" parent="Rig/HipR"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, -0.32, 0.14)
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_thigh")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="KneeR" type="Node3D" parent="Rig/HipR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.62, 0.28)
+
+[node name="ShinR" type="MeshInstance3D" parent="Rig/HipR/KneeR"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, -0.38, -0.16)
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_shin")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="FootR" type="MeshInstance3D" parent="Rig/HipR/KneeR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.78, -0.46)
+material_override = SubResource("ShaderMaterial_1u3qv")
+mesh = SubResource("BoxMesh_foot")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="SparkBurst" parent="." instance=ExtResource("6_spark")]
+
+[node name="OilSpray" parent="." instance=ExtResource("7_oil")]
+
+[node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("8_livery")
+base_material = ExtResource("5_metal")
+pieces = [NodePath("../Rig/Hull"), NodePath("../Rig/TurretRing"), NodePath("../Rig/Turret/TurretBody"), NodePath("../Rig/Turret/Antenna"), NodePath("../Rig/Turret/GunPivot/Mantlet"), NodePath("../Rig/HipL"), NodePath("../Rig/HipR")]
+paint_blend = 1.0

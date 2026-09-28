@@ -74,11 +74,20 @@ func _collect() -> void:
 func _gather(node: Node) -> void:
 	if node == null:
 		return
-	# CSG meshes AND ordinary ones. The robots built from primitives are CSG;
-	# the ones built from a GLB — the quadcopter bomber — are MeshInstance3D,
-	# and collecting only CSG meant its listed pieces were walked past every
-	# time. It flew in the model's own colours, untinted, on both sides.
-	if node is CSGMesh3D or node is MeshInstance3D:
+	# EVERY CSG SHAPE, not only CSGMesh3D. A CSG primitive sitting straight
+	# under the rig — the nest's plinth, body and cap, the mechanic's tanks — is
+	# a render root of its own and needs its own coat; only CSGMesh3D was ever
+	# collected, so those stood in the stock material on every side. (A
+	# primitive nested INSIDE another CSG shape is merged into that root and
+	# painted through it, so collecting it changes nothing — which saves this
+	# from having to know which is which.)
+	#
+	# Ordinary meshes come in the same way: the robots built from primitives are
+	# CSG, the ones built from a GLB — the quadcopter bomber — are
+	# MeshInstance3D, and collecting only CSG meant its listed pieces were
+	# walked past every time. It flew in the model's own colours, untinted, on
+	# both sides.
+	if node is CSGShape3D or node is MeshInstance3D:
 		_meshes.append(node)
 	for child in node.get_children():
 		_gather(child)

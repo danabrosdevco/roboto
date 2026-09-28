@@ -365,6 +365,16 @@ writes every script property out, and flattens instanced scenes. So:
 - A brand-new terrain whose scene doesn't reference its data file yet is
   reported too. Open the level in the editor and save it once.
 
+**Use it rather than calling `TerrainGenerator.generate()` yourself.** A level
+carries its *own* recipe embedded in its scene, which is usually not the preset
+it started from — the coast road's has a wider valley floor, a meander and a
+taller border than `sketch_coast.tres` does. And the second argument is the
+modifier list: every TerrainStamp and TerrainPath under the Terrain node. Pass
+`[]` and you throw away every hill, crater and graded road in the level, which
+is how the coast road lost its overlook hill for a day. `terrain_bake.gd` and
+the editor's Generate button both go through the node, so both get the scene's
+recipe and the scene's modifiers.
+
 ---
 
 ## Invariants (see docs/BRIEFING.md §3–4 for why)

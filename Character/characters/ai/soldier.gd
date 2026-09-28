@@ -71,6 +71,12 @@ signal suppressed_started(soldier: Soldier)
 signal bound_step_complete(soldier: Soldier)
 
 
+# A Soldier is what carries a squad, so this is where the question Enemy asks
+# can actually be answered. See Enemy.squad_is_engaged().
+func squad_is_engaged() -> bool:
+	return squad != null and is_instance_valid(squad) and squad.context == Squad.SquadContext.ENGAGED
+
+
 # ─────────────────────────────────────────────
 # OVERRIDE: reconsider_combat
 # Blocks Enemy's random action rolling while a
@@ -319,7 +325,10 @@ func trigger_combat(body: AI) -> void:
 #
 # force  = move even though we're fighting
 # keep_target = ...but keep fighting while we do it
-func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false) -> void:
+## `think_delay` hands this robot its place in the queue when the whole squad
+## is ordered at once — see Enemy.move_to and Squad.order_stagger_seconds.
+func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false,
+		think_delay: float = 0.0) -> void:
 	if ai_state == AIState.DEAD:
 		return
 	# Normally an engaged soldier ignores move orders. A forced order moves
@@ -351,9 +360,15 @@ func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false)
 	change_soldier_state(SoldierState.NONE)
 	# Staying in COMBAT is what lets them shoot on the move. Dropping to PATROL
 	# is what made the squad forget there was a fight at all.
-	if not (keep_target and ai_state == AIState.COMBAT):
+	#
+	# AND A CULLED ROBOT STAYS CULLED. This line is the other half of the leak
+	# in move_to(): the squad re-issues orders every frame, and each one pulled
+	# a switched-off robot back into PATROL, so the distance cull turned it off
+	# and the squad turned it straight back on — 119 of Mutaha's 161 running a
+	# full brain from 260 m away, from the moment you spawned.
+	if not (keep_target and ai_state == AIState.COMBAT) and ai_state != AIState.PASSIVE:
 		change_ai_state(AIState.PATROL)
-	move_to(pos)
+	move_to(pos, think_delay)
 
 
 # ─────────────────────────────────────────────

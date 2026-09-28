@@ -15,13 +15,15 @@ built geometry saved under it, the same shape as `concrete_bridge.tscn`.
 | `maps/blocks/building_*` | Buildings for the 32 × 24 m sketch-map lots. |
 | `maps/blocks/features/` | Set pieces placed by hand: rocks, a cliff ledge, berms, trench lining, a crater rim, a pillbox, a watchtower, containers, a pylon, fuel tanks. |
 | `maps/blocks/props/` | Small pieces for scattering or placing by hand: boulders, rubble, barriers, sandbags, hesco, tank traps, drums, crates, wrecks, poles, pipes. |
-| `maps/blocks/solar/` | AI-built solar: panel rows, a tracker, a field the size of a lot, heliostats and a solar tower, battery containers, inverters, drone docks. |
+| `maps/blocks/solar/` | AI-built solar: panel rows, a tracker, a field the size of a lot, heliostats and a solar tower, battery containers, inverters, drone docks, and canopy arrays big enough to walk under. |
 | `maps/blocks/compute/` | AI compute: server racks, chillers, a generator, a transformer, a data hall, a compute obelisk, monoliths, cables, cabinets, a satellite dish. |
 | `maps/blocks/landmarks/` | Set pieces a map is built round: the orbital tether anchor at the heart of the valley basin, and a clock tower and a big wheel, one on each bank of Mutaha. |
 | `maps/blocks/industrial/` | The city's industry: warehouses, a sawtooth factory, hangars, a plant office and gate, a car park and a parking deck, container and scrap yards, a coal pile, a smokestack, a blast furnace, silos, a water tower, a gantry crane, a gas holder, a conveyor, a pipe rack, a substation, rail track and wagons, a coal barge, a lock and dam. |
 | `maps/blocks/machines/` | Machine tools, a robot arm and a robot assembly line, plant and vehicles: forklift, excavator, bulldozer, racking, steel coils, a workbench, a semi-truck. |
 | `maps/blocks/fortifications/` | Hardpoints: a command bunker, gun and mortar pits, hesco walls, T-walls, a hesco sangar, a checkpoint, dragon's teeth, razor wire, a sentry turret's mount, an ammo dump, a floodlight mast. |
 | `maps/blocks/bridges/` | Bridges built off `long_bridge.map`: short to very long, two-lane and highway, a footbridge, two trusses, a causeway, a shelled bridge, a gorge bridge and a stone humpback. The squad can walk over every one. |
+| `maps/blocks/causeway/` | A derelict highway in 48 m sections that butt end to end, with an approach ramp and three states of disrepair. For a crossing too long to be one bridge. |
+| `maps/blocks/fortress/` | Machine-built fortification: the citadel (a 260 m tower inside a 200 m walled fort, with the pit down to its basement), a keep on its own podium, and wall and gate sections for outworks. |
 | `maps/blocks/scatter/` | Ready-made `TerrainScatterLayer`s that scatter the props. |
 
 ## Conventions
@@ -45,11 +47,34 @@ built geometry saved under it, the same shape as `concrete_bridge.tscn`.
   (seams, status strips, charge points). Its material has no emission, so it
   only glows if you give that material some. That changes every map using the
   texture.
+- **One entity, one mesh.** FuncGodot builds a mesh per entity, and this
+  project renders in GL compatibility, which lights at most eight lights per
+  mesh. A big piece that needs lamps inside it has to be split: `entity(
+  "func_detail")` in the tools starts a new solid entity, and `fort_tower`
+  uses one per floor so each of its twelve data halls can be lit. The cost is
+  one concave collision shape per entity instead of a convex hull per brush,
+  which for interior floors is the better shape anyway.
+- **Nothing knee-high collides.** A stone, a slab or a brick lying on the
+  ground is texture, not cover. Give it a collider and the navmesh bake
+  punches a hole where it stands and fans triangles across the whole field
+  round it, for an obstacle the squad would have stepped over. `prop_rock_slabs`
+  is the example: it builds with no collision at all. The line is intent, not
+  height — `prop_sandbag_nest` is shorter than `prop_boulder_a` and is cover.
+- **A scatter layer's collider has nothing to do with its props.** The layer
+  draws them as MultiMeshes and puts a cylinder of `collision_radius` round
+  each one, and that cylinder is what the navmesh sees. It has to fit inside
+  the smallest prop the layer spreads, at the smallest scale it spreads it;
+  `tools/test_scatter.gd` fails the build if it does not. A layer that spreads
+  ground detail should have no collider at all, as `scatter_micro_terrain` has
+  none.
 - **Ground detail can be built without collision.** `no_collision()` in the
   tools puts every brush after it into a `func_detail_illusionary` entity
   instead of worldspawn: FuncGodot gives it a mesh and no collision shape. It
   is for things the squad should walk over rather than into — rail track is the
-  one that uses it. In TrenchBroom, select the brushes and move them to a
+  one that uses it. It is a line in a piece, not a switch: everything
+  after it in THAT piece is mesh only, and every tool resets it between pieces
+  — without that reset one piece calling it turned every piece after it in the
+  run into a ghost, which is how the props lost their collision for an hour. In TrenchBroom, select the brushes and move them to a
   `func_detail_illusionary` entity to do the same by hand. Nothing tall belongs
   in one: a wall with no collision is a hole the squad walks through. Note that
   a navmesh baked from *mesh instances* still sees the geometry; only the
@@ -114,6 +139,10 @@ godot --headless --path . --script res://tools/block_prefabs.gd -- maps/blocks/p
 | `tools/block_ai_infra.gd` | `solar/`, `compute/` and `landmarks/` maps (it extends the doodads tool) |
 | `tools/block_industrial.gd` | `industrial/`, `machines/` and `fortifications/` maps, the clock tower and big wheel in `landmarks/` and the monolith in `compute/` (it extends the AI-infra tool). Name pieces after the folder to write only those. |
 | `tools/block_bridges.gd` | `bridges/` maps (it extends the industrial tool) |
+| `tools/block_fortress.gd` | `causeway/` and `fortress/` maps (it extends the bridges tool) |
+| `tools/block_homebase.gd` | `maps/depot/depot_level.map` — a whole level, not a block (it extends the fortress tool) |
+| `tools/block_arena.gd` | `maps/proving/proving_level.map` — a whole level, the arena, rebuilt (it extends the fortress tool) |
+| `tools/block_ground.gd` | `ground/` maps — micro-terrain (it extends the fortress tool) |
 | `tools/block_prefabs.gd` | A prefab for each map in a folder |
 
 ```bash
@@ -121,6 +150,10 @@ godot --headless --path . --script res://tools/block_doodads.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_ai_infra.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_industrial.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_bridges.gd -- maps/blocks
+godot --headless --path . --script res://tools/block_fortress.gd -- maps/blocks
+godot --headless --path . --script res://tools/block_homebase.gd -- maps
+godot --headless --path . --script res://tools/block_arena.gd -- maps
+godot --headless --path . --script res://tools/block_ground.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_prefabs.gd -- maps/blocks/features
 ```
 
@@ -131,6 +164,138 @@ variants.
 **Walkability:** every ramp is 30° or less, starts on open ground and meets its
 landing flush. The climbable pieces were checked by dropping rays along their
 routes from the ground to the top.
+
+
+## Props the navmesh cannot read
+
+Two shapes a prop can have that the navmesh gets wrong, and one helper that
+fixes both. Measured, not guessed: `tools/test_prop_nav.gd` stands every prop
+on a flat floor, bakes with a level's own settings, and reports how much
+walkable area ended up on top of it and how wide a hole it carves. It needs a
+renderer, so it opens a window for a few seconds:
+
+```bash
+godot --path . --script res://tools/test_prop_nav.gd
+```
+
+- **A GENTLE SLOPE IS WALKABLE.** Recast walks anything under 45°, and rubble
+  heaps at about 30°. `prop_rubble_pile` grew navmesh up its own sides and
+  left an island on top that nothing could climb to, and carved only 2.75 m of
+  its 4.9 m footprint, so the squad walked into the skirt.
+- **A BATTERED FOOT IS A TOEHOLD.** A jersey barrier is widest at the ground
+  with a ledge 0.08 m up — inside the baker's 0.25 m climb — so the mesh crept
+  onto the barrier's toe and bodies caught on the flare above it instead of
+  walking round.
+
+`clip_block(centre, half, height)` in `block_buildings.gd` is the fix. It
+writes brushes textured `special/clip`, which FuncGodot drops from the visual
+mesh and keeps for collision: solid, never drawn. Give the prop one of those
+for its collision and build the visible shape after a `no_collision()` call.
+
+**It is slatted, and that matters.** A flat top is walkable however high it
+is, so a plain box grows an island of its own — 13.5 m² of it on the rubble
+pile. Recast erodes the walkable area by the agent's radius, so nothing
+narrower than twice that survives: slats 0.25 m wide at a 0.9 m pitch erode
+away on top and in the gaps, and the gaps are too narrow to walk into. Two
+earlier attempts did not hold: teeth 0.3 m tall on top of a solid box read as
+climbable, because the baker quantises the climb to whole cells and at a
+0.25 m cell 0.3 m is one cell like 0.25 m is; and 0.4 m slats are two cells
+wide, which erodes to a sliver rather than to nothing.
+
+Where a piece is built inside a bigger one — `jersey_at()` in
+`block_industrial.gd` — `no_collision()` is not available, because it would
+take the rest of the piece with it. There, wrap the shape in a clip box a
+couple of centimetres larger instead: the toe ends up buried inside solid
+geometry with no headroom above it, so no walkable span forms on it.
+
+**A FLAT TOP IS WALKABLE TOO**, and that is the third fault. Seven more props
+grew a small island of navmesh on their own tops, 0.6 to 2.9 m² of it, at
+heights from 0.4 m to 3.0 m — nothing could climb to any of it. Where the art
+allows, the cure is `bevel_top()`: pull the top face in and lift it, so the
+faces round it are past 45° and what is left in the middle is narrower than
+twice the agent's radius and erodes away. The bevel has to rise more than it
+insets or its own faces are walkable.
+
+- **`prop_concrete_blocks`** bevelled 0.4 m in over a 0.5 m rise: 2.9 → 0.2 m².
+  Cast concrete with a chamfered edge is what it should have looked like.
+- **`prop_hesco_row`** crowned 0.42 m in over 0.5 m: 1.8 → 0 m². Four hescos
+  in a row make one flat top 1.06 m across and 4.4 m long, and an overfilled
+  gabion heaps over its frame anyway.
+- **`prop_boulder_c`** given 26 facets instead of 16 and half a metre more
+  crown: 1.2 → 0.4 m². At sixteen the hull came out with one top facet wide
+  enough to carry navmesh.
+- **`prop_dirt_mound`** is the rubble pile's fault, not this one — earth heaps
+  at about 20° and the mesh climbed the dome, 2.3 m² of it, connected to the
+  floor so no bake setting would cull it. It has a `clip_block` now: 0 m².
+
+`prop_car_wreck`, `prop_robot_wreck` and `prop_concrete_pipes` keep small
+islands (0.6, 0.8 and 0.9 m²) and were left alone: a car roof and a fallen
+torso ARE flat, and narrowing the car's cabin made it worse rather than better
+— 0.6 m² became 1.5 m², because what the cabin stopped covering was the body
+deck, which is flatter and wider than the roof ever was.
+
+**At a level's own settings nothing is left.** The sweep above runs at
+`region_min_size` 2 to show the raw shape of the problem; every level bakes at
+4, which culls an isolated region under about a square metre, and at 4 every
+one of the nineteen props reports 0 m². Run it both ways when judging a new
+piece — the raw number is the one that tells you whether the prop is right.
+
+
+## Micro-terrain (`maps/blocks/ground/`)
+
+Relief you build rather than paint, written by `tools/block_ground.gd`.
+
+Flattish ground is what the squad can fight on and painted hills are what it
+cannot, so every level ends up with a floor that is correct and dead — the
+heliostat field worst of all, a thousand identical mirrors on a billiard
+table. These sit in between: low enough to keep the navmesh, shaped enough
+that the ground has a horizon.
+
+**The rules every piece here keeps.**
+
+- Slopes 20° or less. The baker walks up to 45, but a body that has to steer
+  while climbing wants far less than its limit, and a rover is not a goat.
+- No step over 0.2 m. The navmesh climbs 0.25 m and anything near that is a
+  lip the squad catches on.
+- Nothing over 1.2 m. Past that it is cover, and cover belongs in `props/`
+  where it gets built with vertical sides.
+- Every edge meets the ground flush. A slab dropped on a field with a square
+  edge is a 0.2 m kerb all the way round it.
+
+| piece | size | what it is |
+|---|---|---|
+| `ground_swell` | 30 × 22 m, 0.72 m | a rise you cannot see over the far side of |
+| `ground_berm` | 32 m long, 0.72 m | a graded bank: walk over it or fight behind it |
+| `ground_berm_ring` | 26 m across | a ring of spoil with a dished middle |
+| `ground_apron` | 16 × 12 m, 0.6 m | a gentle climb onto a kerbed pad |
+| `ground_spoil` | 6 × 4.6 m, 1.1 m | a heap. The one piece here you go ROUND |
+| `ground_pad` | 12 m square | concrete settled into four slabs, skirted in grit |
+| `ground_washout` | 26 × 14 m | a channel between two low banks |
+| `ground_track` | 30 m long, 0.16 m | worn ruts. The smallest and the most useful |
+
+**Check every one of them with the nav test.** `tools/test_prop_nav.gd` reads
+the other way round for this family: a micro-terrain piece should come out
+with a WALK close to the straight-line distance, meaning the squad goes over
+it rather than round, and no `SPLIT IT`.
+
+```bash
+FOLDER=ground godot --path . --script res://tools/test_prop_nav.gd
+```
+
+Three ways a piece here fails, all found by that test and all worth knowing:
+
+- **A tread narrower than twice the agent radius erodes to nothing.** The
+  washout's banks were first built in four steps across 1.4 m — 0.35 m treads
+  — and came out an unwalkable staircase that cut the map in two.
+- **Stacking courses from a common edge leaves a wall on that side.** Built
+  from the inner edge the washout had a half-metre face along the channel;
+  from the outer edge it had the same face on the field side, and the crossing
+  went 43 m round rather than 26 m over. Each course is a trapezoid about the
+  crest, so both faces are steps.
+- **A hull's skirt is a rim of slivers.** A dome meets the ground at a knife
+  edge the baker cannot walk; stepped boxes meet it flush. That is why
+  `_terrace()` builds rings of boxes rather than calling `mound()`.
+
 
 ## The pieces
 
@@ -412,3 +577,236 @@ Spans are between the abutments; the overall length includes the ramps.
 - **bridge_arch:** an old stone humpback, 30 m overall and 6 m wide. One 12 m
   arch, and the road climbing 1 in 4 to a crown 3.25 m up between brick
   parapets.
+
+
+### The solar plant (`maps/blocks/solar/`)
+
+The mirror field had the mirrors and the tower and nothing to say what they
+were FOR, and a hundred identical heliostats read as wallpaper. Six pieces for
+both problems:
+
+- **solar_salt_tanks:** two insulated tanks on a kerbed bund with the pipe
+  bridge between them, 42 m across and 15 m tall. A tower plant stores its
+  heat as molten salt — cold tank, hot tank, receiver moving it between them —
+  so this is the second landmark on a heliostat map after the tower.
+- **solar_steam_block:** turbine hall with the air-cooled condenser bank
+  beside it. A plant in a desert cannot spare water to condense with, so it
+  blows air through a ridge of finned tube: the tallest thing on site after
+  the tower.
+- **solar_wash_bay:** a drive-through frame with brush heads and a water tank
+  on a stand. A field of mirrors in a desert is a field of mirrors under dust.
+- **solar_heliostat_wrecked:** pylon snapped at the pedestal, mirror face-down
+  and broken across its frame.
+- **solar_heliostat_stowed:** parked face-up, the way a field stows in a storm.
+- **solar_mirror_rack:** spare mirrors on edge in a steel frame, two broken
+  ones stacked flat, a crate of fixings.
+
+The last three are the ones that matter for a field: one wreck in twenty-two
+and one stowed in eleven is enough to stop a hundred and twenty mirrors
+reading as a pattern, and both cost nothing to place because they share the
+heliostat's footprint.
+
+### The causeway
+
+For water too wide to bridge in one piece: the old highway, carried over it in
+**48 m sections that butt end to end**. Lay a `causeway_ramp`, then a section
+every 48 m along the same line, then another ramp turned to face back.
+`tools/test_causeway.gd` lays a whole one and walks it bank to bank.
+
+The deck is 16 m wide and 4 m up, on column piers. **There is no median and no
+kerb across it** — a barrier down the middle would cut the deck into two lanes
+the squad could not cross between. The only thing on it is paint.
+
+- **causeway_span:** sound deck, three piers.
+- **causeway_span_cracked:** settled over its middle pier — the deck dips 0.2 m
+  and comes back, which reads as subsidence and the navmesh does not notice.
+- **causeway_span_broken:** the northern half of the deck is gone over 20 m,
+  leaving a 7 m lane on the south side. The lane is flat and clear.
+- **causeway_ramp:** 24 m of embankment climbing to the deck at 1 in 6.
+- **causeway_pier:** one pier and a stub of deck, for the carriageway that
+  came down. Put a line of these alongside and the crossing reads as half of
+  what it was.
+
+**The wreckage does not collide.** Every hanging slab, fallen rail and piece of
+rubble is built after `no_collision()`, so the deck the squad walks is flat and
+empty. Keep it that way — this is a map made of one long walk.
+
+### The fortress
+
+Machine work, built to last, in the manner of the tether anchor: clean faces,
+lit seams, nothing improvised.
+
+- **fort_keep:** the whole fort, 96 m square. Its podium is the flat ground —
+  4 m up, with a 16 m ramp at 1 in 6 to the gate and another at the back. Four
+  corner bastions, a 14 m gate, and down the middle of the yard the ramp into
+  the pit, 20 m wide at 1 in 6, ending at the portal into the data halls. A
+  30 m mast over the head house is what you see from across the water.
+  - **The rim is one brush from the ground to the top of the parapet**, never a
+    wall standing on the podium's top face — see the convention above.
+  - Everything is wide. The yard is clear, the pit is 20 m across and the gate
+    is 14 m: the rover and anything larger gets down there without a thought.
+ m to the tip of the relay on a 49 m shaft, standing
+  in a walled fort 200 m square. Ribbed the whole way up and set back twice,
+  after the courts and jails built that way, with nothing between the ribs.
+  - **The way through it is the mission.** Up 60 m of ramp outside the west
+    wall to the gate; the length of the yard, under the walls and the four
+    bastions, and round the tower — the pit is on the FAR side from the gate,
+    so the yard is crossed rather than skirted; DOWN the pit, 24 m wide at
+    1 in 6, to the portal in the tower's east face; then UP twenty-four data
+    halls from the basement to 138 m.
+  - **The uplink is on the crown**, between the horns, and it is plant rather
+    than an aerial: a clad core 16 m square and 100 m tall carrying bank
+    after bank of heat exchanger fins — a data centre is mostly a machine for
+    moving heat — with dish arrays on outriggers at two levels, a braced
+    lattice above it and the link head at 400 m. It is how the island's
+    compute leaves the island, and the reason the fort is round it.
+    Nothing up there is walkable and nothing is meant to be: the top floor is
+    262 m below the head. Silhouette and objective, not ground.
+  - **Everything on the wall is reachable.** Eight ramps climb from the yard
+    onto the walk, two a side, crossing the wall rather than running along it
+    so each meets the walk on its whole width. The bastion platforms are
+    FLUSH with the walk, not raised: a platform up a ramp of its own turned
+    out to be unreachable from three corners of four. The height is in their
+    parapets instead, 7 m on the two outer faces.
+  - **Twenty-four data halls, one on top of another**, a floor every 6 m. A
+    ramp from each floor to the next climbs a different inside wall each time,
+    so the fight corkscrews through the building instead of running up one
+    stairwell. Each floor is its own entity, so each can be lit.
+  - **Every floor is a room to clear.** Rack rows down the middle for cover,
+    plant on every third floor for a different shape of fight, and a 6 m lane
+    round the outside so the whole squad can work round them. The cable trays
+    overhead are mesh only.
+  - **Each flight stops 6 m short of the wall** and the last 6 m are floor. A
+    ramp run to the corner meets the floor it is reaching at a single point,
+    and the navmesh will not join a point to anything — the climb dies there
+    with nothing to see from either end.
+  - **The inside and the outside do not meet.** No gunloops, no windows, no
+    firing slots — one way in at the bottom, one way out onto the terrace at
+    the top. It is also pitch dark in there. The one texture
+    in the pack with an emission map is
+    `hl_office_complex_style_drop_ceiling_1_1`, and the depot has a material
+    for it — see the depot section below for what it took to make it work.
+- **fort_wall:** 24 m of wall, 4.5 m high, butts end to end.
+- **fort_gate:** the same wall with a 12 m opening headed at 6 m.
+
+### The depot (`maps/depot/depot_level.map`)
+
+Not a block — a whole level, the home base, written by
+`tools/block_homebase.gd`. One hall, 84 × 48 m and 15 m to the ceiling, with a
+range annexe hanging off its south wall. You arrive on a gallery 4 m up at the
+east end and walk down a 20 m ramp at 1 in 5; from the head of it the bays are
+on your right, the muster deck ahead, the range portal on your left and the
+transit car at the far end.
+
+Four things drove the size, and all four are load-bearing:
+
+- **The muster deck.** 24 × 24 m of plated steel a 0.2 m step above the floor
+  (under the navmesh's 0.25 m climb, so the squad walks on and off it), marked
+  out with 36 stands four metres apart. That is the whole squad in formation
+  where you can see it from the gallery, with a rover's worth of room on every
+  stand. The stands are `SquadMuster/Stand01..36` in the level scene.
+- **Four hangar bays**, cut into the north wall: 12 m wide, 12 m deep from the
+  wall, 9 m to the lintel. A rover is 1.7 × 3.4 × 2 m, so a bay swallows one
+  three times that and still leaves 3 m each side to walk round it and look.
+  Each has a plated stand and a lit back wall.
+- **The range annexe**, 24 × 28 m through a 12 m portal in the south wall, with
+  a lit sign band over it you can read from the ramp. It is off the hall, so it
+  is obvious on the first walk down and ignorable on every walk after, and it
+  never stands between you and the car.
+- **The transit dock** at the west end: a 22 m car on a rail bed, two body
+  lengths with a 5 m opening between them, under a gantry. The rail bed is
+  0.6 m up, so there is a boarding apron at the door — a 0.6 m kerb is a wall
+  to a navmesh that will climb 0.25 m, and without it the squad cannot board.
+
+**Nothing robot-shaped is built in it.** The first pass stood a charge post in
+each bay and it read as a robot — a different, wrong robot standing next to the
+real ones. Build the fixture, leave the volume empty and lit, and let the game
+spawn a real chassis at the `ChassisBays/BayN/ChassisStand` markers.
+
+**Zones are separate entities** (`entity("func_detail")` per bay and for the
+annexe) so each is its own MESH. This renderer lights about eight lights per
+mesh; one mesh for the whole depot would mean eight lights for eighty-four
+metres of hall. The level scene then puts each zone's mesh on its own visual
+layer and sets each light's `light_cull_mask` to match, so the bay and range
+lamps cost the hall nothing. Robots stay on layer 1, lit by the hall.
+
+**The walls are in two bands** — `banded()` — painted below 4 m and bare
+concrete above. `concrete_wall_11` draws a vent strip along its bottom edge and
+an oxide dado above it; `@0.909` lands the top of the paint at exactly the band
+height. Run a wall texture like that full height and the dado repeats halfway
+up the wall, which is what the first pass did with the green version and it
+read as mould.
+
+**No `glitch_tx_1` anywhere in it.** At trim size it reads as magenta confetti,
+not as a lit strip. The trim is `metal_wall_5` and the markings are
+`concrete_tx_4` — pale paint on dark steel.
+
+
+### The proving ground (`maps/proving/proving_level.map`)
+
+Not a block — a whole level, written by `tools/block_arena.gd`, and a
+replacement for the arena. Same footprint: 88 × 54 m of grass in a walled
+rectangle. Everything else is different, because three things made the arena
+hard to read and all three are fixable in the geometry:
+
+- **Everything in it was 4 m tall.** Every cover wall and every pillar, so
+  nothing could be seen over and there was no way to tell a thing you shoot
+  over from a thing you hide behind. Cover here is **1.3 m** (shoot over it),
+  **1.9 m** (full cover standing) or **3.0 m** (a sight-line blocker, used at
+  eight places). Nothing is thicker than 1.4 m; the arena had 3.5 m square
+  pillars, which is not cover, it is a building.
+- **The cover was the same colour as the ground** — all of it `Metal_04`, a
+  mossy green-grey, on green grass. Cover is grey concrete now, the blockers
+  are blue-grey, the crates are oxide, and the perimeter is the same blue-grey
+  as the blockers so the boundary reads as one thing.
+- **There was nothing to navigate by** — eighty-one near-identical blocks in a
+  uniform field. There are three landmarks now: a derrick tower in the middle
+  you can climb and see the whole map from, and a base at each end.
+
+**MOBA read.** Three lanes run the length of it, cut into the grass as worn
+track, with a rough strip between each pair to flank through and two
+cross-lanes to rotate on. The lanes are plates 0.06 m proud — nothing to walk
+over, nothing to the navmesh, and the one thing that lets you see the map's
+shape while standing in it. Keep them narrow: at 12 m wide the sand ate the
+field and left the grass as edging, which is backwards.
+
+**Symmetry.** Cover is written once in the `COVER` table and stamped twice,
+the second time rotated 180° about the centre, so neither end has the better
+ground. The builder measures every pair of footprints against every other and
+refuses to write the map if any two overlap.
+
+Three things that cost a rebuild each, worth not repeating:
+
+- **A ramp lying in a lane is a wall across it.** The tower's ramps ran in
+  along the middle lane, and a 12 m ramp seen from eye height at its foot is a
+  five-metre brown slab across the middle of everything. They come up the
+  flanks now and the lane runs clean underneath the tower.
+- **A kerb on a climbing ramp climbs with it.** At 1.1 m proud the ramp rails
+  were a two-metre wall by halfway up. 0.25 m.
+- **This environment blows out anything much above half albedo.** Pale sand
+  lanes, white treadplate and pale concrete all rendered as white paper under
+  the shared sun. The whole palette is chosen from the dark end.
+
+The level scene (`build_proving.gd`, in the scratchpad) carries the arena's
+mission scaffolding — hostile muster, an eliminate objective over the field,
+and an extraction that only opens once it is clear — plus cover points
+generated off the baked navmesh by `CoverPointSpawner`.
+
+### Lit surfaces
+
+`textures/PSX_Textures/hl_office_complex_style_drop_ceiling_1_1.tres` is the
+only material in the project that emits, and it is hand-written. Two traps:
+
+- **FuncGodot did not find the emission map.** It looks for PBR maps in a
+  folder named after the texture, and this pack ships
+  `*_emission.png` beside the texture, so the material it generated was
+  albedo-only. A `.tres` next to the texture wins over the generated one, so
+  the material lives there.
+- **`emission_operator` must be 1 (multiply).** On the default, add, the
+  emission colour goes on the whole surface and the map is added on top — the
+  first attempt lit the entire ceiling like a lightbox. On multiply, only the
+  tubes light.
+
+Use it for a ceiling at 8 m a tile and for panels at `@0.25` (2 m a tile). It
+does not light anything else — it only makes the fitting look lit — so the
+depot still carries nine light nodes for the room itself.

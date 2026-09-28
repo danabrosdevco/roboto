@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_autocannon.tscn" id="2_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"autocannon"
+display_name = "20 mm Autocannon"
+short_name = "AC20"
+description = "Short bursts of heavy shell that barely care how far away the thing is. The anti-armour answer for a turret frame: it will open a rover, and it will not keep anyone's head down while it does."
+kind = 0
+cost = 260
+ai_scene = ExtResource("2_ai")
+ammo_type = &"20mm"
+weapon_damage = 60
+usable_by_player = false
+usable_by_ai = true
+fits_vehicles = true
+chassis_whitelist = Array[StringName]([&"walker", &"rover"])

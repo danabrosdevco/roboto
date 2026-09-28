@@ -284,12 +284,13 @@ func slot_tolerance(squad_tolerance: float) -> float:
 
 # Grinding, the squad's orders wait, as they do for a patient: pulled off the
 # wreck by every formation correction, it would never finish one.
-func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false) -> void:
+func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false,
+		think_delay: float = 0.0) -> void:
 	if _wreck != null:
 		_standing_order = pos
 		_standing_force = force
 		return   # carried out once it is off the wreck (_resume_orders)
-	super(pos, force, keep_target)
+	super(pos, force, keep_target, think_delay)
 
 
 # The Mechanic keeps behind its squad whenever there is shooting. This one only
@@ -576,10 +577,10 @@ func _tick_bite(delta: float) -> void:
 # says nothing about the new one. Left standing, that went on until the agent
 # next got a path query in, and nav queries are rationed across every robot:
 # a frame without one and the new order read as finished short, and it stopped.
-func move_to(pos: Vector3):
+func move_to(pos: Vector3, think_delay: float = 0.0):
 	_path_fresh = false
 	_nav_finished = false
-	super(pos)
+	super(pos, think_delay)
 
 
 # The agent counts the end of a path reached in 3D from the middle of the hull,

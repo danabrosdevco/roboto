@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_heavy_mg.tscn" id="2_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"heavy_mg"
+display_name = "Heavy Machine Gun"
+short_name = "HMG"
+description = "A hundred and twenty rounds a belt at a cyclic rate, and six seconds to change it. It does not kill things quickly; it stops them doing anything at all while it fires."
+kind = 0
+cost = 210
+ai_scene = ExtResource("2_ai")
+ammo_type = &"12.7"
+weapon_damage = 22
+usable_by_player = false
+usable_by_ai = true
+fits_vehicles = true
+chassis_whitelist = Array[StringName]([&"walker", &"rover"])

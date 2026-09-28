@@ -25,6 +25,11 @@ const FRAMES := {
 	&"nest": "res://Campaign/chassis/chassis_nest.tres",
 	&"reclaimer": "res://Campaign/chassis/chassis_reclaimer.tres",
 	&"mechanic": "res://Campaign/chassis/chassis_mechanic.tres",
+	&"marksman": "res://Campaign/chassis/chassis_marksman.tres",
+	&"rover_gl": "res://Campaign/chassis/chassis_rover_gl.tres",
+	&"mortar_track": "res://Campaign/chassis/chassis_mortar_track.tres",
+	&"spotter": "res://Campaign/chassis/chassis_spotter.tres",
+	&"walker": "res://Campaign/chassis/chassis_walker.tres",
 }
 
 ## Scene file (no extension) -> frame id, for robots with no frame of record.
@@ -41,6 +46,9 @@ const SCENES := {
 	"enemy_nest": &"nest",
 	"vehicle_reclaimer": &"reclaimer",
 	"mechanic_chassis": &"mechanic",
+	"soldier_marksman": &"marksman",
+	"spotter_drone": &"spotter",
+	"walker": &"walker",
 }
 
 

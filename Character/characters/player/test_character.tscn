@@ -24,7 +24,7 @@
 radius = 0.25
 height = 1.7
 
-[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("cam", "scanner", "commander", "obstruction_raycast", "interact_raycast", "health_sfx", "shards_sfx", "loadout", "ammo")]
+[node name="test_character" type="CharacterBody3D" node_paths=PackedStringArray("cam", "scanner", "commander", "obstruction_raycast", "interact_raycast", "health_sfx", "loadout", "ammo")]
 script = ExtResource("1_xw2ar")
 cam = NodePath("Camera3D")
 scanner = NodePath("Scanner")
@@ -33,7 +33,6 @@ commander = NodePath("SquadCommander")
 obstruction_raycast = NodePath("Camera3D/ObstructionRaycast")
 interact_raycast = NodePath("Camera3D/InteractRaycast")
 health_sfx = NodePath("HealthSFX")
-shards_sfx = NodePath("ShardSFX")
 loadout = NodePath("EquipmentLoadout")
 ammo = NodePath("AmmoPool")
 

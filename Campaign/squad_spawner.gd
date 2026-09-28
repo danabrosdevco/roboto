@@ -282,15 +282,24 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 	if cat == null:
 		return
 
-	# Weapon: only the first slot is used today, but the loop means a future
-	# two-weapon frame needs no change here.
-	for id_value in record.weapon_ids:
+	# TWO MOUNTS, IN SLOT ORDER. Slot 0 is the main gun and drives the whole
+	# combat state machine; slot 1 is the coax, which rides its bearing and
+	# fires on its own (Enemy._tick_coax). A frame with weapon_slots = 1 never
+	# has a slot 1, and a frame with no coax_mount says so and drops it, so
+	# fitting a second gun to anything but the Walker cannot silently half-work.
+	for i in record.weapon_ids.size():
+		if i > 1:
+			break   # no frame has a third mount; the record should not either
+		var id_value: StringName = record.weapon_ids[i]
 		if id_value == &"":
 			continue
 		var item := cat.item(id_value)
-		if item != null and item.fits_ai():
+		if item == null or not item.fits_ai():
+			continue
+		if i == 0:
 			soldier.equip_weapon_scene(item.ai_scene)
-		break
+		else:
+			soldier.equip_coax_scene(item.ai_scene)
 
 	# Equipment: the AI carries these as AIEquipmentSlot resources rather than
 	# nodes. Built fresh each spawn so two soldiers with the same item don't

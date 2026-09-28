@@ -95,6 +95,9 @@ func _initialize() -> void:
 			skipped += 1
 			continue
 		_brushes = []
+		# A piece that called no_collision() must not hand the flag to the next.
+		_ghost_from = -1
+		_entities = []
 		call(BRIDGES[name])
 		var f := FileAccess.open(path, FileAccess.WRITE)
 		if f == null:

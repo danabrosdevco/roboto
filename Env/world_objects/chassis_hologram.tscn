@@ -1,0 +1,103 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://Env/world_objects/chassis_hologram.gd" id="1_holo"]
+[ext_resource type="PackedScene" uid="uid://bk13ou262jq2t" path="res://Env/world_objects/components/template_interactible.tscn" id="2_inter"]
+[ext_resource type="AudioStream" uid="uid://cvyks5ixawlx2" path="res://sounds/sfx/psx ui sfx/ConfirmH.wav" id="3_confirm"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_pad"]
+top_radius = 1.7
+bottom_radius = 1.8
+height = 0.06
+radial_segments = 24
+rings = 0
+
+[sub_resource type="StandardMaterial3D" id="Mat_pad"]
+albedo_color = Color(0.16, 0.18, 0.2, 1)
+metallic = 0.5
+roughness = 0.6
+
+[sub_resource type="TorusMesh" id="TorusMesh_ring"]
+inner_radius = 1.6
+outer_radius = 1.76
+rings = 24
+ring_segments = 6
+
+[sub_resource type="StandardMaterial3D" id="Mat_ring"]
+albedo_color = Color(0.35, 0.82, 1, 1)
+emission_enabled = true
+emission = Color(0.35, 0.82, 1, 1)
+emission_energy_multiplier = 2.5
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_use"]
+size = Vector3(4, 3, 4)
+
+[node name="ChassisHologram" type="Node3D" node_paths=PackedStringArray("model_root", "name_label", "facts_label", "glow", "ring", "interactible", "use_sound")]
+script = ExtResource("1_holo")
+model_root = NodePath("Model")
+name_label = NodePath("Name")
+facts_label = NodePath("Facts")
+glow = NodePath("Glow")
+ring = NodePath("Ring")
+interactible = NodePath("Interactible")
+use_sound = NodePath("UseSound")
+
+[node name="Pad" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
+mesh = SubResource("CylinderMesh_pad")
+surface_material_override/0 = SubResource("Mat_pad")
+
+[node name="Ring" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.07, 0)
+cast_shadow = 0
+mesh = SubResource("TorusMesh_ring")
+surface_material_override/0 = SubResource("Mat_ring")
+
+[node name="Model" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+
+[node name="Glow" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+light_color = Color(0.35, 0.82, 1, 1)
+light_energy = 1.4
+shadow_enabled = false
+omni_range = 7.0
+
+[node name="Name" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+pixel_size = 0.005
+billboard = 1
+shaded = false
+no_depth_test = true
+fixed_size = false
+modulate = Color(0.35, 0.82, 1, 1)
+outline_modulate = Color(0, 0, 0, 1)
+text = "CHASSIS"
+font_size = 96
+outline_size = 11
+
+[node name="Facts" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.15, 0)
+pixel_size = 0.005
+billboard = 1
+shaded = false
+no_depth_test = true
+modulate = Color(0.35, 0.82, 1, 1)
+outline_modulate = Color(0, 0, 0, 1)
+text = "50 RES | 30 HP"
+font_size = 56
+outline_size = 8
+
+[node name="UseSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("3_confirm")
+unit_size = 8.0
+
+[node name="Interactible" parent="." instance=ExtResource("2_inter")]
+collision_layer = 3
+type = 4
+destroy_on_use = false
+
+[node name="CollisionShape3D" parent="Interactible" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("BoxShape3D_use")
+
+[editable path="Interactible"]

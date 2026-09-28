@@ -1,14 +1,17 @@
-[gd_scene load_steps=34 format=3 uid="uid://csdiwa6ujc6q7"]
+[gd_scene load_steps=38 format=3 uid="uid://csdiwa6ujc6q7"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/rover.gd" id="1_ylmtq"]
-[ext_resource type="PackedScene" path="res://Character/components/bark.tscn" id="3_yfi7w"]
-[ext_resource type="AudioStream" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="4_jgdiy"]
-[ext_resource type="AudioStream" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t5o1c"]
-[ext_resource type="Material" path="res://Character/characters/ai/robot_metal.tres" id="6_car7f"]
-[ext_resource type="Texture2D" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="7_i8jmh"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="3_yfi7w"]
+[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="4_jgdiy"]
+[ext_resource type="Shader" path="res://Character/faction_metal.gdshader" id="5_c8500"]
+[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t5o1c"]
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="6_car7f"]
+[ext_resource type="Texture2D" uid="uid://bvk26224sihon" path="res://2d_assets/metal textures poly.com/metal_plate_02_diff_4k.jpg" id="6_rjqk4"]
+[ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="7_i8jmh"]
+[ext_resource type="Texture2D" uid="uid://o8ik6rntdl2v" path="res://2d_assets/metal textures poly.com/metal_plate_02_disp_4k.png" id="7_w3nx3"]
 [ext_resource type="PackedScene" path="res://Character/weapon/models/machine_gun_model.tscn" id="8_8f8md"]
-[ext_resource type="PackedScene" path="res://Character/components/spark_burst.tscn" id="9_k5bu8"]
-[ext_resource type="PackedScene" path="res://Character/components/oil_spray.tscn" id="10_xlict"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_k5bu8"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_xlict"]
 [ext_resource type="Script" path="res://faction_livery.gd" id="11_t675i"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1i158"]
@@ -17,6 +20,24 @@ height = 3.4
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_qqiko"]
 radius = 25.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1u3qv"]
+render_priority = 0
+shader = ExtResource("5_c8500")
+shader_parameter/use_normal_map = false
+shader_parameter/normal_scale = 1.0
+shader_parameter/derive_mask_from_albedo = true
+shader_parameter/paint_band_center = 0.45
+shader_parameter/paint_band_width = 0.425
+shader_parameter/base_tint = Color(1, 1, 1, 1)
+shader_parameter/metallic = 0.4
+shader_parameter/roughness = 0.85
+shader_parameter/faction_color = Color(0.7, 0.35, 0.02, 1)
+shader_parameter/paint_blend = 1.0
+shader_parameter/marker_energy = 6.0
+shader_parameter/shutdown = 0.0
+shader_parameter/albedo_tex = ExtResource("6_rjqk4")
+shader_parameter/normal_tex = ExtResource("7_w3nx3")
 
 [sub_resource type="BoxMesh" id="BoxMesh_ti3ip"]
 size = Vector3(1.5, 0.62, 3.2)
@@ -169,36 +190,43 @@ shape = SubResource("SphereShape3D_qqiko")
 
 [node name="Hull" type="CSGMesh3D" parent="Rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.22, 0)
+material_override = SubResource("ShaderMaterial_1u3qv")
 mesh = SubResource("BoxMesh_ti3ip")
 material = ExtResource("6_car7f")
 
 [node name="Glacis" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(1, 0, 0, 0, 0.92388, 0.382683, 0, -0.382683, 0.92388, 0, 0.627, -1.441)
+material_override = SubResource("ShaderMaterial_1u3qv")
 operation = 2
 size = Vector3(2.4, 1, 2.4)
 
 [node name="Tail" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(1, 0, 0, 0, 0.79653, -0.604599, 0, 0.604599, 0.79653, 0, 0.613, 1.778)
+material_override = SubResource("ShaderMaterial_1u3qv")
 operation = 2
 size = Vector3(2.4, 1, 1.4)
 
 [node name="BellyR" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(0.845262, -0.534352, 0, 0.534352, 0.845262, 0, 0, 0, 1, 0.868, -0.638, 0)
+material_override = SubResource("ShaderMaterial_1u3qv")
 operation = 2
 size = Vector3(1, 1, 3.6)
 
 [node name="BellyL" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(0.845262, 0.534352, 0, -0.534352, 0.845262, 0, 0, 0, 1, -0.868, -0.638, 0)
+material_override = SubResource("ShaderMaterial_1u3qv")
 operation = 2
 size = Vector3(1, 1, 3.6)
 
 [node name="FenderL" type="CSGMesh3D" parent="Rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, -0.03, 0)
+material_override = SubResource("ShaderMaterial_1u3qv")
 mesh = SubResource("BoxMesh_tgcgs")
 material = ExtResource("6_car7f")
 
 [node name="FenderR" type="CSGMesh3D" parent="Rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, -0.03, 0)
+material_override = SubResource("ShaderMaterial_1u3qv")
 mesh = SubResource("BoxMesh_tgcgs")
 material = ExtResource("6_car7f")
 
@@ -244,11 +272,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.19, 0.15)
 
 [node name="TurretBody" type="CSGMesh3D" parent="Rig/Turret"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, 0.05)
+material_override = SubResource("ShaderMaterial_1u3qv")
 mesh = SubResource("BoxMesh_fsqak")
 material = ExtResource("6_car7f")
 
 [node name="Face" type="CSGBox3D" parent="Rig/Turret/TurretBody"]
 transform = Transform3D(1, 0, 0, 0, 0.695913, 0.718126, 0, -0.718126, 0.695913, 0, 0.373, -0.809)
+material_override = SubResource("ShaderMaterial_1u3qv")
 operation = 2
 size = Vector3(1.2, 1, 1.2)
 

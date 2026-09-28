@@ -150,9 +150,9 @@ func _apply_motion() -> void:
 
 # A squad order sets where it loiters, not a navmesh path — it flies over the
 # terrain rather than around it.
-func move_to(pos: Vector3) -> void:
+func move_to(pos: Vector3, _think_delay: float = 0.0) -> void:
 	movement_target = pos
-	_loiter_centre = pos
+	_loiter_centre = pos   # it flies: there is no path to queue for
 
 
 # The run decides every release. The inherited weapon loop would ALSO fire via

@@ -25,7 +25,7 @@ signal closed
 
 const _Toast := preload("res://Character/hud/tutorial_toast.gd")
 const LABEL_SCRIPT := "res://Env/world_objects/tutorial_label.gd"
-const FALLBACK_BASE := "res://maps/homebase_level.tscn"
+const FALLBACK_BASE := "res://maps/depot_level.tscn"
 
 const COL_DIM    := HUDPalette.DIM
 const COL_BRIGHT := HUDPalette.BRIGHT

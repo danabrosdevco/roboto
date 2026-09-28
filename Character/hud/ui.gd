@@ -1,12 +1,10 @@
 extends Control
 @export var health_label: Label
 @export var ammo_label: Label
-@export var shards_label: Label
-@export var second_label: Label
 @export var progress_bars: Array[ProgressBar]
 @export var bar_scene: PackedScene
 @export var health_container: HBoxContainer
-@export var scanner: TextureProgressBar
+@export var scanner: ProgressBar
 
 # Optional. Assign a ProgressBar here and it gets the blue signal treatment and
 # tracks player signal integrity. Leave null and nothing breaks.
@@ -35,6 +33,16 @@ func _apply_palette() -> void:
 		HUDPalette.style_bar(bar, HUDPalette.BRIGHT)
 	if signal_bar != null:
 		HUDPalette.style_bar(signal_bar, HUDPalette.SIGNAL)
+	# The strip under the health blocks is the scanner's charge, and it wears
+	# HUDPalette.SIGNAL — the same blue the squad roster uses for a degraded
+	# link, so blue means "the signal side of things" wherever you read it.
+	# It was a flat grey slab, which read as a disabled control.
+	#
+	# It is NOT the player's own signal integrity: the player has no live one
+	# (nothing ever calls update_signal). If the player is ever given one the
+	# way robots have it, assign `signal_bar` and it gets its own strip.
+	if scanner != null:
+		HUDPalette.style_bar(scanner, HUDPalette.SIGNAL)
 
 
 func _color_health_bars(health: int, max_health: int) -> void:
@@ -68,11 +76,9 @@ func update_scanner(time: float):
 	pass
 
 
-func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int, shards: int, bits: int) -> void:
-	# --- Ammo & Shards ---
+func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int) -> void:
+	# --- Ammo ---
 	ammo_label.text = "%d / %d" % [magazine_capacity, magazine_size]
-	shards_label.text = ": " + str(shards)
-	second_label.text = ": " + str(bits)
 
 	# --- Health Segments ---
 	var required_segments := int(ceil(max_health / float(health_per_segment)))

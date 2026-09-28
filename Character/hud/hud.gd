@@ -5,7 +5,6 @@ class_name HUD
 @export var enemy_marker_scene: PackedScene
 @export var health_label: Label
 @export var ammo_label: Label
-@export var shards_label: Label
 
 @export var interact_box: HBoxContainer
 @export var interact_label: Label
@@ -16,9 +15,7 @@ class_name HUD
 
 var interact_textures: Dictionary = {
 	Enums.InteractTypes.HEALTH : "PASS",
-	Enums.InteractTypes.SHARDS : preload("res://2d_assets/TB_Textures/flash-drive.png"),
 	Enums.InteractTypes.BONFIRE: preload ("res://addons/plenticons/icons/64x-hidpi/symbols/refresh-green.png"),
-	Enums.InteractTypes.BITS: preload("res://2d_assets/icon_neural-bit.png")
 }
 
 # ── OPTIONS ───────────────────────────────────
@@ -116,10 +113,6 @@ func activate_interactible(interactible: Interactible):
 			interact_label.text = _objective_prompt(objective)
 		Enums.InteractTypes.HEALTH:
 			interact_label.text = "F | Repair  +%d" % value
-		Enums.InteractTypes.SHARDS:
-			interact_label.text = "F | Salvage  +%d" % value
-		Enums.InteractTypes.BITS:
-			interact_label.text = "F | Bits  +%d" % value
 		_:
 			interact_label.text = "F | %d" % value  # default label for others
 
@@ -191,8 +184,7 @@ func deactivate_interaction():
 func update_scanner(time:float):
 	ui.update_scanner(time)
 
-func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int, shards:int, bits: int) -> void:
-	ui.update_status(health, max_health, magazine_capacity, magazine_size, shards, bits)
+func update_status(health: int, max_health: int, magazine_capacity: int, magazine_size: int) -> void:
+	ui.update_status(health, max_health, magazine_capacity, magazine_size)
 	#health_label.text = "Health: %d" % health
 	#ammo_label.text = "Ammo: %d / %d" % [magazine_capacity, magazine_size]
-	#shards_label.text = ": " + str(sharsds)

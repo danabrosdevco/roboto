@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c55qjeu5o7egd"
+path="res://.godot/imported/fort_keep.map-7b76715e87b5e363463398d6cee16842.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortress/fort_keep.map"
+dest_files=["res://.godot/imported/fort_keep.map-7b76715e87b5e363463398d6cee16842.tres"]
+
+[params]
+

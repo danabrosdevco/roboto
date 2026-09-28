@@ -86,6 +86,9 @@ var departure_exits: Array[LevelExit] = []
 
 # True while the player is on a mission map rather than at base.
 var in_mission: bool = false
+## Seconds of play on the current mission, paused time excluded. Read off the
+## debrief as "how long that took".
+var seconds_this_mission: float = 0.0
 # The campaign as it stood when this deployment left base, for putting back if
 # the player dies out there. Empty outside a mission, and empty for a level
 # launched directly — see the void in extract().
@@ -95,6 +98,14 @@ var _pre_run: Dictionary = {}
 # here rather than paid as it comes in, so the debrief can show it as its own
 # line and a mission abandoned halfway still pays it the same way.
 var salvage_this_mission: int = 0
+
+
+# Only runs on a mission (begin_deploy switches it on, extract switches it off)
+# and never while the tree is paused, which is what makes this "time spent on
+# the mission" rather than "time since you left base".
+func _physics_process(delta: float) -> void:
+	if in_mission:
+		seconds_this_mission += delta
 
 
 ## A Reclaimer finished grinding a wreck worth `amount`. Counted only on a
@@ -111,6 +122,8 @@ func _ready() -> void:
 	# parent chain — both of which break the moment you rewire it, and both of
 	# which fail silently.
 	add_to_group("campaign")
+	# Only ticks while a mission is running; begin_deploy turns it on.
+	set_physics_process(false)
 
 	# Loud on purpose. A dev flag that removes the entire mission progression is
 	# exactly the kind of thing that ships enabled because nobody could see it
@@ -579,6 +592,14 @@ func begin_deploy() -> void:
 
 	in_mission = true
 	salvage_this_mission = 0
+	seconds_this_mission = 0.0
+	# TIME SPENT ON THE MISSION, not time since you pressed deploy. Accumulated
+	# from the physics tick rather than read off the clock, so the briefing, the
+	# squad manager, the map and the pause menu — every one of which holds the
+	# tree paused — do not count against you. A wall-clock reading would say a
+	# mission took twenty minutes because you spent fifteen of them in the
+	# armoury.
+	set_physics_process(true)
 	# What to put back if you die out there. See the void in extract().
 	_pre_run = state.to_dict()
 	if current_mission != null:
@@ -767,7 +788,9 @@ func _write_back_player() -> void:
 
 # Success path. Collect the squad, pay out, save, and head home.
 func extract(success: bool = true) -> Dictionary:
-	var result := {"survivors": 0, "lost": 0, "reward": 0, "success": success}
+	var result := {"survivors": 0, "lost": 0, "reward": 0, "success": success, "seconds": seconds_this_mission}
+	# The clock stops the moment the exit fires, not when the debrief closes.
+	set_physics_process(false)
 	# Before anything is paid: the debrief counts up from these.
 	result["resources_before"] = state.available()
 	result["compute_before"] = state.compute_free()

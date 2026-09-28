@@ -136,8 +136,6 @@ stream = ExtResource("8_21ypy")
 
 [node name="UI" parent="." instance=ExtResource("7_64yrs")]
 layout_mode = 1
-offset_top = 505.0
-offset_bottom = 505.0
 
 [node name="FPS" type="Label" parent="."]
 layout_mode = 0

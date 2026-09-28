@@ -38,11 +38,14 @@ const _Analytics := preload("res://Managers/analytics.gd")
 @export var magazine_size: int = 30
 @export var reload_time: float = 2.15
 # TRUE  — a partial magazine is thrown away when you reload. Every reload is a
-#         decision and panic-reloading after each contact costs you.
-# FALSE — leftover rounds go back into the reserve. Forgiving, arcade.
+#         decision and panic-reloading after each contact costs you. The HUD
+#         then counts MAGAZINES, because magazines are what you are spending.
+# FALSE — leftover rounds go back into the pool, so a reload never costs you
+#         anything, and the HUD counts ROUNDS, because rounds are what you
+#         are spending.
 # This is the single most felt consequence of finite ammo. It's per-weapon so
-# you can try both; play it before committing.
-@export var discrete_magazines: bool = true
+# a particular gun can still be run the other way; the shotgun already is.
+@export var discrete_magazines: bool = false
 # Fire the first shot straight out of a reload without a cooldown gap.
 @export var chamber_round: bool = true
 

@@ -204,15 +204,21 @@ func _init() -> void:
 		and commander.get_selected_squad() == infantry and commander.selection_label() == "INFANTRY")
 	hud._refresh_roster()
 	var shown := hud._shown_squads()
-	_check("...the roster lists both teams, one header each, the other dimmed", shown.size() == 2
-		and shown[0] == infantry and shown[1] == armor and hud._roster.get_child_count() == 5
-		and hud._roster.get_child(0).modulate.a > 0.99 and hud._roster.get_child(4).modulate.a < 0.5,
-		"%d shown, %d roster rows" % [shown.size(), hud._roster.get_child_count()])
+	# The team being ordered is drawn in full; the other closes to its header,
+	# which is the line that still has to carry its state. Three rows for
+	# INFANTRY plus one header for ARMOR — ARMOR's single rover is not drawn.
+	_check("...the team you are ordering is drawn in full, the other closes to one line",
+		shown.size() == 2 and shown[0] == infantry and shown[1] == armor
+		and hud._roster.get_child_count() == 4
+		and (hud._roster.get_child(3) as Label).text.begins_with("ARMOR")
+		and (hud._roster.get_child(3) as Label).get_theme_color("font_color").a < 0.6,
+		"%d shown, %d roster children" % [shown.size(), hud._roster.get_child_count()])
 	hud._refresh_nearby()
 	var strip: Array = hud._nearby.get_children().map(func(l): return (l as Label).text)
-	_check("...and IN RANGE names them by team, the ordered one starred",
-		strip.any(func(t): return t.begins_with("*INFANTRY")) and strip.any(func(t): return t.begins_with(" ARMOR")),
-		str(strip))
+	# IN RANGE is for whoever ELSE is on the field. Both of these are already
+	# named on the roster directly below it, so it has nothing to add.
+	_check("...and IN RANGE stays empty, because both teams are already on the roster",
+		strip.is_empty(), str(strip))
 	_check("nothing about it sits in the middle of the screen",
 		hud.get_children().all(func(c): return not (c is Label and (c as Label).anchor_top == 0.5)))
 
@@ -225,11 +231,16 @@ func _init() -> void:
 		and hud._toast.text == "ORDERS > ARMOR" and toast.end.y <= row.position.y
 		and row.position.y - toast.end.y < 16.0 and absf(toast.get_center().x - row.get_center().x) < 2.0,
 		"toast %s, bar row %s, '%s'" % [toast, row, hud._toast.text])
-	strip = hud._nearby.get_children().map(func(l): return (l as Label).text)
-	_check("...the roster and IN RANGE follow at once", hud._roster.get_child(0).modulate.a < 0.5
-		and hud._roster.get_child(4).modulate.a > 0.99
-		and strip.any(func(t): return t.begins_with("*ARMOR")) and strip.any(func(t): return t.begins_with(" INFANTRY")),
-		str(strip))
+	# Switching swaps which one is open: ARMOR's header and its rover go in the
+	# roster, and INFANTRY closes to the panel's own header, dimmed.
+	hud._refresh_roster()
+	_check("...and the roster follows at once: ARMOR opens, INFANTRY closes",
+		hud._roster.get_child_count() == 2
+		and (hud._roster.get_child(0) as Label).text.begins_with("ARMOR")
+		and (hud._roster.get_child(0) as Label).get_theme_color("font_color").a > 0.99
+		and hud._squad_header.text.begins_with("INFANTRY")
+		and hud._squad_header.get_theme_color("font_color").a < 0.6,
+		"%d roster children, panel header '%s'" % [hud._roster.get_child_count(), hud._squad_header.text])
 	commander.cycle_team()
 	_check("G again: straight back to INFANTRY, nothing in between", commander.get_selected_squad() == infantry)
 	_check("...each switch announced", heard == ["ARMOR", "INFANTRY"], str(heard))

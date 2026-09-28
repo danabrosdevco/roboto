@@ -157,3 +157,50 @@ func get_hostiles_in_radius(requesting_ai: AI, radius: float) -> Array:
 
 func on_sound_emitted(_location: Vector3, _meter_distance: float) -> void:
 	pass
+
+
+# ─────────────────────────────────────────────
+# ACTIVATION SOURCES — what makes a robot worth running.
+# ─────────────────────────────────────────────
+# Distance culling used to measure to the PLAYER, which quietly said the player
+# is the only thing in the world worth reacting to. Order a squad 300 m up the
+# road and it walked into a garrison that was frozen solid, because you were
+# still at the insertion point: your robots fought statues, and the fight only
+# started when you caught up. What should wake a robot is anything it would
+# SHOOT — the player, and every ally the player sent — so this is the same
+# question hostiles_for() already answers, asked positionally.
+#
+# The positions are snapshotted once per physics frame per faction rather than
+# read per robot: with 142 hostiles asking about 20 player-side bodies that is
+# twenty transform reads a frame instead of nearly three thousand, and the
+# comparison itself is float work on a packed array.
+var _act_positions: Dictionary = {}     # faction -> PackedVector3Array
+var _act_frame: int = -1
+
+
+## Where everything hostile to `faction` is, this physics frame.
+func activation_sources(faction) -> PackedVector3Array:
+	var frame := Engine.get_physics_frames()
+	if _act_frame != frame:
+		_act_frame = frame
+		_act_positions.clear()
+	if _act_positions.has(faction):
+		return _act_positions[faction]
+	var out := PackedVector3Array()
+	for body in hostiles_for(faction):
+		if body != null and is_instance_valid(body):
+			out.append(body.global_position)
+	_act_positions[faction] = out
+	return out
+
+
+## Distance squared from `at` to the nearest thing hostile to `faction`, or INF
+## when there is nothing left to fight — a robot with no enemies in the world
+## has nothing to wake up for.
+func nearest_hostile_distance_sq(faction, at: Vector3) -> float:
+	var best := INF
+	for p in activation_sources(faction):
+		var d := at.distance_squared_to(p)
+		if d < best:
+			best = d
+	return best

@@ -1,0 +1,38 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://u33ewshggy1q"
+path.s3tc="res://.godot/imported/drone_variant_01_scout_2.png-1281259fb9c0580b597690386beff8be.s3tc.ctex"
+metadata={
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
+generator_parameters={
+"md5": "807b1edb34b44df5172d13933be540af"
+}
+
+[deps]
+
+source_file="res://3d_assets/chatgptg/flying quadcopter drones/drone_variant_01_scout/drone_variant_01_scout_2.png"
+dest_files=["res://.godot/imported/drone_variant_01_scout_2.png-1281259fb9c0580b597690386beff8be.s3tc.ctex"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=1
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=1
+roughness/src_normal="res://3d_assets/chatgptg/flying quadcopter drones/drone_variant_01_scout/drone_variant_01_scout_2.png"
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=0

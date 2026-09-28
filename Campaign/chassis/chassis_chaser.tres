@@ -13,6 +13,7 @@ cost = 55
 purchasable = true
 supply = 1
 starting_weapon_id = &""
+coax_weapon_id = &""
 base_health = 60
 base_speed = 1.0
 base_accuracy = 0.6

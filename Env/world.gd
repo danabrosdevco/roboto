@@ -1,5 +1,7 @@
 extends Node3D
 class_name World
+
+const NavmeshIslands := preload("res://Managers/AI/navmesh_islands.gd")
 var world_states: Enums.WorldStates
 @export var world_env: WorldEnvironment
 @export var spawn_area: Node3D
@@ -99,6 +101,7 @@ func deload_current_level(level):
 	return true
 
 func register_world_objects(_level:TrenchBroomLevel):
+	_sweep_navmesh_islands(_level)
 	ai_manager.reset_all_reg_enemies()
 	for child in get_tree().get_nodes_in_group("enemies"):
 		if child is AI:
@@ -107,6 +110,25 @@ func register_world_objects(_level:TrenchBroomLevel):
 			pass
 		if child is PickUp:
 			pass
+
+# ─────────────────────────────────────────────
+# GROUND NOBODY CAN REACH COMES OUT OF THE NAVMESH.
+#
+# Run once per level, here rather than in the bake, because the islands are
+# mostly made after the bake: GeneratedTerrain carves the river beds at load
+# (water_navmesh.gd) and strands every bank and mid-stream island it cuts off.
+# A path to one of those costs a whole-map search — a second a time on Three
+# Rivers — so they are swept the moment the level is up and before anything
+# has asked for a path. See Managers/AI/navmesh_islands.gd.
+# ─────────────────────────────────────────────
+func _sweep_navmesh_islands(level: TrenchBroomLevel) -> void:
+	if level == null or level.nav_region == null or level.spawn_point == null:
+		return   # a level without a navmesh or a start has nothing to sweep from
+	var went: Dictionary = NavmeshIslands.strip(level.nav_region, level.spawn_point.global_position)
+	if int(went.get("dropped", 0)) > 0:
+		print("[Navmesh] %s: dropped %d polygons (%.0f m2) the squad could not reach, %d kept" % [
+			level.name, int(went["dropped"]), float(went["area"]), int(went["kept"])])
+
 
 func _on_next_level_requested(next_level_scene: PackedScene) -> void:
 	load_next_level(next_level_scene)
@@ -123,7 +145,7 @@ func _on_next_level_requested(next_level_scene: PackedScene) -> void:
 signal player_killed
 
 
-func _on_player_died(_value: int, _pos) -> void:
+func _on_player_died(_pos) -> void:
 	player_killed.emit()
 
 

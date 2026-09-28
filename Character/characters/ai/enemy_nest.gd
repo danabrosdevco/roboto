@@ -78,11 +78,12 @@ func move_along_nav(_delta) -> void:
 	velocity.z = 0.0
 
 
-func move_to(_pos: Vector3) -> void:
+func move_to(_pos: Vector3, _think_delay: float = 0.0) -> void:
 	pass   # a nest is where it was built
 
 
-func order_move_to(_pos: Vector3, _force: bool = false, _keep_target: bool = false) -> void:
+func order_move_to(_pos: Vector3, _force: bool = false, _keep_target: bool = false,
+		_think_delay: float = 0.0) -> void:
 	pass   # the squad can want it elsewhere all it likes
 
 

@@ -23,6 +23,27 @@ const _Ground := preload("res://Campaign/ground_snap.gd")
 # weapon is fitted from a record.
 @export var weapon_mount: Node3D
 
+# ── THE SECOND MOUNT ──────────────────────────
+# A COAXIAL gun, not a second independent weapon.
+#
+# ChassisDefinition has carried `weapon_slots` for a long time, but everything
+# downstream assumed one gun: `weapon` is a single reference, equip_weapon_scene
+# takes one scene, and handle_weapon_logic drives that one. Two guns is runtime
+# work, and the cheap half of it is worth having on its own.
+#
+# So the coax is deliberately NOT a second decision-maker. The main gun picks
+# the target, owns _prefire_threshold, bursts, reloads and the whole state
+# machine, exactly as it does today. The coax only asks two questions, every
+# tick: is the main gun on target, and is the range inside MY band. If both,
+# it fires on its own cooldown.
+#
+# That means it keeps firing through the main gun's reload, which is what a
+# coax is for, and it costs the AI no choices at all. Independent target
+# selection can come later if this earns it.
+@export var coax: AIWeapon
+@export var coax_mount: Node3D
+var _coax_time: float = 0.0
+
 
 # Swaps whatever is on the mount for a new weapon. Safe to call before _ready.
 func equip_weapon_scene(scene: PackedScene) -> void:
@@ -40,6 +61,26 @@ func equip_weapon_scene(scene: PackedScene) -> void:
 	weapon = instance as AIWeapon
 	if weapon == null:
 		push_warning("%s is not an AIWeapon scene." % scene.resource_path)
+
+
+## The same, for the coaxial mount. A frame with no `coax_mount` has one gun
+## and says so rather than silently dropping the second one the player fitted.
+func equip_coax_scene(scene: PackedScene) -> void:
+	if coax_mount == null:
+		if scene != null:
+			push_warning("%s was given a second weapon but has no coax_mount, so it was dropped. Only a two-mount frame (the Walker) can carry one." % name)
+		return
+	for child in coax_mount.get_children():
+		child.queue_free()
+	if scene == null:
+		coax = null
+		return
+	var instance := scene.instantiate()
+	coax_mount.add_child(instance)
+	instance.transform = Transform3D.IDENTITY
+	coax = instance as AIWeapon
+	if coax == null:
+		push_warning("%s is not an AIWeapon scene, so it cannot be a coax." % scene.resource_path)
 @export var bark: Bark
 @export var detection: Area3D
 @export var particle_effects_die: Array[ParticleEffect]
@@ -914,6 +955,25 @@ func _find_collision_shape() -> CollisionShape3D:
 	return null
 
 
+# EVERY shape, not just the first. A frame is allowed more than one — the Rover
+# wears a low box for its hull and wheels and a second, much smaller one around
+# its turret, because one capsule big enough to cover the turret also filled a
+# metre of empty air over the whole length of the deck and caught every shot
+# that should have sailed across it. Turning off only the first left a dead
+# rover's turret standing there solid, stopping rounds and shouldering the
+# living out of the way.
+func _set_colliders_disabled(off: bool) -> void:
+	if _collision_shape == null:
+		_collision_shape = _find_collision_shape()
+	var found := false
+	for child in get_children():
+		if child is CollisionShape3D:
+			(child as CollisionShape3D).set_deferred("disabled", off)
+			found = true
+	if not found and _collision_shape != null:
+		_collision_shape.set_deferred("disabled", off)
+
+
 # ─────────────────────────────────────────────
 # PHYSICS PROCESS
 # ─────────────────────────────────────────────
@@ -998,7 +1058,16 @@ func _physics_process(delta: float) -> void:
 	# robots in the Foundry tick from the far side of the valley, for the
 	# benefit of the five squads that needed it. EnemyForceSpawner.wake() sets
 	# this on the squads it sends in, and nothing else does.
-	var dist_sq = global_position.distance_squared_to(player.global_position)
+	# HOW FAR FROM THE NEAREST THING IT WOULD FIGHT, not how far from the player.
+	# Measuring to the player said the player is the only thing worth reacting
+	# to: send a squad 300 m up the road and it walked into a garrison frozen
+	# solid, because you were still back at the insertion point. Your own robots
+	# fought statues until you caught up. AIManager answers this from the same
+	# cached hostile list the targeting already uses; without a manager the
+	# player is the only source there is, which is the old behaviour.
+	var dist_sq: float = ai_manager.nearest_hostile_distance_sq(faction, global_position) \
+		if ai_manager != null and is_instance_valid(ai_manager) \
+		else global_position.distance_squared_to(player.global_position)
 	# A reinforcement keeps its exemption only until it ARRIVES, or until the
 	# walk it was given runs out. It is there so it can come in from 90 m
 	# without being frozen on the way, not so it ticks for the rest of the
@@ -1012,7 +1081,7 @@ func _physics_process(delta: float) -> void:
 	if never_culled and dist_sq <= activation_distance_sq:
 		never_culled = false
 	if dist_sq > activation_distance_sq and not _is_player_side() \
-			and not never_culled and _woken_t <= 0.0:
+			and not never_culled and _woken_t <= 0.0 and not squad_is_engaged():
 		enter_passive_mode()
 		_apply_motion()
 		return
@@ -1041,7 +1110,14 @@ func _apply_motion() -> void:
 	if ai_state == AIState.PASSIVE and is_on_floor() and velocity.length_squared() < 0.01:
 		return
 
+	var before := global_position
+	# Captured BEFORE the move: move_and_slide rewrites velocity, cancelling it
+	# against whatever it hit, so afterwards there is no record of where the
+	# robot was trying to go.
+	var intent := Vector3(velocity.x, 0.0, velocity.z)
 	move_and_slide()
+	_damp_shoving(before)
+	_step_over(before, intent)
 
 	# Leap landing is detected here now, after the move has resolved.
 	if movement_state == MovementState.LEAPING and is_on_floor() and velocity.y <= 0.0:
@@ -1053,6 +1129,104 @@ func _apply_motion() -> void:
 		# for as long as the target stayed in band.
 		_leap_cooldown_t = leap_cooldown
 		roll_combat_action()
+
+
+# ─────────────────────────────────────────────
+# TWO ROBOTS INSIDE ONE ANOTHER PUSH EACH OTHER OFF THE MAP.
+#
+# When a pair ends up interpenetrating, the solver separates them every tick
+# and each one shoves the other, so the PAIR accelerates. Measured on Mutaha:
+# get_last_motion() a full metre per frame — 52 m/s — with the body's own
+# velocity at zero, running until the boundary wall stopped them or they fell
+# out of the world and were counted as down. Survivors end up stranded off the
+# navmesh, where every path they ask for is a whole-map search costing 40-120 ms
+# a go (see Managers/AI/navmesh_islands.gd). It is also what a stuck robot
+# "freaking out" on a barrier looks like from the outside.
+#
+# So while a body is in contact with another body, it may not be displaced
+# HORIZONTALLY further than it could have walked. A tangle then unwinds at
+# walking pace instead of launching. Height is left alone, so falling, leaping
+# and being blown up all still behave.
+# ─────────────────────────────────────────────
+
+## How much of its own walking step a shoved robot may be moved in one frame.
+const SHOVE_STEP_LIMIT := 1.5
+
+func _damp_shoving(before: Vector3) -> void:
+	# A leap IS a big horizontal step, and a crashing gunship is meant to fly
+	# its wreck somewhere. Neither is a tangle.
+	if movement_state == MovementState.LEAPING or _crashing:
+		return
+	var touching := false
+	for i in get_slide_collision_count():
+		var other = get_slide_collision(i).get_collider()
+		if other is CharacterBody3D:
+			touching = true
+			break
+	if not touching:
+		return
+	var moved := global_position - before
+	var flat := Vector2(moved.x, moved.z)
+	var cap: float = maxf(move_speed, 1.0) * get_physics_process_delta_time() * SHOVE_STEP_LIMIT
+	if flat.length() <= cap:
+		return
+	var kept := flat.normalized() * cap
+	global_position = Vector3(before.x + kept.x, global_position.y, before.z + kept.y)
+
+
+# ─────────────────────────────────────────────
+# WALKING OVER A LIP.
+#
+# move_and_slide has no step-up. A slope up to floor_max_angle is walkable and
+# anything steeper is a WALL, so a kerb, a doorway sill, a rock, the lip where
+# two brushes meet — any vertical face at all, however low — stops a robot
+# dead. From the outside it looks like the AI is broken, and it is why every
+# level has had to have a ramp built onto everything.
+#
+# So when a move is blocked, try it again from `step_height` higher. If the way
+# is clear up there AND there is ground to come down onto just beyond, the
+# robot is lifted onto it. If it is still blocked up there it was a real wall,
+# and if nothing is underneath it was a ledge over a drop — both are left
+# alone. Three shape casts, and only on a frame where something got in the way.
+# ─────────────────────────────────────────────
+
+## The tallest lip a robot will walk up. Above this it is a wall and wants a
+## ramp, or a Leaper.
+@export var step_height: float = 0.45
+## How far past the lip it has to be able to stand before the step is taken —
+## stops a robot climbing onto something it would immediately fall off.
+@export var step_forward: float = 0.35
+
+
+func _step_over(before: Vector3, intent: Vector3) -> void:
+	if step_height <= 0.0 or not is_on_floor():
+		return
+	if movement_state == MovementState.LEAPING or _crashing:
+		return
+	var wanted := intent * get_physics_process_delta_time()
+	var want_len := wanted.length()
+	if want_len < 0.02:
+		return                      # not trying to go anywhere
+	var got := global_position - before
+	got.y = 0.0
+	if got.length() > want_len * 0.5:
+		return                      # it got most of the way; nothing in the way
+
+	var dir := wanted / want_len
+	var reach: float = maxf(want_len, step_forward)
+	var lift := Vector3.UP * step_height
+	var here := global_transform
+	if test_move(here, lift):
+		return                      # no headroom to lift over anything
+	var raised := here.translated(lift)
+	if test_move(raised, dir * reach):
+		return                      # still blocked up there: a wall, not a lip
+	var landing := raised.translated(dir * reach)
+	var drop := Vector3.DOWN * (step_height + 0.05)
+	var touchdown := KinematicCollision3D.new()
+	if not test_move(landing, drop, touchdown):
+		return                      # nothing to stand on: a ledge, not a step
+	global_position = landing.origin + touchdown.get_travel()
 
 
 # ─────────────────────────────────────────────
@@ -1108,10 +1282,32 @@ func exempt_from_culling(seconds: float = CULL_EXEMPT_SECONDS) -> void:
 	_exempt_left = maxf(_exempt_left, seconds)
 
 
+
+## Is this robot's squad in a fight? A squad that is fighting stays awake, ALL
+## of it, for as long as the fight lasts. Squad._on_combat_triggered already
+## wakes every member when one of them makes contact, but that is a countdown
+## (wake_on_damage_seconds) — so in a long fight the ones who had not personally
+## been shot at went back to sleep mid-battle, and a flanking half of a squad
+## froze while the other half was still trading fire. Being in a fight is a
+## state, not an event, so it is asked as one.
+##
+## Overridden by Soldier, which is what carries a squad; a robot with no squad
+## answers for itself.
+func squad_is_engaged() -> bool:
+	return false
+
 func enter_passive_mode():
 	if ai_state == AIState.PASSIVE:
 		return
-	if always_active or _is_player_side():
+	# THE CALLER HAS ALREADY DECIDED. This used to refuse when always_active was
+	# set, which every EnemySquadSpec in every mission sets — and the one call
+	# site is the distance cull in _physics_process, which stopped honouring
+	# that flag when it was found to keep seventy Foundry robots thinking from
+	# across the valley. So the robot was culled but never MARKED culled, and
+	# _apply_motion()'s cheap-out reads exactly this state: a hundred-odd
+	# hostiles standing still 300 m away each paid for a full move_and_slide,
+	# every frame, for the whole mission. Behaviour and state have to agree.
+	if _is_player_side():
 		return
 	change_ai_state(AIState.PASSIVE)
 	velocity.x = 0
@@ -1339,14 +1535,37 @@ func _check_stuck(delta: float) -> void:
 	velocity.z = 0
 	_handle_path_blocked()
 
-func move_to(pos: Vector3):
+func move_to(pos: Vector3, think_delay: float = 0.0):
 	# Pinned. Remember where we were told to go and replay it on release.
 	if is_held():
 		_pending_move = pos
 		_has_pending_move = true
 		return
+	# CULLED. The same bargain as being held, for the same reason: a squad goes
+	# on giving orders to robots the distance cull has switched off — DEFEND
+	# re-posts its line, ADVANCE re-slots it — and every one of those calls used
+	# to buy a nav query for a robot nobody can see. Remember where it was sent;
+	# exit_passive_mode() replays movement_target the moment the player is close
+	# enough for any of it to matter.
+	if ai_state == AIState.PASSIVE:
+		movement_target = pos
+		return
 	nav_agent.set_target_position(pos)
-	_nav_think_timer = 0.0  # new destination: refresh the cached direction now
+	# WHOSE TURN IT IS TO ASK.
+	#
+	# A new destination refreshes the cached direction now — except when the
+	# caller is ordering a whole squad at once. Every member setting this to
+	# zero queued a path resolution for the same frame: profiled at 323 ms
+	# across 21 `_tick_nav` calls in ONE frame on Coast Road, which is what an
+	# ADVANCE order felt like out there. `think_delay` deals the squad's
+	# requests out over the next few frames instead (Squad.order_stagger_seconds).
+	#
+	# It keeps whatever direction it already had while it waits — a fraction of
+	# a second of the old heading. Pointing it straight at the destination
+	# instead was worse than the stall it was meant to cover: on broken ground
+	# the blind bearing walked robots into walls, stuck recovery re-pathed them,
+	# and one order turned into two seconds of solid pathfinding.
+	_nav_think_timer = maxf(0.0, think_delay)
 	movement_target = pos
 	movement_state = MovementState.MOVING
 	movement_time = 0
@@ -1530,6 +1749,10 @@ func handle_weapon_logic(delta):
 		fire_time -= delta
 	if _suppress_pause > 0.0:
 		_suppress_pause -= delta
+	# Ticked before the main gun's early returns, so the coax keeps working
+	# while the main is reloading or out of its own range band. That is the
+	# whole point of carrying one.
+	_tick_coax(delta)
 	if weapon == null:
 		return
 	if ai_state != AIState.COMBAT:
@@ -1606,6 +1829,50 @@ func handle_weapon_logic(delta):
 							# Burst spent: breathe, then open up again.
 							_suppress_pause = SUPPRESSIVE_PAUSE
 				weapon_state = WeaponState.AIM
+
+# ─────────────────────────────────────────────
+# THE COAX
+# ─────────────────────────────────────────────
+# It makes no decisions. It rides the main gun's bearing and fires whenever that
+# bearing is good and the target is inside ITS OWN band — which may be shorter
+# or longer than the main gun's. Fit a short coax and it only answers what gets
+# close; fit the Ancient MG (99 m) and it fires at essentially everything the
+# main gun engages, which is a lot of output for one supply slot. That is a
+# balance question for the fit, not a rule for the code.
+#
+# Every gate here is a condition of the MAIN engagement (are we fighting, can
+# we see it, is the turret on it) except the range check and its own reload,
+# which are the coax's own business.
+func _tick_coax(delta: float) -> void:
+	if _coax_time > 0.0:
+		_coax_time -= delta
+	if coax == null:
+		return
+	if ai_state != AIState.COMBAT or combat_target == null:
+		return
+	if coax.is_reloading:
+		return
+	if coax.needs_reload():
+		coax.start_reload()
+		return
+	if not _has_los and not _can_fire_without_los():
+		return
+	# Its own band, not the main gun's. A coax is short-ranged on purpose: past
+	# its falloff it is throwing rounds away.
+	var dist := global_position.distance_to(weapon_target)
+	if dist > coax.max_effective_range or dist < coax.min_effective_range:
+		return
+	# The main gun's bearing IS the coax's bearing — they are on one mount. If
+	# the turret is still slewing, neither of them is on target.
+	if not _weapon_on_target():
+		return
+	if _coax_time > 0.0:
+		return
+	if _clear_line_of_fire():
+		return   # a squadmate is in the way; the main gun checks the same thing
+	coax.fire(get_inaccurate_target(weapon_target))
+	_coax_time = coax.fire_cooldown
+
 
 # Whether the gun is actually pointing at weapon_target. A robot turns its whole
 # body and fires down its facing, so for one of those it always is. A turret
@@ -2658,10 +2925,7 @@ func enter_downed() -> void:
 	# wreck, fell back to the player, and stopped with "full" — you cannot
 	# repair something you cannot hit. Damage is already ignored while downed,
 	# so a live collider costs nothing.
-	if _collision_shape == null:
-		_collision_shape = _find_collision_shape()
-	if _collision_shape != null:
-		_collision_shape.set_deferred("disabled", false)
+	_set_colliders_disabled(false)
 	_flatten_collider()
 	if stimulus_manager != null:
 		stimulus_manager.emit_stimulus(
@@ -2722,14 +2986,10 @@ func destroy():
 	for i in particle_effects_die:
 		i.activate()
 	nav_agent.set_target_position(global_position)
-	# Salvage off the other side only, for the same reason the kill tally is:
-	# shooting your own robot is not a payday.
-	if damaged_by_player and player != null and Enums.are_hostile(faction, player.faction):
-		player.add_bits(bits)
-	if _collision_shape == null:
-		_collision_shape = _find_collision_shape()
-	if _collision_shape != null:
-		_collision_shape.set_deferred("disabled", true)
+	# A kill used to pay the player a handful of "bits" here. Nothing ever
+	# spent them, so they are gone; `bits` is still what the WRECK is worth,
+	# which is what a Reclaimer grinds it down for. See reclaimer.gd.
+	_set_colliders_disabled(true)
 	damaged_by_player = false
 	hide_body()
 	if weapon != null:
@@ -2778,8 +3038,7 @@ func revive() -> void:
 	_unsettle()
 	_restore_collider()
 	_stop_falling_through()
-	if _collision_shape != null:
-		_collision_shape.set_deferred("disabled", false)
+	_set_colliders_disabled(false)
 	if weapon != null:
 		weapon.show()
 	set_physics_process(true)
@@ -2861,8 +3120,7 @@ func _tick_settle(delta: float) -> void:
 	_settled = true
 	# Down and out of the way. Collision off, so nothing paths around it and
 	# nothing trips over it — and the next tick turns the tick itself off.
-	if _collision_shape != null:
-		_collision_shape.set_deferred("disabled", true)
+	_set_colliders_disabled(true)
 	set_physics_process(false)
 
 
@@ -2962,15 +3220,31 @@ func _shape_box(shape: Shape3D) -> AABB:
 
 
 func _collapse_pieces() -> void:
+	# TIP THE WHOLE BODY OVER, don't spin each piece where it stands. Rotating a
+	# piece about its OWN origin leaves it exactly where it was and only changes
+	# which way it faces, so nothing travels with anything else: the marksman's
+	# hat kept the same 0.58 m it had above the head while standing, and ended
+	# up hovering at ground level over a head that had gone into the deck. The
+	# body capsule looked right only because it sits at the origin, where the
+	# two rotations are the same.
+	#
+	# The pitch is applied IN THE BODY'S OWN SPACE, not the piece's parent's, so
+	# a rig with things hung off it (the Walker's hull under Rig, its turret
+	# body under Turret) tips about the same point as everything else instead of
+	# each sub-pivot spinning separately.
+	var pitch := Basis(Vector3.RIGHT, deg_to_rad(collapse_pitch_degrees))
+	var to_body := global_transform.affine_inverse()
 	for piece in visible_pieces:
 		if piece == null or not is_instance_valid(piece):
 			continue
 		if not _piece_rest.has(piece):
 			_piece_rest[piece] = piece.transform
-		var t: Transform3D = _piece_rest[piece]
-		t = t.rotated_local(Vector3.RIGHT, deg_to_rad(collapse_pitch_degrees))
-		t.origin.y -= collapse_drop
-		piece.transform = t
+		var parent := piece.get_parent() as Node3D
+		var parent_to_body := (to_body * parent.global_transform) if parent != null else Transform3D.IDENTITY
+		var rest := parent_to_body * (_piece_rest[piece] as Transform3D)
+		var tipped := Transform3D(pitch * rest.basis, pitch * rest.origin)
+		tipped.origin.y -= collapse_drop
+		piece.transform = parent_to_body.affine_inverse() * tipped
 	_keep_pieces_above_deck()
 
 
@@ -3083,10 +3357,7 @@ func reset():
 		slot.initialize()
 	set_physics_process(true)
 	set_process(true)
-	if _collision_shape == null:
-		_collision_shape = _find_collision_shape()
-	if _collision_shape != null:
-		_collision_shape.set_deferred("disabled", false)
+	_set_colliders_disabled(false)
 
 
 # ─────────────────────────────────────────────

@@ -125,6 +125,37 @@ const STATE_DOWN := "DOWN"
 const STATE_REPAIRING := "REPAIRING"
 const STATE_SALVAGING := "SALVAGING"
 
+const _Glyphs := preload("res://Character/hud/hud_glyphs.gd")
+const _Kit := preload("res://Character/hud/squad/ui_kit.gd")
+# By path, not by class name: a brand-new class_name is not in the global
+# script cache until the editor rescans, and the level loads before that.
+const _Segment := preload("res://Character/hud/segment_bar.gd")
+
+# WHAT A ROW SAYS NOTHING ABOUT.
+#
+# Seventeen robots holding position used to print HOLDING seventeen times, down
+# a column, every frame of the mission. A word that is on every row is not
+# information, it is wallpaper — and it buries the one row that says PINNED.
+# These three are what a robot does when nothing is wrong, so they are written
+# as blank and the column is empty until something asks for you.
+const QUIET_STATES := [STATE_HOLDING, STATE_MOVING, STATE_FIRING]
+
+# The objective enum keys are engine words: a squad with no order printed
+# "NONE", which read as a fault. These are what the player would say.
+const OBJECTIVE_WORDS := {
+	Squad.SquadObjective.NONE: "",
+	Squad.SquadObjective.ADVANCE: "ADVANCING",
+	Squad.SquadObjective.DEFEND: "HOLDING",
+	Squad.SquadObjective.WITHDRAW: "FALLING BACK",
+	Squad.SquadObjective.ATTACK: "ATTACKING",
+	Squad.SquadObjective.FOLLOW: "FOLLOWING",
+	Squad.SquadObjective.PATROL: "PATROLLING",
+}
+
+## Below this share of its health a robot counts as hurt in a collapsed team's
+## header — the one number worth carrying when the rows are not drawn.
+@export var team_hurt_at: float = 0.6
+
 var _panel: VBoxContainer
 var _squad_header: Label
 var _roster: VBoxContainer
@@ -353,8 +384,14 @@ func _refresh_roster() -> void:
 		_squad_header.add_theme_color_override("font_color", COL_DIM)
 		return
 
-	# One block per team, the one you are not ordering dimmed. The first header
-	# is the panel's own; the rest go in with the rows.
+	# ONE TEAM IS DRAWN IN FULL: the one your next order goes to.
+	#
+	# All three used to draw every row, the two you were not commanding at 45%
+	# alpha — seventeen rows to tell you about the eight you could actually
+	# order, filling the left of the screen. The others collapse to their
+	# header, which still carries the two things you would act on: whether they
+	# are in contact and whether anyone in them is hurt. Cycling with G expands
+	# whichever you switch to.
 	var selected := commander.get_selected_squad()
 	for i in shown.size():
 		var squad: Squad = shown[i]
@@ -364,6 +401,8 @@ func _refresh_roster() -> void:
 			header = _make_label("", COL_BRIGHT, font_size_header)
 			_roster.add_child(header)
 		_fill_header(header, squad, quiet)
+		if quiet:
+			continue
 		var seen := {}
 		for m in squad.squad_members:
 			if m == null or not is_instance_valid(m):
@@ -371,18 +410,18 @@ func _refresh_roster() -> void:
 			if seen.has(m.get_instance_id()):
 				continue
 			seen[m.get_instance_id()] = true
-			var row := _make_member_row(m)
-			if quiet:
-				row.modulate.a = 0.45
-			_roster.add_child(row)
+			_roster.add_child(_make_member_row(m))
 
 
 func _fill_header(header: Label, squad: Squad, quiet: bool) -> void:
 	# Read live contact rather than `context`. Three states, not two — "CLEAR"
 	# on its own covered both "nothing has happened yet" and "the shooting just
 	# stopped", which is why it looked stuck.
+	# CLEAR IS THE ABSENCE OF NEWS, so it is written as nothing. It used to be
+	# printed on every header of every team all mission, three times over, and
+	# a word that is always there cannot report anything.
 	var shooting: bool = squad.has_live_contact()
-	var ctx := "CLEAR"
+	var ctx := ""
 	var ctx_col := COL_BRIGHT
 	if shooting:
 		ctx = "CONTACT"
@@ -391,13 +430,38 @@ func _fill_header(header: Label, squad: Squad, quiet: bool) -> void:
 		ctx = "BREAK %ds" % int(ceil(Squad.CONTACT_GRACE - squad.seconds_since_contact()))
 		ctx_col = COL_WARN
 
-	var obj: String = str(Squad.SquadObjective.keys()[squad.objective])
 	var living := squad.get_living_members().size()
 	var total := squad.squad_members.size()
+	var parts := PackedStringArray([
+		squad.get_display_name().to_upper(), "%d/%d" % [living, total]])
+	var obj: String = OBJECTIVE_WORDS.get(squad.objective, "")
+	if obj != "":
+		parts.append(obj)
+	# A collapsed team has no rows to show a health bar in, so its header says
+	# how many of it are hurt instead. The team you are commanding has the bars
+	# themselves a line below, so it does not need telling twice.
+	if quiet:
+		var hurt := _hurt_count(squad)
+		if hurt > 0:
+			parts.append("%d HURT" % hurt)
+			if ctx == "":
+				ctx_col = COL_WARN
+	if ctx != "":
+		parts.append(ctx)
 
-	header.text = "%s  [%d/%d]  %s  %s" % [
-		squad.get_display_name().to_upper(), living, total, obj, ctx]
-	header.add_theme_color_override("font_color", Color(ctx_col, 0.45) if quiet else ctx_col)
+	header.text = "  ".join(parts)
+	header.add_theme_color_override("font_color", Color(ctx_col, 0.55) if quiet else ctx_col)
+
+
+## Living members below team_hurt_at. Only asked for on a collapsed team.
+func _hurt_count(squad: Squad) -> int:
+	var hurt := 0
+	for m in squad.get_living_members():
+		if m == null or not is_instance_valid(m):
+			continue
+		if float(m.health) / float(maxi(1, m.max_health)) < team_hurt_at:
+			hurt += 1
+	return hurt
 
 
 # Your teams, all of them, whichever you are ordering: the others dimmed.
@@ -416,8 +480,16 @@ func _make_member_row(m: Soldier) -> Control:
 	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+	# What it is, then what it carries — the baked line art, the same pictures
+	# the factory and the armoury show, not initials. A callsign says neither,
+	# and the teams are arranged by hand, so without these a Reclaimer parked
+	# under SUPPORT and a Soldier under ARMOR both read as filing mistakes.
+	var tint := COL_CRIT if not m.alive else COL_DIM
+	row.add_child(_Kit.icon(_Glyphs.frame_icon(m), tint, Vector2(22, 22), true))
+	row.add_child(_Kit.icon(_Glyphs.weapon_icon(m), tint, Vector2(34, 14), true))
+
 	var name_col := COL_CRIT if not m.alive else COL_BRIGHT
-	row.add_child(_make_label(" %-10s" % m.soldier_name.left(10), name_col))
+	row.add_child(_make_label("%-10s" % m.soldier_name.left(10), name_col))
 
 	if not m.alive:
 		# A wreck you can bring back reads very differently from one you can't,
@@ -427,13 +499,32 @@ func _make_member_row(m: Soldier) -> Control:
 			COL_WARN if is_down else COL_CRIT))
 		return row
 
-	row.add_child(_make_bar(float(m.health) / float(maxi(1, m.max_health)), _health_color(m)))
-	row.add_child(_make_bar(m.signal_integrity, COL_SIGNAL))
+	# Blocks, not a fraction: the length says how tough the frame is and the
+	# fill says what is left of it. See SegmentBar.
+	var strip = _Segment.new()
+	strip.setup(float(m.health), float(m.max_health), _health_color(m))
+	row.add_child(strip)
+	# THE SIGNAL BAR ONLY WHEN THERE IS SOMETHING TO SAY. It sits at full on
+	# every robot for the whole of most missions, so as a permanent second bar
+	# it was seventeen full blue bars hiding the one that was not. The slot is
+	# held open so the column behind it does not jump when one appears.
+	if m.signal_integrity < 0.999:
+		row.add_child(_make_bar(m.signal_integrity, COL_SIGNAL))
+	else:
+		row.add_child(_make_spacer(bar_size))
 	var state := _state_text(m)
-	# PINNED is the only state that's a request rather than a report, so it's
-	# the only one that gets to be loud.
-	row.add_child(_make_label(state, COL_WARN if state == STATE_PINNED else COL_DIM))
+	if not QUIET_STATES.has(state):
+		# PINNED is the only state that's a request rather than a report, so
+		# it's the only one that gets to be loud.
+		row.add_child(_make_label(state, COL_WARN if state == STATE_PINNED else COL_DIM))
 	return row
+
+
+func _make_spacer(size: Vector2) -> Control:
+	var gap := Control.new()
+	gap.custom_minimum_size = size
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return gap
 
 
 func _health_color(m: Soldier) -> Color:
@@ -503,7 +594,17 @@ func _refresh_nearby() -> void:
 	_clear(_nearby)
 	if commander == null:
 		return
-	var squads := commander.get_nearby_squads(nearby_radius)
+	# THE ONES YOU ARE NOT ALREADY LOOKING AT.
+	#
+	# get_nearby_squads filters by distance and nothing else, so your own teams
+	# came back in it — and they are drawn in full, by name, directly below.
+	# The strip was three lines of SUPPORT / ARMOR / INFANTRY restating the
+	# roster. Its own job is whoever ELSE is on the field.
+	var on_roster := _shown_squads()
+	var squads := []
+	for s in commander.get_nearby_squads(nearby_radius):
+		if not on_roster.has(s):
+			squads.append(s)
 	if squads.is_empty():
 		return
 
@@ -738,6 +839,14 @@ func _on_contact_called(_position: Vector3, target: Node) -> void:
 
 
 func _show_toast(text: String, col: Color) -> void:
+	# FOLLOW THE BAR, don't assume the middle of the screen. The toast belongs
+	# directly above the weapon bar, and the bar stops being centred on a window
+	# too narrow to fit it beside the corner readout — leaving the toast sitting
+	# off to one side of the thing it is captioning.
+	var half := (_toast.offset_right - _toast.offset_left) * 0.5
+	var mid := WeaponBar.centre_beside(self) - global_position.x - size.x * 0.5
+	_toast.offset_left = mid - half
+	_toast.offset_right = mid + half
 	_toast.text = text
 	_toast.add_theme_color_override("font_color", col)
 	_toast.visible = true

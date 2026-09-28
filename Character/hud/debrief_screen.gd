@@ -184,7 +184,14 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 	titles.add_child(Kit.label(heading,
 		Kit.BRIGHT if success or page != PAGE_RESULTS else Kit.PROBLEM, 32, true))
 	if mission != null:
-		titles.add_child(Kit.label(mission.display_name.to_upper(), Kit.DIM, Kit.HEADING))
+		var name_row := Kit.hbox(14)
+		name_row.add_child(Kit.label(mission.display_name.to_upper(), Kit.DIM, Kit.HEADING))
+		# How long that took. Only on the results page — the unlocks and the
+		# win screen are about what you came home with, not the clock.
+		var seconds := float(result.get("seconds", 0.0))
+		if page == PAGE_RESULTS and seconds > 0.0:
+			name_row.add_child(Kit.label(_clock(seconds), Kit.BRIGHT, Kit.HEADING, true))
+		titles.add_child(name_row)
 	# A failed run is rolled back to the state it deployed in, so everything
 	# below reads as a report rather than a bill: wrecks are shown because they
 	# happened, and the payout is zero because none of it was kept. Say so, or
@@ -553,3 +560,14 @@ func _kills(kinds: Dictionary, total: int) -> Control:
 		pair.mouse_filter = Control.MOUSE_FILTER_PASS
 		row.add_child(pair)
 	return box
+
+
+# Mission length, ASCII only — the HUD font has no glyph outside it. Minutes
+# and seconds up to an hour, then hours and minutes, because a mission that
+# runs past the hour is an evening and the seconds stop mattering.
+func _clock(seconds: float) -> String:
+	var whole := int(round(maxf(seconds, 0.0)))
+	if whole < 3600:
+		return "%d:%02d" % [whole / 60, whole % 60]
+	@warning_ignore("integer_division")
+	return "%dh %02dm" % [whole / 3600, (whole % 3600) / 60]

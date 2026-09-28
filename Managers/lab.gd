@@ -24,7 +24,7 @@ extends Node
 
 const _Matchup := preload("res://Campaign/lab/lab_matchup.gd")
 const SQUAD_SCENE := preload("res://Managers/AI/squad.tscn")
-const ARENA := "res://maps/arena_level.tscn"
+const ARENA := "res://maps/proving_level.tscn"
 const POST_TAG := &"obj_arena_hostiles"
 const SPREAD := 2.2
 const BETWEEN_RUNS := 1.5
@@ -153,8 +153,8 @@ func _find_axis() -> void:
 # ─────────────────────────────────────────────
 func _fight(m, r: int, n: int) -> Dictionary:
 	var place := _starts(m, r)
-	var allies := _spawn_side(m.allies, Enums.Factions.ALLIED, place["ally"], place["hostile"], "ALLY")
-	var hostiles := _spawn_side(m.hostiles, Enums.Factions.ENEMY, place["hostile"], place["ally"], "HOSTILE")
+	var allies := _spawn_side(m.allies, Enums.Factions.ALLIED, place["ally"], place["hostile"], "ALLY", m.weapon_swaps)
+	var hostiles := _spawn_side(m.hostiles, Enums.Factions.ENEMY, place["hostile"], place["ally"], "HOSTILE", m.weapon_swaps)
 	var a_members: Array = allies.squad_members.duplicate() if allies != null else []
 	var h_members: Array = hostiles.squad_members.duplicate() if hostiles != null else []
 	await get_tree().physics_frame
@@ -225,7 +225,8 @@ func _starts(m, r: int) -> Dictionary:
 	return out
 
 
-func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, callsign: String) -> Squad:
+func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, callsign: String,
+		swaps: Dictionary = {}) -> Squad:
 	var members: Array[Soldier] = []
 	var n := roster.size()
 	# The ring turned to face the other side. Laid out in world space it put
@@ -249,11 +250,27 @@ func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, 
 		# is fitted, and only shows a stand-in until then) goes in with the one
 		# it is issued, as a recruit would. Otherwise it drove into every fight
 		# unarmed.
-		if frame.starting_weapon_id != &"" and s.weapon_mount != null \
-				and not s.weapon_mount.get_children().any(func(c): return c is AIWeapon):
-			var issued := _issued_weapon(frame)
+		#
+		# A SWAP NAMED BY THE MATCHUP ALWAYS WINS, even over a gun the scene
+		# itself carries — which is the difference between a swap and a starting
+		# weapon. Without that, "give the soldiers rifles" would silently do
+		# nothing to any frame that models its own gun, which is most of them.
+		var swapped: bool = swaps.has(frame.id)
+		var want_id: StringName = swaps[frame.id] if swapped else frame.starting_weapon_id
+		var armed: bool = s.weapon_mount != null \
+				and s.weapon_mount.get_children().any(func(c): return c is AIWeapon)
+		if want_id != &"" and s.weapon_mount != null and (swapped or not armed):
+			var issued := _issued_weapon_id(want_id, frame)
 			if issued != null:
 				s.equip_weapon_scene(issued)
+		# And the coax, for a two-mount frame. The campaign sells a Walker
+		# HALF-ARMED — the coax mount is a purchase — but a bench measures the
+		# complete machine, or a frame built around two guns is scored on one.
+		# `coax_weapon_id` names the gun that mount is designed around.
+		if frame.coax_weapon_id != &"" and s.get("coax_mount") != null:
+			var second := _issued_weapon_id(frame.coax_weapon_id, frame)
+			if second != null:
+				s.equip_coax_scene(second)
 		if world.enemy_spawner != null:
 			world.enemy_spawner._apply_frame(s, frame)
 		s.set_meta(&"analytics_kind", frame.display_name)
@@ -275,12 +292,16 @@ func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, 
 
 
 func _issued_weapon(frame) -> PackedScene:
+	return _issued_weapon_id(frame.starting_weapon_id, frame)
+
+
+func _issued_weapon_id(weapon_id: StringName, frame) -> PackedScene:
 	var campaign := get_tree().get_first_node_in_group("campaign")
 	var cat = campaign.get("catalogue") if campaign != null else null
-	var item = cat.item(frame.starting_weapon_id) if cat != null else null
+	var item = cat.item(weapon_id) if cat != null else null
 	if item == null or item.ai_scene == null:
-		push_warning("Laboratory: %s is issued '%s', which the catalogue cannot build; it fights unarmed." % [
-			frame.display_name, frame.starting_weapon_id])
+		push_warning("Laboratory: %s is issued '%s', which the catalogue cannot build; it fights without it." % [
+			frame.display_name, weapon_id])
 		return null
 	return item.ai_scene
 
@@ -416,8 +437,9 @@ func summary() -> Array:
 		var s := {"label": m.label, "runs": runs.size(), "ally_wins": 0, "hostile_wins": 0, "draws": 0,
 			"time": 0.0, "winner_left": 0.0, "winner_hp": 0.0, "decided": 0,
 			"a_dmg": 0, "h_dmg": 0, "a_shots": 0, "a_hits": 0, "h_shots": 0, "h_hits": 0,
-			"setup": "%s (%s) vs %s (%s), %dm" % [_roster_text(m.allies), _order_name(m.ally_order),
-				_roster_text(m.hostiles), _order_name(m.hostile_order), int(m.distance)]}
+			"setup": "%s (%s) vs %s (%s), %dm%s" % [_roster_text(m.allies), _order_name(m.ally_order),
+				_roster_text(m.hostiles), _order_name(m.hostile_order), int(m.distance),
+				_swap_text(m.weapon_swaps)]}
 		for run in runs:
 			s["time"] += float(run["time"])
 			s["a_dmg"] += int(run["a_dmg"])
@@ -597,6 +619,24 @@ func _names(roster: Array) -> Array:
 		if f != null:
 			out.append(f.display_name)
 	return out
+
+
+# ", soldiers carrying Ancient Rifles" — said out loud in the report, because a
+# re-kitted fight whose row looks like a stock one is a number waiting to be
+# misread months later.
+func _swap_text(swaps: Dictionary) -> String:
+	if swaps.is_empty():
+		return ""
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	var cat = campaign.get("catalogue") if campaign != null else null
+	var parts: Array[String] = []
+	for chassis_id in swaps:
+		var frame = cat.chassis_def(chassis_id) if cat != null else null
+		var item = cat.item(swaps[chassis_id]) if cat != null else null
+		parts.append("%s carrying %s" % [
+			frame.display_name if frame != null else String(chassis_id),
+			item.display_name if item != null else String(swaps[chassis_id])])
+	return ", " + ", ".join(parts)
 
 
 # "4 Rifle Trooper + 1 Chaser Chassis"

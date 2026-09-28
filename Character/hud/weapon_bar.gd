@@ -32,9 +32,11 @@ class_name WeaponBar
 # ─────────────────────────────────────────────
 
 @export var player: Player
-## Bottom-CENTRE, and lifted clear of the health bar, which spans the full
-## width of the screen. The bottom-left corner already carries that readout and
-## the squad panel, and this is the third thing that wanted to live there.
+## Bottom-CENTRE. The bottom-left corner already carries the ammo and hull
+## readout and the squad panel, and this was the third thing that wanted to
+## live there. Centring is not on its own enough to stay out of that corner —
+## see _layout(), which slides the row right when the window is too narrow for
+## the two to share the band.
 @export var bottom_margin: float = 104.0
 @export var chip_size: Vector2 = Vector2(120, 62)
 
@@ -51,6 +53,23 @@ static func lift_beside(beside: Node) -> float:
 			if sibling is WeaponBar:
 				return (sibling as WeaponBar).bottom_margin + (sibling as WeaponBar).chip_size.y
 	return 104.0 + 62.0
+
+
+## Where the row of chips is centred, in screen pixels, for anything that has to
+## line up with it. It is NOT always the middle of the screen: _layout() slides
+## the row clear of the bottom-left readout when the window is too narrow for
+## both, and the order toast sits directly above it. Falls back to the middle of
+## the viewport when there is no bar, as lift_beside() falls back to defaults.
+static func centre_beside(beside: Node) -> float:
+	var parent := beside.get_parent() if beside != null else null
+	if parent != null:
+		for sibling in parent.get_children():
+			if sibling is WeaponBar:
+				var bar := sibling as WeaponBar
+				if bar._row != null:
+					return bar.global_position.x + bar._row.position.x + bar._row.size.x * 0.5
+	var vp := beside.get_viewport() if beside != null else null
+	return vp.get_visible_rect().size.x * 0.5 if vp != null else 0.0
 @export var chip_gap: float = 8.0
 ## The baked "m" icons' size (icon_art.gd): shown at exactly this, so the line
 ## stays one pixel wide instead of blurring into a blob.
@@ -308,8 +327,38 @@ func _layout() -> void:
 	offset_bottom = 0.0
 
 	var width: float = _chips.size() * chip_size.x + (_chips.size() - 1) * chip_gap
-	_row.position = Vector2((size.x - width) * 0.5, size.y - bottom_margin - chip_size.y)
+	var top: float = size.y - bottom_margin - chip_size.y
+	# CENTRED, BUT NEVER ON TOP OF THE CORNER READOUT. This bar was put at the
+	# bottom CENTRE to stay out of the bottom-left corner, and then trusted
+	# centring to keep it there — which holds only while the window is wide
+	# enough. The readout (ammo, hull, the segment blocks, the signal bar) sits
+	# in the same horizontal band as these chips, so on a narrow window the
+	# leftmost chip reaches back over the health blocks. Centre the row in
+	# whatever is left to the RIGHT of that block: identical on a wide screen,
+	# and a slide rightwards instead of an overlap on a narrow one.
+	var left: float = (size.x - width) * 0.5
+	_row.position = Vector2(maxf(left, _clear_of_corner() + chip_gap), top)
 	_row.size = Vector2(width, chip_size.y)
+
+
+# The right edge of the bottom-left readout in this bar's own coordinates, or 0
+# when nothing down there is in the way. Only a block that shares the chips'
+# horizontal band counts: one that stops above them is not an obstacle, so a
+# readout that later moves up frees the bar to centre itself again without
+# anyone having to remember this function exists.
+func _clear_of_corner() -> float:
+	var parent := get_parent()
+	if parent == null:
+		return 0.0
+	var corner := parent.get_node_or_null("UI/Corner") as Control
+	if corner == null or not corner.is_visible_in_tree():
+		return 0.0
+	var box := corner.get_global_rect()
+	var band := Rect2(global_position.x, global_position.y + size.y - bottom_margin - chip_size.y,
+		size.x, chip_size.y)
+	if not box.intersects(band):
+		return 0.0
+	return box.end.x - global_position.x
 
 
 func _refresh() -> void:

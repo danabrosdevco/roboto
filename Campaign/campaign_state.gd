@@ -635,6 +635,12 @@ func recruit(chassis: ChassisDefinition) -> SoldierRecord:
 	if chassis.starting_weapon_id != &"" and not record.weapon_ids.is_empty():
 		record.weapon_ids[0] = chassis.starting_weapon_id
 		record.recompute_stats(catalogue)
+	# THE SECOND MOUNT SHIPS EMPTY. The price of a Walker buys the frame and the
+	# gun it is built around; the coax is a separate purchase, which is the whole
+	# point of a frame that can carry two — a mount you were simply handed is not
+	# a decision. `coax_weapon_id` on the chassis says what the mount is DESIGNED
+	# AROUND, not what you are given: the laboratory fits it, because a test bench
+	# measures a complete frame, and nothing in the campaign does.
 	record.benched = supply_of(record) > supply_free()
 	roster.append(record)
 	team_of(record)

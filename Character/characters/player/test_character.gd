@@ -39,7 +39,6 @@ const _Analytics := preload("res://Managers/analytics.gd")
 @export var obstruction_raycast: RayCast3D
 @export var interact_raycast: RayCast3D
 @export var health_sfx: AudioStreamPlayer
-@export var shards_sfx: AudioStreamPlayer
 
 # ── EQUIPMENT ─────────────────────────────────
 # Put the AmmoPool node ABOVE the EquipmentLoadout node in the scene tree.
@@ -68,8 +67,6 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 # The fraction a scaled hit leaves over, carried into the next one so chip
 # damage still adds up instead of rounding to nothing.
 var _damage_carry: float = 0.0
-var shards = 0
-var bits = 0
 const LEAN_ANGLE := 0.35
 const LEAN_SPEED := 5.0
 const ADS_FOV := 45.0
@@ -119,7 +116,7 @@ var move_factor := 0.0
 signal activate_scanner_ui(time: float)
 signal highlight_enemy(target: Node3D, duration: float)
 signal activate_interactible_ui(interactible: Interactible)
-signal died(value: int, global_position)
+signal died(global_position)
 
 
 func initialize() -> void:
@@ -569,13 +566,8 @@ func interact(interactible: Interactible):
 	match interactible.get_type():
 		Enums.InteractTypes.HEALTH:
 			apply_healing(interactible.get_value())
-		Enums.InteractTypes.SHARDS:
-			add_shards(interactible.get_value())
-		Enums.InteractTypes.BONFIRE:
 			last_bonfire = interactible
 			pass
-		Enums.InteractTypes.BITS:
-			add_bits(interactible.value)
 		Enums.InteractTypes.OBJECTIVE:
 			# Nothing to collect. The objective connected to this Interactible's
 			# `interacted` signal and handles itself.
@@ -594,7 +586,7 @@ func interact(interactible: Interactible):
 # the same widget. This still calls hud.update_status with its existing six
 # arguments so nothing else has to change today — but the better version is:
 #
-#   hud.update_status(health, max_health, readout, shards, bits)
+#   hud.update_status(health, max_health, readout)
 #
 # with hud.gd switching on readout.mode. Worth doing when you touch the HUD.
 func update_status():
@@ -603,7 +595,7 @@ func update_status():
 	var readout := PlayerEquipment.Readout.new()
 	if loadout != null:
 		readout = loadout.get_readout()
-	hud.update_status(health, max_health, readout.primary, readout.secondary, shards, bits)
+	hud.update_status(health, max_health, readout.primary, readout.secondary)
 
 
 # ─────────────────────────────────────────────
@@ -674,17 +666,6 @@ func apply_healing(healing, healer: Node = null):
 	update_status()
 
 
-func add_shards(value):
-	shards += value
-	shards_sfx.play()
-	update_status()
-
-
-func add_bits(value):
-	bits += value
-	update_status()
-
-
 func update_last_bonfire(bonfire: Node3D):
 	if bonfire == null:
 		if world.current_level == null:
@@ -727,8 +708,7 @@ func die():
 	set_process_unhandled_input(false)
 	# Delay to allow any death effects (like sounds, particles)
 	await get_tree().create_timer(0.5).timeout
-	died.emit(bits, global_position)
-	bits = 0
+	died.emit(global_position)
 
 
 func get_faction():

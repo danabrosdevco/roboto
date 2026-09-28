@@ -14,7 +14,7 @@ class_name PlayerRepairTool
 # RESOURCE: a self-recharging reservoir by default, because it's the lowest
 # friction option and self-balances without ever hard-blocking the player. Set
 # use_ammo_pool to draw from finite charges instead once you know what the
-# economy should be — shards are spoken for, so the other candidate is salvage
+# economy should be — bits are the salvage currency, so the other candidate
 # off destroyed robots, which reuses the Interactible pickup you already have.
 #
 # INTERRUPTION is where the feel lives. Taking damage breaks the channel, but

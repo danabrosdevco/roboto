@@ -137,7 +137,7 @@ func _init() -> void:
 
 	# ── THE LIBRARY: every lesson, read out of the homebase scene ──
 	var library_script := preload("res://Character/hud/tutorial_library.gd")
-	var lessons: Array = library_script.collect(load("res://maps/homebase_level.tscn"))
+	var lessons: Array = library_script.collect(load("res://maps/depot_level.tscn"))
 	var heads: Array = lessons.map(func(l): return str(l["headline"]).to_upper())
 	var weapon_lessons := heads.filter(func(h): return h.contains("{1}"))
 	_check("the pause-menu library lists the base's lessons (%d)" % lessons.size(), lessons.size() >= 7, str(heads))

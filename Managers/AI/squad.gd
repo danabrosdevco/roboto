@@ -88,14 +88,28 @@ var follow_leader: Node3D = null
 # they re-path to a spot they're standing on and pivot in place.
 @export var follow_slot_tolerance: float = 1.6
 # How far a follower's standing order may fall behind its slot before a fresh
-# path is worth it. Your slot moves with you and never stops drifting, so at
-# the tolerance above every member re-pathed every few frames for as long as
-# you walked. See _hold_follow_formation.
-@export var follow_repath_distance: float = 4.0
+# path is worth it. See _hold_follow_formation.
+#
+# DO NOT RAISE THIS TO SAVE QUERIES. It looks like free money — your slot moves
+# with you and never stops drifting, so every member re-paths every few frames
+# for as long as you walk — but the staleness comes straight out of formation
+# keeping. At 4 m a pack of rovers trailed 34 m behind instead of 19 and
+# tools/test_vehicle.gd fails on it. The cheap win is the cached slot snap
+# (_slot_for) and batching the line (_formation_offsets); this is not.
+@export var follow_repath_distance: float = 1.6
 # How far the slot may drift before its navmesh snap is measured again. The
 # snap is a whole-map query (see _on_ground); between refreshes the correction
 # it produced is carried along with the moving slot.
 @export var follow_snap_refresh: float = 2.5
+# ORDERS GO OUT TOGETHER; THE PATHFINDING DOES NOT.
+#
+# One order used to put every member's next path resolution in the same frame.
+# On Coast Road that profiled at 323 ms across 21 `_tick_nav` calls in a single
+# frame — the squad asks, the map is 22,000 polygons wide, and the game stops.
+# Each member is handed its place in the queue instead: member n waits n times
+# this many seconds before asking. At 0.06 a squad of seventeen is spread over
+# a second, and they walk the straight bearing meanwhile (Enemy.move_to).
+@export var order_stagger_seconds: float = 0.06
 # How fast the leader must move for their heading to count. Below this they're
 # considered stationary and the last heading is kept.
 @export var follow_heading_min_speed: float = 0.6
@@ -383,7 +397,7 @@ func _tick_defend() -> void:
 		if gap <= tolerance:
 			# In cover. Static, apart from the head — _tick_idle_scan turns
 			# look_target and never touches movement.
-			if soldier.ai_state != Enemy.AIState.IDLE:
+			if soldier.ai_state != Enemy.AIState.IDLE and soldier.ai_state != Enemy.AIState.PASSIVE:
 				soldier.change_ai_state(Enemy.AIState.IDLE)
 				# Watch outward, away from the thing being defended.
 				soldier.set_scan_facing(soldier.global_position + (soldier.global_position - objective_position))
@@ -580,14 +594,14 @@ func _hold_follow_formation() -> void:
 			# In position. Force the STATE as well as the movement — leaving
 			# them in PATROL or SEARCH is what let the state machine restart a
 			# move a frame later.
-			if robot.ai_state != Enemy.AIState.IDLE:
+			if robot.ai_state != Enemy.AIState.IDLE and robot.ai_state != Enemy.AIState.PASSIVE:
 				robot.change_ai_state(Enemy.AIState.IDLE)
 			if robot.movement_state != Enemy.MovementState.NONE:
 				robot.halt()
 			continue
 
 		# Out of position, and either not on their way at all or walking to a
-		# spot the squad has since left well behind.
+		# spot the squad has since left behind.
 		if robot.movement_state == Enemy.MovementState.NONE \
 				or _flat_gap(robot.movement_target, slot) > follow_repath_distance:
 			if robot is Soldier:
@@ -664,22 +678,26 @@ func _follow_anchor(delta: float) -> Vector3:
 
 
 func _issue_follow_orders() -> void:
-	for ai in get_orderable_members():
+	var members: Array = get_orderable_members()
+	var offsets: Array = _formation_offsets(members)
+	for i in members.size():
+		var ai = members[i]
 		ai.always_active = true
-		var slot: Vector3 = _on_ground(objective_position + _formation_offset(ai), ai)
+		var raw: Vector3 = objective_position + (offsets[i] as Vector3)
+		var slot: Vector3 = _slot_for(ai as Enemy, raw) if ai is Enemy else _on_ground(raw, ai)
 		# Already standing in their slot — stop, don't re-path. Re-issuing a
 		# move to a spot you occupy is what produces the pivot-in-place shuffle.
 		var tolerance: float = (ai as Enemy).slot_tolerance(follow_slot_tolerance) if ai is Enemy else follow_slot_tolerance
-		if ai.global_position.distance_to(slot) <= tolerance:
+		if _flat_gap(ai.global_position, slot) <= tolerance:
 			if ai is Enemy:
 				(ai as Enemy).halt()
 			continue
 		if ai is Soldier:
 			ai.defensive_mode = false
-			ai.order_move_to(slot, true, true)
+			ai.order_move_to(slot, true, true, i * order_stagger_seconds)
 			ai.change_soldier_state(Soldier.SoldierState.NONE)
 		else:
-			ai.move_to(slot)
+			ai.move_to(slot, i * order_stagger_seconds)
 
 
 # Cancels whatever the squad was doing and puts them on the leader's hip.
@@ -745,14 +763,18 @@ func _tick_patrol(delta: float) -> void:
 
 
 func _issue_patrol_orders(force: bool = false) -> void:
-	for ai in get_orderable_members():
+	var members: Array = get_orderable_members()
+	var offsets: Array = _formation_offsets(members)
+	for i in members.size():
+		var ai = members[i]
 		ai.always_active = true
+		var spot: Vector3 = objective_position + (offsets[i] as Vector3)
 		if ai is Soldier:
 			ai.defensive_mode = false
-			ai.order_move_to(objective_position + _formation_offset(ai), force, true)
+			ai.order_move_to(spot, force, true, i * order_stagger_seconds)
 			ai.change_soldier_state(Soldier.SoldierState.NONE)
 		else:
-			ai.move_to(objective_position + _formation_offset(ai))
+			ai.move_to(spot, i * order_stagger_seconds)
 
 
 # ─────────────────────────────────────────────
@@ -977,29 +999,35 @@ func set_objective(
 func _issue_objective_orders(force: bool = false) -> void:
 	match objective:
 		SquadObjective.ADVANCE:
-			for ai in get_orderable_members():
-				var offset = _formation_offset(ai)
+			var members: Array = get_orderable_members()
+			var offsets: Array = _formation_offsets(members)
+			for i in members.size():
+				var ai = members[i]
 				if ai.has_method("enter_passive_mode"):
 					ai.always_active = true
+				var spot: Vector3 = objective_position + (offsets[i] as Vector3)
 				if ai is Soldier:
 					ai.defensive_mode = false
-					ai.order_move_to(objective_position + offset, force, true)
+					ai.order_move_to(spot, force, true, i * order_stagger_seconds)
 				else:
 					if force or ai.ai_state != Enemy.AIState.COMBAT:
-						ai.move_to(objective_position + offset)
+						ai.move_to(spot, i * order_stagger_seconds)
 		SquadObjective.DEFEND:
 			_issue_defend_orders()
 		SquadObjective.WITHDRAW:
-			for ai in get_orderable_members():
-				var offset = _formation_offset(ai)
+			var leaving: Array = get_orderable_members()
+			var back: Array = _formation_offsets(leaving)
+			for i in leaving.size():
+				var ai = leaving[i]
 				if ai.has_method("enter_passive_mode"):
 					ai.always_active = true
+				var spot: Vector3 = objective_position + (back[i] as Vector3)
 				if ai is Soldier:
 					ai.defensive_mode = false
-					ai.order_move_to(objective_position + offset, force, true)
+					ai.order_move_to(spot, force, true, i * order_stagger_seconds)
 					ai.change_soldier_state(Soldier.SoldierState.NONE)
 				else:
-					ai.move_to(objective_position + offset)
+					ai.move_to(spot, i * order_stagger_seconds)
 		SquadObjective.ATTACK:
 			_issue_attack_orders()
 		SquadObjective.FOLLOW:
@@ -1221,21 +1249,22 @@ func _issue_defend_orders() -> void:
 			var cp: CoverPoint = chosen[i]
 			soldier.current_cover_point = cp
 			cp.mark_occupied(soldier)
-			soldier.order_move_to(cp.global_position, true, true)
+			soldier.order_move_to(cp.global_position, true, true, i * order_stagger_seconds)
 			_defend_posts[soldier] = cp.global_position
 		else:
 			# More soldiers than cover points — spread in a ring around objective
 			var angle = (TAU / takers.size()) * i
 			var spread = Vector3(cos(angle), 0, sin(angle)) * 6.0
-			soldier.order_move_to(objective_position + spread, true, true)
+			soldier.order_move_to(objective_position + spread, true, true, i * order_stagger_seconds)
 			_defend_posts[soldier] = objective_position + spread
 
-	for soldier: Soldier in parkers:
+	for p in parkers.size():
+		var soldier: Soldier = parkers[p]
 		if soldier.has_method("enter_passive_mode"):
 			soldier.always_active = true
 		soldier.defensive_mode = true
 		var post := _parking_post(soldier, parkers)
-		soldier.order_move_to(post, true, true)
+		soldier.order_move_to(post, true, true, (takers.size() + p) * order_stagger_seconds)
 		_defend_posts[soldier] = post
 
 

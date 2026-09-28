@@ -70,10 +70,44 @@ const DRAWINGS := {
 	# Cyclic Feed: a belt of rounds running into a feed throat. The rounds are
 	# the point — this is the module that decides you would rather spend them.
 	&"cyclic_feed": "M4 12H20V20H4Z M20 11L28 8V24L20 21Z M8 12V20 M12 12V20 M16 12V20 M6 24H18",
+	# THE WALKER'S TWO GUNS. Both are built on machine_gun_model.tscn, so drawn
+	# from their models they would come out as three identical pictures with the
+	# Ancient MG — and an icon that cannot be told from another icon is worse
+	# than no icon, because it reads as information. Drawn instead, in the wide
+	# 32x12 box a weapon gets. The world models are still shared; if they are
+	# ever given their own, delete these two lines and they bake from the models
+	# like everything else.
+	#
+	# AC20: a big bore with a muzzle brake and a box magazine under it. Read it
+	# by the hole in the end — this is the one that opens armour.
+	&"autocannon": "M2 5.2H4.2 M3.1 4.1V6.3 M4.2 4.4H21V7H4.2Z M6 4.4V2.6H8.4V4.4 M10 7V10.2H15.4V7 M21 3.6H23.2V7.8H21Z M24.4 3.6H26.6V7.8H24.4Z M27.8 3.6H30V7.8H27.8Z M23.2 5.7H24.4 M26.6 5.7H27.8",
+	# Heavy MG: a perforated cooling jacket and a belt running into the feed.
+	# Read it by the belt — this is the one that keeps going.
+	&"heavy_mg": "M8 4.2H24V7.4H8Z M11 4.2V7.4 M14 4.2V7.4 M17 4.2V7.4 M20 4.2V7.4 M24 5H30 M4.4 3.4H8V8.2H4.4Z M2 8.2H4.4L4.4 10.6H2Z M4.4 10.6H6.8V13H4.4 M6.8 10.6V13 M2 10.6V13 M6 3.4V1.6H7.6",
 }
 
 ## Anything without a model or a drawing gets a plain crate.
 const FALLBACK_DRAWING := "M6 9H26V25H6Z M6 9L10 5H30L26 9 M30 5V21L26 25"
+
+
+## The box a DRAWING is authored in, matching the aspect of the slot it lands
+## in. Every size in a class has the same ratio, so one box serves all three.
+static func drawing_box(cls: String) -> Vector2:
+	var s: Vector2i = SIZES[cls]["m"]
+	return Vector2(32.0, 32.0 * float(s.y) / float(s.x))
+
+
+## Art for a part of a frame rather than a thing you can hold. A Mechanic's
+## welder is bolted to it: no catalogue entry, nothing to buy, nothing to take
+## off — and yet the roster still has to say what that robot is carrying, or a
+## Mechanic sits in the line with an empty hand while everyone around it shows
+## a rifle. Keyed by ChassisDefinition.built_in, lowercased, so the name on the
+## frame IS the name of its picture and there is no second table to keep in
+## step. Built-ins whose name already matches an item (the Spotter's OPTICS)
+## need no entry: that item's icon is found first.
+const BUILT_INS := {
+	&"welder": "res://3d_assets/chatgptg/frontline_maintainer_arcwelder_tool_v2.glb",
+}
 
 
 ## Which size class an item's icons are baked in: THE SLOT DECIDES, not the

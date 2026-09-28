@@ -14,4 +14,4 @@ cost = 150
 ai_scene = ExtResource("2_ai")
 usable_by_player = false
 usable_by_ai = true
-chassis_whitelist = Array[StringName]([&"rover"])
+chassis_whitelist = Array[StringName]([&"rover", &"walker"])

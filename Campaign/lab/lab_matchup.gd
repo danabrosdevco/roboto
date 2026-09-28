@@ -45,3 +45,14 @@ enum Order {
 ## Hostiles start on the post (in its cover) whatever the orders, and allies
 ## `distance` down the line. For testing YOUR orders against a garrison.
 @export var hostiles_on_post: bool = false
+
+## Re-kit a chassis for THIS FIGHT ONLY: {chassis id: weapon id}. Say
+## {&"soldier": &"m4"} and every Soldier in the matchup carries an Ancient Rifle
+## instead of its pistol; anything not named here keeps the gun it is issued, so
+## a Walker still brings the one it is built around. A swap beats a gun the
+## frame's own scene carries, which a starting weapon does not.
+##
+## IT APPLIES TO BOTH SIDES, so a mirror match stays a mirror. "What if the
+## soldiers had rifles" is a question about kit, and it is not worth a duplicate
+## chassis .tres to ask it.
+@export var weapon_swaps: Dictionary = {}

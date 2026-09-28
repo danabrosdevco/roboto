@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dqdx8632sefec"
+path="res://.godot/imported/causeway_pier.map-72e43d2a02ba4d0debf3039f162b6eca.tres"
+
+[deps]
+
+source_file="res://maps/blocks/causeway/causeway_pier.map"
+dest_files=["res://.godot/imported/causeway_pier.map-72e43d2a02ba4d0debf3039f162b6eca.tres"]
+
+[params]
+
