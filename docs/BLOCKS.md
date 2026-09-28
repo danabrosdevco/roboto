@@ -396,10 +396,11 @@ tower standing exactly on it reads as open floor with the whole inside of the
 tower as headroom.
 
 `test_block_steps.gd FOLDER=estates`: one 0.09 m riser sample across the
-sixteen. `test_block_reach.gd FOLDER=estates`: the decks each piece's notes
-call walkable are reachable, except the top roof of slab_five, slab_stepped,
-courtyard_block, slab_pair_bridge and collapsed_corner, which are not yet and
-are listed as known.
+sixteen. `test_block_reach.gd FOLDER=estates`: every deck a piece's notes call walkable
+is reachable, with three known exceptions — `courtyard_block`'s roof,
+`slab_pair_bridge`'s 15.3 m galleries and `slab_stepped`'s top roof. Each of
+those pieces says so in its own comment. Everything else the test still lists
+is a tall mass's roof that is meant to be out of reach, or rubble.
 
 **The plinth bank is the thing to get right.** These started with a 1 m flare
 under a 1 m rise — a 45° skirt, which the navmesh baker walks and a body

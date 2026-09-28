@@ -200,14 +200,15 @@ func deck_slab(x0: float, y0: float, x1: float, y1: float, z: float, thick: floa
 	box(Vector3(x0, y0, z - thick), Vector3(x1, y1, z), tex)
 
 
-## Posts under a deck, on a grid: what holds a gallery off a wall.
+## Posts under a deck: ONE ROW, along its outer edge. A gallery is held off the
+## wall it runs past, so the inner side needs nothing — and an inner row stood
+## in the middle of whatever ramp shared the strip, which the navmesh baker
+## erodes a full agent radius around from both sides at once.
 func props_under(x0: float, y0: float, x1: float, y1: float, z: float, pitch: float = 5.0) -> void:
 	var n: int = maxi(2, int(round((y1 - y0) / pitch)) + 1)
 	for i in n:
 		var y := lerpf(y0 + 0.4, y1 - 0.4, float(i) / (n - 1))
 		post(x1 - 0.4, y, 0.0, z - 0.3, 0.3, FRAME)
-		if x1 - x0 > 4.0:
-			post(x0 + 0.4, y, 0.0, z - 0.3, 0.3, FRAME)
 
 
 ## THE LANDING AT THE TOP OF A RAMP IS NOT OPTIONAL. A ramp meets the deck it
@@ -305,7 +306,7 @@ func _slab_five() -> void:
 	rows("+x", 5.0, -33.0, 33.0, 15, 5)
 	rows("-y", -34.0, -7.0, 4.0, 3, 5)
 	rows("+y", 34.0, -7.0, 4.0, 3, 5)
-	roof_cap(-8.3, -34.3, 5.3, 34.3, roof, {"+x": [[9.0, 16.0]]})
+	roof_cap(-8.3, -34.3, 5.3, 34.3, roof, {"+x": [[18.0, 26.0]]})
 	# The gallery, and the two ramps that reach it and then the roof.
 	#
 	# THE RAMPS ARE OUTBOARD OF THE GALLERY, NOT UNDER IT. They used to run in
@@ -321,13 +322,14 @@ func _slab_five() -> void:
 	# deck is a landing against a wall.
 	upstand("x", Vector2(8.7, 9.0), -34.0, -17.0, 8.3, 8.3, true, 1.0)
 	upstand("x", Vector2(8.7, 9.0), -10.0, 34.0, 8.3, 8.3, true, 1.0)
-	climb(9.0, -34.0, 13.0, -17.0, 0.0, 8.3, "+y")
+	climb(9.0, -34.0, 14.0, -17.0, 0.0, 8.3, "+y")
 	# ONE landing serves the top of the first ramp AND the foot of the second.
 	# A ramp rising off a deck touches it along one line too, so its foot needs a
 	# flat pad exactly as much as its head does.
-	landing(4.0, -17.0, 13.0, -10.0, 8.3)
-	climb(9.0, -10.0, 13.0, 10.0, 8.3, roof, "+y", false)
-	landing(3.0, 10.0, 13.0, 15.0, roof)
+	landing(4.0, -17.0, 14.0, -10.0, 8.3)
+	climb(9.0, -10.0, 14.0, 19.0, 8.3, roof, "+y", false)
+	props_under(9.0, -10.0, 14.0, 19.0, 8.3, 5.0)
+	landing(3.0, 19.0, 14.0, 25.0, roof)
 	props_under(8.0, -12.0, 11.0, 10.0, 8.3, 5.0)
 	upstand("x", Vector2(10.7, 11.0), -12.0, 10.0, 8.3, roof, true, 1.0)
 
@@ -348,21 +350,30 @@ func _slab_stepped() -> void:
 		rows("+x", 5.0, span[0] + 1.0, span[1] - 1.0, 5, int(span[2]))
 	rows("-y", -34.0, -7.0, 4.0, 3, 3)
 	rows("+y", 34.0, -7.0, 4.0, 3, 7)
-	roof_cap(-8.3, -34.3, 5.3, -10.7, a, {"+y": [[-6.0, -3.0]], "+x": [[-14.0, -7.0]]}, false)
-	roof_cap(-8.3, -11.3, 5.3, 11.3, b, {"+y": [[-6.0, -3.0]]}, false)
-	roof_cap(-8.3, 10.7, 5.3, 34.3, c)
+	roof_cap(-8.3, -34.3, 5.3, -10.7, a, {"+y": [[-6.0, -3.0]], "+x": [[-17.0, -9.0]]}, false)
+	roof_cap(-8.3, -11.3, 5.3, 11.3, b, {"+x": [[3.0, 11.0]]}, false)
+	roof_cap(-8.3, 10.7, 5.3, 34.3, c, {"+x": [[24.0, 34.0]]})
 	# Ground to the low roof up the back, then two short flights over the steps.
-	climb(6.5, -34.0, 9.5, -12.0, 0.0, a, "+y")
-	landing(3.0, -12.0, 9.5, -8.5, a)
+	# 4.5 m wide, not 3. A ramp carries two rails, each of which the navmesh
+	# baker erodes a full agent radius around: at 3 m the strip left down the
+	# middle is 1.4 m and Recast drops it, so the ramp bakes as nothing and
+	# everything above it is cut off. Every ramp in this family is 4.5 m now.
+	# The landing has to sit ALONGSIDE the roof it serves, not beyond its end:
+	# past the end it clips the corner over a metre and a bit and the two never
+	# join. Here it runs 5 m down the roof's east edge instead.
+	climb(6.0, -36.0, 10.5, -16.0, 0.0, a, "+y")
+	landing(3.0, -16.0, 10.5, -10.0, a)
 	# 7 m of rise wants 13.8 m of run to stay under 30 degrees; at the 10.8 m
 	# the step itself gives you it would be 33.
-	landing(-8.3, -16.0, -1.0, -11.3, a)
-	climb(-6.0, -11.3, -3.0, 2.5, a, b, "+y", false)
-	props_under(-6.0, -11.3, -3.0, 2.5, b, 4.0)
-	landing(-8.3, 2.5, -1.0, 7.0, b)
-	climb(-6.0, 10.7, -3.0, 24.5, b, c, "+y", false)
-	props_under(-6.0, 10.7, -3.0, 24.5, c, 4.0)
-	landing(-8.3, 24.5, -1.0, 29.0, c)
+	# The two upper flights run up the BACK, stacked over the first. They used to
+	# cut across the step from one roof to the next — which is inside the wing
+	# above, so the flight was buried in a solid block for its whole length.
+	climb(6.0, -10.0, 10.5, 4.0, a, b, "+y", false)
+	props_under(6.0, -10.0, 10.5, 4.0, a, 4.5)
+	landing(3.0, 4.0, 10.5, 10.0, b)
+	climb(6.0, 12.0, 10.5, 26.0, b, c, "+y", false)
+	props_under(6.0, 12.0, 10.5, 26.0, b, 4.5)
+	landing(0.0, 26.0, 10.5, 32.0, c)
 
 
 ## The same five-storey slab with a 14 m bay brought down in the middle. The
@@ -606,8 +617,12 @@ func _courtyard_block() -> void:
 	pad(-27.0, -35.0, 27.0, 35.0)
 	var roof := mass_top(5) + 0.3
 	# Two long bars, pierced, and two end bars between them.
-	pierce(-26.0, -34.0, -14.0, 34.0, 5, INFILL, [[-3.0, 3.0]])
-	pierce(14.0, -34.0, 26.0, 34.0, 5, INFILL, [[-3.0, 3.0]])
+	# 10 m archways, not 6. The bar is 12 m deep, so the opening is a tunnel:
+	# the corner posts eat 2.4 m of a 6 m one and the navmesh baker erodes a
+	# further 0.6 either side, which left too little of it to get a squad in and
+	# the whole courtyard unreachable.
+	pierce(-26.0, -34.0, -14.0, 34.0, 5, INFILL, [[-5.0, 5.0]])
+	pierce(14.0, -34.0, 26.0, 34.0, 5, INFILL, [[-5.0, 5.0]])
 	bar(-14.0, -34.0, 14.0, -22.0, 5, PLASTER_A)
 	bar(-14.0, 22.0, 14.0, 34.0, 5, PLASTER_B)
 	piers("x", -26.25, -34.0, 34.0, 0.5, roof - 0.3, 4.25)
@@ -622,7 +637,7 @@ func _courtyard_block() -> void:
 	rows("+x", -14.0, -21.0, 21.0, 10, 5)
 	rows("-x", 14.0, -21.0, 21.0, 10, 5)
 	roof_cap(-26.3, -34.3, -13.7, 34.3, roof, {"+x": [[-2.0, 2.0]]}, false)
-	roof_cap(13.7, -34.3, 26.3, 34.3, roof, {"-x": [[17.0, 23.0]]})
+	roof_cap(13.7, -34.3, 26.3, 34.3, roof, {"-x": [[15.0, 25.0]]})
 	parapet(-14.3, -34.3, 14.3, -21.7, roof, 1.0, 0.3)
 	parapet(-14.3, 21.7, 14.3, 34.3, roof, 1.0, 0.3)
 	# The gallery ring inside the yard, and the two ramps that serve it.
@@ -639,12 +654,12 @@ func _courtyard_block() -> void:
 	upstand("y", Vector2(-18.8, -18.5), -10.5, 10.5, 8.3, 8.3, true, 1.0)
 	# Both ramps stand OUT IN THE COURTYARD, not under the gallery ring. Under
 	# it they had no headroom at the top and the baker deleted them.
-	climb(-10.5, -18.0, -7.0, 2.0, 0.0, 8.3, "+y")
-	landing(-14.0, 2.0, -7.0, 5.5, 8.3)
-	landing(7.0, -9.0, 14.0, -2.0, 8.3)
-	climb(7.0, -2.0, 10.5, 18.0, 8.3, roof, "+y", false)
-	props_under(7.0, -2.0, 10.5, 18.0, roof, 5.0)
-	landing(7.0, 18.0, 14.3, 21.5, roof)
+	climb(-11.0, -18.0, -6.5, 2.0, 0.0, 8.3, "+y")
+	landing(-14.0, 2.0, -6.5, 6.5, 8.3)
+	landing(6.5, -9.0, 14.0, -2.0, 8.3)
+	climb(6.5, -2.0, 11.0, 18.0, 8.3, roof, "+y", false)
+	props_under(6.5, -2.0, 11.0, 18.0, roof, 5.0)
+	landing(4.0, 16.0, 20.0, 23.0, roof)
 	upstand("x", Vector2(7.0, 7.3), -2.0, 18.0, 8.3, roof, true, 1.0)
 	upstand("x", Vector2(10.2, 10.5), -2.0, 18.0, 8.3, roof, true, 1.0)
 
@@ -726,7 +741,9 @@ func _microdistrict() -> void:
 ## Two six-storey slabs facing each other across a low deck, joined by a bridge
 ## at the fourth floor. Both slabs carry a gallery at 15.3 m that the bridge
 ## lands on, so crossing between them is a real route and not scenery.
-## Walkable: the deck at 4.8 m, both galleries at 15.3, and the bridge.
+## Walkable: the deck at 4.8 m. THE GALLERIES AND THE BRIDGE AT 15.3 ARE NOT
+## YET — the flight climbs to 14.5 m and the last stretch will not join them.
+## On the list.
 func _slab_pair_bridge() -> void:
 	pad(-27.0, -35.0, -13.0, 35.0)
 	pad(13.0, -35.0, 27.0, 35.0)
@@ -759,7 +776,9 @@ func _slab_pair_bridge() -> void:
 	deck_slab(-10.5, -4.0, 10.5, 4.0, 15.3)
 	rail("y", -3.9, -10.5, 10.5, 15.3, 15.3)
 	rail("y", 3.9, -10.5, 10.5, 15.3, 15.3)
-	for x: float in [-9.0, -4.0, 4.0, 9.0]:
+	# Two legs a side, at the bridge's own edges. At four they stood in the
+	# middle of the ramp below and split it into two threads the baker dropped.
+	for x: float in [-9.5, 9.5]:
 		post(x, -3.6, 4.8, 15.0, 0.35, FRAME)
 		post(x, 3.6, 4.8, 15.0, 0.35, FRAME)
 	# Ground to the deck, deck to the west gallery.
@@ -768,9 +787,9 @@ func _slab_pair_bridge() -> void:
 	# No pad at this foot: the ramp from the ground runs head-on into the deck's
 	# own edge, which is already a flat surface the full width of it. A pad here
 	# only put a ceiling 0.9 m over the top of the ramp below.
-	climb(-10.5, -18.0, -7.0, 12.0, 4.8, 15.3, "+y", false)
-	props_under(-10.5, -18.0, -7.0, 12.0, 15.3, 5.0)
-	landing(-14.0, 12.0, -7.0, 15.5, 15.3)
+	climb(-8.0, -18.0, -3.5, 12.0, 4.8, 15.3, "+y", false)
+	props_under(-8.0, -18.0, -3.5, 12.0, 15.3, 5.0)
+	landing(-14.0, 11.0, -3.5, 17.0, 15.3)
 	upstand("x", Vector2(-7.3, -7.0), -18.0, 12.0, 4.8, 15.3, true, 1.0)
 	upstand("x", Vector2(-10.5, -10.2), -18.0, 12.0, 4.8, 15.3, true, 1.0)
 
@@ -829,8 +848,8 @@ func _frame_shell() -> void:
 
 ## Five storeys with one corner brought down into a ramp of its own floors.
 ## The rubble climbs to the third floor, so there is a way up that is not a
-## staircase and cannot be held from inside. Walkable: the rubble, the exposed
-## floors at 11.5 m, and the main roof at 18.8 m from them.
+## staircase and cannot be held from inside. Walkable: the rubble and the
+## exposed floors at 11.5 m. The main roof is NOT — see the note at the heap.
 func _collapsed_corner() -> void:
 	pad(-27.0, -35.0, 27.0, 13.0)
 	var roof := bar(-26.0, -34.0, 26.0, 12.0, 5, INFILL)
@@ -857,6 +876,10 @@ func _collapsed_corner() -> void:
 	rail("x", -13.9, 13.0, 33.0, 11.2, 0.0)
 	rail("x", 3.9, 13.0, 33.0, 11.2, 0.0)
 	flight(4.0, 13.0, 14.0, 22.0, 5.5, 11.3, "-y", 0.5, RUBBLE)
+	# NOTHING CLIMBS FROM HERE TO THE ROOF. The heap tops out at 11.2 m against
+	# a break face whose roof is 18.8, and the 7.6 m between them would want 14 m
+	# of run in ground that is 1 m wide. The third floor is as far as the breach
+	# goes, which is what it is for.
 	for c: Array in [[-20.0, 24.0, 3.0, 2.4, 1.6, 19.0], [10.0, 26.0, 4.0, 3.0, 1.9, 44.0],
 			[20.0, 21.0, 3.5, 2.2, 1.3, 63.0], [-4.0, 31.0, 5.0, 2.8, 1.1, 9.0],
 			[18.0, 31.0, 3.0, 2.0, 0.9, 31.0], [-24.0, 18.0, 2.5, 2.0, 1.4, 55.0]]:
@@ -864,9 +887,7 @@ func _collapsed_corner() -> void:
 				Vector3(float(c[2]), float(c[3]), float(c[4])), float(c[5]))
 	# From the exposed floors to the main roof, up the break face.
 	# Up the break face from the heap, in a strip the landing actually reaches.
-	climb(-13.0, 11.0, -9.0, 30.0, 11.5, roof, "-y", false)
-	props_under(-13.0, 11.0, -9.0, 30.0, roof, 5.0)
-	landing(-16.0, 6.0, -7.0, 11.5, roof)
+
 
 
 

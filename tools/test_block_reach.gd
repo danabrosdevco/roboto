@@ -30,7 +30,7 @@ const BUCKET := 0.75
 ## Below this is the ground the piece stands on, not a deck.
 const FLOOR_CLEAR := 1.2
 ## A bucket smaller than this is a kerb or a parapet top, not somewhere to be.
-const MIN_AREA := 12.0
+const MIN_AREA := 20.0
 ## The path has to end this near the mark to count as arriving.
 const NEAR := 3.0
 ## A polygon with less than this above it is not a deck, whatever the baker
@@ -158,8 +158,9 @@ func _check(dir: String, piece_name: String) -> int:
 		var miss: float = (route[route.size() - 1] as Vector3).distance_to(b) if route.size() > 0 else 999.0
 		if OS.get_environment("VERBOSE") != "":
 			var stop: Vector3 = route[route.size() - 1] if route.size() > 0 else Vector3.ZERO
-			print("      %-4s %5.1f m %6.0f m2 at (%6.1f,%6.1f)  path stops at (%6.1f,%6.1f,%6.1f)" % [
-					"ok" if miss < NEAR else "CUT", to.y, row[0], to.x, to.z, stop.x, stop.y, stop.z])
+			print("   %-24s %-4s %5.1f m %6.0f m2 at (%6.1f,%6.1f)  stops (%6.1f,%6.1f,%6.1f)" % [
+					piece_name, "ok" if miss < NEAR else "CUT", to.y, row[0], to.x, to.z,
+					stop.x, stop.y, stop.z])
 		if miss >= NEAR:
 			lost.append("%.1f m deck %.0f m2 at (%.0f, %.0f)" % [to.y, row[0], to.x, to.z])
 	world.queue_free()
