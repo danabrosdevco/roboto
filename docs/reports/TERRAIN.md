@@ -36,6 +36,69 @@ most wants and least often gets:
 
 ---
 
+## 2026-09-28 (5) — the ramps the balconies were eating
+
+**Landed** (`d9b3a361`). The human sent a screenshot of a gallery block whose
+ramp ran out from under its own walkway. It did, and four pieces had it: the
+ramp and the gallery were in the **same strip**, so there was 8 m of headroom
+at the foot and none at the top. Recast ate the last third of every such ramp
+and left a 68 m walkway you could see and not reach.
+
+*New:* `tools/test_block_reach.gd`. Bake a piece on a flat floor, bucket the
+navmesh by height, walk to the middle of every deck from open ground.
+`test_block_steps.gd` finds a riser a body cannot climb; this finds the other
+half — a deck that is fine once you are on it and has no way up.
+
+**Three rules came out of it**, now in `docs/BLOCKS.md`:
+
+1. A ramp never runs under the deck it climbs to.
+2. **A ramp needs a flat landing at each end that shares an EDGE with what it
+   joins.** A slope meeting a flat surface at the same height touches it along
+   one line, and a line is a corner, not an edge: two regions that never join.
+   This one cost the most — every "add a landing" that did not work was a
+   landing that still only touched at a point. The exception is a ramp running
+   head-on into a big flat deck, where the deck's own edge is the landing; a
+   pad there only roofs the ramp below, which is how `slab_pair_bridge`
+   regressed for one run.
+3. The parapet breaks **where the ramp arrives**. Half the gaps in this family
+   were sitting where an earlier version of the ramp used to be.
+
+Floor bands are **rings** now, not slabs across the footprint: a slab buried in
+a solid mass is invisible and is a floor to the baker — four phantom 670 m²
+decks per five-storey block, which the level then sweeps at load.
+
+**Gates.** `check.sh --changed`: **PASS**. `test_block_steps.gd FOLDER=estates`:
+one 0.09 m riser sample across the sixteen. Mutaha's WIP copy rebaked against
+the new geometry — 21447 → 21673 navmesh vertices, 3211 → 3271 cover points,
+every route still walks. `smoke.sh`/`test.sh`: not run this pass.
+
+**I was wrong three times, and the test was wrong twice.** It parsed visual
+meshes at first, so hollow brush boxes read as rooms and it called all sixteen
+pieces broken with five 670 m² decks inside a solid block. Then it reported
+phantoms where a mass sits exactly on a slab, because Recast merges coincident
+faces and the inside of the mass above reads as headroom; filtering those needs
+a raycast with `hit_from_inside` set, or the ray starts inside the mass and
+reports nothing. Worth knowing before trusting any navmesh diagnostic here.
+
+**Needs the human.**
+
+- **Fixed:** `gallery_block`, `courtyard_wing` and `frame_shell` are clean.
+  `slab_five`'s gallery, `podium_row`'s podium terrace, `point_tower`'s and
+  `twin_tower`'s skirts, `market_hall`'s hall roof, `microdistrict`'s shop roof
+  and `u_block`'s arm roofs all reach now. Galleries were what was broken and
+  galleries are fixed.
+- **Not fixed:** the **top roof** of `slab_five`, `slab_stepped`,
+  `courtyard_block`, `slab_pair_bridge` and `collapsed_corner` is still cut off
+  at its last ramp. Every lower deck of each works. I stopped iterating rather
+  than keep guessing; `test_block_reach.gd` with `VERBOSE=1` prints where each
+  path stops, which is where to start.
+- Still not played. Nothing in this session has been.
+
+**Blocked / next.** Finish those five last hops. Then the monolith texture
+scale and `block_prefabs.gd --only`, both still open.
+
+---
+
 ## 2026-09-28 (4) — district anchors on the WIP copy, for GAMEPLAY to write against
 
 **Landed** (`f160d5ba`). `maps/mutaha_wip_level.tscn` now has an objective
