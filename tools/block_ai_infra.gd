@@ -582,6 +582,13 @@ func _obelisk() -> void:
 	for k in 12:
 		var yaw := 360.0 * (k + 0.5) / 12.0
 		box_yawed(Vector3(2.1, -0.05, 1.0), Vector3(3.3, 0.05, 3.6), Vector3.ZERO, yaw, METAL)
+	# The three cable ducts radiating off the plinth are MESH ONLY. At 0.5 m
+	# they are taller than the 0.25 m the navmesh baker climbs and taller than
+	# the 0.45 m a body steps over, so with collision each one cut the ground
+	# round the obelisk into wedges and the squad caught on them walking in.
+	# Same case as rail track: something to walk over, not into. Last in the
+	# piece on purpose — no_collision() applies to everything after it.
+	no_collision()
 	for k in 3:
 		var yaw := 360.0 * k / 3.0 + 30.0
 		box_yawed(Vector3(6.3, -0.3, -0.1), Vector3(16.0, 0.3, 0.4), Vector3.ZERO, yaw, CONCRETE)

@@ -451,11 +451,16 @@ Panels and mirrors face the prefab's -Z. Turn it so -Z points at the sun.
 - **compute_obelisk** (16.6 m tall, 28 m across with its conduits): a black
   six-sided compute node with glowing seams and cooling fins. It stands on four
   0.25 m steps you can walk up. Three glowing conduits run out across the
-  ground.
+  ground; those are **mesh only**, so the squad walks over them. At 0.5 m they
+  are taller than the 0.25 m the baker climbs and taller than the 0.45 m a body
+  steps over, so with collision each one cut the ground round the obelisk into
+  wedges and bodies caught on them walking in. Its collider is therefore 15 x
+  13 m, not the 24 x 28 m it looks.
+  **Its mass sits 3.9 m west of its origin** (the conduits are not symmetrical),
+  which matters when centring one on something.
 - **compute_monolith** (7 m): a tapering black slab on a footing, with a line
   of light down each broad face and a crown of light. The broad faces face the
-  prefab's ±Z. On Mutaha, six ring the obelisk and more stand down the
-  boulevard's median.
+  prefab's ±Z. On Mutaha they ring the obelisk and line the island's avenue.
 - **compute_cable_run** (12.5 m): three cables snaking into a junction box.
 - **compute_network_cabinet:** a roadside cabinet with a whip antenna.
 - **compute_satellite_dish:** a 4 m dish on a pedestal, tilted to face -Z.

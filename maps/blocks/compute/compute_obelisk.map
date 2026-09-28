@@ -232,6 +232,10 @@
 ( 65 -16 32 ) ( 102 -26 32 ) ( 65 -16 115 ) PSX_Textures/metal_floor_1 [ -0.965363 0.260909 0 0 ] [ 0 0 -1 0 ] 0 1 1
 ( 102 -29 115 ) ( 102 -26 32 ) ( 102 -29 32 ) PSX_Textures/metal_floor_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
+}
+// entity 1
+{
+"classname" "func_detail_illusionary"
 // brush 24
 {
 ( 179 92 -3 ) ( 170 109 13 ) ( 179 92 13 ) PSX_Textures/concrete_tx_5 [ 0.467888 -0.883788 0 0 ] [ 0 0 -1 0 ] 0 1 1

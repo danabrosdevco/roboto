@@ -61,6 +61,28 @@ const SIZE := {
 	"dress_prop_sandbag_nest": Vector2(4.3, 3.1),
 	"dress_prop_sandbag_wall": Vector2(3.9, 0.5),
 	"dress_prop_tank_trap": Vector2(1.6, 1.6),
+	# The obelisk is the piece whose visual and collision differ most: the ducts
+	# that make it 24 x 28 m are mesh only now, and what stands in the way is
+	# the plinth. Its mass also sits 3.9 m west of its origin.
+	"dress_compute_obelisk": Vector2(15.2, 13.2),
+	"dress_compute_data_hall": Vector2(29.0, 18.8),
+	"dress_compute_chiller_yard": Vector2(14.0, 20.0),
+	"dress_compute_monolith": Vector2(4.4, 2.8),
+	"dress_compute_generator": Vector2(12.3, 4.6),
+	"dress_compute_transformer": Vector2(3.6, 4.4),
+	"dress_compute_cable_run": Vector2(3.3, 12.6),
+	"dress_compute_network_cabinet": Vector2(1.4, 2.1),
+	"dress_compute_rack_row": Vector2(5.6, 3.0),
+	"dress_compute_racks_toppled": Vector2(3.8, 5.7),
+	"dress_compute_cooling_unit": Vector2(6.5, 2.4),
+	"dress_compute_satellite_dish": Vector2(4.0, 3.3),
+	"dress_solar_canopy": Vector2(28.0, 40.0),
+	"dress_solar_canopy_broken": Vector2(28.0, 40.0),
+	"dress_solar_battery_container": Vector2(13.4, 2.8),
+	"dress_solar_inverter_skid": Vector2(2.4, 6.2),
+	"dress_solar_drone_dock": Vector2(4.0, 3.4),
+	"dress_industrial_substation": Vector2(16.1, 20.1),
+	"dress_feature_fuel_tanks": Vector2(14.0, 9.0),
 	"br_bridge_gorge": Vector2(17.3, 56.5),
 	"bld_apartment": Vector2(22.5, 16.5),
 	"bld_compound": Vector2(28.3, 20.4),
@@ -264,18 +286,22 @@ func group(path: String, nm: String, at := Vector3.ZERO) -> void:
 
 ## Put a piece down, or say why not. `deg` turns it about Y the way the editor
 ## does; `y` defaults to the ground under it.
+## `loose` is for a piece that is MEANT to stand over other things — a canopy
+## on legs, whose whole point is that the yard carries on underneath it. It
+## skips the overlap test and claims no ground of its own.
 func put(parent: String, nm: String, res: String, x: float, z: float, deg := 0.0,
-		y := NAN, shrink := 0.6) -> bool:
+		y := NAN, shrink := 0.6, loose := false) -> bool:
 	var size: Vector2 = SIZE.get(res, Vector2(3.0, 3.0))
 	var h := size * 0.5 * shrink
 	var c := Vector2(x, z)
 	var ang := deg_to_rad(deg)
-	for t: Array in taken:
-		if _hits(c, h, ang, t[0], t[1], t[2]):
-			print("   REFUSED %-22s at (%7.1f, %7.1f) — overlaps %s" % [nm, x, z, t[3]])
-			refused += 1
-			return false
-	taken.append([c, h, ang, nm])
+	if not loose:
+		for t: Array in taken:
+			if _hits(c, h, ang, t[0], t[1], t[2]):
+				print("   REFUSED %-22s at (%7.1f, %7.1f) — overlaps %s" % [nm, x, z, t[3]])
+				refused += 1
+				return false
+		taken.append([c, h, ang, nm])
 	var ca := cos(ang)
 	var sa := sin(ang)
 	var yy: float = ground(x, z) if is_nan(y) else y

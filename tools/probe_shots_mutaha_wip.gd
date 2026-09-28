@@ -47,6 +47,17 @@ const SHOTS: Array = [
 	["25_frame_shell_inside", Vector3(-249.5, EYE, 196.0), Vector3(-249.5, 6.0, 130.0), 72.0],
 	["26_tower_and_gallery", Vector3(-214.0, EYE, 100.0), Vector3(-188.0, 12.0, 168.0), 70.0],
 	["27_courtyard_block_street", Vector3(-331.5, EYE, 240.0), Vector3(-331.5, 8.0, 170.0), 70.0],
+	# The island relaid as the compute hub: the avenue, the plaza with the
+	# obelisk on it, the halls, and the canopies that replaced the panel rows.
+	["30_island_above", Vector3(-46.0, 230.0, 240.0), Vector3(-46.0, 6.0, -60.0), 58.0],
+	["31_island_north_above", Vector3(-46.0, 180.0, 60.0), Vector3(-46.0, 6.0, -170.0), 58.0],
+	["32_avenue_north", Vector3(-44.5, EYE, 60.0), Vector3(-44.5, 9.0, -120.0), 70.0],
+	["33_plaza", Vector3(-44.5, EYE, 14.0), Vector3(-44.0, 9.0, -22.0), 72.0],
+	["33b_plaza_high", Vector3(-20.0, 26.0, 26.0), Vector3(-46.0, 6.0, -30.0), 62.0],
+	["34_server_garden", Vector3(-38.0, EYE, -28.0), Vector3(-22.0, 2.5, -62.0), 72.0],
+	["35_under_the_canopy", Vector3(-44.0, EYE, 70.0), Vector3(-12.0, 3.0, 40.0), 72.0],
+	["36_from_the_east_bridge", Vector3(14.0, 4.5, 18.0), Vector3(-60.0, 8.0, -30.0), 70.0],
+	["37_power_yard", Vector3(-44.0, EYE, -100.0), Vector3(-22.0, 5.0, -150.0), 72.0],
 ]
 
 
