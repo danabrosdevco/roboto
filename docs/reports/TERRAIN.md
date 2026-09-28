@@ -36,6 +36,84 @@ most wants and least often gets:
 
 ---
 
+## 2026-09-28 (2) — sixteen big housing blocks, because the town was flat
+
+**Landed.** A new block family, `maps/blocks/estates/`, written by
+`tools/block_estates.gd` (`305cc045`). `building_*` fits one 32 × 24 m lot and
+stops at four storeys, so a town built only from it is a field of sheds you can
+see straight across. These take **two or four lots, street included**, and
+stand five to eight storeys:
+
+- **wide, 2 × 1 lots** (up to 72 × 24 m): `slab_five` (five storeys with two
+  undercrofts and a back gallery), `slab_stepped` (3/5/7 storeys — three roofs
+  at 11.8, 18.8 and 25.8 m, each reached from the one below), `slab_broken`
+  (an 18 m bay brought down; rubble to the second floor, a fallen slab to the
+  third), `gallery_block` (deck access — walkways at 4.8 and 8.3 m plus the
+  roof), `slab_dogleg`, `podium_row` (shops with a 71 × 16 m terrace on top).
+- **deep, 1 × 2** (up to 32 × 56 m): `twin_tower`, `point_tower` (30 m to the
+  parapet, the tallest non-landmark in the kit), `courtyard_wing`.
+- **big, 2 × 2** (up to 72 × 56 m): `courtyard_block`, `u_block`,
+  `microdistrict`, `slab_pair_bridge` (a bridge at the fourth floor landing on
+  a gallery each side), `frame_shell` (columns and floors, no walls — you can
+  see through it and still not shoot through it), `collapsed_corner`,
+  `market_hall` (46 m of roof at 12.3 m).
+
+Each `.map` has its prefab beside it; `docs/BLOCKS.md` has the full table and
+the per-piece notes. Six of them now stand in the new quarter of
+`maps/mutaha_wip_level.tscn`, replacing sixteen small buildings, so the
+difference can be looked at rather than argued about.
+
+**I was wrong about the plinth, and the test caught it.** At the 1 m flare I
+started with under a 1 m rise, the chamfered base is a **45° skirt** — the
+navmesh baker walks 45° and a body cannot, so the squad would have stood at the
+foot of every block on ground the mesh said they were on. `test_block_steps.gd`
+reported it on **fifteen of the sixteen**. `pad()` now flares 2 m and insets the
+plinth to keep the same extent, which is the buildings tool's 27°. Four pieces
+survived that fix and needed a second one: where the plinth stood proud of the
+mass on a ramp side, the exposed strip of its top was a step with a near
+vertical face under it. Worth knowing for anyone adding to `building_*` — the
+existing blocks get this right and it is easy to copy the numbers without
+copying the reason.
+
+Also caught and fixed before anything shipped: five ramps over 30° (one at
+40°), a row of windows 12 m above the roof they belonged to, and a pair of
+6 × 14 m loading kerbs at 1.2 m that each grew an island of navmesh nothing
+could climb onto.
+
+**Gates.** `check.sh --changed`: **PASS** — and it earned its keep, catching a
+stale `load_steps` on `mutaha_wip_level.tscn` after I added six
+`ext_resource` lines. `smoke.sh`: **PASS**, booted clean, ran 15 s.
+`test.sh`: **not run** — nothing here touches the ledger, the armoury or an
+invariant. `test_block_steps.gd FOLDER=estates`: **0 of 16** pieces with a
+riser a body cannot climb (the existing kit reports 55 of 150).
+
+**Needs the human.**
+
+- **Open them and judge the look.** Nothing here has been seen in play — the
+  screenshots are renders from a probe, not a playthrough. The massing and the
+  climbing are measured; the feel is not.
+- **Placement is not automated.** Nothing knows these cover more than one lot,
+  so whatever puts one down has to clear the neighbours. The six in the WIP
+  quarter were placed by hand. If they are worth keeping, the lot placer needs
+  to learn about multi-lot footprints — that is a real piece of work and I have
+  not started it.
+- A 2 × 2 block spans four lots the generator levelled to four **different**
+  heights, up to 0.5 m apart. The plinth absorbs it, but on steeper ground it
+  will not; the placer should level the lots under one of these.
+- `frame_shell` carries four open decks of roughly 1,900 m² each. That is the
+  one piece worth watching for navmesh cost if Mutaha's draw-call and polygon
+  budget is tight.
+- `collapsed_corner`'s rubble ramp is a clean wedge with chunks scattered on
+  it, the same as `ruin_shell`'s. It reads as concrete rather than rubble from
+  close up. Say the word and I will break it up.
+
+**Blocked / next.** Nothing blocking. The obvious follow-ons, in the order I
+would take them: teach the lot placer about multi-lot footprints; a second pass
+on whichever of the sixteen do not earn their place; then back to the lane
+backlog (Pittsburgh bridge spacing, Coast Road cover, the depot navmesh).
+
+---
+
 ## 2026-09-28 — a temporary Mutaha variant to look at, and a depot pass reverted
 
 **Landed.**
