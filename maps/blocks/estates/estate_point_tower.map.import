@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://w1yjpa83p8xu"
+path="res://.godot/imported/estate_point_tower.map-26de00a380ad9babf5993c9567da3b77.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_point_tower.map"
+dest_files=["res://.godot/imported/estate_point_tower.map-26de00a380ad9babf5993c9567da3b77.tres"]
+
+[params]
+

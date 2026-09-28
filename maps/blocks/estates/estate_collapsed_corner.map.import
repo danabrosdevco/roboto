@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://n8rop4bkfvwo"
+path="res://.godot/imported/estate_collapsed_corner.map-6dcc481e96cf727357f394ddc270295c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_collapsed_corner.map"
+dest_files=["res://.godot/imported/estate_collapsed_corner.map-6dcc481e96cf727357f394ddc270295c.tres"]
+
+[params]
+

@@ -134,12 +134,27 @@ func bar(x0: float, y0: float, x1: float, y1: float, storeys: int, tex: Variant,
 	var top := mass_top(storeys, base)
 	box(Vector3(x0, y0, base), Vector3(x1, y1, top), tex)
 	for i in storeys - 1:
-		var z := base + GROUND_H + STOREY * i
-		box(Vector3(x0 - 0.25, y0 - 0.25, z - 0.25), Vector3(x1 + 0.25, y1 + 0.25, z), FRAME)
+		band(x0, y0, x1, y1, base + GROUND_H + STOREY * i)
 	if not cap:
 		return top
 	box(Vector3(x0 - 0.3, y0 - 0.3, top), Vector3(x1 + 0.3, y1 + 0.3, top + 0.3), SLAB)
 	return top + 0.3
+
+
+## A floor band: a 0.25 m ledge round the OUTSIDE of a mass, four thin boxes.
+##
+## IT USED TO BE ONE SLAB ACROSS THE WHOLE FOOTPRINT. Buried in a solid block
+## that is invisible and looks like nothing — and it is a FLOOR to the navmesh
+## baker, which rasterises surfaces rather than solids, so the top of every
+## buried slab came out as a 670 m2 deck inside the building with no way to it.
+## Five storeys of that is four phantom decks per block. Only the rim is ever
+## seen, so only the rim is built.
+func band(x0: float, y0: float, x1: float, y1: float, z: float,
+		out: float = 0.25, thick: float = 0.25) -> void:
+	box(Vector3(x0 - out, y0 - out, z - thick), Vector3(x0 + out, y1 + out, z), FRAME)
+	box(Vector3(x1 - out, y0 - out, z - thick), Vector3(x1 + out, y1 + out, z), FRAME)
+	box(Vector3(x0 + out, y0 - out, z - thick), Vector3(x1 - out, y0 + out, z), FRAME)
+	box(Vector3(x0 + out, y1 - out, z - thick), Vector3(x1 - out, y1 + out, z), FRAME)
 
 
 ## Piers up a long face, every `pitch` metres: the vertical rhythm that stops a
@@ -193,6 +208,17 @@ func props_under(x0: float, y0: float, x1: float, y1: float, z: float, pitch: fl
 		post(x1 - 0.4, y, 0.0, z - 0.3, 0.3, FRAME)
 		if x1 - x0 > 4.0:
 			post(x0 + 0.4, y, 0.0, z - 0.3, 0.3, FRAME)
+
+
+## THE LANDING AT THE TOP OF A RAMP IS NOT OPTIONAL. A ramp meets the deck it
+## serves along one line, and a sloped surface touching a flat one shares a
+## CORNER, not an edge — so the navmesh baker builds two regions that never
+## join and the deck comes out unreachable with the ramp sitting against it.
+## A flat landing at the top, overlapping the deck by a couple of metres, is
+## what makes them one surface. Every reachable deck here has one.
+func landing(x0: float, y0: float, x1: float, y1: float, z: float) -> void:
+	deck_slab(x0, y0, x1, y1, z)
+	props_under(x0, y0, x1, y1, z, 4.0)
 
 
 ## A ramp with a rail down each side. Solid when it starts on the ground, so
@@ -256,8 +282,7 @@ func pierce(x0: float, y0: float, x1: float, y1: float, storeys: int, tex: Varia
 			post(x0 + 0.6, y + (0.6 if y == g[0] else -0.6), 0.5, head + 0.5, 0.6, FRAME)
 			post(x1 - 0.6, y + (0.6 if y == g[0] else -0.6), 0.5, head + 0.5, 0.6, FRAME)
 	for i in storeys - 1:
-		var z := 0.5 + GROUND_H + STOREY * i
-		box(Vector3(x0 - 0.25, y0 - 0.25, z - 0.25), Vector3(x1 + 0.25, y1 + 0.25, z), FRAME)
+		band(x0, y0, x1, y1, 0.5 + GROUND_H + STOREY * i)
 	box(Vector3(x0 - 0.3, y0 - 0.3, top), Vector3(x1 + 0.3, y1 + 0.3, top + 0.3), SLAB)
 	return top + 0.3
 
@@ -280,18 +305,31 @@ func _slab_five() -> void:
 	rows("+x", 5.0, -33.0, 33.0, 15, 5)
 	rows("-y", -34.0, -7.0, 4.0, 3, 5)
 	rows("+y", 34.0, -7.0, 4.0, 3, 5)
-	roof_cap(-8.3, -34.3, 5.3, 34.3, roof, {"+x": [[-30.0, -27.0]]})
-	# The gallery: a walkway the length of the back on posts, and the two
-	# straight ramps that reach it and then the roof. The ramps run opposite
-	# ways, so arriving on the gallery does not put you at the foot of the next.
-	deck_slab(5.0, -34.0, 9.5, 34.0, 8.3)
-	props_under(5.0, -34.0, 9.5, 34.0, 8.3, 5.5)
-	upstand("x", Vector2(9.2, 9.5), -34.0, 34.0, 8.3, 8.3, true, 1.0)
-	climb(6.5, -34.0, 9.5, -16.0, 0.0, 8.3, "+y")
-	climb(6.5, -12.0, 9.5, 10.0, 8.3, roof, "+y", false)
-	props_under(6.5, -12.0, 9.5, 10.0, 8.3, 5.0)
-	upstand("x", Vector2(9.2, 9.5), -12.0, 10.0, 8.3, roof, true, 1.0)
-	upstand("x", Vector2(6.5, 6.8), -12.0, 10.0, 8.3, roof, true, 1.0)
+	roof_cap(-8.3, -34.3, 5.3, 34.3, roof, {"+x": [[9.0, 16.0]]})
+	# The gallery, and the two ramps that reach it and then the roof.
+	#
+	# THE RAMPS ARE OUTBOARD OF THE GALLERY, NOT UNDER IT. They used to run in
+	# the same strip: 8 m of headroom at the foot, none at the top, so the
+	# navmesh baker ate the last third of each ramp and left a 68 m walkway you
+	# could see and not reach. A ramp may run beside a deck or over it, never
+	# under the one it is climbing to.
+	# 4 m of gallery, not 3: at an agent radius of 0.6 a 3 m walkway with a post
+	# row in it erodes to a thread and the baker drops pieces of it.
+	deck_slab(5.0, -34.0, 9.0, 34.0, 8.3)
+	props_under(5.0, -34.0, 9.0, 34.0, 8.3, 5.5)
+	# The parapet BREAKS WHERE A RAMP ARRIVES. A landing that meets a walled
+	# deck is a landing against a wall.
+	upstand("x", Vector2(8.7, 9.0), -34.0, -17.0, 8.3, 8.3, true, 1.0)
+	upstand("x", Vector2(8.7, 9.0), -10.0, 34.0, 8.3, 8.3, true, 1.0)
+	climb(9.0, -34.0, 13.0, -17.0, 0.0, 8.3, "+y")
+	# ONE landing serves the top of the first ramp AND the foot of the second.
+	# A ramp rising off a deck touches it along one line too, so its foot needs a
+	# flat pad exactly as much as its head does.
+	landing(4.0, -17.0, 13.0, -10.0, 8.3)
+	climb(9.0, -10.0, 13.0, 10.0, 8.3, roof, "+y", false)
+	landing(3.0, 10.0, 13.0, 15.0, roof)
+	props_under(8.0, -12.0, 11.0, 10.0, 8.3, 5.0)
+	upstand("x", Vector2(10.7, 11.0), -12.0, 10.0, 8.3, roof, true, 1.0)
 
 
 ## Three storeys, then five, then seven, in 22 m steps along its length. Three
@@ -310,17 +348,21 @@ func _slab_stepped() -> void:
 		rows("+x", 5.0, span[0] + 1.0, span[1] - 1.0, 5, int(span[2]))
 	rows("-y", -34.0, -7.0, 4.0, 3, 3)
 	rows("+y", 34.0, -7.0, 4.0, 3, 7)
-	roof_cap(-8.3, -34.3, 5.3, -10.7, a, {"+y": [[-6.0, -3.0]]}, false)
+	roof_cap(-8.3, -34.3, 5.3, -10.7, a, {"+y": [[-6.0, -3.0]], "+x": [[-14.0, -7.0]]}, false)
 	roof_cap(-8.3, -11.3, 5.3, 11.3, b, {"+y": [[-6.0, -3.0]]}, false)
 	roof_cap(-8.3, 10.7, 5.3, 34.3, c)
 	# Ground to the low roof up the back, then two short flights over the steps.
 	climb(6.5, -34.0, 9.5, -12.0, 0.0, a, "+y")
+	landing(3.0, -12.0, 9.5, -8.5, a)
 	# 7 m of rise wants 13.8 m of run to stay under 30 degrees; at the 10.8 m
 	# the step itself gives you it would be 33.
+	landing(-8.3, -16.0, -1.0, -11.3, a)
 	climb(-6.0, -11.3, -3.0, 2.5, a, b, "+y", false)
 	props_under(-6.0, -11.3, -3.0, 2.5, b, 4.0)
+	landing(-8.3, 2.5, -1.0, 7.0, b)
 	climb(-6.0, 10.7, -3.0, 24.5, b, c, "+y", false)
 	props_under(-6.0, 10.7, -3.0, 24.5, c, 4.0)
+	landing(-8.3, 24.5, -1.0, 29.0, c)
 
 
 ## The same five-storey slab with a 14 m bay brought down in the middle. The
@@ -372,23 +414,34 @@ func _gallery_block() -> void:
 	rows("-x", -8.0, 4.0, 33.0, 8, 4)
 	rows("-y", -34.0, -7.0, 2.0, 3, 4)
 	rows("+y", 34.0, -7.0, 2.0, 3, 4)
-	roof_cap(-8.3, -34.3, 3.3, 34.3, roof, {"+x": [[-32.0, -29.0]]})
-	# Two galleries, doors onto them, and the flights that link them.
+	roof_cap(-8.3, -34.3, 3.3, 34.3, roof, {"+x": [[17.0, 25.0]]})
+	# Two galleries the whole length, doors onto them, and a stair OUTBOARD of
+	# them — the three flights run in their own strip beside the walkways, not
+	# beneath them, because a ramp under the deck it climbs to has no headroom
+	# where it matters and the baker deletes its top.
 	for level: Array in [[4.8, 0], [8.3, 1]]:
 		var z: float = level[0]
 		deck_slab(3.0, -34.0, 7.0, 34.0, z)
 		props_under(3.0, -34.0, 7.0, 34.0, z, 5.5)
-		upstand("x", Vector2(6.7, 7.0), -34.0, 34.0, z, z, true, 1.0)
 		for i in 9:
 			var y := lerpf(-31.0, 31.0, float(i) / 8.0)
 			window("+x", 3.0, y, z, 1.5, 2.25, false)
-	climb(4.0, -34.0, 7.0, -22.0, 0.0, 4.8, "+y")
-	climb(4.0, -20.0, 7.0, -9.0, 4.8, 8.3, "+y", false)
-	props_under(4.0, -20.0, 7.0, -9.0, 8.3, 4.0)
-	climb(4.0, 14.0, 7.0, 34.0, 8.3, roof, "+y", false)
-	props_under(4.0, 14.0, 7.0, 34.0, roof, 5.0)
-	upstand("x", Vector2(6.7, 7.0), -20.0, -9.0, 4.8, 8.3, true, 1.0)
-	upstand("x", Vector2(6.7, 7.0), 14.0, 34.0, 8.3, roof, true, 1.0)
+	# Parapets, broken where a flight comes off the walkway.
+	upstand("x", Vector2(6.7, 7.0), -34.0, -23.0, 4.8, 4.8, true, 1.0)
+	upstand("x", Vector2(6.7, 7.0), -16.0, 34.0, 4.8, 4.8, true, 1.0)
+	upstand("x", Vector2(6.7, 7.0), -34.0, -10.0, 8.3, 8.3, true, 1.0)
+	upstand("x", Vector2(6.7, 7.0), -2.0, 8.0, 8.3, 8.3, true, 1.0)
+	upstand("x", Vector2(6.7, 7.0), 8.0, 34.0, 8.3, 8.3, true, 1.0)
+	climb(7.0, -34.0, 11.0, -23.0, 0.0, 4.8, "+y")
+	landing(2.0, -23.0, 11.0, -17.0, 4.8)
+	climb(7.0, -17.0, 11.0, -9.0, 4.8, 8.3, "+y", false)
+	props_under(7.0, -17.0, 11.0, -9.0, 8.3, 4.0)
+	landing(2.0, -9.0, 11.0, -3.0, 8.3)
+	climb(7.0, -3.0, 11.0, 18.0, 8.3, roof, "+y", false)
+	props_under(7.0, -3.0, 11.0, 18.0, roof, 5.0)
+	landing(1.0, 18.0, 11.0, 24.0, roof)
+	upstand("x", Vector2(9.2, 9.5), -34.0, -8.0, 0.0, 8.3, true, 1.0)
+	upstand("x", Vector2(9.2, 9.5), 14.0, 34.0, 8.3, roof, true, 1.0)
 
 
 ## Two wings offset across the street line with a stair core in the elbow: five
@@ -409,7 +462,7 @@ func _slab_dogleg() -> void:
 	rows("-x", -2.0, -1.0, 33.0, 8, 4)
 	rows("+x", 10.0, -1.0, 33.0, 8, 4)
 	roof_cap(-10.3, -34.3, 2.3, -2.7, a, {}, false)
-	roof_cap(-2.3, -2.3, 10.3, 34.3, b, {"-x": [[2.0, 5.0]]})
+	roof_cap(-2.3, -2.3, 10.3, 34.3, b, {"-x": [[28.0, 34.0]]})
 	# Up the inside of the elbow to the lower roof. The higher one stays out of
 	# reach: from 34 m of slab at 18.8 m you would see the whole quarter.
 	climb(-6.0, 0.0, -3.0, 30.0, 0.0, b, "+y")
@@ -441,10 +494,13 @@ func _podium_row() -> void:
 	piers("x", 3.0, -28.0, 28.0, 8.3, roof - 0.3, 4.25)
 	rows("-x", -6.0, -27.0, 27.0, 13, 4, 8.3)
 	rows("+x", 3.0, -27.0, 27.0, 13, 4, 8.3)
-	parapet(-9.3, -34.3, 6.3, 34.3, 8.3, 1.0, 0.3, {"+x": [[-30.0, -26.0]]})
+	# The break in the parapet is where the ramp ARRIVES, not where it starts.
+	parapet(-9.3, -34.3, 6.3, 34.3, 8.3, 1.0, 0.3, {"+x": [[-19.0, -13.0]]})
 	water_tank(4.5, -31.0, 8.3)
-	# One straight ramp up the back, inside the footprint.
+	# One straight ramp up the back, inside the footprint, with a landing that
+	# runs onto the podium rather than touching it at a corner.
 	climb(6.3, -34.0, 9.3, -16.0, 0.0, 8.3, "+y")
+	landing(3.0, -16.0, 9.3, -12.5, 8.3)
 
 
 # ── Deep: two lots front to back, 30 × 55 m ──────────────────────────────────
@@ -467,11 +523,12 @@ func _twin_tower() -> void:
 		rows("+x", x + 16.0, -10.0, 7.0, 4, 5, 8.3)
 		water_tank(x + 8.0, 5.0, roof)
 	# The yard between them, walled by the two towers and a parapet at each end.
-	parapet(-26.3, -13.3, 26.3, 10.3, 8.3, 1.1, 0.3, {"+y": [[-14.0, -10.0]]})
+	parapet(-26.3, -13.3, 26.3, 10.3, 8.3, 1.1, 0.3, {"+y": [[-6.0, 2.0]]})
 	box(Vector3(-8.0, -11.0, 8.3), Vector3(-4.0, -7.0, 9.6), FRAME)
 	box(Vector3(2.0, 4.0, 8.3), Vector3(6.0, 8.0, 9.6), FRAME)
-	# One ramp up the open end.
+	# One ramp up the open end, landing across the podium edge.
 	climb(-20.0, 10.3, -2.0, 13.3, 0.0, 8.3, "+x")
+	landing(-2.0, 5.0, 2.0, 13.3, 8.3)
 
 
 ## One eight-storey tower on a two-storey skirt: 30 m to the parapet and 32.6 m
@@ -486,16 +543,20 @@ func _point_tower() -> void:
 	rows("-y", -13.0, -19.0, 19.0, 9, 2)
 	rows("-x", -20.0, -12.0, 8.0, 5, 2)
 	rows("+x", 20.0, -12.0, 8.0, 5, 2)
-	var roof := bar(-11.0, -9.0, 11.0, 7.0, 6, PLASTER_B, 8.3)
-	for face: Array in [["-y", -9.0, -10.0, 10.0, 6], ["+y", 7.0, -10.0, 10.0, 6]]:
+	# The tower sits 1 m further south than it looks it should: the ring of skirt
+	# roof round it has to stay wider than twice the agent radius or the two
+	# halves of it are separate places.
+	var roof := bar(-11.0, -8.0, 11.0, 6.0, 6, PLASTER_B, 8.3)
+	for face: Array in [["-y", -8.0, -10.0, 10.0, 6], ["+y", 6.0, -10.0, 10.0, 6]]:
 		rows(str(face[0]), float(face[1]), float(face[2]), float(face[3]), 6, int(face[4]), 8.3)
-	rows("-x", -11.0, -8.0, 6.0, 4, 6, 8.3)
-	rows("+x", 11.0, -8.0, 6.0, 4, 6, 8.3)
-	piers("y", -9.25, -11.0, 11.0, 8.3, roof - 0.3, 4.4)
-	piers("y", 7.0, -11.0, 11.0, 8.3, roof - 0.3, 4.4)
-	roof_cap(-11.3, -9.3, 11.3, 7.3, roof, {}, true)
-	parapet(-20.3, -13.3, 20.3, 9.3, 8.3, 1.1, 0.3, {"+y": [[-16.0, -12.0]]})
+	rows("-x", -11.0, -7.0, 5.0, 4, 6, 8.3)
+	rows("+x", 11.0, -7.0, 5.0, 4, 6, 8.3)
+	piers("y", -8.25, -11.0, 11.0, 8.3, roof - 0.3, 4.4)
+	piers("y", 6.0, -11.0, 11.0, 8.3, roof - 0.3, 4.4)
+	roof_cap(-11.3, -8.3, 11.3, 6.3, roof, {}, true)
+	parapet(-20.3, -13.3, 20.3, 9.3, 8.3, 1.1, 0.3, {"+y": [[-6.0, 2.0]]})
 	climb(-20.0, 9.3, -2.0, 13.3, 0.0, 8.3, "+x")
+	landing(-2.0, 4.0, 2.0, 13.3, 8.3)
 
 
 ## An L of four storeys round a yard that opens to the street: the yard is a
@@ -514,7 +575,7 @@ func _courtyard_wing() -> void:
 	rows("-y", 4.0, -11.0, 25.0, 6, 4)
 	rows("+y", 14.0, -25.0, 25.0, 12, 4)
 	rows("+x", 26.0, 5.0, 13.0, 2, 4)
-	roof_cap(-26.3, -14.3, -11.7, 14.3, a, {"+x": [[-12.0, -8.0]]}, false)
+	roof_cap(-26.3, -14.3, -11.7, 14.3, a, {"+x": [[-10.5, -3.5]]}, false)
 	roof_cap(-12.3, 3.7, 26.3, 14.3, b)
 	# Up the yard in two flights that double back, because the yard is 38 m the
 	# long way and only 18 m the short way: one straight run at 15.3 m of rise
@@ -527,7 +588,7 @@ func _courtyard_wing() -> void:
 	upstand("x", Vector2(12.7, 13.0), -13.0, -5.0, 7.6, 7.6, true, 1.0)
 	climb(-9.0, -9.0, 9.0, -5.0, 7.6, a, "-x", false)
 	props_under(-9.0, -9.0, 9.0, -5.0, a, 5.0)
-	deck_slab(-12.0, -9.0, -9.0, -5.0, a)
+	landing(-14.5, -9.0, -9.0, -5.0, a)
 	upstand("y", Vector2(-9.3, -9.0), -12.0, 9.0, a, a, true, 1.0)
 	upstand("y", Vector2(-5.3, -5.0), -12.0, 9.0, 7.6, a, false, 1.0)
 	# A wall across the yard mouth, with a gap: cover on the way in.
@@ -561,7 +622,7 @@ func _courtyard_block() -> void:
 	rows("+x", -14.0, -21.0, 21.0, 10, 5)
 	rows("-x", 14.0, -21.0, 21.0, 10, 5)
 	roof_cap(-26.3, -34.3, -13.7, 34.3, roof, {"+x": [[-2.0, 2.0]]}, false)
-	roof_cap(13.7, -34.3, 26.3, 34.3, roof)
+	roof_cap(13.7, -34.3, 26.3, 34.3, roof, {"-x": [[17.0, 23.0]]})
 	parapet(-14.3, -34.3, 14.3, -21.7, roof, 1.0, 0.3)
 	parapet(-14.3, 21.7, 14.3, 34.3, roof, 1.0, 0.3)
 	# The gallery ring inside the yard, and the two ramps that serve it.
@@ -570,13 +631,22 @@ func _courtyard_block() -> void:
 		props_under(float(side[0]), -21.0, float(side[1]), 21.0, 8.3, 5.0)
 	deck_slab(-14.0, -22.0, 14.0, -18.5, 8.3)
 	props_under(-14.0, -22.0, 14.0, -18.5, 8.3, 6.0)
-	upstand("x", Vector2(-10.8, -10.5), -21.0, 21.0, 8.3, 8.3, true, 1.0)
-	upstand("x", Vector2(10.5, 10.8), -21.0, 21.0, 8.3, 8.3, true, 1.0)
+	# Gaps in the gallery ring where each ramp meets it.
+	upstand("x", Vector2(-10.8, -10.5), -21.0, 1.0, 8.3, 8.3, true, 1.0)
+	upstand("x", Vector2(-10.8, -10.5), 7.0, 21.0, 8.3, 8.3, true, 1.0)
+	upstand("x", Vector2(10.5, 10.8), -21.0, -5.0, 8.3, 8.3, true, 1.0)
+	upstand("x", Vector2(10.5, 10.8), 1.0, 21.0, 8.3, 8.3, true, 1.0)
 	upstand("y", Vector2(-18.8, -18.5), -10.5, 10.5, 8.3, 8.3, true, 1.0)
-	climb(-14.0, -18.0, -10.5, 2.0, 0.0, 8.3, "+y")
-	climb(10.5, -2.0, 14.0, 18.0, 8.3, roof, "+y", false)
-	props_under(10.5, -2.0, 14.0, 18.0, roof, 5.0)
-	upstand("x", Vector2(10.5, 10.8), -2.0, 18.0, 8.3, roof, true, 1.0)
+	# Both ramps stand OUT IN THE COURTYARD, not under the gallery ring. Under
+	# it they had no headroom at the top and the baker deleted them.
+	climb(-10.5, -18.0, -7.0, 2.0, 0.0, 8.3, "+y")
+	landing(-14.0, 2.0, -7.0, 5.5, 8.3)
+	landing(7.0, -9.0, 14.0, -2.0, 8.3)
+	climb(7.0, -2.0, 10.5, 18.0, 8.3, roof, "+y", false)
+	props_under(7.0, -2.0, 10.5, 18.0, roof, 5.0)
+	landing(7.0, 18.0, 14.3, 21.5, roof)
+	upstand("x", Vector2(7.0, 7.3), -2.0, 18.0, 8.3, roof, true, 1.0)
+	upstand("x", Vector2(10.2, 10.5), -2.0, 18.0, 8.3, roof, true, 1.0)
 
 
 ## A U of four storeys round a yard, with a six-storey back. The yard opens
@@ -603,7 +673,9 @@ func _u_block() -> void:
 	roof_cap(-26.3, -22.3, -11.7, 34.3, west, {"+x": [[28.0, 32.0]]}, false)
 	roof_cap(11.7, -22.3, 26.3, 34.3, east)
 	# Up the inside of the west arm.
-	climb(-12.0, 4.0, -8.0, 34.0, 0.0, west, "+y")
+	# The ramp stops at z 30 and the landing takes the last 4 m: run to 34 and
+	# the landing sat on top of its own approach with 0.7 m of headroom.
+	climb(-12.0, 2.0, -8.0, 30.0, 0.0, west, "+y")
 	deck_slab(-12.0, 30.0, -6.0, 34.0, west)
 	props_under(-12.0, 30.0, -6.0, 34.0, west, 4.0)
 	rail("x", -6.1, 30.0, 34.0, west, west)
@@ -638,7 +710,7 @@ func _microdistrict() -> void:
 	box(Vector3(-8.3, -16.3, 5.0), Vector3(8.3, 2.3, 5.3), SLAB)
 	for i in 5:
 		window("-x", -8.0, lerpf(-14.0, 0.0, float(i) / 4.0), 0.5, 2.5, 3.0, false)
-	parapet(-8.3, -16.3, 8.3, 2.3, 5.3, 0.9, 0.3, {"+y": [[-3.0, 0.0]]})
+	parapet(-8.3, -16.3, 8.3, 2.3, 5.3, 0.9, 0.3, {"+y": [[-5.5, -0.5]]})
 	climb(-5.0, 2.3, -1.0, 13.3, 0.0, 5.3, "-y")
 	water_tank(5.0, -13.0, 5.3)
 	# The space between: a playground frame, a transformer hut, kerbs.
@@ -671,7 +743,7 @@ func _slab_pair_bridge() -> void:
 	# The deck between the slabs, a storey and a bit up.
 	box(Vector3(-14.0, -20.0, 0.5), Vector3(14.0, 20.0, 4.5), BRICK)
 	box(Vector3(-14.3, -20.3, 4.5), Vector3(14.3, 20.3, 4.8), SLAB)
-	parapet(-14.3, -20.3, 14.3, 20.3, 4.8, 0.9, 0.3, {"-y": [[-6.0, -2.0]]})
+	parapet(-14.3, -20.3, 14.3, 20.3, 4.8, 0.9, 0.3, {"-y": [[-13.0, -7.0]]})
 	for i in 6:
 		window("-y", -20.0, lerpf(-11.0, 11.0, float(i) / 5.0), 0.5, 2.0, 2.5, false)
 	# Galleries at the fourth floor, and the bridge between them.
@@ -680,7 +752,9 @@ func _slab_pair_bridge() -> void:
 		for i in 13:
 			window(("+x" if float(side[2]) < 0.0 else "-x"), float(side[2]),
 					lerpf(-31.0, 31.0, float(i) / 12.0), 15.3, 1.5, 2.25, false)
-	upstand("x", Vector2(-10.8, -10.5), -34.0, 34.0, 15.3, 15.3, true, 1.0)
+	# The west gallery's parapet breaks where the ramp lands on it.
+	upstand("x", Vector2(-10.8, -10.5), -34.0, 11.0, 15.3, 15.3, true, 1.0)
+	upstand("x", Vector2(-10.8, -10.5), 17.0, 34.0, 15.3, 15.3, true, 1.0)
 	upstand("x", Vector2(10.5, 10.8), -34.0, 34.0, 15.3, 15.3, true, 1.0)
 	deck_slab(-10.5, -4.0, 10.5, 4.0, 15.3)
 	rail("y", -3.9, -10.5, 10.5, 15.3, 15.3)
@@ -690,9 +764,15 @@ func _slab_pair_bridge() -> void:
 		post(x, 3.6, 4.8, 15.0, 0.35, FRAME)
 	# Ground to the deck, deck to the west gallery.
 	climb(-12.0, -32.0, -8.0, -20.3, 0.0, 4.8, "+y")
-	climb(-14.0, -18.0, -10.5, 12.0, 4.8, 15.3, "+y", false)
-	props_under(-14.0, -18.0, -10.5, 12.0, 15.3, 5.0)
-	upstand("x", Vector2(-10.8, -10.5), -18.0, 12.0, 4.8, 15.3, true, 1.0)
+	# Out on the deck rather than under the west gallery, which it climbs to.
+	# No pad at this foot: the ramp from the ground runs head-on into the deck's
+	# own edge, which is already a flat surface the full width of it. A pad here
+	# only put a ceiling 0.9 m over the top of the ramp below.
+	climb(-10.5, -18.0, -7.0, 12.0, 4.8, 15.3, "+y", false)
+	props_under(-10.5, -18.0, -7.0, 12.0, 15.3, 5.0)
+	landing(-14.0, 12.0, -7.0, 15.5, 15.3)
+	upstand("x", Vector2(-7.3, -7.0), -18.0, 12.0, 4.8, 15.3, true, 1.0)
+	upstand("x", Vector2(-10.5, -10.2), -18.0, 12.0, 4.8, 15.3, true, 1.0)
 
 
 ## A frame that was never finished: columns, floors and a few shuttered panels,
@@ -730,11 +810,13 @@ func _frame_shell() -> void:
 			[20.1, 0.0, 13.0, 3]]:
 		box(Vector3(float(p[0]), float(p[1]), decks[int(p[3])] - 0.35),
 				Vector3(float(p[0]) + 0.3, float(p[2]), decks[int(p[3])] + 2.6), INFILL)
-	# The builders' ramps, one bay apart at each level.
-	climb(-6.0, -26.5, -1.0, -12.0, 0.0, 4.3, "+y")
-	climb(1.0, -12.0, 6.0, 2.0, 4.3, 7.8, "+y", false)
-	climb(8.0, 2.0, 13.0, 16.0, 7.8, 11.3, "+y", false)
-	climb(-6.0, 12.0, -1.0, 26.0, 11.3, 14.8, "+y", false)
+	# The builders' ramps. EACH ONE RUNS UP THROUGH THE VOID IN THE FLOOR IT IS
+	# CLIMBING TO — anywhere else it is under a solid deck and the top of it has
+	# no headroom. The voids alternate sides, so the climb crosses each floor.
+	climb(-5.0, -19.5, 0.0, -6.5, 0.0, 4.3, "+y")
+	climb(1.0, 0.0, 6.0, 13.0, 4.3, 7.8, "+y", false)
+	climb(-5.0, -19.5, 0.0, -6.5, 7.8, 11.3, "+y", false)
+	climb(1.0, 0.0, 6.0, 13.0, 11.3, 14.8, "+y", false)
 	# Nothing climbs off the top deck: the frame is a place to fight inside,
 	# not a 16 m firing platform over the quarter.
 	# A hoist and a stack of panels on the ground, so it reads as a site.
@@ -757,7 +839,7 @@ func _collapsed_corner() -> void:
 	rows("-x", -26.0, -33.0, 11.0, 11, 5)
 	rows("+x", 26.0, -33.0, 11.0, 11, 5)
 	rows("-y", -34.0, -25.0, 25.0, 12, 5)
-	roof_cap(-26.3, -34.3, 26.3, 12.3, roof, {"+y": [[-6.0, -2.0]]})
+	roof_cap(-26.3, -34.3, 26.3, 12.3, roof, {"+y": [[-14.0, -8.0]]})
 	# The fallen corner: floor plates still cantilevered off the break, the
 	# party walls standing as stumps, and the heap they came down in.
 	for i in 4:
@@ -771,6 +853,7 @@ func _collapsed_corner() -> void:
 	# The heap meets the ground at nothing, not at 0.3 m: a lip along the foot
 	# of a ramp is the whole ramp wasted.
 	ramp(-14.0, 13.0, 4.0, 33.0, 0.0, 0.0, 11.2, "-y", RUBBLE)
+	landing(-14.0, 8.0, 4.0, 13.0, 11.5)
 	rail("x", -13.9, 13.0, 33.0, 11.2, 0.0)
 	rail("x", 3.9, 13.0, 33.0, 11.2, 0.0)
 	flight(4.0, 13.0, 14.0, 22.0, 5.5, 11.3, "-y", 0.5, RUBBLE)
@@ -780,8 +863,11 @@ func _collapsed_corner() -> void:
 		chunk(Vector3(float(c[0]), float(c[1]), 0.0),
 				Vector3(float(c[2]), float(c[3]), float(c[4])), float(c[5]))
 	# From the exposed floors to the main roof, up the break face.
-	climb(-24.0, 12.4, -20.0, 30.0, 11.5, roof, "-y", false)
-	props_under(-24.0, 12.4, -20.0, 30.0, roof, 5.0)
+	# Up the break face from the heap, in a strip the landing actually reaches.
+	climb(-13.0, 11.0, -9.0, 30.0, 11.5, roof, "-y", false)
+	props_under(-13.0, 11.0, -9.0, 30.0, roof, 5.0)
+	landing(-16.0, 6.0, -7.0, 11.5, roof)
+
 
 
 ## A market hall with housing over one end: 46 m of clear-span roof at 12.3 m
@@ -794,14 +880,16 @@ func _market_hall() -> void:
 	# The hall's frame: bays up both long sides and a clerestory band.
 	piers("x", -26.4, -34.0, 6.0, 0.5, 12.0, 5.0, 0.4)
 	piers("x", 20.0, -34.0, 6.0, 0.5, 12.0, 5.0, 0.4)
-	box(Vector3(-26.4, -34.0, 8.5), Vector3(20.4, 6.0, 9.3), FRAME)
+	# A clerestory RING, not a slab across the hall: buried in the solid it is
+	# invisible, and its top face comes out as a 1700 m2 deck inside the hall.
+	band(-26.0, -34.0, 20.0, 6.0, 9.3, 0.4, 0.8)
 	for i in 6:
 		window("-y", -34.0, lerpf(-20.0, 14.0, float(i) / 5.0), 0.5, 3.5, 4.5, false)
 	for i in 8:
 		var y := lerpf(-31.0, 3.0, float(i) / 7.0)
 		window("-x", -26.0, y, 9.6, 2.0, 2.0, false)
 		window("+x", 20.0, y, 9.6, 2.0, 2.0, false)
-	parapet(-26.3, -34.3, 20.3, 6.3, 12.3, 1.1, 0.3, {"+x": [[-32.0, -28.0]]})
+	parapet(-26.3, -34.3, 20.3, 6.3, 12.3, 1.1, 0.3, {"+x": [[-14.0, -6.0]]})
 	water_tank(16.0, -30.0, 12.3)
 	# The housing behind it.
 	var roof := bar(-26.0, 8.0, 26.0, 34.0, 6, PLASTER_A)
@@ -815,6 +903,7 @@ func _market_hall() -> void:
 	roof_cap(-26.3, 7.7, 26.3, 34.3, roof, {}, false)
 	# One long ramp up the hall's back, inside the footprint.
 	climb(20.3, -34.0, 26.3, -12.0, 0.0, 12.3, "+y")
+	landing(14.0, -12.0, 26.3, -6.0, 12.3)
 	# A loading yard along the hall's other side. The kerbs are 0.4 m, under the
 	# 0.45 m a body steps over: at the 1.2 m they started at, each one was a
 	# 6 by 14 m island of navmesh on top of a block nothing could climb.

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cx2a4iltvbqv6"
+path="res://.godot/imported/estate_market_hall.map-60cc0189a6a7de74742bb17c8c42f7a1.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_market_hall.map"
+dest_files=["res://.godot/imported/estate_market_hall.map-60cc0189a6a7de74742bb17c8c42f7a1.tres"]
+
+[params]
+

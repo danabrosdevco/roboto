@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cd5uaov6ivqxu"
+path="res://.godot/imported/estate_slab_stepped.map-24638eddb53afef16091025dbcf9a4d3.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_slab_stepped.map"
+dest_files=["res://.godot/imported/estate_slab_stepped.map-24638eddb53afef16091025dbcf9a4d3.tres"]
+
+[params]
+

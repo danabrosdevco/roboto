@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cpxdd3v1tm065"
+path="res://.godot/imported/estate_microdistrict.map-fce37150c05f590244f3fd15b9cfd120.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_microdistrict.map"
+dest_files=["res://.godot/imported/estate_microdistrict.map-fce37150c05f590244f3fd15b9cfd120.tres"]
+
+[params]
+

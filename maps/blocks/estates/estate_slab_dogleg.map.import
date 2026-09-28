@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cms1intj411ao"
+path="res://.godot/imported/estate_slab_dogleg.map-a00ba940f9a6c9bc6216c2aef82dc6af.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_slab_dogleg.map"
+dest_files=["res://.godot/imported/estate_slab_dogleg.map-a00ba940f9a6c9bc6216c2aef82dc6af.tres"]
+
+[params]
+

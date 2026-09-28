@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cq5n1eneubn03"
+path="res://.godot/imported/estate_gallery_block.map-a0b084ce24e690799fd2c461956813bc.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_gallery_block.map"
+dest_files=["res://.godot/imported/estate_gallery_block.map-a0b084ce24e690799fd2c461956813bc.tres"]
+
+[params]
+

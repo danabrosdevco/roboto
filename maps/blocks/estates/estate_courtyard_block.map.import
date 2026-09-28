@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b1y34aq0t672c"
+path="res://.godot/imported/estate_courtyard_block.map-d0dae2cf966dadc60a7023467b9e1ff7.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_courtyard_block.map"
+dest_files=["res://.godot/imported/estate_courtyard_block.map-d0dae2cf966dadc60a7023467b9e1ff7.tres"]
+
+[params]
+

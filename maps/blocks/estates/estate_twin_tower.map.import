@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cw4ar127hmjii"
+path="res://.godot/imported/estate_twin_tower.map-905c033eee7ee2445f1b37f4cf664f79.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_twin_tower.map"
+dest_files=["res://.godot/imported/estate_twin_tower.map-905c033eee7ee2445f1b37f4cf664f79.tres"]
+
+[params]
+

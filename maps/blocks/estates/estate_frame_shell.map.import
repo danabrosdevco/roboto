@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bmb2mnikvy1ct"
+path="res://.godot/imported/estate_frame_shell.map-557991043ec7a64d0d8882efaf90111e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_frame_shell.map"
+dest_files=["res://.godot/imported/estate_frame_shell.map-557991043ec7a64d0d8882efaf90111e.tres"]
+
+[params]
+

@@ -137,6 +137,7 @@ godot --headless --path . --script res://tools/block_prefabs.gd -- maps/blocks/p
 |---|---|
 | `tools/block_buildings.gd` | `building_*.map` |
 | `tools/block_estates.gd` | `estates/` maps — the big housing blocks (it extends the doodads tool) |
+| `tools/test_block_reach.gd` | nothing — it reports which decks a piece grows navmesh on and whether the squad can get to any of them |
 | `tools/block_doodads.gd` | `features/` and `props/` maps (it extends the buildings tool's brush kit) |
 | `tools/block_ai_infra.gd` | `solar/`, `compute/` and `landmarks/` maps (it extends the doodads tool) |
 | `tools/block_industrial.gd` | `industrial/`, `machines/` and `fortifications/` maps, the clock tower and big wheel in `landmarks/` and the monolith in `compute/` (it extends the AI-infra tool). Name pieces after the folder to write only those. |
@@ -367,10 +368,38 @@ sketch grid, where two lots plus the street between them is 73 m one way and
   behind it. The biggest single piece of high ground in the kit.
 
 **What you can climb.** Every deck called walkable above is reached by a ramp
-of 30° or less that starts on open ground or on the deck below. The TOP of a
-tall mass usually is NOT: a squad on a 30 m roof sees the whole town, which is
-the opposite of what these are for. `tools/test_block_steps.gd` with
-`FOLDER=estates` reports nothing on any of the sixteen.
+of 30° or less. The TOP of a tall mass usually is NOT: a squad on a 30 m roof
+sees the whole town, which is the opposite of what these are for.
+
+**THREE RULES A RAMP HAS TO KEEP**, all three learned the hard way, and all
+three invisible in the editor — `tools/test_block_reach.gd` is what finds them:
+
+1. **A ramp never runs under the deck it climbs to.** Headroom at the foot,
+   none at the top, so the baker eats the last third of it and leaves a
+   walkway you can see and cannot reach. Put the ramp beside the deck or over
+   it, never beneath it.
+2. **A ramp needs a flat landing at each end that shares an EDGE with what it
+   joins.** A sloped surface meeting a flat one at the same height touches it
+   along one line, and a line is a corner, not an edge: two regions that never
+   join. The exception is a ramp running head-on into a big flat deck, where
+   the deck's own edge is the landing — a pad there only roofs the ramp below.
+3. **The parapet breaks where the ramp ARRIVES.** A landing against a walled
+   deck is a landing against a wall. Half the gaps in this family were left
+   where an earlier version of the ramp used to be.
+
+**And a floor band is a RING, never a slab.** A slab buried in a solid mass is
+invisible and looks like nothing, and it is a floor to the navmesh baker, which
+rasterises surfaces rather than solids: the top of every buried slab came out
+as a 670 m² deck inside the building. Five storeys of that is four phantom
+decks per block. Recast also merges coincident faces, so a roof slab with a
+tower standing exactly on it reads as open floor with the whole inside of the
+tower as headroom.
+
+`test_block_steps.gd FOLDER=estates`: one 0.09 m riser sample across the
+sixteen. `test_block_reach.gd FOLDER=estates`: the decks each piece's notes
+call walkable are reachable, except the top roof of slab_five, slab_stepped,
+courtyard_block, slab_pair_bridge and collapsed_corner, which are not yet and
+are listed as known.
 
 **The plinth bank is the thing to get right.** These started with a 1 m flare
 under a 1 m rise — a 45° skirt, which the navmesh baker walks and a body
