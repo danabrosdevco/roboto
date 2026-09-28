@@ -36,6 +36,89 @@ most wants and least often gets:
 
 ---
 
+
+## 2026-09-28 (7) — ascent: a new climb map, built twice because the first one was a mountain
+
+**Landed.** `maps/ascent_level.tscn`, new, with its own sketch
+(`Env/terrain/sketches/ascent.png`) and terrain data. 896 × 1024 m, 2 m cells.
+Seven stations climbing from a trailhead at 0 m to a summit shelf at 132 m:
+Trailhead → Cistern 18 → Pillars 38 → Gate 58 → Terrace 82 → Shoulder 102 →
+Summit 132, linked by ~1.5 km of graded road at 4–13°.
+
+**Generated, not hand-authored.** `tools/probe_build_ascent.gd` writes the
+whole level from a station table. The reason is that the two numbers the map
+lives on — the grade of each leg and the slope of the ground beside it — are
+arithmetic over that table, so the table is the source and the tool refuses to
+write if either leaves its band. Road heights are spread along each leg BY ARC
+LENGTH, so a leg's grade is constant by construction rather than by my getting
+it right by hand. Re-runnable: edit the table, rebuild, rebake.
+
+**The shape.** Rolling hills you can walk over at will — open, flankable, the
+road is the fast way up and not the only way — with exactly one exception: a
+40 m ring at ~60° under the summit, and a single cut ramp through it. That ring
+is the only place on the map the ground says no.
+
+**The summit has a relay station on it**, 20 pieces from the existing compute/
+and fortifications/ kits: a data hall, the obelisk, a four-dish array along the
+north lip, generator and transformers, two watchtowers and a sangar covering
+the ramp mouth. Blockout only — no dressing, no objectives, no cover bake.
+
+**Gates.** `check.sh --changed`: **PASS**. `test.sh` and `smoke.sh`: **not
+run** — nothing here touches their ground, and the level is not in any mission.
+**Never launched.** Everything below is geometry and pathfinding, not feel.
+
+**What was measured, and what it said.**
+
+- `tools/probe_nav_ascent.gd` walks from the spawn to all seven stations:
+  **none cut off**, summit reached after 969 m, every offset 0.0 m.
+- The same tool asks the question reachability cannot: standing 130 m out from
+  the summit and walking up. North 642 m, east 440 m, north-east 585 m — **3–4×
+  the straight line**, because the path has to go round to the ramp. From the
+  ramp mouth, 140 m. **The summit has one approach.**
+- `tools/probe_ascent_bed.gd` samples each leg's centreline against its authored
+  height: beds 95–100% on target.
+
+**I was wrong twice, and both are worth the next agent's time.**
+
+1. **The first build was a mountain.** 500 m summit, five switchback flights cut
+   into a 58° face. It worked — the flights were genuinely forced, 303 m by the
+   stair against 44 m straight up — and it was the wrong map. Rebuilt at hill
+   scale. The thing that does not survive the shrink is the forced switchback:
+   stacked flights need the legs closer in Z than the height between them, and
+   under about 300 m of relief the beds merge before the riser gets steep
+   enough. **At hill scale you get one steep feature, not a staircase.**
+2. **Two roads meeting at a landing write a step across each other.** Their beds
+   overlap for 20-odd metres and whichever is cut second wins that ground, so if
+   either is still climbing it leaves an 8 m wall — which sealed the whole stair
+   above the Gate and read as "navmesh missing" rather than as a step. Fix is a
+   **level run-out at both ends of every leg** (`RUNOUT`, 24 m). Any level with
+   two TerrainPaths meeting at a shared point has this.
+
+Also: the builder once reported a successful write over a **zero-byte file** —
+`_scene()` threw on a station renamed out from under it, came back empty, and
+the open truncated the level while the success line still printed. It now
+refuses to write under 2000 bytes.
+
+**Needs the human.**
+
+- **The scale is the open question.** 132 m is my read of "hills not a
+  mountain"; it is a five-minute change to the table if it is still off.
+- Look at it in-editor. The aerial still reads as one swell with bumps rather
+  than a series of distinct hills — there are seven LOWER stamps cutting saddles
+  between the hills and they are not doing enough.
+- The ramp's cut walls are raw terrain and want built retaining walls; that is
+  the biggest single thing between this and looking finished.
+- The relay is a blockout. Nothing on that shelf is a considered composition.
+
+**Blocked / next.** Nothing blocking, and nothing should be built on top of this
+until the scale is signed off. After that: hill definition, retaining walls
+along the ramp and the road cuts, wayshrines at the stations, then objectives
+and a cover bake. Older queue unchanged — the monolith texture scale,
+`block_prefabs.gd --only`, and `maps/depot_level.tscn` still carrying my ramped
+geometry with no answer on whether to roll it back.
+
+---
+
 ## 2026-09-28 (6) — the ramps finished, and a splash-art pass
 
 **Landed** (`e4f23071`). Four more things were eating the ramps, each found by

@@ -1,0 +1,221 @@
+extends SceneTree
+
+# ─────────────────────────────────────────────
+# NAV ASCENT — bake maps/ascent_level.tscn's navmesh, write it back into the
+# scene, and then ask the two questions a climb map lives or dies on.
+#
+#   godot --path . --script res://tools/probe_nav_ascent.gd
+#   BAKE=0 godot --path . --script res://tools/probe_nav_ascent.gd
+#
+# NOT headless: a bake without a renderer comes back with nothing in it.
+#
+# QUESTION ONE, can the squad get to the top. Walk from the spawn to every
+# station and report how far it got. A station with no route is a dead map.
+#
+# QUESTION TWO, and this is the one that matters, DOES THE STAIR MEAN ANYTHING.
+# Two consecutive landings are 44 m apart across the face and 303 m apart along
+# the flight that joins them. If the navmesh walk between them comes back near
+# 44 m, the face is walkable, the switchbacks are scenery, and every bot on the
+# map will beeline straight up the mountain. "There is navmesh on the summit"
+# is not the claim being made here — the claim is that the only way to it is
+# the way it was built.
+#
+# The same shape of test as the dropped bridge on the Mutaha copy: reachability
+# cannot answer it, because both ends are reachable either way. Only the
+# DISTANCE between them can.
+# ─────────────────────────────────────────────
+
+var level_path := OS.get_environment("LEVEL") if OS.get_environment("LEVEL") != "" else "res://maps/ascent_level.tscn"
+var rebake := OS.get_environment("BAKE") != "0"
+
+## Must match STATIONS in probe_build_ascent.gd: name, x, z, y.
+const STATIONS: Array = [
+	["Trailhead", 0.0, 380.0, 0.0],
+	["Cistern", -170.0, 258.0, 18.0],
+	["Pillars", 150.0, 140.0, 38.0],
+	["Gate", -140.0, 34.0, 58.0],
+	["Terrace", 140.0, -46.0, 82.0],
+	["Shoulder", -90.0, -140.0, 102.0],
+	["Summit", 30.0, -270.0, 132.0],
+]
+
+## Standing places round the foot of the tor, all the same distance out. The
+## ramp comes in from the south-west, so a walk that starts anywhere else has
+## to go round to find it.
+const RING_R := 130.0
+const RING: Array = [
+	["north", 0.0], ["east", 90.0], ["south", 180.0], ["west", 270.0],
+	["north-east", 45.0], ["south-west", 225.0],
+]
+
+## Walking to the summit from the foot of the tor and covering less than this
+## many times the straight-line distance means the flank was climbed, not
+## walked round. Anything genuinely going round adds at least half again.
+const SHORTCUT := 1.5
+
+var map: RID
+
+
+func _initialize() -> void:
+	await process_frame
+	if rebake and not await _bake():
+		quit(1)
+		return
+	var packed := ResourceLoader.load(level_path, "PackedScene",
+			ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
+	if packed == null:
+		print("FAIL  could not load %s" % level_path)
+		quit(1)
+		return
+	var level: Node3D = packed.instantiate()
+	root.add_child(level)
+	for _i in 40:
+		await physics_frame
+	var region: NavigationRegion3D = level.get_node("NavigationRegion3D")
+	print("   %s — %d navmesh vertices, %d polygons" % [level_path.get_file(),
+			region.navigation_mesh.get_vertices().size(),
+			region.navigation_mesh.get_polygon_count()])
+	map = region.get_navigation_map()
+	var spawn: Node3D = level.get_node("SpawnPoint")
+	var from := NavigationServer3D.map_get_closest_point(map, spawn.global_position)
+	print("   spawn (%.0f, %.0f, %.0f) snaps to (%.1f, %.1f, %.1f)" % [
+			spawn.global_position.x, spawn.global_position.y, spawn.global_position.z,
+			from.x, from.y, from.z])
+
+	print("")
+	print("   FROM THE SPAWN")
+	print("   %-12s %-10s %9s %9s %8s" % ["station", "state", "walked", "climbed", "offset"])
+	var cut := 0
+	for s: Array in STATIONS:
+		var mark := Vector3(float(s[1]), float(s[3]), float(s[2]))
+		var r := _walk(from, mark)
+		if not bool(r[0]):
+			cut += 1
+		print("   %-12s %-10s %8.0fm %8.0fm %7.1fm" % [s[0],
+				"reached" if r[0] else "CUT OFF", r[1], r[3] - from.y, r[2]])
+
+	print("")
+	print("   IS THE TOR FORCED — onto the summit from all round its foot")
+	print("   Everything below the tor is rolling hill the squad walks over at")
+	print("   will; that is the point of the map. The one place the ground says")
+	print("   no is the 40 m ring at 60° under the summit shelf. Standing %.0f m"
+			% RING_R)
+	print("   out and walking up should mean going ROUND to the ramp, so a walk")
+	print("   that comes back near the straight-line distance has climbed it.")
+	print("   %-14s %9s %9s %7s" % ["from", "direct", "walked", "ratio"])
+	var summit: Array = STATIONS[STATIONS.size() - 1]
+	var below: Array = STATIONS[STATIONS.size() - 2]
+	var top := Vector3(float(summit[1]), float(summit[3]), float(summit[2]))
+	# Which way the ramp comes in. A standing place on that side is SUPPOSED to
+	# be a short walk — it is stood at the bottom of the ramp. Reporting that
+	# as a breach would be reporting the map working as a fault.
+	var ramp := rad_to_deg(atan2(float(below[1]) - top.x, -(float(below[2]) - top.z)))
+	var loose := 0
+	for r: Array in RING:
+		var a := deg_to_rad(float(r[1]))
+		var at := Vector3(top.x + sin(a) * RING_R, 0.0, top.z - cos(a) * RING_R)
+		var start := NavigationServer3D.map_get_closest_point(map, at)
+		var res := _walk(start, top)
+		var direct := Vector2(top.x - start.x, top.z - start.z).length()
+		var walked := float(res[1])
+		var ratio: float = walked / maxf(direct, 1.0)
+		var off := absf(wrapf(float(r[1]) - ramp, -180.0, 180.0))
+		var mouth := off < 60.0
+		var note := "   round to the ramp"
+		if not bool(res[0]):
+			note = "   CUT OFF — no route at all"
+			loose += 1
+		elif mouth:
+			note = "   the ramp mouth, %.0f° off — short is correct" % off
+		elif ratio < SHORTCUT:
+			note = "   CLIMBED — the tor is walkable here"
+			loose += 1
+		print("   %-14s %8.0fm %8.0fm %6.1fx%s" % [r[0], direct, walked, ratio, note])
+
+	print("")
+	print("   %d station(s) cut off, %d way(s) up the tor that should not be there" % [
+			cut, loose])
+	quit()
+
+
+## [reached, metres walked, how far the mesh is from the mark, end height]
+func _walk(from: Vector3, to: Vector3) -> Array:
+	var b := NavigationServer3D.map_get_closest_point(map, to)
+	var route := NavigationServer3D.map_get_path(map, from, b, true)
+	var walked := 0.0
+	for i in route.size() - 1:
+		walked += route[i].distance_to(route[i + 1])
+	var end: Vector3 = route[route.size() - 1] if route.size() > 0 else from
+	var miss: float = end.distance_to(b) if route.size() > 0 else 999.0
+	return [miss < 4.0, walked, Vector2(b.x - to.x, b.z - to.z).length(), b.y]
+
+
+## Bake the region and write the result into the scene text. Replaces ONLY the
+## two data lines inside the NavigationMesh sub-resource.
+func _bake() -> bool:
+	var packed := ResourceLoader.load(level_path, "PackedScene",
+			ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
+	if packed == null:
+		print("FAIL  could not load %s" % level_path)
+		return false
+	var level: Node3D = packed.instantiate()
+	root.add_child(level)
+	for _i in 30:
+		await physics_frame
+	var region: NavigationRegion3D = level.get_node("NavigationRegion3D")
+	var t0 := Time.get_ticks_msec()
+	region.bake_navigation_mesh(false)
+	for _i in 20:
+		await physics_frame
+	var mesh := region.navigation_mesh
+	var verts := mesh.get_vertices()
+	print("   baked %d vertices, %d polygons in %.1f s" % [
+			verts.size(), mesh.get_polygon_count(), (Time.get_ticks_msec() - t0) / 1000.0])
+	if verts.size() < 500:
+		print("FAIL  that is far too few — is this running with a display?")
+		return false
+	var ok := _write_back(verts, mesh)
+	level.queue_free()
+	await process_frame
+	return ok
+
+
+func _write_back(verts: PackedVector3Array, mesh: NavigationMesh) -> bool:
+	var polys: Array = []
+	for i in mesh.get_polygon_count():
+		polys.append(mesh.get_polygon(i))
+	var v_line := "vertices = " + var_to_str(verts).replace("\n", "").replace("&", "")
+	var p_line := "polygons = " + var_to_str(polys).replace("\n", "").replace("&", "")
+	var text := FileAccess.get_file_as_string(level_path)
+	if text == "":
+		print("FAIL  could not read %s" % level_path)
+		return false
+	var out: PackedStringArray = []
+	var inside := false
+	var wrote_v := false
+	var wrote_p := false
+	for line in text.split("\n"):
+		if line.begins_with("[sub_resource"):
+			inside = line.contains("type=\"NavigationMesh\"")
+		elif line.begins_with("[") and not line.begins_with("[\""):
+			inside = false
+		if inside and line.begins_with("vertices ="):
+			out.append(v_line)
+			wrote_v = true
+			continue
+		if inside and line.begins_with("polygons ="):
+			out.append(p_line)
+			wrote_p = true
+			continue
+		out.append(line)
+	if not (wrote_v and wrote_p):
+		print("FAIL  did not find both data lines inside the NavigationMesh sub-resource")
+		return false
+	var w := FileAccess.open(level_path, FileAccess.WRITE)
+	if w == null:
+		print("FAIL  could not write %s" % level_path)
+		return false
+	w.store_string("\n".join(out))
+	w.close()
+	print("   wrote the navmesh back into %s" % level_path.get_file())
+	return true
