@@ -36,6 +36,74 @@ most wants and least often gets:
 
 ---
 
+## 2026-09-28 (4) — district anchors on the WIP copy, for GAMEPLAY to write against
+
+**Landed** (`f160d5ba`). `maps/mutaha_wip_level.tscn` now has an objective
+anchor in every district, 30 tags → **43**.
+
+**The line I drew.** A `SquadObjectivePoint` is a named place with a tag and no
+logic, and `squad_objective_point.gd` says in as many words that *missions
+reference these by TAG, never by node path*. So a tag is a contract and this
+lane can lay places down without touching an operation. **Nothing under
+`Campaign/` was opened.** What happens at each anchor — who holds it, which is
+a capture, what order they come in — is GAMEPLAY's and is not done.
+
+*Thirteen new*: `cross_east`, `cross_west`, `w_plain`, `stage_sw`, `sw_south`,
+`sw_estates`, `sw_north`, `quay`, `w_bridgehead`, `core_power`, `core_plaza`,
+`core_docks`, `isle_south`. Plus a patrol through the new quarter, which was
+the only district in the level with nothing moving in it.
+
+*Six moved, tags kept*, because the ground went out from under them when this
+lane rebuilt the island and the south of the map: `obj_mutaha_solar` to the
+canopy yard, `_server` and `_compute` onto the relaid island, `_avenue` onto
+the new spine, `_gate` to the island's south gate in the wall, and `_br05` off
+the span that no longer exists and onto the bank where the road dies.
+`RelayGate`, `RelayServer`, `RelayCompute` and `HiveCampus` move with them.
+Two descriptions that had stopped being true are rewritten. The spine patrol
+followed a line through the river and now follows the avenue.
+
+*Cover rebaked*: 3241 stale points → **3211**, from 29406 nav polygons. The old
+set was found against geometry that has since moved, so it had points inside
+the estate blocks and none at all in the districts that grew.
+
+**Gates.** `check.sh --changed`: **PASS**. `smoke.sh`: **PASS**, booted clean,
+ran 15 s. `test.sh`: **not run**, nothing here touches its ground.
+`tools/probe_reach_mutaha.gd` walks from the spawn to all **51** anchors:
+**none cut off**, longest 1090 m, every offset now under 2 m.
+
+**Two things the sweep caught that I would not have seen by eye.** The compute
+console was 7.8 m off the navmesh because it stood *inside* the data hall after
+the island was relaid, and the south bridge mark was 6.2 m off because it stood
+over the gap where the span used to be. Both moved. "There is an objective
+there" and "the squad can stand on it" are different claims and only the second
+one is worth anything.
+
+**I was wrong about the cover regenerate, once.** `generate` and `clear` on
+`CoverPointSpawner` are `@export` buttons whose setters are guarded by
+`Engine.is_editor_hint()`, so outside the editor ticking them does nothing at
+all. The first run reported "3241 cover points, was 3241" and had only
+re-serialised the ones it started with. Calling `_clear()` and `_generate()`
+directly does the job. The scene was restored from the backup before the second
+run, so the pointless churn never landed.
+
+**Needs the human / GAMEPLAY.**
+
+- The anchor list is the deliverable: run `tools/probe_reach_mutaha.gd` for
+  tags, positions, reachability and distances on any level, not just this one.
+- `Campaign/missions/mission_mutaha_1_blocks.tres` points at
+  `maps/mutaha_level.tscn`, not the WIP copy, and uses 30 of these tags. All 30
+  still exist here with the same names, so the same mission could be pointed at
+  the WIP copy without editing it — but its objective ORDER assumes the old
+  south bridge, which is gone. That is a design call, not a rename.
+- The capture points' `channel_duration`, `reward_resources` and prerequisite
+  chain are untouched and still describe the old route.
+- Still not playtested. Nothing in this session has been.
+
+**Blocked / next.** Nothing blocking. Same queue; the monolith texture scale
+and `block_prefabs.gd --only` are still open from the last entry.
+
+---
+
 ## 2026-09-28 (3) — the obelisk's conduits, the canopy swap, and the island relaid
 
 **Landed** (`ab299118`).
