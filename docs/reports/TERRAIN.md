@@ -36,6 +36,65 @@ most wants and least often gets:
 
 ---
 
+## 2026-09-28 (6) — the ramps finished, and a splash-art pass
+
+**Landed** (`e4f23071`). Four more things were eating the ramps, each found by
+reading where `test_block_reach.gd` said the path *stopped* rather than by
+guessing at the geometry:
+
+- **A 3 m ramp bakes as nothing.** It carries two rails and the baker erodes an
+  agent radius around each, so the strip left down the middle is 1.4 m and
+  Recast drops it. Every ramp in the family is **4.5 m** now.
+- **`props_under` put a second post row down the inside of a deck**, which
+  stood in the middle of whatever ramp shared the strip. One row, outer edge.
+- **A landing has to run ALONGSIDE the deck it serves, not past its end.** Past
+  the end it clips a corner over a metre and a bit, and the two never join.
+- **`slab_stepped`'s upper flights climbed through the wing above them** —
+  buried in a solid block for their whole length. They run up the back now,
+  stacked over the first.
+- **`courtyard_block`'s archways were 6 m.** The corner posts take 2.4 m of
+  that and the baker another 1.2, which left too little to get a squad through
+  and made the whole courtyard unreachable. 10 m now.
+
+`gallery_block`, `courtyard_wing`, `frame_shell` and `slab_five` are clean.
+**Three are still short and say so in their own comments:**
+`courtyard_block`'s roof, `slab_pair_bridge`'s 15.3 m galleries and
+`slab_stepped`'s top roof. `collapsed_corner`'s roof is documented as
+unreachable rather than pretended at — the heap tops out 7.6 m below it against
+a break face 1 m wide and no ramp fits. Everything else the test still lists is
+a tall mass's roof that is meant to be out of reach, or rubble.
+
+*New:* `tools/probe_splash.gd` — hero shots of the environments for key art,
+a title screen or a briefing background. Sixteen hand-composed frames across
+Mutaha's WIP copy, the heliostat field, the coast road and Three Rivers, in
+three moods (dusk, cold, night). **It never saves a level:** the sun, the
+environment and `glitch_tx_1`'s emission are overridden on the instance after
+it is in the tree, so nothing about how the game looks in play changes.
+
+**Gates.** `check.sh --changed`: **PASS**. Mutaha's WIP copy rebaked again —
+21742 navmesh vertices, 3289 cover points, every route still walks.
+`test_block_reach.gd FOLDER=estates`: as above. `smoke.sh`/`test.sh`: not run
+this pass.
+
+**Needs the human.**
+
+- The three unfinished roofs. Each is one flight that bakes but will not join
+  its deck. `VERBOSE=1` prints where the path stops, which is where to look.
+- **The splash frames are lit by a script, not by the game.** If any of them is
+  worth keeping as the game's look, the grade has to move into the levels'
+  own `WorldEnvironment` — and `glitch_tx_1` needs real emission, which is the
+  same material change the monolith-texture note has been asking for.
+- The two heliostat frames are the weakest of the sixteen; that level's own sky
+  is much brighter than the town's and its horizon still washes out at an
+  exposure the rest can take.
+- Still not played.
+
+**Blocked / next.** The three roofs; then `block_prefabs.gd --only`, and the
+`glitch_tx_1` scale-and-emission question, which the splash pass has now made
+a visual decision rather than a cleanup.
+
+---
+
 ## 2026-09-28 (5) — the ramps the balconies were eating
 
 **Landed** (`d9b3a361`). The human sent a screenshot of a gallery block whose
