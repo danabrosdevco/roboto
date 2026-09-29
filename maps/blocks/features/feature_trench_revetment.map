@@ -599,6 +599,10 @@
 ( 74 119 18 ) ( 74 127 9 ) ( 74 119 9 ) PSX_Textures/fabric_tx_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 ( 74 127 9 ) ( 74 127 18 ) ( 58 127 18 ) PSX_Textures/fabric_tx_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
+}
+// entity 1
+{
+"classname" "func_detail_illusionary"
 // brush 66
 {
 ( -35 125 -62 ) ( 35 -125 -62 ) ( 35 125 -62 ) PSX_Textures/wood_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1

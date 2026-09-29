@@ -479,6 +479,19 @@ func _trench_revetment() -> void:
 			box(Vector3(x0 + side * 0.05, y - 0.08, -2.2), Vector3(x0 + side * 0.2, y + 0.08, 0.45), WOOD_DARK)
 		for course in 2:
 			bag_course(Vector2(side * 2.05, -4.0), Vector2(side * 2.05, 4.0), 0.0 + course * 0.28, course, 0.5)
+	# THE DUCKBOARDS ARE MESH ONLY, and the walls and parapet above are not.
+	#
+	# The deck is 80 mm of planking laid on the trench floor, and a revetment
+	# is placed by eye on a trench the generator cut — so it ends up sitting a
+	# little proud of the floor it is lining. In Valley Basin that is 0.30 m,
+	# and move_and_slide has no step-up, so the leading edge of the boards is a
+	# wall you cannot walk onto. Three of them across the two trenches there,
+	# each at about 50°, and the map reads as a post in the floor.
+	#
+	# With no collider the trench's own floor is the walking surface the whole
+	# way and the boards are what they look like: boards. The battens go with
+	# them — they are under the deck and would leave the same lip.
+	no_collision()
 	box(Vector3(-1.1, -3.9, -1.95), Vector3(1.1, 3.9, -1.87), WOOD)
 	for y in [-3.2, -1.0, 1.2, 3.4]:
 		box(Vector3(-1.2, y - 0.1, -2.0), Vector3(1.2, y + 0.1, -1.95), WOOD_DARK)

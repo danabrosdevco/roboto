@@ -38,7 +38,7 @@ most wants and least often gets:
 
 
 
-## 2026-09-28 (8) — the craters you could not climb out of
+## 2026-09-28 (8) — the craters you could not climb out of, and the duckboards
 
 **Landed.** `feature_crater_rim` now has **two breaches** in its ring, and one
 crater in `maps/valley_basin_level.tscn` moved 28 m off a trench line.
@@ -66,26 +66,54 @@ the shell hole moved instead: local z −106 → −134. **That is the only chan
 the human's authored dressing, and it is one number.** 19 of 19 craters clear
 now, 22 of 22 on Coast Road.
 
+**The duckboards in the trenches are mesh only now.** Same fault as the crater
+rim, a different piece. `feature_trench_revetment`'s deck is 80 mm of planking
+laid on the trench floor, and a revetment placed by eye on a generator-cut
+trench ends up sitting slightly PROUD of the floor it is lining — 0.30 m in
+Valley Basin. `move_and_slide` has no step-up, so the leading edge of the
+boards is a wall, and in play that reads as a post in the floor. Three of them
+across the two trenches, each at about 50°. With no collider the trench's own
+floor is the walking surface the whole way and the boards are what they look
+like. The battens went with them; they sit under the deck and would leave the
+same lip. The plank walls, posts and parapet keep their collision.
+
+**Finding it took three goes, and the two wrong ones are the lesson.** Walking
+between revetment centres cuts the bank, because the trench meanders — 31
+"blockers" that were all just the line leaving the trench. Walking the piece
+in isolation found nothing, because the piece IS clean: the step only exists
+once it is placed against terrain. What worked was walking the `TerrainPath`'s
+own curve — the centreline by definition — and printing the COLLIDER under
+each step, which turned "something blocks the trench" into `Revet04`'s deck.
+
+`tools/probe_path_walk.gd` (new) does that for any level: `LEVEL=` and an
+optional `PATHS=`. It flags deliberate obstacles too, and should — a
+checkpoint barrier, a rubble pile and a queue of vehicles all stop a body on
+Coast Road's centreline, and all three are meant to. It is a look-here tool.
+
 **Gates.** `check.sh --changed`: **PASS**, 42 scripts and 48 scenes. Craters
 re-walked on both levels after every change.
 
 **Needs the human.**
 
-- **Valley Basin's navmesh was rebaked** — moving the crater made it stale by
-  ~2 m over a 12 m patch. `git diff` on that level is **three lines**: the
-  navmesh's two data lines and the crater's transform. Nothing else moved.
-  The bake used the level's own NavigationMesh settings.
-- The block was regenerated, so any TrenchBroom edit to `feature_crater_rim`
-  since it was committed is gone. It was clean in git; a backup of both the
-  `.map` and the `.tscn` is in this session's scratch if it turns out not to
-  have been.
+- **Valley Basin's navmesh was rebaked twice** — moving the crater and then
+  taking the collision off the duckboards both made it stale. `git diff` on
+  that level is still **three lines**: the navmesh's two data lines and the
+  crater's transform. Nothing else moved.
+- **Two blocks were regenerated** — `feature_crater_rim` and
+  `feature_trench_revetment` — so any TrenchBroom edit to either
+  since it was committed is gone. Both were clean in git; backups of all four
+  `.map` and `.tscn` files are in this session's scratch if that turns out not
+  to have been.
 - `ground_berm_ring` was checked for the same fault and is fine — it is graded
   at 5–11° by construction.
 - Not played. The fix is measured against collision geometry, not felt.
 
-**Blocked / next.** Worth pointing `probe_crater_escape.gd` at other dressing
-that makes closed lines — sandbag walls, dragon's teeth, t-walls — wherever one
-rings a low spot. It takes `LEVEL=` and `PIECE=`.
+**Blocked / next.** The pattern behind both of these is the same and is worth
+sweeping properly: dressing that a NAVMESH test says is fine and a body cannot
+get past. `probe_crater_escape.gd` finds it where something rings a low spot,
+`probe_path_walk.gd` where something sits on a route. Worth pointing the first
+at other closed lines — sandbag walls, dragon's teeth, t-walls — and the second
+at every level with a TerrainPath in it.
 
 ---
 
