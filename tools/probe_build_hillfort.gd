@@ -195,7 +195,10 @@ const SUMMIT_PIECES: Array = [
 	# ── THE GATE. You cannot walk straight in: the checkpoint sits across the
 	# line from the gate, angled to the road, so the way through is a turn.
 	["fortifications/fort_checkpoint", -28.0, 30.0, 40.0],
-	["fortifications/fort_dragon_teeth", -28.0, 8.0, 50.0],
+	# The dragon's teeth came out. Moving the dish forward off its mount grew
+	# its footprint into them, and every spot left in the gate quarter clashed
+	# with the checkpoint or the yard cover. The checkpoint already makes the
+	# way in a turn, which was all the teeth were adding.
 	["features/feature_watchtower", -52.0, 34.0, 0.0],
 	["fortifications/fort_sentry_turret", -8.0, 42.0, 215.0],
 	["props/prop_sandbag_nest", -6.0, 30.0, 0.0],
@@ -380,7 +383,9 @@ const OBJECTIVES: Array = [
 	# snapped to was a scrap inside the piece.
 	["Hillfort_Dish", "obj_hillfort_dish", "The Relay Dish", -12.0, -262.0, 132.0],
 	["Hillfort_Hall", "obj_hillfort_hall", "Data Hall", 34.0, -266.0, 132.0],
-	["Hillfort_Power", "obj_hillfort_power", "Power Yard", 74.0, -256.0, 132.0],
+	# Beside the plant, not on it: at the generator's own spot this reported
+	# cut off the moment a rebake moved the walkable cells a hair.
+	["Hillfort_Power", "obj_hillfort_power", "Power Yard", 68.0, -240.0, 132.0],
 	["Hillfort_Postern", "obj_hillfort_postern", "The Postern", 54.0, -325.0, 132.0],
 	# The extraction point, on the hall roof. Its height is the ROOF's, so the
 	# reach probe's offset means something: an anchor left at ground level here
@@ -426,6 +431,9 @@ const WALL_HALF := Vector2(60.0, 48.0)
 ## run, because that is the side the road climbs from; _installation() checks
 ## the road's own centreline passes through the opening.
 const GATE_AT := -48.0
+## fort_wall is 3.2 m thick. The side runs are offset by half of it so the ring
+## butts at the corners instead of interpenetrating.
+const WALL_THICK := 3.2
 ## The postern, in the north run — the way OUT, and where the level exit sits.
 const POSTERN_AT := 24.0
 ## The data hall, and how far up its walkable roof is. compute_data_hall is
@@ -434,7 +442,7 @@ const HALL_AT := Vector2(4.0, -12.0)
 const HALL_ROOF := 9.8
 
 
-## The ring, built rather than typed: eighteen segments, one of them the gate.
+## The ring, built rather than typed: eighteen segments, two of them gates.
 ## Same [piece, x, z, yaw] shape as SUMMIT_PIECES, offsets from the summit.
 func wall_pieces() -> Array:
 	if OS.get_environment("NOWALL") != "":
@@ -452,19 +460,21 @@ func wall_pieces() -> Array:
 		# leave by the back, which is where the level exit is.
 		out.append([("fortress/fort_gate" if is_equal_approx(x, POSTERN_AT)
 				else "fortress/fort_wall"), x, -WALL_HALF.y, 90.0])
+	# THE SIDE RUNS ARE PUSHED OUT BY HALF THE WALL'S THICKNESS, so their inner
+	# face lands exactly on the end of the runs above rather than inside them.
+	# At WALL_HALF.x the two interpenetrated by 1.6 m at every corner — four
+	# lumps of doubled brushwork that z-fight in game. Butted, they share a
+	# face and nothing else.
 	for z: float in [-36.0, -12.0, 12.0, 36.0]:
-		out.append(["fortress/fort_wall", -WALL_HALF.x, z, 0.0])
-		out.append(["fortress/fort_wall", WALL_HALF.x, z, 0.0])
-	# FOUR SPURS, and they are the reason the postern does not simply hand the
-	# squad a second front door. Without them the strip between the wall and
-	# the plateau's lip runs all the way round, so anything can walk to
-	# whichever gate is undefended — the ring test went from holding on three
-	# bearings to holding on none the moment the postern went in. These cut
-	# that strip into pockets: the postern's pocket reaches the extraction
-	# point and nothing else, so the only way IN is still the south gate.
-	for x: float in [-66.0, 66.0]:
-		out.append(["fortress/fort_wall", x, WALL_HALF.y, 90.0])
-		out.append(["fortress/fort_wall", x, -WALL_HALF.y, 90.0])
+		out.append(["fortress/fort_wall", -WALL_HALF.x - WALL_THICK * 0.5, z, 0.0])
+		out.append(["fortress/fort_wall", WALL_HALF.x + WALL_THICK * 0.5, z, 0.0])
+	# THE FOUR SPURS ARE GONE. They were meant to cut the strip outside the
+	# ring into pockets so the postern could not be walked round to, and the
+	# ring test says plainly that they did not: it read the wall as holding on
+	# none of six bearings with them exactly as it did without. What they DID
+	# do was drive 6 m into the end of each side run — by far the worst
+	# overlapping brushwork on the piece. Geometry that fails its own test and
+	# costs that much comes out.
 	return out
 
 
@@ -515,25 +525,27 @@ func _installation() -> int:
 		var note := ""
 		# SHELF_HALF is a margin for things that stand ON the plateau. The wall
 		# ring is measured against the pad itself, because reaching the lip is
-		# what a curtain wall and its spurs are FOR.
+		# what a curtain wall is FOR.
 		var room := PAD_HALF if ring else SHELF_HALF
 		if absf(centre.x) + rot.x > room.x or absf(centre.y) + rot.y > room.y:
 			note = "   OFF THE SHELF"
 			bad += 1
 		for b: Array in boxes:
-			# A curtain wall is SUPPOSED to touch itself. Segments meeting at a
-			# corner share ground and that is what makes it a wall rather than
-			# a row of slabs, so the ring is only checked against everything
-			# else, never against its own pieces.
-			if ring and bool(b[3]):
-				continue
 			var d: Vector2 = (centre - (b[1] as Vector2)).abs() - rot - (b[2] as Vector2)
 			# MARGIN, not zero. These get dressed later and grow parapets,
 			# handrails and cable trays; touching now is overlapping then.
+			#
+			# THE RING IS THE EXCEPTION, and only just. A curtain wall has to
+			# touch itself or it is a row of slabs, so ring-against-ring is
+			# allowed to meet at a face — but NOT to interpenetrate, which is
+			# what this used to skip entirely. Skipping it hid four corners
+			# driven 1.6 m into each other and four spurs driven 6 m in, all of
+			# which z-fight in game. Butt joints pass; overlaps do not.
+			var allow: float = -0.05 if (ring and bool(b[3])) else MARGIN
 			var gap: float = maxf(d.x, d.y)
-			if gap < MARGIN:
+			if gap < allow:
 				note = "   %s %s by %.1f m" % [
-						"OVERLAPS" if gap < 0.0 else "crowds", b[0], MARGIN - gap]
+						"OVERLAPS" if gap < 0.0 else "crowds", b[0], allow - gap]
 				bad += 1
 		boxes.append([str(p[0]).get_file(), centre, rot, ring])
 		print("   %-38s %8.0fm %8.0fm %6.0fx%.0f%s" % [
@@ -721,6 +733,13 @@ func _scene(by_name: Dictionary) -> String:
 	out.append("fog_sky_affect = 0.3")
 	out.append("fog_height = -60.0")
 	out.append("fog_height_density = 0.004")
+	# Glow, so the machines' seams read as light rather than as a pale stripe.
+	# glitch_tx_1 carries emission now; without this the level has the emission
+	# and none of the bloom.
+	out.append("glow_enabled = true")
+	out.append("glow_intensity = 0.55")
+	out.append("glow_bloom = 0.05")
+	out.append("glow_hdr_threshold = 1.0")
 	out.append("")
 
 	var trail: Array = by_name["Trailhead"]

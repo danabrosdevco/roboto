@@ -38,7 +38,7 @@ most wants and least often gets:
 
 
 
-## 2026-09-29 — the hill map is called hillfort, and its level file is the source now
+## 2026-09-29 — hillfort: the name, the source rule, the overlaps and the glow
 
 **Landed.** `maps/ascent_level.tscn` → **`maps/hillfort_level.tscn`**, with
 everything that hangs off it: the sketch (`Env/terrain/sketches/hillfort.png`),
@@ -65,15 +65,80 @@ the terrain data file does not exist until the first bake and an `ext_resource`
 pointing at a missing file is the silent-null bug `check.sh` hunts for: build,
 bake terrain, build `--force`, bake navmesh.
 
+**Overlapping brushes, and the glow.** Two things the human found by looking at
+it, which is the only instrument I do not have.
+
+**`fort_wall` and `fort_gate` were 4 and 11 overlapping brush pairs out of 5
+and 8 brushes.** The seam strip ran 0.35 m INSIDE the wall with its front face
+exactly coplanar with the wall's — two solids in the same place for the
+renderer to pick between per pixel, which is the flicker on a moving camera.
+Each buttress was one brush straddling the wall with its middle 2 m buried.
+The gate ran its wall segments 1.5 m into the piers and buried both ends of the
+lintel in them. Seams sit 60 mm PROUD now, buttresses are two halves either
+side, the wall starts where the pier ends and the lintel spans the opening.
+**Both are 0 pairs.** They are used by no level but this one.
+
+**The ring's own overlaps were mine and the checker was hiding them.** It
+skipped ring-against-ring entirely — "a curtain wall is supposed to touch
+itself" — which also skipped four corners driven 1.6 m into each other and
+four spurs driven 6 m in. The side runs are now offset by half the wall's
+thickness so the corners BUTT, the spurs are gone, and the check allows a
+face-to-face meeting and nothing deeper. Proved it still has teeth by setting
+the offset back to zero: 3 overlaps, then 0.
+
+**The spurs are gone on their own merits too.** They were meant to stop the
+postern being walked round to, and the ring test said plainly that they did
+not — it read the wall as holding on none of six bearings with them exactly as
+without. Geometry that fails its own test and costs that much comes out.
+
+**The dish went 27 pairs → 12.** The one that mattered was structural, not
+cosmetic: the back of the bowl sat on the elevation pipe and cut through both
+yoke arms — eight panels intersecting the mount that carries them. The bowl is
+set 1.1 m forward along its boresight now and the arms top just above the
+bearing instead of 0.9 m over it. Also the cabin out of the pad's disc, the hub
+inside the first ring of panels, two railing posts that stood inside the yoke.
+The remaining 12 are parts meeting parts — trunking into the pedestal, the glow
+band and grating collar sleeving the tapered drum, the pipe through its own
+bearings, the strut into the hub. No coplanar visible faces, so nothing
+z-fights; that is normal brushwork and I have left it.
+
+`tools/probe_brush_overlap.gd` (new) is what found all of it. It puts each
+brush's hull in its own body and asks the physics server, because an AABB test
+on a dish of 48 tilted panels reports almost every pair and is worthless. The
+hulls are shrunk 4% first, so a butt joint passes and only a hull reaching
+INSIDE another is reported.
+
+**The glow was never in the game, and I should have been plainer about that.**
+`textures/PSX_Textures/glitch_tx_1.tres` was a plain `StandardMaterial3D` with
+an albedo texture and nothing else — no emission, ever. The green seams in the
+splash frames came from `probe_splash.gd` setting `emission_enabled` on the
+material **at runtime, in memory, never saved**. Its own comment says so and
+the last two reports listed it as open, but a screenshot is a claim and that
+one was making a claim about lighting the game did not have.
+
+It does now: emission on at `Color(0.45, 1, 0.6)` × 0.9, and glow in the
+Hillfort environment so it blooms. **Blast radius: 26 blocks carry that
+texture**, so `compute_obelisk` and `compute_monolith` light up on Mutaha, its
+WIP copy and Coast Road as well. Those levels' own `WorldEnvironment` has no
+glow, so they get the emission and not the bloom until somebody turns it on.
+
 **Gates.** `check.sh --changed`: **PASS**. Everything re-measured after the
-rename and the numbers are identical to before it — 24526 navmesh vertices,
-**7 stations reached, 29 objective anchors, 0 cut off**, longest walk 897 m,
-relay feet worst 0.00 m off the plateau. `probe_path_walk.gd`: one step, the
+rename, and again after the brush and glow work: **24290 navmesh vertices,
+7 stations reached, 29 objective anchors, 0 cut off**, longest walk 895 m,
+relay feet worst 0.00 m off the plateau, and `probe_brush_overlap.gd` clean on
+both wall pieces. `probe_path_walk.gd`: one step, the
 fort gate's own pier on the road centreline, which is the gate. Two sightlines
 still blocked by under 5 m by hills on their own approach. **Never launched.**
 
 **Needs the human.**
 
+- **The glow is now on across three other levels.** `compute_obelisk` and
+  `compute_monolith` on Mutaha, its WIP copy and Coast Road all light up,
+  because they share `glitch_tx_1`. Judge it there as well as here — and their
+  `WorldEnvironment` has no glow, so they get emission without bloom.
+- **The dragon's teeth came out of the gate quarter**, because the dish grew
+  when it moved off its mount and every spot left clashed. The checkpoint
+  already makes the way in a turn; say if they are missed.
 - **Nothing on the board mentions this level**, under either name. It is not in
   any mission and the coordinator may not know it exists.
 - The scale is still the open question from the last entry: 132 m.

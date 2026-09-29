@@ -941,18 +941,22 @@ func _relay_dish() -> void:
 	var axis_z := 13.5
 	# The vertex sits BEHIND the elevation axis, so the bowl hangs forward over
 	# its mount the way a real one does instead of balancing on its own middle.
-	var centre := Vector3(-0.6, 0.0, axis_z)
+	# Set FORWARD along the boresight, clear of the mount. At the axis itself
+	# the back of the bowl sat on the elevation pipe and cut through both yoke
+	# arms — eight panels intersecting the thing that is supposed to carry them.
+	var centre := Vector3(-0.6, 0.0, axis_z) + Basis(Vector3(0, 1, 0), deg_to_rad(35.0)) * Vector3(0.0, 0.0, 1.1)
 
 	# ── Ground works. The plinth is 0.4 m and no more: a step nothing can climb,
 	# in the middle of a compound, is a collar of unwalkable ground.
 	cylinder(Vector3(0.0, 0.0, -0.4), 5.6, 0.8, 16, CONCRETE)
 	cylinder(Vector3(0.0, 0.0, 0.4), 4.6, 0.3, 16, PAD)
 	# The equipment cabin at the foot and the trunking that leaves it.
-	box(Vector3(3.6, -3.2, 0.4), Vector3(8.4, 1.8, 3.8), CLAD)
-	box(Vector3(3.5, -3.3, 3.8), Vector3(8.5, 1.9, 4.1), METAL)
-	box(Vector3(3.5, -2.6, 1.1), Vector3(3.62, -0.6, 2.8), GLOW)
-	pipe(Vector3(3.6, -0.9, 3.4), Vector3(1.9, -0.9, 3.4), 0.2, METAL)
-	pipe(Vector3(1.9, -0.9, 3.4), Vector3(1.9, -0.9, 8.4), 0.2, METAL)
+	# Clear of the pad's 4.6 m disc, which it used to stand a metre inside.
+	box(Vector3(4.9, -3.2, 0.4), Vector3(9.7, 1.8, 3.8), CLAD)
+	box(Vector3(4.8, -3.3, 3.8), Vector3(9.8, 1.9, 4.1), METAL)
+	box(Vector3(4.8, -2.6, 1.1), Vector3(4.92, -0.6, 2.8), GLOW)
+	pipe(Vector3(4.9, -0.9, 3.4), Vector3(2.6, -0.9, 3.4), 0.2, METAL)
+	pipe(Vector3(2.6, -0.9, 3.4), Vector3(2.6, -0.9, 8.4), 0.2, METAL)
 
 	# ── The pedestal: a tapered drum, a lit band, a walkway collar under the
 	# turntable.
@@ -960,6 +964,10 @@ func _relay_dish() -> void:
 	cylinder(Vector3(0.0, 0.0, 4.2), 3.02, 0.35, 16, GLOW)
 	cylinder(Vector3(0.0, 0.0, 8.5), 3.6, 0.3, 16, GRATING)
 	for i in 12:
+		# Three and nine o'clock are where the yoke arms come down. A post there
+		# stands inside one.
+		if i == 3 or i == 9:
+			continue
 		var a := TAU * i / 12.0
 		var r := 3.5
 		pipe(Vector3(cos(a) * r, sin(a) * r, 8.8), Vector3(cos(a) * r, sin(a) * r, 9.9), 0.07, METAL)
@@ -971,7 +979,9 @@ func _relay_dish() -> void:
 
 	# ── The yoke, and the elevation axis through it.
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-1.0, 2.9 * s - 0.6, 9.7), Vector3(1.0, 2.9 * s + 0.6, axis_z + 0.9), CLAD)
+		# Topping just above the axis, not 0.9 m over it: the arms only have to
+		# reach the bearing, and every centimetre above it is in the bowl.
+		box(Vector3(-1.0, 2.9 * s - 0.6, 9.7), Vector3(1.0, 2.9 * s + 0.6, axis_z + 0.2), CLAD)
 	pipe(Vector3(0.0, -3.7, axis_z), Vector3(0.0, 3.7, axis_z), 0.55, METAL, 10)
 	# The back strut from the axis into the dish's hub.
 	beam(Vector3(0.0, 0.0, axis_z), centre + tilt * Vector3(0.0, 0.0, -1.5), 0.8, METAL)
@@ -991,7 +1001,9 @@ func _relay_dish() -> void:
 	var hub: Array = []
 	for i in 16:
 		var a := TAU * i / 16.0
-		hub.append(centre + tilt * Vector3(cos(a) * 1.75, sin(a) * 1.75, k * 1.75 * 1.75))
+		# 1.68, not 1.75: the inner ring of panels starts at 1.7 and the hub used
+		# to reach past it into them.
+		hub.append(centre + tilt * Vector3(cos(a) * 1.68, sin(a) * 1.68, k * 1.68 * 1.68))
 		hub.append(centre + tilt * Vector3(cos(a) * 1.4, sin(a) * 1.4, -1.5))
 	solid(hub, METAL)
 	solid([centre + tilt * Vector3(0.0, 0.0, 0.15),
@@ -1010,13 +1022,16 @@ func _relay_dish() -> void:
 	for i in 16:
 		var a0 := TAU * i / 16.0
 		var a1 := TAU * (i + 1) / 16.0
-		pipe(centre + tilt * Vector3(cos(a0) * 12.0, sin(a0) * 12.0, k * 144.0 + 0.12),
-				centre + tilt * Vector3(cos(a1) * 12.0, sin(a1) * 12.0, k * 144.0 + 0.12), 0.24, METAL)
+		pipe(centre + tilt * Vector3(cos(a0) * 12.0, sin(a0) * 12.0, k * 144.0 + 0.28),
+				centre + tilt * Vector3(cos(a1) * 12.0, sin(a1) * 12.0, k * 144.0 + 0.28), 0.24, METAL)
 	# The feed, on a quadpod at the focus.
 	var focus := centre + tilt * Vector3(0.0, 0.0, 1.0 / (4.0 * k))
 	for i in 4:
 		var a := TAU * i / 4.0 + TAU / 8.0
-		beam(centre + tilt * Vector3(cos(a) * 11.2, sin(a) * 11.2, k * 125.44), focus, 0.24, METAL)
+		# Feet set 0.22 m clear of the dish surface. Started ON it, the quadpod
+		# legs each sank a fifth of their width into a panel.
+		beam(centre + tilt * Vector3(cos(a) * 11.2, sin(a) * 11.2, k * 125.44 + 0.22),
+				focus, 0.24, METAL)
 	var feed: Array = []
 	for dx: float in [-0.95, 0.95]:
 		for dy: float in [-0.95, 0.95]:

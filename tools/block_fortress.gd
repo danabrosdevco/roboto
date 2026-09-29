@@ -726,18 +726,30 @@ func _fort_keep() -> void:
 ## end, and its base is buried 1 m so it sits on uneven ground without a gap.
 func _fort_wall() -> void:
 	box(Vector3(-12.0, -1.0, -1.0), Vector3(12.0, 1.0, 4.5), TECH_WALL)
-	box(Vector3(-12.0, -1.0, 4.1), Vector3(12.0, -0.65, 4.5), SEAM)
+	# THE SEAM SITS PROUD OF THE FACE, not inside it. At y −1.0 … −0.65 it was
+	# 0.35 m deep in the wall's own brush with its front face exactly coplanar
+	# with the wall's — two solids in the same place, and the renderer picking
+	# between them per pixel, which is the flicker you see on a moving camera.
+	box(Vector3(-12.0, -1.06, 4.1), Vector3(12.0, -1.0, 4.5), SEAM)
+	# Each buttress in TWO halves, one either side. As a single brush straddling
+	# the wall, its middle 2 m was buried inside it for nothing.
 	for k in 3:
 		var x := -8.0 + k * 8.0
-		box(Vector3(x - 0.3, -1.6, -1.0), Vector3(x + 0.3, 1.6, 4.0), CLAD)
+		for s: float in [-1.0, 1.0]:
+			box(Vector3(x - 0.3, minf(s * 1.0, s * 1.6), -1.0),
+					Vector3(x + 0.3, maxf(s * 1.0, s * 1.6), 4.0), CLAD)
 
 
 ## A gate for outworks: the same wall with a 12 m opening in it, headed at 6 m.
 ## Wide enough and tall enough that nothing has to think about it.
 func _fort_gate() -> void:
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(s * 6.0, -1.0, -1.0), Vector3(s * 12.0, 1.0, 4.5), TECH_WALL)
-		box(Vector3(s * 6.0, -1.0, 4.1), Vector3(s * 12.0, -0.65, 4.5), SEAM)
+		# The wall run starts where the pier ENDS, at 7.5. It used to start at
+		# 6.0 and drive 1.5 m into it.
+		box(Vector3(s * 7.5, -1.0, -1.0), Vector3(s * 12.0, 1.0, 4.5), TECH_WALL)
+		box(Vector3(s * 7.5, -1.06, 4.1), Vector3(s * 12.0, -1.0, 4.5), SEAM)
 		box(Vector3(s * 6.0, -1.8, -1.0), Vector3(s * 7.5, 1.8, 7.5), TECH_WALL)
-	box(Vector3(-7.5, -1.8, 6.0), Vector3(7.5, 1.8, 7.5), CLAD)
-	box(Vector3(-7.5, -1.8, 7.1), Vector3(7.5, -1.45, 7.5), SEAM)
+	# The lintel spans the OPENING and butts the piers either side. At ±7.5 it
+	# had both its ends buried in them.
+	box(Vector3(-6.0, -1.8, 6.0), Vector3(6.0, 1.8, 7.5), CLAD)
+	box(Vector3(-6.0, -1.86, 7.1), Vector3(6.0, -1.8, 7.5), SEAM)
