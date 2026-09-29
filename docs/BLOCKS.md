@@ -109,9 +109,9 @@ Put a `TerrainScatter` under the terrain and add a layer from
 | `scatter_debris` | Rubble, blocks, tank traps, drums, crates and barriers, in clumps. Kept off steep ground and mountains. |
 | `scatter_wrecks` | Cars and robots, rarely, and allowed onto roads. |
 | `scatter_tech_debris` | Toppled racks, cable runs, network cabinets and drone docks. Rare clumps on flat ground, for the land round a compute site. |
-| `scatter_alpine_snags` | The five standing dead trees, in loose groves (9/ha), upright, off slopes over 32°. 0.35 m collider — you can shoot past a trunk but not walk through it. |
-| `scatter_alpine_deadwood` | Deadfall, log piles, stumps, root plates and erratics (11/ha), laid along the slope. The layer that makes a hillside look like it used to hold trees. |
-| `scatter_alpine_ground` | Tussocks, krummholz and scree, thick (240/ha), no collision, faded out at 190 m. This is the one that stops a valley reading as bare ground. |
+| `scatter_alpine_snags` | The nine standing dead trees, in loose groves (9/ha), upright, off slopes over 32°. 0.35 m collider — you can shoot past a trunk but not walk through it. |
+| `scatter_alpine_deadwood` | Deadfall, log piles, stumps (one burnt out), root plates and erratics (11/ha), laid along the slope. The layer that makes a hillside look like it used to hold trees. |
+| `scatter_alpine_ground` | Tussocks, krummholz and scree at two sizes each, thick (240/ha), no collision, faded out at 190 m. This is the one that stops a valley reading as bare ground. |
 
 How scatter layers behave:
 - **Drawn as MultiMeshes.** A layer uses only the prefab's mesh, so its
@@ -443,19 +443,38 @@ plinth to keep the extent, which is the buildings tool's 27°.
 
 ### Alpine (`maps/blocks/alpine/`)
 
-Dead wood for mountain ground. The valleys on Hillfort played as bare, and
+Twenty-two pieces of dead wood for mountain ground. The valleys on Hillfort
+played as bare, and
 this is what goes on them; nothing here has leaves.
 
-- **Standing:** `alpine_pine_dead` (12.7 m, six whorls of bare branches — the
+**A scatter layer varies yaw and scale and nothing else**, so the only thing
+that breaks up a hillside is the number of distinct SILHOUETTES in its list.
+Five standing trees at nine a hectare repeats badly; nine does not. Each of
+the variants is a different outline on purpose — a fork, a one-sided flag, a
+squat stub, a bare spar — not another pass at the same tree with the seed
+changed.
+
+- **Standing (nine):** `alpine_pine_spar` (13.8 m, nearly bare — two whorls at
+  the top and a long clean spar, a landmark at one per grove),
+  `alpine_pine_dead` (12.7 m, six whorls of bare branches — the
   one that carries a skyline), `alpine_snag_tall` (10.3 m, branchless but for
   the stubs), `alpine_snag_leaning` (8 m, uphill roots pulled clear of the
   soil), `alpine_pine_skeleton` (7.1 m), `alpine_snag_broken` (5.3 m, snapped
   at chest height and still splintered).
-- **Down:** `alpine_deadfall` (9.7 m lying along X with its root plate on
+  `alpine_pine_flagged` (9.3 m, branches on ONE side only, scoured bare on the
+  windward — the most alpine shape there is), `alpine_snag_forked` (9.3 m,
+  forking into two leaders; nothing else here makes a Y against the sky),
+  `alpine_snag_short` (3.9 m, squat and wide).
+- **Down (seven):** `alpine_deadfall_snapped` (broken over a rock on the way
+  down, the halves at an angle), `alpine_stump_burnt` (a shell of charred
+  staves — one in ten says what happened to the rest), `alpine_deadfall`
+  (9.7 m lying along X with its root plate on
   end), `alpine_root_plate` (3.8 m, a disc of soil stood almost vertical),
   `alpine_stump` (2.7 m across its root flare), `alpine_log_pile` (three
   trunks jammed — ready-made cover).
-- **Ground:** `alpine_scrub` (krummholz, 3 m across and knee high),
+- **Ground (six):** `alpine_scrub` (krummholz, 3 m across and knee high),
+  `alpine_scrub_low` and `alpine_tussock_wide` (the same two at another size,
+  which is the difference between ground cover and wallpaper),
   `alpine_tussock` (0.6 m), `alpine_talus` (a 3.5 m scree patch),
   `alpine_erratic` (a lone lichened boulder), `alpine_marker_post` (2.7 m,
   the one MADE thing in the set — a scatter of pure nature reads as

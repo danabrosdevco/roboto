@@ -63,6 +63,14 @@ func _initialize() -> void:
 		"alpine_talus": _talus,
 		"alpine_erratic": _erratic,
 		"alpine_marker_post": _marker_post,
+		"alpine_snag_forked": _snag_forked,
+		"alpine_pine_flagged": _pine_flagged,
+		"alpine_snag_short": _snag_short,
+		"alpine_pine_spar": _pine_spar,
+		"alpine_deadfall_snapped": _deadfall_snapped,
+		"alpine_stump_burnt": _stump_burnt,
+		"alpine_tussock_wide": _tussock_wide,
+		"alpine_scrub_low": _scrub_low,
 	}
 	var dir := base.path_join("alpine")
 	if not DirAccess.dir_exists_absolute(dir):
@@ -392,3 +400,144 @@ func _marker_post() -> void:
 	for i in 3:
 		var a := TAU * i / 3.0 + 0.5
 		rock(Vector3(cos(a) * 0.4, sin(a) * 0.4, -0.02), Vector3(0.26, 0.22, 0.16), 141 + i, SCREE, 7)
+
+
+# ── Variants ─────────────────────────────────────────────────────────────────
+#
+# WHY THERE ARE THIS MANY. A scatter layer varies yaw and scale and nothing
+# else, so the only thing that breaks up a hillside is the number of distinct
+# SILHOUETTES in the list. Five standing trees at nine a hectare repeats badly;
+# nine does not. Each of these is a different outline on purpose — a fork, a
+# one-sided flag, a squat stub, a bare spar — not another pass at the same
+# tree with the seed changed.
+
+
+## A trunk that forks into two leaders at half height. The most useful variant
+## in the set: nothing else here makes a Y against the sky.
+func _snag_forked() -> void:
+	var fork := trunk(Vector3.ZERO, 4.6, 0.5, 0.33, Vector3(0.2, -0.3, 0.0), 151, 3)
+	root_flare(Vector3.ZERO, 0.5, 1.6, 152, 5)
+	var a := trunk(fork, 4.4, 0.26, 0.1, Vector3(1.9, 0.5, 0.0), 153, 3)
+	var b := trunk(fork, 3.5, 0.24, 0.1, Vector3(-1.5, -0.9, 0.0), 154, 3)
+	splinters(a, 0.11, 155, 3)
+	splinters(b, 0.11, 156, 3)
+	no_collision()
+	for i in 3:
+		var z := 5.8 + i * 1.3
+		limb(Vector3(0.9 + i * 0.3, 0.2, z), Vector3(2.2 + i * 0.4, 1.3 - i * 0.9, z - 0.4),
+				0.13, 0.06, BARK, 4)
+
+
+## Wind-flagged: branches on one side only, the windward side scoured bare.
+## The most alpine shape there is, and it reads from a long way off.
+func _pine_flagged() -> void:
+	var top := trunk(Vector3.ZERO, 9.2, 0.42, 0.11, Vector3(1.1, 0.2, 0.0), 161, 6)
+	root_flare(Vector3.ZERO, 0.42, 1.4, 162, 5)
+	no_collision()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 163
+	for i in 6:
+		var t := 0.3 + i * 0.115
+		var z := 9.2 * t
+		var at := Vector3(1.1 * t * t, 0.2 * t * t, z)
+		# A 120° arc downwind instead of a full whorl.
+		for j in 3:
+			var ang := 0.6 + j * 0.5 + rng.randf_range(-0.2, 0.2)
+			var reach := (2.6 - i * 0.3) * rng.randf_range(0.7, 1.0)
+			limb(at, at + Vector3(cos(ang), sin(ang), -0.35) * reach,
+					0.15 - i * 0.015, 0.06, BARK, 4)
+	splinters(top, 0.11, 164, 3)
+
+
+## A squat broken stub, chest high and wide. Fills the gap between the stump
+## and the snapped trunk, and gives the low end of the scatter something that
+## is not a rock.
+func _snag_short() -> void:
+	var top := trunk(Vector3.ZERO, 2.6, 0.72, 0.58, Vector3(0.2, 0.15, 0.0), 171, 2)
+	root_flare(Vector3.ZERO, 0.72, 2.1, 172, 6)
+	splinters(top, 0.58, 173, 8)
+	no_collision()
+	limb(Vector3(0.0, 0.0, 1.5), Vector3(1.5, -1.1, 1.1), 0.2, 0.08, BARK, 4)
+
+
+## The tallest thing in the set at fourteen metres, and nearly bare — two
+## whorls left at the top and a long clean spar below. Scatter one of these
+## per grove and it does the work of a landmark.
+func _pine_spar() -> void:
+	var top := trunk(Vector3.ZERO, 13.6, 0.52, 0.09, Vector3(-0.6, 0.5, 0.0), 181, 8)
+	root_flare(Vector3.ZERO, 0.52, 1.7, 182, 6)
+	no_collision()
+	for i in 2:
+		var t := 0.74 + i * 0.1
+		var at := Vector3(-0.6 * t * t, 0.5 * t * t, 13.6 * t)
+		whorl(at, 4, 1.7 - i * 0.4, 0.5, 0.11, 183 + i)
+	for i in 3:
+		var z := 4.0 + i * 2.2
+		var t := z / 13.6
+		var at := Vector3(-0.6 * t * t, 0.5 * t * t, z)
+		limb(at, at + Vector3(cos(i * 2.1), sin(i * 2.1), -0.3) * 1.1, 0.12, 0.06, BARK, 4)
+	splinters(top, 0.09, 186, 3)
+
+
+## A fallen trunk that broke over something on the way down, the two halves at
+## an angle to each other. Reads differently from the straight deadfall at any
+## yaw, which is the whole point of it.
+func _deadfall_snapped() -> void:
+	limb(Vector3(-3.6, -0.6, 0.5), Vector3(-0.4, 0.0, 1.15), 0.4, 0.3, BARK, 6)
+	limb(Vector3(-0.4, 0.0, 1.15), Vector3(3.4, 1.4, 0.36), 0.28, 0.15, BARK, 5)
+	# What it broke over.
+	rock(Vector3(-0.3, 0.1, 0.35), Vector3(0.9, 0.8, 0.7), 191, ROCK, 11)
+	no_collision()
+	splinters(Vector3(-0.4, 0.0, 1.15), 0.16, 192, 5)
+	for i in 2:
+		limb(Vector3(-2.2 + i * 3.0, -0.3 + i * 0.8, 0.7),
+				Vector3(-1.6 + i * 3.4, -1.6 + i * 2.6, 1.0), 0.13, 0.06, BARK, 4)
+
+
+## A stump burnt out to a shell: black, shattered, the inside gone. One of
+## these in ten says what happened to the rest of the trees.
+func _stump_burnt() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 201
+	# A broken ring rather than a drum — it is what is left of the outside.
+	for i in 7:
+		var a := TAU * i / 7.0 + rng.randf_range(-0.12, 0.12)
+		var h := rng.randf_range(0.5, 1.5)
+		var o := Vector3(cos(a), sin(a), 0.0)
+		limb(Vector3.ZERO + o * 0.45, o * 0.34 + Vector3(0.0, 0.0, h), 0.2, 0.13, SCORCH, 4)
+	root_flare(Vector3.ZERO, 0.55, 1.9, 202, 5)
+	no_collision()
+	for i in 5:
+		var a := TAU * i / 5.0 + 0.4
+		rock(Vector3(cos(a) * rng.randf_range(0.8, 1.7), sin(a) * rng.randf_range(0.8, 1.7), -0.03),
+				Vector3(0.22, 0.2, 0.12), 203 + i, SCORCH, 7)
+
+
+## A broader, flatter grass clump. Two tussocks at 240 a hectare is the
+## difference between ground cover and wallpaper.
+func _tussock_wide() -> void:
+	no_collision()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 211
+	for i in 9:
+		var a := TAU * i / 9.0 + rng.randf_range(-0.35, 0.35)
+		var lean := Vector3(cos(a), sin(a), 0.0) * rng.randf_range(0.3, 0.68)
+		solid([Vector3(cos(a) * 0.14, sin(a) * 0.14, 0.0),
+				Vector3(cos(a + 2.1) * 0.16, sin(a + 2.1) * 0.16, 0.0),
+				Vector3(cos(a + 4.2) * 0.14, sin(a + 4.2) * 0.14, 0.0),
+				lean + Vector3(0.0, 0.0, rng.randf_range(0.2, 0.38))], GRASS)
+
+
+## A small krummholz mat, half the size of the other one and lower. Scrub at
+## two sizes stops a slope looking stencilled.
+func _scrub_low() -> void:
+	no_collision()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 221
+	for i in 7:
+		var a := TAU * i / 7.0 + rng.randf_range(-0.35, 0.35)
+		var out := Vector3(cos(a), sin(a), 0.0) * rng.randf_range(0.5, 1.0)
+		limb(Vector3(0.0, 0.0, 0.12), out + Vector3(0.0, 0.0, rng.randf_range(0.15, 0.4)),
+				0.1, 0.06, BARK, 4)
+	solid([Vector3(-0.3, -0.3, 0.0), Vector3(0.3, -0.3, 0.0), Vector3(0.3, 0.3, 0.0),
+			Vector3(-0.3, 0.3, 0.0), Vector3(0.0, 0.0, 0.26)], BARK)

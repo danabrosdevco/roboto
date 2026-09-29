@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cmhof8t7v5bcg"
+path="res://.godot/imported/alpine_deadfall_snapped.map-212492135e9f8cbaeba1a6e2215b8959.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_deadfall_snapped.map"
+dest_files=["res://.godot/imported/alpine_deadfall_snapped.map-212492135e9f8cbaeba1a6e2215b8959.tres"]
+
+[params]
+

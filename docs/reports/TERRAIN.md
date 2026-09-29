@@ -41,7 +41,8 @@ most wants and least often gets:
 
 ## 2026-09-29 (2) — an alpine set, so the valleys have something in them
 
-**Landed.** `maps/blocks/alpine/` — fourteen pieces of dead wood and mountain
+**Landed.** `maps/blocks/alpine/` — **twenty-two** pieces of dead wood and
+mountain
 ground cover, built by `tools/block_alpine.gd`, plus three ready
 `TerrainScatterLayer`s. **No level was touched**: GAMEPLAY has Hillfort open
 and this is assets only.
@@ -52,6 +53,21 @@ bare snag, an 8 m leaner with its uphill roots pulled clear of the soil, a
 its root plate on end, a root plate on its own, a stump, a log pile. Ground:
 krummholz scrub, tussocks, a scree patch, a lone erratic, and one route marker
 post — a scatter of pure nature reads as wilderness and this world is not that.
+
+**Eight more, because a scatter layer varies yaw and scale and nothing else.**
+The only thing that breaks up a hillside is the number of distinct SILHOUETTES
+in the list — five standing trees at nine a hectare repeats badly, nine does
+not. So the variants are each a different OUTLINE rather than another pass at
+the same tree with the seed changed: `alpine_snag_forked` makes a Y, which
+nothing else here did; `alpine_pine_flagged` has its branches on one side only,
+scoured bare on the windward, which is the most alpine shape there is;
+`alpine_pine_spar` is 13.8 m and nearly bare, a landmark at one per grove;
+`alpine_snag_short` is squat and wide. Plus `alpine_deadfall_snapped` (broken
+over a rock on the way down), `alpine_stump_burnt` (a shell of charred staves,
+one in ten saying what happened to the rest), and second sizes of the tussock
+and the scrub — which is the difference between ground cover and wallpaper.
+Scale ranges widened at the same time, to 0.7–1.35 on the snags and 0.65–1.5
+on the ground.
 
 **Everything woody comes off one helper.** `limb()` is a tapered hull between
 two points in any direction; `trunk()` stacks those with a wander so a tree
@@ -66,7 +82,7 @@ there — but a hand-placed knee-high stone with a collider punches a hole in
 the navmesh, and the trench duckboards and the cable run this session were the
 same fault in a different shape.
 
-**Gates.** `check.sh --changed`: **PASS**, 29 scripts and 75 scenes and
+**Gates.** `check.sh --changed`: **PASS**, 29 scripts and 83 scenes and
 resources. `test_scatter.gd`: **PASS**, and it picked up both new collidable
 layers on its own — a layer whose collider is fatter than the smallest thing
 it spreads is exactly the fault it exists to catch, and neither is.

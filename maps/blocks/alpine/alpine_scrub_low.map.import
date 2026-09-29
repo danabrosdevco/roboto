@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dppeapayyr21p"
+path="res://.godot/imported/alpine_scrub_low.map-867da24e572992e23a371ceb25446ec8.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_scrub_low.map"
+dest_files=["res://.godot/imported/alpine_scrub_low.map-867da24e572992e23a371ceb25446ec8.tres"]
+
+[params]
+

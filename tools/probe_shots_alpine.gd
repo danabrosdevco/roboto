@@ -20,6 +20,9 @@ const ORDER: Array = [
 	"alpine_stump", "alpine_marker_post", "alpine_deadfall",
 	"alpine_log_pile", "alpine_erratic", "alpine_scrub",
 	"alpine_talus", "alpine_tussock",
+	"alpine_pine_spar", "alpine_snag_forked", "alpine_pine_flagged",
+	"alpine_snag_short", "alpine_deadfall_snapped", "alpine_stump_burnt",
+	"alpine_scrub_low", "alpine_tussock_wide",
 ]
 
 ## The mix a hillside gets: piece, per-hectare weight.
@@ -29,6 +32,9 @@ const GROVE: Array = [
 	["alpine_snag_leaning", 3], ["alpine_pine_skeleton", 4], ["alpine_stump", 5],
 	["alpine_deadfall", 3], ["alpine_log_pile", 2], ["alpine_erratic", 3],
 	["alpine_root_plate", 2], ["alpine_marker_post", 1],
+	["alpine_tussock_wide", 34], ["alpine_scrub_low", 12],
+	["alpine_pine_spar", 2], ["alpine_snag_forked", 4], ["alpine_pine_flagged", 4],
+	["alpine_snag_short", 5], ["alpine_deadfall_snapped", 3], ["alpine_stump_burnt", 3],
 ]
 
 
@@ -44,7 +50,7 @@ func _initialize() -> void:
 	_ground(world, 260.0)
 	_light(world)
 
-	var x := -44.0
+	var x := -73.0
 	for n: String in ORDER:
 		var packed := load("res://maps/blocks/alpine/%s.tscn" % n) as PackedScene
 		if packed == null:
@@ -77,8 +83,8 @@ func _initialize() -> void:
 	world.add_child(cam)
 	cam.make_current()
 	var shots: Array = [
-		["01_lineup", Vector3(0.0, 9.0, 62.0), Vector3(0.0, 4.0, 0.0), 58.0],
-		["02_lineup_low", Vector3(-30.0, 2.0, 26.0), Vector3(14.0, 4.0, 0.0), 62.0],
+		["01_lineup", Vector3(0.0, 16.0, 168.0), Vector3(0.0, 5.0, 0.0), 54.0],
+		["02_lineup_low", Vector3(-58.0, 2.2, 34.0), Vector3(20.0, 5.0, 0.0), 62.0],
 		["03_grove", Vector3(0.0, 2.0, 40.0), Vector3(0.0, 6.0, 150.0), 65.0],
 		["04_grove_high", Vector3(-40.0, 46.0, 30.0), Vector3(10.0, 0.0, 140.0), 55.0],
 	]
