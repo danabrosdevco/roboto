@@ -689,6 +689,77 @@ func entity(classname: String) -> void:
 		_ghost_from = _brushes.size()
 
 
+## EVERY BRUSH AGAINST EVERY OTHER BRUSH, as solids. Returns `[i, j, AABB]` for
+## each overlapping pair, worst first, where the AABB is the space the two
+## share. Call it from a tool's clearance check, before the file is written.
+##
+## WHY NOT FOOTPRINTS. Every block tool has a clearance check and every one of
+## them tests the thing it was written for. block_arena compared its 56 cover
+## footprints, printed "none overlapping", and wrote a map with 248 overlapping
+## brush pairs in it: it never looked at the ground, the lanes, the tower, the
+## bases or the skyline, and it compared 2D boxes rather than solids. The
+## fortress ring checker had the same fault. A checker with categories hides
+## every fault in the category it skips, so this one has no categories.
+##
+## A brush IS an intersection of half-spaces, which is exactly what
+## Geometry3D.compute_convex_mesh_points wants, so nothing is hulled here: a
+## brush corners itself out of its own face planes. Two brushes overlap when
+## the union of their planes still encloses a volume.
+##
+## EVERY PLANE MOVES IN BY `margin` FIRST, because brushes are MEANT to share
+## faces — butting a wall against a wall is the whole idea of brush geometry. A
+## shared face erodes to nothing, a real interpenetration survives. A quarter
+## unit reports anything sharing more than half a unit, 1.6 cm, which is tight
+## and right for geometry written on a one-unit grid.
+##
+## THE AABB OVERSTATES A SLOPED OVERLAP: a sliver 0.3 m thick lying up a ramp
+## has a bounding box as tall as the ramp climbs. Read its smallest dimension
+## as the depth, not its height.
+func brush_overlaps(margin := 0.25) -> Array:
+	var planes: Array = []
+	var boxes: Array = []
+	for b in _brushes.size():
+		var pl: Array[Plane] = []
+		for face: Dictionary in _brushes[b]:
+			var n: Vector3 = face.n
+			pl.append(Plane(n, n.dot(face.poly[0])))
+		planes.append(pl)
+		boxes.append(_hull_box(Geometry3D.compute_convex_mesh_points(pl)))
+	var out: Array = []
+	for i in _brushes.size():
+		if (boxes[i] as AABB).size == Vector3.ZERO:
+			continue            # degenerate; brush() already warned about it
+		for j in range(i + 1, _brushes.size()):
+			if (boxes[j] as AABB).size == Vector3.ZERO:
+				continue
+			if not (boxes[i] as AABB).intersects(boxes[j] as AABB):
+				continue
+			var both: Array[Plane] = []
+			for p: Plane in planes[i]:
+				both.append(Plane(p.normal, p.d - margin))
+			for p: Plane in planes[j]:
+				both.append(Plane(p.normal, p.d - margin))
+			var shared := _hull_box(Geometry3D.compute_convex_mesh_points(both))
+			if shared.size == Vector3.ZERO:
+				continue        # they touch, which is the point of brushes
+			out.append([i, j, shared])
+	out.sort_custom(func(a, b): return _box_volume(a[2]) > _box_volume(b[2]))
+	return out
+
+
+func _hull_box(pts: PackedVector3Array) -> AABB:
+	if pts.size() < 4:
+		return AABB()
+	var box := AABB(pts[0], Vector3.ZERO)
+	for p: Vector3 in pts:
+		box = box.expand(p)
+	return box
+
+
+func _box_volume(box: AABB) -> float:
+	return box.size.x * box.size.y * box.size.z
+
+
 func _map_text() -> String:
 	var lines := PackedStringArray(["// Game: Roboto", "// Format: Valve", "// entity 0", "{",
 			"\"mapversion\" \"220\"", "\"wad\" \"\"", "\"classname\" \"worldspawn\""])

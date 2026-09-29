@@ -135,6 +135,56 @@ whole folder's prefabs headless:
 godot --headless --path . --script res://tools/block_prefabs.gd -- maps/blocks/props --force
 ```
 
+A LEVEL is not a prefab and does not update on its own. A level scene holds the
+built geometry — one mesh per entity, one `CollisionShape3D` per brush, all
+saved into the `.tscn` — so editing its `.map` changes nothing in game until it
+is rebuilt. In the editor that is opening the level, selecting its
+`FuncGodotMap` and pressing **Build**; without one:
+
+```bash
+LEVEL=res://maps/proving_level.tscn godot --headless --path . --script res://tools/level_map_rebuild.gd
+```
+
+It replaces only the map node's children — objectives, spawns, patrols, lights
+and the navmesh are left exactly as they were, and the level's own scripts
+never run. **Re-bake the navmesh afterwards** if any walkable surface moved.
+
+## Overlapping brushes
+
+Two brushes in the same space z-fight, waste faces, and read in TrenchBroom as
+a mess. Brushes are MEANT to share faces — a wall butted against a wall is the
+whole idea — so the test is interpenetration, not contact:
+
+```bash
+MAP=res://maps/proving/proving_level.map godot --headless --path . --script res://tools/probe_map_overlap.gd
+```
+
+It reads a written file and names each pair the way TrenchBroom numbers them.
+`brush_overlaps()` in `block_buildings.gd` is the same test against a tool's own
+brushes, for calling from its clearance check before it writes anything —
+`block_arena.gd` does, and names the stage that built each one.
+
+**Use it, because a footprint check does not see this.** Every block tool has a
+clearance check and every one of them tests what it was written for.
+`block_arena` compared its 56 cover footprints, printed "none overlapping", and
+wrote a map with **248 overlapping brush pairs** in it. They came in families,
+one line of code each, repeated by a table: a cap laid over the top of the wall
+it caps rather than onto the end of it (56 pairs), a coping run through the
+piers under it (32), a lattice drawn straight through itself (44), lanes laid
+as plates on the floor so everything standing on one sank into it (54).
+
+Three habits that avoid nearly all of it:
+
+- **A cap stops the thing it caps.** `box(0, h - cap)` then `box(h - cap, h)`,
+  never `box(0, h)` and a cap over it.
+- **One member runs through a joint and the others butt it.** Pick the one
+  that is horizontal wherever you can: its faces are level, so the others can
+  end on them exactly. `slant_post()` in `block_doodads.gd` is `beam()` with
+  level ends for this — a mitred end cannot butt a level face.
+- **Do not sink a thing into the floor to hide its edge.** `ramp()` fills from
+  a base below its surface because a hexahedron cannot come to an edge; a
+  six-point `solid()` is the same wedge standing ON the floor.
+
 ## Making more
 
 | Tool | Writes |

@@ -274,6 +274,25 @@ func rock(c: Vector3, r: Vector3, seed: int, tex: Variant = ROCK, n: int = 14, t
 	solid(pts, tex, 4)
 
 
+## A square bar from a to b with LEVEL ends: the section is a `w` square in
+## plan, so however far the bar leans, its top and bottom are flat and sit at
+## exactly a.z and b.z.
+##
+## post() above is upright and axis-aligned; beam() below caps its ends square
+## to its own axis, which is right for a
+## strut in open air and wrong anywhere the bar has to meet something
+## horizontal. The proving tower's derrick legs were beams: every one of them
+## stood 0.11 m up through the box on top and through all four rings it passed,
+## because a mitred end cannot butt a level face. A leaning post can.
+func slant_post(a: Vector3, b: Vector3, w: float, tex: Variant = METAL) -> void:
+	var pts: Array = []
+	for s in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+		var o := Vector3(s.x * w * 0.5, s.y * w * 0.5, 0.0)
+		pts.append(a + o)
+		pts.append(b + o)
+	solid(pts, tex)
+
+
 ## A square-section bar `w` wide from a to b.
 func beam(a: Vector3, b: Vector3, w: float, tex: Variant = METAL) -> void:
 	var axis := (b - a).normalized()

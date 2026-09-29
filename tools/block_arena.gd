@@ -54,6 +54,8 @@ const TOW_DECK := 4.6    # you stand here, over every piece of cover below
 const TOW_TOP := 12.0    # and the derrick above it is the thing you steer by
 const TOW_RAMP := 18.0   # the ramps run in from x +/- 18
 const RAMP_HALF := 2.0   # 4 m wide
+## Leg and ring alike, so a joint in the derrick comes out flush.
+const DERRICK_W := 0.35
 
 # ── The bases ──
 const BASE_IN := 32.0    # the base is x 32..42
@@ -139,6 +141,7 @@ const COVER := [
 ]
 
 var _boxes: Array = []   # every cover footprint, for the overlap check
+var _stages: Array = []  # [first brush index, what built it], to name a pair
 
 
 func _initialize() -> void:
@@ -171,6 +174,7 @@ func _initialize() -> void:
 	_ghost_from = -1
 	_entities = []
 	_boxes = []
+	_stages = []
 	_proving()
 	if not _check_clearance():
 		quit(1)
@@ -187,16 +191,40 @@ func _initialize() -> void:
 	quit()
 
 
+## Each stage says its name first, so an overlapping pair can be reported as
+## "lanes/tower" rather than as two brush numbers nobody can place.
 func _proving() -> void:
+	_stage("ground")
 	_ground()
-	_lanes()
+	_stage("tower")
 	_tower()
 	for s: float in [1.0, -1.0]:
+		_stage("base %s" % ("east" if s > 0.0 else "west"))
 		_base(s)
-	for piece: Array in COVER:
-		_cover(piece, 1.0)
-		_cover(piece, -1.0)
+	for i in COVER.size():
+		_stage("cover %d" % i)
+		_cover(COVER[i], 1.0)
+		_cover(COVER[i], -1.0)
+	_stage("skyline")
 	_skyline()
+
+
+## Where a derrick leg is at height z, for the one quadrant it is written in.
+func _on_leg(foot: Vector3, head: Vector3, z: float) -> Vector3:
+	return foot.lerp(head, (z - foot.z) / (head.z - foot.z))
+
+
+func _stage(what: String) -> void:
+	_stages.append([_brushes.size(), what])
+
+
+func _stage_of(b: int) -> String:
+	var what := "?"
+	for s: Array in _stages:
+		if int(s[0]) > b:
+			break
+		what = s[1]
+	return what
 
 
 ## The grass and the wall round it. The wall is a metre lower than the arena's
@@ -207,50 +235,103 @@ func _ground() -> void:
 	# field. Without it the tanks and pylons outside the wall hang in the air,
 	# which is exactly how the first build came out.
 	box(Vector3(-100.0, -70.0, -3.5), Vector3(100.0, 70.0, -1.5), {"top": PATH, "side": RAMPART, "bottom": RAMPART})
-	box(Vector3(-FIELD_X - WALL, -FIELD_Y - WALL, -1.5), Vector3(FIELD_X + WALL, FIELD_Y + WALL, 0.0),
-			{"top": TURF, "side": RAMPART, "bottom": RAMPART})
+	_field()
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(-FIELD_X - WALL, s * FIELD_Y, 0.0), Vector3(FIELD_X + WALL, s * (FIELD_Y + WALL), WALL_Z), RAMPART)
 		box(Vector3(s * FIELD_X, -FIELD_Y, 0.0), Vector3(s * (FIELD_X + WALL), FIELD_Y, WALL_Z), RAMPART)
-		# The cap, and piers to give the wall a rhythm to measure it against.
+		# The coping, 0.15 m proud of the inside face so the wall reads as
+		# built rather than as a slab. The short walls' coping stops at the
+		# long walls' inner edge: run both to the corner and they share a
+		# 1.15 x 0.15 m block of the same space.
 		box(Vector3(-FIELD_X - WALL, s * FIELD_Y - s * 0.15, WALL_Z),
 				Vector3(FIELD_X + WALL, s * (FIELD_Y + WALL), WALL_Z + 0.35), OXIDE)
-		box(Vector3(s * FIELD_X - s * 0.15, -FIELD_Y, WALL_Z),
-				Vector3(s * (FIELD_X + WALL), FIELD_Y, WALL_Z + 0.35), OXIDE)
+		box(Vector3(s * FIELD_X - s * 0.15, -FIELD_Y + 0.15, WALL_Z),
+				Vector3(s * (FIELD_X + WALL), FIELD_Y - 0.15, WALL_Z + 0.35), OXIDE)
+	# Piers, to give the wall a rhythm to measure it against. They stop UNDER
+	# the coping and let it run over them: taken to the coping's own height
+	# they stood through its 0.15 m overhang, which is 28 of the 32 overlaps
+	# the wall used to have and the one nobody would ever have seen.
 	for k in 9:
 		var x := -40.0 + k * 10.0
 		for s: float in [-1.0, 1.0]:
-			box(Vector3(x - 0.5, s * FIELD_Y, 0.0), Vector3(x + 0.5, s * (FIELD_Y - 0.4), WALL_Z + 0.35), OXIDE)
+			box(Vector3(x - 0.5, s * FIELD_Y, 0.0), Vector3(x + 0.5, s * (FIELD_Y - 0.4), WALL_Z), OXIDE)
 	for k in 5:
 		var y := -20.0 + k * 10.0
 		for s: float in [-1.0, 1.0]:
-			box(Vector3(s * FIELD_X, y - 0.5, 0.0), Vector3(s * (FIELD_X - 0.4), y + 0.5, WALL_Z + 0.35), OXIDE)
+			box(Vector3(s * FIELD_X, y - 0.5, 0.0), Vector3(s * (FIELD_X - 0.4), y + 0.5, WALL_Z), OXIDE)
 
 
-## THE LANES, cut into the grass as sand. This is the thing the arena did not
-## have: standing anywhere on the map you can see where the routes go, because
-## they are a different colour under your feet. Three down the length, two
-## across, and an apron at each base.
+## THE FIELD, AND THE LANES IN IT AS ONE SURFACE. The lanes are the thing the
+## arena did not have: standing anywhere on the map you can see where the
+## routes go, because they are a different colour under your feet. Three down
+## the length, two across, and an apron at each base.
 ##
-## The grass is the field and the lanes are paths through it, not the other
-## way round: at twelve and ten metres wide the sand ate the ground and left
-## the grass as edging, which is backwards for the one texture here that was
+## The grass is the field and the lanes are paths through it, not the other way
+## round: at twelve and ten metres wide the sand ate the ground and left the
+## grass as edging, which is backwards for the one texture here that was
 ## already right.
 ##
-## They are plates 0.06 m proud, which is nothing to walk over and nothing to
-## the navmesh, but reads as a worn path rather than as paint.
-func _lanes() -> void:
-	# Sloped to the grass, not stepped onto it. A 0.06 m lip is nothing to look
-	# at and a wall to a robot: move_and_slide has no step-up, so a vertical
-	# face of any height stops a body dead however low it is.
+## THEY USED TO BE PLATES LAID ON THE GRASS, 0.06 m proud with a bevelled edge,
+## and that is where a fifth of this map's overlapping brushes came from: every
+## lane crossing another lane, and every piece of cover standing on one, sank
+## into the plate under it. Six centimetres you cannot see in a game where the
+## colour is doing all the work.
+##
+## So the floor is one layer now. Cut the field at every lane edge, colour each
+## cell by whether a lane covers it, and merge the runs back together along x —
+## about forty brushes, no plate, no bevel, no lip to catch a robot, and the
+## map looks the same from eye height and from the minimap.
+func _field() -> void:
+	var lanes: Array = []
 	for y: float in [0.0, SIDE_MID, -SIDE_MID]:
 		var h: float = MID_HALF if y == 0.0 else SIDE_HALF
-		slope_slab(-LANE_END, y - h, LANE_END, y + h, 0.06, 0.4, PATH)
+		lanes.append(Rect2(-LANE_END, y - h, LANE_END * 2.0, h * 2.0))
 	for s: float in [-1.0, 1.0]:
-		slope_slab(s * CROSS - 2.5, -SIDE_MID - SIDE_HALF, s * CROSS + 2.5,
-				SIDE_MID + SIDE_HALF, 0.06, 0.4, PATH)
-		slope_slab(minf(s * BASE_IN - s * 3.0, s * BASE_OUT), -BASE_HALF + 2.0,
-				maxf(s * BASE_IN - s * 3.0, s * BASE_OUT), BASE_HALF - 2.0, 0.06, 0.4, PATH)
+		lanes.append(Rect2(s * CROSS - 2.5, -SIDE_MID - SIDE_HALF, 5.0,
+				(SIDE_MID + SIDE_HALF) * 2.0))
+		var a: float = minf(s * BASE_IN - s * 3.0, s * BASE_OUT)
+		lanes.append(Rect2(a, -BASE_HALF + 2.0, absf(s * BASE_OUT - (s * BASE_IN - s * 3.0)),
+				(BASE_HALF - 2.0) * 2.0))
+	var xs := _cuts(-FIELD_X - WALL, FIELD_X + WALL, lanes, true)
+	var ys := _cuts(-FIELD_Y - WALL, FIELD_Y + WALL, lanes, false)
+	for r in ys.size() - 1:
+		var y0: float = ys[r]
+		var y1: float = ys[r + 1]
+		var run := 0
+		for c in xs.size() - 1:
+			# Hold the run open while the next cell is the same surface, so a
+			# grass row is one brush and not eleven.
+			var last: bool = c == xs.size() - 2
+			var same: bool = not last and _is_lane(lanes, xs[c + 1], xs[c + 2], y0, y1) \
+					== _is_lane(lanes, xs[c], xs[c + 1], y0, y1)
+			if same:
+				continue
+			var paved: bool = _is_lane(lanes, xs[run], xs[c + 1], y0, y1)
+			box(Vector3(xs[run], y0, -1.5), Vector3(xs[c + 1], y1, 0.0),
+					{"top": PATH if paved else TURF, "side": RAMPART, "bottom": RAMPART})
+			run = c + 1
+
+
+## Every distinct edge the lanes put in one axis, plus the field's own, sorted.
+func _cuts(lo: float, hi: float, lanes: Array, along_x: bool) -> Array:
+	var seen := {lo: true, hi: true}
+	for r: Rect2 in lanes:
+		for v: float in ([r.position.x, r.end.x] if along_x else [r.position.y, r.end.y]):
+			if v > lo and v < hi:
+				seen[v] = true
+	var out: Array = seen.keys()
+	out.sort()
+	return out
+
+
+## Cells are cut AT every lane edge, so a cell is either wholly inside a lane
+## or wholly outside one and its centre answers for all of it.
+func _is_lane(lanes: Array, x0: float, x1: float, y0: float, y1: float) -> bool:
+	var c := Vector2((x0 + x1) * 0.5, (y0 + y1) * 0.5)
+	for r: Rect2 in lanes:
+		if r.has_point(c):
+			return true
+	return false
 
 
 ## THE TOWER. One landmark in the middle of the map, tall enough to see from
@@ -264,52 +345,90 @@ func _lanes() -> void:
 ## navmesh the squad will not use.
 func _tower() -> void:
 	# Legs, and the deck they carry.
+	# The legs carry the deck, so they stop at its underside. Run them to the
+	# deck's top and the deck is threaded onto four posts.
 	for sx: float in [-1.0, 1.0]:
 		for sy: float in [-1.0, 1.0]:
 			box(Vector3(sx * (TOW_HALF - 1.4), sy * (TOW_HALF - 1.4), 0.0),
-					Vector3(sx * (TOW_HALF - 0.4), sy * (TOW_HALF - 0.4), TOW_DECK), OXIDE)
+					Vector3(sx * (TOW_HALF - 0.4), sy * (TOW_HALF - 0.4), TOW_DECK - 0.4), OXIDE)
 	box(Vector3(-TOW_HALF, -TOW_HALF, TOW_DECK - 0.4), Vector3(TOW_HALF, TOW_HALF, TOW_DECK),
 			{"top": TREAD, "side": OXIDE, "bottom": OXIDE})
-	# A parapet, with the two ramp mouths left open.
+	# A parapet, with the two ramp mouths left open. The x runs take the
+	# corners and the y runs stop short of them.
 	for sx: float in [-1.0, 1.0]:
 		box(Vector3(sx * (TOW_HALF - 0.3), -TOW_HALF, TOW_DECK), Vector3(sx * TOW_HALF, TOW_HALF, TOW_DECK + 1.0), OXIDE)
 	for sx: float in [-1.0, 1.0]:
 		for sy: float in [-1.0, 1.0]:
 			box(Vector3(sx * RAMP_HALF, sy * (TOW_HALF - 0.3), TOW_DECK),
-					Vector3(sx * TOW_HALF, sy * TOW_HALF, TOW_DECK + 1.0), OXIDE)
+					Vector3(sx * (TOW_HALF - 0.3), sy * TOW_HALF, TOW_DECK + 1.0), OXIDE)
 	# THE RAMPS COME UP THE SIDES, not along the middle lane. A twelve-metre
 	# ramp lying in the lane you are meant to read the map down is, from eye
 	# height at the foot of it, a five-metre brown wall across the middle of
 	# everything — which is exactly how the first build came out. Off to the
 	# flanks they leave the lane running clean underneath the tower.
 	for s: float in [-1.0, 1.0]:
-		var run := "-y" if s > 0.0 else "+y"
-		ramp(-RAMP_HALF, s * TOW_HALF, RAMP_HALF, s * TOW_RAMP, -0.2, 0.0, TOW_DECK, run, {"top": TREAD, "side": OXIDE, "bottom": OXIDE})
+		# A WEDGE ON THE GROUND, not a slab sunk into it. ramp() fills from a
+		# base below the surface because a hexahedron cannot come to an edge —
+		# give it a base of 0 and the foot has two vertices in the same place.
+		# solid() dedupes, so the same shape as a six-point prism sits ON the
+		# field instead of 0.2 m through it, and walks identically.
+		var far: float = s * TOW_RAMP
+		var near: float = s * TOW_HALF
+		solid([Vector3(-RAMP_HALF, far, 0.0), Vector3(RAMP_HALF, far, 0.0),
+				Vector3(-RAMP_HALF, near, 0.0), Vector3(RAMP_HALF, near, 0.0),
+				Vector3(-RAMP_HALF, near, TOW_DECK), Vector3(RAMP_HALF, near, TOW_DECK)],
+				{"top": TREAD, "side": OXIDE, "bottom": OXIDE})
 		# A rail each side so nobody walks off it. 0.25 m proud, not the 1.1 m
 		# it started at: a kerb that tall on a climbing ramp becomes a two-metre
 		# wall down the middle of the map, and walled off the one lane the whole
-		# layout is meant to be read from.
+		# layout is meant to be read from. Its underside follows the ramp's own
+		# surface exactly — dropped 0.45 m below it, as it was, and the rail is
+		# inside the ramp for its whole length and inside the field at the foot.
 		for sx: float in [-1.0, 1.0]:
 			var pts: Array = []
-			for pair: Array in [[s * TOW_RAMP, 0.0], [s * TOW_HALF, TOW_DECK]]:
+			for pair: Array in [[far, 0.0], [near, TOW_DECK]]:
 				for x: float in [sx * RAMP_HALF, sx * (RAMP_HALF + 0.3)]:
-					pts.append(Vector3(x, pair[0], pair[1] - 0.45))
+					pts.append(Vector3(x, pair[0], pair[1]))
 					pts.append(Vector3(x, pair[0], pair[1] + 0.25))
 			solid(pts, OXIDE)
 	# The derrick over the deck: silhouette only, and no collision, because a
 	# lattice with collision is a navmesh full of holes.
+	#
+	# A LATTICE IS MEMBERS MEETING AT NODES, and in brush geometry exactly one
+	# member at a node can be the one that runs through. Here it is the ring,
+	# because a ring is horizontal: the legs are cut at every ring and their
+	# level ends butt its level faces exactly, and the ring fills the node like
+	# a gusset. Drawn the obvious way — four legs straight up through four
+	# rings — this derrick alone was 44 of the map's 248 overlapping pairs.
+	#
+	# Both are DERRICK_W wide so a node comes out flush. The rings take their
+	# radius off the leg line rather than a ratio of their own, which is what
+	# made them graze the legs by seven centimetres instead of meeting them.
 	no_collision()
+	var foot := Vector3(TOW_HALF - 1.0, TOW_HALF - 1.0, TOW_DECK + 1.0)
+	var head := Vector3(1.2, 1.2, TOW_TOP)
+	var half: float = DERRICK_W * 0.5
+	var rings: Array = []
+	for k in 4:
+		rings.append(TOW_DECK + 1.6 + k * 1.6)
 	for sx: float in [-1.0, 1.0]:
 		for sy: float in [-1.0, 1.0]:
-			beam(Vector3(sx * (TOW_HALF - 1.0), sy * (TOW_HALF - 1.0), TOW_DECK + 1.0),
-					Vector3(sx * 1.2, sy * 1.2, TOW_TOP), 0.35, OXIDE)
-	for k in 4:
-		var z: float = TOW_DECK + 1.6 + k * 1.6
-		var t: float = float(k + 1) / 5.0
-		var r: float = lerpf(TOW_HALF - 1.0, 1.2, t)
+			var from: float = foot.z
+			for k in rings.size() + 1:
+				var to: float = (float(rings[k]) - half) if k < rings.size() else head.z
+				var a := _on_leg(foot, head, from)
+				var b := _on_leg(foot, head, to)
+				slant_post(Vector3(sx * a.x, sy * a.y, a.z), Vector3(sx * b.x, sy * b.y, b.z),
+						DERRICK_W, OXIDE)
+				if k < rings.size():
+					from = float(rings[k]) + half
+	for z: float in rings:
+		var r: float = _on_leg(foot, head, z).x
 		for sx: float in [-1.0, 1.0]:
-			beam(Vector3(-r, sx * r, z), Vector3(r, sx * r, z), 0.22, OXIDE)
-			beam(Vector3(sx * r, -r, z), Vector3(sx * r, r, z), 0.22, OXIDE)
+			beam(Vector3(-r, sx * r, z), Vector3(r, sx * r, z), DERRICK_W, OXIDE)
+			# Short of the corners, which the run above already fills.
+			beam(Vector3(sx * r, -r + DERRICK_W, z), Vector3(sx * r, r - DERRICK_W, z),
+					DERRICK_W, OXIDE)
 	box(Vector3(-1.6, -1.6, TOW_TOP), Vector3(1.6, 1.6, TOW_TOP + 1.2), TREAD)
 	beam(Vector3(0.0, 0.0, TOW_TOP + 1.2), Vector3(0.0, 0.0, TOW_TOP + 4.0), 0.25, OXIDE)
 	entity("func_detail")
@@ -327,27 +446,37 @@ func _base(s: float) -> void:
 	var deck_tex := {"top": TREAD, "side": tex, "bottom": tex}
 	var i: float = s * BASE_IN
 	var o: float = s * BASE_OUT
-	# Posts, a back wall, and the deck over them.
+	# Posts, a back wall, and the deck over them. Everything here stops where
+	# the next thing starts: the posts under the deck rather than through it,
+	# the outer pair against the back wall rather than half inside it, the deck
+	# at the wall rather than into it.
+	var back: float = s * (BASE_OUT - 0.8)
 	for sy: float in [-1.0, 1.0]:
-		for x: float in [BASE_IN + 1.0, BASE_OUT - 1.0]:
+		for x: float in [BASE_IN + 1.0, BASE_OUT - 1.3]:
 			box(Vector3(s * x - 0.5, sy * (BASE_HALF - 1.0) - 0.5, 0.0),
-					Vector3(s * x + 0.5, sy * (BASE_HALF - 1.0) + 0.5, BASE_DECK), tex)
-	box(Vector3(o, -BASE_HALF, 0.0), Vector3(s * (BASE_OUT - 0.8), BASE_HALF, BASE_DECK + 1.2), tex)
-	box(Vector3(i, -BASE_HALF, BASE_DECK - 0.4), Vector3(o, BASE_HALF, BASE_DECK), deck_tex)
-	# The parapet round the deck, open where the ramp arrives.
-	box(Vector3(i, -BASE_HALF, BASE_DECK), Vector3(s * (BASE_IN + 0.4), BASE_HALF, BASE_DECK + 1.1), tex)
-	box(Vector3(i, -BASE_HALF, BASE_DECK), Vector3(o, -(BASE_HALF - 0.4), BASE_DECK + 1.1), tex)
-	box(Vector3(i, BASE_HALF - 0.4, BASE_DECK), Vector3(s * BR_IN, BASE_HALF, BASE_DECK + 1.1), tex)
-	box(Vector3(s * BR_OUT, BASE_HALF - 0.4, BASE_DECK), Vector3(o, BASE_HALF, BASE_DECK + 1.1), tex)
+					Vector3(s * x + 0.5, sy * (BASE_HALF - 1.0) + 0.5, BASE_DECK - 0.4), tex)
+	box(Vector3(o, -BASE_HALF, 0.0), Vector3(back, BASE_HALF, BASE_DECK + 1.2), tex)
+	box(Vector3(i, -BASE_HALF, BASE_DECK - 0.4), Vector3(back, BASE_HALF, BASE_DECK), deck_tex)
+	# The parapet round the deck, open where the ramp arrives. The inner run
+	# takes both corners and the other three start clear of it.
+	var inner: float = s * (BASE_IN + 0.4)
+	box(Vector3(i, -BASE_HALF, BASE_DECK), Vector3(inner, BASE_HALF, BASE_DECK + 1.1), tex)
+	box(Vector3(inner, -BASE_HALF, BASE_DECK), Vector3(back, -(BASE_HALF - 0.4), BASE_DECK + 1.1), tex)
+	box(Vector3(inner, BASE_HALF - 0.4, BASE_DECK), Vector3(s * BR_IN, BASE_HALF, BASE_DECK + 1.1), tex)
+	box(Vector3(s * BR_OUT, BASE_HALF - 0.4, BASE_DECK), Vector3(back, BASE_HALF, BASE_DECK + 1.1), tex)
 	# The ramp, out into the side lane. It arrives on a four-metre edge of the
-	# deck, not on a corner of it.
-	ramp(s * BR_IN, BASE_HALF, s * BR_OUT, BR_FAR, -0.2, BASE_DECK, 0.0, "+y", {"top": TREAD, "side": tex, "bottom": tex})
+	# deck, not on a corner of it, and it is a wedge standing on the field
+	# rather than a slab sunk 0.2 m into it — see the tower ramp for why.
+	solid([Vector3(s * BR_IN, BR_FAR, 0.0), Vector3(s * BR_OUT, BR_FAR, 0.0),
+			Vector3(s * BR_IN, BASE_HALF, 0.0), Vector3(s * BR_OUT, BASE_HALF, 0.0),
+			Vector3(s * BR_IN, BASE_HALF, BASE_DECK), Vector3(s * BR_OUT, BASE_HALF, BASE_DECK)],
+			{"top": TREAD, "side": tex, "bottom": tex})
 	for sx: float in [0.0, 1.0]:
 		var x: float = s * (BR_IN + (BR_OUT - BR_IN) * sx)
 		var pts: Array = []
 		for pair: Array in [[BASE_HALF, BASE_DECK], [BR_FAR, 0.0]]:
 			for d: float in [0.0, s * 0.3]:
-				pts.append(Vector3(x - s * 0.3 * sx + d, pair[0], pair[1] - 0.45))
+				pts.append(Vector3(x - s * 0.3 * sx + d, pair[0], pair[1]))
 				pts.append(Vector3(x - s * 0.3 * sx + d, pair[0], pair[1] + 0.25))
 		solid(pts, tex)
 
@@ -363,7 +492,11 @@ func _cover(p: Array, s: float) -> void:
 	var along_x: bool = p[5]
 	var hx: float = half_len if along_x else half_thick
 	var hy: float = half_thick if along_x else half_len
-	box(Vector3(x - hx, y - hy, 0.0), Vector3(x + hx, y + hy, h), p[6])
+	# The wall stops where its cap starts. Built to full height with the cap
+	# laid over the top of it, every one of the 56 pieces on this map had
+	# 0.12 m of two solids in the same place — 56 of 248 overlapping pairs,
+	# from one line, repeated by the table.
+	box(Vector3(x - hx, y - hy, 0.0), Vector3(x + hx, y + hy, h - 0.12), p[6])
 	# A cap in a second material, so a 1 m wall and a 1.9 m wall do not read
 	# as the same thing at fifty metres.
 	box(Vector3(x - hx, y - hy, h - 0.12), Vector3(x + hx, y + hy, h), OXIDE if p[6] != OXIDE else CHALK)
@@ -385,18 +518,32 @@ func _skyline() -> void:
 		cylinder(Vector3(s * (far + 16.0), -s * 6.0, -1.5), 3.0, 26.0, 10, BLOCK)
 		box(Vector3(s * (far - 6.0), -s * 22.0, -1.5), Vector3(s * (far + 10.0), -s * 34.0, 7.5), BLOCK)
 		box(Vector3(s * (far - 7.0), -s * 21.0, 7.5), Vector3(s * (far + 11.0), -s * 35.0, 8.7), OXIDE)
-		# A pylon out past the long wall.
+		# A pylon out past the long wall. The post is the through member and
+		# each crossarm is two arms hung off it — run whole, they crossed it
+		# inside the mast, which is all twelve of the skyline's overlaps.
 		for k in 3:
 			var x: float = -24.0 + k * 24.0
 			beam(Vector3(x, s * side, -1.5), Vector3(x, s * side, 15.5), 0.7, OXIDE)
-			beam(Vector3(x - 4.0, s * side, 11.5), Vector3(x + 4.0, s * side, 11.5), 0.5, OXIDE)
-			beam(Vector3(x - 2.6, s * side, 14.5), Vector3(x + 2.6, s * side, 14.5), 0.5, OXIDE)
+			for arm: Array in [[11.5, 4.0], [14.5, 2.6]]:
+				for sx: float in [-1.0, 1.0]:
+					beam(Vector3(x + sx * 0.35, s * side, arm[0]),
+							Vector3(x + sx * float(arm[1]), s * side, arm[0]), 0.5, OXIDE)
 
 
-## Every piece of cover against every other. Measured, not eyeballed: the last
-## time a placement pass went out without this it put bridges through each
-## other. Cover that touches is fine; cover that overlaps is a modelling error
-## and shows as a seam.
+## Nothing is written unless the geometry is clean, and "clean" means two
+## different things.
+##
+## FOOTPRINTS, so no two pieces of cover stand in the same place — measured, not
+## eyeballed: the last time a placement pass went out without this it put
+## bridges through each other.
+##
+## AND EVERY BRUSH AGAINST EVERY OTHER BRUSH, which the footprint test cannot
+## see and which for a long time nobody was looking at. This check passed 56
+## cover footprints and printed "none overlapping" over a map with 248
+## overlapping brush pairs in it — every cover cap sunk 0.12 m into the wall
+## under it, every lane crossing another lane, every wall pier through its own
+## coping. The footprint test is not wrong, it is just narrow, and a narrow
+## check reads as a clean bill of health. Both run now.
 func _check_clearance() -> bool:
 	var bad := 0
 	for i in _boxes.size():
@@ -411,7 +558,24 @@ func _check_clearance() -> bool:
 						(a[0] + a[2]) * 0.5, (a[1] + a[3]) * 0.5,
 						(b[0] + b[2]) * 0.5, (b[1] + b[3]) * 0.5, ox, oy])
 	if bad > 0:
-		print("FAIL  %d overlapping pair(s) — nothing written" % bad)
+		print("FAIL  %d overlapping cover pair(s) — nothing written" % bad)
 		return false
-	print("      %d cover pieces, none overlapping" % _boxes.size())
+	print("      %d cover footprints, none overlapping" % _boxes.size())
+	var pairs := brush_overlaps()
+	# SHOW=all when you are working through them; thirty is enough to see the
+	# families without burying the summary line.
+	var show := 30 if OS.get_environment("SHOW") != "all" else pairs.size()
+	for k in mini(pairs.size(), show):
+		var row: Array = pairs[k]
+		var s: AABB = row[2]
+		print("FAIL  brush %d (%s) and %d (%s) share %.2f x %.2f x %.2f m at (%.1f, %.1f, %.1f)" % [
+				row[0], _stage_of(row[0]), row[1], _stage_of(row[1]),
+				s.size.x / UPM, s.size.y / UPM, s.size.z / UPM,
+				s.get_center().x / UPM, s.get_center().y / UPM, s.get_center().z / UPM])
+	if pairs.size() > show:
+		print("FAIL  ... and %d more" % (pairs.size() - show))
+	if pairs.size() > 0:
+		print("FAIL  %d overlapping brush pair(s) — nothing written" % pairs.size())
+		return false
+	print("      %d brushes, none overlapping" % _brushes.size())
 	return true
