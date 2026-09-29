@@ -14,16 +14,20 @@ extends SceneTree
 
 const DATA := "res://maps/terrain_data/ascent_level_terrain.res"
 
-## name, from (x, z, y), to (x, z, y), bed width. Vector3 is (x, z, y) here,
-## not (x, y, z) — the two horizontals travel together everywhere in this file.
-const FLIGHTS: Array = [
-	["Trailhead→Cistern", Vector3(0.0, 380.0, 0.0), Vector3(-170.0, 258.0, 18.0), 14.0],
-	["Cistern→Pillars", Vector3(-170.0, 258.0, 18.0), Vector3(150.0, 140.0, 38.0), 14.0],
-	["Pillars→Gate", Vector3(150.0, 140.0, 38.0), Vector3(-140.0, 34.0, 58.0), 13.0],
-	["Gate→Terrace", Vector3(-140.0, 34.0, 58.0), Vector3(140.0, -46.0, 82.0), 13.0],
-	["Terrace→Shoulder", Vector3(140.0, -46.0, 82.0), Vector3(-90.0, -140.0, 102.0), 12.0],
-	["Shoulder→Summit", Vector3(-90.0, -140.0, 102.0), Vector3(30.0, -270.0, 132.0), 11.0],
+## Mirrors STATIONS in probe_build_ascent.gd: name, x, z, y, pad x, pad z,
+## falloff. The run-out at each end of a leg is DERIVED from these, the same way
+## the generator derives it — a hard-coded run-out here went stale the moment
+## the pads changed and started reporting breaks that were not there.
+const STATIONS: Array = [
+	["Trailhead", 0.0, 430.0, 0.0, 100.0, 70.0, 18.0],
+	["Cistern", -170.0, 258.0, 10.0, 56.0, 40.0, 16.0],
+	["Pillars", 150.0, 140.0, 34.0, 56.0, 40.0, 16.0],
+	["Gate", -140.0, 34.0, 46.0, 56.0, 40.0, 16.0],
+	["Terrace", 140.0, -46.0, 76.0, 56.0, 40.0, 16.0],
+	["Shoulder", -205.0, -46.0, 62.0, 56.0, 40.0, 16.0],
+	["Summit", 30.0, -270.0, 132.0, 150.0, 120.0, 14.0],
 ]
+const RUNOUT := 24.0
 
 ## Eye height, for the sightline check.
 const EYE := 1.7
@@ -40,15 +44,43 @@ const TOWER := 21.8
 const SUMMIT := Vector2(30.0, -270.0)
 const PLATEAU := 132.0
 
+## Mirrors SUMMIT_PIECES in probe_build_ascent.gd: name, x, z (from the summit),
+## then the footprint to sample the corners of.
+const RELAY: Array = [
+	["compute_data_hall", 12.0, -6.0, 29.0, 19.0],
+	["compute_obelisk", -20.0, -12.0, 15.0, 13.0],
+	["compute_satellite_dish", -28.0, -27.0, 4.0, 3.3],
+	["compute_satellite_dish", 20.0, -27.0, 4.0, 3.3],
+	["compute_generator", 28.0, 12.0, 12.3, 4.6],
+	["compute_transformer", 14.0, 14.0, 3.6, 4.4],
+	["compute_cable_run", -6.0, -8.0, 3.3, 12.6],
+	["compute_network_cabinet", 4.0, 10.0, 1.4, 2.1],
+	["feature_watchtower", -34.0, 18.0, 4.9, 14.9],
+	["feature_watchtower", -4.0, 30.0, 14.9, 4.9],
+	["fort_hesco_sangar", -22.0, 20.0, 10.3, 5.0],
+	["fort_sentry_turret", -24.0, 6.0, 1.6, 3.8],
+	["fort_floodlight_mast", -36.0, -8.0, 3.2, 4.5],
+	["feature_power_pylon", 56.0, -30.0, 9.6, 7.4],
+	["feature_power_pylon", -40.0, 44.0, 9.6, 7.4],
+	["feature_power_pylon", 24.0, 46.0, 9.6, 7.4],
+]
+
 ## Ground this far off the authored height is not the bed.
 const TOL := 1.5
 ## A walkable ribbon has to be at least this wide after the baker erodes it.
 const WANT_WIDE := 6.0
-## Must match RUNOUT in probe_build_ascent.gd: the level ground at each end.
-const RUNOUT := 24.0
-## Legs bent through via points, whose bed is not a straight line.
-const BENT: Array = ["Trailhead→Cistern", "Cistern→Pillars", "Pillars→Gate",
-		"Shoulder→Summit"]
+## Legs bent through via points, whose bed is not a straight line between ends.
+const BENT: Array = ["Trailhead to Cistern", "Cistern to Pillars", "Pillars to Gate",
+		"Shoulder to Summit"]
+
+
+## Same rule as the generator: level ground at each end, long enough to cross
+## that station's own pad.
+func _runout(station: Array, dir: Vector2) -> float:
+	var half := Vector2(float(station[4]), float(station[5])) * 0.5
+	var reach: float = minf(half.x / maxf(absf(dir.x), 0.0001),
+			half.y / maxf(absf(dir.y), 0.0001))
+	return maxf(RUNOUT, reach + float(station[6]))
 
 
 func _initialize() -> void:
@@ -59,7 +91,12 @@ func _initialize() -> void:
 		return
 	print("   %-20s %6s %8s %8s %8s %8s" % [
 			"flight", "steps", "on bed", "worst", "flat w", "narrowest"])
-	for f: Array in FLIGHTS:
+	for li in range(STATIONS.size() - 1):
+		var sa: Array = STATIONS[li]
+		var sb: Array = STATIONS[li + 1]
+		var f: Array = ["%s to %s" % [sa[0], sb[0]],
+				Vector3(float(sa[1]), float(sa[2]), float(sa[3])),
+				Vector3(float(sb[1]), float(sb[2]), float(sb[3])), sa, sb]
 		var a: Vector3 = f[1]
 		var b: Vector3 = f[2]
 		# Four of the six legs are bent through via points (see _vias in
@@ -79,15 +116,17 @@ func _initialize() -> void:
 		var dir := Vector2(b.x - a.x, b.y - a.y).normalized()
 		var nrm := Vector2(-dir.y, dir.x)
 		var total := Vector2(b.x - a.x, b.y - a.y).length()
-		var run: float = minf(RUNOUT, total * 0.3)
-		var graded: float = maxf(total - run * 2.0, 0.001)
+		var ldir := Vector2(b.x - a.x, b.y - a.y).normalized()
+		var r0: float = minf(_runout(f[3], ldir), total * 0.45)
+		var r1: float = minf(_runout(f[4], ldir), total * 0.45)
+		var graded: float = maxf(total - r0 - r1, 0.001)
 		# Skip the first and last sample. They sit exactly on a landing, where
 		# the pad and two flights all meet, and measuring "how far either side
 		# is the bed still flat" there reports the pad's edge, not the bed's.
 		for i in range(1, steps):
 			var t := float(i) / maxf(steps, 1)
 			var p := Vector2(lerpf(a.x, b.x, t), lerpf(a.y, b.y, t))
-			var want := lerpf(a.z, b.z, clampf((t * total - run) / graded, 0.0, 1.0))
+			var want := lerpf(a.z, b.z, clampf((t * total - r0) / graded, 0.0, 1.0))
 			var got: float = data.height_at_local(p.x, p.y)
 			var err := absf(got - want)
 			if err <= TOL:
@@ -120,6 +159,8 @@ func _initialize() -> void:
 					narrow_at.x, narrow_at.y, WANT_WIDE])
 	_sightlines(data)
 	_summit_section(data)
+	_relay_feet(data)
+	_station_cuts(data)
 	quit()
 
 
@@ -131,7 +172,12 @@ func _sightlines(data: Resource) -> void:
 	print("")
 	print("   line of sight to the summit, from an eye %.1f m above each station" % EYE)
 	print("   %-12s %9s %9s %9s" % ["from", "range", "clear by", "lowest at"])
-	for f: Array in FLIGHTS:
+	for li in range(STATIONS.size() - 1):
+		var sa: Array = STATIONS[li]
+		var sb: Array = STATIONS[li + 1]
+		var f: Array = ["%s to %s" % [sa[0], sb[0]],
+				Vector3(float(sa[1]), float(sa[2]), float(sa[3])),
+				Vector3(float(sb[1]), float(sb[2]), float(sb[3])), sa, sb]
 		var a: Vector3 = f[1]
 		var from := Vector3(a.x, a.z + EYE, a.y)
 		var to := Vector3(TOP.x, TOP.z + TOWER, TOP.y)
@@ -186,3 +232,78 @@ func _summit_section(data: Resource) -> void:
 		if rim > PLATEAU + 1.0:
 			note = "   RIM +%.0f m at %.0f m out" % [rim - PLATEAU, rim_at]
 		print("   %-8s %s%s" % [dir[0], "".join(row), note])
+
+
+## The ground under every summit piece, against the height it was placed at.
+## A piece standing on a number the ground does not agree with is either buried
+## or on stilts, and on a flat plateau the second one is very visible.
+func _relay_feet(data: Resource) -> void:
+	print("")
+	print("   ground under the relay, against the plateau at %.0f m" % PLATEAU)
+	var worst := 0.0
+	for p: Array in RELAY:
+		var at := SUMMIT + Vector2(float(p[1]), float(p[2]))
+		var lo := INF
+		var hi := -INF
+		# Four corners of the piece's footprint, not just its origin: a long
+		# piece can sit level on its middle and hang off one end.
+		for dx: float in [-1.0, 1.0]:
+			for dz: float in [-1.0, 1.0]:
+				var q := at + Vector2(float(p[3]) * 0.5 * dx, float(p[4]) * 0.5 * dz)
+				var h: float = data.height_at_local(q.x, q.y)
+				lo = minf(lo, h)
+				hi = maxf(hi, h)
+		var drop := PLATEAU - lo
+		worst = maxf(worst, absf(drop))
+		var note := ""
+		if drop > 0.3:
+			note = "   ON STILTS — ground %.2f m below its feet" % drop
+		elif drop < -0.3:
+			note = "   BURIED %.2f m" % -drop
+		print("   %-32s %7.2f .. %7.2f m%s" % [p[0], lo, hi, note])
+	print("   worst %.2f m" % worst)
+
+
+## How each station's pad meets the ground around it.
+##
+## THE FAILURE THIS FINDS. A FLATTEN pad cut deep into a hill is ringed by a
+## bank as steep as the cut is deep, and a bank over the navmesh's 45° turns
+## the pad into an ISLAND — navmesh on it, navmesh off it, no route between.
+## When it happened here every one of the seven stations came back cut off at
+## once, which looks like a broken bake and is really a terracing problem.
+func _station_cuts(data: Resource) -> void:
+	print("")
+	print("   how each pad meets the ground, and the bank that makes")
+	print("   %-12s %8s %9s %9s" % ["station", "pad", "outside", "bank"])
+	for s: Array in STATIONS:
+		var at := Vector2(float(s[1]), float(s[2]))
+		var half := Vector2(float(s[4]), float(s[5])) * 0.5
+		var fall := float(s[6])
+		var worst := 0.0
+		var worst_dir := ""
+		# The EASIEST way on also matters, and matters more. A pad with a drop
+		# off one edge is a hilltop; a pad with a bank over 45° on every edge is
+		# an island, whatever the navmesh shows sitting on it. An earlier
+		# version of this reported the worst side only and called the summit
+		# itself broken for having a hillside beneath it.
+		var best := 90.0
+		var best_dir := ""
+		for dir: Array in [["E", Vector2(1, 0)], ["W", Vector2(-1, 0)],
+				["S", Vector2(0, 1)], ["N", Vector2(0, -1)]]:
+			var d: Vector2 = dir[1]
+			var edge: float = half.x * absf(d.x) + half.y * absf(d.y)
+			var outside: float = data.height_at_local(
+					at.x + d.x * (edge + fall), at.y + d.y * (edge + fall))
+			var bank := rad_to_deg(atan2(absf(outside - float(s[3])), fall))
+			if bank > worst:
+				worst = bank
+				worst_dir = "%s %+.0f m" % [dir[0], outside - float(s[3])]
+			if bank < best:
+				best = bank
+				best_dir = dir[0]
+		var note := "   walk on from the %s at %.0f°" % [best_dir, best]
+		if best > 45.0:
+			note = "   ISLAND — every side over agent_max_slope"
+		elif worst > 50.0:
+			note += ", %s side is a %.0f° drop" % [worst_dir, worst]
+		print("   %-12s %7.0fm %8s %8.0f°%s" % [s[0], float(s[3]), worst_dir, worst, note])

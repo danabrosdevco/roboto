@@ -98,6 +98,34 @@ put the west flank at 42° and the nav probe immediately called it a detour, so
 the falloff went back out to 130 m — 31° at its steepest, walkable from every
 side. The summit is now the highest point on the map, 132.0 m of 132.0 m.
 
+**The fort has a curtain wall and a gate now**, eighteen `fortress/` segments
+ringing the plateau 120 × 96, the gate on the south-west where the road comes
+in. `probe_nav_ascent.gd` walks two routes per bearing because they answer
+different questions: **to the foot of the wall**, which should be open from
+everywhere because the ground is not supposed to be gating anything, and
+**through to the middle**, which should be a long way round on every bearing
+but the gate's. Five of six reach the wall at 1.2–1.6×; the wall holds on
+three; south and south-west go straight in, which is the gate.
+
+**And the thing the human spotted that no check of mine would have: daylight
+under the fort.** Roads are cut AFTER the shelves, so the final leg — still
+climbing where it crossed the summit pad — won the ground the buildings were
+standing on and trenched it 3 to 10 m. The run-out now has to cross the whole
+pad at each end (`_runout`), not a flat 24 m.
+
+That fix exposed a much bigger one. Sizing run-outs off the pads made the
+generator refuse to write, naming two legs whose pads ate the entire leg —
+and chasing that down showed **six of the seven stations were islands**, pads
+gouged up to 69 m into hills with banks of 52–75° round them, because I had
+centred a RAISE hill on each station and then flattened a pad far below its
+crown. Every station had reported "reached" throughout, because the navmesh
+region on each island connected to the road that was cut through the bank.
+`probe_ascent_bed.gd` now reports the bank on all four sides of every pad and
+the gentlest way on; a pad with a drop off one edge is a hilltop, a pad over
+45° on every edge is an island. The station table is rebuilt: heights that sit
+near what the cones give, pads down from 150 × 120 to 56 × 40, and the hills
+moved off the route they were supposed to be beside.
+
 **A flat hilltop hides itself, and that is a thing to design for.** The first
 open version put the plateau at 132 m on ground already at 127 a hundred metres
 out, so an ordinary hill stamp on the approach stood HIGHER than the objective.
@@ -148,8 +176,12 @@ refuses to write under 2000 bytes.
 - Look at it in-editor. The aerial still reads as one swell with bumps rather
   than a series of distinct hills — there are seven LOWER stamps cutting saddles
   between the hills and they are not doing enough.
-- The fort has no wall. That is the obvious next thing and the one that makes
-  the plateau a place to hold rather than a place to walk onto.
+- **The west flank of the summit is sealed by the final road's own embankment**
+  — it fills ~21 m at its midpoint, and even at a 26 m bank that is a wall on
+  one side of the hill. Widening it further flattens the hill; the honest fix
+  is probably a built viaduct, which is a block job.
+- The curtain wall is 5.5 m and reads as a fence from any distance. If the fort
+  should read as a fort from the Terrace, it wants a taller piece.
 - The relay is a blockout. Nothing on that shelf is a considered composition.
 
 **Blocked / next.** Nothing blocking, and nothing should be built on top of this

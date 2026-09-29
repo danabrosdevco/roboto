@@ -28,14 +28,16 @@ extends SceneTree
 var level_path := OS.get_environment("LEVEL") if OS.get_environment("LEVEL") != "" else "res://maps/ascent_level.tscn"
 var rebake := OS.get_environment("BAKE") != "0"
 
-## Must match STATIONS in probe_build_ascent.gd: name, x, z, y.
+## Must match STATIONS in probe_build_ascent.gd: name, x, z, y. KEEP IT IN STEP
+## — this went stale when the Shoulder moved and the probe spent a run walking
+## to where that station used to be, reporting a 40 m climb that was not there.
 const STATIONS: Array = [
-	["Trailhead", 0.0, 380.0, 0.0],
-	["Cistern", -170.0, 258.0, 18.0],
-	["Pillars", 150.0, 140.0, 38.0],
-	["Gate", -140.0, 34.0, 58.0],
-	["Terrace", 140.0, -46.0, 82.0],
-	["Shoulder", -90.0, -140.0, 102.0],
+	["Trailhead", 0.0, 430.0, 0.0],
+	["Cistern", -170.0, 258.0, 10.0],
+	["Pillars", 150.0, 140.0, 34.0],
+	["Gate", -140.0, 34.0, 46.0],
+	["Terrace", 140.0, -46.0, 76.0],
+	["Shoulder", -205.0, -46.0, 62.0],
 	["Summit", 30.0, -270.0, 132.0],
 ]
 
@@ -43,6 +45,9 @@ const STATIONS: Array = [
 ## Far enough out to be below the plateau, close enough that a walk up is a
 ## walk and not a cross-country trek.
 const RING_R := 130.0
+## Just outside the curtain wall. The ring is 120 x 96 and 3.2 m thick, so 68 m
+## from the middle clears its longest side and is still on the plateau.
+const OUTSIDE_WALL := 68.0
 const RING: Array = [
 	["north", 0.0], ["east", 90.0], ["south", 180.0], ["west", 270.0],
 	["north-east", 45.0], ["south-west", 225.0],
@@ -105,30 +110,48 @@ func _initialize() -> void:
 	print("   long way over is a piece of hillside that has quietly become a")
 	print("   cliff. Stopping the squad walking in is a WALL's job now, not the")
 	print("   ground's — so this measures that the ground is NOT doing it.")
-	print("   %-14s %9s %9s %7s" % ["from", "direct", "walked", "ratio"])
+	print("   TWO WALKS PER BEARING, and they answer different questions. Up to")
+	print("   the foot of the wall should be OPEN everywhere, because the ground")
+	print("   is not supposed to be doing any gating. Through to the middle of")
+	print("   the fort should be a long way round on every bearing but the gate's")
+	print("   — that is the wall doing the job the terrain used to.")
+	print("   %-14s %9s %9s %7s %9s %7s" % [
+			"from", "direct", "to wall", "ratio", "to middle", "ratio"])
 	var summit: Array = STATIONS[STATIONS.size() - 1]
 	var top := Vector3(float(summit[1]), float(summit[3]), float(summit[2]))
 	var loose := 0
+	var sealed := 0
 	for r: Array in RING:
 		var a := deg_to_rad(float(r[1]))
 		var at := Vector3(top.x + sin(a) * RING_R, 0.0, top.z - cos(a) * RING_R)
+		var foot := Vector3(top.x + sin(a) * OUTSIDE_WALL, top.y,
+				top.z - cos(a) * OUTSIDE_WALL)
 		var start := NavigationServer3D.map_get_closest_point(map, at)
-		var res := _walk(start, top)
 		var direct := Vector2(top.x - start.x, top.z - start.z).length()
-		var walked := float(res[1])
-		var ratio: float = walked / maxf(direct, 1.0)
-		var note := "   open"
-		if not bool(res[0]):
-			note = "   CUT OFF — no route at all"
+		var to_foot := _walk(start, foot)
+		var to_mid := _walk(start, top)
+		var gap := Vector2(foot.x - start.x, foot.z - start.z).length()
+		var ground: float = float(to_foot[1]) / maxf(gap, 1.0)
+		var through: float = float(to_mid[1]) / maxf(direct, 1.0)
+		var note := ""
+		if not bool(to_foot[0]):
+			note = "   CUT OFF short of the wall"
 			loose += 1
-		elif ratio > DETOUR:
-			note = "   DETOUR — the hillside is not walkable on this side"
+		elif ground > DETOUR:
+			note = "   GROUND DETOUR — the hillside is not walkable here"
 			loose += 1
-		print("   %-14s %8.0fm %8.0fm %6.1fx%s" % [r[0], direct, walked, ratio, note])
+		elif through > DETOUR:
+			note = "   the wall holds"
+			sealed += 1
+		else:
+			note = "   straight in — the gate is on this side"
+		print("   %-14s %8.0fm %8.0fm %6.1fx %8.0fm %6.1fx%s" % [
+				r[0], direct, float(to_foot[1]), ground, float(to_mid[1]), through, note])
 
 	print("")
-	print("   %d station(s) cut off, %d side(s) of the hill that do not go straight up" % [
+	print("   %d station(s) cut off, %d side(s) of the HILL that turn the squad back;" % [
 			cut, loose])
+	print("   the WALL holds on %d of %d bearings" % [sealed, RING.size()])
 	quit()
 
 

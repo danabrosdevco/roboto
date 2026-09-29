@@ -39,10 +39,11 @@ const SIZE_Z := 1024.0
 
 ## A leg gentler than this is a walk; steeper and the bots start scrabbling.
 ## The blocks' ramp rule is 30°, but that is authored geometry — a cut road is
-## quantised to 2 m terrain cells and then smoothed, so it gets a wide margin.
-const MAX_GRADE := 16.0
-## Level ground at each end of every leg. See _curve: without it two flights
-## meeting at a landing write a step across each other.
+## quantised to 2 m terrain cells and then smoothed, so it gets a margin.
+const MAX_GRADE := 22.0
+## The LEAST level ground at each end of every leg. See _curve: without it two
+## roads meeting at a station write a step across each other. The real run-out
+## is whatever it takes to cross that station's pad — see _runout.
 const RUNOUT := 24.0
 ## The face between two flights has to beat the navmesh's agent_max_slope by
 ## enough that neither cell quantisation nor the finishing blur opens a way up.
@@ -93,12 +94,12 @@ const FACE_R1 := 260.0
 ## A station is somewhere to stand and fight, not a parade ground — and the
 ## falloff does more for how it sits in the ground than the size does.
 const STATIONS: Array = [
-	["Trailhead", 0.0, 380.0, 0.0, 170.0, 96.0, 34.0],
-	["Cistern", -170.0, 258.0, 18.0, 86.0, 58.0, 30.0],
-	["Pillars", 150.0, 140.0, 38.0, 86.0, 58.0, 30.0],
-	["Gate", -140.0, 34.0, 58.0, 92.0, 60.0, 30.0],
-	["Terrace", 140.0, -46.0, 82.0, 80.0, 52.0, 28.0],
-	["Shoulder", -90.0, -140.0, 102.0, 88.0, 58.0, 28.0],
+	["Trailhead", 0.0, 430.0, 0.0, 100.0, 70.0, 18.0],
+	["Cistern", -170.0, 258.0, 10.0, 56.0, 40.0, 16.0],
+	["Pillars", 150.0, 140.0, 34.0, 56.0, 40.0, 16.0],
+	["Gate", -140.0, 34.0, 46.0, 56.0, 40.0, 16.0],
+	["Terrace", 140.0, -46.0, 76.0, 56.0, 40.0, 16.0],
+	["Shoulder", -205.0, -46.0, 62.0, 56.0, 40.0, 16.0],
 	["Summit", 30.0, -270.0, 132.0, 150.0, 120.0, 14.0],
 ]
 
@@ -110,24 +111,24 @@ const LEGS: Array = [
 	["Pillars", "Gate", 13.0, 11.0],
 	["Gate", "Terrace", 13.0, 11.0],
 	["Terrace", "Shoulder", 12.0, 10.0],
-	["Shoulder", "Summit", 11.0, 8.0],
+	["Shoulder", "Summit", 12.0, 26.0],
 ]
 
 ## The hills either side of the route, so the ground between the stations has
 ## shape to fight over rather than being a ramp across a plain.
 ## centre x, z, radius, falloff, amount
 const HILLS: Array = [
-	[-170.0, 258.0, 74.0, 150.0, 30.0],
-	[150.0, 140.0, 76.0, 150.0, 54.0],
-	[-40.0, 194.0, 58.0, 130.0, 36.0],
-	[286.0, 268.0, 66.0, 140.0, 28.0],
-	[-298.0, 92.0, 80.0, 160.0, 48.0],
-	[258.0, 36.0, 70.0, 145.0, 44.0],
-	[-24.0, 62.0, 54.0, 120.0, 30.0],
+	[-256.0, 306.0, 70.0, 150.0, 22.0],
+	[268.0, 216.0, 72.0, 150.0, 30.0],
+	[-40.0, 194.0, 58.0, 130.0, 22.0],
+	[286.0, 268.0, 66.0, 140.0, 20.0],
+	[-320.0, 110.0, 80.0, 160.0, 28.0],
+	[276.0, 30.0, 70.0, 145.0, 26.0],
+	[-24.0, 74.0, 54.0, 120.0, 20.0],
 	# Kept off the line from the Terrace to the summit on purpose — at its old
 	# place it raised the ground on that sightline by 27 m and hid the fort.
-	[268.0, -120.0, 62.0, 110.0, 34.0],
-	[-208.0, -232.0, 58.0, 125.0, 30.0],
+	[268.0, -120.0, 62.0, 110.0, 24.0],
+	[-208.0, -232.0, 58.0, 125.0, 22.0],
 ]
 
 ## THE THING AT THE TOP. A relay station: the machines' ear on the high ground,
@@ -167,9 +168,9 @@ const SUMMIT_PIECES: Array = [
 	# hides itself: from the Terrace, 250 m out and 50 m below, the plateau edge
 	# cuts the line, and anything standing on the summit needs to be about 23 m
 	# tall to clear it. The watchtowers are 8.7 m. These are 21.8 m.
-	["features/feature_power_pylon", 56.0, -30.0, 0.0],
-	["features/feature_power_pylon", -40.0, 44.0, 0.0],
-	["features/feature_power_pylon", 24.0, 46.0, 0.0],
+	["features/feature_power_pylon", 44.0, -34.0, 0.0],
+	["features/feature_power_pylon", -40.0, 38.0, 0.0],
+	["features/feature_power_pylon", 24.0, 38.0, 0.0],
 ]
 
 ## Saddles and hollows, as LOWER stamps. WITHOUT THESE THE MAP IS ONE DOME:
@@ -179,12 +180,12 @@ const SUMMIT_PIECES: Array = [
 ## Every one of these is between two hills, on purpose.
 ## centre x, z, radius, falloff, amount
 const HOLLOWS: Array = [
-	[-64.0, 300.0, 46.0, 120.0, 16.0],
+	[-64.0, 296.0, 40.0, 90.0, 9.0],
 	[36.0, 170.0, 52.0, 130.0, 20.0],
 	[-250.0, 190.0, 44.0, 110.0, 14.0],
 	[60.0, 40.0, 50.0, 125.0, 18.0],
 	[-230.0, -46.0, 48.0, 120.0, 16.0],
-	[26.0, -140.0, 46.0, 115.0, 14.0],
+	[96.0, -128.0, 44.0, 110.0, 12.0],
 	[330.0, 140.0, 54.0, 130.0, 18.0],
 ]
 
@@ -222,6 +223,23 @@ func _initialize() -> void:
 	print("   wrote %s — %d station(s), %d leg(s), %d hill(s), %d hollow(s)" % [
 			OUT, STATIONS.size(), LEGS.size(), HILLS.size(), HOLLOWS.size()])
 	quit()
+
+
+## How far a leg leaving `station` in direction `dir` must stay level.
+##
+## IT HAS TO CROSS THE WHOLE PAD. Roads are cut AFTER the shelves, so a road
+## still climbing where it crosses a station's pad wins that ground and digs a
+## trench through it — which is how the summit fort ended up with its towers
+## standing on the pad's level and the ground cut 3 to 10 m out from under
+## them, visible as daylight under the buildings. Level from the pad's own
+## boundary inwards and the road asks for exactly the height the pad is at.
+func _runout(station: Array, dir: Vector2) -> float:
+	var half := Vector2(float(station[4]), float(station[5])) * 0.5
+	# Distance from the pad's centre to its edge along dir, for an axis-aligned
+	# rectangle. A near-zero component would divide to infinity, hence the max.
+	var reach: float = minf(half.x / maxf(absf(dir.x), 0.0001),
+			half.y / maxf(absf(dir.y), 0.0001))
+	return maxf(RUNOUT, reach + float(station[6]))
 
 
 ## Height the stacked cones give at radius r from the summit.
@@ -262,6 +280,40 @@ func _profile() -> int:
 	return bad
 
 
+## THE CURTAIN WALL. The plateau is walkable from every side — that was the
+## point of taking the steep ring out — so this is the thing that makes the
+## summit somewhere to be held rather than somewhere to walk onto.
+##
+## The ring is sized to WHOLE SEGMENTS. fort_wall is 24 m long, so a half-extent
+## that is not a multiple of 12 leaves either a gap at the corner or a pair of
+## segments buried in each other. 120 × 96 is 5 segments by 4.
+const WALL_HALF := Vector2(60.0, 48.0)
+## Where the road crosses the wall. It is the south-west segment of the south
+## run, because that is the side the road climbs from; _installation() checks
+## the road's own centreline passes through the opening.
+const GATE_AT := -48.0
+
+
+## The ring, built rather than typed: eighteen segments, one of them the gate.
+## Same [piece, x, z, yaw] shape as SUMMIT_PIECES, offsets from the summit.
+func wall_pieces() -> Array:
+	if OS.get_environment("NOWALL") != "":
+		# Isolation switch, used once to prove the wall was NOT what broke the
+		# navmesh. Kept: it is the cheapest way to ask that question again.
+		return []
+	var out: Array = []
+	# fort_wall and fort_gate are 24 m along their OWN Z, so the runs that go
+	# along X are turned a quarter.
+	for x: float in [-48.0, -24.0, 0.0, 24.0, 48.0]:
+		out.append([("fortress/fort_gate" if is_equal_approx(x, GATE_AT)
+				else "fortress/fort_wall"), x, WALL_HALF.y, 90.0])
+		out.append(["fortress/fort_wall", x, -WALL_HALF.y, 90.0])
+	for z: float in [-36.0, -12.0, 12.0, 36.0]:
+		out.append(["fortress/fort_wall", -WALL_HALF.x, z, 0.0])
+		out.append(["fortress/fort_wall", WALL_HALF.x, z, 0.0])
+	return out
+
+
 ## Half-extents of the plateau the relay stands on, less a margin for the lip.
 const SHELF_HALF := Vector2(68.0, 54.0)
 ## Clear ground between two pieces, so dressing them later does not collide.
@@ -275,7 +327,7 @@ func _installation() -> int:
 	var bad := 0
 	var boxes: Array = []
 	print("   %-38s %9s %9s %8s" % ["summit piece", "x", "z", "size"])
-	for p: Array in SUMMIT_PIECES:
+	for p: Array in SUMMIT_PIECES + wall_pieces():
 		var path := "res://maps/blocks/%s.tscn" % p[0]
 		var packed := load(path) as PackedScene
 		if packed == null:
@@ -307,7 +359,14 @@ func _installation() -> int:
 		if absf(centre.x) + rot.x > SHELF_HALF.x or absf(centre.y) + rot.y > SHELF_HALF.y:
 			note = "   OFF THE SHELF"
 			bad += 1
+		var ring: bool = str(p[0]).begins_with("fortress/")
 		for b: Array in boxes:
+			# A curtain wall is SUPPOSED to touch itself. Segments meeting at a
+			# corner share ground and that is what makes it a wall rather than
+			# a row of slabs, so the ring is only checked against everything
+			# else, never against its own pieces.
+			if ring and bool(b[3]):
+				continue
 			var d: Vector2 = (centre - (b[1] as Vector2)).abs() - rot - (b[2] as Vector2)
 			# MARGIN, not zero. These get dressed later and grow parapets,
 			# handrails and cable trays; touching now is overlapping then.
@@ -316,7 +375,7 @@ func _installation() -> int:
 				note = "   %s %s by %.1f m" % [
 						"OVERLAPS" if gap < 0.0 else "crowds", b[0], MARGIN - gap]
 				bad += 1
-		boxes.append([str(p[0]).get_file(), centre, rot])
+		boxes.append([str(p[0]).get_file(), centre, rot, ring])
 		print("   %-38s %8.0fm %8.0fm %6.0fx%.0f%s" % [
 				str(p[0]).get_file(), centre.x, centre.y, rot.x * 2.0, rot.y * 2.0, note])
 	return bad
@@ -356,8 +415,17 @@ func _grades(by_name: Dictionary) -> int:
 		var run := Vector2(float(b[1]) - float(a[1]), float(b[2]) - float(a[2])).length()
 		var rise := float(b[3]) - float(a[3])
 		# The grade of the GRADED part: the run-outs at each end are level, so
-		# the climb is squeezed into what is left.
-		var graded: float = maxf(run - minf(RUNOUT, run * 0.3) * 2.0, 0.001)
+		# the climb is squeezed into what is left. Each end's run-out is however
+		# far it takes to cross that station's own pad, so a big pad on a short
+		# leg is what makes a grade fail here — move the station, or shrink it.
+		var dir := Vector2(float(b[1]) - float(a[1]), float(b[2]) - float(a[2])).normalized()
+		var ends := _runout(a, dir) + _runout(b, dir)
+		if ends >= run - 8.0:
+			bad += 1
+			print("   %-24s %7.0fm %7.0fm  PADS EAT THE LEG — %.0f m of run-out in %.0f m" % [
+					"%s → %s" % [l[0], l[1]], run, rise, ends, run])
+			continue
+		var graded: float = maxf(run - ends, 0.001)
 		var grade := rad_to_deg(atan2(rise, graded))
 		# How far the bed sits off the natural ground at the midpoint: a big
 		# number means an embankment across the face rather than a shelf in it.
@@ -400,7 +468,7 @@ func _scene(by_name: Dictionary) -> String:
 	# placed. check.sh fails a scene that declares an id it never uses and a
 	# scene whose load_steps is off, so both are counted rather than typed.
 	var seen := {}
-	for p: Array in SUMMIT_PIECES:
+	for p: Array in SUMMIT_PIECES + wall_pieces():
 		var id: String = "p_" + str(p[0]).get_file()
 		if seen.has(id):
 			continue
@@ -502,10 +570,15 @@ func _scene(by_name: Dictionary) -> String:
 	out.append("level_exits = [NodePath(\"NavigationRegion3D/LevelExit\")]")
 	out.append("")
 	out.append("[node name=\"SpawnPoint\" parent=\".\" instance=ExtResource(\"2_spawn\")]")
-	out.append(_xform(float(trail[1]), float(trail[3]) + 1.15, float(trail[2]) + 56.0))
+	# INSIDE THE PAD, measured off its own size. A fixed offset survived two pad
+	# resizes and then put the spawn out on the hillside, where it snapped to a
+	# scrap of navmesh that joined nothing and reported the ENTIRE MAP cut off.
+	out.append(_xform(float(trail[1]), float(trail[3]) + 1.15,
+			float(trail[2]) + float(trail[5]) * 0.5 - 16.0))
 	out.append("")
 	out.append("[node name=\"SquadSpawnPoint\" type=\"Node3D\" parent=\".\"]")
-	out.append(_xform(float(trail[1]) - 14.0, float(trail[3]), float(trail[2]) + 48.0))
+	out.append(_xform(float(trail[1]) - 14.0, float(trail[3]),
+			float(trail[2]) + float(trail[5]) * 0.5 - 26.0))
 	out.append("script = ExtResource(\"3_squad\")")
 	out.append("")
 	out.append("[node name=\"NavigationRegion3D\" type=\"NavigationRegion3D\" parent=\".\"]")
@@ -600,7 +673,7 @@ func _scene(by_name: Dictionary) -> String:
 	out.append("")
 
 	var ri := 1
-	for p: Array in SUMMIT_PIECES:
+	for p: Array in SUMMIT_PIECES + wall_pieces():
 		var id: String = "p_" + str(p[0]).get_file()
 
 		var yaw := deg_to_rad(float(p[3]))
@@ -613,7 +686,9 @@ func _scene(by_name: Dictionary) -> String:
 		ri += 1
 
 	out.append("[node name=\"LevelExit\" parent=\"NavigationRegion3D\" instance=ExtResource(\"10_exit\")]")
-	out.append(_xform(float(summit[1]), float(summit[3]), float(summit[2]) + 72.0))
+	# On the plateau, inside the wall.
+	out.append(_xform(float(summit[1]) - 30.0, float(summit[3]),
+			float(summit[2]) + float(summit[5]) * 0.5 - 34.0))
 	out.append("")
 	out.append("[node name=\"WorldEnvironment\" parent=\".\" instance=ExtResource(\"11_env\")]")
 	out.append("environment = SubResource(\"Environment_ascent\")")
@@ -728,8 +803,10 @@ func _curve(by_name: Dictionary, leg: Array) -> String:
 	var total: float = maxf(cum[cum.size() - 1], 0.001)
 	# The two kinks in the height profile become real curve points, or the
 	# resampler rounds the corner and the run-out is not level after all.
-	var run := minf(RUNOUT, total * 0.3)
-	for s: float in [run, total - run]:
+	var dir := (pts[pts.size() - 1] - pts[0]).normalized()
+	var r0: float = minf(_runout(a, dir), total * 0.45)
+	var r1: float = minf(_runout(b, dir), total * 0.45)
+	for s: float in [r0, total - r1]:
 		var at := _along(pts, cum, s)
 		var slot := 1
 		while slot < cum.size() and cum[slot] < s:
@@ -738,7 +815,7 @@ func _curve(by_name: Dictionary, leg: Array) -> String:
 		cum.insert(slot, s)
 	var nums: PackedStringArray = []
 	for i in pts.size():
-		var y := _height(float(a[3]), float(b[3]), cum[i], total, run)
+		var y := _height(float(a[3]), float(b[3]), cum[i], total, r0, r1)
 		# Zero handles: every segment is a straight line, so the height really
 		# is linear in arc length. A Bezier handle would bow the curve and the
 		# grade with it.
@@ -747,10 +824,10 @@ func _curve(by_name: Dictionary, leg: Array) -> String:
 			", ".join(nums), ", ".join(_zeros(pts.size())), pts.size()]
 
 
-## Level for `run` at each end, one constant grade in between.
-func _height(y0: float, y1: float, s: float, total: float, run: float) -> float:
-	var graded: float = maxf(total - run * 2.0, 0.001)
-	return lerpf(y0, y1, clampf((s - run) / graded, 0.0, 1.0))
+## Level for `r0` at the start and `r1` at the end, one constant grade between.
+func _height(y0: float, y1: float, s: float, total: float, r0: float, r1: float) -> float:
+	var graded: float = maxf(total - r0 - r1, 0.001)
+	return lerpf(y0, y1, clampf((s - r0) / graded, 0.0, 1.0))
 
 
 ## The point `s` metres along the polyline.
