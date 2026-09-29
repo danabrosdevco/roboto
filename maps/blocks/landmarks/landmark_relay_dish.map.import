@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bn6b7pj01o3hg"
+path="res://.godot/imported/landmark_relay_dish.map-4421f712bbe429e99d40a5a390d5d332.tres"
+
+[deps]
+
+source_file="res://maps/blocks/landmarks/landmark_relay_dish.map"
+dest_files=["res://.godot/imported/landmark_relay_dish.map-4421f712bbe429e99d40a5a390d5d332.tres"]
+
+[params]
+

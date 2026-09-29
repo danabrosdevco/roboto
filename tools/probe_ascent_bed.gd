@@ -36,10 +36,12 @@ const EYE := 1.7
 ## and that is true of every real hilltop. What has to be visible is what stands
 ## ON it, so the sightline is drawn to the top of a watchtower, not to the dirt.
 ## Aimed at the NEAREST MAST, on the plateau’s south lip, not at the middle of
-## the summit. A mast at the back of a flat top is hidden by the front of it.
-const TOP := Vector3(54.0, -224.0, 132.0)
+## at 25.3 m. It sits at the BACK of the plateau, which makes this the hard
+## version of the question: a thing at the back of a flat top is hidden by the
+## front of it, so if the dish clears the brow everything else does too.
+const TOP := Vector3(-4.0, -286.0, 132.0)
 ## The tallest thing standing on the summit — the relay masts, not a watchtower.
-const TOWER := 21.8
+const TOWER := 25.3
 ## The summit plateau's centre and its authored height.
 const SUMMIT := Vector2(30.0, -270.0)
 const PLATEAU := 132.0
@@ -48,7 +50,7 @@ const PLATEAU := 132.0
 ## then the footprint to sample the corners of.
 const RELAY: Array = [
 	["compute_data_hall", 12.0, -6.0, 29.0, 19.0],
-	["compute_obelisk", -20.0, -12.0, 15.0, 13.0],
+	["landmark_relay_dish", -34.0, -16.0, 30.0, 28.0],
 	["compute_satellite_dish", -28.0, -27.0, 4.0, 3.3],
 	["compute_satellite_dish", 20.0, -27.0, 4.0, 3.3],
 	["compute_generator", 28.0, 12.0, 12.3, 4.6],

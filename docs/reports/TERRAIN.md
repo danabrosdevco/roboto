@@ -63,10 +63,9 @@ along the north lip, generator and transformers, three 21.8 m masts, two
 watchtowers, a sangar and a sentry turret. Blockout only — no dressing, no
 objectives, no cover bake.
 
-**Gates.** `check.sh --changed`: everything in this lane **consistent**, all 34
-scripts parse — but the run does NOT print PASS, because of one file that is
-not mine: `Campaign/lab/plans/foundry_rifle.tres`, untracked and mid-edit in
-the GAMEPLAY lane, with `load_steps=9` where 11 is expected. Left alone.
+**Gates.** `check.sh --changed`: **PASS** — 37 scripts, 45 scenes and
+resources consistent. (It failed for a while on `foundry_rifle.tres`, an
+untracked file mid-edit in the GAMEPLAY lane; that lane has since fixed it.)
 `test.sh` and `smoke.sh`: **not
 run** — nothing here touches their ground, and the level is not in any mission.
 **Never launched.** Everything below is geometry and pathfinding, not feel.
@@ -101,6 +100,26 @@ already falling by the time the pad's edge is reached. Narrowing it too far
 put the west flank at 42° and the nav probe immediately called it a detour, so
 the falloff went back out to 130 m — 31° at its steepest, walkable from every
 side. The summit is now the highest point on the map, 132.0 m of 132.0 m.
+
+**A new block, and the obelisk is out of the relay.** `landmark_relay_dish` —
+a 24 m bowl on a slewing mount, **25.3 m to the top of the rim**, built in
+`tools/block_ai_infra.gd` the same way `compute_satellite_dish` is (a tilted
+basis, then sectors × rings through a paraboloid) and scaled up with a real
+pedestal, yoke, elevation axis, feed quadpod and equipment cabin. 107 brushes.
+It replaced a reused `compute_obelisk` at the head of the compound, which
+solves three things at once: the compound now has a centrepiece that explains
+why the station and the road exist; the `glitch_tx_1` confetti is off the most
+visible object on the map; and the dish is tall enough to be the thing the
+sightline check aims at. **Aimed at the dish, the summit now reads from the
+Trailhead 716 m away**, and from the Pillars, Terrace and Shoulder. The Cistern
+and the Gate are blocked, each by under 5 m, by hills on their own approach.
+
+Two things learned building it, both in `docs/BLOCKS.md`: `cylinder()` with a
+top radius makes a brush the hull builder calls non-convex when the frustum is
+SHORT — tall cones are fine, a 0.9 m one is not — and a new `.map` needs the
+editor scan for its `.import`, then `block_prefabs.gd` on its folder to get a
+`.tscn`. Run that WITHOUT `--force`: it skips what exists, so only the new
+piece is built and the other three landmarks keep their resource ids.
 
 **The relay is composed now, not scattered** — 40 pieces where there were 23.
 One decision drives the rest: the data hall's LONG side faces the gate, so the
@@ -199,10 +218,11 @@ refuses to write under 2000 bytes.
   is probably a built viaduct, which is a block job.
 - The curtain wall is 5.5 m and reads as a fence from any distance. If the fort
   should read as a fort from the Terrace, it wants a taller piece.
-- The obelisk wears `glitch_tx_1` and reads as magenta and green confetti up
-  close — it is the centrepiece of the compound and the first thing seen
-  through the gate, so this is now the texture's most visible appearance
-  anywhere. Same fix as the monolith note that has been open three sessions.
+- `glitch_tx_1` is off the summit now — the dish replaced the obelisk — but it
+  is still on `compute_monolith` and still reads as magenta and green confetti
+  up close. Same fix as the note that has been open three sessions.
+- **The relay dish has not been seen in the editor.** It is 107 brushes of
+  generated geometry and the only eyes on it so far are a render from a probe.
 
 **Blocked / next.** Nothing blocking, and nothing should be built on top of this
 until the scale is signed off. After that, in order: a curtain wall and gate

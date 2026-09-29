@@ -144,11 +144,12 @@ const SUMMIT_PIECES: Array = [
 	# front rather than presenting an end wall to whoever walks in. Everything
 	# else is placed off that one decision.
 	["compute/compute_data_hall", 4.0, -12.0, 0.0],
-	# The obelisk is the tallest single thing at eye level and stands clear on
-	# the hall's west flank, where it reads against the sky from the gate. Its
-	# VISUAL mass sits about 3.9 m west of its origin — see docs/BLOCKS.md —
-	# so it is further from the wall than the number here looks.
-	["compute/compute_obelisk", -34.0, -16.0, 0.0],
+	# The dish is the reason the station exists and the reason there is a road
+	# up the hill, so it gets the clear flank west of the hall and it is turned
+	# to face the approach: from the gate and from the Terrace you see the BOWL,
+	# not its back. 25.3 m tall, which is also what clears the plateau's brow —
+	# see the sightline note in tools/probe_ascent_bed.gd.
+	["landmarks/landmark_relay_dish", -34.0, -16.0, -25.0],
 	["compute/compute_chiller_yard", 36.0, -12.0, 0.0],
 	["compute/compute_cooling_unit", -4.0, -30.0, 0.0],
 	["compute/compute_cooling_unit", 12.0, -30.0, 0.0],
@@ -175,19 +176,19 @@ const SUMMIT_PIECES: Array = [
 	["compute/compute_cable_run", -6.0, 8.0, 0.0],
 	["compute/compute_cable_run", 10.0, 8.0, 0.0],
 	["compute/compute_rack_row", 20.0, 2.0, 20.0],
-	["compute/compute_rack_row", -18.0, -2.0, -14.0],
+	["compute/compute_rack_row", -12.0, 2.0, -14.0],
 
 	# ── THE GATE. You cannot walk straight in: the checkpoint sits across the
 	# line from the gate, angled to the road, so the way through is a turn.
 	["fortifications/fort_checkpoint", -28.0, 30.0, 40.0],
-	["fortifications/fort_dragon_teeth", -44.0, 2.0, 50.0],
+	["fortifications/fort_dragon_teeth", -28.0, 8.0, 50.0],
 	["features/feature_watchtower", -52.0, 34.0, 0.0],
 	["fortifications/fort_sentry_turret", -8.0, 42.0, 215.0],
 	["props/prop_sandbag_nest", -6.0, 30.0, 0.0],
 	# The second tower is on the far side, covering the yard and the power end.
 	["features/feature_watchtower", 52.0, -12.0, 0.0],
 	["fortifications/fort_gun_emplacement", 38.0, -40.0, 0.0],
-	["fortifications/fort_ammo_dump", -52.0, -10.0, 0.0],
+	["fortifications/fort_ammo_dump", 52.0, 34.0, 0.0],
 	["fortifications/fort_floodlight_mast", -52.0, 12.0, 0.0],
 	["fortifications/fort_floodlight_mast", 30.0, -42.0, 0.0],
 

@@ -497,6 +497,25 @@ Panels and mirrors face the prefab's -Z. Turn it so -Z points at the sun.
 
 ### Landmarks
 
+- **landmark_relay_dish** (24 m bowl, **25.3 m to the top of the rim**): a
+  communications dish on a slewing mount, for a listening post or a hilltop
+  station. Footprint 24 × 20 m, collision the same — the bowl overhangs its
+  pedestal, so space it off its FULL extent and not off the drum at the bottom.
+  - The boresight points along the map's **+X in Quake, which is +Z in Godot**,
+    tilted 35° up. Yaw it to face the approach: the bowl reads as a landmark
+    from in front and as a grey ellipse from behind.
+  - 25.3 m is a deliberate number. A flat hilltop hides itself — from a station
+    250 m out and 50 m below, the plateau's own brow cuts the line and anything
+    standing up there needs about 23 m to clear it. A watchtower is 8.7 m and a
+    power pylon 21.8 m; this is the piece that reads from the valley floor.
+  - The ribs, rim and feed quadpod are **mesh only**. They are 0.2 m bars 20 m
+    in the air and every one would otherwise carry its own collision hull for
+    nothing.
+  - The plinth is 0.4 m on purpose. A step nothing can climb, in the middle of
+    a compound, is a collar of unwalkable ground round the best cover on it.
+  - Used in `maps/ascent_level.tscn`, where it replaced a reused
+    `compute_obelisk`.
+
 - **landmark_tether_anchor:** the ground anchor of an orbital tether, and the
   reason the valley fortress is there. It stands on a 34 × 48 m pad, the old
   tower's court.
