@@ -69,6 +69,14 @@ func _initialize() -> void:
 	if rebake and not await _bake():
 		quit(1)
 		return
+	# BAKE_ONLY: bake the navmesh, write it into the scene, stop. The station
+	# and ring tests below are about maps/ascent_level.tscn and mean nothing on
+	# any other level — but the bake and the write-back are level-agnostic, and
+	# any level whose NavigationMesh is a sub-resource needs them after its
+	# terrain moves. terrain_bake.gd --navmesh cannot save an embedded one.
+	if OS.get_environment("BAKE_ONLY") != "":
+		quit()
+		return
 	var packed := ResourceLoader.load(level_path, "PackedScene",
 			ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
 	if packed == null:

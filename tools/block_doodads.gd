@@ -488,7 +488,23 @@ func _trench_revetment() -> void:
 func _crater_rim() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 61
+	# TWO BREACHES, and they are not decoration. Eleven slabs 3.8 m long round
+	# a 35 m circumference OVERLAP into a closed ring 0.6 to 1.2 m tall, and
+	# move_and_slide has no step-up: a face steeper than floor_max_angle is a
+	# wall at any height. The navmesh bridges it perfectly happily — it fills a
+	# 0.5 m climb and smooths what is left — so a reach test says the crater is
+	# fine while a player standing in it cannot get out, which is exactly how
+	# this shipped. tools/probe_crater_escape.gd walks the COLLISION SURFACE
+	# instead and found 2 of the 3 in valley_basin sealed, at 78° and 55° on
+	# their gentlest bearing.
+	#
+	# Leaving two slabs out puts a 2.6 m gap at each, with the tapered ends of
+	# their neighbours either side. Roughly opposite, so the piece has a way
+	# out whichever way a level turns it.
+	var breach := [2, 8]
 	for i in 11:
+		if i in breach:
+			continue
 		var a := TAU * i / 11.0 + rng.randf_range(-0.12, 0.12)
 		var rad := 5.6 + rng.randf_range(-0.4, 0.4)
 		var c := Vector3(cos(a) * rad, sin(a) * rad, -0.2)
@@ -508,6 +524,13 @@ func _crater_rim() -> void:
 	for i in 6:
 		var a := rng.randf_range(0.0, TAU)
 		var rad := rng.randf_range(2.0, 8.5)
+		# Keep the loose slabs out of the breaches. These are only 0.3 m tall,
+		# and 0.3 m is still a wall to a body that cannot step up — one of them
+		# dropped in a gap closes it again.
+		for b: int in breach:
+			if rad > 3.6 and rad < 7.8 \
+					and absf(wrapf(a - TAU * b / 11.0, -PI, PI)) < 0.45:
+				rad = 2.6
 		tipped_box(Vector3(cos(a) * rad, sin(a) * rad, 0.15), Vector3(rng.randf_range(0.6, 1.4), rng.randf_range(0.5, 1.0), 0.3),
 				Vector3(rng.randf_range(-20, 20), rng.randf_range(-20, 20), rng.randf_range(0, 180)), SCORCH if i % 2 == 0 else RUBBLE)
 

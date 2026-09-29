@@ -37,6 +37,58 @@ most wants and least often gets:
 ---
 
 
+
+## 2026-09-28 (8) — the craters you could not climb out of
+
+**Landed.** `feature_crater_rim` now has **two breaches** in its ring, and one
+crater in `maps/valley_basin_level.tscn` moved 28 m off a trench line.
+
+**What was wrong, and why nothing had caught it.** The rim laid eleven heaved
+slabs at 5.6 m, each 3.8 m long, round a 35 m circumference — they OVERLAP, so
+the ring is closed, and they stand 0.6 to 1.2 m. `move_and_slide` has no
+step-up, so a face steeper than `floor_max_angle` is a wall at any height:
+walk into the crater and you stay in it. **The navmesh shows none of this.** It
+fills a 0.5 m climb and smooths the rest, so every reach test on that level has
+always said the craters are fine — and they are, for a bot. A player is a
+`CharacterBody3D`.
+
+`tools/probe_crater_escape.gd` (new) asks the question that finds it: from the
+middle of a crater, walk the COLLISION SURFACE outward on 72 bearings at 0.25 m
+and report the steepest rise on the gentlest one. Before: **2 of 3 rims in
+valley_basin sealed, at 78° and 55°.** After: 39°, 31°, 40°. Coastal Road's
+eight were already 14–25° and are unchanged in kind.
+
+**One instance was not the block.** Sweeping every crater STAMP as well turned
+up `Crater_200_24`, sealed at 82° and with no rim on it at all — a trench
+revetment line runs straight across it, and two of the revetments sit inside
+the bowl. Breaking the trench lining to fix a shell hole is the wrong trade, so
+the shell hole moved instead: local z −106 → −134. **That is the only change to
+the human's authored dressing, and it is one number.** 19 of 19 craters clear
+now, 22 of 22 on Coast Road.
+
+**Gates.** `check.sh --changed`: **PASS**, 42 scripts and 48 scenes. Craters
+re-walked on both levels after every change.
+
+**Needs the human.**
+
+- **Valley Basin's navmesh was rebaked** — moving the crater made it stale by
+  ~2 m over a 12 m patch. `git diff` on that level is **three lines**: the
+  navmesh's two data lines and the crater's transform. Nothing else moved.
+  The bake used the level's own NavigationMesh settings.
+- The block was regenerated, so any TrenchBroom edit to `feature_crater_rim`
+  since it was committed is gone. It was clean in git; a backup of both the
+  `.map` and the `.tscn` is in this session's scratch if it turns out not to
+  have been.
+- `ground_berm_ring` was checked for the same fault and is fine — it is graded
+  at 5–11° by construction.
+- Not played. The fix is measured against collision geometry, not felt.
+
+**Blocked / next.** Worth pointing `probe_crater_escape.gd` at other dressing
+that makes closed lines — sandbag walls, dragon's teeth, t-walls — wherever one
+rings a low spot. It takes `LEVEL=` and `PIECE=`.
+
+---
+
 ## 2026-09-28 (7) — ascent: a new climb map, built twice because the first one was a mountain
 
 **Landed.** `maps/ascent_level.tscn`, new, with its own sketch

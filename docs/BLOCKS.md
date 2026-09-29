@@ -421,8 +421,15 @@ plinth to keep the extent, which is the buildings tool's 27°.
 - **trench_revetment** (8 m): plank walls, duckboards and sandbag parapets. Made
   for a `TerrainPath` TRENCH 4 m wide and 2 m deep; place it on the trench
   centreline at ground height.
-- **crater_rim** (about 14 m across): a heaved-up rim with scorched slabs, to put
-  round a crater stamp.
+- **crater_rim** (about 14 m across): a heaved-up rim with scorched slabs, to
+  put round a crater stamp. **Two of its eleven slabs are deliberately absent**,
+  leaving a 2.6 m breach on roughly opposite sides — without them the ring is
+  continuous and 0.6 to 1.2 m tall, and `move_and_slide` has no step-up, so a
+  player who walks into the crater cannot get out. The navmesh does not show
+  this: it bridges a 0.5 m climb and reports the crater fine. Check it with
+  `tools/probe_crater_escape.gd`, which walks the collision surface instead.
+  The loose slabs are kept out of the breach arcs for the same reason — 0.3 m
+  is still a wall to a body that cannot step up.
 - **pillbox:** a six-sided bunker, half dug in, with firing slits. An earth
   ramp climbs to the roof.
 - **watchtower:** a sandbagged platform 6 m up on legs, with a ramp on posts.
