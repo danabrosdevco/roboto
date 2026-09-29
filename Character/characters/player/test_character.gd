@@ -117,6 +117,10 @@ signal activate_scanner_ui(time: float)
 signal highlight_enemy(target: Node3D, duration: float)
 signal activate_interactible_ui(interactible: Interactible)
 signal died(global_position)
+## Every repair that lands on you, with what it put back and who did it. The
+## squad's robots have had `revived` for a long time; the player had nothing,
+## so anything wanting to know you had patched yourself up had to poll.
+signal healed(amount: int, healer: Node)
 
 
 func initialize() -> void:
@@ -661,6 +665,7 @@ func apply_healing(healing, healer: Node = null):
 		new_health = max_health
 	health = new_health
 	_Analytics.heal(self, int(health) - before, healer)
+	healed.emit(int(health) - before, healer)
 	#if health_sfx != null:
 		#health_sfx.play()
 	update_status()

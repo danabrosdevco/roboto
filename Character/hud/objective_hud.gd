@@ -288,9 +288,24 @@ func _rebuild() -> void:
 	# zero objectives" is a SETUP PROBLEM, not a normal state — hiding there is
 	# what made this look like a broken HUD instead of an empty level.
 	var in_mission: bool = _campaign != null and _campaign.in_mission
-	_panel.visible = in_mission
-	if not in_mission:
+	# AT BASE THERE IS USUALLY NOTHING TO SHOW, but not always: the depot
+	# induction sets five objectives on the first visit, and they are the only
+	# thing telling a new player what to do. So the panel follows the
+	# OBJECTIVES, not the mission — at base with none, it still hides.
+	var has_objectives: bool = tracker != null and not tracker.objectives().is_empty()
+	_panel.visible = in_mission or has_objectives
+	if not _panel.visible:
 		return
+	# OUT FROM UNDER THE WALLET. Resources and compute own this corner at base
+	# and hide in the field, which was safe for as long as this panel did the
+	# opposite. The induction put objectives at base and the two drew on top of
+	# each other. Measured off the wallet's own constants rather than a copied
+	# number, so moving one moves the other.
+	var top: float = panel_margin.y
+	if not in_mission:
+		top = maxf(top, _Wallet.ROW_BOTTOM + 12.0)
+	_panel.offset_top = top
+	_panel.offset_bottom = top + 300.0
 
 	if tracker == null or tracker.objectives().is_empty():
 		for c in _list.get_children():
@@ -381,7 +396,11 @@ func _on_changed(objective: MissionObjective) -> void:
 
 
 func _on_all_complete() -> void:
-	_show_toast("ALL OBJECTIVES COMPLETE — EXTRACT", COL_DONE)
+	# "EXTRACT" is the wrong word at base. The induction's last objective is
+	# choosing an operation, and what follows it is the train, not a pad.
+	var in_mission: bool = _campaign != null and _campaign.in_mission
+	_show_toast("ALL OBJECTIVES COMPLETE — EXTRACT" if in_mission
+		else "INDUCTION COMPLETE — TAKE THE TRAIN", COL_DONE)
 	_rebuild()
 
 

@@ -1,0 +1,139 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=17 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" uid="uid://cchassisrifle01" path="res://Campaign/chassis/chassis_rifleman.tres" id="4_rifle"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover.tres" id="5_rover"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_walker.tres" id="6_walker"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="7_lobber"]
+
+[sub_resource type="Resource" id="M1_ROVER"]
+script = ExtResource("2_match")
+label = "1. rifles vs Rover (small arms into LIGHT)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("5_rover")])
+hostile_order = 1
+distance = 35.0
+repeats = 6
+time_limit = 120.0
+swap_sides = false
+
+[sub_resource type="Resource" id="M2_WALKER"]
+script = ExtResource("2_match")
+label = "2. rifles vs Walker (small arms into MEDIUM)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_walker")])
+hostile_order = 1
+distance = 35.0
+repeats = 6
+time_limit = 120.0
+swap_sides = false
+
+[sub_resource type="Resource" id="M3_CONTROL"]
+script = ExtResource("2_match")
+label = "3. rifles vs rifles (UNARMOURED control)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+hostile_order = 1
+distance = 35.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+
+[sub_resource type="Resource" id="M4_EXPLOSIVE"]
+script = ExtResource("2_match")
+label = "4. 3 Lobbers vs Walker (EXPLOSIVE into medium)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("7_lobber"), ExtResource("7_lobber"), ExtResource("7_lobber")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_walker")])
+hostile_order = 1
+distance = 35.0
+repeats = 4
+time_limit = 120.0
+swap_sides = false
+
+[sub_resource type="Resource" id="M5_MGROVER"]
+script = ExtResource("2_match")
+label = "5. 3 MG Rovers vs Walker (small arms into medium)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_walker")])
+hostile_order = 1
+distance = 35.0
+repeats = 4
+time_limit = 120.0
+swap_sides = false
+
+[sub_resource type="Resource" id="M6_AT_WALKER"]
+script = ExtResource("2_match")
+label = "6. AT rifles vs Walker (ANTI-ARMOUR into medium)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_walker")])
+hostile_order = 1
+distance = 35.0
+repeats = 4
+time_limit = 120.0
+swap_sides = false
+weapon_swaps = {
+&"rifleman": &"autocannon"
+}
+
+[sub_resource type="Resource" id="M7_AT_SOFT"]
+script = ExtResource("2_match")
+label = "7. AT rifles vs rifles (ANTI-ARMOUR into unarmoured)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+hostile_order = 1
+distance = 35.0
+repeats = 4
+time_limit = 120.0
+swap_sides = false
+weapon_swaps = {
+&"rifleman": &"autocannon"
+}
+
+[sub_resource type="Resource" id="M8_MIRROR"]
+script = ExtResource("2_match")
+label = "8. combined arms, mirror match"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_walker"), ExtResource("5_rover"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_walker"), ExtResource("5_rover"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+hostile_order = 1
+distance = 40.0
+repeats = 4
+time_limit = 150.0
+swap_sides = true
+
+[sub_resource type="Resource" id="M9_NUMBERS"]
+script = ExtResource("2_match")
+label = "9. combined arms vs 8 rifles (armour vs numbers)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_walker"), ExtResource("5_rover"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+hostile_order = 1
+distance = 40.0
+repeats = 4
+time_limit = 150.0
+swap_sides = false
+
+[resource]
+script = ExtResource("1_plan")
+title = "Armour baseline"
+question = "THE BEFORE MEASUREMENT FOR ARMOUR, taken while no armour rule exists, so every hit lands at full value. Once the helper is in Enemy.apply_damage there is no way back to these numbers except by reverting — which is why this is run first. The two figures that matter are DAMAGE DEALT PER RUN and AVERAGE TIME; those are what the multipliers will move.
+
+Matchups 1-3 are the ladder: the same four Ancient Rifle troopers against LIGHT (rover), MEDIUM (walker) and UNARMOURED (each other). 3 is a control and armour must NOT change it — if it moves, the rule has leaked onto things with no armour class. Six repeats on these three because one rover killing four troopers is close to a coin flip at low n.
+
+4-5 vary the damage TYPE against one hull: explosive (Lobber) and small arms (MG Rover) into the same Walker, so the multiplier table can be read off the difference rather than guessed.
+
+6-7 are the counter, and they are a PROXY. There is no anti-armour weapon any AI robot can carry: the Recoilless Rifle is usable_by_ai = false with no ai_scene, and the autocannon is whitelisted to walker and rover. The lab's weapon_swaps ignores that whitelist, so these two put an autocannon in a trooper's hands to measure the damage-type interaction. 7 exists because anti-armour is deliberately WORSE into unarmoured (0.80) and that cost should be visible.
+
+8-9 are how the game is actually played — a walker, a rover and two troopers as one force, mirrored, and then against numbers. The walker may well be overtuned here; that is worth knowing rather than avoiding."
+matchups = Array[Resource]([SubResource("M1_ROVER"), SubResource("M2_WALKER"), SubResource("M3_CONTROL"), SubResource("M4_EXPLOSIVE"), SubResource("M5_MGROVER"), SubResource("M6_AT_WALKER"), SubResource("M7_AT_SOFT"), SubResource("M8_MIRROR"), SubResource("M9_NUMBERS")])
+repeats_override = 0
+speed = 6.0

@@ -280,6 +280,19 @@ func supply_used() -> int:
 	return used
 
 
+
+## Does the motor pool contain one of these frames? Used to gate kit that
+## belongs to a tier the player has not bought into yet — see
+## ItemDefinition.requires_chassis. The player's own record counts, and so does
+## a benched robot: you own it, it is just not going out today.
+func owns_any_chassis(ids: Array[StringName]) -> bool:
+	if ids.is_empty():
+		return true
+	for record in roster:
+		if record != null and ids.has(record.chassis_id):
+			return true
+	return false
+
 func supply_free() -> int:
 	return supply_cap - supply_used()
 

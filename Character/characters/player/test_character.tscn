@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://bgj56y7q1pyxr"]
+[gd_scene load_steps=22 format=3 uid="uid://bgj56y7q1pyxr"]
 
 [ext_resource type="Script" path="res://Character/characters/player/test_character.gd" id="1_xw2ar"]
 [ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/components/command.tscn" id="2_ysmyv"]
@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://Character/equipment/equipment_loadout.gd" id="16_load"]
 [ext_resource type="Script" path="res://Character/equipment/ammo_stock.gd" id="17_stock"]
 [ext_resource type="Resource" uid="uid://ccpr2dv1am1dg" path="res://Character/equipment/ammo/ammo_5_56.tres" id="19_a556"]
+[ext_resource type="Resource" path="res://Character/equipment/ammo/ammo_7_62.tres" id="19_a762"]
 [ext_resource type="Resource" uid="uid://b1r5x5m37xxx4" path="res://Character/equipment/ammo/ammo_9mm.tres" id="20_a9mm"]
 [ext_resource type="Resource" uid="uid://bn4opddjoiin8" path="res://Character/equipment/ammo/ammo_grenade.tres" id="21_agrn"]
 [ext_resource type="Resource" uid="uid://b5ukc6x65d6ss" path="res://Character/equipment/ammo/ammo_repair.tres" id="22_arep"]
@@ -89,7 +90,7 @@ marker_scene = ExtResource("2_ysmyv")
 
 [node name="AmmoPool" type="Node" parent="."]
 script = ExtResource("15_pool")
-starting_ammo = Array[ExtResource("17_stock")]([ExtResource("19_a556"), ExtResource("20_a9mm"), ExtResource("21_agrn"), ExtResource("22_arep"), ExtResource("23_a12ga"), ExtResource("90_aemp"), ExtResource("91_ahat"), ExtResource("92_arkt")])
+starting_ammo = Array[ExtResource("17_stock")]([ExtResource("19_a556"), ExtResource("19_a762"), ExtResource("20_a9mm"), ExtResource("21_agrn"), ExtResource("22_arep"), ExtResource("23_a12ga"), ExtResource("90_aemp"), ExtResource("91_ahat"), ExtResource("92_arkt")])
 
 [node name="EquipmentLoadout" type="Node" parent="." node_paths=PackedStringArray("player", "cam", "ammo", "permanent_items")]
 script = ExtResource("16_load")

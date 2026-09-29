@@ -1,0 +1,115 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" uid="uid://vw46h82csp7a" path="res://Campaign/chassis/chassis_soldier.tres" id="4_soldier"]
+[ext_resource type="Resource" uid="uid://cchassisrifle01" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_line"]
+[ext_resource type="Resource" uid="uid://cchassisrifle02" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="6_heavy"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "1. ANCIENT RIFLE vs LINE trooper (60 hp)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line")])
+hostile_order = 1
+distance = 40.0
+repeats = 12
+time_limit = 120.0
+swap_sides = false
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "2. MARK ONE vs LINE trooper (60 hp)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line")])
+hostile_order = 1
+distance = 40.0
+repeats = 12
+time_limit = 120.0
+swap_sides = false
+weapon_swaps = {
+&"soldier": &"bolt"
+}
+
+[sub_resource type="Resource" id="M3"]
+script = ExtResource("2_match")
+label = "3. ANCIENT RIFLE vs HEAVY trooper (100 hp)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_heavy"), ExtResource("6_heavy"), ExtResource("6_heavy"), ExtResource("6_heavy")])
+hostile_order = 1
+distance = 40.0
+repeats = 12
+time_limit = 120.0
+swap_sides = false
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M4"]
+script = ExtResource("2_match")
+label = "4. MARK ONE vs HEAVY trooper (100 hp)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_heavy"), ExtResource("6_heavy"), ExtResource("6_heavy"), ExtResource("6_heavy")])
+hostile_order = 1
+distance = 40.0
+repeats = 12
+time_limit = 120.0
+swap_sides = false
+weapon_swaps = {
+&"soldier": &"bolt"
+}
+
+[sub_resource type="Resource" id="M5"]
+script = ExtResource("2_match")
+label = "5. ANCIENT RIFLE vs TWELVE line troopers (volume)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line")])
+hostile_order = 1
+distance = 45.0
+repeats = 6
+time_limit = 150.0
+swap_sides = false
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M6"]
+script = ExtResource("2_match")
+label = "6. MARK ONE vs TWELVE line troopers (volume)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier"), ExtResource("4_soldier")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line"), ExtResource("5_line")])
+hostile_order = 1
+distance = 45.0
+repeats = 6
+time_limit = 150.0
+swap_sides = false
+weapon_swaps = {
+&"soldier": &"bolt"
+}
+
+[resource]
+script = ExtResource("1_plan")
+title = "The Mark One, against both trooper types"
+question = "DOES THE NEW GUN DO THE JOB IT WAS BUILT FOR? The Mark One trades volume for power — 70 a shot on a 1.15 s bolt and a ten-round box, against the Ancient Rifle's 30 a shot on a 0.35 s trigger and thirty rounds. Sustained, that is 44 DPS against 60, so the rifle should win any fight decided by how much lead lands.
+
+The point is the other kind of fight. A LINE trooper is 60 frame: the Ancient Rifle needs two hits, the Mark One needs one. A HEAVY is 100: the Ancient needs four, the Mark One two. So the gap between the two guns should WIDEN as the target gets tougher, and that is the whole design.
+
+  1 vs 2   the same four troopers, both guns, against line infantry
+  3 vs 4   the same four troopers, both guns, against heavies
+
+Read pairs, not rows. If 2 beats 1 by as much as 4 beats 3, the Mark One is simply the better gun and the price is wrong. What should happen is 1 ≈ 2 and 4 > 3 — the Mark One earns its 130 against armour and pays for it against numbers.
+
+Four a side at 40 m, six repeats, no side swap: both sides are infantry on flat ground and the arena is symmetrical."
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2"), SubResource("M3"), SubResource("M4")])
+repeats_override = 0
+speed = 6.0

@@ -26,4 +26,5 @@ vehicle = false
 drives = false
 equipment_slots = 1
 module_slots = 2
+musters_at_base = true
 required_rank = 2

@@ -548,3 +548,101 @@ static func scatter(centre: Vector3, mrad: float) -> Vector3:
 static func _flat(v: Vector3) -> Vector3:
 	var out := Vector3(v.x, 0.0, v.z)
 	return out.normalized() if out.length_squared() > 0.0001 else Vector3.ZERO
+
+
+# ─────────────────────────────────────────────
+# TARGETING — whose problem is it, the robot's or the gun's?
+# ─────────────────────────────────────────────
+# For most weapons the answer is the robot's: it shoots whatever it is fighting,
+# the round arrives instantly, and there is nothing else to decide. FOLLOW_BODY
+# is that, it is the default, and nothing that exists today changes behaviour.
+#
+# A LOBBED round is a different problem. It takes seconds to land, and the
+# target picked because it was nearest is usually dead by the time it arrives —
+# eight Lobbers all firing at whoever is closest means one kill and seven
+# craters. Measured: an eight-Lobber force lost 3 of 3 against combined arms of
+# the same supply cost.
+#
+# So a weapon can be given the job instead, and the two targets are kept apart:
+# the BODY keeps `combat_target` for where it moves and which way it faces, the
+# WEAPON keeps `own_target` for where the round goes. A mortar robot can
+# manoeuvre with its squad while its tube is aimed somewhere else entirely.
+#
+# The modes are an enum rather than a subclass per weapon so they can be set in
+# the .tscn like everything else here. Anti-armour is the next one to want a
+# mode of its own — a rocket should prefer the hull it can actually hurt rather
+# than the nearest body.
+enum Targeting {
+	FOLLOW_BODY,   ## shoot whatever the robot is fighting. Instant weapons.
+	PATIENT,       ## slow round: pick something that will still be there, and
+				   ## do not pick what a squadmate has already claimed.
+}
+
+@export var targeting: Targeting = Targeting.FOLLOW_BODY
+## Metres per second of the round in flight. 0 means instant — a hitscan weapon
+## has no flight time and PATIENT has nothing to reason about.
+@export var projectile_speed: float = 0.0
+## How long a PATIENT weapon sticks with a target once it has chosen. At least
+## the flight time, or it re-picks mid-flight and the whole point is lost.
+@export var target_hold_seconds: float = 2.5
+
+## What this weapon is shooting at, when it does its own choosing.
+var own_target: CharacterBody3D = null
+var _hold_left: float = 0.0
+
+
+## Seconds for a round to cross `distance`. Zero for an instant weapon.
+func flight_time(distance: float) -> float:
+	return 0.0 if projectile_speed <= 0.0 else distance / projectile_speed
+
+
+## Pick a target. `candidates` is whatever the owner can see.
+##
+## Overriding this is how a new weapon role gets its own behaviour — the base
+## answers for the two modes above and anything else should add a mode rather
+## than reaching into the owner.
+func acquire(owner: Node3D, candidates: Array, delta: float) -> CharacterBody3D:
+	if targeting == Targeting.FOLLOW_BODY:
+		return owner.get("combat_target")
+
+	_hold_left = maxf(0.0, _hold_left - delta)
+	if own_target != null and is_instance_valid(own_target) and own_target.alive and _hold_left > 0.0:
+		return own_target
+
+	var best: CharacterBody3D = null
+	var best_score := -INF
+	for c in candidates:
+		if c == null or not is_instance_valid(c) or not c.alive:
+			continue
+		var d := owner.global_position.distance_to(c.global_position)
+		if d > max_effective_range or d < min_effective_range:
+			continue
+		# SOMEONE ELSE'S ALREADY. The whole failure this mode exists to stop is
+		# a row of tubes all dropping on one robot, so a target another patient
+		# weapon is holding is worth far less than a fresh one.
+		var score := 0.0 if _claimed_by_squadmate(owner, c) else 1000.0
+		# Still alive when the round lands, roughly: how much health it has, and
+		# how far it is from the fight it is about to lose.
+		score += float(c.health)
+		score += d * 2.0
+		if score > best_score:
+			best_score = score
+			best = c
+	if best != null:
+		own_target = best
+		_hold_left = maxf(target_hold_seconds, flight_time(owner.global_position.distance_to(best.global_position)))
+	return own_target if (own_target != null and is_instance_valid(own_target) and own_target.alive) else null
+
+
+# Is one of the owner's squadmates already lobbing at this?
+func _claimed_by_squadmate(owner: Node3D, who: CharacterBody3D) -> bool:
+	var squad = owner.get("squad")
+	if squad == null or not is_instance_valid(squad):
+		return false
+	for mate in squad.squad_members:
+		if mate == null or mate == owner or not is_instance_valid(mate):
+			continue
+		var w = mate.get("weapon")
+		if w is AIWeapon and (w as AIWeapon).own_target == who:
+			return true
+	return false

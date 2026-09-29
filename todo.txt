@@ -1,144 +1,17 @@
-GRENADES
-ABILITIES
-WEAPON PICK-UPS
-WEAPON SWITCHING
-INVENTORY
-BOSS
-DASH
-MOVEMENT VFX
-TAKE DAMAGE VFX
-SCAN INFO: NAME, MODEL #, SIGNAL STRENGTH
+ROBOTO — TODO
 
+This file moved. There is now ONE place:
 
+    docs/BOARD.md
 
+It opens with YOUR DESK — the decisions and playtests only you can clear —
+then NOW, NEXT and ROADMAP (where this is all going, in phases), then BACKLOG
+and LANDED. Everything that used to be scattered across this file, the board
+and chat scrollback is in there.
 
+Why the move: two lists meant neither was true. The old contents of this file
+(a three-year brain dump where done, abandoned and never-started sat in one
+undifferentiated pile) have been sorted into the board's BACKLOG and PARKED
+sections. Nothing was thrown away.
 
-
-
-
-
-Next To Do:
-	- Melee enemy
-		- Chaser [done]
-		- Nest Defender [delay]
-	- Generic Enemy Scene [done]
-	- Sound Orbs to check detection [delay] EHHHH
-	- var building up to awareness rather than instant [ehHhh]
-		- var building up to shot rather than 'HEY I CAN SHOOT YOU'
-
-
-ALL ENEMIES FRIENDLY FIRE / PROBLEM
-
-SLAB MENU - TELEPORT, LEVEL-UP - TO-DO
-
-G: SWITCHT TO GRENADE
-T: SWITCH TO ABILITY 1
-C: SWITCH TO ABILITY 2
-SEARCH / RETURN TO IDLE
-FLOCKING / AVOIDANCE
-SUPPRESSION
-MELEE WEAPON
-ESTUS 
-SECRET BOSSES: INSANE VETERANS
-
-
-Enemy respawn + placement logic
-STAGGER ON DAMAGE?
-- slow, aim crazy?
-- suppress?
-Damage stagger + i-frames
-Dodge / dash mechanic
-Heat / stamina system
-Simple upgrade menu at SLAB
-Prototype mini-boss
-
-PLAYER CONTROLLER
-- Weapon Generalization
-	- Swap weapons, weapons different functionalities.
-- Melee - melee weapons
-- Fix Lean
-- Grenade
-	- Frag
-	- Missile
-	- Healing Zone
-	- Drone
-
-ENEMIES / AI
- - STIMULUS MANAGER
-- AI MANAGER
-- Alerts / Sound / Hearing / Movement / Melee / Ragdoll
-
-MENUS / BETWEEN LEVELS
-
-Hud
-- energy, hull integrity, fluids
-- ammo, weapons
-
-LEVEL DESIGN
-
-WORLD OBJECTS
-- interactible interacting with world objects
-	- doors
-	- gates
-	- elevators
-
-
-Network / Faction
-- Local Network / Network Owner
-- Refugees / State
-- Stonebreakers / Chaos
-- Stonebreakers / Argus
-- Outpost / State
-Most of humans are dead.
-Most of interactions are with servitor robots.
-Servitors operate under a local network, directed by network owner.
-Insurgents: Fighting their way out ::
-State: Fighting to maintain. <>
-Argus: 
-	/.\
-	\o/
-State:
-	<*>
-Insurgents:  	^^
-				::
-				::
-- bullets do something [ragdoll an enemy]
-	- not ragdoll, queue_free()
-- set place where robots move
-	- YOU CAN SET A LOCATION AND THEY'LL GO THERE.
-- robots avoid and flock.
-	- STEERING VECTOR
-	- AVOIDANCE
-- robots advance as group.
-- robots defend as a group.
-
-POINTS
-- COMPUTER YOU CAN INTERACT WITH AND INFECT fOR POINTS.
-
-INTERACTION / LINK
-- PUSH A BUTTON, TRIGGERS EFFECT ON ANOTHER THING.
-
-MELEE ENEMY
-
-INSURGENT ENEMY
-
-GUN PUSHES INTO TABLES ETC.
-
-SUPPRESSION EFFECT.
-- robots suppressing fire.
-GRENADES
-
-- robots use grenades.
-
-GRENADES ARE EQUIPMENT
-- FRAG
-- STUN
-- SMOKE
-- GAS
-- SUPPORT CALL-IN
-- ALLY DRONE SPAWN
-
-LEVEL 1
-- Civil Unrest. Stone breaking robots have gone berserk.
-- Insurgent cell is activating and revolting against Order.
-- Restore Order, Eliminate Insurgent Leader, Shut Down the stone breakers.
+Lore, faction fiction and world-building live in lore.txt, not in either.

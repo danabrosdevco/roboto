@@ -129,8 +129,14 @@ func _run() -> void:
 			# cards and the debrief says nothing about what each robot IS, and
 			# a rover and a soldier read as the same smudge. Items keep the
 			# fill: at 16px their lines really do run together.
-			var img: Image = await studio.render_model(frame.scene, size, _Studio.Framing.THREE_QUARTER,
-				false, false, 0.0)
+			# ARMED, IF ITS SCENE DOES NOT ALREADY CARRY A GUN. A Rover's turret
+			# takes whatever is fitted and is empty in the scene, so the Rover
+			# and the Lobber Rover — same hull, different issue — drew the same
+			# picture. Only frames that come up empty are fitted here; anything
+			# that models its own weapon (the marksman and its rifle) is left
+			# exactly as it was.
+			var img: Image = await studio.render_body(_armed_body(frame, catalogue), size,
+				_Studio.Framing.THREE_QUARTER, false, false, 0.0)
 			if img == null:
 				skipped.append("%s (%s)" % [frame.id, size_name])
 				continue
@@ -147,6 +153,34 @@ func _run() -> void:
 		_save(_sheet(sheet_parts), out_dir + "/_sheet.png")
 		print("bake_icons: contact sheet at %s/_sheet.png" % out_dir)
 	quit()
+
+
+# The frame's scene, with the weapon it is issued fitted to its mount — exactly
+# as Enemy.equip_weapon_scene does it at runtime, which CLEARS the mount first.
+#
+# That clearing is the point. A Rover's mount carries a DisplayGun stand-in so
+# the model is not empty in the editor, and the game throws it away the moment a
+# real weapon is fitted. Treating that stand-in as "already armed" and leaving
+# it alone is why the Rover and the Lobber Rover baked pixel-identical icons:
+# both were drawn wearing the placeholder neither of them fights with.
+func _armed_body(frame: ChassisDefinition, catalogue: ItemCatalogue) -> Node:
+	var body := frame.scene.instantiate()
+	if frame.starting_weapon_id == &"" or catalogue == null:
+		return body
+	var mount = body.get("weapon_mount")
+	if mount == null or not (mount is Node3D):
+		return body
+	var item := catalogue.item(frame.starting_weapon_id)
+	if item == null or item.ai_scene == null:
+		return body
+	for child in (mount as Node3D).get_children():
+		(mount as Node3D).remove_child(child)
+		child.queue_free()
+	var gun := item.ai_scene.instantiate()
+	(mount as Node3D).add_child(gun)
+	if gun is Node3D:
+		(gun as Node3D).transform = Transform3D.IDENTITY
+	return body
 
 
 func _save(img: Image, file: String) -> bool:

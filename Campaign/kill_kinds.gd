@@ -13,6 +13,7 @@ extends RefCounted
 ## Frame id -> the ChassisDefinition with its name and (baked) icon.
 const FRAMES := {
 	&"rifleman": "res://Campaign/chassis/chassis_rifleman.tres",
+	&"rifleman_armoured": "res://Campaign/chassis/chassis_rifleman_armoured.tres",
 	&"shotgunner": "res://Campaign/chassis/chassis_shotgunner.tres",
 	&"soldier": "res://Campaign/chassis/chassis_soldier.tres",
 	&"chaser": "res://Campaign/chassis/chassis_chaser.tres",
@@ -35,6 +36,7 @@ const FRAMES := {
 ## Scene file (no extension) -> frame id, for robots with no frame of record.
 const SCENES := {
 	"soldier_rifle": &"rifleman",
+	"soldier_rifle_armoured": &"rifleman_armoured",
 	"soldier_shotgun": &"shotgunner",
 	"enemy_shotgun": &"shotgunner",
 	"enemy_chaser": &"chaser",

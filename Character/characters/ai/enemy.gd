@@ -1094,6 +1094,7 @@ func _physics_process(delta: float) -> void:
 	handle_time_passing(delta)
 	handle_movement(delta)
 	_update_facing(delta)
+	_tick_weapon_target(delta)
 	handle_weapon_logic(delta)
 	_apply_motion()
 
@@ -1795,7 +1796,7 @@ func handle_weapon_logic(delta):
 		WeaponState.AIM:
 			if fire_time > 0.0:
 				return
-			if combat_target == null:
+			if _aimed_body() == null:
 				return
 			if not _has_los and not _can_fire_without_los():
 				return
@@ -3052,6 +3053,7 @@ func revive() -> void:
 	if nav_agent != null:
 		nav_agent.set_target_position(global_position)
 	revived.emit()
+	_on_revived()
 
 
 # Tip the visible pieces over. The CharacterBody3D itself stays upright —
@@ -3358,8 +3360,23 @@ func reset():
 	set_physics_process(true)
 	set_process(true)
 	_set_colliders_disabled(false)
+	_on_revived()
 
 
+
+
+## Called whenever this robot comes back — stood up by a Mechanic, self-revived
+## off a nanite charge, or reset with the level.
+##
+## ANYTHING A SUBCLASS SWITCHED OFF ON THE WAY DOWN HAS TO COME BACK HERE.
+## _ready() does not run twice, so a drone that stops its rotor loop when it is
+## downed (spotter_drone, enemy_helicopter: enter_downed and both crash
+## handlers) flew again in total silence once repaired — which reads as a broken
+## drone rather than a quiet one. Both revive() and reset() call this, because
+## they are separate paths back to life and only one of them used to be
+## remembered.
+func _on_revived() -> void:
+	pass
 # ─────────────────────────────────────────────
 # STIMULUS
 # ─────────────────────────────────────────────
@@ -3718,6 +3735,33 @@ func trigger_combat(body: AI):
 
 # ─────────────────────────────────────────────
 # ACCURACY
+
+
+# ─────────────────────────────────────────────
+# WHERE THE ROUND GOES, which is not always what the robot is fighting.
+# ─────────────────────────────────────────────
+# A weapon set to pick its own target (AIWeapon.Targeting) gets asked here once
+# a tick. Everything else answers `combat_target` and behaves exactly as before.
+#
+# The body's own target is deliberately NOT changed by this. Movement, facing
+# and the squad's idea of who it is fighting all stay on `combat_target`, so a
+# mortar robot advances with its squad while its tube is on something else.
+func _tick_weapon_target(delta: float) -> void:
+	if weapon == null or weapon.targeting == AIWeapon.Targeting.FOLLOW_BODY:
+		return
+	var picked := weapon.acquire(self, _visible_candidates(), delta)
+	if picked != null and is_instance_valid(picked):
+		weapon_target = picked.global_position
+
+
+# What the gun is aimed at, as a body. Used for the range and line-of-fire
+# checks so they ask about the thing being shot at rather than the thing being
+# fought.
+func _aimed_body() -> CharacterBody3D:
+	if weapon != null and weapon.targeting != AIWeapon.Targeting.FOLLOW_BODY \
+			and weapon.own_target != null and is_instance_valid(weapon.own_target):
+		return weapon.own_target
+	return combat_target
 # ─────────────────────────────────────────────
 func get_inaccurate_target(target_pos: Vector3) -> Vector3:
 	if weapon == null:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://cmarksman00001"]
+[gd_scene load_steps=24 format=3 uid="uid://cyl50hvmpyiuq"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_nty0a"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
@@ -9,7 +9,7 @@
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_t0xuv"]
 [ext_resource type="Shader" path="res://Character/faction_metal.gdshader" id="8_27chb"]
 [ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
-[ext_resource type="PackedScene" uid="uid://caiwepmarksman1" path="res://Character/weapon/ai-wep_marksman.tscn" id="8_utu75"]
+[ext_resource type="PackedScene" uid="uid://g7mab0c0l6au" path="res://Character/weapon/ai-wep_marksman.tscn" id="8_utu75"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
 [ext_resource type="Texture2D" uid="uid://bvk26224sihon" path="res://2d_assets/metal textures poly.com/metal_plate_02_diff_4k.jpg" id="9_qbqh2"]
 [ext_resource type="Texture2D" uid="uid://o8ik6rntdl2v" path="res://2d_assets/metal textures poly.com/metal_plate_02_disp_4k.png" id="10_tx84r"]
@@ -19,7 +19,7 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_bejot"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7nk3q"]
 render_priority = 0
 shader = ExtResource("8_27chb")
 shader_parameter/use_normal_map = false
@@ -67,7 +67,7 @@ detection = NodePath("Detection")
 particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
 particle_effects_hit = [NodePath("SparkBurst")]
 visible_pieces = [NodePath("CSGMesh3D"), NodePath("aiweapon"), NodePath("CSGMesh3D2"), NodePath("Hat")]
-activation_distance = 250
+activation_distance = 120
 health = 90
 max_health = 90
 move_speed = 5.0
@@ -85,12 +85,12 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
-material_override = SubResource("ShaderMaterial_bejot")
+material_override = SubResource("ShaderMaterial_7nk3q")
 mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
 
 [node name="aiweapon" parent="." instance=ExtResource("8_utu75")]
-transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.553111, 0.221401, 0)
+transform = Transform3D(-1.74845e-08, 0, 0.4, 0, 0.4, 0, -0.4, 0, -1.74845e-08, 0.553111, 0.221401, 0)
 
 [node name="Detection" type="Area3D" parent="."]
 
@@ -104,7 +104,7 @@ material = SubResource("StandardMaterial3D_6qgus")
 
 [node name="Hat" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.86, 0)
-material_override = SubResource("ShaderMaterial_bejot")
+material_override = SubResource("ShaderMaterial_7nk3q")
 mesh = SubResource("CylinderMesh_hat")
 
 [node name="SparkBurst" parent="." instance=ExtResource("9_pm84i")]

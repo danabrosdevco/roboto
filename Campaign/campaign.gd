@@ -3,6 +3,7 @@ class_name CampaignManager
 
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
+const _Induction := preload("res://Campaign/induction.gd")
 const _SoftwareTree := preload("res://Campaign/software_tree.gd")
 
 # ─────────────────────────────────────────────
@@ -65,7 +66,17 @@ const _SoftwareTree := preload("res://Campaign/software_tree.gd")
 # holding nothing, because the chassis ships with no gun by design.
 @export var starting_stock: Array[StringName] = [
 ]
-@export var starting_weapon_id: StringName = &"shotgun"
+@export var starting_weapon_id: StringName = &"m4"
+## What the player's health opens the FIRST tutorial on, as a fraction of their
+## maximum. Low enough that the repair tool is plainly the answer, high enough
+## that a fall off the gantry cannot finish them before they find it.
+@export_range(0.05, 1.0, 0.05) var tutorial_player_health: float = 0.35
+## OFF FOR ANYTHING THAT IS NOT THE GAME. The lab boots the campaign to get at
+## the catalogue and the spawner, lands at base like any other session, and was
+## therefore staging the induction casualty in the middle of a measurement run —
+## downing a robot and dropping the player to 35% in what is supposed to be a
+## controlled fight. Master turns this off in lab_mode.
+@export var stage_tutorial: bool = true
 
 signal state_loaded
 signal deployed(mission: MissionDefinition)
@@ -360,6 +371,9 @@ func register_spawner(s: SquadSpawner) -> void:
 # Coalesced because one purchase emits both signals; without this, every buy
 # would write the file twice.
 var _save_queued: bool = false
+## The depot induction while it is running, so the deferred casualty staging
+## can hand it the robot it put on the floor. Null once it is finished.
+var _induction: Node = null
 
 
 func _queue_base_save() -> void:
@@ -376,6 +390,71 @@ func _flush_base_save() -> void:
 	if in_mission or not autosave:
 		return
 	state.save_to_disk()
+
+
+## True for the hub, whichever way it got into the tree — pre-instanced under
+## World at boot or loaded on the way home from an operation.
+func _is_base(level: Node) -> bool:
+	return level != null and base_level != null \
+		and level.scene_file_path == base_level.resource_path
+
+
+# THE FIRST TUTORIAL OPENS ON A CASUALTY.
+#
+# A new player's first two verbs are the two no sign can teach: patch yourself
+# up, and pick a squadmate off the floor. Both are the same tool — key 3, and
+# the crosshair decides which one you get — so one downed robot and a hurt
+# player covers the whole of it without a word of instruction.
+#
+# ONCE, EVER, and not once per visit. mark_lesson is the ledger built for this:
+# true the first time, false after, and it is written to the save. Without it
+# every walk back into the base before the last sign is read would put another
+# robot on the floor.
+#
+# BODIES ONLY, NEVER RECORDS. The record is what deploys and what the repair
+# desk bills for, so writing this damage there would charge the player compute
+# to undo a scripted lesson and could bench the robot outright. Nothing can
+# soft-lock on that choice: leaving for a mission repairs body and record both
+# (TestCharacter._repair_at_base), so the worst case is a lesson skipped.
+func _stage_first_tutorial(squad: Squad) -> void:
+	if squad == null or not is_instance_valid(squad):
+		return
+	# The LAST one down, so Bravo-1 — the robot the player's eye goes to first
+	# and the one every order demo talks about — is still on their feet.
+	var casualty: Soldier = null
+	for member in squad.squad_members:
+		if member != null and is_instance_valid(member) \
+				and member.can_be_downed and not member.downed:
+			casualty = member
+	if casualty != null:
+		casualty.enter_downed()
+	var body: Node = spawner.player if spawner != null else null
+	if body != null and is_instance_valid(body) and "health" in body and "max_health" in body:
+		body.health = maxi(1, int(round(float(body.max_health) * tutorial_player_health)))
+	print("[Campaign] induction: %s is down, and you start at %d%% health." % [
+		casualty.soldier_name if casualty != null else "nobody (no downable body mustered)",
+		int(round(tutorial_player_health * 100.0))])
+	# Arming is NOT done here. It has to happen on every visit the induction is
+	# up, and this runs only on the visit that stages the casualty.
+
+
+# Switches the induction's objectives on, once the bodies they watch exist.
+# Finds the casualty rather than being handed it, because on a resumed
+# induction nothing was staged and there is no casualty to hand over.
+func _arm_induction() -> void:
+	if _induction == null or not is_instance_valid(_induction):
+		return
+	var casualty: Soldier = null
+	if spawner != null:
+		for squad in spawner.squads:
+			if squad == null or not is_instance_valid(squad):
+				continue
+			for member in squad.squad_members:
+				if member != null and is_instance_valid(member) and member.downed:
+					casualty = member
+	_induction.arm(spawner.player if spawner != null else null, casualty)
+	if objectives != null:
+		objectives.refresh()
 
 
 func _on_soldier_repaired(record: SoldierRecord) -> void:
@@ -634,25 +713,72 @@ func on_level_loaded(level: Node) -> void:
 		print("[Campaign] debug_mission active: '%s'. Base flow was skipped." % debug_mission.id)
 
 	if not in_mission and debug_mission == null and base_level != null:
-		if level == base_level:
-			return
-		push_warning("Campaign: level loaded but in_mission is false, so NO enemy force will spawn and the objective HUD will stay hidden. If you launched this level directly, set Campaign.debug_mission.")
+		# AT BASE this is the normal state of affairs and nothing below is
+		# skipped — the squad still musters. Compared by SCENE PATH: level is a
+		# Node and base_level is a PackedScene, so `level == base_level` was
+		# never once true, and the warning fired every time the player walked
+		# into their own depot.
+		if not _is_base(level):
+			push_warning("Campaign: level loaded but in_mission is false, so NO enemy force will spawn and the objective HUD will stay hidden. If you launched this level directly, set Campaign.debug_mission.")
 
 	if in_mission and current_mission == null:
 		push_warning("Campaign: in a mission but current_mission is null. Nothing will spawn. Either deploy from base, or set Campaign.debug_mission while iterating.")
 	if spawner != null:
 		var going := squad_for(current_mission if in_mission else null)
+		# NOT EVERYTHING MUSTERS AT THE HUB. A quadcopter cannot stand at ease:
+		# parked at the base it hovers, and its rotor loop runs for as long as
+		# you are in there buying things. It still deploys on every mission —
+		# see ChassisDefinition.musters_at_base.
+		if not in_mission:
+			var mustering: Array[SoldierRecord] = []
+			for record in going:
+				var frame := catalogue.chassis_def(record.chassis_id) if catalogue != null else null
+				if frame == null or frame.musters_at_base:
+					mustering.append(record)
+			going = mustering
 		if going.is_empty():
 			# A solo op, or nobody active. Clear rather than deploy_into([]),
 			# which would warn about an empty roster that is empty on purpose.
 			spawner.clear()
 		else:
-			spawner.deploy_into(level, going)
+			var mustered := spawner.deploy_into(level, going)
+			# Deferred so the bodies have finished being placed and grounded:
+			# enter_downed() flattens a collider and settles a wreck, and doing
+			# that to something still being seated reads as a robot falling over
+			# on spawn.
+			# THE CASUALTY IS STAGED ONCE PER CAMPAIGN, even though the five
+			# objectives below are rebuilt until they are finished. Restaging on
+			# every visit meant coming home from an operation re-broke you —
+			# arriving at base heals you (TestCharacter._repair_at_base) and
+			# this put you straight back on 35%, which test_endings caught as a
+			# player who had survived a mission and was somehow still hurt.
+			# An induction resumed with nobody on the floor is handled: the
+			# revive objective completes itself rather than blocking.
+			if stage_tutorial and _is_base(level) and not state.completed_tutorial \
+					and state.mark_lesson(&"induction_triage"):
+				_stage_first_tutorial.call_deferred(mustered)
 	# Objectives filter themselves in _ready, but that runs before
 	# debug_mission is adopted on a direct launch — and before current_mission
 	# exists at all if anything loads the level out of band. Re-run it here,
 	# where the mission is definitely known.
 	_prune_inactive_objectives()
+
+	# AFTER THE PRUNE, deliberately. _prune_inactive_objectives frees anything
+	# the current mission does not name, and the induction's five are named by
+	# no mission at all — built before it, they would be destroyed by it.
+	_induction = null
+	if _is_base(level):
+		# Cleared whether or not a new one follows: the visit that FINISHES the
+		# induction leaves five ticked objectives in the level, and the visit
+		# after that has to arrive at an empty depot.
+		_Induction.clear(level)
+		if stage_tutorial and not state.completed_tutorial:
+			_induction = _Induction.begin(self, level)
+			# Deferred, and queued AFTER the casualty staging above so the robot
+			# is already on the floor when "get your squadmate up" goes looking
+			# for it. Arming is separate from staging because a resumed
+			# induction stages nothing and still has to switch its objectives on.
+			_arm_induction.call_deferred()
 
 	# Opposition AFTER the player squad, so an EliminateObjective capturing
 	# hostiles in a zone sees a fully populated map.

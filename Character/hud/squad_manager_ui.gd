@@ -396,13 +396,30 @@ func frame_of(record: SoldierRecord) -> ChassisDefinition:
 ## from sale that you still have a spare of, so it can be fitted or sold.
 ## Weapons, then gear, then modules; cheapest first; name breaks ties so the
 ## order never reshuffles.
+# WHAT IS LOCKED IS NOT LISTED. Both shops used to print every entry in the
+# catalogue and stamp "LOCKED - CLEAR <OPERATION>" on the ones you cannot have,
+# which reads as a shop full of things being withheld rather than a shop. The
+# lock label stays for anything already in stores — you can own a thing whose
+# operation you have not cleared, and hiding THAT would lose it — but nothing
+# you have never had is advertised.
 func shop_items() -> Array:
 	var out: Array = []
 	if catalogue == null:
 		return out
 	for entry in catalogue.items:
-		if entry != null and (entry.in_shop or state.armoury.spare(entry.id) > 0):
-			out.append(entry)
+		if entry == null:
+			continue
+		var held: bool = state.armoury.spare(entry.id) > 0
+		if not held:
+			if not entry.in_shop:
+				continue
+			if locked_by(entry.id) != null:
+				continue
+			# A tier you have not bought into: the Walker's guns before there is
+			# a Walker. See ItemDefinition.requires_chassis.
+			if not state.owns_any_chassis(entry.requires_chassis):
+				continue
+		out.append(entry)
 	out.sort_custom(func(a, b):
 		if a.kind != b.kind:
 			return a.kind < b.kind
@@ -425,7 +442,7 @@ func buildable_frames() -> Array:
 	if catalogue == null:
 		return out
 	for frame in catalogue.chassis:
-		if frame != null and frame.purchasable:
+		if frame != null and frame.purchasable and locked_by(frame.id) == null:
 			out.append(frame)
 	return out
 

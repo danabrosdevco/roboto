@@ -1,30 +1,25 @@
-[gd_scene load_steps=153 format=4]
+[gd_scene load_steps=148 format=4 uid="uid://di44xwffknyvf"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_gay3u"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_oxq43"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_1fbc1"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="4_qdfp5"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_4.tres" id="5_byytu"]
+[ext_resource type="Resource" uid="uid://bkhxcqsquw1yg" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_1fbc1"]
+[ext_resource type="Material" uid="uid://cokps8vdm1s5k" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="4_qdfp5"]
+[ext_resource type="Material" uid="uid://bq82omlyg0osi" path="res://textures/PSX_Textures/concrete_tx_4.tres" id="5_byytu"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/concrete_wall_11.tres" id="6_dupyn"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/hl_office_complex_style_drop_ceiling_1_1.tres" id="7_etbh5"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/metal_floor_1.tres" id="8_nvutj"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_3.tres" id="9_sywlc"]
+[ext_resource type="Material" uid="uid://b6gyhb18qiqpv" path="res://textures/PSX_Textures/metal_floor_1.tres" id="8_nvutj"]
+[ext_resource type="Material" uid="uid://cori88y5adfc8" path="res://textures/PSX_Textures/concrete_3.tres" id="9_sywlc"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/metal_wall_tx_1.tres" id="10_3jw3a"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/metal_floor_3.tres" id="11_m2exa"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_wall_12_1.tres" id="12_jufxn"]
+[ext_resource type="Material" uid="uid://c18lb1qytmooa" path="res://textures/PSX_Textures/concrete_wall_12_1.tres" id="12_jufxn"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/metal_wall_5.tres" id="13_3cef0"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_6.tres" id="14_su7l6"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/mission_terminal.tscn" id="15_j2p7m"]
-[ext_resource type="Script" path="res://Campaign/mission_terminal.gd" id="16_eip5s"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/dummy_terminal.tscn" id="17_lhpuj"]
-[ext_resource type="Script" path="res://Env/world_objects/dummy_terminal.gd" id="18_bfukb"]
+[ext_resource type="Material" uid="uid://blg4bavd0dttw" path="res://textures/PSX_Textures/concrete_6.tres" id="14_su7l6"]
+[ext_resource type="PackedScene" uid="uid://c28bwsb1wj5sh" path="res://Env/world_objects/mission_terminal.tscn" id="15_j2p7m"]
+[ext_resource type="PackedScene" uid="uid://c35vac7u5e3gs" path="res://Env/world_objects/dummy_terminal.tscn" id="17_lhpuj"]
 [ext_resource type="PackedScene" path="res://Env/world_objects/breakable_panel.tscn" id="19_t838r"]
-[ext_resource type="Script" path="res://Env/world_objects/breakable_panel.gd" id="20_dmnbc"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/level_exit.tscn" id="21_wpulw"]
-[ext_resource type="Script" path="res://Env/world_objects/level_exit.gd" id="22_lfq5n"]
-[ext_resource type="Script" path="res://Env/world_objects/tutorial_label.gd" id="23_vtsg6"]
-[ext_resource type="PackedScene" path="res://Env/world_environment.tscn" id="24_t3fag"]
-[ext_resource type="Environment" path="res://Env/world_environment.tres" id="25_14b6e"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="21_wpulw"]
+[ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="24_t3fag"]
+[ext_resource type="Script" path="res://Campaign/squad_spawn_point.gd" id="25_sqspawn"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_jmks4"]
 vertices = PackedVector3Array(-25, 17, 43.25, 25, 17, 43.25, 25.25, 17, 32.75, 25, 17, -43, -25, 17, -43, -18.5, 0.5, -40.25, -15, 0.5, -40.5, -15, 0.5, -41.25, -22.25, 0.5, -41.25, -22.25, 0.5, -38.75, -23.25, 0.5, -38.25, -22.25, 0.5, -33.25, -18.5, 0.5, -32, -22.25, 0.5, -32, -23.25, 0.5, -33.5, -12.5, 10.5, -41.25, -12.5, 10.5, -40.5, 12.5, 10.5, -40.5, 12.5, 10.5, -41.25, 15.25, 0.5, -41.25, 15.25, 0.5, -40.5, 18.75, 0.5, -40.25, 23.5, 0.5, -41.25, 18.75, 0.5, -30.75, 23, 0.5, -30.75, 23, 0.5, -32.25, 23.5, 0.5, -32.5, -8.25, 1, -31.25, -8.25, 1, -31.5, -10.75, 1, -31.5, -11.5, 1, -39, -10.75, 1, -39.5, -17.5, 1, -39.5, -17.5, 1, -31.5, -11.5, 1, -32, -3.25, 1, -39.5, -2, 1, -39, 3.25, 1, -39.25, 11.75, 1, -32.5, 10.75, 1, -31.5, 17.5, 1, -31.5, 17.5, 1, -39.5, 10.75, 1, -39.5, 11.75, 1, -38.5, 17.75, 1, -35, -2.75, 7.25, -33, -2.75, 7.25, -38, -3, 7, -38.5, -10.5, 7, -38.5, -10.5, 7, -32.5, -3, 7, -32.5, -10.5, 7.25, -33.7, 2.75, 7.25, -38, 2.75, 7.25, -33, 3, 7, -32.5, 10.5, 7, -32.5, 10.5, 7, -38.5, 3, 7, -38.5, 10.5, 7.25, -33.7, -10.25, 1.25, -37.5, -10.25, 1.25, -33.25, -3, 1.25, -33.5, -3, 1.25, -37.5, 3.5, 1.25, -33.25, 10.5, 1.25, -33.25, 10.5, 1.25, -37.5, 3.25, 1.25, -37.5, -1.75, 1.25, -33.5, 2, 1.25, -33.5, 2, 1.25, -36.75, -1.75, 1.25, -36.75, 4.5, 0.75, 14, 6, 0.75, 14, 6.25, 0.75, 13.75, 5.75, 0.75, -30, 5.75, 1, -31.5, 5.25, 1, -31.75, 2.25, 1, -31.5, -5.75, 1, -31.25, -2, 1, -31.5, 18, 0.5, -30.25, 15.25, 0.5, -30.25, 15, 0.5, -29.25, 23, 0.5, -18.75, 23, 0.5, -20, 23, 0.5, 1.75, 23.5, 0.5, 1.5, 23.5, 0.5, -1.5, 23, 0.5, -1.75, -14.75, 0.5, -29.25, -15, 0.5, -30.25, -18.25, 0.5, -30.25, -22.25, 0.5, -25.25, -22.25, 0.5, -22.75, -22.25, 0.5, -1.25, -22.25, 0.5, 1.25, -6, 0.75, 14, -5.5, 0.75, -30, -4.25, 0.75, 14, -22.25, 0.5, -30.75, -23.25, 0.5, -30.25, -23.25, 0.5, -25.5, 23, 0.5, -3.25, 13.25, 0.5, -29.25, -13, 0.5, -29.25, -22.25, 0.5, -6.75, 5.0212, 1.25, 5.52237, 4.97575, 0.5, 2.51584, 2.00117, 1.25, 5.50039, 6.50621, 0.5, 5.48335, -3.98432, 0.5, 2.49992, -3.98888, 1.25, 5.50644, -6.98912, 0.5, 3.9867, 0.501896, 1.25, 13.0096, -4.00314, 1.25, 12.9767, 4.99182, 1.25, 11.4937, 23, 0.5, -13.75, 23.5, 0.5, -18.5, -22.25, 0.5, -17.25, -22.25, 0.5, -14.75, -23.25, 0.5, -22.25, -23.25, 0.5, -17.5, -23.25, 0.5, -14.25, -23.25, 0.5, -9.5, -22.25, 0.5, -9.25, -23.25, 0.5, -6.25, -23.25, 0.5, -1.5, 23, 0.5, 3, -23.25, 0.5, 1.75, -23, 0.5, 8.25, -12.75, 0.5, -30.25, 13, 0.5, -30.25, -4.25, 0.75, 15.75, 4.5, 0.75, 15.75, 23.75, 0.5, -3.5, 23.75, 0.5, -13.5, 26.25, 11, -32.5, 26.25, 11, -18.5, 37, 11, -18.5, 37, 11, -32.5, 23.75, 0.5, -30.5, 23.75, 0.5, -20.5, 24.5, 0.5, -20.5, 24.75, 0.5, -20, 27, 0.5, -20, 27.25, 0.5, -20.5, 32.25, 0.5, -20.5, 35.5, 0.5, -20, 35.5, 0.5, -30.75, 28.75, 0.5, -20.5, 29, 0.5, -20, 32, 0.5, -20, 26.25, 11, -15.5, 26.25, 11, -1.5, 37, 11, -1.5, 37, 11, -15.5, 24.5, 0.5, -3.5, 24.75, 0.5, -3, 27, 0.5, -3, 27.25, 0.5, -3.5, 32.25, 0.5, -3.5, 35.5, 0.5, -3, 35.5, 0.5, -13.75, 28.75, 0.5, -3.5, 29, 0.5, -3, 32, 0.5, -3, -53, 10, 1, -53, 10, 27, -26, 10, 27, -26, 10, 1, 26.25, 11, 1.5, 26.25, 11, 15.5, 37, 11, 15.5, 37, 11, 1.5, -49.25, 0.5, 2.75, -49.25, 0.5, 4, -48.75, 0.5, 4.25, -31.5, 0.5, 4.75, -30.5, 0.5, 4.5, -30.5, 0.5, 2.75, -48.75, 0.5, 23.75, -49.25, 0.5, 24, -49.5, 0.5, 25.25, -30.5, 0.5, 25.5, -30.5, 0.5, 23.75, -31.5, 0.5, 23.5, -48.75, 0.5, 17.75, -49.25, 0.5, 22, -48.75, 0.5, 22.25, -31.5, 0.5, 16.25, -30.25, 0.5, 16, -30.5, 0.5, 12.25, -31.5, 0.5, 12, -48.75, 0.5, 13.25, -48.75, 0.5, 14.75, -48.75, 0.5, 5.75, -49.25, 0.5, 6, -49.25, 0.5, 8.5, -48.75, 0.5, 8.75, -48.75, 0.5, 10.25, -49.25, 0.5, 10.5, -49.25, 0.5, 13, -49.25, 0.5, 15, -49.25, 0.5, 17.5, -29.25, 0.5, 4.75, -26, 0.5, 2.75, -29.25, 0.5, 7.25, -26, 0.5, 7, 23, 0.5, 13.75, 23.75, 0.5, 13.5, 23.75, 0.5, 3.5, 24.5, 0.5, 13.5, 24.75, 0.5, 14, 27, 0.5, 14, 27.25, 0.5, 13.5, 32.25, 0.5, 13.5, 35.5, 0.5, 14, 35.5, 0.5, 3.25, 28.75, 0.5, 13.5, 29, 0.5, 14, 32, 0.5, 14, -29.25, 0.5, 21, -26, 0.5, 21.25, -25.75, 0.5, 19.5, -29.25, 0.5, 16.25, -25.75, 0.5, 8.75, -29.25, 0.5, 11.75, -23.25, 0.5, 8.75, -23.25, 0.5, 19.5, -23, 0.5, 20.75, -6.25, 0.5, 21, 23, 0.5, 20.25, 23.5, 0.5, 15.5, 23, 0.5, 15.25, 6.25, 0.5, 20.75, 23.5, 0.5, 20.5, -4.25, 4, 32.5, 4.5, 4, 32.5, 26.25, 11, 18.5, 26.25, 11, 32.5, 37, 11, 32.5, 37, 11, 18.5, 24.5, 0.5, 30.5, 24.75, 0.5, 31, 27, 0.5, 31, 27.25, 0.5, 30.5, 23.75, 0.5, 20.5, 32.25, 0.5, 30.5, 35.5, 0.5, 31, 35.5, 0.5, 20.25, 28.75, 0.5, 30.5, 29, 0.5, 31, 32, 0.5, 31, 23.75, 0.5, 30.5, 5.75, 0.5, 33.5, 23, 0.5, 30.75, 23.5, 0.5, 33.5, -23.25, 0.5, 22.5, -22.5, 0.5, 22.5, -22.25, 0.5, 23, -6.25, 0.5, 23, -29.25, 0.5, 23.25, -26, 0.5, 25.5, -23.25, 0.5, 25.75, -23.25, 0.5, 30.5, -22.25, 0.5, 30.75, -6.25, 0.5, 26, -22.25, 0.5, 25.25, -5.5, 0.5, 33.5, -5.5, 0.5, 26.25, -22.5, 0.5, 33.5, -4.25, 0.5, 23.5, -4.25, 0.5, 33.5, 4.5, 0.5, 33.5, 4.5, 0.5, 23.5, 6.5, 4.5, 41.5, 6.75, 4.5, 34.75, 5.25, 4.5, 34.75, -4.5, 4.5, 34.5, -6.75, 4.5, 34.75, -6.5, 4.5, 41.5, 4.5, 4.5, 34.25, -23.25, 0.5, 34.75, -23.25, 0.5, 38.5, -22.25, 0.5, 38.75, 23.5, 0.5, 41.5, 23.5, 0.5, 34.75, -22.5, 0.5, 41.5, -23.25, 4.5, 34.75, -23.25, 4.5, 38.5, -22.25, 4.5, 38.75, -22.5, 4.5, 41.5, 23.5, 4.5, 41.5, 23.5, 4.5, 34.75)
@@ -893,11 +888,10 @@ _surfaces = [{
 "vertex_data": PackedByteArray("AAA8wQAAlkAAYAbCAAA8wQAAlkAAoAHCAAAJQgAAlkAAoAHCAAAJQgAAlkAAYAbCAAA8wQAAsEAAYAbCAAAJQgAAsEAAYAbCAAAJQgAAsEAAoAHCAAA8wQAAsEAAoAHCAAA8wQAAlkAAYAbCAAA8wQAAsEAAYAbCAAA8wQAAsEAAoAHCAAA8wQAAlkAAoAHCAAA8wQAAlkAAoAHCAAA8wQAAsEAAoAHCAAAJQgAAsEAAoAHCAAAJQgAAlkAAoAHCAAAJQgAAlkAAoAHCAAAJQgAAsEAAoAHCAAAJQgAAsEAAYAbCAAAJQgAAlkAAYAbCAAAJQgAAlkAAYAbCAAAJQgAAsEAAYAbCAAA8wQAAsEAAYAbCAAA8wQAAlkAAYAbCAAA8wQAAlkAAwMzBAAA8wQAAlkAAQMPBAAAJQgAAlkAAQMPBAAAJQgAAlkAAwMzBAAA8wQAAsEAAwMzBAAAJQgAAsEAAwMzBAAAJQgAAsEAAQMPBAAA8wQAAsEAAQMPBAAA8wQAAlkAAwMzBAAA8wQAAsEAAwMzBAAA8wQAAsEAAQMPBAAA8wQAAlkAAQMPBAAA8wQAAlkAAQMPBAAA8wQAAsEAAQMPBAAAJQgAAsEAAQMPBAAAJQgAAlkAAQMPBAAAJQgAAlkAAQMPBAAAJQgAAsEAAQMPBAAAJQgAAsEAAwMzBAAAJQgAAlkAAwMzBAAAJQgAAlkAAwMzBAAAJQgAAsEAAwMzBAAA8wQAAsEAAwMzBAAA8wQAAlkAAwMzBAAA8wQAAlkAAwIzBAAA8wQAAlkAAQIPBAAAJQgAAlkAAQIPBAAAJQgAAlkAAwIzBAAA8wQAAsEAAwIzBAAAJQgAAsEAAwIzBAAAJQgAAsEAAQIPBAAA8wQAAsEAAQIPBAAA8wQAAlkAAwIzBAAA8wQAAsEAAwIzBAAA8wQAAsEAAQIPBAAA8wQAAlkAAQIPBAAA8wQAAlkAAQIPBAAA8wQAAsEAAQIPBAAAJQgAAsEAAQIPBAAAJQgAAlkAAQIPBAAAJQgAAlkAAQIPBAAAJQgAAsEAAQIPBAAAJQgAAsEAAwIzBAAAJQgAAlkAAwIzBAAAJQgAAlkAAwIzBAAAJQgAAsEAAwIzBAAA8wQAAsEAAwIzBAAA8wQAAlkAAwIzBAAA8wQAAlkAAgBnBAAA8wQAAlkAAgAbBAAAJQgAAlkAAgAbBAAAJQgAAlkAAgBnBAAA8wQAAsEAAgBnBAAAJQgAAsEAAgBnBAAAJQgAAsEAAgAbBAAA8wQAAsEAAgAbBAAA8wQAAlkAAgBnBAAA8wQAAsEAAgBnBAAA8wQAAsEAAgAbBAAA8wQAAlkAAgAbBAAA8wQAAlkAAgAbBAAA8wQAAsEAAgAbBAAAJQgAAsEAAgAbBAAAJQgAAlkAAgAbBAAAJQgAAlkAAgAbBAAAJQgAAsEAAgAbBAAAJQgAAsEAAgBnBAAAJQgAAlkAAgBnBAAAJQgAAlkAAgBnBAAAJQgAAsEAAgBnBAAA8wQAAsEAAgBnBAAA8wQAAlkAAgBnBAAA8wQAAlkAAAMy/AAA8wQAAlkAAANC+AAAJQgAAlkAAANC+AAAJQgAAlkAAAMy/AAA8wQAAsEAAAMy/AAAJQgAAsEAAAMy/AAAJQgAAsEAAANC+AAA8wQAAsEAAANC+AAA8wQAAlkAAAMy/AAA8wQAAsEAAAMy/AAA8wQAAsEAAANC+AAA8wQAAlkAAANC+AAA8wQAAlkAAANC+AAA8wQAAsEAAANC+AAAJQgAAsEAAANC+AAAJQgAAlkAAANC+AAAJQgAAlkAAANC+AAAJQgAAsEAAANC+AAAJQgAAsEAAAMy/AAAJQgAAlkAAAMy/AAAJQgAAlkAAAMy/AAAJQgAAsEAAAMy/AAA8wQAAsEAAAMy/AAA8wQAAlkAAAMy/AAA8wQAAlkAAAM1AAAA8wQAAlkAAAPNAAAAJQgAAlkAAAPNAAAAJQgAAlkAAAM1AAAA8wQAAsEAAAM1AAAAJQgAAsEAAAM1AAAAJQgAAsEAAAPNAAAA8wQAAsEAAAPNAAAA8wQAAlkAAAM1AAAA8wQAAsEAAAM1AAAA8wQAAsEAAAPNAAAA8wQAAlkAAAPNAAAA8wQAAlkAAAPNAAAA8wQAAsEAAAPNAAAAJQgAAsEAAAPNAAAAJQgAAlkAAAPNAAAAJQgAAlkAAAPNAAAAJQgAAsEAAAPNAAAAJQgAAsEAAAM1AAAAJQgAAlkAAAM1AAAAJQgAAlkAAAM1AAAAJQgAAsEAAAM1AAAA8wQAAsEAAAM1AAAA8wQAAlkAAAM1AAAA8wQAAlkAAgGZBAAA8wQAAlkAAgHlBAAAJQgAAlkAAgHlBAAAJQgAAlkAAgGZBAAA8wQAAsEAAgGZBAAAJQgAAsEAAgGZBAAAJQgAAsEAAgHlBAAA8wQAAsEAAgHlBAAA8wQAAlkAAgGZBAAA8wQAAsEAAgGZBAAA8wQAAsEAAgHlBAAA8wQAAlkAAgHlBAAA8wQAAlkAAgHlBAAA8wQAAsEAAgHlBAAAJQgAAsEAAgHlBAAAJQgAAlkAAgHlBAAAJQgAAlkAAgHlBAAAJQgAAsEAAgHlBAAAJQgAAsEAAgGZBAAAJQgAAlkAAgGZBAAAJQgAAlkAAgGZBAAAJQgAAsEAAgGZBAAA8wQAAsEAAgGZBAAA8wQAAlkAAgGZBAAA8wQAAlkAAQLNBAAA8wQAAlkAAwLxBAAAJQgAAlkAAwLxBAAAJQgAAlkAAQLNBAAA8wQAAsEAAQLNBAAAJQgAAsEAAQLNBAAAJQgAAsEAAwLxBAAA8wQAAsEAAwLxBAAA8wQAAlkAAQLNBAAA8wQAAsEAAQLNBAAA8wQAAsEAAwLxBAAA8wQAAlkAAwLxBAAA8wQAAlkAAwLxBAAA8wQAAsEAAwLxBAAAJQgAAsEAAwLxBAAAJQgAAlkAAwLxBAAAJQgAAlkAAwLxBAAAJQgAAsEAAwLxBAAAJQgAAsEAAQLNBAAAJQgAAlkAAQLNBAAAJQgAAlkAAQLNBAAAJQgAAsEAAQLNBAAA8wQAAsEAAQLNBAAA8wQAAlkAAQLNBAAA8wQAAlkAAQPNBAAA8wQAAlkAAwPxBAAAJQgAAlkAAwPxBAAAJQgAAlkAAQPNBAAA8wQAAsEAAQPNBAAAJQgAAsEAAQPNBAAAJQgAAsEAAwPxBAAA8wQAAsEAAwPxBAAA8wQAAlkAAQPNBAAA8wQAAsEAAQPNBAAA8wQAAsEAAwPxBAAA8wQAAlkAAwPxBAAA8wQAAlkAAwPxBAAA8wQAAsEAAwPxBAAAJQgAAsEAAwPxBAAAJQgAAlkAAwPxBAAAJQgAAlkAAwPxBAAAJQgAAsEAAwPxBAAAJQgAAsEAAQPNBAAAJQgAAlkAAQPNBAAAJQgAAlkAAQPNBAAAJQgAAsEAAQPNBAAA8wQAAsEAAQPNBAAA8wQAAlkAAQPNBAAANwgAADMAAAABAAAANwgAADMAAAMBBAAAJwgAADMAAAMBBAAAJwgAADMAAAABAAAANwgAAwL8AAABAAAAJwgAAwL8AAABAAAAJwgAAwL8AAMBBAAANwgAAwL8AAMBBAAANwgAADMAAAABAAAANwgAAwL8AAABAAAANwgAAwL8AAMBBAAANwgAADMAAAMBBAAANwgAADMAAAMBBAAANwgAAwL8AAMBBAAAJwgAAwL8AAMBBAAAJwgAADMAAAMBBAAAJwgAADMAAAMBBAAAJwgAAwL8AAMBBAAAJwgAAwL8AAABAAAAJwgAADMAAAABAAAAJwgAADMAAAABAAAAJwgAAwL8AAABAAAANwgAAwL8AAABAAAANwgAADMAAAABAAADqwQAADMAAAABAAADqwQAADMAAAMBBAADiwQAADMAAAMBBAADiwQAADMAAAABAAADqwQAAwL8AAABAAADiwQAAwL8AAABAAADiwQAAwL8AAMBBAADqwQAAwL8AAMBBAADqwQAADMAAAABAAADqwQAAwL8AAABAAADqwQAAwL8AAMBBAADqwQAADMAAAMBBAADqwQAADMAAAMBBAADqwQAAwL8AAMBBAADiwQAAwL8AAMBBAADiwQAADMAAAMBBAADiwQAADMAAAMBBAADiwQAAwL8AAMBBAADiwQAAwL8AAABAAADiwQAADMAAAABAAADiwQAADMAAAABAAADiwQAAwL8AAABAAADqwQAAwL8AAABAAADqwQAADMAAAABAAAC6wQAADMAAAABAAAC6wQAADMAAAMBBAACywQAADMAAAMBBAACywQAADMAAAABAAAC6wQAAwL8AAABAAACywQAAwL8AAABAAACywQAAwL8AAMBBAAC6wQAAwL8AAMBBAAC6wQAADMAAAABAAAC6wQAAwL8AAABAAAC6wQAAwL8AAMBBAAC6wQAADMAAAMBBAAC6wQAADMAAAMBBAAC6wQAAwL8AAMBBAACywQAAwL8AAMBBAACywQAADMAAAMBBAACywQAADMAAAMBBAACywQAAwL8AAMBBAACywQAAwL8AAABAAACywQAADMAAAABAAACywQAADMAAAABAAACywQAAwL8AAABAAAC6wQAAwL8AAABAAAC6wQAADMAAAABAAACKwQAADMAAAABAAACKwQAADMAAAMBBAACCwQAADMAAAMBBAACCwQAADMAAAABAAACKwQAAwL8AAABAAACCwQAAwL8AAABAAACCwQAAwL8AAMBBAACKwQAAwL8AAMBBAACKwQAADMAAAABAAACKwQAAwL8AAABAAACKwQAAwL8AAMBBAACKwQAADMAAAMBBAACKwQAADMAAAMBBAACKwQAAwL8AAMBBAACCwQAAwL8AAMBBAACCwQAADMAAAMBBAACCwQAADMAAAMBBAACCwQAAwL8AAMBBAACCwQAAwL8AAABAAACCwQAADMAAAABAAACCwQAADMAAAABAAACCwQAAwL8AAABAAACKwQAAwL8AAABAAACKwQAADMAAAABA/38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+/")
 }]
 
-[node name="DepotLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region", "level_exits")]
+[node name="DepotLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region")]
 script = ExtResource("1_gay3u")
 spawn_point = NodePath("SpawnPoint")
 nav_region = NodePath("NavigationRegion3D")
-level_exits = []
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_jmks4")
@@ -905,11 +899,8 @@ navigation_mesh = SubResource("NavigationMesh_jmks4")
 [node name="FuncGodotMap" type="Node3D" parent="NavigationRegion3D"]
 script = ExtResource("2_oxq43")
 local_map_file = "res://maps/depot/depot_level.map"
-global_map_file = ""
 map_settings = ExtResource("3_1fbc1")
-print_profiling_data = false
 block_until_complete = true
-set_owner_batch_size = 1000
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="NavigationRegion3D/FuncGodotMap"]
 collision_mask = 0
@@ -1322,10 +1313,15 @@ metadata/func_godot_mesh_data = {}
 mesh = SubResource("ArrayMesh_owqj3")
 
 [node name="SpawnPoint" type="Node3D" parent="."]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 4.2, 38)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.2, 38)
 
-[node name="SquadMuster" type="Node3D" parent="."]
+[node name="SquadMuster" type="Node3D" parent="." node_paths=PackedStringArray("slot_markers")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, -10)
+script = ExtResource("25_sqspawn")
+callsign = "BRAVO"
+max_slots = 999
+default_objective = 2
+slot_markers = [NodePath("Stand01"), NodePath("Stand02"), NodePath("Stand03"), NodePath("Stand04"), NodePath("Stand05"), NodePath("Stand06"), NodePath("Stand07"), NodePath("Stand08"), NodePath("Stand09"), NodePath("Stand10"), NodePath("Stand11"), NodePath("Stand12"), NodePath("Stand13"), NodePath("Stand14"), NodePath("Stand15"), NodePath("Stand16"), NodePath("Stand17"), NodePath("Stand18"), NodePath("Stand19"), NodePath("Stand20"), NodePath("Stand21"), NodePath("Stand22"), NodePath("Stand23"), NodePath("Stand24"), NodePath("Stand25"), NodePath("Stand26"), NodePath("Stand27"), NodePath("Stand28"), NodePath("Stand29"), NodePath("Stand30"), NodePath("Stand31"), NodePath("Stand32"), NodePath("Stand33"), NodePath("Stand34"), NodePath("Stand35"), NodePath("Stand36")]
 
 [node name="Stand01" type="Node3D" parent="SquadMuster"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -10)
@@ -1460,244 +1456,29 @@ transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 31, 0.
 
 [node name="ChassisStand" type="Node3D" parent="ChassisBays/Bay4"]
 
-[node name="MissionTerminal" type="Node3D" parent="." node_paths=PackedStringArray("interactible", "label", "select_sound") instance=ExtResource("15_j2p7m")]
+[node name="MissionTerminal" parent="." instance=ExtResource("15_j2p7m")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 9)
-script = ExtResource("16_eip5s")
-interactible = NodePath("Interactible")
-label = NodePath("Label3D")
-selected_color = Color(0.55, 0.85, 0.55, 1)
-idle_color = Color(0.75, 0.75, 0.75, 1)
-unavailable_color = Color(0.5, 0.35, 0.35, 1)
-select_sound = NodePath("AudioStreamPlayer3D")
-show_briefing = true
-label_width = 420.0
 
 [node name="Range" type="Node3D" parent="."]
 
-[node name="DummyTerminal" type="Node3D" parent="Range" node_paths=PackedStringArray("interactible", "label", "indicator", "use_sound") instance=ExtResource("17_lhpuj")]
+[node name="DummyTerminal" parent="Range" instance=ExtResource("17_lhpuj")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -28, 0, 10)
-script = ExtResource("18_bfukb")
-interactible = NodePath("Interactible")
-label = NodePath("Label3D")
-indicator = NodePath("Indicator")
-use_sound = NodePath("UseSound")
-prompt_text = "Use Terminal"
-label_text = "TERMINAL"
-used_prompt_text = "Terminal Active"
-one_shot = false
-idle_color = Color(0.45, 0.85, 0.55, 1)
-used_color = Color(0.95, 0.78, 0.35, 1)
 
-[node name="BreakablePanel1" type="StaticBody3D" parent="Range" node_paths=PackedStringArray("hit_effect", "death_effect") instance=ExtResource("19_t838r")]
+[node name="BreakablePanel1" parent="Range" instance=ExtResource("19_t838r")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48.6, 0.6, 7.25)
-script = ExtResource("20_dmnbc")
-health = 60
-max_health = 60
-faction = 3
-obstacle = true
-destroy_delay = 0.15
-free_on_destroy = true
-hit_effect = NodePath("SparkBurst")
-death_effect = NodePath("SparkBurst")
-alert_on_destroy = false
-alert_radius = 25.0
 
-[node name="BreakablePanel2" type="StaticBody3D" parent="Range" node_paths=PackedStringArray("hit_effect", "death_effect") instance=ExtResource("19_t838r")]
+[node name="BreakablePanel2" parent="Range" instance=ExtResource("19_t838r")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48.6, 0.6, 11.75)
-script = ExtResource("20_dmnbc")
-health = 60
-max_health = 60
-faction = 3
-obstacle = true
-destroy_delay = 0.15
-free_on_destroy = true
-hit_effect = NodePath("SparkBurst")
-death_effect = NodePath("SparkBurst")
-alert_on_destroy = false
-alert_radius = 25.0
 
-[node name="BreakablePanel3" type="StaticBody3D" parent="Range" node_paths=PackedStringArray("hit_effect", "death_effect") instance=ExtResource("19_t838r")]
+[node name="BreakablePanel3" parent="Range" instance=ExtResource("19_t838r")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48.6, 0.6, 16.25)
-script = ExtResource("20_dmnbc")
-health = 60
-max_health = 60
-faction = 3
-obstacle = true
-destroy_delay = 0.15
-free_on_destroy = true
-hit_effect = NodePath("SparkBurst")
-death_effect = NodePath("SparkBurst")
-alert_on_destroy = false
-alert_radius = 25.0
 
-[node name="BreakablePanel4" type="StaticBody3D" parent="Range" node_paths=PackedStringArray("hit_effect", "death_effect") instance=ExtResource("19_t838r")]
+[node name="BreakablePanel4" parent="Range" instance=ExtResource("19_t838r")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48.6, 0.6, 20.75)
-script = ExtResource("20_dmnbc")
-health = 60
-max_health = 60
-faction = 3
-obstacle = true
-destroy_delay = 0.15
-free_on_destroy = true
-hit_effect = NodePath("SparkBurst")
-death_effect = NodePath("SparkBurst")
-alert_on_destroy = false
-alert_radius = 25.0
 
-[node name="LevelExit" type="Node3D" parent="." node_paths=PackedStringArray("area", "live_parts") groups=["levelexit"] instance=ExtResource("21_wpulw")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -35.5)
-script = ExtResource("22_lfq5n")
-area = NodePath("Area3D")
-live_parts = [NodePath("ChevronN"), NodePath("ChevronE"), NodePath("ChevronS"), NodePath("ChevronW"), NodePath("BeaconA"), NodePath("BeaconB"), NodePath("BeaconC"), NodePath("BeaconD")]
-live_check_seconds = 1.0
-is_departure = false
-requires_objectives_complete = false
-
-[node name="TutorialLabels" type="Node3D" parent="."]
-
-[node name="Arrival" type="Label3D" parent="TutorialLabels"]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 5.6, 30)
-billboard = 1
-no_depth_test = true
-modulate = Color(0.95, 1, 0.97, 1)
-text = "DEPOT"
-outline_size = 36
-script = ExtResource("23_vtsg6")
-display = 0
-trigger_radius = 6.0
-marker_text = "DEPOT"
-in_library = true
-completes_tutorial = false
-reveal_distance = 34.0
-full_distance = 26.0
-fade_speed = 6.0
-text_color = Color(0.95, 1, 0.97, 1)
-outline_px = 36
-draw_through_walls = true
-unshaded = true
-palette_color = 1
-custom_color = Color(0, 0, 0, 0)
-face_camera = true
-
-[node name="Terminal" type="Label3D" parent="TutorialLabels"]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -2, 2.4, 9)
-billboard = 1
-no_depth_test = true
-modulate = Color(0.95, 1, 0.97, 1)
-text = "TERMINAL"
-outline_size = 36
-script = ExtResource("23_vtsg6")
-display = 0
-trigger_radius = 6.0
-marker_text = "TERMINAL"
-in_library = true
-completes_tutorial = false
-reveal_distance = 34.0
-full_distance = 26.0
-fade_speed = 6.0
-text_color = Color(0.95, 1, 0.97, 1)
-outline_px = 36
-draw_through_walls = true
-unshaded = true
-palette_color = 1
-custom_color = Color(0, 0, 0, 0)
-face_camera = true
-
-[node name="Muster" type="Label3D" parent="TutorialLabels"]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 2.6, -10)
-billboard = 1
-no_depth_test = true
-modulate = Color(0.95, 1, 0.97, 1)
-text = "MUSTER"
-outline_size = 36
-script = ExtResource("23_vtsg6")
-display = 0
-trigger_radius = 6.0
-marker_text = "MUSTER"
-in_library = true
-completes_tutorial = false
-reveal_distance = 34.0
-full_distance = 26.0
-fade_speed = 6.0
-text_color = Color(0.95, 1, 0.97, 1)
-outline_px = 36
-draw_through_walls = true
-unshaded = true
-palette_color = 1
-custom_color = Color(0, 0, 0, 0)
-face_camera = true
-
-[node name="Bays" type="Label3D" parent="TutorialLabels"]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 22, 3.4, 8.5)
-billboard = 1
-no_depth_test = true
-modulate = Color(0.95, 1, 0.97, 1)
-text = "BAYS"
-outline_size = 36
-script = ExtResource("23_vtsg6")
-display = 0
-trigger_radius = 6.0
-marker_text = "BAYS"
-in_library = true
-completes_tutorial = false
-reveal_distance = 34.0
-full_distance = 26.0
-fade_speed = 6.0
-text_color = Color(0.95, 1, 0.97, 1)
-outline_px = 36
-draw_through_walls = true
-unshaded = true
-palette_color = 1
-custom_color = Color(0, 0, 0, 0)
-face_camera = true
-
-[node name="Range" type="Label3D" parent="TutorialLabels"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 4.6, 14)
-billboard = 1
-no_depth_test = true
-modulate = Color(0.95, 1, 0.97, 1)
-text = "RANGE"
-outline_size = 36
-script = ExtResource("23_vtsg6")
-display = 0
-trigger_radius = 6.0
-marker_text = "RANGE"
-in_library = true
-completes_tutorial = false
-reveal_distance = 34.0
-full_distance = 26.0
-fade_speed = 6.0
-text_color = Color(0.95, 1, 0.97, 1)
-outline_px = 36
-draw_through_walls = true
-unshaded = true
-palette_color = 1
-custom_color = Color(0, 0, 0, 0)
-face_camera = true
-
-[node name="Transit" type="Label3D" parent="TutorialLabels"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -30)
-billboard = 1
-no_depth_test = true
-modulate = Color(0.95, 1, 0.97, 1)
-text = "TRANSIT"
-outline_size = 36
-script = ExtResource("23_vtsg6")
-display = 0
-trigger_radius = 6.0
-marker_text = "TRANSIT"
-in_library = true
-completes_tutorial = false
-reveal_distance = 34.0
-full_distance = 26.0
-fade_speed = 6.0
-text_color = Color(0.95, 1, 0.97, 1)
-outline_px = 36
-draw_through_walls = true
-unshaded = true
-palette_color = 1
-custom_color = Color(0, 0, 0, 0)
-face_camera = true
+[node name="LevelExit" parent="." instance=ExtResource("21_wpulw")]
+transform = Transform3D(4, 0, 0, 0, 3, 0, 0, 0, 4, 0, 2.31, -35)
+is_departure = true
 
 [node name="Lights" type="Node3D" parent="."]
 
@@ -1806,5 +1587,4 @@ light_energy = 6.0
 light_cull_mask = 4
 omni_range = 24.0
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." instance=ExtResource("24_t3fag")]
-environment = ExtResource("25_14b6e")
+[node name="WorldEnvironment" parent="." instance=ExtResource("24_t3fag")]

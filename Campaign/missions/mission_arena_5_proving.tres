@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
-[ext_resource type="PackedScene" uid="uid://bc3ly8colloeb" path="res://maps/proving_level.tscn" id="3_arena"]
+[ext_resource type="PackedScene" uid="uid://c5a5ri7ni5ufx" path="res://maps/proving_level.tscn" id="3_arena"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
 [ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="5_hopper"]
 [ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="6_chaser"]
@@ -16,7 +16,7 @@ roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource(
 count = 0
 posture = 2
 route_tag = &""
-post_tag = &"obj_arena_centre"
+post_tag = &""
 spawn_tag = &"obj_arena_hostiles"
 spawn_offset = Vector3(0, 0, 0)
 always_active = true
@@ -31,7 +31,7 @@ roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_hopper"), ExtResourc
 count = 0
 posture = 2
 route_tag = &""
-post_tag = &"obj_arena_centre"
+post_tag = &""
 spawn_tag = &"obj_arena_hostiles"
 spawn_offset = Vector3(0, 0, 0)
 always_active = true
@@ -46,7 +46,7 @@ roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource(
 count = 0
 posture = 2
 route_tag = &""
-post_tag = &"obj_arena_centre"
+post_tag = &""
 spawn_tag = &"obj_arena_hostiles"
 spawn_offset = Vector3(0, 0, 0)
 always_active = true

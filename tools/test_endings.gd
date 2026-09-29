@@ -54,6 +54,20 @@ func _says(n: Node, text: String) -> bool:
 	return false
 
 
+## The number showing under a debrief counter with this heading. Found by the
+## heading rather than by position, so reordering the row cannot break it.
+func _counter_value(n: Node, title: String) -> String:
+	if n.has_meta(&"number"):
+		var kids := n.get_children()
+		if kids.size() > 0 and kids[0] is Label and (kids[0] as Label).text == title:
+			return (n.get_meta(&"number") as Label).text
+	for c in n.get_children():
+		var found := _counter_value(c, title)
+		if found != "":
+			return found
+	return ""
+
+
 func _init() -> void:
 	Settings.path = "user://settings_endings_test.json"
 	await process_frame
@@ -197,6 +211,43 @@ func _init() -> void:
 		and _says(debrief, "MISSION COMPLETE"))
 	_check("...shows the compute it paid", debrief != null and _says(debrief, "+%d" % paid))
 	_check("...with a card for you", debrief != null and _says(debrief, "YOU"))
+
+	# ── THE COUNTERS ACTUALLY COUNT ──────────────
+	# KILLS and REVIVES were built, shown, and never animated: the count-up ran
+	# over two named fields the builder had to remember to assign, so the top of
+	# the screen reported 0 kills under a squad card saying 74. Driven straight
+	# to the end rather than waited out — COUNT_SECONDS of real frames is a
+	# second and a half this suite does not need to spend.
+	if debrief != null:
+		debrief._physics_process(10.0)
+		var stuck: Array = []
+		for c in debrief._counters:
+			var want: String = str(c.get_meta(&"prefix", "")) + str(int(c.get_meta(&"to")))
+			if c.text != want:
+				stuck.append("shows '%s', wants '%s'" % [c.text, want])
+		_check("every debrief counter reaches its number", stuck.is_empty(), str(stuck))
+		_check("...and the screen HAS counters", debrief._counters.size() >= 2,
+			"%d" % debrief._counters.size())
+		# Named, so a regression cannot hide behind a squad that killed nothing.
+		debrief.close()
+		debrief.show_result(final_op, {
+			"success": true, "resources_before": 0, "resources_after": 120, "reward": 120,
+			"squad": [
+				{"name": "ONE", "kills": 5, "revives": 2, "came_home": true, "kinds": {}},
+				{"name": "TWO", "kills": 3, "revives": 1, "came_home": true, "kinds": {}}],
+		})
+		await process_frame
+		debrief._physics_process(10.0)
+		_check("the top KILLS counter shows what the squad did, not 0",
+			_counter_value(debrief, "KILLS") == "8", _counter_value(debrief, "KILLS"))
+		_check("...and REVIVES the same",
+			_counter_value(debrief, "REVIVES") == "3", _counter_value(debrief, "REVIVES"))
+		# Put the REAL result back before handing on. The synthetic one above
+		# replaced _result_now, and with it the win page the walk below is
+		# looking for — this restores exactly the state on_returned_to_base left.
+		debrief.close()
+		debrief.show_result(final_op, result)
+		await process_frame
 	# The end of the campaign is its own screen now, after the results and
 	# after anything the operation unlocked: CONTINUE walks them.
 	var walked := 0

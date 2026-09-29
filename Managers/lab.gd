@@ -22,6 +22,7 @@ extends Node
 # editor having registered them yet.
 # ─────────────────────────────────────────────
 
+const _Ground := preload("res://Campaign/ground_snap.gd")
 const _Matchup := preload("res://Campaign/lab/lab_matchup.gd")
 const SQUAD_SCENE := preload("res://Managers/AI/squad.tscn")
 const ARENA := "res://maps/proving_level.tscn"
@@ -275,7 +276,7 @@ func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, 
 			world.enemy_spawner._apply_frame(s, frame)
 		s.set_meta(&"analytics_kind", frame.display_name)
 		_level.add_child(s)
-		s.global_position = _ground(center + turn * _ring(i, n))
+		s.global_position = _ground_body(center + turn * _ring(i, n), s)
 		if world.ai_manager != null:
 			world.ai_manager.register_enemy(s)
 		s.wake(AWAKE_FOR)
@@ -591,9 +592,30 @@ func _build_hud() -> void:
 # hostiles started the fight standing on it. From 1m up the ray begins below
 # any roof, and a ray that starts inside a cover block passes out through it
 # to the floor rather than stopping on top.
+# Put a spawned robot on the ground.
+#
+# THE RAY HAS TO START ABOVE THE TERRAIN, NOT ABOVE THE REQUESTED POINT. This
+# used to cast from one metre over `p` down twenty, and returned `p` untouched
+# when it hit nothing — so on a map with any relief, a robot placed on the far
+# side of the spawn ring (up to about 7 m out at full roster size) started its
+# ray INSIDE a bank, missed, and was left at the site's own height, under the
+# ground, where it fell out of the world and died on the first frame. Half of
+# one side of a 30-seat fight went that way, which is what made a mirror match
+# come out 100% to one side.
+#
+# Ground snap does the whole job properly — it knows the body's foot depth and
+# pulls onto the navmesh — and it is what the enemy spawner uses, so lab fights
+# and mission fights now start the same way. The ray is kept as the fallback
+# for a body with no collider to measure.
+func _ground_body(p: Vector3, body: Node3D) -> Vector3:
+	if body != null and body.is_inside_tree():
+		return _Ground.stand(p, body, _level)
+	return _ground(p)
+
+
 func _ground(p: Vector3) -> Vector3:
 	var space := world.get_world_3d().direct_space_state
-	var q := PhysicsRayQueryParameters3D.create(p + Vector3.UP * 1.0, p + Vector3.DOWN * 20.0)
+	var q := PhysicsRayQueryParameters3D.create(p + Vector3.UP * 60.0, p + Vector3.DOWN * 60.0)
 	var hit := space.intersect_ray(q)
 	return (hit.position + Vector3.UP * 0.3) if hit else p
 

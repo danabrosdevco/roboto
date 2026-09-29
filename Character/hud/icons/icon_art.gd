@@ -28,6 +28,9 @@ const MODEL_OVERRIDES := {
 	&"machine_gun": "res://Character/weapon/models/machine_gun_model.tscn",
 	&"grenade_launcher": "res://Character/weapon/models/grenade_launcher_model.tscn",
 	&"shotgun": "res://Character/weapon/models/pump_shotgun_model.tscn",
+	# The Mark One is a baked ArrayMesh plus primitives, so there is no
+	# .blend instanced anywhere in its scene for model_in() to find.
+	&"bolt": "res://Character/weapon/bolt_rifle_model.tscn",
 	&"hatchling": "res://Character/weapon/models/hatchling_canister_model.tscn",
 	&"recoilless": "res://Character/weapon/models/recoilless_model.tscn",
 	# The tube on the Reclaimer's boom is a pipe with rings on it; drawn on a

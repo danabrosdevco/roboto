@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
-[ext_resource type="PackedScene" uid="uid://bc3ly8colloeb" path="res://maps/proving_level.tscn" id="3_arena"]
+[ext_resource type="PackedScene" uid="uid://c5a5ri7ni5ufx" path="res://maps/proving_level.tscn" id="3_arena"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
 [ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
 
@@ -13,7 +13,7 @@ roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource(
 count = 0
 posture = 2
 route_tag = &""
-post_tag = &"obj_arena_centre"
+post_tag = &""
 spawn_tag = &"obj_arena_hostiles"
 spawn_offset = Vector3(0, 0, 0)
 always_active = true
@@ -33,7 +33,7 @@ replace_level_enemies = true
 active_objectives = Array[StringName]([&"proving_clear", &"proving_extract"])
 reward_resources = 50
 compute_reward = 0
-unlocks = Array[StringName]([&"chaser", &"emp", &"hatchling"])
+unlocks = Array[StringName]([&"emp", &"hatchling"])
 squad_size = 0
 repeatable = false
 requires = Array[StringName]([])

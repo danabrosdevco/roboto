@@ -353,7 +353,7 @@ bridge_blockouts = false
 script = ExtResource("8_scatter")
 
 [node name="LevelExit" parent="NavigationRegion3D" instance=ExtResource("9_exit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, -0.12, -420)
+transform = Transform3D(2.25936, 0, 0, 0, 1, 0, 0, 0, 2.15384, 11.5, 0.464318, -420)
 
 [node name="MutahaExtract" type="Node3D" parent="NavigationRegion3D/LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
 script = ExtResource("mut_reach")
@@ -1439,7 +1439,7 @@ transform = Transform3D(-0.0600137, 0.0845204, 0.994613, 0.000639251, 0.996412, 
 transform = Transform3D(0.0245428, 0, 0.999699, 0, 1, 0, -0.999699, 0, 0.0245428, -36.4499, -2.69926, -380.587)
 
 [node name="Bridge02" parent="NavigationRegion3D/Bridges" instance=ExtResource("br_bridge_causeway")]
-transform = Transform3D(0.981226, 0, -0.192863, 0, 1, 0, 0.192863, 0, 0.981226, -17.4232, -0.949868, -207.223)
+transform = Transform3D(0.981226, 0, -0.192863, 0, 1, 0, 0.192863, 0, 0.981226, -17.4232, -0.591377, -207.223)
 
 [node name="Bridge03" parent="NavigationRegion3D/Bridges" instance=ExtResource("br_bridge_truss_long")]
 transform = Transform3D(0.432754, 0, 0.901512, 0, 1, 0, -0.901512, 0, 0.432754, -122.334, -2.69937, -37.7291)

@@ -23,8 +23,10 @@ var _campaign: Node
 var _pending: Dictionary = {}
 var _mission: MissionDefinition
 var _column: VBoxContainer
-var _resources: Label
-var _compute: Label
+## Every number on the page that counts up, filled by _counter() as it builds
+## them. A list rather than a field per counter: the two-field version silently
+## dropped any counter nobody remembered to wire.
+var _counters: Array[Label] = []
 var _counting := 0.0
 var _page: int = 0
 var _result_now: Dictionary = {}
@@ -136,14 +138,14 @@ func _input(event: InputEvent) -> void:
 		advance()
 
 
-# The two numbers count up to where the mission left them. Physics, not
-# process (the project rule), and only while counting.
+# Every counter on the page counts up to where the mission left it. Physics,
+# not process (the project rule), and only while counting.
 func _physics_process(delta: float) -> void:
 	_counting += delta
 	var t := clampf(_counting / COUNT_SECONDS, 0.0, 1.0)
 	t = 1.0 - pow(1.0 - t, 3.0)
-	for counter in [_resources, _compute]:
-		if counter == null or not counter.has_meta(&"from"):
+	for counter in _counters:
+		if counter == null or not is_instance_valid(counter) or not counter.has_meta(&"from"):
 			continue
 		var now := int(round(lerpf(counter.get_meta(&"from"), counter.get_meta(&"to"), t)))
 		counter.text = str(counter.get_meta(&"prefix", "")) + str(now)
@@ -156,8 +158,10 @@ func _physics_process(delta: float) -> void:
 # ─────────────────────────────────────────────
 func _build(mission: MissionDefinition, result: Dictionary) -> void:
 	Kit.clear(self)
-	_resources = null
-	_compute = null
+	# Kit.clear() has just freed the labels the last page registered, and page 2
+	# builds its own. Cleared rather than filtered so the list cannot grow a
+	# freed entry per page turn.
+	_counters.clear()
 	var backdrop := ColorRect.new()
 	# Opaque: the HUD underneath (the wallet, the weapon bar) showed through.
 	backdrop.color = Color(0.025, 0.04, 0.035, 1.0)
@@ -200,8 +204,22 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 		titles.add_child(Kit.label("RUN VOIDED · THE SQUAD AND THE STORES ARE AS YOU LEFT BASE",
 			Kit.BRIGHT, Kit.SMALL, true))
 	head.add_child(titles)
-	head.add_child(Kit.fill())
+	# THE BUTTON KEEPS ITS PLACE, THE TITLE GIVES WAY. A Label's minimum width
+	# is the full width of its text, so a long mission name pushed CONTINUE off
+	# the right-hand edge of the screen where it could not be clicked — and the
+	# font this HUD draws in is wider than anything a headless check can
+	# measure, so the overflow only ever showed up on the real thing. Letting
+	# the titles clip means the row can always seat the button.
+	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for child in titles.get_children():
+		if child is Label:
+			(child as Label).clip_text = true
+		elif child is HBoxContainer:
+			for inner in child.get_children():
+				if inner is Label:
+					(inner as Label).clip_text = true
 	var go := Kit.button("CONTINUE", Kit.BRIGHT, 20)
+	go.size_flags_horizontal = Control.SIZE_SHRINK_END
 	go.pressed.connect(advance)
 	head.add_child(go)
 	_column.add_child(head)
@@ -221,19 +239,13 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 
 	var squad: Array = result.get("squad", [])
 	var lost := 0
-	var kills := 0
-	var lifts := 0
 	for entry in squad:
 		if bool(entry.get("destroyed", false)):
 			lost += 1
-		kills += int(entry.get("kills", 0))
-		lifts += int(entry.get("revives", 0))
 	var squad_head := Kit.hbox(10)
 	squad_head.add_child(Kit.heading("SQUAD"))
 	squad_head.add_child(Kit.label("%d CAME HOME%s" % [squad.size() - lost, " · %d LOST" % lost if lost > 0 else ""],
 		Kit.PROBLEM if lost > 0 else Kit.DIM, Kit.SMALL))
-	squad_head.add_child(Kit.fill())
-	squad_head.add_child(Kit.label(_tally_text(kills, lifts), Kit.BRIGHT, Kit.SMALL, true))
 	_column.add_child(squad_head)
 	# BY TEAM, the way you sent them in: you first, then each team under its
 	# own name with what it did. One grid per team — a single grid would line
@@ -243,8 +255,13 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 	for group in _by_team(squad):
 		var team_head := Kit.hbox(8)
 		team_head.add_child(Kit.label(str(group["label"]), Kit.BRIGHT, Kit.BODY, true))
+		# The team's own tally sits NEXT TO ITS NAME, not pushed out to the far
+		# right of a very wide screen where it reads as belonging to nothing and
+		# ran off the edge entirely. Bright, because it is the thing you came to
+		# this screen to find out.
+		team_head.add_child(Kit.label(_tally_text(int(group["kills"]), int(group["revives"])),
+			Kit.BRIGHT, Kit.SMALL))
 		team_head.add_child(Kit.fill())
-		team_head.add_child(Kit.label(_tally_text(int(group["kills"]), int(group["revives"])), Kit.DIM, Kit.SMALL))
 		grid.add_child(team_head)
 		var row := GridContainer.new()
 		row.columns = 3
@@ -296,15 +313,26 @@ func _rewards(result: Dictionary) -> Control:
 	var earned := after - before
 	var money := _counter("EARNED", 0, earned, Kit.MONEY,
 		" + ".join(parts) if earned > 0 else "NO PAYOUT", "+")
-	_resources = money.get_meta(&"number")
 	money.add_child(Kit.label("%d IN THE BANK" % after, Kit.DIM, Kit.SMALL))
 	row.add_child(money)
 	var gained := int(result.get("compute", 0))
 	if gained > 0:
 		var c_before := int(result.get("compute_before", 0))
 		var brain := _counter("COMPUTE", c_before, c_before + gained, Kit.COMPUTE, "+%d" % gained)
-		_compute = brain.get_meta(&"number")
 		row.add_child(brain)
+	# WHAT THE SQUAD DID, AT THE SAME SIZE AS WHAT IT EARNED. These two used to
+	# be one small right-aligned line up beside the roster heading, where the
+	# longest run in the game ran off the edge of the screen and got clipped
+	# mid-word. They are the other half of the result — a mission is a payout
+	# AND a body count — so they are counted up here next to it instead.
+	var tally_kills := 0
+	var tally_lifts := 0
+	for entry in result.get("squad", []):
+		tally_kills += int(entry.get("kills", 0))
+		tally_lifts += int(entry.get("revives", 0))
+	row.add_child(_counter("KILLS", 0, tally_kills, Kit.BRIGHT, "BY THE WHOLE SQUAD"))
+	if tally_lifts > 0:
+		row.add_child(_counter("REVIVES", 0, tally_lifts, Kit.COMPUTE, "STOOD BACK UP"))
 	# Unlocks are NOT here any more. They get the whole screen after this one —
 	# a chip beside the payout was the smallest thing on the page and it was
 	# the reason you ran the operation.
@@ -322,6 +350,12 @@ func _counter(title: String, from: int, to: int, color: Color, note: String, pre
 	col.add_child(number)
 	col.add_child(Kit.label(note, Kit.DIM, Kit.SMALL))
 	col.set_meta(&"number", number)
+	# REGISTERED HERE, not by the caller. The count-up used to run over two
+	# named fields the builder had to remember to assign, so KILLS and REVIVES
+	# were built, shown, and never counted — they sat on their `from` value and
+	# reported 0 kills under a squad that had made 74. Every counter is made in
+	# this function, so this is the one place registration cannot be forgotten.
+	_counters.append(number)
 	return col
 
 

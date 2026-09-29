@@ -68,6 +68,12 @@ class_name ChassisDefinition
 @export var equipment_slots: int = 2
 @export var module_slots: int = 2
 
+## Does this frame stand around at the base between missions? A Spotter Drone
+## does not: it is a quadcopter, so "standing" means hovering, and a hangar with
+## one parked in it is a rotor loop running in your ear for as long as you are
+## buying things. It still deploys on every mission — this is about the hub, not
+## about the roster.
+@export var musters_at_base: bool = true
 # Ranks this chassis can be crewed by, if you want to gate frames behind
 # experience as well as cost. 0 means no requirement.
 @export var required_rank: int = 0

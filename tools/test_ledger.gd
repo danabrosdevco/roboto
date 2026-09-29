@@ -351,6 +351,15 @@ func names(records: Array) -> Array:
 
 # ── RECRUITING, SUPPLY, COMPUTE ──────────────
 # Robots are bought in their own frames, for resources. SUPPLY caps how many
+# A frame the player cannot buy, made buyable for the ledger's sake. Chasers and
+# leapers are ENEMY frames — you meet them, you do not field them — but they are
+# still the shapes these tests need: no weapon slot, no equipment slot, a
+# different supply cost each. Duplicating leaves the catalogue's own copy alone,
+# which matters because resources are shared.
+func buyable(frame: ChassisDefinition) -> ChassisDefinition:
+	var copy: ChassisDefinition = frame.duplicate()
+	copy.purchasable = true
+	return copy
 # are ACTIVE (benched ones take none), and COMPUTE buys more supply.
 func real_catalogue() -> ItemCatalogue:
 	return load("res://Campaign/items & catalogue/test_item_catalogue.tres")
@@ -361,8 +370,8 @@ func test_recruiting() -> void:
 	var state := make_state(500)
 	state.catalogue = cat
 	var soldier_frame := cat.chassis_def(&"soldier")
-	var chaser_frame := cat.chassis_def(&"chaser")
-	var hopper_frame := cat.chassis_def(&"leaper")
+	var chaser_frame := buyable(cat.chassis_def(&"chaser"))
+	var hopper_frame := buyable(cat.chassis_def(&"leaper"))
 	var soldier := state.recruit(soldier_frame)
 	var chaser := state.recruit(chaser_frame)
 	var hopper := state.recruit(hopper_frame)
@@ -387,6 +396,17 @@ func test_recruiting() -> void:
 	check("each frame's health is its own", chaser.max_health == chaser_frame.base_health
 		and hopper.max_health == hopper_frame.base_health, "%d %d" % [chaser.max_health, hopper.max_health])
 
+	# ENEMY FRAMES ARE NOT STOCK. A chaser and a leaper are things you fight,
+	# not things you field: they have no weapon mount and no equipment slot, so
+	# bought they were a worse soldier with a melee attack, and their presence
+	# in the shop said the catalogue was a list of everything in the game rather
+	# than a list of what you can build.
+	for enemy_only in [&"chaser", &"leaper"]:
+		var frame := cat.chassis_def(enemy_only)
+		check("%s is not sold to the player" % enemy_only, frame != null and not frame.purchasable)
+		check("...and recruiting one is refused outright",
+			make_state(9999).recruit(frame) == null)
+
 	var poor := make_state(20)
 	poor.catalogue = cat
 	check("a recruit you cannot afford is refused", poor.recruit(soldier_frame) == null and poor.roster.is_empty())
@@ -402,11 +422,11 @@ func test_supply_caps_the_active_squad() -> void:
 	state.catalogue = cat
 	state.supply_cap = 2
 	var a := state.recruit(cat.chassis_def(&"soldier"))
-	var b := state.recruit(cat.chassis_def(&"chaser"))
+	var b := state.recruit(buyable(cat.chassis_def(&"chaser")))
 	check("recruits join the squad while there is supply", not a.benched and not b.benched)
 	check("...each taking its frame's supply", state.supply_used() == 2 and state.supply_free() == 0,
 		"used=%d free=%d" % [state.supply_used(), state.supply_free()])
-	var c := state.recruit(cat.chassis_def(&"leaper"))
+	var c := state.recruit(buyable(cat.chassis_def(&"leaper")))
 	check("buying is never blocked by supply: the next joins the bench", c != null and c.benched)
 	check("...where it takes none", state.supply_used() == 2)
 	check("coming off the bench with no supply free is refused", not state.set_benched(c, false) and c.benched)
@@ -660,7 +680,7 @@ func test_utility_harness_adds_a_slot() -> void:
 		and state.armoury.spare(&"utility_harness") == 1)
 	check("...while the other two stay fitted", s.equipment_ids[0] == &"frag" and s.equipment_ids[1] == &"hatchling")
 	invariant(state, "after the harness comes off")
-	var chaser := state.recruit(cat.chassis_def(&"chaser"))
+	var chaser := state.recruit(buyable(cat.chassis_def(&"chaser")))
 	check("a chaser cannot wear a harness", not state.fit_item(chaser, cat.item(&"utility_harness"), 0))
 
 	# ONE PER ROBOT. Two Sensor Relays added their range together; a second

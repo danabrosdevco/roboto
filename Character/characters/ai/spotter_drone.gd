@@ -122,9 +122,34 @@ func _ready() -> void:
 # SEAMS OVERRIDDEN FROM ENEMY
 # ─────────────────────────────────────────────
 
-# Flight cancels gravity outright.
-func handle_gravity(_delta: float) -> void:
-	pass
+# ─────────────────────────────────────────────
+# PARKED AT BASE
+# ─────────────────────────────────────────────
+# A Spotter deployed in the hangar has nothing to scout and every reason to be
+# quiet. It used to lift off the moment the level loaded and circle the depot
+# at full rotor for as long as you were shopping, which is a lot of noise for
+# no information.
+#
+# Keyed off the campaign's `in_mission` rather than a per-level flag, so it
+# covers the depot and the home base together and needs no data on either. The
+# campaign is resolved through its group and LAZILY — node ready order means it
+# does not exist yet when this drone runs _ready.
+var _campaign_node: Node = null
+
+
+func _parked() -> bool:
+	if _campaign_node == null or not is_instance_valid(_campaign_node):
+		_campaign_node = get_tree().get_first_node_in_group("campaign")
+	if _campaign_node == null or not ("in_mission" in _campaign_node):
+		return false   # no campaign to ask: assume a mission, which is the old behaviour
+	return not _campaign_node.in_mission
+
+
+# Flight cancels gravity outright — unless it is parked, when it is just a
+# machine with weight and should sit on the pad like everything else.
+func handle_gravity(delta: float) -> void:
+	if _parked():
+		super(delta)
 
 
 func _apply_motion() -> void:
@@ -190,6 +215,16 @@ func formation_width() -> float:
 func handle_movement(delta: float) -> void:
 	if downed or ai_state == AIState.DEAD:
 		return
+
+	# PARKED. No lift, no orbit, no rotor — see _parked(). Returning here rather
+	# than gating each piece means it never sets _lifted either, so the moment
+	# it deploys on a real mission it still does its spawn-airborne trick.
+	if _parked():
+		if rotor_loop != null and rotor_loop.playing:
+			rotor_loop.stop()
+		return
+	if rotor_loop != null and not rotor_loop.playing:
+		rotor_loop.play()
 
 	# SPAWN AIRBORNE. Built at a ground point, it would otherwise start on the
 	# grass and climb out of the earth in full view.
@@ -333,3 +368,9 @@ func _on_crash_started() -> void:
 func _on_crash_landed() -> void:
 	if rotor_loop != null:
 		rotor_loop.stop()
+
+
+# Back in the air, back in the ear. See Enemy._on_revived().
+func _on_revived() -> void:
+	if rotor_loop != null and not rotor_loop.playing:
+		rotor_loop.play()

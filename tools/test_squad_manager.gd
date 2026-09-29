@@ -43,12 +43,12 @@ func _run() -> void:
 	p.display_name = "PLAYER"
 	p.set_chassis(cat.chassis_def(&"soldier"), cat)
 	p.weapon_ids[0] = &"m4"
-	var b1 := _robot(cat, &"soldier", "Bravo-1", &"shotgun")
-	var b2 := _robot(cat, &"soldier", "Bravo-2", &"pistol")
+	var b1 := _robot(cat, &"soldier", "Bravo-1", &"m4")
+	var b2 := _robot(cat, &"soldier", "Bravo-2", &"m4")
 	var b3 := _robot(cat, &"soldier", "Bravo-3", &"")
-	var b4 := _robot(cat, &"soldier", "Bravo-4", &"pistol")
-	var chaser := _robot(cat, &"chaser", "Chaser-1", &"")
-	chaser.benched = true
+	var b4 := _robot(cat, &"soldier", "Bravo-4", &"m4")
+	var mechanic := _robot(cat, &"mechanic", "Mechanic-1", &"")
+	mechanic.benched = true
 	var wreck := _robot(cat, &"leaper", "Hopper-1", &"")
 	wreck.benched = true
 	wreck.status = SoldierRecord.Status.DESTROYED
@@ -78,13 +78,13 @@ func _run() -> void:
 	_check("icons are baked for every gun, and load",
 		_Icons.item(cat.item(&"m4"), "m") != null and _Icons.item(cat.item(&"shotgun"), "s") != null
 		and _Icons.item(cat.item(&"pistol"), "l") != null)
-	_check("...for every frame", _Icons.chassis(cat.chassis_def(&"chaser"), "l") != null)
+	_check("...for every frame", _Icons.chassis(cat.chassis_def(&"mechanic"), "l") != null)
 	_check("...and for the repair tool", _Icons.item(cat.item(&"repair_tool"), "m") != null)
 
 	# ── SQUAD ────────────────────────────────────
 	_check("opens on the squad page, with you selected", ui._tab == &"squad" and squad.visible
 		and squad.selected == state.player_record)
-	_check("every robot has a card", _card("BRAVO-3") != null and _card("CHASER-1") != null)
+	_check("every robot has a card", _card("BRAVO-3") != null and _card("MECHANIC-1") != null)
 	_check("an unarmed robot says so on its card", _says(_card("BRAVO-3"), "NO WEAPON"))
 	_check("...an armed one that it is ready", _says(_card("BRAVO-1"), "READY"))
 	_check("...and a wreck that it is destroyed", _says(_card("HOPPER-1"), "DESTROYED"))
@@ -118,8 +118,8 @@ func _run() -> void:
 		_team_names() == ["INFANTRY"] and _panel_with(_team_section("INFANTRY"), "BRAVO-1") != null)
 	_check("...and your card sits in a team with them, not above the teams", _card("PLAYER") != null
 		and _panel_with(_team_section("INFANTRY"), "PLAYER") != null)
-	_check("...and the benched are on the bench, not in their team", _panel_with(squad._bench, "CHASER-1") != null
-		and _panel_with(_team_section("INFANTRY"), "CHASER-1") == null)
+	_check("...and the benched are on the bench, not in their team", _panel_with(squad._bench, "MECHANIC-1") != null
+		and _panel_with(_team_section("INFANTRY"), "MECHANIC-1") == null)
 	_check("...nothing on a card names a team: where it sits says it", not _says(_card("BRAVO-1"), "INFANTRY"))
 	var rover := _robot(cat, &"rover", "Rover-1", &"machine_gun")
 	rover.benched = true
@@ -154,19 +154,19 @@ func _run() -> void:
 	_check("dropping one on the bench benches it, still in its team", b1.benched and b1.team_id == t2
 		and _panel_with(squad._bench, "BRAVO-1") != null and _says(_team_section("TEAM 2"), "1 BENCHED"))
 	_check("...which frees its seat", state.supply_free() == 1, str(state.supply_free()))
-	_drop({"kind": &"team", "id": t1}, chaser)
+	_drop({"kind": &"team", "id": t1}, mechanic)
 	_check("a benched robot dropped on a team comes off the bench into it, taking the seat",
-		not chaser.benched and chaser.team_id == t1 and state.supply_free() == 0)
+		not mechanic.benched and mechanic.team_id == t1 and state.supply_free() == 0)
 	_check("...with no seat left, no team takes another from the bench", not _can({"kind": &"team", "id": t1}, recl)
 		and not _can({"kind": &"new"}, recl))
 	_check("...nor a wreck, which has to be rebuilt first", not _can({"kind": &"team", "id": t1}, wreck))
 	_check("...and yours is no robot to move: you order every team", not _can({"kind": &"team", "id": t1}, state.player_record)
 		and not _can({"kind": &"bench"}, state.player_record))
 	# Back as it was, for everything below.
-	_drop({"kind": &"bench"}, chaser)
+	_drop({"kind": &"bench"}, mechanic)
 	_drop({"kind": &"team", "id": t1}, b1)
 	_drop({"kind": &"team", "id": t1}, b2)
-	_check("moving everyone out of a team ends it", _team_names() == ["INFANTRY"] and not b1.benched and chaser.benched,
+	_check("moving everyone out of a team ends it", _team_names() == ["INFANTRY"] and not b1.benched and mechanic.benched,
 		str(_team_names()))
 
 	# ── FOLDING AND NAMING ───────────────────────
@@ -214,8 +214,8 @@ func _run() -> void:
 	_press(_card("BRAVO-4"), "BENCH")
 	_check("BENCH on a card benches it", b4.benched)
 	_check("...and frees a seat", state.supply_free() == 1, str(state.supply_free()))
-	_press(_card("CHASER-1"), "DEPLOY")
-	_check("DEPLOY brings one off the bench into the free seat", not chaser.benched and state.supply_free() == 0)
+	_press(_card("MECHANIC-1"), "DEPLOY")
+	_check("DEPLOY brings one off the bench into the free seat", not mechanic.benched and state.supply_free() == 0)
 	_press(_card("BRAVO-4"), "NO SEAT")
 	_check("with no seat free, the bench refuses", b4.benched)
 	_check("a wreck on the bench has no deploy switch", _button_in(_card("HOPPER-1"), "") == null)
@@ -233,9 +233,9 @@ func _run() -> void:
 	_click(_card("RECLAIMER-1"))
 	_check("...its empty slot shows the welder, and is a slot to fill",
 		_says(squad._detail, "WELDER") and _says(squad._detail, "TOOL"))
-
-	_click(_card("CHASER-1"))
-	_check("a chaser has no weapon slot to pick", _says(squad._detail, "CLAWS"))
+	_click(_card("MECHANIC-1"))
+	_check("a mechanic has no weapon slot to pick, so it shows its built-in welder",
+		_says(squad._detail, "WELDER"))
 	_press(squad._detail, "BUY AT THE ARMORER")
 	_check("with nothing in stores for a slot, the button goes to the Armorer",
 		ui._tab == &"armorer" and ui._pages[&"armorer"].visible)
@@ -269,7 +269,7 @@ func _run() -> void:
 	_press(_panel_with(factory, "SOLDIER"), "BUILD")
 	_check("BUILD makes a robot", state.roster.size() == roster + 1)
 	var built: SoldierRecord = state.roster.back()
-	_check("...a soldier comes with its pistol", built.weapon_ids[0] == &"pistol", str(built.weapon_ids))
+	_check("...a soldier comes with its Ancient Rifle", built.weapon_ids[0] == &"m4", str(built.weapon_ids))
 	_check("...and says where it went", _says(factory, "BUILT"))
 	_check("with no seat free it waits on the bench", built.benched)
 	var cap := state.supply_cap

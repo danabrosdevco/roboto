@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://cchassisrifle01"]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://cl3tjym2xteg7"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
 [ext_resource type="PackedScene" uid="uid://crifle0000001" path="res://Character/characters/ai/soldier_rifle.tscn" id="2_scene"]
@@ -10,11 +10,21 @@ display_name = "Rifle Trooper"
 description = "Salvaged pre-collapse assault rifle. Reaches much further than a pump, but the barrels are a century past service life and it scatters badly at range."
 scene = ExtResource("2_scene")
 cost = 0
-base_health = 100
+purchasable = false
+supply = 1
+starting_weapon_id = &""
+coax_weapon_id = &""
+base_health = 60
 base_speed = 1.0
 base_accuracy = 0.75
 base_sensor_range = 45.0
 weapon_slots = 1
+built_in = "CLAWS"
+weapon_replaces_built_in = false
+turret = false
+vehicle = false
+drives = false
 equipment_slots = 2
 module_slots = 2
+musters_at_base = true
 required_rank = 0

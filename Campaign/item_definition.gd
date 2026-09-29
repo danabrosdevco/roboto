@@ -119,6 +119,19 @@ enum Kind {
 # rank matter more than raw level.
 @export var required_rank: int = 0
 # Empty means any chassis. Otherwise a list of ChassisDefinition ids.
+## Hidden from the shop until the player OWNS one of these frames. Empty means
+## always available, which is nearly everything.
+##
+## Different from chassis_whitelist, which says what a thing can be FITTED to.
+## The autocannon and the Heavy MG both fit a rover, so on the whitelist alone
+## they would be for sale from the first hour — a tier-three gun on the
+## starting vehicle. This gates them on having bought the frame they belong to:
+## buy the Walker and its guns appear, and the tier arrives as one thing rather
+## than leaking in early.
+##
+## Also different from the mission unlock list (Campaign.locked_by), which gates
+## on clearing an operation. This gates on what is in the motor pool.
+@export var requires_chassis: Array[StringName] = []
 @export var chassis_whitelist: Array[StringName] = []
 
 

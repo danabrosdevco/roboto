@@ -531,3 +531,9 @@ func _on_crash_started() -> void:
 func _on_crash_landed() -> void:
 	if rotor_loop != null:
 		rotor_loop.stop()
+
+
+# Back in the air, back in the ear. See Enemy._on_revived().
+func _on_revived() -> void:
+	if rotor_loop != null and not rotor_loop.playing:
+		rotor_loop.play()

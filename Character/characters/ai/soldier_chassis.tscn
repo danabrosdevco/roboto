@@ -80,7 +80,7 @@ mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
 
 [node name="WeaponMount" type="Node3D" parent="."]
-transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.553111, 0.221401, 0)
+transform = Transform3D(-1.74845e-08, 0, 0.4, 0, 0.4, 0, -0.4, 0, -1.74845e-08, 0.553111, 0.221401, 0)
 
 [node name="Detection" type="Area3D" parent="."]
 

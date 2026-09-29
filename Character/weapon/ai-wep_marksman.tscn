@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://caiwepmarksman1"]
+[gd_scene load_steps=7 format=3 uid="uid://g7mab0c0l6au"]
 
 [ext_resource type="Script" path="res://Character/weapon/ai_weapon.gd" id="1_cg26h"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_fgv2f"]

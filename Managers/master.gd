@@ -197,6 +197,13 @@ func _ready() -> void:
 	_hook_world()
 	_build_overlay()
 	if lab_mode:
+		# The lab boots the real campaign for its catalogue and its spawner, so
+		# it lands at base and gets taught at like a new player would: a robot
+		# on the floor and the player on 35% health, in the middle of a
+		# measurement. Nothing in a lab session is being taught anything.
+		var cm := get_tree().get_first_node_in_group("campaign")
+		if cm != null and "stage_tutorial" in cm:
+			cm.stage_tutorial = false
 		_teardown_overlay()
 		_start_lab.call_deferred()
 		return

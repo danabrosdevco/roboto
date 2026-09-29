@@ -12,6 +12,12 @@ extends Control
 
 const Kit := preload("res://Character/hud/squad/ui_kit.gd")
 
+## Where the row ends, so anything else wanting this corner can clear it. The
+## objective list shares it now — the depot induction puts objectives at base,
+## which is exactly where this used to have the corner to itself.
+const ROW_TOP := 22.0
+const ROW_BOTTOM := 52.0
+
 var _campaign: Node
 var _resources: Label
 var _compute: Label
@@ -26,8 +32,8 @@ func _ready() -> void:
 	row.anchor_right = 1.0
 	row.offset_left = -420
 	row.offset_right = -28
-	row.offset_top = 22
-	row.offset_bottom = 52
+	row.offset_top = ROW_TOP
+	row.offset_bottom = ROW_BOTTOM
 	row.alignment = BoxContainer.ALIGNMENT_END
 	row.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	add_child(row)

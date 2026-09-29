@@ -46,6 +46,19 @@ func render_model(model: PackedScene, size: Vector2i, framing: int, flip_h: bool
 		flip_v: bool = false, fill: float = 0.0) -> Image:
 	if model == null:
 		return null
+	return await render_body(model.instantiate(), size, framing, flip_h, flip_v, fill)
+
+
+## The same, from a body already built — so a caller can fit something to it
+## first. The Rover and the Lobber Rover share one model and differ only by the
+## turret they are issued, which is fitted at runtime and therefore absent from
+## the scene: drawn from the scene alone their icons came out pixel-identical,
+## and two catalogue entries with the same picture are worse than one without.
+## Takes ownership of `body` and frees it with the viewport.
+func render_body(body: Node, size: Vector2i, framing: int, flip_h: bool = false,
+		flip_v: bool = false, fill: float = 0.0) -> Image:
+	if body == null:
+		return null
 	var big := size * SUPERSAMPLE
 	var pass_vp := _viewport(big)
 	pass_vp.own_world_3d = true
@@ -54,7 +67,6 @@ func render_model(model: PackedScene, size: Vector2i, framing: int, flip_h: bool
 	cam.environment = _plain_environment()
 	pass_vp.add_child(cam)
 	cam.current = true
-	var body := model.instantiate()
 	_strip(body)
 	pass_vp.add_child(body)
 	# CSG builds its mesh on the frame after it enters the tree, and the

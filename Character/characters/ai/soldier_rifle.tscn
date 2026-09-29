@@ -60,9 +60,9 @@ detection = NodePath("Detection")
 particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
 particle_effects_hit = [NodePath("SparkBurst")]
 visible_pieces = [NodePath("CSGMesh3D"), NodePath("aiweapon"), NodePath("CSGMesh3D2")]
-activation_distance = 250
-health = 100
-max_health = 100
+activation_distance = 120
+health = 60
+max_health = 60
 move_speed = 6.0
 equipment_slots = Array[ExtResource("2_8p1te")]([ExtResource("3_3i6e3")])
 soldier_name = "Rifleman"
@@ -83,7 +83,7 @@ mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
 
 [node name="aiweapon" parent="." instance=ExtResource("8_utu75")]
-transform = Transform3D(-1.09278e-08, 0, 0.25, 0, 0.25, 0, -0.25, 0, -1.09278e-08, 0.553111, 0.221401, 0)
+transform = Transform3D(-1.74845e-08, 0, 0.4, 0, 0.4, 0, -0.4, 0, -1.74845e-08, 0.553111, 0.221401, 0)
 
 [node name="Detection" type="Area3D" parent="."]
 

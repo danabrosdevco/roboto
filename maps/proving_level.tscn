@@ -1,26 +1,21 @@
-[gd_scene load_steps=95 format=4]
+[gd_scene load_steps=90 format=4 uid="uid://c5a5ri7ni5ufx"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_ok3hl"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_50mdb"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_x1luf"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_wall_12_1.tres" id="4_hx3l6"]
+[ext_resource type="Resource" uid="uid://bkhxcqsquw1yg" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_x1luf"]
+[ext_resource type="Material" uid="uid://c18lb1qytmooa" path="res://textures/PSX_Textures/concrete_wall_12_1.tres" id="4_hx3l6"]
 [ext_resource type="Material" path="res://textures/textures_pack/Dirt_04-256x256.tres" id="5_vcxvg"]
-[ext_resource type="Material" path="res://textures/textures_pack/Grass_19-256x256.tres" id="6_vrj4s"]
+[ext_resource type="Material" uid="uid://crycddbn5lr0x" path="res://textures/textures_pack/Grass_19-256x256.tres" id="6_vrj4s"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/metal_wall_5.tres" id="7_x6had"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/metal_floor_1.tres" id="8_hflsa"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="9_mspc4"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/squad_objective_point.tscn" id="10_kpg0b"]
-[ext_resource type="Script" path="res://Env/world_objects/squad_objective_point.gd" id="11_ihg21"]
-[ext_resource type="PackedScene" path="res://Env/world_environment.tscn" id="12_xrf7q"]
-[ext_resource type="Environment" path="res://Env/world_environment.tres" id="13_n6gqy"]
-[ext_resource type="Script" path="res://Env/sun.gd" id="14_cjp1t"]
+[ext_resource type="Material" uid="uid://b6gyhb18qiqpv" path="res://textures/PSX_Textures/metal_floor_1.tres" id="8_hflsa"]
+[ext_resource type="Material" uid="uid://cokps8vdm1s5k" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="9_mspc4"]
+[ext_resource type="PackedScene" uid="uid://62y43tyd5sx6" path="res://Env/world_objects/squad_objective_point.tscn" id="10_kpg0b"]
+[ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="12_xrf7q"]
 [ext_resource type="Shader" path="res://Character/flash.gdshader" id="15_0rcdb"]
 [ext_resource type="Script" path="res://Campaign/eliminate_objective.gd" id="16_fa6kp"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/level_exit.tscn" id="17_54lhj"]
-[ext_resource type="Script" path="res://Env/world_objects/level_exit.gd" id="18_jcdrd"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="17_54lhj"]
 [ext_resource type="Script" path="res://Campaign/reach_objective.gd" id="19_enp2r"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/cover_point_spawner.tscn" id="20_1d5mb"]
-[ext_resource type="Script" path="res://Env/world_objects/cover_point_spawner.gd" id="21_5wkoo"]
+[ext_resource type="PackedScene" uid="uid://cyslwv078g4sk" path="res://Env/world_objects/cover_point_spawner.tscn" id="20_1d5mb"]
 [ext_resource type="Script" path="res://Env/world_objects/cover_point.gd" id="22_5123v"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_twy7h"]
@@ -414,12 +409,11 @@ size = Vector3(58, 26, 92)
 [sub_resource type="BoxShape3D" id="BoxShape3D_pldbn"]
 size = Vector3(8, 5, 8)
 
-[node name="ProvingLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region", "func_godot_map", "level_exits")]
+[node name="ProvingLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region", "func_godot_map")]
 script = ExtResource("1_ok3hl")
 spawn_point = NodePath("SpawnPoint")
 nav_region = NodePath("NavigationRegion3D")
 func_godot_map = NodePath("NavigationRegion3D/FuncGodotMap")
-level_exits = []
 
 [node name="SpawnPoint" type="Node3D" parent="."]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0.2, -28)
@@ -430,11 +424,8 @@ navigation_mesh = SubResource("NavigationMesh_twy7h")
 [node name="FuncGodotMap" type="Node3D" parent="NavigationRegion3D"]
 script = ExtResource("2_50mdb")
 local_map_file = "res://maps/proving/proving_level.map"
-global_map_file = ""
 map_settings = ExtResource("3_x1luf")
-print_profiling_data = false
 block_until_complete = true
-set_owner_batch_size = 1000
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="NavigationRegion3D/FuncGodotMap"]
 collision_mask = 0
@@ -655,62 +646,38 @@ metadata/func_godot_mesh_data = {}
 [node name="entity_3_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_3_func_detail_illusionary"]
 mesh = SubResource("ArrayMesh_py2w0")
 
-[node name="OBJ1" type="Node3D" parent="." instance=ExtResource("10_kpg0b")]
+[node name="OBJ1" parent="." instance=ExtResource("10_kpg0b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 37)
-script = ExtResource("11_ihg21")
-objective_name = "Objective"
-tag = &""
 show_debug_label = false
 
-[node name="OBJ2" type="Node3D" parent="." instance=ExtResource("10_kpg0b")]
+[node name="OBJ2" parent="." instance=ExtResource("10_kpg0b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, -37)
-script = ExtResource("11_ihg21")
 objective_name = "Objective2"
-tag = &""
 show_debug_label = false
 
 [node name="WorldEnvironment" parent="." instance=ExtResource("12_xrf7q")]
-environment = ExtResource("13_n6gqy")
 
 [node name="Sun" parent="WorldEnvironment" index="0"]
 transform = Transform3D(-0.615662, -0.527282, 0.585606, 1.38438e-06, 0.743144, 0.669131, -0.78801, 0.41196, -0.457526, 0, 0, 0)
 light_color = Color(1, 0.943977, 0.892974, 1)
 light_indirect_energy = 0.35
 light_angular_distance = 0.5
-shadow_enabled = true
 shadow_opacity = 0.6
-directional_shadow_mode = 0
-directional_shadow_blend_splits = true
-script = ExtResource("14_cjp1t")
 
 [node name="CSGSphere3D" parent="WorldEnvironment/Sun" index="0"]
-visible = false
 material = SubResource("ShaderMaterial_cf586")
 
-[node name="HostileMuster" type="Node3D" parent="." instance=ExtResource("10_kpg0b")]
+[node name="HostileMuster" parent="." instance=ExtResource("10_kpg0b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 37)
-script = ExtResource("11_ihg21")
 objective_name = "The Proving Ground"
 tag = &"obj_arena_hostiles"
-show_debug_label = true
 
-[node name="EliminateObjective" type="Node3D" parent="." node_paths=PackedStringArray("targets", "zone", "prerequisites")]
+[node name="EliminateObjective" type="Node3D" parent="." node_paths=PackedStringArray("zone")]
 script = ExtResource("16_fa6kp")
-targets = []
 zone = NodePath("Zone")
-squad_callsigns = []
-poll_interval = 0.5
-required_kills = 0
-empty_warn_after = 6.0
 id = &"proving_clear"
 display_name = "The Proving Ground"
-description = ""
-optional = false
 reward_resources = 20
-compute_reward = 0
-starts_active = true
-prerequisites = []
-is_extraction = false
 
 [node name="Zone" type="Area3D" parent="EliminateObjective"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
@@ -718,27 +685,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="EliminateObjective/Zone"]
 shape = SubResource("BoxShape3D_xtepe")
 
-[node name="LevelExit" type="Node3D" parent="." node_paths=PackedStringArray("area", "live_parts") groups=["levelexit"] instance=ExtResource("17_54lhj")]
+[node name="LevelExit" parent="." instance=ExtResource("17_54lhj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 37)
-script = ExtResource("18_jcdrd")
-area = NodePath("Area3D")
-live_parts = [NodePath("ChevronN"), NodePath("ChevronE"), NodePath("ChevronS"), NodePath("ChevronW"), NodePath("BeaconA"), NodePath("BeaconB"), NodePath("BeaconC"), NodePath("BeaconD")]
-live_check_seconds = 1.0
-is_departure = false
 requires_objectives_complete = true
 
 [node name="ReachObjective" type="Node3D" parent="LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
 script = ExtResource("19_enp2r")
 area = NodePath("Area3D")
-requires_squad = false
 squad_radius = 30.0
 id = &"proving_extract"
 display_name = ""
-description = ""
-optional = false
-reward_resources = 0
-compute_reward = 0
-starts_active = true
 prerequisites = [NodePath("../../EliminateObjective")]
 is_extraction = true
 
@@ -747,46 +703,26 @@ is_extraction = true
 [node name="CollisionShape3D" type="CollisionShape3D" parent="LevelExit/ReachObjective/Area3D"]
 shape = SubResource("BoxShape3D_pldbn")
 
-[node name="CoverPointSpawner" type="Node3D" parent="." node_paths=PackedStringArray("navigation_region") instance=ExtResource("20_1d5mb")]
-script = ExtResource("21_5wkoo")
+[node name="CoverPointSpawner" parent="." node_paths=PackedStringArray("navigation_region") instance=ExtResource("20_1d5mb")]
 navigation_region = NodePath("../NavigationRegion3D")
-points_per_edge = 3
 min_spacing = 3.0
-sample_radius = 80.0
-wall_detect_length = 1.5
-open_detect_length = 2.0
-stand_check_height = 1.2
-crouch_check_height = 0.6
-arm_span_offset = 0.4
-max_cliff_drop = 0.5
 debug_visualize = false
-generate = false
-clear = false
 
 [node name="CoverPoint_0" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.2083, -1, -45.25)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_1" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, -1, -45.25)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_2" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.9583, -1, -45.25)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -794,8 +730,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.0417, -1, 45.5417)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.00440524, 0, 0.99999)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.00440524, 0, 0.99999)
 metadata/is_crouch_cover = false
 
@@ -803,8 +737,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.125, -1, 45.625)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.00440524, 0, 0.99999)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.00440524, 0, 0.99999)
 metadata/is_crouch_cover = false
 
@@ -812,8 +744,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.7917, -1, 45.7083)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.00440524, 0, 0.99999)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.00440524, 0, 0.99999)
 metadata/is_crouch_cover = false
 
@@ -821,8 +751,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.75, -1, 30.1667)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -830,8 +758,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.75, -1, 0)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -839,8 +765,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.75, -1, -30.1667)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -848,8 +772,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.3333, -1, 31.2083)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.999941, 0, -0.0108985)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.999941, 0, -0.0108985)
 metadata/is_crouch_cover = false
 
@@ -857,8 +779,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29, -1, 0.625)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.999941, 0, -0.0108985)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.999941, 0, -0.0108985)
 metadata/is_crouch_cover = false
 
@@ -866,8 +786,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.6667, -1, -29.9583)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.999941, 0, -0.0108985)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.999941, 0, -0.0108985)
 metadata/is_crouch_cover = false
 
@@ -875,8 +793,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.3333, -1, 45.6667)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
 metadata/is_crouch_cover = false
 
@@ -884,8 +800,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.875, 0.5, -42.4583)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.316228, 0, -0.948683)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.316228, 0, -0.948683)
 metadata/is_crouch_cover = false
 
@@ -893,26 +807,18 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.875, 0.5, -33.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.141421, 0, -0.98995)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.141421, 0, -0.98995)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_15" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.8333, 0.5, -31)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_16" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.1667, 0.5, -31)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -920,8 +826,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.0417, 0.5, -32.2083)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.999822, 0, -0.0188646)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.999822, 0, -0.0188646)
 metadata/is_crouch_cover = false
 
@@ -929,8 +833,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.125, 0.5, -36.625)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.999822, 0, -0.0188646)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.999822, 0, -0.0188646)
 metadata/is_crouch_cover = false
 
@@ -938,8 +840,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.2083, 0.5, -41.0417)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.999822, 0, -0.0188646)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.999822, 0, -0.0188646)
 metadata/is_crouch_cover = false
 
@@ -947,8 +847,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.2917, 0.5, -43.0833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.0562488, 0, 0.998417)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.0562488, 0, 0.998417)
 metadata/is_crouch_cover = false
 
@@ -956,8 +854,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.375, 0.5, -42.75)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.0562488, 0, 0.998417)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.0562488, 0, 0.998417)
 metadata/is_crouch_cover = false
 
@@ -965,8 +861,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.8333, 0.5, -43.25)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, 1)
 metadata/is_crouch_cover = false
 
@@ -974,8 +868,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.375, 0.5, -42.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.316228, 0, -0.948683)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.316228, 0, -0.948683)
 metadata/is_crouch_cover = false
 
@@ -983,8 +875,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.125, 0.5, -43.25)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, 1)
 metadata/is_crouch_cover = false
 
@@ -992,8 +882,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.4167, 0.5, -40.9583)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
 metadata/is_crouch_cover = false
 
@@ -1001,8 +889,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.375, 0.5, -43.25)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, 1)
 metadata/is_crouch_cover = false
 
@@ -1010,8 +896,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.4167, 0.5, -36.7917)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.994505, 0, 0.104685)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.994505, 0, 0.104685)
 metadata/is_crouch_cover = false
 
@@ -1019,8 +903,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.58333, 0.5, -35.4583)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
@@ -1028,8 +910,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.45833, 0.5, -31.625)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.155963, 0, -0.987763)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.155963, 0, -0.987763)
 metadata/is_crouch_cover = false
 
@@ -1037,8 +917,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.29167, 0.5, -31.125)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.155963, 0, -0.987763)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.155963, 0, -0.987763)
 metadata/is_crouch_cover = false
 
@@ -1046,17 +924,12 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.66667, 0.5, -31.1667)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.447214, 0, -0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.447214, 0, -0.894427)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_32" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.79167, 0.5, -31)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1064,8 +937,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.04167, 0.5, -40.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.948683, 0, 0.316228)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.948683, 0, 0.316228)
 metadata/is_crouch_cover = false
 
@@ -1073,8 +944,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.79167, 0.5, -40.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, 1)
 metadata/is_crouch_cover = false
 
@@ -1082,8 +951,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 0.5, -40.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, 1)
 metadata/is_crouch_cover = false
 
@@ -1091,17 +958,12 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.0417, 0.5, -39.0417)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.0905358, 0, 0.995893)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.0905358, 0, 0.995893)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_37" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.25, 0.5, -31)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1109,8 +971,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.25, 0.5, -30.875)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
 metadata/is_crouch_cover = false
 
@@ -1118,8 +978,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.625, 0.5, -30.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.970143, 0, -0.242536)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.970143, 0, -0.242536)
 metadata/is_crouch_cover = false
 
@@ -1127,8 +985,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.75, 0.5, -35.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.0263067, 0, 0.999654)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.0263067, 0, 0.999654)
 metadata/is_crouch_cover = false
 
@@ -1136,8 +992,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.83333, 0.5, -26.25)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.83205, 0, 0.5547)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.83205, 0, 0.5547)
 metadata/is_crouch_cover = false
 
@@ -1145,8 +999,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.5, -30.4583)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1154,8 +1006,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.2083, 0.5, -25.8333)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.998752, 0, 0.0499376)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.998752, 0, 0.0499376)
 metadata/is_crouch_cover = false
 
@@ -1163,8 +1013,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.0417, 0.5, -29.1667)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.998752, 0, 0.0499376)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.998752, 0, 0.0499376)
 metadata/is_crouch_cover = false
 
@@ -1172,8 +1020,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.83333, 0.5, -28.5833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.707107, 0, 0.707107)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.707107, 0, 0.707107)
 metadata/is_crouch_cover = false
 
@@ -1181,8 +1027,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.83333, 0.5, -28.5833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.707107, 0, 0.707107)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.707107, 0, 0.707107)
 metadata/is_crouch_cover = false
 
@@ -1190,8 +1034,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.125, 0.5, -23.75)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.999512, 0, 0.0312348)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.999512, 0, 0.0312348)
 metadata/is_crouch_cover = false
 
@@ -1199,8 +1041,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2083, 0.5, -24.1667)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
 metadata/is_crouch_cover = false
 
@@ -1208,8 +1048,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.75, 0.5, -26.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.164399, 0, -0.986394)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.164399, 0, -0.986394)
 metadata/is_crouch_cover = false
 
@@ -1217,8 +1055,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.5, 0.5, -26.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1226,17 +1062,12 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.75, 0.5, -15.625)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.447214, 0, -0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.447214, 0, -0.894427)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_52" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.75, 0.5, -15.25)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1244,17 +1075,12 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5833, 0.5, -17.4583)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_54" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.125, 0.5, -15.25)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1262,17 +1088,12 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0.5, -21.875)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_56" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0.5, -25)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1280,8 +1101,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.0417, 0.5, -20)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.999133, 0, -0.0416305)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.999133, 0, -0.0416305)
 metadata/is_crouch_cover = false
 
@@ -1289,8 +1108,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.4167, 0.5, -23.4167)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.995037, 0, -0.0995037)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.995037, 0, -0.0995037)
 metadata/is_crouch_cover = false
 
@@ -1298,26 +1115,18 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.0833, 0.5, -20.0833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.995037, 0, -0.0995037)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.995037, 0, -0.0995037)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_60" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.16667, 0.5, -12)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_61" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.83333, 0.5, -12)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1325,8 +1134,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.8333, 0.5, -12.7917)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
@@ -1334,8 +1141,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.5, 0.5, -14.875)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1343,8 +1148,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.4167, 0.5, -10.9583)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
 metadata/is_crouch_cover = false
 
@@ -1352,8 +1155,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.4583, 0.5, -10.0833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.894427, 0, -0.447214)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.894427, 0, -0.447214)
 metadata/is_crouch_cover = false
 
@@ -1361,8 +1162,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0.5, -11.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1370,8 +1169,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0.5, -14.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1379,8 +1176,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.0833, 0.5, -15.0417)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
 metadata/is_crouch_cover = false
 
@@ -1388,8 +1183,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.625, 0.5, -11.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.970143, 0, -0.242536)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.970143, 0, -0.242536)
 metadata/is_crouch_cover = false
 
@@ -1397,8 +1190,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.375, 0.5, -9.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.970143, 0, -0.242536)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.970143, 0, -0.242536)
 metadata/is_crouch_cover = false
 
@@ -1406,17 +1197,12 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.375, 0.5, -12.8333)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.5547, 0, 0.83205)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.5547, 0, 0.83205)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_72" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.91667, 0.5, -10)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1424,8 +1210,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.3333, 0.5, -3.41667)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
@@ -1433,8 +1217,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.875, 0.5, -2.83333)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.8, 0, -0.6)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.8, 0, -0.6)
 metadata/is_crouch_cover = false
 
@@ -1442,8 +1224,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5, 0.5, -9.125)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1451,8 +1231,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.6667, 0.5, -3.29167)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.242536, 0, -0.970143)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.242536, 0, -0.970143)
 metadata/is_crouch_cover = false
 
@@ -1460,8 +1238,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.4583, 0.5, -12.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.364399, 0, 0.931243)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.364399, 0, 0.931243)
 metadata/is_crouch_cover = false
 
@@ -1469,26 +1245,18 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.625, 0.5, -6.75)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.999363, 0, 0.0356915)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.999363, 0, 0.0356915)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_79" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.5, -6.25)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_80" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.875, 0.5, -6.25)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1496,8 +1264,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.2083, 0.5, -5.625)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.998868, 0, 0.0475652)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.998868, 0, 0.0475652)
 metadata/is_crouch_cover = false
 
@@ -1505,8 +1271,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.5, 0.5, -7.125)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1515,7 +1279,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.25, 0.5, -2.625)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.114624, 0, -0.993409)
 is_crouch_cover = true
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.114624, 0, -0.993409)
 metadata/is_crouch_cover = true
 
@@ -1523,8 +1286,6 @@ metadata/is_crouch_cover = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 0.5, -6.25)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1532,8 +1293,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0.5, -3.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.303204, 0, -0.952926)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.303204, 0, -0.952926)
 metadata/is_crouch_cover = false
 
@@ -1541,8 +1300,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.625, 0.5, -3.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.141421, 0, 0.98995)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.141421, 0, 0.98995)
 metadata/is_crouch_cover = false
 
@@ -1550,8 +1307,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.5, 0.5, 2)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1559,8 +1314,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.5, 0.5, 5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1568,8 +1321,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.0833, 0.5, -1.54167)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.994505, 0, -0.104685)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.994505, 0, -0.104685)
 metadata/is_crouch_cover = false
 
@@ -1577,8 +1328,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 0.5, 3.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
 metadata/is_crouch_cover = false
 
@@ -1586,8 +1335,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 0.5, 0.125)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1595,8 +1342,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.25, 0.5, 3.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1604,8 +1349,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.25, 0.5, 0.125)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1613,8 +1356,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.58333, 0.5, 2.54167)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
@@ -1622,26 +1363,18 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.91667, 0.5, -2.45833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_96" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.5, 4)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_97" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.625, 1.875, 1.5)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1649,8 +1382,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.6667, 0.5, 3.54167)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.242536, 0, 0.970143)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.242536, 0, 0.970143)
 metadata/is_crouch_cover = false
 
@@ -1658,8 +1389,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.2083, 0.5, 3.125)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.22486, 0, 0.974391)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.22486, 0, 0.974391)
 metadata/is_crouch_cover = false
 
@@ -1667,8 +1396,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0.5, 9.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1676,17 +1403,12 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.125, 0.5, 12.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.393919, 0, -0.919145)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.393919, 0, -0.919145)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_102" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.625, 0.5, 12.75)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1694,8 +1416,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6667, 0.5, 3.625)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.6, 0, -0.8)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.6, 0, -0.8)
 metadata/is_crouch_cover = false
 
@@ -1703,8 +1423,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.75, 0.5, 2.875)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.0333148, 0, 0.999445)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.0333148, 0, 0.999445)
 metadata/is_crouch_cover = false
 
@@ -1712,8 +1430,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.79167, 0.5, 7.66667)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.425797, 0, -0.904819)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.425797, 0, -0.904819)
 metadata/is_crouch_cover = false
 
@@ -1721,8 +1437,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.83333, 0.5, 6.20833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
@@ -1730,8 +1444,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.875, 0.5, 12.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.393919, 0, -0.919145)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.393919, 0, -0.919145)
 metadata/is_crouch_cover = false
 
@@ -1739,8 +1451,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.0833, 0.5, 10.7083)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
@@ -1748,8 +1458,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 0.5, 7.125)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1757,8 +1465,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.0417, 0.5, 9.375)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.998868, 0, -0.0475652)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.998868, 0, -0.0475652)
 metadata/is_crouch_cover = false
 
@@ -1766,8 +1472,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.29167, 0.5, 10.8333)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
 metadata/is_crouch_cover = false
 
@@ -1775,8 +1479,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.625, 0.5, 10.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.970143, 0, -0.242536)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.970143, 0, -0.242536)
 metadata/is_crouch_cover = false
 
@@ -1784,8 +1486,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.4167, 0.5, 9.04167)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
 metadata/is_crouch_cover = false
 
@@ -1793,8 +1493,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.25, 0.5, 11)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1802,8 +1500,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.33333, 0.5, 11.9583)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
@@ -1811,8 +1507,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.75, 0.5, 17.625)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.164399, 0, -0.986394)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.164399, 0, -0.986394)
 metadata/is_crouch_cover = false
 
@@ -1820,8 +1514,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0.5, 17.75)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1829,8 +1521,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0.5, 14.75)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1838,8 +1528,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.4167, 0.5, 19.0833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.707107, 0, -0.707107)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.707107, 0, -0.707107)
 metadata/is_crouch_cover = false
 
@@ -1847,8 +1535,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.5, 0.5, 12.5417)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1856,8 +1542,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.0833, 0.5, 15.0417)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
@@ -1865,8 +1549,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.3333, 0.5, 15.6667)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
@@ -1874,8 +1556,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0.5, 25.0417)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1883,17 +1563,12 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.125, 0.5, 28.5833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.429934, 0, -0.902861)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.429934, 0, -0.902861)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_125" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.8333, 0.5, 29)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1901,8 +1576,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.125, 0.5, 15.25)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, 1)
 metadata/is_crouch_cover = false
 
@@ -1910,17 +1583,12 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.875, 0.5, 28.5833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.429934, 0, -0.902861)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.429934, 0, -0.902861)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_128" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.1667, 0.5, 29)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -1928,8 +1596,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.83333, 0.5, 28.2083)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.242536, 0, -0.970143)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.242536, 0, -0.970143)
 metadata/is_crouch_cover = false
 
@@ -1937,8 +1603,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.83333, 0.5, 28.8333)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.707107, 0, -0.707107)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.707107, 0, -0.707107)
 metadata/is_crouch_cover = false
 
@@ -1946,8 +1610,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.125, 0.5, 24)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.999512, 0, -0.0312348)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.999512, 0, -0.0312348)
 metadata/is_crouch_cover = false
 
@@ -1955,8 +1617,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.70833, 0.5, 29.2083)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.980581, 0, -0.196116)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.980581, 0, -0.196116)
 metadata/is_crouch_cover = false
 
@@ -1964,8 +1624,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.29167, 0.5, 29.8333)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.970143, 0, -0.242536)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.970143, 0, -0.242536)
 metadata/is_crouch_cover = false
 
@@ -1973,8 +1631,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.875, 0.5, 23.5)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.970143, 0, -0.242536)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.970143, 0, -0.242536)
 metadata/is_crouch_cover = false
 
@@ -1982,8 +1638,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0.5, 22.125)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -1991,8 +1645,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.2083, 0.5, 24.25)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.999133, 0, 0.0416305)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.999133, 0, 0.0416305)
 metadata/is_crouch_cover = false
 
@@ -2000,8 +1652,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.4167, 0.5, 23.6667)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.995037, 0, 0.0995037)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.995037, 0, 0.0995037)
 metadata/is_crouch_cover = false
 
@@ -2009,8 +1659,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.83333, 0.5, 26.4583)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.868243, 0, -0.496139)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.868243, 0, -0.496139)
 metadata/is_crouch_cover = false
 
@@ -2018,8 +1666,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.5, 29.875)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -2027,8 +1673,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.5, 29.4167)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
@@ -2036,8 +1680,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.0417, 0.5, 29.2083)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.998618, 0, -0.0525588)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.998618, 0, -0.0525588)
 metadata/is_crouch_cover = false
 
@@ -2045,8 +1687,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0.5, 25)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, 1)
 metadata/is_crouch_cover = false
 
@@ -2054,8 +1694,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.41667, 0.5, 42.5417)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, 0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, 0.894427)
 metadata/is_crouch_cover = false
 
@@ -2063,8 +1701,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6667, 0.5, 43.0833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.0623783, 0, -0.998053)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.0623783, 0, -0.998053)
 metadata/is_crouch_cover = false
 
@@ -2072,8 +1708,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.3333, 0.5, 43.4167)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.0623783, 0, -0.998053)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.0623783, 0, -0.998053)
 metadata/is_crouch_cover = false
 
@@ -2081,26 +1715,18 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.95833, 0.5, 33.625)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.948683, 0, 0.316228)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.948683, 0, 0.316228)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_147" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.875, 0.5, 43.5)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_148" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.375, 0.5, 43.5)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -2108,8 +1734,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.125, 0.5, 36.75)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.999829, 0, 0.0185153)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.999829, 0, 0.0185153)
 metadata/is_crouch_cover = false
 
@@ -2117,8 +1741,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.0417, 0.5, 32.25)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.999829, 0, 0.0185153)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.999829, 0, 0.0185153)
 metadata/is_crouch_cover = false
 
@@ -2126,8 +1748,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.91667, 0.5, 35.5417)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.447214, 0, -0.894427)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.447214, 0, -0.894427)
 metadata/is_crouch_cover = false
 
@@ -2135,8 +1755,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.5, 32.125)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.124035, 0, -0.992278)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.124035, 0, -0.992278)
 metadata/is_crouch_cover = false
 
@@ -2144,8 +1762,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.875, 0.5, 31.75)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.229039, 0, 0.973417)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.229039, 0, 0.973417)
 metadata/is_crouch_cover = false
 
@@ -2153,8 +1769,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.20833, 0.5, 40.0833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.894427, 0, -0.447214)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.894427, 0, -0.447214)
 metadata/is_crouch_cover = false
 
@@ -2162,26 +1776,18 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.875, 0.5, 31.25)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0, 0, 1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, 1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_156" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 0.5, 40.5)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_157" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.79167, 0.5, 40.5)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -2189,26 +1795,18 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.5, 0.5, 33.75)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-1, 0, 0)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-1, 0, 0)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_159" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.875, 0.5, 35.5)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_160" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.7083, 0.5, 43.5)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
@@ -2216,8 +1814,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.2083, 0.5, 43.4167)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.894427, 0, -0.447214)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.894427, 0, -0.447214)
 metadata/is_crouch_cover = false
 
@@ -2225,8 +1821,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.5833, 0.5, 43.4167)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(0.0905358, 0, -0.995893)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0.0905358, 0, -0.995893)
 metadata/is_crouch_cover = false
 
@@ -2234,8 +1828,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.0833, 0.5, 39.9583)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.993151, 0, 0.116841)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.993151, 0, 0.116841)
 metadata/is_crouch_cover = false
 
@@ -2243,8 +1835,6 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.4167, 0.5, 36.75)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.986394, 0, -0.164399)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.986394, 0, -0.164399)
 metadata/is_crouch_cover = false
 
@@ -2252,26 +1842,18 @@ metadata/is_crouch_cover = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.0417, 0.5, 39.0833)
 script = ExtResource("22_5123v")
 cover_direction = Vector3(-0.178885, 0, -0.98387)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(-0.178885, 0, -0.98387)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_166" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.875, 0.5, 43.5)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 
 [node name="CoverPoint_167" type="Node3D" parent="CoverPointSpawner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.0833, 0.5, 43.5)
 script = ExtResource("22_5123v")
-cover_direction = Vector3(0, 0, -1)
-is_crouch_cover = false
-los_check_height = 1.0
 metadata/cover_direction = Vector3(0, 0, -1)
 metadata/is_crouch_cover = false
 

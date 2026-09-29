@@ -51,6 +51,18 @@ func _texts(n: Node) -> String:
 	return out
 
 
+## Names of every squad body currently on the floor.
+func _downed(world: Node) -> Array:
+	var out: Array = []
+	for sq in world.squad_spawner.squads:
+		if sq == null or not is_instance_valid(sq):
+			continue
+		for m in sq.squad_members:
+			if m != null and is_instance_valid(m) and m.downed:
+				out.append(m.soldier_name)
+	return out
+
+
 func _sign_saying(signs: Array, fragment: String) -> TutorialLabel:
 	for s in signs:
 		if str(s.toast_text).contains(fragment):
@@ -73,15 +85,30 @@ func _init() -> void:
 	var signs: Array = []
 	_signs(root, signs)
 	var toast = root.get_node_or_null("TutorialToast")
-	_check("the homebase signs are toasts (%d found)" % signs.size(), signs.size() >= 10 and toast != null)
-	if toast == null:
-		quit(1)
-		return
-
+	# A SIGN WITHOUT toast_text IS SIGNAGE, NOT A LESSON. The rebuilt depot has
+	# six Label3Ds — DEPOT, TERMINAL, MUSTER, BAYS, RANGE, TRANSIT — and not one
+	# of them carries a lesson, so there is nothing in the base to stand at and
+	# read. That is the whole of "the tutorial is gone": the TutorialLabel and
+	# toast machinery are intact and the CONTENT was dropped with the old layout.
+	var carrying: Array = signs.filter(func(s): return str(s.toast_text) != "")
+	_check("the homebase signs are toasts (%d sign(s), %d carrying a lesson)" % [
+		signs.size(), carrying.size()],
+		signs.size() >= 10 and toast != null and carrying.size() >= 7)
+	# BAIL OUT RATHER THAN RUN ON NULLS. Every check from here to the library
+	# needs a lesson sign to walk up to, and reaching into a null inside a
+	# coroutine does not fail the test — it kills the coroutine before quit(),
+	# leaving the process alive forever. Eighteen of those were found holding
+	# this suite open, which is why no full run ever printed a total.
 	var weapons := _sign_saying(signs, "{reload}")
 	_check("(setup) found the weapon sign", weapons != null)
+	if toast == null or weapons == null:
+		printerr("test_tutorial: this base has %d sign(s) and none of them teaches a weapon, so the walk-up, library and stand-down checks cannot run. Author the lessons back into the depot and this test comes back to life." % signs.size())
+		await _check_opening(world)
+		TutorialLabel.veteran_override = -1
+		_done()
+		return
 	_check("signs leave a small marker in the world, not their paragraph",
-		weapons != null and weapons.text == weapons.marker_text)
+		weapons.text == weapons.marker_text)
 
 	# Stand at the weapon sign.
 	player.global_position = weapons.global_position + Vector3(1.0, 0.0, 0.5)
@@ -168,8 +195,40 @@ func _init() -> void:
 	var live := signs.filter(func(s): return s.toast_text != "" or s.visible)
 	_check("a returning player's base has no signs left (%d active)" % live.size(), live.is_empty(), str(live))
 	_check("...and nothing that can toast", TutorialToast._signs.is_empty(), str(TutorialToast._signs.size()))
-	TutorialLabel.veteran_override = -1
 
+	await _check_opening(world)
+	TutorialLabel.veteran_override = -1
+	_done()
+
+
+# ── THE OPENING STATE: the first tutorial starts on a casualty ──
+# The two verbs no sign can teach are patching yourself up and picking a
+# squadmate up off the floor, so a fresh campaign hands the player both jobs on
+# the way in the door. The second muster is the half that matters: the lesson
+# ledger has to stop this firing again every time they walk home.
+#
+# Its own function because it needs the campaign and not the signs, so it still
+# runs on the bail-out path below, where there are no lessons in the base to
+# stand at.
+func _check_opening(world: Node) -> void:
+	var cm = world.get_node("CampaignManager")
+	cm.reset_campaign()
+	cm.on_level_loaded(world.current_level)
+	for _i in 40:
+		await physics_frame
+	var hero: Node = _find(root, "Player")
+	var floored := _downed(world)
+	_check("the first tutorial opens with one robot down", floored.size() == 1, str(floored))
+	_check("...and the player hurt enough to need the repair tool (%d/%d)" % [
+		int(hero.health), int(hero.max_health)], int(hero.health) < int(hero.max_health))
+	cm.on_level_loaded(world.current_level)
+	for _i in 40:
+		await physics_frame
+	var relapse := _downed(world)
+	_check("...and nobody else goes down on a later muster", relapse.is_empty(), str(relapse))
+
+
+func _done() -> void:
 	if FileAccess.file_exists("user://settings_tutorial_test.json"):
 		DirAccess.remove_absolute("user://settings_tutorial_test.json")
 	print("")

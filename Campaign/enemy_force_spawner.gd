@@ -170,7 +170,7 @@ func wake(tag: StringName) -> int:
 			continue
 		_squads.append(squad)
 		var post := _find_point(spec.post_tag)
-		var destination := post.global_position if post != null else squad.get_center()
+		var destination := _advance_destination(squad, spec, post)
 		squad.target_objective = post
 		squad.set_objective(Squad.SquadObjective.ADVANCE, destination, true)
 		# They come in from outside activation_distance on purpose, so they are
@@ -477,11 +477,50 @@ func _apply_posture(squad: Squad, spec: EnemySquadSpec, route: PatrolPath, post:
 		EnemySquadSpec.Posture.ADVANCE:
 			squad.target_objective = post
 			squad.set_objective(Squad.SquadObjective.ADVANCE,
-				post.global_position if post != null else squad.get_center(), true)
+				_advance_destination(squad, spec, post), true)
 		EnemySquadSpec.Posture.RESERVE:
 			# Inert until something wakes them. This is the hook reinforcements
 			# will hang off — a director flips them to ADVANCE on a trigger.
 			squad.set_objective(Squad.SquadObjective.NONE, squad.get_center(), true)
+
+
+# WHERE AN ADVANCING SQUAD IS ACTUALLY HEADED.
+#
+# ADVANCE onto squad.get_center() is the one fallback that does nothing at all:
+# the destination is the patch of ground the squad is already standing on, so
+# the order is issued, accepted and satisfied on the first tick. Every proving
+# ground squad sat on the muster platform for the whole mission because
+# post_tag named a point that level does not contain — the posture was right,
+# the tag was dangling, and nothing said so.
+#
+# So a missing post is now reported, and the advance is pointed at the player's
+# own spawn instead. "Push towards the player" is what ADVANCE means when the
+# level offers nowhere else to push, and it is never worse than holding still.
+func _advance_destination(squad: Squad, spec: EnemySquadSpec, post: SquadObjectivePoint) -> Vector3:
+	if post != null:
+		return post.global_position
+	var muster := _player_spawn()
+	if muster != Vector3.INF:
+		# An EMPTY post_tag is a decision — "this squad has nowhere particular to
+		# be, go at the player" — and small maps are full of those. A tag that
+		# was written and does not resolve is a mistake, and only that warns.
+		if spec.post_tag != &"":
+			push_warning("EnemyForceSpawner: '%s' is set to ADVANCE but post_tag=%s is not in this level, so it is advancing on the player spawn instead.\n  points in level: %s" % [
+				spec.callsign, spec.post_tag, _known_tags("squad_objective_points")])
+		return muster
+	push_warning("EnemyForceSpawner: '%s' is set to ADVANCE but post_tag=%s is not in this level and there is no player spawn to head for, so it will hold where it landed." % [
+		spec.callsign, spec.post_tag])
+	return squad.get_center()
+
+
+## The player's own start, read off the level script the way World does it.
+func _player_spawn() -> Vector3:
+	if _level == null or not is_instance_valid(_level):
+		return Vector3.INF
+	var sp: Variant = _level.get("spawn_point")
+	if sp is Node3D and (sp as Node3D).is_inside_tree():
+		return (sp as Node3D).global_position
+	return Vector3.INF
 
 
 func _resolve_anchor(spec: EnemySquadSpec, route: PatrolPath, post: SquadObjectivePoint) -> Vector3:
