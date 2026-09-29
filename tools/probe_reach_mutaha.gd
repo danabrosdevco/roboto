@@ -38,6 +38,16 @@ func _initialize() -> void:
 	for _i in 40:
 		await physics_frame
 	var region: NavigationRegion3D = level.get_node("NavigationRegion3D")
+	# AN EMPTY NAVMESH REPORTS EVERY ANCHOR CUT OFF, which reads as a broken
+	# level and is really a missing bake. A generated level writes empty
+	# placeholders for its navmesh data every time it is rebuilt, so this is a
+	# whole run of red that means nothing — say so instead.
+	var verts := region.navigation_mesh.get_vertices().size() if region.navigation_mesh != null else 0
+	if verts < 500:
+		print("FAIL  %s has %d navmesh vertices — bake it first, then run this." % [
+				level_path.get_file(), verts])
+		quit(1)
+		return
 	map = region.get_navigation_map()
 	var spawn: Node3D = level.get_node("SpawnPoint")
 	var from := NavigationServer3D.map_get_closest_point(map, spawn.global_position)

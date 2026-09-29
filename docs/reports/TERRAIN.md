@@ -101,6 +101,44 @@ put the west flank at 42° and the nav probe immediately called it a detour, so
 the falloff went back out to 130 m — 31° at its steepest, walkable from every
 side. The summit is now the highest point on the map, 132.0 m of 132.0 m.
 
+**District anchors, and the exit is off the parade ground.** Eighteen
+`SquadObjectivePoint`s with tags plus two patrol routes, 29 marks in all, and
+`tools/probe_reach_mutaha.gd` walks from the spawn to every one: **none cut
+off, every offset under 2 m, longest walk 897 m.** Same line as on the Mutaha
+copy — a tag is a contract, so this lane says WHERE the places are and
+**nothing under `Campaign/` was opened.** Who holds each one, which is a
+capture and what order they come in is GAMEPLAY's.
+
+Six on the route, one per station. Six in the summit compound, because taking
+a hilltop is not one objective — `fortgate`, `yard`, `dish`, `hall`, `power`,
+`postern`. One on the hall roof. And **five deliberately off the road**
+(`west_hill`, `east_hill`, `saddle`, `east_upland`, `north_spur`), so a
+mission can ask for a flank instead of a column, which is the whole reason the
+hills were left walkable.
+
+**The level exit is on the data hall's roof**, reached by the hall's own
+external stair. It was going to be a postern with the exit on the strip
+outside the north wall, and the ring test killed that: the hillside below the
+plateau is walkable, so anything can go round the outside and come up into
+that pocket without ever entering the compound. Four spur walls did not fix
+it. A roof ten metres up inside the wall cannot be reached any other way.
+
+**The postern stayed anyway**, and it costs something worth writing down: with
+two gates the ring test went from *the wall holds on three of six bearings* to
+**none**. The wall now shapes the fight instead of sealing it. That is a real
+trade and GAMEPLAY should know it is deliberate — brick the north gate up and
+the three come back.
+
+**Three bugs this pass, all in the measuring and not in the map.** Patrol
+points are CHILDREN of their anchor, so a table of world coordinates emitted
+raw put the yard patrol at twice its coordinates and half a kilometre off the
+map. Two patrol heights were guessed 25 m under the hill, which does not
+report as cut off — it reports as a few metres of OFFSET, because the navmesh
+query snaps in 3D and finds something further away sideways. And rebuilding a
+generated level rewrites its navmesh as empty placeholders, so a reach probe
+run before the re-bake called all 29 anchors cut off; `probe_reach_mutaha.gd`
+now refuses to report at all under 500 navmesh vertices and says to bake.
+
 **A new block, and the obelisk is out of the relay.** `landmark_relay_dish` —
 a 24 m bowl on a slewing mount, **25.3 m to the top of the rim**, built in
 `tools/block_ai_infra.gd` the same way `compute_satellite_dish` is (a tilted

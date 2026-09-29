@@ -319,6 +319,70 @@ func _profile() -> int:
 	return bad
 
 
+## DISTRICT ANCHORS. A SquadObjectivePoint is a named place with a tag and no
+## logic, and squad_objective_point.gd says in as many words that missions
+## reference these BY TAG and never by node path. So a tag is a contract this
+## lane can honour without touching an operation: these say WHERE the places
+## are. What happens at each — who holds it, which is a capture, what order
+## they come in — is GAMEPLAY's, and nothing under Campaign/ is opened here.
+##
+## Heights are the ground, sampled off the baked terrain, not guessed. An
+## anchor floating 20 m over its district still reports "reached" because the
+## navmesh query snaps in 3D; it is the OFFSET in probe_reach_mutaha.gd that
+## catches it, and that only works if the height is honest to begin with.
+##
+## node, tag, display name, x, z, y
+const OBJECTIVES: Array = [
+	# The route, one per station.
+	["Ascent_Trailhead", "obj_ascent_trailhead", "Trailhead", 0.0, 430.0, 0.0],
+	["Ascent_Cistern", "obj_ascent_cistern", "The Cistern", -170.0, 258.0, 10.0],
+	["Ascent_Pillars", "obj_ascent_pillars", "The Pillars", 150.0, 140.0, 34.0],
+	["Ascent_Gate", "obj_ascent_gate", "The Gate", -140.0, 34.0, 46.0],
+	["Ascent_Terrace", "obj_ascent_terrace", "The Terrace", 140.0, -46.0, 76.0],
+	["Ascent_Shoulder", "obj_ascent_shoulder", "The Shoulder", -205.0, -46.0, 62.0],
+	# The summit compound, broken up: taking the hilltop is not one objective,
+	# it is a gate, a yard, and three things inside worth standing on.
+	["Ascent_FortGate", "obj_ascent_fortgate", "Fort Gate", -18.0, -214.0, 132.0],
+	["Ascent_Yard", "obj_ascent_yard", "The Yard", 30.0, -250.0, 132.0],
+	# At the dish's FOOT, not under it: an anchor on the pedestal's own footprint
+	# reported reached with a 0.0 offset and no route, because the navmesh it
+	# snapped to was a scrap inside the piece.
+	["Ascent_Dish", "obj_ascent_dish", "The Relay Dish", -12.0, -262.0, 132.0],
+	["Ascent_Hall", "obj_ascent_hall", "Data Hall", 34.0, -266.0, 132.0],
+	["Ascent_Power", "obj_ascent_power", "Power Yard", 74.0, -256.0, 132.0],
+	["Ascent_Postern", "obj_ascent_postern", "The Postern", 54.0, -325.0, 132.0],
+	# The extraction point, on the hall roof. Its height is the ROOF's, so the
+	# reach probe's offset means something: an anchor left at ground level here
+	# would report reached off the yard below and prove nothing.
+	["Ascent_Roof", "obj_ascent_roof", "Hall Roof", 34.0, -282.0, 141.8],
+	# OFF the road. Every one of these is somewhere the squad can stand that
+	# the road does not go, so a mission can ask for a flank instead of a
+	# column — which is the whole reason the hills are walkable.
+	["Ascent_WestHill", "obj_ascent_west_hill", "West Hill", -300.0, 110.0, 26.0],
+	["Ascent_EastHill", "obj_ascent_east_hill", "East Hill", 268.0, 216.0, 41.5],
+	["Ascent_Saddle", "obj_ascent_saddle", "The Saddle", 36.0, 170.0, 21.2],
+	["Ascent_EastUpland", "obj_ascent_east_upland", "East Upland", 276.0, 30.0, 51.3],
+	["Ascent_NorthSpur", "obj_ascent_north_spur", "North-West Spur", -208.0, -232.0, 97.8],
+]
+
+## Patrol routes: plain Node3D children of an anchor, which is the shape
+## probe_reach_mutaha.gd reads them in. HEIGHTS ARE SAMPLED, not guessed —
+## two of these were 25 m under the hill on the first pass, and the symptom is
+## not "cut off", it is an OFFSET of a few metres, because the navmesh query
+## snaps in 3D and finds something further away sideways.
+## anchor node, then points as x, z, y triples
+const PATROLS: Array = [
+	["Ascent_Saddle", [
+		[36.0, 170.0, 21.2], [-40.0, 194.0, 21.4], [-120.0, 150.0, 43.0],
+		[-60.0, 96.0, 48.6], [30.0, 120.0, 26.0],
+	]],
+	["Ascent_Yard", [
+		[30.0, -250.0, 132.0], [24.0, -234.0, 132.0], [44.0, -238.0, 132.0],
+		[60.0, -252.0, 132.0], [46.0, -264.0, 132.0], [22.0, -252.0, 132.0],
+	]],
+]
+
+
 ## THE CURTAIN WALL. The plateau is walkable from every side — that was the
 ## point of taking the steep ring out — so this is the thing that makes the
 ## summit somewhere to be held rather than somewhere to walk onto.
@@ -331,6 +395,12 @@ const WALL_HALF := Vector2(60.0, 48.0)
 ## run, because that is the side the road climbs from; _installation() checks
 ## the road's own centreline passes through the opening.
 const GATE_AT := -48.0
+## The postern, in the north run — the way OUT, and where the level exit sits.
+const POSTERN_AT := 24.0
+## The data hall, and how far up its walkable roof is. compute_data_hall is
+## 10.3 m tall with its origin 0.5 m up from the bottom of its collision.
+const HALL_AT := Vector2(4.0, -12.0)
+const HALL_ROOF := 9.8
 
 
 ## The ring, built rather than typed: eighteen segments, one of them the gate.
@@ -346,15 +416,31 @@ func wall_pieces() -> Array:
 	for x: float in [-48.0, -24.0, 0.0, 24.0, 48.0]:
 		out.append([("fortress/fort_gate" if is_equal_approx(x, GATE_AT)
 				else "fortress/fort_wall"), x, WALL_HALF.y, 90.0])
-		out.append(["fortress/fort_wall", x, -WALL_HALF.y, 90.0])
+		# The postern, on the far side from the road. A compound with one way
+		# in and out is a cul-de-sac: you fight in through the south gate and
+		# leave by the back, which is where the level exit is.
+		out.append([("fortress/fort_gate" if is_equal_approx(x, POSTERN_AT)
+				else "fortress/fort_wall"), x, -WALL_HALF.y, 90.0])
 	for z: float in [-36.0, -12.0, 12.0, 36.0]:
 		out.append(["fortress/fort_wall", -WALL_HALF.x, z, 0.0])
 		out.append(["fortress/fort_wall", WALL_HALF.x, z, 0.0])
+	# FOUR SPURS, and they are the reason the postern does not simply hand the
+	# squad a second front door. Without them the strip between the wall and
+	# the plateau's lip runs all the way round, so anything can walk to
+	# whichever gate is undefended — the ring test went from holding on three
+	# bearings to holding on none the moment the postern went in. These cut
+	# that strip into pockets: the postern's pocket reaches the extraction
+	# point and nothing else, so the only way IN is still the south gate.
+	for x: float in [-66.0, 66.0]:
+		out.append(["fortress/fort_wall", x, WALL_HALF.y, 90.0])
+		out.append(["fortress/fort_wall", x, -WALL_HALF.y, 90.0])
 	return out
 
 
 ## Half-extents of the plateau the relay stands on, less a margin for the lip.
 const SHELF_HALF := Vector2(68.0, 54.0)
+## The plateau pad itself, which the wall ring and its spurs may reach.
+const PAD_HALF := Vector2(78.0, 62.0)
 ## Clear ground between two pieces, so dressing them later does not collide.
 const MARGIN := 1.5
 
@@ -394,11 +480,15 @@ func _installation() -> int:
 		var rot := Vector2(
 				absf(half.x * cos(yaw)) + absf(half.y * sin(yaw)),
 				absf(half.x * sin(yaw)) + absf(half.y * cos(yaw)))
+		var ring: bool = str(p[0]).begins_with("fortress/")
 		var note := ""
-		if absf(centre.x) + rot.x > SHELF_HALF.x or absf(centre.y) + rot.y > SHELF_HALF.y:
+		# SHELF_HALF is a margin for things that stand ON the plateau. The wall
+		# ring is measured against the pad itself, because reaching the lip is
+		# what a curtain wall and its spurs are FOR.
+		var room := PAD_HALF if ring else SHELF_HALF
+		if absf(centre.x) + rot.x > room.x or absf(centre.y) + rot.y > room.y:
 			note = "   OFF THE SHELF"
 			bad += 1
-		var ring: bool = str(p[0]).begins_with("fortress/")
 		for b: Array in boxes:
 			# A curtain wall is SUPPOSED to touch itself. Segments meeting at a
 			# corner share ground and that is what makes it a wall rather than
@@ -494,6 +584,8 @@ func _scene(by_name: Dictionary) -> String:
 		["PackedScene", "res://Env/world_objects/level_exit.tscn", "10_exit", "uid://big5ms541m2j7"],
 		["PackedScene", "res://Env/world_environment.tscn", "11_env", "uid://cml2uoky1hnes"],
 		["Shader", "res://Env/new_sky_oct.16.gdshader", "12_sky", ""],
+		["PackedScene", "res://Env/world_objects/squad_objective_point.tscn",
+				"14_sqpoint", "uid://62y43tyd5sx6"],
 	]
 	# The terrain data file does not exist until the first bake, and an
 	# ext_resource pointing at a missing file is the silent-null bug check.sh
@@ -724,10 +816,14 @@ func _scene(by_name: Dictionary) -> String:
 		out.append("")
 		ri += 1
 
+	# ON THE DATA HALL ROOF, reached by the hall's own external stair. The first
+	# try was the strip outside the postern, and the ring test killed it: the
+	# hillside below the plateau is walkable, so anything can go round the
+	# outside and up into that pocket without ever entering the compound. A roof
+	# ten metres up inside the wall cannot be reached any way but through it.
 	out.append("[node name=\"LevelExit\" parent=\"NavigationRegion3D\" instance=ExtResource(\"10_exit\")]")
-	# On the plateau, inside the wall.
-	out.append(_xform(float(summit[1]) - 30.0, float(summit[3]),
-			float(summit[2]) + float(summit[5]) * 0.5 - 34.0))
+	out.append(_xform(float(summit[1]) + HALL_AT.x, float(summit[3]) + HALL_ROOF,
+			float(summit[2]) + HALL_AT.y))
 	out.append("")
 	out.append("[node name=\"WorldEnvironment\" parent=\".\" instance=ExtResource(\"11_env\")]")
 	out.append("environment = SubResource(\"Environment_ascent\")")
@@ -739,6 +835,32 @@ func _scene(by_name: Dictionary) -> String:
 	out.append("shadow_opacity = 0.9")
 	out.append("directional_shadow_max_distance = 500.0")
 	out.append("")
+	out.append("[node name=\"EnemySquadObjs\" type=\"Node\" parent=\".\"]")
+	out.append("")
+	for o: Array in OBJECTIVES:
+		out.append("[node name=\"%s\" parent=\"EnemySquadObjs\" instance=ExtResource(\"14_sqpoint\")]" % o[0])
+		out.append(_xform(float(o[3]), float(o[5]), float(o[4])))
+		out.append("objective_name = \"%s\"" % o[2])
+		out.append("tag = &\"%s\"" % o[1])
+		out.append("show_debug_label = false")
+		out.append("")
+	for p: Array in PATROLS:
+		# A patrol point is a CHILD of its anchor, so its transform is relative
+		# to it. The table holds world coordinates, which is how they are read
+		# and checked, so the anchor's own position comes off here — emitted
+		# raw, the first run put the yard patrol at twice its coordinates and
+		# half a kilometre off the map.
+		var at := Vector3.ZERO
+		for o: Array in OBJECTIVES:
+			if str(o[0]) == str(p[0]):
+				at = Vector3(float(o[3]), float(o[5]), float(o[4]))
+		var pi := 1
+		for pt: Array in p[1]:
+			out.append("[node name=\"Patrol%d\" type=\"Node3D\" parent=\"EnemySquadObjs/%s\"]" % [pi, p[0]])
+			out.append(_xform(float(pt[0]) - at.x, float(pt[2]) - at.y, float(pt[1]) - at.z))
+			out.append("")
+			pi += 1
+
 	out.append("[editable path=\"WorldEnvironment\"]")
 	out.append("")
 	return "\n".join(out)
