@@ -755,21 +755,40 @@ func _test_scatter() -> void:
 	terrain.add_child(scatter)
 	root.add_child(terrain)
 	await process_frame
-	var mmi: MultiMeshInstance3D = null
+	# A LAYER IS SEVERAL MULTIMESHES, one per tile of ground, not one for the
+	# whole map — so everything here counts across all of them.
+	var mmis: Array = []
 	var body: StaticBody3D = null
 	for n in scatter.find_children("*", "", true, false):
 		if n is MultiMeshInstance3D:
-			mmi = n
+			mmis.append(n)
 		elif n is StaticBody3D:
 			body = n
-	_check("scatter builds a MultiMesh", mmi != null and mmi.multimesh.instance_count > 0)
-	if mmi == null:
+	var drawn := 0
+	for m: MultiMeshInstance3D in mmis:
+		drawn += m.multimesh.instance_count
+	_check("scatter builds a MultiMesh", not mmis.is_empty() and drawn > 0)
+	if mmis.is_empty():
 		terrain.queue_free()
 		return
 	# Placements come from get_layer_transforms(): the dummy renderer used
 	# headless does not keep MultiMesh transforms, so they cannot be read back.
 	var placed: Array = scatter.get_layer_transforms(0)
-	_check("scatter records one placement per instance", placed.size() == mmi.multimesh.instance_count and placed.size() > 0)
+	_check("scatter records one placement per instance", placed.size() == drawn and placed.size() > 0)
+	# EACH MULTIMESH SITS WHERE ITS OWN PROPS ARE. A multimesh is one instance
+	# to the renderer however many props it draws, so it is culled by distance
+	# to where the whole thing sits; built as one for the map that is the map's
+	# middle, and visibility_range_end then means "while you stand in the
+	# centre". Hillfort had every tree on the map vanish at once when you
+	# walked out past the range. A tile whose node is far from the props it
+	# holds has the same bug in miniature.
+	var adrift := 0.0
+	for m: MultiMeshInstance3D in mmis:
+		var box: AABB = m.multimesh.get_aabb()
+		if box.size != Vector3.ZERO:
+			adrift = maxf(adrift, Vector2(box.get_center().x, box.get_center().z).length())
+	_check("each multimesh sits among its own props", adrift < ScatterScript.CHUNK,
+			"worst %.1f m from the middle of what it draws" % adrift)
 	var rect: Rect2 = terrain.get_playable_rect()
 	var inside := true
 	var grounded := true

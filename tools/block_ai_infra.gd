@@ -968,13 +968,20 @@ func _relay_dish() -> void:
 	# the middle of a compound, is a collar of unwalkable ground.
 	cylinder(Vector3(0.0, 0.0, -0.4 * s), 5.6 * s, 0.8 * s, 20, CONCRETE)
 	cylinder(Vector3(0.0, 0.0, 0.4 * s), 4.6 * s, 0.3 * s, 20, PAD)
-	# The equipment cabin at the foot and the trunking that leaves it. Clear of
-	# the pad's disc, which it used to stand inside.
-	box(Vector3(4.9 * s, -3.2 * s, 0.4 * s), Vector3(9.7 * s, 1.8 * s, 3.8 * s), CLAD)
-	box(Vector3(4.8 * s, -3.3 * s, 3.8 * s), Vector3(9.8 * s, 1.9 * s, 4.1 * s), METAL)
-	box(Vector3(4.8 * s, -2.6 * s, 1.1 * s), Vector3(4.92 * s, -0.6 * s, 2.8 * s), GLOW)
-	pipe(Vector3(4.9 * s, -0.9 * s, 3.4 * s), Vector3(2.6 * s, -0.9 * s, 3.4 * s), 0.2 * s, METAL)
-	pipe(Vector3(2.6 * s, -0.9 * s, 3.4 * s), Vector3(2.6 * s, -0.9 * s, 8.4 * s), 0.2 * s, METAL)
+	# The equipment cabin at the foot and the trunking that leaves it.
+	#
+	# IT STANDS ON THE GROUND, NOT ON THE PLINTH. It was moved out of the PAD's
+	# disc (4.6·s) and left at the plinth's height, and the plinth is a metre
+	# wider than that (5.6·s) — so its inner end rested on the step and the
+	# other nine metres of it hung 0.96 m over open pad, which is what you see
+	# from anywhere on the summit. Out past the plinth's own edge and down onto
+	# the deck: clear of both discs at z = 0, which is the ground this piece
+	# stands on.
+	box(Vector3(5.8 * s, -3.2 * s, 0.0), Vector3(10.6 * s, 1.8 * s, 3.4 * s), CLAD)
+	box(Vector3(5.7 * s, -3.3 * s, 3.4 * s), Vector3(10.7 * s, 1.9 * s, 3.7 * s), METAL)
+	box(Vector3(5.7 * s, -2.6 * s, 0.7 * s), Vector3(5.82 * s, -0.6 * s, 2.4 * s), GLOW)
+	pipe(Vector3(5.8 * s, -0.9 * s, 3.0 * s), Vector3(2.6 * s, -0.9 * s, 3.0 * s), 0.2 * s, METAL)
+	pipe(Vector3(2.6 * s, -0.9 * s, 3.0 * s), Vector3(2.6 * s, -0.9 * s, 8.4 * s), 0.2 * s, METAL)
 
 	# ── The pedestal: a tapered drum, a lit band, a walkway collar under the
 	# turntable.

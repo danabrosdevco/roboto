@@ -24,6 +24,11 @@ const Layer := preload("res://Env/terrain/terrain_scatter_layer.gd")
 const Data := preload("res://Env/terrain/terrain_data.gd")
 
 const BUILT_META := &"_terrain_scatter_built"
+## How wide a tile of scatter is, in metres — see _tiles(). Small enough that
+## a tile going out of view or out of range is worth something on a 900 m map,
+## big enough that a hillside of grass is not a thousand draw calls. Roughly
+## the visibility range the ground layers use.
+const CHUNK := 192.0
 
 ## The terrain to scatter over. Empty = the nearest GeneratedTerrain above this.
 @export var terrain_path: NodePath:
@@ -222,23 +227,50 @@ func _scatter_layer(layer: Layer, index: int, data: Data, area: Rect2, terrain_t
 		if xfs.is_empty():
 			continue
 		(_layer_transforms[index] as Array).append_array(xfs)
-		for part in variants[v]:
-			var mm := MultiMesh.new()
-			mm.transform_format = MultiMesh.TRANSFORM_3D
-			mm.mesh = part.mesh
-			mm.instance_count = xfs.size()
-			var part_xf: Transform3D = part.xf
-			for k in xfs.size():
-				mm.set_instance_transform(k, (xfs[k] as Transform3D) * part_xf)
-			var mmi := MultiMeshInstance3D.new()
-			mmi.name = "Layer%d_Variant%d" % [index, v]
-			mmi.multimesh = mm
-			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if layer.cast_shadows else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			if part.material != null:
-				mmi.material_override = part.material
-			if layer.visibility_range_end > 0.0:
-				mmi.visibility_range_end = layer.visibility_range_end
-			root.add_child(mmi)
+		# ONE MULTIMESH PER TILE, NOT ONE PER MAP.
+		#
+		# A MultiMesh is ONE instance to the renderer however many props it
+		# draws, so it is culled as one thing, by the distance to where the
+		# whole thing sits. Built as a single multimesh over an 896 x 1024 m
+		# map, that is the middle of the map — and visibility_range_end then
+		# means "you can see the trees while you stand in the centre", which is
+		# exactly how it behaved on Hillfort: walk out past the range and every
+		# tree on the map disappears at once, walk back and they all return.
+		#
+		# The same is true of the view frustum. One map-wide multimesh has a
+		# map-wide bounding box, so it is never off screen and every prop is
+		# submitted every frame whichever way you face.
+		#
+		# So cut each variant into tiles and give each tile its own multimesh,
+		# sitting at the middle of the props it holds. Each tile's range gets
+		# half its own diagonal added, because the distance is measured to that
+		# middle and a prop in the corner is further away than it.
+		for tile: Array in _tiles(xfs):
+			var lo: Vector3 = (tile[0] as Transform3D).origin
+			var hi := lo
+			for xf: Transform3D in tile:
+				lo = Vector3(minf(lo.x, xf.origin.x), minf(lo.y, xf.origin.y), minf(lo.z, xf.origin.z))
+				hi = Vector3(maxf(hi.x, xf.origin.x), maxf(hi.y, xf.origin.y), maxf(hi.z, xf.origin.z))
+			var at := (lo + hi) * 0.5
+			var to_tile := Transform3D(Basis(), -at)
+			for part in variants[v]:
+				var mm := MultiMesh.new()
+				mm.transform_format = MultiMesh.TRANSFORM_3D
+				mm.mesh = part.mesh
+				mm.instance_count = tile.size()
+				var part_xf: Transform3D = part.xf
+				for k in tile.size():
+					mm.set_instance_transform(k, to_tile * (tile[k] as Transform3D) * part_xf)
+				var mmi := MultiMeshInstance3D.new()
+				mmi.name = "Layer%d_Variant%d" % [index, v]
+				mmi.multimesh = mm
+				mmi.position = at
+				mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if layer.cast_shadows else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				if part.material != null:
+					mmi.material_override = part.material
+				if layer.visibility_range_end > 0.0:
+					mmi.visibility_range_end = layer.visibility_range_end + (hi - lo).length() * 0.5
+				root.add_child(mmi)
 		for xf in xfs:
 			origins.append((xf as Transform3D).origin)
 
@@ -259,6 +291,19 @@ func _scatter_layer(layer: Layer, index: int, data: Data, area: Rect2, terrain_t
 			body.shape_owner_add_shape(owner_id, shape)
 			body.shape_owner_set_transform(owner_id, Transform3D(Basis(), o + lift))
 		root.add_child(body)
+
+
+## One variant's transforms split into CHUNK-metre squares of ground, empty
+## squares left out. Each becomes its own multimesh, so the renderer can cull
+## a hillside you are not looking at instead of the whole map or none of it.
+func _tiles(xfs: Array) -> Array:
+	var by_cell := {}
+	for xf: Transform3D in xfs:
+		var key := Vector2i(int(floorf(xf.origin.x / CHUNK)), int(floorf(xf.origin.z / CHUNK)))
+		if not by_cell.has(key):
+			by_cell[key] = []
+		(by_cell[key] as Array).append(xf)
+	return by_cell.values()
 
 
 ## Every drawable part of every variant: an Array (one per scene or mesh) of

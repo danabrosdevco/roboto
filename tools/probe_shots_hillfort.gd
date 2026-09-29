@@ -35,6 +35,10 @@ const SHOTS: Array = [
 	["08d_the_hall_roof", Vector3(10.0, 137.0, -246.0), Vector3(40.0, 142.0, -284.0), 58.0],
 	["08e_the_postern", Vector3(54.0, 134.0, -348.0), Vector3(40.0, 138.0, -286.0), 55.0],
 	["08b_the_dish_line", Vector3(56.0, 136.0, -286.0), Vector3(-20.0, 140.0, -300.0), 58.0],
+	# Along the feet of the relay compound, low: the shots that show whether a
+	# piece is standing on the pad or hanging over it.
+	["08f_relay_cabin", Vector3(14.0, 134.0, -258.0), Vector3(15.0, 135.0, -279.0), 55.0],
+	["08g_relay_cabin_side", Vector3(36.0, 133.4, -272.0), Vector3(12.0, 134.6, -282.0), 58.0],
 	["09_aerial_whole_map", Vector3(0.0, 780.0, 720.0), Vector3(10.0, 70.0, -120.0), 50.0],
 	["10_aerial_the_route", Vector3(-40.0, 520.0, 300.0), Vector3(20.0, 100.0, -200.0), 46.0],
 	["11_the_upland", Vector3(236.0, 124.0, 64.0), Vector3(30.0, 128.0, -270.0), 44.0],

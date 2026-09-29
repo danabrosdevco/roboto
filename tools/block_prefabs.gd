@@ -34,15 +34,21 @@ func _initialize() -> void:
 	await process_frame
 	var dir := ""
 	var force := false
+	# --only=<name>, so ONE piece can be rebuilt without --force reaching every
+	# other prefab in its folder. Editing one map and having to rewrite thirty
+	# untouched scenes to see it is how editor work gets lost.
+	var only := ""
 	for a in OS.get_cmdline_user_args():
 		if a == "--force":
 			force = true
+		elif a.begins_with("--only="):
+			only = a.trim_prefix("--only=").get_basename()
 		elif dir == "":
 			dir = a
 		else:
 			print("ignoring argument '%s'" % a)
 	if dir == "":
-		print("usage: godot --headless --path . --script res://tools/block_prefabs.gd -- maps/blocks/props [--force]")
+		print("usage: godot --headless --path . --script res://tools/block_prefabs.gd -- maps/blocks/props [--only=<piece>] [--force]")
 		quit(2)
 		return
 	if not dir.begins_with("res://") and not dir.is_absolute_path():
@@ -56,10 +62,14 @@ func _initialize() -> void:
 	# cannot drop new files into the texture folder behind anyone's back.
 	var quiet: Resource = settings.duplicate()
 	quiet.save_generated_materials = false
-	var maps := Array(DirAccess.get_files_at(dir)).filter(func(f: String) -> bool: return f.ends_with(".map"))
+	var maps := Array(DirAccess.get_files_at(dir)).filter(func(f: String) -> bool:
+			return f.ends_with(".map") and (only == "" or f.get_basename() == only))
 	maps.sort()
 	if maps.is_empty():
-		print("FAIL  no .map files in %s" % dir)
+		if only != "":
+			print("FAIL  no %s.map in %s" % [only, dir])
+		else:
+			print("FAIL  no .map files in %s" % dir)
 		quit(1)
 		return
 	var made := 0
