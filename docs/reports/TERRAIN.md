@@ -63,7 +63,11 @@ along the north lip, generator and transformers, three 21.8 m masts, two
 watchtowers, a sangar and a sentry turret. Blockout only — no dressing, no
 objectives, no cover bake.
 
-**Gates.** `check.sh --changed`: **PASS**. `test.sh` and `smoke.sh`: **not
+**Gates.** `check.sh --changed`: everything in this lane **consistent**, all 34
+scripts parse — but the run does NOT print PASS, because of one file that is
+not mine: `Campaign/lab/plans/foundry_rifle.tres`, untracked and mid-edit in
+the GAMEPLAY lane, with `load_steps=9` where 11 is expected. Left alone.
+`test.sh` and `smoke.sh`: **not
 run** — nothing here touches their ground, and the level is not in any mission.
 **Never launched.** Everything below is geometry and pathfinding, not feel.
 
@@ -97,6 +101,19 @@ already falling by the time the pad's edge is reached. Narrowing it too far
 put the west flank at 42° and the nav probe immediately called it a detour, so
 the falloff went back out to 130 m — 31° at its steepest, walkable from every
 side. The summit is now the highest point on the map, 132.0 m of 132.0 m.
+
+**The relay is composed now, not scattered** — 40 pieces where there were 23.
+One decision drives the rest: the data hall's LONG side faces the gate, so the
+compound has a front instead of presenting an end wall to whoever walks in.
+Off that: the obelisk stands clear on the hall's west flank, framed by the gate
+opening from outside; the four dishes are one line, even spacing, one yaw,
+because a dish farm is machinery pointed at the same thing and four angles read
+as clutter; power is gathered on the east flank behind a revetment rather than
+sitting loose in the yard; the checkpoint sits ACROSS the line from the gate at
+the road's angle, so the way in is a turn and not a straight run; and the yard
+is deliberately left open, with three T-wall stacks and a scatter set off the
+axis so nothing lines up into a shooting corridor. The masts are in the corners
+where they do not clutter it.
 
 **The fort has a curtain wall and a gate now**, eighteen `fortress/` segments
 ringing the plateau 120 × 96, the gate on the south-west where the road comes
@@ -182,7 +199,10 @@ refuses to write under 2000 bytes.
   is probably a built viaduct, which is a block job.
 - The curtain wall is 5.5 m and reads as a fence from any distance. If the fort
   should read as a fort from the Terrace, it wants a taller piece.
-- The relay is a blockout. Nothing on that shelf is a considered composition.
+- The obelisk wears `glitch_tx_1` and reads as magenta and green confetti up
+  close — it is the centrepiece of the compound and the first thing seen
+  through the gate, so this is now the texture's most visible appearance
+  anywhere. Same fix as the monolith note that has been open three sessions.
 
 **Blocked / next.** Nothing blocking, and nothing should be built on top of this
 until the scale is signed off. After that, in order: a curtain wall and gate

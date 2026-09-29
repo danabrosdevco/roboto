@@ -140,7 +140,10 @@ func _initialize() -> void:
 		elif ground > DETOUR:
 			note = "   GROUND DETOUR — the hillside is not walkable here"
 			loose += 1
-		elif through > DETOUR:
+		# Against the GROUND ratio, not a flat number: a bearing where the hill
+		# already costs 1.6x has not been sealed by the wall just because the
+		# walk through to the middle costs 2.0x.
+		elif through > ground * 1.4:
 			note = "   the wall holds"
 			sealed += 1
 		else:

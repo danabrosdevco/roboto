@@ -140,37 +140,75 @@ const HILLS: Array = [
 ## pair for overlap — two pieces in the same ground is the quickest way to make
 ## a level look broken, and the eye does not catch it on a plateau this size.
 const SUMMIT_PIECES: Array = [
-	# The hall and the mast, off-centre so the shelf is not symmetrical.
-	["compute/compute_data_hall", 12.0, -6.0, 0.0],
-	["compute/compute_obelisk", -20.0, -12.0, 0.0],
-	# The dish array, along the north lip, all looking the same way off the map.
-	["compute/compute_satellite_dish", -28.0, -27.0, 12.0],
-	["compute/compute_satellite_dish", -12.0, -27.0, 6.0],
-	["compute/compute_satellite_dish", 4.0, -27.0, -4.0],
-	["compute/compute_satellite_dish", 20.0, -27.0, -10.0],
-	# Power, downwind of the hall.
-	["compute/compute_generator", 28.0, 12.0, 0.0],
-	["compute/compute_transformer", 14.0, 14.0, 0.0],
-	["compute/compute_transformer", 38.0, 10.0, 0.0],
-	["compute/compute_cable_run", -6.0, -8.0, 0.0],
+	# ── THE CORE. The hall's LONG side faces the gate, so the compound has a
+	# front rather than presenting an end wall to whoever walks in. Everything
+	# else is placed off that one decision.
+	["compute/compute_data_hall", 4.0, -12.0, 0.0],
+	# The obelisk is the tallest single thing at eye level and stands clear on
+	# the hall's west flank, where it reads against the sky from the gate. Its
+	# VISUAL mass sits about 3.9 m west of its origin — see docs/BLOCKS.md —
+	# so it is further from the wall than the number here looks.
+	["compute/compute_obelisk", -34.0, -16.0, 0.0],
+	["compute/compute_chiller_yard", 36.0, -12.0, 0.0],
+	["compute/compute_cooling_unit", -4.0, -30.0, 0.0],
+	["compute/compute_cooling_unit", 12.0, -30.0, 0.0],
+	# The dish array on the north lip: one line, even spacing, one yaw. A dish
+	# farm is machinery pointed at the same thing, and four dishes at four
+	# angles read as clutter instead of as an instrument.
+	["compute/compute_satellite_dish", -26.0, -38.0, -6.0],
+	["compute/compute_satellite_dish", -10.0, -38.0, -6.0],
+	["compute/compute_satellite_dish", 6.0, -38.0, -6.0],
+	["compute/compute_satellite_dish", 22.0, -38.0, -6.0],
+
+	# ── POWER, on the east flank and screened off the yard. Kept together and
+	# kept apart: a generator in the middle of a courtyard is a prop, a
+	# generator behind a revetment is a place.
+	["compute/compute_generator", 44.0, 14.0, 90.0],
+	["compute/compute_transformer", 32.0, 22.0, 0.0],
+	["compute/compute_transformer", 44.0, 30.0, 0.0],
+	["fortifications/fort_hesco_wall", 34.0, 6.0, 0.0],
+	["compute/compute_network_cabinet", 52.0, 16.0, 90.0],
+	["compute/compute_network_cabinet", 52.0, 21.0, 90.0],
+	["compute/compute_network_cabinet", 52.0, 26.0, 90.0],
+	# Cable runs leave the hall and cross the yard, which is what ties the two
+	# halves of the compound together visually.
 	["compute/compute_cable_run", -6.0, 8.0, 0.0],
-	["compute/compute_network_cabinet", 4.0, 10.0, 20.0],
-	["compute/compute_network_cabinet", 8.0, 15.0, -14.0],
-	["compute/compute_network_cabinet", 0.0, 18.0, 4.0],
-	# The ramp comes in from the south-west, so the guns look that way.
-	["features/feature_watchtower", -34.0, 18.0, 0.0],
-	["features/feature_watchtower", -4.0, 30.0, 90.0],
-	["fortifications/fort_hesco_sangar", -22.0, 20.0, 40.0],
-	["fortifications/fort_sentry_turret", -24.0, 6.0, 215.0],
-	["fortifications/fort_floodlight_mast", -36.0, -8.0, 0.0],
-	["fortifications/fort_floodlight_mast", 34.0, -20.0, 0.0],
-	# THE MASTS ARE WHY THE FORT CAN BE SEEN AT ALL. A flat top on a convex hill
-	# hides itself: from the Terrace, 250 m out and 50 m below, the plateau edge
-	# cuts the line, and anything standing on the summit needs to be about 23 m
-	# tall to clear it. The watchtowers are 8.7 m. These are 21.8 m.
-	["features/feature_power_pylon", 44.0, -34.0, 0.0],
-	["features/feature_power_pylon", -40.0, 38.0, 0.0],
-	["features/feature_power_pylon", 24.0, 38.0, 0.0],
+	["compute/compute_cable_run", 10.0, 8.0, 0.0],
+	["compute/compute_rack_row", 20.0, 2.0, 20.0],
+	["compute/compute_rack_row", -18.0, -2.0, -14.0],
+
+	# ── THE GATE. You cannot walk straight in: the checkpoint sits across the
+	# line from the gate, angled to the road, so the way through is a turn.
+	["fortifications/fort_checkpoint", -28.0, 30.0, 40.0],
+	["fortifications/fort_dragon_teeth", -44.0, 2.0, 50.0],
+	["features/feature_watchtower", -52.0, 34.0, 0.0],
+	["fortifications/fort_sentry_turret", -8.0, 42.0, 215.0],
+	["props/prop_sandbag_nest", -6.0, 30.0, 0.0],
+	# The second tower is on the far side, covering the yard and the power end.
+	["features/feature_watchtower", 52.0, -12.0, 0.0],
+	["fortifications/fort_gun_emplacement", 38.0, -40.0, 0.0],
+	["fortifications/fort_ammo_dump", -52.0, -10.0, 0.0],
+	["fortifications/fort_floodlight_mast", -52.0, 12.0, 0.0],
+	["fortifications/fort_floodlight_mast", 30.0, -42.0, 0.0],
+
+	# ── THE YARD. Deliberately NOT full. It is the only open ground inside the
+	# wall and it is where a fight over this place happens, so it gets cover
+	# worth using and nothing else: three T-wall stacks and a scatter, set off
+	# the axis so none of them lines up into a corridor.
+	["fortifications/fort_t_walls", 10.0, 30.0, 24.0],
+	["fortifications/fort_t_walls", 22.0, 26.0, -32.0],
+	["fortifications/fort_t_walls", 2.0, 20.0, 70.0],
+	["props/prop_jersey_barrier", 16.0, 36.0, 12.0],
+	["props/prop_jersey_barrier", 22.0, 34.0, 12.0],
+	["props/prop_crates", 0.0, 8.0, 30.0],
+	["props/prop_barrels", 30.0, 32.0, 0.0],
+
+	# ── THE MASTS, in the corners where they do not clutter the yard. The
+	# south-east one is the piece the Terrace sees: see the sightline note in
+	# tools/probe_ascent_bed.gd before moving it.
+	["features/feature_power_pylon", -50.0, -36.0, 0.0],
+	["features/feature_power_pylon", 50.0, -36.0, 0.0],
+	["features/feature_power_pylon", 40.0, 38.0, 0.0],
 ]
 
 ## Saddles and hollows, as LOWER stamps. WITHOUT THESE THE MAP IS ONE DOME:
