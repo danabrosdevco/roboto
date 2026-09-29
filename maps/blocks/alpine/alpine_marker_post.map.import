@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b61knjr5fwxep"
+path="res://.godot/imported/alpine_marker_post.map-a0cfb86f9a2111b37f4bd387d03e41ee.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_marker_post.map"
+dest_files=["res://.godot/imported/alpine_marker_post.map-a0cfb86f9a2111b37f4bd387d03e41ee.tres"]
+
+[params]
+

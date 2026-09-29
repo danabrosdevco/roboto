@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=4]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_eutko"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_y2r0o"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/grass_7.tres" id="3_oob6c"]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_kfxx8"]
+_surfaces = [{
+"aabb": AABB(-0.375, -0.296875, -0.3125, 0.75, 0.59375, 0.625),
+"attribute_data": PackedByteArray("RuNlvfZNHr4M4u88ptI3u8Tqqbyk0je7ju2GPYRkGr5ZuK88fD+1ugWelrx+P7W6AwAAPAEAAL0DAIA8AQCAPP//v7wAAAA8z/7xvPW00DtYhHw7XIQovjFNkzwItdA7NGm2vexN5b0K4u882K+Qu8bqqbzFr5C7WTywPcyA6r273bI8puCRu0Ru0ryU4JG7AQAAPf7//zsAAIC8AADAPAEAALwBAMC80p/evJAzVzyg3PI7Dm4Svq8ltjygM1c8fn5mvWgPFr7TitA8hykpu3+jpLyqKSm7mpl5Pf3xE76amZk89KcNu2Rmprw4qA27/v+/PPr/fzz//7+89///OwAAAAAAAMC8QW7SvCclvztOhHw7qdIgvrndsjxaJb87s9KdPUJk47253bI8GOiuu0hu0rxM6K674t6svT731r2thNs8s0Kxu6ypmbzkQrG7BADAvAEAgLz//788AAAAvKC3nLECAAA9D1rIPCJ0Lzwu+eS8CnQvPID4ZDuTcQq+DLxsvWy62b1FbtI8xzgfu7vdsrwqOR+7aGZmPYDV2r1nZqY8bAxCu5uZmbyODEK7AQDAvAEAgDwvBjIwAQDAvAEAwDwAAAA82IrQvHMc8DsMkUU8TOX2vYCjpDxQHPA7LsyAvbgE+70w+eQ8kh07uwxayLySHTu7AQCAPVwH+73//788otJIuwYAwLyi0ki7AgAAvW9fsrEAAIA8BgDAvAAAgDz//788LvnkvHTWCDzo+OQ7MB0Nvg5ayDyO1gg8VjywvSaiA75BbtI8wNOAu7rdsrzh04C7MDOzPRBiAr5nZqY86nCMu5eZmby5cIy7AACAvP3/v7z+/7882DRJMQEAALwAAMA81YrQvJrZCDxoeHE8VNMdvn6jpDyR2Qg8"),
+"format": 34359742487,
+"index_count": 84,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcAGAAZABoAGwAcAB0AHgAfACAAIQAiACMAJAAlACYAJwAoACkAKgArACwALQAuAC8AMAAxADIAMwA0ADUANgA3ADgAOQA6ADsAPAA9AD4APwBAAEEAQgBDAEQARQBGAEcASABJAEoASwBMAE0ATgBPAFAAUQBSAFMA"),
+"material": ExtResource("3_oob6c"),
+"name": "PSX_Textures/grass_7",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 84,
+"vertex_data": PackedByteArray("CQCAvQAAmD4AAKA++v//PQAAmL4AAECyEAAAvQAAmL7///89CQCAvQAAmD4AAKA+EAAAvQAAmL7///89CQCAvQAAmL4GAAC9+v//PQAAmL4AAECyCQCAvQAAmL4GAAC9EAAAvQAAmL7///89+v//PQAAmL4AAECyCQCAvQAAmD4AAKA+CQCAvQAAmL4GAAC9/v+/PgQA4D0AAEA+DwAAvQAAmL4CAMC9+f+/PQAAmL4AAIA9/v+/PgQA4D0AAEA++f+/PQAAmL4AAIA9CADAvQAAmL4AAMA9DwAAvQAAmL4CAMC9CADAvQAAmL4AAMA9+f+/PQAAmL4AAIA9DwAAvQAAmL4CAMC9/v+/PgQA4D0AAEA+CADAvQAAmL4AAMA9/v+PPgIAiD4AAICxBQCAvQAAmL78/3+9+P+/PQAAmL4AAAA9/v+PPgIAiD4AAICx+P+/PQAAmL4AAAA9DAAAvQAAmL7///89BQCAvQAAmL78/3+9DAAAvQAAmL7///89+P+/PQAAmL4AAAA9BQCAvQAAmL78/3+9/v+PPgIAiD4AAICxDAAAvQAAmL7///89/f8/PgQAoD0AAKC+4P//PAAAmL7+/3+98v9/PQAAmL4CAAA+/f8/PgQAoD0AAKC+BgAAvgAAmL4FAAA94P//PAAAmL7+/3+98v9/PQAAmL4CAAA+4P//PAAAmL7+/3+9BgAAvgAAmL4FAAA98v9/PQAAmL4CAAA+BgAAvgAAmL4FAAA9/f8/PgQAoD0AAKC+CgDAvQAA4D0AAGC+CQCAvQAAmL4AAAA+EAAAvQAAmL4BAIC9CgDAvQAA4D0AAGC+EAAAvQAAmL4BAIC9+f+/PQAAmL7///88CQCAvQAAmL4AAAA++f+/PQAAmL7///88EAAAvQAAmL4BAIC9CQCAvQAAmL4AAAA+CgDAvQAA4D0AAGC++f+/PQAAmL7///88AwCAvgQAMD4BAAC+SNAmswAAmL4CACA+BwDAvQAAmL4AAAC9AwCAvgQAMD4BAAC+BwDAvQAAmL4AAAC9/v+/PQAAmL4AAAC9SNAmswAAmL4CACA+/v+/PQAAmL4AAAC9BwDAvQAAmL4AAAC9SNAmswAAmL4CACA+AwCAvgQAMD4BAAC+/v+/PQAAmL4AAAC9//+/vvb/Lz79/z8+9f+/PQAAmL4AAMA9CADAvQAAmL4AAIA9//+/vvb/Lz79/z8+CADAvQAAmL4AAIA9myaZswAAmL78/3+99f+/PQAAmL4AAMA9myaZswAAmL78/3+9CADAvQAAmL4AAIA99f+/PQAAmL4AAMA9//+/vvb/Lz79/z8+myaZswAAmL78/3+9YLEab///cNxgsRpv//9w3GCxGm///3DcuB67dFSV/7+4Hrt0VJX/v7geu3RUlf+//38AAP//////fwAA//////9/AAD/////i9XG8wAAI8mL1cbzAAAjyYvVxvMAACPJkub8OAAAjeOS5vw4AACN45Lm/DgAAI3jao3vXf//I8lqje9d//8jyWqN713//yPJ/38AAP//////fwAA//////9/AAD/////cD0Tzv9f/79wPRPO/1//v3A9E87/X/+/Xu5jKQAA/9de7mMpAAD/117uYykAAP/XXrEyc///bNtesTJz//9s216xMnP//2zb/38AAP//////fwAA//////9/AAD/////PTccq0iS/789NxyrSJL/vz03HKtIkv+/INiKSwAA2vYg2IpLAADa9iDYiksAANr2choVJv8v/79yGhUm/y//v3IaFSb/L/+//38AAP//////fwAA//////9/AAD/////aWk7vFTV/79paTu8VNX/v2lpO7xU1f+/JRRxXLZt/78lFHFctm3/vyUUcVy2bf+/7u6KLwAAbNvu7oovAABs2+7uii8AAGzb/38AAP//////fwAA//////9/AAD/////z57Trf///9fPntOt////18+e063////XJzbEbqqq/78nNsRuqqr/vyc2xG6qqv+/qeoAAAAA/7+p6gAAAAD/v6nqAAAAAP+//38AAP//////fwAA//////9/AAD/////2ra2rf//qeratrat//+p6tq2tq3//6nqFXJjYbXt/78VcmNhte3/vxVyY2G17f+/0BeIOyRJ/7/QF4g7JEn/v9AXiDskSf+//38AAP//////fwAA//////9/AAD/////Ssvw0AAA/+dKy/DQAAD/50rL8NAAAP/n")
+}]
+
+[node name="AlpineTussock" type="Node3D"]
+script = ExtResource("1_eutko")
+local_map_file = "res://maps/blocks/alpine/alpine_tussock.map"
+map_settings = ExtResource("2_y2r0o")
+
+[node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
+collision_mask = 0
+
+[node name="entity_1_func_detail_illusionary" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.96046e-08, 0.296875, -0.03125)
+metadata/func_godot_mesh_data = {}
+
+[node name="entity_1_mesh_instance" type="MeshInstance3D" parent="entity_1_func_detail_illusionary"]
+mesh = SubResource("ArrayMesh_kfxx8")

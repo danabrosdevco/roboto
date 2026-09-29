@@ -16,6 +16,7 @@ built geometry saved under it, the same shape as `concrete_bridge.tscn`.
 | `maps/blocks/estates/` | The big housing: five- to eight-storey slabs, towers, courtyard and U blocks, a deck-access block, a broken slab, a collapsed corner, an unfinished frame and a market hall. Each takes two or four lots. |
 | `maps/blocks/features/` | Set pieces placed by hand: rocks, a cliff ledge, berms, trench lining, a crater rim, a pillbox, a watchtower, containers, a pylon, fuel tanks. |
 | `maps/blocks/props/` | Small pieces for scattering or placing by hand: boulders, rubble, barriers, sandbags, hesco, tank traps, drums, crates, wrecks, poles, pipes. |
+| `maps/blocks/alpine/` | Dead wood and mountain ground cover for above the treeline: standing snags, dead conifers, a leaning snag, stumps, deadfall, a root plate, a log pile, krummholz scrub, tussocks, a scree patch, an erratic and a route marker. Built for scattering. |
 | `maps/blocks/solar/` | AI-built solar: panel rows, a tracker, a field the size of a lot, heliostats and a solar tower, battery containers, inverters, drone docks, and canopy arrays big enough to walk under. |
 | `maps/blocks/compute/` | AI compute: server racks, chillers, a generator, a transformer, a data hall, a compute obelisk, monoliths, cables, cabinets, a satellite dish. |
 | `maps/blocks/landmarks/` | Set pieces a map is built round: the orbital tether anchor at the heart of the valley basin, and a clock tower and a big wheel, one on each bank of Mutaha. |
@@ -108,6 +109,9 @@ Put a `TerrainScatter` under the terrain and add a layer from
 | `scatter_debris` | Rubble, blocks, tank traps, drums, crates and barriers, in clumps. Kept off steep ground and mountains. |
 | `scatter_wrecks` | Cars and robots, rarely, and allowed onto roads. |
 | `scatter_tech_debris` | Toppled racks, cable runs, network cabinets and drone docks. Rare clumps on flat ground, for the land round a compute site. |
+| `scatter_alpine_snags` | The five standing dead trees, in loose groves (9/ha), upright, off slopes over 32°. 0.35 m collider — you can shoot past a trunk but not walk through it. |
+| `scatter_alpine_deadwood` | Deadfall, log piles, stumps, root plates and erratics (11/ha), laid along the slope. The layer that makes a hillside look like it used to hold trees. |
+| `scatter_alpine_ground` | Tussocks, krummholz and scree, thick (240/ha), no collision, faded out at 190 m. This is the one that stops a valley reading as bare ground. |
 
 How scatter layers behave:
 - **Drawn as MultiMeshes.** A layer uses only the prefab's mesh, so its
@@ -436,6 +440,44 @@ plinth to keep the extent, which is the buildings tool's 27°.
 - **container_stack:** three shipping containers.
 - **power_pylon** (21 m): a landmark.
 - **fuel_tanks:** two tanks in a bund, with pipes and a catwalk.
+
+### Alpine (`maps/blocks/alpine/`)
+
+Dead wood for mountain ground. The valleys on Hillfort played as bare, and
+this is what goes on them; nothing here has leaves.
+
+- **Standing:** `alpine_pine_dead` (12.7 m, six whorls of bare branches — the
+  one that carries a skyline), `alpine_snag_tall` (10.3 m, branchless but for
+  the stubs), `alpine_snag_leaning` (8 m, uphill roots pulled clear of the
+  soil), `alpine_pine_skeleton` (7.1 m), `alpine_snag_broken` (5.3 m, snapped
+  at chest height and still splintered).
+- **Down:** `alpine_deadfall` (9.7 m lying along X with its root plate on
+  end), `alpine_root_plate` (3.8 m, a disc of soil stood almost vertical),
+  `alpine_stump` (2.7 m across its root flare), `alpine_log_pile` (three
+  trunks jammed — ready-made cover).
+- **Ground:** `alpine_scrub` (krummholz, 3 m across and knee high),
+  `alpine_tussock` (0.6 m), `alpine_talus` (a 3.5 m scree patch),
+  `alpine_erratic` (a lone lichened boulder), `alpine_marker_post` (2.7 m,
+  the one MADE thing in the set — a scatter of pure nature reads as
+  wilderness, and this world is not that).
+
+Everything woody is built from one helper, `limb()`: a tapered hull between
+two points in any direction. `trunk()` stacks those with a wander so a tree
+kinks instead of standing like a pipe, `root_flare()` puts the base in the
+ground, `whorl()` hangs the branches and `splinters()` is what tells a snapped
+trunk from a cut one. **Keep any limb's narrow end at 0.06 m or more** — below
+that the ring rounds to a point on the 1/32 m grid and the brush is dropped.
+
+**The small stuff carries no collision at all** — scrub, tussocks and talus.
+A scatter layer ignores a prop's own collision anyway and uses its
+`collision_radius`, but a hand-placed knee-high stone with a collider punches
+a hole in the navmesh and fans triangles out around it.
+
+Three ready layers spread them: `scatter_alpine_snags`,
+`scatter_alpine_deadwood` and `scatter_alpine_ground`. Together they are about
+260 pieces a hectare, most of it the ground layer, faded out at 190 m.
+`tools/probe_shots_alpine.gd` renders the set as a line-up and as a hillside
+without touching a level.
 
 ### Props
 

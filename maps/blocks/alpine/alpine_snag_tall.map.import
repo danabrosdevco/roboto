@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://hpfqlx4q2tg2"
+path="res://.godot/imported/alpine_snag_tall.map-0ed320e8bce16f3cc4fbcbeaef8d425c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_snag_tall.map"
+dest_files=["res://.godot/imported/alpine_snag_tall.map-0ed320e8bce16f3cc4fbcbeaef8d425c.tres"]
+
+[params]
+

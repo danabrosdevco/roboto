@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://8t2nxi3pq6h4"
+path="res://.godot/imported/alpine_snag_leaning.map-3a5a3147aae513375ea8df66d5569ed8.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_snag_leaning.map"
+dest_files=["res://.godot/imported/alpine_snag_leaning.map-3a5a3147aae513375ea8df66d5569ed8.tres"]
+
+[params]
+

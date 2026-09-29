@@ -38,6 +38,58 @@ most wants and least often gets:
 
 
 
+
+## 2026-09-29 (2) — an alpine set, so the valleys have something in them
+
+**Landed.** `maps/blocks/alpine/` — fourteen pieces of dead wood and mountain
+ground cover, built by `tools/block_alpine.gd`, plus three ready
+`TerrainScatterLayer`s. **No level was touched**: GAMEPLAY has Hillfort open
+and this is assets only.
+
+Standing: a 12.7 m dead conifer with six whorls of bare branches, a 10.3 m
+bare snag, an 8 m leaner with its uphill roots pulled clear of the soil, a
+7.1 m skeleton and a 5.3 m trunk snapped at chest height. Down: deadfall with
+its root plate on end, a root plate on its own, a stump, a log pile. Ground:
+krummholz scrub, tussocks, a scree patch, a lone erratic, and one route marker
+post — a scatter of pure nature reads as wilderness and this world is not that.
+
+**Everything woody comes off one helper.** `limb()` is a tapered hull between
+two points in any direction; `trunk()` stacks those with a wander so a tree
+kinks instead of standing like a pipe; `root_flare()`, `whorl()` and
+`splinters()` do the rest. Nothing here is a cylinder. The one rule worth
+carrying: **keep a limb's narrow end at 0.06 m or more**, or the ring rounds
+to a point on the 1/32 m grid and `solid()` drops the brush.
+
+**The small stuff carries no collision at all.** A scatter layer ignores a
+prop's own collision and uses its `collision_radius`, so it costs nothing
+there — but a hand-placed knee-high stone with a collider punches a hole in
+the navmesh, and the trench duckboards and the cable run this session were the
+same fault in a different shape.
+
+**Gates.** `check.sh --changed`: **PASS**, 29 scripts and 75 scenes and
+resources. `test_scatter.gd`: **PASS**, and it picked up both new collidable
+layers on its own — a layer whose collider is fatter than the smallest thing
+it spreads is exactly the fault it exists to catch, and neither is.
+`tools/probe_shots_alpine.gd` renders the set as a line-up and as a hillside
+**without touching a level**, which is how it was judged. Not played.
+
+**Needs the human.**
+
+- **Look at the line-up and the grove before any of it goes down.** The bark
+  is `wood_8`, which is dark; at distance the snags read as silhouettes, which
+  I think is right for this world but is a taste call.
+- **Nothing is placed.** The three layers are sitting in
+  `maps/blocks/scatter/` ready to be added to a `TerrainScatter` when
+  GAMEPLAY is done with Hillfort. Rough mix if they want it: snags 9/ha,
+  deadwood 11/ha, ground 240/ha.
+- The ground layer fades out at 190 m. On a map with 700 m sightlines that
+  edge may be visible; it is one number.
+
+**Blocked / next.** Nothing blocking. Placing them is the obvious follow-on
+and is deliberately not done.
+
+---
+
 ## 2026-09-29 — hillfort: the name, the source rule, the overlaps and the glow
 
 **Landed.** `maps/ascent_level.tscn` → **`maps/hillfort_level.tscn`**, with
