@@ -1,20 +1,20 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# ASCENT BED — walk the centreline of every flight and say whether the ground
+# HILLFORT BED — walk the centreline of every flight and say whether the ground
 # is actually at the height the road asked for, and how wide the flat is.
 #
-#   godot --headless --path . --script res://tools/probe_ascent_bed.gd
+#   godot --headless --path . --script res://tools/probe_hillfort_bed.gd
 #
-# WHY. probe_nav_ascent.gd says a flight is cut off; it cannot say why. A bed
+# WHY. probe_nav_hillfort.gd says a flight is cut off; it cannot say why. A bed
 # that is not where it was authored is a cut that lost a fight with something
 # applied after it, and a bed that is there but two metres wide is a bed the
 # navmesh will not carry. This tells the two apart.
 # ─────────────────────────────────────────────
 
-const DATA := "res://maps/terrain_data/ascent_level_terrain.res"
+const DATA := "res://maps/terrain_data/hillfort_level_terrain.res"
 
-## Mirrors STATIONS in probe_build_ascent.gd: name, x, z, y, pad x, pad z,
+## Mirrors STATIONS in probe_build_hillfort.gd: name, x, z, y, pad x, pad z,
 ## falloff. The run-out at each end of a leg is DERIVED from these, the same way
 ## the generator derives it — a hard-coded run-out here went stale the moment
 ## the pads changed and started reporting breaks that were not there.
@@ -46,7 +46,7 @@ const TOWER := 25.3
 const SUMMIT := Vector2(30.0, -270.0)
 const PLATEAU := 132.0
 
-## Mirrors SUMMIT_PIECES in probe_build_ascent.gd: name, x, z (from the summit),
+## Mirrors SUMMIT_PIECES in probe_build_hillfort.gd: name, x, z (from the summit),
 ## then the footprint to sample the corners of.
 const RELAY: Array = [
 	["compute_data_hall", 12.0, -6.0, 29.0, 19.0],
@@ -102,7 +102,7 @@ func _initialize() -> void:
 		var a: Vector3 = f[1]
 		var b: Vector3 = f[2]
 		# Four of the six legs are bent through via points (see _vias in
-		# probe_build_ascent.gd), so a straight line between their ends is not
+		# probe_build_hillfort.gd), so a straight line between their ends is not
 		# where the bed is and walking it reports a break that is not there.
 		if str(f[0]) in BENT:
 			print("   %-20s bent through vias — bed not walked" % f[0])

@@ -1,10 +1,24 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# BUILD ASCENT — writes maps/ascent_level.tscn from the station table below.
+# BUILD HILLFORT — writes maps/hillfort_level.tscn from the station table below.
 #
-#   godot --headless --path . --script res://tools/probe_build_ascent.gd
-#   PROFILE=1 godot --headless --path . --script res://tools/probe_build_ascent.gd
+#   godot --headless --path . --script res://tools/probe_build_hillfort.gd
+#   PROFILE=1 godot --headless --path . --script res://tools/probe_build_hillfort.gd
+#   godot --headless --path . --script res://tools/probe_build_hillfort.gd -- --force
+#
+# IT WILL NOT OVERWRITE AN EXISTING LEVEL without --force. The scene on disk is
+# the source once anyone has opened it; this table only made the first one.
+#
+# BOOTSTRAPPING A NEW LEVEL TAKES TWO WRITES, because the terrain data file
+# does not exist until the first bake and an ext_resource pointing at a missing
+# file is the silent-null bug check.sh hunts for. Build, bake the terrain,
+# build again with --force, then bake the navmesh:
+#
+#   probe_build_hillfort.gd
+#   terrain_bake.gd -- res://maps/hillfort_level.tscn
+#   probe_build_hillfort.gd -- --force
+#   probe_nav_hillfort.gd
 #
 # PROFILE=1 prints the massif's radial height and slope and the grade of every
 # road leg, and writes nothing. Use it to tune before baking.
@@ -33,7 +47,7 @@ extends SceneTree
 # at the exact heights written here. The sketch only supplies the rock.
 # ─────────────────────────────────────────────
 
-const OUT := "res://maps/ascent_level.tscn"
+const OUT := "res://maps/hillfort_level.tscn"
 const SIZE_X := 896.0
 const SIZE_Z := 1024.0
 
@@ -148,7 +162,7 @@ const SUMMIT_PIECES: Array = [
 	# up the hill, so it gets the clear flank west of the hall and it is turned
 	# to face the approach: from the gate and from the Terrace you see the BOWL,
 	# not its back. 25.3 m tall, which is also what clears the plateau's brow —
-	# see the sightline note in tools/probe_ascent_bed.gd.
+	# see the sightline note in tools/probe_hillfort_bed.gd.
 	["landmarks/landmark_relay_dish", -34.0, -16.0, -25.0],
 	["compute/compute_chiller_yard", 36.0, -12.0, 0.0],
 	["compute/compute_cooling_unit", -4.0, -30.0, 0.0],
@@ -206,7 +220,7 @@ const SUMMIT_PIECES: Array = [
 
 	# ── THE MASTS, in the corners where they do not clutter the yard. The
 	# south-east one is the piece the Terrace sees: see the sightline note in
-	# tools/probe_ascent_bed.gd before moving it.
+	# tools/probe_hillfort_bed.gd before moving it.
 	["features/feature_power_pylon", -50.0, -36.0, 0.0],
 	["features/feature_power_pylon", 50.0, -36.0, 0.0],
 	["features/feature_power_pylon", 40.0, 38.0, 0.0],
@@ -230,6 +244,12 @@ const HOLLOWS: Array = [
 
 
 func _initialize() -> void:
+	var force := false
+	for a in OS.get_cmdline_user_args():
+		if a == "--force":
+			force = true
+		else:
+			print("ignoring argument '%s'" % a)
 	var by_name := {}
 	for s: Array in STATIONS:
 		by_name[s[0]] = s
@@ -251,6 +271,17 @@ func _initialize() -> void:
 	if text.length() < 2000:
 		print("FAIL  the scene text came back %d bytes — see the script error above" % text.length())
 		quit(1)
+		return
+	# THE LEVEL FILE IS THE SOURCE NOW, not this script's output. Same rule the
+	# block_*.gd tools keep, and for the same reason: once a human has opened
+	# hillfort_level.tscn in the editor, the scene on disk holds work this
+	# table knows nothing about — a moved prop, a light, a tweaked inspector
+	# value — and a rebuild would take it all out without saying so. Pass
+	# --force when you really do mean to regenerate, and back the scene up
+	# first if it has been touched.
+	if FileAccess.file_exists(OUT) and not force:
+		print("SKIP  %s exists — it may hold editor changes. Pass --force to regenerate it." % OUT)
+		quit()
 		return
 	var f := FileAccess.open(OUT, FileAccess.WRITE)
 	if f == null:
@@ -334,35 +365,35 @@ func _profile() -> int:
 ## node, tag, display name, x, z, y
 const OBJECTIVES: Array = [
 	# The route, one per station.
-	["Ascent_Trailhead", "obj_ascent_trailhead", "Trailhead", 0.0, 430.0, 0.0],
-	["Ascent_Cistern", "obj_ascent_cistern", "The Cistern", -170.0, 258.0, 10.0],
-	["Ascent_Pillars", "obj_ascent_pillars", "The Pillars", 150.0, 140.0, 34.0],
-	["Ascent_Gate", "obj_ascent_gate", "The Gate", -140.0, 34.0, 46.0],
-	["Ascent_Terrace", "obj_ascent_terrace", "The Terrace", 140.0, -46.0, 76.0],
-	["Ascent_Shoulder", "obj_ascent_shoulder", "The Shoulder", -205.0, -46.0, 62.0],
+	["Hillfort_Trailhead", "obj_hillfort_trailhead", "Trailhead", 0.0, 430.0, 0.0],
+	["Hillfort_Cistern", "obj_hillfort_cistern", "The Cistern", -170.0, 258.0, 10.0],
+	["Hillfort_Pillars", "obj_hillfort_pillars", "The Pillars", 150.0, 140.0, 34.0],
+	["Hillfort_Gate", "obj_hillfort_gate", "The Gate", -140.0, 34.0, 46.0],
+	["Hillfort_Terrace", "obj_hillfort_terrace", "The Terrace", 140.0, -46.0, 76.0],
+	["Hillfort_Shoulder", "obj_hillfort_shoulder", "The Shoulder", -205.0, -46.0, 62.0],
 	# The summit compound, broken up: taking the hilltop is not one objective,
 	# it is a gate, a yard, and three things inside worth standing on.
-	["Ascent_FortGate", "obj_ascent_fortgate", "Fort Gate", -18.0, -214.0, 132.0],
-	["Ascent_Yard", "obj_ascent_yard", "The Yard", 30.0, -250.0, 132.0],
+	["Hillfort_FortGate", "obj_hillfort_fortgate", "Fort Gate", -18.0, -214.0, 132.0],
+	["Hillfort_Yard", "obj_hillfort_yard", "The Yard", 30.0, -250.0, 132.0],
 	# At the dish's FOOT, not under it: an anchor on the pedestal's own footprint
 	# reported reached with a 0.0 offset and no route, because the navmesh it
 	# snapped to was a scrap inside the piece.
-	["Ascent_Dish", "obj_ascent_dish", "The Relay Dish", -12.0, -262.0, 132.0],
-	["Ascent_Hall", "obj_ascent_hall", "Data Hall", 34.0, -266.0, 132.0],
-	["Ascent_Power", "obj_ascent_power", "Power Yard", 74.0, -256.0, 132.0],
-	["Ascent_Postern", "obj_ascent_postern", "The Postern", 54.0, -325.0, 132.0],
+	["Hillfort_Dish", "obj_hillfort_dish", "The Relay Dish", -12.0, -262.0, 132.0],
+	["Hillfort_Hall", "obj_hillfort_hall", "Data Hall", 34.0, -266.0, 132.0],
+	["Hillfort_Power", "obj_hillfort_power", "Power Yard", 74.0, -256.0, 132.0],
+	["Hillfort_Postern", "obj_hillfort_postern", "The Postern", 54.0, -325.0, 132.0],
 	# The extraction point, on the hall roof. Its height is the ROOF's, so the
 	# reach probe's offset means something: an anchor left at ground level here
 	# would report reached off the yard below and prove nothing.
-	["Ascent_Roof", "obj_ascent_roof", "Hall Roof", 34.0, -282.0, 141.8],
+	["Hillfort_Roof", "obj_hillfort_roof", "Hall Roof", 34.0, -282.0, 141.8],
 	# OFF the road. Every one of these is somewhere the squad can stand that
 	# the road does not go, so a mission can ask for a flank instead of a
 	# column — which is the whole reason the hills are walkable.
-	["Ascent_WestHill", "obj_ascent_west_hill", "West Hill", -300.0, 110.0, 26.0],
-	["Ascent_EastHill", "obj_ascent_east_hill", "East Hill", 268.0, 216.0, 41.5],
-	["Ascent_Saddle", "obj_ascent_saddle", "The Saddle", 36.0, 170.0, 21.2],
-	["Ascent_EastUpland", "obj_ascent_east_upland", "East Upland", 276.0, 30.0, 51.3],
-	["Ascent_NorthSpur", "obj_ascent_north_spur", "North-West Spur", -208.0, -232.0, 97.8],
+	["Hillfort_WestHill", "obj_hillfort_west_hill", "West Hill", -300.0, 110.0, 26.0],
+	["Hillfort_EastHill", "obj_hillfort_east_hill", "East Hill", 268.0, 216.0, 41.5],
+	["Hillfort_Saddle", "obj_hillfort_saddle", "The Saddle", 36.0, 170.0, 21.2],
+	["Hillfort_EastUpland", "obj_hillfort_east_upland", "East Upland", 276.0, 30.0, 51.3],
+	["Hillfort_NorthSpur", "obj_hillfort_north_spur", "North-West Spur", -208.0, -232.0, 97.8],
 ]
 
 ## Patrol routes: plain Node3D children of an anchor, which is the shape
@@ -372,11 +403,11 @@ const OBJECTIVES: Array = [
 ## snaps in 3D and finds something further away sideways.
 ## anchor node, then points as x, z, y triples
 const PATROLS: Array = [
-	["Ascent_Saddle", [
+	["Hillfort_Saddle", [
 		[36.0, 170.0, 21.2], [-40.0, 194.0, 21.4], [-120.0, 150.0, 43.0],
 		[-60.0, 96.0, 48.6], [30.0, 120.0, 26.0],
 	]],
-	["Ascent_Yard", [
+	["Hillfort_Yard", [
 		[30.0, -250.0, 132.0], [24.0, -234.0, 132.0], [44.0, -238.0, 132.0],
 		[60.0, -252.0, 132.0], [46.0, -264.0, 132.0], [22.0, -252.0, 132.0],
 	]],
@@ -580,7 +611,7 @@ func _scene(by_name: Dictionary) -> String:
 		["Script", "res://Env/terrain/terrain_recipe.gd", "6_recipe", ""],
 		["Script", "res://Env/terrain/terrain_stamp.gd", "7_stamp", ""],
 		["Script", "res://Env/terrain/terrain_path.gd", "8_path", ""],
-		["Texture2D", "res://Env/terrain/sketches/ascent.png", "9_sketch", ""],
+		["Texture2D", "res://Env/terrain/sketches/hillfort.png", "9_sketch", ""],
 		["PackedScene", "res://Env/world_objects/level_exit.tscn", "10_exit", "uid://big5ms541m2j7"],
 		["PackedScene", "res://Env/world_environment.tscn", "11_env", "uid://cml2uoky1hnes"],
 		["Shader", "res://Env/new_sky_oct.16.gdshader", "12_sky", ""],
@@ -591,7 +622,7 @@ func _scene(by_name: Dictionary) -> String:
 	# ext_resource pointing at a missing file is the silent-null bug check.sh
 	# hunts for. So: write without it, bake, run this again — the second pass
 	# picks it up. Nothing else about the scene changes between the two.
-	var data_path := "res://maps/terrain_data/ascent_level_terrain.res"
+	var data_path := "res://maps/terrain_data/hillfort_level_terrain.res"
 	var has_data := ResourceLoader.exists(data_path)
 	if has_data:
 		ext.append(["Resource", data_path, "13_data", ""])
@@ -606,8 +637,8 @@ func _scene(by_name: Dictionary) -> String:
 		seen[id] = true
 		ext.append(["PackedScene", "res://maps/blocks/%s.tscn" % p[0], id, ""])
 
-	var subs: Array = ["NavigationMesh_ascent", "Resource_recipe", "ShaderMaterial_sky",
-			"Sky_ascent", "Environment_ascent"]
+	var subs: Array = ["NavigationMesh_hillfort", "Resource_recipe", "ShaderMaterial_sky",
+			"Sky_hillfort", "Environment_hillfort"]
 	var curves := {}
 	for l: Array in LEGS:
 		curves["Curve3D_%s_%s" % [str(l[0]).to_snake_case(), str(l[1]).to_snake_case()]] = l
@@ -615,7 +646,7 @@ func _scene(by_name: Dictionary) -> String:
 		subs.append(k)
 
 	var out: PackedStringArray = []
-	out.append("[gd_scene load_steps=%d format=3 uid=\"uid://bascent4rt0m1\"]" % (
+	out.append("[gd_scene load_steps=%d format=3 uid=\"uid://bhlfrt4rt0m1\"]" % (
 			ext.size() + subs.size() + 1))
 	out.append("")
 	for e: Array in ext:
@@ -626,8 +657,8 @@ func _scene(by_name: Dictionary) -> String:
 	# The navmesh. agent_max_slope is written down here on purpose: MIN_FACE
 	# above is only a guarantee if this number is the one the baker uses, and
 	# a default is invisible until somebody changes it.
-	out.append("[sub_resource type=\"NavigationMesh\" id=\"NavigationMesh_ascent\"]")
-	# Empty placeholders: probe_nav_ascent.gd replaces these two lines in place
+	out.append("[sub_resource type=\"NavigationMesh\" id=\"NavigationMesh_hillfort\"]")
+	# Empty placeholders: probe_nav_hillfort.gd replaces these two lines in place
 	# with the baked result, and it can only replace a line that is there.
 	out.append("vertices = PackedVector3Array()")
 	out.append("polygons = []")
@@ -669,13 +700,13 @@ func _scene(by_name: Dictionary) -> String:
 	out.append("shader_parameter/fog_falloff = 3.4")
 	out.append("shader_parameter/brightness = 0.85")
 	out.append("")
-	out.append("[sub_resource type=\"Sky\" id=\"Sky_ascent\"]")
+	out.append("[sub_resource type=\"Sky\" id=\"Sky_hillfort\"]")
 	out.append("sky_material = SubResource(\"ShaderMaterial_sky\")")
 	out.append("radiance_size = 0")
 	out.append("")
-	out.append("[sub_resource type=\"Environment\" id=\"Environment_ascent\"]")
+	out.append("[sub_resource type=\"Environment\" id=\"Environment_hillfort\"]")
 	out.append("background_mode = 2")
-	out.append("sky = SubResource(\"Sky_ascent\")")
+	out.append("sky = SubResource(\"Sky_hillfort\")")
 	out.append("ambient_light_source = 3")
 	out.append("ambient_light_color = Color(0.36, 0.38, 0.42, 1)")
 	out.append("ambient_light_sky_contribution = 0.7")
@@ -694,7 +725,7 @@ func _scene(by_name: Dictionary) -> String:
 
 	var trail: Array = by_name["Trailhead"]
 	var summit: Array = by_name["Summit"]
-	out.append("[node name=\"AscentLevel\" type=\"Node3D\" node_paths=PackedStringArray(\"spawn_point\", \"nav_region\", \"level_exits\")]")
+	out.append("[node name=\"HillfortLevel\" type=\"Node3D\" node_paths=PackedStringArray(\"spawn_point\", \"nav_region\", \"level_exits\")]")
 	out.append("script = ExtResource(\"1_level\")")
 	out.append("spawn_point = NodePath(\"SpawnPoint\")")
 	out.append("nav_region = NodePath(\"NavigationRegion3D\")")
@@ -713,7 +744,7 @@ func _scene(by_name: Dictionary) -> String:
 	out.append("script = ExtResource(\"3_squad\")")
 	out.append("")
 	out.append("[node name=\"NavigationRegion3D\" type=\"NavigationRegion3D\" parent=\".\"]")
-	out.append("navigation_mesh = SubResource(\"NavigationMesh_ascent\")")
+	out.append("navigation_mesh = SubResource(\"NavigationMesh_hillfort\")")
 	out.append("")
 	out.append("[node name=\"Terrain\" type=\"Node3D\" parent=\"NavigationRegion3D\"]")
 	out.append("script = ExtResource(\"5_terrain\")")
@@ -826,7 +857,7 @@ func _scene(by_name: Dictionary) -> String:
 			float(summit[2]) + HALL_AT.y))
 	out.append("")
 	out.append("[node name=\"WorldEnvironment\" parent=\".\" instance=ExtResource(\"11_env\")]")
-	out.append("environment = SubResource(\"Environment_ascent\")")
+	out.append("environment = SubResource(\"Environment_hillfort\")")
 	out.append("")
 	out.append("[node name=\"Sun\" parent=\"WorldEnvironment\" index=\"0\"]")
 	# Low and from the south-east, so the face the stair climbs is lit and the

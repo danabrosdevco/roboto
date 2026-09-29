@@ -1,11 +1,11 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# NAV ASCENT — bake maps/ascent_level.tscn's navmesh, write it back into the
+# NAV HILLFORT — bake maps/hillfort_level.tscn's navmesh, write it back into the
 # scene, and then ask the two questions a climb map lives or dies on.
 #
-#   godot --path . --script res://tools/probe_nav_ascent.gd
-#   BAKE=0 godot --path . --script res://tools/probe_nav_ascent.gd
+#   godot --path . --script res://tools/probe_nav_hillfort.gd
+#   BAKE=0 godot --path . --script res://tools/probe_nav_hillfort.gd
 #
 # NOT headless: a bake without a renderer comes back with nothing in it.
 #
@@ -25,10 +25,10 @@ extends SceneTree
 # DISTANCE between them can.
 # ─────────────────────────────────────────────
 
-var level_path := OS.get_environment("LEVEL") if OS.get_environment("LEVEL") != "" else "res://maps/ascent_level.tscn"
+var level_path := OS.get_environment("LEVEL") if OS.get_environment("LEVEL") != "" else "res://maps/hillfort_level.tscn"
 var rebake := OS.get_environment("BAKE") != "0"
 
-## Must match STATIONS in probe_build_ascent.gd: name, x, z, y. KEEP IT IN STEP
+## Must match STATIONS in probe_build_hillfort.gd: name, x, z, y. KEEP IT IN STEP
 ## — this went stale when the Shoulder moved and the probe spent a run walking
 ## to where that station used to be, reporting a 40 m climb that was not there.
 const STATIONS: Array = [
@@ -70,7 +70,7 @@ func _initialize() -> void:
 		quit(1)
 		return
 	# BAKE_ONLY: bake the navmesh, write it into the scene, stop. The station
-	# and ring tests below are about maps/ascent_level.tscn and mean nothing on
+	# and ring tests below are about maps/hillfort_level.tscn and mean nothing on
 	# any other level — but the bake and the write-back are level-agnostic, and
 	# any level whose NavigationMesh is a sub-resource needs them after its
 	# terrain moves. terrain_bake.gd --navmesh cannot save an embedded one.

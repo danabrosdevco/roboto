@@ -1,10 +1,10 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# PAINT ASCENT — the sketch for maps/ascent_level.tscn. A new file; it reads
+# PAINT HILLFORT — the sketch for maps/hillfort_level.tscn. A new file; it reads
 # nothing and overwrites nothing but its own output.
 #
-#   godot --headless --path . --script res://tools/probe_paint_ascent.gd
+#   godot --headless --path . --script res://tools/probe_paint_hillfort.gd
 #
 # WHAT THE SKETCH IS FOR HERE, AND WHAT IT IS NOT. On a climb the sketch
 # CANNOT carry the height: a white mask is binary, blurred by sketch_blend, so
@@ -19,7 +19,7 @@ extends SceneTree
 #   2. thirty metres of crags and relief for free, on ground nothing walks.
 # The massif's real 250 m and every flat the squad stands on are TerrainStamps
 # and TerrainPaths in the level, which run last, after the floor shift, at
-# heights that are authored numbers. See tools/probe_build_ascent.gd.
+# heights that are authored numbers. See tools/probe_build_hillfort.gd.
 #
 # Yellow is the broken rock at the foot of the face and along the flanks.
 # Green is the trailhead plain, so the low ground stays smooth under the spawn.
@@ -27,9 +27,9 @@ extends SceneTree
 # would flood the valley to match.
 # ─────────────────────────────────────────────
 
-const DST := "D:/Godot Games/roboto/Env/terrain/sketches/ascent.png"
+const DST := "D:/Godot Games/roboto/Env/terrain/sketches/hillfort.png"
 
-## Must match the recipe in probe_build_ascent.gd.
+## Must match the recipe in probe_build_hillfort.gd.
 const SIZE_X := 896.0
 const SIZE_Z := 1024.0
 const MPP := 4.0

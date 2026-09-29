@@ -1,11 +1,11 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# SHOTS ASCENT — survey pictures of maps/ascent_level.tscn, for looking at the
+# SHOTS HILLFORT — survey pictures of maps/hillfort_level.tscn, for looking at the
 # shape of the map rather than for key art. probe_splash.gd is the moody one.
 #
-#   RENDER_OUT=<dir> godot --path . --script res://tools/probe_shots_ascent.gd
-#   RENDER_OUT=<dir> ONLY=03 godot --path . --script res://tools/probe_shots_ascent.gd
+#   RENDER_OUT=<dir> godot --path . --script res://tools/probe_shots_hillfort.gd
+#   RENDER_OUT=<dir> ONLY=03 godot --path . --script res://tools/probe_shots_hillfort.gd
 #
 # NOT headless: the dummy renderer returns blank images.
 #
@@ -48,9 +48,9 @@ func _initialize() -> void:
 		quit(1)
 		return
 	var only := OS.get_environment("ONLY")
-	var packed := load("res://maps/ascent_level.tscn") as PackedScene
+	var packed := load("res://maps/hillfort_level.tscn") as PackedScene
 	if packed == null:
-		print("FAIL  maps/ascent_level.tscn will not load")
+		print("FAIL  maps/hillfort_level.tscn will not load")
 		quit(1)
 		return
 	var level := packed.instantiate() as Node3D
@@ -88,7 +88,7 @@ func _initialize() -> void:
 			for _i in 10:
 				await process_frame
 			if pass_i == 1:
-				root.get_texture().get_image().save_png(out.path_join("ascent_%s.png" % s[0]))
+				root.get_texture().get_image().save_png(out.path_join("hillfort_%s.png" % s[0]))
 		done += 1
 		print("   %s" % s[0])
 	print("   wrote %d shot(s) to %s, %d lifted off the ground" % [done, out, lifted])

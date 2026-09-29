@@ -520,7 +520,7 @@ Panels and mirrors face the prefab's -Z. Turn it so -Z points at the sun.
     nothing.
   - The plinth is 0.4 m on purpose. A step nothing can climb, in the middle of
     a compound, is a collar of unwalkable ground round the best cover on it.
-  - Used in `maps/ascent_level.tscn`, where it replaced a reused
+  - Used in `maps/hillfort_level.tscn`, where it replaced a reused
     `compute_obelisk`.
 
 - **landmark_tether_anchor:** the ground anchor of an orbital tether, and the

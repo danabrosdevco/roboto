@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://1dwgr0ga1ftl"
-path="res://.godot/imported/ascent.png-035b5392e890cb2519815c2cd4bcf1f1.ctex"
+uid="uid://vlukj88etdgb"
+path="res://.godot/imported/hillfort.png-f43a52f4d449ffc99894186845960d9c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Env/terrain/sketches/ascent.png"
-dest_files=["res://.godot/imported/ascent.png-035b5392e890cb2519815c2cd4bcf1f1.ctex"]
+source_file="res://Env/terrain/sketches/hillfort.png"
+dest_files=["res://.godot/imported/hillfort.png-f43a52f4d449ffc99894186845960d9c.ctex"]
 
 [params]
 

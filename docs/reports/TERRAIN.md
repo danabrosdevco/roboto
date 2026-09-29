@@ -38,6 +38,55 @@ most wants and least often gets:
 
 
 
+## 2026-09-29 — the hill map is called hillfort, and its level file is the source now
+
+**Landed.** `maps/ascent_level.tscn` → **`maps/hillfort_level.tscn`**, with
+everything that hangs off it: the sketch (`Env/terrain/sketches/hillfort.png`),
+the terrain data, the five tools (`probe_build_hillfort.gd`,
+`probe_paint_hillfort.gd`, `probe_nav_hillfort.gd`, `probe_hillfort_bed.gd`,
+`probe_shots_hillfort.gd`), the root node, the scene uid and **all eighteen
+objective tags** — `obj_ascent_*` → `obj_hillfort_*`.
+
+**The tags were safe to rename because nothing had taken them up yet.** No
+mission references this level and `grep obj_ascent` found hits in exactly two
+files, both mine. A tag is a contract; the moment GAMEPLAY writes against one
+this stops being free, so it was now or never.
+
+**The second half, and the part that is not just a rename: the level file is
+the source now.** `probe_build_hillfort.gd` **will not overwrite an existing
+level without `--force`** — the same rule `block_*.gd` keeps, for the same
+reason. Until today every run of that tool silently rewrote the whole scene,
+so anything done to it in the editor would have vanished at the next rebuild
+with no warning. That was fine while it was a blockout and is not fine for a
+level anybody is going to open.
+
+Bootstrapping a new one now takes two writes and the header says so, because
+the terrain data file does not exist until the first bake and an `ext_resource`
+pointing at a missing file is the silent-null bug `check.sh` hunts for: build,
+bake terrain, build `--force`, bake navmesh.
+
+**Gates.** `check.sh --changed`: **PASS**. Everything re-measured after the
+rename and the numbers are identical to before it — 24526 navmesh vertices,
+**7 stations reached, 29 objective anchors, 0 cut off**, longest walk 897 m,
+relay feet worst 0.00 m off the plateau. `probe_path_walk.gd`: one step, the
+fort gate's own pier on the road centreline, which is the gate. Two sightlines
+still blocked by under 5 m by hills on their own approach. **Never launched.**
+
+**Needs the human.**
+
+- **Nothing on the board mentions this level**, under either name. It is not in
+  any mission and the coordinator may not know it exists.
+- The scale is still the open question from the last entry: 132 m.
+- Everything else from entry (7) stands: the hills read as one swell from
+  above, the summit's west flank is sealed by the final road's embankment, and
+  the fort's wall holds on none of six bearings now that the postern is in.
+
+**Blocked / next.** Nothing blocking. If the name is meant to be a fresh
+SECOND hill map rather than this one renamed, say so — the rename is one
+commit to revert and I have not deleted anything that was not regenerated.
+
+---
+
 ## 2026-09-28 (8) — the craters you could not climb out of, and the duckboards
 
 **Landed.** `feature_crater_rim` now has **two breaches** in its ring, and one
@@ -117,7 +166,8 @@ at every level with a TerrainPath in it.
 
 ---
 
-## 2026-09-28 (7) — ascent: a new climb map, built twice because the first one was a mountain
+## 2026-09-28 (7) — hillfort (then called ascent): a new climb map, built twice
+## because the first one was a mountain
 
 **Landed.** `maps/ascent_level.tscn`, new, with its own sketch
 (`Env/terrain/sketches/ascent.png`) and terrain data. 896 × 1024 m, 2 m cells.

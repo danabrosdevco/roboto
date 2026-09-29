@@ -927,10 +927,10 @@ func _mirror_rack() -> void:
 ##
 ## TWENTY-THREE METRES TO THE TOP OF THE RIM, and that is the number, not a
 ## guess. A flat hilltop hides itself: from the station below the summit on
-## maps/ascent_level.tscn, 250 m out and 50 m down, the plateau's own brow
+## maps/hillfort_level.tscn, 250 m out and 50 m down, the plateau's own brow
 ## cuts the line and anything standing up there has to clear about 23 m to be
 ## seen at all. A watchtower is 8.7 m. See the sightline check in
-## tools/probe_ascent_bed.gd before changing the elevation or the mount height.
+## tools/probe_hillfort_bed.gd before changing the elevation or the mount height.
 ##
 ## Built the same way as compute_satellite_dish, just much bigger: a tilted
 ## basis, then sectors × rings × thickness through a paraboloid. k = 0.035
