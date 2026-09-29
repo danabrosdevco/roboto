@@ -121,9 +121,11 @@ at every level with a TerrainPath in it.
 
 **Landed.** `maps/ascent_level.tscn`, new, with its own sketch
 (`Env/terrain/sketches/ascent.png`) and terrain data. 896 × 1024 m, 2 m cells.
-Seven stations climbing from a trailhead at 0 m to a summit shelf at 132 m:
-Trailhead → Cistern 18 → Pillars 38 → Gate 58 → Terrace 82 → Shoulder 102 →
-Summit 132, linked by ~1.5 km of graded road at 4–13°.
+Seven stations climbing from a trailhead at 0 m to a summit plateau at 132 m:
+Trailhead 0 → Cistern 10 → Pillars 34 → Gate 46 → Terrace 76 → Shoulder 62 →
+Summit 132, linked by ~1.85 km of graded road. Grades 0.6° to 21.4°, the steep
+one being the last pitch to the fort; the Terrace-to-Shoulder leg loses 14 m,
+which is the traverse before that pitch and is deliberate.
 
 **Generated, not hand-authored.** `tools/probe_build_ascent.gd` writes the
 whole level from a station table. The reason is that the two numbers the map
@@ -137,18 +139,22 @@ it right by hand. Re-runnable: edit the table, rebuild, rebake.
 is the fast way up and not the only way. The summit is a 150 × 120 m flat
 plateau on a hill with about 36 m of prominence, reached from any side.
 
-**The summit has a relay station on it**, 23 pieces from the existing compute/,
-features/ and fortifications/ kits: a data hall, the obelisk, a four-dish array
-along the north lip, generator and transformers, three 21.8 m masts, two
-watchtowers, a sangar and a sentry turret. Blockout only — no dressing, no
-objectives, no cover bake.
+**The summit has a relay station on it** — 42 pieces plus a twenty-two-segment
+curtain wall and two gates, composed round a 24 m dish. It started as a 23-piece
+blockout with a reused `compute_obelisk` in the middle; what it is now is
+further down this entry, under *the relay is composed* and *a new block*.
 
-**Gates.** `check.sh --changed`: **PASS** — 37 scripts, 45 scenes and
-resources consistent. (It failed for a while on `foundry_rifle.tres`, an
-untracked file mid-edit in the GAMEPLAY lane; that lane has since fixed it.)
-`test.sh` and `smoke.sh`: **not
-run** — nothing here touches their ground, and the level is not in any mission.
-**Never launched.** Everything below is geometry and pathfinding, not feel.
+**Gates.** `check.sh --changed`: **PASS** — 42 scripts, 48 scenes and resources
+consistent at the end of the session. (It failed for a while on
+`foundry_rifle.tres`, an untracked file mid-edit in the GAMEPLAY lane; that
+lane has since fixed it.) `test.sh` and `smoke.sh`: **not run** — nothing here
+touches their ground, and the level is not in any mission. **Never launched.**
+Everything below is geometry and pathfinding, not feel.
+
+**This entry was written as the work went and the top of it lagged behind the
+bottom** — the summary above said 23 pieces and an obelisk long after both had
+gone. Worth checking before folding it into the board: the paragraphs are in
+the order they happened, so where two disagree the later one is right.
 
 **What was measured, and what it said.**
 
@@ -252,9 +258,14 @@ is deliberately left open, with three T-wall stacks and a scatter set off the
 axis so nothing lines up into a shooting corridor. The masts are in the corners
 where they do not clutter it.
 
-**The fort has a curtain wall and a gate now**, eighteen `fortress/` segments
-ringing the plateau 120 × 96, the gate on the south-west where the road comes
-in. `probe_nav_ascent.gd` walks two routes per bearing because they answer
+**The fort has a curtain wall and two gates now**, twenty-two `fortress/` pieces
+ringing the plateau 120 × 96: the main gate on the south-west where the road
+comes in, a postern opposite, and four spur walls that cut the strip outside
+the ring so the postern cannot be used as a second front door. The spurs do
+not fully seal it — see the postern note below — but they are why the strip is
+pockets rather than a lap of the compound.
+
+`probe_nav_ascent.gd` walks two routes per bearing because they answer
 different questions: **to the foot of the wall**, which should be open from
 everywhere because the ground is not supposed to be gating anything, and
 **through to the middle**, which should be a long way round on every bearing
