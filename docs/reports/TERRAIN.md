@@ -39,13 +39,13 @@ most wants and least often gets:
 
 
 
-## 2026-09-29 (2) — an alpine set, so the valleys have something in them
+## 2026-09-29 (2) — an alpine set, and it goes down on Hillfort
 
 **Landed.** `maps/blocks/alpine/` — **twenty-two** pieces of dead wood and
-mountain
-ground cover, built by `tools/block_alpine.gd`, plus three ready
-`TerrainScatterLayer`s. **No level was touched**: GAMEPLAY has Hillfort open
-and this is assets only.
+mountain ground cover, built by `tools/block_alpine.gd`, plus three ready
+`TerrainScatterLayer`s, and by the end of the session they are down on Hillfort
+— see the divergence note below, because the placement did not go in the way
+it normally would.
 
 Standing: a 12.7 m dead conifer with six whorls of bare branches, a 10.3 m
 bare snag, an 8 m leaner with its uphill roots pulled clear of the soil, a
@@ -82,27 +82,70 @@ there — but a hand-placed knee-high stone with a collider punches a hole in
 the navmesh, and the trench duckboards and the cable run this session were the
 same fault in a different shape.
 
-**Gates.** `check.sh --changed`: **PASS**, 29 scripts and 83 scenes and
-resources. `test_scatter.gd`: **PASS**, and it picked up both new collidable
-layers on its own — a layer whose collider is fatter than the smallest thing
-it spreads is exactly the fault it exists to catch, and neither is.
+**The scatter is down on Hillfort**, and it went in **by hand, not by
+regenerating** — which is the first time the no-overwrite rule earned its keep.
+`maps/hillfort_level.tscn` had changed under me since my last commit: GAMEPLAY
+has a `ReachObjective` on the level exit, a `RelayObjective` with an
+interactible and a terminal, extra patrol points on the yard, and **the spawn
+moved from the Trailhead to the Cistern**. `probe_build_hillfort.gd --force`
+would have wiped all of it. So the `TerrainScatter` node and its five
+`ext_resource` lines were added to the scene text directly, `load_steps` 75 →
+80 by hand.
+
+**The two tables have now diverged and the generator says so at the top.** It
+can no longer reproduce this level, and `--force` on it would destroy an
+afternoon of someone else's work. The scatter went into the generator as well,
+so the gap does not get any wider, but merging the objectives back is a job
+somebody has to do deliberately.
+
+Three layers, ground/deadwood/snags, and the rules do the placing: `max_paint`
+keeps them off the roads and the station pads, `max_slope` and `max_mountain`
+keep them off the bare rock above. What is left is the rolling brown ground
+between the valleys, which is exactly where the map was empty.
+
+**The navmesh moved and had to be rebaked**: a scatter layer gives every prop
+a collision cylinder, so the trees carve the mesh. **24637 → 27970 vertices,
+and all 30 objective anchors still walk, none cut off.** That is the check
+that mattered here — dropping a hundred trunks into a map is the easiest way
+to strand something.
+
+**One thing to watch:** the first insert landed in the middle of `Hill1`'s node
+block and split it in two. `check.sh` passed it, because it checks `load_steps`
+and resource consistency and not node structure. Editing a 2 MB scene by line
+number is a mistake; match on the node header instead.
+
+**Gates.** `check.sh --changed`: **PASS** — twice, once on the asset set and
+again after the level edit (30 scripts, 88 scenes and resources).
+`probe_nav_hillfort.gd` rebaked to **27970 vertices, 43225 polygons**, 0 of 7
+stations cut off, 0 of 30 objective anchors cut off, longest walk 772 m.
+`test_scatter.gd`: **PASS**, and it picked up both new collidable layers on its
+own — a layer whose collider is fatter than the smallest thing it spreads is
+exactly the fault it exists to catch, and neither is.
 `tools/probe_shots_alpine.gd` renders the set as a line-up and as a hillside
-**without touching a level**, which is how it was judged. Not played.
+**without touching a level**, which is how the set itself was judged, and
+`probe_shots_hillfort.gd` re-rendered the map with the scatter in it. **Not
+played** — the pictures are the only evidence for how the density feels.
 
 **Needs the human.**
 
-- **Look at the line-up and the grove before any of it goes down.** The bark
-  is `wood_8`, which is dark; at distance the snags read as silhouettes, which
-  I think is right for this world but is a taste call.
-- **Nothing is placed.** The three layers are sitting in
-  `maps/blocks/scatter/` ready to be added to a `TerrainScatter` when
-  GAMEPLAY is done with Hillfort. Rough mix if they want it: snags 9/ha,
-  deadwood 11/ha, ground 240/ha.
+- **Walk the valleys on Hillfort and tell me if the density is right.** 9 snags,
+  11 deadwood and 240 ground pieces a hectare is a guess; the renders look
+  sparse-but-inhabited to me and that is the one judgement a picture is worst
+  at. The bark is `wood_8`, which is dark — at distance the snags read as
+  silhouettes, which I think suits this world but is a taste call.
+- **Hillfort's scene file and its generator no longer agree.** Anyone running
+  `probe_build_hillfort.gd --force` destroys GAMEPLAY's objectives. The script
+  says so in its header, but a header is not a lock.
+- The three layers are in `maps/blocks/scatter/` and any other level can take
+  them as they are.
 - The ground layer fades out at 190 m. On a map with 700 m sightlines that
   edge may be visible; it is one number.
 
-**Blocked / next.** Nothing blocking. Placing them is the obvious follow-on
-and is deliberately not done.
+**Blocked / next.** Nothing blocking. The next job on Hillfort is the one I
+will not do unasked: **merging the generator table and the hand-edited level
+back together**, so `--force` is safe again. That needs GAMEPLAY to be finished
+with the scene, and it needs someone to decide whether the objectives move into
+the table or the table stops being the source.
 
 ---
 

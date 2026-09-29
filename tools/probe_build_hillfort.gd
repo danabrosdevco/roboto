@@ -7,6 +7,13 @@ extends SceneTree
 #   PROFILE=1 godot --headless --path . --script res://tools/probe_build_hillfort.gd
 #   godot --headless --path . --script res://tools/probe_build_hillfort.gd -- --force
 #
+# THE LEVEL HAS DIVERGED FROM THIS TABLE, and as of 2026-09-29 --force WOULD
+# DESTROY WORK. GAMEPLAY has maps/hillfort_level.tscn open: a ReachObjective on
+# the level exit, a RelayObjective with an interactible and a terminal, extra
+# patrol points, and the spawn moved from the Trailhead to the Cistern. None of
+# that is in here and this cannot reproduce it. Merge by hand before you ever
+# pass --force again.
+#
 # IT WILL NOT OVERWRITE AN EXISTING LEVEL without --force. The scene on disk is
 # the source once anyone has opened it; this table only made the first one.
 #
@@ -720,6 +727,11 @@ func _scene(by_name: Dictionary) -> String:
 		["PackedScene", "res://Env/world_objects/level_exit.tscn", "10_exit", "uid://big5ms541m2j7"],
 		["PackedScene", "res://Env/world_environment.tscn", "11_env", "uid://cml2uoky1hnes"],
 		["Shader", "res://Env/new_sky_oct.16.gdshader", "12_sky", ""],
+		["Script", "res://Env/terrain/terrain_scatter.gd", "15_scatter", ""],
+		["Script", "res://Env/terrain/terrain_scatter_layer.gd", "16_layer", ""],
+		["Resource", "res://maps/blocks/scatter/scatter_alpine_ground.tres", "17_ground", ""],
+		["Resource", "res://maps/blocks/scatter/scatter_alpine_deadwood.tres", "18_dead", ""],
+		["Resource", "res://maps/blocks/scatter/scatter_alpine_snags.tres", "19_snags", ""],
 		["PackedScene", "res://Env/world_objects/squad_objective_point.tscn",
 				"14_sqpoint", "uid://62y43tyd5sx6"],
 	]
@@ -869,6 +881,14 @@ func _scene(by_name: Dictionary) -> String:
 	# order and a later one wins, so: the hills and the massif raise the ground,
 	# the shelves cut flats into it, and the roads cut last of all. Move Roads
 	# above Shelves and every landing swallows the flight arriving at it.
+	# The alpine scatter. Not a terrain modifier — TerrainScatter has no
+	# to_terrain_modifier — so where it sits among these does not change the
+	# ground, only the Scene dock.
+	out.append("[node name=\"Scatter\" type=\"Node3D\" parent=\"NavigationRegion3D/Terrain\"]")
+	out.append("script = ExtResource(\"15_scatter\")")
+	out.append("layers = Array[ExtResource(\"16_layer\")]([ExtResource(\"17_ground\"), ExtResource(\"18_dead\"), ExtResource(\"19_snags\")])")
+	out.append("")
+
 	out.append("[node name=\"Hills\" type=\"Node3D\" parent=\"NavigationRegion3D/Terrain\"]")
 	out.append("")
 	var hi := 1
