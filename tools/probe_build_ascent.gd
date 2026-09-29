@@ -49,23 +49,35 @@ const RUNOUT := 24.0
 const NAV_MAX_SLOPE := 45.0
 const MIN_FACE := 52.0
 
-## The high ground, as stacked RAISE cones about the summit, and the tor on top
-## of it. [radius, falloff, amount]
+## The high ground, as stacked RAISE cones about the summit. [radius, falloff,
+## amount]
+##
+## NO STEEP RING. There was one — a 40 m band at 60° that ringed the summit and
+## left exactly one cut ramp through it. It worked, and it read as a CRATER with
+## a fort at the bottom rather than as a hilltop with a fort on it. So the
+## ground now just rises to the top at about 20° from every side, the summit is
+## a flat plateau, and whatever needs to stop the squad walking straight in is
+## a WALL somebody built — which is what a fort looks like, and is the right
+## place for that job anyway.
+## PROMINENCE, not height. The first flat-topped version put the plateau at 132
+## on ground that was already 127 a hundred metres out, so one ordinary hill
+## stamp on the approach stood HIGHER than the objective and the fort could not
+## be seen from the station below it. A hilltop fort that is invisible until you
+## are on it is not a hilltop fort. The third cone is tighter and taller now, so
+## the summit stands ~15 m clear at 120 m out and ~33 m clear at 160 m.
 const CONES: Array = [
-	[180.0, 420.0, 70.0],
-	[110.0, 240.0, 38.0],
-	# THE TOR, and the only steep thing on the map. amount/falloff is what sets
-	# a cone's flank: 1.5 × 46/36 is a tangent of 1.9, so the middle of this
-	# band stands at 60°. Everything else here is rolling hill the squad walks
-	# over at will — this ring is the one place the ground says no, which is
-	# what makes the cut ramp to the summit worth holding.
-	[72.0, 36.0, 46.0],
+	[180.0, 420.0, 50.0],
+	[140.0, 300.0, 26.0],
+	# 1.5 x 56/90 is a tangent of 0.93, so the steepest part of this stands at
+	# 43 degrees - under the navmesh limit of 45, so it is a hill you walk up.
+	[76.0, 90.0, 56.0],
 ]
 const SUMMIT := Vector2(30.0, -270.0)
 
-## The tor's steep band, where the profile has to beat the navmesh.
-const FACE_R0 := 76.0
-const FACE_R1 := 104.0
+## The band the profile is reported over. Nothing here has to be steep any more,
+## so this is for looking at, not for passing.
+const FACE_R0 := 80.0
+const FACE_R1 := 260.0
 
 ## name, x, z, y, pad x, pad z, falloff
 ##
@@ -81,7 +93,7 @@ const STATIONS: Array = [
 	["Gate", -140.0, 34.0, 58.0, 92.0, 60.0, 30.0],
 	["Terrace", 140.0, -46.0, 82.0, 80.0, 52.0, 28.0],
 	["Shoulder", -90.0, -140.0, 102.0, 88.0, 58.0, 28.0],
-	["Summit", 30.0, -270.0, 132.0, 92.0, 74.0, 18.0],
+	["Summit", 30.0, -270.0, 132.0, 150.0, 120.0, 14.0],
 ]
 
 ## from, to, bed width, bank falloff. In order: the road is walked in this order
@@ -106,7 +118,9 @@ const HILLS: Array = [
 	[-298.0, 92.0, 80.0, 160.0, 48.0],
 	[258.0, 36.0, 70.0, 145.0, 44.0],
 	[-24.0, 62.0, 54.0, 120.0, 30.0],
-	[196.0, -164.0, 62.0, 130.0, 34.0],
+	# Kept off the line from the Terrace to the summit on purpose — at its old
+	# place it raised the ground on that sightline by 27 m and hid the fort.
+	[268.0, -120.0, 62.0, 110.0, 34.0],
 	[-208.0, -232.0, 58.0, 125.0, 30.0],
 ]
 
@@ -114,10 +128,10 @@ const HILLS: Array = [
 ## which is what the road is for and why anything garrisons the summit.
 ##
 ## piece, x, z (OFFSET FROM THE SUMMIT, not world), yaw°
-## The shelf is 92 × 74, so nothing may sit outside ±42 / ±33 of centre or it
-## hangs over the tor. _installation() checks that, and checks every pair for
-## overlap — two pieces in the same ground is the quickest way to make a level
-## look broken, and the eye does not catch it on a 92 m shelf.
+## The plateau is 150 × 120, so nothing may sit outside ±68 / ±54 of centre or
+## it hangs over the hillside. _installation() checks that, and checks every
+## pair for overlap — two pieces in the same ground is the quickest way to make
+## a level look broken, and the eye does not catch it on a plateau this size.
 const SUMMIT_PIECES: Array = [
 	# The hall and the mast, off-centre so the shelf is not symmetrical.
 	["compute/compute_data_hall", 12.0, -6.0, 0.0],
@@ -143,6 +157,13 @@ const SUMMIT_PIECES: Array = [
 	["fortifications/fort_sentry_turret", -24.0, 6.0, 215.0],
 	["fortifications/fort_floodlight_mast", -36.0, -8.0, 0.0],
 	["fortifications/fort_floodlight_mast", 34.0, -20.0, 0.0],
+	# THE MASTS ARE WHY THE FORT CAN BE SEEN AT ALL. A flat top on a convex hill
+	# hides itself: from the Terrace, 250 m out and 50 m below, the plateau edge
+	# cuts the line, and anything standing on the summit needs to be about 23 m
+	# tall to clear it. The watchtowers are 8.7 m. These are 21.8 m.
+	["features/feature_power_pylon", 56.0, -30.0, 0.0],
+	["features/feature_power_pylon", -40.0, 44.0, 0.0],
+	["features/feature_power_pylon", 24.0, 46.0, 0.0],
 ]
 
 ## Saddles and hollows, as LOWER stamps. WITHOUT THESE THE MAP IS ONE DOME:
@@ -209,31 +230,34 @@ func cone_h(r: float) -> float:
 	return h
 
 
-## Returns the number of bands in the tor's ring that a body could walk up.
+## The shape of the hill under the summit. Reports only — since the tor came
+## out there is no slope here that has to be anything, and a check that cannot
+## fail is worse than no check.
 func _profile() -> int:
 	print("   high ground, radial profile from the summit at (%.0f, %.0f)" % [SUMMIT.x, SUMMIT.y])
 	print("   %8s %9s %9s" % ["r (m)", "height", "slope"])
 	var bad := 0
 	var r := 0.0
 	while r <= 560.0:
-		var step := 8.0 if r >= FACE_R0 - 16.0 and r < FACE_R1 + 16.0 else 40.0
+		var step := 20.0 if r < FACE_R1 else 40.0
 		var a := cone_h(r)
 		var b := cone_h(r + step)
 		var slope := rad_to_deg(atan2(a - b, step))
 		var mark := ""
-		if r >= FACE_R0 and r < FACE_R1:
-			if slope >= MIN_FACE:
-				mark = "  tor"
-			else:
-				mark = "  TOR TOO GENTLE — walkable"
-				bad += 1
+		if slope > NAV_MAX_SLOPE:
+			# Not a fault, but say so: anywhere over the navmesh's limit is a
+			# piece of hillside the squad cannot use, and on a map whose whole
+			# point is that the hills are open, that wants to be deliberate.
+			mark = "  over agent_max_slope — not walkable"
+		elif r < FACE_R1 and slope > 26.0:
+			mark = "  steep for a hill"
 		print("   %8.0f %8.1f m %8.1f°%s" % [r, a, slope, mark])
 		r += step
 	return bad
 
 
-## Half-extents of the shelf the relay stands on, less a margin for the lip.
-const SHELF_HALF := Vector2(42.0, 33.0)
+## Half-extents of the plateau the relay stands on, less a margin for the lip.
+const SHELF_HALF := Vector2(68.0, 54.0)
 ## Clear ground between two pieces, so dressing them later does not collide.
 const MARGIN := 1.5
 

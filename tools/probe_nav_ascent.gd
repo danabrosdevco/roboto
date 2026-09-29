@@ -39,19 +39,22 @@ const STATIONS: Array = [
 	["Summit", 30.0, -270.0, 132.0],
 ]
 
-## Standing places round the foot of the tor, all the same distance out. The
-## ramp comes in from the south-west, so a walk that starts anywhere else has
-## to go round to find it.
+## Standing places round the hill, all the same distance out from the summit.
+## Far enough out to be below the plateau, close enough that a walk up is a
+## walk and not a cross-country trek.
 const RING_R := 130.0
 const RING: Array = [
 	["north", 0.0], ["east", 90.0], ["south", 180.0], ["west", 270.0],
 	["north-east", 45.0], ["south-west", 225.0],
 ]
 
-## Walking to the summit from the foot of the tor and covering less than this
-## many times the straight-line distance means the flank was climbed, not
-## walked round. Anything genuinely going round adds at least half again.
-const SHORTCUT := 1.5
+## Walking to the summit and covering more than this many times the straight-
+## line distance means the ground turned the squad back — which on this map is
+## a defect, not a feature.
+## When the steep ring still existed it showed 3-5x from every bearing but the
+## ramp. So a wall reads WAY over this; anything between 1 and 2 is the path
+## rounding a wrinkle, not being turned back.
+const DETOUR := 2.0
 
 var map: RID
 
@@ -95,21 +98,16 @@ func _initialize() -> void:
 				"reached" if r[0] else "CUT OFF", r[1], r[3] - from.y, r[2]])
 
 	print("")
-	print("   IS THE TOR FORCED — onto the summit from all round its foot")
-	print("   Everything below the tor is rolling hill the squad walks over at")
-	print("   will; that is the point of the map. The one place the ground says")
-	print("   no is the 40 m ring at 60° under the summit shelf. Standing %.0f m"
-			% RING_R)
-	print("   out and walking up should mean going ROUND to the ramp, so a walk")
-	print("   that comes back near the straight-line distance has climbed it.")
+	print("   HOW OPEN IS THE SUMMIT — onto the plateau from all round the hill")
+	print("   The steep ring under the summit is GONE on purpose: it read as a")
+	print("   crater with a fort in it. The hill is now walkable from every side,")
+	print("   so every one of these should come back near 1.0x, and anything a")
+	print("   long way over is a piece of hillside that has quietly become a")
+	print("   cliff. Stopping the squad walking in is a WALL's job now, not the")
+	print("   ground's — so this measures that the ground is NOT doing it.")
 	print("   %-14s %9s %9s %7s" % ["from", "direct", "walked", "ratio"])
 	var summit: Array = STATIONS[STATIONS.size() - 1]
-	var below: Array = STATIONS[STATIONS.size() - 2]
 	var top := Vector3(float(summit[1]), float(summit[3]), float(summit[2]))
-	# Which way the ramp comes in. A standing place on that side is SUPPOSED to
-	# be a short walk — it is stood at the bottom of the ramp. Reporting that
-	# as a breach would be reporting the map working as a fault.
-	var ramp := rad_to_deg(atan2(float(below[1]) - top.x, -(float(below[2]) - top.z)))
 	var loose := 0
 	for r: Array in RING:
 		var a := deg_to_rad(float(r[1]))
@@ -119,21 +117,17 @@ func _initialize() -> void:
 		var direct := Vector2(top.x - start.x, top.z - start.z).length()
 		var walked := float(res[1])
 		var ratio: float = walked / maxf(direct, 1.0)
-		var off := absf(wrapf(float(r[1]) - ramp, -180.0, 180.0))
-		var mouth := off < 60.0
-		var note := "   round to the ramp"
+		var note := "   open"
 		if not bool(res[0]):
 			note = "   CUT OFF — no route at all"
 			loose += 1
-		elif mouth:
-			note = "   the ramp mouth, %.0f° off — short is correct" % off
-		elif ratio < SHORTCUT:
-			note = "   CLIMBED — the tor is walkable here"
+		elif ratio > DETOUR:
+			note = "   DETOUR — the hillside is not walkable on this side"
 			loose += 1
 		print("   %-14s %8.0fm %8.0fm %6.1fx%s" % [r[0], direct, walked, ratio, note])
 
 	print("")
-	print("   %d station(s) cut off, %d way(s) up the tor that should not be there" % [
+	print("   %d station(s) cut off, %d side(s) of the hill that do not go straight up" % [
 			cut, loose])
 	quit()
 

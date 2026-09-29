@@ -53,15 +53,15 @@ write if either leaves its band. Road heights are spread along each leg BY ARC
 LENGTH, so a leg's grade is constant by construction rather than by my getting
 it right by hand. Re-runnable: edit the table, rebuild, rebake.
 
-**The shape.** Rolling hills you can walk over at will — open, flankable, the
-road is the fast way up and not the only way — with exactly one exception: a
-40 m ring at ~60° under the summit, and a single cut ramp through it. That ring
-is the only place on the map the ground says no.
+**The shape.** Rolling hills, walkable everywhere — open, flankable, the road
+is the fast way up and not the only way. The summit is a 150 × 120 m flat
+plateau on a hill with about 36 m of prominence, reached from any side.
 
-**The summit has a relay station on it**, 20 pieces from the existing compute/
-and fortifications/ kits: a data hall, the obelisk, a four-dish array along the
-north lip, generator and transformers, two watchtowers and a sangar covering
-the ramp mouth. Blockout only — no dressing, no objectives, no cover bake.
+**The summit has a relay station on it**, 23 pieces from the existing compute/,
+features/ and fortifications/ kits: a data hall, the obelisk, a four-dish array
+along the north lip, generator and transformers, three 21.8 m masts, two
+watchtowers, a sangar and a sentry turret. Blockout only — no dressing, no
+objectives, no cover bake.
 
 **Gates.** `check.sh --changed`: **PASS**. `test.sh` and `smoke.sh`: **not
 run** — nothing here touches their ground, and the level is not in any mission.
@@ -76,7 +76,22 @@ run** — nothing here touches their ground, and the level is not in any mission
   the straight line**, because the path has to go round to the ramp. From the
   ramp mouth, 140 m. **The summit has one approach.**
 - `tools/probe_ascent_bed.gd` samples each leg's centreline against its authored
-  height: beds 95–100% on target.
+  height: beds 100% on target. It also draws the **line of sight** to the
+  summit from every station, which is the check that earned its keep — see
+  below.
+
+**A flat hilltop hides itself, and that is a thing to design for.** The first
+open version put the plateau at 132 m on ground already at 127 a hundred metres
+out, so an ordinary hill stamp on the approach stood HIGHER than the objective.
+Then, once the hill had real prominence, the plateau's own south edge cut the
+line: from the Terrace, 250 m out and 50 m below, anything on the summit needs
+to be **about 23 m tall** to clear the brow, and a watchtower is 8.7 m. Three
+21.8 m masts fixed it, two of them stood on the plateau's SOUTH LIP — a mast at
+the back of a flat top is hidden by the front of it. The fort is now visible
+from the **Gate and the Terrace**, the second half of the climb, and hidden by
+intervening hills from the first three stations, which is what hill country
+does. `probe_shots_ascent.gd` also now raycasts each camera onto the ground and
+lifts it if it is underground; four of fourteen were.
 
 **I was wrong twice, and both are worth the next agent's time.**
 
@@ -87,7 +102,16 @@ run** — nothing here touches their ground, and the level is not in any mission
    stacked flights need the legs closer in Z than the height between them, and
    under about 300 m of relief the beds merge before the riser gets steep
    enough. **At hill scale you get one steep feature, not a staircase.**
-2. **Two roads meeting at a landing write a step across each other.** Their beds
+2. **The steep ring round the summit came out.** I ringed the plateau with a
+   40 m band at 60° so there was exactly one cut ramp in, and tested it hard —
+   walking to the summit from 130 m out came back 3–5× the straight line from
+   every bearing but the ramp's. It was also, in the human's words, giant walls
+   round a fort: **it read as a crater with a fort at the bottom.** Now the hill
+   just rises at ~20° from every side and the plateau is open. Whatever has to
+   stop the squad walking in is a **wall somebody built**, which is both what a
+   fort looks like and the right place for that job. `probe_nav_ascent.gd` was
+   turned round to match: it now checks the hill is NOT doing the wall's work.
+3. **Two roads meeting at a landing write a step across each other.** Their beds
    overlap for 20-odd metres and whichever is cut second wins that ground, so if
    either is still climbing it leaves an 8 m wall — which sealed the whole stair
    above the Gate and read as "navmesh missing" rather than as a step. Fix is a
@@ -101,21 +125,23 @@ refuses to write under 2000 bytes.
 
 **Needs the human.**
 
-- **The scale is the open question.** 132 m is my read of "hills not a
-  mountain"; it is a five-minute change to the table if it is still off.
+- **The scale.** 132 m is my read of "hills not a mountain", down from a 500 m
+  first pass. Five minutes to change if it is still off.
 - Look at it in-editor. The aerial still reads as one swell with bumps rather
   than a series of distinct hills — there are seven LOWER stamps cutting saddles
   between the hills and they are not doing enough.
-- The ramp's cut walls are raw terrain and want built retaining walls; that is
-  the biggest single thing between this and looking finished.
+- The fort has no wall. That is the obvious next thing and the one that makes
+  the plateau a place to hold rather than a place to walk onto.
 - The relay is a blockout. Nothing on that shelf is a considered composition.
 
 **Blocked / next.** Nothing blocking, and nothing should be built on top of this
-until the scale is signed off. After that: hill definition, retaining walls
-along the ramp and the road cuts, wayshrines at the stations, then objectives
-and a cover bake. Older queue unchanged — the monolith texture scale,
-`block_prefabs.gd --only`, and `maps/depot_level.tscn` still carrying my ramped
-geometry with no answer on whether to roll it back.
+until the scale is signed off. After that, in order: a curtain wall and gate
+round the plateau — that is what makes the summit a thing to take rather than
+a thing to walk onto, and the whole reason the steep ring was allowed to go;
+then hill definition, retaining walls along the road cuts, wayshrines at the
+stations, then objectives and a cover bake. Older queue unchanged — the
+monolith texture scale, `block_prefabs.gd --only`, and `maps/depot_level.tscn`
+still carrying my ramped geometry with no answer on whether to roll it back.
 
 ---
 

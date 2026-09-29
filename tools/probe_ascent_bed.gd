@@ -14,15 +14,28 @@ extends SceneTree
 
 const DATA := "res://maps/terrain_data/ascent_level_terrain.res"
 
-## name, from (x, z, y), to (x, z, y), bed width
+## name, from (x, z, y), to (x, z, y), bed width. Vector3 is (x, z, y) here,
+## not (x, y, z) — the two horizontals travel together everywhere in this file.
 const FLIGHTS: Array = [
-	["Gate→Landing1", Vector3(-150.0, 80.0, 88.0), Vector3(150.0, 36.0, 158.0), 11.0],
-	["Landing1→Landing2", Vector3(150.0, 36.0, 158.0), Vector3(-150.0, -8.0, 228.0), 11.0],
-	["Landing2→Landing3", Vector3(-150.0, -8.0, 228.0), Vector3(150.0, -52.0, 298.0), 11.0],
-	["Landing3→Landing4", Vector3(150.0, -52.0, 298.0), Vector3(-150.0, -96.0, 368.0), 11.0],
-	["Landing4→Shoulder", Vector3(-150.0, -96.0, 368.0), Vector3(150.0, -140.0, 438.0), 11.0],
-	["Shoulder→Sanctum", Vector3(150.0, -140.0, 438.0), Vector3(0.0, -360.0, 500.0), 13.0],
+	["Trailhead→Cistern", Vector3(0.0, 380.0, 0.0), Vector3(-170.0, 258.0, 18.0), 14.0],
+	["Cistern→Pillars", Vector3(-170.0, 258.0, 18.0), Vector3(150.0, 140.0, 38.0), 14.0],
+	["Pillars→Gate", Vector3(150.0, 140.0, 38.0), Vector3(-140.0, 34.0, 58.0), 13.0],
+	["Gate→Terrace", Vector3(-140.0, 34.0, 58.0), Vector3(140.0, -46.0, 82.0), 13.0],
+	["Terrace→Shoulder", Vector3(140.0, -46.0, 82.0), Vector3(-90.0, -140.0, 102.0), 12.0],
+	["Shoulder→Summit", Vector3(-90.0, -140.0, 102.0), Vector3(30.0, -270.0, 132.0), 11.0],
 ]
+
+## Eye height, for the sightline check.
+const EYE := 1.7
+## What "see the fort" means. A flat plateau on a convex hill is ALWAYS hidden
+## from below — the hill's own shoulder cuts the line to the ground up there,
+## and that is true of every real hilltop. What has to be visible is what stands
+## ON it, so the sightline is drawn to the top of a watchtower, not to the dirt.
+## Aimed at the NEAREST MAST, on the plateau’s south lip, not at the middle of
+## the summit. A mast at the back of a flat top is hidden by the front of it.
+const TOP := Vector3(54.0, -224.0, 132.0)
+## The tallest thing standing on the summit — the relay masts, not a watchtower.
+const TOWER := 21.8
 
 ## Ground this far off the authored height is not the bed.
 const TOL := 1.5
@@ -30,6 +43,9 @@ const TOL := 1.5
 const WANT_WIDE := 6.0
 ## Must match RUNOUT in probe_build_ascent.gd: the level ground at each end.
 const RUNOUT := 24.0
+## Legs bent through via points, whose bed is not a straight line.
+const BENT: Array = ["Trailhead→Cistern", "Cistern→Pillars", "Pillars→Gate",
+		"Shoulder→Summit"]
 
 
 func _initialize() -> void:
@@ -43,6 +59,12 @@ func _initialize() -> void:
 	for f: Array in FLIGHTS:
 		var a: Vector3 = f[1]
 		var b: Vector3 = f[2]
+		# Four of the six legs are bent through via points (see _vias in
+		# probe_build_ascent.gd), so a straight line between their ends is not
+		# where the bed is and walking it reports a break that is not there.
+		if str(f[0]) in BENT:
+			print("   %-20s bent through vias — bed not walked" % f[0])
+			continue
 		var steps := int((Vector2(b.x - a.x, b.y - a.y)).length() / 4.0)
 		var on := 0
 		var worst := 0.0
@@ -93,8 +115,39 @@ func _initialize() -> void:
 		if narrowest < WANT_WIDE:
 			print("       narrowest at (%.0f, %.0f) — under %.0f m, the baker will drop it" % [
 					narrow_at.x, narrow_at.y, WANT_WIDE])
-	_landings(data)
+	_sightlines(data)
 	quit()
+
+
+## Can you see the fort from each station? A hilltop objective the squad only
+## sees once it is on top of it is not a hilltop objective, and the thing that
+## breaks it is never the summit — it is an ordinary hill on the approach that
+## happens to stand higher than the plateau.
+func _sightlines(data: Resource) -> void:
+	print("")
+	print("   line of sight to the summit, from an eye %.1f m above each station" % EYE)
+	print("   %-12s %9s %9s %9s" % ["from", "range", "clear by", "lowest at"])
+	for f: Array in FLIGHTS:
+		var a: Vector3 = f[1]
+		var from := Vector3(a.x, a.z + EYE, a.y)
+		var to := Vector3(TOP.x, TOP.z + TOWER, TOP.y)
+		var span := Vector2(to.x - from.x, to.z - from.z).length()
+		if span < 1.0:
+			continue
+		var worst := INF
+		var worst_at := Vector2.ZERO
+		var steps := int(span / 4.0)
+		for i in range(1, steps):
+			var t := float(i) / steps
+			var p := Vector2(lerpf(from.x, to.x, t), lerpf(from.z, to.z, t))
+			# Clearance: how far the sightline passes ABOVE the ground here.
+			var clear: float = lerpf(from.y, to.y, t) - float(data.height_at_local(p.x, p.y))
+			if clear < worst:
+				worst = clear
+				worst_at = p
+		print("   %-12s %8.0fm %8.1fm %s" % [str(f[0]).split("→")[0], span, worst,
+				"(%.0f, %.0f)%s" % [worst_at.x, worst_at.y,
+						"  BLOCKED" if worst < 0.0 else ""]])
 
 
 ## A cross-section through each landing along the flight's own direction. A
