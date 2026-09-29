@@ -138,9 +138,59 @@ of it and all eleven levels are in this session's scratch.
 than usual here, because a shared material and a shared environment changed
 under every level at once.
 
+**Played, and three things came back.** All of them were right.
+
+**The dish is 2.4× bigger: a 59 m bowl standing 63 m**, where it was 24 m and
+25 m. It is a scale constant through `_relay_dish` now rather than two dozen
+literals, and `k` divides by it where everything else multiplies, because the
+paraboloid is z = k·r². At the old size it was a speck from the station below
+the summit, which is the one job it has — to be seen from down the valley.
+
+It is placed at **yaw 0, and that is not laziness**: turned 25° its bounding
+footprint goes from 59 × 49 to 73 × 69, twenty metres in both axes and most of
+the room inside the wall, while square-on it still faces within a few degrees
+of the gate. Its box also sits **7 m south of its own origin**, because the
+bowl overhangs the pedestal forward — placing off the origin put it seven
+metres into the yard.
+
+**So the compound was re-laid around it.** At that size the dish IS the
+composition and everything else is what fits: east strip 35 m for the hall
+(turned side-on, a 29 m building does not fit across it with anything else)
+and the plant; south strip 38 m for the gate quarter and the yard; west strip
+23 m for the tower, the gun and the racks. The four small dishes and the
+cooling units went — the big one replaces them. The dragon's teeth went too,
+and a second floodlight: the north strip is six metres and nothing stands in
+it. The roof exit and its anchor moved with the hall.
+
+**Every station has cover and doodads now** — `STATION_DRESS`, 51 pieces. The
+map played as a road between bare pads with everything interesting on the
+hilltop. Each station has a character and, more to the point, something to
+fight behind: the Trailhead a staging yard of containers, hesco and plant; the
+Cistern tanks and a pump house with pipe runs for cover; the Pillars rock
+spires with a pylon run through them, which also breaks a crown that was a
+billiard table; the Gate a checkpoint with teeth and a pillbox looking back
+down the hill; the Terrace a gun pit, ammo and revetments; the Shoulder a
+mortar position and the wreck of whatever tried this before.
+
+The placement checker was generalised to do this: `_group()` takes any list of
+pieces, an origin and a room, so each station is checked the same way the
+summit is — on its pad, and 1.5 m clear of its neighbours. It earned it, with
+about thirty clashes across four passes, including three pieces I had sized
+from memory that turned out to be two to four times bigger than I thought
+(`solar_salt_tanks` 31 × 42, `feature_rock_outcrop` 24 × 25,
+`fort_command_bunker` 32 × 22). **Measure the piece, then place it.**
+
+**And the cables in `compute_cable_run` are mesh only.** They lie 80 mm off the
+ground and are 180 mm thick, and `move_and_slide` has no step-up — the same
+fault as the trench duckboards and the crater rim, small enough to be invisible
+and enough to stop a body. Two collision brushes now instead of fourteen: the
+junction box keeps its own, the wires do not. Used by four levels, and removing
+collision can only open ground, so no navmesh anywhere needed rebaking for it.
+
 **Gates.** `check.sh --changed`: **PASS**. Everything re-measured after the
-rename, and again after the brush and glow work: **24290 navmesh vertices,
-7 stations reached, 29 objective anchors, 0 cut off**, longest walk 895 m,
+rename, after the brush and glow work, and after the dish and the dressing:
+**24637 navmesh vertices,
+7 stations reached, 29 objective anchors, 0 cut off**, longest walk 905 m,
 relay feet worst 0.00 m off the plateau, and `probe_brush_overlap.gd` clean on
 both wall pieces. `probe_path_walk.gd`: one step, the
 fort gate's own pier on the road centreline, which is the gate. Two sightlines

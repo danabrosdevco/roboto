@@ -154,79 +154,61 @@ const HILLS: Array = [
 ## pair for overlap — two pieces in the same ground is the quickest way to make
 ## a level look broken, and the eye does not catch it on a plateau this size.
 const SUMMIT_PIECES: Array = [
-	# ── THE CORE. The hall's LONG side faces the gate, so the compound has a
-	# front rather than presenting an end wall to whoever walks in. Everything
-	# else is placed off that one decision.
-	["compute/compute_data_hall", 4.0, -12.0, 0.0],
-	# The dish is the reason the station exists and the reason there is a road
-	# up the hill, so it gets the clear flank west of the hall and it is turned
-	# to face the approach: from the gate and from the Terrace you see the BOWL,
-	# not its back. 25.3 m tall, which is also what clears the plateau's brow —
-	# see the sightline note in tools/probe_hillfort_bed.gd.
-	["landmarks/landmark_relay_dish", -34.0, -16.0, -25.0],
-	["compute/compute_chiller_yard", 36.0, -12.0, 0.0],
-	["compute/compute_cooling_unit", -4.0, -30.0, 0.0],
-	["compute/compute_cooling_unit", 12.0, -30.0, 0.0],
-	# The dish array on the north lip: one line, even spacing, one yaw. A dish
-	# farm is machinery pointed at the same thing, and four dishes at four
-	# angles read as clutter instead of as an instrument.
-	["compute/compute_satellite_dish", -26.0, -38.0, -6.0],
-	["compute/compute_satellite_dish", -10.0, -38.0, -6.0],
-	["compute/compute_satellite_dish", 6.0, -38.0, -6.0],
-	["compute/compute_satellite_dish", 22.0, -38.0, -6.0],
+	# ── THE DISH IS THE COMPOUND NOW. At 59 m across and 63 m tall it fills the
+	# middle of a 120 × 96 ring, and the composition is what fits round it
+	# rather than an arrangement it stands in. That is the right way up: a
+	# relay station is a dish with buildings at its feet, and the 24 m version
+	# read as a speck from the station below the summit — which is the whole
+	# job it has, to be seen from down the valley.
+	#
+	# YAW 0, AND THAT IS NOT LAZINESS. Turned 25° its bounding footprint grows
+	# from 59 × 49 to 73 × 69 — twenty metres in both axes, most of the room
+	# inside the wall — and square-on it still faces due south, which is within
+	# a few degrees of the gate and the road. It leaves three strips: east 35 m,
+	# south 38 m, west 23 m, and everything below lives in one of them.
+	# At z −24, not −16: the piece's bounding box sits 7 m SOUTH of its own
+	# origin, because the bowl overhangs the pedestal forward. Placing off the
+	# origin put it seven metres into the yard.
+	["landmarks/landmark_relay_dish", -6.0, -24.0, 0.0],
 
-	# ── POWER, on the east flank and screened off the yard. Kept together and
-	# kept apart: a generator in the middle of a courtyard is a prop, a
-	# generator behind a revetment is a place.
-	["compute/compute_generator", 44.0, 14.0, 90.0],
-	["compute/compute_transformer", 32.0, 22.0, 0.0],
-	["compute/compute_transformer", 44.0, 30.0, 0.0],
-	["fortifications/fort_hesco_wall", 34.0, 6.0, 0.0],
-	["compute/compute_network_cabinet", 52.0, 16.0, 90.0],
-	["compute/compute_network_cabinet", 52.0, 21.0, 90.0],
-	["compute/compute_network_cabinet", 52.0, 26.0, 90.0],
-	# Cable runs leave the hall and cross the yard, which is what ties the two
-	# halves of the compound together visually.
-	["compute/compute_cable_run", -6.0, 8.0, 0.0],
-	["compute/compute_cable_run", 10.0, 8.0, 0.0],
-	["compute/compute_rack_row", 20.0, 2.0, 20.0],
-	["compute/compute_rack_row", -12.0, 2.0, -14.0],
+	# ── EAST: the plant. The hall turned side-on, because a 29 m building does
+	# not fit across a 35 m strip with anything else in it.
+	["compute/compute_data_hall", 42.0, -22.0, 90.0],
+	["compute/compute_chiller_yard", 44.0, 10.0, 0.0],
+	["compute/compute_network_cabinet", 56.0, -30.0, 90.0],
+	["compute/compute_network_cabinet", 56.0, -36.0, 90.0],
+	["compute/compute_network_cabinet", 56.0, -42.0, 90.0],
+	["compute/compute_transformer", 54.0, 24.0, 0.0],
+	["compute/compute_transformer", 54.0, 34.0, 0.0],
+	["compute/compute_cable_run", 28.0, 24.0, 90.0],
+	["compute/compute_generator", 34.0, 36.0, 90.0],
 
-	# ── THE GATE. You cannot walk straight in: the checkpoint sits across the
-	# line from the gate, angled to the road, so the way through is a turn.
-	["fortifications/fort_checkpoint", -28.0, 30.0, 40.0],
-	# The dragon's teeth came out. Moving the dish forward off its mount grew
-	# its footprint into them, and every spot left in the gate quarter clashed
-	# with the checkpoint or the yard cover. The checkpoint already makes the
-	# way in a turn, which was all the teeth were adding.
-	["features/feature_watchtower", -52.0, 34.0, 0.0],
-	["fortifications/fort_sentry_turret", -8.0, 42.0, 215.0],
-	["props/prop_sandbag_nest", -6.0, 30.0, 0.0],
-	# The second tower is on the far side, covering the yard and the power end.
-	["features/feature_watchtower", 52.0, -12.0, 0.0],
-	["fortifications/fort_gun_emplacement", 38.0, -40.0, 0.0],
-	["fortifications/fort_ammo_dump", 52.0, 34.0, 0.0],
-	["fortifications/fort_floodlight_mast", -52.0, 12.0, 0.0],
-	["fortifications/fort_floodlight_mast", 30.0, -42.0, 0.0],
+	# ── WEST: the working side, and the gun that covers the road's last turn.
+	["features/feature_watchtower", -52.0, -26.0, 0.0],
+	["fortifications/fort_gun_emplacement", -50.0, -6.0, 0.0],
+	["compute/compute_rack_row", -50.0, 8.0, 0.0],
+	["compute/compute_rack_row", -50.0, 18.0, 0.0],
+	# Only one floodlight now. The north strip between the dish and the wall is
+	# six metres and nothing stands in it.
+	["features/feature_power_pylon", -48.0, 32.0, 0.0],
 
-	# ── THE YARD. Deliberately NOT full. It is the only open ground inside the
-	# wall and it is where a fight over this place happens, so it gets cover
-	# worth using and nothing else: three T-wall stacks and a scatter, set off
-	# the axis so none of them lines up into a corridor.
-	["fortifications/fort_t_walls", 10.0, 30.0, 24.0],
-	["fortifications/fort_t_walls", 22.0, 26.0, -32.0],
-	["fortifications/fort_t_walls", 2.0, 20.0, 70.0],
-	["props/prop_jersey_barrier", 16.0, 36.0, 12.0],
-	["props/prop_jersey_barrier", 22.0, 34.0, 12.0],
-	["props/prop_crates", 0.0, 8.0, 30.0],
-	["props/prop_barrels", 30.0, 32.0, 0.0],
-
-	# ── THE MASTS, in the corners where they do not clutter the yard. The
-	# south-east one is the piece the Terrace sees: see the sightline note in
-	# tools/probe_hillfort_bed.gd before moving it.
-	["features/feature_power_pylon", -50.0, -36.0, 0.0],
-	["features/feature_power_pylon", 50.0, -36.0, 0.0],
-	["features/feature_power_pylon", 40.0, 38.0, 0.0],
+	# ── SOUTH: the gate quarter and the only open ground inside the wall. The
+	# checkpoint sits across the line from the gate so the way in is a turn,
+	# and the yard's cover is set off that axis so none of it lines up into a
+	# shooting corridor.
+	["fortifications/fort_checkpoint", -28.0, 32.0, 20.0],
+	["features/feature_watchtower", 4.0, 40.0, 90.0],
+	["fortifications/fort_hesco_sangar", 24.0, 36.0, 40.0],
+	["fortifications/fort_sentry_turret", 12.0, 42.0, 215.0],
+	["fortifications/fort_floodlight_mast", 44.0, 41.0, 0.0],
+	["fortifications/fort_t_walls", -6.0, 18.0, 24.0],
+	["fortifications/fort_t_walls", 12.0, 24.0, -32.0],
+	["fortifications/fort_t_walls", -18.0, 14.0, 70.0],
+	["props/prop_jersey_barrier", 2.0, 14.0, 12.0],
+	["props/prop_jersey_barrier", 8.0, 12.0, 12.0],
+	["props/prop_crates", -24.0, 16.0, 30.0],
+	["props/prop_barrels", 16.0, 18.0, 0.0],
+	["props/prop_sandbag_nest", -52.0, 41.0, 0.0],
 ]
 
 ## Saddles and hollows, as LOWER stamps. WITHOUT THESE THE MAP IS ONE DOME:
@@ -390,7 +372,7 @@ const OBJECTIVES: Array = [
 	# The extraction point, on the hall roof. Its height is the ROOF's, so the
 	# reach probe's offset means something: an anchor left at ground level here
 	# would report reached off the yard below and prove nothing.
-	["Hillfort_Roof", "obj_hillfort_roof", "Hall Roof", 34.0, -282.0, 141.8],
+	["Hillfort_Roof", "obj_hillfort_roof", "Hall Roof", 72.0, -292.0, 141.8],
 	# OFF the road. Every one of these is somewhere the squad can stand that
 	# the road does not go, so a mission can ask for a flank instead of a
 	# column — which is the whole reason the hills are walkable.
@@ -438,8 +420,100 @@ const WALL_THICK := 3.2
 const POSTERN_AT := 24.0
 ## The data hall, and how far up its walkable roof is. compute_data_hall is
 ## 10.3 m tall with its origin 0.5 m up from the bottom of its collision.
-const HALL_AT := Vector2(4.0, -12.0)
+const HALL_AT := Vector2(42.0, -22.0)
 const HALL_ROOF := 9.8
+
+
+## WHAT IS AT EACH STATION. Played, the map was a road between bare pads with
+## everything interesting on the hilltop — "overall except for the top of the
+## hill there's nothing". A station has to be somewhere worth stopping and
+## somewhere worth fighting over, which means two different things: COVER a
+## squad can use, and enough built stuff that the place has a name for a
+## reason.
+##
+## Offsets are from the station's centre and heights come from the station, so
+## everything here stands on the flat the pad already guarantees. _installation
+## checks each station's group the same way it checks the summit: on the pad,
+## and clear of each other.
+##
+## station, piece, dx, dz, yaw
+const STATION_DRESS: Array = [
+	# ── TRAILHEAD. The staging area: where the squad comes from. Containers,
+	# a hesco line to form up behind, the plant that got the road built.
+	["Trailhead", "features/feature_container_stack", -30.0, -20.0, 0.0],
+	["Trailhead", "features/feature_container_stack", 28.0, -18.0, 20.0],
+	["Trailhead", "fortifications/fort_hesco_wall", -8.0, -26.0, 0.0],
+	["Trailhead", "fortifications/fort_hesco_wall", 8.0, -26.0, 0.0],
+	["Trailhead", "machines/machine_bulldozer", 26.0, 14.0, 200.0],
+	["Trailhead", "machines/machine_semi_truck", -28.0, 16.0, 95.0],
+	["Trailhead", "fortifications/fort_floodlight_mast", 0.0, -32.0, 0.0],
+	["Trailhead", "props/prop_crates", -14.0, 4.0, 15.0],
+	["Trailhead", "props/prop_barrels", -10.0, 12.0, 0.0],
+	["Trailhead", "props/prop_jersey_barrier", 6.0, 6.0, 8.0],
+	["Trailhead", "props/prop_jersey_barrier", 12.0, 4.0, 8.0],
+	["Trailhead", "props/prop_lamp_post", 34.0, 22.0, 0.0],
+
+	# ── THE CISTERN. Tanks and a pump house, and the pipe runs are the cover.
+	["Cistern", "features/feature_fuel_tanks", 2.0, -8.0, 0.0],
+	["Cistern", "building_house_small", -18.0, 8.0, 25.0],
+	["Cistern", "props/prop_concrete_pipes", 10.0, 6.0, 10.0],
+	["Cistern", "props/prop_concrete_pipes", 16.0, 2.0, 70.0],
+	["Cistern", "compute/compute_cooling_unit", 0.0, 12.0, 0.0],
+	["Cistern", "props/prop_sandbag_wall", 6.0, 16.0, 0.0],
+	["Cistern", "props/prop_rubble_pile", 18.0, -12.0, 0.0],
+	["Cistern", "props/prop_barrels", 12.0, 13.0, 0.0],
+
+	# ── THE PILLARS. Named for what stands on it: rock spires with a pylon
+	# line run through them. The spires ARE the cover, and they break a crown
+	# that was otherwise a billiard table.
+	["Pillars", "features/feature_rock_spire", -14.0, -10.0, 0.0],
+	["Pillars", "features/feature_rock_spire", 10.0, -12.0, 140.0],
+	["Pillars", "features/feature_rock_spire", 16.0, 6.0, 60.0],
+	["Pillars", "features/feature_power_pylon", -2.0, 2.0, 0.0],
+	["Pillars", "props/prop_boulder_c", -20.0, 6.0, 0.0],
+	["Pillars", "props/prop_boulder_a", 4.0, 14.0, 0.0],
+	["Pillars", "props/prop_rock_slabs", 22.0, -4.0, 45.0],
+	["Pillars", "props/prop_tank_trap", -8.0, 13.0, 0.0],
+
+	# ── THE GATE. The foot of the climb: a checkpoint on the road, teeth
+	# across it, a pillbox looking back down the hill.
+	["Gate", "fortifications/fort_checkpoint", 0.0, 8.0, 0.0],
+	["Gate", "features/feature_pillbox", -16.0, -10.0, 0.0],
+	["Gate", "fortifications/fort_dragon_teeth", 14.0, -8.0, 80.0],
+	["Gate", "fortifications/fort_hesco_wall", -20.0, 6.0, 90.0],
+	["Gate", "fortifications/fort_sentry_turret", 18.0, 6.0, 180.0],
+	["Gate", "props/prop_car_wreck", -6.0, -15.0, 130.0],
+	["Gate", "props/prop_sandbag_nest", 6.0, -15.0, 0.0],
+
+	# ── THE TERRACE. A dug-in position on the shelf, and the one that looks
+	# up at the fort.
+	["Terrace", "fortifications/fort_gun_emplacement", 2.0, -9.0, 0.0],
+	["Terrace", "fortifications/fort_ammo_dump", -14.0, -8.0, 0.0],
+	["Terrace", "fortifications/fort_hesco_wall", 12.0, 6.0, 0.0],
+	["Terrace", "fortifications/fort_hesco_wall", -4.0, 10.0, 0.0],
+	["Terrace", "fortifications/fort_t_walls", 20.0, -2.0, 70.0],
+	["Terrace", "props/prop_sandbag_wall", -20.0, 4.0, 0.0],
+	["Terrace", "props/prop_crates", -16.0, 14.0, 20.0],
+	["Terrace", "props/prop_robot_wreck", 22.0, -12.0, 60.0],
+
+	# ── THE SHOULDER. A mortar position below the fort, and the wreck of
+	# whatever tried this before.
+	["Shoulder", "fortifications/fort_mortar_pit", -8.0, -8.0, 0.0],
+	["Shoulder", "fortifications/fort_hesco_sangar", 10.0, -6.0, 30.0],
+	["Shoulder", "fortifications/fort_hesco_wall", -18.0, 6.0, 90.0],
+	["Shoulder", "props/prop_sandbag_wall", 2.0, 10.0, 0.0],
+	["Shoulder", "props/prop_robot_wreck", 18.0, 6.0, 200.0],
+	["Shoulder", "props/prop_rubble_pile", 20.0, -10.0, 0.0],
+	["Shoulder", "props/prop_barrels", -18.0, -10.0, 0.0],
+]
+
+
+## The dressing as plain [piece, ...] rows, for the ext_resource count.
+func _dress_pieces() -> Array:
+	var out: Array = []
+	for d: Array in STATION_DRESS:
+		out.append([d[1], d[2], d[3], d[4]])
+	return out
 
 
 ## The ring, built rather than typed: eighteen segments, two of them gates.
@@ -489,11 +563,30 @@ const MARGIN := 1.5
 ## Every piece measured against the shelf and against every other piece.
 ## Returns the number of problems. Loads the real scenes: the docs round the
 ## numbers and an origin is often not in the middle of the mass.
+## Every group of placed pieces: the summit compound, then each station's
+## dressing. Same test for all of them — on the pad, and clear of each other.
 func _installation() -> int:
+	var bad := await _group("summit", SUMMIT_PIECES + wall_pieces(),
+			Vector2.ZERO, SHELF_HALF, PAD_HALF)
+	for s: Array in STATIONS:
+		var dress: Array = []
+		for d: Array in STATION_DRESS:
+			if str(d[0]) == str(s[0]):
+				dress.append([d[1], d[2], d[3], d[4]])
+		if dress.is_empty():
+			continue
+		# Pieces may sit a little past the pad edge — the falloff keeps the
+		# ground near level for a few metres — but not far, or they hang.
+		var room := Vector2(float(s[4]), float(s[5])) * 0.5 + Vector2(6.0, 6.0)
+		bad += await _group(str(s[0]), dress, Vector2(float(s[1]), float(s[2])), room, room)
+	return bad
+
+
+func _group(label: String, pieces: Array, origin: Vector2, room_a: Vector2, room_b: Vector2) -> int:
 	var bad := 0
 	var boxes: Array = []
-	print("   %-38s %9s %9s %8s" % ["summit piece", "x", "z", "size"])
-	for p: Array in SUMMIT_PIECES + wall_pieces():
+	print("   %-38s %9s %9s %8s" % ["%s piece" % label, "x", "z", "size"])
+	for p: Array in pieces:
 		var path := "res://maps/blocks/%s.tscn" % p[0]
 		var packed := load(path) as PackedScene
 		if packed == null:
@@ -526,7 +619,7 @@ func _installation() -> int:
 		# SHELF_HALF is a margin for things that stand ON the plateau. The wall
 		# ring is measured against the pad itself, because reaching the lip is
 		# what a curtain wall is FOR.
-		var room := PAD_HALF if ring else SHELF_HALF
+		var room := room_b if ring else room_a
 		if absf(centre.x) + rot.x > room.x or absf(centre.y) + rot.y > room.y:
 			note = "   OFF THE SHELF"
 			bad += 1
@@ -642,7 +735,7 @@ func _scene(by_name: Dictionary) -> String:
 	# placed. check.sh fails a scene that declares an id it never uses and a
 	# scene whose load_steps is off, so both are counted rather than typed.
 	var seen := {}
-	for p: Array in SUMMIT_PIECES + wall_pieces():
+	for p: Array in SUMMIT_PIECES + wall_pieces() + _dress_pieces():
 		var id: String = "p_" + str(p[0]).get_file()
 		if seen.has(id):
 			continue
@@ -871,6 +964,21 @@ func _scene(by_name: Dictionary) -> String:
 	# hillside below the plateau is walkable, so anything can go round the
 	# outside and up into that pocket without ever entering the compound. A roof
 	# ten metres up inside the wall cannot be reached any way but through it.
+	out.append("[node name=\"Stations\" type=\"Node3D\" parent=\"NavigationRegion3D\"]")
+	out.append("")
+	var si := 1
+	for d: Array in STATION_DRESS:
+		var st: Array = by_name[d[0]]
+		var did: String = "p_" + str(d[1]).get_file()
+		var dyaw := deg_to_rad(float(d[4]))
+		out.append("[node name=\"%s%02d_%s\" parent=\"NavigationRegion3D/Stations\" instance=ExtResource(\"%s\")]" % [d[0], si, str(d[1]).get_file(), did])
+		out.append("transform = Transform3D(%s, 0, %s, 0, 1, 0, %s, 0, %s, %s, %s, %s)" % [
+				_n(cos(dyaw)), _n(-sin(dyaw)), _n(sin(dyaw)), _n(cos(dyaw)),
+				_n(float(st[1]) + float(d[2])), _n(float(st[3])),
+				_n(float(st[2]) + float(d[3]))])
+		out.append("")
+		si += 1
+
 	out.append("[node name=\"LevelExit\" parent=\"NavigationRegion3D\" instance=ExtResource(\"10_exit\")]")
 	out.append(_xform(float(summit[1]) + HALL_AT.x, float(summit[3]) + HALL_ROOF,
 			float(summit[2]) + HALL_AT.y))

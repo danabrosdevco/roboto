@@ -26,7 +26,10 @@ const SHOTS: Array = [
 	# Standing on the road itself, at the road's own height for that point.
 	["05_the_road_up", Vector3(-44.0, 119.0, -196.0), Vector3(30.0, 136.0, -272.0), 60.0],
 	["06_down_from_the_summit", Vector3(30.0, 135.0, -228.0), Vector3(-110.0, 30.0, 220.0), 66.0],
-	["07_the_terrace", Vector3(214.0, 88.0, 16.0), Vector3(40.0, 104.0, -160.0), 55.0],
+	["07_the_terrace", Vector3(196.0, 80.0, -6.0), Vector3(120.0, 80.0, -62.0), 62.0],
+	["07b_the_pillars", Vector3(196.0, 38.0, 176.0), Vector3(140.0, 38.0, 128.0), 62.0],
+	["07c_the_shoulder", Vector3(-160.0, 66.0, -8.0), Vector3(-212.0, 64.0, -52.0), 62.0],
+	["07d_the_trailhead", Vector3(44.0, 4.0, 462.0), Vector3(-20.0, 4.0, 406.0), 62.0],
 	["08_the_relay", Vector3(-16.0, 136.0, -240.0), Vector3(46.0, 140.0, -292.0), 62.0],
 	["08c_the_gate", Vector3(-30.0, 136.0, -180.0), Vector3(-6.0, 138.0, -240.0), 58.0],
 	["08d_the_hall_roof", Vector3(10.0, 137.0, -246.0), Vector3(40.0, 142.0, -284.0), 58.0],

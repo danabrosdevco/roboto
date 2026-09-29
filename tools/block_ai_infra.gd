@@ -598,13 +598,21 @@ func _obelisk() -> void:
 
 ## Three thick cables snaking across the ground, into a junction box.
 func _cable_run() -> void:
+	# The junction box first, because it is a real object and keeps its
+	# collision — no_collision() applies to everything after it.
+	box(Vector3(-0.1, 1.2, -0.1), Vector3(1.1, 2.0, 0.9), CLAD)
+	box(Vector3(0.2, 1.17, 0.6), Vector3(0.8, 1.2, 0.7), GLOW)
+	# THE CABLES ARE MESH ONLY. They lie 80 mm off the ground and are 180 mm
+	# thick, and move_and_slide has no step-up: a face that size is a wall you
+	# walk into rather than over. Same fault as the trench duckboards and the
+	# crater rim — small, invisible to a navmesh test, and it stops a body.
+	# Nothing should ever be brought up short by a cable.
+	no_collision()
 	var path := [Vector3(-6.0, -1.0, 0.08), Vector3(-2.5, -0.2, 0.08), Vector3(0.5, 0.8, 0.08), Vector3(4.0, 0.3, 0.08), Vector3(6.5, 1.2, 0.08)]
 	for k in 3:
 		var off := Vector3(0.0, (k - 1) * 0.24, 0.0)
 		for i in path.size() - 1:
 			pipe(path[i] + off, path[i + 1] + off, 0.09, RUBBER if k != 1 else GREEN, 6)
-	box(Vector3(-0.1, 1.2, -0.1), Vector3(1.1, 2.0, 0.9), CLAD)
-	box(Vector3(0.2, 1.17, 0.6), Vector3(0.8, 1.2, 0.7), GLOW)
 
 
 ## A roadside network cabinet with its conduits and a whip antenna.
@@ -936,108 +944,130 @@ func _mirror_rack() -> void:
 ## basis, then sectors × rings × thickness through a paraboloid. k = 0.035
 ## puts the focus 7.1 m out, which is where the feed quadpod meets.
 func _relay_dish() -> void:
-	var k := 0.035
+	# EVERY DIMENSION IN HERE IS RELATIVE TO S. It was built at S = 1 — a 24 m
+	# bowl 25 m tall — and played as a speck you could not pick out from the
+	# station below the summit. A relay is the reason the road up the hill
+	# exists; it has to read from the valley floor. At 2.4 it is a 58 m bowl
+	# standing 60 m, which is a radio telescope rather than a satellite dish.
+	#
+	# k is the paraboloid's z = k·r², so it divides by the scale where
+	# everything else multiplies. Get that backwards and the bowl turns into a
+	# saucer or a funnel.
+	var s := 2.4
+	var k := 0.035 / s
 	var tilt := Basis(Vector3(0, 1, 0), deg_to_rad(35.0))
-	var axis_z := 13.5
+	var axis_z := 13.5 * s
 	# The vertex sits BEHIND the elevation axis, so the bowl hangs forward over
-	# its mount the way a real one does instead of balancing on its own middle.
-	# Set FORWARD along the boresight, clear of the mount. At the axis itself
+	# its mount the way a real one does instead of balancing on its own middle —
+	# then forward along the boresight to clear the mount entirely. At the axis
 	# the back of the bowl sat on the elevation pipe and cut through both yoke
-	# arms — eight panels intersecting the thing that is supposed to carry them.
-	var centre := Vector3(-0.6, 0.0, axis_z) + Basis(Vector3(0, 1, 0), deg_to_rad(35.0)) * Vector3(0.0, 0.0, 1.1)
+	# arms.
+	var centre := Vector3(-0.6 * s, 0.0, axis_z) + tilt * Vector3(0.0, 0.0, 1.1 * s)
 
-	# ── Ground works. The plinth is 0.4 m and no more: a step nothing can climb,
-	# in the middle of a compound, is a collar of unwalkable ground.
-	cylinder(Vector3(0.0, 0.0, -0.4), 5.6, 0.8, 16, CONCRETE)
-	cylinder(Vector3(0.0, 0.0, 0.4), 4.6, 0.3, 16, PAD)
-	# The equipment cabin at the foot and the trunking that leaves it.
-	# Clear of the pad's 4.6 m disc, which it used to stand a metre inside.
-	box(Vector3(4.9, -3.2, 0.4), Vector3(9.7, 1.8, 3.8), CLAD)
-	box(Vector3(4.8, -3.3, 3.8), Vector3(9.8, 1.9, 4.1), METAL)
-	box(Vector3(4.8, -2.6, 1.1), Vector3(4.92, -0.6, 2.8), GLOW)
-	pipe(Vector3(4.9, -0.9, 3.4), Vector3(2.6, -0.9, 3.4), 0.2, METAL)
-	pipe(Vector3(2.6, -0.9, 3.4), Vector3(2.6, -0.9, 8.4), 0.2, METAL)
+	# ── Ground works. The plinth is a low step on purpose: anything taller, in
+	# the middle of a compound, is a collar of unwalkable ground.
+	cylinder(Vector3(0.0, 0.0, -0.4 * s), 5.6 * s, 0.8 * s, 20, CONCRETE)
+	cylinder(Vector3(0.0, 0.0, 0.4 * s), 4.6 * s, 0.3 * s, 20, PAD)
+	# The equipment cabin at the foot and the trunking that leaves it. Clear of
+	# the pad's disc, which it used to stand inside.
+	box(Vector3(4.9 * s, -3.2 * s, 0.4 * s), Vector3(9.7 * s, 1.8 * s, 3.8 * s), CLAD)
+	box(Vector3(4.8 * s, -3.3 * s, 3.8 * s), Vector3(9.8 * s, 1.9 * s, 4.1 * s), METAL)
+	box(Vector3(4.8 * s, -2.6 * s, 1.1 * s), Vector3(4.92 * s, -0.6 * s, 2.8 * s), GLOW)
+	pipe(Vector3(4.9 * s, -0.9 * s, 3.4 * s), Vector3(2.6 * s, -0.9 * s, 3.4 * s), 0.2 * s, METAL)
+	pipe(Vector3(2.6 * s, -0.9 * s, 3.4 * s), Vector3(2.6 * s, -0.9 * s, 8.4 * s), 0.2 * s, METAL)
 
 	# ── The pedestal: a tapered drum, a lit band, a walkway collar under the
 	# turntable.
-	cylinder(Vector3(0.0, 0.0, 0.7), 3.0, 8.0, 16, CLAD, 2.2)
-	cylinder(Vector3(0.0, 0.0, 4.2), 3.02, 0.35, 16, GLOW)
-	cylinder(Vector3(0.0, 0.0, 8.5), 3.6, 0.3, 16, GRATING)
-	for i in 12:
-		# Three and nine o'clock are where the yoke arms come down. A post there
-		# stands inside one.
-		if i == 3 or i == 9:
+	# TWO STRAIGHT DRUMS, not one tapered. A frustum's side quads are planar in
+	# theory and stop being planar once their corners snap to the 1/32 m grid;
+	# at this size the builder called it non-convex and would have built it
+	# smaller than drawn. Stepping it reads as a machine pedestal anyway.
+	cylinder(Vector3(0.0, 0.0, 0.7 * s), 3.0 * s, 4.4 * s, 16, CLAD)
+	cylinder(Vector3(0.0, 0.0, 5.1 * s), 2.5 * s, 3.4 * s, 16, CLAD)
+	cylinder(Vector3(0.0, 0.0, 4.2 * s), 3.02 * s, 0.35 * s, 20, GLOW)
+	cylinder(Vector3(0.0, 0.0, 8.5 * s), 3.6 * s, 0.3 * s, 20, GRATING)
+	for i in 16:
+		# Four and twelve o'clock are where the yoke arms come down. A post
+		# there stands inside one.
+		if i == 4 or i == 12:
 			continue
-		var a := TAU * i / 12.0
-		var r := 3.5
-		pipe(Vector3(cos(a) * r, sin(a) * r, 8.8), Vector3(cos(a) * r, sin(a) * r, 9.9), 0.07, METAL)
-	# The turntable the whole head sits on.
-	# Straight-sided, not tapered. A SHALLOW frustum snaps to the 1/32 m grid
-	# badly enough that its side quads stop being flat, and the builder warns it
-	# will come out smaller than drawn. Tall cones are fine; short ones are not.
-	cylinder(Vector3(0.0, 0.0, 8.8), 2.8, 0.9, 16, METAL)
+		var a := TAU * i / 16.0
+		var r := 3.5 * s
+		pipe(Vector3(cos(a) * r, sin(a) * r, 8.8 * s),
+				Vector3(cos(a) * r, sin(a) * r, 9.9 * s), 0.07 * s, METAL)
+	# The turntable the whole head sits on. Straight-sided, not tapered: a
+	# SHALLOW frustum snaps to the 1/32 m grid badly enough that its side quads
+	# stop being flat. Tall cones are fine; short ones are not.
+	cylinder(Vector3(0.0, 0.0, 8.8 * s), 2.8 * s, 0.9 * s, 20, METAL)
 
 	# ── The yoke, and the elevation axis through it.
-	for s: float in [-1.0, 1.0]:
-		# Topping just above the axis, not 0.9 m over it: the arms only have to
-		# reach the bearing, and every centimetre above it is in the bowl.
-		box(Vector3(-1.0, 2.9 * s - 0.6, 9.7), Vector3(1.0, 2.9 * s + 0.6, axis_z + 0.2), CLAD)
-	pipe(Vector3(0.0, -3.7, axis_z), Vector3(0.0, 3.7, axis_z), 0.55, METAL, 10)
-	# The back strut from the axis into the dish's hub.
-	beam(Vector3(0.0, 0.0, axis_z), centre + tilt * Vector3(0.0, 0.0, -1.5), 0.8, METAL)
+	for side: float in [-1.0, 1.0]:
+		# Topping just above the axis: the arms only have to reach the bearing,
+		# and every centimetre above it is inside the bowl.
+		box(Vector3(-1.0 * s, 2.9 * s * side - 0.6 * s, 9.7 * s),
+				Vector3(1.0 * s, 2.9 * s * side + 0.6 * s, axis_z + 0.2 * s), CLAD)
+	pipe(Vector3(0.0, -3.7 * s, axis_z), Vector3(0.0, 3.7 * s, axis_z), 0.55 * s, METAL, 12)
+	beam(Vector3(0.0, 0.0, axis_z), centre + tilt * Vector3(0.0, 0.0, -1.5 * s), 0.8 * s, METAL)
 
-	# ── The bowl. Sixteen sectors by three rings, each panel a hull of its
-	# eight corners on the paraboloid and 0.3 m behind it.
-	var rings := [1.7, 5.1, 8.6, 12.0]
-	for i in 16:
-		for j in 3:
+	# ── The bowl. Twenty sectors by four rings at this size — sixteen by three
+	# was fine on a 24 m dish and shows its facets on a 58 m one.
+	var rings: Array = [1.7, 4.3, 7.3, 10.0, 12.0]
+	for i in 20:
+		for j in 4:
 			var pts: Array = []
-			for a in [TAU * i / 16.0, TAU * (i + 1) / 16.0]:
-				for r: float in [rings[j], rings[j + 1]]:
-					for t: float in [0.0, -0.3]:
+			for a in [TAU * i / 20.0, TAU * (i + 1) / 20.0]:
+				for r: float in [rings[j] * s, rings[j + 1] * s]:
+					for t: float in [0.0, -0.3 * s]:
 						pts.append(centre + tilt * Vector3(cos(a) * r, sin(a) * r, k * r * r + t))
 			solid(pts, PALE)
-	# The hub, closing the middle of the bowl.
+	# The hub, closing the middle of the bowl. Its outer radius stops just
+	# short of the first ring of panels rather than reaching into them.
 	var hub: Array = []
-	for i in 16:
-		var a := TAU * i / 16.0
-		# 1.68, not 1.75: the inner ring of panels starts at 1.7 and the hub used
-		# to reach past it into them.
-		hub.append(centre + tilt * Vector3(cos(a) * 1.68, sin(a) * 1.68, k * 1.68 * 1.68))
-		hub.append(centre + tilt * Vector3(cos(a) * 1.4, sin(a) * 1.4, -1.5))
+	for i in 20:
+		var a := TAU * i / 20.0
+		hub.append(centre + tilt * Vector3(cos(a) * 1.68 * s, sin(a) * 1.68 * s,
+				k * 1.68 * s * 1.68 * s))
+		hub.append(centre + tilt * Vector3(cos(a) * 1.4 * s, sin(a) * 1.4 * s, -1.5 * s))
 	solid(hub, METAL)
-	solid([centre + tilt * Vector3(0.0, 0.0, 0.15),
-			centre + tilt * Vector3(0.9, 0.0, -0.1), centre + tilt * Vector3(-0.9, 0.0, -0.1),
-			centre + tilt * Vector3(0.0, 0.9, -0.1), centre + tilt * Vector3(0.0, -0.9, -0.1),
-			centre + tilt * Vector3(0.0, 0.0, -0.5)], GLOW)
+	solid([centre + tilt * Vector3(0.0, 0.0, 0.15 * s),
+			centre + tilt * Vector3(0.9 * s, 0.0, -0.1 * s),
+			centre + tilt * Vector3(-0.9 * s, 0.0, -0.1 * s),
+			centre + tilt * Vector3(0.0, 0.9 * s, -0.1 * s),
+			centre + tilt * Vector3(0.0, -0.9 * s, -0.1 * s),
+			centre + tilt * Vector3(0.0, 0.0, -0.5 * s)], GLOW)
 
-	# ── Ribs and rim. MESH ONLY from here down: these are 0.2 m bars 20 m in
-	# the air, and every one of them would otherwise be its own collision hull
-	# for no gain — nothing is ever going to walk into the back of a dish.
+	# ── Ribs, rim and feed. MESH ONLY from here down: bars a fifth of a metre
+	# thick, fifty metres in the air, and every one would otherwise carry its
+	# own collision hull for nothing.
 	no_collision()
-	for i in 8:
-		var a := TAU * i / 8.0 + TAU / 16.0
-		beam(centre + tilt * Vector3(cos(a) * 2.1, sin(a) * 2.1, k * 4.41 - 0.55),
-				centre + tilt * Vector3(cos(a) * 11.5, sin(a) * 11.5, k * 132.25 - 0.5), 0.34, METAL)
-	for i in 16:
-		var a0 := TAU * i / 16.0
-		var a1 := TAU * (i + 1) / 16.0
-		pipe(centre + tilt * Vector3(cos(a0) * 12.0, sin(a0) * 12.0, k * 144.0 + 0.28),
-				centre + tilt * Vector3(cos(a1) * 12.0, sin(a1) * 12.0, k * 144.0 + 0.28), 0.24, METAL)
-	# The feed, on a quadpod at the focus.
+	for i in 10:
+		var a := TAU * i / 10.0 + TAU / 20.0
+		beam(centre + tilt * Vector3(cos(a) * 2.1 * s, sin(a) * 2.1 * s,
+				k * 4.41 * s * s - 0.55 * s),
+				centre + tilt * Vector3(cos(a) * 11.5 * s, sin(a) * 11.5 * s,
+				k * 132.25 * s * s - 0.5 * s), 0.34 * s, METAL)
+	for i in 20:
+		var a0 := TAU * i / 20.0
+		var a1 := TAU * (i + 1) / 20.0
+		pipe(centre + tilt * Vector3(cos(a0) * 12.0 * s, sin(a0) * 12.0 * s,
+				k * 144.0 * s * s + 0.28 * s),
+				centre + tilt * Vector3(cos(a1) * 12.0 * s, sin(a1) * 12.0 * s,
+				k * 144.0 * s * s + 0.28 * s), 0.24 * s, METAL)
+	# The feed, on a quadpod at the focus. Feet set clear of the dish surface —
+	# started on it, each leg sank a fifth of its width into a panel.
 	var focus := centre + tilt * Vector3(0.0, 0.0, 1.0 / (4.0 * k))
 	for i in 4:
 		var a := TAU * i / 4.0 + TAU / 8.0
-		# Feet set 0.22 m clear of the dish surface. Started ON it, the quadpod
-		# legs each sank a fifth of their width into a panel.
-		beam(centre + tilt * Vector3(cos(a) * 11.2, sin(a) * 11.2, k * 125.44 + 0.22),
-				focus, 0.24, METAL)
+		beam(centre + tilt * Vector3(cos(a) * 11.2 * s, sin(a) * 11.2 * s,
+				k * 125.44 * s * s + 0.22 * s), focus, 0.24 * s, METAL)
 	var feed: Array = []
-	for dx: float in [-0.95, 0.95]:
-		for dy: float in [-0.95, 0.95]:
-			for dz: float in [-1.4, 1.0]:
+	for dx: float in [-0.95 * s, 0.95 * s]:
+		for dy: float in [-0.95 * s, 0.95 * s]:
+			for dz: float in [-1.4 * s, 1.0 * s]:
 				feed.append(focus + tilt * Vector3(dx, dy, dz))
 	solid(feed, CLAD)
-	solid([focus + tilt * Vector3(-0.5, -0.5, 1.0), focus + tilt * Vector3(0.5, -0.5, 1.0),
-			focus + tilt * Vector3(0.5, 0.5, 1.0), focus + tilt * Vector3(-0.5, 0.5, 1.0),
-			focus + tilt * Vector3(0.0, 0.0, 1.9)], GLOW)
+	solid([focus + tilt * Vector3(-0.5 * s, -0.5 * s, 1.0 * s),
+			focus + tilt * Vector3(0.5 * s, -0.5 * s, 1.0 * s),
+			focus + tilt * Vector3(0.5 * s, 0.5 * s, 1.0 * s),
+			focus + tilt * Vector3(-0.5 * s, 0.5 * s, 1.0 * s),
+			focus + tilt * Vector3(0.0, 0.0, 1.9 * s)], GLOW)
