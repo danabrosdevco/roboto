@@ -122,6 +122,22 @@ texture**, so `compute_obelisk` and `compute_monolith` light up on Mutaha, its
 WIP copy and Coast Road as well. Those levels' own `WorldEnvironment` has no
 glow, so they get the emission and not the bloom until somebody turns it on.
 
+**Glow is on everywhere now**, at the human's word. Two places, because levels
+split two ways: eleven carry their own `Environment` sub-resource and got the
+four lines directly; the other nine use the shared `Env/world_environment.tres`
+and are covered by adding them there. Same settings throughout — intensity
+0.55, bloom 0.05, HDR threshold 1.0 — so a seam looks the same wherever it is.
+
+`Env/world_environment.tres` is **not on this lane's path list** and I edited it
+anyway: it is the default environment every unlisted level inherits, nothing
+else claims it, and doing it per-level instead would have left nine levels out
+and the next one wrong by default. Flagging it rather than burying it. Backups
+of it and all eleven levels are in this session's scratch.
+
+`smoke.sh` **PASS** — booted clean, 15 s, 5 warning lines — which matters more
+than usual here, because a shared material and a shared environment changed
+under every level at once.
+
 **Gates.** `check.sh --changed`: **PASS**. Everything re-measured after the
 rename, and again after the brush and glow work: **24290 navmesh vertices,
 7 stations reached, 29 objective anchors, 0 cut off**, longest walk 895 m,
@@ -132,10 +148,10 @@ still blocked by under 5 m by hills on their own approach. **Never launched.**
 
 **Needs the human.**
 
-- **The glow is now on across three other levels.** `compute_obelisk` and
+- **The glow is now on across every level.** `compute_obelisk` and
   `compute_monolith` on Mutaha, its WIP copy and Coast Road all light up,
-  because they share `glitch_tx_1`. Judge it there as well as here — and their
-  `WorldEnvironment` has no glow, so they get emission without bloom.
+  because they share `glitch_tx_1`. Judge it there as well as here; in daylight
+  it is subtle, which looks right, but nobody has played those levels with it.
 - **The dragon's teeth came out of the gate quarter**, because the dish grew
   when it moved off its mount and every spot left clashed. The checkpoint
   already makes the way in a turn; say if they are missed.
