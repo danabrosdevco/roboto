@@ -39,6 +39,122 @@ most wants and least often gets:
 
 
 
+## 2026-09-29 (3) — a checker that could not see 248 overlaps, and two things from playing Hillfort
+
+**Landed.** `maps/proving/proving_level.map` has **no overlapping brushes**. It
+had 248 pairs, and `block_arena.gd` printed "none overlapping" over every one
+of them: its clearance check compares the 56 COVER footprints against each
+other, as 2D boxes, and never looks at the ground, the lanes, the tower, the
+bases or the skyline. The fortress ring checker had the same fault. **A checker
+with categories hides every fault in the category it skips.**
+
+So there is one with no categories. `brush_overlaps()` in `block_buildings.gd`
+tests every brush against every other as a solid, and `tools/probe_map_overlap.gd`
+does the same to a written `.map`, naming pairs the way TrenchBroom numbers
+them so one can be selected in the editor. A brush IS an intersection of
+half-spaces, so both get a brush's corners out of its own face planes and ask
+whether the union of two brushes' planes still encloses anything. Every plane
+is pulled in a quarter unit first, because brushes are MEANT to share faces and
+only a real interpenetration survives that.
+
+**The 248 were four families, one line of code each, multiplied by a table.**
+56 cover caps laid OVER the wall they cap instead of onto the end of it. 44 in
+the derrick, drawn straight through itself. 32 from the wall coping run through
+the 28 piers standing under it. 54 from the lanes being plates laid ON the
+floor, so every crossing lane and every piece of cover standing on one sank
+0.06 m into it. The rest: ramps sunk 0.2 m into the field, rails 0.45 m into
+their ramps, deck through posts, parapets through each other, pylon arms
+through masts.
+
+**The lanes are cut into the field as one surface now.** The floor is split at
+every lane edge, each cell coloured grass or dirt, and the runs merged back
+along x — about forty brushes. No plate, no bevel, and no 0.06 m lip for a
+robot to catch on. It looks the same at eye height and on the minimap; the
+colour was doing all the work, not the six centimetres.
+
+**The derrick's legs are cut at every ring**, so the ring runs through the node
+and the legs butt its level faces. That needed `slant_post()`: `beam()` mitres
+its ends square to its own axis, and **a mitred end cannot butt a level face**.
+Both ramps stand ON the field instead of 0.2 m through it — `ramp()` fills from
+a base below its surface because a hexahedron cannot come to an edge, so they
+are six-point `solid()` wedges, which walk identically. 250 brushes → 309, same
+extents.
+
+**`tools/level_map_rebuild.gd` is how a map change reaches the game.** A level
+scene holds the BUILT geometry — one mesh per entity, one CollisionShape3D per
+brush, saved into the `.tscn` — so editing a level's `.map` changes nothing
+until somebody presses Build. It replaces only the FuncGodotMap node's children
+and lifts that node out of the level to build it, so the level's own scripts
+never enter the tree. Two things it has to put back by hand: the scene's uid,
+which `pack()` drops and **three missions depend on**, and the 400 script
+defaults that packing outside the editor writes out — those are a trap, because
+a scene value beats a script default. Outside the map subtree the rebuilt level
+diffs against the editor-saved one as **zero lines**, which is the test that
+says it is as good as the button.
+
+**Then the two things from playing Hillfort.**
+
+**The scatter appearing and disappearing depending on where you stood.** A
+MultiMesh is ONE instance to the renderer however many props it draws, so it is
+culled as one thing, by the distance to where the whole thing sits — and built
+as a single multimesh over an 896 × 1024 m map, that is the middle of the map.
+`visibility_range_end` then means "you can see the trees while you stand in the
+centre". Walk out past 190 m and every tree goes at once. The same was true of
+the frustum, silently: a map-wide multimesh has a map-wide bounding box, so it
+is never off screen and every prop was submitted every frame whichever way you
+faced. Each variant is cut into 192 m tiles now, one multimesh each, sitting at
+the middle of the props it holds.
+
+**The building off the ground by the relay is inside `landmark_relay_dish`**,
+not a placed piece, which is why every placement check passed it. The equipment
+cabin had been moved clear of the PAD's disc (4.6·s) and left at the plinth's
+height — and the plinth is a metre wider than the pad (5.6·s), so its inner end
+rested on the step and the other nine metres hung 0.96 m over open deck. It is
+out past the plinth's edge and down on the ground now.
+
+**`tools/probe_footing.gd` is the instrument for that class.** For every placed
+piece it takes the piece's lowest geometry COLUMN BY COLUMN over a 16 × 16 net,
+drops a ray under each column with the piece's own collision excluded, and
+reports the typical gap. Column by column is the whole point: a 40 m dish on a
+pedestal has most of its area hanging over open ground, so judged as one box
+its worst corner is 40 m up and it is not floating at all, while a hall
+hovering a metre is a metre off in *every* column. The median tells those
+apart; the minimum cannot.
+
+**I got that tool wrong twice before it found anything**, and both are written
+into it. The sign was inverted, so it called thirty-five correctly bedded
+pieces "floating" and found none of the ones that were. Then it judged each
+piece by its merged bounding box, which cannot see a cabin hanging off the edge
+of a 59 m dish.
+
+**Gates.** `check.sh --changed`: **PASS** (39 scripts, 67 scenes and
+resources). `smoke.sh`: **PASS**, booted clean. `test.sh`: the scatter suite
+passes, including a new guard — no multimesh may sit further than a tile from
+the middle of what it draws. `probe_map_overlap.gd` on the written proving map:
+**0 pairs, 0 degenerate brushes**. Navmesh re-baked on both levels: proving
+727 → 712 vertices, Hillfort 27970 → 27978.
+
+**Needs the human.**
+
+- **Walk Hillfort and tell me the trees stop popping.** I cannot play it. The
+  cause is certain and the fix is the standard one, but "does it still pop"
+  is a question only walking the map answers.
+- **Look at the proving ground's floor.** The lanes lost their 0.06 m and
+  their bevelled edge. I think it reads the same and the hard edge is
+  slightly better, but it is a change to a map you have played.
+- **`landmark_relay_dish` has 129 overlapping brush pairs of its own** —
+  mostly the feed legs and the bowl's facets. Out of scope today; the tool
+  will list them whenever it is worth a pass.
+- Two test failures are NOT mine and were failing before: Pittsburgh's bridge
+  spacing (carried from my first entry), and the Mutaha squad spawn and exit
+  standing on the ground.
+
+**Blocked / next.** Nothing blocking. The obvious next pass is running
+`probe_map_overlap.gd` over `maps/blocks/` as a whole — the arena was not
+special, it was just the one that got looked at.
+
+---
+
 ## 2026-09-29 (2) — an alpine set, and it goes down on Hillfort
 
 **Landed.** `maps/blocks/alpine/` — **twenty-two** pieces of dead wood and
