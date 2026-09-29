@@ -36,6 +36,9 @@ const EYE := 1.7
 const TOP := Vector3(54.0, -224.0, 132.0)
 ## The tallest thing standing on the summit — the relay masts, not a watchtower.
 const TOWER := 21.8
+## The summit plateau's centre and its authored height.
+const SUMMIT := Vector2(30.0, -270.0)
+const PLATEAU := 132.0
 
 ## Ground this far off the authored height is not the bed.
 const TOL := 1.5
@@ -116,6 +119,7 @@ func _initialize() -> void:
 			print("       narrowest at (%.0f, %.0f) — under %.0f m, the baker will drop it" % [
 					narrow_at.x, narrow_at.y, WANT_WIDE])
 	_sightlines(data)
+	_summit_section(data)
 	quit()
 
 
@@ -153,14 +157,32 @@ func _sightlines(data: Resource) -> void:
 ## A cross-section through each landing along the flight's own direction. A
 ## landing is where two flights hand over; if the ground there is not the pad's
 ## height the handover is a step, and a step is a wall.
-func _landings(data: Resource) -> void:
+## Cross-sections through the summit, out past the plateau on all four
+## bearings. THE ONE QUESTION THIS ANSWERS: is the fort on a top or in a bowl.
+## Anything out there higher than the plateau is a rim, and a rim is what makes
+## a hilltop read as a crater however gently it rises.
+func _summit_section(data: Resource) -> void:
+	var pad := Vector2(75.0, 60.0)
 	print("")
-	print("   landings, sampled along X through the pad centre (pad height in brackets)")
-	for f: Array in FLIGHTS:
-		var b: Vector3 = f[2]
+	print("   cross-sections through the summit at (%.0f, %.0f), plateau %.0f m" % [
+			SUMMIT.x, SUMMIT.y, PLATEAU])
+	print("   %-8s %s" % ["out", "  0   20   40   60   80  100  120  140  160  200  240 m"])
+	for dir: Array in [["east", Vector2(1, 0)], ["west", Vector2(-1, 0)],
+			["south", Vector2(0, 1)], ["north", Vector2(0, -1)]]:
+		var d: Vector2 = dir[1]
 		var row: PackedStringArray = []
-		for d in [-60.0, -40.0, -28.0, -20.0, -12.0, 0.0, 12.0, 20.0]:
-			var x: float = b.x + (d if b.x < 0.0 else -d)
-			row.append("%.0f" % float(data.height_at_local(x, b.y)))
-		print("   %-20s (%3.0f)  %s" % [str(f[0]).split("→")[1], b.z, " ".join(row)])
-	print("   offsets -60 -40 -28 -20 -12 0 +12 +20 m from the pad centre, outward first")
+		var rim := -INF
+		var rim_at := 0.0
+		for out: float in [0.0, 20.0, 40.0, 60.0, 80.0, 100.0, 120.0, 140.0, 160.0, 200.0, 240.0]:
+			var p := SUMMIT + d * out
+			var h: float = data.height_at_local(p.x, p.y)
+			row.append("%5.0f" % h)
+			# Only count ground OUTSIDE the plateau: the pad itself is level and
+			# is not a rim however it reads.
+			if out > maxf(pad.x * absf(d.x), pad.y * absf(d.y)) and h > rim:
+				rim = h
+				rim_at = out
+		var note := ""
+		if rim > PLATEAU + 1.0:
+			note = "   RIM +%.0f m at %.0f m out" % [rim - PLATEAU, rim_at]
+		print("   %-8s %s%s" % [dir[0], "".join(row), note])

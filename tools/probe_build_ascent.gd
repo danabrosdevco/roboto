@@ -68,9 +68,15 @@ const MIN_FACE := 52.0
 const CONES: Array = [
 	[180.0, 420.0, 50.0],
 	[140.0, 300.0, 26.0],
-	# 1.5 x 56/90 is a tangent of 0.93, so the steepest part of this stands at
-	# 43 degrees - under the navmesh limit of 45, so it is a hill you walk up.
-	[76.0, 90.0, 56.0],
+	# The summit dome. Its flat top is DELIBERATELY SMALLER than the plateau pad
+	# above it: when the cone was flat out to r=76 and the pad only reached 60 in
+	# Z, the ground just outside the pad stood 15-18 m HIGHER than the plateau
+	# and the fort sat in a bowl. The pad has to be the top, so the ground under
+	# it has to be falling by the time the pad ends.
+	# 1.5 x 52/130 is a tangent of 0.6, so the steepest of this stands at 31 deg:
+	# a hill you walk up from any side. At 100 m of falloff it was 42 and the
+	# nav probe started reporting the west side as a detour.
+	[40.0, 130.0, 52.0],
 ]
 const SUMMIT := Vector2(30.0, -270.0)
 
@@ -648,11 +654,11 @@ func _recipe() -> PackedStringArray:
 		"border_width = 100.0",
 		"border_noise = 60.0",
 		"border_ruggedness = 0.7",
-		"hills_height = 7.0",
+		"hills_height = 5.0",
 		"hills_scale = 240.0",
 		"hills_octaves = 5",
 		"hills_warp = 60.0",
-		"ridge_height = 8.0",
+		"ridge_height = 5.0",
 		"ridge_scale = 340.0",
 		"ridge_on_floor = 0.08",
 		"detail_height = 0.7",
@@ -678,7 +684,7 @@ func _recipe() -> PackedStringArray:
 		"sketch_edge_noise = 30.0",
 		# Low on purpose. The white mask is here for the rock zone and for
 		# crags; the 500 m is stamped on afterwards, in the final datum.
-		"sketch_mountain_height = 16.0",
+		"sketch_mountain_height = 4.0",
 		# No painted water anywhere, and the level parked far below the map:
 		# water_level is ONE global height, so a tarn on a shelf 300 m up would
 		# flood the valley to match.

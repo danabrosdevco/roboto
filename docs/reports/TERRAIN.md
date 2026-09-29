@@ -80,6 +80,24 @@ run** — nothing here touches their ground, and the level is not in any mission
   summit from every station, which is the check that earned its keep — see
   below.
 
+**The fort was still in a bowl after the steep ring came out, and I could not
+see it until the human drew a line round it.** A `TerrainStamp` FLATTEN levels
+what is inside it and leaves everything outside exactly as it was, so the
+sketch's painted relief plus the hills and ridge noise — 15 to 18 m of it —
+went on standing in a ring 80 to 100 m out while the plateau sat flat at 132.
+The cross-section in `probe_ascent_bed.gd` prints it in one line per bearing;
+**there was no measurement that would have caught this and now there is**, and
+it flags anything outside the pad that stands above the plateau.
+
+Two fixes, both worth keeping: `sketch_mountain_height` down from 16 m to 4 m,
+because the white paint is here for the ROCK ZONE and not for relief (the tool
+already said so in its own comment while the number said otherwise); and the
+summit dome's flat top made SMALLER than the pad above it, so the ground is
+already falling by the time the pad's edge is reached. Narrowing it too far
+put the west flank at 42° and the nav probe immediately called it a detour, so
+the falloff went back out to 130 m — 31° at its steepest, walkable from every
+side. The summit is now the highest point on the map, 132.0 m of 132.0 m.
+
 **A flat hilltop hides itself, and that is a thing to design for.** The first
 open version put the plateau at 132 m on ground already at 127 a hundred metres
 out, so an ordinary hill stamp on the approach stood HIGHER than the objective.
