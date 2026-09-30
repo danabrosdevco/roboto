@@ -39,6 +39,94 @@ most wants and least often gets:
 
 
 
+## 2026-09-30 (3) — regenerating art without eating anyone's work, and three Pittsburgh themes
+
+**Landed.** A level is **two files** now. `maps/<name>_art.tscn` is the
+terrain, what shapes it and everything standing on it; `maps/<name>_level.tscn`
+is the spawn, the exit, the environment, the navigation region, the objective
+anchors and whatever GAMEPLAY adds. The level instances the art under its
+`NavigationRegion3D` so the baker still walks it. **The art is rewritten every
+run; the level is written once.** `tools/build_salient.gd` is the worked
+example and `maps/salient_art.tscn` / `maps/salient_level.tscn` the first pair.
+
+**This is GAMEPLAY's ask, answered the strong way.** Their words: *"the
+regenerator does not preserve nodes it did not place. Every rebuild deletes the
+relay console, the extraction and the spawn move… the real fix is for the block
+pass to leave non-generated nodes alone."* A MERGE would have been the obvious
+reading and it is the wrong one — a generator that keeps the nodes it did not
+author can be got subtly wrong, and when it is it eats work silently, which is
+the exact failure being fixed. **A generator that never opens the file cannot.**
+Either the art was rewritten and the level is untouched, or nothing happened.
+
+**Objective anchors stay in the LEVEL**, even though TERRAIN places them.
+Patrol points are children of their anchor, so a regenerated anchor takes
+someone's patrol route with it.
+
+**The navmesh is the only thing that still crosses**, and it is written back by
+replacing two lines rather than rewriting the scene — a rebake is not a
+rewrite.
+
+**Proved, not asserted.** A node added to `salient_level.tscn` by hand survives
+a full art regenerate AND a navmesh rebake. The bake is identical either way
+(44335 vertices, 61409 polygons) and all 26 anchors still reach.
+
+**`tools/level_split.gd` migrates a level that already exists.** It writes
+nothing without `--apply` and refuses to apply if the move would break a
+`NodePath` — the silent half of the change. Dry runs read clean on both:
+
+- **`pittsburgh_level`** — 5061 nodes to the art; the level keeps eight
+  objective anchors, the exit, both spawns and the `CoverPointSpawner`.
+- **`hillfort_level`** — 2353 to the art; the level keeps GAMEPLAY's
+  `RelayObjective` and the spawn they moved to the Cistern.
+
+**NEITHER IS APPLIED.** Pittsburgh because the human asked it to wait, Hillfort
+because it is another lane's open file and splitting it is their call to make,
+not mine. Both are one command away.
+
+**Gates.** `check.sh --changed`: **PASS** (140 scenes and resources). Reach on
+the split Salient: **26 anchors, 0 cut off**. `smoke.sh` and `test.sh`: not run
+this pass — nothing here loads at startup or touches the ledger.
+
+**Needs the human.**
+
+- **Say whether Hillfort gets split.** It is GAMEPLAY's open file; the command
+  is in `docs/TERRAIN.md` and takes about a minute plus a rebake. Doing it ends
+  `tools/hillfort_objectives.sh` as a standing chore.
+- Three Pittsburgh themes are below, as asked. **Nothing started on Pittsburgh.**
+
+**Blocked / next.** Nothing blocking. Still open from this morning: the
+Salient's 1330 placed pieces want consolidating into one generated `.map`, and
+until that lands its draw-call count is unmeasured.
+
+### Three themes for a Three Rivers redesign
+
+Not layouts — the confluence and the crossings are the map. These are three
+different answers to *what this place is*, and each one changes the kit, the
+palette and how the ground plays.
+
+1. **The Works, Still Running.** Nobody shut the plant down; it just stopped
+   having people in it. Blast furnaces, coke batteries, torpedo cars on the
+   rail, gas holders, slag still glowing. **The crossings are plant, not
+   roads** — a conveyor gallery, a rail bridge, the lock — so every river
+   crossing is a structure you fight *inside* rather than a strip of tarmac you
+   run across. Kit is `industrial/` almost entirely, and it is the only theme
+   that needs no new assets. Palette: rust, soot, and heat.
+2. **The Flood.** The dam went. Streets are canals, ground floors are under,
+   and the walkable layer is upper storeys, embankments and pontoons. This is
+   the "water forces a crossing" lesson turned up to the map's whole premise —
+   every route is a causeway, a roof or a boat, and the confluence finally
+   means something tactically instead of being scenery. The most work of the
+   three, because a roof layer has to be built rather than painted.
+3. **The Reclamation.** The machines are eating the city and Pittsburgh is
+   halfway through being processed: blocks stripped to frames, material sorted
+   into graded heaps, a compute spine of data halls and cable runs growing
+   along the river where the mills were. **The contrast IS the theme** —
+   grimy brick on one bank, clean grey monolith with green seams on the other,
+   and a front line between them. It is also the only one of the three that is
+   about the game's own fiction rather than about a city.
+
+---
+
 ## 2026-09-30 (2) — the Salient as a real level, and what was making it flat
 
 **Landed.** `maps/salient_level.tscn`, from `tools/build_salient.gd`. The deck
