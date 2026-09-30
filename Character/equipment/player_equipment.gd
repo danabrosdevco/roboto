@@ -410,3 +410,34 @@ func aim_point(distance: float, exclude: Array = []) -> Vector3:
 			return global_position
 		return cam.global_position + (-cam.global_transform.basis.z.normalized() * distance)
 	return hit.position
+
+
+## WHERE A SPAWNED THING BELONGS: THE LEVEL, NOT THE WORLD.
+##
+## `player.world` is the persistent node that levels are loaded INTO — the
+## player is a SIBLING of the level, not a child of it, which is why it
+## survives a mission change. Parenting ordnance there makes the ordnance
+## survive too: a Drone Carrier Pack thrown in the depot put two Divers in the
+## air that were still flying after the next mission loaded.
+##
+## World.current_level is what deload_current_level() frees, so anything
+## parented to it goes when the mission does. The AI side already worked this
+## out — see ai_weapon_grenade_launcher._charge_parent(), which notes that a
+## bomb in the air at extraction used to come home with you.
+var _warned_no_level: bool = false
+
+
+func level_node() -> Node:
+	var w = player.get("world") if player != null else null
+	if w != null:
+		var lvl = w.get("current_level")
+		if lvl != null and is_instance_valid(lvl):
+			return lvl
+		# Falling back to the World means whatever this is will outlive the
+		# mission. Worth saying so — once: this is also the tracer path, and a
+		# warning per round would bury the message it is trying to send.
+		if not _warned_no_level:
+			_warned_no_level = true
+			push_warning("%s: no current_level, so this is being parented to the World and will survive a mission change." % display_name)
+		return w
+	return get_tree().current_scene

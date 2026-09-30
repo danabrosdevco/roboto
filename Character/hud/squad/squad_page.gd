@@ -13,7 +13,9 @@ extends HBoxContainer
 # Drag a card to another team to move it, onto the strip under the teams to
 # start a new one, or onto the bench to leave it at base. A team goes when the
 # last robot leaves it. Nothing else: no buttons for making or deleting teams.
-# The bench has its own scroll, so it is on screen however long the teams run.
+# Teams and bench share ONE scroll: the bench used to be pinned to the bottom,
+# which cost a permanent slab of height to robots you had chosen to leave
+# behind and hid the new ones under the fold.
 #
 # Select a card and its slots open on the right. Click a slot, and the list
 # under it is what you have IN STORES that fits it — no prices on this page,
@@ -43,7 +45,6 @@ var _teams: VBoxContainer
 var _bench_head: HBoxContainer
 var _bench_panel: PanelContainer
 var _bench: VBoxContainer
-var _bench_scroll: ScrollContainer
 var _teams_scroll: ScrollContainer
 var _detail: VBoxContainer
 # Every card on the page, so a click can re-light them in place (see _pick).
@@ -69,23 +70,38 @@ func setup(owner_ui) -> void:
 	# Pinned: the seats are what every move on this page is spent against.
 	_head = Kit.vbox(4)
 	_left.add_child(_head)
+	# ONE SCROLL FOR THE WHOLE COLUMN, teams and bench together.
+	#
+	# The bench used to be pinned to the bottom with its own scroll, so it was
+	# always on screen however long the teams ran. That sounds right and plays
+	# wrong: the bench is usually one or two robots you have chosen to leave
+	# behind, and it was holding ~150px of permanent height in front of the
+	# thing you actually came to look at. Recruit your first Rover and it joins
+	# ARMOR, ARMOR is the last team, and the new robot lands under the fold
+	# behind a bench showing nobody you care about.
+	#
+	# The seats header above stays pinned — that is the number every move on
+	# this page is spent against, and it is one line.
 	_teams_scroll = _scroll()
-	# The teams take whatever the bench leaves: see _build_bench.
 	_left.add_child(_teams_scroll)
+	var column := Kit.vbox(10)
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_teams_scroll.add_child(column)
 	_teams = Kit.vbox(10)
 	_teams.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_teams_scroll.add_child(_teams)
+	column.add_child(_teams)
 	_bench_head = Kit.hbox(10)
-	_left.add_child(_bench_head)
+	column.add_child(_bench_head)
 	_bench_panel = PanelContainer.new()
-	_bench_panel.size_flags_vertical = Control.SIZE_FILL
+	_bench_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_drop_target(_bench_panel, {"kind": &"bench"})
-	_left.add_child(_bench_panel)
-	_bench_scroll = _scroll()
-	_bench_panel.add_child(_bench_scroll)
+	column.add_child(_bench_panel)
+	# No inner scroll any more: the column's own scroll handles the overflow,
+	# and a scroll inside a scroll eats the wheel wherever the pointer happens
+	# to be sitting.
 	_bench = Kit.vbox(8)
 	_bench.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_bench_scroll.add_child(_bench)
+	_bench_panel.add_child(_bench)
 
 	var side := PanelContainer.new()
 	var line := StyleBoxFlat.new()
@@ -345,20 +361,15 @@ func _build_bench() -> void:
 		if r.benched:
 			resting.append(r)
 	if resting.is_empty():
-		_bench_scroll.custom_minimum_size = Vector2(0, 22)
 		_bench.add_child(Kit.label("NOBODY ON THE BENCH. DRAG A ROBOT HERE TO LEAVE IT AT BASE", Kit.DIM, Kit.SMALL))
 		return
 	var grid := _grid()
 	for r in resting:
 		grid.add_child(_card(r, {"kind": &"bench"}))
 	_bench.add_child(grid)
-	# As tall as what is on it, up to two rows of cards: past that it scrolls,
-	# and the teams above keep the rest of the page. Measured, not guessed —
-	# a card is as tall as what is on it too.
-	var rows := ceili(resting.size() / 2.0)
-	var tall := grid.get_combined_minimum_size().y
-	var gap := float(grid.get_theme_constant("v_separation"))
-	_bench_scroll.custom_minimum_size = Vector2(0, tall if rows <= 2 else (tall + gap) * 2.0 / rows - gap)
+	# As tall as what is on it, full stop. The two-row cap and the measured
+	# height it needed went with the inner scroll: the bench is the last thing
+	# in the column now, so a long one simply runs on and the column scrolls.
 
 
 func _grid() -> GridContainer:

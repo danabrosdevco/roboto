@@ -1,0 +1,80 @@
+[gd_scene load_steps=6 format=3]
+
+; CLUSTER SUBMINE — a caltrop. Six spikes on three orthogonal axes, so however
+; it lands there is always a point up and it reads the same from any angle.
+;
+; That shape is the whole reason it is legible: five of these scattered over
+; six metres have to be identifiable at a glance from standing height, and a
+; disc lying flat in grass is not. A caltrop is a silhouette.
+;
+; Each spike is a cone — CylinderMesh with top_radius 0 — pushed out half its
+; own height so the six meet at the hub. The three axis mappings are the same
+; basis the gun barrels use (mesh +Y onto the axis you want).
+
+[sub_resource type="StandardMaterial3D" id="mat_olive"]
+albedo_color = Color(0.27, 0.3, 0.18, 1)
+metallic = 0.1
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="mat_steel"]
+albedo_color = Color(0.15, 0.16, 0.17, 1)
+metallic = 0.65
+roughness = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_red"]
+albedo_color = Color(0.85, 0.16, 0.12, 1)
+metallic = 0.2
+roughness = 0.4
+
+[sub_resource type="CylinderMesh" id="m_spike"]
+top_radius = 0.0
+bottom_radius = 0.03
+height = 0.085
+radial_segments = 5
+
+[sub_resource type="SphereMesh" id="m_hub"]
+radius = 0.035
+height = 0.07
+radial_segments = 8
+rings = 4
+
+[node name="CaltropMineModel" type="Node3D"]
+
+[node name="Hub" type="MeshInstance3D" parent="."]
+material_override = SubResource("mat_olive")
+mesh = SubResource("m_hub")
+
+[node name="Pip" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.45, 0, 0, 0, 0.45, 0, 0, 0, 0.45, 0, 0, 0)
+material_override = SubResource("mat_red")
+mesh = SubResource("m_hub")
+
+[node name="SpikeUp" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0425, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_spike")
+
+[node name="SpikeDown" type="MeshInstance3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, -1, 0, 0, 0, 1, 0, -0.0425, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_spike")
+
+[node name="SpikeRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.0425, 0, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_spike")
+
+[node name="SpikeLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -0.0425, 0, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_spike")
+
+[node name="SpikeFore" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.0425)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_spike")
+
+[node name="SpikeAft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, -0.0425)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_spike")

@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3]
+
+; THE CANISTER IN FLIGHT. A grenade whose "explosion" is a cloud.
+;
+; blast_damage 0 is load-bearing: AIGrenadeProjectile only assigns
+; damage_value when it is above zero, and a SmokeVolume has no such property.
+; Smoke that hurt people would be a frag with extra steps anyway.
+
+[ext_resource type="PackedScene" path="res://Character/characters/ai/equipment/ai_grenade_projectile.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://Character/weapon/smoke_volume.tscn" id="2_smoke"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/smoke_canister_model.tscn" id="3_model"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="4_hiss"]
+
+[node name="Smoke_Canister" node_paths=PackedStringArray("mesh") instance=ExtResource("1_base")]
+explosion_scene = ExtResource("2_smoke")
+blast_damage = 0
+fuse_time = 2.0
+explode_on_bounce = true
+bounce_before_explode = 1
+mesh = NodePath("Canister")
+
+[node name="Frag_West" parent="."]
+visible = false
+
+[node name="ExplosionSound" parent="."]
+stream = ExtResource("4_hiss")
+pitch_scale = 0.6
+volume_db = -8.0
+
+[node name="Canister" parent="." instance=ExtResource("3_model")]
+transform = Transform3D(1.4, 0, 0, 0, 1.4, 0, 0, 0, 1.4, 0, 0, 0)

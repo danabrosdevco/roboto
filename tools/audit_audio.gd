@@ -17,7 +17,8 @@ extends SceneTree
 #   godot --headless --audio-driver Dummy --path . --script res://tools/audit_audio.gd
 # ─────────────────────────────────────────────
 
-const RANGES := [10.0, 25.0, 50.0, 100.0, 200.0, 400.0]
+const _Bands := preload("res://Managers/weapon_audio.gd")
+const RANGES := [10.0, 25.0, 50.0, 100.0, 200.0, 400.0, 800.0]
 ## Below this at the listener, a sound is masked by anything else going on.
 const FLOOR_DB := -40.0
 
@@ -37,18 +38,21 @@ func _init() -> void:
 	print("")
 	print("══ AUDIO AUDIT ════════════════════════════════════════════════════")
 	print("gain at the listener, dB. Anything under %.0f is masked in a firefight." % FLOOR_DB)
+	print("* = banded at runtime by WeaponAudio")
 	print("%-30s %-9s %5s %6s %7s %s" % ["sound", "bus", "unit", "vol", "cutoff",
 		" ".join(RANGES.map(func(d): return "%6dm" % int(d)))])
 	rows.sort_custom(func(a, b): return String(a["name"]) < String(b["name"]))
 	for r in rows:
 		var line := ""
 		for d in RANGES:
-			if r["max_distance"] > 0.0 and d > r["max_distance"]:
+			# A banded sound has its cutoff cleared by WeaponAudio in the far
+			# band, so an authored max_distance only bites the ones it stages not.
+			if not bool(r["banded"]) and r["max_distance"] > 0.0 and d > r["max_distance"]:
 				line += "%7s" % "--"
 				continue
 			line += "%7.1f" % _gain(r, d)
 		print("%-30s %-9s %5.0f %6.1f %7s %s" % [
-			r["name"], r["bus"], r["unit_size"], r["volume_db"],
+			("* " if r["banded"] else "  ") + String(r["name"]), r["bus"], r["unit_size"], r["volume_db"],
 			("%.0fm" % r["max_distance"]) if r["max_distance"] > 0.0 else "none", line])
 
 	# ── WHAT IS ON THE GUN BUS ───────────────────
@@ -77,20 +81,52 @@ func _init() -> void:
 	quit(0)
 
 
-## Godot's inverse-distance law, the default attenuation_model.
+## What the listener actually gets, INCLUDING the distance bands: near and mid
+## use Godot's inverse-distance law, far is computed by WeaponAudio instead.
 func _gain(r: Dictionary, distance: float) -> float:
-	var att: float = float(r["unit_size"]) / maxf(distance, 0.0001)
+	# THE FLOOR WeaponAudio APPLIES, applied here too. A banded sound never runs
+	# at the unit_size its scene authored if that is below MIN_UNIT_SIZE, so an
+	# audit that printed the authored number would be describing a curve the
+	# game does not use.
+	var unit: float = float(r["unit_size"])
+	if bool(r["banded"]):
+		unit = maxf(unit, _Bands.MIN_UNIT_SIZE)
+	if bool(r["banded"]) and distance > _Bands.FAR_START:
+		return minf(_Bands.FAR_CEILING_DB,
+			_Bands.far_db(unit, float(r["volume_db"]), distance))
+	var att: float = unit / maxf(distance, 0.0001)
 	return float(r["volume_db"]) + minf(float(r["max_db"]), linear_to_db(att))
+
+
+## Which bus a shot lands on at this distance. Only the sounds WeaponAudio
+## stages are banded; a reload click stays where it was authored.
+func _bus_at(r: Dictionary, distance: float) -> String:
+	if not bool(r["banded"]):
+		return String(r["bus"])
+	if distance <= _Bands.NEAR_END:
+		return "Weapons"
+	return "WeaponsMid" if distance <= _Bands.FAR_START else "WeaponsFar"
 
 
 ## Every AudioStreamPlayer3D a scene declares, read as packed data so nothing
 ## has to be instantiated or make a sound.
 func _players(st: SceneState, scene: String) -> Array:
 	var out: Array = []
+	# WeaponAudio.stage() is called on whatever the weapon names as its SHOT —
+	# `shot_audio` on an AIWeapon, `rifle_stream_player` on a HUD weapon. Those
+	# are the sounds that get banded; a reload click is not one of them.
+	var staged: Array = []
+	for j in st.get_node_property_count(0):
+		var p := String(st.get_node_property_name(0, j))
+		# Every property a script hands to WeaponAudio.stage(). Kept in step with
+		# the call sites by hand, which the "NOT banded" list below makes visible.
+		if p in ["shot_audio", "rifle_stream_player", "audio", "launch_sound", "explosion_sfx"]:
+			staged.append(String(st.get_node_property_value(0, j)).get_file())
 	for i in st.get_node_count():
 		if st.get_node_type(i) != &"AudioStreamPlayer3D":
 			continue
 		var row := {
+			"banded": staged.has(String(st.get_node_name(i))),
 			"name": "%s/%s" % [scene, st.get_node_name(i)],
 			"bus": "Master", "unit_size": 10.0, "volume_db": 0.0,
 			"max_db": 3.0, "max_distance": 0.0,
@@ -98,6 +134,8 @@ func _players(st: SceneState, scene: String) -> Array:
 		for j in st.get_node_property_count(i):
 			var prop := String(st.get_node_property_name(i, j))
 			var v: Variant = st.get_node_property_value(i, j)
+			if prop == "banded":
+				continue
 			if row.has(prop):
 				row[prop] = str(v) if prop == "bus" else float(v)
 		# What AudioBuses._route will have done by the time it plays.

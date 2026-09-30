@@ -1,0 +1,16 @@
+[gd_resource type="Curve" format=3]
+
+; SQUAD AUTOMATIC — jumps, then steadies.
+;
+; The curve is PER SHOT and gets re-armed every 0.11s, so it never plays past
+; about t=0.5 on automatic and cannot express a burst settling down on its own.
+; That half of the feel is settle_shots / settle_to on the weapon; this only
+; shapes the individual round.
+;
+; It deliberately does NOT return to zero, because on a held trigger there is
+; no moment between rounds where the gun is at rest.
+
+[resource]
+max_value = 3.0
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.1, 2.8), 0.0, 0.0, 0, 0, Vector2(0.55, 1.3), 0.0, 0.0, 0, 0, Vector2(1, 0.7), 0.0, 0.0, 0, 0]
+point_count = 4

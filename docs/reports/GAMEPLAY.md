@@ -36,6 +36,199 @@ most wants and least often gets:
 
 ---
 
+## 2026-09-29 (later) — playtest fixes, and a level that will not stay fixed
+
+**Landed.** The six things off the playtest, plus two bugs the work turned up.
+
+- *The Hillfort had no objectives and deployed four robots.* Two separate bugs.
+  The level had been regenerated without the objective nodes the mission names,
+  and `active_objectives` is a WHITELIST — `Campaign._prune_inactive_objectives`
+  frees every objective the mission does not name, so a mission naming two ids
+  the level does not have ends up with none at all. The four robots were
+  `SquadSpawnPoint.max_slots`, whose script default was 4; every hand-built
+  level writes 999 over it and the Hillfort did not, so a seven-seat squad
+  deployed four. The default is now 0 (= everyone), because forgetting it must
+  not silently cost you robots.
+- *Garrisoned shotgunners stood still and died.* `Soldier.perform_action` blocked
+  every MOVE in `defensive_mode` unless the frame was `aggressive`, which is set
+  for melee rushers only. A 45m shotgun in cover taking 60m rifle fire aimed at
+  something it could not touch. It now also lets anyone move who is shot at from
+  beyond their own `_max_range()` — `find_advance_target` still stops them at
+  their own standoff, and Squad's defend tick skips anyone in COMBAT, so they
+  push, then walk back to the post when it is over.
+- *The induction opens on the keys.* A REVIEW_KEYS trigger (appended to the enum)
+  completes when the KEYS tab of the options screen is shown. `OptionsMenu` emits
+  `tab_shown`, `Master` relays it as `keys_reviewed` — relayed because the options
+  screen is built on demand and freed on close, so there is nothing for an
+  objective built at level load to connect to. It is first because every other
+  objective's text names a key.
+- *Debrief.* REVIVES was drawn in the compute blue, which is the colour of a
+  currency everywhere else on that screen; it is green now, with KILLS, because
+  both are what the squad did. Mission time moved from an unlabelled `12:34`
+  beside the mission name into the stat row as a TIME counter that counts up.
+- *Minimaps.* `tools/minimap_bake.gd` never listed the Hillfort or
+  `mutaha_wip_level`, so the briefing for the final mission was showing the
+  retired Mutaha map. Both baked. Mutaha renamed to **Qamareen** in the mission's
+  display name and briefing; the internal `obj_mutaha_*` tags and the level
+  filename are unchanged and are TERRAIN's to rename if they want.
+- *Four Qamareen reserve squads that had never arrived.* `squad_engaged_tag()`
+  lowercases the callsign — "EAST-YARD" becomes `east-yard_engaged` — and the
+  mission wrote the tags in upper case, so WEST-ALLEY, EAST-AMBUSH, RESPONSE-EAST
+  and the BOMBER were waiting on tags nothing could ever fire. Found by the new
+  suite below, which is the only reason anyone knows.
+- *A DEBUG tab on the pause menu, editor-only.* PAUSED → DEBUG opens the options
+  screen on a fifth tab: two switches (UNLOCK ALL MISSIONS, UNLOCK ALL HARDWARE)
+  and two handouts (+5000 resources, +50 compute), split under headings that say
+  which are reversible and which are not. The switches are read LIVE by
+  `available_missions()` and `locked_by()` and write nothing, so unticking puts
+  the run back to what it earned; `locked_by()` being the one gate all four shop
+  surfaces ask is why one flag opens weapons, frames, modules and equipment
+  together. **The first gate I wrote was wrong**: `_playtest_data_shown()` uses
+  `OS.is_debug_build()`, which is TRUE in a debug-template export — the build you
+  hand a playtester. It is `OS.has_feature("editor")` now, checked in four places
+  including `Campaign._debug_switch()`, because settings.json ships beside the
+  executable as plain text and hiding the tab alone would leave "unlock
+  everything" two lines from anyone with a text editor.
+- *Three live runtime errors the suite had been printing and nobody failing on.*
+  All in game code, all found by reading SCRIPT ERROR lines in a passing run:
+  `SquadHUD._on_order_issued` threw on a null squad (every order, in the
+  induction); `CampaignState._team_index`/`team_name` indexed a saved team row
+  for a key it might not carry; and `DebriefScreen._card` threw on an entry with
+  no record, then handed `add_child()` a null. The third was MASKED by the
+  second — fixing one let execution reach the next. `test_endings` went from two
+  script errors to none.
+- *`test_ledger` had 31 checks that had stopped running.* `cat.chassis_def(&"chaser")`
+  returned null once chaser and leaper left the player catalogue, `buyable()`
+  called `duplicate()` on it, and the error killed the COROUTINE without failing
+  the run — so `test_recruiting` and `test_supply_caps_the_active_squad` had not
+  executed at all while the suite reported PASS. That is the second time this
+  project has been bitten by exactly that. The enemy frames load by path now,
+  which is also the honest door: the point of them is that they are NOT in the
+  catalogue. 131 checks → 162. It also revealed a silent early return in
+  `SoldierRecord.recompute_stats()`, which left a 45-health frame reading
+  SoldierRecord's own 100 and said nothing; it warns now.
+- *New suite: `tools/test_mission_objectives.gd`.* Reads every mission and its
+  level as packed data and checks they agree. It would have caught the Hillfort
+  in a second. It knows all four ways a `reinforcement_tag` can be woken — an
+  objective id, `nest_down`, `<callsign>_down`, `<callsign>_engaged` — because
+  checking against objective ids alone reports most of the game as broken.
+
+**Gates.** `check.sh --changed`: PASS (27 scripts, 45 scenes/resources).
+`smoke.sh`: PASS, booted clean — run because master.gd is the main scene and this
+session changed it. `test.sh`: **33 suites** (two new), and the only failures are
+pre-existing and named below — pittsburgh bridge spacing (TERRAIN), the mutaha
+terrain check (a retired map), two tutorial sign checks (markers deleted on
+purpose), and the twelve dead reserve tags. The only SCRIPT ERROR left in the
+whole run is FuncGodot's `entity_fgd` parse error during level loads, which
+`test_livery` passes in spite of.
+`tools/test_debug_switches.gd` runs TWICE, once as the editor and once under
+`ROBOTO_DEBUG_TOOLS=0` as an export would see it; both branches pass. All 13
+minimaps re-baked.
+
+**Needs the human.**
+
+1. **`maps/hillfort_level.tscn` is being regenerated by the TERRAIN lane every
+   few minutes** — 12:17, 12:23, 12:25 today — and the regenerator does not
+   preserve nodes it did not place. Every rebuild deletes the relay console, the
+   extraction and the spawn move, and the mission goes back to a blank objective
+   HUD. The repair is one idempotent command:
+
+       bash tools/hillfort_objectives.sh
+
+   Run it after TERRAIN finishes. The real fix is for the block pass to leave
+   non-generated nodes alone, which is a coordination call, not mine.
+2. **Twelve reserve squads across four missions never arrive.** Their
+   `reinforcement_tag` names a capture objective the level does not author —
+   `basin_anchor`, `coast_relay_bridge/craters/town`,
+   `pitt_relay_dam/shore/strip/furnace`, `mutaha_relay_clock/compute`. Same root
+   cause as the Hillfort: the missions were written against capture objectives
+   the levels no longer have. Those missions still play, because they also name
+   objectives that DO exist, so the prune leaves something alive — but a chunk
+   of each designed force has never once spawned. Deciding whether to build the
+   objectives or re-point the reserves is a design call.
+3. `maps/minimaps/mutaha_wip_level.png` has no `.import` yet. Give the editor
+   focus once and it will import; I did not run `--import` with the editor open.
+4. Unverified in game: the Hillfort's new start position, the relay console's
+   placement in the yard, and the new first induction objective.
+
+**Blocked / next.** Nothing blocked. Next would be the twelve dead reserves,
+once someone says which way to fix them.
+
+
+## 2026-09-29 — the Hillfort, the distance bands, and the Mark One
+
+**Landed.**
+
+- **The Hillfort — the missing rung between Proving Ground and Valley Basin.**
+  TERRAIN built `maps/hillfort_level.tscn` with eighteen tagged points and an
+  exit; the mission on it is `Campaign/missions/mission_hillfort_1_relay.tres`.
+  Fifteen squads, 30 bodies on the map and 8 held back, all infantry — shotguns,
+  rifles, chasers and leapers, nothing armoured and nothing on wheels. It is an
+  ascent: spawn at y=0 z=449, fight up through the cistern, the standing stones,
+  the old gate and the terrace, and take the relay dish in the fort yard at
+  y=132. Taking it wakes POSTERN and SPUR, who come back through the postern
+  gate and down off the north spur to retake it; the exit is the roof above.
+  **This is what the economy audit asked for.** Proving Ground to Basin was a
+  6.6× step in opposition against +1 seat — the single cliff in the campaign.
+  It is now 3.2× then 2.1×, and the purse going into Basin rose 860 → 1140.
+  **It also gives the Mark One a home:** the Hillfort unlocks it, closing the
+  last "buyable from minute one" hole. `basin_1_anchor` now requires
+  `hillfort_1_relay` rather than `arena_5_proving`.
+- **`maps/hillfort_level.tscn` gained two objective nodes** — the RelayDish
+  capture point and the ReachObjective on the exit. That is TERRAIN's file and
+  the board says missions are GAMEPLAY's, which is exactly the seam: objectives
+  live in level scenes. Done on the human's instruction, backed up first, and
+  recorded here.
+- **Audio: three distance bands.** `Weapons` (0-40m, as authored), `WeaponsMid`
+  (40-150m, low-passed to 4.2kHz) and `WeaponsFar` (150m+, 850Hz), all children
+  of Effects. `Managers/weapon_audio.gd` picks the band per shot; past 150m it
+  switches Godot's attenuation OFF and computes the level itself, falling 2dB
+  per doubling instead of 6, continuous at the boundary.
+  Called from `AIWeapon.play_shot_audio`, `HUDWeapon`, `Explosion._ready`,
+  `PlayerRocket` and `RocketProjectile` — 18 sounds, every gun and every blast.
+  **That also fixed the routing:** the Weapons bus already had an EQ, a
+  compressor and a limiter built for exactly this, and only TWO of 51 sounds
+  reached it, because `_route()` moves Master→Effects and a scene only lands on
+  Weapons if it NAMES it.
+- **Every `max_distance` cutoff is gone** — the mortar was silent past 250m, the
+  rocket launch past 200m, its detonation past 220m and explosions past 750m.
+  Those were the things the player most needs to hear coming.
+- **The bolt-action is the Mark One**, "Slow, heavy, made by the thousand." The
+  old name collided with the Valley Foundry mission, the Foundry robots in
+  enemy.gd and the Foundry weapon tier on the board.
+
+**Gates.** check.sh: **PASS** (535 resources). smoke.sh: **PASS**. test.sh:
+running at hand-off; the previous full run was 31 suites with the four known
+failures and nothing new.
+
+**Measured, not assumed.** `tools/audit_audio.gd` prints every sound's level at
+the listener from 10m to 800m, which bus it lands on and what is cut off. At
+400m: Ancient Rifle -28.1 → -22.4, Ancient MG -40.4 → -34.7, explosions
+-14.5 → -8.9, and the mortar from silent to -16.8.
+
+**A warning worth not believing.** Booting the Hillfort prints
+"navmesh_islands: left only 2158 m2 of 891611 reachable from the spawn". It
+reads like an unplayable map. It is not: the sweep REFUSED to run, so it
+stripped nothing, and a direct path test walks spawn → cistern → pillars → gate
+→ terrace → fortgate → relay → roof, every leg reached, 203 points to the relay
+and 218 to the exit. The warning is still worth TERRAIN's eye, because a sweep
+that always refuses is a sweep that protects nothing.
+
+**Needs the human.**
+- **The Hillfort has never been played.** 30 bodies on an ascent is a guess
+  calibrated to supply cost, not to how it feels climbing into rifle fire from
+  above. The flanking watchers on the two hills are the part most likely to be
+  wrong.
+- **Audio wants ears, not numbers.** If distant fire is too loud, raise
+  `FAR_SLOPE_DB` (2.0) or lower `FAR_CEILING_DB` (-8). If it is too thin, raise
+  the far bus cutoff from 850Hz. Your own gun now goes through the Weapons
+  compressor, which it mostly did not before.
+- **`unit_size` still ranges 10 to 46 with no rationale** and is the main lever
+  left on the near and mid bands. The player shotgun is the outlier: -20dB at
+  unit 10, which is -40 at 100m where the AI shotgun is -16.
+
+---
+
 ## 2026-09-28 (last) — the depot induction: the first visit to base is a mission
 
 **Landed.** The onboarding blocker on the board is closed, by a different route

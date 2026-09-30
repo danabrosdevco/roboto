@@ -1,6 +1,9 @@
 extends Node3D
 class_name Explosion
 
+## By path, not by class_name — see the note in ai_weapon.gd.
+const _WeaponAudio := preload("res://Managers/weapon_audio.gd")
+
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
 @export var effects: Array[GPUParticles3D]
@@ -30,8 +33,17 @@ func _ready() -> void:
 	for i in effects:
 		i.emitting = true
 	audio.pitch_scale = randf_range(0.9, 1.1)   # ±10% pitch change
-	if get_parent() is not World:
-		audio.play()
+	# Banded like a gunshot. A mortar landing three streets away is the thing
+	# the player most needs to hear, and it was cut off entirely past its
+	# authored max_distance.
+	#
+	# UNCONDITIONAL. This used to be skipped when the blast was parented to the
+	# World, which silenced it completely rather than merely unbanding it — and
+	# the World was exactly where every explosion from the player's own kit
+	# ended up, because thrown ordnance was parented there. An explosion you
+	# cannot hear is never the right answer.
+	_WeaponAudio.stage(audio)
+	audio.play()
 	await get_tree().create_timer(0.3, false).timeout
 	damage_area.monitoring = false
 	await get_tree().create_timer(2, false).timeout

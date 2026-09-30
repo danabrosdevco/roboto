@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
 [ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
-[ext_resource type="Resource" uid="uid://cchassisrifle01" path="res://Campaign/chassis/chassis_rifleman.tres" id="4_rifle"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rifleman.tres" id="4_rifle"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover.tres" id="5_rover"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="6_lobber"]
 [ext_resource type="PackedScene" path="res://maps/coastal-road_level.tscn" id="7_coast"]

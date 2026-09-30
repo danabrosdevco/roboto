@@ -24,10 +24,8 @@ func _ready():
 			if child is TrenchBroomLevel:
 				current_level = child
 	if current_level:
-		var spawn_transform = current_level.spawn_point.global_transform
-		player.global_transform = spawn_transform
+		player.place_at(current_level.spawn_point.global_transform)
 		player.last_bonfire = current_level.spawn_point.global_position
-		player.cam.look_at(Vector3(player.global_position.x, player.global_position.y, player.global_position.z - 1))
 	else:
 		for i in get_children():
 			if i is TrenchBroomLevel:
@@ -82,8 +80,7 @@ func load_next_level(next_level_scene: PackedScene, success: bool = true) -> voi
 	add_child(new_level)
 	current_level = new_level
 	if new_level.spawn_point:
-		var spawn_transform = new_level.spawn_point.global_transform
-		player.global_transform = spawn_transform
+		player.place_at(new_level.spawn_point.global_transform)
 		player.last_bonfire = current_level.spawn_point.global_position
 	await get_tree().process_frame
 	PauseHold.release(&"level_load")

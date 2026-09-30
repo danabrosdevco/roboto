@@ -199,10 +199,6 @@ sky_material = SubResource("ShaderMaterial_sky")
 radiance_size = 0
 
 [sub_resource type="Environment" id="Environment_dark"]
-glow_enabled = true
-glow_intensity = 0.55
-glow_bloom = 0.05
-glow_hdr_threshold = 1.0
 background_mode = 2
 sky = SubResource("Sky_dark")
 ambient_light_source = 3
@@ -210,6 +206,9 @@ ambient_light_color = Color(0.3, 0.29, 0.27, 1)
 ambient_light_sky_contribution = 0.6
 ambient_light_energy = 0.6
 tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.55
+glow_bloom = 0.05
 fog_enabled = true
 fog_light_color = Color(0.33, 0.31, 0.29, 1)
 fog_density = 0.0015
@@ -850,10 +849,11 @@ size = Vector2(11.625, 9.375)
 falloff = 4.0
 
 [node name="LevelExit" parent="NavigationRegion3D" instance=ExtResource("11_4278d")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 505, -0.8, 20)
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 505, -0.8, 20)
 requires_objectives_complete = true
 
 [node name="PittExtract" type="Node3D" parent="NavigationRegion3D/LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 script = ExtResource("pitt_reach")
 area = NodePath("Area3D")
 squad_radius = 30.0

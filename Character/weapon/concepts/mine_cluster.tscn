@@ -1,0 +1,121 @@
+[gd_scene load_steps=9 format=3]
+
+; CLUSTER MINE — thrown, bursts on landing into five submines.
+;
+; Deliberately the OPPOSITE silhouette to the Heavy Mine. That one is a broad
+; flat puck you set down; this is a thrown canister — upright, banded, with a
+; visible split line round its waist where it comes apart, and a throwing
+; handle. You should never confuse which one is in your hand.
+;
+; One submine sits beside it at the scale it scatters at, so the whole item
+; reads in a single picture: the canister and what comes out of it.
+;
+; House palette. No emissive.
+
+[sub_resource type="StandardMaterial3D" id="Steel"]
+albedo_color = Color(0.17, 0.18, 0.19, 1)
+metallic = 0.65
+roughness = 0.42
+
+[sub_resource type="StandardMaterial3D" id="Black"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+metallic = 0.5
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Olive"]
+albedo_color = Color(0.27, 0.3, 0.18, 1)
+metallic = 0.1
+roughness = 0.85
+
+[sub_resource type="CylinderMesh" id="Can"]
+top_radius = 0.105
+bottom_radius = 0.115
+height = 0.3
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="Band"]
+top_radius = 0.125
+bottom_radius = 0.125
+height = 0.035
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="Cap"]
+top_radius = 0.075
+bottom_radius = 0.1
+height = 0.07
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Handle"]
+size = Vector3(0.05, 0.16, 0.032)
+
+[sub_resource type="CylinderMesh" id="Sub"]
+top_radius = 0.075
+bottom_radius = 0.085
+height = 0.05
+radial_segments = 8
+
+[node name="ClusterMine" type="Node3D"]
+
+[node name="Can" type="MeshInstance3D" parent="."]
+material_override = SubResource("Olive")
+mesh = SubResource("Can")
+
+[node name="SplitBand" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Band")
+
+[node name="BandUpper" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.92, 0, 0, 0, 0.5, 0, 0, 0, 0.92, 0, 0.1, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Band")
+
+[node name="BandLower" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.92, 0, 0, 0, 0.5, 0, 0, 0, 0.92, 0, -0.09, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Band")
+
+[node name="Cap" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.175, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Cap")
+
+[node name="Fuse" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.42, 0, 0, 0, 0.7, 0, 0, 0, 0.42, 0, 0.225, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Cap")
+
+[node name="Handle" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.11, 0.17, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Handle")
+
+[node name="HandleArm" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.065, 0.235, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Handle")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -1, -8.74228e-08, 0, 8.74228e-08, -1, 0, -0.17, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Cap")
+
+[node name="SubA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.33, -0.12, 0.1)
+material_override = SubResource("Olive")
+mesh = SubResource("Sub")
+
+[node name="SubACap" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.62, 0, 0, 0, 0.5, 0, 0, 0, 0.62, 0.33, -0.09, 0.1)
+material_override = SubResource("Black")
+mesh = SubResource("Sub")
+
+[node name="SubB" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.94, 0, 0.34, 0, 1, 0, -0.34, 0, 0.94, 0.44, -0.13, -0.12)
+material_override = SubResource("Olive")
+mesh = SubResource("Sub")
+
+[node name="SubBCap" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.58, 0, 0.21, 0, 0.5, 0, -0.21, 0, 0.58, 0.44, -0.1, -0.12)
+material_override = SubResource("Black")
+mesh = SubResource("Sub")

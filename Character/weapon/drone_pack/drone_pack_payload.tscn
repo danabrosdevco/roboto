@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3]
+
+; WHAT COMES OUT OF THE PACK: two Divers, on the thrower's side.
+;
+; Same HatchlingPayload the Hatchling Charge uses, pointed at a different
+; unit_scene. That is the whole item — the release, the faction paint, the
+; kill attribution and the AI registration are all solved already, and
+; hatchling_payload.gd's header explains why they have to happen in that order.
+;
+; lifetime 32 against the Diver's own 30. The drone runs its own clock and
+; drops itself when it expires; this one is only a backstop for a Diver that
+; somehow outlives it, and it must not fire first or it would cut the run short.
+
+[ext_resource type="Script" path="res://Character/weapon/hatchling/hatchling_payload.gd" id="1_payload"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/diver.tscn" id="2_diver"]
+
+[node name="DronePackPayload" type="Node3D"]
+script = ExtResource("1_payload")
+unit_scene = ExtResource("2_diver")
+count = 2
+unit_name = "DIVER"
+lifetime = 32.0
+seek_radius = 90.0

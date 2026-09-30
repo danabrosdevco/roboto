@@ -1,27 +1,30 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://cmarksmanchas01"]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://dwa610h0q63pn"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
-[ext_resource type="PackedScene" uid="uid://cmarksman00001" path="res://Character/characters/ai/soldier_marksman.tscn" id="2_scene"]
+[ext_resource type="PackedScene" uid="uid://cyl50hvmpyiuq" path="res://Character/characters/ai/soldier_marksman.tscn" id="2_scene"]
 
 [resource]
 script = ExtResource("1_chassisdef")
 id = &"marksman"
 display_name = "Marksman"
-description = "A rifle trooper rebuilt around one long barrel and a sensor package that sees half a city block further than anything else they field. It shoots once, slowly, and takes a third of a robot with it. It will not fire inside twelve metres — get in under the barrel and it is the weakest frame on the street."
+description = "Long-barrelled rifle frame. Fires slowly and accurately from further out than anything else on foot."
 scene = ExtResource("2_scene")
 cost = 0
 purchasable = false
 supply = 1
 starting_weapon_id = &""
+coax_weapon_id = &""
 base_health = 90
 base_speed = 1.0
 base_accuracy = 1.0
 base_sensor_range = 90.0
 weapon_slots = 1
 built_in = ""
+weapon_replaces_built_in = false
 turret = false
 vehicle = false
 drives = false
 equipment_slots = 2
 module_slots = 2
+musters_at_base = true
 required_rank = 0

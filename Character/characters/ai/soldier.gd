@@ -266,7 +266,13 @@ func perform_action(action: CombatOptions) -> void:
 	# leap — came back as AIM or FIRE. A melee frame aiming at something 10m
 	# away swipes at air forever. Rushers hold a post until something shows up,
 	# then they go; the squad leash lets them off for exactly that.
-	if defensive_mode and action == CombatOptions.MOVE and not aggressive:
+	#
+	# NOR FOR ANYONE SHOT AT FROM OUTSIDE THEIR OWN REACH. It is the same bug
+	# with a gun instead of a knife: the shotgun garrison on the hillfort
+	# pillars stood in cover taking rifle fire from 60m and re-rolled every
+	# MOVE into AIM, so they aimed a 45m weapon at something they could not
+	# touch until they died of it. A post you cannot shoot from is not a post.
+	if defensive_mode and action == CombatOptions.MOVE and not aggressive and not _cannot_reach():
 		# Only allow repositioning within the defence perimeter
 		# Explicitly block advance, chase, leap by re-rolling as AIM
 		var roll = randi_range(0, 1)
@@ -276,6 +282,20 @@ func perform_action(action: CombatOptions) -> void:
 			perform_action(CombatOptions.FIRE)
 		return
 	super(action)
+
+
+## There is something to fight and it is further away than this frame can shoot.
+##
+## The one case where holding a garrison post means doing nothing at all, so it
+## is the one case that earns a dug-in soldier the right to move. find_advance_
+## target() still stops them at their own standoff, so they close to where their
+## weapon works and no further — and Squad's defend tick skips anyone in COMBAT,
+## so nothing drags them back mid-fight and they walk home when it is over.
+func _cannot_reach() -> bool:
+	if combat_target == null or not is_instance_valid(combat_target):
+		return false   # nothing acquired: hold the post, that is what a post is for
+	return global_position.distance_to(combat_target.global_position) > _max_range()
+
 
 func trigger_combat(body: AI) -> void:
 	super(body)

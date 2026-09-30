@@ -52,4 +52,3 @@ visible = false
 stream = ExtResource("4_thump")
 pitch_scale = 0.7
 unit_size = 30.0
-max_distance = 250.0

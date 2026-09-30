@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
 [ext_resource type="PackedScene" uid="uid://be2sgj1qwg7f2" path="res://Character/weapon/m4_hud_weapon.tscn" id="2_player"]
-[ext_resource type="PackedScene" uid="uid://csylooihvypi1" path="res://Character/weapon/ai-wep_m4.tscn" id="3_ai"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_m4.tscn" id="3_ai"]
 
 [resource]
 script = ExtResource("1_itemdef")

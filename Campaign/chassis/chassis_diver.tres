@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/diver.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"diver"
+display_name = "Diver"
+description = "Single-use attack quadcopter. Climbs on release, picks the most expensive frame it can see, and flies into it."
+scene = ExtResource("2_scene")
+cost = 60
+purchasable = false
+supply = 0
+starting_weapon_id = &""
+coax_weapon_id = &""
+base_health = 50
+base_speed = 1.0
+base_accuracy = 0.0
+base_sensor_range = 90.0
+weapon_slots = 0
+built_in = "WARHEAD"
+weapon_replaces_built_in = false
+turret = false
+vehicle = true
+drives = false
+equipment_slots = 0
+module_slots = 0
+musters_at_base = false
+required_rank = 0

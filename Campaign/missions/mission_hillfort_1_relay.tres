@@ -1,0 +1,364 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3 uid="uid://ca167sd6w3m08"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://bt27tf1xtntmx" path="res://maps/hillfort_level.tscn" id="3_hillfort"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="5_hopper"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="6_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="8_rifle"]
+[ext_resource type="Resource" uid="uid://dlreffr1i7fcp" path="res://Campaign/chassis/chassis_watcher.tres" id="9_watcher"]
+
+[sub_resource type="Resource" id="S_cistern"]
+script = ExtResource("2_espec")
+callsign = "CISTERN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("6_chaser")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_cistern"
+spawn_tag = &"obj_hillfort_cistern"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_saddle"]
+script = ExtResource("2_espec")
+callsign = "SADDLE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("6_chaser")])
+count = 3
+posture = 2
+route_tag = &""
+post_tag = &"obj_hillfort_cistern"
+spawn_tag = &"obj_hillfort_saddle"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_pillars"]
+script = ExtResource("2_espec")
+callsign = "PILLARS"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("5_hopper")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_pillars"
+spawn_tag = &"obj_hillfort_pillars"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_westhill"]
+script = ExtResource("2_espec")
+callsign = "WESTWATCH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_watcher"), ExtResource("8_rifle"), ExtResource("8_rifle")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_west_hill"
+spawn_tag = &"obj_hillfort_west_hill"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_easthill"]
+script = ExtResource("2_espec")
+callsign = "EASTWATCH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_watcher"), ExtResource("8_rifle"), ExtResource("8_rifle")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_east_hill"
+spawn_tag = &"obj_hillfort_east_hill"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_gate"]
+script = ExtResource("2_espec")
+callsign = "GATEHOUSE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("8_rifle")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_gate"
+spawn_tag = &"obj_hillfort_gate"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_upland"]
+script = ExtResource("2_espec")
+callsign = "UPLAND"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("6_chaser")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_east_upland"
+spawn_tag = &"obj_hillfort_east_upland"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_terrace"]
+script = ExtResource("2_espec")
+callsign = "TERRACE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("7_shot"), ExtResource("7_shot")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_terrace"
+spawn_tag = &"obj_hillfort_terrace"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_shoulder"]
+script = ExtResource("2_espec")
+callsign = "SHOULDER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("8_rifle")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_shoulder"
+spawn_tag = &"obj_hillfort_shoulder"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_fortgate"]
+script = ExtResource("2_espec")
+callsign = "PORTAL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("8_rifle"), ExtResource("8_rifle")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_fortgate"
+spawn_tag = &"obj_hillfort_fortgate"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_yard"]
+script = ExtResource("2_espec")
+callsign = "YARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("7_shot")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_yard"
+spawn_tag = &"obj_hillfort_yard"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_dish"]
+script = ExtResource("2_espec")
+callsign = "DISH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_dish"
+spawn_tag = &"obj_hillfort_dish"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_power"]
+script = ExtResource("2_espec")
+callsign = "POWERHOUSE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_chaser"), ExtResource("6_chaser")])
+count = 3
+posture = 1
+route_tag = &""
+post_tag = &"obj_hillfort_power"
+spawn_tag = &"obj_hillfort_power"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_postern"]
+script = ExtResource("2_espec")
+callsign = "POSTERN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("6_chaser")])
+count = 3
+posture = 3
+route_tag = &""
+post_tag = &"obj_hillfort_dish"
+spawn_tag = &"obj_hillfort_postern"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"hillfort_relay"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_spur"]
+script = ExtResource("2_espec")
+callsign = "SPUR"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("7_shot"), ExtResource("7_shot")])
+count = 3
+posture = 3
+route_tag = &""
+post_tag = &"obj_hillfort_dish"
+spawn_tag = &"obj_hillfort_north_spur"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"hillfort_relay"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_eastridge"]
+script = ExtResource("2_espec")
+callsign = "EAST-RIDGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("6_chaser"), ExtResource("6_chaser")])
+count = 3
+posture = 3
+route_tag = &""
+post_tag = &"obj_hillfort_pillars"
+spawn_tag = &"obj_hillfort_east_hill"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cistern_down"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_westridge"]
+script = ExtResource("2_espec")
+callsign = "WEST-RIDGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("8_rifle"), ExtResource("8_rifle")])
+count = 3
+posture = 3
+route_tag = &""
+post_tag = &"obj_hillfort_gate"
+spawn_tag = &"obj_hillfort_west_hill"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pillars_down"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_highground"]
+script = ExtResource("2_espec")
+callsign = "HIGH-GROUND"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("8_rifle")])
+count = 3
+posture = 3
+route_tag = &""
+post_tag = &"obj_hillfort_terrace"
+spawn_tag = &"obj_hillfort_east_upland"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"gatehouse_down"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_west_call_a"]
+script = ExtResource("2_espec")
+callsign = "WEST-CALL-1"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 3
+posture = 3
+route_tag = &""
+post_tag = &"obj_hillfort_pillars"
+spawn_tag = &"obj_hillfort_gate"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"westwatch_engaged"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_west_call_b"]
+script = ExtResource("2_espec")
+callsign = "WEST-CALL-2"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_rifle"), ExtResource("8_rifle"), ExtResource("5_hopper")])
+count = 3
+posture = 3
+route_tag = &""
+post_tag = &"obj_hillfort_gate"
+spawn_tag = &"obj_hillfort_shoulder"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"westwatch_engaged"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_east_call_a"]
+script = ExtResource("2_espec")
+callsign = "EAST-CALL-1"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 3
+posture = 3
+route_tag = &""
+post_tag = &"obj_hillfort_pillars"
+spawn_tag = &"obj_hillfort_saddle"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"eastwatch_engaged"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_east_call_b"]
+script = ExtResource("2_espec")
+callsign = "EAST-CALL-2"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("8_rifle")])
+count = 3
+posture = 3
+route_tag = &""
+post_tag = &"obj_hillfort_terrace"
+spawn_tag = &"obj_hillfort_east_upland"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"eastwatch_engaged"
+wake_after_kills = 0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"hillfort_1_relay"
+display_name = "Hillfort"
+briefing = "A relay dish on an iron-age hillfort, a hundred and thirty metres up. You come in on the trail below the cistern, at the foot of it, and there is one way on from there and it is uphill the whole way: the standing stones above the cistern, then the old gate and the terrace under the walls. They hold the high ground the entire climb, and on each flanking hill there is a WATCHER — a mast with a sweeping arm and an amber lamp. It is unarmed. It does not need a gun: while one of them has eyes on you it keeps calling groups down onto your route, one after another, for as long as you stay on its hill. Rounds pass straight through the mast; the only thing on it that can be hurt is the plinth at its foot, so it cannot be answered from below. Somebody has to go up and stand over it.
+
+And they answer. Every position you take off them brings the next one down off a ridge onto the leg you are climbing — the east hill after the cistern, the west hill after the stones, the upland after the gate. You will not get a quiet stretch on this hill; the price of clearing a post is the group that arrives because you cleared it.
+
+The relay is in the fort yard. Take the console and hold it — and be ready, because the moment it goes over they come back through the postern and down off the north spur to take it back. Out is the roof, once it is yours.
+
+Your first fight on open ground instead of a sim floor. Nothing here is armoured; all of it is above you."
+level_scene = ExtResource("3_hillfort")
+map_position = Vector2(92, 26)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_cistern"), SubResource("S_saddle"), SubResource("S_pillars"), SubResource("S_westhill"), SubResource("S_easthill"), SubResource("S_gate"), SubResource("S_upland"), SubResource("S_terrace"), SubResource("S_shoulder"), SubResource("S_fortgate"), SubResource("S_yard"), SubResource("S_dish"), SubResource("S_power"), SubResource("S_postern"), SubResource("S_spur"), SubResource("S_eastridge"), SubResource("S_westridge"), SubResource("S_highground"), SubResource("S_west_call_a"), SubResource("S_west_call_b"), SubResource("S_east_call_a"), SubResource("S_east_call_b")])
+replace_level_enemies = false
+active_objectives = Array[StringName]([&"hillfort_relay", &"hillfort_extract"])
+reward_resources = 225
+compute_reward = 1
+unlocks = Array[StringName]([&"rover", &"machine_gun", &"mine_heavy", &"mine_cluster"])
+squad_size = -1
+repeatable = false
+requires = Array[StringName]([&"arena_5_proving"])

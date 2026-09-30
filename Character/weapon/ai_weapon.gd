@@ -3,6 +3,9 @@ class_name AIWeapon
 
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
+## By path, not by class_name: a brand-new class_name is not resolvable until
+## the editor rescans, and that rescan must not be run with the editor open.
+const _WeaponAudio := preload("res://Managers/weapon_audio.gd")
 
 # ── EXPORTS ───────────────────────────────────
 @export var weapon_type: Enums.AIWeaponTypes
@@ -496,6 +499,10 @@ func get_forward_vector() -> Vector3:
 
 func play_shot_audio() -> void:
 	if shot_audio != null:
+		# Bus and level picked from where the listener is: past 150m this stops
+		# obeying inverse-distance and becomes a thump held near a floor, so a
+		# firefight across the map is audible without being loud up close.
+		_WeaponAudio.stage(shot_audio)
 		shot_audio.play()
 
 func play_muzzle_flash() -> void:

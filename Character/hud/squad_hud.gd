@@ -826,7 +826,15 @@ func _on_order_issued(squad: Squad, verb: int, _position: Vector3, target: Node)
 	if target != null and target is Enemy:
 		suffix = " > %s" % (target as Enemy).soldier_name.to_upper()
 	# Who it went to: with two teams, the team.
-	var who := squad.team_name() if commander.has_teams() else squad.get_display_name().to_upper()
+	#
+	# A NULL SQUAD IS SURVIVABLE HERE. SquadCommander._issue_order returns early
+	# without a selected squad so it never emits one — but this is a toast, and
+	# a cosmetic handler that throws on every order fills the log with errors
+	# that look like the order failed when it did not. tools/test_induction.gd
+	# emits the signal directly with no squad, which is how this surfaced.
+	var who := "SQUAD"
+	if squad != null and is_instance_valid(squad):
+		who = squad.team_name() if commander.has_teams() else squad.get_display_name().to_upper()
 	_show_toast("%s : %s%s" % [who, verb_text, suffix], COL_BRIGHT)
 	order_ux_sound_confirm.play()
 

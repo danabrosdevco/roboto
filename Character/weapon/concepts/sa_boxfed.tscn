@@ -1,0 +1,200 @@
+[gd_scene load_steps=14 format=3]
+
+; Palette lifted from machine_gun_model.tscn so this sits in the same rack as
+; the guns already in the game: matte olive kit, semi-gloss steel, near-black
+; furniture. No emissive anywhere — nothing on a weapon glows in this game.
+
+[sub_resource type="StandardMaterial3D" id="Steel"]
+albedo_color = Color(0.15, 0.16, 0.17, 1)
+metallic = 0.65
+roughness = 0.42
+
+[sub_resource type="StandardMaterial3D" id="Black"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+metallic = 0.5
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Olive"]
+albedo_color = Color(0.27, 0.3, 0.18, 1)
+metallic = 0.1
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="Receiver"]
+size = Vector3(0.62, 0.17, 0.15)
+
+[sub_resource type="BoxMesh" id="Rail"]
+size = Vector3(0.46, 0.035, 0.07)
+
+[sub_resource type="CylinderMesh" id="Barrel"]
+top_radius = 0.018
+bottom_radius = 0.023
+height = 0.78
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="Jacket"]
+top_radius = 0.037
+bottom_radius = 0.04
+height = 0.3
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="AmmoBox"]
+size = Vector3(0.28, 0.24, 0.17)
+
+[sub_resource type="BoxMesh" id="Link"]
+size = Vector3(0.026, 0.02, 0.016)
+
+[sub_resource type="BoxMesh" id="Leg"]
+size = Vector3(0.018, 0.24, 0.018)
+
+[sub_resource type="BoxMesh" id="Fin"]
+size = Vector3(0.05, 0.008, 0.062)
+
+[sub_resource type="BoxMesh" id="Slab"]
+size = Vector3(0.09, 0.05, 0.13)
+
+[sub_resource type="CylinderMesh" id="Cap"]
+top_radius = 0.032
+bottom_radius = 0.032
+height = 0.05
+radial_segments = 8
+
+[node name="SquadAutomatic" type="Node3D"]
+
+[node name="Receiver" type="MeshInstance3D" parent="."]
+material_override = SubResource("Steel")
+mesh = SubResource("Receiver")
+
+[node name="FeedCover" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, 0.105, 0)
+material_override = SubResource("Olive")
+mesh = SubResource("Rail")
+
+[node name="RearSight" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.4, 0, 0, 0, 1, 0, 0, 0, 0.7, -0.21, 0.145, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Rail")
+
+[node name="FrontSight" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.22, 0, 0, 0, 1.4, 0, 0, 0, 0.5, 0.42, 0.115, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Rail")
+
+[node name="Jacket" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.46, 0.005, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Jacket")
+
+[node name="VentA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.38, 0.045, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Fin")
+
+[node name="VentB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46, 0.045, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Fin")
+
+[node name="VentC" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.54, 0.045, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Fin")
+
+[node name="Barrel" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.84, 0.005, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Barrel")
+
+[node name="MuzzleBrake" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 1.21, 0.005, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Cap")
+
+[node name="AmmoBox" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04, -0.2, 0)
+material_override = SubResource("Olive")
+mesh = SubResource("AmmoBox")
+
+[node name="BoxLid" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.68, 0, 0, 0, 1, 0, 0, 0, 0.62, -0.04, -0.075, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Rail")
+
+[node name="BoxLatch" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 0.7, 0, 0, 0, 0.5, 0.09, -0.2, 0.09)
+material_override = SubResource("Steel")
+mesh = SubResource("Slab")
+
+[node name="Link0" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, -0.062, 0.055)
+material_override = SubResource("Steel")
+mesh = SubResource("Link")
+
+[node name="Link1" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.94, 0.34, 0, -0.34, 0.94, 0, 0, 0, 1, 0.105, -0.05, 0.055)
+material_override = SubResource("Steel")
+mesh = SubResource("Link")
+
+[node name="Link2" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.87, 0.5, 0, -0.5, 0.87, 0, 0, 0, 1, 0.135, -0.03, 0.055)
+material_override = SubResource("Steel")
+mesh = SubResource("Link")
+
+[node name="Link3" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.77, 0.64, 0, -0.64, 0.77, 0, 0, 0, 1, 0.158, -0.008, 0.055)
+material_override = SubResource("Steel")
+mesh = SubResource("Link")
+
+[node name="Grip" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.94, 0.34, 0, -0.34, 0.94, 0, 0, 0, 1, -0.2, -0.16, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Slab")
+
+[node name="TriggerGuard" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.3, 0, 0, 0, 1, 0, 0, 0, 0.7, -0.14, -0.105, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Rail")
+
+[node name="Stock" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.62, 0, 0, 0, 0.85, 0, 0, 0, 0.8, -0.48, -0.02, 0)
+material_override = SubResource("Olive")
+mesh = SubResource("Receiver")
+
+[node name="Comb" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.7, 0, 0, 0, 1, 0, 0, 0, 0.8, -0.46, 0.075, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Rail")
+
+[node name="ButtPlate" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.1, 0, 0, 0, 1.15, 0, 0, 0, 1.05, -0.685, -0.02, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Receiver")
+
+[node name="Carry" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.42, 0, 0, 0, 1, 0, 0, 0, 0.9, 0.16, 0.16, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Rail")
+
+[node name="CarryPostA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.22, 0, 0, 0, 1, 0.06, 0.135, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Leg")
+
+[node name="CarryPostB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.22, 0, 0, 0, 1, 0.26, 0.135, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Leg")
+
+[node name="BipodL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.97, 0.26, 0, -0.26, 0.97, 0, 0, 0, 1, 0.6, -0.14, 0.055)
+material_override = SubResource("Black")
+mesh = SubResource("Leg")
+
+[node name="BipodR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.97, -0.26, 0, 0.26, 0.97, 0, 0, 0, 1, 0.6, -0.14, -0.055)
+material_override = SubResource("Black")
+mesh = SubResource("Leg")
+
+[node name="BipodMount" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 0.6, 0, 0, 0, 0.7, 0.6, -0.04, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Slab")

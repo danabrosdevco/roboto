@@ -1,6 +1,9 @@
 extends PlayerEquipment
 class_name PlayerRocket
 
+## By path, not by class_name — see the note in ai_weapon.gd.
+const _WeaponAudio := preload("res://Managers/weapon_audio.gd")
+
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
 
@@ -185,11 +188,7 @@ func _launch() -> void:
 		return
 	if not has_charge() or cam == null:
 		return
-	var world: Node = null
-	if player != null:
-		world = player.get("world")
-	if world == null:
-		world = get_tree().current_scene
+	var world: Node = level_node()
 	if world == null:
 		world = get_parent()
 
@@ -212,6 +211,9 @@ func _launch() -> void:
 	_reload_t = reload_time
 	_kick = recoil_metres
 	if launch_sound != null:
+		# Banded like every other shot: a launch you cannot hear from across the
+		# map is the one you most needed warning of.
+		_WeaponAudio.stage(launch_sound)
 		launch_sound.play()
 	_Analytics.throw(player, display_name)
 	fired.emit(rocket)

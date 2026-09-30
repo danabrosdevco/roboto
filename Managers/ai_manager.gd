@@ -97,38 +97,35 @@ func hostiles_for(faction) -> Array:
 
 
 func get_nearest_hostile(requesting_ai: AI) -> CharacterBody3D:
+	# THE SHARED LIST, NOT EVERY ROBOT ON THE MAP.
+	#
+	# This used to walk all_ai and re-test hostility per entry, for every
+	# caller, every time — so with 300 robots in a level each AI asking "who is
+	# nearest" paid for 300 checks, most of them its own side. hostiles_for()
+	# already builds that answer once per faction and caches it for
+	# HOSTILE_CACHE_LIFETIME, filtered to living, targetable, hostile bodies:
+	# for an enemy in a fight against a ten-robot squad that is ten entries
+	# instead of three hundred.
+	#
+	# It is also the squad sharing its knowledge, which is the honest framing:
+	# one list per side per tick, read by everyone on it.
 	var best: CharacterBody3D = null
 	var best_dist: float = INF
-	var req_faction = requesting_ai.faction
-
-	# Check the player first
-	if player != null and player.is_targetable():
-		if Enums.are_hostile(req_faction, player.faction):
-			var d = requesting_ai.global_position.distance_squared_to(player.global_position)
-			if d < best_dist:
-				best_dist = d
-				best = player
-
-	# Check all other registered AI
-	for ai in all_ai:
-		# Belt to the _exit_tree brace: a freed entry must never reach .alive.
-		if ai == null or not is_instance_valid(ai):
+	var from: Vector3 = requesting_ai.global_position
+	for body in hostiles_for(requesting_ai.faction):
+		if body == requesting_ai or body == null or not is_instance_valid(body):
 			continue
-		if ai == requesting_ai:
+		# The cache can outlive a death inside its window.
+		if not body.alive:
 			continue
-		if not ai.alive:
-			continue
-		if not ai is Enemy:
-			continue
-		var enemy := ai as Enemy
-		if Enums.are_hostile(req_faction, enemy.faction):
-			# Squared distance, so the priority goes in squared too.
-			var prio := maxf(enemy.target_priority, 0.01)
-			var d = requesting_ai.global_position.distance_squared_to(enemy.global_position) / (prio * prio)
-			if d < best_dist:
-				best_dist = d
-				best = enemy
-
+		var prio := 1.0
+		if body is Enemy:
+			prio = maxf((body as Enemy).target_priority, 0.01)
+		# Squared distance, so the priority goes in squared too.
+		var d: float = from.distance_squared_to((body as Node3D).global_position) / (prio * prio)
+		if d < best_dist:
+			best_dist = d
+			best = body
 	return best
 
 # ─────────────────────────────────────────────

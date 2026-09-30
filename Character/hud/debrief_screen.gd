@@ -148,6 +148,9 @@ func _physics_process(delta: float) -> void:
 		if counter == null or not is_instance_valid(counter) or not counter.has_meta(&"from"):
 			continue
 		var now := int(round(lerpf(counter.get_meta(&"from"), counter.get_meta(&"to"), t)))
+		if bool(counter.get_meta(&"clock", false)):
+			counter.text = _clock(now)
+			continue
 		counter.text = str(counter.get_meta(&"prefix", "")) + str(now)
 	if t >= 1.0:
 		set_physics_process(false)
@@ -190,11 +193,9 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 	if mission != null:
 		var name_row := Kit.hbox(14)
 		name_row.add_child(Kit.label(mission.display_name.to_upper(), Kit.DIM, Kit.HEADING))
-		# How long that took. Only on the results page — the unlocks and the
-		# win screen are about what you came home with, not the clock.
-		var seconds := float(result.get("seconds", 0.0))
-		if page == PAGE_RESULTS and seconds > 0.0:
-			name_row.add_child(Kit.label(_clock(seconds), Kit.BRIGHT, Kit.HEADING, true))
+		# The clock used to hang off the end of this row. It is a TIME counter
+		# down in the stats now, where the other numbers are and where it gets
+		# a label — see _rewards().
 		titles.add_child(name_row)
 	# A failed run is rolled back to the state it deployed in, so everything
 	# below reads as a report rather than a bill: wrecks are shown because they
@@ -269,7 +270,10 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 		row.add_theme_constant_override("v_separation", 10)
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		for entry in group["entries"]:
-			row.add_child(_card(entry))
+			var card := _card(entry)
+			if card == null:
+				continue   # no record on it: _card has already said so
+			row.add_child(card)
 		grid.add_child(row)
 	# Ten robots is four rows of cards, and the screen has room for three: the
 	# last row ran off the bottom with no way to reach it. The cards scroll;
@@ -331,22 +335,38 @@ func _rewards(result: Dictionary) -> Control:
 		tally_kills += int(entry.get("kills", 0))
 		tally_lifts += int(entry.get("revives", 0))
 	row.add_child(_counter("KILLS", 0, tally_kills, Kit.BRIGHT, "BY THE WHOLE SQUAD"))
+	# GREEN, not the compute blue. Blue is the colour of the compute currency
+	# everywhere else on this screen and in the squad manager, so a blue REVIVES
+	# read as a second resource you had earned rather than as something the
+	# squad did. Revives belong with KILLS: both are what the squad did.
 	if tally_lifts > 0:
-		row.add_child(_counter("REVIVES", 0, tally_lifts, Kit.COMPUTE, "STOOD BACK UP"))
+		row.add_child(_counter("REVIVES", 0, tally_lifts, Kit.BRIGHT, "STOOD BACK UP"))
+	# HOW LONG IT TOOK, counted up beside the rest. It used to be a bare "12:34"
+	# tucked against the mission name at heading size, next to nothing else that
+	# was a number — so the one figure on the page with no label was the one
+	# nobody read. It is a stat, so it goes in the row of stats.
+	var seconds := float(result.get("seconds", 0.0))
+	if seconds > 0.0:
+		row.add_child(_counter("TIME", 0, int(round(seconds)), Kit.DIM,
+			"ON THE GROUND", "", true))
 	# Unlocks are NOT here any more. They get the whole screen after this one —
 	# a chip beside the payout was the smallest thing on the page and it was
 	# the reason you ran the operation.
 	return row
 
 
-func _counter(title: String, from: int, to: int, color: Color, note: String, prefix: String = "") -> Control:
+func _counter(title: String, from: int, to: int, color: Color, note: String, prefix: String = "",
+		clock: bool = false) -> Control:
 	var col := Kit.vbox(0)
 	col.add_child(Kit.label(title, Kit.DIM, Kit.SMALL, true))
-	var number := Kit.label(prefix + str(from), color, 34, true)
+	var number := Kit.label(_clock(from) if clock else prefix + str(from), color, 34, true)
 	number.set_meta(&"from", float(from))
 	number.set_meta(&"to", float(to))
 	# A counter that counts a GAIN reads as a gain: "+490", not "490".
 	number.set_meta(&"prefix", prefix)
+	# A clock counts in seconds and is WRITTEN as m:ss, so the run-up reads as
+	# a clock running rather than as a four-figure number of seconds.
+	number.set_meta(&"clock", clock)
 	col.add_child(number)
 	col.add_child(Kit.label(note, Kit.DIM, Kit.SMALL))
 	col.set_meta(&"number", number)
@@ -410,6 +430,12 @@ func _unlocks(ids: Array, large: bool = false) -> Control:
 		var item: ItemDefinition = catalogue.item(id)
 		var frame: ChassisDefinition = catalogue.chassis_def(id)
 		var tile := Kit.vbox(6 if large else 2)
+		# NOTHING THE ARMOURER WILL NOT SELL. Every tile here says "AT THE
+		# ARMORER", so announcing something with in_shop off sends the player to
+		# a shelf that does not stock it. The unlock still happens — it is only
+		# the announcement that is withheld.
+		if item != null and not item.in_shop:
+			continue
 		if item != null:
 			var wide := item.kind == ItemDefinition.Kind.WEAPON
 			var size := Vector2(232, 88) if wide else Vector2(88, 88)
@@ -443,10 +469,15 @@ func _by_team(squad: Array) -> Array:
 	var index := {}
 	for entry in squad:
 		var id := StringName(str(entry.get("team", "")))
-		if not index.has(id):
-			index[id] = {"label": _team_label(id), "id": id, "entries": [], "kills": 0, "revives": 0}
-			groups.append(index[id])
-		var group: Dictionary = index[id]
+		# Held in a local and stored once, rather than indexed back out of
+		# `index` twice. The Dictionary is the same object either way, so the
+		# grouping is unchanged — but nothing here does a `[]` lookup that can
+		# throw on a results screen, which is the whole point.
+		var group: Dictionary = index.get(id, {})
+		if group.is_empty():
+			group = {"label": _team_label(id), "id": id, "entries": [], "kills": 0, "revives": 0}
+			index[id] = group
+			groups.append(group)
 		# Your card leads the team you are in, wherever you sit in the roster.
 		if bool(entry.get("player", false)):
 			(group["entries"] as Array).push_front(entry)
@@ -495,6 +526,14 @@ func _tally_text(kills: int, revives: int) -> String:
 
 
 func _card(entry: Dictionary) -> Control:
+	# A CARD IS ABOUT A ROBOT, so an entry with no robot on it has no card —
+	# and used to throw instead, taking the rest of the roster down with it and
+	# then handing add_child() a null on the way out. Every entry the campaign
+	# builds carries a record; one that does not came from somewhere else, and
+	# the screen should say which rather than die.
+	if not entry.has("record") or entry["record"] == null:
+		push_warning("DebriefScreen: a squad entry has no record on it, so it gets no card. Keys: %s" % str(entry.keys()))
+		return null
 	var record: SoldierRecord = entry["record"]
 	var catalogue = _campaign.get("catalogue") if _campaign != null else null
 	var frame: ChassisDefinition = catalogue.chassis_def(record.chassis_id) if catalogue != null else null

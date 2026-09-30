@@ -1158,7 +1158,7 @@ metadata/is_crouch_cover = true
 transform = Transform3D(-3, 2.62268e-07, 1.14641e-14, 0, -1.31134e-07, 3, 2.62268e-07, 3, 1.31134e-07, -0.0291634, -3.95803, -0.391821)
 
 [node name="LevelExit" parent="." instance=ExtResource("5_xs52v")]
-transform = Transform3D(2.72158, 0, 0, 0, 1.97621, 0, 0, 0, 3.11484, -15.5288, 1.5, 12.8134)
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, -15.5288, 1.5, 12.8134)
 is_departure = true
 
 [node name="MissionTerminal" parent="." instance=ExtResource("15_mby7b")]

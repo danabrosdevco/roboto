@@ -1,0 +1,121 @@
+[gd_scene load_steps=9 format=3]
+
+; HEAVY MINE — placed, anti-vehicle, 160 damage.
+;
+; Reads as something you put DOWN rather than throw: a broad squat puck with a
+; carry handle on top, a pressure ring proud of the lid, and folding anchor
+; spurs. Wide and low, because it is meant to be spotted late by something with
+; wheels rather than seen early by something with eyes.
+;
+; House palette from machine_gun_model.tscn. No emissive — the arming state is
+; a job for a light the code turns on, not for baked paint.
+
+[sub_resource type="StandardMaterial3D" id="Steel"]
+albedo_color = Color(0.17, 0.18, 0.19, 1)
+metallic = 0.65
+roughness = 0.42
+
+[sub_resource type="StandardMaterial3D" id="Black"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+metallic = 0.5
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Olive"]
+albedo_color = Color(0.27, 0.3, 0.18, 1)
+metallic = 0.1
+roughness = 0.85
+
+[sub_resource type="CylinderMesh" id="Body"]
+top_radius = 0.26
+bottom_radius = 0.3
+height = 0.14
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="Ring"]
+top_radius = 0.17
+bottom_radius = 0.17
+height = 0.05
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="Plate"]
+top_radius = 0.1
+bottom_radius = 0.11
+height = 0.06
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Bar"]
+size = Vector3(0.24, 0.03, 0.035)
+
+[sub_resource type="BoxMesh" id="Spur"]
+size = Vector3(0.13, 0.022, 0.05)
+
+[node name="HeavyMine" type="Node3D"]
+
+[node name="Body" type="MeshInstance3D" parent="."]
+material_override = SubResource("Olive")
+mesh = SubResource("Body")
+
+[node name="Skirt" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.08, 0, 0, 0, 0.3, 0, 0, 0, 1.08, 0, -0.06, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Body")
+
+[node name="Ring" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.085, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Ring")
+
+[node name="Plate" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Plate")
+
+[node name="HandleTop" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Bar")
+
+[node name="HandlePostL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, -0.1, 0.17, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Bar")
+
+[node name="HandlePostR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.1, 0.17, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Bar")
+
+[node name="SpurA" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.94, -0.34, 0, 0.34, 0.94, 0, 0, 0, 1, 0.33, -0.05, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Spur")
+
+[node name="SpurB" type="MeshInstance3D" parent="."]
+transform = Transform3D(-0.94, -0.34, 0, -0.34, 0.94, 0, 0, 0, 1, -0.33, -0.05, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Spur")
+
+[node name="SpurC" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -0.34, 0.94, 0, 0.94, 0.34, -1, 0, 0, 0, -0.05, 0.33)
+material_override = SubResource("Steel")
+mesh = SubResource("Spur")
+
+[node name="SpurD" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -0.34, -0.94, 0, 0.94, -0.34, 1, 0, 0, 0, -0.05, -0.33)
+material_override = SubResource("Steel")
+mesh = SubResource("Spur")
+
+[node name="FuseWell" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.45, 0, 0, 0, 0.8, 0, 0, 0, 0.45, 0.17, 0.11, 0.1)
+material_override = SubResource("Black")
+mesh = SubResource("Plate")
+
+[node name="StripA" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.72, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.005, 0.27)
+material_override = SubResource("Black")
+mesh = SubResource("Bar")
+
+[node name="StripB" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 0, 0.72, 0, 1, 0, -1, 0, 0, 0.27, 0.005, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Bar")

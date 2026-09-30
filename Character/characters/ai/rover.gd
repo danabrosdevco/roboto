@@ -49,6 +49,20 @@ extends Soldier
 ## Throttle open and the wheels hardly turning for this long means it is up
 ## against something, and it takes the next leg rather than sit there pushing.
 @export var pinned_after: float = 0.35
+## Driving, with a path, and no closer to where it is going than it has already
+## been for this long: it takes a leg of a turn rather than keep pushing.
+##
+## _pinned_t CANNOT CATCH THIS. It measures roll along the hull's own nose, and
+## move_and_slide slides a body along whatever it hit — so a rover grinding
+## down a wall, or sawing between two whisker readings, is moving forward the
+## whole time and the pin timer resets every frame. It looked exactly like what
+## it was: a vehicle driving hard into something, for ever, until a new order
+## arrived and reset everything. Progress towards the GOAL is the only measure
+## that notices.
+@export var no_progress_after: float = 2.5
+## How much nearer it has to get for that to count as progress, so creeping
+## along a wall a centimetre a second does not read as getting somewhere.
+@export var progress_margin: float = 0.6
 ## How much room it wants ahead of the nose (or behind, reversing) before it
 ## commits to turning there, plus a little more per metre per second.
 @export var bumper_clearance: float = 0.6
@@ -135,6 +149,11 @@ var _manoeuvre_gear: float = 0.0 # -1 backing out, +1 pulling forward out
 var _manoeuvre_steer: float = 0.0
 var _manoeuvres: int = 0         # legs taken on this order
 var _pinned_t: float = 0.0
+## Closest this leg has got to its goal, and how long since it last beat that.
+var _progress_best: float = INF
+var _progress_t: float = 0.0
+## The waypoint those two readings are about.
+var _progress_at: Vector3 = Vector3.INF
 var _command: float = 0.0        # drive speed asked for this frame, signed
 var _driving: bool = false       # move_along_nav ran this frame
 var _gave_up_at := Vector3.INF   # where it last ran out of turn legs, for the warning
@@ -198,6 +217,7 @@ func _physics_process(delta: float) -> void:
 func move_to(pos: Vector3, think_delay: float = 0.0):
 	if pos.distance_to(movement_target) > 6.0:
 		_manoeuvres = 0   # somewhere new, not the same spot again
+	_reset_progress()   # a new goal: the old leg's best approach means nothing
 	_path_fresh = false
 	super(pos, think_delay)
 
@@ -242,6 +262,14 @@ func move_along_nav(delta):
 	if _pinned_t >= pinned_after:
 		_pinned_t = 0.0
 		_start_manoeuvre(-signf(_command) if absf(_command) > 0.0 else -1.0, err)
+
+	# Going nowhere the slow way. Checked before the manoeuvre branch so a leg
+	# already running is left to finish — it is allowed to not close the gap,
+	# that is what backing up is.
+	_tick_progress(delta, has_path)
+	if _progress_t >= no_progress_after:
+		_reset_progress()
+		_start_manoeuvre(-1.0, err)
 
 	if _manoeuvre_t > 0.0:
 		_manoeuvre_t -= delta
@@ -300,6 +328,49 @@ func move_along_nav(delta):
 		_last_move_dir = fwd * signf(speed)
 
 
+# ARE WE ACTUALLY GETTING THERE?
+#
+# Holds the closest it has ever been to the current goal on this leg. Every
+# time it beats that by `progress_margin` the clock restarts; otherwise the
+# clock runs. So sliding along a wall, sawing between whiskers, or shunting
+# back and forth all read as what they are — not arriving.
+#
+# Only while it is driving with somewhere to go. Parked, halted, or mid-turn it
+# is not supposed to be closing on anything.
+## MEASURED AGAINST THE NEXT PATH POINT, NOT THE GOAL.
+##
+## Straight-line distance to the goal is the obvious thing to watch and it is
+## wrong: driving the long way round a building legitimately does not shorten
+## it for several seconds, and can lengthen it. A watchdog on that reverses a
+## rover in the middle of a perfectly good detour. The next waypoint always
+## gets nearer when the path is being followed, whatever shape the path is.
+func _tick_progress(delta: float, has_path: bool) -> void:
+	if not has_path or _manoeuvre_t > 0.0 or absf(_command) < 1.0:
+		_reset_progress()
+		return
+	var next: Vector3 = nav_agent.get_next_path_position()
+	# The waypoint moved on, so the gap jumping up is progress, not the lack of
+	# it. Start again on the new one.
+	if _progress_at.distance_to(next) > 1.0:
+		_progress_at = next
+		_progress_best = INF
+		_progress_t = 0.0
+	var gap := _flat_gap(next)
+	if gap < _progress_best - progress_margin:
+		_progress_best = gap
+		_progress_t = 0.0
+		return
+	if _progress_best == INF:
+		_progress_best = gap
+	_progress_t += delta
+
+
+func _reset_progress() -> void:
+	_progress_at = Vector3.INF
+	_progress_best = INF
+	_progress_t = 0.0
+
+
 # Signed angle from the hull's heading to the way the path goes; + is left.
 func _nav_error() -> float:
 	var to := _nav_dir if _nav_dir.length_squared() > 0.0225 else _goal() - global_position
@@ -324,6 +395,8 @@ func _start_manoeuvre(gear: float, err: float) -> void:
 		halt()
 		return
 	_manoeuvres += 1
+	# A leg is ALLOWED to make no progress — backing up is the point of it.
+	_reset_progress()
 	_manoeuvre_gear = -1.0 if gear < 0.0 else 1.0
 	_manoeuvre_t = backoff_seconds
 	var side := signf(err) if absf(err) > 0.05 else (1.0 if randf() < 0.5 else -1.0)

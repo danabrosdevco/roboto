@@ -72,6 +72,7 @@ visible_pieces = [NodePath("CSGMesh3D"), NodePath("WeaponMount"), NodePath("CSGM
 health = 60
 max_health = 60
 equipment_slots = Array[ExtResource("2_8p1te")]([])
+move_speed = 6.0
 soldier_name = "Mechanic"
 formation_trail = 6.0
 

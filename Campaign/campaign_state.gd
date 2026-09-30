@@ -315,9 +315,13 @@ func has_team(id: StringName) -> bool:
 	return _team_index(id) >= 0
 
 
+## `.get()` rather than `[]` on both of these. A team row is a plain Dictionary
+## that has been through a save and a load, and indexing one for a key it turns
+## out not to carry THROWS — from inside a label lookup, on the results screen,
+## where the worst thing that should ever happen is a team reading "SQUAD".
 func _team_index(id: StringName) -> int:
 	for i in teams.size():
-		if teams[i]["id"] == id:
+		if StringName(str(teams[i].get("id", ""))) == id:
 			return i
 	return -1
 
@@ -325,7 +329,7 @@ func _team_index(id: StringName) -> int:
 ## A team's name as the field shows it, or "" for no such team.
 func team_name(id: StringName) -> String:
 	var i := _team_index(id)
-	return String(teams[i]["name"]) if i >= 0 else ""
+	return str(teams[i].get("name", "")) if i >= 0 else ""
 
 
 ## The team a robot goes in with. A robot with none, or whose team is gone,

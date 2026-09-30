@@ -94,8 +94,8 @@ func _init() -> void:
 		await physics_frame
 
 	var ids := _ids(cm)
-	_check("the first visit sets seven objectives (%d)" % ids.size(), ids.size() == 7, str(ids))
-	for want in [&"induct_repair_self", &"induct_revive_squad", &"induct_buy_rifle",
+	_check("the first visit sets eight objectives (%d)" % ids.size(), ids.size() == 8, str(ids))
+	for want in [&"induct_read_keys", &"induct_repair_self", &"induct_revive_squad", &"induct_buy_rifle",
 			&"induct_fit_rifle", &"induct_order_follow",
 			&"induct_order_advance", &"induct_pick_op"]:
 		_check("...including %s" % String(want), _obj(cm, want) != null, str(ids))
@@ -185,7 +185,7 @@ func _init() -> void:
 	cm.select_mission(first.id)
 	await process_frame
 	_check("choosing an operation completes the last one", _done(cm, &"induct_pick_op"))
-	_check("...and finishing all seven marks the tutorial done", cm.state.completed_tutorial)
+	_check("...and finishing all eight marks the tutorial done", cm.state.completed_tutorial)
 
 	# ── THE VISIT AFTER ───────────────────────────
 	# The whole point: the depot is a depot from here on.
@@ -217,7 +217,7 @@ func _init() -> void:
 	cm.on_level_loaded(world.current_level)
 	for _i in 60:
 		await physics_frame
-	_check("an unfinished induction is rebuilt on the next visit", _ids(cm).size() == 7,
+	_check("an unfinished induction is rebuilt on the next visit", _ids(cm).size() == 8,
 		str(_ids(cm)))
 	# The casualty is staged ONCE per campaign, so a resumed induction finds
 	# nobody on the floor. That objective must not block the other four — it

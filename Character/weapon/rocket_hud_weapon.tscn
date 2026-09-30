@@ -111,7 +111,6 @@ transform = Transform3D(0.042, 0, 0, 0, -1.83588e-09, -0.042, 0, 0.042, -1.83588
 stream = ExtResource("4_272kr")
 volume_db = -2.0
 unit_size = 30.0
-max_distance = 200.0
 
 [node name="Click" type="AudioStreamPlayer3D" parent="."]
 stream = ExtResource("4_click")

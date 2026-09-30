@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://cairepairkit01"]
+[gd_scene load_steps=2 format=3 uid="uid://cstlobvhx2x41"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_repair_kit.gd" id="1_repair"]
 

@@ -41,6 +41,8 @@ var _levels := [
 	"res://maps/homebase_level.tscn",
 	"res://maps/coastal-road_level.tscn",
 	"res://maps/mutaha_level.tscn",
+	"res://maps/mutaha_wip_level.tscn",
+	"res://maps/hillfort_level.tscn",
 	"res://maps/pittsburgh_level.tscn",
 	"res://maps/causeway_level.tscn",
 	"res://maps/depot_level.tscn",

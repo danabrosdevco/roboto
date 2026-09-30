@@ -1,6 +1,9 @@
 extends RigidBody3D
 class_name RocketProjectile
 
+## By path, not by class_name — see the note in ai_weapon.gd.
+const _WeaponAudio := preload("res://Managers/weapon_audio.gd")
+
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
 
@@ -152,6 +155,7 @@ func _explode() -> void:
 	blast.global_position = global_position
 	_widen(blast)
 	if explosion_sfx != null:
+		_WeaponAudio.stage(explosion_sfx)
 		explosion_sfx.play()
 		# Outlives the rocket: freed with it, the bang is cut off at the start.
 		remove_child(explosion_sfx)

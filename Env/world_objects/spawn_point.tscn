@@ -1,4 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://g7fmy28elpah"]
+[gd_scene load_steps=4 format=3 uid="uid://g7fmy28elpah"]
+
+[ext_resource type="Script" path="res://Env/world_objects/spawn_point.gd" id="1_spawn"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_thanl"]
 
@@ -7,6 +9,7 @@ vertex_color_use_as_albedo = true
 albedo_color = Color(0, 0.831373, 0, 1)
 
 [node name="SpawnPoint" type="Node3D"]
+script = ExtResource("1_spawn")
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
 mesh = SubResource("BoxMesh_thanl")

@@ -23,6 +23,10 @@ class_name HatchlingPayload
 @export var unit_scene: PackedScene
 ## How many. More than one turns it into a swarm charge.
 @export var count: int = 1
+## What the released unit is called in the kill feed and on its nameplate.
+## Defaults to the hatchling's so the scenes that already use this payload keep
+## reading the way they did; the Drone Carrier Pack sets its own.
+@export var unit_name: String = "HATCHLING"
 ## Seconds before a released unit shuts down. It is a charge, not a recruit.
 @export var lifetime: float = 25.0
 ## How far it looks for its first target. Wider than its own sensors on purpose:
@@ -59,7 +63,7 @@ func _release() -> void:
 		# _ready, so setting it afterwards would paint a player-side hatchling in
 		# enemy amber — and a friendly that looks hostile gets shot by you.
 		unit.faction = faction
-		unit.soldier_name = "HATCHLING"
+		unit.soldier_name = unit_name
 		unit.always_active = true
 		# Its kills are the thrower's. See Enemy.credit_kills_to.
 		if source_actor != null and is_instance_valid(source_actor):

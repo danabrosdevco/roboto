@@ -1,8 +1,8 @@
 extends Soldier
-class_name FPVDrone
+class_name Diver
 
 # ─────────────────────────────────────────────
-# FPV DRONE — a single-use frame that trades itself for one kill.
+# DIVER — a single-use frame that trades itself for one kill.
 #
 # Every other AI in the game picks what to attack by what is nearest and
 # visible (Enemy.reconsider_target). This one ranks candidates by chassis COST
@@ -20,10 +20,10 @@ class_name FPVDrone
 #   turn_rate      steering is rate-limited like the Walker's turret traverse,
 #                  so moving late beats it. Perfect tracking would remove the
 #                  counter entirely.
-#   base_health    80 on the chassis. Everything in the game kills it.
+#   base_health    50 on the chassis. Everything in the game kills it.
 #
 # It expires on a timer, cannot be downed and repaired, and is not purchasable:
-# it is spawned by the FPV Charge (a grenade whose burst releases one) or by an
+# it is spawned by the Drone Carrier Pack (equipment that sends one up) or by an
 # enemy spec, the same way a Hatchling releases a hopper.
 # ─────────────────────────────────────────────
 
@@ -268,6 +268,7 @@ func _detonate() -> void:
 		host.add_child(blast)
 		(blast as Node3D).global_position = global_position
 	die()
+	_vanish()
 
 
 # Out of time. It drops rather than going off: a charge that detonates on a
@@ -277,6 +278,7 @@ func _expire() -> void:
 		return
 	_enter(Phase.SPENT)
 	die()
+	_vanish()
 
 
 # ─────────────────────────────────────────────
@@ -332,3 +334,22 @@ func _spin_rotors(delta: float) -> void:
 	for r in rotors:
 		if r != null and is_instance_valid(r):
 			r.rotate_y(rotor_speed * delta)
+
+
+## NOTHING IS LEFT OF IT.
+##
+## Enemy.destroy() hides the body and kills its colliders but leaves the NODE
+## in the tree, which is right for a wreck a Reclaimer can still grind down and
+## wrong for a munition that has just gone off. The rotor loop is an
+## autoplaying AudioStreamPlayer3D on that node, so a spent Diver went on
+## buzzing from the spot where it blew up for the rest of the mission.
+##
+## The audio is stopped before the free rather than left to it: queue_free is
+## deferred, and a frame of rotor noise coming out of a fireball is a frame too
+## many. The blast itself is a separate node parented to the level, so it
+## outlives this and finishes properly.
+func _vanish() -> void:
+	for c in get_children():
+		if c is AudioStreamPlayer3D:
+			(c as AudioStreamPlayer3D).stop()
+	queue_free()

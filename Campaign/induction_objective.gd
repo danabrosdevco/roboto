@@ -33,6 +33,10 @@ enum Trigger {
 	SELECT_MISSION,
 	## An order given to a team — `order_verb` says which.
 	ORDER_SQUAD,
+	## The KEYS tab of the options screen has been on screen. APPENDED, not
+	## slotted in beside the other menu-ish triggers: these are ints in a save
+	## and in any scene that ever authors one.
+	REVIEW_KEYS,
 }
 
 @export var trigger: Trigger = Trigger.HEAL_SELF
@@ -89,6 +93,18 @@ func _on_activated() -> void:
 		Trigger.SELECT_MISSION:
 			if _campaign != null and _campaign.has_signal("mission_selected"):
 				_campaign.mission_selected.connect(_on_mission_selected)
+		Trigger.REVIEW_KEYS:
+			# Master is get_tree().current_scene in this project (see the note
+			# in ai_weapon.gd) and it outlives every menu, so it is the only
+			# thing an objective built at level load can connect to. Found by
+			# signal rather than by class so a headless probe resolves it
+			# before the editor has rescanned the class list.
+			var master := get_tree().current_scene
+			if master == null or not master.has_signal("keys_reviewed"):
+				push_warning("InductionObjective '%s': nothing above the level emits keys_reviewed, so reading the keys can never complete it. Passing it rather than blocking the induction." % id)
+				complete()
+				return
+			master.keys_reviewed.connect(complete)
 		Trigger.ORDER_SQUAD:
 			# SquadCommander owns the command key and announces every order it
 			# sends, which is the only place an order can be observed — Squad

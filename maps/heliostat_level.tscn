@@ -4243,7 +4243,7 @@ block_until_complete = false
 set_owner_batch_size = 1000
 
 [node name="LevelExit" type="Node3D" parent="NavigationRegion3D" node_paths=PackedStringArray("area", "live_parts") groups=["levelexit"] instance=ExtResource("36_qraln")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 208, 0.101242, 120)
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 208, 0.101242, 120)
 script = ExtResource("37_nwsvm")
 area = NodePath("Area3D")
 live_parts = [NodePath("ChevronN"), NodePath("ChevronE"), NodePath("ChevronS"), NodePath("ChevronW"), NodePath("BeaconA"), NodePath("BeaconB"), NodePath("BeaconC"), NodePath("BeaconD")]
@@ -4252,6 +4252,7 @@ is_departure = false
 requires_objectives_complete = true
 
 [node name="ReachObjective" type="Node3D" parent="NavigationRegion3D/LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 script = ExtResource("38_mh2i1")
 area = NodePath("Area3D")
 requires_squad = false

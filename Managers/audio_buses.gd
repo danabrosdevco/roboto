@@ -48,6 +48,7 @@ static func ensure() -> void:
 			AudioServer.set_bus_name(i, bus)
 			AudioServer.set_bus_send(i, MASTER)
 	_ensure_weapons()
+	_ensure_bands()
 	_install_routing()
 
 
@@ -167,4 +168,62 @@ static func _ensure_weapons() -> void:
 	var limit := AudioEffectLimiter.new()
 	limit.ceiling_db = -0.5
 	limit.threshold_db = -1.5
+	AudioServer.add_bus_effect(i, limit)
+
+
+# ─────────────────────────────────────────────
+# DISTANCE BANDS
+# ─────────────────────────────────────────────
+# A gunshot 300m away and one at 3m are the same recording, and inverse-square
+# spends 6dB on every doubling between them — about 38dB from arm's length to
+# the far side of Mutaha. No single gain curve is comfortable at both ends, so
+# the far end stops being a quieter version of the near one and becomes a
+# different sound: no top, no crack, just the thump that carries.
+#
+# That is what air actually does over a few hundred metres, which is why one
+# sample through a low-pass reads correctly and no second recording is needed.
+#
+#   Weapons      0-40m    the crack, as authored (EQ, compressor, limiter)
+#   WeaponsMid   40-150m  the report, top end starting to go
+#   WeaponsFar   150m+    a thump, and held near a floor by WeaponAudio so it
+#                         stays present instead of falling away to nothing
+#
+# BOTH HANG OFF EFFECTS, NOT OFF WEAPONS. Sending them through the near bus
+# would let the compressor duck every distant shot the moment the player fires,
+# which is the opposite of being able to hear a firefight you are standing in.
+const WEAPONS_MID := &"WeaponsMid"
+const WEAPONS_FAR := &"WeaponsFar"
+
+
+static func _ensure_bands() -> void:
+	_band(WEAPONS_MID, 4200.0, -20.0, 2.5)
+	_band(WEAPONS_FAR, 850.0, -26.0, 4.0)
+
+
+## One distance band: a low-pass for the air, then a compressor to hold what is
+## left of the shot up once the level has come down.
+static func _band(bus: StringName, cutoff_hz: float, threshold_db: float, ratio: float) -> void:
+	if AudioServer.get_bus_index(bus) != -1:
+		return
+	var i := AudioServer.bus_count
+	AudioServer.add_bus(i)
+	AudioServer.set_bus_name(i, bus)
+	AudioServer.set_bus_send(i, EFFECTS)
+
+	var lpf := AudioEffectLowPassFilter.new()
+	lpf.cutoff_hz = cutoff_hz
+	lpf.resonance = 0.2
+	AudioServer.add_bus_effect(i, lpf)
+
+	var comp := AudioEffectCompressor.new()
+	comp.threshold = threshold_db
+	comp.ratio = ratio
+	comp.attack_us = 200.0
+	comp.release_ms = 250.0
+	comp.gain = 4.0
+	AudioServer.add_bus_effect(i, comp)
+
+	var limit := AudioEffectLimiter.new()
+	limit.ceiling_db = -1.0
+	limit.threshold_db = -2.0
 	AudioServer.add_bus_effect(i, limit)

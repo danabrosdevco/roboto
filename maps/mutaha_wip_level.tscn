@@ -220,9 +220,10 @@ bridge_blockouts = false
 script = ExtResource("8_scatter")
 
 [node name="LevelExit" parent="NavigationRegion3D" instance=ExtResource("9_exit")]
-transform = Transform3D(2.25936, 0, 0, 0, 1, 0, 0, 0, 2.15384, 11.5, 0.464318, -420)
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 11.5, 0.464318, -420)
 
 [node name="MutahaExtract" type="Node3D" parent="NavigationRegion3D/LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 script = ExtResource("mut_reach")
 area = NodePath("Area3D")
 squad_radius = 30.0

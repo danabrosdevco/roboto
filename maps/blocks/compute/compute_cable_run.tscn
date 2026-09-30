@@ -1,9 +1,9 @@
-[gd_scene load_steps=12 format=4]
+[gd_scene load_steps=12 format=4 uid="uid://dnw7ptd8b8xg6"]
 
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_u32y0"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_j0ilp"]
+[ext_resource type="Resource" uid="uid://bkhxcqsquw1yg" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_j0ilp"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/metal_wall_tx_1.tres" id="3_mfr8b"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/glitch_tx_1.tres" id="4_alqnk"]
+[ext_resource type="Material" uid="uid://bsyq31dqvwrem" path="res://textures/PSX_Textures/glitch_tx_1.tres" id="4_alqnk"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/rubber_tsk_1.tres" id="5_2ja56"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/metal_wall_2.tres" id="6_q8bop"]
 

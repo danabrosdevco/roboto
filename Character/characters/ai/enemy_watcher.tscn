@@ -1,0 +1,204 @@
+[gd_scene load_steps=17 format=3 uid="uid://d2r3mqavwwrmo"]
+
+[ext_resource type="Script" path="res://Character/characters/ai/enemy_watcher.gd" id="1_watcher"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_bark"]
+[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_voice"]
+[ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="4_voice2"]
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="5_metal"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="6_sparks"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="7_oil"]
+
+[sub_resource type="BoxShape3D" id="Hull"]
+size = Vector3(1.9, 1.5, 1.9)
+
+[sub_resource type="SphereShape3D" id="Sense"]
+radius = 60.0
+
+[sub_resource type="StandardMaterial3D" id="Dark"]
+albedo_color = Color(0.11, 0.13, 0.12, 1)
+metallic = 0.45
+roughness = 0.65
+
+[sub_resource type="StandardMaterial3D" id="Amber"]
+albedo_color = Color(1, 0.55, 0.12, 1)
+metallic = 0.2
+roughness = 0.3
+emission_enabled = true
+emission = Color(1, 0.45, 0.08, 1)
+emission_energy_multiplier = 3.5
+
+[sub_resource type="CylinderMesh" id="Leg"]
+top_radius = 0.08
+bottom_radius = 0.11
+height = 6.0
+radial_segments = 6
+
+[sub_resource type="BoxMesh" id="Brace"]
+size = Vector3(1.1, 0.07, 0.07)
+
+[sub_resource type="BoxMesh" id="Bar"]
+size = Vector3(3.4, 0.14, 0.14)
+
+[sub_resource type="BoxMesh" id="Pod"]
+size = Vector3(0.34, 0.3, 0.5)
+
+[sub_resource type="CylinderMesh" id="Drum"]
+top_radius = 0.3
+bottom_radius = 0.3
+height = 0.34
+radial_segments = 8
+
+[node name="Enemy_Watcher" type="CharacterBody3D" node_paths=PackedStringArray("scanner", "spinner", "nav_agent", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+script = ExtResource("1_watcher")
+scanner = NodePath("Rig/Scanner")
+spinner = NodePath("Rig/Spinner")
+nav_agent = NodePath("NavigationAgent3D")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("Rig")]
+activation_distance = 400
+health = 350
+max_health = 350
+bits = 30
+soldier_name = "Watcher"
+sensor_range = 170.0
+can_be_downed = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+shape = SubResource("Hull")
+
+[node name="Bark" parent="." instance=ExtResource("2_bark")]
+bark_clips = Array[AudioStream]([ExtResource("3_voice"), ExtResource("4_voice2")])
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
+shape = SubResource("Sense")
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Plinth" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, 0)
+size = Vector3(2.4, 0.44, 2.4)
+material = ExtResource("5_metal")
+
+[node name="Bunker" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
+size = Vector3(1.8, 0.7, 1.8)
+material = ExtResource("5_metal")
+
+[node name="Hatch" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, -0.92)
+size = Vector3(0.9, 0.5, 0.1)
+material = SubResource("Dark")
+
+[node name="Strip" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.06, -0.9)
+size = Vector3(0.7, 0.07, 0.06)
+material = SubResource("Amber")
+
+[node name="LegA" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.995, 0.0998, 0, -0.0998, 0.995, 0, 0, 0, 1, 0.45, 4.1, 0.45)
+material_override = SubResource("Dark")
+mesh = SubResource("Leg")
+
+[node name="LegB" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.995, -0.0998, 0, 0.0998, 0.995, 0, 0, 0, 1, -0.45, 4.1, 0.45)
+material_override = SubResource("Dark")
+mesh = SubResource("Leg")
+
+[node name="LegC" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.995, 0.0998, 0, -0.0998, 0.995, 0, 0, 0, 1, 0.45, 4.1, -0.45)
+material_override = SubResource("Dark")
+mesh = SubResource("Leg")
+
+[node name="LegD" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.995, -0.0998, 0, 0.0998, 0.995, 0, 0, 0, 1, -0.45, 4.1, -0.45)
+material_override = SubResource("Dark")
+mesh = SubResource("Leg")
+
+[node name="BraceLow" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0.62)
+material_override = SubResource("Dark")
+mesh = SubResource("Brace")
+
+[node name="BraceLowX" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0.62, 2.3, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Brace")
+
+[node name="BraceMid" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.85, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.5)
+material_override = SubResource("Dark")
+mesh = SubResource("Brace")
+
+[node name="BraceMidX" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0, 0, 0.85, 0, 1, 0, -1, 0, 0, 0.5, 4, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Brace")
+
+[node name="BraceTop" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.6, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.7, 0.34)
+material_override = SubResource("Dark")
+mesh = SubResource("Brace")
+
+[node name="Collar" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5, 0)
+size = Vector3(0.8, 0.5, 0.8)
+material = ExtResource("5_metal")
+
+[node name="Scanner" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.95, 0)
+
+[node name="Bar" type="MeshInstance3D" parent="Rig/Scanner"]
+material_override = SubResource("Dark")
+mesh = SubResource("Bar")
+
+[node name="PodL" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.62, 0, 0)
+material_override = ExtResource("5_metal")
+mesh = SubResource("Pod")
+
+[node name="PodR" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 0, 0)
+material_override = ExtResource("5_metal")
+mesh = SubResource("Pod")
+
+[node name="Spinner" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.35, 0)
+
+[node name="Drum" type="MeshInstance3D" parent="Rig/Spinner"]
+material_override = ExtResource("5_metal")
+mesh = SubResource("Drum")
+
+[node name="VaneA" type="CSGBox3D" parent="Rig/Spinner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.34)
+size = Vector3(0.44, 0.26, 0.08)
+material = SubResource("Dark")
+
+[node name="VaneB" type="CSGBox3D" parent="Rig/Spinner"]
+transform = Transform3D(-0.5, 0, 0.866, 0, 1, 0, -0.866, 0, -0.5, 0.29, 0, 0.17)
+size = Vector3(0.44, 0.26, 0.08)
+material = SubResource("Dark")
+
+[node name="VaneC" type="CSGBox3D" parent="Rig/Spinner"]
+transform = Transform3D(-0.5, 0, -0.866, 0, 1, 0, 0.866, 0, -0.5, -0.29, 0, 0.17)
+size = Vector3(0.44, 0.26, 0.08)
+material = SubResource("Dark")
+
+[node name="Lamp" type="CSGSphere3D" parent="Rig/Spinner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14, -0.42)
+radius = 0.15
+radial_segments = 10
+material = SubResource("Amber")
+
+[node name="SparkBurst" parent="." instance=ExtResource("6_sparks")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+
+[node name="OilSpray" parent="." instance=ExtResource("7_oil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)

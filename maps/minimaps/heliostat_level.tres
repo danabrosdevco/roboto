@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_hn4ik"]
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_nc1fq"]
 
 [resource]
-script = ExtResource("1_hn4ik")
+script = ExtResource("1_nc1fq")
 level_scene_path = "res://maps/heliostat_level.tscn"
 image_path = "res://maps/minimaps/heliostat_level.png"
 world_min = Vector2(-163.406, -163.406)

@@ -24,6 +24,7 @@ const FRAMES := {
 	&"gunship": "res://Campaign/chassis/chassis_helicopter.tres",
 	&"rover": "res://Campaign/chassis/chassis_rover.tres",
 	&"nest": "res://Campaign/chassis/chassis_nest.tres",
+	&"watcher": "res://Campaign/chassis/chassis_watcher.tres",
 	&"reclaimer": "res://Campaign/chassis/chassis_reclaimer.tres",
 	&"mechanic": "res://Campaign/chassis/chassis_mechanic.tres",
 	&"marksman": "res://Campaign/chassis/chassis_marksman.tres",
@@ -31,6 +32,7 @@ const FRAMES := {
 	&"mortar_track": "res://Campaign/chassis/chassis_mortar_track.tres",
 	&"spotter": "res://Campaign/chassis/chassis_spotter.tres",
 	&"walker": "res://Campaign/chassis/chassis_walker.tres",
+	&"diver": "res://Campaign/chassis/chassis_diver.tres",
 }
 
 ## Scene file (no extension) -> frame id, for robots with no frame of record.
@@ -44,6 +46,7 @@ const SCENES := {
 	"enemy_helicopter": &"gunship",
 	"vehicle_rover": &"rover",
 	"soldier_chassis": &"soldier",
+	"enemy_watcher": &"watcher",
 	"boss_guardian": &"guardian",
 	"enemy_nest": &"nest",
 	"vehicle_reclaimer": &"reclaimer",
@@ -51,6 +54,7 @@ const SCENES := {
 	"soldier_marksman": &"marksman",
 	"spotter_drone": &"spotter",
 	"walker": &"walker",
+	"diver": &"diver",
 }
 
 

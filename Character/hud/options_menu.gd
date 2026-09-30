@@ -24,19 +24,29 @@ class_name OptionsMenu
 # ─────────────────────────────────────────────
 
 signal closed
+## Which tab is now on screen, as an index into TABS. Master relays it so the
+## induction can set "go and read your keys" as an objective; nothing else
+## listens, and nothing has to.
+signal tab_shown(index: int)
 
 const COL_DIM    := HUDPalette.DIM
 const COL_BRIGHT := HUDPalette.BRIGHT
 const COL_WARN   := HUDPalette.WARN
 const COL_HOVER  := Color(0.86, 1.0, 0.88)
 
-const TABS := ["DISPLAY", "AUDIO", "CONTROLS", "KEYS"]
+# DEBUG is APPENDED, not slotted in. Master looks KEYS up by index to know when
+# the induction's "read your keys" objective is done, and a tab inserted above
+# it would silently move it.
+const TABS := ["DISPLAY", "AUDIO", "CONTROLS", "KEYS", "DEBUG"]
 const TAB_HINTS := [
 	"CHANGES APPLY AS YOU MAKE THEM.  POINT AT A SETTING FOR DETAILS.",
 	"CHANGES APPLY AS YOU MAKE THEM.  POINT AT A SETTING FOR DETAILS.",
 	"CHANGES APPLY AS YOU MAKE THEM.  POINT AT A SETTING FOR DETAILS.",
 	"CLICK A BINDING, THEN PRESS THE NEW KEY OR MOUSE BUTTON.  ESC CANCELS.",
+	"PLAYTESTING ONLY.  THE SWITCHES ARE LIVE AND REVERSIBLE; THE HANDOUTS ARE NOT.",
 ]
+## Which tab the DEBUG switches are on. Master opens the screen straight onto it.
+const TAB_DEBUG := 4
 
 const PANEL_WIDTH := 780.0
 const ROW_HEIGHT  := 32.0
@@ -100,6 +110,11 @@ func _exit_tree() -> void:
 func show_tab(i: int) -> void:
 	_cancel_capture()
 	_tab = clampi(i, 0, TABS.size() - 1)
+	# The button is not built in an export, but the tab is still reachable by
+	# index from anything holding TAB_DEBUG. Sent to DISPLAY rather than
+	# refused, so a caller that guessed wrong shows a page instead of nothing.
+	if _tab == TAB_DEBUG and not Settings.debug_tools_enabled():
+		_tab = 0
 	for c in _page.get_children():
 		_page.remove_child(c)
 		c.queue_free()
@@ -110,6 +125,7 @@ func show_tab(i: int) -> void:
 		1: _build_audio()
 		2: _build_controls()
 		3: _build_keys()
+		4: _build_debug()
 	for j in _tab_buttons.size():
 		var on := j == _tab
 		_tab_buttons[j].add_theme_color_override("font_color", COL_BRIGHT if on else COL_DIM)
@@ -118,6 +134,9 @@ func show_tab(i: int) -> void:
 	_disarm_defaults()
 	_refresh()
 	_show_hint()
+	# AFTER the page is built, not before: a listener that reacts by closing
+	# this screen must not do it to a half-built one.
+	tab_shown.emit(_tab)
 
 
 ## ESC. Backs out of a key capture if one is running, otherwise closes.
@@ -187,6 +206,13 @@ func _build() -> void:
 	tabs.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(tabs)
 	for i in TABS.size():
+		# NO DEBUG TAB OUTSIDE THE EDITOR. Skipping it rather than trimming TABS
+		# keeps every other index where it was — Master finds KEYS by index —
+		# and it only works because DEBUG is LAST, so _tab_buttons still lines
+		# up with TABS one for one. Anything inserted after it must be added
+		# above DEBUG, not below.
+		if i == TAB_DEBUG and not Settings.debug_tools_enabled():
+			continue
 		var b := _flat_button(TABS[i], FONT_TAB)
 		b.mouse_entered.connect(_on_button_hover)
 		b.pressed.connect(func() -> void:
@@ -313,6 +339,66 @@ func _build_controls() -> void:
 		"HOLD: AIM WHILE THE BUTTON IS DOWN.  TOGGLE: CLICK ONCE TO AIM, AGAIN TO STOP.",
 		func() -> Array: return [false, true],
 		func(v) -> String: return "TOGGLE" if v else "HOLD")
+
+
+# ─────────────────────────────────────────────
+# DEBUG — playtesting switches.
+#
+# TWO KINDS, and the difference matters. The SWITCHES are reversible: they are
+# read live by `Campaign.available_missions()` and `Campaign.locked_by()`, they
+# write nothing to the campaign, and turning one off puts the run straight back
+# to what it had actually earned. The HANDOUTS are not: resources and compute go
+# into the save the moment the next autosave runs, and no amount of unticking
+# takes them out again. The rows say so, because the two read identically on a
+# menu and behave nothing alike.
+# ─────────────────────────────────────────────
+func _build_debug() -> void:
+	_header("REVERSIBLE — NOTHING IS WRITTEN TO THE SAVE")
+	_toggle("debug.unlock_all_missions", "UNLOCK ALL MISSIONS",
+		"EVERY OPERATION SELECTABLE AT THE TERMINAL, IGNORING WHAT IT REQUIRES, AND NONE RETIRE WHEN CLEARED — SO YOU CAN RUN ONE AGAIN.")
+	_toggle("debug.unlock_all_gear", "UNLOCK ALL HARDWARE",
+		"EVERY WEAPON, FRAME, MODULE AND PIECE OF EQUIPMENT BUYABLE NOW. YOU STILL PAY FOR IT. DOES NOT BRING BACK ANYTHING TAKEN OUT OF THE GAME, LIKE THE SHOTGUN.")
+	_header("PERMANENT — GOES INTO THE SAVE AND CANNOT BE TAKEN BACK")
+	_give("GIVE RESOURCES", "ADDS 5000 TO THE PURSE.", "+5000", 5000, false)
+	_give("GIVE COMPUTE", "ADDS 50 UNSPENT COMPUTE.", "+50", 50, true)
+
+
+## One handout row: a name, a button, and the campaign on the other end of it.
+## Finds the campaign through the "campaign" group because this screen lives
+## above World and must not assume a path into it — see the ready-order note in
+## CLAUDE.md.
+func _give(label: String, hint: String, button_text: String, amount: int, compute: bool) -> void:
+	var row := _new_row(label, hint)
+	var line: HBoxContainer = row["line"]
+	line.add_child(_gap(ARROW_W))
+	var button := _flat_button(button_text, FONT_ROW)
+	button.custom_minimum_size = Vector2(VALUE_W, 0)
+	button.pressed.connect(func() -> void: _on_give(amount, compute))
+	line.add_child(button)
+	line.add_child(_gap(READOUT_W))
+	# No refresh and no enabled test: a handout has no value to read back, and
+	# _refresh() skips an invalid Callable.
+	row["refresh"] = Callable()
+	row["enabled"] = Callable()
+	row["controls"] = [button]
+
+
+func _on_give(amount: int, compute: bool) -> void:
+	_play(confirm_sound)
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	var state = campaign.get("state") if campaign != null else null
+	if state == null:
+		# Says why rather than doing nothing. The options screen opens from the
+		# MAIN MENU too, where no campaign has been loaded yet and there is
+		# nothing to pay into.
+		_flash("NO CAMPAIGN LOADED — START A RUN FIRST.", COL_WARN)
+		return
+	if compute:
+		state.award_compute(amount)
+		_flash("+%d COMPUTE. %d UNSPENT." % [amount, state.compute_free()], COL_BRIGHT)
+	else:
+		state.award(amount)
+		_flash("+%d RESOURCES. %d IN THE PURSE." % [amount, state.available()], COL_BRIGHT)
 
 
 func _build_keys() -> void:
@@ -635,6 +721,8 @@ func _on_defaults_pressed() -> void:
 		1: Settings.reset_section("audio")
 		2: Settings.reset_section("controls")
 		3: Settings.reset_bindings()
+		# Both switches off. The handouts are not undone, because they cannot be.
+		4: Settings.reset_section("debug")
 	_flash("%s RESET TO DEFAULTS." % TABS[_tab], COL_BRIGHT)
 
 

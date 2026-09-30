@@ -514,9 +514,11 @@ func _init() -> void:
 	var second := state.recruit(frame)
 	_check("a rover with one free seat waits on the bench", second != null and second.benched,
 		"%d of %d seats used" % [state.supply_used(), state.supply_cap])
+	# The rover used to be the basin's own reward, which meant the fight that
+	# needed it was the fight that paid for it. It arrives a mission earlier now.
 	var unlocks_it := cm.missions.filter(func(m): return m != null and m.unlocks.has(&"rover"))
-	_check("the rover is unlocked by clearing the basin, with the gun it comes with",
-		unlocks_it.size() == 1 and unlocks_it[0].id == &"basin_1_anchor"
+	_check("the rover is unlocked by clearing the hillfort, with the gun it comes with",
+		unlocks_it.size() == 1 and unlocks_it[0].id == &"hillfort_1_relay"
 		and unlocks_it[0].unlocks.has(&"machine_gun"), str(unlocks_it.map(func(m): return str(m.id))))
 	# The grenade launcher is one of the late, high-power unlocks, not a
 	# second gun that arrives with the rover.

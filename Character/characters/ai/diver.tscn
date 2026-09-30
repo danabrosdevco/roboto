@@ -1,0 +1,77 @@
+[gd_scene load_steps=8 format=3]
+
+; THE DIVER, as a frame.
+;
+; diver.gd was written a long time before this scene and never had one, so the
+; behaviour is finished and this is only the body it needed: a rig to bank, four
+; blades to spin, and a ray to find the ground it climbs above.
+;
+; THE MODEL IS INSTANCED, not copied. Character/weapon/concepts/diver.tscn is
+; the same file the concept sheet renders, so the thing in the design doc and
+; the thing that flies at you cannot drift apart.
+;
+; NO NavigationAgent3D TARGET IS EVER SET. It overrides move_to() to store the
+; point and nothing else, because it flies over terrain rather than around it —
+; but Enemy.nav_agent is not optional, so the node is here and idle.
+;
+; The collider is a 0.45 sphere: small, because fifty hull and "shoot it down"
+; only works if hitting it is the hard part rather than the easy one.
+
+[ext_resource type="Script" path="res://Character/characters/ai/diver.gd" id="1_diver"]
+[ext_resource type="PackedScene" path="res://Character/weapon/concepts/diver.tscn" id="2_model"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="3_bark"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="4_spark"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="5_oil"]
+[ext_resource type="AudioStream" uid="uid://dw0e386o42h2o" path="res://sounds/sfx/quadcopter loop/freesound_community-mini-quadcopter-flying-loop-80330.mp3" id="6_rotor"]
+
+[sub_resource type="SphereShape3D" id="shape_body"]
+radius = 0.45
+
+[node name="diver" type="CharacterBody3D" node_paths=PackedStringArray("rig", "rotors", "ground_ray", "nav_agent", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+script = ExtResource("1_diver")
+rig = NodePath("Rig")
+rotors = [NodePath("Rig/Diver/BladeA"), NodePath("Rig/Diver/BladeB"), NodePath("Rig/Diver/BladeC"), NodePath("Rig/Diver/BladeD")]
+ground_ray = NodePath("GroundRay")
+nav_agent = NodePath("NavigationAgent3D")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("Rig/Diver/Hull"), NodePath("Rig/Diver/ArmA"), NodePath("Rig/Diver/Warhead")]
+activation_distance = 250
+health = 50
+max_health = 50
+move_speed = 30.0
+soldier_name = "Diver"
+flatten_collider_when_downed = false
+blast_damage = 90
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("shape_body")
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Diver" parent="Rig" instance=ExtResource("2_model")]
+
+[node name="GroundRay" type="RayCast3D" parent="."]
+target_position = Vector3(0, -60, 0)
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="Bark" parent="." instance=ExtResource("3_bark")]
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="DetectionShape" type="CollisionShape3D" parent="Detection"]
+shape = SubResource("shape_body")
+
+[node name="SparkBurst" parent="." instance=ExtResource("4_spark")]
+
+[node name="OilSpray" parent="." instance=ExtResource("5_oil")]
+
+[node name="RotorLoop" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("6_rotor")
+volume_db = -10.0
+unit_size = 18.0
+pitch_scale = 1.25
+autoplay = true

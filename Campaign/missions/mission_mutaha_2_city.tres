@@ -13,7 +13,7 @@
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="10_mech"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="12_nest"]
 [ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="13_bomber"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_marksman.tres" id="14_marks"]
+[ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="14_marks"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="15_lobber"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_mortar_track.tres" id="16_mortar"]
 
@@ -104,7 +104,7 @@ spawn_tag = &"obj_mutaha_w_mid"
 spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
-reinforcement_tag = &"WEST-GATE_engaged"
+reinforcement_tag = &"west-gate_engaged"
 wake_after_kills = 0
 
 [sub_resource type="Resource" id="W_guns"]
@@ -224,7 +224,7 @@ spawn_tag = &"obj_mutaha_e_mid"
 spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
-reinforcement_tag = &"EAST-YARD_engaged"
+reinforcement_tag = &"east-yard_engaged"
 wake_after_kills = 0
 
 [sub_resource type="Resource" id="E_fair"]
@@ -449,7 +449,7 @@ spawn_tag = &"obj_mutaha_in_east"
 spawn_offset = Vector3(0, 0, 0)
 always_active = true
 faction = 1
-reinforcement_tag = &"EAST-YARD_engaged"
+reinforcement_tag = &"east-yard_engaged"
 wake_after_kills = 0
 
 [sub_resource type="Resource" id="X_isle"]
@@ -494,14 +494,14 @@ spawn_tag = &"obj_mutaha_in_north"
 spawn_offset = Vector3(0, 60, 0)
 always_active = true
 faction = 1
-reinforcement_tag = &"COMPUTE-HALL_engaged"
+reinforcement_tag = &"compute-hall_engaged"
 wake_after_kills = 0
 
 [resource]
 script = ExtResource("1_missdef")
 id = &"mutaha_2_city"
-display_name = "Mutaha — City"
-briefing = "MUTAHA, SECOND PASS.
+display_name = "Qamareen — City"
+briefing = "QAMAREEN, SECOND PASS.
 
 You come in from the SOUTH. The picket on the bridge is not the fight — it is the doorbell.
 
@@ -517,9 +517,9 @@ map_position = Vector2(0, 0)
 enemy_force = Array[ExtResource("2_espec")]([SubResource("A_picket"), SubResource("A_gate"), SubResource("A_patrol"), SubResource("W_gate"), SubResource("W_roofs"), SubResource("W_alley"), SubResource("W_guns"), SubResource("W_clock"), SubResource("W_north"), SubResource("W_hive"), SubResource("E_yard"), SubResource("E_lanes"), SubResource("E_roofs"), SubResource("E_ambush"), SubResource("E_fair"), SubResource("E_north"), SubResource("E_bridge"), SubResource("E_hive"), SubResource("I_solar"), SubResource("I_server"), SubResource("I_compute"), SubResource("I_avenue"), SubResource("I_roofs"), SubResource("I_listen"), SubResource("I_north"), SubResource("N_road"), SubResource("N_bridge"), SubResource("X_west"), SubResource("X_east"), SubResource("X_isle"), SubResource("X_late"), SubResource("X_bomber")])
 replace_level_enemies = false
 active_objectives = Array[StringName]([&"mutaha_relay_clock", &"mutaha_hive_fair", &"mutaha_relay_compute", &"mutaha_extract"])
-reward_resources = 0
-compute_reward = 0
-unlocks = Array[StringName]([])
+reward_resources = 850
+compute_reward = 3
+unlocks = Array[StringName]([&"cluster_launcher", &"drone_pack"])
 squad_size = -1
 repeatable = false
-requires = Array[StringName]([&"mutaha_1_blocks"])
+requires = Array[StringName]([&"pitt_1_rivers"])

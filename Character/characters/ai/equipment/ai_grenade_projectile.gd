@@ -4,6 +4,11 @@ class_name AIGrenadeProjectile
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
 
+## Banded like a gunshot, same as the Explosion the round spawns. The canister
+## pop used to play raw, so a mine going off two streets away was inaudible
+## while its blast was not. By path: see the note in ai_weapon.gd.
+const _WeaponAudio := preload("res://Managers/weapon_audio.gd")
+
 # ─────────────────────────────────────────────
 # AI GRENADE PROJECTILE
 # Physics-based grenade. Thrown with a computed
@@ -148,6 +153,7 @@ func _explode() -> void:
 			else _Analytics.label_for_scene(scene_file_path))
 		_level().add_child(blast)
 		blast.global_position = global_position
+		_WeaponAudio.stage(explosion_sfx)
 		explosion_sfx.play()
 		mesh.queue_free()
 		freeze = true

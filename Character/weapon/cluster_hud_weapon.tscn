@@ -1,0 +1,95 @@
+[gd_scene load_steps=8 format=3]
+
+; CLUSTER LAUNCHER, in the player's hands.
+;
+; SAME HOLDER AS THE MARK ONE AND THE SQUAD AUTOMATIC — scale 0.26 at
+; (0.104, -0.123, -0.55) — because the model is built to the same scale and
+; axes. That is what lets one ADS solve serve all three.
+;
+; ADS SOLVE — and this is the ONE weapon whose ads_rotation is not zero.
+;
+; The other two keep a flat sight line so the bore stays on the crosshair. A
+; launcher wants the bore ABOVE the line of sight, because the shell falls the
+; whole way. So the model's rear ladder sits high (the 50m mark at y 0.704764
+; against the front post's 0.573) and the pose pitches the gun nose-up by
+; ads_rotation.z = +0.0424788 rad = 2.433 degrees, which levels that sight line
+; AND elevates the bore by exactly that much. 2.433 degrees at 76 m/s lands a
+; shell at 50m, so the crosshair means 50m and the other four marks on the
+; ladder mean what cluster_launcher_model.tscn's table says they mean.
+;
+; ads_position then lands that levelled line on the optical axis:
+;   y = 0.123 / 0.26 - 0.759334 = -0.286257   (0.759334 is the mark's height
+;       AFTER the pitch, not before it — the rotation moves it)
+;   x puts the 50m mark 0.278m from the eye; z = -0.4 centres it.
+; tools/preview_viewmodel.gd prints both sights' camera-local position and the
+; line's tilt; all three read zero.
+;
+; THE SHELL MUST LEAVE ALONG THE BORE, not the camera. See _fire_shot() in
+; player_cluster_launcher.gd — firing down the view axis would throw it flat
+; and make every mark on that leaf decorative.
+;
+; SIX ROUNDS, THEN FIVE AND A HALF SECONDS. That reload is the weapon's price:
+; the drum is a burst of area control and then you are carrying a club.
+
+[ext_resource type="Script" path="res://Character/weapon/player_cluster_launcher.gd" id="1_cluster"]
+[ext_resource type="Curve" path="res://Character/weapon/cluster_recoil_curve.tres" id="7_curve"]
+[ext_resource type="PackedScene" path="res://Character/weapon/cluster_shell.tscn" id="2_shell"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/cluster_launcher_model.tscn" id="3_model"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="4_flash"]
+[ext_resource type="AudioStream" uid="uid://3ps2c3e6sglw" path="res://sounds/sfx/grenade launcher/freesound_community-grenade-launcher-106342.mp3" id="5_fire"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="6_click"]
+
+[node name="ClusterLauncher" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "click_stream_player", "viewmodel")]
+script = ExtResource("1_cluster")
+tracer_origin = NodePath("Holder/ClusterLauncherModel/Muzzle")
+muzzle_flash = NodePath("Holder/ClusterLauncherModel/MuzzleFlash")
+weapon_model = NodePath("Holder/ClusterLauncherModel")
+rifle_stream_player = NodePath("Shot")
+recoil_curve = ExtResource("7_curve")
+recoil_duration = 0.34
+recoil_per_shot = 5.2
+camera_recoil_yaw_scale = 0.35
+hitscan_range = 250.0
+noise_radius = 58.0
+ammo_type = &"40mm"
+magazine_size = 6
+reload_time = 5.5
+firemode = 0
+damage = 40
+FIRE_RATE = 0.55
+click_stream_player = NodePath("Click")
+display_name = "Cluster Launcher"
+base_position = Vector3(-2.355, -0.731, 0.365)
+reload_position = Vector3(-2.355, -0.911, 0.415)
+reload_rotation = Vector3(0.55, 0, -0.12)
+base_rotation = Vector3(0, 0, 0)
+ads_position = Vector3(-2.256308, -0.681824, -0.4)
+ads_rotation = Vector3(0, 0, 0.0813502)
+viewmodel = NodePath("Holder/ClusterLauncherModel")
+shell_scene = ExtResource("2_shell")
+launch_speed = 55.0
+launch_lift = 0.0
+spawn_forward = 0.9
+spawn_drop = 0.12
+analytics_label = "Cluster Launcher"
+
+[node name="Holder" type="Node3D" parent="."]
+transform = Transform3D(-1.13649e-08, 0, 0.26, 0, 0.26, 0, -0.26, 0, -1.13649e-08, 0.104, -0.123, -0.55)
+
+[node name="ClusterLauncherModel" parent="Holder" instance=ExtResource("3_model")]
+
+[node name="Muzzle" type="Node3D" parent="Holder/ClusterLauncherModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.85, -0.06, 0)
+
+[node name="MuzzleFlash" parent="Holder/ClusterLauncherModel" instance=ExtResource("4_flash")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 4.7, -0.06, 0)
+visible = false
+
+[node name="Shot" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("5_fire")
+volume_db = -6.0
+pitch_scale = 0.82
+bus = &"Weapons"
+
+[node name="Click" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("6_click")

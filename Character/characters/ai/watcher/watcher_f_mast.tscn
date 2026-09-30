@@ -1,0 +1,141 @@
+[gd_scene load_steps=11 format=3 uid="uid://cwatcher0mast"]
+
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="1_metal"]
+
+[sub_resource type="StandardMaterial3D" id="Dark"]
+albedo_color = Color(0.13, 0.15, 0.14, 1)
+metallic = 0.4
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="Amber"]
+albedo_color = Color(0.7, 0.35, 0.02, 1)
+metallic = 0.2
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.95, 0.5, 0.06, 1)
+emission_energy_multiplier = 3.2
+
+[sub_resource type="StandardMaterial3D" id="HitMat"]
+transparency = 1
+albedo_color = Color(0.95, 0.25, 0.2, 0.28)
+
+[sub_resource type="CylinderMesh" id="Drum"]
+top_radius = 1.25
+bottom_radius = 1.5
+height = 1.5
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="Seg1"]
+top_radius = 0.26
+bottom_radius = 0.32
+height = 1.9
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="Seg2"]
+top_radius = 0.2
+bottom_radius = 0.25
+height = 1.8
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="Seg3"]
+top_radius = 0.15
+bottom_radius = 0.19
+height = 1.6
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="Lens"]
+top_radius = 0.2
+bottom_radius = 0.2
+height = 0.09
+radial_segments = 14
+
+[sub_resource type="BoxMesh" id="HitMesh"]
+size = Vector3(2.0, 1.5, 2.0)
+
+[node name="Watcher_Mast" type="Node3D"]
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Apron" type="CSGCylinder3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, 0)
+radius = 1.95
+height = 0.22
+sides = 12
+material = SubResource("Dark")
+
+[node name="Drum" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.97, 0)
+material_override = ExtResource("1_metal")
+mesh = SubResource("Drum")
+
+[node name="Lid" type="CSGCylinder3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.78, 0)
+radius = 1.15
+height = 0.18
+sides = 10
+material = ExtResource("1_metal")
+
+[node name="Hatch" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -1.32)
+size = Vector3(0.85, 0.85, 0.12)
+material = SubResource("Dark")
+
+[node name="Strip" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.42, -1.36)
+size = Vector3(0.66, 0.07, 0.06)
+material = SubResource("Amber")
+
+[node name="Iris" type="CSGCylinder3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.88, 0)
+radius = 0.4
+height = 0.08
+sides = 10
+material = SubResource("Dark")
+
+[node name="Seg1" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.85, 0)
+material_override = ExtResource("1_metal")
+mesh = SubResource("Seg1")
+
+[node name="Seg2" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.6, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Seg2")
+
+[node name="Seg3" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.2, 0)
+material_override = ExtResource("1_metal")
+mesh = SubResource("Seg3")
+
+[node name="Scanner" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.25, 0)
+
+[node name="Head" type="CSGBox3D" parent="Rig/Scanner"]
+size = Vector3(0.72, 0.5, 0.62)
+material = ExtResource("1_metal")
+
+[node name="Cowl" type="CSGBox3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 0.94, 0.342, 0, -0.342, 0.94, 0, 0.3, -0.24)
+size = Vector3(0.8, 0.1, 0.4)
+material = SubResource("Dark")
+
+[node name="Lens" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, -0.02, -0.34)
+material_override = SubResource("Amber")
+mesh = SubResource("Lens")
+
+[node name="FinL" type="CSGBox3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.42, 0, 0.1)
+size = Vector3(0.12, 0.3, 0.44)
+material = SubResource("Dark")
+
+[node name="FinR" type="CSGBox3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.42, 0, 0.1)
+size = Vector3(0.12, 0.3, 0.44)
+material = SubResource("Dark")
+
+[node name="Hitbox" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+visible = false
+material_override = SubResource("HitMat")
+mesh = SubResource("HitMesh")

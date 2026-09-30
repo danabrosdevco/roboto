@@ -28,4 +28,3 @@ shape = SubResource("Body")
 stream = ExtResource("4_boom")
 volume_db = 2.0
 unit_size = 40.0
-max_distance = 220.0

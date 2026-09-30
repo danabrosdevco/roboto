@@ -1,15 +1,15 @@
 [gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_onc77"]
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_5eff5"]
 
 [resource]
-script = ExtResource("1_onc77")
+script = ExtResource("1_5eff5")
 level_scene_path = "res://maps/coastal-road_level.tscn"
 image_path = "res://maps/minimaps/coastal-road_level.png"
-world_min = Vector2(-694.035, -725.535)
-world_max = Vector2(694.035, 662.535)
+world_min = Vector2(-693.781, -725.539)
+world_max = Vector2(694.289, 662.531)
 objective_ids = Array[StringName]([&"coast_extract", &"coast_relay_bridge", &"coast_relay_craters", &"coast_relay_town", &"coast_hive_bridge", &"coast_hive_craters", &"coast_hive_hill", &"coast_hive_town"])
 objective_names = Array[String](["Objective", "Bridge Relay", "Crater Relay", "Town Relay", "Bridge Hive", "Crater Hive", "Hill Hive", "Town Hive"])
-objective_positions = Array[Vector3]([Vector3(505, 0.8362, 20), Vector3(-105, -1.2251, -18), Vector3(-55, -0.67, 75), Vector3(292, -0.53, -24), Vector3(-98, -1.04, -35), Vector3(-68, -0.79, 58), Vector3(30, 1.57, -136), Vector3(304, -0.69, -42)])
+objective_positions = Array[Vector3]([Vector3(505.254, 1.32567, 19.9961), Vector3(-104.746, -0.735632, -18.0039), Vector3(-54.7463, -0.180532, 74.9961), Vector3(292.254, -0.040532, -24.0039), Vector3(-97.7463, -0.550532, -35.0039), Vector3(-67.7463, -0.300532, 57.9961), Vector3(30.2537, 2.05947, -136.004), Vector3(304.254, -0.200532, -42.0039)])
 objective_kinds = Array[StringName]([&"extract", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture"])
-insertion_positions = Array[Vector3]([Vector3(-500, 1.15, 18), Vector3(-486, -0.3, 28)])
+insertion_positions = Array[Vector3]([Vector3(-499.746, 1.63947, 17.9961), Vector3(-485.746, 0.189468, 27.9961)])

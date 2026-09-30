@@ -1,0 +1,62 @@
+[gd_scene load_steps=9 format=3 uid="uid://d1halv6ax74u3"]
+
+[ext_resource type="Script" path="res://Character/weapon/hud_weapon_template.gd" id="1_hudwep"]
+[ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/weapon/appx/bullet.tscn" id="2_bullet"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="3_tracer"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/squad_automatic_model.tscn" id="4_model"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="5_flash"]
+[ext_resource type="AudioStream" uid="uid://b46wwhkqbq3x2" path="res://sounds/sfx/weapons/ar15/best_rifle_fire_1 (2).wav" id="6_fire"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="7_click"]
+[ext_resource type="Curve" path="res://Character/weapon/squad_auto_recoil_curve.tres" id="8_curve"]
+
+[node name="SquadAutomatic" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "click_stream_player", "viewmodel")]
+script = ExtResource("1_hudwep")
+tracer_origin = NodePath("Holder/SquadAutomaticModel/Muzzle")
+muzzle_flash = NodePath("Holder/SquadAutomaticModel/MuzzleFlash")
+weapon_model = NodePath("Holder/SquadAutomaticModel")
+projectile_scene = ExtResource("2_bullet")
+tracer_scene = ExtResource("3_tracer")
+rifle_stream_player = NodePath("Shot")
+recoil_curve = ExtResource("8_curve")
+recoil_duration = 0.22
+recoil_per_shot = 1.3
+camera_recoil_yaw_scale = 0.35
+settle_shots = 6
+settle_to = 0.6
+tracers_in_mag = Array[int]([95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 5, 0])
+noise_radius = 62.0
+ammo_type = &"belt"
+magazine_size = 100
+reload_time = 7.0
+firemode = 1
+damage = 18
+FIRE_RATE = 0.11
+ads_position = Vector3(-2.3454, -0.099923, -0.4)
+ads_rotation = Vector3(0, 0, 0)
+reload_position = Vector3(-1.717, -0.881, 0.415)
+reload_rotation = Vector3(0.55, 0, -0.12)
+click_stream_player = NodePath("Click")
+display_name = "Squad Auto"
+viewmodel = NodePath("Holder/SquadAutomaticModel")
+base_position = Vector3(-1.717, -0.701, 0.365)
+base_rotation = Vector3(0, 0, 0)
+
+[node name="Holder" type="Node3D" parent="."]
+transform = Transform3D(-1.13649e-08, 0, 0.26, 0, 0.26, 0, -0.26, 0, -1.13649e-08, 0.104, -0.123, -0.55)
+
+[node name="SquadAutomaticModel" parent="Holder" instance=ExtResource("4_model")]
+
+[node name="Muzzle" type="Node3D" parent="Holder/SquadAutomaticModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 0.02, 0)
+
+[node name="MuzzleFlash" parent="Holder/SquadAutomaticModel" instance=ExtResource("5_flash")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 5.15, 0.02, 0)
+visible = false
+
+[node name="Shot" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("6_fire")
+volume_db = -7.0
+pitch_scale = 0.74
+
+[node name="Click" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("7_click")

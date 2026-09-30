@@ -33,6 +33,19 @@ const MODEL_OVERRIDES := {
 	&"bolt": "res://Character/weapon/bolt_rifle_model.tscn",
 	&"hatchling": "res://Character/weapon/models/hatchling_canister_model.tscn",
 	&"recoilless": "res://Character/weapon/models/recoilless_model.tscn",
+	# Both built from primitives for the same reason as the machine gun, and
+	# both baked BLANK without these — model_in() walks a scene looking for an
+	# imported model file and there is not one to find, so the studio rendered
+	# an empty stage and wrote six 1153-byte white rectangles.
+	&"squad_auto": "res://Character/weapon/models/squad_automatic_model.tscn",
+	&"cluster_launcher": "res://Character/weapon/models/cluster_launcher_model.tscn",
+	# Design Drop 1's four. All primitive-built, so model_in() finds nothing in
+	# their scenes and every one of them bakes blank without a line here.
+	&"drone_pack": "res://Character/weapon/models/drone_pack_model.tscn",
+	&"repair_lance": "res://Character/weapon/concepts/repair_lance.tscn",
+	&"mine_heavy": "res://Character/weapon/concepts/mine_heavy.tscn",
+	&"mine_cluster": "res://Character/weapon/concepts/mine_cluster.tscn",
+	&"smoke": "res://Character/weapon/models/smoke_canister_model.tscn",
 	# The tube on the Reclaimer's boom is a pipe with rings on it; drawn on a
 	# baseplate and bipod at 45 degrees, it reads as a mortar at 15 pixels.
 	&"mortar": "res://Character/weapon/models/mortar_icon_model.tscn",
@@ -51,6 +64,8 @@ const FRAMINGS := {
 	# A launcher reads as a tube, which means lengthways like a gun, not
 	# stood on end like a canister.
 	&"recoilless": "side",
+	# A two-handed spear reads lengthways like a gun, not stood on end.
+	&"repair_lance": "side",
 	&"hatchling": "three_quarter",
 }
 

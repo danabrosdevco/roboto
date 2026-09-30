@@ -2336,7 +2336,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53.3744, 1.27176, 84.6941)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -92.3023, 0.886101, 68.123)
 
 [node name="LevelExit" parent="." instance=ExtResource("4_gnl0g")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -91.3356, -9.81879, 71.6309)
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, -91.3356, -9.81879, 71.6309)
 next_level = ExtResource("19_w1lir")
 
 [node name="CSGBox3D" parent="LevelExit" index="1"]

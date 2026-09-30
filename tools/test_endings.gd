@@ -222,7 +222,13 @@ func _init() -> void:
 		debrief._physics_process(10.0)
 		var stuck: Array = []
 		for c in debrief._counters:
-			var want: String = str(c.get_meta(&"prefix", "")) + str(int(c.get_meta(&"to")))
+			# The TIME counter counts seconds and WRITES m:ss, so what it should
+			# end on is the formatted clock, not the raw number. Asked of the
+			# screen itself rather than reimplemented here — a second copy of
+			# the format would only drift away from the one on the page.
+			var want: String = debrief._clock(int(c.get_meta(&"to"))) \
+				if bool(c.get_meta(&"clock", false)) \
+				else str(c.get_meta(&"prefix", "")) + str(int(c.get_meta(&"to")))
 			if c.text != want:
 				stuck.append("shows '%s', wants '%s'" % [c.text, want])
 		_check("every debrief counter reaches its number", stuck.is_empty(), str(stuck))

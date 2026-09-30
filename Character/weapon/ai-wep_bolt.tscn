@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Character/weapon/ai_weapon.gd" id="1_cg26h"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_fgv2f"]
-[ext_resource type="PackedScene" uid="uid://cboltrifle0001" path="res://Character/weapon/bolt_rifle_model.tscn" id="3_nn2c5"]
+[ext_resource type="PackedScene" path="res://Character/weapon/bolt_rifle_model.tscn" id="3_nn2c5"]
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="4_j4rxt"]
 [ext_resource type="AudioStream" uid="uid://b46wwhkqbq3x2" path="res://sounds/sfx/weapons/ar15/best_rifle_fire_1 (2).wav" id="5_0gjjf"]
 [ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="6_nqw0o"]
@@ -12,8 +12,8 @@ transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 
 script = ExtResource("1_cg26h")
 weapon_type = 1
 fire_cooldown = 0.8
-base_damage = 55
-min_damage = 42
+base_damage = 62
+min_damage = 47
 damage_falloff_start = 45.0
 min_effective_range = 0.0
 max_effective_range = 100.0

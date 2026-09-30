@@ -7,7 +7,7 @@
 script = ExtResource("1_chassisdef")
 id = &"walker"
 display_name = "Walker"
-description = "Two mounts on one traverse: a main gun that fights, and a coax that answers whatever gets close while the main one reloads. IT ARRIVES HALF-ARMED — the coax mount is empty until you buy something for it. It WALKS, so unlike a rover it takes kit built for legs: a Walker can carry a Nanite Reboot and stand itself back up. Get around the side faster than the turret and both guns are pointing the wrong way."
+description = "Two-legged heavy with a main gun and a coax mount. Slow, enormous, and the only frame that carries two weapons."
 scene = ExtResource("2_scene")
 cost = 320
 purchasable = true
@@ -26,4 +26,5 @@ vehicle = true
 drives = false
 equipment_slots = 0
 module_slots = 3
+musters_at_base = true
 required_rank = 2

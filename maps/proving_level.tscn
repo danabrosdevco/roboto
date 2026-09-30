@@ -870,10 +870,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
 shape = SubResource("BoxShape3D_xtepe")
 
 [node name="LevelExit" parent="." instance=ExtResource("17_54lhj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 37)
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0.5, 37)
 requires_objectives_complete = true
 
 [node name="ReachObjective" type="Node3D" parent="LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 script = ExtResource("19_enp2r")
 area = NodePath("Area3D")
 squad_radius = 30.0

@@ -270,14 +270,13 @@ sky_material = SubResource("ShaderMaterial_7a55h")
 radiance_size = 0
 
 [sub_resource type="Environment" id="Environment_6x7du"]
-glow_enabled = true
-glow_intensity = 0.55
-glow_bloom = 0.05
-glow_hdr_threshold = 1.0
 background_mode = 2
 background_energy_multiplier = 1.5
 sky = SubResource("Sky_siqjn")
 ambient_light_color = Color(0.176471, 0.219608, 0.054902, 1)
+glow_enabled = true
+glow_intensity = 0.55
+glow_bloom = 0.05
 
 [node name="TBLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region", "level_exits")]
 script = ExtResource("1_swp7i")
@@ -753,10 +752,11 @@ script = ExtResource("scatter_script")
 layers = Array[ExtResource("scatter_layer_script")]([ExtResource("scatter_micro"), ExtResource("scatter_boulders"), ExtResource("scatter_debris")])
 
 [node name="LevelExit" parent="NavigationRegion3D" instance=ExtResource("5_406yi")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 322, -11.4841, 139)
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 322, -11.4841, 139)
 requires_objectives_complete = true
 
 [node name="ReachObjective" type="Node3D" parent="NavigationRegion3D/LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 script = ExtResource("21_n1ec4")
 area = NodePath("Area3D")
 squad_radius = 30.0
@@ -770,6 +770,7 @@ is_extraction = true
 shape = SubResource("SphereShape3D_yyiqa")
 
 [node name="BasinExtract" type="Node3D" parent="NavigationRegion3D/LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 script = ExtResource("21_n1ec4")
 area = NodePath("Area3D")
 squad_radius = 30.0

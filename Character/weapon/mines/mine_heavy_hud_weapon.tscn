@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3]
+
+; HEAVY MINE, in the player's hands. Set down rather than thrown: throw_speed
+; 3 and no arc puts it about a metre in front of your boots, which is where you
+; want a mine you are placing on a road.
+
+[ext_resource type="PackedScene" path="res://Character/weapon/grenade_hud_weapon.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://Character/weapon/mines/mine_heavy.tscn" id="2_proj"]
+[ext_resource type="PackedScene" path="res://Character/weapon/concepts/mine_heavy.tscn" id="3_model"]
+
+[node name="HeavyMine" node_paths=PackedStringArray("viewmodel") instance=ExtResource("1_base")]
+grenade_scene = ExtResource("2_proj")
+ammo_type = &"mine_heavy"
+throw_speed = 3.0
+throw_arc = 0.05
+display_name = "Heavy Mine"
+equipment_order = 5
+viewmodel = NodePath("Mine")
+
+[node name="Frag_West" parent="."]
+visible = false
+
+[node name="Mine" parent="." instance=ExtResource("3_model")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0237351, -0.473094)

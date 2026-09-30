@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3 uid="uid://dq4q6k6aiixgq"]
 
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
 [ext_resource type="PackedScene" path="res://Character/weapon/hatchling/hatchling_hud_weapon.tscn" id="2_player"]
@@ -9,12 +9,31 @@ script = ExtResource("1_itemdef")
 id = &"hatchling"
 display_name = "Hatchling Charge"
 short_name = "Hatchling"
-description = "A folded hopper in a throwable canister. It bursts on landing and goes straight for the nearest hostile, leaping in. Shuts itself down after twenty-five seconds."
+description = "A hopper in a canister. It bursts on landing."
 kind = 1
 cost = 75
 player_scene = ExtResource("2_player")
 ai_scene = ExtResource("3_ai")
+player_mount_offset = Vector3(0, 0, 0)
+player_mount_rotation_degrees = Vector3(0, 0, 0)
+ammo_type = &""
+weapon_damage = 0
 usable_by_player = true
 usable_by_ai = true
+fits_vehicles = true
+one_per_robot = false
+in_shop = true
 quantity = 2
+health_bonus = 0
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+sensor_bonus = 0.0
+signal_resistance_bonus = 0.0
+self_revive_seconds = 0.0
+equipment_slot_bonus = 0
+suppressive_fire = false
 required_rank = 0
+requires_chassis = Array[StringName]([])
+chassis_whitelist = Array[StringName]([])

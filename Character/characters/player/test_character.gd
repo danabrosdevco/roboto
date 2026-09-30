@@ -57,6 +57,14 @@ const MOUSE_SENS := 0.002
 # `use_gravity = null` onto the player — which `if use_gravity == true` read as
 # "no gravity". A typed bool rejects the null and keeps its default.
 @export var use_gravity: bool = true
+
+## TINY STEPS. CharacterBody3D has no step-up of its own: a kerb, a doorway
+## lip, a 15cm ledge or the edge of a brush stops you dead, and TrenchBroom
+## geometry is made of them. Anything this tall or under is walked over.
+@export var step_height: float = 0.3
+## How far past the intended motion to probe. Without a margin you only step
+## once you are already touching, which reads as catching on the lip first.
+@export var step_probe: float = 0.08
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var health = 100
 @export var max_health = 100
@@ -331,6 +339,7 @@ func _physics_process(delta: float) -> void:
 		var obstructed := obstruction_raycast != null and obstruction_raycast.is_colliding()
 		loadout.update(delta, move_factor, obstructed, is_ads)
 
+	_step_up(delta)
 	move_and_slide()
 
 
@@ -539,6 +548,33 @@ func handle_camera(delta: float) -> void:
 	cam.rotation.x = lerp_angle(cam.rotation.x, look_direction.x, delta * look_interp_speed)
 
 
+## Put the player on a spawn point, FACING THE WAY IT FACES.
+##
+## Setting global_transform alone does not work and never did. `look_direction`
+## is the authority for where you are looking — _physics_process lerps
+## rotation.y TOWARDS it every frame (and the camera basis is built from it) —
+## so a transform assignment survives exactly one frame before the player is
+## spun back to look_direction.y, which on a fresh run is 0, i.e. world north.
+## That is why the depot and the proving ground started you turned around
+## whatever their spawn points said.
+##
+## It is also why rotating a spawn point "made WASD backwards": movement is
+## taken from the BODY basis, so for the few frames the lerp was running the
+## body faced the spawn and the camera faced north, and the keys were relative
+## to a body you were not looking along.
+##
+## Yaw only. Pitch belongs to the camera and roll belongs to leaning, so a
+## spawn point that happens to be tilted must not tip the player over.
+func place_at(spawn: Transform3D) -> void:
+	global_transform = spawn
+	rotation.x = 0.0
+	rotation.z = 0.0
+	look_direction.y = rotation.y
+	look_direction.x = 0.0
+	if cam != null:
+		cam.rotation.x = 0.0
+
+
 func activate_command():
 	# Kept so existing call sites and .tscn signal connections don't break.
 	# The real work moved to SquadCommander, which owns the "command" action,
@@ -718,3 +754,40 @@ func die():
 
 func get_faction():
 	return faction
+
+
+# ─────────────────────────────────────────────
+# STEPPING OVER SMALL THINGS
+# ─────────────────────────────────────────────
+## Lift the body over a low obstacle before the slide resolves against it.
+##
+## Godot's CharacterBody3D slides along anything it cannot climb, and a 15cm
+## kerb is "anything" — you stop dead with no indication why. This runs three
+## sweeps and only lifts when all three agree:
+##
+##   1. the way forward is BLOCKED where the feet are, and
+##   2. it is CLEAR one step higher, and
+##   3. there is GROUND under where that step would land.
+##
+## The third is what stops it walking you up onto nothing at the lip of a pit
+## or a railing. Lifting is enough on its own — move_and_slide carries you
+## forward from the new height, and gravity plus floor snapping settle you on
+## the far side, so there is no second move to keep in sync.
+##
+## It cannot run away with itself: once you are up, test 1 fails, because the
+## thing that was blocking your feet is now under them.
+func _step_up(delta: float) -> void:
+	if step_height <= 0.0 or not is_on_floor():
+		return
+	var wish := Vector3(velocity.x, 0.0, velocity.z) * delta
+	if wish.length_squared() < 0.000004:
+		return
+	var probe := wish.normalized() * (wish.length() + step_probe)
+	if not test_move(global_transform, probe):
+		return                                  # nothing in the way
+	var raised := global_transform.translated(Vector3.UP * step_height)
+	if test_move(raised, probe):
+		return                                  # too tall to step onto
+	if not test_move(raised.translated(probe), Vector3.DOWN * (step_height + 0.05)):
+		return                                  # nothing to land on
+	global_position.y += step_height

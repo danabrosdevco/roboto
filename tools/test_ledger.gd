@@ -17,11 +17,23 @@ extends SceneTree
 # drift. Every test asserts it as well as whatever it is actually checking.
 # ─────────────────────────────────────────────
 
+## The two enemy frames the recruiting and supply tests are built on: no weapon
+## mount, no equipment slot, one and two module slots. Held by path because they
+## are deliberately absent from the player catalogue — see enemy_frame().
+const CHASER := "res://Campaign/chassis/chassis_chaser.tres"
+const HOPPER := "res://Campaign/chassis/chassis_hopper.tres"
+
 var _checks: int = 0
 var _failures: int = 0
 
 
 func _initialize() -> void:
+	# A PROBE FILE, NOT THE PLAYER'S SETTINGS. locked_by() consults the DEBUG
+	# "unlock all gear" switch, which lives in settings.json — so with that
+	# ticked on the machine running the suite, every unlock check here failed and
+	# the code was entirely correct. A test must not read state the player can
+	# toggle from a menu.
+	Settings.path = "user://settings_probe.json"
 	test_invariant_on_fresh_state()
 	test_buy_deducts_and_stocks()
 	test_sell_bought_refunds_half()
@@ -36,6 +48,7 @@ func _initialize() -> void:
 	test_old_save_repair_tool_comes_off_the_player()
 	test_squad_size_caps_the_deploy()
 	test_the_ally_ramp()
+	test_unlocks_are_things_you_can_buy()
 	test_recruiting()
 	test_supply_caps_the_active_squad()
 	test_compute_buys_supply()
@@ -321,6 +334,7 @@ func test_squad_size_caps_the_deploy() -> void:
 # how you choose who goes.
 func test_the_ally_ramp() -> void:
 	var files := ["arena_1_contact", "arena_3_firing_line", "arena_5_proving",
+		"hillfort_1_relay",
 		"basin_1_anchor", "coast_1_road", "pitt_1_rivers"]
 	var by_id: Dictionary = {}
 	for f in files:
@@ -335,11 +349,11 @@ func test_the_ally_ramp() -> void:
 		if prev != &"" and not m.requires.has(prev):
 			chained = false
 		prev = m.id
-	check("each op unlocks the next, arena 1 through the basin and the coast to the three rivers", chained)
+	check("each op unlocks the next, arena 1 through the hillfort and the basin to the three rivers", chained)
 	# You go alone once, and from the second op the cap comes off entirely:
 	# after that it is your supply, bought with compute at the Factory, that
 	# decides how many go in with you — not the mission.
-	check("alone once, then everyone you can supply", sizes == [0, -1, -1, -1, -1, -1], str(sizes))
+	check("alone once, then everyone you can supply", sizes == [0, -1, -1, -1, -1, -1, -1], str(sizes))
 
 
 func names(records: Array) -> Array:
@@ -360,6 +374,26 @@ func buyable(frame: ChassisDefinition) -> ChassisDefinition:
 	var copy: ChassisDefinition = frame.duplicate()
 	copy.purchasable = true
 	return copy
+
+
+## An enemy frame, loaded BY PATH rather than out of the catalogue.
+##
+## These used to come from `cat.chassis_def(&"chaser")`. They were taken out of
+## the player catalogue when the shop stopped listing things you only ever
+## fight — and `chassis_def` then returned null, `buyable()` called duplicate()
+## on it, and the script error aborted the COROUTINE without failing the run. So
+## test_recruiting and test_supply_caps_the_active_squad stopped executing
+## entirely and the suite went on reporting PASS. That is the second time this
+## project has been bitten by a coroutine swallowing its own abort.
+##
+## By path is also the honest way to say it: the point of these two is that they
+## are NOT in the player's catalogue, so reaching for them through it was always
+## the wrong door.
+func enemy_frame(path: String) -> ChassisDefinition:
+	var frame: ChassisDefinition = load(path)
+	if frame == null:
+		push_error("test_ledger: no chassis at %s — the ledger tests need a frame with no weapon and no equipment slot." % path)
+	return frame
 # are ACTIVE (benched ones take none), and COMPUTE buys more supply.
 func real_catalogue() -> ItemCatalogue:
 	return load("res://Campaign/items & catalogue/test_item_catalogue.tres")
@@ -370,8 +404,8 @@ func test_recruiting() -> void:
 	var state := make_state(500)
 	state.catalogue = cat
 	var soldier_frame := cat.chassis_def(&"soldier")
-	var chaser_frame := buyable(cat.chassis_def(&"chaser"))
-	var hopper_frame := buyable(cat.chassis_def(&"leaper"))
+	var chaser_frame := buyable(enemy_frame(CHASER))
+	var hopper_frame := buyable(enemy_frame(HOPPER))
 	var soldier := state.recruit(soldier_frame)
 	var chaser := state.recruit(chaser_frame)
 	var hopper := state.recruit(hopper_frame)
@@ -382,10 +416,12 @@ func test_recruiting() -> void:
 	check("recruits are named for their frame", names([soldier, chaser, hopper]) == ["Soldier-1", "Chaser-1", "Leaper-1"],
 		str(names([soldier, chaser, hopper])))
 	check("...and numbered", state.recruit(chaser_frame).display_name == "Chaser-2")
-	check("a soldier arrives with its pistol and otherwise empty slots",
+	# AN ANCIENT RIFLE, not the pistol it used to be. The pistol is out of the
+	# player's game entirely; the soldier frame issues an m4 now.
+	check("a soldier arrives with its rifle and otherwise empty slots",
 		soldier.weapon_ids.size() == 1 and soldier.equipment_ids.size() == 2 and soldier.module_ids.size() == 2
-		and soldier.all_fitted_ids() == [&"pistol"], str(soldier.all_fitted_ids()))
-	check("...issued with the frame, not taken from stores", state.armoury.spare(&"pistol") == 0)
+		and soldier.all_fitted_ids() == [&"m4"], str(soldier.all_fitted_ids()))
+	check("...issued with the frame, not taken from stores", state.armoury.spare(&"m4") == 0)
 	check("a chaser has no weapon or equipment slots, one module",
 		chaser.weapon_ids.is_empty() and chaser.equipment_ids.is_empty() and chaser.module_ids.size() == 1)
 	check("...a hopper, two modules",
@@ -393,17 +429,39 @@ func test_recruiting() -> void:
 	check("...and nothing can hand a chaser a gun", not state.fit_item(chaser, cat.item(&"m4"), 0))
 	check("each fights in its own body", chaser.chassis_scene == chaser_frame.scene and hopper.chassis_scene == hopper_frame.scene
 		and chaser.chassis_scene != null and hopper.chassis_scene != null)
-	check("each frame's health is its own", chaser.max_health == chaser_frame.base_health
-		and hopper.max_health == hopper_frame.base_health, "%d %d" % [chaser.max_health, hopper.max_health])
+	# HEALTH COMES OUT OF THE CATALOGUE, not off the frame you passed in:
+	# recompute_stats() looks the chassis up by id. So this is asked of frames
+	# the catalogue actually carries — asking it of a chaser measured
+	# SoldierRecord's own 100 for both and called that "its own health".
+	var recl := state.recruit(cat.chassis_def(&"reclaimer"))
+	check("each frame's health is its own",
+		soldier.max_health == cat.chassis_def(&"soldier").base_health
+		and recl.max_health == cat.chassis_def(&"reclaimer").base_health
+		and soldier.max_health != recl.max_health,
+		"soldier %d, reclaimer %d" % [soldier.max_health, recl.max_health])
+	# ...AND A FRAME THE CATALOGUE DOES NOT CARRY FALLS BACK, LOUDLY. The record
+	# keeps its class defaults and recompute_stats() pushes a warning, which is
+	# the behaviour that used to be silent and read as "a chaser has 100 health".
+	check("...and a frame outside the catalogue falls back to class defaults",
+		chaser.max_health == 100 and chaser.max_health != chaser_frame.base_health,
+		"%d, frame says %d" % [chaser.max_health, chaser_frame.base_health])
 
 	# ENEMY FRAMES ARE NOT STOCK. A chaser and a leaper are things you fight,
 	# not things you field: they have no weapon mount and no equipment slot, so
 	# bought they were a worse soldier with a melee attack, and their presence
 	# in the shop said the catalogue was a list of everything in the game rather
 	# than a list of what you can build.
+	#
+	# They used to be IN the catalogue and merely unpurchasable. They are out of
+	# it entirely now, which is the stronger claim and the one worth pinning:
+	# `locked_by()` only gates what a mission NAMES, so a frame left in the
+	# catalogue and named by nothing is on sale from the first minute.
 	for enemy_only in [&"chaser", &"leaper"]:
-		var frame := cat.chassis_def(enemy_only)
-		check("%s is not sold to the player" % enemy_only, frame != null and not frame.purchasable)
+		check("%s is not in the player's catalogue at all" % enemy_only,
+			cat.chassis_def(enemy_only) == null)
+	for path in [CHASER, HOPPER]:
+		var frame := enemy_frame(path)
+		check("%s is not sold to the player" % frame.id, not frame.purchasable)
 		check("...and recruiting one is refused outright",
 			make_state(9999).recruit(frame) == null)
 
@@ -422,11 +480,11 @@ func test_supply_caps_the_active_squad() -> void:
 	state.catalogue = cat
 	state.supply_cap = 2
 	var a := state.recruit(cat.chassis_def(&"soldier"))
-	var b := state.recruit(buyable(cat.chassis_def(&"chaser")))
+	var b := state.recruit(buyable(enemy_frame(CHASER)))
 	check("recruits join the squad while there is supply", not a.benched and not b.benched)
 	check("...each taking its frame's supply", state.supply_used() == 2 and state.supply_free() == 0,
 		"used=%d free=%d" % [state.supply_used(), state.supply_free()])
-	var c := state.recruit(buyable(cat.chassis_def(&"leaper")))
+	var c := state.recruit(buyable(enemy_frame(HOPPER)))
 	check("buying is never blocked by supply: the next joins the bench", c != null and c.benched)
 	check("...where it takes none", state.supply_used() == 2)
 	check("coming off the bench with no supply free is refused", not state.set_benched(c, false) and c.benched)
@@ -680,7 +738,7 @@ func test_utility_harness_adds_a_slot() -> void:
 		and state.armoury.spare(&"utility_harness") == 1)
 	check("...while the other two stay fitted", s.equipment_ids[0] == &"frag" and s.equipment_ids[1] == &"hatchling")
 	invariant(state, "after the harness comes off")
-	var chaser := state.recruit(buyable(cat.chassis_def(&"chaser")))
+	var chaser := state.recruit(buyable(enemy_frame(CHASER)))
 	check("a chaser cannot wear a harness", not state.fit_item(chaser, cat.item(&"utility_harness"), 0))
 
 	# ONE PER ROBOT. Two Sensor Relays added their range together; a second
@@ -728,3 +786,36 @@ func test_utility_harness_adds_a_slot() -> void:
 	var bare := SoldierRecord.new()
 	bare.set_chassis(cat.chassis_def(&"soldier"), null)
 	check("set_chassis sizes equipment without a catalogue", bare.equipment_ids.size() == 2, str(bare.equipment_ids.size()))
+
+
+# EVERY UNLOCK HAS TO BE SOMETHING THE SHOP WILL SELL.
+#
+# The debrief announces each one on a tile reading "AT THE ARMORER", so an
+# unlock whose item has in_shop off sends the player to a shelf that does not
+# stock it. The debrief filters those out now; this catches the authoring
+# mistake that puts one in a mission's unlock list in the first place.
+#
+# Chassis are exempt: ChassisDefinition has no in_shop, and the Factory offers
+# whatever the catalogue holds.
+func test_unlocks_are_things_you_can_buy() -> void:
+	var catalogue: ItemCatalogue = load("res://Campaign/items & catalogue/test_item_catalogue.tres")
+	var world: PackedScene = load("res://Env/world.tscn")
+	var missions: Array = []
+	var st := world.get_state()
+	for i in st.get_node_count():
+		if st.get_node_name(i) != "CampaignManager":
+			continue
+		for j in st.get_node_property_count(i):
+			if String(st.get_node_property_name(i, j)) == "missions":
+				missions = st.get_node_property_value(i, j)
+	var bad: Array = []
+	for m in missions:
+		if m == null:
+			continue
+		for id in m.unlocks:
+			var item: ItemDefinition = catalogue.item(id)
+			if item != null and not item.in_shop:
+				bad.append("%s unlocks %s, which the armoury will not sell" % [m.id, id])
+			elif item == null and catalogue.chassis_def(id) == null:
+				bad.append("%s unlocks %s, which is in neither list" % [m.id, id])
+	check("every mission unlock is something the player can actually buy", bad.is_empty(), str(bad))

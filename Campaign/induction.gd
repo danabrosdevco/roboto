@@ -6,25 +6,28 @@ class_name Induction
 #
 # The tutorial used to be signs you walked past, and when the depot replaced
 # the old homebase the signs did not come with it: a new save arrived at a base
-# that explained nothing. This replaces them with five objectives in the
+# that explained nothing. This replaces them with a set of objectives in the
 # ordinary objective HUD, so the thing that teaches the game is the same thing
 # the game uses to set tasks everywhere else.
 #
-#   1. patch yourself up          (you arrive damaged)
-#   2. get your squadmate up      (one robot arrives on the floor)
-#   3. buy an Ancient Rifle
-#   4. fit it to a robot
-#   5. choose an operation
+#   1. read your keys             (everything below names a key)
+#   2. patch yourself up          (you arrive damaged)
+#   3. get your squadmate up      (one robot arrives on the floor)
+#   4. buy an Ancient Rifle
+#   5. fit it to a robot
+#   6. order the squad to follow
+#   7. order the squad to advance
+#   8. choose an operation
 #
-# ONCE. Finishing the fifth sets `completed_tutorial`, which is the same flag
-# the old GO FORTH sign set, and from then on the depot is just the depot. An
-# induction left unfinished is rebuilt on the next visit — including the
+# ONCE. Finishing the last one sets `completed_tutorial`, which is the same
+# flag the old GO FORTH sign set, and from then on the depot is just the depot.
+# An induction left unfinished is rebuilt on the next visit — including the
 # casualty — so the objectives and the world can never disagree about whether
 # there is a robot on the floor.
 #
 # Built in code rather than authored into the level: the depot is TERRAIN's
-# file, these five exist only at base and only once, and a level should not
-# carry nodes that are freed on every visit after the first.
+# file, these exist only at base and only once, and a level should not carry
+# nodes that are freed on every visit after the first.
 # ─────────────────────────────────────────────
 
 const _Objective := preload("res://Campaign/induction_objective.gd")
@@ -44,7 +47,7 @@ var _objectives: Array[MissionObjective] = []
 ## Takes down a previous induction, objectives and all. ALWAYS call this on
 ## arriving at base, finished or not: on_level_loaded runs on every arrival —
 ## World._ready fires it at boot and the train fires it coming home — so
-## without it the five objectives stack up one set per visit and the tracker
+## without it the objectives stack up one set per visit and the tracker
 ## reports ten, then fifteen.
 ##
 ## remove_child before queue_free, which is deferred: the objectives have to
@@ -72,9 +75,15 @@ static func begin(campaign: Node, level: Node) -> Node:
 
 
 func _build() -> void:
-	# ALL FIVE ACTIVE AT ONCE, no prerequisite chain. A player who buys the
+	# ALL ACTIVE AT ONCE, no prerequisite chain. A player who buys the
 	# rifle before patching themselves up has still done the thing, and an
 	# objective that was not listening yet would never notice.
+	# FIRST, because everything under it is phrased in keys the player has not
+	# been told. "The repair tool is on 3" and "{command} gives orders" both
+	# assume a keyboard they have never seen; this is where they see it.
+	_add(&"induct_read_keys", "CHECK YOUR CONTROLS",
+		"ESC opens the menu. OPTIONS, then KEYS, lists every binding and lets you change any of them.",
+		_Objective.Trigger.REVIEW_KEYS)
 	_add(&"induct_repair_self", "REPAIR YOURSELF",
 		"Your frame took damage on the way in. The repair tool is built in on 3 — hold it with the crosshair on nothing.",
 		_Objective.Trigger.HEAL_SELF)
@@ -147,5 +156,5 @@ func _on_one_done(_objective: MissionObjective) -> void:
 		state.completed_tutorial = true
 		if _campaign.has_method("_queue_base_save"):
 			_campaign._queue_base_save()
-	print("[Induction] all five done; the depot is just the depot from here.")
+	print("[Induction] all done; the depot is just the depot from here.")
 	finished.emit()

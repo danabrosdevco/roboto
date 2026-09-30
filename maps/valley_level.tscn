@@ -209,14 +209,13 @@ sky_material = SubResource("ShaderMaterial_7a55h")
 radiance_size = 0
 
 [sub_resource type="Environment" id="Environment_6x7du"]
-glow_enabled = true
-glow_intensity = 0.55
-glow_bloom = 0.05
-glow_hdr_threshold = 1.0
 background_mode = 2
 background_energy_multiplier = 1.5
 sky = SubResource("Sky_8r8oe")
 ambient_light_color = Color(0.176471, 0.219608, 0.054902, 1)
+glow_enabled = true
+glow_intensity = 0.55
+glow_bloom = 0.05
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ybliv"]
 
@@ -242,10 +241,11 @@ navigation_mesh = SubResource("NavigationMesh_b87a8")
 transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 
 [node name="LevelExit" parent="NavigationRegion3D" instance=ExtResource("5_406yi")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 300.683, -10.805, 136.7)
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 300.683, -10.805, 136.7)
 requires_objectives_complete = true
 
 [node name="ReachObjective" type="Node3D" parent="NavigationRegion3D/LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 script = ExtResource("21_n1ec4")
 area = NodePath("Area3D")
 squad_radius = 30.0

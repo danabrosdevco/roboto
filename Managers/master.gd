@@ -22,6 +22,11 @@ class_name Master
 # splash is inside the CRT rather than sitting in front of it.
 # ─────────────────────────────────────────────
 
+## The player has looked at the KEYS tab. The induction's first objective is
+## "find out what the keys are", and this is the game's only evidence that they
+## did. See _on_options_tab().
+signal keys_reviewed
+
 const FILTER_SHADER := preload("res://Character/hud/signal_filter.gdshader")
 
 # The same two clips the squad manager uses, so the menus and the management
@@ -576,6 +581,15 @@ func _show_pause_menu() -> void:
 	if _playtest_data_shown():
 		items.append({"text": "PLAYTEST DATA", "action": _open_playtest_data})
 	items.append({"text": "OPTIONS", "action": _open_options})
+	# Straight onto the DEBUG tab rather than making you go OPTIONS and hunt for
+	# it, because mid-playtest is exactly when it is wanted.
+	#
+	# EDITOR ONLY, and deliberately a stricter test than PLAYTEST DATA above.
+	# That one uses OS.is_debug_build(), which is TRUE in a build exported with
+	# the debug template — the build you hand a playtester. Collecting data from
+	# them is the point; letting them unlock the ladder is not.
+	if Settings.debug_tools_enabled():
+		items.append({"text": "DEBUG", "action": _open_debug})
 	items.append({"text": "QUIT", "action": _quit})
 	_build_menu("PAUSED", items, HUDPalette.WARN)
 
@@ -728,7 +742,7 @@ func _close_tutorials() -> void:
 # menu; the options screen changes nothing about it. Returning rebuilds that
 # menu from scratch, exactly as ESC-ing into it would.
 # ─────────────────────────────────────────────
-func _open_options() -> void:
+func _open_options(tab: int = 0) -> void:
 	if not is_instance_valid(_content):
 		return
 	_options_from = _menu
@@ -740,7 +754,28 @@ func _open_options() -> void:
 	# DEFERRED. BACK closes this screen from inside its own button's pressed
 	# signal, and rebuilding the menu frees that button mid-emit.
 	_options.closed.connect(_close_options, CONNECT_DEFERRED)
+	_options.tab_shown.connect(_on_options_tab)
 	_content.add_child(_options)
+	# AFTER add_child: show_tab() rebuilds the page, and _ready() has to have
+	# built the tab strip and the scroll container for it to rebuild into.
+	if tab != 0:
+		_options.show_tab(tab)
+
+
+## The pause menu's DEBUG item. A separate function because the menu items hold
+## a bare Callable with no arguments.
+func _open_debug() -> void:
+	_open_options(OptionsMenu.TAB_DEBUG)
+
+
+# The induction sets "go and find your keys" as its first objective, and this
+# is the only place in the game that knows the player did. Relayed through
+# Master rather than listened for directly because the options screen is built
+# on demand and freed on close — there is nothing for an objective to connect
+# to until the player opens it, and Master is always here.
+func _on_options_tab(index: int) -> void:
+	if index == OptionsMenu.TABS.find("KEYS"):
+		keys_reviewed.emit()
 
 
 func _close_options() -> void:

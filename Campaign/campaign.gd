@@ -600,8 +600,13 @@ func is_final_mission(m: MissionDefinition) -> bool:
 
 func available_missions() -> Array[MissionDefinition]:
 	var out: Array[MissionDefinition] = []
+	# The exported flag OR the DEBUG tab's switch. Two sources rather than one
+	# variable they fight over: the export is for launching the editor into a
+	# late mission, the setting is for opening the ladder up mid-run from the
+	# pause menu, and neither should silently turn the other off.
+	var all_open: bool = unlock_all_missions or _debug_switch("debug.unlock_all_missions")
 	for m in missions:
-		if unlock_all_missions or (state != null and state.campaign_won):
+		if all_open or (state != null and state.campaign_won):
 			# Both filters skipped, not just the gate: dropping only `requires`
 			# would still retire each non-repeatable mission the moment you
 			# cleared it, so you could reach Valley Siege but not run it twice.
@@ -859,11 +864,34 @@ func _debrief_squad() -> Array:
 	return out
 
 
+## One of the DEBUG tab's switches, and false in anything that is not the
+## editor whatever the file says.
+##
+## Checked HERE rather than only where the menu draws it. settings.json ships
+## beside the executable and is plain text, so hiding the tab alone would leave
+## "unlock everything" two lines away from anyone with a text editor. In an
+## export those lines are inert.
+func _debug_switch(key: String) -> bool:
+	if not Settings.debug_tools_enabled():
+		return false
+	return bool(Settings.get_value(key))
+
+
 ## The operation that unlocks `id` (an item or a frame) while it is still
 ## locked; null when it isn't locked. Only what an operation lists in its
 ## `unlocks` is ever locked: everything else is simply available.
 func locked_by(id: StringName) -> MissionDefinition:
 	if state == null or id == &"" or state.unlocked.has(id):
+		return null
+	# THE ONE GATE, so the DEBUG switch only has to open this. The armourer, the
+	# factory, the squad manager and the chassis holograms all ask this same
+	# question, so opening it here opens weapons, frames, equipment and modules
+	# together and nothing had to learn about the switch.
+	#
+	# `in_shop = false` is NOT affected and must not be: that is a thing taken
+	# out of the player's game (the shotgun, the pistol), not a thing they have
+	# yet to earn.
+	if _debug_switch("debug.unlock_all_gear"):
 		return null
 	for m in missions:
 		if m != null and m.unlocks.has(id):

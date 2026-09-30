@@ -75,7 +75,41 @@ const SPEC := {
 	"controls.aim_sensitivity":   {"default": 1.0, "min": 0.2, "max": 1.5},
 	"controls.invert_y":          {"default": false},
 	"controls.toggle_aim":        {"default": false},
+
+	# ── DEBUG ────────────────────────────────────
+	# Playtesting switches, shown on the DEBUG tab of the options screen. They
+	# live here rather than on the campaign save on purpose: they are a
+	# PREFERENCE of this machine, not a fact about the run, so turning one off
+	# puts the campaign straight back to what it had actually earned and no
+	# save ever records that the gates were open. Both default OFF, and both
+	# are read live by the thing they affect rather than writing anything.
+	#
+	# NEITHER DOES ANYTHING OUTSIDE THE EDITOR. See debug_tools_enabled().
+	"debug.unlock_all_missions":  {"default": false},
+	"debug.unlock_all_gear":      {"default": false},
 }
+
+
+## Whether the DEBUG tools exist at all: the tab, the pause-menu item, and the
+## switches themselves.
+##
+## EDITOR ONLY, and checked in both places — the menu that shows them AND the
+## code that obeys them. Hiding the UI alone would not be enough: the switches
+## are two lines in a settings.json that ships next to the executable, so
+## anyone who opened that file in a build could turn the whole ladder off. The
+## gates in Campaign ask this too, so in an export those lines are inert text.
+##
+## NOT `OS.is_debug_build()`, which is the trap here: that is TRUE in a build
+## exported with the debug template, which is exactly the build you hand to a
+## playtester. `has_feature("editor")` is false in every export, debug or not.
+## ROBOTO_DEBUG_TOOLS=0 forces it off, so the export path can be TESTED rather
+## than assumed — tools/test_debug_switches.gd runs itself twice. The override
+## is ONE-DIRECTIONAL on purpose: it can only ever take the tools away. There
+## is no value of it, and no other input, that turns them on in an export.
+static func debug_tools_enabled() -> bool:
+	if OS.get_environment("ROBOTO_DEBUG_TOOLS") == "0":
+		return false
+	return OS.has_feature("editor")
 
 ## Windowed sizes offered, smallest first. Only the ones that fit the screen are
 ## shown — see window_size_choices().

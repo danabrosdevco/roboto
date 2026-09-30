@@ -149,11 +149,7 @@ func _release_grenade() -> void:
 	if cam == null:
 		return
 
-	var world: Node = null
-	if player != null:
-		world = player.get("world")
-	if world == null:
-		world = get_tree().current_scene
+	var world: Node = level_node()
 
 	var g := grenade_scene.instantiate()
 	world.add_child(g)

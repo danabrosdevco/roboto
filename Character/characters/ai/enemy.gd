@@ -11,6 +11,12 @@ const _Analytics := preload("res://Managers/analytics.gd")
 const _SignalArc := preload("res://Character/weapon/appx/signal_arc.gd")
 const _KillKinds := preload("res://Campaign/kill_kinds.gd")
 const _Ground := preload("res://Campaign/ground_snap.gd")
+## Smoke blocks sight but not bullets, so is_path_clear() asks it separately.
+## By path for the same reason as the others: a brand-new class_name is not
+## resolvable until the editor rescans, and enemy.gd is depended on by almost
+## everything — referencing SmokeVolume directly failed the parse check on
+## fifty scripts at once.
+const _Smoke := preload("res://Character/weapon/smoke_volume.gd")
 
 # ── NODE REFERENCES ───────────────────────────
 @export var patrol_path: PatrolPath
@@ -2326,6 +2332,17 @@ func _check_close_threat() -> bool:
 	if sig == SignalState.EKILL or sig == SignalState.CRITICAL:
 		return false
 
+	# ALREADY FIGHTING SOMETHING IN YOUR FACE.
+	#
+	# This check exists to catch a hostile walking up while you shoot at
+	# something further off. If the thing you are already on is itself inside
+	# close_threat_range there is nothing here to find — and the scan below is
+	# the single most expensive thing reconsider_target() does, run on every
+	# re-decision by every robot in the fight.
+	if combat_target != null and is_instance_valid(combat_target) and combat_target.alive \
+			and global_position.distance_to(combat_target.global_position) <= close_threat_range:
+		return false
+
 	var candidate := _nearest_hostile()
 	if candidate == null or candidate == combat_target:
 		return false
@@ -3643,7 +3660,17 @@ func is_path_clear(from: Vector3, to: Vector3, ignore: Node3D = null) -> bool:
 	if ignore != null and ignore is CollisionObject3D:
 		exclusion.append((ignore as CollisionObject3D).get_rid())
 	query.exclude = exclusion
-	return not space_state.intersect_ray(query)
+	if space_state.intersect_ray(query):
+		return false
+	# SMOKE BLOCKS SIGHT AND NOTHING ELSE. It cannot be a collider or the ray
+	# above would stop bullets too, so it is asked separately — and it is asked
+	# HERE because every caller of this function is a sight question (can I see
+	# it, can I shoot it from that cover point, who shot me, can I throw there).
+	# Movement never comes through here; that is the navmesh's job, and walking
+	# into smoke has to stay possible or it is a wall.
+	#
+	# Free when no smoke exists: blocks_sight() returns on an integer compare.
+	return not _Smoke.blocks_sight(get_tree(), from, to)
 
 func force_check_detection():
 	if detection == null or detection.get_child_count() == 0:

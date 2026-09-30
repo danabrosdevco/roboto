@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
-[ext_resource type="PackedScene" uid="uid://bxg8i8eoyk2hu" path="res://maps/valley_basin_level.tscn" id="3_valley"]
+[ext_resource type="PackedScene" path="res://maps/valley_basin_level.tscn" id="3_valley"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
 [ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="5_heli"]
 

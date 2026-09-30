@@ -185,6 +185,13 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 		return
 	var chassis := catalogue.chassis_def(chassis_id)
 	if chassis == null:
+		# EVERY EARLY RETURN WARNS. This one leaves max_health, accuracy, speed
+		# and sensors at SoldierRecord's own defaults — 100 health for a frame
+		# built as 45 — and used to do it in complete silence. It happens when a
+		# record names a frame the catalogue does not carry: an enemy frame
+		# handed to a player record by a test or a lab bench, or a save from
+		# before a frame was retired.
+		push_warning("SoldierRecord '%s': no chassis '%s' in the catalogue, so its stats are class defaults, not the frame's." % [display_name, chassis_id])
 		return
 
 	var health := chassis.base_health

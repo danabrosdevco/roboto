@@ -243,7 +243,7 @@ Wanted, ordered loosely, not scheduled.
 - Player-side kit worth carrying. Ruled 2026-09-28: the player CAN take
   anti-armour, so the fix for the long-range-god problem is MORE good options
   rather than fewer. Needs a list before it needs code.
-- The other nine Foundry-tier weapons. The FPV drone is written and untracked;
+- The other nine Foundry-tier weapons. The Diver (Character/characters/ai/diver.gd) is written and unwired;
   the rest are a list, not code.
 - Retire the obsolete ladder: 15 of 22 mission files are outside the live
   campaign. Appendix them, do not delete.
