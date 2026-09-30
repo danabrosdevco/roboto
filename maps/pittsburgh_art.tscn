@@ -1,11 +1,11 @@
-[gd_scene load_steps=79 format=3]
+[gd_scene load_steps=94 format=3]
 
 [ext_resource type="Script" path="res://Env/terrain/generated_terrain.gd" id="1_egq3v"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="2_8wf8h"]
 [ext_resource type="Texture2D" path="res://Env/terrain/sketches/pittsburgh.png" id="3_iacbp"]
 [ext_resource type="Resource" path="res://maps/terrain_data/pittsburgh_level_terrain.res" id="4_nnfkr"]
-[ext_resource type="Material" path="res://Env/terrain/terrain_material.tres" id="5_ftucn"]
-[ext_resource type="Material" path="res://Env/terrain/water_material.tres" id="6_nlhs4"]
+[ext_resource type="Material" path="res://Env/terrain/terrain_material.tres" id="5_wppx1"]
+[ext_resource type="Material" path="res://Env/terrain/water_material.tres" id="6_tqx4b"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_stamp.gd" id="7_6xulr"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_path.gd" id="8_vrmj3"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_scatter.gd" id="9_adnun"]
@@ -13,6 +13,7 @@
 [ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_micro_terrain.tres" id="11_gyw6i"]
 [ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_boulders.tres" id="12_4fj77"]
 [ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_debris.tres" id="13_rall3"]
+[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_works.tres" id="14_fgkle"]
 [ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_parking_lot.tscn" id="14_klvmr"]
 [ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_semi_truck.tscn" id="27_8xhks"]
 [ext_resource type="PackedScene" path="res://maps/blocks/features/feature_container_stack.tscn" id="28_vcmvk"]
@@ -44,15 +45,29 @@
 [ext_resource type="PackedScene" path="res://maps/blocks/solar/solar_drone_dock.tscn" id="67_g7yxk"]
 [ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_plant_office.tscn" id="68_i8xsy"]
 [ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_satellite_dish.tscn" id="70_cdpse"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_pipe_rack.tscn" id="71_c3tct"]
 [ext_resource type="PackedScene" path="res://maps/blocks/features/feature_fuel_tanks.tscn" id="71_phwlp"]
 [ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_water_tower.tscn" id="72_2v26u"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_silos.tscn" id="72_ugmup"]
 [ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_command_bunker.tscn" id="73_ptnnb"]
+[ext_resource type="PackedScene" path="res://maps/blocks/ground/ground_swell.tscn" id="73_s20tp"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_concrete_pipes.tscn" id="74_idlus"]
 [ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_container_yard.tscn" id="74_j7fed"]
+[ext_resource type="PackedScene" path="res://maps/blocks/ground/ground_berm.tscn" id="74_n8qee"]
 [ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_substation.tscn" id="75_6cei2"]
+[ext_resource type="PackedScene" path="res://maps/blocks/ground/ground_spoil.tscn" id="75_c8eap"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_gatehouse.tscn" id="75_hfmqm"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_robot_wreck.tscn" id="76_6w0gh"]
+[ext_resource type="PackedScene" path="res://maps/blocks/ground/ground_washout.tscn" id="76_grmt5"]
+[ext_resource type="PackedScene" path="res://maps/blocks/ground/ground_track.tscn" id="77_gqw11"]
 [ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_ammo_dump.tscn" id="77_sinbb"]
 [ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_hesco_wall.tscn" id="78_jpqdw"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_dirt_mound.tscn" id="78_mntbb"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_boulder_b.tscn" id="79_435qi"]
 [ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_dragon_teeth.tscn" id="79_pb3ss"]
 [ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_parking_deck.tscn" id="80_quote"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_rock_slabs.tscn" id="80_u2utw"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_power_pole.tscn" id="81_dj4op"]
 [ext_resource type="PackedScene" path="res://maps/blocks/props/prop_jersey_barrier.tscn" id="81_ncjcn"]
 [ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_sawtooth_factory.tscn" id="82_osd8v"]
 [ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_checkpoint.tscn" id="83_nwfft"]
@@ -218,7 +233,7 @@ smoothing = 10.0
 
 [node name="Scatter" type="Node3D" parent="Terrain"]
 script = ExtResource("9_adnun")
-layers = Array[ExtResource("10_2mxua")]([ExtResource("11_gyw6i"), ExtResource("12_4fj77"), ExtResource("13_rall3")])
+layers = Array[ExtResource("10_2mxua")]([ExtResource("11_gyw6i"), ExtResource("12_4fj77"), ExtResource("13_rall3"), ExtResource("14_fgkle")])
 
 [node name="IndustryPads" type="Node3D" parent="Terrain"]
 
@@ -1315,6 +1330,534 @@ transform = Transform3D(0.865686, -0.026623, 0.499879, 0.02549, 0.999634, 0.0090
 
 [node name="Rubble" parent="Dressing/EastRoad" instance=ExtResource("95_nj00v")]
 transform = Transform3D(0.76598, -0.0183487, 0.642602, 0.00698304, 0.999771, 0.0202235, -0.642826, -0.0110035, 0.765933, 47, 20.7644, 22)
+
+[node name="Works_OhioWorks" type="Node3D" parent="Dressing"]
+
+[node name="W000_industrial_smokestack" parent="Dressing/Works_OhioWorks" instance=ExtResource("88_l5ry7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -420, -0.285002, -140)
+
+[node name="W001_industrial_gas_sphere" parent="Dressing/Works_OhioWorks" instance=ExtResource("51_m5j84")]
+transform = Transform3D(-0.964764, 0, 0.263117, 0, 1, 0, -0.263117, 0, -0.964764, -440, 1.30687, -60)
+
+[node name="W002_industrial_gas_sphere" parent="Dressing/Works_OhioWorks" instance=ExtResource("51_m5j84")]
+transform = Transform3D(-0.964764, 0, 0.263117, 0, 1, 0, -0.263117, 0, -0.964764, -403.333, 11.5, -50)
+
+[node name="W003_industrial_gas_sphere" parent="Dressing/Works_OhioWorks" instance=ExtResource("51_m5j84")]
+transform = Transform3D(-0.964764, 0, 0.263117, 0, 1, 0, -0.263117, 0, -0.964764, -366.667, 19.8677, -40)
+
+[node name="W004_industrial_pipe_rack" parent="Dressing/Works_OhioWorks" instance=ExtResource("71_c3tct")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -430, 0.892808, -100)
+
+[node name="W005_industrial_pipe_rack" parent="Dressing/Works_OhioWorks" instance=ExtResource("71_c3tct")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -397.5, -1.49374, -100)
+
+[node name="W006_industrial_pipe_rack" parent="Dressing/Works_OhioWorks" instance=ExtResource("71_c3tct")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -310, 11.4749, -76)
+
+[node name="W007_industrial_rail_track" parent="Dressing/Works_OhioWorks" instance=ExtResource("34_odru3")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -460, 1.78911, -46)
+
+[node name="W008_industrial_rail_track" parent="Dressing/Works_OhioWorks" instance=ExtResource("34_odru3")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -302.5, 15.7345, -46)
+
+[node name="W009_industrial_rail_track" parent="Dressing/Works_OhioWorks" instance=ExtResource("34_odru3")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -276.25, 17.4188, -46)
+
+[node name="W010_industrial_water_tower" parent="Dressing/Works_OhioWorks" instance=ExtResource("72_2v26u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -410, 16.2141, -210)
+
+[node name="W011_machine_steel_coils" parent="Dressing/Works_OhioWorks" instance=ExtResource("89_rmxfl")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -300, 19.7569, 20)
+
+[node name="W012_machine_steel_coils" parent="Dressing/Works_OhioWorks" instance=ExtResource("89_rmxfl")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -268, 13.0718, 20)
+
+[node name="W013_machine_steel_coils" parent="Dressing/Works_OhioWorks" instance=ExtResource("89_rmxfl")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -236, 20.1032, 20)
+
+[node name="W014_prop_barrels" parent="Dressing/Works_OhioWorks" instance=ExtResource("30_swjli")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -330, 2.40205, -80)
+
+[node name="W015_industrial_pipe_rack" parent="Dressing/Works_OhioWorks" instance=ExtResource("71_c3tct")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -213.333, -0.472319, -130)
+
+[node name="W016_industrial_pipe_rack" parent="Dressing/Works_OhioWorks" instance=ExtResource("71_c3tct")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -180, 10.4475, -130)
+
+[node name="W017_feature_fuel_tanks" parent="Dressing/Works_OhioWorks" instance=ExtResource("71_phwlp")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -470, 2.06197, -26.6667)
+
+[node name="W018_feature_fuel_tanks" parent="Dressing/Works_OhioWorks" instance=ExtResource("71_phwlp")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -470, 2.51353, 40)
+
+[node name="W019_industrial_silos" parent="Dressing/Works_OhioWorks" instance=ExtResource("72_ugmup")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -250, -2.39249, -160)
+
+[node name="W020_industrial_silos" parent="Dressing/Works_OhioWorks" instance=ExtResource("72_ugmup")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -220, -0.403346, -160)
+
+[node name="W021_industrial_silos" parent="Dressing/Works_OhioWorks" instance=ExtResource("72_ugmup")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -190, 3.56342, -160)
+
+[node name="W022_machine_semi_truck" parent="Dressing/Works_OhioWorks" instance=ExtResource("27_8xhks")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -300, 20.1406, 60)
+
+[node name="W023_machine_semi_truck" parent="Dressing/Works_OhioWorks" instance=ExtResource("27_8xhks")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -280, 20.4436, 60)
+
+[node name="W024_machine_semi_truck" parent="Dressing/Works_OhioWorks" instance=ExtResource("27_8xhks")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -260, 20.2703, 60)
+
+[node name="W025_machine_semi_truck" parent="Dressing/Works_OhioWorks" instance=ExtResource("27_8xhks")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -240, 14.1827, 60)
+
+[node name="W026_machine_semi_truck" parent="Dressing/Works_OhioWorks" instance=ExtResource("27_8xhks")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -220, 13.7808, 60)
+
+[node name="W027_machine_semi_truck" parent="Dressing/Works_OhioWorks" instance=ExtResource("27_8xhks")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -200, 16.2007, 60)
+
+[node name="W028_prop_concrete_pipes" parent="Dressing/Works_OhioWorks" instance=ExtResource("74_idlus")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -180, 19.4155, 60)
+
+[node name="W029_prop_crates" parent="Dressing/Works_OhioWorks" instance=ExtResource("31_hvqgp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -350, 19.8016, 40)
+
+[node name="W030_prop_crates" parent="Dressing/Works_OhioWorks" instance=ExtResource("31_hvqgp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -318, 19.7201, 40)
+
+[node name="W031_prop_crates" parent="Dressing/Works_OhioWorks" instance=ExtResource("31_hvqgp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -302, 19.7756, 40)
+
+[node name="W032_prop_crates" parent="Dressing/Works_OhioWorks" instance=ExtResource("31_hvqgp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -286, 19.3728, 40)
+
+[node name="W033_prop_crates" parent="Dressing/Works_OhioWorks" instance=ExtResource("31_hvqgp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -270, 19.3685, 40)
+
+[node name="W034_industrial_gatehouse" parent="Dressing/Works_OhioWorks" instance=ExtResource("75_hfmqm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -300, 20.3479, 100)
+
+[node name="W035_prop_robot_wreck" parent="Dressing/Works_OhioWorks" instance=ExtResource("76_6w0gh")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -400, -1.89961, -120)
+
+[node name="Works_Furnace" type="Node3D" parent="Dressing"]
+
+[node name="W000_industrial_gas_sphere" parent="Dressing/Works_Furnace" instance=ExtResource("51_m5j84")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 300, 2.1073, 290)
+
+[node name="W001_industrial_gas_sphere" parent="Dressing/Works_Furnace" instance=ExtResource("51_m5j84")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 333.333, 4.9342, 290)
+
+[node name="W002_industrial_gas_sphere" parent="Dressing/Works_Furnace" instance=ExtResource("51_m5j84")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 366.667, 12.2242, 290)
+
+[node name="W003_industrial_gas_sphere" parent="Dressing/Works_Furnace" instance=ExtResource("51_m5j84")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 400, 13.4216, 290)
+
+[node name="W004_industrial_pipe_rack" parent="Dressing/Works_Furnace" instance=ExtResource("71_c3tct")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 356.667, -2.48, 180)
+
+[node name="W005_industrial_pipe_rack" parent="Dressing/Works_Furnace" instance=ExtResource("71_c3tct")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 430, -1.97251, 180)
+
+[node name="W006_machine_steel_coils" parent="Dressing/Works_Furnace" instance=ExtResource("89_rmxfl")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 440, 13.1374, 300)
+
+[node name="W007_machine_steel_coils" parent="Dressing/Works_Furnace" instance=ExtResource("89_rmxfl")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 472, 17.6077, 300)
+
+[node name="W008_machine_steel_coils" parent="Dressing/Works_Furnace" instance=ExtResource("89_rmxfl")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 504, 15.8633, 300)
+
+[node name="Works_CokeWorks" type="Node3D" parent="Dressing"]
+
+[node name="W000_industrial_silos" parent="Dressing/Works_CokeWorks" instance=ExtResource("72_ugmup")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 560, 15.1572, 200)
+
+[node name="W001_industrial_silos" parent="Dressing/Works_CokeWorks" instance=ExtResource("72_ugmup")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 590, 15.1749, 200)
+
+[node name="W002_industrial_silos" parent="Dressing/Works_CokeWorks" instance=ExtResource("72_ugmup")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 620, 19.8466, 200)
+
+[node name="W003_industrial_smokestack" parent="Dressing/Works_CokeWorks" instance=ExtResource("88_l5ry7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 600, -0.0260193, 300)
+
+[node name="W004_industrial_substation" parent="Dressing/Works_CokeWorks" instance=ExtResource("75_6cei2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 620, 14.0477, 260)
+
+[node name="Works_Port" type="Node3D" parent="Dressing"]
+
+[node name="W000_industrial_gantry_crane" parent="Dressing/Works_Port" instance=ExtResource("84_2uyg8")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 330, 18.8375, -330)
+
+[node name="W001_industrial_gantry_crane" parent="Dressing/Works_Port" instance=ExtResource("84_2uyg8")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 440, 13.264, -330)
+
+[node name="W002_industrial_container_yard" parent="Dressing/Works_Port" instance=ExtResource("74_j7fed")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 380, 7.03071, -340)
+
+[node name="Works_Strip" type="Node3D" parent="Dressing"]
+
+[node name="W000_industrial_rail_track" parent="Dressing/Works_Strip" instance=ExtResource("34_odru3")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -20, 16.1128, -130)
+
+[node name="W001_industrial_rail_boxcar" parent="Dressing/Works_Strip" instance=ExtResource("36_i4xd6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 20, 10.5471, -130)
+
+[node name="W002_industrial_warehouse_long" parent="Dressing/Works_Strip" instance=ExtResource("44_rjojd")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 12.0685, -170)
+
+[node name="W003_industrial_water_tower" parent="Dressing/Works_Strip" instance=ExtResource("72_2v26u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 18.7585, -160)
+
+[node name="W004_feature_container_stack" parent="Dressing/Works_Strip" instance=ExtResource("28_vcmvk")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 80, 11.2859, -40)
+
+[node name="W005_feature_container_stack" parent="Dressing/Works_Strip" instance=ExtResource("28_vcmvk")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 120, 20.8494, -40)
+
+[node name="W006_feature_container_stack" parent="Dressing/Works_Strip" instance=ExtResource("28_vcmvk")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 160, 7.99032, -40)
+
+[node name="Works_DroneDepot" type="Node3D" parent="Dressing"]
+
+[node name="W000_industrial_substation" parent="Dressing/Works_DroneDepot" instance=ExtResource("75_6cei2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -250, 20.7455, 130)
+
+[node name="W001_machine_pallet_rack" parent="Dressing/Works_DroneDepot" instance=ExtResource("53_01n24")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -320, 20.2432, 110)
+
+[node name="W002_machine_pallet_rack" parent="Dressing/Works_DroneDepot" instance=ExtResource("53_01n24")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -280, 20.7754, 110)
+
+[node name="Works_Staging" type="Node3D" parent="Dressing"]
+
+[node name="W000_machine_semi_truck" parent="Dressing/Works_Staging" instance=ExtResource("27_8xhks")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -540, 12.5235, 310)
+
+[node name="W001_machine_semi_truck" parent="Dressing/Works_Staging" instance=ExtResource("27_8xhks")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -520, 7.31281, 310)
+
+[node name="W002_machine_semi_truck" parent="Dressing/Works_Staging" instance=ExtResource("27_8xhks")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -440, 8.12862, 310)
+
+[node name="W003_feature_fuel_tanks" parent="Dressing/Works_Staging" instance=ExtResource("71_phwlp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -560, 22.0231, 380)
+
+[node name="W004_feature_fuel_tanks" parent="Dressing/Works_Staging" instance=ExtResource("71_phwlp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -515, 4.35386, 380)
+
+[node name="Works_ValleyRail" type="Node3D" parent="Dressing"]
+
+[node name="W000_industrial_rail_track" parent="Dressing/Works_ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(-0.0963241, 0, -0.99535, 0, 1, 0, 0.99535, 0, -0.0963241, -428.75, 7.17842, 110.417)
+
+[node name="W001_industrial_rail_track" parent="Dressing/Works_ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(-0.0963241, 0, -0.99535, 0, 1, 0, 0.99535, 0, -0.0963241, -425.625, 10.7721, 78.125)
+
+[node name="W002_industrial_rail_track" parent="Dressing/Works_ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(-0.0963241, 0, -0.99535, 0, 1, 0, 0.99535, 0, -0.0963241, -421.25, 19.1405, 32.9167)
+
+[node name="W003_industrial_rail_gondola" parent="Dressing/Works_ValleyRail" instance=ExtResource("37_cqlvs")]
+transform = Transform3D(-0.115881, 0, -0.993263, 0, 1, 0, 0.993263, 0, -0.115881, -426, 5.54973, 140)
+
+[node name="Works_Ground" type="Node3D" parent="Dressing"]
+
+[node name="W000_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -380, 19.7407, 60)
+
+[node name="W001_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -120, 11.3173, 200)
+
+[node name="W002_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -71.4286, 20.6414, 200)
+
+[node name="W003_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -22.8571, 13.9568, 200)
+
+[node name="W004_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 25.7143, 13.9156, 200)
+
+[node name="W005_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 74.2857, 21.6523, 200)
+
+[node name="W006_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 122.857, 18.7618, 200)
+
+[node name="W007_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 171.429, -0.800747, 200)
+
+[node name="W008_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 220, 8.29904, 200)
+
+[node name="W009_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 260, 13.8917, -120)
+
+[node name="W010_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 310, 5.35015, -120)
+
+[node name="W011_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 360, 1.79057, -120)
+
+[node name="W012_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 410, 18.6383, -120)
+
+[node name="W013_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 460, 13.6394, -120)
+
+[node name="W014_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 510, 16.4479, -120)
+
+[node name="W015_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 560, 11.4989, -120)
+
+[node name="W016_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 200, 7.77129, 320)
+
+[node name="W017_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 245.714, 2.38033, 320)
+
+[node name="W018_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 291.429, 9.32083, 320)
+
+[node name="W019_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 337.143, 15.0838, 320)
+
+[node name="W020_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 382.857, 12.1422, 320)
+
+[node name="W021_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 428.571, 12.114, 320)
+
+[node name="W022_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 474.286, 19.5881, 320)
+
+[node name="W023_ground_swell" parent="Dressing/Works_Ground" instance=ExtResource("73_s20tp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 520, 12.8273, 320)
+
+[node name="W024_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -384, 1.10374, -230)
+
+[node name="W025_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -276, 2.21565, -230)
+
+[node name="W026_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -240, 10.1715, -230)
+
+[node name="W027_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 300, 20.1762, 140)
+
+[node name="W028_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 340, 17.7916, 140)
+
+[node name="W029_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 380, 1.72177, 140)
+
+[node name="W030_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 420, 1.39466, 140)
+
+[node name="W031_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 460, 2.02064, 140)
+
+[node name="W032_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 500, 11.9356, 140)
+
+[node name="W033_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -60, 20.5632, -200)
+
+[node name="W034_ground_berm" parent="Dressing/Works_Ground" instance=ExtResource("74_n8qee")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 50, 2.8306, -200)
+
+[node name="W035_ground_spoil" parent="Dressing/Works_Ground" instance=ExtResource("75_c8eap")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -460, 6.26544, -120)
+
+[node name="W036_ground_spoil" parent="Dressing/Works_Ground" instance=ExtResource("75_c8eap")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -420, -0.570994, -120)
+
+[node name="W037_ground_spoil" parent="Dressing/Works_Ground" instance=ExtResource("75_c8eap")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -380, -2.20609, -120)
+
+[node name="W038_ground_spoil" parent="Dressing/Works_Ground" instance=ExtResource("75_c8eap")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 380, -1.25974, 170)
+
+[node name="W039_ground_spoil" parent="Dressing/Works_Ground" instance=ExtResource("75_c8eap")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 470, 2.57813, 170)
+
+[node name="W040_ground_spoil" parent="Dressing/Works_Ground" instance=ExtResource("75_c8eap")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 515, 4.29603, 170)
+
+[node name="W041_ground_spoil" parent="Dressing/Works_Ground" instance=ExtResource("75_c8eap")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 560, 10.9265, 170)
+
+[node name="W042_ground_spoil" parent="Dressing/Works_Ground" instance=ExtResource("75_c8eap")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 40, 10.3315, 160)
+
+[node name="W043_ground_spoil" parent="Dressing/Works_Ground" instance=ExtResource("75_c8eap")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 200, 17.3705, 160)
+
+[node name="W044_ground_washout" parent="Dressing/Works_Ground" instance=ExtResource("76_grmt5")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -200, 11.0469, 120)
+
+[node name="W045_ground_washout" parent="Dressing/Works_Ground" instance=ExtResource("76_grmt5")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -146.667, 16.1624, 120)
+
+[node name="W046_ground_washout" parent="Dressing/Works_Ground" instance=ExtResource("76_grmt5")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -93.3333, 11.3082, 120)
+
+[node name="W047_ground_washout" parent="Dressing/Works_Ground" instance=ExtResource("76_grmt5")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 240, 2.87954, -60)
+
+[node name="W048_ground_washout" parent="Dressing/Works_Ground" instance=ExtResource("76_grmt5")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 293.333, 8.28929, -60)
+
+[node name="W049_ground_washout" parent="Dressing/Works_Ground" instance=ExtResource("76_grmt5")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 346.667, 5.67825, -60)
+
+[node name="W050_ground_washout" parent="Dressing/Works_Ground" instance=ExtResource("76_grmt5")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 400, 5.30548, -60)
+
+[node name="W051_ground_track" parent="Dressing/Works_Ground" instance=ExtResource("77_gqw11")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -283.077, 10.7997, 0)
+
+[node name="W052_ground_track" parent="Dressing/Works_Ground" instance=ExtResource("77_gqw11")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 60, 14.3289, 240)
+
+[node name="W053_ground_track" parent="Dressing/Works_Ground" instance=ExtResource("77_gqw11")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 92.3077, 10.5855, 240)
+
+[node name="W054_ground_track" parent="Dressing/Works_Ground" instance=ExtResource("77_gqw11")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 124.615, 6.30906, 240)
+
+[node name="W055_ground_track" parent="Dressing/Works_Ground" instance=ExtResource("77_gqw11")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 178.462, -0.723323, 240)
+
+[node name="W056_ground_track" parent="Dressing/Works_Ground" instance=ExtResource("77_gqw11")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 210.769, 1.27508, 240)
+
+[node name="W057_ground_track" parent="Dressing/Works_Ground" instance=ExtResource("77_gqw11")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 243.077, 16.3672, 240)
+
+[node name="W058_ground_track" parent="Dressing/Works_Ground" instance=ExtResource("77_gqw11")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 275.385, 19.6999, 240)
+
+[node name="W059_prop_dirt_mound" parent="Dressing/Works_Ground" instance=ExtResource("78_mntbb")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -344, 21.3116, 200)
+
+[node name="W060_prop_dirt_mound" parent="Dressing/Works_Ground" instance=ExtResource("78_mntbb")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -296, 20.695, 200)
+
+[node name="W061_prop_dirt_mound" parent="Dressing/Works_Ground" instance=ExtResource("78_mntbb")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -248, 20.5986, 200)
+
+[node name="W062_prop_dirt_mound" parent="Dressing/Works_Ground" instance=ExtResource("78_mntbb")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -200, 15.6905, 200)
+
+[node name="W063_prop_rubble_pile" parent="Dressing/Works_Ground" instance=ExtResource("95_nj00v")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 180, 10.5192, -300)
+
+[node name="W064_prop_rubble_pile" parent="Dressing/Works_Ground" instance=ExtResource("95_nj00v")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 236, 3.9056, -300)
+
+[node name="W065_prop_rubble_pile" parent="Dressing/Works_Ground" instance=ExtResource("95_nj00v")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 292, 0.83742, -300)
+
+[node name="W066_prop_rubble_pile" parent="Dressing/Works_Ground" instance=ExtResource("95_nj00v")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 348, 2.80872, -300)
+
+[node name="W067_prop_rubble_pile" parent="Dressing/Works_Ground" instance=ExtResource("95_nj00v")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 404, 13.604, -300)
+
+[node name="W068_prop_rubble_pile" parent="Dressing/Works_Ground" instance=ExtResource("95_nj00v")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 460, 5.66333, -300)
+
+[node name="W069_prop_boulder_b" parent="Dressing/Works_Ground" instance=ExtResource("79_435qi")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -160, 14.0414, 300)
+
+[node name="W070_prop_boulder_b" parent="Dressing/Works_Ground" instance=ExtResource("79_435qi")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -108.571, 18.6381, 300)
+
+[node name="W071_prop_boulder_b" parent="Dressing/Works_Ground" instance=ExtResource("79_435qi")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -57.1429, 9.55994, 300)
+
+[node name="W072_prop_boulder_b" parent="Dressing/Works_Ground" instance=ExtResource("79_435qi")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -5.71428, 21.372, 300)
+
+[node name="W073_prop_boulder_b" parent="Dressing/Works_Ground" instance=ExtResource("79_435qi")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 45.7143, 16.7526, 300)
+
+[node name="W074_prop_boulder_b" parent="Dressing/Works_Ground" instance=ExtResource("79_435qi")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 97.1429, 13.1319, 300)
+
+[node name="W075_prop_boulder_b" parent="Dressing/Works_Ground" instance=ExtResource("79_435qi")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 148.571, 14.6155, 300)
+
+[node name="W076_prop_rock_slabs" parent="Dressing/Works_Ground" instance=ExtResource("80_u2utw")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 360, 20.581, 60)
+
+[node name="W077_prop_rock_slabs" parent="Dressing/Works_Ground" instance=ExtResource("80_u2utw")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 412, 9.96766, 60)
+
+[node name="W078_prop_rock_slabs" parent="Dressing/Works_Ground" instance=ExtResource("80_u2utw")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 464, 5.90468, 60)
+
+[node name="W079_prop_rock_slabs" parent="Dressing/Works_Ground" instance=ExtResource("80_u2utw")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 516, 15.4895, 60)
+
+[node name="W080_prop_rock_slabs" parent="Dressing/Works_Ground" instance=ExtResource("80_u2utw")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 568, 15.777, 60)
+
+[node name="W081_prop_rock_slabs" parent="Dressing/Works_Ground" instance=ExtResource("80_u2utw")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 620, 19.4577, 60)
+
+[node name="W082_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -480, 8.23863, -260)
+
+[node name="W083_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -415.556, -1.70662, -260)
+
+[node name="W084_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -286.667, 16.1477, -260)
+
+[node name="W085_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -222.222, 20.113, -260)
+
+[node name="W086_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -157.778, 6.79849, -260)
+
+[node name="W087_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -93.3333, 17.8718, -260)
+
+[node name="W088_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -28.8889, 12.4998, -260)
+
+[node name="W089_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 35.5555, 11.0879, -260)
+
+[node name="W090_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 120, 14.5513, 340)
+
+[node name="W091_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 182.857, 9.33072, 340)
+
+[node name="W092_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 245.714, 3.86045, 340)
+
+[node name="W093_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 308.571, 19.5632, 340)
+
+[node name="W094_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 371.429, 21.1717, 340)
+
+[node name="W095_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 434.286, 15.8285, 340)
+
+[node name="W096_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 497.143, 19.7279, 340)
+
+[node name="W097_prop_power_pole" parent="Dressing/Works_Ground" instance=ExtResource("81_dj4op")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 560, -2.0493, 340)
 
 [node name="Bridges" type="Node3D" parent="."]
 
