@@ -39,6 +39,79 @@ most wants and least often gets:
 
 
 
+## 2026-09-30 (2) — the Salient as a real level, and what was making it flat
+
+**Landed.** `maps/salient_level.tscn`, from `tools/build_salient.gd`. The deck
+entry stays the design — paint, recipe, trench cuts, dressing and scatter all
+come out of `mapdeck_data.gd` through the same `_placements()` the deck renders
+with, so the concept and the level cannot drift apart. The level adds only what
+a level needs: a spawn, an exit, eleven objective anchors (`obj_salient_*`)
+with patrols, a navigation region, and a saved terrain resource.
+
+**The cut trenches bake as CONNECTED walkable navmesh.** 44335 vertices, 61409
+polygons; all **26 anchors and patrol points reach from the spawn**, longest
+walk 1036 m. That was the single thing that could have sunk this map and it
+holds.
+
+**WHAT WAS MAKING IT FLAT — the useful part of this entry.** The complaint was
+a view of the rear area that was flat-flat-flat to the horizon. Four causes, in
+order of how much each mattered:
+
+1. **The floor was painted GREEN.** Green is "flat ground" and the generator
+   **LEVELS** it, before and after erosion — so no amount of `detail_height`
+   survived. Leaving it unpainted and letting the recipe decide was the whole
+   difference. **Most of the other fifty deck maps paint their floors green
+   too**, so this is worth knowing before building any of them.
+2. **Gentle relief in the recipe**: 4 m hills on a 260 m wavelength under 1.3 m
+   of detail on 28 m — about three degrees and about sixteen. Nothing the squad
+   cannot walk.
+3. **`maps/blocks/ground/`**, the micro-terrain kit built for exactly this
+   problem: swells, berms, spoil rings, washouts and ruts. Slopes under 20°, no
+   step over 0.2 m, nothing over 1.2 m, so the navmesh survives it.
+4. **Litter at seventy-five a hectare** (`scatter_battlefield.tres`).
+   `scatter_debris` is **three** — one piece every fifty-eight metres, which is
+   nothing in the thirty metres of foreground you actually look at.
+
+**And `growth_amount = 0.0` is not no growth.** The shader reads it as a
+threshold — `smoothstep(1 - amount - 0.08, 1 - amount + 0.08, noise)` — so at
+zero the top eight per cent of the noise still comes through green. It wants
+**−0.2**. The grass came back **twice**: once because the level was emitted
+without the deck's material overrides at all (a perl insert that matched
+nothing and reported success), and once because zero was not zero.
+
+**`build_salient.gd` checks its own anchors now.** An objective on a building's
+footprint snaps to a hole in the navmesh and the reach probe calls it CUT OFF
+after a thousand-metre walk — a true report of a placement mistake and a slow
+way to find one. Three rebuild-and-rebake cycles went on that before the check
+existed. It skips micro-terrain and gun pits, which are things you stand *in*.
+
+**`godot --headless --import` is what imports a new sketch.**
+`--editor --quit` aborts the scan; `--editor --quit-after 900` aborts it too.
+
+**Gates.** `check.sh --changed`: **PASS** (106 scenes and resources).
+`smoke.sh`: **PASS**, booted clean. Reach: **26 anchors, 0 cut off**.
+`test.sh`: **not run** — nothing here touches the ledger or the armoury.
+
+**Needs the human.**
+
+- **Play it.** It is a real level with a spawn, an exit and objective anchors,
+  and nobody has been in it. No mission points at it yet — the anchors are
+  tagged `obj_salient_*` and are GAMEPLAY's to write against.
+- **1330 placed pieces, against Hillfort's 96.** The revetment is most of it.
+  The right answer is to generate the trench lining as one `.map` of long boxes
+  per traverse leg, the way `proving_level.map` is built, which would collapse
+  several hundred instances into one mesh. **Until that is done the draw-call
+  count is unmeasured and suspect** — and this project already has "Mutaha
+  rendering cost is unmeasured" as risk #2.
+- The level's recipe sub-resource points at `sketches/salient.png`, so
+  regenerating from the inspector works — but the terrain **data** is what the
+  game loads, and `build_salient.gd` is what should rewrite it.
+
+**Blocked / next.** Nothing blocking. Consolidating the revetment into a
+generated `.map` is the obvious next job and the one I would do first.
+
+---
+
 ## 2026-09-30 — fifty-one map ideas, built as terrain and ranked
 
 **Landed.** `docs/MAP_DECK.md` — fifty map concepts, each painted as a sketch,
