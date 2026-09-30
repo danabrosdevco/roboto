@@ -39,6 +39,62 @@ most wants and least often gets:
 
 
 
+## 2026-09-30 — fifty map ideas, built as terrain and ranked
+
+**Landed.** `docs/MAP_DECK.md` — fifty map concepts, each painted as a sketch,
+generated, dressed out of `maps/blocks/` and photographed. `tools/mapdeck.gd`
+rebuilds the whole set in **ninety seconds**; `tools/mapdeck_data.gd` holds the
+fifty; `tools/contact_sheet.gd` tiles the pictures so they can be judged as a
+set. Sheets in `docs/deck/`.
+
+**They are DRESSED, and that was the whole difference.** The generator paints
+mountains, water, flat ground, a street grid, craters, rough ground and roads —
+and to that list a rail yard, a container port and a refinery are all "flat
+ground with roads on it". A deck of bare terrain would have been fifty pictures
+of the same field and would have answered nothing. So each one gets 60–200
+blocks, and rows and grids space themselves off **the prefab's own bounding
+box, read at build time**. Sizing pieces from memory is how a placement pass
+puts three buildings through each other, and it has happened here.
+
+**The default recipe in the deck is a FLAT map** — hills, ridges, erosion and
+crater depth all start near zero and each map turns up only what it needs.
+That is the opposite way round from the presets and it is deliberate: bots
+climb 0.25 m, so anywhere the squad fights is flat or it bakes as a wall.
+
+**The ranking is against this project's own record, not a playtest.** Both maps
+that died died of emptiness — `valley_level` and `arena_level` — the one that
+got approved is a town, and the note on the newest map was that there was
+nothing between the objectives. So the top of the list is towns and works and
+the bottom is open country, and I have said so in those words rather than
+dressing it up as taste. Top five: Ford Town, Boulevard, Old Town, Lock Ladder,
+Canal District. Bottom five: Solar Field, Launch Complex, Dish Array, Pylon
+Line, Salt Flat.
+
+**Two things the deck says that I did not expect going in.** Water is the
+cheapest good decision available — six of the top ten use it and it costs one
+painted stroke. And **the real gap in the roster is interiors**: Foundry and
+Rail Station rank as high as they do mostly because almost nothing we have is
+a fight indoors.
+
+**Gates.** `check.sh --changed`: **PASS** (41 scripts, 73 scenes and
+resources). All fifty build with no missing pieces. `test.sh` and `smoke.sh`:
+**not run** — nothing here is in the game, it is a tools-and-docs pass.
+
+**Needs the human.**
+
+- **This is the deliverable to argue with.** The ranking is one agent's
+  judgement; you are the one who has played these maps. If the top ten is
+  wrong, saying which and why is worth more than the next fifty ideas.
+- **Nothing here has been played, including by me.** They are terrain plus a
+  dressing pass. No objectives, no navmesh, no spawn, no mission.
+- Some eye-level cameras ended up inside terrain or under water — `aqueduct`,
+  `dam_crest`, `braided_delta`. Their plan shots carry them.
+
+**Blocked / next.** Nothing blocking. The obvious next step is to take one
+Tier-1 map to a playable level and see whether the ranking survives contact.
+
+---
+
 ## 2026-09-29 (3) — a checker that could not see 248 overlaps, and two things from playing Hillfort
 
 **Landed.** `maps/proving/proving_level.map` has **no overlapping brushes**. It
