@@ -28,7 +28,7 @@ func _initialize() -> void:
 	for id in OS.get_environment("IDS").split(",", false):
 		id = id.strip_edges()
 		var eyes: Array = []
-		for n in range(1, 5):
+		for n in range(1, 9):
 			var p := src.path_join("%s_eye%d.png" % [id, n])
 			if FileAccess.file_exists(p):
 				eyes.append(p)
@@ -38,7 +38,9 @@ func _initialize() -> void:
 		_place(card, src.path_join("%s_sketch.png" % id), Vector2i(0, 0), TOP)
 		_place(card, src.path_join("%s_plan.png" % id), Vector2i(TOP.x, 0), TOP)
 		for i in eyes.size():
-			_place(card, eyes[i], Vector2i(i * EYE.x, TOP.y), EYE)
+			# Wraps to a second row. Without the modulo the fifth shot onward is
+			# drawn off the right edge and the row below comes out black.
+			_place(card, eyes[i], Vector2i((i % 4) * EYE.x, TOP.y + (i / 4) * EYE.y), EYE)
 		var out := dst.path_join("%s_card.png" % id)
 		card.save_png(out)
 		made += 1

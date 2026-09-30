@@ -80,6 +80,29 @@ static func town(pieces: Array, x0: float, z0: float, x1: float, z1: float, band
 	return out
 
 
+## One band of a town, laid as BLOCKS BETWEEN STREETS rather than as one
+## unbroken row. `xs` is where the cross streets are; each span between two of
+## them gets its own run of buildings, inset so the street stays clear.
+##
+## Without this the dressing and the painted street grid do not know about each
+## other: the paint levels a grid of blocks, the buildings land in rows across
+## it, and half the streets come out with a house in them. Two of Ford Town's
+## cameras ended up a metre from a wall that way, which was the tell.
+static func blocks(pieces: Array, z: float, xs: Array, inset := 11.0, gap := 12.0,
+		skip := Vector2.ZERO) -> Array:
+	var out: Array = []
+	for i in xs.size() - 1:
+		var a: float = float(xs[i]) + inset
+		var b: float = float(xs[i + 1]) - inset
+		if b - a < 24.0:
+			continue
+		# A span the caller wants left open — a square, a yard, a park.
+		if skip != Vector2.ZERO and a < skip.y and b > skip.x:
+			continue
+		out.append_array(mix(pieces, a, z, b, z, gap))
+	return out
+
+
 ## Cover strewn along a line, the three-height rule the proving ground uses:
 ## something to shoot over, something to hide behind, something to break the
 ## sight line. A lane with one height of cover is a lane with no decisions.
@@ -114,6 +137,30 @@ static func run(z: float, x0: float, x1: float) -> Array:
 	return [Vector2(x0, z), Vector2(x1, z)]
 
 
+## THE TRENCH, IN THREE NUMBERS.
+##
+## feature_trench_revetment measures -2.19 to +0.59: it is built to line a
+## 2.19 m cut, with 0.59 m of sandbag parapet above ground. A 2.19 m trench is
+## head-height cover you cannot fight from — eye level for a 1.5 m player is
+## 1.35 m off the floor and the parapet top would be 2.78 m.
+##
+## So the cut is 0.8 m, not 2.19. Floor to parapet top is then 1.39 m: the
+## player stands and shoots over it, crouches and is behind it. That is the
+## game's own number — CoverPointSpawner probes for a wall at 1.2 m standing
+## and 0.6 m crouched, and anything shorter than 1.2 m generates no cover point
+## at all. The lining's buried lower half simply does not show.
+##
+## ONE DEPTH EVERYWHERE, including the communication trenches. Cutting those
+## deeper reads better and plays worse: a metre of step where a deep trench
+## meets a shallow one is a wall, because move_and_slide has no step-up.
+## Ford Town's cross streets, in metres, matching the magenta in its sketch.
+const FT_STREETS := [-704.0, -512.0, -320.0, -144.0, 32.0, 240.0, 496.0, 704.0]
+
+const TR_W := 4.0
+const TR_D := 0.8
+const TR_F := 1.5
+
+
 static func maps() -> Array:
 	var out: Array = []
 
@@ -135,15 +182,15 @@ static func maps() -> Array:
 	var line_x := {"reserve": -430.0, "support": -300.0, "front": -170.0,
 			"ef": 60.0, "es": 190.0, "eg": 330.0}
 	for key: String in line_x:
-		fire_lines.append(["trench", 7.0, 2.2, 3.5, traverse(line_x[key], -215.0, 215.0)])
+		fire_lines.append(["trench", TR_W, TR_D, TR_F, traverse(line_x[key], -215.0, 215.0)])
 	# Communication trenches back from the friendly front, and the enemy's own.
 	for z: float in [-130.0, 0.0, 130.0]:
-		fire_lines.append(["trench", 6.0, 2.0, 3.5, run(z, -430.0, -170.0)])
+		fire_lines.append(["trench", TR_W, TR_D, TR_F, run(z, -430.0, -170.0)])
 	for z: float in [-90.0, 90.0]:
-		fire_lines.append(["trench", 6.0, 2.0, 3.5, run(z, 60.0, 330.0)])
+		fire_lines.append(["trench", TR_W, TR_D, TR_F, run(z, 60.0, 330.0)])
 	# Saps pushed out into no-man's-land: the only cover on the way over.
 	for z: float in [-70.0, 70.0]:
-		fire_lines.append(["trench", 5.0, 1.8, 3.0, run(z, -170.0, -95.0)])
+		fire_lines.append(["trench", TR_W, TR_D, TR_F, run(z, -170.0, -95.0)])
 
 	out.append({
 		"id": "the_salient", "name": "The Salient",
@@ -168,7 +215,13 @@ static func maps() -> Array:
 			# A lateral road behind each line, and the village.
 			["line", 0, 50, 40, 50, 1.0, "M"], ["line", 92, 14, 128, 14, 1.0, "M"],
 			["rect", 106, 20, 124, 44, "U"]],
-		"recipe": {"cell_size": 1.5, "shelling_per_hectare": 70.0,
+		# EVERYTHING ON THIS MAP IS DEAD. growth_amount is the patchy scrub the
+		# terrain shader lays on any gentle ground, and here it goes to zero; the
+		# ground tint goes grey-brown with it, and the hollows darken. Nothing
+		# green grows in a field that has been shelled for two years.
+		"material": {"growth_amount": 0.0, "ground_tint": Color(0.28, 0.255, 0.225),
+			"rubble_in_hollows": 0.85, "hollow_darkening": 0.3, "saturation": 0.72},
+		"recipe": {"cell_size": 1.0, "shelling_per_hectare": 70.0,
 			"crater_radius_min": 3.0, "crater_radius_max": 13.0,
 			# SHALLOW ON PURPOSE. A deep crater with a heaved rim is a hole the
 			# squad walks into and cannot leave, which has happened on this
@@ -180,16 +233,16 @@ static func maps() -> Array:
 		"paths": fire_lines,
 		"dress": []
 			# Revetment in every cut, following the traverse.
-			+ [["along", "features/feature_trench_revetment", traverse(-430.0, -215.0, 215.0), 0.0],
-				["along", "features/feature_trench_revetment", traverse(-300.0, -215.0, 215.0), 0.0],
-				["along", "features/feature_trench_revetment", traverse(-170.0, -215.0, 215.0), 0.0],
-				["along", "features/feature_trench_revetment", traverse(60.0, -215.0, 215.0), 0.0],
-				["along", "features/feature_trench_revetment", traverse(190.0, -215.0, 215.0), 0.0],
-				["along", "features/feature_trench_revetment", run(0.0, -430.0, -170.0), 0.0],
-				["along", "features/feature_trench_revetment", run(-130.0, -430.0, -170.0), 0.0],
-				["along", "features/feature_trench_revetment", run(130.0, -430.0, -170.0), 0.0],
-				["along", "features/feature_trench_revetment", run(-90.0, 60.0, 330.0), 0.0],
-				["along", "features/feature_trench_revetment", run(90.0, 60.0, 330.0), 0.0]]
+			+ [["along", "features/feature_trench_revetment", traverse(-430.0, -215.0, 215.0), 0.0, 6.0],
+				["along", "features/feature_trench_revetment", traverse(-300.0, -215.0, 215.0), 0.0, 6.0],
+				["along", "features/feature_trench_revetment", traverse(-170.0, -215.0, 215.0), 0.0, 6.0],
+				["along", "features/feature_trench_revetment", traverse(60.0, -215.0, 215.0), 0.0, 6.0],
+				["along", "features/feature_trench_revetment", traverse(190.0, -215.0, 215.0), 0.0, 6.0],
+				["along", "features/feature_trench_revetment", run(0.0, -430.0, -170.0), 0.0, 6.0],
+				["along", "features/feature_trench_revetment", run(-130.0, -430.0, -170.0), 0.0, 6.0],
+				["along", "features/feature_trench_revetment", run(130.0, -430.0, -170.0), 0.0, 6.0],
+				["along", "features/feature_trench_revetment", run(-90.0, 60.0, 330.0), 0.0, 6.0],
+				["along", "features/feature_trench_revetment", run(90.0, 60.0, 330.0), 0.0, 6.0]]
 			# Wire: a belt in front of each front line, which is what makes the
 			# 230 m between them a problem rather than a walk.
 			+ [["row", "fortifications/fort_razor_wire", -140.0, -215.0, -140.0, 215.0, 4.0],
@@ -231,10 +284,47 @@ static func maps() -> Array:
 				["row", "props/prop_car_wreck", -120.0, 140.0, 10.0, 140.0, 40.0],
 				["row", "props/prop_tank_trap", -60.0, -200.0, -60.0, 200.0, 30.0],
 				["row", "props/prop_robot_wreck", -30.0, -120.0, -30.0, 120.0, 38.0]]
+			# THE REAR IS MOST OF A TRENCH MAP. Everything in front of the fire
+			# trench is a killing ground nobody lives in; the fight is fed from
+			# behind, and a rear area with nothing in it turns two thirds of
+			# the map into a walk. Batteries, dumps, a light railway to bring
+			# the shells up, dugouts, and a farm that was here first.
+			+ [["row", "industrial/industrial_rail_track", -520.0, 195.0, -190.0, 195.0, 0.0],
+				["row", "industrial/industrial_rail_track", 210.0, -195.0, 500.0, -195.0, 0.0],
+				["at", "industrial/industrial_rail_gondola", -420.0, 195.0, 0.0],
+				["at", "industrial/industrial_rail_gondola", -380.0, 195.0, 0.0],
+				["at", "industrial/industrial_rail_boxcar", 330.0, -195.0, 0.0],
+				["row", "fortifications/fort_mortar_pit", -370.0, -70.0, -370.0, 70.0, 45.0],
+				["row", "fortifications/fort_gun_emplacement", -345.0, -170.0, -345.0, 170.0, 95.0],
+				["row", "fortifications/fort_ammo_dump", -480.0, -60.0, -480.0, 60.0, 50.0],
+				["row", "fortifications/fort_ammo_dump", 380.0, -120.0, 380.0, 120.0, 60.0],
+				["at", "fortifications/fort_command_bunker", -400.0, -180.0, 0.0],
+				["at", "fortifications/fort_command_bunker", 260.0, 160.0, 0.0],
+				["at", "fortifications/fort_hesco_sangar", -250.0, -150.0, 20.0],
+				["at", "fortifications/fort_hesco_sangar", -250.0, 150.0, 200.0],
+				["at", "fortifications/fort_hesco_sangar", 130.0, -150.0, 200.0],
+				["at", "fortifications/fort_hesco_sangar", 130.0, 150.0, 20.0],
+				["row", "machines/machine_semi_truck", -500.0, 120.0, -300.0, 120.0, 30.0],
+				["row", "props/prop_crates", -460.0, 60.0, -300.0, 60.0, 18.0],
+				["row", "props/prop_barrels", -460.0, -110.0, -300.0, -110.0, 20.0]]
+			# The farm that was here before the line came through it.
+			+ [["at", "estates/estate_collapsed_corner", -470.0, -185.0, 30.0],
+				["at", "estates/estate_frame_shell", -430.0, -195.0, 0.0],
+				["at", "industrial/industrial_water_tower", -510.0, -150.0, 0.0]]
+			# The valley shoulders: observation over the whole sector, and the
+			# stumps of the wood that used to hold them.
+			+ [["at", "features/feature_watchtower", -330.0, -225.0, 0.0],
+				["at", "features/feature_watchtower", 250.0, 225.0, 0.0],
+				["at", "features/feature_pillbox", -60.0, -228.0, 0.0],
+				["row", "alpine/alpine_snag_broken", -520.0, -232.0, 500.0, -232.0, 32.0],
+				["row", "alpine/alpine_pine_skeleton", -520.0, 232.0, 500.0, 232.0, 32.0],
+				["row", "alpine/alpine_stump", -500.0, -208.0, 480.0, -208.0, 44.0],
+				["row", "alpine/alpine_stump", -500.0, 208.0, 480.0, 208.0, 44.0]]
 			# The village behind their gun line: the reason to come this far.
 			+ [["at", "landmarks/landmark_clock_tower", 420.0, -20.0, 0.0]]
 			+ town(["estates/estate_collapsed_corner", "estates/estate_frame_shell",
-				"estates/estate_slab_broken"], 370.0, -180.0, 500.0, 180.0, 3, 14.0),
+				"estates/estate_slab_broken", "estates/estate_u_block"],
+				360.0, -190.0, 505.0, 190.0, 4, 12.0),
 		"scatter": ["scatter_debris", "scatter_alpine_snags", "scatter_micro_terrain"],
 		# Behind the parapet, out in it, back from their side, and one straight
 		# down a communication trench — the camera sits on the cut floor there,
@@ -242,7 +332,9 @@ static func maps() -> Array:
 		"cams": [[-212.0, 45.0, 60.0, 20.0, 62.0],
 			[-95.0, 105.0, 60.0, 55.0, 64.0],
 			[255.0, 135.0, -260.0, 60.0, 60.0],
-			[-390.0, 130.0, -180.0, 130.0, 60.0]],
+			[-390.0, 130.0, -180.0, 130.0, 60.0],
+			[-175.0, -110.0, -175.0, 110.0, 60.0],
+			[-470.0, -70.0, -110.0, -10.0, 62.0]],
 	})
 
 	# ═══ CROSSINGS ═══════════════════════════════════════════════════════════
@@ -365,25 +457,111 @@ static func maps() -> Array:
 		"hook": "The river IS the main street, and both banks are built right up to it.",
 		"shape": "linear choke through dense cover",
 		"px": LONG,
+		# THE GRID IS PAINTED, NOT DRESSED. The magenta is the street plan —
+		# two embankment roads either side of the water, six cross streets, and
+		# three crossings — and the generator levels a block to each square it
+		# makes. Dressing a town without painting one puts buildings in rows on
+		# open ground; painting one first makes the streets real, so the blocks
+		# land between them and the squad has somewhere to be that is not a
+		# firing line.
 		"paint": [["rect", 0, 0, 176, 64, "U"],
 			["path", [Vector2(0, 30), Vector2(50, 34), Vector2(110, 28), Vector2(176, 32)], 4.0, "B"],
+			# The valley the town sits in, and a mill leat off the river.
 			["rect", 0, 0, 176, 4, "Y"], ["rect", 0, 60, 176, 64, "Y"],
-			["line", 0, 14, 176, 14, 1.0, "M"], ["line", 0, 48, 176, 48, 1.0, "M"],
-			["line", 62, 14, 62, 48, 1.0, "M"], ["line", 114, 14, 114, 48, 1.0, "M"]],
-		"recipe": {"water_depth": 4.0, "water_bank": 10.0, "urban_block": Vector2(34.0, 26.0),
-			"urban_street": 8.0, "urban_ruin": 0.3},
-		"dress": town(["estates/estate_courtyard_block", "estates/estate_u_block",
-				"estates/estate_market_hall", "estates/estate_collapsed_corner"],
-				-640.0, -180.0, 640.0, -90.0, 2)
-			+ town(["estates/estate_gallery_block", "estates/estate_slab_broken",
-				"estates/estate_podium_row", "estates/estate_frame_shell"],
-				-640.0, 90.0, 640.0, 180.0, 2)
-			+ [["at", "landmarks/landmark_clock_tower", -100.0, -140.0, 0.0],
-				["at", "estates/estate_point_tower", 260.0, 150.0, 0.0]]
-			+ cover(-620.0, -40.0, 620.0, -40.0, 26.0)
-			+ cover(-620.0, 46.0, 620.0, 46.0, 26.0),
+			["rect", 0, 0, 176, 2, "W"], ["rect", 0, 62, 176, 64, "W"],
+			# Embankment roads, tight to the water on both banks.
+			["line", 0, 22, 176, 22, 1.0, "M"], ["line", 0, 40, 176, 40, 1.0, "M"],
+			# The two back streets.
+			["line", 0, 10, 176, 10, 1.0, "M"], ["line", 0, 52, 176, 52, 1.0, "M"],
+			# Cross streets, and the three crossings among them.
+			["line", 24, 8, 24, 54, 1.0, "M"], ["line", 48, 8, 48, 54, 1.0, "M"],
+			["line", 70, 8, 70, 54, 1.0, "M"], ["line", 92, 8, 92, 54, 1.0, "M"],
+			["line", 118, 8, 118, 54, 1.0, "M"], ["line", 150, 8, 150, 54, 1.0, "M"],
+			# The market square: open ground in the middle of the densest part,
+			# and the one place on the map with a long shot in it.
+			["rect", 76, 42, 92, 54, "G"],
+			# Shelled ground at the east end, where the fighting has been.
+			["rect", 150, 6, 176, 56, "R"]],
+		"recipe": {"water_depth": 4.0, "water_bank": 10.0, "urban_block": Vector2(30.0, 24.0),
+			"urban_street": 8.0, "urban_ruin": 0.28, "shelling_per_hectare": 30.0,
+			"crater_depth": 0.22, "crater_rim": 0.06},
+		# A town that has been fought in, not flattened: growth held down but
+		# not off, since something still grows in a yard nobody has shelled.
+		"material": {"growth_amount": 0.14, "ground_tint": Color(0.32, 0.29, 0.25)},
+		# SEVEN BANDS, EACH CUT INTO BLOCKS BY THE CROSS STREETS. The z values
+		# are the corridors the painted roads leave: back streets at -176 and
+		# +160, embankment roads at -80 and +64, the water at -32..0. Nothing
+		# is placed on a road, which is what makes the streets usable.
+		"dress": blocks(["estates/estate_courtyard_block", "estates/estate_u_block",
+				"estates/estate_collapsed_corner"], -204.0, FT_STREETS)
+			+ blocks(["estates/estate_courtyard_wing", "estates/estate_podium_row",
+				"estates/estate_frame_shell"], -148.0, FT_STREETS)
+			+ blocks(["estates/estate_gallery_block", "estates/estate_courtyard_block",
+				"estates/estate_slab_dogleg"], -110.0, FT_STREETS)
+			+ blocks(["estates/estate_market_hall", "estates/estate_podium_row",
+				"estates/estate_gallery_block"], -56.0, FT_STREETS, 11.0, 14.0)
+			+ blocks(["estates/estate_podium_row", "estates/estate_frame_shell",
+				"estates/estate_market_hall"], 30.0, FT_STREETS, 11.0, 14.0)
+			+ blocks(["estates/estate_courtyard_block", "estates/estate_slab_broken",
+				"estates/estate_u_block"], 94.0, FT_STREETS, 11.0, 12.0, Vector2(-144.0, 32.0))
+			+ blocks(["estates/estate_gallery_block", "estates/estate_courtyard_wing",
+				"estates/estate_collapsed_corner"], 132.0, FT_STREETS, 11.0, 12.0,
+				Vector2(-144.0, 32.0))
+			+ blocks(["estates/estate_frame_shell", "estates/estate_slab_dogleg",
+				"estates/estate_podium_row"], 200.0, FT_STREETS)
+			# The three things you steer by: a church at the west end, a tower
+			# over the square, and a mill at the shelled east end.
+			+ [["at", "landmarks/landmark_clock_tower", -420.0, -130.0, 0.0],
+				["at", "estates/estate_point_tower", -120.0, 200.0, 0.0],
+				["at", "estates/estate_twin_tower", 310.0, -150.0, 0.0],
+				["at", "industrial/industrial_silos", 560.0, -140.0, 0.0],
+				["at", "industrial/industrial_smokestack", 620.0, -150.0, 0.0],
+				["at", "industrial/industrial_warehouse_long", 540.0, 130.0, 0.0],
+				["at", "estates/estate_market_hall", 20.0, -20.0, 0.0]]
+			# Quays. The banks are built up, which is what stops the river
+			# being a ford everywhere instead of at the crossings.
+			+ [["row", "props/prop_concrete_blocks", -640.0, -42.0, 640.0, -42.0, 14.0],
+				["row", "props/prop_concrete_blocks", -640.0, 42.0, 640.0, 42.0, 14.0],
+				["row", "props/prop_lamp_post", -620.0, -52.0, 620.0, -52.0, 46.0],
+				["row", "props/prop_lamp_post", -620.0, 52.0, 620.0, 52.0, 46.0]]
+			# Barricades at the three crossings: this is where the map is won.
+			+ [["at", "fortifications/fort_checkpoint", -320.0, -70.0, 0.0],
+				["at", "fortifications/fort_checkpoint", -320.0, 70.0, 0.0],
+				["row", "fortifications/fort_hesco_wall", -80.0, -62.0, 20.0, -62.0, 4.0],
+				["row", "fortifications/fort_hesco_wall", -80.0, 62.0, 20.0, 62.0, 4.0],
+				["row", "props/prop_sandbag_wall", 220.0, -62.0, 320.0, -62.0, 6.0],
+				["row", "props/prop_sandbag_wall", 220.0, 62.0, 320.0, 62.0, 6.0],
+				["at", "props/prop_sandbag_nest", -330.0, -50.0, 0.0],
+				["at", "props/prop_sandbag_nest", 260.0, 50.0, 180.0]]
+			# The square: cover in the middle of the one open space, or it is a
+			# thirty-metre gap with nothing in it.
+			+ [["ring", "props/prop_jersey_barrier", -56.0, 112.0, 42.0, 12],
+				["at", "props/prop_car_wreck", -96.0, 96.0, 30.0],
+				["at", "props/prop_car_wreck", -20.0, 132.0, 210.0],
+				["at", "props/prop_crates", -56.0, 86.0, 0.0],
+				["at", "estates/estate_market_hall", -56.0, 160.0, 0.0]]
+			# Streets, so the lanes between the blocks are not empty corridors.
+			+ cover(-620.0, -108.0, 620.0, -108.0, 24.0)
+			+ cover(-620.0, 108.0, 620.0, 108.0, 24.0)
+			+ cover(-620.0, -170.0, 620.0, -170.0, 28.0)
+			+ cover(-620.0, 170.0, 620.0, 170.0, 28.0)
+			+ [["row", "props/prop_car_wreck", -600.0, -80.0, 600.0, -80.0, 70.0],
+				["row", "props/prop_rubble_pile", -600.0, 80.0, 600.0, 80.0, 64.0],
+				["row", "props/prop_rubble_pile", 420.0, -120.0, 620.0, -120.0, 30.0],
+				["row", "props/prop_robot_wreck", 400.0, 40.0, 620.0, 40.0, 50.0]],
 		"scatter": ["scatter_debris"],
-		"cams": [[-200.0, -50.0, 420.0, -20.0, 62.0], [60.0, -170.0, 60.0, 180.0, 60.0]],
+		# Down the embankment, across a crossing, into the square, and the
+		# shelled east end where it stops being a town.
+		# EVERY CAMERA STANDS ON A PAINTED STREET. Put one between the blocks by
+		# eye and it ends up a metre from a wall, which is what the first pass
+		# here did twice: the embankment roads are at z -80 and +64, the back
+		# streets at -176 and +160, and the cross streets at x -512, -320, -144,
+		# +32, +240 and +496.
+		"cams": [[-560.0, -80.0, 560.0, -76.0, 62.0],
+			[-320.0, -172.0, -320.0, 150.0, 62.0],
+			[-56.0, 168.0, -56.0, 70.0, 64.0],
+			[496.0, 160.0, 620.0, 100.0, 62.0],
+			[32.0, 64.0, 240.0, 60.0, 62.0]],
 	})
 
 	# ── TIDAL CAUSEWAY ───────────────────────────────────────────────────────

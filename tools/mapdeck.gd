@@ -147,6 +147,15 @@ func _build(map: Dictionary) -> void:
 	terrain.data = d
 	terrain.collision_enabled = false        # nothing here is walked
 	terrain.boundary_walls = false
+	# Shader overrides, on a copy so one map cannot restyle the others.
+	# growth_amount is the one that matters: it is the patchy scrub the terrain
+	# puts on any gentle ground, and a map where everything is dead has to be
+	# able to say so.
+	if map.has("material"):
+		var mat: ShaderMaterial = (terrain.material as ShaderMaterial).duplicate()
+		for k: String in map.material:
+			mat.set_shader_parameter(k, map.material[k])
+		terrain.material = mat
 	var world := Node3D.new()
 	root.add_child(world)
 	world.add_child(terrain)
@@ -288,16 +297,26 @@ func _dress(world: Node3D, d: Data, op: Array) -> int:
 			# Follows a polyline rather than a straight line, so revetment can
 			# line a trench that traverses instead of cutting the corners off
 			# it. Each piece turns to the leg it sits on.
+			#
+			# `aside` is how far to one side the GROUND HEIGHT is read from,
+			# and it is what makes a trench lining work. A revetment sits at
+			# the trench's TOP — its planks reach 2.19 m down and its parapet
+			# 0.59 m up — so reading the height under its own centre drops it
+			# onto the cut floor, buries the lining and leaves a sandbag kerb
+			# in a ditch. Read it from outside the cut instead.
 			var pts: Array = op[2]
 			var gap: float = float(op[3]) if op.size() > 3 else 0.0
+			var aside: float = float(op[4]) if op.size() > 4 else 0.0
 			for i in pts.size() - 1:
 				var a: Vector2 = pts[i]
 				var b: Vector2 = pts[i + 1]
 				var yaw: float = atan2(b.x - a.x, b.y - a.y)
+				var side := Vector2(cos(yaw), -sin(yaw)) * aside
 				var step: float = _span(box, yaw) + gap
 				var n := maxi(int(a.distance_to(b) / maxf(step, 0.5)), 1)
 				for k in n:
-					put.append([a.lerp(b, (k + 0.5) / n), rad_to_deg(yaw) + 90.0])
+					var at := a.lerp(b, (k + 0.5) / n)
+					put.append([at, rad_to_deg(yaw) + 90.0, at + side, at - side])
 	var packed := load("res://maps/blocks/%s.tscn" % piece) as PackedScene
 	if packed == null:
 		return 0
@@ -305,6 +324,13 @@ func _dress(world: Node3D, d: Data, op: Array) -> int:
 	for entry: Array in put:
 		var p: Vector2 = entry[0]
 		var y := d.height_at_local(p.x, p.y)
+		# Height read from beside the piece, both sides, higher lip wins: that
+		# is the ground the cut was made in.
+		if entry.size() > 3:
+			for s: Vector2 in [entry[2], entry[3]]:
+				var h := d.height_at_local(s.x, s.y)
+				if not is_nan(h):
+					y = maxf(y, h) if not is_nan(y) else h
 		if is_nan(y):
 			continue
 		var inst := packed.instantiate() as Node3D

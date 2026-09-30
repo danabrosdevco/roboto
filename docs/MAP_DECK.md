@@ -164,11 +164,36 @@ are cut, so no length of one can be shot down end to end. It turns a 260 m
 ditch into a chain of 30 m rooms, and it is the single thing that makes the
 trenches worth fighting in rather than worth avoiding.
 
-**2.2 m deep on a 3.5 m falloff is about 32°** — steep enough to be cover,
-shallow enough that the navmesh baker walks it. That number is not arbitrary: a
-trench the squad cannot climb out of is the crater bug in a longer shape, and
-this project has built that before and had to dig it back out. Terrain craters
-are held to 0.28 depth with a 0.07 rim for the same reason.
+**THE DEPTH IS SET BY WHAT YOU CAN SHOOT OVER, and it is not the depth the
+piece was drawn for.** `feature_trench_revetment` measures −2.19 to +0.59: it
+lines a 2.19 m cut and carries 0.59 m of sandbag parapet above ground. A 2.19 m
+trench is head-height cover you cannot fight from — eye level for a 1.5 m
+player is 1.35 m off the floor and the parapet top would be 2.78 m.
+
+So **the cut is 0.8 m, not 2.19**. Floor to parapet top is then **1.39 m**: the
+player stands and shoots over it, crouches and is behind it. That is the game's
+own number — `CoverPointSpawner` probes for a wall at 1.2 m standing and 0.6 m
+crouched, and anything shorter than 1.2 m generates no cover point at all. The
+lining's buried lower half simply does not show.
+
+**One depth everywhere, including the communication trenches.** Cutting those
+deeper reads better and plays worse: a metre of step where a deep trench meets
+a shallow one is a wall, because `move_and_slide` has no step-up. Terrain
+craters are held to 0.28 deep with a 0.07 rim for the same family of reason — a
+hole the squad cannot leave is a bug this project has already shipped once.
+
+**Nothing green grows on it.** The terrain shader lays patchy scrub on any
+gentle ground through `growth_amount`; here it is zero, the ground tint goes
+grey-brown and the hollows darken. A field that has been shelled for two years
+does not have grass on it, and a map can now say so — deck entries carry a
+`material` block of shader overrides.
+
+The rear areas carry as much as the front: batteries, ammo dumps, a light
+railway to bring the shells up, dugouts, sangars, a lorry park and the farm
+that was there before the line came through it. **The rear is most of a trench
+map** — everything in front of the fire trench is a killing ground nobody
+lives in, and a rear area with nothing in it turns two thirds of the map into
+a walk.
 
 What is out there between the lines: two belts of wire each side, dragon's
 teeth, a parapet berm, a mine crater and a second smaller one, tank traps,
@@ -191,6 +216,32 @@ narrower gap.
 **Unverified:** that the cut trenches bake as connected walkable navmesh. That
 has to be checked the moment this becomes a real level, and it is the one thing
 that could sink it.
+
+---
+
+## Ford Town — fleshed out
+
+1408 × 512 m. The street plan is **painted, not dressed**: two embankment roads
+tight to the water, two back streets, six cross streets and three crossings.
+The generator levels a block to each square that makes, so the buildings land
+between the streets instead of across them.
+
+**That distinction cost two cameras before it was noticed.** Dressing a town
+without painting one puts buildings in rows on open ground; painting one and
+then dressing it in unbroken rows puts a house in half the streets. `blocks()`
+lays each band as separate runs *between* the cross streets, inset so the
+street stays clear — and the tell that it was wrong was two eye-level shots
+coming back a metre from a wall.
+
+Seven bands of building, four to eight blocks each: two quarters behind each
+bank, a frontage on each quay, and outer streets at the valley edge. A church
+tower at the west end, a point tower over the market square, a mill and silos
+at the shelled east end — three things to steer by along a 1.4 km map.
+
+The square is the one open ground in the middle of the densest part and the
+only long shot in the town, so it has its own cover in it rather than being a
+forty-metre gap. The three crossings are barricaded: checkpoints at the west
+one, hesco at the middle, sandbags at the east.
 
 ---
 
