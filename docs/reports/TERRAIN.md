@@ -39,7 +39,7 @@ most wants and least often gets:
 
 
 
-## 2026-09-30 — fifty map ideas, built as terrain and ranked
+## 2026-09-30 — fifty-one map ideas, built as terrain and ranked
 
 **Landed.** `docs/MAP_DECK.md` — fifty map concepts, each painted as a sketch,
 generated, dressed out of `maps/blocks/` and photographed. `tools/mapdeck.gd`
@@ -76,8 +76,35 @@ painted stroke. And **the real gap in the roster is interiors**: Foundry and
 Rail Station rank as high as they do mostly because almost nothing we have is
 a fight indoors.
 
-**Gates.** `check.sh --changed`: **PASS** (41 scripts, 73 scenes and
-resources). All fifty build with no missing pieces. `test.sh` and `smoke.sh`:
+**Then a fifty-first, by request: The Salient** — WW1 trench warfare in a
+valley. Three traversed lines each side, 230 m of shelled ground between them,
+communication trenches back from each front, two saps out into it, a mine
+crater, flooded shell holes and a ruined village behind the enemy guns. It goes
+into the ranking at **3**.
+
+**The trenches are CUT, not placed, and that is the whole map.**
+`feature_trench_revetment` is a *lining* — its plank walls reach 2 m below its
+own origin and its parapet 0.45 m above — so stood on flat ground it is a
+sandbag kerb and nothing else. `mapdeck.gd` grew `TerrainPath` modifiers for
+this: every line is a TRENCH cut first and revetment second, laid along the cut
+by a new `along` op because the lines **traverse** every 30 m, the way real
+trenches are cut. That last part is not decoration: it means no length of a
+trench can be shot down end to end, which is what makes them worth fighting in
+rather than worth avoiding.
+
+**Two numbers that are not arbitrary.** 2.2 m deep on a 3.5 m falloff is about
+32° — cover, and still walkable to the baker. Craters are held to 0.28 depth
+with a 0.07 rim. A trench the squad cannot climb out of is the crater bug in a
+longer shape, and we have built that here before and had to dig it out again.
+**Whether the cuts bake as CONNECTED walkable navmesh is unverified**, and it
+is the one thing that could sink the map.
+
+`tools/map_card.gd` puts one map on one picture — sketch and plan above,
+eye-level shots below. Cards for the top eleven are in `docs/deck/cards/`.
+
+**Gates.** `check.sh --changed`: **PASS** (42 scripts, 80 scenes and
+resources). All fifty-one build with no missing pieces. `test.sh` and
+`smoke.sh`:
 **not run** — nothing here is in the game, it is a tools-and-docs pass.
 
 **Needs the human.**
