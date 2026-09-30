@@ -171,12 +171,19 @@ func _build(map: Dictionary) -> void:
 		var layer := load("res://maps/blocks/scatter/%s.tres" % n)
 		if layer != null:
 			layers.append(layer)
+	var scatter: Node3D = null
 	if not layers.is_empty():
-		var scatter: Node3D = load("res://Env/terrain/terrain_scatter.gd").new()
+		scatter = load("res://Env/terrain/terrain_scatter.gd").new()
 		scatter.layers = layers
 		terrain.add_child(scatter)
 	for _i in 6:
 		await process_frame
+	if scatter != null:
+		var counts: Array = []
+		for li in layers.size():
+			counts.append("%s %d" % [str(map.scatter[li]).trim_prefix("scatter_"),
+					(scatter.get_layer_transforms(li) as Array).size()])
+		print("      scatter: %s" % ", ".join(counts))
 	await _shoot(world, d, map)
 	_made.append({"id": map.id, "name": map.name, "hook": map.hook,
 			"size": "%d x %d m" % [int(d.width()), int(d.depth())], "pieces": dressed})
@@ -253,11 +260,12 @@ func _fill_poly(img: Image, pts: Array, c: Color) -> void:
 ## Placement is in METRES, with the map's middle at 0, 0 — the same frame the
 ## terrain uses — so a sketch pixel (px, py) is at
 ## ((px - w/2) * MPP, (py - h/2) * MPP).
-func _dress(world: Node3D, d: Data, op: Array) -> int:
+## Where one dressing op puts its pieces: [world position, yaw in degrees].
+func _placements(d: Data, op: Array) -> Array:
 	var piece: String = op[1]
 	var box := _size_of(piece)
 	if box.size == Vector3.ZERO:
-		return 0
+		return []
 	var put: Array = []
 	match op[0]:
 		"at":
@@ -317,10 +325,7 @@ func _dress(world: Node3D, d: Data, op: Array) -> int:
 				for k in n:
 					var at := a.lerp(b, (k + 0.5) / n)
 					put.append([at, rad_to_deg(yaw) + 90.0, at + side, at - side])
-	var packed := load("res://maps/blocks/%s.tscn" % piece) as PackedScene
-	if packed == null:
-		return 0
-	var done := 0
+	var out: Array = []
 	for entry: Array in put:
 		var p: Vector2 = entry[0]
 		var y := d.height_at_local(p.x, p.y)
@@ -333,12 +338,24 @@ func _dress(world: Node3D, d: Data, op: Array) -> int:
 					y = maxf(y, h) if not is_nan(y) else h
 		if is_nan(y):
 			continue
+		out.append([Vector3(p.x, y, p.y), float(entry[1])])
+	return out
+
+
+## Instantiate what _placements worked out. Split from it so a level builder
+## can take the same table and write nodes into a .tscn instead, off one set of
+## rules — the deck and the level it is promoted to must not drift apart.
+func _dress(world: Node3D, d: Data, op: Array) -> int:
+	var packed := load("res://maps/blocks/%s.tscn" % op[1]) as PackedScene
+	if packed == null:
+		return 0
+	var put := _placements(d, op)
+	for row: Array in put:
 		var inst := packed.instantiate() as Node3D
 		world.add_child(inst)
-		inst.position = Vector3(p.x, y, p.y)
-		inst.rotation.y = deg_to_rad(float(entry[1]))
-		done += 1
-	return done
+		inst.position = row[0]
+		inst.rotation.y = deg_to_rad(float(row[1]))
+	return put.size()
 
 
 ## How much room the piece takes along a heading, from its own box.

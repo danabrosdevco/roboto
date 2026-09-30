@@ -213,9 +213,45 @@ wrecks, two saps and a sunken road — and three separate ways across. If it
 plays as a walk into a wall anyway, the fix is more saps and more spoil, not a
 narrower gap.
 
-**Unverified:** that the cut trenches bake as connected walkable navmesh. That
-has to be checked the moment this becomes a real level, and it is the one thing
-that could sink it.
+**It is a real level now:** `maps/salient_level.tscn`, built by
+`tools/build_salient.gd` from this same deck entry. **The cut trenches bake as
+connected walkable navmesh** — 44335 vertices, and all 26 objective anchors and
+patrol points reach from the spawn, longest walk 1036 m. That was the one thing
+that could have sunk it and it holds.
+
+### Making it stop looking flat
+
+The first build of the rear areas was a plate with clutter on the horizon.
+Four things fixed it, in order of how much they mattered:
+
+1. **The floor was painted green, and green means "flat ground".** The
+   generator LEVELS it, before and after erosion, so no amount of
+   `detail_height` survived. Leaving the floor unpainted and letting the recipe
+   decide was the whole difference. *Most of the other fifty paint their floors
+   green too — this is worth knowing before building any of them.*
+2. **Gentle relief in the recipe**: 4 m hills on a 260 m wavelength under 1.3 m
+   of detail on 28 m. About three degrees and about sixteen. Nothing the squad
+   cannot walk, and it turns a floor into ground.
+3. **`maps/blocks/ground/` micro-terrain**: swells, berms, spoil rings,
+   washouts and ruts. Relief you BUILD, every piece keeping slopes under 20°,
+   no step over 0.2 m and nothing over 1.2 m — so the navmesh survives it. A
+   swell you cannot see over the far side of is cover, horizon and dead ground
+   at once.
+4. **Litter, and a lot more of it than the shipped layer has.**
+   `scatter_debris` is three a hectare, one piece every fifty-eight metres:
+   nothing in the thirty metres of foreground you actually look at.
+   `scatter_battlefield.tres` is seventy-five, mesh only.
+
+And the ground had to be told it was dead twice: `growth_amount = 0.0` is not
+no growth. The shader reads it as a threshold, so at zero the top eight per
+cent of the noise still comes through green. It wants **−0.2**.
+
+**Known and not yet fixed: 1330 placed pieces**, against Hillfort's 96. The
+revetment is most of it. The right answer is to generate the trench lining as
+one `.map` — long boxes per traverse leg rather than a prefab every eight
+metres — which is how `proving_level.map` is built and would collapse several
+hundred instances into one mesh. Until that is done, treat the draw-call count
+as unmeasured and suspect.
 
 ---
 

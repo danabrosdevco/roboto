@@ -197,7 +197,15 @@ static func maps() -> Array:
 		"hook": "Three lines each side of 230 m of shelled ground, and one sunken road across it.",
 		"shape": "attrition frontage — parallel lines, one covered approach",
 		"px": Vector2i(128, 64),
-		"paint": [["rect", 0, 0, 128, 64, "G"],
+		# THE FLOOR IS NOT PAINTED GREEN. Green is "flat ground", and the
+		# generator LEVELS it — before and after erosion — so a green floor is a
+		# billiard table whatever detail_height says. It is the right paint for
+		# an airstrip and the wrong paint for a valley, and it is why the first
+		# build of this map had a horizon like a ruled line. Left unpainted, the
+		# recipe decides, and the recipe here is gentle: 4 m hills on a 260 m
+		# wavelength under 1.3 m of knee-high detail on 28 m. Nothing the squad
+		# cannot walk, and ground instead of a floor.
+		"paint": [
 			# The valley: rough shoulders rising to crests north and south.
 			["rect", 0, 0, 128, 9, "Y"], ["rect", 0, 55, 128, 64, "Y"],
 			["rect", 0, 0, 128, 4, "W"], ["rect", 0, 60, 128, 64, "W"],
@@ -219,25 +227,47 @@ static func maps() -> Array:
 		# terrain shader lays on any gentle ground, and here it goes to zero; the
 		# ground tint goes grey-brown with it, and the hollows darken. Nothing
 		# green grows in a field that has been shelled for two years.
-		"material": {"growth_amount": 0.0, "ground_tint": Color(0.28, 0.255, 0.225),
+		# growth_amount 0.0 IS NOT NO GROWTH. The shader takes it as a threshold
+		# — smoothstep(1 - amount - 0.08, 1 - amount + 0.08, noise) — so at zero
+		# the top eight per cent of the noise still comes through green, which is
+		# what was still showing in the level after the first override. Below
+		# -0.08 the band leaves the range entirely, and the tint is dulled too so
+		# that anything which does slip through is not green.
+		"material": {"growth_amount": -0.2, "growth_tint": Color(0.3, 0.27, 0.2),
+			"ground_tint": Color(0.28, 0.255, 0.225),
 			"rubble_in_hollows": 0.85, "hollow_darkening": 0.3, "saturation": 0.72},
-		"recipe": {"cell_size": 1.0, "shelling_per_hectare": 70.0,
+		# 1.25 m cells: three samples across a 4 m trench floor, and a terrain
+		# resource of the same order as the other levels rather than twice the
+		# biggest of them.
+		"recipe": {"cell_size": 1.25, "shelling_per_hectare": 70.0,
 			"crater_radius_min": 3.0, "crater_radius_max": 13.0,
 			# SHALLOW ON PURPOSE. A deep crater with a heaved rim is a hole the
 			# squad walks into and cannot leave, which has happened on this
 			# project and had to be dug back out again.
 			"crater_depth": 0.28, "crater_rim": 0.07,
+			# DETAIL IS THE KNEE-HIGH UNDULATION. 1.1 m over a 24 m wavelength is
+			# about five degrees: invisible to the navmesh, and the difference
+			# between ground and a floor. crater_count sprinkles the whole map
+			# lightly on top of the heavy painted shelling in no-man's-land.
+			"detail_height": 1.3, "detail_scale": 28.0, "hills_height": 4.0,
+			"hills_scale": 260.0,
+			"crater_count": 260, "craters_on_floor": true,
 			"rough_height": 7.0, "sketch_mountain_height": 42.0,
 			"water_depth": 2.0, "water_bank": 6.0, "road_width": 7.0,
-			"road_falloff": 6.0, "hills_height": 3.0, "smooth_passes": 1},
+			"road_falloff": 6.0, "smooth_passes": 1},
 		"paths": fire_lines,
 		"dress": []
-			# Revetment in every cut, following the traverse.
-			+ [["along", "features/feature_trench_revetment", traverse(-430.0, -215.0, 215.0), 0.0, 6.0],
-				["along", "features/feature_trench_revetment", traverse(-300.0, -215.0, 215.0), 0.0, 6.0],
+			# Revetment following each cut. The FRONT lines and the communication
+			# trenches are lined end to end; the reserve and support lines are
+			# revetted in sections, which is both how a rear trench actually was
+			# and four hundred fewer pieces in a level that has too many.
+			# The wire is broken too: a gap in a belt is where you funnel, so it
+			# is worth more than an unbroken one and costs less.
+			+ [["along", "features/feature_trench_revetment", traverse(-430.0, -215.0, 215.0), 12.0, 6.0],
+				["along", "features/feature_trench_revetment", traverse(-300.0, -215.0, 215.0), 12.0, 6.0],
 				["along", "features/feature_trench_revetment", traverse(-170.0, -215.0, 215.0), 0.0, 6.0],
 				["along", "features/feature_trench_revetment", traverse(60.0, -215.0, 215.0), 0.0, 6.0],
-				["along", "features/feature_trench_revetment", traverse(190.0, -215.0, 215.0), 0.0, 6.0],
+				["along", "features/feature_trench_revetment", traverse(190.0, -215.0, 215.0), 12.0, 6.0],
 				["along", "features/feature_trench_revetment", run(0.0, -430.0, -170.0), 0.0, 6.0],
 				["along", "features/feature_trench_revetment", run(-130.0, -430.0, -170.0), 0.0, 6.0],
 				["along", "features/feature_trench_revetment", run(130.0, -430.0, -170.0), 0.0, 6.0],
@@ -245,10 +275,10 @@ static func maps() -> Array:
 				["along", "features/feature_trench_revetment", run(90.0, 60.0, 330.0), 0.0, 6.0]]
 			# Wire: a belt in front of each front line, which is what makes the
 			# 230 m between them a problem rather than a walk.
-			+ [["row", "fortifications/fort_razor_wire", -140.0, -215.0, -140.0, 215.0, 4.0],
-				["row", "fortifications/fort_razor_wire", -126.0, -215.0, -126.0, 215.0, 4.0],
-				["row", "fortifications/fort_razor_wire", 26.0, -215.0, 26.0, 215.0, 4.0],
-				["row", "fortifications/fort_razor_wire", 12.0, -215.0, 12.0, 215.0, 4.0],
+			+ [["row", "fortifications/fort_razor_wire", -140.0, -215.0, -140.0, 215.0, 11.0],
+				["row", "fortifications/fort_razor_wire", -126.0, -215.0, -126.0, 215.0, 11.0],
+				["row", "fortifications/fort_razor_wire", 26.0, -215.0, 26.0, 215.0, 11.0],
+				["row", "fortifications/fort_razor_wire", 12.0, -215.0, 12.0, 215.0, 11.0],
 				["row", "fortifications/fort_dragon_teeth", 40.0, -200.0, 40.0, 200.0, 14.0],
 				["row", "features/feature_berm", -152.0, -200.0, -152.0, 200.0, 12.0],
 				["row", "features/feature_berm", 44.0, -200.0, 44.0, 200.0, 12.0]]
@@ -320,12 +350,65 @@ static func maps() -> Array:
 				["row", "alpine/alpine_pine_skeleton", -520.0, 232.0, 500.0, 232.0, 32.0],
 				["row", "alpine/alpine_stump", -500.0, -208.0, 480.0, -208.0, 44.0],
 				["row", "alpine/alpine_stump", -500.0, 208.0, 480.0, 208.0, 44.0]]
+			# ── MICRO-TERRAIN ────────────────────────────────────────────────
+			# A correct floor is a dead floor. Everything the squad fights on
+			# has to be flat, so a valley like this comes out as a billiard
+			# table with clutter on it and a horizon that is a straight line —
+			# which is exactly what it looked like the first time.
+			#
+			# maps/blocks/ground/ is the answer this project already built for
+			# it: relief you BUILD rather than paint. Every piece keeps slopes
+			# under 20 degrees, no step over 0.2 m and nothing over 1.2 m, so
+			# the navmesh survives it and the squad walks over rather than
+			# round. A swell you cannot see over the far side of is cover, a
+			# horizon and dead ground all at once.
+			+ [["row", "ground/ground_swell", -500.0, -170.0, -220.0, -170.0, 22.0],
+				["row", "ground/ground_swell", -500.0, 150.0, -220.0, 150.0, 22.0],
+				["row", "ground/ground_swell", 250.0, -150.0, 500.0, -150.0, 22.0],
+				["row", "ground/ground_swell", 250.0, 170.0, 500.0, 170.0, 22.0],
+				["row", "ground/ground_swell", -300.0, -40.0, -190.0, -40.0, 20.0],
+				["row", "ground/ground_swell", 90.0, 40.0, 210.0, 40.0, 20.0],
+				["row", "ground/ground_berm", -460.0, 60.0, -200.0, 60.0, 30.0],
+				["row", "ground/ground_berm", 230.0, -60.0, 470.0, -60.0, 30.0],
+				["row", "ground/ground_berm", -130.0, -220.0, 30.0, -220.0, 26.0],
+				["row", "ground/ground_berm", -130.0, 220.0, 30.0, 220.0, 26.0],
+				["at", "ground/ground_berm_ring", -60.0, 10.0, 0.0],
+				["at", "ground/ground_berm_ring", -20.0, -110.0, 0.0],
+				["at", "ground/ground_berm_ring", -110.0, 140.0, 0.0],
+				["at", "ground/ground_berm_ring", 10.0, 170.0, 0.0],
+				["row", "ground/ground_washout", -140.0, -60.0, 30.0, -60.0, 24.0],
+				["row", "ground/ground_washout", -140.0, 90.0, 30.0, 90.0, 24.0],
+				["row", "ground/ground_spoil", -120.0, -180.0, 20.0, -180.0, 26.0],
+				["row", "ground/ground_spoil", -120.0, 40.0, 20.0, 40.0, 26.0],
+				["row", "ground/ground_spoil", -400.0, -120.0, -240.0, -120.0, 30.0],
+				["row", "ground/ground_spoil", 260.0, 110.0, 420.0, 110.0, 30.0],
+				# Ruts along the routes that feed the line, which is the one
+				# piece here you would miss if it were gone.
+				["row", "ground/ground_track", -520.0, 120.0, -190.0, 120.0, 4.0],
+				["row", "ground/ground_track", -520.0, -100.0, -190.0, -100.0, 4.0],
+				["row", "ground/ground_track", 210.0, -120.0, 500.0, -120.0, 4.0],
+				["row", "ground/ground_track", 210.0, 100.0, 500.0, 100.0, 4.0],
+				["row", "ground/ground_apron", -480.0, -60.0, -340.0, -60.0, 26.0],
+				["row", "ground/ground_apron", 290.0, 60.0, 430.0, 60.0, 26.0]]
+			# SOMETHING ON THE SKYLINE. A flat map reads as flat because its
+			# horizon is a ruled line; poles and masts are what break it, and
+			# they cost nothing to path around.
+			+ [["row", "props/prop_power_pole", -520.0, 160.0, 500.0, 160.0, 46.0],
+				["row", "props/prop_power_pole", -520.0, -160.0, 500.0, -160.0, 52.0],
+				["at", "fortifications/fort_floodlight_mast", -440.0, 40.0, 0.0],
+				["at", "fortifications/fort_floodlight_mast", 400.0, -40.0, 0.0],
+				["at", "industrial/industrial_water_tower", 470.0, 120.0, 0.0]]
 			# The village behind their gun line: the reason to come this far.
 			+ [["at", "landmarks/landmark_clock_tower", 420.0, -20.0, 0.0]]
 			+ town(["estates/estate_collapsed_corner", "estates/estate_frame_shell",
 				"estates/estate_slab_broken", "estates/estate_u_block"],
 				360.0, -190.0, 505.0, 190.0, 4, 12.0),
-		"scatter": ["scatter_debris", "scatter_alpine_snags", "scatter_micro_terrain"],
+		# BATTLEFIELD LITTER AT SEVENTY-FIVE A HECTARE. scatter_debris is three,
+		# which is one piece every fifty-eight metres — nothing in the thirty
+		# metres of foreground you actually look at, which is why the ground
+		# read as a plate however much was standing on the horizon.
+		"scatter": ["scatter_battlefield", "scatter_debris", "scatter_alpine_snags",
+			"scatter_micro_terrain"],
 		# Behind the parapet, out in it, back from their side, and one straight
 		# down a communication trench — the camera sits on the cut floor there,
 		# which is the shot that says whether the trenches are trenches.
@@ -334,7 +417,7 @@ static func maps() -> Array:
 			[255.0, 135.0, -260.0, 60.0, 60.0],
 			[-390.0, 130.0, -180.0, 130.0, 60.0],
 			[-175.0, -110.0, -175.0, 110.0, 60.0],
-			[-470.0, -70.0, -110.0, -10.0, 62.0]],
+			[-410.0, -70.0, -110.0, -10.0, 62.0]],
 	})
 
 	# ═══ CROSSINGS ═══════════════════════════════════════════════════════════
