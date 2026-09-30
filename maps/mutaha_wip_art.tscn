@@ -1,0 +1,1851 @@
+[gd_scene load_steps=78 format=3]
+
+[ext_resource type="Script" path="res://Env/terrain/generated_terrain.gd" id="1_onv5o"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="2_1w3lq"]
+[ext_resource type="Texture2D" path="res://Env/terrain/sketches/mutaha_wip.png" id="3_tvk31"]
+[ext_resource type="Resource" path="res://maps/terrain_data/mutaha_wip_level_terrain.res" id="4_6tkai"]
+[ext_resource type="Material" path="res://Env/terrain/terrain_material.tres" id="5_8dfit"]
+[ext_resource type="Material" path="res://Env/terrain/water_material.tres" id="6_dvh23"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter.gd" id="7_n31lq"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter_layer.gd" id="8_qpvh6"]
+[ext_resource type="PackedScene" path="res://maps/blocks/building_compound.tscn" id="9_a07et"]
+[ext_resource type="PackedScene" path="res://maps/blocks/building_warehouse.tscn" id="18_ueyb4"]
+[ext_resource type="PackedScene" path="res://maps/blocks/building_ruin_low.tscn" id="19_5su23"]
+[ext_resource type="PackedScene" path="res://maps/blocks/building_house_terrace.tscn" id="22_71jo7"]
+[ext_resource type="PackedScene" path="res://maps/blocks/building_house_small.tscn" id="23_sfb4f"]
+[ext_resource type="PackedScene" path="res://maps/blocks/building_ruin_shell.tscn" id="24_b7fx6"]
+[ext_resource type="PackedScene" path="res://maps/blocks/building_apartment.tscn" id="25_rg2fc"]
+[ext_resource type="PackedScene" path="res://maps/blocks/building_shop_row.tscn" id="27_eeo1s"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_container_yard.tscn" id="28_pk1wl"]
+[ext_resource type="PackedScene" path="res://maps/blocks/estates/estate_slab_five.tscn" id="32_y36h8"]
+[ext_resource type="PackedScene" path="res://maps/blocks/estates/estate_slab_stepped.tscn" id="33_kdi4t"]
+[ext_resource type="PackedScene" path="res://maps/blocks/estates/estate_courtyard_block.tscn" id="34_7kmal"]
+[ext_resource type="PackedScene" path="res://maps/blocks/estates/estate_gallery_block.tscn" id="35_mqbrc"]
+[ext_resource type="PackedScene" path="res://maps/blocks/estates/estate_frame_shell.tscn" id="36_5oaoj"]
+[ext_resource type="PackedScene" path="res://maps/blocks/estates/estate_point_tower.tscn" id="37_4bsgg"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_satellite_dish.tscn" id="38_v121b"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_generator.tscn" id="40_u0uw5"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_network_cabinet.tscn" id="43_toy0x"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_floodlight_mast.tscn" id="47_w1wmw"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_hangar_shed.tscn" id="48_1uak1"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_assembly_line.tscn" id="49_yy7v0"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_pallet_rack.tscn" id="51_nbxc5"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_forklift.tscn" id="53_akwtl"]
+[ext_resource type="PackedScene" path="res://maps/blocks/solar/solar_drone_dock.tscn" id="54_xk544"]
+[ext_resource type="PackedScene" path="res://maps/blocks/solar/solar_battery_container.tscn" id="55_4konr"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_sandbag_wall.tscn" id="56_yxfwd"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_car_wreck.tscn" id="58_m8wn6"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_rubble_pile.tscn" id="59_6hy75"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_crates.tscn" id="60_rv8ux"]
+[ext_resource type="PackedScene" path="res://maps/blocks/landmarks/landmark_clock_tower.tscn" id="61_vgstj"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_lamp_post.tscn" id="63_x6sb0"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_jersey_barrier.tscn" id="64_fe2df"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_barrels.tscn" id="65_bi8aj"]
+[ext_resource type="PackedScene" path="res://maps/blocks/landmarks/landmark_ferris_wheel.tscn" id="66_58sls"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_parking_lot.tscn" id="67_1mmaj"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_concrete_blocks.tscn" id="68_pi8c8"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_dragon_teeth.tscn" id="69_lp7jp"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_razor_wire.tscn" id="70_mnoqp"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_sandbag_nest.tscn" id="71_p6vs7"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_checkpoint.tscn" id="72_vb21b"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_hesco_wall.tscn" id="75_sr8ts"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_t_walls.tscn" id="76_sxar3"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_hesco_sangar.tscn" id="77_nrmi2"]
+[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_container_stack.tscn" id="79_xwp1g"]
+[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_berm.tscn" id="80_d2ir4"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_concrete_pipes.tscn" id="81_e3etl"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_dirt_mound.tscn" id="82_mw0a1"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_hesco_row.tscn" id="83_sdsyr"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_power_pole.tscn" id="84_t76os"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_tank_trap.tscn" id="85_042b1"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_substation.tscn" id="86_yh51o"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_transformer.tscn" id="87_7avis"]
+[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_fuel_tanks.tscn" id="88_d7k2l"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_cable_run.tscn" id="89_ogxri"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_data_hall.tscn" id="90_yovqn"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_cooling_unit.tscn" id="92_fvvrq"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_rack_row.tscn" id="93_s603f"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_racks_toppled.tscn" id="94_n3xda"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_chiller_yard.tscn" id="95_mcjdk"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_obelisk.tscn" id="96_exdla"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_monolith.tscn" id="97_nm71s"]
+[ext_resource type="PackedScene" path="res://maps/blocks/solar/solar_canopy.tscn" id="98_2xto5"]
+[ext_resource type="PackedScene" path="res://maps/blocks/solar/solar_inverter_skid.tscn" id="100_engpi"]
+[ext_resource type="PackedScene" path="res://maps/blocks/solar/solar_canopy_broken.tscn" id="101_gt533"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bridges/bridge_truss.tscn" id="102_do647"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bridges/bridge_causeway.tscn" id="104_rvdvd"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bridges/bridge_truss_long.tscn" id="105_n5v8g"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bridges/bridge_gorge.tscn" id="106_g3y3f"]
+
+[sub_resource type="Resource" id="Resource_recipe"]
+script = ExtResource("2_1w3lq")
+size_x = 1024.0
+size_z = 1024.0
+cell_size = 2.0
+random_seed = 21
+layout = 2
+floor_at_zero = true
+floor_width = 150.0
+floor_shoulder = 150.0
+floor_depth = 4.0
+floor_roughness = 0.3
+floor_edge_noise = 0.35
+meander = 90.0
+meander_scale = 650.0
+border_sides = 0
+border_height = 75.0
+border_width = 120.0
+border_noise = 70.0
+border_ruggedness = 0.6
+hills_height = 5.0
+hills_scale = 240.0
+hills_octaves = 5
+hills_warp = 50.0
+ridge_height = 4.0
+ridge_scale = 320.0
+ridge_on_floor = 0.2
+detail_height = 0.8
+detail_scale = 14.0
+terrace_step = 0.0
+terrace_strength = 0.75
+crater_count = 10
+crater_radius_min = 2.5
+crater_radius_max = 8.0
+crater_depth = 0.3
+crater_rim = 0.1
+craters_on_floor = true
+thermal_passes = 3
+talus_angle = 40.0
+hydraulic_strength = 0.5
+smooth_passes = 1
+sketch = ExtResource("3_tvk31")
+sketch_metres_per_pixel = 8.0
+sketch_blend = 20.0
+sketch_edge_noise = 14.0
+sketch_mountain_height = 20.0
+water_level = -1.5
+water_depth = 3.0
+water_bank = 20.0
+urban_block = Vector2(34, 26)
+urban_street = 7.0
+urban_angle = 0.0
+urban_ruin = 0.3
+shelling_per_hectare = 30.0
+rough_height = 9.0
+road_width = 5.0
+road_falloff = 5.0
+road_smoothing = 40.0
+bridge_clearance = 2.0
+
+[node name="MutahaWipArt" type="Node3D"]
+
+[node name="Terrain" type="Node3D" parent="."]
+script = ExtResource("1_onv5o")
+recipe = SubResource("Resource_recipe")
+data = ExtResource("4_6tkai")
+bridge_blockouts = false
+
+[node name="Scatter" type="Node3D" parent="Terrain"]
+script = ExtResource("7_n31lq")
+
+[node name="Buildings" type="Node3D" parent="."]
+
+[node name="Lot000_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -229, -1.19076, -350)
+
+[node name="Lot001_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -270, -1.0408, -317)
+
+[node name="Lot002_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -229, -1.03021, -317)
+
+[node name="Lot003_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -188, -0.739274, -317)
+
+[node name="Lot004_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -147, -0.397224, -317)
+
+[node name="Lot005_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 222, -0.473944, -317)
+
+[node name="Lot006_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -311, -0.751362, -284)
+
+[node name="Lot007_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -270, -0.734802, -284)
+
+[node name="Lot008_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -229, -0.752815, -284)
+
+[node name="Lot009_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -188, -0.655925, -284)
+
+[node name="Lot010_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -147, -0.494374, -284)
+
+[node name="Lot011_apartment" parent="Buildings" instance=ExtResource("25_rg2fc")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 99, -1.56721, -284)
+
+[node name="Lot012_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, -1.67631, -284)
+
+[node name="Lot013_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 263, -0.217946, -284)
+
+[node name="Lot014_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -352, -0.126438, -251)
+
+[node name="Lot015_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -311, -0.514577, -251)
+
+[node name="Lot016_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -270, -0.559876, -251)
+
+[node name="Lot017_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -229, -0.609495, -251)
+
+[node name="Lot018_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -188, -0.558094, -251)
+
+[node name="Lot019_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -147, -0.56452, -251)
+
+[node name="Lot020_apartment" parent="Buildings" instance=ExtResource("25_rg2fc")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 58, -1.40573, -251)
+
+[node name="Lot021_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 99, -1.53793, -251)
+
+[node name="Lot022_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 140, -1.61483, -251)
+
+[node name="Lot023_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 181, -1.3449, -251)
+
+[node name="Lot024_apartment" parent="Buildings" instance=ExtResource("25_rg2fc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 222, -0.944148, -251)
+
+[node name="Lot025_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 304, -0.420332, -251)
+
+[node name="Lot026_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -352, -0.0321783, -218)
+
+[node name="Lot027_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -311, -0.299518, -218)
+
+[node name="Lot028_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -270, -0.548781, -218)
+
+[node name="Lot030_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -188, -0.532396, -218)
+
+[node name="Lot031_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -147, -0.47974, -218)
+
+[node name="Lot032_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, -1.36713, -218)
+
+[node name="Lot033_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 99, -1.20492, -218)
+
+[node name="Lot034_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, -1.18949, -218)
+
+[node name="Lot036_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 222, -1.15211, -218)
+
+[node name="Lot037_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 263, -0.907117, -218)
+
+[node name="Lot038_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -352, -0.0716296, -185)
+
+[node name="Lot039_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -311, -0.300664, -185)
+
+[node name="Lot040_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -270, -0.686313, -185)
+
+[node name="Lot041_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -229, -0.775121, -185)
+
+[node name="Lot042_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -188, -0.595327, -185)
+
+[node name="Lot043_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -147, -0.460939, -185)
+
+[node name="Lot044_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 58, -1.07576, -185)
+
+[node name="Lot045_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 99, -0.850043, -185)
+
+[node name="Lot046_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, -0.726175, -185)
+
+[node name="Lot048_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 222, -1.10217, -185)
+
+[node name="Lot049_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 263, -0.909942, -185)
+
+[node name="Lot050_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 304, -0.49024, -185)
+
+[node name="Lot051_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -352, -0.0924957, -152)
+
+[node name="Lot052_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -311, -0.429344, -152)
+
+[node name="Lot053_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -270, -0.923079, -152)
+
+[node name="Lot054_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -229, -1.15774, -152)
+
+[node name="Lot055_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -188, -0.99056, -152)
+
+[node name="Lot056_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -147, -0.741969, -152)
+
+[node name="Lot057_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, -0.685432, -152)
+
+[node name="Lot058_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 99, -0.683759, -152)
+
+[node name="Lot059_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 140, -0.558532, -152)
+
+[node name="Lot060_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 181, -0.623354, -152)
+
+[node name="Lot061_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 222, -0.839611, -152)
+
+[node name="Lot062_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 263, -0.786815, -152)
+
+[node name="Lot063_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 304, -0.451922, -152)
+
+[node name="Lot064_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -270, -1.16267, -119)
+
+[node name="Lot065_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -229, -1.4061, -119)
+
+[node name="Lot066_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -188, -1.35376, -119)
+
+[node name="Lot067_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -147, -1.11671, -119)
+
+[node name="Lot068_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -65, -0.568699, -119)
+
+[node name="Lot069_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, -0.632782, -119)
+
+[node name="Lot070_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 99, -0.642221, -119)
+
+[node name="Lot071_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, -0.556823, -119)
+
+[node name="Lot072_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 181, -0.549455, -119)
+
+[node name="Lot073_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 222, -0.551104, -119)
+
+[node name="Lot074_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 263, -0.478951, -119)
+
+[node name="Lot075_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 304, -0.483466, -119)
+
+[node name="Lot076_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -352, -0.58522, -86)
+
+[node name="Lot077_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -188, -1.50488, -86)
+
+[node name="Lot078_apartment" parent="Buildings" instance=ExtResource("25_rg2fc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -147, -1.27996, -86)
+
+[node name="Lot079_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, -0.988062, -86)
+
+[node name="Lot080_apartment" parent="Buildings" instance=ExtResource("25_rg2fc")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 99, -0.796776, -86)
+
+[node name="Lot081_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, -0.780799, -86)
+
+[node name="Lot082_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 181, -0.820181, -86)
+
+[node name="Lot083_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 222, -0.528953, -86)
+
+[node name="Lot084_apartment" parent="Buildings" instance=ExtResource("25_rg2fc")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 263, -0.429037, -86)
+
+[node name="Lot085_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 304, -0.73826, -86)
+
+[node name="Lot086_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -352, -0.820187, -53)
+
+[node name="Lot087_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -311, -1.03725, -53)
+
+[node name="Lot088_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -270, -1.2483, -53)
+
+[node name="Lot089_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -65, -1.0242, -53)
+
+[node name="Lot090_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 99, -1.07835, -53)
+
+[node name="Lot091_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, -1.0172, -53)
+
+[node name="Lot092_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 181, -0.970377, -53)
+
+[node name="Lot093_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 222, -0.652818, -53)
+
+[node name="Lot094_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 263, -0.63471, -53)
+
+[node name="Lot095_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 304, -0.966878, -53)
+
+[node name="Lot096_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -352, -0.97914, -20)
+
+[node name="Lot097_apartment" parent="Buildings" instance=ExtResource("25_rg2fc")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -311, -1.00263, -20)
+
+[node name="Lot098_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -270, -1.00345, -20)
+
+[node name="Lot099_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -229, -0.988909, -20)
+
+[node name="Lot100_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -188, -1.11691, -20)
+
+[node name="Lot101_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 99, -1.29437, -20)
+
+[node name="Lot102_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, -1.11007, -20)
+
+[node name="Lot103_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 181, -1.05624, -20)
+
+[node name="Lot104_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 222, -0.853374, -20)
+
+[node name="Lot105_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 263, -0.743805, -20)
+
+[node name="Lot107_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -311, -0.948415, 13)
+
+[node name="Lot108_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -270, -0.577999, 13)
+
+[node name="Lot109_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -229, -0.542681, 13)
+
+[node name="Lot110_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -188, -0.904535, 13)
+
+[node name="Lot111_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -65, -0.825737, 13)
+
+[node name="Lot112_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 304, -0.728491, 13)
+
+[node name="Lot113_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -311, -0.932885, 46)
+
+[node name="Lot114_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -270, -0.398582, 46)
+
+[node name="Lot115_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -229, -0.519084, 46)
+
+[node name="Lot116_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -188, -1.0572, 46)
+
+[node name="Lot117_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -147, -1.28464, 46)
+
+[node name="Lot118_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 99, -0.882236, 46)
+
+[node name="Lot119_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, -0.706397, 46)
+
+[node name="Lot120_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 181, -0.892046, 46)
+
+[node name="Lot121_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 222, -0.990128, 46)
+
+[node name="Lot122_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -270, -0.636105, 79)
+
+[node name="Lot123_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -229, -0.651393, 79)
+
+[node name="Lot124_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 99, -0.672576, 79)
+
+[node name="Lot125_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, -0.601195, 79)
+
+[node name="Lot126_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 181, -0.605231, 79)
+
+[node name="Lot127_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 222, -0.843311, 79)
+
+[node name="Lot128_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 263, -1.07727, 79)
+
+[node name="Lot129_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, -0.804511, 112)
+
+[node name="Lot130_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 181, -0.592095, 112)
+
+[node name="Lot131_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 222, -0.849628, 112)
+
+[node name="Lot132_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 263, -1.22782, 112)
+
+[node name="Block000_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -393, -0.464175, -119)
+
+[node name="Block001_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -352, -1.25825, 13)
+
+[node name="Block002_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -352, -1.34538, 46)
+
+[node name="Block003_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -311, -0.651986, -119)
+
+[node name="Block004_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -311, -1.05003, 79)
+
+[node name="Block005_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -229, -1.36332, -53)
+
+[node name="Block006_apartment" parent="Buildings" instance=ExtResource("25_rg2fc")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -188, -0.806248, -350)
+
+[node name="Block007_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -188, -1.08838, 79)
+
+[node name="Block008_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -147, -0.459601, -350)
+
+[node name="Block009_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -147, -1.37728, 79)
+
+[node name="Block010_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -106, -0.792539, -218)
+
+[node name="Block011_warehouse" parent="Buildings" instance=ExtResource("18_ueyb4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, -0.822912, 46)
+
+[node name="Block012_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, -0.953995, 79)
+
+[node name="Block013_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, -0.727908, 112)
+
+[node name="Block014_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, -1.36519, -317)
+
+[node name="Block015_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 58, -1.28239, -284)
+
+[node name="Block016_shop_row" parent="Buildings" instance=ExtResource("27_eeo1s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, -0.76586, -86)
+
+[node name="Block017_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, -1.0641, -53)
+
+[node name="Block018_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 99, -1.48196, -317)
+
+[node name="Block019_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 181, -0.976084, -317)
+
+[node name="Block020_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 263, 0.125084, -317)
+
+[node name="Block021_ruin_shell" parent="Buildings" instance=ExtResource("24_b7fx6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 263, -0.849268, 13)
+
+[node name="Block022_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 263, -0.880929, 46)
+
+[node name="Block023_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 304, 0.931885, -284)
+
+[node name="Block024_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 345, -0.0297307, -218)
+
+[node name="Block025_house_terrace" parent="Buildings" instance=ExtResource("22_71jo7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 345, -0.745145, -86)
+
+[node name="Block026_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 345, -1.19254, -53)
+
+[node name="Block027_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 345, -1.21048, -20)
+
+[node name="LotS00_compound" parent="Buildings" instance=ExtResource("9_a07et")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -311, -1.01211, 79)
+
+[node name="LotS01_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -188, -1.0876, 79)
+
+[node name="LotS06_ruin_low" parent="Buildings" instance=ExtResource("19_5su23")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -188, -0.74982, 112)
+
+[node name="LotS19_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -270, -0.76578, 211)
+
+[node name="LotS20_industrial_container_yard" parent="Buildings" instance=ExtResource("28_pk1wl")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -229, -0.42848, 211)
+
+[node name="LotS21_house_small" parent="Buildings" instance=ExtResource("23_sfb4f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -188, -0.23612, 211)
+
+[node name="EstateA_slab_five" parent="Buildings" instance=ExtResource("32_y36h8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -331.5, -0.98, 112)
+
+[node name="EstateB_slab_stepped" parent="Buildings" instance=ExtResource("33_kdi4t")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -331.5, -0.7, 145)
+
+[node name="EstateC_courtyard_block" parent="Buildings" instance=ExtResource("34_7kmal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -331.5, -0.5, 194.5)
+
+[node name="EstateD_gallery_block" parent="Buildings" instance=ExtResource("35_mqbrc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -249.5, -0.71, 112)
+
+[node name="EstateE_frame_shell" parent="Buildings" instance=ExtResource("36_5oaoj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -249.5, -0.51, 161.5)
+
+[node name="EstateF_point_tower" parent="Buildings" instance=ExtResource("37_4bsgg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -188, -0.3, 161.5)
+
+[node name="Dressing" type="Node3D" parent="."]
+
+[node name="ListeningPost" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 0, -196)
+
+[node name="Dish1" parent="Dressing/ListeningPost" instance=ExtResource("38_v121b")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -13, -1.11307, 6)
+
+[node name="Dish2" parent="Dressing/ListeningPost" instance=ExtResource("38_v121b")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -1, -1.30307, 2)
+
+[node name="Dish3" parent="Dressing/ListeningPost" instance=ExtResource("38_v121b")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -2, -1.17615, -10)
+
+[node name="Dish4" parent="Dressing/ListeningPost" instance=ExtResource("38_v121b")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, 6, -1.20628, -19)
+
+[node name="Generator" parent="Dressing/ListeningPost" instance=ExtResource("40_u0uw5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, -0.877562, 18)
+
+[node name="Cabinet" parent="Dressing/ListeningPost" instance=ExtResource("43_toy0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, -1.23859, -4)
+
+[node name="Floodlight" parent="Dressing/ListeningPost" instance=ExtResource("47_w1wmw")]
+transform = Transform3D(-0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, -0.866025, 12, -1.20368, 6)
+
+[node name="Factory" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, 0, 167)
+
+[node name="Shed" parent="Dressing/Factory" instance=ExtResource("48_1uak1")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -14, -0.899254, -1)
+
+[node name="AssemblyLine" parent="Dressing/Factory" instance=ExtResource("49_yy7v0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, -0.861231, -1)
+
+[node name="PalletRack" parent="Dressing/Factory" instance=ExtResource("51_nbxc5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, -0.744222, -9)
+
+[node name="Forklift" parent="Dressing/Factory" instance=ExtResource("53_akwtl")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -2, -1.11468, -6)
+
+[node name="Dock1" parent="Dressing/Factory" instance=ExtResource("54_xk544")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, -1.21428, -11)
+
+[node name="Dock2" parent="Dressing/Factory" instance=ExtResource("54_xk544")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, 12, -1.28867, 1)
+
+[node name="Dock3" parent="Dressing/Factory" instance=ExtResource("54_xk544")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, 17, -1.25769, 11)
+
+[node name="Battery" parent="Dressing/Factory" instance=ExtResource("55_4konr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, -0.919002, -21)
+
+[node name="Floodlight" parent="Dressing/Factory" instance=ExtResource("47_w1wmw")]
+transform = Transform3D(-0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, -0.766044, 2, -1.1854, 15)
+
+[node name="LastStand" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53, 0, -16)
+
+[node name="Sandbags1" parent="Dressing/LastStand" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -1.5, -0.917947, -11)
+
+[node name="Sandbags2" parent="Dressing/LastStand" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -1.5, -0.917947, -6)
+
+[node name="Sandbags3" parent="Dressing/LastStand" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(-4.38026e-08, 1.591e-05, 1, -1.14643e-05, 1, -1.591e-05, -1, -1.14643e-05, -4.36202e-08, -1.5, -0.917937, -1)
+
+[node name="Car" parent="Dressing/LastStand" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.939684, 0.00460167, 0.342013, -0.00383014, 0.999988, -0.00293118, -0.342023, 0.00144442, 0.93969, -11, -0.862561, 3)
+
+[node name="Rubble" parent="Dressing/LastStand" instance=ExtResource("59_6hy75")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -13, -0.917947, -11)
+
+[node name="Crates" parent="Dressing/LastStand" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(0.965926, 6.07355e-08, 0.258819, -4.42474e-07, 1, 1.41667e-06, -0.258819, -1.48292e-06, 0.965926, -8, -0.917947, -5)
+
+[node name="ClockSquare" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -231, 0, -217)
+
+[node name="ClockTower" parent="Dressing/ClockSquare" instance=ExtResource("61_vgstj")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 2, -0.63759, -1)
+
+[node name="Lamp1" parent="Dressing/ClockSquare" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(-0.624695, 0, -0.780869, 0, 1, 0, 0.780869, 0, -0.624695, -10.5, -0.63759, -11)
+
+[node name="Lamp2" parent="Dressing/ClockSquare" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(-0.624695, 0, 0.780869, 0, 1, 0, -0.780869, 0, -0.624695, 14.5, -0.63759, -11)
+
+[node name="Lamp3" parent="Dressing/ClockSquare" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.624695, 0, -0.780869, 0, 1, 0, 0.780869, 0, 0.624695, -10.5, -0.63759, 9)
+
+[node name="Lamp4" parent="Dressing/ClockSquare" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.624695, 0, 0.780869, 0, 1, 0, -0.780869, 0, 0.624695, 14.5, -0.63759, 9)
+
+[node name="Sandbags1" parent="Dressing/ClockSquare" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 5.5, -0.63759, 10)
+
+[node name="Sandbags2" parent="Dressing/ClockSquare" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -1.5, -0.63759, 10)
+
+[node name="Car1" parent="Dressing/ClockSquare" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.0871552, -0.00275418, -0.996191, 0.000404155, 0.999996, -0.00272934, 0.996195, -0.00016474, 0.087156, 22.5, -0.591833, -5)
+
+[node name="Car2" parent="Dressing/ClockSquare" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.984808, -0.000840199, -0.173644, -0.000637028, 0.999964, -0.00845129, 0.173645, 0.00843351, 0.984772, -17, -0.689784, 13)
+
+[node name="Barrier1" parent="Dressing/ClockSquare" instance=ExtResource("64_fe2df")]
+transform = Transform3D(-0.996194, 0.00155263, -0.0871543, 0.00139047, 0.999997, 0.00192126, 0.0871571, 0.00179276, -0.996193, -6, -0.614514, -17)
+
+[node name="Barrier2" parent="Dressing/ClockSquare" instance=ExtResource("64_fe2df")]
+transform = Transform3D(-0.984805, 0.00226458, 0.17365, 0.00256563, 0.999996, 0.00150925, -0.173646, 0.00193184, -0.984806, -10, -0.605866, -17.5)
+
+[node name="Rubble" parent="Dressing/ClockSquare" instance=ExtResource("59_6hy75")]
+transform = Transform3D(-0.999992, -0.00396714, -3.139e-06, -0.00396714, 0.999991, 0.00153842, -2.96415e-06, 0.00153842, -0.999999, 15, -0.630609, 14.5)
+
+[node name="Barrels" parent="Dressing/ClockSquare" instance=ExtResource("65_bi8aj")]
+transform = Transform3D(-0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, -0.866025, -12, -0.63759, -8)
+
+[node name="Funfair" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 181, 0, -184)
+
+[node name="FerrisWheel" parent="Dressing/Funfair" instance=ExtResource("66_58sls")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 0, -0.979938, -1)
+
+[node name="CarPark" parent="Dressing/Funfair" instance=ExtResource("67_1mmaj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.24281, -34)
+
+[node name="Lamp1" parent="Dressing/Funfair" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.6, 0, -0.8, 0, 1, 0, 0.8, 0, 0.6, -12, -0.9769, 8)
+
+[node name="Lamp2" parent="Dressing/Funfair" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(-0.6, 0, 0.8, 0, 1, 0, -0.8, 0, -0.6, 12, -0.9769, -10)
+
+[node name="Lamp3" parent="Dressing/Funfair" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.851658, 0, 0.524097, 0, 1, 0, -0.524097, 0, 0.851658, 8, -0.931056, 12)
+
+[node name="Crates" parent="Dressing/Funfair" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -14, -0.9769, 5)
+
+[node name="Barrels" parent="Dressing/Funfair" instance=ExtResource("65_bi8aj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, -0.9769, -13)
+
+[node name="Barrier1" parent="Dressing/Funfair" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.999964, 0.00842757, 4.82769e-05, -0.00842757, 0.999899, 0.0114563, 4.82769e-05, -0.0114563, 0.999934, -4, -0.7752, 14)
+
+[node name="Barrier2" parent="Dressing/Funfair" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.990228, 0.00823237, 0.139216, -0.00976976, 0.999899, 0.0103634, -0.139116, -0.0116222, 0.990208, 3, -0.828215, 14.5)
+
+[node name="Car" parent="Dressing/Funfair" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.0348869, 0.00306859, 0.999387, -0.0082109, 0.999962, -0.00278373, -0.999358, -0.00810875, 0.0349108, 21, -1.07825, 1)
+
+[node name="WestStreets" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -275, 0, -142)
+
+[node name="W00_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.970573, -0.00106375, -0.240806, -0.00974287, 0.998998, -0.0436818, 0.240611, 0.0447425, 0.96959, -82.3096, -0.767956, 74.9395)
+
+[node name="W01_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.998244, 0.00325746, 0.0591512, -0.00312435, 0.999992, -0.00234259, -0.0591583, 0.00215367, 0.998246, 23.6406, -0.575876, -92.6703)
+
+[node name="W02_jersey_barrier" parent="Dressing/WestStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.028011, 0.0762025, 0.996699, 0.0411341, 0.996158, -0.0773171, -0.998761, 0.043164, 0.0247688, -55.1019, -0.518494, -166.648)
+
+[node name="W03_crates" parent="Dressing/WestStreets" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(0.864214, 0.00889911, 0.503045, -0.00273163, 0.999912, -0.0129961, -0.503116, 0.00985725, 0.864163, -96.0825, -0.45693, 44.075)
+
+[node name="W04_concrete_blocks" parent="Dressing/WestStreets" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(-0.520157, 0.0107425, -0.854003, 0.00203117, 0.999934, 0.011341, 0.854068, 0.00416448, -0.520144, -16.7965, -0.501615, -40.9665)
+
+[node name="W05_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.982621, 0.00677141, -0.185501, -0.0190772, 0.997727, -0.0646336, 0.184642, 0.0670491, 0.980516, 50.4871, -0.619194, 201.382)
+
+[node name="W06_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.963033, 0.00617527, -0.269312, -0.00705955, 0.999972, -0.0023151, 0.26929, 0.00413074, 0.96305, 6.52692, -1.25837, 62.9097)
+
+[node name="W07_rubble_pile" parent="Dressing/WestStreets" instance=ExtResource("59_6hy75")]
+transform = Transform3D(-0.954382, 0.0031093, 0.298572, 0.00214864, 0.999991, -0.00354572, -0.298581, -0.00274245, -0.954381, 25.5305, -0.58064, -122.111)
+
+[node name="W08_barrels" parent="Dressing/WestStreets" instance=ExtResource("65_bi8aj")]
+transform = Transform3D(-0.379055, 0.00525138, -0.925359, -0.0525618, 0.998247, 0.0271959, 0.92388, 0.0589473, -0.378115, 36.7007, -0.9111, -30.2001)
+
+[node name="W09_rubble_pile" parent="Dressing/WestStreets" instance=ExtResource("59_6hy75")]
+transform = Transform3D(-0.363468, 0.0376763, 0.930845, 0.0123643, 0.999289, -0.0356187, -0.931525, -0.00143696, -0.363675, -58.0157, -0.428271, -134.393)
+
+[node name="W10_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(-0.289875, 0.0379088, 0.956314, 0.138241, 0.990395, 0.00264329, -0.947028, 0.132968, -0.292331, -97.9592, 2.00573, -194.82)
+
+[node name="W11_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.964103, 0.00907622, 0.265374, -0.00589073, 0.999901, -0.0127972, -0.265464, 0.0107746, 0.964061, 93.6211, -1.04395, 174.233)
+
+[node name="W12_jersey_barrier" parent="Dressing/WestStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.984383, 0.0029329, -0.176018, -0.00167204, 0.999972, 0.00731107, 0.176035, -0.00690258, 0.98436, -11.4452, -1.17757, 102.226)
+
+[node name="W13_jersey_barrier" parent="Dressing/WestStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.994437, 0.0037519, 0.105269, -0.0025806, 0.999933, -0.0112608, -0.105304, 0.0109265, 0.99438, -75.246, -0.410819, 40.2424)
+
+[node name="W14_crates" parent="Dressing/WestStreets" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(0.946361, 0.0525336, -0.318812, -0.0681785, 0.996945, -0.0381053, 0.315836, 0.0577975, 0.947052, -44.9984, -0.243165, -193.532)
+
+[node name="W15_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.964881, -0.00362082, 0.262661, 0.00553041, 0.999963, -0.00653121, -0.262628, 0.00775446, 0.964866, -65.6396, -1.0656, 138.628)
+
+[node name="W16_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.998977, -0.000491327, -0.0452145, 0.000745689, 0.999984, 0.00560897, 0.0452111, -0.00563695, 0.998962, -18.2501, -0.953067, -159.305)
+
+[node name="W17_jersey_barrier" parent="Dressing/WestStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(-0.237484, -0.00868874, 0.971353, 0.00279115, 0.99995, 0.00962694, -0.971387, 0.00499743, -0.237448, 68.5986, -1.4366, 27.8724)
+
+[node name="W18_concrete_blocks" parent="Dressing/WestStreets" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(-0.606218, 0.00290594, -0.795294, -0.0567098, 0.99729, 0.0468714, 0.793274, 0.0735152, -0.60441, 14.9172, -0.505984, 206.841)
+
+[node name="W19_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.990804, -0.000358023, 0.135303, 0.000214366, 0.999999, 0.00107632, -0.135303, -0.00103741, 0.990804, 108.987, -0.512367, -94.3731)
+
+[node name="W20_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.261395, -0.00246094, 0.965229, 0.000362048, 0.999997, 0.00245154, -0.965232, -0.000291361, 0.261395, 63.592, -0.600313, -100.258)
+
+[node name="W21_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.956031, -0.00406932, 0.293237, -0.000974109, 0.999854, 0.017051, -0.293264, -0.016587, 0.955888, 45.881, -1.17085, -194.742)
+
+[node name="W22_jersey_barrier" parent="Dressing/WestStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.990495, 0.0122622, -0.137, -0.0128602, 0.999911, -0.0034805, 0.136945, 0.00520927, 0.990565, 61.6785, -0.634102, 171.37)
+
+[node name="W23_jersey_barrier" parent="Dressing/WestStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(-0.200223, -0.00488005, 0.979738, 0.00801026, 0.999946, 0.00661771, -0.979718, 0.00917297, -0.200173, 64.5149, -0.709496, -41.0244)
+
+[node name="W24_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(-0.0737342, 0.0276936, 0.996893, 0.00563638, 0.99961, -0.0273521, -0.997262, 0.00360208, -0.0738615, -55.5444, -0.17751, -18.7672)
+
+[node name="W25_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.980725, -0.00443201, 0.195342, 0.0029153, 0.999963, 0.0080512, -0.19537, -0.00732653, 0.980702, -10.0977, -0.682965, -126.976)
+
+[node name="W26_concrete_blocks" parent="Dressing/WestStreets" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.063658, -0.00461332, 0.997961, 0.00996257, 0.999942, 0.00398699, -0.997922, 0.00968845, 0.0637003, 68.7595, -1.30484, 7.23314)
+
+[node name="W27_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.997388, 0.0055837, -0.0720136, -0.00165944, 0.998516, 0.0544385, 0.0722107, -0.0541768, 0.995917, 36.0983, -0.406561, 167.837)
+
+[node name="W28_car_wreck" parent="Dressing/WestStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.211951, -0.00846397, 0.977244, 0.00447453, 0.99996, 0.00769026, -0.97727, 0.00274275, 0.21198, -57.6411, -1.14605, 161.622)
+
+[node name="W29_rubble_pile" parent="Dressing/WestStreets" instance=ExtResource("59_6hy75")]
+transform = Transform3D(0.298553, 0.00282545, -0.954389, 0.0330106, 0.999367, 0.013285, 0.953822, -0.0354712, 0.298271, -10.4355, -0.929133, 135.536)
+
+[node name="EastStreets" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 202, 0, -140)
+
+[node name="E00_concrete_blocks" parent="Dressing/EastStreets" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.322997, -0.00573877, 0.946383, 0.00594126, 0.999974, 0.00403602, -0.946381, 0.00431908, 0.323023, 31.5689, -0.494861, 70.6615)
+
+[node name="E01_rubble_pile" parent="Dressing/EastStreets" instance=ExtResource("59_6hy75")]
+transform = Transform3D(-0.873997, -0.0165093, -0.48565, -0.0176296, 0.999842, -0.00226193, 0.485611, 0.00658488, -0.87415, 0.729706, -1.14488, -107.05)
+
+[node name="E02_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.963157, -0.00427419, 0.268905, 0.00424994, 0.999991, 0.000672316, -0.268905, 0.000495282, 0.963167, 97.8895, -0.625571, -92.5611)
+
+[node name="E03_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.968846, -0.0055123, 0.247603, 0.00506788, 0.999984, 0.0024322, -0.247612, -0.00110161, 0.968859, 37.5629, -0.986768, 172.538)
+
+[node name="E04_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.996157, -0.00639425, -0.0873535, 0.00590436, 0.999965, -0.00586537, 0.087388, 0.00532706, 0.99616, -0.0240784, -0.883838, 106.888)
+
+[node name="E05_crates" parent="Dressing/EastStreets" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(-0.976595, -0.00142258, 0.215081, -0.0043248, 0.999906, -0.0130236, -0.215043, -0.0136489, -0.976509, -80.9194, -0.823893, -58.4022)
+
+[node name="E06_concrete_blocks" parent="Dressing/EastStreets" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.993805, 0.00444706, 0.111051, 0.0254304, 0.963592, -0.266166, -0.108192, 0.267341, 0.957509, 127.853, 0.652196, -130.762)
+
+[node name="E07_jersey_barrier" parent="Dressing/EastStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.973786, 0.00186611, -0.227459, -0.00330891, 0.999977, -0.00596198, 0.227442, 0.00655833, 0.973769, 113.056, -0.958614, 72.5475)
+
+[node name="E08_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.959746, -0.00751432, -0.280769, 0.00453816, 0.999926, -0.0112487, 0.280833, 0.00952172, 0.959709, 40.7541, -0.921793, -97.039)
+
+[node name="E09_rubble_pile" parent="Dressing/EastStreets" instance=ExtResource("59_6hy75")]
+transform = Transform3D(0.883698, -0.0164258, 0.467769, 0.0179113, 0.999839, 0.00127193, -0.467715, 0.00725435, 0.88385, -2.0719, -0.721729, -175.529)
+
+[node name="E10_concrete_blocks" parent="Dressing/EastStreets" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.790927, 0.000586601, 0.61191, 0.00349767, 0.999979, -0.00547954, -0.6119, 0.00647418, 0.790908, -42.507, -0.545902, 22.3699)
+
+[node name="E11_jersey_barrier" parent="Dressing/EastStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.996199, -0.00558601, -0.0869229, 0.00408772, 0.99984, -0.0174055, 0.0870062, 0.016984, 0.996063, 64.1442, -0.808306, -92.135)
+
+[node name="E12_barrels" parent="Dressing/EastStreets" instance=ExtResource("65_bi8aj")]
+transform = Transform3D(0.680464, -0.00324957, -0.732775, 0.00403575, 0.999992, -0.000686918, 0.732771, -0.00248987, 0.680471, 26.4557, -0.655403, -139.751)
+
+[node name="E13_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.985795, 0.000274585, -0.16795, 0.00361312, 0.999733, 0.022842, 0.167911, -0.0231244, 0.985531, -30.0475, -0.51108, 2.23973)
+
+[node name="E14_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.0463879, 0.00037073, 0.998923, 0.000527891, 1, -0.000395644, -0.998923, 0.000545676, 0.0463877, 58.0303, -0.63161, -116.537)
+
+[node name="E15_jersey_barrier" parent="Dressing/EastStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.0294354, 0.00139358, 0.999566, -0.00147288, 0.999998, -0.00135081, -0.999566, -0.00143248, 0.0294374, 84.0834, -0.47943, 21.274)
+
+[node name="E16_crates" parent="Dressing/EastStreets" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(-0.679607, -0.00895084, 0.733521, 0.00772296, 0.999783, 0.0193552, -0.733535, 0.0188189, -0.679391, 85.213, -0.697271, -63.53)
+
+[node name="E17_concrete_blocks" parent="Dressing/EastStreets" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.874553, -0.000780641, -0.484929, 0.00933516, 0.99984, 0.0152261, 0.48484, -0.0178429, 0.874421, -148.458, -0.875121, -30.8056)
+
+[node name="E18_rubble_pile" parent="Dressing/EastStreets" instance=ExtResource("59_6hy75")]
+transform = Transform3D(0.455548, -0.00720561, -0.890182, 0.0405045, 0.999099, 0.0126408, 0.889289, -0.0418148, 0.45543, -98.8889, -0.990463, -63.3858)
+
+[node name="E19_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.225365, 0.0135735, 0.97418, -0.0104697, 0.999879, -0.0115096, -0.974218, -0.00760553, 0.22548, 1.4958, -0.73878, 212.912)
+
+[node name="E20_jersey_barrier" parent="Dressing/EastStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(-0.134456, 0.00102326, 0.990919, -0.00483445, 0.999987, -0.0016886, -0.990908, -0.00501759, -0.13445, -123.861, -0.683706, -10.078)
+
+[node name="E21_jersey_barrier" parent="Dressing/EastStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.189799, -0.00424579, 0.981814, -0.00216862, 0.999986, 0.0047436, -0.98182, -0.00302952, 0.189788, 40.3725, -1.04433, -40.1643)
+
+[node name="E22_concrete_blocks" parent="Dressing/EastStreets" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(-0.42299, 0.00100177, 0.906134, 0.000428783, 1, -0.000905387, -0.906134, 5.56571e-06, -0.42299, -17.5948, -1.12913, 163.712)
+
+[node name="E23_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.975375, -0.00162439, -0.220546, 0.00421821, 0.999927, 0.0112905, 0.220511, -0.0119428, 0.975311, 30.6452, -1.11595, -59.0551)
+
+[node name="E24_jersey_barrier" parent="Dressing/EastStreets" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.116979, -0.00370454, 0.993127, 0.00852778, 0.99996, 0.00272555, -0.993098, 0.00815034, 0.117006, -2.65189, -1.07764, 131.207)
+
+[node name="E25_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.967578, 0.00157278, 0.252568, 0.000767239, 0.999958, -0.00916614, -0.252572, 0.00906273, 0.967536, -105.005, -0.706885, 236.918)
+
+[node name="E26_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.984467, -0.00468502, 0.175509, 0.00542211, 0.999978, -0.00372039, -0.175488, 0.00461423, 0.984471, -46.0113, -0.584758, 233.957)
+
+[node name="E27_crates" parent="Dressing/EastStreets" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(-0.991539, -0.00463592, -0.129724, -0.00449104, 0.999989, -0.00140932, 0.129729, -0.000814798, -0.991549, -85.0661, -0.605707, 18.5506)
+
+[node name="E28_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.972504, -0.0015589, -0.232881, 0.009035, 0.999477, 0.0310394, 0.232711, -0.03229, 0.97201, -56.968, -1.66368, -125.366)
+
+[node name="E29_car_wreck" parent="Dressing/EastStreets" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(-0.0600137, 0.0845204, 0.994613, 0.000639251, 0.996412, -0.0846347, -0.998197, -0.00444343, -0.0598524, -4.86246, -1.07531, -54.4696)
+
+[node name="BridgeOutSouth" type="Node3D" parent="Dressing"]
+
+[node name="IslandBarrier1" parent="Dressing/BridgeOutSouth" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.924091, 0, 0.382172, 0, 1, 0, -0.382172, 0, 0.924091, -6.6031, -0.15578, 154.945)
+
+[node name="IslandBarrier2" parent="Dressing/BridgeOutSouth" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.924091, 0, 0.382172, 0, 1, 0, -0.382172, 0, 0.924091, -3.4611, -0.47209, 153.646)
+
+[node name="IslandBarrier3" parent="Dressing/BridgeOutSouth" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.924091, 0, 0.382172, 0, 1, 0, -0.382172, 0, 0.924091, -0.3192, -1.25, 152.346)
+
+[node name="IslandRubble1" parent="Dressing/BridgeOutSouth" instance=ExtResource("59_6hy75")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1725, -1.33391, 146.732)
+
+[node name="IslandRubble2" parent="Dressing/BridgeOutSouth" instance=ExtResource("59_6hy75")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.0631, -0.86971, 148.546)
+
+[node name="IslandBlocks" parent="Dressing/BridgeOutSouth" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.951057, 0, 0.309017, 0, 1, 0, -0.309017, 0, 0.951057, -7.7621, -0.30154, 151.096)
+
+[node name="IslandCar" parent="Dressing/BridgeOutSouth" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.56595, 0, -0.82444, 0, 1, 0, 0.82444, 0, 0.56595, -5.8169, -0.51904, 142.717)
+
+[node name="FallenSpan1" parent="Dressing/BridgeOutSouth" instance=ExtResource("59_6hy75")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3293, -3.32642, 163.523)
+
+[node name="FallenSpan2" parent="Dressing/BridgeOutSouth" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, 0.0037, -2.40112, 171.182)
+
+[node name="FallenSpan3" parent="Dressing/BridgeOutSouth" instance=ExtResource("59_6hy75")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, 7.7672, -2.68673, 174.255)
+
+[node name="FallenSpan4" parent="Dressing/BridgeOutSouth" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, 4.4417, -2.87831, 181.913)
+
+[node name="PlainTeeth1" parent="Dressing/BridgeOutSouth" instance=ExtResource("69_lp7jp")]
+transform = Transform3D(0.924091, 0, 0.382172, 0, 1, 0, -0.382172, 0, 0.924091, 12.4216, -0.29927, 192.05)
+
+[node name="PlainTeeth2" parent="Dressing/BridgeOutSouth" instance=ExtResource("69_lp7jp")]
+transform = Transform3D(0.924091, 0, 0.382172, 0, 1, 0, -0.382172, 0, 0.924091, 25.9634, -1.8078, 190.778)
+
+[node name="PlainWire1" parent="Dressing/BridgeOutSouth" instance=ExtResource("70_mnoqp")]
+transform = Transform3D(0.924091, 0, 0.382172, 0, 1, 0, -0.382172, 0, 0.924091, 14.7146, -0.75485, 197.595)
+
+[node name="PlainNest" parent="Dressing/BridgeOutSouth" instance=ExtResource("71_p6vs7")]
+transform = Transform3D(0.382172, 0, -0.924091, 0, 1, 0, 0.924091, 0, 0.382172, 8.6908, -1.73944, 206.579)
+
+[node name="PlainRubble" parent="Dressing/BridgeOutSouth" instance=ExtResource("59_6hy75")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.7932, -0.81088, 196.956)
+
+[node name="PlainSign" parent="Dressing/BridgeOutSouth" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, 22.3298, -1.12563, 197.692)
+
+[node name="SouthCrossing" type="Node3D" parent="Dressing"]
+
+[node name="Gate" parent="Dressing/SouthCrossing" instance=ExtResource("72_vb21b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -170, -1.23203, 316)
+
+[node name="GateWall1" parent="Dressing/SouthCrossing" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -162, -1.02906, 301)
+
+[node name="GateMast1" parent="Dressing/SouthCrossing" instance=ExtResource("47_w1wmw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -154, -1.07051, 304)
+
+[node name="FarWire1" parent="Dressing/SouthCrossing" instance=ExtResource("70_mnoqp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -68, -1.26778, 305)
+
+[node name="GateWall2" parent="Dressing/SouthCrossing" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -162, -1.35461, 331)
+
+[node name="GateMast2" parent="Dressing/SouthCrossing" instance=ExtResource("47_w1wmw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -154, -1.34668, 328)
+
+[node name="FarWire2" parent="Dressing/SouthCrossing" instance=ExtResource("70_mnoqp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -68, -1.28966, 327)
+
+[node name="FarNest" parent="Dressing/SouthCrossing" instance=ExtResource("71_p6vs7")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -62, -1.08983, 324)
+
+[node name="FarBarrier1" parent="Dressing/SouthCrossing" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -74, -0.47733, 313)
+
+[node name="FarBarrier2" parent="Dressing/SouthCrossing" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -74, -0.47733, 319)
+
+[node name="WestBridgehead" type="Node3D" parent="Dressing"]
+
+[node name="Chicane1" parent="Dressing/WestBridgehead" instance=ExtResource("76_sxar3")]
+transform = Transform3D(0.132991, 0, 0.991117, 0, 1, 0, -0.991117, 0, 0.132991, -167.328, -1.37018, -64.8741)
+
+[node name="Chicane2" parent="Dressing/WestBridgehead" instance=ExtResource("76_sxar3")]
+transform = Transform3D(0.690156, 0, 0.723661, 0, 1, 0, -0.723661, 0, 0.690156, -177.966, -1.27172, -58.8882)
+
+[node name="Chicane3" parent="Dressing/WestBridgehead" instance=ExtResource("76_sxar3")]
+transform = Transform3D(0.132991, 0, 0.991117, 0, 1, 0, -0.991117, 0, 0.132991, -179.949, -1.48183, -70.9326)
+
+[node name="Chicane4" parent="Dressing/WestBridgehead" instance=ExtResource("76_sxar3")]
+transform = Transform3D(0.690156, 0, 0.723661, 0, 1, 0, -0.723661, 0, 0.690156, -190.587, -1.38922, -64.9468)
+
+[node name="WallN1" parent="Dressing/WestBridgehead" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.901512, 0, 0.432754, 0, 1, 0, -0.432754, 0, -0.901512, -144.105, -1.13461, -67.0372)
+
+[node name="WallS1" parent="Dressing/WestBridgehead" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.901512, 0, 0.432754, 0, 1, 0, -0.432754, 0, -0.901512, -158.818, -1.06516, -36.3857)
+
+[node name="WallN2" parent="Dressing/WestBridgehead" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.901512, 0, 0.432754, 0, 1, 0, -0.432754, 0, -0.901512, -153.714, -1.27352, -69.8707)
+
+[node name="WallS2" parent="Dressing/WestBridgehead" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.901512, 0, 0.432754, 0, 1, 0, -0.432754, 0, -0.901512, -170.538, -1.25823, -42.0115)
+
+[node name="WallN3" parent="Dressing/WestBridgehead" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.901512, 0, 0.432754, 0, 1, 0, -0.432754, 0, -0.901512, -167.544, -1.45029, -78.2888)
+
+[node name="WallS3" parent="Dressing/WestBridgehead" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.901512, 0, 0.432754, 0, 1, 0, -0.432754, 0, -0.901512, -182.258, -1.39914, -47.6373)
+
+[node name="SangarN" parent="Dressing/WestBridgehead" instance=ExtResource("77_nrmi2")]
+transform = Transform3D(0.432754, 0, 0.901512, 0, 1, 0, -0.901512, 0, 0.432754, -165.81, -1.44263, -86.1276)
+
+[node name="ContainersN" parent="Dressing/WestBridgehead" instance=ExtResource("79_xwp1g")]
+transform = Transform3D(-0.979426, 0, 0.201803, 0, 1, 0, -0.201803, 0, -0.979426, -171.198, -1.4412, -71.3988)
+
+[node name="BermN" parent="Dressing/WestBridgehead" instance=ExtResource("80_d2ir4")]
+transform = Transform3D(-0.901512, 0, 0.432754, 0, 1, 0, -0.432754, 0, -0.901512, -142.392, -1.15025, -70.4374)
+
+[node name="SangarS" parent="Dressing/WestBridgehead" instance=ExtResource("77_nrmi2")]
+transform = Transform3D(0.432754, 0, 0.901512, 0, 1, 0, -0.901512, 0, 0.432754, -177.877, -1.22726, -36.2214)
+
+[node name="ContainersS" parent="Dressing/WestBridgehead" instance=ExtResource("79_xwp1g")]
+transform = Transform3D(-0.770041, 0, 0.637995, 0, 1, 0, -0.637995, 0, -0.770041, -189.831, -1.39918, -45.7263)
+
+[node name="BermS" parent="Dressing/WestBridgehead" instance=ExtResource("80_d2ir4")]
+transform = Transform3D(-0.901512, 0, 0.432754, 0, 1, 0, -0.432754, 0, -0.901512, -165.728, -1.06369, -25.4669)
+
+[node name="Car1" parent="Dressing/WestBridgehead" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, 0.34202, -162.144, -1.35272, -68.7286)
+
+[node name="Car2" parent="Dressing/WestBridgehead" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -179.625, -1.2438, -50.8106)
+
+[node name="Rubble1" parent="Dressing/WestBridgehead" instance=ExtResource("59_6hy75")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -164.855, -1.37994, -69.1103)
+
+[node name="Rubble2" parent="Dressing/WestBridgehead" instance=ExtResource("59_6hy75")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -188.316, -1.37635, -62.747)
+
+[node name="Blocks1" parent="Dressing/WestBridgehead" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, -160.855, -1.11248, -41.1304)
+
+[node name="Blocks2" parent="Dressing/WestBridgehead" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, 0.939693, -169.225, -1.45142, -75.9523)
+
+[node name="Pipes" parent="Dressing/WestBridgehead" instance=ExtResource("81_e3etl")]
+transform = Transform3D(0.573576, 0, 0.819152, 0, 1, 0, -0.819152, 0, 0.573576, -177.911, -1.48656, -72.612)
+
+[node name="Crates" parent="Dressing/WestBridgehead" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(0.965926, 0, 0.258819, 0, 1, 0, -0.258819, 0, 0.965926, -164.609, -1.28925, -67.0812)
+
+[node name="Barrels" parent="Dressing/WestBridgehead" instance=ExtResource("65_bi8aj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -172.573, -1.08732, -48.4116)
+
+[node name="Mound1" parent="Dressing/WestBridgehead" instance=ExtResource("82_mw0a1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -148.339, -1.22276, -71.1654)
+
+[node name="Mound2" parent="Dressing/WestBridgehead" instance=ExtResource("82_mw0a1")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -171.8, -1.18621, -37.0712)
+
+[node name="Hesco1" parent="Dressing/WestBridgehead" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(0.978148, 0, 0.207912, 0, 1, 0, -0.207912, 0, 0.978148, -175.802, -1.29553, -63.3958)
+
+[node name="Hesco2" parent="Dressing/WestBridgehead" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(0.978148, 0, 0.207912, 0, 1, 0, -0.207912, 0, 0.978148, -177.677, -1.45511, -68.7329)
+
+[node name="Lamp1" parent="Dressing/WestBridgehead" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -149.268, -1.19416, -67.6898)
+
+[node name="Lamp2" parent="Dressing/WestBridgehead" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -178.796, -1.23949, -54.8494)
+
+[node name="Mast" parent="Dressing/WestBridgehead" instance=ExtResource("47_w1wmw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -155.717, -1.04696, -38.2248)
+
+[node name="Wire1" parent="Dressing/WestBridgehead" instance=ExtResource("70_mnoqp")]
+transform = Transform3D(0.432754, 0, 0.901512, 0, 1, 0, -0.901512, 0, 0.432754, -137.866, -1.08865, -68.4794)
+
+[node name="Wire2" parent="Dressing/WestBridgehead" instance=ExtResource("70_mnoqp")]
+transform = Transform3D(0.432754, 0, 0.901512, 0, 1, 0, -0.901512, 0, 0.432754, -156.042, -1.00468, -30.6159)
+
+[node name="IslandSouthWall" type="Node3D" parent="Dressing"]
+
+[node name="East1" parent="Dressing/IslandSouthWall" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.214862, 0, -0.976644, 0, 1, 0, 0.976644, 0, -0.214862, -8, -0.57543, 140)
+
+[node name="East2" parent="Dressing/IslandSouthWall" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.773392, 0, -0.633928, 0, 1, 0, 0.633928, 0, -0.773392, -17.8317, -1.25, 171.01)
+
+[node name="East3" parent="Dressing/IslandSouthWall" instance=ExtResource("76_sxar3")]
+transform = Transform3D(-0.864507, 0, -0.502621, 0, 1, 0, 0.502621, 0, -0.864507, -27.9207, -1.25, 178.326)
+
+[node name="East4" parent="Dressing/IslandSouthWall" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.773392, 0, -0.633928, 0, 1, 0, 0.633928, 0, -0.773392, -36.9596, -1.25, 186.688)
+
+[node name="East5" parent="Dressing/IslandSouthWall" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.214862, 0, -0.976644, 0, 1, 0, 0.976644, 0, -0.214862, -42.6221, -1.20698, 197.373)
+
+[node name="East6" parent="Dressing/IslandSouthWall" instance=ExtResource("76_sxar3")]
+transform = Transform3D(-0.773392, 0, -0.633928, 0, 1, 0, 0.633928, 0, -0.773392, -46.4548, -1.03447, 207.586)
+
+[node name="East7" parent="Dressing/IslandSouthWall" instance=ExtResource("75_sr8ts")]
+transform = Transform3D(-0.864507, 0, -0.50262, 0, 1, 0, 0.50262, 0, -0.864507, -55.8205, -0.91867, 215.477)
+
+[node name="West1" parent="Dressing/IslandSouthWall" instance=ExtResource("80_d2ir4")]
+transform = Transform3D(-0.214861, 0, -0.976645, 0, 1, 0, 0.976645, 0, -0.214861, -74.64, -0.69559, 152)
+
+[node name="West2" parent="Dressing/IslandSouthWall" instance=ExtResource("80_d2ir4")]
+transform = Transform3D(-0.214863, 0, -0.976644, 0, 1, 0, 0.976644, 0, -0.214863, -73.9454, -0.62454, 167.024)
+
+[node name="West3" parent="Dressing/IslandSouthWall" instance=ExtResource("80_d2ir4")]
+transform = Transform3D(-0.584304, 0, -0.811535, 0, 1, 0, 0.811535, 0, -0.584304, -77.5728, -0.50151, 181.073)
+
+[node name="West4" parent="Dressing/IslandSouthWall" instance=ExtResource("80_d2ir4")]
+transform = Transform3D(0.269629, 0, -0.962964, 0, 1, 0, 0.962964, 0, 0.269629, -87.9791, -0.34826, 190.074)
+
+[node name="West5" parent="Dressing/IslandSouthWall" instance=ExtResource("80_d2ir4")]
+transform = Transform3D(-0.214861, 0, -0.976645, 0, 1, 0, 0.976645, 0, -0.214861, -90.1492, -0.28863, 204.314)
+
+[node name="West6" parent="Dressing/IslandSouthWall" instance=ExtResource("80_d2ir4")]
+transform = Transform3D(0.269631, 0, -0.962964, 0, 1, 0, 0.962964, 0, 0.269631, -93.9915, -0.04454, 218.602)
+
+[node name="Sangar1" parent="Dressing/IslandSouthWall" instance=ExtResource("77_nrmi2")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -28.04, -1.28926, 172)
+
+[node name="Sangar2" parent="Dressing/IslandSouthWall" instance=ExtResource("77_nrmi2")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -51.76, -1.02345, 198)
+
+[node name="Wire1" parent="Dressing/IslandSouthWall" instance=ExtResource("70_mnoqp")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -5.2, -0.33184, 150)
+
+[node name="Wire2" parent="Dressing/IslandSouthWall" instance=ExtResource("70_mnoqp")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -17.843, -1.25, 177.224)
+
+[node name="Wire3" parent="Dressing/IslandSouthWall" instance=ExtResource("70_mnoqp")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -37.76, -1.25, 198)
+
+[node name="GateTeeth" parent="Dressing/IslandSouthWall" instance=ExtResource("69_lp7jp")]
+transform = Transform3D(0.913545, 0, 0.406737, 0, 1, 0, -0.406737, 0, 0.913545, -22, -1.13244, 156)
+
+[node name="GateWallA" parent="Dressing/IslandSouthWall" instance=ExtResource("76_sxar3")]
+transform = Transform3D(0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, 0.34202, -10.7763, -0.58974, 151.363)
+
+[node name="GateWallB" parent="Dressing/IslandSouthWall" instance=ExtResource("76_sxar3")]
+transform = Transform3D(0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, 0.34202, -18, -1.27687, 164)
+
+[node name="SouthQuarter" type="Node3D" parent="Dressing"]
+
+[node name="Street01" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, -323.5, -1.03697, 101.5)
+
+[node name="Street02" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -339.5, -0.92007, 105.5)
+
+[node name="Street03" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(-0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, -0.866025, -338.5, -0.92007, 102.5)
+
+[node name="Street04" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, -326.5, -1.10313, 94.5)
+
+[node name="Street05" parent="Dressing/SouthQuarter" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, 0.5, -335.5, -0.62336, 138.5)
+
+[node name="Street06" parent="Dressing/SouthQuarter" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -319.5, -1.03697, 122.5)
+
+[node name="Street07" parent="Dressing/SouthQuarter" instance=ExtResource("82_mw0a1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -329.5, -0.8207, 139.5)
+
+[node name="Street08" parent="Dressing/SouthQuarter" instance=ExtResource("82_mw0a1")]
+transform = Transform3D(-0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, -0.5, -319.5, -1.03697, 119.5)
+
+[node name="Street09" parent="Dressing/SouthQuarter" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -339.5, -0.27037, 168.5)
+
+[node name="Street10" parent="Dressing/SouthQuarter" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(-0.642788, 0, 0.766044, 0, 1, 0, -0.766044, 0, -0.642788, -320.5, -0.63123, 161.5)
+
+[node name="Street11" parent="Dressing/SouthQuarter" instance=ExtResource("85_042b1")]
+transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, -340.5, -0.56304, 152.5)
+
+[node name="Street12" parent="Dressing/SouthQuarter" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(-0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, -0.766044, -336.5, -0.48658, 162.5)
+
+[node name="Street13" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -334.5, -0.41849, 189.5)
+
+[node name="Street14" parent="Dressing/SouthQuarter" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -342.5, -0.32751, 204.5)
+
+[node name="Street15" parent="Dressing/SouthQuarter" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -319.5, -0.59604, 191.5)
+
+[node name="Street16" parent="Dressing/SouthQuarter" instance=ExtResource("65_bi8aj")]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, -332.276, -0.49154, 190.863)
+
+[node name="Street17" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(-0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, -0.5, -320.5, -0.79598, 217.5)
+
+[node name="Street18" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, 0.939693, -324.5, -1.09296, 239.5)
+
+[node name="Street19" parent="Dressing/SouthQuarter" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, -319.5, -0.79598, 221.5)
+
+[node name="Street20" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, -323.5, -0.79598, 217.5)
+
+[node name="Street21" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, 0.34202, -289.5, -0.97945, 106.5)
+
+[node name="Street22" parent="Dressing/SouthQuarter" instance=ExtResource("82_mw0a1")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -297.5, -1.03697, 102.5)
+
+[node name="Street23" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(-0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, -0.34202, -298.5, -0.99657, 92.5)
+
+[node name="Street24" parent="Dressing/SouthQuarter" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -300.5, -1.01211, 89.5)
+
+[node name="Street25" parent="Dressing/SouthQuarter" instance=ExtResource("65_bi8aj")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -278.5, -0.73341, 134.5)
+
+[node name="Street26" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(-0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, -0.34202, -276.276, -0.73341, 135.863)
+
+[node name="Street27" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0.173648, 0, -0.984808, 0, 1, 0, 0.984808, 0, 0.173648, -292.5, -0.94553, 126.5)
+
+[node name="Street28" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(-0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, -0.766044, -300.5, -0.85746, 131.5)
+
+[node name="Street29" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
+transform = Transform3D(-0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, -0.939693, -279.5, -0.66089, 161.5)
+
+[node name="Street30" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
+transform = Transform3D(-0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, -0.984808, -287.5, -0.60601, 169.5)
+
+[node name="Street31" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, -291.5, -0.64195, 169.5)
+
+[node name="Street32" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(-0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, -0.173648, -297.5, -0.59386, 168.5)
+
+[node name="Street33" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.173648, 0, -0.984808, 0, 1, 0, 0.984808, 0, 0.173648, -285.5, -0.76578, 206.5)
+
+[node name="Street34" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -284.5, -0.76578, 206.5)
+
+[node name="Street35" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(-0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, -0.939693, -281.276, -0.76578, 207.863)
+
+[node name="Street36" parent="Dressing/SouthQuarter" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, -278.5, -0.76578, 200.5)
+
+[node name="Street37" parent="Dressing/SouthQuarter" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(-0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, -0.766044, -281.5, -1.24965, 236.5)
+
+[node name="Street38" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(0.34202, 0, -0.939693, 0, 1, 0, 0.939693, 0, 0.34202, -278.5, -1.16072, 233.5)
+
+[node name="Street39" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(-0.173648, 0, -0.984808, 0, 1, 0, 0.984808, 0, -0.173648, -298.5, -0.79598, 218.5)
+
+[node name="Street40" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, -289.5, -1.21201, 235.5)
+
+[node name="Street41" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(0.642788, 0, -0.766044, 0, 1, 0, 0.766044, 0, 0.642788, -254.5, -0.64489, 93.5)
+
+[node name="Street42" parent="Dressing/SouthQuarter" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(0.34202, 0, -0.939693, 0, 1, 0, 0.939693, 0, 0.34202, -246.5, -0.5971, 100.5)
+
+[node name="Street43" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -251.5, -0.65848, 99.5)
+
+[node name="Street44" parent="Dressing/SouthQuarter" instance=ExtResource("85_042b1")]
+transform = Transform3D(0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, 0.939693, -257.5, -0.83407, 102.5)
+
+[node name="Street45" parent="Dressing/SouthQuarter" instance=ExtResource("59_6hy75")]
+transform = Transform3D(-0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, -0.766044, -241.5, -0.45811, 134.5)
+
+[node name="Street46" parent="Dressing/SouthQuarter" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, -244.5, -0.58228, 121.5)
+
+[node name="Street47" parent="Dressing/SouthQuarter" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(-0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, -0.939693, -248.5, -0.6095, 139.5)
+
+[node name="Street48" parent="Dressing/SouthQuarter" instance=ExtResource("85_042b1")]
+transform = Transform3D(-0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, -0.939693, -237.5, -0.56269, 125.5)
+
+[node name="Street49" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
+transform = Transform3D(-0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, -0.984808, -250.5, -0.50252, 162.5)
+
+[node name="Street50" parent="Dressing/SouthQuarter" instance=ExtResource("59_6hy75")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -252.5, -0.58619, 156.5)
+
+[node name="Street51" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -260.5, -0.52587, 167.5)
+
+[node name="Street52" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(-0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, -0.766044, -257.5, -0.73341, 152.5)
+
+[node name="Street53" parent="Dressing/SouthQuarter" instance=ExtResource("59_6hy75")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -243.5, -0.42848, 203.5)
+
+[node name="Street54" parent="Dressing/SouthQuarter" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(-0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, -0.939693, -244.5, -0.31826, 187.5)
+
+[node name="Street55" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0.173648, 0, -0.984808, 0, 1, 0, 0.984808, 0, 0.173648, -248.5, -0.40823, 193.5)
+
+[node name="Street56" parent="Dressing/SouthQuarter" instance=ExtResource("65_bi8aj")]
+transform = Transform3D(-0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, -0.5, -259.5, -0.76578, 201.5)
+
+[node name="Street57" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(-0.34202, 0, -0.939693, 0, 1, 0, 0.939693, 0, -0.34202, -252.5, -1.11725, 238.5)
+
+[node name="Street58" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, -249.5, -0.90419, 229.5)
+
+[node name="Street59" parent="Dressing/SouthQuarter" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, -258.5, -0.76578, 215.5)
+
+[node name="Street60" parent="Dressing/SouthQuarter" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(-0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, -0.766044, -243.5, -0.42848, 217.5)
+
+[node name="Street61" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, 0.34202, -218.5, -0.58228, 102.5)
+
+[node name="Street62" parent="Dressing/SouthQuarter" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -197.5, -1.0876, 89.5)
+
+[node name="Street63" parent="Dressing/SouthQuarter" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(-0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, -0.866025, -200.5, -0.92429, 91.5)
+
+[node name="Street64" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(-0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, -0.766044, -200.5, -1.0876, 85.5)
+
+[node name="Street65" parent="Dressing/SouthQuarter" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(-0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, -0.766044, -204.5, -0.69687, 118.5)
+
+[node name="Street66" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(-0.34202, 0, -0.939693, 0, 1, 0, 0.939693, 0, -0.34202, -214.5, -0.58228, 116.5)
+
+[node name="Street67" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(-0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, -0.5, -220.5, -0.4566, 131.5)
+
+[node name="Street68" parent="Dressing/SouthQuarter" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, -217.5, -0.45811, 138.5)
+
+[node name="Street69" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(-0.642788, 0, -0.766044, 0, 1, 0, 0.766044, 0, -0.642788, -208.5, -0.29041, 156.5)
+
+[node name="Street70" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.34202, 0, -0.939693, 0, 1, 0, 0.939693, 0, 0.34202, -200.5, -0.29231, 157.5)
+
+[node name="Street71" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, 0.5, -218.5, -0.30959, 164.5)
+
+[node name="Street72" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(-0.642788, 0, 0.766044, 0, 1, 0, -0.766044, 0, -0.642788, -217.5, -0.45811, 149.5)
+
+[node name="Street73" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, -204.5, -0.2201, 196.5)
+
+[node name="Street74" parent="Dressing/SouthQuarter" instance=ExtResource("82_mw0a1")]
+transform = Transform3D(-0.173648, 0, -0.984808, 0, 1, 0, 0.984808, 0, -0.173648, -204.5, -0.21176, 187.5)
+
+[node name="Street75" parent="Dressing/SouthQuarter" instance=ExtResource("82_mw0a1")]
+transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, -207.5, -0.21453, 189.5)
+
+[node name="Street76" parent="Dressing/SouthQuarter" instance=ExtResource("59_6hy75")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -219.5, -0.26029, 194.5)
+
+[node name="Street77" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
+transform = Transform3D(-0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, -0.5, -200.5, -0.3281, 223.5)
+
+[node name="Street78" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(0.642788, 0, -0.766044, 0, 1, 0, 0.766044, 0, 0.642788, -206.5, -0.3804, 223.5)
+
+[node name="Street79" parent="Dressing/SouthQuarter" instance=ExtResource("63_x6sb0")]
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, -206.5, -0.41018, 226.5)
+
+[node name="Street80" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(-0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, -0.34202, -205.5, -0.52189, 238.5)
+
+[node name="Street81" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.642788, 0, -0.766044, 0, 1, 0, 0.766044, 0, 0.642788, -164.5, -1.21694, 94.5)
+
+[node name="Street82" parent="Dressing/SouthQuarter" instance=ExtResource("60_rv8ux")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -158.5, -1.35738, 88.5)
+
+[node name="Street83" parent="Dressing/SouthQuarter" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -159.5, -1.29385, 94.5)
+
+[node name="Street84" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(-0.642788, 0, 0.766044, 0, 1, 0, -0.766044, 0, -0.642788, -177.5, -0.74982, 105.5)
+
+[node name="Street85" parent="Dressing/SouthQuarter" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(0.642788, 0, 0.766044, 0, 1, 0, -0.766044, 0, 0.642788, -174.5, -0.74982, 122.5)
+
+[node name="Street86" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
+transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, -159.5, -0.73363, 134.5)
+
+[node name="Street88" parent="Dressing/SouthQuarter" instance=ExtResource("59_6hy75")]
+transform = Transform3D(-0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, -0.939693, -161.5, -0.62178, 137.5)
+
+[node name="Street89" parent="Dressing/SouthQuarter" instance=ExtResource("65_bi8aj")]
+transform = Transform3D(0.173648, 0, -0.984808, 0, 1, 0, 0.984808, 0, 0.173648, -175.5, -0.21233, 168.5)
+
+[node name="Street90" parent="Dressing/SouthQuarter" instance=ExtResource("58_m8wn6")]
+transform = Transform3D(-0.642788, 0, 0.766044, 0, 1, 0, -0.766044, 0, -0.642788, -156.5, -0.51876, 151.5)
+
+[node name="Street91" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(-0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, -0.939693, -179.5, -0.38401, 152.5)
+
+[node name="Street92" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(-0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, -0.939693, -160.5, -0.23127, 173.5)
+
+[node name="Street93" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, 0.34202, -178.5, -0.21233, 188.5)
+
+[node name="Street94" parent="Dressing/SouthQuarter" instance=ExtResource("65_bi8aj")]
+transform = Transform3D(-0.642788, 0, -0.766044, 0, 1, 0, 0.766044, 0, -0.642788, -172.5, -0.19179, 192.5)
+
+[node name="Street95" parent="Dressing/SouthQuarter" instance=ExtResource("68_pi8c8")]
+transform = Transform3D(-0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, -0.34202, -177.5, -0.22473, 197.5)
+
+[node name="Street96" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(-0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, -0.766044, -157.5, -0.22651, 187.5)
+
+[node name="Street97" parent="Dressing/SouthQuarter" instance=ExtResource("82_mw0a1")]
+transform = Transform3D(0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, 0.34202, -159.5, -0.39201, 239.5)
+
+[node name="Street98" parent="Dressing/SouthQuarter" instance=ExtResource("81_e3etl")]
+transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, -161.5, -0.22553, 229.5)
+
+[node name="Street99" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(-0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, -0.984808, -176.5, -0.31821, 227.5)
+
+[node name="Street100" parent="Dressing/SouthQuarter" instance=ExtResource("82_mw0a1")]
+transform = Transform3D(-0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, -0.984808, -176.5, -0.42721, 231.5)
+
+[node name="Quay01" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -1.00475, 104)
+
+[node name="Quay02" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.98684, 115)
+
+[node name="QuayPole02" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -170.5, -0.79082, 121)
+
+[node name="Quay03" parent="Dressing/SouthQuarter" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.79295, 126)
+
+[node name="Quay04" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.59276, 137)
+
+[node name="Quay05" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.54024, 148)
+
+[node name="Quay06" parent="Dressing/SouthQuarter" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.32731, 159)
+
+[node name="QuayPole06" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -170.5, -0.27512, 165)
+
+[node name="Quay07" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.22789, 170)
+
+[node name="Quay08" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.2257, 181)
+
+[node name="Quay09" parent="Dressing/SouthQuarter" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.18437, 192)
+
+[node name="Quay10" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.16885, 203)
+
+[node name="QuayPole10" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -170.5, -0.19691, 209)
+
+[node name="Quay11" parent="Dressing/SouthQuarter" instance=ExtResource("56_yxfwd")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.15907, 214)
+
+[node name="Quay12" parent="Dressing/SouthQuarter" instance=ExtResource("83_sdsyr")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -163.5, -0.19364, 225)
+
+[node name="CorePower" type="Node3D" parent="Dressing"]
+
+[node name="Substation" parent="Dressing/CorePower" instance=ExtResource("86_yh51o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -0.74049, -152)
+
+[node name="Transformer1" parent="Dressing/CorePower" instance=ExtResource("87_7avis")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, -0.74678, -159)
+
+[node name="Transformer2" parent="Dressing/CorePower" instance=ExtResource("87_7avis")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, -0.74678, -145)
+
+[node name="Cabinet1" parent="Dressing/CorePower" instance=ExtResource("43_toy0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.74678, -160)
+
+[node name="Mast1" parent="Dressing/CorePower" instance=ExtResource("47_w1wmw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.74678, -143)
+
+[node name="Poles1" parent="Dressing/CorePower" instance=ExtResource("84_t76os")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, -0.7553, -164)
+
+[node name="Poles2" parent="Dressing/CorePower" instance=ExtResource("84_t76os")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, -0.53393, -140)
+
+[node name="Generator1" parent="Dressing/CorePower" instance=ExtResource("40_u0uw5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, -0.76442, -127)
+
+[node name="Generator2" parent="Dressing/CorePower" instance=ExtResource("40_u0uw5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, -0.80532, -118)
+
+[node name="FuelTanks" parent="Dressing/CorePower" instance=ExtResource("88_d7k2l")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, -0.75796, -111)
+
+[node name="Transformer3" parent="Dressing/CorePower" instance=ExtResource("87_7avis")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, -0.85588, -110)
+
+[node name="Cabinet2" parent="Dressing/CorePower" instance=ExtResource("43_toy0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, -0.75796, -127)
+
+[node name="Trunk1" parent="Dressing/CorePower" instance=ExtResource("89_ogxri")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, -0.90375, -103)
+
+[node name="Trunk2" parent="Dressing/CorePower" instance=ExtResource("89_ogxri")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29, -0.91015, -103)
+
+[node name="CoreHalls" type="Node3D" parent="Dressing"]
+
+[node name="DataHall1" parent="Dressing/CoreHalls" instance=ExtResource("90_yovqn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -1.04703, -86)
+
+[node name="Cooling1" parent="Dressing/CoreHalls" instance=ExtResource("92_fvvrq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, -1.04373, -70)
+
+[node name="Cooling2" parent="Dressing/CoreHalls" instance=ExtResource("92_fvvrq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, -1.0812, -70)
+
+[node name="Cooling3" parent="Dressing/CoreHalls" instance=ExtResource("92_fvvrq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, -1.07556, -70)
+
+[node name="Cabinet1" parent="Dressing/CoreHalls" instance=ExtResource("43_toy0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, -1.04703, -96)
+
+[node name="HallFeed" parent="Dressing/CoreHalls" instance=ExtResource("89_ogxri")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, -0.96738, -93)
+
+[node name="RackRow1" parent="Dressing/CoreHalls" instance=ExtResource("93_s603f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, -1.0395, -62)
+
+[node name="RackRow2" parent="Dressing/CoreHalls" instance=ExtResource("93_s603f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -1.0371, -62)
+
+[node name="RackRow3" parent="Dressing/CoreHalls" instance=ExtResource("93_s603f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, -1.0371, -62)
+
+[node name="RackRow4" parent="Dressing/CoreHalls" instance=ExtResource("93_s603f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, -1.0214, -53)
+
+[node name="RackRow5" parent="Dressing/CoreHalls" instance=ExtResource("93_s603f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -1.0371, -53)
+
+[node name="RackRow6" parent="Dressing/CoreHalls" instance=ExtResource("93_s603f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, -1.0371, -53)
+
+[node name="RackRow7" parent="Dressing/CoreHalls" instance=ExtResource("93_s603f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, -0.996, -44)
+
+[node name="RackRow8" parent="Dressing/CoreHalls" instance=ExtResource("93_s603f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -1.0371, -44)
+
+[node name="RackRow9" parent="Dressing/CoreHalls" instance=ExtResource("93_s603f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, -1.0371, -44)
+
+[node name="RacksToppled" parent="Dressing/CoreHalls" instance=ExtResource("94_n3xda")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.90522, -38)
+
+[node name="Cabinet2" parent="Dressing/CoreHalls" instance=ExtResource("43_toy0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -39, -0.9926, -43)
+
+[node name="ChillerYard1" parent="Dressing/CoreHalls" instance=ExtResource("95_mcjdk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, -0.88338, -20)
+
+[node name="ChillerUnit1" parent="Dressing/CoreHalls" instance=ExtResource("92_fvvrq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, -0.97594, -38)
+
+[node name="ChillerUnit2" parent="Dressing/CoreHalls" instance=ExtResource("92_fvvrq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, -0.95418, -38)
+
+[node name="CorePlaza" type="Node3D" parent="Dressing"]
+
+[node name="Obelisk" parent="Dressing/CorePlaza" instance=ExtResource("96_exdla")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41, -0.91131, -20)
+
+[node name="Monolith1" parent="Dressing/CorePlaza" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -27, -0.92833, -33)
+
+[node name="Monolith2" parent="Dressing/CorePlaza" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -27, -0.86926, -7)
+
+[node name="Monolith3" parent="Dressing/CorePlaza" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -41, -0.99534, -43)
+
+[node name="Monolith4" parent="Dressing/CorePlaza" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -41, -0.83079, 5)
+
+[node name="Feed2" parent="Dressing/CorePlaza" instance=ExtResource("89_ogxri")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -30, -0.86908, -3)
+
+[node name="Mast" parent="Dressing/CorePlaza" instance=ExtResource("47_w1wmw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33, -0.95419, -33)
+
+[node name="Cabinet" parent="Dressing/CorePlaza" instance=ExtResource("43_toy0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33, -0.8706, -7)
+
+[node name="CoreCooling" type="Node3D" parent="Dressing"]
+
+[node name="GateCabinet" parent="Dressing/CoreCooling" instance=ExtResource("43_toy0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, -0.81753, 7)
+
+[node name="GateCable" parent="Dressing/CoreCooling" instance=ExtResource("89_ogxri")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, -0.75738, 19)
+
+[node name="GateMast" parent="Dressing/CoreCooling" instance=ExtResource("47_w1wmw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, -0.74896, 25)
+
+[node name="Canopy1" parent="Dressing/CoreCooling" instance=ExtResource("98_2xto5")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, -0.659, 48)
+
+[node name="Inverter1" parent="Dressing/CoreCooling" instance=ExtResource("100_engpi")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37, -0.65391, 40)
+
+[node name="Inverter2" parent="Dressing/CoreCooling" instance=ExtResource("100_engpi")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37, -0.64881, 56)
+
+[node name="Battery1" parent="Dressing/CoreCooling" instance=ExtResource("55_4konr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, -0.64965, 40)
+
+[node name="Battery2" parent="Dressing/CoreCooling" instance=ExtResource("55_4konr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, -0.64965, 56)
+
+[node name="Cabinet" parent="Dressing/CoreCooling" instance=ExtResource("43_toy0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, -0.64965, 48)
+
+[node name="ChillerYard2" parent="Dressing/CoreCooling" instance=ExtResource("95_mcjdk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, -0.81051, 46)
+
+[node name="Cooling1" parent="Dressing/CoreCooling" instance=ExtResource("92_fvvrq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -78, -0.76267, 38)
+
+[node name="Cooling2" parent="Dressing/CoreCooling" instance=ExtResource("92_fvvrq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -78, -0.83348, 54)
+
+[node name="Pipes" parent="Dressing/CoreCooling" instance=ExtResource("81_e3etl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52, -0.81051, 55)
+
+[node name="CoreDocks" type="Node3D" parent="Dressing"]
+
+[node name="Dock1" parent="Dressing/CoreDocks" instance=ExtResource("54_xk544")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, -0.62037, 71)
+
+[node name="Dock2" parent="Dressing/CoreDocks" instance=ExtResource("54_xk544")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, -0.62037, 87)
+
+[node name="Dock3" parent="Dressing/CoreDocks" instance=ExtResource("54_xk544")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, -0.6311, 71)
+
+[node name="Dock4" parent="Dressing/CoreDocks" instance=ExtResource("54_xk544")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, -0.64035, 87)
+
+[node name="DockCabinet" parent="Dressing/CoreDocks" instance=ExtResource("43_toy0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, -0.63424, 79)
+
+[node name="DockMast" parent="Dressing/CoreDocks" instance=ExtResource("47_w1wmw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, -0.65307, 93)
+
+[node name="Canopy2" parent="Dressing/CoreDocks" instance=ExtResource("101_gt533")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -65, -0.87797, 79)
+
+[node name="Dock5" parent="Dressing/CoreDocks" instance=ExtResource("54_xk544")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, -0.88951, 73)
+
+[node name="Dock6" parent="Dressing/CoreDocks" instance=ExtResource("54_xk544")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -57, -0.87797, 73)
+
+[node name="Battery3" parent="Dressing/CoreDocks" instance=ExtResource("55_4konr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -66, -0.87797, 87)
+
+[node name="Cabinet2" parent="Dressing/CoreDocks" instance=ExtResource("43_toy0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, -0.72889, 106)
+
+[node name="Transformer" parent="Dressing/CoreDocks" instance=ExtResource("87_7avis")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, -0.69203, 106)
+
+[node name="Cable" parent="Dressing/CoreDocks" instance=ExtResource("89_ogxri")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -0.72889, 120)
+
+[node name="CoreAvenue" type="Node3D" parent="Dressing"]
+
+[node name="Way1" parent="Dressing/CoreAvenue" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -51, -0.50427, -140)
+
+[node name="Way2" parent="Dressing/CoreAvenue" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -38, -0.88985, -105)
+
+[node name="Way3" parent="Dressing/CoreAvenue" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -51, -1.12296, -70)
+
+[node name="Way4" parent="Dressing/CoreAvenue" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -38, -0.86756, -2)
+
+[node name="Way5" parent="Dressing/CoreAvenue" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -51, -0.74172, 30)
+
+[node name="Way6" parent="Dressing/CoreAvenue" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -38, -0.62037, 66)
+
+[node name="Way7" parent="Dressing/CoreAvenue" instance=ExtResource("97_nm71s")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -51, -0.75864, 110)
+
+[node name="Bridges" type="Node3D" parent="."]
+
+[node name="Bridge01" parent="Bridges" instance=ExtResource("102_do647")]
+transform = Transform3D(0.0245428, 0, 0.999699, 0, 1, 0, -0.999699, 0, 0.0245428, -36.4499, -2.69926, -380.587)
+
+[node name="Bridge02" parent="Bridges" instance=ExtResource("104_rvdvd")]
+transform = Transform3D(0.981226, 0, -0.192863, 0, 1, 0, 0.192863, 0, 0.981226, -17.4232, -0.591377, -207.223)
+
+[node name="Bridge03" parent="Bridges" instance=ExtResource("105_n5v8g")]
+transform = Transform3D(0.432754, 0, 0.901512, 0, 1, 0, -0.901512, 0, 0.432754, -122.334, -2.69937, -37.7291)
+
+[node name="Bridge04" parent="Bridges" instance=ExtResource("105_n5v8g")]
+transform = Transform3D(0.140724, 0, 0.990049, 0, 1, 0, -0.990049, 0, 0.140724, 28.7362, -2.69993, 16.463)
+
+[node name="Bridge06" parent="Bridges" instance=ExtResource("104_rvdvd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 340, -0.949563, 152.862)
+
+[node name="Bridge07" parent="Bridges" instance=ExtResource("106_g3y3f")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -106, -0.45, 316)

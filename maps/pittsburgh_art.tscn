@@ -1,0 +1,1355 @@
+[gd_scene load_steps=79 format=3]
+
+[ext_resource type="Script" path="res://Env/terrain/generated_terrain.gd" id="1_egq3v"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="2_8wf8h"]
+[ext_resource type="Texture2D" path="res://Env/terrain/sketches/pittsburgh.png" id="3_iacbp"]
+[ext_resource type="Resource" path="res://maps/terrain_data/pittsburgh_level_terrain.res" id="4_nnfkr"]
+[ext_resource type="Material" path="res://Env/terrain/terrain_material.tres" id="5_ftucn"]
+[ext_resource type="Material" path="res://Env/terrain/water_material.tres" id="6_nlhs4"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_stamp.gd" id="7_6xulr"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_path.gd" id="8_vrmj3"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter.gd" id="9_adnun"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter_layer.gd" id="10_2mxua"]
+[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_micro_terrain.tres" id="11_gyw6i"]
+[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_boulders.tres" id="12_4fj77"]
+[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_debris.tres" id="13_rall3"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_parking_lot.tscn" id="14_klvmr"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_semi_truck.tscn" id="27_8xhks"]
+[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_container_stack.tscn" id="28_vcmvk"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_floodlight_mast.tscn" id="29_f0f16"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_barrels.tscn" id="30_swjli"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_crates.tscn" id="31_hvqgp"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_rail_track.tscn" id="34_odru3"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_rail_boxcar.tscn" id="36_i4xd6"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_rail_gondola.tscn" id="37_cqlvs"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_rail_tank_car.tscn" id="39_g16xu"]
+[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_power_pylon.tscn" id="41_nap0a"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_car_wreck.tscn" id="42_1rc1c"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_warehouse_long.tscn" id="44_rjojd"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_scrap_yard.tscn" id="49_hauri"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_gas_sphere.tscn" id="51_m5j84"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_hangar_shed.tscn" id="52_6e8vd"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_pallet_rack.tscn" id="53_01n24"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_forklift.tscn" id="54_ap26t"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_lock_dam.tscn" id="55_tdijr"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_sentry_turret.tscn" id="56_d1abv"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_t_walls.tscn" id="57_xxtyb"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_hesco_sangar.tscn" id="58_aqyg5"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_gun_emplacement.tscn" id="61_l6j35"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_razor_wire.tscn" id="62_boqhn"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_coal_barge.tscn" id="63_kdpc6"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_hesco_row.tscn" id="64_kew22"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_mortar_pit.tscn" id="65_cv3tl"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_hangar_arch.tscn" id="66_2hkpv"]
+[ext_resource type="PackedScene" path="res://maps/blocks/solar/solar_drone_dock.tscn" id="67_g7yxk"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_plant_office.tscn" id="68_i8xsy"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_satellite_dish.tscn" id="70_cdpse"]
+[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_fuel_tanks.tscn" id="71_phwlp"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_water_tower.tscn" id="72_2v26u"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_command_bunker.tscn" id="73_ptnnb"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_container_yard.tscn" id="74_j7fed"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_substation.tscn" id="75_6cei2"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_ammo_dump.tscn" id="77_sinbb"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_hesco_wall.tscn" id="78_jpqdw"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_dragon_teeth.tscn" id="79_pb3ss"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_parking_deck.tscn" id="80_quote"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_jersey_barrier.tscn" id="81_ncjcn"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_sawtooth_factory.tscn" id="82_osd8v"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_checkpoint.tscn" id="83_nwfft"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_gantry_crane.tscn" id="84_2uyg8"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_press.tscn" id="85_x4ax7"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_lathe.tscn" id="86_b50eb"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_cnc.tscn" id="87_bmj1s"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_smokestack.tscn" id="88_l5ry7"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_steel_coils.tscn" id="89_rmxfl"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_blast_furnace.tscn" id="90_thorb"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_coal_pile.tscn" id="91_pjxea"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_excavator.tscn" id="92_7wttg"]
+[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_bulldozer.tscn" id="93_jv52j"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_tank_trap.tscn" id="94_53ksf"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_rubble_pile.tscn" id="95_nj00v"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bridges/bridge_causeway.tscn" id="96_kclu7"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bridges/bridge_damaged.tscn" id="98_skcik"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bridges/bridge_medium.tscn" id="99_5gdm0"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bridges/bridge_short.tscn" id="100_cmrfg"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bridges/bridge_arch.tscn" id="101_kmep6"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bridges/bridge_foot.tscn" id="104_shk35"]
+
+[sub_resource type="Resource" id="Resource_wc85w"]
+script = ExtResource("2_8wf8h")
+size_x = 1408.0
+size_z = 896.0
+cell_size = 2.0
+random_seed = 7
+layout = 2
+floor_at_zero = true
+floor_width = 150.0
+floor_shoulder = 150.0
+floor_depth = 20.0
+floor_roughness = 0.3
+floor_edge_noise = 0.35
+meander = 90.0
+meander_scale = 650.0
+border_sides = 0
+border_height = 75.0
+border_width = 170.0
+border_noise = 70.0
+border_ruggedness = 0.7
+hills_height = 1.5
+hills_scale = 150.0
+hills_octaves = 5
+hills_warp = 40.0
+ridge_height = 2.0
+ridge_scale = 220.0
+ridge_on_floor = 0.1
+detail_height = 0.6
+detail_scale = 14.0
+terrace_step = 0.0
+terrace_strength = 0.75
+crater_count = 15
+crater_radius_min = 2.0
+crater_radius_max = 6.0
+crater_depth = 0.3
+crater_rim = 0.1
+craters_on_floor = true
+thermal_passes = 2
+talus_angle = 38.0
+hydraulic_strength = 1.5
+smooth_passes = 1
+sketch = ExtResource("3_iacbp")
+sketch_metres_per_pixel = 4.0
+sketch_blend = 6.0
+sketch_edge_noise = 4.0
+sketch_mountain_height = 3.0
+water_level = -3.5
+water_depth = 4.0
+water_bank = 12.0
+urban_block = Vector2(28, 22)
+urban_street = 6.0
+urban_angle = 25.0
+urban_ruin = 0.25
+shelling_per_hectare = 30.0
+rough_height = 6.0
+road_width = 6.0
+road_falloff = 4.0
+road_smoothing = 30.0
+bridge_clearance = 2.5
+
+[sub_resource type="Curve3D" id="Curve3D_road"]
+bake_interval = 1.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -520, -0.05, 18, -39.6, 0, 5.28, 39.6, 0, -5.28, -440, -0.1, 12, -46.2, 0, 3.52, 46.2, 0, -3.52, -340, 0.8, -6, -48.4, 0, -3.96, 48.4, 0, 3.96, -230, -0.2, -4, -48.4, 0, -4.84, 48.4, 0, 4.84, -120, 0.3, 12, -48.4, 0, 0.88, 48.4, 0, -0.88, -10, 0, 18, -48.4, 0, 7.04, 48.4, 0, -7.04, 100, 0.2, 8, -50.6, 0, 3.08, 50.6, 0, -3.08, 210, -0.4, -14, -48.4, 0, -5.72, 48.4, 0, 5.72, 330, 0, -6, -38.5, 0, -5.72, 38.5, 0, 5.72, 430, 0.2, 12, 0, 0, 0, 0, 0, 0, 505, -0.3, 20),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+}
+point_count = 11
+
+[sub_resource type="Curve3D" id="Curve3D_trench_n"]
+bake_interval = 1.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 60, 1.5, -110, -0.88, 0, -12.76, 0.88, 0, 12.76, 52, 0.8, -80, -0.88, 0, -12.32, 0.88, 0, 12.32, 64, 0.9, -52, 0, 0, 0, 0, 0, 0, 56, 0.25, -24),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_trench_s"]
+bake_interval = 1.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 58, 0.7, 38, 0.88, 0, -11.88, -0.88, 0, 11.88, 66, 0.35, 64, 0.88, 0, -11.88, -0.88, 0, 11.88, 54, 0.2, 92, 0, 0, 0, 0, 0, 0, 62, 1.05, 118),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[node name="PittsburghArt" type="Node3D"]
+
+[node name="Terrain" type="Node3D" parent="."]
+script = ExtResource("1_egq3v")
+recipe = SubResource("Resource_wc85w")
+data = ExtResource("4_nnfkr")
+bridge_blockouts = false
+
+[node name="Stamps" type="Node3D" parent="Terrain"]
+
+[node name="OutpostPad" type="Node3D" parent="Terrain/Stamps"]
+transform = Transform3D(0.990268, 0, 0.139173, 0, 1, 0, -0.139173, 0, 0.990268, -190, -0.15, -44)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(48, 32)
+falloff = 10.0
+
+[node name="CompoundPad" type="Node3D" parent="Terrain/Stamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 250, -1.2, 62)
+script = ExtResource("7_6xulr")
+radius = 26.0
+falloff = 12.0
+
+[node name="ExtractionPad" type="Node3D" parent="Terrain/Stamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 505, -0.8, 20)
+script = ExtResource("7_6xulr")
+radius = 16.0
+
+[node name="ImpactCrater" type="Node3D" parent="Terrain/Stamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, -0.15, -70)
+script = ExtResource("7_6xulr")
+shape = 3
+radius = 18.0
+amount = 6.0
+paint = 3
+
+[node name="Road" type="Path3D" parent="Terrain"]
+curve = SubResource("Curve3D_road")
+script = ExtResource("8_vrmj3")
+width = 7.0
+
+[node name="TrenchNorth" type="Path3D" parent="Terrain"]
+curve = SubResource("Curve3D_trench_n")
+script = ExtResource("8_vrmj3")
+mode = 1
+width = 4.0
+falloff = 1.5
+smoothing = 10.0
+
+[node name="TrenchSouth" type="Path3D" parent="Terrain"]
+curve = SubResource("Curve3D_trench_s")
+script = ExtResource("8_vrmj3")
+mode = 1
+width = 4.0
+falloff = 1.5
+smoothing = 10.0
+
+[node name="Scatter" type="Node3D" parent="Terrain"]
+script = ExtResource("9_adnun")
+layers = Array[ExtResource("10_2mxua")]([ExtResource("11_gyw6i"), ExtResource("12_4fj77"), ExtResource("13_rall3")])
+
+[node name="IndustryPads" type="Node3D" parent="Terrain"]
+
+[node name="Pad_Staging" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -491, 2.94347, 351)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(38, 56)
+
+[node name="Pad_OhioWorks" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, -352, -2.20609, -132)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(88, 56)
+
+[node name="Pad_DamWest" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-0.920505, 0, -0.390731, 0, 1, 0, 0.390731, 0, -0.920505, -303.781, -1, -170.093)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10, 20)
+falloff = 6.0
+
+[node name="Pad_DamEast" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-0.920505, 0, -0.390731, 0, 1, 0, 0.390731, 0, -0.920505, -260.964, -1, -188.485)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(16, 22)
+falloff = 6.0
+
+[node name="Pad_Island" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.891007, 0, 0.453991, 0, 1, 0, -0.453991, 0, 0.891007, -263, -2, -96)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10, 44)
+falloff = 3.0
+
+[node name="Pad_DroneDepot" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -312, 20.9704, 150)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(110, 64)
+falloff = 10.0
+
+[node name="Pad_Port" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.997564, 0, -0.0697565, 0, 1, 0, 0.0697565, 0, 0.997564, 386, 0.491409, -276)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(94, 30)
+
+[node name="Pad_Furnace" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 386, -1.46886, 229)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(64, 44)
+
+[node name="Pad_CokeWorks" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 544, -0.620412, 259)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(100, 34)
+
+[node name="Pad_ValleyRail_PylonS" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -428, 12.4729, 290)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(11.625, 9.375)
+falloff = 4.0
+
+[node name="Pad_ValleyRail_PylonM" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, -420, 5.84159, 170)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(11.625, 9.375)
+falloff = 4.0
+
+[node name="Pad_ValleyRail_PylonN" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -432, 18.0483, 50)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(11.625, 9.375)
+falloff = 4.0
+
+[node name="Pad_Dam_Sangar" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-0.920505, 0, -0.390731, 0, 1, 0, 0.390731, 0, -0.920505, -318.411, -1, -178.005)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(12.25, 7)
+falloff = 4.0
+
+[node name="Pad_Dam_GunPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.390731, 0, -0.920505, 0, 1, 0, 0.920505, 0, 0.390731, -312.542, -2.20609, -160.942)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10.8125, 12.0938)
+falloff = 4.0
+
+[node name="Pad_Dam_FloodlightW" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.390731, 0, -0.920505, 0, 1, 0, 0.920505, 0, 0.390731, -303.23, -1, -155.118)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(5.1875, 6.5)
+falloff = 4.0
+
+[node name="Pad_NorthShore_Bunker" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.422618, 0, 0.906308, 0, 1, 0, -0.906308, 0, 0.422618, -145.094, -0.490462, -55.5774)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(26, 24)
+falloff = 4.0
+
+[node name="Pad_NorthShore_Office" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -115, -0.925237, -42)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(25, 19)
+falloff = 4.0
+
+[node name="Pad_NorthShore_CarPark" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -160, -0.490462, -27)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(34, 26)
+falloff = 4.0
+
+[node name="Pad_NorthShore_ContainerYard" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -127, -0.490462, -14)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(34, 26)
+falloff = 4.0
+
+[node name="Pad_NorthShore_Substation" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -73, 0.504408, -53)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(18.0625, 22.0626)
+falloff = 4.0
+
+[node name="Pad_NorthShore_SangarW" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -193, -0.15, -49.375)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(12.25, 7)
+falloff = 4.0
+
+[node name="Pad_NorthShore_GunPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -201.359, -0.15, -34)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10.8125, 12.0938)
+falloff = 4.0
+
+[node name="Pad_NorthShore_MortarPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -180, -0.490462, -40)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(8.375, 8.0625)
+falloff = 4.0
+
+[node name="Pad_NorthShore_AmmoDump" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -176, -0.490462, -54.4844)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10, 10.7813)
+falloff = 4.0
+
+[node name="Pad_NorthShore_HescoW" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -210.344, -0.15, -48)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(14.0625, 6.375)
+falloff = 4.0
+
+[node name="Pad_NorthShore_TWallsN" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -168.011, -0.490462, -63.9018)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(9.5, 3.1875)
+falloff = 4.0
+
+[node name="Pad_NorthShore_Sentry1" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, -129.567, -0.490462, -63.75)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_NorthShore_Sentry2" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -99.5, -0.925237, -26)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_NorthShore_Teeth" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -140.008, -0.490462, -82.0208)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(15.3438, 5.03126)
+falloff = 4.0
+
+[node name="Pad_NorthShore_Floodlight1" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -188, -0.490462, -30.3438)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(5.1875, 6.5)
+falloff = 4.0
+
+[node name="Pad_NorthShore_Floodlight2" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -120, -0.490462, -61.6563)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(5.1875, 6.5)
+falloff = 4.0
+
+[node name="Pad_Downtown_ParkingDeck" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -4, -1.83368, 41)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(39, 27)
+falloff = 4.0
+
+[node name="Pad_Strip_Bunker" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 97.5774, 0.576549, -96.0937)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(26, 24)
+falloff = 4.0
+
+[node name="Pad_Strip_DepotYard" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 86, 0.576549, -69)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(34, 26)
+falloff = 4.0
+
+[node name="Pad_Strip_Factory" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.422618, 0, 0.906308, 0, 1, 0, -0.906308, 0, 0.422618, 134, 0.11587, -149)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(37, 31)
+falloff = 4.0
+
+[node name="Pad_Strip_Warehouse" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.422618, 0, 0.906308, 0, 1, 0, -0.906308, 0, 0.422618, 165.411, 2.57863, -196.102)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(56.5, 29)
+falloff = 4.0
+
+[node name="Pad_Strip_BridgeCheckpoint" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.891007, 0, -0.453991, 0, 1, 0, 0.453991, 0, 0.891007, 109.099, 0.11587, -130.196)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(24.3126, 15.75)
+falloff = 4.0
+
+[node name="Pad_Strip_Sangar" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 92.625, 0.576549, -124)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(12.25, 7)
+falloff = 4.0
+
+[node name="Pad_Strip_GunPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 68.6406, 0.576549, -100)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10.8125, 12.0938)
+falloff = 4.0
+
+[node name="Pad_Strip_MortarPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 116, 0.576549, -80)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(8.375, 8.0625)
+falloff = 4.0
+
+[node name="Pad_Strip_Sentry1" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 92, 0.576549, -117.5)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_Strip_Sentry2" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 64.5, 0.576549, -90)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_Strip_TWalls" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, 72.0968, 0.576549, -111.98)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(9.5, 3.1875)
+falloff = 4.0
+
+[node name="Pad_Strip_Floodlight" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 104, 0.576549, -111.656)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(5.1875, 6.5)
+falloff = 4.0
+
+[node name="Pad_Port_Sentry2" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-0.997564, 0, 0.0697565, 0, 1, 0, -0.0697565, 0, -0.997564, 435.495, 0.491409, -267.026)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_Port_GunPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.0697565, 0, 0.997564, 0, 1, 0, -0.997564, 0, 0.0697565, 332.492, 0.491409, -275.732)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10.8125, 12.0938)
+falloff = 4.0
+
+[node name="Pad_Port_Sangar" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.997564, 0, -0.0697565, 0, 1, 0, 0.0697565, 0, 0.997564, 328.355, 0.491409, -292.06)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(12.25, 7)
+falloff = 4.0
+
+[node name="Pad_Bridgehead_Checkpoint" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 87.5625, 0.111286, 69.125)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(24.3126, 15.75)
+falloff = 4.0
+
+[node name="Pad_Bridgehead_TWallsW" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 54.0938, -1.47466, 64.9688)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(9.5, 3.1875)
+falloff = 4.0
+
+[node name="Pad_Bridgehead_TWallsE" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 71.0938, 0.111286, 70.9688)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(9.5, 3.1875)
+falloff = 4.0
+
+[node name="Pad_Bridgehead_Sangar" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 41.375, -1.47466, 62)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(12.25, 7)
+falloff = 4.0
+
+[node name="Pad_Bridgehead_GunPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 106, 0.111286, 61.3594)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10.8125, 12.0938)
+falloff = 4.0
+
+[node name="Pad_Bridgehead_Teeth" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, 111.98, 0.111286, 79.9907)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(15.3438, 5.03126)
+falloff = 4.0
+
+[node name="Pad_Bridgehead_Sentry1" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 70, 0.111286, 61.5)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_Bridgehead_Sentry2" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 44, -1.47466, 67.5)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_Bridgehead_Floodlight" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 64, -1.47466, 57.6563)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(5.1875, 6.5)
+falloff = 4.0
+
+[node name="Pad_SouthSideMill_MillShed" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 18, -0.736436, 116)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(24, 34)
+falloff = 4.0
+
+[node name="Pad_SouthSideMill_Shop" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 66, 0.157222, 124)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(37, 31)
+falloff = 4.0
+
+[node name="Pad_SouthSideMill_StackW" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, -0.736436, 107.156)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(9.375, 15.6875)
+falloff = 4.0
+
+[node name="Pad_SouthSideMill_StackE" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0.157222, 149.156)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(9.375, 15.6875)
+falloff = 4.0
+
+[node name="Pad_SouthSideMill_Coils" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -9.93397, -0.736436, 129.858)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(8, 17.6875)
+falloff = 4.0
+
+[node name="Pad_SouthSideMill_Forklift" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, 1.94978, -0.736436, 137.94)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.3125, 5.96875)
+falloff = 4.0
+
+[node name="Pad_Furnace_Bunker" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 425, -1.46886, 233)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(26, 24)
+falloff = 4.0
+
+[node name="Pad_Furnace_SangarW" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 341.375, -1.46886, 221)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(12.25, 7)
+falloff = 4.0
+
+[node name="Pad_Furnace_GunPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 344.641, -1.46886, 239)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10.8125, 12.0938)
+falloff = 4.0
+
+[node name="Pad_Furnace_MortarPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 416, -1.46886, 245)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(8.375, 8.0625)
+falloff = 4.0
+
+[node name="Pad_Furnace_AmmoDump" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 372, -1.46886, 245.516)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10, 10.7813)
+falloff = 4.0
+
+[node name="Pad_Furnace_HescoS" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 362, -1.46886, 255.656)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(14.0625, 6.375)
+falloff = 4.0
+
+[node name="Pad_Furnace_Sentry1" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 360, -1.46886, 209.5)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_Furnace_Sentry2" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 420, -1.46886, 215.5)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_Furnace_Floodlight2" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 408, -1.46886, 211.344)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(5.1875, 6.5)
+falloff = 4.0
+
+[node name="Pad_CokeWorks_Sangar" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, -0.819152, 585.638, -0.620412, 256.415)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(12.25, 7)
+falloff = 4.0
+
+[node name="Pad_CokeWorks_GunPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, -0.819152, 557.642, -0.620412, 236.03)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(10.8125, 12.0938)
+falloff = 4.0
+
+[node name="Pad_CokeWorks_MortarPit" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 534.338, -0.620412, 220.495)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(8.375, 8.0625)
+falloff = 4.0
+
+[node name="Pad_CokeWorks_Sentry1" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(-0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, -0.819152, 578.853, -0.620412, 299.885)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_CokeWorks_Sentry2" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.573576, 0, 0.819152, 0, 1, 0, -0.819152, 0, 0.573576, 498.372, -0.620412, 234.376)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(3.625, 7)
+falloff = 4.0
+
+[node name="Pad_CokeWorks_Hesco" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 568.284, -0.620412, 248.727)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(14.0625, 6.375)
+falloff = 4.0
+
+[node name="Pad_EastRoad_Pylon1" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.996195, 0, 0.0871557, 0, 1, 0, -0.0871557, 0, 0.996195, 130, 20.4443, -14)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(11.625, 9.375)
+falloff = 4.0
+
+[node name="Pad_EastRoad_Pylon2" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, 250, 4.45605, -34)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(11.625, 9.375)
+falloff = 4.0
+
+[node name="Pad_EastRoad_Pylon3" type="Node3D" parent="Terrain/IndustryPads"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 370, 21.0329, -24)
+script = ExtResource("7_6xulr")
+footprint = 1
+size = Vector2(11.625, 9.375)
+falloff = 4.0
+
+[node name="Dressing" type="Node3D" parent="."]
+
+[node name="Staging" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -488, 0, 346)
+
+[node name="CarPark" parent="Dressing/Staging" instance=ExtResource("14_klvmr")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -9, 2.94347, 15)
+
+[node name="Rig" parent="Dressing/Staging" instance=ExtResource("27_8xhks")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 2.94347, 5)
+
+[node name="Containers" parent="Dressing/Staging" instance=ExtResource("28_vcmvk")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 10, 2.94347, 23)
+
+[node name="Floodlight1" parent="Dressing/Staging" instance=ExtResource("29_f0f16")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -18, 2.94347, -9)
+
+[node name="Floodlight2" parent="Dressing/Staging" instance=ExtResource("29_f0f16")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 12, 2.94347, -15)
+
+[node name="Barrels" parent="Dressing/Staging" instance=ExtResource("30_swjli")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 2.94347, -6)
+
+[node name="Crates" parent="Dressing/Staging" instance=ExtResource("31_hvqgp")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -15, 2.94347, -15)
+
+[node name="ValleyRail" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -455, 0, 194)
+
+[node name="Track01" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(0.413682, 0.0100114, 0.910366, -0.0241937, 0.999707, 0, -0.9101, -0.0220251, 0.413803, -28.0344, 2.21717, 117.076)
+
+[node name="Track02" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(0.413403, -0.0182052, 0.910366, 0.0439948, 0.999032, 0, -0.909485, 0.0400514, 0.413803, -18.1031, 2.24726, 95.2268)
+
+[node name="Boxcar1" parent="Dressing/ValleyRail" instance=ExtResource("36_i4xd6")]
+transform = Transform3D(0.413204, -0.0222573, 0.910366, 0.0537871, 0.998552, 0, -0.909049, 0.048966, 0.413803, -18.1031, 2.15179, 95.2268)
+
+[node name="Track03" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(0.359436, 0.0149376, 0.93305, -0.0415225, 0.999138, 0, -0.932246, -0.0387426, 0.359746, -8.82062, 2.95633, 73.1061)
+
+[node name="Gondola1" parent="Dressing/ValleyRail" instance=ExtResource("37_cqlvs")]
+transform = Transform3D(0.359034, 0.0226239, 0.93305, -0.0628885, 0.998021, 0, -0.931203, -0.0586781, 0.359746, -8.82062, 3.04378, 73.1061)
+
+[node name="Track04" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(0.2486, -0.00328604, 0.968601, 0.013217, 0.999913, 0, -0.968516, 0.012802, 0.248622, -1.52454, 2.55785, 50.303)
+
+[node name="TankCar1" parent="Dressing/ValleyRail" instance=ExtResource("39_g16xu")]
+transform = Transform3D(0.248608, -0.0026018, 0.968601, 0.0104649, 0.999945, 0, -0.968548, 0.0101363, 0.248622, -1.52454, 2.5779, 50.303)
+
+[node name="Track05" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(0.22483, 0.00358203, 0.974391, -0.0159301, 0.999873, 0, -0.974268, -0.0155222, 0.224859, 4.15302, 2.43235, 27.0036)
+
+[node name="Track06" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(0.161424, 0.00337068, 0.986879, -0.0208764, 0.999782, 0, -0.986664, -0.0206025, 0.161459, 8.78613, 2.29854, 3.48471)
+
+[node name="Track07" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(-0.0126449, 0.000344672, 0.99992, 0.0272477, 0.999629, 0, -0.999549, 0.0272455, -0.0126496, 10.5703, 2.41235, -20.256)
+
+[node name="BoxcarDerailed" parent="Dressing/ValleyRail" instance=ExtResource("36_i4xd6")]
+transform = Transform3D(-0.202102, 0.0522158, 0.977972, 0.0424414, 0.998107, -0.0445201, -0.978444, 0.0325089, -0.203935, 10.5703, 2.46268, -20.256)
+
+[node name="Track08" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(-0.181606, -0.00344043, 0.983365, -0.0189411, 0.999821, 0, -0.983189, -0.018626, -0.181638, 8.24414, 2.78118, -43.9477)
+
+[node name="Track09" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(-0.289481, 0.0142048, 0.957078, 0.049011, 0.998798, 0, -0.955928, 0.0469074, -0.289829, 2.59552, 2.70485, -67.1944)
+
+[node name="Track10" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(-0.377844, 0.00451888, 0.925858, 0.0119588, 0.999928, 0, -0.925792, 0.0110721, -0.377871, -5.40881, 3.51603, -89.7657)
+
+[node name="Track11" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(-0.413717, -0.00844739, 0.910366, -0.020414, 0.999792, 0, -0.910177, -0.0185842, -0.413803, -14.9055, 2.90223, -111.792)
+
+[node name="Track12" parent="Dressing/ValleyRail" instance=ExtResource("34_odru3")]
+transform = Transform3D(-0.373738, -0.00811151, 0.927499, -0.0216986, 0.999765, 0, -0.92728, -0.0201254, -0.373826, -24.3525, 2.77139, -133.835)
+
+[node name="PylonS" parent="Dressing/ValleyRail" instance=ExtResource("41_nap0a")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, 27, 12.4729, 96)
+
+[node name="PylonM" parent="Dressing/ValleyRail" instance=ExtResource("41_nap0a")]
+transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, 35, 5.84159, -24)
+
+[node name="PylonN" parent="Dressing/ValleyRail" instance=ExtResource("41_nap0a")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 18.0483, -144)
+
+[node name="Wreck1" parent="Dressing/ValleyRail" instance=ExtResource("42_1rc1c")]
+transform = Transform3D(0.342847, 0.101876, 0.933851, 0.0161866, 0.993314, -0.114306, -0.939252, 0.0543053, 0.338906, -8, 3.26396, 44)
+
+[node name="OhioWorks" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -353, 0, -123)
+
+[node name="Warehouse" parent="Dressing/OhioWorks" instance=ExtResource("44_rjojd")]
+transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, -4.58234, -2.20609, -24.1274)
+
+[node name="ScrapYard" parent="Dressing/OhioWorks" instance=ExtResource("49_hauri")]
+transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, 28.6173, -2.20609, 2.42505)
+
+[node name="GasHolder" parent="Dressing/OhioWorks" instance=ExtResource("51_m5j84")]
+transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, -30.9803, -2.20609, -17.559)
+
+[node name="Containers" parent="Dressing/OhioWorks" instance=ExtResource("28_vcmvk")]
+transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, -13.8809, -2.20609, -0.600014)
+
+[node name="MillShed" parent="Dressing/OhioWorks" instance=ExtResource("52_6e8vd")]
+transform = Transform3D(0.642788, 0, 0.766044, 0, 1, 0, -0.766044, 0, 0.642788, 11.0772, -2.20609, 20.995)
+
+[node name="Racking" parent="Dressing/OhioWorks" instance=ExtResource("53_01n24")]
+transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, 11.0772, -2.20609, 20.995)
+
+[node name="Forklift" parent="Dressing/OhioWorks" instance=ExtResource("54_ap26t")]
+transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, -6.56369, -2.20609, -6.20883)
+
+[node name="Barrels" parent="Dressing/OhioWorks" instance=ExtResource("30_swjli")]
+transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, 1.98605, -2.20609, 2.27066)
+
+[node name="Dam" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -291, 0, -180)
+
+[node name="LockDam" parent="Dressing/Dam" instance=ExtResource("55_tdijr")]
+transform = Transform3D(-0.920505, 0, -0.390731, 0, 1, 0, 0.390731, 0, -0.920505, 8, -1, 0)
+
+[node name="Sentry" parent="Dressing/Dam" instance=ExtResource("56_d1abv")]
+transform = Transform3D(-0.920505, 0, -0.390731, 0, 1, 0, 0.390731, 0, -0.920505, 35.9795, -1, -3.1857)
+
+[node name="TWalls" parent="Dressing/Dam" instance=ExtResource("57_xxtyb")]
+transform = Transform3D(-0.920505, 0, -0.390731, 0, 1, 0, 0.390731, 0, -0.920505, 31.9595, -1, -17.7747)
+
+[node name="FloodlightE" parent="Dressing/Dam" instance=ExtResource("29_f0f16")]
+transform = Transform3D(0.390731, 0, -0.920505, 0, 1, 0, 0.920505, 0, 0.390731, 36.7873, -1, -8.96042)
+
+[node name="Sangar" parent="Dressing/Dam" instance=ExtResource("58_aqyg5")]
+transform = Transform3D(-0.920505, 0, -0.390731, 0, 1, 0, 0.390731, 0, -0.920505, -29.827, -1, 3.02026)
+
+[node name="GunPit" parent="Dressing/Dam" instance=ExtResource("61_l6j35")]
+transform = Transform3D(0.390731, 0, -0.920505, 0, 1, 0, 0.920505, 0, 0.390731, -20.9528, -2.20609, 18.8079)
+
+[node name="Wire" parent="Dressing/Dam" instance=ExtResource("62_boqhn")]
+transform = Transform3D(0.401926, -0.187886, -0.896189, -0.116792, 0.960209, -0.253688, 0.908193, 0.206632, 0.363989, -32.7275, -1.5349, 6.42419)
+
+[node name="FloodlightW" parent="Dressing/Dam" instance=ExtResource("29_f0f16")]
+transform = Transform3D(0.390731, 0, -0.920505, 0, 1, 0, 0.920505, 0, 0.390731, -11.9132, -1, 24.748)
+
+[node name="Barge" parent="Dressing/Dam" instance=ExtResource("63_kdpc6")]
+transform = Transform3D(0.390731, 0, -0.920505, 0, 1, 0, 0.920505, 0, 0.390731, -15.9402, -3.5, -25.6879)
+
+[node name="Island" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -263, 0, -95)
+
+[node name="HescoTip" parent="Dressing/Island" instance=ExtResource("64_kew22")]
+transform = Transform3D(0.891007, 0, 0.453991, 0, 1, 0, -0.453991, 0, 0.891007, -9.53381, -2, -19.7111)
+
+[node name="GunPit" parent="Dressing/Island" instance=ExtResource("61_l6j35")]
+transform = Transform3D(0.891007, 0, 0.453991, 0, 1, 0, -0.453991, 0, 0.891007, -5.90189, -2, -12.5831)
+
+[node name="Sangar" parent="Dressing/Island" instance=ExtResource("58_aqyg5")]
+transform = Transform3D(-0.453991, 0, 0.891006, 0, 1, 0, -0.891006, 0, -0.453991, 0.453979, -2, -0.108994)
+
+[node name="MortarPit" parent="Dressing/Island" instance=ExtResource("65_cv3tl")]
+transform = Transform3D(0.891007, 0, 0.453991, 0, 1, 0, -0.453991, 0, 0.891007, 6.80984, -2, 12.3651)
+
+[node name="SentryW" parent="Dressing/Island" instance=ExtResource("56_d1abv")]
+transform = Transform3D(0.891007, 0, 0.453991, 0, 1, 0, -0.453991, 0, 0.891007, -5.38849, -2, -3.86607)
+
+[node name="SentryE" parent="Dressing/Island" instance=ExtResource("56_d1abv")]
+transform = Transform3D(-0.891007, 0, -0.453991, 0, 1, 0, 0.453991, 0, -0.891007, 7.65843, -2, 6.3211)
+
+[node name="WireW" parent="Dressing/Island" instance=ExtResource("62_boqhn")]
+transform = Transform3D(-0.453991, 0, 0.891006, 0, 1, 0, -0.891006, 0, -0.453991, 0.0763855, -2, 9.06202)
+
+[node name="Floodlight" parent="Dressing/Island" instance=ExtResource("29_f0f16")]
+transform = Transform3D(0.891007, 0, 0.453991, 0, 1, 0, -0.453991, 0, 0.891007, 0.630066, -2, -6.3715)
+
+[node name="BargeE" parent="Dressing/Island" instance=ExtResource("63_kdpc6")]
+transform = Transform3D(-0.453991, 0, 0.891006, 0, 1, 0, -0.891006, 0, -0.453991, 26.9339, -3.5, 12.2123)
+
+[node name="DroneDepot" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -317, 0, 157)
+
+[node name="HangarW" parent="Dressing/DroneDepot" instance=ExtResource("66_2hkpv")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -15, 20.9704, -17)
+
+[node name="HangarE" parent="Dressing/DroneDepot" instance=ExtResource("66_2hkpv")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 25, 20.9704, -17)
+
+[node name="Dock1" parent="Dressing/DroneDepot" instance=ExtResource("67_g7yxk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41, 20.9704, 14)
+
+[node name="Dock2" parent="Dressing/DroneDepot" instance=ExtResource("67_g7yxk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33, 20.9704, 19)
+
+[node name="Dock3" parent="Dressing/DroneDepot" instance=ExtResource("67_g7yxk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43, 20.9704, 20)
+
+[node name="Control" parent="Dressing/DroneDepot" instance=ExtResource("68_i8xsy")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -39, 20.9704, -23)
+
+[node name="Dish" parent="Dressing/DroneDepot" instance=ExtResource("70_cdpse")]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, 51, 20.9704, -28)
+
+[node name="Fuel" parent="Dressing/DroneDepot" instance=ExtResource("71_phwlp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 20.9704, -14)
+
+[node name="Floodlight1" parent="Dressing/DroneDepot" instance=ExtResource("29_f0f16")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 5, 20.9704, 19)
+
+[node name="Floodlight2" parent="Dressing/DroneDepot" instance=ExtResource("29_f0f16")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -47, 20.9704, -3)
+
+[node name="WaterTower" parent="Dressing/DroneDepot" instance=ExtResource("72_2v26u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61, 21.2186, 5)
+
+[node name="NorthShore" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -156, 0, -48)
+
+[node name="Bunker" parent="Dressing/NorthShore" instance=ExtResource("73_ptnnb")]
+transform = Transform3D(0.422618, 0, 0.906308, 0, 1, 0, -0.906308, 0, 0.422618, 10, -0.490462, -8)
+
+[node name="Office" parent="Dressing/NorthShore" instance=ExtResource("68_i8xsy")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 41, -0.925237, 6)
+
+[node name="CarPark" parent="Dressing/NorthShore" instance=ExtResource("14_klvmr")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -4, -0.490462, 21)
+
+[node name="ContainerYard" parent="Dressing/NorthShore" instance=ExtResource("74_j7fed")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 29, -0.490462, 34)
+
+[node name="Substation" parent="Dressing/NorthShore" instance=ExtResource("75_6cei2")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 83, 0.504408, -5)
+
+[node name="SangarW" parent="Dressing/NorthShore" instance=ExtResource("58_aqyg5")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -37, -0.15, -4)
+
+[node name="GunPit" parent="Dressing/NorthShore" instance=ExtResource("61_l6j35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -46, -0.15, 14)
+
+[node name="MortarPit" parent="Dressing/NorthShore" instance=ExtResource("65_cv3tl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -0.490462, 8)
+
+[node name="AmmoDump" parent="Dressing/NorthShore" instance=ExtResource("77_sinbb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, -0.490462, -6)
+
+[node name="HescoW" parent="Dressing/NorthShore" instance=ExtResource("78_jpqdw")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -56, -0.15, 0)
+
+[node name="TWallsN" parent="Dressing/NorthShore" instance=ExtResource("57_xxtyb")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -12, -0.490462, -16)
+
+[node name="Sentry1" parent="Dressing/NorthShore" instance=ExtResource("56_d1abv")]
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, 26, -0.490462, -16)
+
+[node name="Sentry2" parent="Dressing/NorthShore" instance=ExtResource("56_d1abv")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 56, -0.925237, 22)
+
+[node name="WireBank" parent="Dressing/NorthShore" instance=ExtResource("62_boqhn")]
+transform = Transform3D(0.497331, -0.104382, 0.861258, 0.0509945, 0.994536, 0.0910887, -0.866061, -0.00138183, 0.499937, -58, -2.44034, -22)
+
+[node name="Teeth" parent="Dressing/NorthShore" instance=ExtResource("79_pb3ss")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 16, -0.490462, -34)
+
+[node name="Floodlight1" parent="Dressing/NorthShore" instance=ExtResource("29_f0f16")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -32, -0.490462, 18)
+
+[node name="Floodlight2" parent="Dressing/NorthShore" instance=ExtResource("29_f0f16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, -0.490462, -14)
+
+[node name="Downtown" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, 26)
+
+[node name="ParkingDeck" parent="Dressing/Downtown" instance=ExtResource("80_quote")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 11, -1.83368, 15)
+
+[node name="Wreck1" parent="Dressing/Downtown" instance=ExtResource("42_1rc1c")]
+transform = Transform3D(0.865958, 0.0181908, 0.499787, -0.00745875, 0.999697, -0.0234626, -0.500062, 0.0165898, 0.865831, -27, -1.82292, -5)
+
+[node name="Barrier1" parent="Dressing/Downtown" instance=ExtResource("81_ncjcn")]
+transform = Transform3D(0.493418, -0.109997, 0.862809, 0.119149, 0.991168, 0.0582224, -0.861593, 0.0740748, 0.502166, -7, -2.33363, 0)
+
+[node name="Strip" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 102, 0, -114)
+
+[node name="Bunker" parent="Dressing/Strip" instance=ExtResource("73_ptnnb")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -4, 0.576549, 17)
+
+[node name="DepotYard" parent="Dressing/Strip" instance=ExtResource("74_j7fed")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -16, 0.576549, 45)
+
+[node name="Factory" parent="Dressing/Strip" instance=ExtResource("82_osd8v")]
+transform = Transform3D(0.422618, 0, 0.906308, 0, 1, 0, -0.906308, 0, 0.422618, 32, 0.11587, -35)
+
+[node name="Warehouse" parent="Dressing/Strip" instance=ExtResource("44_rjojd")]
+transform = Transform3D(0.422618, 0, 0.906308, 0, 1, 0, -0.906308, 0, 0.422618, 64, 2.57863, -81)
+
+[node name="FortCheckpoint" parent="Dressing/Strip" instance=ExtResource("83_nwfft")]
+transform = Transform3D(0.891006, 0, -0.453991, 0, 1, 0, 0.453991, 0, 0.891006, 8, 0.11587, -17)
+
+[node name="Sangar" parent="Dressing/Strip" instance=ExtResource("58_aqyg5")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -12, 0.576549, -10)
+
+[node name="GunPit" parent="Dressing/Strip" instance=ExtResource("61_l6j35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -34, 0.576549, 14)
+
+[node name="MortarPit" parent="Dressing/Strip" instance=ExtResource("65_cv3tl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.576549, 34)
+
+[node name="Sentry1" parent="Dressing/Strip" instance=ExtResource("56_d1abv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.576549, -4)
+
+[node name="Sentry2" parent="Dressing/Strip" instance=ExtResource("56_d1abv")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -38, 0.576549, 24)
+
+[node name="TWalls" parent="Dressing/Strip" instance=ExtResource("57_xxtyb")]
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, -30, 0.576549, 2)
+
+[node name="Wire" parent="Dressing/Strip" instance=ExtResource("62_boqhn")]
+transform = Transform3D(0.879092, -0.217274, -0.424251, 0.246634, 0.968996, 0.014793, 0.407883, -0.117639, 0.905424, 18, 0.533774, 4)
+
+[node name="Floodlight" parent="Dressing/Strip" instance=ExtResource("29_f0f16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.576549, 2)
+
+[node name="Port" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 372, 0, -271)
+
+[node name="Bunker" parent="Dressing/Port" instance=ExtResource("73_ptnnb")]
+transform = Transform3D(0.0697565, 0, 0.997564, 0, 1, 0, -0.997564, 0, 0.0697565, -18.9196, 0.491409, -7.30197)
+
+[node name="ContainerYard" parent="Dressing/Port" instance=ExtResource("74_j7fed")]
+transform = Transform3D(0.997564, 0, -0.0697565, 0, 1, 0, 0.0697565, 0, 0.997564, 14, 0.491409, -5)
+
+[node name="Gantry" parent="Dressing/Port" instance=ExtResource("84_2uyg8")]
+transform = Transform3D(0.997564, 0, -0.0697565, 0, 1, 0, 0.0697565, 0, 0.997564, 45.9221, 0.491409, -2.76779)
+
+[node name="UnderCrane" parent="Dressing/Port" instance=ExtResource("28_vcmvk")]
+transform = Transform3D(0.997564, 0, -0.0697565, 0, 1, 0, 0.0697565, 0, 0.997564, 46.0616, 0.491409, -4.76291)
+
+[node name="TWalls" parent="Dressing/Port" instance=ExtResource("57_xxtyb")]
+transform = Transform3D(0.0697565, 0, 0.997564, 0, 1, 0, -0.997564, 0, 0.0697565, -4.45493, 0.491409, -6.2905)
+
+[node name="Floodlight1" parent="Dressing/Port" instance=ExtResource("29_f0f16")]
+transform = Transform3D(0.997564, 0, -0.0697565, 0, 1, 0, 0.0697565, 0, 0.997564, -3.75739, 0.491409, -16.2661)
+
+[node name="Sentry1" parent="Dressing/Port" instance=ExtResource("56_d1abv")]
+transform = Transform3D(-0.997564, 0, 0.0697565, 0, 1, 0, -0.0697565, 0, -0.997564, -5.08273, 0.491409, 2.68759)
+
+[node name="Sentry2" parent="Dressing/Port" instance=ExtResource("56_d1abv")]
+transform = Transform3D(-0.997564, 0, 0.0697565, 0, 1, 0, -0.0697565, 0, -0.997564, 63.4597, 0.491409, 4.47321)
+
+[node name="GunPit" parent="Dressing/Port" instance=ExtResource("61_l6j35")]
+transform = Transform3D(0.0697565, 0, 0.997564, 0, 1, 0, -0.997564, 0, 0.0697565, -40.1475, 0.491409, -4.77658)
+
+[node name="Sangar" parent="Dressing/Port" instance=ExtResource("58_aqyg5")]
+transform = Transform3D(0.997564, 0, -0.0697565, 0, 1, 0, 0.0697565, 0, 0.997564, -41.0265, 0.491409, -20.8771)
+
+[node name="Wire" parent="Dressing/Port" instance=ExtResource("62_boqhn")]
+transform = Transform3D(0.997566, -0.0018494, -0.0697096, -0.00169039, 0.998713, -0.0506859, 0.0697136, 0.0506804, 0.996279, 4.97314, 0.468485, 9.4054)
+
+[node name="Barge1" parent="Dressing/Port" instance=ExtResource("63_kdpc6")]
+transform = Transform3D(0.997564, 0, -0.0697565, 0, 1, 0, 0.0697565, 0, 0.997564, -10.4576, -3.5, 29.3777)
+
+[node name="Barge2" parent="Dressing/Port" instance=ExtResource("63_kdpc6")]
+transform = Transform3D(0.997564, 0, -0.0697565, 0, 1, 0, 0.0697565, 0, 0.997564, -47.7373, -3.5, 17.7488)
+
+[node name="Bridgehead" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 69, 0, 66)
+
+[node name="Checkpoint" parent="Dressing/Bridgehead" instance=ExtResource("83_nwfft")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 0.111286, 2)
+
+[node name="TWallsW" parent="Dressing/Bridgehead" instance=ExtResource("57_xxtyb")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -15, -1.47466, -1)
+
+[node name="TWallsE" parent="Dressing/Bridgehead" instance=ExtResource("57_xxtyb")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 2, 0.111286, 5)
+
+[node name="Sangar" parent="Dressing/Bridgehead" instance=ExtResource("58_aqyg5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, -1.47466, -4)
+
+[node name="GunPit" parent="Dressing/Bridgehead" instance=ExtResource("61_l6j35")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 37, 0.111286, -4)
+
+[node name="Teeth" parent="Dressing/Bridgehead" instance=ExtResource("79_pb3ss")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, 43, 0.111286, 14)
+
+[node name="Wire" parent="Dressing/Bridgehead" instance=ExtResource("62_boqhn")]
+transform = Transform3D(0.999973, -0.00737461, -1.25434e-06, 0.00737461, 0.999973, 0.000340174, -1.25434e-06, -0.000340174, 1, -35, -1.49309, 1)
+
+[node name="Sentry1" parent="Dressing/Bridgehead" instance=ExtResource("56_d1abv")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 1, 0.111286, -4)
+
+[node name="Sentry2" parent="Dressing/Bridgehead" instance=ExtResource("56_d1abv")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -25, -1.47466, 2)
+
+[node name="Floodlight" parent="Dressing/Bridgehead" instance=ExtResource("29_f0f16")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -5, -1.47466, -8)
+
+[node name="SouthSideMill" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 122)
+
+[node name="MillShed" parent="Dressing/SouthSideMill" instance=ExtResource("52_6e8vd")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 0, -0.736436, -6)
+
+[node name="Press" parent="Dressing/SouthSideMill" instance=ExtResource("85_x4ax7")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -4, -0.736436, -12)
+
+[node name="Lathe" parent="Dressing/SouthSideMill" instance=ExtResource("86_b50eb")]
+transform = Transform3D(0.422618, 0, 0.906308, 0, 1, 0, -0.906308, 0, 0.422618, 4, -0.736436, 0)
+
+[node name="Machining" parent="Dressing/SouthSideMill" instance=ExtResource("87_bmj1s")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 8, -0.736436, -12)
+
+[node name="Racking" parent="Dressing/SouthSideMill" instance=ExtResource("53_01n24")]
+transform = Transform3D(0.422618, 0, 0.906308, 0, 1, 0, -0.906308, 0, 0.422618, -8, -0.736436, 2)
+
+[node name="Shop" parent="Dressing/SouthSideMill" instance=ExtResource("82_osd8v")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, 48, 0.157222, 2)
+
+[node name="StackW" parent="Dressing/SouthSideMill" instance=ExtResource("88_l5ry7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, -0.736436, -18)
+
+[node name="StackE" parent="Dressing/SouthSideMill" instance=ExtResource("88_l5ry7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0.157222, 24)
+
+[node name="Coils" parent="Dressing/SouthSideMill" instance=ExtResource("89_rmxfl")]
+transform = Transform3D(0.906308, 0, -0.422618, 0, 1, 0, 0.422618, 0, 0.906308, -28, -0.736436, 8)
+
+[node name="Forklift" parent="Dressing/SouthSideMill" instance=ExtResource("54_ap26t")]
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -16, -0.736436, 16)
+
+[node name="Furnace" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 377, 0, 231)
+
+[node name="BlastFurnace" parent="Dressing/Furnace" instance=ExtResource("90_thorb")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 13, -1.46886, -3)
+
+[node name="Bunker" parent="Dressing/Furnace" instance=ExtResource("73_ptnnb")]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 49, -1.46886, 2)
+
+[node name="SangarW" parent="Dressing/Furnace" instance=ExtResource("58_aqyg5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33, -1.46886, -10)
+
+[node name="GunPit" parent="Dressing/Furnace" instance=ExtResource("61_l6j35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -33, -1.46886, 8)
+
+[node name="MortarPit" parent="Dressing/Furnace" instance=ExtResource("65_cv3tl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, -1.46886, 14)
+
+[node name="AmmoDump" parent="Dressing/Furnace" instance=ExtResource("77_sinbb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, -1.46886, 15)
+
+[node name="HescoS" parent="Dressing/Furnace" instance=ExtResource("78_jpqdw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, -1.46886, 23)
+
+[node name="Sentry1" parent="Dressing/Furnace" instance=ExtResource("56_d1abv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, -1.46886, -22)
+
+[node name="Sentry2" parent="Dressing/Furnace" instance=ExtResource("56_d1abv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43, -1.46886, -16)
+
+[node name="Wire" parent="Dressing/Furnace" instance=ExtResource("62_boqhn")]
+transform = Transform3D(0.0135049, -0.126835, 0.991832, -0.209706, 0.969503, 0.126835, -0.977671, -0.209706, -0.013505, -47, -2.02782, 0)
+
+[node name="Floodlight1" parent="Dressing/Furnace" instance=ExtResource("29_f0f16")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -21, -1.46886, 12)
+
+[node name="Floodlight2" parent="Dressing/Furnace" instance=ExtResource("29_f0f16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31, -1.46886, -20)
+
+[node name="CokeWorks" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 553, 0, 258)
+
+[node name="CoalPile" parent="Dressing/CokeWorks" instance=ExtResource("91_pjxea")]
+transform = Transform3D(0.573576, 0, 0.819152, 0, 1, 0, -0.819152, 0, 0.573576, -25.3831, -0.620412, -10.4715)
+
+[node name="OvenShed" parent="Dressing/CokeWorks" instance=ExtResource("52_6e8vd")]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 0.829834, -0.620412, 7.8829)
+
+[node name="Excavator" parent="Dressing/CokeWorks" instance=ExtResource("92_7wttg")]
+transform = Transform3D(0.996195, 0, -0.0871557, 0, 1, 0, 0.0871557, 0, 0.996195, 23.9309, -0.620412, 16.7338)
+
+[node name="Bulldozer" parent="Dressing/CokeWorks" instance=ExtResource("93_jv52j")]
+transform = Transform3D(0.906308, 0, 0.422618, 0, 1, 0, -0.422618, 0, 0.906308, 18.6039, -0.620412, 31.3154)
+
+[node name="Sangar" parent="Dressing/CokeWorks" instance=ExtResource("58_aqyg5")]
+transform = Transform3D(-0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, -0.819152, 30.4875, -0.620412, -3.09065)
+
+[node name="GunPit" parent="Dressing/CokeWorks" instance=ExtResource("61_l6j35")]
+transform = Transform3D(-0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, -0.819152, 4.27466, -0.620412, -21.4451)
+
+[node name="MortarPit" parent="Dressing/CokeWorks" instance=ExtResource("65_cv3tl")]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, -18.6616, -0.620412, -37.5052)
+
+[node name="Sentry1" parent="Dressing/CokeWorks" instance=ExtResource("56_d1abv")]
+transform = Transform3D(-0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, -0.819152, 25.5659, -0.620412, 42.2941)
+
+[node name="Sentry2" parent="Dressing/CokeWorks" instance=ExtResource("56_d1abv")]
+transform = Transform3D(0.573576, 0, 0.819152, 0, 1, 0, -0.819152, 0, 0.573576, -55.0374, -0.620412, -23.9111)
+
+[node name="Hesco" parent="Dressing/CokeWorks" instance=ExtResource("78_jpqdw")]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 16.2339, -0.620412, -10.6296)
+
+[node name="Floodlight" parent="Dressing/CokeWorks" instance=ExtResource("29_f0f16")]
+transform = Transform3D(-0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, -0.819152, -19.1595, -0.620412, 8.53552)
+
+[node name="EastRoad" type="Node3D" parent="Dressing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 305, 0, -8)
+
+[node name="Pylon1" parent="Dressing/EastRoad" instance=ExtResource("41_nap0a")]
+transform = Transform3D(0.996195, 0, 0.0871557, 0, 1, 0, -0.0871557, 0, 0.996195, -175, 20.4443, -6)
+
+[node name="Pylon2" parent="Dressing/EastRoad" instance=ExtResource("41_nap0a")]
+transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, -55, 4.45605, -26)
+
+[node name="Pylon3" parent="Dressing/EastRoad" instance=ExtResource("41_nap0a")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65, 21.0329, -16)
+
+[node name="BurntRig" parent="Dressing/EastRoad" instance=ExtResource("27_8xhks")]
+transform = Transform3D(0.258701, -0.0142634, 0.965852, 0.0165686, 0.999809, 0.010327, -0.965815, 0.0133312, 0.258888, 60, 20.7782, 16)
+
+[node name="Wreck1" parent="Dressing/EastRoad" instance=ExtResource("42_1rc1c")]
+transform = Transform3D(0.862674, -0.0961237, 0.496542, 0.0695591, 0.994993, 0.0717676, -0.500954, -0.027373, 0.865041, -91, 5.18, -2)
+
+[node name="Wreck2" parent="Dressing/EastRoad" instance=ExtResource("42_1rc1c")]
+transform = Transform3D(-0.341192, 0.0546475, 0.938404, 0.0302965, 0.998429, -0.0471276, -0.939505, 0.0123509, -0.342311, 85, 20.5924, 12)
+
+[node name="Barrier1" parent="Dressing/EastRoad" instance=ExtResource("81_ncjcn")]
+transform = Transform3D(0.93967, -0.00724467, 0.342006, 0.006336, 0.999973, 0.00377396, -0.342025, -0.00137933, 0.93969, 25, 20.5302, -1)
+
+[node name="Barrier2" parent="Dressing/EastRoad" instance=ExtResource("81_ncjcn")]
+transform = Transform3D(-0.939688, -0.00822222, 0.341935, -0.00117684, 0.999783, 0.0208068, -0.342032, 0.0191495, -0.939493, 29, 20.5364, 8)
+
+[node name="Trap1" parent="Dressing/EastRoad" instance=ExtResource("94_53ksf")]
+transform = Transform3D(0.999886, 0.0150733, 5.761e-05, -0.0150733, 0.999857, 0.00764346, 5.761e-05, -0.00764346, 0.999971, 17, 20.5499, 12)
+
+[node name="Trap2" parent="Dressing/EastRoad" instance=ExtResource("94_53ksf")]
+transform = Transform3D(0.865686, -0.026623, 0.499879, 0.02549, 0.999634, 0.00909619, -0.499938, 0.00486745, 0.866048, 37, 20.5659, -6)
+
+[node name="Rubble" parent="Dressing/EastRoad" instance=ExtResource("95_nj00v")]
+transform = Transform3D(0.76598, -0.0183487, 0.642602, 0.00698304, 0.999771, 0.0202235, -0.642826, -0.0110035, 0.765933, 47, 20.7644, 22)
+
+[node name="Bridges" type="Node3D" parent="."]
+
+[node name="Bridge03" parent="Bridges" instance=ExtResource("96_kclu7")]
+transform = Transform3D(0.442287, 0, 0.896874, 0, 1, 0, -0.896874, 0, 0.442287, 85.6844, -1.38918, -147.494)
+
+[node name="BridgeDamaged" parent="Bridges" instance=ExtResource("98_skcik")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.4572, -2.99755, 92.7915)
+
+[node name="BridgeMedium" parent="Bridges" instance=ExtResource("99_5gdm0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 223.429, -2.37457, -263.079)
+
+[node name="BridgeMedium2" parent="Bridges" instance=ExtResource("99_5gdm0")]
+transform = Transform3D(0.621982, 0, 0.783032, 0, 1, 0, -0.783032, 0, 0.621982, 1.88245, -5.32911, -51.3171)
+
+[node name="BridgeCauseway" parent="Bridges" instance=ExtResource("96_kclu7")]
+transform = Transform3D(0.789973, 0, 0.613141, 0, 1, 0, -0.613141, 0, 0.789973, -66.1848, -1.90535, 10.8347)
+
+[node name="BridgeShort" parent="Bridges" instance=ExtResource("100_cmrfg")]
+transform = Transform3D(0.953043, 0, -0.302836, 0, 1, 0, 0.302836, 0, 0.953043, -76.2338, -1.63754, 73.3123)
+
+[node name="BridgeArch" parent="Bridges" instance=ExtResource("101_kmep6")]
+transform = Transform3D(0.69789, 0, -0.716204, 0, 1, 0, 0.716204, 0, 0.69789, -113.833, -0.262588, 54.9791)
+
+[node name="BridgeShort2" parent="Bridges" instance=ExtResource("100_cmrfg")]
+transform = Transform3D(0.797647, 0, -0.603124, 0, 1, 0, 0.603124, 0, 0.797647, -193.238, -3.52176, 1.72696)
+
+[node name="BridgeFoot" parent="Bridges" instance=ExtResource("104_shk35")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.706603, 61.9637, -3.07703, 85.9314)
+
+[node name="BridgeShort3" parent="Bridges" instance=ExtResource("100_cmrfg")]
+transform = Transform3D(0.642413, 0, -0.766358, 0, 1, 0, 0.766358, 0, 0.642413, 120.169, -2.53967, 114.757)
+
+[node name="BridgeArch2" parent="Bridges" instance=ExtResource("101_kmep6")]
+transform = Transform3D(0.0262293, 0, 0.999656, 0, 1, 0, -0.999656, 0, 0.0262293, -294.187, -2.02589, -110.54)
+
+[node name="BridgeArch3" parent="Bridges" instance=ExtResource("101_kmep6")]
+transform = Transform3D(-0.196151, 0, 0.980574, 0, 1, 0, -0.980574, 0, -0.196151, -251.285, -2.02589, -116.807)
