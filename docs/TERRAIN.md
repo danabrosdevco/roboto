@@ -377,6 +377,69 @@ recipe and the scene's modifiers.
 
 ---
 
+## Regenerating a level without destroying someone else's work
+
+**A level is two files.** `maps/<name>_art.tscn` is the terrain, what shapes it
+and everything standing on it; `maps/<name>_level.tscn` is the spawn, the exit,
+the environment, the navigation region, the objective anchors and whatever the
+GAMEPLAY lane adds. The level instances the art under its `NavigationRegion3D`
+so the navmesh baker still walks it.
+
+**The art is rewritten every run. The level is written once.** That is the
+whole rule, and `tools/build_salient.gd` is the worked example: it writes the
+art scene unconditionally and refuses to touch the level if the file already
+exists.
+
+```bash
+godot --headless --path . --script res://tools/build_salient.gd
+#   salient_art.tscn  1040 x 560 m at 1.25 m cells, 1330 piece(s)
+#   salient_level.tscn left alone — it is GAMEPLAY's once it exists.
+```
+
+### Why a boundary and not a merge
+
+From the GAMEPLAY report, in their words: *"the regenerator does not preserve
+nodes it did not place. Every rebuild deletes the relay console, the extraction
+and the spawn move."* The repair was an idempotent shell script run by hand
+after every TERRAIN pass, and the ask was for the block pass to leave
+non-generated nodes alone.
+
+A generator that tries to MERGE — keep the nodes it did not author, rewrite the
+ones it did — can be got subtly wrong, and when it is, it eats work silently,
+which is the exact failure being fixed. A generator that never opens the file
+cannot. Either the art was rewritten and the level is untouched, or nothing
+happened.
+
+**Objective ANCHORS stay in the level**, not the art, even though TERRAIN
+places them. Patrol points are children of their anchor, so an anchor that gets
+regenerated takes someone's patrol route with it.
+
+**The navmesh is the one thing that still crosses.** It is baked from the art
+and stored on the level's `NavigationRegion3D`, but `probe_nav_hillfort.gd`
+writes it back by replacing two lines, so a rebake is not a rewrite. Nothing
+else in the level moves.
+
+Proved rather than asserted: a foreign node added to `salient_level.tscn`
+survives a full art regenerate and a navmesh rebake.
+
+### Splitting a level that already exists
+
+`tools/level_split.gd` cuts a monolithic level in two. It writes nothing
+without `--apply`, and it refuses to apply at all if the move would break a
+`NodePath` — which is the silent half of this change.
+
+```bash
+LEVEL=res://maps/pittsburgh_level.tscn \
+MOVE=NavigationRegion3D/Terrain,NavigationRegion3D/Dressing,NavigationRegion3D/Bridges \
+    godot --headless --path . --script res://tools/level_split.gd
+```
+
+Everything moved must share one parent, because what replaces it is a single
+instance of the art scene and that can only go in one place. **Re-bake the
+navmesh afterwards.**
+
+---
+
 ## Invariants (see docs/BRIEFING.md §3–4 for why)
 
 - **Enums are append-only.** `TerrainRecipe.Layout`, `TerrainStamp.Shape /

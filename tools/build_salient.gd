@@ -27,6 +27,7 @@ extends "res://tools/mapdeck.gd"
 
 const ID := "the_salient"
 const LEVEL := "res://maps/salient_level.tscn"
+const ART := "res://maps/salient_art.tscn"
 const SKETCH := "res://Env/terrain/sketches/salient.png"
 const DATA := "res://maps/terrain_data/salient_level_terrain.res"
 const ENVIRON := "res://maps/terrain_data/salient_environment.tres"
@@ -70,6 +71,7 @@ const STAND_IN := ["feature_crater_rim", "feature_berm", "feature_trench_revetme
 
 var _map: Dictionary = {}
 var _data: Data = null
+var _placed: Array = []
 
 
 func _initialize() -> void:
@@ -101,22 +103,51 @@ func _initialize() -> void:
 	_environment()
 	_ground_material()
 	_check_anchors()
-	var text := _scene(r)
-	if text.length() < 4000:
-		# A builder that reports success over a truncated file is the worst
-		# failure this project has had: it looks done and is not.
-		print("FAIL  the scene came out %d characters; something threw" % text.length())
-		quit(1)
+
+	# THE ART IS REWRITTEN EVERY RUN. THE LEVEL IS WRITTEN ONCE.
+	#
+	# This is the whole answer to "the regenerator does not preserve nodes it
+	# did not place". It does not have to preserve them, because it never opens
+	# the file they are in. The art scene holds the terrain and everything
+	# standing on it and is TERRAIN's to overwrite; the level scene holds the
+	# spawn, the exit, the objective anchors and whatever GAMEPLAY adds, and is
+	# never touched again after it is created. The only thing that crosses is
+	# the navmesh, and probe_nav_hillfort writes that back by replacing two
+	# lines rather than rewriting the scene.
+	#
+	# A merge would have been the other way to do it, and it is the wrong one:
+	# a file boundary cannot be got subtly wrong. Either the art is rewritten
+	# and the level is untouched, or nothing happened.
+	if not _write(ART, _art_scene(r), 4000):
 		return
-	var f := FileAccess.open(LEVEL, FileAccess.WRITE)
-	f.store_string(text)
-	f.close()
-	print("      %s  %.0f x %.0f m at %.2f m cells" % [LEVEL.get_file(),
-			_data.width(), _data.depth(), r.cell_size])
+	var have_level := FileAccess.file_exists(ProjectSettings.globalize_path(LEVEL))
+	if have_level and not OS.get_cmdline_user_args().has("--force-level"):
+		print("      %s left alone — it is GAMEPLAY's once it exists." % LEVEL.get_file())
+	else:
+		if have_level:
+			print("      --force-level: OVERWRITING %s, and everything anyone" % LEVEL.get_file())
+			print("      else put in it — the exit, the objectives, the spawn move.")
+		if not _write(LEVEL, _level_scene(), 800):
+			return
+	print("      %s  %.0f x %.0f m at %.2f m cells, %d piece(s)" % [ART.get_file(),
+			_data.width(), _data.depth(), r.cell_size, _placed.size()])
 	if not ResourceLoader.exists(DATA):
 		print("      terrain data written but not yet importable — RUN THIS AGAIN")
 	print("BUILD SALIENT DONE")
 	quit()
+
+
+## Writes, or refuses to. A builder that reports success over a truncated file
+## is the worst failure this project has had: it looks done and is not.
+func _write(path: String, text: String, least: int) -> bool:
+	if text.length() < least:
+		print("FAIL  %s came out %d characters; something threw" % [path.get_file(), text.length()])
+		quit(1)
+		return false
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(text)
+	f.close()
+	return true
 
 
 # ── The pieces of it ────────────────────────────────────────────────────────
@@ -203,18 +234,14 @@ func _environment() -> void:
 
 # ── Writing the scene ───────────────────────────────────────────────────────
 
-func _scene(r: Recipe) -> String:
+## THE ART. Terrain, what shapes it and everything standing on it — and
+## nothing else. Rewritten every run.
+func _art_scene(r: Recipe) -> String:
 	var out := PackedStringArray()
 	var ext: Array = [
-		["Script", "res://maps/trench_broom_level.gd", "1_level"],
-		["PackedScene", "res://Env/world_objects/spawn_point.tscn", "2_spawn"],
-		["Script", "res://Campaign/squad_spawn_point.gd", "3_squad"],
 		["Script", "res://Env/terrain/generated_terrain.gd", "5_terrain"],
 		["Script", "res://Env/terrain/terrain_recipe.gd", "6_recipe"],
 		["Script", "res://Env/terrain/terrain_path.gd", "8_path"],
-		["PackedScene", "res://Env/world_objects/level_exit.tscn", "10_exit"],
-		["PackedScene", "res://Env/world_environment.tscn", "11_env"],
-		["PackedScene", "res://Env/world_objects/squad_objective_point.tscn", "14_sqpoint"],
 		["Script", "res://Env/terrain/terrain_scatter.gd", "15_scatter"],
 		["Script", "res://Env/terrain/terrain_scatter_layer.gd", "16_layer"],
 	]
@@ -251,24 +278,6 @@ func _scene(r: Recipe) -> String:
 	for i in (_map.get("paths", []) as Array).size():
 		curves.append("Curve3D_t%02d" % i)
 		subs.append_array(_curve_sub(curves[i], _map.paths[i][4]))
-	subs.append_array(PackedStringArray([
-		"[sub_resource type=\"NavigationMesh\" id=\"NavigationMesh_salient\"]",
-		# EMPTY, BUT PRESENT. probe_nav_hillfort writes the bake back by finding
-		# these two lines and replacing them; without them it bakes fine, reports
-		# forty thousand vertices and has nowhere to put them.
-		"vertices = PackedVector3Array()",
-		"polygons = []",
-		"geometry_parsed_geometry_type = 1",
-		"agent_height = 1.8",
-		"agent_max_climb = 0.5",
-		"region_min_size = 6.0",
-		"edge_max_error = 2.0",
-		"detail_sample_distance = 16.0",
-		"filter_baking_aabb = AABB(%s, -60, %s, %s, 300, %s)" % [
-				_n(-_data.width() * 0.5 - 8.0), _n(-_data.depth() * 0.5 - 8.0),
-				_n(_data.width() + 16.0), _n(_data.depth() + 16.0)],
-		""]))
-
 	out.append("[gd_scene load_steps=%d format=3]" % (ext.size() + _count_subs(subs) + 1))
 	out.append("")
 	for e: Array in ext:
@@ -277,25 +286,10 @@ func _scene(r: Recipe) -> String:
 	out.append_array(subs)
 
 	# ── The tree ──
-	out.append("[node name=\"SalientLevel\" type=\"Node3D\" node_paths=PackedStringArray(\"spawn_point\", \"nav_region\", \"level_exits\")]")
-	out.append("script = ExtResource(\"1_level\")")
-	out.append("spawn_point = NodePath(\"SpawnPoint\")")
-	out.append("nav_region = NodePath(\"NavigationRegion3D\")")
-	out.append("level_exits = [NodePath(\"NavigationRegion3D/LevelExit\")]")
+	_placed = placed
+	out.append("[node name=\"SalientArt\" type=\"Node3D\"]")
 	out.append("")
-	# Behind the reserve trench, on the ground rather than in the cut: a spawn
-	# in a trench is a spawn on a scrap of navmesh that joins nothing.
-	out.append("[node name=\"SpawnPoint\" parent=\".\" instance=ExtResource(\"2_spawn\")]")
-	out.append(_at(-468.0, 20.0, 1.15))
-	out.append("")
-	out.append("[node name=\"SquadSpawnPoint\" type=\"Node3D\" parent=\".\"]")
-	out.append(_at(-476.0, 4.0, 0.0))
-	out.append("script = ExtResource(\"3_squad\")")
-	out.append("")
-	out.append("[node name=\"NavigationRegion3D\" type=\"NavigationRegion3D\" parent=\".\"]")
-	out.append("navigation_mesh = SubResource(\"NavigationMesh_salient\")")
-	out.append("")
-	out.append("[node name=\"Terrain\" type=\"Node3D\" parent=\"NavigationRegion3D\"]")
+	out.append("[node name=\"Terrain\" type=\"Node3D\" parent=\".\"]")
 	out.append("script = ExtResource(\"5_terrain\")")
 	out.append("recipe = SubResource(\"Resource_recipe\")")
 	if ResourceLoader.exists(DATA):
@@ -310,15 +304,15 @@ func _scene(r: Recipe) -> String:
 		var ids: Array = []
 		for i in (_map.scatter as Array).size():
 			ids.append("ExtResource(\"sc%d\")" % i)
-		out.append("[node name=\"Scatter\" type=\"Node3D\" parent=\"NavigationRegion3D/Terrain\"]")
+		out.append("[node name=\"Scatter\" type=\"Node3D\" parent=\"Terrain\"]")
 		out.append("script = ExtResource(\"15_scatter\")")
 		out.append("layers = Array[ExtResource(\"16_layer\")]([%s])" % ", ".join(ids))
 		out.append("")
-	out.append("[node name=\"Trenches\" type=\"Node3D\" parent=\"NavigationRegion3D/Terrain\"]")
+	out.append("[node name=\"Trenches\" type=\"Node3D\" parent=\"Terrain\"]")
 	out.append("")
 	for i in curves.size():
 		var p: Array = _map.paths[i]
-		out.append("[node name=\"Cut%02d\" type=\"Path3D\" parent=\"NavigationRegion3D/Terrain/Trenches\"]" % i)
+		out.append("[node name=\"Cut%02d\" type=\"Path3D\" parent=\"Terrain/Trenches\"]" % i)
 		out.append("curve = SubResource(\"%s\")" % curves[i])
 		out.append("script = ExtResource(\"8_path\")")
 		out.append("mode = %d" % PATH_MODE[p[0]])
@@ -327,17 +321,84 @@ func _scene(r: Recipe) -> String:
 		out.append("falloff = %s" % _n(float(p[3])))
 		out.append("smoothing = %s" % _n(float(p[5]) if p.size() > 5 else 8.0))
 		out.append("")
-	out.append("[node name=\"Works\" type=\"Node3D\" parent=\"NavigationRegion3D\"]")
+	out.append("[node name=\"Works\" type=\"Node3D\" parent=\".\"]")
 	out.append("")
 	var n := 1
 	for row: Array in placed:
 		var piece: String = row[0]
 		var pos: Vector3 = row[1]
-		out.append("[node name=\"W%04d_%s\" parent=\"NavigationRegion3D/Works\" instance=ExtResource(\"p_%s\")]" % [
+		out.append("[node name=\"W%04d_%s\" parent=\"Works\" instance=ExtResource(\"p_%s\")]" % [
 				n, str(piece).get_file(), str(piece).get_file()])
 		out.append(_yawed(pos, float(row[2])))
 		out.append("")
 		n += 1
+	return "\n".join(out) + "\n"
+
+
+## THE LEVEL. The spawn, the exit, the objective anchors, the environment and
+## the navigation region — and one instance of the art. WRITTEN ONCE: after
+## that it belongs to whoever is putting missions in it, and this tool does not
+## open it again without --force-level.
+func _level_scene() -> String:
+	var out := PackedStringArray()
+	var ext: Array = [
+		["Script", "res://maps/trench_broom_level.gd", "1_level"],
+		["PackedScene", "res://Env/world_objects/spawn_point.tscn", "2_spawn"],
+		["Script", "res://Campaign/squad_spawn_point.gd", "3_squad"],
+		["PackedScene", ART, "4_art"],
+		["PackedScene", "res://Env/world_objects/level_exit.tscn", "10_exit"],
+		["PackedScene", "res://Env/world_environment.tscn", "11_env"],
+		["PackedScene", "res://Env/world_objects/squad_objective_point.tscn", "14_sqpoint"],
+	]
+	if ResourceLoader.exists(ENVIRON):
+		ext.append(["Environment", ENVIRON, "12_env"])
+	var subs := PackedStringArray([
+		"[sub_resource type=\"NavigationMesh\" id=\"NavigationMesh_salient\"]",
+		# EMPTY, BUT PRESENT. probe_nav_hillfort writes the bake back by finding
+		# these two lines and replacing them; without them it bakes fine,
+		# reports forty thousand vertices and has nowhere to put them. Two
+		# lines is also why a rebake does not count as touching this file.
+		"vertices = PackedVector3Array()",
+		"polygons = []",
+		"geometry_parsed_geometry_type = 1",
+		"agent_height = 1.8",
+		"agent_max_climb = 0.5",
+		"region_min_size = 6.0",
+		"edge_max_error = 2.0",
+		"detail_sample_distance = 16.0",
+		"filter_baking_aabb = AABB(%s, -60, %s, %s, 300, %s)" % [
+				_n(-_data.width() * 0.5 - 8.0), _n(-_data.depth() * 0.5 - 8.0),
+				_n(_data.width() + 16.0), _n(_data.depth() + 16.0)],
+		""])
+	out.append("[gd_scene load_steps=%d format=3]" % (ext.size() + 2))
+	out.append("")
+	for e: Array in ext:
+		out.append("[ext_resource type=\"%s\" path=\"%s\" id=\"%s\"]" % [e[0], e[1], e[2]])
+	out.append("")
+	out.append_array(subs)
+	out.append("[node name=\"SalientLevel\" type=\"Node3D\" node_paths=PackedStringArray(\"spawn_point\", \"nav_region\", \"level_exits\")]")
+	out.append("script = ExtResource(\"1_level\")")
+	out.append("spawn_point = NodePath(\"SpawnPoint\")")
+	out.append("nav_region = NodePath(\"NavigationRegion3D\")")
+	out.append("level_exits = [NodePath(\"NavigationRegion3D/LevelExit\")]")
+	out.append("")
+	# Behind the reserve trench, on the ground rather than in the cut: a spawn
+	# in a trench is a spawn on a scrap of navmesh that joins nothing.
+	out.append("[node name=\"SpawnPoint\" parent=\".\" instance=ExtResource(\"2_spawn\")]")
+	out.append(_at(-468.0, 20.0, 1.15))
+	out.append("")
+	out.append("[node name=\"SquadSpawnPoint\" type=\"Node3D\" parent=\".\"]")
+	out.append(_at(-476.0, 4.0, 0.0))
+	out.append("script = ExtResource(\"3_squad\")")
+	out.append("max_slots = 999")
+	out.append("")
+	out.append("[node name=\"NavigationRegion3D\" type=\"NavigationRegion3D\" parent=\".\"]")
+	out.append("navigation_mesh = SubResource(\"NavigationMesh_salient\")")
+	out.append("")
+	# THE ART GOES UNDER THE REGION, so the baker walks it. It is one node here
+	# and a whole scene on the other side of the file boundary.
+	out.append("[node name=\"SalientArt\" parent=\"NavigationRegion3D\" instance=ExtResource(\"4_art\")]")
+	out.append("")
 	out.append("[node name=\"LevelExit\" parent=\"NavigationRegion3D\" instance=ExtResource(\"10_exit\")]")
 	out.append(_at(470.0, 150.0, 0.6))
 	out.append("")
