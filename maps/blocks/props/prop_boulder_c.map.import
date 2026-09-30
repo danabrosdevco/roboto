@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cxjfwhwmh12hk"
+path="res://.godot/imported/prop_boulder_c.map-59b29af868a6700e2537fc9976902a27.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_boulder_c.map"
+dest_files=["res://.godot/imported/prop_boulder_c.map-59b29af868a6700e2537fc9976902a27.tres"]
+
+[params]
+

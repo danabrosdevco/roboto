@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://x5qm85m8d7bb"
+path="res://.godot/imported/industrial_gas_sphere.map-68cbd957bcb5d744796ef232bf6eaca3.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_gas_sphere.map"
+dest_files=["res://.godot/imported/industrial_gas_sphere.map-68cbd957bcb5d744796ef232bf6eaca3.tres"]
+
+[params]
+

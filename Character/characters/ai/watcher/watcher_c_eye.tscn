@@ -1,0 +1,117 @@
+[gd_scene load_steps=10 format=3 uid="uid://cwatcher0eye"]
+
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="1_metal"]
+
+[sub_resource type="StandardMaterial3D" id="Dark"]
+albedo_color = Color(0.13, 0.15, 0.14, 1)
+metallic = 0.4
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="Glass"]
+albedo_color = Color(0.05, 0.06, 0.07, 1)
+metallic = 0.9
+roughness = 0.15
+
+[sub_resource type="StandardMaterial3D" id="Amber"]
+albedo_color = Color(0.7, 0.35, 0.02, 1)
+metallic = 0.2
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.95, 0.5, 0.06, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="CylinderMesh" id="Sangar"]
+top_radius = 1.9
+bottom_radius = 2.25
+height = 1.5
+radial_segments = 6
+
+[sub_resource type="CylinderMesh" id="Neck"]
+top_radius = 0.5
+bottom_radius = 0.62
+height = 0.7
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="Lens"]
+top_radius = 0.52
+bottom_radius = 0.52
+height = 0.1
+radial_segments = 16
+
+[sub_resource type="TorusMesh" id="Iris"]
+inner_radius = 0.2
+outer_radius = 0.3
+
+[sub_resource type="BoxMesh" id="Fin"]
+size = Vector3(0.12, 0.34, 0.8)
+
+[node name="Watcher_Eye" type="Node3D"]
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Skirt" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1.08, 0, 0, 0, 0.2, 0, 0, 0, 1.08, 0, 0.15, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Sangar")
+
+[node name="Sangar" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+material_override = ExtResource("1_metal")
+mesh = SubResource("Sangar")
+
+[node name="Glacis" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.82, 0, 0, 0, 0.28, 0, 0, 0, 0.82, 0, 1.95, 0)
+material_override = ExtResource("1_metal")
+mesh = SubResource("Sangar")
+
+[node name="SlitFront" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, -1.82)
+size = Vector3(2.0, 0.26, 0.14)
+material = SubResource("Dark")
+
+[node name="SlitL" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(0.5, 0, 0.866, 0, 1, 0, -0.866, 0, 0.5, -1.58, 1.35, -0.91)
+size = Vector3(2.0, 0.26, 0.14)
+material = SubResource("Dark")
+
+[node name="SlitR" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(0.5, 0, -0.866, 0, 1, 0, 0.866, 0, 0.5, 1.58, 1.35, -0.91)
+size = Vector3(2.0, 0.26, 0.14)
+material = SubResource("Dark")
+
+[node name="Neck" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.38, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Neck")
+
+[node name="Scanner" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0, 0)
+
+[node name="Head" type="CSGBox3D" parent="Rig/Scanner"]
+size = Vector3(1.24, 0.96, 1.5)
+material = ExtResource("1_metal")
+
+[node name="Brow" type="CSGBox3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 0.94, 0.342, 0, -0.342, 0.94, 0, 0.56, -0.5)
+size = Vector3(1.34, 0.16, 0.7)
+material = ExtResource("1_metal")
+
+[node name="Lens" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, -0.76)
+material_override = SubResource("Glass")
+mesh = SubResource("Lens")
+
+[node name="Iris" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, -0.82)
+material_override = SubResource("Amber")
+mesh = SubResource("Iris")
+
+[node name="FinL" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.66, 0.1, 0.16)
+material_override = SubResource("Dark")
+mesh = SubResource("Fin")
+
+[node name="FinR" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.66, 0.1, 0.16)
+material_override = SubResource("Dark")
+mesh = SubResource("Fin")

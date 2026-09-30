@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bei3u0ltcjjbv"
+path="res://.godot/imported/solar_panel_row.map-176e1a7f77c1237238c5277cf665b79c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_panel_row.map"
+dest_files=["res://.godot/imported/solar_panel_row.map-176e1a7f77c1237238c5277cf665b79c.tres"]
+
+[params]
+

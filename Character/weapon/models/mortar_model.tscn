@@ -1,0 +1,89 @@
+[gd_scene load_steps=10 format=3]
+
+[sub_resource type="StandardMaterial3D" id="TubeMat"]
+albedo_color = Color(0.2, 0.23, 0.18, 1)
+metallic = 0.5
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="DarkMat"]
+albedo_color = Color(0.09, 0.09, 0.1, 1)
+metallic = 0.6
+roughness = 0.45
+
+[sub_resource type="CylinderMesh" id="BarrelMesh"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 1.0
+radial_segments = 14
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CollarMesh"]
+top_radius = 0.074
+bottom_radius = 0.074
+height = 0.16
+radial_segments = 14
+rings = 1
+
+[sub_resource type="CylinderMesh" id="BreechMesh"]
+top_radius = 0.066
+bottom_radius = 0.066
+height = 0.1
+radial_segments = 14
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CapMesh"]
+top_radius = 0.03
+bottom_radius = 0.066
+height = 0.07
+radial_segments = 14
+rings = 1
+
+[sub_resource type="CylinderMesh" id="RingMesh"]
+top_radius = 0.058
+bottom_radius = 0.058
+height = 0.045
+radial_segments = 14
+rings = 1
+
+[sub_resource type="BoxMesh" id="JawMesh"]
+size = Vector3(0.08, 0.1, 0.13)
+
+[sub_resource type="BoxMesh" id="SightMesh"]
+size = Vector3(0.045, 0.075, 0.1)
+
+[node name="MortarModel" type="Node3D"]
+
+[node name="Jaw" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.045, 0)
+material_override = SubResource("DarkMat")
+mesh = SubResource("JawMesh")
+
+[node name="Collar" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.1, 0)
+material_override = SubResource("DarkMat")
+mesh = SubResource("CollarMesh")
+
+[node name="Barrel" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.1, -0.3)
+material_override = SubResource("TubeMat")
+mesh = SubResource("BarrelMesh")
+
+[node name="Breech" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.1, 0.25)
+material_override = SubResource("TubeMat")
+mesh = SubResource("BreechMesh")
+
+[node name="Cap" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.1, 0.335)
+material_override = SubResource("DarkMat")
+mesh = SubResource("CapMesh")
+
+[node name="MuzzleRing" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.1, -0.775)
+material_override = SubResource("DarkMat")
+mesh = SubResource("RingMesh")
+
+[node name="Sight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.085, 0.15, 0.03)
+material_override = SubResource("DarkMat")
+mesh = SubResource("SightMesh")

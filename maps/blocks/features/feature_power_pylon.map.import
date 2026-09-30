@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b48itxksjo673"
+path="res://.godot/imported/feature_power_pylon.map-ce87d4d7005ba7d53c8242b9a5ff3738.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_power_pylon.map"
+dest_files=["res://.godot/imported/feature_power_pylon.map-ce87d4d7005ba7d53c8242b9a5ff3738.tres"]
+
+[params]
+

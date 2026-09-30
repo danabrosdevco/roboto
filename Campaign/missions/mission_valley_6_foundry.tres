@@ -1,0 +1,227 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3 uid="uid://bdmdcux88x8tl"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://bry0vr0coxyl4" path="res://maps/valley_level.tscn" id="3_valley"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="7_hopper"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="8_chaser"]
+[ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="9_rover"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="10_mech"]
+[ext_resource type="Resource" uid="uid://c543tvfyia5hs" path="res://Campaign/chassis/chassis_reclaimer.tres" id="11_recl"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="12_nest"]
+[ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="13_bomber"]
+
+[sub_resource type="Resource" id="S_patrol"]
+script = ExtResource("2_espec")
+callsign = "PICKET"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser"), ExtResource("8_chaser")])
+count = 0
+posture = 0
+route_tag = &"patrol_valley_foundry"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_g1"]
+script = ExtResource("2_espec")
+callsign = "RELAY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_valley_garrison_1"
+spawn_tag = &"obj_valley_garrison_1"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_g2"]
+script = ExtResource("2_espec")
+callsign = "SPUR"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser"), ExtResource("11_recl")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_valley_garrison_2"
+spawn_tag = &"obj_valley_garrison_2"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_nest_2"]
+script = ExtResource("2_espec")
+callsign = "HIVE-SOUTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_valley_garrison_2"
+spawn_tag = &"obj_valley_garrison_2"
+spawn_offset = Vector3(4, 0, -4)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_g3"]
+script = ExtResource("2_espec")
+callsign = "GATE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("7_hopper"), ExtResource("8_chaser"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_valley_garrison_3"
+spawn_tag = &"obj_valley_garrison_3"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_nest_4"]
+script = ExtResource("2_espec")
+callsign = "HIVE-NORTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_valley_garrison_4"
+spawn_tag = &"obj_valley_garrison_4"
+spawn_offset = Vector3(-4, 0, 4)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_g4"]
+script = ExtResource("2_espec")
+callsign = "ANVIL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser"), ExtResource("11_recl")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_valley_garrison_4"
+spawn_tag = &"obj_valley_garrison_4"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_g5"]
+script = ExtResource("2_espec")
+callsign = "KEEP"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser"), ExtResource("8_chaser")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_valley_garrison_5"
+spawn_tag = &"obj_valley_garrison_5"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_wave_kills_1"]
+script = ExtResource("2_espec")
+callsign = "COLUMN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_valley_garrison_3"
+spawn_tag = &"obj_valley_garrison_5"
+spawn_offset = Vector3(86, 0, 60)
+always_active = true
+faction = 1
+reinforcement_tag = &"valley6_column"
+wake_after_kills = 14
+
+[sub_resource type="Resource" id="S_wave_kills_2"]
+script = ExtResource("2_espec")
+callsign = "LANCE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("7_hopper"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("10_mech")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_valley_garrison_4"
+spawn_tag = &"obj_valley_garrison_4"
+spawn_offset = Vector3(96, 0, -52)
+always_active = true
+faction = 1
+reinforcement_tag = &"valley6_lance"
+wake_after_kills = 28
+
+[sub_resource type="Resource" id="S_wave_nest"]
+script = ExtResource("2_espec")
+callsign = "SWARM"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("7_hopper"), ExtResource("7_hopper"), ExtResource("6_rifle")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_valley_garrison_3"
+spawn_tag = &"obj_valley_garrison_4"
+spawn_offset = Vector3(74, 0, -78)
+always_active = true
+faction = 1
+reinforcement_tag = &"nest_down"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_wave_cap"]
+script = ExtResource("2_espec")
+callsign = "RIPOSTE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("11_recl")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_valley_garrison_3"
+spawn_tag = &"obj_valley_garrison_5"
+spawn_offset = Vector3(58, 0, -96)
+always_active = true
+faction = 1
+reinforcement_tag = &"valley_garrison_cap_3"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_wave_hunters"]
+script = ExtResource("2_espec")
+callsign = "HUNTERS"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_valley_garrison_1"
+spawn_tag = &"obj_valley_garrison_5"
+spawn_offset = Vector3(60, 26, 40)
+always_active = true
+faction = 1
+reinforcement_tag = &"picket_down"
+wake_after_kills = 0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"valley_6_foundry"
+display_name = "Valley Foundry"
+briefing = "They are building in the valley now. Two hives sit inside the compounds and hatch a chaser or a leaper every few seconds once the shooting starts, and there are repair crews behind their line. Only the north gate has to fall — but they will come out to meet you, in column, with armour â and the moment their picket stops answering, two bombers come looking."
+level_scene = ExtResource("3_valley")
+map_position = Vector2(300, 8)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_patrol"), SubResource("S_g1"), SubResource("S_g2"), SubResource("S_nest_2"), SubResource("S_g3"), SubResource("S_nest_4"), SubResource("S_g4"), SubResource("S_g5"), SubResource("S_wave_kills_1"), SubResource("S_wave_kills_2"), SubResource("S_wave_nest"), SubResource("S_wave_cap"), SubResource("S_wave_hunters")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"valley_garrison_cap_3", &"valley_hive_south", &"valley_hive_north", &"valley_extract"])
+reward_resources = 400
+compute_reward = 1
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = false
+requires = Array[StringName]([&"valley_5_siege"])

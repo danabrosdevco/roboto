@@ -1,0 +1,44 @@
+[gd_scene load_steps=3 format=3]
+
+; REPAIR LANCE, in the player's hands.
+;
+; A PlayerMelee with one branch added — see player_repair_lance.gd. The numbers
+; that make it a lance rather than a knife are here: 3.4m of reach against the
+; wrench's 2.2, and sixty damage, which is the hardest single hit in the game
+; outside the Recoilless. Both are the trade for having to close.
+;
+; THE MODEL IS TURNED TO POINT AWAY. repair_lance.tscn runs its haft along +X
+; with the head toward +X, so instanced unrotated it lies flat across the screen
+; like a bar held sideways — which is exactly what it did. The basis here maps
+; model +X onto camera -Z so the point goes downrange, and the whole thing sits
+; angled in from the bottom-right corner so the haft runs off the frame edge.
+; The butt sits 6.6cm BEHIND the eye at rest and stays clipped through the full
+; thrust, which is what keeps the lance anchored instead of floating mid-screen.
+;
+; swing_time 1.1 and impact_at 0.62: a slow commit with the hit late in it, so
+; a thrust reads as a thrust and you are exposed for the whole of it.
+
+[ext_resource type="Script" path="res://Character/equipment/player_repair_lance.gd" id="1_lance"]
+[ext_resource type="PackedScene" path="res://Character/weapon/concepts/repair_lance.tscn" id="2_model"]
+
+[node name="RepairLance" type="Node3D" node_paths=PackedStringArray("viewmodel")]
+script = ExtResource("1_lance")
+damage = 60
+range = 3.4
+swing_time = 1.1
+impact_at = 0.62
+swing_rotation = Vector3(-18, 6, 0)
+repair_amount = 30
+max_charges = 3
+recharge_seconds = 9.0
+thrust_distance = 0.22
+thrust_rise = 0.05
+display_name = "Repair Lance"
+slot = 2
+viewmodel = NodePath("Lance")
+use_default_position = false
+bob_speed = 0.6
+movement_bob_scale = 1.0
+
+[node name="Lance" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(-0.11381, 0.025612, 0.361608, 0.083448, 0.37069, 0, -0.35283, 0.07942, -0.11666, 0.26, -0.3, -0.3)

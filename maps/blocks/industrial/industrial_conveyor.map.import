@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b26lmdwgo7bc6"
+path="res://.godot/imported/industrial_conveyor.map-83d652e52ab1ccbff756c23b6ef00fe8.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_conveyor.map"
+dest_files=["res://.godot/imported/industrial_conveyor.map-83d652e52ab1ccbff756c23b6ef00fe8.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cej7l0x0ei4mj"
+path="res://.godot/imported/industrial_container_yard.map-ae8db1dae82a43b34af743dc0da46e79.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_container_yard.map"
+dest_files=["res://.godot/imported/industrial_container_yard.map-ae8db1dae82a43b34af743dc0da46e79.tres"]
+
+[params]
+

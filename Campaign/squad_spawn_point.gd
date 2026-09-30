@@ -14,7 +14,15 @@ class_name SquadSpawnPoint
 
 @export var callsign: String = "ALPHA"
 # Cap on how many of the roster deploy here. 0 means everyone deployable.
-@export var max_slots: int = 4
+#
+# DEFAULTS TO NO CAP, because forgetting to author it must not silently cost
+# you robots. This used to default to 4. Every hand-built level writes 999 over
+# it, so nobody noticed until the hillfort was added without that line and a
+# seven-seat squad deployed four — the roster was right, the supply cap was
+# right, and the only thing wrong was a script default nothing had overridden.
+# A missing cap now means "everyone", which is wrong in the direction you can
+# see.
+@export var max_slots: int = 0
 @export var player_commandable: bool = true
 @export var default_objective: Squad.SquadObjective = Squad.SquadObjective.FOLLOW
 # Optional. Leave null and FOLLOW makes the player the objective.
@@ -29,13 +37,12 @@ class_name SquadSpawnPoint
 
 func _ready() -> void:
 	add_to_group("squad_spawn_points")
-
-
 # Where the nth deployed soldier stands.
 func slot_position(index: int) -> Vector3:
 	if index < slot_markers.size() and slot_markers[index] != null:
 		return slot_markers[index].global_position
 	# Arc behind the spawn point, alternating left and right of centre.
+	@warning_ignore("integer_division")
 	var row := index / 2
 	var side := 1.0 if index % 2 == 0 else -1.0
 	var offset := Vector3(side * spacing * (float(row) * 0.5 + 0.5), 0.0, float(row) * spacing)

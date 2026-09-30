@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_walker.tres" id="4_walker"]
+[ext_resource type="Resource" uid="uid://vw46h82csp7a" path="res://Campaign/chassis/chassis_soldier.tres" id="5_soldier"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "Walker + 2 soldiers, mirror match"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_walker"), ExtResource("5_soldier"), ExtResource("5_soldier")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_walker"), ExtResource("5_soldier"), ExtResource("5_soldier")])
+hostile_order = 1
+distance = 45.0
+repeats = 3
+time_limit = 150.0
+swap_sides = true
+hostiles_on_post = false
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[resource]
+script = ExtResource("1_plan")
+title = "Walker duel"
+question = "The Walker in a fight on the sim arena, with the escort armed to match it. A mirror match on purpose: both sides get one Walker (autocannon on the main mount, Ancient MG on the coax) and two soldiers carrying ANCIENT RIFLES rather than pistols, both ordered to advance, starting 45 m apart in open ground with sides swapped every other run. Nothing here is asking who wins — it should be close to even. The first pass ran the escort on pistols and they were spectators: 231 damage and 2 kills across six fights against the Walkers' 2052 and 11. The question now is whether rifles buy the infantry a part in the fight at 45 m, or whether an autocannon platform simply closes it before anything else matters. Also watch: whether the turret traverse reads as a real constraint, whether the coax is firing when it should, and whether the legs look like they are carrying the thing rather than sliding under it."
+matchups = Array[Resource]([SubResource("M1")])
+repeats_override = 0
+speed = 1.0

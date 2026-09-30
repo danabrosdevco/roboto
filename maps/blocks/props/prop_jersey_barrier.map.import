@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://0fhbwlq5kvda"
+path="res://.godot/imported/prop_jersey_barrier.map-e7049223f6e5eec8983a9e4147df9b9c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_jersey_barrier.map"
+dest_files=["res://.godot/imported/prop_jersey_barrier.map-e7049223f6e5eec8983a9e4147df9b9c.tres"]
+
+[params]
+

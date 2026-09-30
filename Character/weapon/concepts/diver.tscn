@@ -1,0 +1,191 @@
+[gd_scene load_steps=11 format=3]
+
+; THE DIVER — built to the language of drone_variant_02_interceptor.glb, which
+; is the quadcopter already flying in this game.
+;
+; What that asset does and this now copies: HEXAGONAL DUCTED ROTOR RINGS on
+; swept arms rather than bare discs, a rectangular slab hull with a recessed
+; panel, charcoal grey throughout, and RED accents on the rotor hubs and nose.
+;
+; Red, not amber. The first pass used amber, which is the mechanic's welder and
+; the reclaimer — it read as repair. The interceptor's own accent is red, so
+; that is the established colour for "this is a hostile drone" and it costs
+; nothing to match.
+;
+; The warhead is the one thing the interceptor does not have, and it is the
+; whole point of this frame: a blunt cone slung under the hull where the bomber
+; carries its bomb, visible from below, which is the only angle you get.
+
+[sub_resource type="StandardMaterial3D" id="Shell"]
+albedo_color = Color(0.22, 0.23, 0.24, 1)
+metallic = 0.45
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Dark"]
+albedo_color = Color(0.11, 0.115, 0.12, 1)
+metallic = 0.5
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="Red"]
+albedo_color = Color(0.85, 0.16, 0.12, 1)
+metallic = 0.2
+roughness = 0.4
+
+[sub_resource type="TorusMesh" id="Duct"]
+inner_radius = 0.2
+outer_radius = 0.26
+rings = 6
+ring_segments = 6
+
+[sub_resource type="CylinderMesh" id="Hub"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 0.05
+radial_segments = 6
+
+[sub_resource type="CylinderMesh" id="Blade"]
+top_radius = 0.19
+bottom_radius = 0.19
+height = 0.012
+radial_segments = 6
+
+[sub_resource type="BoxMesh" id="Arm"]
+size = Vector3(0.36, 0.05, 0.08)
+
+[sub_resource type="BoxMesh" id="Hull"]
+size = Vector3(0.46, 0.17, 0.32)
+
+[sub_resource type="BoxMesh" id="Panel"]
+size = Vector3(0.24, 0.02, 0.16)
+
+[sub_resource type="CylinderMesh" id="Warhead"]
+top_radius = 0.135
+bottom_radius = 0.055
+height = 0.28
+radial_segments = 8
+
+[node name="Diver" type="Node3D"]
+
+[node name="Hull" type="MeshInstance3D" parent="."]
+material_override = SubResource("Shell")
+mesh = SubResource("Hull")
+
+[node name="Panel" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.088, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Panel")
+
+[node name="Spine" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.55, 0, 0, 0, 1.6, 0, 0, 0, 0.5, 0, 0.1, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Panel")
+
+[node name="NosePod" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 0.6, 0, -0.6, 0, 0, 0, 0, 0.6, 0, -0.01, 0.19)
+material_override = SubResource("Red")
+mesh = SubResource("Hub")
+
+[node name="NoseCowl" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.42, 0, 0, 0, 2.2, 0, 0, 0, 0.3, 0, 0.01, 0.17)
+material_override = SubResource("Dark")
+mesh = SubResource("Panel")
+
+[node name="ArmA" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.707, 0, -0.707, 0, 1, 0, 0.707, 0, 0.707, 0.2, 0.015, 0.2)
+material_override = SubResource("Dark")
+mesh = SubResource("Arm")
+
+[node name="ArmB" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.707, 0, 0.707, 0, 1, 0, -0.707, 0, 0.707, -0.2, 0.015, 0.2)
+material_override = SubResource("Dark")
+mesh = SubResource("Arm")
+
+[node name="ArmC" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.707, 0, 0.707, 0, 1, 0, -0.707, 0, 0.707, 0.2, 0.015, -0.2)
+material_override = SubResource("Dark")
+mesh = SubResource("Arm")
+
+[node name="ArmD" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.707, 0, -0.707, 0, 1, 0, 0.707, 0, 0.707, -0.2, 0.015, -0.2)
+material_override = SubResource("Dark")
+mesh = SubResource("Arm")
+
+[node name="DuctA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.03, 0.4)
+material_override = SubResource("Shell")
+mesh = SubResource("Duct")
+
+[node name="DuctB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.03, 0.4)
+material_override = SubResource("Shell")
+mesh = SubResource("Duct")
+
+[node name="DuctC" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.03, -0.4)
+material_override = SubResource("Shell")
+mesh = SubResource("Duct")
+
+[node name="DuctD" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.03, -0.4)
+material_override = SubResource("Shell")
+mesh = SubResource("Duct")
+
+[node name="BladeA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.035, 0.4)
+material_override = SubResource("Dark")
+mesh = SubResource("Blade")
+
+[node name="BladeB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.035, 0.4)
+material_override = SubResource("Dark")
+mesh = SubResource("Blade")
+
+[node name="BladeC" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.035, -0.4)
+material_override = SubResource("Dark")
+mesh = SubResource("Blade")
+
+[node name="BladeD" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.035, -0.4)
+material_override = SubResource("Dark")
+mesh = SubResource("Blade")
+
+[node name="HubA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.06, 0.4)
+material_override = SubResource("Red")
+mesh = SubResource("Hub")
+
+[node name="HubB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.06, 0.4)
+material_override = SubResource("Red")
+mesh = SubResource("Hub")
+
+[node name="HubC" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.06, -0.4)
+material_override = SubResource("Red")
+mesh = SubResource("Hub")
+
+[node name="HubD" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.06, -0.4)
+material_override = SubResource("Red")
+mesh = SubResource("Hub")
+
+[node name="Cradle" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.85, 0, 0, 0, 1.6, 0, 0, 0, 0.9, 0, -0.1, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Panel")
+
+[node name="Warhead" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -1, -8.74228e-08, 0, 8.74228e-08, -1, 0, -0.26, 0)
+material_override = SubResource("Shell")
+mesh = SubResource("Warhead")
+
+[node name="FuseBand" type="MeshInstance3D" parent="."]
+transform = Transform3D(2.3, 0, 0, 0, 0.55, 0, 0, 0, 2.3, 0, -0.15, 0)
+material_override = SubResource("Red")
+mesh = SubResource("Hub")
+
+[node name="Contact" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 1.2, 0, 0, 0, 0.5, 0, -0.43, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Hub")

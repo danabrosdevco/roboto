@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3 uid="uid://3jioym1uw0m6"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://c5a5ri7ni5ufx" path="res://maps/proving_level.tscn" id="3_arena"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
+
+[sub_resource type="Resource" id="S_shot"]
+script = ExtResource("2_espec")
+callsign = "PICKET"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot")])
+count = 0
+posture = 2
+route_tag = &""
+post_tag = &""
+spawn_tag = &"obj_arena_hostiles"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"arena_1_contact"
+display_name = "Sim Arena: First Contact"
+briefing = "Two chassis on the sim arena floor, both carrying pumps, and they will not wait at their end — they come for the middle the moment you are down. They hit hard up close and not much further, so take them across a low wall rather than in the open. Three lanes run the length of the floor: the low walls you can shoot over standing, the tall ones you cannot see past at all."
+level_scene = ExtResource("3_arena")
+map_position = Vector2(-260, -40)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_shot")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"proving_clear", &"proving_extract"])
+reward_resources = 100
+compute_reward = 1
+unlocks = Array[StringName]([&"emp", &"hatchling"])
+squad_size = 0
+repeatable = false
+requires = Array[StringName]([])

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cuy6or1fspsba"
+path="res://.godot/imported/solar_heliostat_stowed.map-aba4a5823e94816aa39d99b1de35cd7e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_heliostat_stowed.map"
+dest_files=["res://.godot/imported/solar_heliostat_stowed.map-aba4a5823e94816aa39d99b1de35cd7e.tres"]
+
+[params]
+

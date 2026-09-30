@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="TerrainRecipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+size_x = 1024.0
+size_z = 512.0
+cell_size = 1.0
+random_seed = 9
+layout = 2
+floor_at_zero = true
+floor_roughness = 1.0
+border_sides = 15
+border_height = 22.0
+border_width = 90.0
+border_noise = 40.0
+border_ruggedness = 0.55
+hills_height = 2.5
+hills_scale = 180.0
+hills_octaves = 4
+hills_warp = 40.0
+ridge_height = 1.5
+ridge_scale = 300.0
+ridge_on_floor = 1.0
+detail_height = 0.7
+detail_scale = 10.0
+crater_count = 380
+crater_radius_min = 2.0
+crater_radius_max = 8.0
+crater_depth = 0.35
+crater_rim = 0.14
+craters_on_floor = true
+thermal_passes = 2
+talus_angle = 40.0
+hydraulic_strength = 0.0
+smooth_passes = 0

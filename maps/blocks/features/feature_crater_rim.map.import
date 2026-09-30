@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dfdkgpoeed651"
+path="res://.godot/imported/feature_crater_rim.map-cfddc44a8213e814421c848751259d10.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_crater_rim.map"
+dest_files=["res://.godot/imported/feature_crater_rim.map-cfddc44a8213e814421c848751259d10.tres"]
+
+[params]
+

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_nc1fq"]
+
+[resource]
+script = ExtResource("1_nc1fq")
+level_scene_path = "res://maps/heliostat_level.tscn"
+image_path = "res://maps/minimaps/heliostat_level.png"
+world_min = Vector2(-163.406, -163.406)
+world_max = Vector2(279.25, 279.25)
+objective_ids = Array[StringName]([&"heliostat_extract", &"heliostat_clear"])
+objective_names = Array[String](["", "Heliostat Sea"])
+objective_positions = Array[Vector3]([Vector3(208, 0.101242, 120), Vector3(0, 0, 0)])
+objective_kinds = Array[StringName]([&"extract", &"capture"])
+insertion_positions = Array[Vector3]([Vector3(0, 0.173014, 250)])

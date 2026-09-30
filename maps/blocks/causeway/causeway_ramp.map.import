@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cnevmuyf42rkv"
+path="res://.godot/imported/causeway_ramp.map-b5c805ae5ddc80caec4acda9e9b19405.tres"
+
+[deps]
+
+source_file="res://maps/blocks/causeway/causeway_ramp.map"
+dest_files=["res://.godot/imported/causeway_ramp.map-b5c805ae5ddc80caec4acda9e9b19405.tres"]
+
+[params]
+

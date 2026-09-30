@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ylo62e4al8ie"
+path="res://.godot/imported/machine_press.map-7eed6dba52c895ceb8237c85337747d1.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_press.map"
+dest_files=["res://.godot/imported/machine_press.map-7eed6dba52c895ceb8237c85337747d1.tres"]
+
+[params]
+

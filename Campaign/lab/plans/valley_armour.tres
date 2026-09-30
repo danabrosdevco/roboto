@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover.tres" id="4_rover"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="5_mech"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
+[ext_resource type="PackedScene" uid="uid://bry0vr0coxyl4" path="res://maps/valley_level.tscn" id="7_valley"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "rover + mechanic + 3 rifles vs the same"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_rover"), ExtResource("5_mech"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_rover"), ExtResource("5_mech"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 50.0
+repeats = 6
+time_limit = 150.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "rover + mechanic + 3 rifles vs rover + 4 rifles"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_rover"), ExtResource("5_mech"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 50.0
+repeats = 8
+time_limit = 150.0
+swap_sides = true
+hostiles_on_post = false
+
+[resource]
+script = ExtResource("1_plan")
+title = "Valley armour"
+question = "In the open valley: does a rover with a Mechanic behind it hold up against the same, and is the Mechanic worth the rifle whose seat it takes?"
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2")])
+level = ExtResource("7_valley")
+site = Vector3(290, -11, 220)
+site_heading = 0.0
+repeats_override = 0
+speed = 1.0

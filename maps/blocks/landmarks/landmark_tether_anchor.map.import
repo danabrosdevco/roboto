@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://07r5nenoqoss"
+path="res://.godot/imported/landmark_tether_anchor.map-460f9eb5a74a73482b30aa4e4965093d.tres"
+
+[deps]
+
+source_file="res://maps/blocks/landmarks/landmark_tether_anchor.map"
+dest_files=["res://.godot/imported/landmark_tether_anchor.map-460f9eb5a74a73482b30aa4e4965093d.tres"]
+
+[params]
+

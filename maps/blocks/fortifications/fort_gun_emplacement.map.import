@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bhum378fk748n"
+path="res://.godot/imported/fort_gun_emplacement.map-9f6d28b815a6a32d921c769e64cad038.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_gun_emplacement.map"
+dest_files=["res://.godot/imported/fort_gun_emplacement.map-9f6d28b815a6a32d921c769e64cad038.tres"]
+
+[params]
+

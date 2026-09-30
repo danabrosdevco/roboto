@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://hmnqik84omfy"
+path="res://.godot/imported/DropI.ogg-441016e09051c754443843fb9e323a6e.oggvorbisstr"
+
+[deps]
+
+source_file="res://sounds/sfx/psx ui sfx/squad_manager/DropI.ogg"
+dest_files=["res://.godot/imported/DropI.ogg-441016e09051c754443843fb9e323a6e.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

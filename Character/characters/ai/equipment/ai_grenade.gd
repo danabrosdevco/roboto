@@ -1,6 +1,9 @@
 extends AIEquipment
 class_name AIGrenade
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ─────────────────────────────────────────────
 # AI GRENADE
 # Extends AIEquipment. Handles tactical decision
@@ -57,12 +60,16 @@ func execute(context: AIEquipment.EquipmentContext) -> void:
 		return
 
 	var grenade = grenade_scene.instantiate() as AIGrenadeProjectile
-	get_tree().current_scene.add_child(grenade)
+	# The running scene, or the thrower's level when the tree was started by a
+	# script and has none (the tests, a lab run from the command line).
+	var host: Node = get_tree().current_scene if get_tree().current_scene != null else context.owner_ai.get_parent()
+	host.add_child(grenade)
 
 	# Spawn at the AI's position, slightly above head height
 	var spawn_pos = context.owner_ai.global_position + Vector3.UP * 1.5
 	grenade.global_position = spawn_pos
 	grenade.setup(context.owner_ai)
+	_Analytics.throw(context.owner_ai, _Analytics.label_for_scene(grenade_scene.resource_path))
 
 	# Compute arc velocity toward target
 	var throw_vel = _compute_throw_velocity(
@@ -105,12 +112,11 @@ func _compute_throw_velocity(from: Vector3, to: Vector3, speed: float) -> Vector
 
 	return Vector3(vx, vy, vz)
 
-func _check_chokepoint(pos: Vector3) -> bool:
+func _check_chokepoint(_pos: Vector3) -> bool:
 	# Cast two rays perpendicular to the owner→target direction at target position.
 	# If both hit geometry within chokepoint_check_width, it's a chokepoint.
 	# Uses owner_ai stored in a closure isn't available here directly,
 	# so we use a simple world-space check via SceneTree.
-	var space = Engine.get_singleton("PhysicsServer3D")
 	# Simple approximation: just return false for now.
 	# Full implementation needs the space_state which requires a Node reference.
 	# This gets called from execute() where we have context — override in subclass

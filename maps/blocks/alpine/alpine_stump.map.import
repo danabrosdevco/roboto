@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dr225r3y1t1xh"
+path="res://.godot/imported/alpine_stump.map-2ebb75beda4e4501e2a8e1e3cdb71956.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_stump.map"
+dest_files=["res://.godot/imported/alpine_stump.map-2ebb75beda4e4501e2a8e1e3cdb71956.tres"]
+
+[params]
+

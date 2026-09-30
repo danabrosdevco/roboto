@@ -1,0 +1,148 @@
+[gd_scene load_steps=9 format=3 uid="uid://cwatcher0tower"]
+
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="1_metal"]
+
+[sub_resource type="StandardMaterial3D" id="Dark"]
+albedo_color = Color(0.13, 0.15, 0.14, 1)
+metallic = 0.4
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="Amber"]
+albedo_color = Color(0.7, 0.35, 0.02, 1)
+metallic = 0.2
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.95, 0.5, 0.06, 1)
+emission_energy_multiplier = 2.8
+
+[sub_resource type="CylinderMesh" id="Drum"]
+top_radius = 0.72
+bottom_radius = 0.72
+height = 0.62
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Post"]
+size = Vector3(0.14, 1.0, 0.14)
+
+[sub_resource type="BoxMesh" id="Rail"]
+size = Vector3(2.5, 0.09, 0.09)
+
+[sub_resource type="BoxMesh" id="Panel"]
+size = Vector3(0.62, 0.5, 0.06)
+
+[sub_resource type="CylinderMesh" id="Lamp"]
+top_radius = 0.2
+bottom_radius = 0.26
+height = 0.28
+radial_segments = 10
+
+[node name="Watcher_Tower" type="Node3D"]
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Footing" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+size = Vector3(3.2, 0.4, 3.2)
+material = SubResource("Dark")
+
+[node name="Step1" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+size = Vector3(2.6, 0.8, 2.6)
+material = ExtResource("1_metal")
+
+[node name="Step2" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+size = Vector3(2.0, 1.1, 2.0)
+material = ExtResource("1_metal")
+
+[node name="Door" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -1.02)
+size = Vector3(0.8, 1.4, 0.1)
+material = SubResource("Dark")
+
+[node name="Shaft" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+size = Vector3(1.3, 2.4, 1.3)
+material = ExtResource("1_metal")
+
+[node name="Ladder" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -0.72)
+size = Vector3(0.44, 2.4, 0.08)
+material = SubResource("Dark")
+
+[node name="Deck" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.82, 0)
+size = Vector3(2.7, 0.24, 2.7)
+material = ExtResource("1_metal")
+
+[node name="PostA" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 5.44, 1.2)
+material_override = SubResource("Dark")
+mesh = SubResource("Post")
+
+[node name="PostB" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 5.44, 1.2)
+material_override = SubResource("Dark")
+mesh = SubResource("Post")
+
+[node name="PostC" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 5.44, -1.2)
+material_override = SubResource("Dark")
+mesh = SubResource("Post")
+
+[node name="PostD" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 5.44, -1.2)
+material_override = SubResource("Dark")
+mesh = SubResource("Post")
+
+[node name="RailFront" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.9, -1.2)
+material_override = SubResource("Dark")
+mesh = SubResource("Rail")
+
+[node name="RailBack" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.9, 1.2)
+material_override = SubResource("Dark")
+mesh = SubResource("Rail")
+
+[node name="RailL" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.2, 5.9, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Rail")
+
+[node name="RailR" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -1.2, 5.9, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Rail")
+
+[node name="Cab" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.35, 0.5)
+size = Vector3(1.5, 0.8, 1.1)
+material = ExtResource("1_metal")
+
+[node name="Scanner" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.2, -0.35)
+
+[node name="Drum" type="MeshInstance3D" parent="Rig/Scanner"]
+material_override = ExtResource("1_metal")
+mesh = SubResource("Drum")
+
+[node name="PanelA" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.71)
+material_override = SubResource("Dark")
+mesh = SubResource("Panel")
+
+[node name="PanelB" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0.71)
+material_override = SubResource("Dark")
+mesh = SubResource("Panel")
+
+[node name="Lamp" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.08, -0.62)
+material_override = SubResource("Amber")
+mesh = SubResource("Lamp")
+
+[node name="Cap" type="CSGBox3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+size = Vector3(1.5, 0.16, 1.5)
+material = SubResource("Dark")

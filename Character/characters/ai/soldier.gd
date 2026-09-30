@@ -38,6 +38,19 @@ var defensive_mode: bool = false
 # ── Cover ──
 var current_cover_point: CoverPoint = null
 var at_cover: bool = false
+## Never takes cover, never suppresses, never falls back. On contact it just
+## comes at you, and a hit only makes it shift its approach rather than break
+## it off. For melee rushers — a chaser that walks to a wall when it spots you
+## has stopped being a chaser.
+##
+## Deliberately not inferred from weapon type: a shotgunner could reasonably be
+## built this way too, and a knife unit could reasonably be made cautious.
+@export var aggressive: bool = false
+## How far behind its squad's line this robot walks, along the way the squad is
+## going. 0 for anything that fights. The Mechanic walks at the back: in the
+## front rank it was the first thing every fight found.
+@export var formation_trail: float = 0.0
+
 @export var cover_arrival_threshold: float = 1.2
 @export var cover_search_radius: float = 25.0
 
@@ -56,6 +69,12 @@ signal reached_cover(soldier: Soldier)
 signal suppressing_started(soldier: Soldier)
 signal suppressed_started(soldier: Soldier)
 signal bound_step_complete(soldier: Soldier)
+
+
+# A Soldier is what carries a squad, so this is where the question Enemy asks
+# can actually be answered. See Enemy.squad_is_engaged().
+func squad_is_engaged() -> bool:
+	return squad != null and is_instance_valid(squad) and squad.context == Squad.SquadContext.ENGAGED
 
 
 # ─────────────────────────────────────────────
@@ -121,16 +140,29 @@ func tick_cover_seeking() -> void:
 		change_soldier_state(SoldierState.NONE)
 		reached_cover.emit(self)
 
+## Whether this robot is sent to cover points. A vehicle does not fit behind one:
+## told to hold somewhere, it parks on the spot instead.
+func takes_cover() -> bool:
+	return true
+
+
 func find_best_cover_point() -> CoverPoint:
 	var cover_points = get_tree().get_nodes_in_group("cover_points")
 	var best: CoverPoint = null
 	var best_score: float = -INF
 	var target_pos = combat_target.global_position if combat_target else global_position
 
+	# CHEAPEST REJECT FIRST. This used to call is_occupied() on every cover point
+	# in the level before the distance test, so each soldier seeking cover made
+	# ~130 method calls and ~130 sqrt distance checks to find the handful in
+	# range — with ten soldiers in contact that was 1400 calls a frame, which is
+	# what the profiler was showing. Squared distance also drops the sqrt.
+	var radius_sq := cover_search_radius * cover_search_radius
+	var here := global_position
 	for cp in cover_points:
-		if not cp is CoverPoint or cp.is_occupied():
+		if here.distance_squared_to(cp.global_position) > radius_sq:
 			continue
-		if global_position.distance_to(cp.global_position) > cover_search_radius:
+		if not cp is CoverPoint or cp.is_occupied():
 			continue
 		var score = cp.score_for(global_position, target_pos)
 		if score > best_score:
@@ -204,13 +236,17 @@ func tick_bounding() -> void:
 	if movement_state == MovementState.CHASING:
 		if combat_target != null:
 			var dist = global_position.distance_to(combat_target.global_position)
-			if dist <= weapon.max_effective_range * 0.6:
+			# Nothing in the hands (a robot sent out with NO WEAPON, a rover
+			# before its turret is fitted): no range to close to, so the step
+			# is over now rather than a crash on weapon.max_effective_range.
+			if weapon == null or dist <= weapon.max_effective_range * 0.6:
 				# Close enough to engage — stop advancing
 				movement_state = MovementState.NONE
 				change_soldier_state(SoldierState.NONE)
 				bound_step_complete.emit(self)
 		return
-	if nav_agent.is_navigation_finished():
+	_tick_nav(get_physics_process_delta_time())
+	if _nav_finished:
 		change_soldier_state(SoldierState.NONE)
 		bound_step_complete.emit(self)
 
@@ -225,7 +261,18 @@ func tick_bounding() -> void:
 # block any movement that would leave cover.
 # ─────────────────────────────────────────────
 func perform_action(action: CombatOptions) -> void:
-	if defensive_mode and action == CombatOptions.MOVE:
+	# NOT for rushers. This is what pinned a garrisoned hopper: DEFEND sets
+	# defensive_mode on arrival at the post, and every MOVE — every chase, every
+	# leap — came back as AIM or FIRE. A melee frame aiming at something 10m
+	# away swipes at air forever. Rushers hold a post until something shows up,
+	# then they go; the squad leash lets them off for exactly that.
+	#
+	# NOR FOR ANYONE SHOT AT FROM OUTSIDE THEIR OWN REACH. It is the same bug
+	# with a gun instead of a knife: the shotgun garrison on the hillfort
+	# pillars stood in cover taking rifle fire from 60m and re-rolled every
+	# MOVE into AIM, so they aimed a 45m weapon at something they could not
+	# touch until they died of it. A post you cannot shoot from is not a post.
+	if defensive_mode and action == CombatOptions.MOVE and not aggressive and not _cannot_reach():
 		# Only allow repositioning within the defence perimeter
 		# Explicitly block advance, chase, leap by re-rolling as AIM
 		var roll = randi_range(0, 1)
@@ -236,8 +283,37 @@ func perform_action(action: CombatOptions) -> void:
 		return
 	super(action)
 
+
+## There is something to fight and it is further away than this frame can shoot.
+##
+## The one case where holding a garrison post means doing nothing at all, so it
+## is the one case that earns a dug-in soldier the right to move. find_advance_
+## target() still stops them at their own standoff, so they close to where their
+## weapon works and no further — and Squad's defend tick skips anyone in COMBAT,
+## so nothing drags them back mid-fight and they walk home when it is over.
+func _cannot_reach() -> bool:
+	if combat_target == null or not is_instance_valid(combat_target):
+		return false   # nothing acquired: hold the post, that is what a post is for
+	return global_position.distance_to(combat_target.global_position) > _max_range()
+
+
 func trigger_combat(body: AI) -> void:
 	super(body)
+	# A rusher that has seen you closes. Every time.
+	#
+	# This branch used to send EVERY non-defensive soldier to the nearest cover
+	# point the instant it acquired a target, which for a melee chassis meant
+	# walking sideways to a wall instead of at the thing it exists to reach.
+	# Staying in NONE leaves the movement roll free to pick CHASE or LEAP on the
+	# very next tick.
+	#
+	# BEFORE the soldier_state check, and it clears whatever state it finds. A
+	# garrison hopper is already in a cover or hold state when contact arrives,
+	# and the early return below used to leave it there — dug in, with a knife.
+	if aggressive:
+		if soldier_state != SoldierState.NONE:
+			change_soldier_state(SoldierState.NONE)
+		return
 	if soldier_state != SoldierState.NONE:
 		return
 	if defensive_mode:
@@ -258,12 +334,25 @@ func trigger_combat(body: AI) -> void:
 # Called by Squad when unengaged and an objective exists.
 # Only executes if not currently in combat.
 # ─────────────────────────────────────────────
-func order_move_to(pos: Vector3, force: bool = false) -> void:
+# keep_target separates "go somewhere" from "stop fighting".
+#
+# A forced order used to always null combat_target and drop to PATROL, because
+# force meant "the player said fall back". But the squad ALSO forces moves for
+# routine corrections — leash recalls, taking up a new defend post — and those
+# are repositioning, not disengaging. Issuing ADVANCE mid-firefight therefore
+# wiped every target in the squad and the whole unit fell out of contact until
+# the 25m detection sphere re-triggered.
+#
+# force  = move even though we're fighting
+# keep_target = ...but keep fighting while we do it
+## `think_delay` hands this robot its place in the queue when the whole squad
+## is ordered at once — see Enemy.move_to and Squad.order_stagger_seconds.
+func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false,
+		think_delay: float = 0.0) -> void:
 	if ai_state == AIState.DEAD:
 		return
-	# Normally an engaged soldier ignores move orders. A forced order — meaning
-	# the player said so — breaks contact and moves anyway. This is what makes
-	# "fall back to that ridge" work in the middle of a firefight.
+	# Normally an engaged soldier ignores move orders. A forced order moves
+	# anyway — that's what makes "get to that ridge" work mid-firefight.
 	if ai_state == AIState.COMBAT and not force:
 		return
 	# CRITICAL or E-KILL: signal too degraded to receive squad orders.
@@ -271,12 +360,35 @@ func order_move_to(pos: Vector3, force: bool = false) -> void:
 	# not answering the radio is the e-warfare system doing its job.
 	if not _can_receive_orders():
 		return
+
+	# NO ORDER_ACK HERE. `force` does not mean "the player said so" — Squad
+	# passes force = true from eleven internal call sites (formation holds, cover
+	# moves, bounding, regroups), so acknowledging here meant the squad answered
+	# orders nobody gave, constantly. Worse, every one of those stamped the
+	# shared per-squad and per-speaker cooldowns, which starved contact, kill
+	# and hurt lines entirely.
+	#
+	# The acknowledgement belongs where a PLAYER order actually arrives:
+	# Squad.receive_player_order() and Squad.follow().
+
+	# Cover is released either way; you can't hold it and walk.
 	if force:
 		release_cover()
-		combat_target = null
+		if not keep_target:
+			combat_target = null
+
 	change_soldier_state(SoldierState.NONE)
-	change_ai_state(AIState.PATROL)
-	move_to(pos)
+	# Staying in COMBAT is what lets them shoot on the move. Dropping to PATROL
+	# is what made the squad forget there was a fight at all.
+	#
+	# AND A CULLED ROBOT STAYS CULLED. This line is the other half of the leak
+	# in move_to(): the squad re-issues orders every frame, and each one pulled
+	# a switched-off robot back into PATROL, so the distance cull turned it off
+	# and the squad turned it straight back on — 119 of Mutaha's 161 running a
+	# full brain from 260 m away, from the moment you spawned.
+	if not (keep_target and ai_state == AIState.COMBAT) and ai_state != AIState.PASSIVE:
+		change_ai_state(AIState.PATROL)
+	move_to(pos, think_delay)
 
 
 # ─────────────────────────────────────────────
@@ -285,6 +397,15 @@ func order_move_to(pos: Vector3, force: bool = false) -> void:
 func assign_role(role: SoldierRole) -> void:
 	# CRITICAL or E-KILL: ignores squad role assignments
 	if not _can_receive_orders():
+		return
+	# The squad's fire-and-manoeuvre roles are the OTHER way a rusher ends up
+	# standing still: SUPPRESSOR plants it to lay covering fire, FALLBACK walks
+	# it backwards. Neither means anything to something with a knife, so an
+	# aggressive chassis takes every role as "go forward".
+	if aggressive:
+		squad_role = SoldierRole.ADVANCER
+		if combat_target != null:
+			movement_state = MovementState.CHASING
 		return
 	squad_role = role
 	match role:
@@ -363,7 +484,6 @@ func die() -> void:
 	release_cover()
 	if squad != null:
 		squad.notify_member_died(self)
-	reset_debug_label()
 	super()
 
 
@@ -379,16 +499,3 @@ func reset() -> void:
 	suppress_timer = 0.0
 	suppressed_timer = 0.0
 	super()
-
-
-# ─────────────────────────────────────────────
-# OVERRIDE: update_debug_label
-# ─────────────────────────────────────────────
-func update_debug_label() -> void:
-	super()
-	if label != null:
-		label.text += "\n%s" % SoldierRole.keys()[squad_role]
-
-func reset_debug_label() -> void:
-	if label != null:
-		label.text = "DEAD"

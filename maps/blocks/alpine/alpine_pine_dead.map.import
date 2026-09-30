@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ksknptjrbgrv"
+path="res://.godot/imported/alpine_pine_dead.map-dd34e10a592151d513127e34d5b03ed3.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_pine_dead.map"
+dest_files=["res://.godot/imported/alpine_pine_dead.map-dd34e10a592151d513127e34d5b03ed3.tres"]
+
+[params]
+

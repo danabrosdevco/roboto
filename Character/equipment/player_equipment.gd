@@ -72,6 +72,10 @@ class Readout:
 @export var base_rotation: Vector3 = Vector3(-0.3, 6.0, 2.8)
 @export var obstructed_position: Vector3 = Vector3(-0.5, -0.425, -1.0)
 @export var obstructed_rotation: Vector3 = Vector3(0.3, 270.0, 3.0)
+## Swing aside when something is right in front of the camera. Off for items
+## used up close: the repair tool's whole job is standing against a robot,
+## which is exactly what the obstruction ray sees.
+@export var lowers_when_obstructed: bool = true
 @export var pose_speed: float = 10.0
 @export var bob_speed: float = 1.1
 @export var bob_amount: float = 0.015
@@ -92,9 +96,11 @@ class Readout:
 # ── SIGNALS ───────────────────────────────────
 signal equipped
 signal unequipped
+@warning_ignore("unused_signal")
 signal used                          # one discrete use happened
 signal charges_changed               # HUD should re-read get_readout()
 signal wants_revert                  # empty, and reverts_when_empty is set
+@warning_ignore("unused_signal")
 signal denied(reason: String)        # tried to use it and couldn't
 
 # ── RUNTIME ───────────────────────────────────
@@ -105,13 +111,18 @@ var ammo: AmmoPool = null
 var is_equipped: bool = false
 var move_factor: float = 0.0
 var is_obstructed: bool = false
+var _rest_pose_read: bool = false
 var is_ads: bool = false
 
 var _bob_time: float = 0.0
+## What bob added to viewmodel.position last frame, taken back out before the
+## pose lerp runs again. See the note in update_view().
+var _last_bob: Vector3 = Vector3.ZERO
 var _equip_timer: float = 0.0
 
 
-# Called once by EquipmentLoadout. Don't do this in _ready — the item needs
+# Called by EquipmentLoadout — again on every rebuild, for permanent items.
+# Don't do this in _ready: the item needs
 # references it can't find on its own, and _ready order isn't guaranteed.
 func initialize(p_player: Node, p_cam: Camera3D, p_ammo: AmmoPool) -> void:
 	player = p_player
@@ -121,9 +132,16 @@ func initialize(p_player: Node, p_cam: Camera3D, p_ammo: AmmoPool) -> void:
 	# (HUDWeapon forwards its own weapon_model export into it) and set_hidden
 	# needs it to already be there or the model starts visible.
 	_on_initialize()
-	if use_default_position == false:
+	# The authored pose, read ONCE. "Called once" above is not true of a
+	# permanent item: the loadout re-initializes everything when it rebuilds
+	# from the save, and by then the item may already have been drawn — which
+	# snaps the model to the obstructed pose. Re-reading here recorded that
+	# off-screen spot as the rest pose, and the repair tool sat beside your head
+	# where no scale would ever bring it into view.
+	if use_default_position == false and not _rest_pose_read:
 		base_position = viewmodel.position
 		base_rotation = viewmodel.rotation
+		_rest_pose_read = true
 	set_hidden(true)
 
 
@@ -203,6 +221,20 @@ func tick(_delta: float) -> void:
 	pass
 
 
+# Ticked for every item you are NOT holding. Anything that recovers over time
+# has to run here, or it only recovers while equipped — which for a resource
+# that gates equipping is a deadlock: empty means you can't hold it, and not
+# holding it means it never refills.
+func tick_stowed(_delta: float) -> void:
+	pass
+
+
+# Called by EquipmentLoadout.refill() at base. Reservoirs, cooldowns, anything
+# that isn't in the shared AmmoPool and so isn't covered by refill_all().
+func restock() -> void:
+	pass
+
+
 # ─────────────────────────────────────────────
 # INPUT — the loadout routes to whatever is held
 # ─────────────────────────────────────────────
@@ -267,7 +299,7 @@ func get_readout() -> Readout:
 # and reload via _get_pose_target().
 func update_view(delta: float, p_move_factor: float, p_obstructed: bool, p_ads: bool) -> void:
 	move_factor = p_move_factor
-	is_obstructed = p_obstructed
+	is_obstructed = p_obstructed and lowers_when_obstructed
 	is_ads = p_ads
 
 	if _equip_timer > 0.0:
@@ -288,6 +320,20 @@ func update_view(delta: float, p_move_factor: float, p_obstructed: bool, p_ads: 
 	var target_pos: Vector3 = target[0]
 	var target_rot: Vector3 = target[1]
 
+	# TAKE LAST FRAME'S BOB BACK OUT BEFORE LERPING.
+	#
+	# Bob used to be added straight into viewmodel.position, and the next
+	# frame's lerp then read that as where the weapon actually was. The
+	# vertical term is abs(sin()) — never negative — so every frame shoved the
+	# model up and the lerp only pulled back `delta * pose_speed` of it. It
+	# settled bob_amount / (delta * pose_speed) above its own pose: 6mm on the
+	# recoilless at the 60Hz physics tick this runs on. Six millimetres is
+	# nothing on a rifle you never look down, and everything on an iron sight
+	# 0.41m from the eye — it is 0.8 degrees, which puts the rocket a metre low
+	# at 65m while the ring looks like it is on the target.
+	viewmodel.position -= _last_bob
+	_last_bob = Vector3.ZERO
+
 	if viewmodel.position.distance_to(target_pos) > 0.001:
 		viewmodel.position = viewmodel.position.lerp(target_pos, delta * pose_speed)
 	if viewmodel.rotation.distance_to(target_rot) > 0.001:
@@ -295,6 +341,7 @@ func update_view(delta: float, p_move_factor: float, p_obstructed: bool, p_ads: 
 
 	if _apply_bob():
 		viewmodel.position += bob_offset
+		_last_bob = bob_offset
 
 	var bob_rotation := Vector3(
 		sin(_bob_time * 2.0) * amount * 20.0,
@@ -313,6 +360,18 @@ func _get_pose_target() -> Array:
 	if is_obstructed:
 		return [obstructed_position, obstructed_rotation]
 	return [base_position, base_rotation]
+
+
+## The field of view this item aims down to, or 0 for something that cannot be
+## aimed — a scanner, a repair tool, a grenade in your hand.
+##
+## Asked of whatever is HELD rather than read off PlayerWeapon, because aiming
+## is not a property of being a gun. The launcher is a PlayerEquipment with a
+## sight on the tube; before this, Player.current_weapon() cast the held item
+## to PlayerWeapon, got null, and the aim button did nothing at all with a
+## recoilless rifle up.
+func ads_fov() -> float:
+	return 0.0
 
 
 func _apply_bob() -> bool:
@@ -351,3 +410,34 @@ func aim_point(distance: float, exclude: Array = []) -> Vector3:
 			return global_position
 		return cam.global_position + (-cam.global_transform.basis.z.normalized() * distance)
 	return hit.position
+
+
+## WHERE A SPAWNED THING BELONGS: THE LEVEL, NOT THE WORLD.
+##
+## `player.world` is the persistent node that levels are loaded INTO — the
+## player is a SIBLING of the level, not a child of it, which is why it
+## survives a mission change. Parenting ordnance there makes the ordnance
+## survive too: a Drone Carrier Pack thrown in the depot put two Divers in the
+## air that were still flying after the next mission loaded.
+##
+## World.current_level is what deload_current_level() frees, so anything
+## parented to it goes when the mission does. The AI side already worked this
+## out — see ai_weapon_grenade_launcher._charge_parent(), which notes that a
+## bomb in the air at extraction used to come home with you.
+var _warned_no_level: bool = false
+
+
+func level_node() -> Node:
+	var w = player.get("world") if player != null else null
+	if w != null:
+		var lvl = w.get("current_level")
+		if lvl != null and is_instance_valid(lvl):
+			return lvl
+		# Falling back to the World means whatever this is will outlive the
+		# mission. Worth saying so — once: this is also the tracer path, and a
+		# warning per round would bury the message it is trying to send.
+		if not _warned_no_level:
+			_warned_no_level = true
+			push_warning("%s: no current_level, so this is being parented to the World and will survive a mission change." % display_name)
+		return w
+	return get_tree().current_scene

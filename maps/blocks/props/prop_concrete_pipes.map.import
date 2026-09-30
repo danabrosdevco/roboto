@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cbrd3x72laxr3"
+path="res://.godot/imported/prop_concrete_pipes.map-833536769879e8b21b1ccdb22294436a.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_concrete_pipes.map"
+dest_files=["res://.godot/imported/prop_concrete_pipes.map-833536769879e8b21b1ccdb22294436a.tres"]
+
+[params]
+

@@ -17,6 +17,16 @@ class_name LevelExit
 
 @export var area: Area3D
 @export var next_level: PackedScene
+## The parts that only light up once walking in would actually take you out:
+## the chevrons on the pad and the corner beacons. Dark before that, the same
+## rule the HUD's extraction marker follows (objective_hud.gd) — a lit gate
+## while the objectives are unfinished points the player at the way out at
+## exactly the moment they should not take it.
+@export var live_parts: Array[Node3D] = []
+## How often the gate re-checks whether it is open. Objectives finish on their
+## own schedule and the terminal can set a destination at any time; a second is
+## far below noticing, and costs nothing next to a per-frame check.
+@export var live_check_seconds: float = 1.0
 
 # The train at base. World registers these with Campaign so selecting a mission
 # knows which exit to point at the chosen level.
@@ -31,6 +41,24 @@ signal exit_blocked(reason: String)
 func _ready() -> void:
 	if is_departure:
 		add_to_group("departure_exits")
+	_refresh_live()
+	if live_parts.is_empty():
+		return   # a bare exit (a plain door): nothing to light
+	var tick := Timer.new()
+	tick.wait_time = maxf(live_check_seconds, 0.1)
+	tick.autostart = true
+	tick.timeout.connect(_refresh_live)
+	add_child(tick)
+
+
+# Lit when this gate would actually take you somewhere: at base once an
+# operation is selected, on a mission once the objectives that gate extraction
+# are done.
+func _refresh_live() -> void:
+	var open := next_level != null and (not requires_objectives_complete or _objectives_done())
+	for part in live_parts:
+		if part != null:
+			part.visible = open
 
 
 func _on_area_3d_body_entered(body: Node3D) -> void:

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bkom3en3vir5w"
+path="res://.godot/imported/bridge_highway.map-51c831f1a9117f509ec047d28622102c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bridges/bridge_highway.map"
+dest_files=["res://.godot/imported/bridge_highway.map-51c831f1a9117f509ec047d28622102c.tres"]
+
+[params]
+

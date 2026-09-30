@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cwx3bnvxrou4h"
+path="res://.godot/imported/prop_concrete_blocks.map-ae2e2e77716d0503dd19c387e8d9171e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_concrete_blocks.map"
+dest_files=["res://.godot/imported/prop_concrete_blocks.map-ae2e2e77716d0503dd19c387e8d9171e.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://slnjnhnm3ewi"
+path="res://.godot/imported/alpine_pine_skeleton.map-208958892aab80b81b517d76929d53a5.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_pine_skeleton.map"
+dest_files=["res://.godot/imported/alpine_pine_skeleton.map-208958892aab80b81b517d76929d53a5.tres"]
+
+[params]
+

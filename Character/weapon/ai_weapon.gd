@@ -1,6 +1,12 @@
 extends Node3D
 class_name AIWeapon
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+## By path, not by class_name: a brand-new class_name is not resolvable until
+## the editor rescans, and that rescan must not be run with the editor open.
+const _WeaponAudio := preload("res://Managers/weapon_audio.gd")
+
 # ── EXPORTS ───────────────────────────────────
 @export var weapon_type: Enums.AIWeaponTypes
 @export var fire_cooldown: float = 1.35
@@ -17,6 +23,12 @@ class_name AIWeapon
 # Spread — in milliradians. At distance D, spread = mrad * D / 1000 metres.
 @export var ai_spread_mrad: float = 6.0
 
+# Rounds per shot. 1 is a rifle; a shotgun is several, each carrying its share
+# of base_damage and thrown wide by pellet_spread_mrad. The pattern is what
+# makes a shotgun fall off with range, so there is no separate falloff to tune.
+@export var pellets: int = 1
+@export var pellet_spread_mrad: float = 0.0
+
 # Suppression — signal_integrity damage applied to enemies near each shot.
 @export var suppression_per_shot: float = 3.0   # signal_integrity units × 100
 @export var near_miss_radius: float = 2.5       # metres
@@ -27,9 +39,19 @@ class_name AIWeapon
 
 ## When false, rounds pass through same-faction bodies. Advancing soldiers
 ## were shooting their own squadmates in the back.
-@export var friendly_fire: bool = false
+# Rounds DO hit allies — they just hit softer. Passing them straight through was
+# the wrong fix: it meant you could stand in your own squad's line forever with
+# no consequence, which makes the sidestep below pointless and makes the world
+# feel fake. A third of damage is enough to punish a careless push without one
+# stray burst wiping your own fireteam.
+@export var friendly_fire: bool = true
+@export var friendly_fire_multiplier: float = 0.34
 
 # Magazine
+## Rounds per committed burst, whoever carries it. 0 leaves it to the robot's
+## own burst_min/burst_max — set it where the weapon has a rhythm of its own.
+@export var burst_min: int = 0
+@export var burst_max: int = 0
 @export var magazine_size: int = 30          # rounds per magazine
 @export var reload_time: float = 2.8         # seconds to reload
 @export var infinite_ammo: bool = false      # useful for turrets / bosses
@@ -58,6 +80,8 @@ var reload_timer: float = 0.0
 # PhysicsShapeQueryParameters3D on every single shot.
 var _near_miss_shape: SphereShape3D
 var _near_miss_query: PhysicsShapeQueryParameters3D
+# Reused across the four friendly-fire passes rather than reallocated per pass.
+var _ff_query: PhysicsRayQueryParameters3D
 var _melee_shape: SphereShape3D
 var _melee_query: PhysicsShapeQueryParameters3D
 
@@ -104,6 +128,20 @@ func _process(delta: float) -> void:
 func can_fire() -> bool:
 	return not is_reloading and magazine_current > 0
 
+
+# When a round last left this weapon.
+#
+# The squad HUD used to read ai_state == COMBAT as "FIRING", which is really
+# "has a target" — so a soldier who had acquired someone and then spent ten
+# seconds walking, reloading or waiting for a shot still read FIRING the whole
+# time. That is the status getting stuck. A recency window on actual shots is
+# the only honest answer to "is this one shooting".
+var _last_fired_ms: int = -100000
+
+
+func seconds_since_fired() -> float:
+	return (Time.get_ticks_msec() - _last_fired_ms) / 1000.0
+
 func needs_reload() -> bool:
 	return not infinite_ammo and magazine_current <= 0 and not is_reloading
 
@@ -118,8 +156,11 @@ func fire(weapon_target: Vector3) -> void:
 	if not can_fire():
 		return
 
+	_last_fired_ms = Time.get_ticks_msec()
 	if not infinite_ammo:
 		magazine_current -= 1
+	# Before the hit resolves, so the log can pair the two (same physics frame).
+	_Analytics.shot(_owner_body())
 
 	play_shot_audio()
 
@@ -152,70 +193,210 @@ func calculate_damage(distance: float) -> int:
 	var t = clamp((distance - damage_falloff_start) / range_beyond, 0.0, 1.0)
 	return int(lerp(float(base_damage), float(min_damage), t))
 
+# The owning character, not merely the node this weapon hangs off.
+#
+# Baked chassis scenes park the weapon directly on the CharacterBody3D, so
+# get_parent() was right for them — and every enemy in the game is baked.
+# equip_weapon_scene() parents a RUNTIME-fitted weapon to weapon_mount instead,
+# a bare Node3D, and every runtime-fitted weapon belongs to the player's squad.
+#
+# That single difference cost four things, all of them silent:
+#   - no confirmed_kills on the mount, so squad kill credit was dropped
+#   - no bark, so squad members never called out a kill
+#   - no get_faction(), so _owner_faction() returned null, _is_friendly()
+#     answered false for everybody, and they would happily shoot you
+#   - not a CollisionObject3D, so their own body was never excluded from their
+#     raycast
+#
+# Cached because this runs per shot and thirty robots fire at once.
+var _owner_cache: Node = null
+
+
+# Where what this weapon leaves behind goes: the level its carrier stands in.
+# get_tree().current_scene is Master in the game — above World, so anything put
+# there outlives the level — and in a headless test there is none, which is
+# where every tracer failed with "add_child on a null value".
+func _level_node() -> Node:
+	var shooter := _owner_body()
+	if shooter != null and shooter.get_parent() != null:
+		return shooter.get_parent()
+	if get_tree().current_scene != null:
+		return get_tree().current_scene
+	return get_tree().root
+
+
+func _owner_body() -> Node:
+	if _owner_cache != null and is_instance_valid(_owner_cache):
+		return _owner_cache
+	var n: Node = get_parent()
+	while n != null:
+		if n is CharacterBody3D:
+			_owner_cache = n
+			return n
+		n = n.get_parent()
+	_owner_cache = get_parent()
+	return _owner_cache
+
+
 func _owner_faction():
-	var p = get_parent()
+	var p = _owner_body()
 	if p != null and p.has_method("get_faction"):
 		return p.get_faction()
 	return null
 
+# "Friendly" means NOT HOSTILE, not "same faction". Enums.Factions.PLAYER and
+# Enums.Factions.ALLIED are different values, so an equality test says your own
+# squad and you are not friendly to each other — which is why they were putting
+# rounds into you and into each other across the faction line. are_hostile() is
+# the same test the AI uses to pick targets, so shooting and targeting finally
+# agree about who's on whose side.
+# Answers "is this one of ours", nothing more. It used to return false whenever
+# friendly_fire was on, which conflated "is an ally" with "may be shot" — now
+# that allies CAN be shot, those have to be separate questions.
 func _is_friendly(body: Node) -> bool:
-	if friendly_fire:
-		return false
 	var mine = _owner_faction()
 	if mine == null:
 		return false
 	if not body.has_method("get_faction"):
 		return false
-	return body.get_faction() == mine
+	return not Enums.are_hostile(mine, body.get_faction())
 
-func check_damage(weapon_target: Vector3) -> void:
-	var space_state = get_world_3d().direct_space_state
-	var from = muzzle_origin.global_position
-	var direction = (weapon_target - from).normalized()
+# True when a non-hostile body is between the muzzle and the target. Firing
+# anyway looks careless even when the round passes through — and it wastes
+# ammunition the squad now has a finite amount of.
+func friendly_in_line(weapon_target: Vector3) -> bool:
+	if muzzle_origin == null:
+		return false
+	var from: Vector3 = muzzle_origin.global_position
+	var to_target: Vector3 = weapon_target - from
+	var distance: float = to_target.length()
+	if distance < 0.01:
+		return false
+	var direction: Vector3 = to_target / distance
 
 	var exclusion: Array[RID] = []
-	var shooter = get_parent()
+	var shooter = _owner_body()
 	if shooter is CollisionObject3D:
 		exclusion.append((shooter as CollisionObject3D).get_rid())
 
+	# Both hoisted out of the loop. The space state cannot change between passes,
+	# and the query was being reallocated four times per shot — with thirty
+	# robots firing, that is the second-hottest path in the game allocating for
+	# no reason. Everything else in this file already caches its query object;
+	# this was the one that didn't.
+	var space := space_state_or_null()
+	if space == null:
+		return false
+	if _ff_query == null:
+		_ff_query = PhysicsRayQueryParameters3D.new()
+	var to_point := from + direction * distance
+
+	for _pass in 4:
+		var query := _ff_query
+		query.from = from
+		query.to = to_point
+		query.exclude = exclusion
+		var hit = space.intersect_ray(query)
+		if not hit:
+			return false
+		var collider = hit.collider
+		var damageable: Node = null
+		if collider.has_method("apply_damage"):
+			damageable = collider
+		elif collider.get_parent() != null and collider.get_parent().has_method("apply_damage"):
+			damageable = collider.get_parent()
+		if damageable == null:
+			return false   # geometry — a wall isn't a friendly-fire problem
+		if _is_friendly(damageable):
+			return true
+		if collider is CollisionObject3D:
+			exclusion.append((collider as CollisionObject3D).get_rid())
+	return false
+
+
+func space_state_or_null() -> PhysicsDirectSpaceState3D:
+	var world := get_world_3d()
+	return world.direct_space_state if world != null else null
+
+
+signal friendly_hit(body: Node)
+
+
+# A SHOT MAY BE MORE THAN ONE ROUND.
+#
+# A shotgun firing a single ray for its whole damage is a slow rifle: it either
+# lands all 45 or none of it, and at range it behaves exactly like every other
+# hitscan. Pellets give it the shape it should have had — everything lands in
+# your face, half of it lands across a room, almost none of it lands at forty
+# metres — without a range table, because the pattern does it.
+#
+# `base_damage` stays the damage of a WHOLE shell; each pellet carries its
+# share, so retuning the weapon is still one number.
+func check_damage(weapon_target: Vector3) -> void:
+	var count: int = maxi(pellets, 1)
+	var from: Vector3 = muzzle_origin.global_position
+	var centre := (weapon_target - from).normalized()
+	var shooter = _owner_body()
+	var exclusion: Array[RID] = []
+	if shooter is CollisionObject3D:
+		exclusion.append((shooter as CollisionObject3D).get_rid())
+
+	# Split so the parts add up to the whole: the remainder rides on the first
+	# pellet rather than being rounded away.
+	var each: int = int(floor(float(base_damage) / float(count)))
+	var spare: int = base_damage - each * count
+
+	var centre_impact := from + centre * max_effective_range
+	for i in count:
+		var dir := centre
+		if count > 1 and pellet_spread_mrad > 0.0:
+			dir = scatter(centre, pellet_spread_mrad)
+		var impact := _one_round(from, dir, exclusion, shooter, each + (spare if i == 0 else 0))
+		if i == 0:
+			centre_impact = impact
+
+	# One tracer for the shot, down the middle of the pattern.
+	fire_tracer_to(from, centre_impact)
+
+	if suppression_per_shot > 0.0:
+		_apply_near_miss_suppression(centre_impact)
+
+
+# One round down one line. Returns where it stopped.
+func _one_round(from: Vector3, direction: Vector3, exclusion: Array[RID],
+		shooter, share: int) -> Vector3:
+	var space_state = get_world_3d().direct_space_state
 	var impact = from + direction * max_effective_range
 	var hit_body: Node = null
 	var hit_dist: float = max_effective_range
 
-	# Walk the ray, skipping same-faction bodies so an advancing soldier
-	# doesn't put rounds into the back of the squadmate in front of it.
-	for _pass in 4:
-		var query := PhysicsRayQueryParameters3D.create(from, from + direction * 250.0)
-		query.exclude = exclusion
-		var result = space_state.intersect_ray(query)
-		if not result:
-			break
+	# The round stops at the FIRST thing it meets, ally or not. Who it was only
+	# changes how hard it lands.
+	var query := PhysicsRayQueryParameters3D.create(from, from + direction * 250.0)
+	query.exclude = exclusion
+	var result = space_state.intersect_ray(query)
+	if result:
 		var collider = result.collider
 		var damageable: Node = null
 		if collider.has_method("apply_damage"):
 			damageable = collider
 		elif collider.get_parent() != null and collider.get_parent().has_method("apply_damage"):
 			damageable = collider.get_parent()
-
-		if damageable != null and _is_friendly(damageable):
-			# Pass through this ally and keep looking.
-			if collider is CollisionObject3D:
-				exclusion.append((collider as CollisionObject3D).get_rid())
-			continue
-
 		impact = result.position
 		hit_dist = from.distance_to(result.position)
 		hit_body = damageable
-		break
 
 	if hit_body != null:
-		hit_body.apply_damage(calculate_damage(hit_dist), shooter)
+		# calculate_damage works off base_damage, so scale its falloff onto this
+		# round's share of the shell.
+		var full: float = maxf(float(base_damage), 1.0)
+		var dealt: int = maxi(1, int(round(calculate_damage(hit_dist) * float(share) / full)))
+		if _is_friendly(hit_body):
+			dealt = maxi(1, int(round(float(dealt) * friendly_fire_multiplier)))
+			friendly_hit.emit(hit_body)
+		hit_body.apply_damage(dealt, shooter)
+	return impact
 
-	# One tracer, along the line the round actually took.
-	fire_tracer_to(from, impact)
-
-	if suppression_per_shot > 0.0:
-		_apply_near_miss_suppression(impact)
 
 func _apply_near_miss_suppression(shot_pos: Vector3) -> void:
 	var space_state = get_world_3d().direct_space_state
@@ -224,7 +405,7 @@ func _apply_near_miss_suppression(shot_pos: Vector3) -> void:
 	_near_miss_query.collision_mask = character_mask
 	var results = space_state.intersect_shape(_near_miss_query, 8)
 	var suppression_amount = suppression_per_shot / 100.0
-	var shooter = get_parent()
+	var shooter = _owner_body()
 	for hit in results:
 		var body = hit.collider
 		if body == null:
@@ -239,26 +420,51 @@ func _apply_near_miss_suppression(shot_pos: Vector3) -> void:
 			continue
 		if "signal_integrity" in body:
 			if body.has_method("receive_signal_damage"):
-				body.receive_signal_damage(suppression_amount)
+				body.receive_signal_damage(suppression_amount, shooter)
 			else:
 				body.signal_integrity = maxf(0.0, body.signal_integrity - suppression_amount)
 
+# A SWING GOES WHERE IT IS LOOKING, not down the weapon node's own X axis.
+#
+# The sphere used to be placed at `global_position + basis.x * melee_range`.
+# That axis is whatever rotation the weapon was given in its scene, and the
+# chaser's is yawed ninety degrees — so the swing landed a metre and a half to
+# the SIDE of whatever it was attacking, and a metre above it, because the
+# weapon is mounted high on the body. A chaser could stand on your feet, in
+# COMBAT, cycling its attack, and never once touch you.
+#
+# Aimed at the target instead, so the sphere is always on the line between the
+# two. The arc is still measured against the BODY's facing, which is what stops
+# it hitting something behind it.
 func check_melee_damage() -> void:
 	var space_state = get_world_3d().direct_space_state
+	var shooter = _owner_body()
+	var swing := _melee_direction(shooter)
 	_melee_shape.radius = melee_radius
-	_melee_query.transform = Transform3D(Basis(), global_position + get_forward_vector() * melee_range)
+	_melee_query.transform = Transform3D(Basis(), global_position + swing * melee_range)
 	_melee_query.collision_mask = character_mask
 	var exclusion: Array[RID] = []
-	var shooter = get_parent()
 	if shooter is CollisionObject3D:
 		exclusion.append((shooter as CollisionObject3D).get_rid())
 	_melee_query.exclude = exclusion
+	var facing := swing
+	if shooter is Node3D:
+		var nose: Vector3 = -(shooter as Node3D).global_transform.basis.z
+		if nose.length_squared() > 0.0001:
+			facing = nose.normalized()
 
 	var results = space_state.intersect_shape(_melee_query, 16)
 	for result in results:
 		var collider = result.collider
-		var to_target = (collider.global_position - global_position).normalized()
-		if rad_to_deg(acos(clampf(get_forward_vector().dot(to_target), -1.0, 1.0))) > melee_arc_angle:
+		# ON THE FLAT. The arc says "is this in front of me", and a weapon mounted
+		# high on a chaser looks DOWN at something standing next to it — that tilt
+		# alone was most of the sixty degrees, so a target dead ahead measured 63
+		# and was thrown away. Height is the sphere's business, not the arc's.
+		var to_target := _flat(collider.global_position - global_position)
+		var flat_facing := _flat(facing)
+		if to_target == Vector3.ZERO or flat_facing == Vector3.ZERO:
+			continue
+		if rad_to_deg(acos(clampf(flat_facing.dot(to_target), -1.0, 1.0))) > melee_arc_angle:
 			continue
 		var damageable: Node = null
 		if collider.has_method("apply_damage"):
@@ -269,11 +475,34 @@ func check_melee_damage() -> void:
 			continue
 		damageable.apply_damage(base_damage, shooter)
 
+# Where a swing is aimed: at what the owner is fighting, or at whatever it was
+# last told to shoot at. Falls back to the weapon's own axis when it has
+# neither, which is the old behaviour and fine for a swing at nothing.
+func _melee_direction(shooter: Node) -> Vector3:
+	var aim_points: Array = []
+	if shooter != null and is_instance_valid(shooter):
+		var target = shooter.get("combat_target")
+		if target != null and is_instance_valid(target) and target is Node3D:
+			aim_points.append((target as Node3D).global_position)
+		var spot = shooter.get("weapon_target")
+		if spot is Vector3 and (spot as Vector3) != Vector3.ZERO:
+			aim_points.append(spot)
+	for point in aim_points:
+		var to: Vector3 = (point as Vector3) - global_position
+		if to.length_squared() > 0.0001:
+			return to.normalized()
+	return get_forward_vector()
+
+
 func get_forward_vector() -> Vector3:
 	return muzzle_origin.global_transform.basis.x.normalized()
 
 func play_shot_audio() -> void:
 	if shot_audio != null:
+		# Bus and level picked from where the listener is: past 150m this stops
+		# obeying inverse-distance and becomes a thump held near a floor, so a
+		# firefight across the map is audible without being loud up close.
+		_WeaponAudio.stage(shot_audio)
 		shot_audio.play()
 
 func play_muzzle_flash() -> void:
@@ -286,7 +515,7 @@ func fire_tracer_to(from: Vector3, to: Vector3) -> void:
 	if tracer_scene == null:
 		return
 	var new_tracer = tracer_scene.instantiate()
-	get_tree().current_scene.add_child(new_tracer)
+	_level_node().add_child(new_tracer)
 
 	var end_point = to
 	if tracer_jitter_degrees > 0.0:
@@ -305,3 +534,122 @@ func fire_tracer_to(from: Vector3, to: Vector3) -> void:
 		new_tracer.global_position = from
 		new_tracer.direction = (end_point - from).normalized()
 		new_tracer.look_at(from + new_tracer.direction, Vector3.UP)
+
+
+# One pellet's line, thrown off `centre` by up to `mrad` milliradians on each
+# of the two axes across the line. Static, and the player's own shotgun calls
+# it too — a pattern that differs depending on who pulled the trigger is a bug
+# waiting to be argued about.
+static func scatter(centre: Vector3, mrad: float) -> Vector3:
+	var spread := mrad / 1000.0
+	var side := centre.cross(Vector3.UP)
+	if side.length_squared() < 0.0001:
+		side = centre.cross(Vector3.RIGHT)
+	side = side.normalized()
+	var up := side.cross(centre).normalized()
+	return (centre + side * randf_range(-spread, spread)
+		+ up * randf_range(-spread, spread)).normalized()
+
+
+# Horizontal only, for arc tests between bodies standing on the same ground.
+static func _flat(v: Vector3) -> Vector3:
+	var out := Vector3(v.x, 0.0, v.z)
+	return out.normalized() if out.length_squared() > 0.0001 else Vector3.ZERO
+
+
+# ─────────────────────────────────────────────
+# TARGETING — whose problem is it, the robot's or the gun's?
+# ─────────────────────────────────────────────
+# For most weapons the answer is the robot's: it shoots whatever it is fighting,
+# the round arrives instantly, and there is nothing else to decide. FOLLOW_BODY
+# is that, it is the default, and nothing that exists today changes behaviour.
+#
+# A LOBBED round is a different problem. It takes seconds to land, and the
+# target picked because it was nearest is usually dead by the time it arrives —
+# eight Lobbers all firing at whoever is closest means one kill and seven
+# craters. Measured: an eight-Lobber force lost 3 of 3 against combined arms of
+# the same supply cost.
+#
+# So a weapon can be given the job instead, and the two targets are kept apart:
+# the BODY keeps `combat_target` for where it moves and which way it faces, the
+# WEAPON keeps `own_target` for where the round goes. A mortar robot can
+# manoeuvre with its squad while its tube is aimed somewhere else entirely.
+#
+# The modes are an enum rather than a subclass per weapon so they can be set in
+# the .tscn like everything else here. Anti-armour is the next one to want a
+# mode of its own — a rocket should prefer the hull it can actually hurt rather
+# than the nearest body.
+enum Targeting {
+	FOLLOW_BODY,   ## shoot whatever the robot is fighting. Instant weapons.
+	PATIENT,       ## slow round: pick something that will still be there, and
+				   ## do not pick what a squadmate has already claimed.
+}
+
+@export var targeting: Targeting = Targeting.FOLLOW_BODY
+## Metres per second of the round in flight. 0 means instant — a hitscan weapon
+## has no flight time and PATIENT has nothing to reason about.
+@export var projectile_speed: float = 0.0
+## How long a PATIENT weapon sticks with a target once it has chosen. At least
+## the flight time, or it re-picks mid-flight and the whole point is lost.
+@export var target_hold_seconds: float = 2.5
+
+## What this weapon is shooting at, when it does its own choosing.
+var own_target: CharacterBody3D = null
+var _hold_left: float = 0.0
+
+
+## Seconds for a round to cross `distance`. Zero for an instant weapon.
+func flight_time(distance: float) -> float:
+	return 0.0 if projectile_speed <= 0.0 else distance / projectile_speed
+
+
+## Pick a target. `candidates` is whatever the owner can see.
+##
+## Overriding this is how a new weapon role gets its own behaviour — the base
+## answers for the two modes above and anything else should add a mode rather
+## than reaching into the owner.
+func acquire(owner: Node3D, candidates: Array, delta: float) -> CharacterBody3D:
+	if targeting == Targeting.FOLLOW_BODY:
+		return owner.get("combat_target")
+
+	_hold_left = maxf(0.0, _hold_left - delta)
+	if own_target != null and is_instance_valid(own_target) and own_target.alive and _hold_left > 0.0:
+		return own_target
+
+	var best: CharacterBody3D = null
+	var best_score := -INF
+	for c in candidates:
+		if c == null or not is_instance_valid(c) or not c.alive:
+			continue
+		var d := owner.global_position.distance_to(c.global_position)
+		if d > max_effective_range or d < min_effective_range:
+			continue
+		# SOMEONE ELSE'S ALREADY. The whole failure this mode exists to stop is
+		# a row of tubes all dropping on one robot, so a target another patient
+		# weapon is holding is worth far less than a fresh one.
+		var score := 0.0 if _claimed_by_squadmate(owner, c) else 1000.0
+		# Still alive when the round lands, roughly: how much health it has, and
+		# how far it is from the fight it is about to lose.
+		score += float(c.health)
+		score += d * 2.0
+		if score > best_score:
+			best_score = score
+			best = c
+	if best != null:
+		own_target = best
+		_hold_left = maxf(target_hold_seconds, flight_time(owner.global_position.distance_to(best.global_position)))
+	return own_target if (own_target != null and is_instance_valid(own_target) and own_target.alive) else null
+
+
+# Is one of the owner's squadmates already lobbing at this?
+func _claimed_by_squadmate(owner: Node3D, who: CharacterBody3D) -> bool:
+	var squad = owner.get("squad")
+	if squad == null or not is_instance_valid(squad):
+		return false
+	for mate in squad.squad_members:
+		if mate == null or mate == owner or not is_instance_valid(mate):
+			continue
+		var w = mate.get("weapon")
+		if w is AIWeapon and (w as AIWeapon).own_target == who:
+			return true
+	return false

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://pgfnlpwvhwl"
+path="res://.godot/imported/feature_watchtower.map-25bc3937c5b592f66040b9b8c1beab4c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_watchtower.map"
+dest_files=["res://.godot/imported/feature_watchtower.map-25bc3937c5b592f66040b9b8c1beab4c.tres"]
+
+[params]
+

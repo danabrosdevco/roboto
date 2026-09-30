@@ -1,0 +1,41 @@
+[gd_scene load_steps=6 format=4]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_cnkvm"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_2ifne"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_2.tres" id="3_jp8bs"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_3ryhs"]
+points = PackedVector3Array(-1.5, -0.0625, -0.3125, -1.5, -0.0625, 0.3125, 1.5, -0.0625, 0.3125, 1.5, -0.0625, -0.3125, -1.5, 0.84375, -0.3125, 1.5, 0.84375, -0.3125, 1.5, 0.84375, 0.3125, -1.5, 0.84375, 0.3125)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_b4cmy"]
+_surfaces = [{
+"aabb": AABB(-1.5, -0.4375, -0.3125, 3, 0.875, 0.625),
+"attribute_data": PackedByteArray("AAAgvQAAADwAACC9AABAvAAAoLwAABC9AACgPAAAEL0AACA9AABAvAAAID0AAAA8AAAgPQAAQLwAACA9AAAAPAAAIL0AAAA8AAAgvQAAQLwAAKC8AAAQvQAAoDwAABC9AAAgvQAAQD4AACC9AABAvgAAID0AAEC+AAAgPQAAQD4AAEC+AABAvAAAQD4AAEC8AABAPgAAADwAAEC+AAAAPAAAQL4SHIM8//8/vu2ibbz//z8+7aJtvAAAQD4SHIM8AACgvP//Pz4AAKC8//8/vgAAoDz//z++AACgPP//Pz4AAEA+EhyDPAAAQL4SHIM8//8/vu2ibbz//z8+7aJtvAAAQD4AAAA8AABAvgAAADwAAEC+AABAvAAAQD4AAEC8AACgvAAAEL0AAEC8AADQvQAAQDwAANC9AACgPAAAEL0AAKA8AAAQvQAAoLwAABC9AABAvAAA0L0AAEA8AADQvQAAoLwAAEA+AACgvAAAQL4AAKA8AABAvgAAoDwAAEA+AABAvm/Fy70AAEA+b8XLvQAAQD6eqgW9AABAvp6qBb0AAEC8AABAPgAAQLwAAEC+AABAPAAAQL4AAEA8AABAPgAAQD6eqgW9AABAvp6qBb0AAEC+b8XLvQAAQD5vxcu9"),
+"format": 34359742487,
+"index_count": 96,
+"index_data": PackedByteArray("AAABAAIAAAACAAMAAAADAAQAAAAEAAUABgAHAAgABgAIAAkABgAJAAoABgAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8AIAAhACIAIAAiACMAJAAlACYAJAAmACcAKAApACoAKAAqACsALAAtAC4ALAAuAC8AMAAxADIAMAAyADMANAA1ADYANAA2ADcAOAA5ADoAOAA6ADsA"),
+"material": ExtResource("3_jp8bs"),
+"name": "PSX_Textures/concrete_tx_2",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 60,
+"vertex_data": PackedByteArray("AADAvwAA4L4AAKC+AADAvwAAkL4AAKC+//+/vwAAwL0AACC+//+/vwAAwL0AACA+AADAvwAAkL4AAKA+AADAvwAA4L4AAKA+AADAPwAAkL4AAKC+AADAPwAA4L4AAKC+AADAPwAA4L4AAKA+AADAPwAAkL4AAKA+//+/PwAAwL0AACA+//+/PwAAwL0AACC+AADAvwAA4L4AAKA+AADAPwAA4L4AAKA+AADAPwAA4L4AAKC+AADAvwAA4L4AAKC+AADAvwAAkL4AAKA+AADAPwAAkL4AAKA+AADAPwAA4L4AAKA+AADAvwAA4L4AAKA+AADAvwAAkL4AAKA+//+/vwAAwL0AACA+//+/PwAAwL0AACA+AADAPwAAkL4AAKA+//+/vwAAwL0AACC+//+/PwAAwL0AACC+//+/PwAAwL0AACA+//+/vwAAwL0AACA+AADAvwAAkL4AAKC+AADAPwAAkL4AAKC+//+/PwAAwL0AACC+//+/vwAAwL0AACC+AADAvwAA4L4AAKC+AADAPwAA4L4AAKC+AADAPwAAkL4AAKC+AADAvwAAkL4AAKC+AADAvwAAwL0AACC+AADAvwAA4D4AAMC9AADAvwAA4D4AAMA9AADAvwAAwL0AACA+AADAPwAAwL0AACC+AADAPwAAwL0AACA+AADAPwAA4D4AAMA9AADAPwAA4D4AAMC9AADAvwAAwL0AACA+AADAPwAAwL0AACA+AADAPwAAwL0AACC+AADAvwAAwL0AACC+AADAvwAA4D4AAMA9AADAPwAA4D4AAMA9AADAPwAAwL0AACA+AADAvwAAwL0AACA+AADAvwAA4D4AAMC9AADAPwAA4D4AAMC9AADAPwAA4D4AAMA9AADAvwAA4D4AAMA9AADAvwAAwL0AACC+AADAPwAAwL0AACC+AADAPwAA4D4AAMC9AADAvwAA4D4AAMC9AAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+/////f/////////9//////////3//////////f/////////9//////////3///////38AAP//////fwAA//////9/AAD//////38AAP//////f/9/////v/9//3////+//3//f////7//f/9/////v/9/Lbr///+//38tuv///7//fy26////v/9/Lbr///+//3////9//7//f////3//v/9/////f/+//3////9//7/Qxf//AAD/v9DF//8AAP+/0MX//wAA/7/Qxf//AAD/v/////8AAP+//////wAA/7//////AAD/v/////8AAP+/AAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//7////9//////////3//////////f/////////9///////9/AAD//////38AAP//////fwAA//////9/AAD//////394jf///7//f3iN////v/9/eI3///+//394jf///7//f////3//v/9/////f/+//3////9//7//f////3//v4Xy//8AAP+/hfL//wAA/7+F8v//AAD/v4Xy//8AAP+/")
+}]
+
+[node name="PropJerseyBarrier" type="Node3D"]
+script = ExtResource("1_cnkvm")
+local_map_file = "res://maps/blocks/props/prop_jersey_barrier.map"
+map_settings = ExtResource("2_2ifne")
+
+[node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
+collision_mask = 0
+
+[node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConvexPolygonShape3D_3ryhs")
+
+[node name="entity_1_func_detail_illusionary" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.375, 0)
+metadata/func_godot_mesh_data = {}
+
+[node name="entity_1_mesh_instance" type="MeshInstance3D" parent="entity_1_func_detail_illusionary"]
+mesh = SubResource("ArrayMesh_b4cmy")

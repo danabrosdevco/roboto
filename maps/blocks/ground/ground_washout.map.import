@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://psl01yaef82f"
+path="res://.godot/imported/ground_washout.map-c459a4c77ba6041b0539be265f8d4d66.tres"
+
+[deps]
+
+source_file="res://maps/blocks/ground/ground_washout.map"
+dest_files=["res://.godot/imported/ground_washout.map-c459a4c77ba6041b0539be265f8d4d66.tres"]
+
+[params]
+

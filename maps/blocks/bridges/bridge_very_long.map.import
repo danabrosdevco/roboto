@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bkn30ns7nsycd"
+path="res://.godot/imported/bridge_very_long.map-b1ea369668628aea6a3a05d91bbb3b56.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bridges/bridge_very_long.map"
+dest_files=["res://.godot/imported/bridge_very_long.map-b1ea369668628aea6a3a05d91bbb3b56.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dvtnk6w18ks6r"
+path="res://.godot/imported/machine_steel_coils.map-06cde2cf3d534965a0685a1efd5cd9f5.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_steel_coils.map"
+dest_files=["res://.godot/imported/machine_steel_coils.map-06cde2cf3d534965a0685a1efd5cd9f5.tres"]
+
+[params]
+

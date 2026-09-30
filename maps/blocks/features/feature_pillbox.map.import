@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ba7huhkilpf5g"
+path="res://.godot/imported/feature_pillbox.map-afad23ceda723e7f9c173ae0b876c847.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_pillbox.map"
+dest_files=["res://.godot/imported/feature_pillbox.map-afad23ceda723e7f9c173ae0b876c847.tres"]
+
+[params]
+

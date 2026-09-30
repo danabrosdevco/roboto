@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b284bl045v6qh"
+path="res://.godot/imported/compute_network_cabinet.map-bc9675916c1d9b7de03afff6cf197375.tres"
+
+[deps]
+
+source_file="res://maps/blocks/compute/compute_network_cabinet.map"
+dest_files=["res://.godot/imported/compute_network_cabinet.map-bc9675916c1d9b7de03afff6cf197375.tres"]
+
+[params]
+

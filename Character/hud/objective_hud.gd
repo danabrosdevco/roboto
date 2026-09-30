@@ -22,11 +22,18 @@ class_name ObjectiveHUD
 @export var panel_margin: Vector2 = Vector2(28, 26)
 @export var panel_width: float = 380.0
 @export var refresh_interval: float = 0.2
+# The payout card stays up longer than an objective ping — it is the last thing
+# you see before the level unloads, and it is the only place the mission's
+# reward is ever shown.
+@export var reward_toast_seconds: float = 6.0
 
 const COL_DIM    := HUDPalette.DIM
 const COL_BRIGHT := HUDPalette.BRIGHT
 const COL_WARN   := HUDPalette.WARN
 const COL_DONE   := HUDPalette.SIGNAL
+const _Debrief := preload("res://Character/hud/debrief_screen.gd")
+const _Wallet := preload("res://Character/hud/wallet_hud.gd")
+const _Lessons := preload("res://Character/hud/lesson_prompts.gd")
 
 var tracker: ObjectiveTracker
 # Same reasoning as LevelExit: resolved by path so hud.tscn stays loadable
@@ -39,6 +46,9 @@ var _list: VBoxContainer
 var _toast: Label
 var _timer: float = 0.0
 var _toast_time: float = 0.0
+# Toasts waiting for the one on screen to finish: YOU WON follows MISSION
+# COMPLETE rather than replacing it before it can be read.
+var _toast_queue: Array = []
 
 
 func _ready() -> void:
@@ -52,6 +62,25 @@ func _ready() -> void:
 	if _campaign != null:
 		_campaign.deployed.connect(func(_m): _bind_tracker())
 		_campaign.returned_to_base.connect(func(): _bind_tracker())
+	# The debrief (mission complete / failed) and, at base, the resources and
+	# compute in this corner: both built here rather than placed in hud.tscn.
+	# Deferred, because the HUD is still readying its children.
+	var host := get_parent()
+	if host != null:
+		var debrief := _Debrief.new()
+		debrief.name = "DebriefScreen"
+		host.add_child.call_deferred(debrief)
+		var wallet := _Wallet.new()
+		wallet.name = "WalletHUD"
+		host.add_child.call_deferred(wallet)
+		# The lessons you earn by unlocking something, rather than by walking
+		# past a sign. Built here for the same reason as the two above: an
+		# unassigned export in hud.tscn fails silently.
+		var lessons := _Lessons.new()
+		lessons.name = "LessonPrompts"
+		host.add_child.call_deferred(lessons)
+	else:
+		push_warning("ObjectiveHUD: no parent to put the debrief and wallet in.")
 
 
 func _bind_tracker() -> void:
@@ -104,33 +133,145 @@ func _build_ui() -> void:
 	_toast = _make_label("", COL_WARN, font_size_header)
 	_toast.anchor_left = 0.5
 	_toast.anchor_right = 0.5
-	_toast.offset_left = -300
-	_toast.offset_right = 300
-	_toast.offset_top = 150
-	_toast.offset_bottom = 180
+	_toast.offset_left = -360
+	_toast.offset_right = 360
+	# Tall enough for the multi-line payout card, not just a one-line ping. At
+	# the old 30px the extraction summary was clipped to its first line.
+	_toast.offset_top = 140
+	_toast.offset_bottom = 300
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_toast.visible = false
 	add_child(_toast)
 
 
-func _make_label(text: String, col: Color, size: int = -1) -> Label:
-	if size < 0:
-		size = font_size_body
+func _make_label(text: String, col: Color, font_px: int = -1) -> Label:
+	if font_px < 0:
+		font_px = font_size_body
 	var l := Label.new()
 	l.text = text
 	l.add_theme_color_override("font_color", col)
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", font_px)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
 
 
+# ─────────────────────────────────────────────
+# THE WAY OUT
+# A shaft of light with a chevron on the end and a word over it, hanging over
+# whichever door you are meant to walk through. Drawn rather than modelled so
+# it needs no art and cannot be left unassigned in a scene.
+#
+# TWO DOORS, ONE MARKER. On a mission it is the extraction pad, and only once
+# every required objective is done — before that the exit is not where you
+# should be going, and pointing at it would be telling the player to leave. At
+# base it is the departure gate, and only once an operation is selected, which
+# is the same rule: the gate refuses to fire with no destination set, so
+# pointing at it beforehand would be pointing at a locked door.
+#
+# The base half of this did not exist. Selecting a mission lit four corner
+# beacons on the pad itself and nothing else, which is no use at all from the
+# far side of the base — the whole point of a marker you can see through walls
+# is that it tells you where to go from where you are standing.
+# ─────────────────────────────────────────────
+@export var exit_marker_enabled: bool = true
+## Metres above the extraction pad the arrow floats.
+@export var extract_marker_height: float = 14.0
+## And above the departure gate, which is indoors and has a roof on it.
+@export var deploy_marker_height: float = 6.0
+@export var exit_marker_size: float = 34.0
+
+# [Node3D, label] for wherever the player should be heading, or [] for nowhere.
+var _marker: Array = []
+
+
+func _find_extraction() -> MissionObjective:
+	if tracker == null:
+		return null
+	for objective in tracker.objectives():
+		if objective != null and objective.is_extraction:
+			return objective
+	return null
+
+
+# The train at base, once the terminal has written a destination into it.
+# next_level is null until a mission is picked, which is exactly the gate we
+# want, and it is the same field LevelExit itself checks before it will fire.
+func _find_departure() -> Node3D:
+	for exit in get_tree().get_nodes_in_group("departure_exits"):
+		if exit is Node3D and is_instance_valid(exit) and exit.get("next_level") != null:
+			return exit
+	return null
+
+
+func _find_marker() -> Array:
+	if _campaign == null:
+		return []
+	if not _campaign.in_mission:
+		var gate := _find_departure()
+		return [gate, "START MISSION", deploy_marker_height] if gate != null else []
+	if tracker == null or not tracker.all_required_complete():
+		return []
+	var pad := _find_extraction()
+	return [pad, "EXTRACT", extract_marker_height] if pad != null else []
+
+
+func _draw() -> void:
+	if not exit_marker_enabled or _marker.is_empty():
+		return
+	var target: Node3D = _marker[0]
+	if target == null or not is_instance_valid(target):
+		return
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return
+
+	var world_top: Vector3 = target.global_position + Vector3.UP * float(_marker[2])
+	# Behind the camera unprojects to a mirrored on-screen point, which would
+	# draw an arrow pointing at empty sky behind the player.
+	if cam.is_position_behind(world_top):
+		return
+
+	var tip: Vector2 = cam.unproject_position(target.global_position + Vector3.UP * 2.0)
+	var top: Vector2 = cam.unproject_position(world_top)
+
+	# Pulse so it reads as a signal rather than scenery.
+	var pulse: float = 0.65 + 0.35 * sin(Time.get_ticks_msec() / 260.0)
+	var col: Color = COL_DONE
+	col.a = pulse
+
+	var size: float = maxf(10.0, exit_marker_size * clampf(
+		1.0 - (top.distance_to(tip) / 900.0), 0.35, 1.0))
+
+	draw_line(top, tip, col, 3.0)
+	draw_polyline(PackedVector2Array([
+		tip + Vector2(-size, -size),
+		tip,
+		tip + Vector2(size, -size),
+	]), col, 4.0)
+	# Centred on the shaft by measuring it. The old -38 was hand-fitted to the
+	# width of "EXTRACT" and put anything longer off to one side.
+	var text: String = _marker[1]
+	var font := ThemeDB.fallback_font
+	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size_body).x
+	draw_string(font, top - Vector2(width * 0.5, 12.0), text,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, font_size_body, col)
+
+
 func _process(delta: float) -> void:
 	_ensure_full_rect()
+	# Cheap, and the tracker's contents change on every level load.
+	if exit_marker_enabled:
+		_marker = _find_marker()
+		queue_redraw()
 	if _toast_time > 0.0:
 		_toast_time -= delta
 		if _toast_time <= 0.0:
 			_toast.visible = false
+			if not _toast_queue.is_empty():
+				var next: Array = _toast_queue.pop_front()
+				_show_toast(next[0], next[1], next[2])
 
 	# Channel progress and kill counts change between signals, so poll the
 	# numbers rather than rebuilding the whole list every frame.
@@ -147,9 +288,24 @@ func _rebuild() -> void:
 	# zero objectives" is a SETUP PROBLEM, not a normal state — hiding there is
 	# what made this look like a broken HUD instead of an empty level.
 	var in_mission: bool = _campaign != null and _campaign.in_mission
-	_panel.visible = in_mission
-	if not in_mission:
+	# AT BASE THERE IS USUALLY NOTHING TO SHOW, but not always: the depot
+	# induction sets five objectives on the first visit, and they are the only
+	# thing telling a new player what to do. So the panel follows the
+	# OBJECTIVES, not the mission — at base with none, it still hides.
+	var has_objectives: bool = tracker != null and not tracker.objectives().is_empty()
+	_panel.visible = in_mission or has_objectives
+	if not _panel.visible:
 		return
+	# OUT FROM UNDER THE WALLET. Resources and compute own this corner at base
+	# and hide in the field, which was safe for as long as this panel did the
+	# opposite. The induction put objectives at base and the two drew on top of
+	# each other. Measured off the wallet's own constants rather than a copied
+	# number, so moving one moves the other.
+	var top: float = panel_margin.y
+	if not in_mission:
+		top = maxf(top, _Wallet.ROW_BOTTOM + 12.0)
+	_panel.offset_top = top
+	_panel.offset_bottom = top + 300.0
 
 	if tracker == null or tracker.objectives().is_empty():
 		for c in _list.get_children():
@@ -164,7 +320,12 @@ func _rebuild() -> void:
 
 	var progress: Array = tracker.required_progress()
 	var ready_to_leave: bool = tracker.all_required_complete()
-	_header.text = "EXTRACT" if ready_to_leave else "OBJECTIVES  %d/%d" % [progress[0], progress[1]]
+	# The header used to become "EXTRACT" once everything was done. It sat
+	# directly above the list in the same right-aligned style, so it read as a
+	# list row — and with the extraction objective ALSO listed, the panel showed
+	# EXTRACT twice and in the wrong order. The header stays a header now; the
+	# extraction row speaks for itself.
+	_header.text = "OBJECTIVES  %d/%d" % [progress[0], progress[1]]
 	_header.add_theme_color_override("font_color", COL_DONE if ready_to_leave else COL_BRIGHT)
 
 	for objective in tracker.objectives():
@@ -178,12 +339,19 @@ func _make_row(objective: MissionObjective) -> Control:
 	var current: int = counts[0]
 	var target: int = counts[1]
 
-	var name := objective.display_name
+	# label(), not display_name — carries the verb and never renders the bare
+	# placeholder "Objective" for a node whose name was never authored.
+	var label_text := objective.label()
 	if objective.optional:
-		name = "(%s)" % name
+		label_text = "(%s)" % label_text
 	var suffix := ""
 	if target > 1:
 		suffix = "  %d/%d" % [current, target]
+	# A timed capture counts up here too. The console's own prompt only shows
+	# while you look at it, and holding a capture point means turning round to
+	# shoot whoever is coming up the ramp.
+	if objective is InteractObjective and (objective as InteractObjective).is_channelling():
+		suffix += "  %d%%" % int((objective as InteractObjective).channel_fraction() * 100.0)
 
 	var col := COL_DIM
 	var mark := "□"
@@ -196,7 +364,7 @@ func _make_row(objective: MissionObjective) -> Control:
 	elif not objective.optional:
 		col = COL_BRIGHT
 
-	var row := _make_label("%s  %s%s" % [mark, name, suffix], col)
+	var row := _make_label("%s  %s%s" % [mark, label_text, suffix], col)
 	if objective.completed:
 		# Struck through rather than removed, so progress is legible.
 		row.add_theme_constant_override("line_spacing", 0)
@@ -208,20 +376,36 @@ func _on_refreshed(_objectives: Array) -> void:
 
 
 func _on_changed(objective: MissionObjective) -> void:
+	# The extraction objective is not worth announcing on its own: completing it
+	# IS the end of the mission, and _on_extracted puts the payout on screen a
+	# moment later. Two toasts in a row, the first saying nothing useful, buried
+	# the one that mattered.
+	if objective.is_extraction:
+		_rebuild()
+		return
 	if objective.completed:
-		_show_toast("OBJECTIVE COMPLETE : %s" % objective.display_name.to_upper(), COL_DONE)
+		_show_toast("OBJECTIVE COMPLETE : %s" % objective.label().to_upper(), COL_DONE)
 	elif objective.failed:
-		_show_toast("OBJECTIVE FAILED : %s" % objective.display_name.to_upper(), COL_WARN)
+		_show_toast("OBJECTIVE FAILED : %s" % objective.label().to_upper(), COL_WARN)
 	_rebuild()
+
+
+# The payout used to be a toast here. It is the debrief screen now
+# (debrief_screen.gd), which this HUD adds beside itself in _ready: the squad,
+# what each robot killed, XP, resources and compute counting up, and unlocks.
 
 
 func _on_all_complete() -> void:
-	_show_toast("ALL OBJECTIVES COMPLETE — EXTRACT", COL_DONE)
+	# "EXTRACT" is the wrong word at base. The induction's last objective is
+	# choosing an operation, and what follows it is the train, not a pad.
+	var in_mission: bool = _campaign != null and _campaign.in_mission
+	_show_toast("ALL OBJECTIVES COMPLETE — EXTRACT" if in_mission
+		else "INDUCTION COMPLETE — TAKE THE TRAIN", COL_DONE)
 	_rebuild()
 
 
-func _show_toast(text: String, col: Color) -> void:
+func _show_toast(text: String, col: Color, seconds: float = 3.0) -> void:
 	_toast.text = text
 	_toast.add_theme_color_override("font_color", col)
 	_toast.visible = true
-	_toast_time = 3.0
+	_toast_time = seconds

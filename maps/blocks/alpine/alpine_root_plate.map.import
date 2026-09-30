@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://citafub6oyslm"
+path="res://.godot/imported/alpine_root_plate.map-57f409b905a957addf29a26a8a1826b9.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_root_plate.map"
+dest_files=["res://.godot/imported/alpine_root_plate.map-57f409b905a957addf29a26a8a1826b9.tres"]
+
+[params]
+

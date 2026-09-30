@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dt71je8j57w5w"
+path="res://.godot/imported/ClickA.ogg-cad701fa5f67ab8b3fdcfec23d1a2263.oggvorbisstr"
+
+[deps]
+
+source_file="res://sounds/sfx/psx ui sfx/squad_manager/ClickA.ogg"
+dest_files=["res://.godot/imported/ClickA.ogg-cad701fa5f67ab8b3fdcfec23d1a2263.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

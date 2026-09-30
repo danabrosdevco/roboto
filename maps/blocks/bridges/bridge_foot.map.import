@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://derh36b4gl81r"
+path="res://.godot/imported/bridge_foot.map-2b101477326b113f6f55eb7768293428.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bridges/bridge_foot.map"
+dest_files=["res://.godot/imported/bridge_foot.map-2b101477326b113f6f55eb7768293428.tres"]
+
+[params]
+

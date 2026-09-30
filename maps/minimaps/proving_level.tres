@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_10efi"]
+
+[resource]
+script = ExtResource("1_10efi")
+level_scene_path = "res://maps/proving_level.tscn"
+image_path = "res://maps/minimaps/proving_level.png"
+world_min = Vector2(-65.19, -65.19)
+world_max = Vector2(65.19, 65.19)
+objective_ids = Array[StringName]([&"proving_clear", &"proving_extract"])
+objective_names = Array[String](["The Proving Ground", ""])
+objective_positions = Array[Vector3]([Vector3(0, 0, 0), Vector3(0, 0.5, 37)])
+objective_kinds = Array[StringName]([&"capture", &"extract"])
+insertion_positions = Array[Vector3]([Vector3(0, 0.2, -28)])

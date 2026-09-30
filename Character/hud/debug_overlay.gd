@@ -160,7 +160,6 @@ func _refresh_player() -> void:
 	_player_section.add_child(_make_row("Position: %s" % _fmt_vec(player.global_position)))
 	_player_section.add_child(_make_row("Velocity: %s  |  Speed: %.1f" % [_fmt_vec(player.velocity), player.velocity.length()]))
 	_player_section.add_child(_make_row("Grounded: %s" % str(player.is_on_floor())))
-	_player_section.add_child(_make_row("Bits: %d  |  Shards: %d" % [player.bits, player.shards]))
 	if player.hud_weapon:
 		_player_section.add_child(_make_row("Weapon: %s  |  Ammo: %d / %d" % [
 			player.hud_weapon.name,

@@ -1,0 +1,141 @@
+[gd_scene load_steps=11 format=3 uid="uid://cwatcher0aerial"]
+
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="1_metal"]
+
+[sub_resource type="StandardMaterial3D" id="Dark"]
+albedo_color = Color(0.13, 0.15, 0.14, 1)
+metallic = 0.4
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="Amber"]
+albedo_color = Color(0.7, 0.35, 0.02, 1)
+metallic = 0.2
+roughness = 0.35
+emission_enabled = true
+emission = Color(0.9, 0.5, 0.08, 1)
+emission_energy_multiplier = 2.4
+
+[sub_resource type="CylinderMesh" id="Leg"]
+top_radius = 0.08
+bottom_radius = 0.11
+height = 6.0
+radial_segments = 6
+
+[sub_resource type="BoxMesh" id="Brace"]
+size = Vector3(1.1, 0.07, 0.07)
+
+[sub_resource type="BoxMesh" id="Bar"]
+size = Vector3(3.4, 0.14, 0.14)
+
+[sub_resource type="BoxMesh" id="Pod"]
+size = Vector3(0.34, 0.3, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="HitMat"]
+transparency = 1
+albedo_color = Color(0.95, 0.25, 0.2, 0.28)
+
+[sub_resource type="BoxMesh" id="HitMesh"]
+size = Vector3(1.9, 1.1, 1.9)
+
+[sub_resource type="CylinderMesh" id="Lamp"]
+top_radius = 0.16
+bottom_radius = 0.16
+height = 0.1
+radial_segments = 10
+
+[node name="Watcher_Aerial" type="Node3D"]
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Plinth" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, 0)
+size = Vector3(2.4, 0.44, 2.4)
+material = ExtResource("1_metal")
+
+[node name="Bunker" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
+size = Vector3(1.8, 0.7, 1.8)
+material = ExtResource("1_metal")
+
+[node name="Hatch" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, -0.92)
+size = Vector3(0.9, 0.5, 0.1)
+material = SubResource("Dark")
+
+[node name="LegA" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.995, 0.0998, 0, -0.0998, 0.995, 0, 0, 0, 1, 0.45, 4.1, 0.45)
+material_override = SubResource("Dark")
+mesh = SubResource("Leg")
+
+[node name="LegB" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.995, -0.0998, 0, 0.0998, 0.995, 0, 0, 0, 1, -0.45, 4.1, 0.45)
+material_override = SubResource("Dark")
+mesh = SubResource("Leg")
+
+[node name="LegC" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.995, 0.0998, 0, -0.0998, 0.995, 0, 0, 0, 1, 0.45, 4.1, -0.45)
+material_override = SubResource("Dark")
+mesh = SubResource("Leg")
+
+[node name="LegD" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.995, -0.0998, 0, 0.0998, 0.995, 0, 0, 0, 1, -0.45, 4.1, -0.45)
+material_override = SubResource("Dark")
+mesh = SubResource("Leg")
+
+[node name="BraceLow" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0.62)
+material_override = SubResource("Dark")
+mesh = SubResource("Brace")
+
+[node name="BraceLowX" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0.62, 2.3, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Brace")
+
+[node name="BraceMid" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.85, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.0, 0.5)
+material_override = SubResource("Dark")
+mesh = SubResource("Brace")
+
+[node name="BraceMidX" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0, 0, 0.85, 0, 1, 0, -1, 0, 0, 0.5, 4.0, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Brace")
+
+[node name="BraceTop" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.6, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.7, 0.34)
+material_override = SubResource("Dark")
+mesh = SubResource("Brace")
+
+[node name="Collar" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5, 0)
+size = Vector3(0.8, 0.5, 0.8)
+material = ExtResource("1_metal")
+
+[node name="Scanner" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.95, 0)
+
+[node name="Bar" type="MeshInstance3D" parent="Rig/Scanner"]
+material_override = SubResource("Dark")
+mesh = SubResource("Bar")
+
+[node name="PodL" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.62, 0, 0)
+material_override = ExtResource("1_metal")
+mesh = SubResource("Pod")
+
+[node name="PodR" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 0, 0)
+material_override = ExtResource("1_metal")
+mesh = SubResource("Pod")
+
+[node name="Lamp" type="MeshInstance3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
+material_override = SubResource("Amber")
+mesh = SubResource("Lamp")
+
+[node name="Hitbox" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+visible = false
+material_override = SubResource("HitMat")
+mesh = SubResource("HitMesh")

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cj6s15y56b3j4"
+path="res://.godot/imported/alpine_talus.map-7508b2cbbf0e6ac0be4856f8462ee5cb.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_talus.map"
+dest_files=["res://.godot/imported/alpine_talus.map-7508b2cbbf0e6ac0be4856f8462ee5cb.tres"]
+
+[params]
+

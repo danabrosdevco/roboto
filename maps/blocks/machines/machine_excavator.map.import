@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cyhnsrgwrtryr"
+path="res://.godot/imported/machine_excavator.map-f97c09311be5fbd79764ca9cb3759461.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_excavator.map"
+dest_files=["res://.godot/imported/machine_excavator.map-f97c09311be5fbd79764ca9cb3759461.tres"]
+
+[params]
+

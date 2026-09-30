@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c03w5xjf0ch2o"
+path="res://.godot/imported/estate_slab_pair_bridge.map-991004b882d632fb6539b58cf9a3786b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_slab_pair_bridge.map"
+dest_files=["res://.godot/imported/estate_slab_pair_bridge.map-991004b882d632fb6539b58cf9a3786b.tres"]
+
+[params]
+

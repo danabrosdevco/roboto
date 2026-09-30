@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bes01hkj01jgs"
+path="res://.godot/imported/feature_rock_outcrop.map-b90c93aa8de47430c7a85be966e362d9.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_rock_outcrop.map"
+dest_files=["res://.godot/imported/feature_rock_outcrop.map-b90c93aa8de47430c7a85be966e362d9.tres"]
+
+[params]
+

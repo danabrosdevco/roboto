@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://sw27b1v81dd"
+path="res://.godot/imported/machine_semi_truck.map-f1c7bff2bb0dc8376cbecf2ff1cf2092.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_semi_truck.map"
+dest_files=["res://.godot/imported/machine_semi_truck.map-f1c7bff2bb0dc8376cbecf2ff1cf2092.tres"]
+
+[params]
+

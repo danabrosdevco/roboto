@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bugbarsw7nio1"
+path="res://.godot/imported/machine_assembly_line.map-1f183cc194e8e119b72af6e5c9417272.tres"
+
+[deps]
+
+source_file="res://maps/blocks/machines/machine_assembly_line.map"
+dest_files=["res://.godot/imported/machine_assembly_line.map-1f183cc194e8e119b72af6e5c9417272.tres"]
+
+[params]
+

@@ -1,0 +1,15 @@
+[gd_resource type="Curve" format=3]
+
+; MARK ONE — one hard shove per round, fully spent before you can cycle.
+;
+; It is a bolt action, so unlike the Ancient Rifle's curve this one comes all
+; the way back to zero at t=1: nothing re-arms it mid-window, and a curve that
+; ended high would leave the camera leaning between shots.
+;
+; Peak 1.6 against recoil_per_shot 6.5. The product is what matters, not either
+; number: see tools/test_recoil.gd, which reports what it does in degrees.
+
+[resource]
+max_value = 2.0
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.08, 1.6), 0.0, 0.0, 0, 0, Vector2(0.45, 0.55), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 4

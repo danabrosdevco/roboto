@@ -1,0 +1,44 @@
+// Game: Roboto
+// Format: Valve
+// entity 0
+{
+"mapversion" "220"
+"wad" ""
+"classname" "worldspawn"
+// brush 0
+{
+( -19 16 0 ) ( 19 -16 0 ) ( 19 16 0 ) PSX_Textures/wood_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -19 -16 4 ) ( 19 16 4 ) ( 19 -16 4 ) PSX_Textures/wood_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -19 -16 0 ) ( 19 -16 4 ) ( 19 -16 0 ) PSX_Textures/wood_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 19 -16 0 ) ( 19 16 4 ) ( 19 16 0 ) PSX_Textures/wood_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 19 16 0 ) ( -19 16 4 ) ( -19 16 0 ) PSX_Textures/wood_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -19 16 0 ) ( -19 -16 4 ) ( -19 -16 0 ) PSX_Textures/wood_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 1
+{
+( -18 14 4 ) ( 14 -14 4 ) ( 14 14 4 ) PSX_Textures/crate_wooden_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -18 -14 36 ) ( 14 14 36 ) ( 14 -14 36 ) PSX_Textures/crate_wooden_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -18 -14 4 ) ( 14 -14 36 ) ( 14 -14 4 ) PSX_Textures/crate_wooden_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 14 -14 4 ) ( 14 14 36 ) ( 14 14 4 ) PSX_Textures/crate_wooden_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 14 14 4 ) ( -18 14 36 ) ( -18 14 4 ) PSX_Textures/crate_wooden_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -18 14 4 ) ( -18 -14 36 ) ( -18 -14 4 ) PSX_Textures/crate_wooden_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 2
+{
+( -11 -16 36 ) ( -17 9 36 ) ( -11 -16 62 ) PSX_Textures/crate_wooden_2 [ 0.233373 -0.972387 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 8 16 62 ) ( -17 9 62 ) ( -17 9 36 ) PSX_Textures/crate_wooden_2 [ -0.962964 -0.26963 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -11 -16 62 ) ( -17 9 62 ) ( 8 16 62 ) PSX_Textures/crate_wooden_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -11 -16 62 ) ( 14 -9 36 ) ( -11 -16 36 ) PSX_Textures/crate_wooden_2 [ 0.962964 0.26963 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -11 -16 36 ) ( 14 -9 36 ) ( -17 9 36 ) PSX_Textures/crate_wooden_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 14 -9 36 ) ( 14 -9 62 ) ( 8 16 62 ) PSX_Textures/crate_wooden_2 [ -0.233373 0.972387 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 3
+{
+( 16 22 0 ) ( 24 43 0 ) ( 16 22 22 ) PSX_Textures/crate_wooden_2 [ -0.355995 -0.934488 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 45 35 22 ) ( 24 43 22 ) ( 24 43 0 ) PSX_Textures/crate_wooden_2 [ -0.934488 0.355995 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 16 22 22 ) ( 24 43 22 ) ( 45 35 22 ) PSX_Textures/crate_wooden_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 16 22 0 ) ( 37 14 0 ) ( 24 43 0 ) PSX_Textures/crate_wooden_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 16 22 22 ) ( 37 14 0 ) ( 16 22 0 ) PSX_Textures/crate_wooden_2 [ 0.934488 -0.355995 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 37 14 0 ) ( 37 14 22 ) ( 45 35 22 ) PSX_Textures/crate_wooden_2 [ 0.355995 0.934488 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+}

@@ -1,0 +1,13 @@
+[gd_resource type="Curve" format=3]
+
+; CLUSTER LAUNCHER — a full thump on every round, six times, no settling.
+;
+; 0.55s between shots against a 0.34s window, so each kick plays out and dies
+; before the next one starts. That is the point: this does not climb, it
+; punches, and you re-acquire between rounds. settle_shots is left at 0 so the
+; sixth shot hits as hard as the first.
+
+[resource]
+max_value = 3.0
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.07, 2.4), 0.0, 0.0, 0, 0, Vector2(0.4, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 4

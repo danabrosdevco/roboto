@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cdgtfy6pqaxpx"
+path="res://.godot/imported/proving_level.map-de4d68a0f82a8e895e3d04ccb4354995.tres"
+
+[deps]
+
+source_file="res://maps/proving/proving_level.map"
+dest_files=["res://.godot/imported/proving_level.map-de4d68a0f82a8e895e3d04ccb4354995.tres"]
+
+[params]
+

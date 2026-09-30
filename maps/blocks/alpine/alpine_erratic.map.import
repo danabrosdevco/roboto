@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dwa51xbxpbjjx"
+path="res://.godot/imported/alpine_erratic.map-e208907aae378d77f288ecbccd9859b3.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_erratic.map"
+dest_files=["res://.godot/imported/alpine_erratic.map-e208907aae378d77f288ecbccd9859b3.tres"]
+
+[params]
+

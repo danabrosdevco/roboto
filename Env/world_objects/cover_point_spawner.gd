@@ -41,7 +41,9 @@ class_name CoverPointSpawner
 @export var points_per_edge: int = 3
 ## Minimum distance between kept cover points
 @export var min_spacing: float = 2.0
-## Only process edges within this radius of the spawner
+## Only process edges within this radius of the spawner. 0 means the whole
+## level, which is what a 1.3 km map wants: one spawner at the origin otherwise
+## covers a circle you can walk across in fifteen seconds.
 @export var sample_radius: float = 80.0
 
 @export_group("Validation Raycasts")
@@ -114,8 +116,8 @@ func _generate() -> void:
 
 			# Skip edges outside our sample radius
 			var edge_mid: Vector3 = (a + b) * 0.5
-			if edge_mid.distance_to(origin) > sample_radius:
-				continue
+			if sample_radius > 0.0 and edge_mid.distance_to(origin) > sample_radius:
+				continue   # 0 means the whole level: one spawner covers a 1.3 km map
 
 			# Skip very short edges (artifact-prone per the article)
 			if a.distance_to(b) < 0.5:
@@ -148,12 +150,22 @@ func _generate() -> void:
 					continue
 
 				# ── Step 2: stand/crouch cover validation ──
-				# The wall must actually block at stand height.
-				# Optionally check crouch height for crouch-cover tagging.
+				# EITHER height counts. Requiring the wall to block at 1.2 m
+				# threw away every low one — hesco lines, jersey barriers,
+				# sandbag walls, the waist-high stuff a robot gets behind and
+				# shoots over, which is the best cover in the kit to fight
+				# from. `is_crouch_cover` exists to mark exactly those, and
+				# CoverPoint.score_for already prefers a full wall when there
+				# is one nearby, so letting the low ones in costs nothing and
+				# populates the open ground where there is no wall at all.
 				var stand_covered: bool = _raycast(space_state, sample_pos + Vector3.UP * stand_check_height, -cover_dir, wall_detect_length)
-				if not stand_covered:
-					continue
 				var crouch_covered: bool = _raycast(space_state, sample_pos + Vector3.UP * crouch_check_height, -cover_dir, wall_detect_length)
+				if not stand_covered and not crouch_covered:
+					continue
+				# Low cover means it stops a shot kneeling and not standing —
+				# NOT "the wall happens to be solid at knee height too", which
+				# is true of every wall in the game and is what this used to say.
+				var low_cover: bool = crouch_covered and not stand_covered
 
 				# ── Step 3: cliff/edge rejection ──
 				# Cast two downward rays offset by arm_span to either side of the soldier.
@@ -172,7 +184,7 @@ func _generate() -> void:
 					continue
 
 				kept.append(sample_pos)
-				_spawn_cover_point(sample_pos, cover_dir, crouch_covered)
+				_spawn_cover_point(sample_pos, cover_dir, low_cover)
 				spawned += 1
 
 	print("CoverPointSpawner: placed %d cover points from %d nav polygons." % [

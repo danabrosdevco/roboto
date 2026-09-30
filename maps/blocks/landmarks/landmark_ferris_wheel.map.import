@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cl5nkkgnnracu"
+path="res://.godot/imported/landmark_ferris_wheel.map-c566180cc1d3278606de87986034d1d1.tres"
+
+[deps]
+
+source_file="res://maps/blocks/landmarks/landmark_ferris_wheel.map"
+dest_files=["res://.godot/imported/landmark_ferris_wheel.map-c566180cc1d3278606de87986034d1d1.tres"]
+
+[params]
+

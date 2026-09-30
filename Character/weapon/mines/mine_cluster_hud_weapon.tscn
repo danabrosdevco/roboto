@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3]
+
+; CLUSTER MINE, in the player's hands. Thrown properly — the point is to seed
+; ground you are not standing on.
+
+[ext_resource type="PackedScene" path="res://Character/weapon/grenade_hud_weapon.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://Character/weapon/mines/mine_cluster_canister.tscn" id="2_proj"]
+[ext_resource type="PackedScene" path="res://Character/weapon/concepts/mine_cluster.tscn" id="3_model"]
+
+[node name="ClusterMine" node_paths=PackedStringArray("viewmodel") instance=ExtResource("1_base")]
+grenade_scene = ExtResource("2_proj")
+ammo_type = &"mine_cluster"
+display_name = "Cluster Mine"
+equipment_order = 6
+viewmodel = NodePath("Mine")
+
+[node name="Frag_West" parent="."]
+visible = false
+
+[node name="Mine" parent="." instance=ExtResource("3_model")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0237351, -0.473094)

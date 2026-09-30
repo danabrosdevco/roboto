@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dwxgk7cqf1qf5"
+path="res://.godot/imported/feature_trench_revetment.map-16b37ee95d5de4257b123ab47998277f.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_trench_revetment.map"
+dest_files=["res://.godot/imported/feature_trench_revetment.map-16b37ee95d5de4257b123ab47998277f.tres"]
+
+[params]
+

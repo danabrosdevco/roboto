@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rifleman.tres" id="4_rifle"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover.tres" id="5_rover"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="6_lobber"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_walker.tres" id="7_walker"]
+[ext_resource type="PackedScene" path="res://maps/coastal-road_level.tscn" id="8_coast"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "1. MASS (30 rifles) vs BALANCED (4W 5R 8rifles)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+hostile_order = 1
+distance = 200.0
+repeats = 3
+time_limit = 300.0
+swap_sides = true
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "2. ARMOUR WEDGE (8 walkers 6 rifles) vs MASS"
+allies = Array[ExtResource("3_chassis")]([ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+hostile_order = 1
+distance = 200.0
+repeats = 3
+time_limit = 300.0
+swap_sides = true
+
+[sub_resource type="Resource" id="M3"]
+script = ExtResource("2_match")
+label = "3. ARTILLERY (8 Lobbers 14 rifles) vs BALANCED"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+hostile_order = 1
+distance = 200.0
+repeats = 3
+time_limit = 300.0
+swap_sides = true
+
+[sub_resource type="Resource" id="M4"]
+script = ExtResource("2_match")
+label = "4. BALANCED vs BALANCED (mirror control)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("7_walker"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+hostile_order = 1
+distance = 200.0
+repeats = 3
+time_limit = 300.0
+swap_sides = true
+
+[resource]
+script = ExtResource("1_plan")
+title = "Open ground, 30 seats a side"
+question = "FOUR FORCE DESIGNS AT THE SAME PRICE, on the longest open run in the repo. Every side costs exactly 30 SUPPLY SEATS — infantry 1, rover and Lobber 2, walker 3 — so the question is not who brought more, it is which SHAPE of force wins for the same seats.
+
+  MASS       30 rifles
+  BALANCED   4 walkers + 5 rovers + 8 rifles
+  WEDGE      8 walkers + 6 rifles
+  ARTILLERY  8 Lobbers + 14 rifles
+
+1 asks whether numbers beat combined arms. 2 is the extreme version — almost all armour against almost all bodies. 3 asks whether indirect fire pays for itself over a 200 m approach, which is the fight Lobbers are supposed to be for. 4 is the mirror control: it should come out near even, and if it does not, the map or the spawn is doing something the other three results would inherit.
+
+Sides swap every other run. Three repeats only — sixty robots a fight is expensive — so read these as a direction, not a settled number.
+
+Run before the armour rule lands and again after: matchup 2 in particular should change completely, since today a rifle takes the same bite out of a walker as out of a trooper."
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2"), SubResource("M3"), SubResource("M4")])
+level = ExtResource("8_coast")
+site = Vector3(0, 0, 24)
+site_heading = 90.0
+repeats_override = 0
+speed = 4.0

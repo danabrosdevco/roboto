@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3 uid="uid://cmoo8kwpv0p6r"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" path="res://Character/weapon/repair_lance_hud_weapon.tscn" id="2_player"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"repair_lance"
+display_name = "Repair Lance"
+short_name = "Lance"
+description = "Three and a half metres of reach and sixty damage a thrust. It also mends allies it touches, three times, then nine seconds a charge to refill."
+kind = 0
+cost = 90
+player_scene = ExtResource("2_player")
+player_mount_offset = Vector3(0, 0, 0)
+player_mount_rotation_degrees = Vector3(0, 0, 0)
+ammo_type = &""
+weapon_damage = 60
+usable_by_player = true
+usable_by_ai = false
+fits_vehicles = false
+one_per_robot = false
+in_shop = true
+quantity = 1
+health_bonus = 0
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+sensor_bonus = 0.0
+signal_resistance_bonus = 0.0
+self_revive_seconds = 0.0
+equipment_slot_bonus = 0
+suppressive_fire = false
+required_rank = 0
+requires_chassis = Array[StringName]([])
+chassis_whitelist = Array[StringName]([])

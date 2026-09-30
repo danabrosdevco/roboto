@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bciwhbq4k4362"
+path="res://.godot/imported/compute_monolith.map-8ee704eedfd494265f9c3bda0a88c3fc.tres"
+
+[deps]
+
+source_file="res://maps/blocks/compute/compute_monolith.map"
+dest_files=["res://.godot/imported/compute_monolith.map-8ee704eedfd494265f9c3bda0a88c3fc.tres"]
+
+[params]
+

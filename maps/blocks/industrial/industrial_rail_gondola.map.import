@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bonn4frc7eqt5"
+path="res://.godot/imported/industrial_rail_gondola.map-597a0722a1134fd12458bd7c429671ed.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_rail_gondola.map"
+dest_files=["res://.godot/imported/industrial_rail_gondola.map-597a0722a1134fd12458bd7c429671ed.tres"]
+
+[params]
+

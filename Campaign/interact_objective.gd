@@ -45,6 +45,10 @@ func _on_objective_ready() -> void:
 	for item in interactibles:
 		if item != null:
 			item.interacted.connect(_on_interacted)
+			# Back-reference so the HUD can ask what this console is FOR. The
+			# objective owns an array of interactibles that may live anywhere in
+			# the tree, so parent-walking wouldn't find it.
+			item.set_meta("mission_objective", self)
 	set_process(channel_duration > 0.0)
 	_emit_progress()
 
@@ -57,6 +61,41 @@ func target_count() -> int:
 
 func progress() -> Array:
 	return [_done.size(), maxi(1, target_count())]
+
+
+# What the HUD shows next to the F prompt. "F | 0" told the player nothing —
+# this says which objective the console belongs to, how far through the set they
+# are, and whether it's a tap or a hold.
+#
+# The HUD refreshes this every frame you look at the console, so it has to
+# read right in every state, not just while counting: it used to freeze on the
+# last count, 99%, once a capture resolved. ASCII only (see the HUD font).
+func get_prompt() -> String:
+	if completed:
+		return "%s captured" % (display_name if has_authored_name() else DEFAULT_DISPLAY_NAME)
+	var target := target_count()
+	var progress_text := ""
+	if target > 1:
+		progress_text = "  (%d/%d)" % [_done.size(), target]
+	if channel_duration > 0.0:
+		if _channelling != null:
+			return "%s%s  %d%%" % [label(), progress_text, int(channel_fraction() * 100.0)]
+		if _grace_t > 0.0 and _channel_t > 0.0:
+			# Stepped out of range: the count is kept for a moment, and pressing
+			# again picks it up where it stopped.
+			return "%s%s  %d%% : paused" % [label(), progress_text, int(channel_fraction() * 100.0)]
+		return "%s%s : hold %ds" % [label(), progress_text, ceili(channel_duration)]
+	return "%s%s" % [label(), progress_text]
+
+
+func channel_fraction() -> float:
+	if channel_duration <= 0.0:
+		return 0.0
+	return clampf(_channel_t / channel_duration, 0.0, 1.0)
+
+
+func is_channelling() -> bool:
+	return _channelling != null
 
 
 func _emit_progress() -> void:
@@ -128,3 +167,9 @@ func _find_player() -> Node3D:
 			return (node as World).player
 		node = node.get_parent()
 	return null
+
+
+# "Garrison" -> CAPTURE GARRISON. An interact objective is always something you
+# go and take, so the verb is constant.
+func verb() -> String:
+	return "Capture"

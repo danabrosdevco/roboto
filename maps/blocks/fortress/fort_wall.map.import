@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://birfbk0dpycy3"
+path="res://.godot/imported/fort_wall.map-f07abd592161bdbba30bf30db14b9d3e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortress/fort_wall.map"
+dest_files=["res://.godot/imported/fort_wall.map-f07abd592161bdbba30bf30db14b9d3e.tres"]
+
+[params]
+

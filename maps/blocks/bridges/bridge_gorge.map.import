@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b86n8cnto50e"
+path="res://.godot/imported/bridge_gorge.map-1dade3e077856578e30997c169e16f47.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bridges/bridge_gorge.map"
+dest_files=["res://.godot/imported/bridge_gorge.map-1dade3e077856578e30997c169e16f47.tres"]
+
+[params]
+

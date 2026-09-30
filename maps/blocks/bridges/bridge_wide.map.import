@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cw7pxtp278qnj"
+path="res://.godot/imported/bridge_wide.map-9dd9e4ea5b881069b917504e81ee11d6.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bridges/bridge_wide.map"
+dest_files=["res://.godot/imported/bridge_wide.map-9dd9e4ea5b881069b917504e81ee11d6.tres"]
+
+[params]
+

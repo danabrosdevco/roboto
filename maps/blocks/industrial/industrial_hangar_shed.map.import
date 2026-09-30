@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://hps8yxmnnkaa"
+path="res://.godot/imported/industrial_hangar_shed.map-38a230b92f1daab53379acfc287c0dd9.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_hangar_shed.map"
+dest_files=["res://.godot/imported/industrial_hangar_shed.map-38a230b92f1daab53379acfc287c0dd9.tres"]
+
+[params]
+

@@ -1,11 +1,19 @@
 [gd_scene load_steps=5 format=3 uid="uid://chv5jfp7dw2bo"]
 
-[ext_resource type="Shader" path="res://Character/flash.gdshader" id="1_argpr"]
+[ext_resource type="Shader" path="res://Character/weapon/tracer.gdshader" id="1_argpr"]
 [ext_resource type="Script" path="res://Character/weapon/tracer.gd" id="1_no8ns"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mjqsk"]
 render_priority = 0
 shader = ExtResource("1_argpr")
+shader_parameter/head_color = Color(1, 0.92, 0.74, 1)
+shader_parameter/body_color = Color(1, 0.62, 0.16, 1)
+shader_parameter/tail_color = Color(0.8, 0.16, 0.05, 1)
+shader_parameter/head_length = 0.14
+shader_parameter/tail_start = 0.65
+shader_parameter/energy = 0.45
+shader_parameter/opacity = 1.0
+shader_parameter/edge_softness = 0.3
 
 [sub_resource type="BoxMesh" id="BoxMesh_2de8j"]
 
@@ -13,6 +21,6 @@ shader = ExtResource("1_argpr")
 script = ExtResource("1_no8ns")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 4, 0, 0, 0)
+transform = Transform3D(0.085, 0, 0, 0, 0.085, 0, 0, 0, 4, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_mjqsk")
 mesh = SubResource("BoxMesh_2de8j")

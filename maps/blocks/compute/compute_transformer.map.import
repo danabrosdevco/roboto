@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://35hllnjq3aaq"
+path="res://.godot/imported/compute_transformer.map-4528eecb5a2a9f729cb8ad1b3bb4bbc6.tres"
+
+[deps]
+
+source_file="res://maps/blocks/compute/compute_transformer.map"
+dest_files=["res://.godot/imported/compute_transformer.map-4528eecb5a2a9f729cb8ad1b3bb4bbc6.tres"]
+
+[params]
+

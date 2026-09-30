@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://2n61xdybta2h"
+path="res://.godot/imported/industrial_scrap_yard.map-eafff5a244c6234c4a876611c0864316.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_scrap_yard.map"
+dest_files=["res://.godot/imported/industrial_scrap_yard.map-eafff5a244c6234c4a876611c0864316.tres"]
+
+[params]
+

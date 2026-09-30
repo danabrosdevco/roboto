@@ -1,0 +1,89 @@
+[gd_scene load_steps=9 format=3 uid="uid://dyn1gvqmsa441"]
+
+; THE MARK ONE, in the player's hands.
+;
+; ADS SOLVE, and it is the same three numbers for every iron-sighted weapon.
+;
+; ads_rotation is ZERO. The model's sight line is flat — rear aperture centre
+; and front post tip both at model y 0.573 — and hud_weapon_template.gd traces
+; the shot from the camera ALONG THE MUZZLE'S +X, so pitching the model to
+; correct a sight picture aims the bullet off the crosshair instead. This scene
+; used to carry a -0.01148 pitch and put its rounds 0.76 degrees low.
+;
+; ads_position.y = 0.123 / 0.26 - 0.573 = -0.099923. The Holder sits 0.123m
+; under the eye and scales by 0.26, so that is the offset landing model y 0.573
+; on the optical axis. Bore, post tip and aperture centre then all project to
+; dead centre, which is the only arrangement where the irons and the reticle
+; agree about where the bullet goes.
+;
+; ads_position.x puts the rear aperture 0.278m from the eye; .z = -0.4 centres
+; it laterally (0.26 * -0.4 + 0.104 = 0).
+;
+; None of this is eyeballed any more. tools/preview_viewmodel.gd prints the
+; camera-local x, y and depth of both sights; correct numbers read as zeroes.
+
+[ext_resource type="Script" path="res://Character/weapon/hud_weapon_template.gd" id="1_hudwep"]
+[ext_resource type="Curve" path="res://Character/weapon/bolt_recoil_curve.tres" id="8_curve"]
+[ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/weapon/appx/bullet.tscn" id="2_bullet"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="3_tracer"]
+[ext_resource type="PackedScene" path="res://Character/weapon/bolt_rifle_model.tscn" id="4_model"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="5_flash"]
+[ext_resource type="AudioStream" uid="uid://b46wwhkqbq3x2" path="res://sounds/sfx/weapons/ar15/best_rifle_fire_1 (2).wav" id="6_fire"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="7_click"]
+
+[node name="BoltRifle" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "pump_sound", "click_stream_player", "viewmodel")]
+script = ExtResource("1_hudwep")
+tracer_origin = NodePath("Holder/BoltRifleModel/Muzzle")
+muzzle_flash = NodePath("Holder/BoltRifleModel/MuzzleFlash")
+weapon_model = NodePath("Holder/BoltRifleModel")
+projectile_scene = ExtResource("2_bullet")
+tracer_scene = ExtResource("3_tracer")
+rifle_stream_player = NodePath("BoltShot")
+recoil_curve = ExtResource("8_curve")
+recoil_duration = 0.4
+recoil_per_shot = 6.5
+tracers_in_mag = Array[int]([10, 8, 6, 4, 2, 0])
+hitscan_range = 250.0
+noise_radius = 48.0
+ammo_type = &"7.62"
+magazine_size = 10
+reload_time = 3.4
+firemode = 2
+pump_time = 0.7
+pump_sound = NodePath("Bolt")
+damage = 62
+FIRE_RATE = 0.4
+click_stream_player = NodePath("Click")
+display_name = "Mark I"
+base_position = Vector3(-1.309, -0.425, -0.015)
+reload_position = Vector3(-1.309, -0.605, 0.035)
+reload_rotation = Vector3(0.55, 0, -0.12)
+base_rotation = Vector3(0, 0, 0)
+ads_position = Vector3(-2.1945, -0.099923, -0.4)
+ads_rotation = Vector3(0, 0, 0)
+viewmodel = NodePath("Holder/BoltRifleModel")
+
+[node name="Holder" type="Node3D" parent="."]
+transform = Transform3D(-1.13649e-08, 0, 0.26, 0, 0.26, 0, -0.26, 0, -1.13649e-08, 0.104, -0.123, -0.55)
+
+[node name="BoltRifleModel" parent="Holder" instance=ExtResource("4_model")]
+
+[node name="Muzzle" type="Node3D" parent="Holder/BoltRifleModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.6, 0.1, 0)
+
+[node name="MuzzleFlash" parent="Holder/BoltRifleModel" instance=ExtResource("5_flash")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 5.3, 0.1, 0)
+visible = false
+
+[node name="BoltShot" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("6_fire")
+volume_db = -4.0
+pitch_scale = 0.82
+bus = &"Weapons"
+
+[node name="Click" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("7_click")
+
+[node name="Bolt" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("7_click")
+pitch_scale = 0.62

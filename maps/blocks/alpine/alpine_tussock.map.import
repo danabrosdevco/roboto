@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://csom2h3vyvfys"
+path="res://.godot/imported/alpine_tussock.map-95871492d3526e368b0295cf17e9185c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_tussock.map"
+dest_files=["res://.godot/imported/alpine_tussock.map-95871492d3526e368b0295cf17e9185c.tres"]
+
+[params]
+

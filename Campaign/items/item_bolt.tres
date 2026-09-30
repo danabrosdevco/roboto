@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3 uid="uid://c3b6pfu0wqk5"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" uid="uid://dyn1gvqmsa441" path="res://Character/weapon/bolt_hud_weapon.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_bolt.tscn" id="3_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"bolt"
+display_name = "Mark One"
+short_name = "Mark I"
+description = "Slow, heavy, made by the thousand."
+kind = 0
+cost = 130
+player_scene = ExtResource("2_player")
+ai_scene = ExtResource("3_ai")
+player_mount_offset = Vector3(0, 0, 0)
+player_mount_rotation_degrees = Vector3(0, 0, 0)
+ammo_type = &"7.62"
+weapon_damage = 62
+usable_by_player = true
+usable_by_ai = true
+fits_vehicles = false
+one_per_robot = false
+in_shop = true
+quantity = 1
+health_bonus = 0
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+sensor_bonus = 0.0
+signal_resistance_bonus = 0.0
+self_revive_seconds = 0.0
+equipment_slot_bonus = 0
+suppressive_fire = false
+required_rank = 0
+requires_chassis = Array[StringName]([])
+chassis_whitelist = Array[StringName]([])

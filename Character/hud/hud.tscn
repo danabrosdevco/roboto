@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://ib6m72545n75"]
+[gd_scene load_steps=21 format=3 uid="uid://ib6m72545n75"]
 
 [ext_resource type="PackedScene" uid="uid://b4n2skq3ovhu6" path="res://Character/hud/scan_effect.tscn" id="1_80vuv"]
 [ext_resource type="Script" path="res://Character/hud/hud.gd" id="1_nopku"]
@@ -11,6 +11,14 @@
 [ext_resource type="AudioStream" uid="uid://cvyks5ixawlx2" path="res://sounds/sfx/psx ui sfx/ConfirmH.wav" id="8_21ypy"]
 [ext_resource type="Script" path="res://Character/hud/squad_hud.gd" id="9_n3ibl"]
 [ext_resource type="Script" path="res://Character/hud/objective_hud.gd" id="11_1xhm8"]
+[ext_resource type="Script" path="res://Character/hud/squad_manager_ui.gd" id="12_b61d5"]
+[ext_resource type="Script" path="res://Character/hud/comms_log.gd" id="13_comms"]
+[ext_resource type="AudioStream" uid="uid://blqxl5ak3y7lq" path="res://sounds/sfx/psx ui sfx/squad_manager/HoverG.ogg" id="13_kseao"]
+[ext_resource type="AudioStream" uid="uid://bntfdsr3ubjrc" path="res://sounds/sfx/psx ui sfx/squad_manager/DragB.ogg" id="14_sxo81"]
+[ext_resource type="AudioStream" uid="uid://hmnqik84omfy" path="res://sounds/sfx/psx ui sfx/squad_manager/DropI.ogg" id="15_4nw2x"]
+[ext_resource type="AudioStream" uid="uid://bh7ralx5afru3" path="res://sounds/sfx/psx ui sfx/squad_manager/PageA.ogg" id="16_cnjdy"]
+[ext_resource type="AudioStream" uid="uid://1dtcl250xe7c" path="res://sounds/sfx/psx ui sfx/squad_manager/PageB.ogg" id="17_34lhm"]
+[ext_resource type="Script" path="res://Character/hud/weapon_bar.gd" id="20_wepbar"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bvcf1"]
 shader = ExtResource("8_21qk7")
@@ -19,6 +27,7 @@ shader_parameter/signal_height = 360.0
 shader_parameter/cell_average = true
 shader_parameter/chroma_divisor = 2.0
 shader_parameter/exposure = 1.05
+shader_parameter/gamma = 1.0
 shader_parameter/contrast = 1.12
 shader_parameter/black_lift = 0.05
 shader_parameter/luma_levels = 10.0
@@ -27,7 +36,7 @@ shader_parameter/saturation = 0.9
 shader_parameter/shadow_tint = Color(0.05, 0.11, 0.12, 1)
 shader_parameter/mid_tint = Color(0.3, 0.46, 0.38, 1)
 shader_parameter/high_tint = Color(0.87, 0.94, 0.72, 1)
-shader_parameter/palette_strength = 1.0
+shader_parameter/palette_strength = 0.6
 shader_parameter/edge_color = Color(0.02, 0.06, 0.06, 1)
 shader_parameter/edge_strength = 0.75
 shader_parameter/edge_threshold = 0.06
@@ -107,19 +116,17 @@ script = ExtResource("11_1xhm8")
 layout_mode = 3
 anchors_preset = 0
 offset_left = -16.0
-offset_top = 594.0
+offset_top = 388.0
 offset_right = 24.0
-offset_bottom = 634.0
+offset_bottom = 428.0
 script = ExtResource("9_n3ibl")
 order_ux_sound = NodePath("OrderUXSoundCycle")
 order_ux_sound_confirm = NodePath("OrderUXSoundConfirm")
 font_size_header = 16
 font_size_body = 14
 font_size_nearby = 14
-font_size_wheel = 14
 font_size_toast = 14
 font_size_marker = 14
-panel_margin = Vector2(0, -150)
 
 [node name="OrderUXSoundCycle" type="AudioStreamPlayer" parent="SquadHud"]
 stream = ExtResource("7_raese")
@@ -129,8 +136,6 @@ stream = ExtResource("8_21ypy")
 
 [node name="UI" parent="." instance=ExtResource("7_64yrs")]
 layout_mode = 1
-offset_top = 505.0
-offset_bottom = 505.0
 
 [node name="FPS" type="Label" parent="."]
 layout_mode = 0
@@ -139,3 +144,49 @@ offset_bottom = 31.0
 theme_override_font_sizes/font_size = 30
 text = "FPS:"
 script = ExtResource("4_wqlwh")
+
+[node name="SquadManagerUI" type="Control" parent="." node_paths=PackedStringArray("sfx_hover", "sfx_pick_up", "sfx_drop", "sfx_select", "sfx_open", "sfx_close")]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("12_b61d5")
+sfx_hover = NodePath("SquadUXSoundHover")
+sfx_pick_up = NodePath("SquadUXSoundDrag")
+sfx_drop = NodePath("SquadUXSoundDrop")
+sfx_select = NodePath("SquadUXSoundConfirm")
+sfx_open = NodePath("SquadUXSoundOpen")
+sfx_close = NodePath("SquadUXSoundClose")
+
+[node name="SquadUXSoundHover" type="AudioStreamPlayer" parent="SquadManagerUI"]
+stream = ExtResource("13_kseao")
+max_polyphony = 2
+
+[node name="SquadUXSoundConfirm" type="AudioStreamPlayer" parent="SquadManagerUI"]
+stream = ExtResource("8_21ypy")
+
+[node name="SquadUXSoundDrag" type="AudioStreamPlayer" parent="SquadManagerUI"]
+stream = ExtResource("14_sxo81")
+
+[node name="SquadUXSoundDrop" type="AudioStreamPlayer" parent="SquadManagerUI"]
+stream = ExtResource("15_4nw2x")
+
+[node name="SquadUXSoundOpen" type="AudioStreamPlayer" parent="SquadManagerUI"]
+stream = ExtResource("16_cnjdy")
+
+[node name="SquadUXSoundClose" type="AudioStreamPlayer" parent="SquadManagerUI"]
+stream = ExtResource("17_34lhm")
+
+[node name="CommsLog" type="Control" parent="."]
+anchors_preset = 0
+script = ExtResource("13_comms")
+
+[node name="WeaponBar" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("20_wepbar")
+idle_alpha = 0.25

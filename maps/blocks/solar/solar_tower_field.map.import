@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://0ps32xo882dh"
+path="res://.godot/imported/solar_tower_field.map-3fb78bc154919b5036a82b6cdb15e6ff.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_tower_field.map"
+dest_files=["res://.godot/imported/solar_tower_field.map-3fb78bc154919b5036a82b6cdb15e6ff.tres"]
+
+[params]
+

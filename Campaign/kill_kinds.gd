@@ -1,0 +1,89 @@
+extends RefCounted
+
+# ─────────────────────────────────────────────
+# KILL KINDS — what a robot killed, by frame, so the debrief can say
+# "2 CHASERS, 1 RIFLE TROOPER" and draw them.
+#
+# A kind is a frame id. Robots from an EnemyForceSpawner carry theirs as meta
+# (`chassis_id`); robots placed in a level by hand carry none, so their scene
+# says what they are. Anything unknown falls back to its scene's name, which
+# still reads, just without an icon.
+# ─────────────────────────────────────────────
+
+## Frame id -> the ChassisDefinition with its name and (baked) icon.
+const FRAMES := {
+	&"rifleman": "res://Campaign/chassis/chassis_rifleman.tres",
+	&"rifleman_armoured": "res://Campaign/chassis/chassis_rifleman_armoured.tres",
+	&"shotgunner": "res://Campaign/chassis/chassis_shotgunner.tres",
+	&"soldier": "res://Campaign/chassis/chassis_soldier.tres",
+	&"chaser": "res://Campaign/chassis/chassis_chaser.tres",
+	&"leaper": "res://Campaign/chassis/chassis_hopper.tres",
+	# The quadcopter bomber's id is still `gunship`. It is what career tallies
+	# in campaign.json were written under, and renaming it would orphan every
+	# one of them. The name the player reads comes off the frame, not the key.
+	&"gunship": "res://Campaign/chassis/chassis_helicopter.tres",
+	&"rover": "res://Campaign/chassis/chassis_rover.tres",
+	&"nest": "res://Campaign/chassis/chassis_nest.tres",
+	&"watcher": "res://Campaign/chassis/chassis_watcher.tres",
+	&"reclaimer": "res://Campaign/chassis/chassis_reclaimer.tres",
+	&"mechanic": "res://Campaign/chassis/chassis_mechanic.tres",
+	&"marksman": "res://Campaign/chassis/chassis_marksman.tres",
+	&"rover_gl": "res://Campaign/chassis/chassis_rover_gl.tres",
+	&"mortar_track": "res://Campaign/chassis/chassis_mortar_track.tres",
+	&"spotter": "res://Campaign/chassis/chassis_spotter.tres",
+	&"walker": "res://Campaign/chassis/chassis_walker.tres",
+	&"diver": "res://Campaign/chassis/chassis_diver.tres",
+}
+
+## Scene file (no extension) -> frame id, for robots with no frame of record.
+const SCENES := {
+	"soldier_rifle": &"rifleman",
+	"soldier_rifle_armoured": &"rifleman_armoured",
+	"soldier_shotgun": &"shotgunner",
+	"enemy_shotgun": &"shotgunner",
+	"enemy_chaser": &"chaser",
+	"enemy_nest-chaser": &"leaper",
+	"enemy_helicopter": &"gunship",
+	"vehicle_rover": &"rover",
+	"soldier_chassis": &"soldier",
+	"enemy_watcher": &"watcher",
+	"boss_guardian": &"guardian",
+	"enemy_nest": &"nest",
+	"vehicle_reclaimer": &"reclaimer",
+	"mechanic_chassis": &"mechanic",
+	"soldier_marksman": &"marksman",
+	"spotter_drone": &"spotter",
+	"walker": &"walker",
+	"diver": &"diver",
+}
+
+
+static func kind_of(body: Node) -> StringName:
+	if body == null:
+		return &"unknown"
+	if body.has_meta(&"chassis_id"):
+		return StringName(str(body.get_meta(&"chassis_id")))
+	var base := body.scene_file_path.get_file().get_basename()
+	if base == "":
+		return &"unknown"
+	return SCENES.get(base, StringName(base))
+
+
+static func frame_of(kind: StringName) -> ChassisDefinition:
+	var path: String = FRAMES.get(kind, "")
+	if path == "" or not ResourceLoader.exists(path):
+		return null
+	return load(path) as ChassisDefinition
+
+
+## "CHASER", "RIFLE TROOPER" — the frame's name without the word "Chassis".
+static func name_of(kind: StringName) -> String:
+	var frame := frame_of(kind)
+	var words := frame.display_name if frame != null else String(kind).replace("_", " ").replace("-", " ")
+	return words.to_upper().trim_suffix(" CHASSIS")
+
+
+## Adds one tally into another: career totals from a mission's.
+static func merge(into: Dictionary, from: Dictionary) -> void:
+	for kind in from:
+		into[kind] = int(into.get(kind, 0)) + int(from[kind])

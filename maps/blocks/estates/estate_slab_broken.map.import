@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c686jraj71vx3"
+path="res://.godot/imported/estate_slab_broken.map-4309a7461eec3f580c6a8c4c25460e67.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_slab_broken.map"
+dest_files=["res://.godot/imported/estate_slab_broken.map-4309a7461eec3f580c6a8c4c25460e67.tres"]
+
+[params]
+

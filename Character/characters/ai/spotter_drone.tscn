@@ -1,0 +1,169 @@
+[gd_scene load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://Character/characters/ai/spotter_drone.gd" id="1_spotter"]
+[ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_bark"]
+[ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_v1"]
+[ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_v2"]
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="5_metal"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="6_spark"]
+[ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="7_oil"]
+[ext_resource type="Script" path="res://faction_livery.gd" id="8_livery"]
+[ext_resource type="AudioStream" uid="uid://dw0e386o42h2o" path="res://sounds/sfx/quadcopter loop/freesound_community-mini-quadcopter-flying-loop-80330.mp3" id="9_rotor"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_body"]
+radius = 0.5
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_detect"]
+radius = 25.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_core"]
+size = Vector3(0.3, 0.12, 0.3)
+
+[sub_resource type="TorusMesh" id="TorusMesh_ring"]
+inner_radius = 0.19
+outer_radius = 0.225
+rings = 16
+ring_segments = 5
+
+[sub_resource type="StandardMaterial3D" id="Mat_ring"]
+albedo_color = Color(0.4, 0.78, 0.95, 1)
+emission_enabled = true
+emission = Color(0.4, 0.78, 0.95, 1)
+emission_energy_multiplier = 0.8
+
+[sub_resource type="SphereMesh" id="SphereMesh_optics"]
+radius = 0.16
+height = 0.3
+radial_segments = 14
+rings = 7
+
+[sub_resource type="StandardMaterial3D" id="Mat_optics"]
+albedo_color = Color(0.08, 0.1, 0.12, 1)
+metallic = 0.6
+roughness = 0.25
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_lens"]
+top_radius = 0.1
+bottom_radius = 0.07
+height = 0.06
+radial_segments = 12
+rings = 0
+
+[sub_resource type="StandardMaterial3D" id="Mat_lens"]
+albedo_color = Color(0.5, 0.9, 1, 1)
+emission_enabled = true
+emission = Color(0.5, 0.9, 1, 1)
+emission_energy_multiplier = 1.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_arm"]
+size = Vector3(0.045, 0.03, 0.8)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_rotor"]
+top_radius = 0.15
+bottom_radius = 0.15
+height = 0.012
+radial_segments = 14
+rings = 0
+
+[node name="Spotter_Drone" type="CharacterBody3D" node_paths=PackedStringArray("rotor_loop", "nav_agent", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+script = ExtResource("1_spotter")
+rotor_loop = NodePath("RotorLoop")
+nav_agent = NodePath("NavigationAgent3D")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("Rig/Core"), NodePath("Rig/ArmA"), NodePath("Rig/ArmB")]
+activation_distance = 250
+health = 80
+max_health = 80
+move_speed = 18.0
+soldier_name = "Spotter Drone"
+flatten_collider_when_downed = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_body")
+
+[node name="Bark" parent="." instance=ExtResource("2_bark")]
+bark_clips = Array[AudioStream]([ExtResource("3_v1"), ExtResource("4_v2")])
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
+shape = SubResource("SphereShape3D_detect")
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Core" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+mesh = SubResource("BoxMesh_core")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="SensorRing" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+cast_shadow = 0
+mesh = SubResource("TorusMesh_ring")
+surface_material_override/0 = SubResource("Mat_ring")
+
+[node name="Optics" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+mesh = SubResource("SphereMesh_optics")
+surface_material_override/0 = SubResource("Mat_optics")
+
+[node name="Lens" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, -0.12, -0.17)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_lens")
+surface_material_override/0 = SubResource("Mat_lens")
+
+[node name="ArmA" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.7071, 0, -0.7071, 0, 1, 0, 0.7071, 0, 0.7071, 0, 0.05, 0)
+mesh = SubResource("BoxMesh_arm")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="ArmB" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.7071, 0, 0.7071, 0, 0.05, 0)
+mesh = SubResource("BoxMesh_arm")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="RotorFL" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.28, 0.09, -0.28)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_rotor")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="RotorFR" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.28, 0.09, -0.28)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_rotor")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="RotorRL" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.28, 0.09, 0.28)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_rotor")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="RotorRR" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.28, 0.09, 0.28)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_rotor")
+surface_material_override/0 = ExtResource("5_metal")
+
+[node name="SparkBurst" parent="." instance=ExtResource("6_spark")]
+
+[node name="OilSpray" parent="." instance=ExtResource("7_oil")]
+
+[node name="RotorLoop" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("9_rotor")
+volume_db = -8.0
+unit_size = 14.0
+autoplay = true
+
+[node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("8_livery")
+base_material = ExtResource("5_metal")
+pieces = [NodePath("../Rig/Core"), NodePath("../Rig/ArmA"), NodePath("../Rig/ArmB"), NodePath("../Rig/RotorFL"), NodePath("../Rig/RotorFR"), NodePath("../Rig/RotorRL"), NodePath("../Rig/RotorRR")]
+paint_blend = 1.0

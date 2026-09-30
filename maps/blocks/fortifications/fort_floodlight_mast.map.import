@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://lqdrcfxbpfam"
+path="res://.godot/imported/fort_floodlight_mast.map-b31cc11d11ee9965389351eb10d2b38e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_floodlight_mast.map"
+dest_files=["res://.godot/imported/fort_floodlight_mast.map-b31cc11d11ee9965389351eb10d2b38e.tres"]
+
+[params]
+

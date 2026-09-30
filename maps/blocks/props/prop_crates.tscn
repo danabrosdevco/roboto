@@ -1,0 +1,75 @@
+[gd_scene load_steps=11 format=4]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_jyv00"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_m4apy"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/wood_2.tres" id="3_jnulj"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/crate_wooden_2.tres" id="4_ttwm6"]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_s64rb"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, -0.59375, 1, 0.125, 1.1875),
+"attribute_data": PackedByteArray("AACYPQAAgD0AAJi9AACAPQAAmL0AAIC9AACYPQAAgL0AAJi9AACAPQAAmL0AAIC9AACYPQAAgL0AAJg9AACAPQAAmL0AAAAAAACYvQAAgLwAAJg9AACAvAAAmD0AAAAAAACAvQAAAAAAAIC9AACAvAAAgD0AAIC8AACAPQAAAAAAAJi9AAAAAAAAmL0AAIC8AACYPQAAgLwAAJg9AAAAAAAAgL0AAAAAAACAvQAAgLwAAIA9AACAvAAAgD0AAAAA"),
+"format": 34359742487,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcA"),
+"material": ExtResource("3_jnulj"),
+"name": "PSX_Textures/wood_2",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAAvwAAAAAAABi/AAAAvwAAAAAAABg/AAAAPwAAAAAAABg/AAAAPwAAAAAAABi/AAAAvwAAAD4AABi/AAAAPwAAAD4AABi/AAAAPwAAAD4AABg/AAAAvwAAAD4AABg/AAAAvwAAAAAAABi/AAAAvwAAAD4AABi/AAAAvwAAAD4AABg/AAAAvwAAAAAAABg/AAAAvwAAAAAAABg/AAAAvwAAAD4AABg/AAAAPwAAAD4AABg/AAAAPwAAAAAAABg/AAAAPwAAAAAAABg/AAAAPwAAAD4AABg/AAAAPwAAAD4AABi/AAAAPwAAAAAAABi/AAAAPwAAAAAAABi/AAAAPwAAAD4AABi/AAAAvwAAAD4AABi/AAAAvwAAAAAAABi//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+/")
+}, {
+"aabb": AABB(-0.5, 0, -0.5625, 1.84375, 1.9375, 1.96875),
+"attribute_data": PackedByteArray("AAAQPgAA4D0AAOC9AADgPQAA4L0AAOC9AAAQPgAA4L0AABC+AADgPQAAEL4AAOC9AADgPQAA4L0AAOA9AADgPQAAEL4AAAC9AAAQvgAAkL4AAOA9AACQvgAA4D0AAAC9AADgvQAAAL0AAOC9AACQvgAA4D0AAJC+AADgPQAAAL0AAOC9AAAAvQAA4L0AAJC+AAAQPgAAkL4AABA+AAAAvQAA4L0AAAC9AADgvQAAkL4AAOA9AACQvgAA4D0AAAC9ToDLvQAAkL5OgMu9AAD4voDbzz0AAPi+gNvPPQAAkL54Gd89AACQvuFIwL0AAJC+4UjAvQAA+L54Gd89AAD4vgAAsL0AAAA+AAAIvgEAkL0AAIA9AQAAvgAA4D0AAJA9x4HuvQAAkL7Hge69AAD4vpHgsD0AAPi+keCwPQAAkL4AALA9AAAAPgAA4L0AAJA9AACAvQEAAL4AAAg+AQCQvTIP2z0AAJC+nkzAvQAAkL6eTMC9AAD4vjIP2z0AAPi+UOjCvgAAAABQ6MK+AAAwvooJUr4AADC+iglSvgAAAAB21mO9AAAAALK8bL4AAAAAsrxsvgAAML521mO9AAAwvgAAAD4AADC+AgBAPgEArL4BALQ+AQCMvgAAlD7//9+9AAAAvgAAML4AAJS+///fvQEAtL4BAIy+AgBAvgEArL5e1mM9AAAAAF7WYz0AADC+rrxsPgAAML6uvGw+AAAAAE7owj4AAAAAhAlSPgAAAACECVI+AAAwvk7owj4AADC+"),
+"format": 34359742487,
+"index_count": 108,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8AIAAhACIAIAAiACMAJAAlACYAJAAmACcAKAApACoAKAAqACsALAAtAC4ALAAuAC8AMAAxADIAMAAyADMANAA1ADYANAA2ADcAOAA5ADoAOAA6ADsAPAA9AD4APAA+AD8AQABBAEIAQABCAEMARABFAEYARABGAEcA"),
+"material": ExtResource("4_ttwm6"),
+"name": "PSX_Textures/crate_wooden_2",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 72,
+"vertex_data": PackedByteArray("AADgvgAAAD4AABC/AADgvgAAAD4AAOA+AADgPgAAAD4AAOA+AADgPgAAAD4AABC/AADgvgAAkD8AABC/AADgPgAAkD8AABC/AADgPgAAkD8AAOA+AADgvgAAkD8AAOA+AADgvgAAAD4AABC/AADgvgAAkD8AABC/AADgvgAAkD8AAOA+AADgvgAAAD4AAOA+AADgvgAAAD4AAOA+AADgvgAAkD8AAOA+AADgPgAAkD8AAOA+AADgPgAAAD4AAOA+AADgPgAAAD4AAOA+AADgPgAAkD8AAOA+AADgPgAAkD8AABC/AADgPgAAAD4AABC/AADgPgAAAD4AABC/AADgPgAAkD8AABC/AADgvgAAkD8AABC/AADgvgAAAD4AABC/AQCQPgAAkD8AAAi/AQCQPgAA+D8AAAi/AAAAvwAA+D8AALC+AAAAvwAAkD8AALC+AQCQPgAAkD8AAAi/AQAAPwAAkD8AAIA+AQAAPwAA+D8AAIA+AQCQPgAA+D8AAAi/AAAAvwAA+D8AALC+AQCQPgAA+D8AAAi/AQAAPwAA+D8AAIA+AACQvgAA+D8AAOA+AAAAvwAAkD8AALC+AAAAvwAA+D8AALC+AACQvgAA+D8AAOA+AACQvgAAkD8AAOA+AAAAvwAAkD8AALC+AACQvgAAkD8AAOA+AQAAPwAAkD8AAIA+AQCQPgAAkD8AAAi/AQAAPwAAkD8AAIA+AACQvgAAkD8AAOA+AACQvgAA+D8AAOA+AQAAPwAA+D8AAIA+AQCsPwAAAAACAEA/AQCsPwAAMD8CAEA/AAAwPwAAMD8AAAA/AAAwPwAAAAAAAAA/AQCsPwAAAAACAEA/AQCMPwAAAAABALQ/AQCMPwAAMD8BALQ/AQCsPwAAMD8CAEA/AAAwPwAAMD8AAAA/AQCsPwAAMD8CAEA/AQCMPwAAMD8BALQ////fPgAAMD8AAJQ/AAAwPwAAAAAAAAA////fPgAAAAAAAJQ/AQCMPwAAAAABALQ/AQCsPwAAAAACAEA/AAAwPwAAAAAAAAA/AAAwPwAAMD8AAAA////fPgAAMD8AAJQ////fPgAAAAAAAJQ/AQCMPwAAAAABALQ////fPgAAAAAAAJQ////fPgAAMD8AAJQ/AQCMPwAAMD8BALQ//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+/AAA458YY/78AADjnxhj/vwAAOOfGGP+/AAA458YY/7////+bAAD/8f///5sAAP/x////mwAA//H///+bAAD/8f9/////f/+//3////9//7//f////3//v/9/////f/+//xv/f/+b/7//G/9//5v/v/8b/3//m/+//xv/f/+b/7//fwAA//////9/AAD//////38AAP//////fwAA/////8WY/3///2LMxZj/f///YszFmP9///9izMWY/3///2LM//+v3AAAptH//6/cAACm0f//r9wAAKbR//+v3AAAptGv3P9///9X7q/c/3///1fur9z/f///V+6v3P9///9X7v9/////f/+//3////9//7//f////3//v/9/////f/+//38AAP//////fwAA//////9/AAD//////38AAP////8AAE6jsFz/vwAATqOwXP+/AABOo7Bc/78AAE6jsFz/v7Bc/3+v3P+/sFz/f6/c/7+wXP9/r9z/v7Bc/3+v3P+/")
+}]
+
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_qjgu2"]
+vertices = PackedVector3Array(-0.5, 0, -0.59375, -0.5, 0, 0.59375, 0.5, 0, 0.59375, 0.5, 0, -0.59375, -0.5, 0.125, -0.59375, 0.5, 0.125, -0.59375, 0.5, 0.125, 0.59375, -0.5, 0.125, 0.59375, -0.5, 0, -0.59375, -0.5, 0.125, -0.59375, -0.5, 0.125, 0.59375, -0.5, 0, 0.59375, -0.5, 0, 0.59375, -0.5, 0.125, 0.59375, 0.5, 0.125, 0.59375, 0.5, 0, 0.59375, 0.5, 0, 0.59375, 0.5, 0.125, 0.59375, 0.5, 0.125, -0.59375, 0.5, 0, -0.59375, 0.5, 0, -0.59375, 0.5, 0.125, -0.59375, -0.5, 0.125, -0.59375, -0.5, 0, -0.59375, -0.4375, 0.125, -0.5625, -0.4375, 0.125, 0.4375, 0.4375, 0.125, 0.4375, 0.4375, 0.125, -0.5625, -0.4375, 1.125, -0.5625, 0.4375, 1.125, -0.5625, 0.4375, 1.125, 0.4375, -0.4375, 1.125, 0.4375, -0.4375, 0.125, -0.5625, -0.4375, 1.125, -0.5625, -0.4375, 1.125, 0.4375, -0.4375, 0.125, 0.4375, -0.4375, 0.125, 0.4375, -0.4375, 1.125, 0.4375, 0.4375, 1.125, 0.4375, 0.4375, 0.125, 0.4375, 0.4375, 0.125, 0.4375, 0.4375, 1.125, 0.4375, 0.4375, 1.125, -0.5625, 0.4375, 0.125, -0.5625, 0.4375, 0.125, -0.5625, 0.4375, 1.125, -0.5625, -0.4375, 1.125, -0.5625, -0.4375, 0.125, -0.5625, 0.28125, 1.125, -0.53125, 0.28125, 1.9375, -0.53125, -0.5, 1.9375, -0.34375, -0.5, 1.125, -0.34375, 0.28125, 1.125, -0.53125, 0.5, 1.125, 0.25, 0.5, 1.9375, 0.25, 0.28125, 1.9375, -0.53125, -0.5, 1.9375, -0.34375, 0.28125, 1.9375, -0.53125, 0.5, 1.9375, 0.25, -0.28125, 1.9375, 0.4375, -0.5, 1.125, -0.34375, -0.5, 1.9375, -0.34375, -0.28125, 1.9375, 0.4375, -0.28125, 1.125, 0.4375, -0.5, 1.125, -0.34375, -0.28125, 1.125, 0.4375, 0.5, 1.125, 0.25, 0.28125, 1.125, -0.53125, 0.5, 1.125, 0.25, -0.28125, 1.125, 0.4375, -0.28125, 1.9375, 0.4375, 0.5, 1.9375, 0.25, 1.34375, 0, 0.75, 1.34375, 0.6875, 0.75, 0.6875, 0.6875, 0.5, 0.6875, 0, 0.5, 1.34375, 0, 0.75, 1.09375, 0, 1.40625, 1.09375, 0.6875, 1.40625, 1.34375, 0.6875, 0.75, 0.6875, 0.6875, 0.5, 1.34375, 0.6875, 0.75, 1.09375, 0.6875, 1.40625, 0.4375, 0.6875, 1.15625, 0.6875, 0, 0.5, 0.4375, 0, 1.15625, 1.09375, 0, 1.40625, 1.34375, 0, 0.75, 0.6875, 0, 0.5, 0.6875, 0.6875, 0.5, 0.4375, 0.6875, 1.15625, 0.4375, 0, 1.15625, 1.09375, 0, 1.40625, 0.4375, 0, 1.15625, 0.4375, 0.6875, 1.15625, 1.09375, 0.6875, 1.40625)
+indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23, 24, 25, 26, 24, 26, 27, 28, 29, 30, 28, 30, 31, 32, 33, 34, 32, 34, 35, 36, 37, 38, 36, 38, 39, 40, 41, 42, 40, 42, 43, 44, 45, 46, 44, 46, 47, 48, 49, 50, 48, 50, 51, 52, 53, 54, 52, 54, 55, 56, 57, 58, 56, 58, 59, 60, 61, 62, 60, 62, 63, 64, 65, 66, 64, 66, 67, 68, 69, 70, 68, 70, 71, 72, 73, 74, 72, 74, 75, 76, 77, 78, 76, 78, 79, 80, 81, 82, 80, 82, 83, 84, 85, 86, 84, 86, 87, 88, 89, 90, 88, 90, 91, 92, 93, 94, 92, 94, 95)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_b2lmc"]
+points = PackedVector3Array(-0.5, 0, -0.59375, -0.5, 0, 0.59375, 0.5, 0, 0.59375, 0.5, 0, -0.59375, -0.5, 0.125, -0.59375, 0.5, 0.125, -0.59375, 0.5, 0.125, 0.59375, -0.5, 0.125, 0.59375)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_8l0mn"]
+points = PackedVector3Array(-0.4375, 0.125, -0.5625, -0.4375, 0.125, 0.4375, 0.4375, 0.125, 0.4375, 0.4375, 0.125, -0.5625, -0.4375, 1.125, -0.5625, 0.4375, 1.125, -0.5625, 0.4375, 1.125, 0.4375, -0.4375, 1.125, 0.4375)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_lpkll"]
+points = PackedVector3Array(0.28125, 1.125, -0.53125, 0.28125, 1.9375, -0.53125, -0.5, 1.9375, -0.34375, -0.5, 1.125, -0.34375, 0.5, 1.125, 0.25, 0.5, 1.9375, 0.25, -0.28125, 1.9375, 0.4375, -0.28125, 1.125, 0.4375)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_63acd"]
+points = PackedVector3Array(1.34375, 0, 0.75, 1.34375, 0.6875, 0.75, 0.6875, 0.6875, 0.5, 0.6875, 0, 0.5, 1.09375, 0, 1.40625, 1.09375, 0.6875, 1.40625, 0.4375, 0.6875, 1.15625, 0.4375, 0, 1.15625)
+
+[node name="PropCrates" type="Node3D"]
+script = ExtResource("1_jyv00")
+local_map_file = "res://maps/blocks/props/prop_crates.map"
+map_settings = ExtResource("2_m4apy")
+
+[node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
+collision_mask = 0
+
+[node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
+mesh = SubResource("ArrayMesh_s64rb")
+
+[node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
+occluder = SubResource("ArrayOccluder3D_qjgu2")
+
+[node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConvexPolygonShape3D_b2lmc")
+
+[node name="entity_0_brush_1_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConvexPolygonShape3D_8l0mn")
+
+[node name="entity_0_brush_2_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConvexPolygonShape3D_lpkll")
+
+[node name="entity_0_brush_3_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConvexPolygonShape3D_63acd")

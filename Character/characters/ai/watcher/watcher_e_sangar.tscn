@@ -1,0 +1,134 @@
+[gd_scene load_steps=11 format=3 uid="uid://cwatcher0sangar"]
+
+[ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="1_metal"]
+
+[sub_resource type="StandardMaterial3D" id="Dark"]
+albedo_color = Color(0.13, 0.15, 0.14, 1)
+metallic = 0.4
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="Amber"]
+albedo_color = Color(0.7, 0.35, 0.02, 1)
+metallic = 0.2
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.95, 0.5, 0.06, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="StandardMaterial3D" id="HitMat"]
+transparency = 1
+albedo_color = Color(0.95, 0.25, 0.2, 0.28)
+
+[sub_resource type="CylinderMesh" id="Hex"]
+top_radius = 2.0
+bottom_radius = 2.35
+height = 1.6
+radial_segments = 6
+
+[sub_resource type="CylinderMesh" id="Pintle"]
+top_radius = 0.34
+bottom_radius = 0.46
+height = 0.6
+radial_segments = 10
+
+[sub_resource type="SphereMesh" id="Bowl"]
+radius = 1.25
+height = 1.25
+is_hemisphere = true
+radial_segments = 18
+rings = 7
+
+[sub_resource type="TorusMesh" id="Rim"]
+inner_radius = 1.2
+outer_radius = 1.32
+
+[sub_resource type="CylinderMesh" id="Feed"]
+top_radius = 0.08
+bottom_radius = 0.04
+height = 0.85
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="HitMesh"]
+size = Vector3(2.8, 1.5, 2.8)
+
+[node name="Watcher_Sangar" type="Node3D"]
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Skirt" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1.14, 0, 0, 0, 0.18, 0, 0, 0, 1.14, 0, 0.14, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Hex")
+
+[node name="Sangar" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+material_override = ExtResource("1_metal")
+mesh = SubResource("Hex")
+
+[node name="Parapet" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1.06, 0, 0, 0, 0.16, 0, 0, 0, 1.06, 0, 1.9, 0)
+material_override = ExtResource("1_metal")
+mesh = SubResource("Hex")
+
+[node name="SlitFront" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, -1.92)
+size = Vector3(2.1, 0.24, 0.14)
+material = SubResource("Dark")
+
+[node name="SlitL" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(0.5, 0, 0.866, 0, 1, 0, -0.866, 0, 0.5, -1.66, 1.35, -0.96)
+size = Vector3(2.1, 0.24, 0.14)
+material = SubResource("Dark")
+
+[node name="SlitR" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(0.5, 0, -0.866, 0, 1, 0, 0.866, 0, 0.5, 1.66, 1.35, -0.96)
+size = Vector3(2.1, 0.24, 0.14)
+material = SubResource("Dark")
+
+[node name="Strip" type="CSGBox3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.06, -2.0)
+size = Vector3(0.8, 0.07, 0.06)
+material = SubResource("Amber")
+
+[node name="Pintle" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Pintle")
+
+[node name="Scanner" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.75, 0)
+
+[node name="Tilt" type="Node3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 0.819, -0.574, 0, 0.574, 0.819, 0, 0, 0)
+
+[node name="Bowl" type="MeshInstance3D" parent="Rig/Scanner/Tilt"]
+transform = Transform3D(1, 0, 0, 0, -1, -8.74228e-08, 0, 8.74228e-08, -1, 0, 0, 0)
+material_override = ExtResource("1_metal")
+mesh = SubResource("Bowl")
+
+[node name="Rim" type="MeshInstance3D" parent="Rig/Scanner/Tilt"]
+material_override = SubResource("Dark")
+mesh = SubResource("Rim")
+
+[node name="Feed" type="MeshInstance3D" parent="Rig/Scanner/Tilt"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.42, 0)
+material_override = SubResource("Dark")
+mesh = SubResource("Feed")
+
+[node name="Horn" type="CSGSphere3D" parent="Rig/Scanner/Tilt"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.86, 0)
+radius = 0.17
+radial_segments = 10
+rings = 6
+material = SubResource("Amber")
+
+[node name="Yoke" type="CSGBox3D" parent="Rig/Scanner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+size = Vector3(1.5, 0.2, 0.3)
+material = ExtResource("1_metal")
+
+[node name="Hitbox" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+visible = false
+material_override = SubResource("HitMat")
+mesh = SubResource("HitMesh")

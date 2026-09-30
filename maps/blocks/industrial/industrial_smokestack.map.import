@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c1evhp4nsy0nn"
+path="res://.godot/imported/industrial_smokestack.map-92c3299c99b3cabee2769e95a3f6d2c8.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_smokestack.map"
+dest_files=["res://.godot/imported/industrial_smokestack.map-92c3299c99b3cabee2769e95a3f6d2c8.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bifd5har6e0js"
+path="res://.godot/imported/fort_hesco_sangar.map-0842446cd89725271b760a38b3db77e1.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_hesco_sangar.map"
+dest_files=["res://.godot/imported/fort_hesco_sangar.map-0842446cd89725271b760a38b3db77e1.tres"]
+
+[params]
+

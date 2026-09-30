@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://vrj6hpyctclx"
+path="res://.godot/imported/ground_berm.map-fbf8a19fce44bcab043c6097bbf8ae3b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/ground/ground_berm.map"
+dest_files=["res://.godot/imported/ground_berm.map-fbf8a19fce44bcab043c6097bbf8ae3b.tres"]
+
+[params]
+

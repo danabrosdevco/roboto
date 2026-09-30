@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bgcuh1beu71sc"
+path="res://.godot/imported/alpine_pine_flagged.map-76ea51fdcbd0eff8df2aae44f046a1ff.tres"
+
+[deps]
+
+source_file="res://maps/blocks/alpine/alpine_pine_flagged.map"
+dest_files=["res://.godot/imported/alpine_pine_flagged.map-76ea51fdcbd0eff8df2aae44f046a1ff.tres"]
+
+[params]
+

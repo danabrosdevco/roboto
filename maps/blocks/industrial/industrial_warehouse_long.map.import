@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://23kswkgfgqyl"
+path="res://.godot/imported/industrial_warehouse_long.map-e03c88cf4eddae5f85e2059f8ee03e19.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_warehouse_long.map"
+dest_files=["res://.godot/imported/industrial_warehouse_long.map-e03c88cf4eddae5f85e2059f8ee03e19.tres"]
+
+[params]
+

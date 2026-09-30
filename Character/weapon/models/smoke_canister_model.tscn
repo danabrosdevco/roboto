@@ -1,0 +1,53 @@
+[gd_scene load_steps=6 format=3]
+
+; SMOKE CANISTER. A ribbed cylinder with a spoon and a white band — the band
+; is the whole read: it is the one thing you throw that is not painted to kill.
+
+[sub_resource type="StandardMaterial3D" id="mat_olive"]
+albedo_color = Color(0.27, 0.3, 0.18, 1)
+metallic = 0.1
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="mat_pale"]
+albedo_color = Color(0.72, 0.73, 0.7, 1)
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="mat_steel"]
+albedo_color = Color(0.15, 0.16, 0.17, 1)
+metallic = 0.65
+roughness = 0.42
+
+[sub_resource type="CylinderMesh" id="m_body"]
+top_radius = 0.058
+bottom_radius = 0.058
+height = 0.19
+radial_segments = 10
+
+[sub_resource type="BoxMesh" id="m_spoon"]
+size = Vector3(0.022, 0.12, 0.03)
+
+[node name="SmokeCanisterModel" type="Node3D"]
+
+[node name="Body" type="MeshInstance3D" parent="."]
+material_override = SubResource("mat_olive")
+mesh = SubResource("m_body")
+
+[node name="Band" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.04, 0, 0, 0, 0.16, 0, 0, 0, 1.04, 0, 0.02, 0)
+material_override = SubResource("mat_pale")
+mesh = SubResource("m_body")
+
+[node name="Cap" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.8, 0, 0, 0, 0.18, 0, 0, 0, 0.8, 0, 0.104, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_body")
+
+[node name="Vent" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.45, 0, 0, 0, 0.12, 0, 0, 0, 0.45, 0, 0.122, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_body")
+
+[node name="Spoon" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.058, 0.055, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_spoon")

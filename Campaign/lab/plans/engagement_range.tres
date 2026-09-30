@@ -1,0 +1,121 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="4_chaser"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="5_hopper"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "4 chasers vs 4 rifles at 10m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_chaser"), ExtResource("4_chaser"), ExtResource("4_chaser"), ExtResource("4_chaser")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 10.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "4 chasers vs 4 rifles at 25m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_chaser"), ExtResource("4_chaser"), ExtResource("4_chaser"), ExtResource("4_chaser")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 25.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M3"]
+script = ExtResource("2_match")
+label = "4 chasers vs 4 rifles at 45m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_chaser"), ExtResource("4_chaser"), ExtResource("4_chaser"), ExtResource("4_chaser")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 45.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M4"]
+script = ExtResource("2_match")
+label = "4 hoppers vs 4 rifles at 10m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("5_hopper")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 10.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M5"]
+script = ExtResource("2_match")
+label = "4 hoppers vs 4 rifles at 25m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("5_hopper")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 25.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M6"]
+script = ExtResource("2_match")
+label = "4 hoppers vs 4 rifles at 45m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("5_hopper")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 45.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M7"]
+script = ExtResource("2_match")
+label = "4 shotguns vs 4 rifles at 10m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 10.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M8"]
+script = ExtResource("2_match")
+label = "4 shotguns vs 4 rifles at 35m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 35.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[resource]
+script = ExtResource("1_plan")
+title = "Engagement range"
+question = "Does the starting distance decide melee against guns? Melee should win up close and lose in the open. If it wins at every range, closing speed or damage is too high."
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2"), SubResource("M3"), SubResource("M4"), SubResource("M5"), SubResource("M6"), SubResource("M7"), SubResource("M8")])
+repeats_override = 0
+speed = 2.0

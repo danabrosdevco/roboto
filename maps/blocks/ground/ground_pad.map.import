@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c0bmewd441vdt"
+path="res://.godot/imported/ground_pad.map-c014a6e5350f7f90f763975a84e76b3f.tres"
+
+[deps]
+
+source_file="res://maps/blocks/ground/ground_pad.map"
+dest_files=["res://.godot/imported/ground_pad.map-c014a6e5350f7f90f763975a84e76b3f.tres"]
+
+[params]
+

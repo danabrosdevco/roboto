@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AmmoStock" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Character/equipment/ammo_stock.gd" id="1_stock"]
+
+[resource]
+script = ExtResource("1_stock")
+ammo_type = &"hatchling"
+amount = 2
+capacity = 3

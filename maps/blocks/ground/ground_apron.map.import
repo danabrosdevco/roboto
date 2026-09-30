@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cueub0bpjey0e"
+path="res://.godot/imported/ground_apron.map-23e7a4a301c62ac64d5bcd0832aac01a.tres"
+
+[deps]
+
+source_file="res://maps/blocks/ground/ground_apron.map"
+dest_files=["res://.godot/imported/ground_apron.map-23e7a4a301c62ac64d5bcd0832aac01a.tres"]
+
+[params]
+

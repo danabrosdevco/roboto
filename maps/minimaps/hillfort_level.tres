@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_1k3s7"]
+
+[resource]
+script = ExtResource("1_1k3s7")
+level_scene_path = "res://maps/hillfort_level.tscn"
+image_path = "res://maps/minimaps/hillfort_level.png"
+world_min = Vector2(-408.164, -377.464)
+world_max = Vector2(321.964, 352.664)
+objective_ids = Array[StringName]([&"hillfort_extract", &"hillfort_relay"])
+objective_names = Array[String](["Off The Hill", "The Relay"])
+objective_positions = Array[Vector3]([Vector3(72, 141.8, -292), Vector3(-12, 132, -262)])
+objective_kinds = Array[StringName]([&"extract", &"capture"])
+insertion_positions = Array[Vector3]([Vector3(-166, 11.15, 302)])

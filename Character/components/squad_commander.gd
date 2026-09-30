@@ -5,15 +5,21 @@ class_name SquadCommander
 # SQUAD COMMANDER
 # Child of Player. Owns the "command" input (T) and everything downstream of it.
 #
-# TAP T    — contextual order at the crosshair. The verb is inferred from what
-#            you're looking at, so the common case costs one keypress:
-#              hostile   → ASSAULT that target
-#              friendly  → select that robot's squad
-#              ground    → ASSAULT that position
-#              nothing   → CONTACT callout down the sightline
-# HOLD T   — opens the verb wheel. Mouse left/right picks, release commits.
-#            Camera is frozen while the wheel is open.
-# TAB      — cycle which squad you're commanding.
+# TAP T    — ADVANCE to the crosshair and hold, whatever is under it: ground,
+#            one of your robots or a hostile (a hive included) all mean "go
+#            there", to the ground it stands on. The tap never picks a team or
+#            a target — G picks the team, and the squad fights what it meets.
+#            Open sky → CONTACT callout down the sightline.
+# HOLD T   — FOLLOW. Fires the moment the hold threshold passes.
+# G        — switch the team T orders to the next one.
+#
+# TEAMS
+# Your robots go in as one squad per team you made on the squad page, so a
+# rover can hold a ridge while the rest follow you in. Orders go to one team at
+# a time, your first to start with, and G steps to the next in the page's order
+# and round again: no ALL to step through, so with two teams a switch is always
+# one press. With one team nothing is different. (Cycling used to hang off Tab,
+# which the squad manager takes first; it never fired.)
 #
 # WHY THREE VERBS
 # The wheel used to carry MOVE TO / DEFEND / ATTACK / FALL BACK / CONTACT. Those
@@ -45,48 +51,74 @@ class_name SquadCommander
 @export var command_ray_mask: int = 0xFFFFFFFF
 
 @export var hold_threshold: float = 0.22
-@export var wheel_sensitivity: float = 0.006
 
 # How often the squad registry is rebuilt. It used to be built exactly once in
 # _ready(), so a squad that spawned later never became commandable and a wiped
 # one stayed in the cycle list forever.
 @export var registry_refresh_interval: float = 2.0
 
-enum Verb { ASSAULT, DEFEND, FOLLOW, CONTACT }
+# ASSAULT is gone. "Go there and engage what you meet on the way" meant the
+# squad self-directed mid-order, and self-direction is where almost every
+# problem came from — chasing corpses, closing into shotgun range, stringing
+# into a line, slipping the leash.
+#
+# ADVANCE is the old DEFEND behaviour under a better name: go there, hold, dig
+# in. Taking ground becomes a sequence of orders you issue rather than a
+# judgement call the AI gets wrong. Bounding a squad forward is now YOUR job,
+# which is the whole appeal of a squad game.
+enum Verb { ADVANCE, FOLLOW, CONTACT, ATTACK }
 
 const VERB_LABELS := {
-	Verb.ASSAULT: "ASSAULT",
-	Verb.DEFEND:  "DEFEND",
+	Verb.ADVANCE: "ADVANCE",
 	Verb.FOLLOW:  "FOLLOW",
 	Verb.CONTACT: "CONTACT",
+	Verb.ATTACK:  "ATTACK",
 }
+
+const SWITCH_TEAM_ACTION := &"switch_team"
 
 var commandable_squads: Array[Squad] = []
 var selected_index: int = 0
 
 var _hold_time: float = 0.0
-var _wheel_open: bool = false
-var _wheel_accum: float = 0.0
-var _wheel_index: int = 0
+# True once a hold has already issued FOLLOW, so releasing does not then also
+# fire a tap order on the way out.
+var _hold_fired: bool = false
 var _markers: Dictionary = {}   # Squad -> CommandMarker
 var _preview: CommandMarker = null
 var _registry_timer: float = 0.0
 
 signal squad_selected(squad: Squad)
 signal squads_refreshed(squads: Array)
-signal wheel_opened(verbs: Array, index: int)
-signal wheel_moved(index: int)
-signal wheel_closed()
 signal order_issued(squad: Squad, verb: int, position: Vector3, target: Node)
 signal contact_called(position: Vector3, target: Node)
+## Which team the orders now go to changed: the team's name — or a callsign.
+signal team_selected(label: String)
+## G with no other team in the field to switch to.
+signal no_team_to_switch
 
 
 func _ready() -> void:
 	_autowire()
+	# Settings registers G for this when it loads the bindings; whichever of us
+	# is first makes it, so the key works before anyone opens the options.
+	if not InputMap.has_action(SWITCH_TEAM_ACTION):
+		InputMap.add_action(SWITCH_TEAM_ACTION)
+		var ev := InputEventKey.new()
+		ev.physical_keycode = KEY_G
+		InputMap.action_add_event(SWITCH_TEAM_ACTION, ev)
 	# Squads add themselves to the group in their own _ready, which may not have
 	# run yet. Wait a frame before the first sweep.
 	await get_tree().process_frame
 	refresh_squads()
+
+
+# Teams are made and emptied on the squad page, which pauses the game while it
+# is open. Sweep on the first frame after, rather than up to two seconds later:
+# a team you just made has to be on G the moment you are back.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_UNPAUSED:
+		_registry_timer = registry_refresh_interval
 
 
 # `world` and `hud` are not set in test_character.tscn. _place_marker() bails on
@@ -118,11 +150,17 @@ func refresh_squads() -> void:
 		if not s is Squad:
 			continue
 		var squad := s as Squad
-		if squad.is_wiped():
+		# is_lost(), not is_wiped(): an all-downed squad is recoverable and must
+		# stay commandable so its markers keep drawing.
+		if squad.is_lost():
 			continue
 		if squad.player_commandable or _is_friendly_squad(squad):
 			commandable_squads.append(squad)
 	selected_index = clampi(selected_index, 0, maxi(0, commandable_squads.size() - 1))
+	# Your first team, not whichever squad the group happened to list first.
+	var teams := team_squads()
+	if not teams.is_empty() and not teams.has(get_selected_squad()):
+		selected_index = commandable_squads.find(teams[0])
 	squads_refreshed.emit(commandable_squads)
 	squad_selected.emit(get_selected_squad())
 
@@ -144,53 +182,98 @@ func get_selected_squad() -> Squad:
 		return null
 	if selected_index >= commandable_squads.size():
 		selected_index = 0
-	return commandable_squads[selected_index]
+	var squad = commandable_squads[selected_index]
+	# A level unload frees its squads before the registry's next sweep (up to
+	# registry_refresh_interval later) takes them out of the list.
+	if not is_instance_valid(squad):
+		return null
+	return squad
 
 
 func cycle_squad(dir: int = 1) -> void:
 	if commandable_squads.size() <= 1:
 		return
 	selected_index = wrapi(selected_index + dir, 0, commandable_squads.size())
+	_refresh_marker_dimming()
 	squad_selected.emit(get_selected_squad())
 
 
+# ─────────────────────────────────────────────
+# TEAMS
+# ─────────────────────────────────────────────
+## Your own squads, in the squad page's order: the teams SquadSpawner deployed.
+func team_squads() -> Array[Squad]:
+	var out: Array[Squad] = []
+	for squad in commandable_squads:
+		if not is_instance_valid(squad):
+			continue
+		if squad.player_commandable and squad.team != &"":
+			out.append(squad)
+	out.sort_custom(func(a: Squad, b: Squad) -> bool: return a.team_rank < b.team_rank)
+	return out
+
+
+## More than one team in the field — the only time there is anything to choose,
+## and the only time the HUD says who the orders are for.
+func has_teams() -> bool:
+	return team_squads().size() > 1
+
+
+## The team's name — or a callsign, for someone else's squad you are ordering.
+func selection_label() -> String:
+	var squad := get_selected_squad()
+	return squad.team_name() if squad != null else "NOBODY"
+
+
+## G: the next team, and round from the last to the first. From someone else's
+## squad, back to your first. In a level whose squads were placed by hand rather
+## than deployed as teams, it steps through those squads instead — the job Tab
+## was meant to do.
+func cycle_team() -> void:
+	var teams := team_squads()
+	if teams.is_empty() and commandable_squads.size() > 1:
+		cycle_squad(1)
+		return
+	var at := teams.find(get_selected_squad())
+	if teams.is_empty() or (teams.size() == 1 and at == 0):
+		# Nothing to switch between. Said on the HUD rather than the key doing
+		# nothing, which reads as a broken binding.
+		no_team_to_switch.emit()
+		return
+	var next: Squad = teams[(at + 1) % teams.size()] if at >= 0 else teams[0]
+	selected_index = commandable_squads.find(next)
+	_refresh_marker_dimming()
+	squad_selected.emit(next)
+	team_selected.emit(selection_label())
+
+
 # Squads within radius of the player, for the "squads around you" HUD readout.
+# Nearest first. Group order is arbitrary and stable, so an unsorted list meant
+# that whenever there were more squads in range than the HUD could show, the
+# visible ones were an arbitrary fixed subset — the strip looked frozen while
+# you walked past squads it never mentioned. Sorting makes the cut meaningful:
+# whatever gets dropped is always the furthest away.
 func get_nearby_squads(radius: float = 120.0) -> Array:
 	var result: Array = []
 	if player == null:
 		return result
+	var origin := player.global_position
 	for s in get_tree().get_nodes_in_group("squads"):
 		if not s is Squad:
 			continue
 		var squad := s as Squad
 		if squad.is_wiped():
 			continue
-		if player.global_position.distance_to(squad.get_center()) <= radius:
+		if origin.distance_to(squad.get_center()) <= radius:
 			result.append(squad)
+	result.sort_custom(func(a: Squad, b: Squad) -> bool:
+		return origin.distance_squared_to(a.get_center()) < origin.distance_squared_to(b.get_center()))
 	return result
 
 
 # ─────────────────────────────────────────────
 # INPUT
 # ─────────────────────────────────────────────
-func _input(event: InputEvent) -> void:
-	# While the wheel is open we eat mouse motion so the camera holds still and
-	# the same gesture drives selection instead.
-	if _wheel_open and event is InputEventMouseMotion:
-		_wheel_accum += event.relative.x * wheel_sensitivity
-		var verbs := _available_verbs()
-		var idx = wrapi(int(round(_wheel_accum)), 0, verbs.size())
-		if idx != _wheel_index:
-			_wheel_index = idx
-			wheel_moved.emit(_wheel_index)
-		get_viewport().set_input_as_handled()
-
-
-func _unhandled_key_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_TAB:
-			cycle_squad(1)
-
 
 func _process(delta: float) -> void:
 	if player == null or not player.alive:
@@ -201,53 +284,31 @@ func _process(delta: float) -> void:
 		_registry_timer = 0.0
 		_refresh_registry_quietly()
 
+	if Input.is_action_just_pressed(SWITCH_TEAM_ACTION):
+		cycle_team()
+
 	if Input.is_action_pressed("command"):
 		_hold_time += delta
-		if not _wheel_open and _hold_time >= hold_threshold:
-			_open_wheel()
-		# Live preview: while the wheel is open the marker tracks the crosshair
-		# and recolours as you scrub verbs, so you can see where the order will
-		# land BEFORE you commit it.
-		if _wheel_open:
-			_update_preview()
+		# HOLD IS FOLLOW, and it fires the moment the threshold is crossed
+		# rather than waiting for release. There is nothing left to choose —
+		# the wheel offered exactly two verbs and ADVANCE is already the tap —
+		# so holding for a decision you are not making is dead latency. "Come
+		# to me" should land when you ask for it.
+		if not _hold_fired and _hold_time >= hold_threshold:
+			_hold_fired = true
+			_issue_order(Verb.FOLLOW)
 		return
 
 	if Input.is_action_just_released("command") or (_hold_time > 0.0 and not Input.is_action_pressed("command")):
-		if _wheel_open:
-			_commit_wheel()
-		elif _hold_time > 0.0:
+		# Released before the threshold: it was a tap, and the verb comes from
+		# whatever the crosshair is on.
+		if not _hold_fired and _hold_time > 0.0:
 			_issue_contextual_order()
 		_hold_time = 0.0
+		_hold_fired = false
 
 
 # CONTACT is deliberately absent — it's the tap, not a wheel entry.
-func _available_verbs() -> Array:
-	return [Verb.ASSAULT, Verb.DEFEND, Verb.FOLLOW]
-
-
-func _open_wheel() -> void:
-	if get_selected_squad() == null:
-		return
-	_wheel_open = true
-	_wheel_accum = 0.0
-	_wheel_index = 0
-	_spawn_preview()
-	var labels: Array = []
-	for v in _available_verbs():
-		labels.append(VERB_LABELS[v])
-	wheel_opened.emit(labels, _wheel_index)
-
-
-func _commit_wheel() -> void:
-	_wheel_open = false
-	_clear_preview()
-	wheel_closed.emit()
-	var verbs := _available_verbs()
-	if _wheel_index < 0 or _wheel_index >= verbs.size():
-		return
-	_issue_order(verbs[_wheel_index])
-
-
 # ─────────────────────────────────────────────
 # AIM RESOLUTION
 # One raycast, then branch on what it hit. The old version masked to layer 1
@@ -274,23 +335,16 @@ func _issue_contextual_order() -> void:
 		_call_contact(far_point, null)
 		return
 
+	# ADVANCE, WHATEVER IS UNDER THE CROSSHAIR. One of your robots used to switch
+	# the orders to its team, and a hostile (a hive included) got a callout, or
+	# a vehicle team sent at it, instead of the move you asked for: a unit in
+	# the way of where you were pointing hijacked the order. Aimed at a body,
+	# "there" is the ground it stands on, not the point on its chest.
+	var pos: Vector3 = hit.position
 	var collider = hit.get("collider")
-
-	# Friendly robot under the crosshair — select their squad, don't order.
-	if collider is Soldier and not Enums.are_hostile(Enums.Factions.PLAYER, collider.faction):
-		var s: Squad = collider.squad
-		if s != null and commandable_squads.has(s):
-			selected_index = commandable_squads.find(s)
-			squad_selected.emit(s)
-			return
-
-	# Hostile under the crosshair — assault it.
-	if collider is Enemy and Enums.are_hostile(Enums.Factions.PLAYER, collider.faction):
-		_issue_order(Verb.ASSAULT, hit.position, collider)
-		return
-
-	# Ground. Push to it.
-	_issue_order(Verb.ASSAULT, hit.position)
+	if collider is CharacterBody3D or collider is RigidBody3D:
+		pos = _snap_to_ground(pos)
+	_issue_order(Verb.ADVANCE, pos)
 
 
 func _issue_order(verb: int, position = null, target: Node = null) -> void:
@@ -298,35 +352,26 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 	if squad == null:
 		return
 
-	# Resolve a position if the caller didn't supply one (wheel path).
+	# Resolve a position if the caller didn't supply one (hold, and the old
+	# wheel path).
 	var pos: Vector3
 	if position == null:
 		var hit := _aim_result()
-		if hit.is_empty():
-			pos = player.global_position
-		else:
-			pos = hit.position
-			if verb == Verb.ASSAULT and target == null:
-				var c = hit.get("collider")
-				if c is Enemy and Enums.are_hostile(Enums.Factions.PLAYER, c.faction):
-					target = c
+		pos = player.global_position if hit.is_empty() else hit.position
 	else:
 		pos = position
 
 	match verb:
 		Verb.CONTACT:
+			# A report for everyone in earshot, never an order: no team is sent
+			# at anything by it.
 			_call_contact(pos, target)
 			return
-		Verb.ASSAULT:
-			# One verb, two objectives, resolved by whether the crosshair found
-			# a body. Designating a target is strictly more specific than
-			# pushing to a spot, so prefer it when we have one.
-			if target == null:
-				squad.receive_player_order(Squad.SquadObjective.ADVANCE, pos)
-			else:
-				squad.receive_player_order(
-					Squad.SquadObjective.ATTACK, pos, target as CharacterBody3D)
-		Verb.DEFEND:
+		Verb.ADVANCE:
+			# Maps to SquadObjective.DEFEND — go there and hold. The enum keeps
+			# ADVANCE and ATTACK because EnemySquadSpec.Posture still uses them
+			# for garrisons and patrols; enemies genuinely should push. Only the
+			# PLAYER's vocabulary shrank.
 			squad.receive_player_order(Squad.SquadObjective.DEFEND, pos)
 		Verb.FOLLOW:
 			# No world position to mark — the objective is a moving node. Clear
@@ -338,6 +383,7 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 			return
 
 	_place_marker(squad, verb, pos)
+	_refresh_marker_dimming()
 	order_issued.emit(squad, verb, pos, target)
 
 
@@ -400,15 +446,12 @@ func _update_preview() -> void:
 		_spawn_preview()
 		if _preview == null:
 			return
-	var verbs := _available_verbs()
-	var verb: int = verbs[_wheel_index] if _wheel_index >= 0 and _wheel_index < verbs.size() else Verb.ASSAULT
-	# FOLLOW has no aim point — park the preview at the player's feet so the
-	# ring still reads as "this order is about you", not about the crosshair.
-	if verb == Verb.FOLLOW and player != null:
-		_preview.global_position = _snap_to_ground(player.global_position)
-	else:
-		_preview.global_position = _snap_to_ground(get_aim_point())
-	_preview.set_order(verb, str(VERB_LABELS.get(verb, "")))
+	# The preview only ever shows ADVANCE now. FOLLOW fires the instant the hold
+	# threshold passes and drops its own marker through _place_marker, so there
+	# is nothing to preview for it — you are not choosing between two things any
+	# more, so there is no decision to show you first.
+	_preview.global_position = _snap_to_ground(get_aim_point())
+	_preview.set_order(Verb.ADVANCE, str(VERB_LABELS.get(Verb.ADVANCE, "")))
 
 
 func _clear_preview() -> void:
@@ -426,16 +469,36 @@ func _refresh_registry_quietly() -> void:
 		if not s is Squad:
 			continue
 		var squad := s as Squad
-		if squad.is_wiped():
+		# is_lost(), not is_wiped(). This runs every 2s, so it was the one that
+		# actually dropped your squad mid-fight once the last member went down.
+		if squad.is_lost():
 			continue
 		if squad.player_commandable or _is_friendly_squad(squad):
 			commandable_squads.append(squad)
 	if previous != null and commandable_squads.has(previous):
 		selected_index = commandable_squads.find(previous)
 	else:
-		selected_index = clampi(selected_index, 0, maxi(0, commandable_squads.size() - 1))
+		# The team you had picked is gone — a new mission, or it was wiped.
+		# Orders go to your first team rather than to whatever slid into its slot.
+		var teams := team_squads()
+		if not teams.is_empty():
+			selected_index = commandable_squads.find(teams[0])
+		else:
+			selected_index = clampi(selected_index, 0, maxi(0, commandable_squads.size() - 1))
 		if get_selected_squad() != previous:
 			squad_selected.emit(get_selected_squad())
+			team_selected.emit(selection_label())
+	# Markers sit in the World, which outlives every level: one whose squad is
+	# gone (the last mission's, a wiped team) comes down with it. Untyped keys,
+	# because a freed squad cannot be passed to _clear_marker(squad: Squad).
+	for key in _markers.keys():
+		if is_instance_valid(key) and commandable_squads.has(key):
+			continue
+		var marker = _markers[key]
+		if marker != null and is_instance_valid(marker):
+			marker.queue_free()
+		_markers.erase(key)
+	_refresh_marker_dimming()
 
 
 # ─────────────────────────────────────────────
@@ -463,7 +526,20 @@ func _place_marker(squad: Squad, verb: int, pos: Vector3) -> void:
 	marker.global_position = _snap_to_ground(pos)
 	marker.rotation = Vector3.ZERO
 	if marker.has_method("set_order"):
-		marker.set_order(verb, VERB_LABELS.get(verb, ""))
+		var text: String = VERB_LABELS.get(verb, "")
+		if has_teams():
+			text = "%s : %s" % [squad.team_name(), text]
+		marker.set_order(verb, text)
+
+
+# The orders of the team you are not commanding right now stay on the map,
+# quieter.
+func _refresh_marker_dimming() -> void:
+	var selected := get_selected_squad()
+	for squad in _markers.keys():
+		var marker = _markers[squad]
+		if marker != null and is_instance_valid(marker):
+			marker.set("dimmed", squad != selected)
 
 
 func _clear_marker(squad: Squad) -> void:
@@ -474,14 +550,23 @@ func _clear_marker(squad: Squad) -> void:
 
 
 # The old code forced marker.y = 0, which drops the marker to world origin
-# height — fine on a flat arena, wrong on anything with terrain.
+# height — fine on a flat arena, wrong on anything with terrain. Robots stand
+# on layer 1 with the level, so the ray looks through bodies to the surface
+# under them; otherwise an order aimed at a robot sat on its head.
 func _snap_to_ground(pos: Vector3) -> Vector3:
 	if player == null:
-		return pos
+		return pos   # no world to look in (a test rig)
 	var query := PhysicsRayQueryParameters3D.create(
 		pos + Vector3.UP * 3.0, pos + Vector3.DOWN * 30.0)
 	query.collision_mask = 1
-	var hit: Dictionary = _space().intersect_ray(query)
-	if hit.is_empty():
-		return pos
-	return hit.position + Vector3.UP * 0.05
+	var skip: Array[RID] = []
+	for _i in 4:
+		query.exclude = skip
+		var hit: Dictionary = _space().intersect_ray(query)
+		if hit.is_empty():
+			return pos   # nothing under it within reach: keep the point as given
+		if hit.collider is CharacterBody3D or hit.collider is RigidBody3D:
+			skip.append(hit.rid)
+			continue
+		return hit.position + Vector3.UP * 0.05
+	return pos   # four bodies deep and still no ground: keep the point as given

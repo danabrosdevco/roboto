@@ -1,0 +1,66 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rifleman.tres" id="4_rifle"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover.tres" id="5_rover"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="6_lobber"]
+[ext_resource type="PackedScene" path="res://maps/coastal-road_level.tscn" id="7_coast"]
+
+[sub_resource type="Resource" id="M1_ROVERS"]
+script = ExtResource("2_match")
+label = "1. 4 MG Rovers a side, 200 m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover"), ExtResource("5_rover")])
+hostile_order = 1
+distance = 200.0
+repeats = 4
+time_limit = 240.0
+swap_sides = true
+
+[sub_resource type="Resource" id="M2_LOBBERS"]
+script = ExtResource("2_match")
+label = "2. 3 Lobbers + 4 rifles a side, 200 m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("6_lobber"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+hostile_order = 1
+distance = 200.0
+repeats = 4
+time_limit = 240.0
+swap_sides = true
+
+[sub_resource type="Resource" id="M3_RIFLES"]
+script = ExtResource("2_match")
+label = "3. 8 rifles a side, 200 m (control)"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle"), ExtResource("4_rifle")])
+hostile_order = 1
+distance = 200.0
+repeats = 4
+time_limit = 240.0
+swap_sides = true
+
+[resource]
+script = ExtResource("1_plan")
+title = "Open ground, 200 m"
+question = "FRIENDLY FIRE AND TARGET CHURN, ON A REAL MAP INSTEAD OF THE ARENA. Two forces advance into each other from 200 m down the middle of the Coast Road, which is the longest open run in the repo — the sim arena is too small for any of this to show.
+
+Three questions:
+
+1. DO ROVERS SHOOT EACH OTHER? Four a side, same gun, advancing in formation. If machine guns spray through friends this is where it appears.
+
+2. DO LOBBERS WASTE THEIR SHOTS? A grenade takes seconds to land, and a target picked because it is nearest is often dead before the round arrives. Watch friendly fire AND damage dealt per run: overkill looks like low damage for a long fight. The arena baseline already had Lobbers putting 18.8% of their damage into their own side, four times any other force.
+
+3. WHAT IS NORMAL? Eight rifles a side is the control. Small arms hit instantly and have no blast, so whatever friendly fire they record is the floor that crossfire alone produces at this range.
+
+Sides swap every other run so the road's own shape cannot favour one of them."
+matchups = Array[Resource]([SubResource("M1_ROVERS"), SubResource("M2_LOBBERS"), SubResource("M3_RIFLES")])
+level = ExtResource("7_coast")
+site = Vector3(0, 0, 24)
+site_heading = 90.0
+repeats_override = 0
+speed = 4.0

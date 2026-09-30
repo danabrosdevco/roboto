@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://drs500wjqd2ye"
+path="res://.godot/imported/solar_salt_tanks.map-74ff15f78473174893ae60eb78e518a0.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_salt_tanks.map"
+dest_files=["res://.godot/imported/solar_salt_tanks.map-74ff15f78473174893ae60eb78e518a0.tres"]
+
+[params]
+

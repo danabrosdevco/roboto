@@ -1,0 +1,22 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3]
+
+[ext_resource type="Shader" path="res://Env/terrain/water.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" uid="uid://cgryxmjg0lt2p" path="res://textures/Set4All/Water/Water_01_Grey_1.png" id="2_surface"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/surface_texture = ExtResource("2_surface")
+shader_parameter/texture_scale = 14.0
+shader_parameter/texture_strength = 0.35
+shader_parameter/flow = Vector2(0.012, 0.006)
+shader_parameter/ripple_strength = 0.25
+shader_parameter/shallow_colour = Color(0.22, 0.21, 0.15, 1)
+shader_parameter/deep_colour = Color(0.03, 0.045, 0.045, 1)
+shader_parameter/shore_colour = Color(0.38, 0.36, 0.3, 1)
+shader_parameter/shore_width = 0.08
+shader_parameter/shallow_alpha = 0.55
+shader_parameter/deep_alpha = 0.94
+shader_parameter/oil_sheen = 0.15
+shader_parameter/roughness = 0.12
+shader_parameter/specular = 0.5

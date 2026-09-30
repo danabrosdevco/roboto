@@ -1,0 +1,227 @@
+extends Resource
+class_name ItemDefinition
+
+# ─────────────────────────────────────────────
+# ITEM DEFINITION — one thing you can own, buy, and fit to a soldier.
+#
+# Weapons, equipment and upgrade modules are all this. They differ only in which
+# kind of slot they occupy, which keeps the armoury, the shop and the drag-drop
+# UI as one code path instead of three.
+#
+# Authored as .tres and shipped with the game. NOT save state — the save records
+# ids and counts, never the definitions themselves.
+# ─────────────────────────────────────────────
+
+enum Kind {
+	WEAPON,      # the soldier's gun. One per chassis weapon slot.
+	EQUIPMENT,   # consumables and gadgets — maps to AIEquipmentSlot
+	MODULE,      # passive upgrade. Refundable, returns to the pool on death.
+}
+
+@export var id: StringName = &""
+@export var display_name: String = "Item"
+# What fits in a 58px slot. "Ancient Rifle" and "Ancient Pistol" both truncate
+# to "Ancient" at eight characters, so slots need their own short label rather
+# than a substring of the long one. Leave blank and short_label() derives a
+# sensible one from the last word.
+@export var short_name: String = ""
+@export_multiline var description: String = ""
+@export var kind: Kind = Kind.EQUIPMENT
+@export var icon: Texture2D
+
+# What it costs to buy. Charged through CampaignState's allocation ledger, so
+# selling is a refund rather than a separate transaction.
+@export var cost: int = 0
+
+# ── THE TWO SCENES ────────────────────────────
+# A player weapon and an AI weapon are genuinely different objects and cannot
+# share a scene. HUDWeapon is a viewmodel hanging off the camera with ADS,
+# camera recoil and hand-relative tracers; AIWeapon is a world-space object
+# bolted to a robot with falloff curves, spread in milliradians and suppression
+# values. They don't even have the same base class.
+#
+# So an item carries BOTH, and either may be null. That's not a workaround — it
+# IS the thing you're modelling: "the M4" is a concept with two implementations,
+# and an item that only has one of them simply can't be carried by the other
+# side. The UI reads usable_by_* to refuse the fit before you drag it.
+@export var player_scene: PackedScene   # HUDWeapon / PlayerEquipment
+@export var ai_scene: PackedScene       # AIWeapon / AIEquipment
+
+# Set these deliberately rather than inferring from which scene is non-null, so
+# a half-authored item fails loudly instead of quietly becoming AI-only.
+# ── PLAYER MOUNT ──────────────────────────────
+# Per-instance overrides that used to live on the node in test_character.tscn —
+# the M4 carried transform = (0.192761, -0.207464, 0) to sit at eye level, and
+# instancing the packed scene fresh loses that. It belongs on the ITEM now: the
+# alignment is a property of the weapon, not of one hand-placed node, so every
+# copy of an M4 hangs the same way and a new weapon is tuned in one place.
+@export var player_mount_offset: Vector3 = Vector3.ZERO
+@export var player_mount_rotation_degrees: Vector3 = Vector3.ZERO
+
+# Blank leaves whatever the scene says. Set it where two items share a scene but
+# feed from different pools — the pistol uses m4-shaped scenes but 9mm ammo.
+@export var ammo_type: StringName = &""
+# 0 leaves the scene's value.
+@export var weapon_damage: int = 0
+
+@export var usable_by_player: bool = true
+@export var usable_by_ai: bool = true
+## Goes on a frame that drives (ChassisDefinition.drives). False for anything
+## written for a robot on legs: nanites rebuild a body, not a hull.
+@export var fits_vehicles: bool = true
+## At most one on any robot. For modules where a second copy is either nothing
+## (Cyclic Feed is on or off) or a stack no frame was balanced for (two Sensor
+## Relays added their range together): fitting refuses the second, and a save
+## that already holds two hands the spare back to stores on load.
+@export var one_per_robot: bool = false
+## Listed in the armoury to buy. Off retires an item without breaking saves:
+## anyone who already owns one still sees its row (to fit or sell it), but a
+## campaign that has none never sees it offered. The player's Repair Tool went
+## this way when it became built in — as a squad item it only duplicated the
+## Field Repair Kit.
+@export var in_shop: bool = true
+# EQUIPMENT only: how many uses one of these grants.
+@export var quantity: int = 1
+
+# ── MODULE EFFECTS ────────────────────────────
+# Flat and multiplicative, applied on top of the chassis base when a soldier is
+# spawned. Kept as plain numbers rather than a script hook so the UI can show
+# "+15 HP" without running anything.
+@export var health_bonus: int = 0
+@export var accuracy_bonus: float = 0.0
+@export var damage_bonus: int = 0
+@export var speed_multiplier: float = 1.0
+@export var signal_bonus: float = 0.0
+# Additive metres of sight. The module that lets a rifle squad actually use its
+# range — see Enemy.sensor_range for why that gap exists on purpose.
+@export var sensor_bonus: float = 0.0
+# Added to Enemy.signal_resistance, which DIVIDES every point of incoming
+# signal damage. 1.0 is stock, so +1.0 halves what suppression and EMP do. Not
+# the same thing as signal_bonus, which raises a starting value that is already
+# at its 1.0 ceiling — see effect_summary for why that one reads as nothing.
+@export var signal_resistance_bonus: float = 0.0
+# Seconds after going down before this soldier gets itself back up, once per
+# deployment. 0 means never. A capability rather than a stat, but kept as a
+# plain number for the same reason as the rest: the UI can print it.
+@export var self_revive_seconds: float = 0.0
+## Extra equipment slots while fitted. Taking the module off hands whatever
+## sat in the slot back to stores.
+@export var equipment_slot_bonus: int = 0
+## Fires without waiting for the sight picture. A robot normally holds its
+## trigger until _aim_tracking has climbed past _prefire_threshold(), which is
+## why infantry that has stopped shoots steadily and anything on the move
+## barely shoots at all. This drops that condition: it opens up regardless, in
+## long bursts, at the spread that comes of firing unsettled. Volume and
+## suppression, not accuracy.
+@export var suppressive_fire: bool = false
+
+# Gating. A module can require a rank before it will fit — that's what makes
+# rank matter more than raw level.
+@export var required_rank: int = 0
+# Empty means any chassis. Otherwise a list of ChassisDefinition ids.
+## Hidden from the shop until the player OWNS one of these frames. Empty means
+## always available, which is nearly everything.
+##
+## Different from chassis_whitelist, which says what a thing can be FITTED to.
+## The autocannon and the Heavy MG both fit a rover, so on the whitelist alone
+## they would be for sale from the first hour — a tier-three gun on the
+## starting vehicle. This gates them on having bought the frame they belong to:
+## buy the Walker and its guns appear, and the tier arrives as one thing rather
+## than leaking in early.
+##
+## Also different from the mission unlock list (Campaign.locked_by), which gates
+## on clearing an operation. This gates on what is in the motor pool.
+@export var requires_chassis: Array[StringName] = []
+@export var chassis_whitelist: Array[StringName] = []
+
+
+func fits_chassis(chassis_id: StringName) -> bool:
+	return chassis_whitelist.is_empty() or chassis_whitelist.has(chassis_id)
+
+
+# Can a squadmate carry this? Weapons and equipment need something to instance;
+# a MODULE is a passive stat delta with no node at all, so demanding a scene for
+# one would make every module unfittable. Kinds differ in what "usable" means.
+func fits_ai() -> bool:
+	if not usable_by_ai:
+		return false
+	if kind == Kind.MODULE:
+		return true
+	return ai_scene != null
+
+
+func fits_player() -> bool:
+	if not usable_by_player:
+		return false
+	if kind == Kind.MODULE:
+		return true
+	return player_scene != null
+
+
+# Shown in the armoury so a player-only weapon in stores reads as deliberate
+# rather than as a bug when it won't drop onto a squadmate.
+# Marks items only one side can carry. "[SQUAD]" on the pump shotgun means it
+# has no player_scene — there is no HUDWeapon version of it — so it will refuse
+# to drop onto your own loadout. Without the tag that refusal looks like a bug.
+# Items both sides can use, and all modules, show nothing.
+func carrier_tag() -> String:
+	if kind == Kind.MODULE:
+		# Most modules fit anyone. One that does not — a self-revive, which
+		# means nothing to a player who respawns at a bonfire — has to SAY so,
+		# or the refused drag reads as a bug. That is this function's whole job.
+		if not usable_by_player:
+			return "[SQUAD]"
+		if not usable_by_ai:
+			return "[YOU]"
+		return ""
+	if fits_ai() and fits_player():
+		return ""
+	if fits_player():
+		return "[YOU]"
+	if fits_ai():
+		return "[SQUAD]"
+	return "[UNUSABLE]"
+
+
+# Slot label. Falls back to the most distinguishing part of the name — the LAST
+# word — because that's what differs between "Ancient Rifle" and "Ancient
+# Pistol". Truncating from the front gets it exactly backwards.
+func short_label() -> String:
+	if short_name != "":
+		return short_name
+	var words := display_name.split(" ", false)
+	if words.is_empty():
+		return "?"
+	var last: String = words[words.size() - 1]
+	return last.substr(0, 9)
+
+
+# One line for the UI, built from whatever is non-default.
+func effect_summary() -> String:
+	var parts: Array = []
+	if health_bonus != 0:
+		parts.append("%+d HP" % health_bonus)
+	if damage_bonus != 0:
+		parts.append("%+d DMG" % damage_bonus)
+	if accuracy_bonus != 0.0:
+		parts.append("%+.0f%% ACC" % (accuracy_bonus * 100.0))
+	if signal_bonus != 0.0:
+		parts.append("%+.0f%% SIG" % (signal_bonus * 100.0))
+	if sensor_bonus != 0.0:
+		parts.append("%+.0fm SENSOR" % sensor_bonus)
+	if not is_equal_approx(speed_multiplier, 1.0):
+		parts.append("%+.0f%% SPD" % ((speed_multiplier - 1.0) * 100.0))
+	if signal_resistance_bonus != 0.0:
+		# Shown as the reduction you actually get, not the raw divisor —
+		# "+100% RES" means nothing, "-50% JAM" means something.
+		var cut: float = 1.0 - 1.0 / (1.0 + signal_resistance_bonus)
+		parts.append("-%.0f%% JAM" % (cut * 100.0))
+	if equipment_slot_bonus != 0:
+		parts.append("%+d EQUIP SLOT" % equipment_slot_bonus)
+	if self_revive_seconds > 0.0:
+		parts.append("SELF-REVIVE %.0fs" % self_revive_seconds)
+	if suppressive_fire:
+		parts.append("SUPPRESSIVE FIRE")
+	if kind == Kind.EQUIPMENT and quantity > 0:
+		parts.append("x%d" % quantity)
+	return ", ".join(parts)

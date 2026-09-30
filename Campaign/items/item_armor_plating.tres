@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3 uid="uid://bcnupjkijv6gd"]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"armor_plating"
+display_name = "Armour Plating"
+short_name = "Plating"
+description = "Bolted-on plate."
+kind = 2
+cost = 75
+player_mount_offset = Vector3(0, 0, 0)
+player_mount_rotation_degrees = Vector3(0, 0, 0)
+ammo_type = &""
+weapon_damage = 0
+usable_by_player = true
+usable_by_ai = true
+fits_vehicles = true
+one_per_robot = false
+in_shop = true
+quantity = 1
+health_bonus = 15
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+sensor_bonus = 0.0
+signal_resistance_bonus = 0.0
+self_revive_seconds = 0.0
+equipment_slot_bonus = 0
+suppressive_fire = false
+required_rank = 0
+requires_chassis = Array[StringName]([])
+chassis_whitelist = Array[StringName]([])

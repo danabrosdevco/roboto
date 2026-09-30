@@ -22,7 +22,6 @@ enum Mode {
 @export var mode: Mode = Mode.AUTO
 # Blocks extraction until the mission's objectives report done. Leave false
 # while you're still building the loop out.
-@export var requires_objectives_complete: bool = false
 @export var prompt: String = ""
 
 signal blocked(reason: String)

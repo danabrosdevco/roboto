@@ -26,13 +26,49 @@ func refresh() -> void:
 	for node in get_tree().get_nodes_in_group("mission_objectives"):
 		if not (node is MissionObjective):
 			continue
+		# NOT THE ONES ALREADY ON THEIR WAY OUT. Campaign frees every objective
+		# the current operation didn't ask for, and queue_free() is deferred —
+		# so a node pruned earlier this frame is still in the group when this
+		# runs, gets adopted here, and is a dangling reference by the next
+		# frame. That was an error per objective per frame, for the whole
+		# mission, out of counts_toward_extraction().
+		if node.is_queued_for_deletion():
+			continue
 		var obj := node as MissionObjective
 		_objectives.append(obj)
 		if not obj.objective_completed.is_connected(_on_completed):
 			obj.objective_completed.connect(_on_completed)
 			obj.objective_failed.connect(_on_failed)
 			obj.progress_changed.connect(_on_progress)
+	_sort_objectives()
 	objectives_refreshed.emit(_objectives)
+
+
+# Extraction goes last, then optional, then everything else in scene order.
+#
+# The group returns nodes in tree order, and an extraction point lives inside
+# LevelExit — which in valley_level is declared thousands of lines above the
+# objectives you have to do first. So "get out" listed above "capture the
+# garrison", which is the reverse of the order you do them in. Sorting here
+# rather than in the HUD keeps every reader of objectives() consistent.
+func _sort_objectives() -> void:
+	var order := func(o: MissionObjective) -> int:
+		if o.is_extraction:
+			return 2
+		if o.optional:
+			return 1
+		return 0
+	# Stable: equal ranks keep the scene order the level author chose.
+	var indexed: Array = []
+	for i in _objectives.size():
+		indexed.append({"obj": _objectives[i], "rank": order.call(_objectives[i]), "i": i})
+	indexed.sort_custom(func(a, b):
+		if a["rank"] != b["rank"]:
+			return a["rank"] < b["rank"]
+		return a["i"] < b["i"])
+	_objectives.clear()
+	for entry in indexed:
+		_objectives.append(entry["obj"])
 	_check_all()
 
 
@@ -43,6 +79,11 @@ func objectives() -> Array[MissionObjective]:
 func required() -> Array[MissionObjective]:
 	var out: Array[MissionObjective] = []
 	for o in _objectives:
+		# Belt and braces alongside the queue_free guard in refresh(): an
+		# objective can still go at any time, and asking a freed one whether it
+		# counts is an error rather than a false.
+		if o == null or not is_instance_valid(o):
+			continue
 		if o.counts_toward_extraction():
 			out.append(o)
 	return out
@@ -72,6 +113,16 @@ func earned_objective_rewards() -> int:
 		if o.completed:
 			total += o.reward_resources
 	return total
+
+
+## Completed objectives that carry compute, as {id, compute}. The campaign pays
+## each one once per campaign, so replaying a mission cannot farm it.
+func earned_compute() -> Array:
+	var out: Array = []
+	for o in _objectives:
+		if o.completed and o.compute_reward > 0:
+			out.append({"id": String(o.id), "compute": o.compute_reward})
+	return out
 
 
 func clear() -> void:

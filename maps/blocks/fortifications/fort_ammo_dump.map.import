@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://gplv0mad1ea2"
+path="res://.godot/imported/fort_ammo_dump.map-66345920550666445a92ae82296ecc9e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_ammo_dump.map"
+dest_files=["res://.godot/imported/fort_ammo_dump.map-66345920550666445a92ae82296ecc9e.tres"]
+
+[params]
+

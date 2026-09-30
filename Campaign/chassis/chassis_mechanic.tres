@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/mechanic_chassis.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"mechanic"
+display_name = "Mechanic Chassis"
+description = "Repair frame. A welder where the gun goes: it stands downed squadmates back up first, then patches the damaged, vehicles first, and keeps behind the fight. No gun: it lives by staying behind the robots that have one."
+scene = ExtResource("2_scene")
+cost = 70
+purchasable = true
+supply = 1
+starting_weapon_id = &""
+base_health = 60
+base_speed = 1.0
+base_accuracy = 1.0
+base_sensor_range = 45.0
+weapon_slots = 0
+built_in = "WELDER"
+turret = false
+vehicle = false
+equipment_slots = 1
+module_slots = 2
+required_rank = 0

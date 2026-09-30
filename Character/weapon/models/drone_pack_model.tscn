@@ -1,0 +1,91 @@
+[gd_scene load_steps=9 format=3]
+
+; DRONE CARRIER PACK — a flat case with two Divers folded into it.
+;
+; Read as a THING YOU THROW, not a thing you wear: it leaves your hand and
+; bursts, so the silhouette is a case with a seam down it and two rotor humps
+; showing through the lid, which is what tells the player what comes out.
+;
+; Palette is the guns' olive/steel/black plus the Diver's red hubs, so the
+; canister and the drones inside it are visibly the same kit.
+
+[sub_resource type="StandardMaterial3D" id="mat_olive"]
+albedo_color = Color(0.27, 0.3, 0.18, 1)
+metallic = 0.1
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="mat_black"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+metallic = 0.5
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="mat_steel"]
+albedo_color = Color(0.15, 0.16, 0.17, 1)
+metallic = 0.65
+roughness = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_red"]
+albedo_color = Color(0.85, 0.16, 0.12, 1)
+metallic = 0.2
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="m_case"]
+size = Vector3(0.34, 0.14, 0.24)
+
+[sub_resource type="BoxMesh" id="m_seam"]
+size = Vector3(0.35, 0.018, 0.25)
+
+[sub_resource type="BoxMesh" id="m_strap"]
+size = Vector3(0.05, 0.15, 0.25)
+
+[sub_resource type="CylinderMesh" id="m_hump"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 0.03
+radial_segments = 6
+
+[node name="DronePackModel" type="Node3D"]
+
+[node name="Case" type="MeshInstance3D" parent="."]
+material_override = SubResource("mat_olive")
+mesh = SubResource("m_case")
+
+[node name="Seam" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_seam")
+
+[node name="StrapL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 0, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_strap")
+
+[node name="StrapR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_strap")
+
+[node name="Latch" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.55, 0, 0, 0, 0.9, 0, 0, 0, 0.35, 0, 0.005, 0.125)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_strap")
+
+[node name="HumpA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.07, 0.08, -0.05)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_hump")
+
+[node name="HumpB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.08, 0.05)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_hump")
+
+[node name="PipA" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.35, 0, 0, 0, 1.2, 0, 0, 0, 0.35, -0.07, 0.095, -0.05)
+material_override = SubResource("mat_red")
+mesh = SubResource("m_hump")
+
+[node name="PipB" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.35, 0, 0, 0, 1.2, 0, 0, 0, 0.35, 0.07, 0.095, 0.05)
+material_override = SubResource("mat_red")
+mesh = SubResource("m_hump")

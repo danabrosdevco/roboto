@@ -1,0 +1,64 @@
+[gd_scene load_steps=4 format=3]
+
+; A SMOKE CLOUD. Five overlapping puffs on one material.
+;
+; resource_local_to_scene on the material is load-bearing: sub-resources are
+; shared between instances of a scene by default, so without it every cloud on
+; the map would fade on the first one's clock.
+;
+; Unshaded, no depth write, no shadow. It is a sight blocker that happens to be
+; drawn — the number that matters is SmokeVolume.density(), and the alpha is
+; driven from it so what the player sees is what the AI sees.
+
+[ext_resource type="Script" path="res://Character/weapon/smoke_volume.gd" id="1_smoke"]
+
+[sub_resource type="StandardMaterial3D" id="mat_smoke"]
+resource_local_to_scene = true
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.74, 0.75, 0.73, 0.55)
+disable_receive_shadows = true
+no_depth_test = false
+
+[sub_resource type="SphereMesh" id="m_puff"]
+radius = 0.6
+height = 1.2
+radial_segments = 10
+rings = 6
+
+[node name="SmokeVolume" type="Node3D" node_paths=PackedStringArray("puffs")]
+script = ExtResource("1_smoke")
+radius = 7.0
+duration = 14.0
+fade_seconds = 3.0
+puffs = [NodePath("PuffA"), NodePath("PuffB"), NodePath("PuffC"), NodePath("PuffD"), NodePath("PuffE")]
+
+[node name="PuffA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+cast_shadow = 0
+material_override = SubResource("mat_smoke")
+mesh = SubResource("m_puff")
+
+[node name="PuffB" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, 0.42, -0.1, 0.22)
+cast_shadow = 0
+material_override = SubResource("mat_smoke")
+mesh = SubResource("m_puff")
+
+[node name="PuffC" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, -0.4, -0.05, 0.3)
+cast_shadow = 0
+material_override = SubResource("mat_smoke")
+mesh = SubResource("m_puff")
+
+[node name="PuffD" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 0.18, 0.05, -0.42)
+cast_shadow = 0
+material_override = SubResource("mat_smoke")
+mesh = SubResource("m_puff")
+
+[node name="PuffE" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -0.3, 0.18, -0.3)
+cast_shadow = 0
+material_override = SubResource("mat_smoke")
+mesh = SubResource("m_puff")

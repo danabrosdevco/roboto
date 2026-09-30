@@ -1,0 +1,325 @@
+[gd_scene load_steps=19 format=3]
+
+; CLUSTER LAUNCHER — six-chamber revolver, fires on an arc.
+;
+; Same axes and scale as the Mark One and the Squad Automatic (barrel down +X,
+; about five units long, Holder scale 0.26), and the SAME IRON SIGHTS: rear
+; aperture y 0.473–0.673 centred on 0.573, front post tip 0.573, flat. Three
+; weapons, one sight picture. bolt_rifle_model.tscn's header says why flat.
+;
+; THE DRUM IS SIZED TO THE SIGHT LINE, NOT THE OTHER WAY ROUND. It started at
+; radius 0.78, which at the Holder's 0.26 is a metre and a half across — and
+; it stood 3.7 degrees ABOVE the line of sight, so aiming down the irons showed
+; you the top of your own drum and nothing else. At 0.46 it is about 24cm, the
+; size a 40mm revolver actually is, and its crown clears the sight line by 0.17.
+; Everything between the two sights is now under y 0.41.
+;
+; THE REAR SIGHT IS A FIXED HOLD-OVER RETICLE, marked 25 / 50 / 75 / 100.
+; No moving parts and no key to press: every mark is live at once. Put the
+; target on the mark for its range and the shell lands there. Because raising
+; the muzzle drops the target in the frame, THE MARKS RUN DOWNWARD AS RANGE
+; INCREASES — 25m on top, 100m at the bottom.
+;
+; WHICH CONVENTION THIS IS, AND WHY IT MATTERS. A real ladder sight aligns
+; mark -> FRONT POST -> target, so the post is the pivot and the mark spacing
+; gets multiplied by sight_radius / eye_relief, here 2.9x. Built that way these
+; four marks spanned 20 degrees and the sight was a tower. A hold-over reticle
+; puts the aim point ON the mark, no pivot, so the spacing is the raw
+; difference in launch angle: 2.3 degrees per 25m step, seven degrees for the
+; whole set. Same ballistics, a quarter of the size, and the player reads it
+; without having to also find the post.
+;
+;   mark screen angle = elevation(50m) - elevation(range)
+;   elevation(R)      = asin(R * g / v^2) / 2          (v = 55 m/s, g = 9.8)
+;   mark model y      = y(50m) + 1.07268 * tan(screen angle)
+;
+;   range   elevation   on screen   mark y
+;    25 m    2.3228      +2.34 deg   1.096540
+;    50 m    4.6610       0.00       1.052743   <- the zero, on the crosshair
+;    75 m    7.0311      -2.37       1.008347
+;   100 m    9.4515      -4.79       0.962837
+;
+; Verified by firing, not by drawing: tools/preview_gl_ranges.gd takes the bore
+; off the posed muzzle node, throws a shell at launch_speed under the project's
+; own gravity and reports where it lands. 22.7 / 49.4 / 74.9 / 100.2m against
+; marks of 25 / 50 / 75 / 100. The 25m mark is the loose one because the shell
+; spawns 0.9m in front of the eye, which is 4% of that range and none of 100m.
+;
+; THE SIGHT LINE SITS 0.23 HIGHER THAN A RIFLE'S, front post tip at 0.80 rather
+; than 0.573, and the front blade is 0.05 thin. Both are so you can SEE the
+; target at 100m: at the old height the barrel's crown covered anything more
+; than 3.56 degrees below the axis and the 100m aim point is 4.79 below it, and
+; at the old 0.12 thickness the front post was 1.64 degrees wide against a 2m
+; target's 1.15 — the post was wider than the thing it was aimed at.
+;
+; THE LADDER MUST TOUCH THE GUN. A previous pass had the uprights starting at
+; y 0.55 while the riser stopped at 0.451, and the whole sight floated a
+; centimetre above the receiver. They now run from 0.40, inside the riser, and
+; stop at 1.14 just above the 25m pair rather than running off the screen.
+;
+; Silhouette is deliberately nothing like the Ancient Grenade Launcher, which
+; is a square box with a stubby tube: this is a drum with the rounds showing.
+; Palette from machine_gun_model.tscn. No emissive.
+
+[sub_resource type="StandardMaterial3D" id="mat_steel"]
+albedo_color = Color(0.15, 0.16, 0.17, 1)
+metallic = 0.65
+roughness = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_black"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+metallic = 0.5
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="mat_olive"]
+albedo_color = Color(0.27, 0.3, 0.18, 1)
+metallic = 0.1
+roughness = 0.85
+
+[sub_resource type="CylinderMesh" id="m_drum"]
+top_radius = 0.46
+bottom_radius = 0.46
+height = 0.86
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="m_chamber"]
+top_radius = 0.1
+bottom_radius = 0.1
+height = 0.94
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="m_spindle"]
+top_radius = 0.08
+bottom_radius = 0.08
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="m_barrel"]
+top_radius = 0.17
+bottom_radius = 0.19
+height = 1.5
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="m_frame"]
+size = Vector3(1.7, 0.5, 0.42)
+
+[sub_resource type="BoxMesh" id="m_slab"]
+size = Vector3(0.34, 0.2, 0.44)
+
+[sub_resource type="BoxMesh" id="m_grip"]
+size = Vector3(0.3, 0.9, 0.26)
+
+[sub_resource type="BoxMesh" id="m_riser_rear"]
+size = Vector3(0.16, 0.14, 0.42)
+
+[sub_resource type="BoxMesh" id="m_riser_front"]
+size = Vector3(0.07, 0.4, 0.05)
+
+[sub_resource type="BoxMesh" id="m_upright"]
+size = Vector3(0.038, 0.74, 0.022)
+
+[sub_resource type="BoxMesh" id="m_tick"]
+size = Vector3(0.05, 0.028, 0.055)
+
+[sub_resource type="BoxMesh" id="m_tab"]
+size = Vector3(0.06, 0.03, 0.09)
+
+[sub_resource type="BoxMesh" id="m_sight_base"]
+size = Vector3(0.16, 0.06, 0.13)
+
+[sub_resource type="BoxMesh" id="m_post"]
+size = Vector3(0.05, 0.14, 0.05)
+
+[sub_resource type="BoxMesh" id="m_ear"]
+size = Vector3(0.05, 0.2, 0.035)
+
+[node name="ClusterLauncherModel" type="Node3D"]
+
+[node name="Drum" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 2.5, -0.06, -0.277)
+material_override = SubResource("mat_olive")
+mesh = SubResource("m_drum")
+
+[node name="ChamberA" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 2.5, -0.06, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_chamber")
+
+[node name="ChamberB" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 2.5, 0.1799, -0.1385)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_chamber")
+
+[node name="ChamberC" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 2.5, 0.1799, -0.4155)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_chamber")
+
+[node name="ChamberD" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 2.5, -0.06, -0.554)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_chamber")
+
+[node name="ChamberE" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 2.5, -0.2999, -0.4155)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_chamber")
+
+[node name="ChamberF" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 2.5, -0.2999, -0.1385)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_chamber")
+
+[node name="Spindle" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 2.5, -0.06, -0.277)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_spindle")
+
+[node name="Crank" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.55, 0, 0, 0, 0.8, 0, 0, 0, 0.55, 2.5, 0.2, -0.62)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_slab")
+
+[node name="Frame" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1, 0.02, 0)
+material_override = SubResource("mat_olive")
+mesh = SubResource("m_frame")
+
+[node name="Shoulder" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.6, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -0.25, 0.02, 0)
+material_override = SubResource("mat_olive")
+mesh = SubResource("m_frame")
+
+[node name="ButtPlate" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.1, 0, 0, 0, 1.05, 0, 0, 0, 1.05, -0.83, 0.02, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_frame")
+
+[node name="Barrel" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 3.8, -0.06, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_barrel")
+
+[node name="MuzzleRing" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 0.17, 0, -1.25, 0, 0, 0, 0, 1.25, 4.6, -0.06, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_barrel")
+
+[node name="Grip" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.94, 0.34, 0, -0.34, 0.94, 0, 0, 0, 1, 0.6, -0.62, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_grip")
+
+[node name="TriggerGuard" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.3, 0, 0, 0, 0.34, 0, 0, 0, 0.55, 0.85, -0.35, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_grip")
+
+[node name="Foregrip" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, 3.5, -0.6, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_grip")
+
+[node name="ForeMount" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.7, 0, 0, 0, 0.6, 0, 0, 0, 0.7, 3.5, -0.22, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_slab")
+
+[node name="RearRiser" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1.3, 0, 0, 0, 1, 1.3, 0.36, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_riser_rear")
+
+[node name="RearSight" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.3, 0, 0)
+
+[node name="UprightL" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.77, 0.085)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_upright")
+
+[node name="UprightR" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.77, -0.085)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_upright")
+
+[node name="T25L" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.09654, 0.0625)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_tick")
+
+[node name="T25R" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.09654, -0.0625)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_tick")
+
+[node name="T50L" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.052743, 0.0625)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_tick")
+
+[node name="T50R" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.052743, -0.0625)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_tick")
+
+[node name="T75L" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.008347, 0.0625)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_tick")
+
+[node name="T75R" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.008347, -0.0625)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_tick")
+
+[node name="T100L" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.962837, 0.0625)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_tick")
+
+[node name="T100R" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.962837, -0.0625)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_tick")
+
+
+
+[node name="ZeroTab" type="MeshInstance3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.052743, 0.15)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_tab")
+
+[node name="Aperture" type="Node3D" parent="RearSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.052743, 0)
+
+[node name="FrontRiser" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.4, 0.4, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_riser_front")
+
+[node name="FrontSight" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.4, 0, 0)
+
+[node name="Base" type="MeshInstance3D" parent="FrontSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.625, 0)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_sight_base")
+
+[node name="Post" type="MeshInstance3D" parent="FrontSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.73, 0)
+material_override = SubResource("mat_steel")
+mesh = SubResource("m_post")
+
+[node name="WingL" type="MeshInstance3D" parent="FrontSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.745, 0.095)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_ear")
+
+[node name="WingR" type="MeshInstance3D" parent="FrontSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.745, -0.095)
+material_override = SubResource("mat_black")
+mesh = SubResource("m_ear")
+
+[node name="Tip" type="Node3D" parent="FrontSight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)

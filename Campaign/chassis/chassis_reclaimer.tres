@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://c543tvfyia5hs"]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/vehicle_reclaimer.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"reclaimer"
+display_name = "Reclaimer"
+description = "Tracked repair and salvage vehicle. Its boom welds squadmates back up, and the grinder chews enemy wrecks for resources."
+scene = ExtResource("2_scene")
+cost = 130
+purchasable = true
+supply = 2
+starting_weapon_id = &""
+coax_weapon_id = &""
+base_health = 150
+base_speed = 1.0
+base_accuracy = 1.0
+base_sensor_range = 40.0
+weapon_slots = 1
+built_in = "WELDER"
+weapon_replaces_built_in = true
+turret = false
+vehicle = false
+drives = true
+equipment_slots = 0
+module_slots = 3
+musters_at_base = true
+required_rank = 0

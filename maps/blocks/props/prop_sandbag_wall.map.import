@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dogki217ut8i"
+path="res://.godot/imported/prop_sandbag_wall.map-767186afea46d7d79c346f85ae117c92.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_sandbag_wall.map"
+dest_files=["res://.godot/imported/prop_sandbag_wall.map-767186afea46d7d79c346f85ae117c92.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cmg3e44lbddsn"
+path="res://.godot/imported/long_bridge.map-d7b1e70d80cadcf13b31a7f31f29f6ae.tres"
+
+[deps]
+
+source_file="res://maps/blocks/long_bridge.map"
+dest_files=["res://.godot/imported/long_bridge.map-d7b1e70d80cadcf13b31a7f31f29f6ae.tres"]
+
+[params]
+

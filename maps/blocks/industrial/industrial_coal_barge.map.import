@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cfrxi3wfdb01c"
+path="res://.godot/imported/industrial_coal_barge.map-08488eccd349ac3ac9e4e892d451bdeb.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_coal_barge.map"
+dest_files=["res://.godot/imported/industrial_coal_barge.map-08488eccd349ac3ac9e4e892d451bdeb.tres"]
+
+[params]
+

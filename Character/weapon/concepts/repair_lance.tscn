@@ -1,0 +1,154 @@
+[gd_scene load_steps=11 format=3]
+
+; A WEAPON THAT HEALS, not a tool that hurts.
+;
+; Three things fixed from the first pass. The head was a cone on a smooth
+; shaft, which read as a service wand — it is now a broad leaf blade with
+; swept-back barbs behind the shoulder, so it bites going in and again coming
+; out. The blade was a PrismMesh, which is flat and vanished when the camera
+; caught it edge-on — it is stacked boxes now and has volume from every angle.
+; And the haft was 2.6m against a 0.5m head, so the thing read as a pole with
+; something on the end; the haft is shorter and the head nearly twice the size.
+;
+; Palette is the one the guns in use are built from. The single teal is the
+; injector, kept small — teal is the repair read in this game and it should be
+; a detail on a weapon, not the weapon.
+
+[sub_resource type="StandardMaterial3D" id="Steel"]
+albedo_color = Color(0.17, 0.18, 0.19, 1)
+metallic = 0.65
+roughness = 0.42
+
+[sub_resource type="StandardMaterial3D" id="Black"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+metallic = 0.5
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Olive"]
+albedo_color = Color(0.27, 0.3, 0.18, 1)
+metallic = 0.1
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="Core"]
+albedo_color = Color(0.16, 0.5, 0.54, 1)
+metallic = 0.3
+roughness = 0.4
+
+[sub_resource type="CylinderMesh" id="Haft"]
+top_radius = 0.03
+bottom_radius = 0.036
+height = 1.15
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Blade"]
+size = Vector3(0.36, 0.2, 0.06)
+
+[sub_resource type="BoxMesh" id="Barb"]
+size = Vector3(0.26, 0.075, 0.05)
+
+[sub_resource type="CylinderMesh" id="Collar"]
+top_radius = 0.055
+bottom_radius = 0.07
+height = 0.1
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Wrap"]
+size = Vector3(0.085, 0.09, 0.085)
+
+[sub_resource type="CylinderMesh" id="Spike"]
+top_radius = 0.005
+bottom_radius = 0.034
+height = 0.24
+radial_segments = 6
+
+[node name="RepairLance" type="Node3D"]
+
+[node name="Haft" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, -0.14, 0, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Haft")
+
+[node name="BladeRoot" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.62, 0, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Blade")
+
+[node name="BladeMid" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.82, 0, 0, 0, 0.72, 0, 0, 0, 0.8, 0.9, 0, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Blade")
+
+[node name="BladeFore" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.6, 0, 0, 0, 0.44, 0, 0, 0, 0.6, 1.11, 0, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Blade")
+
+[node name="BladeTip" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.34, 0, 0, 0, 0.18, 0, 0, 0, 0.38, 1.26, 0, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Blade")
+
+[node name="Ridge" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.6, 0, 0, 0, 0.22, 0, 0, 0, 1.25, 0.85, 0, 0)
+material_override = SubResource("Black")
+mesh = SubResource("Blade")
+
+[node name="BarbUpper" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.77, 0.64, 0, -0.64, 0.77, 0, 0, 0, 1, 0.42, 0.13, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Barb")
+
+[node name="BarbLower" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.77, -0.64, 0, 0.64, 0.77, 0, 0, 0, 1, 0.42, -0.13, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Barb")
+
+[node name="BarbTipU" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.42, 0.35, 0, -0.35, 0.42, 0, 0, 0, 0.55, 0.28, 0.21, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Barb")
+
+[node name="BarbTipL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.42, -0.35, 0, 0.35, 0.42, 0, 0, 0, 0.55, 0.28, -0.21, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Barb")
+
+[node name="Shoulder" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1.15, 0, -1.15, 0, 0, 0, 0, 1.15, 0.4, 0, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Collar")
+
+[node name="Injector" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 0.62, 0, -0.62, 0, 0, 0, 0, 0.62, 0.3, 0, 0)
+material_override = SubResource("Core")
+mesh = SubResource("Collar")
+
+[node name="Reservoir" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1.9, 0, -1.05, 0, 0, 0, 0, 1.05, 0.02, 0, 0)
+material_override = SubResource("Olive")
+mesh = SubResource("Collar")
+
+[node name="FeedLine" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.28, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0.17, 0.07, 0)
+material_override = SubResource("Core")
+mesh = SubResource("Blade")
+
+[node name="GripFore" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1.5, 0, 0, 0, 1, -0.3, 0, 0)
+material_override = SubResource("Olive")
+mesh = SubResource("Wrap")
+
+[node name="GripRear" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1.5, 0, 0, 0, 1, -0.6, 0, 0)
+material_override = SubResource("Olive")
+mesh = SubResource("Wrap")
+
+[node name="Ferrule" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 0.85, 0, -0.85, 0, 0, 0, 0, 0.85, -0.74, 0, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Collar")
+
+[node name="ButtSpike" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -0.9, 0, 0)
+material_override = SubResource("Steel")
+mesh = SubResource("Spike")

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b3pmgk2ut0pur"
+path="res://.godot/imported/fort_razor_wire.map-cfc4cfb58f6aab12ac70a715858ca6e7.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_razor_wire.map"
+dest_files=["res://.godot/imported/fort_razor_wire.map-cfc4cfb58f6aab12ac70a715858ca6e7.tres"]
+
+[params]
+

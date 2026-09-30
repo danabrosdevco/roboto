@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bf8w3yvhb8la"
+path="res://.godot/imported/causeway_span.map-178b8decf3bcc91245a6faaa3f76ff46.tres"
+
+[deps]
+
+source_file="res://maps/blocks/causeway/causeway_span.map"
+dest_files=["res://.godot/imported/causeway_span.map-178b8decf3bcc91245a6faaa3f76ff46.tres"]
+
+[params]
+

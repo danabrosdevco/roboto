@@ -1,6 +1,9 @@
 extends PlayerEquipment
 class_name PlayerGrenade
 
+# Playtest analytics. By path: see the note in analytics.gd.
+const _Analytics := preload("res://Managers/analytics.gd")
+
 # ─────────────────────────────────────────────
 # PLAYER GRENADE
 #
@@ -146,19 +149,15 @@ func _release_grenade() -> void:
 	if cam == null:
 		return
 
-	var world: Node = null
-	if player != null:
-		world = player.get("world")
-	if world == null:
-		world = get_tree().current_scene
+	var world: Node = level_node()
 
 	var g := grenade_scene.instantiate()
 	world.add_child(g)
 
-	var basis := cam.global_transform.basis
-	g.global_position = cam.global_position + (basis * spawn_offset)
+	var cam_basis := cam.global_transform.basis
+	g.global_position = cam.global_position + (cam_basis * spawn_offset)
 
-	var dir := (-basis.z.normalized() + Vector3.UP * throw_arc).normalized()
+	var dir := (-cam_basis.z.normalized() + Vector3.UP * throw_arc).normalized()
 	if g is RigidBody3D:
 		var body := g as RigidBody3D
 		body.linear_velocity = dir * throw_speed
@@ -173,6 +172,7 @@ func _release_grenade() -> void:
 		g.setup(player)
 
 	consume_charge()
+	_Analytics.throw(player, display_name)
 	thrown.emit(g)
 	used.emit()
 	_notify_spent()

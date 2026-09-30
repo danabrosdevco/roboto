@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://lon0kuqafeyj"
+path="res://.godot/imported/solar_inverter_skid.map-fca0d5f8626f76a7095c7720c9cfc3f0.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_inverter_skid.map"
+dest_files=["res://.godot/imported/solar_inverter_skid.map-fca0d5f8626f76a7095c7720c9cfc3f0.tres"]
+
+[params]
+

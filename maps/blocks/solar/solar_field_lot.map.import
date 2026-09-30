@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://31higlfhpgw2"
+path="res://.godot/imported/solar_field_lot.map-b36446b41575e1b4a1dc72f2fb4050c9.tres"
+
+[deps]
+
+source_file="res://maps/blocks/solar/solar_field_lot.map"
+dest_files=["res://.godot/imported/solar_field_lot.map-b36446b41575e1b4a1dc72f2fb4050c9.tres"]
+
+[params]
+

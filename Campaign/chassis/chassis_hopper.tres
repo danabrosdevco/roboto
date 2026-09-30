@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://dkmjutumnfq6a"]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" uid="uid://d2qtk67sm0w38" path="res://Character/characters/ai/enemy_nest-chaser.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"leaper"
+display_name = "Leaper Chassis"
+description = "Leaping frame. Clears walls in one jump and goes for the weakest target. Built-in claws, no guns, no equipment. Modules only."
+scene = ExtResource("2_scene")
+cost = 70
+purchasable = false
+supply = 1
+starting_weapon_id = &""
+coax_weapon_id = &""
+base_health = 45
+base_speed = 1.0
+base_accuracy = 0.8
+base_sensor_range = 60.0
+weapon_slots = 0
+built_in = "CLAWS"
+weapon_replaces_built_in = false
+turret = false
+vehicle = false
+drives = false
+equipment_slots = 0
+module_slots = 2
+musters_at_base = true
+required_rank = 0

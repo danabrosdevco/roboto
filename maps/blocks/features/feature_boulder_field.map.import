@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://defsmudx6t6yw"
+path="res://.godot/imported/feature_boulder_field.map-ea6a09b5ceb5c5c10c8a504c31a9a200.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_boulder_field.map"
+dest_files=["res://.godot/imported/feature_boulder_field.map-ea6a09b5ceb5c5c10c8a504c31a9a200.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://12lgbw8r46ag"
+path="res://.godot/imported/fort_gate.map-a335e6d87cdcb4d9d9a0993e09bc051c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortress/fort_gate.map"
+dest_files=["res://.godot/imported/fort_gate.map-a335e6d87cdcb4d9d9a0993e09bc051c.tres"]
+
+[params]
+

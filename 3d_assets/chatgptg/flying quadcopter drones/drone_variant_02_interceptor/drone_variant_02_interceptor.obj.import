@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://jv8n68c6g2s6"
+path="res://.godot/imported/drone_variant_02_interceptor.obj-2e75a41e1bc88d6bf55b38e5765b4bfa.mesh"
+
+[deps]
+
+files=["res://.godot/imported/drone_variant_02_interceptor.obj-2e75a41e1bc88d6bf55b38e5765b4bfa.mesh"]
+
+source_file="res://3d_assets/chatgptg/flying quadcopter drones/drone_variant_02_interceptor/drone_variant_02_interceptor.obj"
+dest_files=["res://.godot/imported/drone_variant_02_interceptor.obj-2e75a41e1bc88d6bf55b38e5765b4bfa.mesh", "res://.godot/imported/drone_variant_02_interceptor.obj-2e75a41e1bc88d6bf55b38e5765b4bfa.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

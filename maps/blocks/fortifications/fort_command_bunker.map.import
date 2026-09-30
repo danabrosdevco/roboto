@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cjktwq8m0vhl7"
+path="res://.godot/imported/fort_command_bunker.map-5619956d5b2cfe7cf8dff08af4af4e05.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_command_bunker.map"
+dest_files=["res://.godot/imported/fort_command_bunker.map-5619956d5b2cfe7cf8dff08af4af4e05.tres"]
+
+[params]
+

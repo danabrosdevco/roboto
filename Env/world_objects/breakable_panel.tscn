@@ -1,0 +1,39 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Env/world_objects/breakable_panel.gd" id="1_panel"]
+[ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="2_spark"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_panel"]
+size = Vector3(1.6, 2.4, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_panel"]
+size = Vector3(1.6, 2.4, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_panel"]
+albedo_color = Color(0.38, 0.35, 0.3, 1)
+roughness = 0.9
+metallic = 0.35
+
+[node name="BreakablePanel" type="StaticBody3D" node_paths=PackedStringArray("hit_effect", "death_effect")]
+script = ExtResource("1_panel")
+health = 60
+max_health = 60
+obstacle = true
+destroy_delay = 0.15
+free_on_destroy = true
+hit_effect = NodePath("SparkBurst")
+death_effect = NodePath("SparkBurst")
+alert_on_destroy = false
+alert_radius = 25.0
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+mesh = SubResource("BoxMesh_panel")
+surface_material_override/0 = SubResource("StandardMaterial3D_panel")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+shape = SubResource("BoxShape3D_panel")
+
+[node name="SparkBurst" parent="." instance=ExtResource("2_spark")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)

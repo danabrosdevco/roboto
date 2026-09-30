@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://44n2butbh55i"
+path="res://.godot/imported/tower.map-4972641117d0439aac3b3abee80efc65.tres"
+
+[deps]
+
+source_file="res://maps/blocks/tower.map"
+dest_files=["res://.godot/imported/tower.map-4972641117d0439aac3b3abee80efc65.tres"]
+
+[params]
+

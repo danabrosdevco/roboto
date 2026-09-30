@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cj0i1r5qrfrm2"
+path="res://.godot/imported/industrial_coal_pile.map-f04b260f66bb8215b56887e30573d6a0.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_coal_pile.map"
+dest_files=["res://.godot/imported/industrial_coal_pile.map-f04b260f66bb8215b56887e30573d6a0.tres"]
+
+[params]
+

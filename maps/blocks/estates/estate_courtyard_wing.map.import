@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cnhf6sqctatvs"
+path="res://.godot/imported/estate_courtyard_wing.map-1dc711b7d7df8c5e2ff58c228cbfb9d8.tres"
+
+[deps]
+
+source_file="res://maps/blocks/estates/estate_courtyard_wing.map"
+dest_files=["res://.godot/imported/estate_courtyard_wing.map-1dc711b7d7df8c5e2ff58c228cbfb9d8.tres"]
+
+[params]
+

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://coof35gx1tj4g"]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" uid="uid://bjnmbvul1677q" path="res://Character/characters/ai/enemy_chaser.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"chaser"
+display_name = "Chaser Chassis"
+description = "Melee frame. Built-in claws, no guns, no equipment: it runs at whatever it sees. Modules only."
+scene = ExtResource("2_scene")
+cost = 55
+purchasable = false
+supply = 1
+starting_weapon_id = &""
+coax_weapon_id = &""
+base_health = 60
+base_speed = 1.0
+base_accuracy = 0.6
+base_sensor_range = 55.0
+weapon_slots = 0
+built_in = "CLAWS"
+weapon_replaces_built_in = false
+turret = false
+vehicle = false
+drives = false
+equipment_slots = 0
+module_slots = 1
+musters_at_base = true
+required_rank = 0

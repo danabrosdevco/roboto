@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://yjx4nwse1hlm"
+path="res://.godot/imported/industrial_gatehouse.map-5694ccb25e42121bcd64eb31bb7da26c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_gatehouse.map"
+dest_files=["res://.godot/imported/industrial_gatehouse.map-5694ccb25e42121bcd64eb31bb7da26c.tres"]
+
+[params]
+

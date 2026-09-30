@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bn7jl5ruv726"
+path="res://.godot/imported/feature_fuel_tanks.map-f8e2f19930aaa15e793b53267aa8e5b7.tres"
+
+[deps]
+
+source_file="res://maps/blocks/features/feature_fuel_tanks.map"
+dest_files=["res://.godot/imported/feature_fuel_tanks.map-f8e2f19930aaa15e793b53267aa8e5b7.tres"]
+
+[params]
+

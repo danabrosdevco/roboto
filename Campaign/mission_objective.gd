@@ -25,6 +25,9 @@ class_name MissionObjective
 @export var optional: bool = false
 # Paid on extraction, on top of the mission's own reward.
 @export var reward_resources: int = 0
+## Compute for completing this, once per campaign — a bonus or hidden
+## objective is the other way compute is earned besides first clears.
+@export var compute_reward: int = 0
 
 # Optional ordering target so you can send a squad to this objective.
 @export var linked_squad_point: SquadObjectivePoint
@@ -45,6 +48,9 @@ var active: bool = false
 signal objective_activated(objective: MissionObjective)
 signal objective_completed(objective: MissionObjective)
 signal objective_failed(objective: MissionObjective)
+# Emitted by the subclasses (interact/eliminate/reach), connected by
+# ObjectiveTracker. The base class never emits it itself.
+@warning_ignore("unused_signal")
 signal progress_changed(objective: MissionObjective, current: int, target: int)
 
 
@@ -52,7 +58,7 @@ func _ready() -> void:
 	# Switched off for operations that don't want it. The level holds every
 	# objective it could ever need; the mission picks a subset. Freed rather
 	# than hidden so the tracker never counts it and its props go with it.
-	var campaign := get_node_or_null("/root/Campaign")
+	var campaign := _find_campaign()
 	if campaign != null and id != &"" and not campaign.is_objective_active(id):
 		queue_free()
 		return
@@ -126,3 +132,57 @@ func progress() -> Array:
 
 func counts_toward_extraction() -> bool:
 	return not optional and not is_extraction
+
+
+# ─────────────────────────────────────────────
+# LABELLING
+# What the HUD and the interact prompt call this objective.
+#
+# display_name names the PLACE ("Garrison"). On its own that doesn't tell the
+# player what to do with it, and an objective whose display_name was never
+# authored fell back to the literal word "Objective", which told them nothing at
+# all. The verb supplies the action, so a level author only has to name the
+# thing: "Garrison" becomes CAPTURE GARRISON, and an unnamed extraction point
+# reads EXTRACT instead of OBJECTIVE.
+# ─────────────────────────────────────────────
+const DEFAULT_DISPLAY_NAME := "Objective"
+
+
+# Subclasses override. Empty means "no verb", and label() falls back to the name.
+func verb() -> String:
+	return ""
+
+
+func has_authored_name() -> bool:
+	return display_name != "" and display_name != DEFAULT_DISPLAY_NAME
+
+
+func label() -> String:
+	var action := verb()
+	if action == "":
+		return display_name if has_authored_name() else DEFAULT_DISPLAY_NAME
+	if has_authored_name():
+		return "%s %s" % [action, display_name]
+	return action
+
+
+# Finds the campaign however it's wired: a node in the "campaign" group (the
+# reliable way), a /root/Campaign autoload, or a parent's Campaign export.
+#
+# This file was still hard-coded to the autoload path. There is no autoload in
+# this project — CampaignManager is a node under World — so `campaign` was
+# always null, the active_objectives filter never ran, and EVERY objective in
+# the level survived regardless of which mission you were on.
+func _find_campaign() -> Node:
+	var found := get_tree().get_first_node_in_group("campaign")
+	if found != null:
+		return found
+	found = get_node_or_null("/root/Campaign")
+	if found != null:
+		return found
+	var node: Node = self
+	while node != null:
+		if "Campaign" in node and node.get("Campaign") != null:
+			return node.get("Campaign")
+		node = node.get_parent()
+	return null

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dyusbipiyicrj"
+path="res://.godot/imported/prop_rock_slabs.map-41a8b4902d9b09769107c7b5783992c8.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_rock_slabs.map"
+dest_files=["res://.godot/imported/prop_rock_slabs.map-41a8b4902d9b09769107c7b5783992c8.tres"]
+
+[params]
+

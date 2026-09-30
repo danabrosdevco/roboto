@@ -5,13 +5,13 @@
 
 [resource]
 script = ExtResource("2_a4rll")
-callsign = "RELAY"
+callsign = "LEONID"
 count = 3
 chassis = ExtResource("1_chfdc")
 posture = 1
 route_tag = &""
-post_tag = &"obj_valley_garrison"
-spawn_tag = &"obj_valley_garrison"
+post_tag = &"obj_valley_garrison_1"
+spawn_tag = &"obj_valley_garrison_1"
 always_active = true
 faction = 1
 reinforcement_tag = &""

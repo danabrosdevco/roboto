@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://da5uwotrdd1b5"
+path="res://.godot/imported/prop_tank_trap.map-65d52b9cdd90670336e16541a60f5d7b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/props/prop_tank_trap.map"
+dest_files=["res://.godot/imported/prop_tank_trap.map-65d52b9cdd90670336e16541a60f5d7b.tres"]
+
+[params]
+

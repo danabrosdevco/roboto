@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://br5shxqycynwm"
+path="res://.godot/imported/building_compound.map-20ee2254b8eee9e3546ee3464ba4ad39.tres"
+
+[deps]
+
+source_file="res://maps/blocks/building_compound.map"
+dest_files=["res://.godot/imported/building_compound.map-20ee2254b8eee9e3546ee3464ba4ad39.tres"]
+
+[params]
+

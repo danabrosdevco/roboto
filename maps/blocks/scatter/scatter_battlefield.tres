@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TerrainScatterLayer" load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_rock_slabs.tscn" id="1_slabs"]
+[ext_resource type="PackedScene" path="res://maps/blocks/alpine/alpine_talus.tscn" id="2_talus"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_boulder_a.tscn" id="3_bldr"]
+[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_dirt_mound.tscn" id="4_mound"]
+[ext_resource type="PackedScene" path="res://maps/blocks/alpine/alpine_stump_burnt.tscn" id="5_stump"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter_layer.gd" id="6_layer"]
+
+[resource]
+script = ExtResource("6_layer")
+scenes = Array[PackedScene]([ExtResource("1_slabs"), ExtResource("2_talus"), ExtResource("3_bldr"), ExtResource("4_mound"), ExtResource("5_stump")])
+per_hectare = 75.0
+clumping = 0.2
+clump_size = 55.0
+min_scale = 0.55
+max_scale = 1.25
+random_yaw = true
+align_to_ground = 0.9
+sink = 0.25
+max_slope = 34.0
+max_mountain = 0.45
+max_paint = 0.8
+collision_radius = 0.0
+visibility_range_end = 280.0

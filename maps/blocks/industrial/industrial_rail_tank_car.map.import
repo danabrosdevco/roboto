@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dyndatmbkgitu"
+path="res://.godot/imported/industrial_rail_tank_car.map-b00042a66857b6872a2d4c763e30f0a0.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_rail_tank_car.map"
+dest_files=["res://.godot/imported/industrial_rail_tank_car.map-b00042a66857b6872a2d4c763e30f0a0.tres"]
+
+[params]
+

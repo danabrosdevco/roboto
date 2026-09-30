@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ctbkgf25bouyq"
+path="res://.godot/imported/fort_mortar_pit.map-d32200d366a93c752e9f4b4ae3b7a3bc.tres"
+
+[deps]
+
+source_file="res://maps/blocks/fortifications/fort_mortar_pit.map"
+dest_files=["res://.godot/imported/fort_mortar_pit.map-d32200d366a93c752e9f4b4ae3b7a3bc.tres"]
+
+[params]
+

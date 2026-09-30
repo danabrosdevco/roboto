@@ -1,0 +1,69 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="4_chaser"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="5_hopper"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "2 chasers + 2 rifles vs 4 rifles"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_chaser"), ExtResource("4_chaser"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 25.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "2 hoppers + 2 rifles vs 4 rifles"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 25.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M3"]
+script = ExtResource("2_match")
+label = "2 shotguns + 2 rifles vs 4 rifles"
+allies = Array[ExtResource("3_chassis")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 25.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M4"]
+script = ExtResource("2_match")
+label = "1 chaser + 1 hopper + 2 rifles vs 4 rifles"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_chaser"), ExtResource("5_hopper"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
+hostile_order = 1
+distance = 25.0
+repeats = 6
+time_limit = 120.0
+swap_sides = true
+hostiles_on_post = false
+
+[resource]
+script = ExtResource("1_plan")
+title = "Mixed squads"
+question = "Does a melee screen protect the guns behind it, or just die first? Each mixed squad fights four rifles; compare against the pure squads in Melee scaling."
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2"), SubResource("M3"), SubResource("M4")])
+repeats_override = 0
+speed = 2.0

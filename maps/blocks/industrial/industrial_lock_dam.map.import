@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c01dykr6j7inu"
+path="res://.godot/imported/industrial_lock_dam.map-06972a6c6aff1eb8eafe98c3526fafe1.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_lock_dam.map"
+dest_files=["res://.godot/imported/industrial_lock_dam.map-06972a6c6aff1eb8eafe98c3526fafe1.tres"]
+
+[params]
+

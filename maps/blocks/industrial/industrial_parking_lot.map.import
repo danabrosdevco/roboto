@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dwynvwtjfxh3i"
+path="res://.godot/imported/industrial_parking_lot.map-ed245b7d70d566aeef8bb675c5bf25e7.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_parking_lot.map"
+dest_files=["res://.godot/imported/industrial_parking_lot.map-ed245b7d70d566aeef8bb675c5bf25e7.tres"]
+
+[params]
+

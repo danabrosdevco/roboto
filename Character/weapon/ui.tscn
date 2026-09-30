@@ -1,11 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://c3e3nxrjlhipg"]
+[gd_scene load_steps=4 format=3 uid="uid://c3e3nxrjlhipg"]
 
 [ext_resource type="Script" path="res://Character/hud/ui.gd" id="1_lsqa1"]
 [ext_resource type="PackedScene" uid="uid://okx8aisron30" path="res://Character/hud/farcry2_health_marker.tscn" id="2_ldhfw"]
 [ext_resource type="Script" path="res://Character/hud/use_hud_palette.gd" id="3_dudrt"]
-[ext_resource type="Texture2D" uid="uid://cbc1eigqtilxa" path="res://2d_assets/white.png" id="4_xwo8j"]
 
-[node name="UI" type="Control" node_paths=PackedStringArray("health_label", "ammo_label", "shards_label", "second_label", "health_container", "scanner")]
+[node name="UI" type="Control" node_paths=PackedStringArray("health_label", "ammo_label", "health_container", "scanner")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -14,83 +13,65 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_lsqa1")
-health_label = NodePath("Left Vbox/HullIntegrity")
-ammo_label = NodePath("Left Vbox/Ammo")
-shards_label = NodePath("Right Vbox/HBoxContainer3/ShardNumber")
-second_label = NodePath("Right Vbox/HBoxContainer4/BitsNumber")
+health_label = NodePath("Corner/Hull")
+ammo_label = NodePath("Corner/Ammo")
 bar_scene = ExtResource("2_ldhfw")
-health_container = NodePath("Left Vbox/HealthBarHolder")
-scanner = NodePath("Left Vbox/Scanner-Energy")
+health_container = NodePath("Corner/HealthBarHolder")
+scanner = NodePath("Corner/Signal")
 
-[node name="Left Vbox" type="VBoxContainer" parent="."]
-layout_mode = 2
-offset_left = 9.0
-offset_right = 225.0
-offset_bottom = 90.0
+[node name="Corner" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -180.0
+offset_right = 364.0
+offset_bottom = -44.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 6
 
-[node name="Ammo" type="Label" parent="Left Vbox"]
+[node name="Ammo" type="Label" parent="Corner"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 34
 text = "30 / 30"
 script = ExtResource("3_dudrt")
 
-[node name="HullIntegrity" type="Label" parent="Left Vbox"]
+[node name="Hull" type="Label" parent="Corner"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = "Stable"
+theme_override_font_sizes/font_size = 20
+text = "STABLE"
 script = ExtResource("3_dudrt")
+hud_color = 0
 
-[node name="HealthBarHolder" type="HBoxContainer" parent="Left Vbox"]
+[node name="HealthBarHolder" type="HBoxContainer" parent="Corner"]
 layout_mode = 2
+theme_override_constants/separation = 3
 
-[node name="HealthBar" parent="Left Vbox/HealthBarHolder" instance=ExtResource("2_ldhfw")]
+[node name="HealthBar" parent="Corner/HealthBarHolder" instance=ExtResource("2_ldhfw")]
 visible = false
 layout_mode = 2
 
-[node name="HealthBar2" parent="Left Vbox/HealthBarHolder" instance=ExtResource("2_ldhfw")]
+[node name="HealthBar2" parent="Corner/HealthBarHolder" instance=ExtResource("2_ldhfw")]
 visible = false
 layout_mode = 2
 
-[node name="HealthBar3" parent="Left Vbox/HealthBarHolder" instance=ExtResource("2_ldhfw")]
+[node name="HealthBar3" parent="Corner/HealthBarHolder" instance=ExtResource("2_ldhfw")]
 visible = false
 layout_mode = 2
 
-[node name="HealthBar4" parent="Left Vbox/HealthBarHolder" instance=ExtResource("2_ldhfw")]
+[node name="HealthBar4" parent="Corner/HealthBarHolder" instance=ExtResource("2_ldhfw")]
 visible = false
 layout_mode = 2
 
-[node name="HealthBar5" parent="Left Vbox/HealthBarHolder" instance=ExtResource("2_ldhfw")]
+[node name="HealthBar5" parent="Corner/HealthBarHolder" instance=ExtResource("2_ldhfw")]
 visible = false
 layout_mode = 2
 
-[node name="Scanner-Energy" type="TextureProgressBar" parent="Left Vbox"]
-custom_minimum_size = Vector2(216, 16)
+[node name="Signal" type="ProgressBar" parent="Corner"]
+custom_minimum_size = Vector2(215, 8)
 layout_mode = 2
 value = 100.0
-nine_patch_stretch = true
-texture_progress = ExtResource("4_xwo8j")
-tint_progress = Color(0.435192, 0.435192, 0.435192, 1)
+show_percentage = false
 
-[node name="Right Vbox" type="VBoxContainer" parent="."]
-layout_mode = 2
-offset_left = 119.0
-offset_right = 161.0
-offset_bottom = 66.0
-
-[node name="HBoxContainer3" type="HBoxContainer" parent="Right Vbox"]
-layout_mode = 2
-
-[node name="ShardNumber" type="Label" parent="Right Vbox/HBoxContainer3"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = ": 0"
-script = ExtResource("3_dudrt")
-
-[node name="HBoxContainer4" type="HBoxContainer" parent="Right Vbox"]
-layout_mode = 2
-
-[node name="BitsNumber" type="Label" parent="Right Vbox/HBoxContainer4"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = ": 0"
-script = ExtResource("3_dudrt")

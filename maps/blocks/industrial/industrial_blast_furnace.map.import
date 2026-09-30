@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://56pyqitpgdge"
+path="res://.godot/imported/industrial_blast_furnace.map-d1a7133c355820b25af762fd675676b8.tres"
+
+[deps]
+
+source_file="res://maps/blocks/industrial/industrial_blast_furnace.map"
+dest_files=["res://.godot/imported/industrial_blast_furnace.map-d1a7133c355820b25af762fd675676b8.tres"]
+
+[params]
+
