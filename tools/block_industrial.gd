@@ -1091,8 +1091,17 @@ func _lock_dam() -> void:
 		box(Vector3(-0.3, float(b[0]), -9.0), Vector3(0.3, float(b[1]), -3.3), RUST)
 		box(Vector3(-0.45, float(b[0]), -3.5), Vector3(0.45, float(b[1]), -3.1), METAL)
 	# Cover on the upstream edge; a rail on the downstream edge between houses.
+	#
+	# THE RAIL RUNS ALONG THE DECK, WHICH IS THE Y AXIS HERE. `axis` names the
+	# axis `line` is measured ON, not the one the rail runs down — so "y" put
+	# forty-four metres of railing ACROSS a nine-metre dam and hung seventeen
+	# metres of it off each side, which read in game as a fence across the
+	# crossing and was the first thing anyone said about this piece.
+	# And BETWEEN the houses, in five runs, because a single run at this line
+	# puts a post through each of the four gate houses.
 	box(Vector3(-3.0, -22.0, 0.0), Vector3(-2.7, 22.0, 1.1), FRAME)
-	rail("y", 2.875, -22.0, 22.0, 0.0, 0.0)
+	for gap: Array in [[-22.0, -13.4], [-10.6, -5.4], [-2.6, 2.6], [5.4, 10.6], [13.4, 22.0]]:
+		rail("x", 3.9, float(gap[0]), float(gap[1]), 0.0, 0.0)
 	# The control tower, beside the deck on the +Y abutment.
 	box(Vector3(-4.5, 16.5, -7.0), Vector3(-9.0, 23.5, 0.0), {"top": DECK, "side": CONCRETE, "bottom": CONCRETE})
 	box(Vector3(-8.7, 17.0, 0.0), Vector3(-4.8, 22.0, 6.5), CLAD)
