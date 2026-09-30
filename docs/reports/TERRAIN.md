@@ -39,6 +39,82 @@ most wants and least often gets:
 
 
 
+## 2026-09-30 (4) — nine levels split, and a Works pass on Pittsburgh
+
+**Landed — the split, applied.** All nine generated-terrain levels are now a
+pair: `<name>_art.tscn` and `<name>_level.tscn`. The tool works the list out
+itself — every art group under the navigation region, minus the exit and
+anything carrying a Campaign script at any depth — so no list was typed nine
+times and no group was left out.
+
+**The first pass quietly broke prefab instancing, and the tell was in plain
+sight: the levels stayed enormous afterwards.** A packed scene writes every
+node its root OWNS, and I set the owner of every descendant — so the INSIDES of
+each instanced prefab were written out as declared nodes with their own
+`type=`. Hillfort's 96 prefabs became **2353 node entries**. The bloat was the
+least of it: those internals were then declared in the scene, so editing a
+block in `maps/blocks` would no longer reach the level that instances it, and
+**the whole prefab workflow would have stopped propagating without saying so.**
+The human caught it before I did.
+
+**The rule now:** an instance ROOT is owned, because that is what writes the
+`instance=` line, and nothing inside one is — *except* a node the prefab does
+not have, which somebody added and must stay. **Patrol points are children of
+instanced objective anchors**, and clearing those would have deleted the patrol
+routes this whole exercise exists to protect. So it compares against a pristine
+copy of the prefab rather than guessing. `tools/reinstance.gd` repairs a scene
+already flattened: `hillfort_art` went 3.57 MB / 2354 nodes to **32 KB / 138**.
+
+Verified rather than assumed: every art scene declares zero prefab internals
+(causeway 26 and mutaha 33 are genuine additions, kept); hillfort keeps all 11
+patrol points; pittsburgh keeps its 3023 cover points; and pittsburgh,
+hillfort, mutaha_wip and coastal-road all report **0 anchors cut off** at the
+same walk distances as before.
+
+**Landed — Pittsburgh, Works theme.** 170 pieces into `pittsburgh_art.tscn`:
+two blast furnaces and a stack on the high side of the Ohio Works, gas holders
+and pipe runs behind them, hot metal on rail, scrap and coal at the feed end;
+coke batteries and a second furnace on the south bank; cranes and a container
+yard at the port; rail and warehousing through the Strip. Plus
+`scatter_works.tres` — ground litter at **55 a hectare** against the 3 the
+debris layer was giving.
+
+**Nothing moved and nothing was removed.** Bridges, districts and the 176
+pieces already there are exactly where they were. Everything added sits under
+`Dressing/Works_*` so the pass lifts out in one go, and the tool clears its own
+previous run before placing, so the table can be tuned and re-run.
+
+**The lanes come from the map, not from me.** The terrain paints its road
+network into the control map, so anything within 7 m of road paint is refused
+outright — which keeps every route the level already had without my needing to
+know where they go. On top: a 9 m corridor along four vehicle routes between
+objectives, a 20 m clear circle round each of the eight objectives, nothing in
+a river, nothing overlapping what is there. **241 of 411 candidates refused on
+those rules.** Reach afterwards is unchanged.
+
+**Gates.** `check.sh --changed`: **PASS**. Navmesh rebaked on Pittsburgh
+(27942 vertices). Reach: **26 anchors, 0 cut off, 1217 m** against 1219 before.
+
+**Needs the human.**
+
+1. **Check a few of the split levels**, as asked — open one, confirm the art
+   instance is there and nothing of yours moved. `maps/*_art.tscn` are mine to
+   regenerate; `maps/*_level.tscn` are yours and no tool of mine writes them.
+2. **PITTSBURGH'S LAND IS NOT SHORT OF TEXTURE — IT IS FULL OF IT.** A sea of
+   high-frequency lumps, and near the Ohio Works black jagged spikes tall
+   enough to swallow a camera. A rover could not drive most of it. This is the
+   same defect named on 2026-09-22, and adding statics on top does not touch
+   it. I left the terrain alone because the brief was to keep the areas as they
+   are — **but the recipe behind it is where the next pass has to go**, and
+   until it does, the statics sit in a landscape that swallows them.
+3. The level renders very dark. That is its authored environment, not this
+   pass, and worth a look if it is not deliberate.
+
+**Blocked / next.** Nothing blocking. In order: Pittsburgh's terrain recipe;
+then the Salient's 1330 pieces into one generated `.map`.
+
+---
+
 ## 2026-09-30 (3) — regenerating art without eating anyone's work, and three Pittsburgh themes
 
 **Landed.** A level is **two files** now. `maps/<name>_art.tscn` is the
