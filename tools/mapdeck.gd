@@ -44,6 +44,8 @@ const MPP := 8.0
 ## at 2 m is an hour of erosion.
 const CELL := 3.0
 const DRAFT_CELL := 5.0
+## TerrainPath.Mode, by name, so a deck entry does not carry a bare integer.
+const PATH_MODE := {"road": 0, "trench": 1, "riverbed": 2, "berm": 3}
 
 var _out := ""
 var _draft := false
@@ -126,7 +128,21 @@ func _build(map: Dictionary) -> void:
 	for k: String in map.get("recipe", {}):
 		r.set(k, map.recipe[k])
 
-	var d: Data = Generator.generate(r, [])
+	# TerrainPath hands the generator a plain dictionary, so a deck entry can
+	# build one without a node in a tree. TRENCH is the one that matters here:
+	# feature_trench_revetment LINES a cut, its plank walls reaching 2 m below
+	# its origin, so stood on flat ground it is a sandbag kerb and nothing else.
+	var mods: Array = []
+	for p: Array in map.get("paths", []):
+		var pts := PackedVector3Array()
+		for v: Vector2 in p[4]:
+			pts.append(Vector3(v.x, 0.0, v.y))
+		mods.append({"type": "path", "source": "deck/%s" % map.id,
+				"mode": PATH_MODE[p[0]], "points": pts, "width": float(p[1]),
+				"depth": float(p[2]), "falloff": float(p[3]),
+				"follow_terrain": true, "smoothing": float(p[5]) if p.size() > 5 else 8.0,
+				"paint": true})
+	var d: Data = Generator.generate(r, mods)
 	var terrain: Node3D = TerrainScript.new()
 	terrain.data = d
 	terrain.collision_enabled = false        # nothing here is walked
@@ -268,6 +284,20 @@ func _dress(world: Node3D, d: Data, op: Array) -> int:
 			for i in n:
 				var a := TAU * i / n
 				put.append([c + Vector2(sin(a), cos(a)) * rad, rad_to_deg(a)])
+		"along":
+			# Follows a polyline rather than a straight line, so revetment can
+			# line a trench that traverses instead of cutting the corners off
+			# it. Each piece turns to the leg it sits on.
+			var pts: Array = op[2]
+			var gap: float = float(op[3]) if op.size() > 3 else 0.0
+			for i in pts.size() - 1:
+				var a: Vector2 = pts[i]
+				var b: Vector2 = pts[i + 1]
+				var yaw: float = atan2(b.x - a.x, b.y - a.y)
+				var step: float = _span(box, yaw) + gap
+				var n := maxi(int(a.distance_to(b) / maxf(step, 0.5)), 1)
+				for k in n:
+					put.append([a.lerp(b, (k + 0.5) / n), rad_to_deg(yaw) + 90.0])
 	var packed := load("res://maps/blocks/%s.tscn" % piece) as PackedScene
 	if packed == null:
 		return 0

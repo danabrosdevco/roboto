@@ -93,8 +93,157 @@ static func cover(x0: float, z0: float, x1: float, z1: float, gap := 26.0) -> Ar
 const HILLS := ["rect", 0, 0, 176, 5, "W"]
 
 
+## A trench line running north-south at `x`, TRAVERSED: stepped sideways every
+## `step` metres so no length of it can be shot down end to end. Real trenches
+## are cut this way for exactly that reason, and it does the same job here —
+## it turns a 260 m ditch into a chain of 30 m rooms.
+static func traverse(x: float, z0: float, z1: float, step := 30.0, amp := 5.0) -> Array:
+	var out: Array = []
+	var n := maxi(int(absf(z1 - z0) / step), 2)
+	for i in n + 1:
+		var z := lerpf(z0, z1, float(i) / n)
+		out.append(Vector2(x + (amp if i % 2 == 0 else -amp), z))
+		if i < n:
+			out.append(Vector2(x + (amp if i % 2 == 0 else -amp), z + (z1 - z0) / n * 0.6))
+			out.append(Vector2(x + (-amp if i % 2 == 0 else amp), z + (z1 - z0) / n * 0.6))
+	return out
+
+
+## A straight run east-west, for communication trenches and saps.
+static func run(z: float, x0: float, x1: float) -> Array:
+	return [Vector2(x0, z), Vector2(x1, z)]
+
+
 static func maps() -> Array:
 	var out: Array = []
+
+	# ═══ THE SALIENT ═════════════════════════════════════════════════════════
+	# Trench warfare in a valley. Three lines each side, a traversed front, a
+	# mine crater in the middle of no-man's-land and a ruined village behind
+	# the enemy gun line.
+	#
+	# THE TRENCHES ARE CUT, NOT PLACED. feature_trench_revetment is a LINING:
+	# its plank walls reach 2 m below its own origin and its sandbag parapet
+	# 0.45 m above, so on flat ground it reads as a kerb and nothing else. Each
+	# line here is a TerrainPath TRENCH first and revetment second.
+	#
+	# 2.2 m deep on a 3.5 m falloff is about 32 degrees — steep enough to be
+	# cover, shallow enough that the baker walks it. A trench the squad cannot
+	# climb out of is the crater bug in a longer shape, and that one has been
+	# built here before.
+	var fire_lines: Array = []
+	var line_x := {"reserve": -430.0, "support": -300.0, "front": -170.0,
+			"ef": 60.0, "es": 190.0, "eg": 330.0}
+	for key: String in line_x:
+		fire_lines.append(["trench", 7.0, 2.2, 3.5, traverse(line_x[key], -215.0, 215.0)])
+	# Communication trenches back from the friendly front, and the enemy's own.
+	for z: float in [-130.0, 0.0, 130.0]:
+		fire_lines.append(["trench", 6.0, 2.0, 3.5, run(z, -430.0, -170.0)])
+	for z: float in [-90.0, 90.0]:
+		fire_lines.append(["trench", 6.0, 2.0, 3.5, run(z, 60.0, 330.0)])
+	# Saps pushed out into no-man's-land: the only cover on the way over.
+	for z: float in [-70.0, 70.0]:
+		fire_lines.append(["trench", 5.0, 1.8, 3.0, run(z, -170.0, -95.0)])
+
+	out.append({
+		"id": "the_salient", "name": "The Salient",
+		"hook": "Three lines each side of 230 m of shelled ground, and one sunken road across it.",
+		"shape": "attrition frontage — parallel lines, one covered approach",
+		"px": Vector2i(128, 64),
+		"paint": [["rect", 0, 0, 128, 64, "G"],
+			# The valley: rough shoulders rising to crests north and south.
+			["rect", 0, 0, 128, 9, "Y"], ["rect", 0, 55, 128, 64, "Y"],
+			["rect", 0, 0, 128, 4, "W"], ["rect", 0, 60, 128, 64, "W"],
+			# No-man's-land, and the ground behind each front line that the
+			# other side's guns have been working on.
+			["rect", 43, 8, 72, 56, "R"], ["rect", 30, 12, 43, 52, "R"],
+			["rect", 72, 12, 86, 52, "R"],
+			# Flooded shell holes. Two metres of water is not a swim, it is a
+			# reason to go round.
+			["oval", 50, 22, 4, 3, "B"], ["oval", 60, 40, 5, 3, "B"],
+			["oval", 67, 18, 3, 3, "B"],
+			# The sunken road: graded flat with a bank either side, straight
+			# across the middle of the worst of it.
+			["line", 0, 27, 128, 27, 2.0, "M"],
+			# A lateral road behind each line, and the village.
+			["line", 0, 50, 40, 50, 1.0, "M"], ["line", 92, 14, 128, 14, 1.0, "M"],
+			["rect", 106, 20, 124, 44, "U"]],
+		"recipe": {"cell_size": 1.5, "shelling_per_hectare": 70.0,
+			"crater_radius_min": 3.0, "crater_radius_max": 13.0,
+			# SHALLOW ON PURPOSE. A deep crater with a heaved rim is a hole the
+			# squad walks into and cannot leave, which has happened on this
+			# project and had to be dug back out again.
+			"crater_depth": 0.28, "crater_rim": 0.07,
+			"rough_height": 7.0, "sketch_mountain_height": 42.0,
+			"water_depth": 2.0, "water_bank": 6.0, "road_width": 7.0,
+			"road_falloff": 6.0, "hills_height": 3.0, "smooth_passes": 1},
+		"paths": fire_lines,
+		"dress": []
+			# Revetment in every cut, following the traverse.
+			+ [["along", "features/feature_trench_revetment", traverse(-430.0, -215.0, 215.0), 0.0],
+				["along", "features/feature_trench_revetment", traverse(-300.0, -215.0, 215.0), 0.0],
+				["along", "features/feature_trench_revetment", traverse(-170.0, -215.0, 215.0), 0.0],
+				["along", "features/feature_trench_revetment", traverse(60.0, -215.0, 215.0), 0.0],
+				["along", "features/feature_trench_revetment", traverse(190.0, -215.0, 215.0), 0.0],
+				["along", "features/feature_trench_revetment", run(0.0, -430.0, -170.0), 0.0],
+				["along", "features/feature_trench_revetment", run(-130.0, -430.0, -170.0), 0.0],
+				["along", "features/feature_trench_revetment", run(130.0, -430.0, -170.0), 0.0],
+				["along", "features/feature_trench_revetment", run(-90.0, 60.0, 330.0), 0.0],
+				["along", "features/feature_trench_revetment", run(90.0, 60.0, 330.0), 0.0]]
+			# Wire: a belt in front of each front line, which is what makes the
+			# 230 m between them a problem rather than a walk.
+			+ [["row", "fortifications/fort_razor_wire", -140.0, -215.0, -140.0, 215.0, 4.0],
+				["row", "fortifications/fort_razor_wire", -126.0, -215.0, -126.0, 215.0, 4.0],
+				["row", "fortifications/fort_razor_wire", 26.0, -215.0, 26.0, 215.0, 4.0],
+				["row", "fortifications/fort_razor_wire", 12.0, -215.0, 12.0, 215.0, 4.0],
+				["row", "fortifications/fort_dragon_teeth", 40.0, -200.0, 40.0, 200.0, 14.0],
+				["row", "features/feature_berm", -152.0, -200.0, -152.0, 200.0, 12.0],
+				["row", "features/feature_berm", 44.0, -200.0, 44.0, 200.0, 12.0]]
+			# Strongpoints on the line, guns behind it.
+			+ [["at", "features/feature_pillbox", 64.0, -120.0, 270.0],
+				["at", "features/feature_pillbox", 64.0, 0.0, 270.0],
+				["at", "features/feature_pillbox", 64.0, 120.0, 270.0],
+				["at", "fortifications/fort_command_bunker", 200.0, -40.0, 0.0],
+				["at", "fortifications/fort_command_bunker", 200.0, 40.0, 0.0],
+				["at", "fortifications/fort_command_bunker", -310.0, 0.0, 0.0],
+				["row", "fortifications/fort_mortar_pit", 330.0, -160.0, 330.0, 160.0, 60.0],
+				["row", "fortifications/fort_gun_emplacement", 300.0, -120.0, 300.0, 120.0, 90.0],
+				["row", "fortifications/fort_ammo_dump", -420.0, -120.0, -420.0, 120.0, 70.0],
+				["row", "props/prop_sandbag_nest", -160.0, -190.0, -160.0, 190.0, 40.0],
+				["row", "props/prop_sandbag_nest", 70.0, -190.0, 70.0, 190.0, 40.0]]
+			# No-man's-land: a mine crater, wrecks, and the stumps of a wood
+			# that used to be here.
+			+ [["at", "features/feature_crater_rim", -60.0, 10.0, 0.0],
+				["at", "features/feature_crater_rim", -20.0, -110.0, 40.0],
+				["row", "props/prop_tank_trap", -100.0, -200.0, -100.0, 200.0, 26.0],
+				["row", "props/prop_robot_wreck", -80.0, -160.0, -80.0, 160.0, 44.0],
+				["row", "props/prop_rubble_pile", -40.0, -180.0, -40.0, 180.0, 50.0],
+				["row", "alpine/alpine_pine_skeleton", -120.0, -210.0, 20.0, -210.0, 26.0],
+				["row", "alpine/alpine_snag_broken", -120.0, 210.0, 20.0, 210.0, 26.0],
+				["row", "alpine/alpine_stump_burnt", -150.0, -60.0, 40.0, -60.0, 30.0],
+				["row", "alpine/alpine_stump_burnt", -150.0, 100.0, 40.0, 100.0, 30.0],
+				["row", "alpine/alpine_stump_burnt", -150.0, -150.0, 40.0, -150.0, 34.0],
+				["row", "alpine/alpine_stump_burnt", -150.0, 170.0, 40.0, 170.0, 34.0],
+				["row", "props/prop_dirt_mound", -130.0, -190.0, -130.0, 190.0, 22.0],
+				["row", "props/prop_dirt_mound", 0.0, -190.0, 0.0, 190.0, 22.0],
+				["row", "props/prop_rubble_pile", -110.0, -170.0, 20.0, -170.0, 30.0],
+				["row", "props/prop_rubble_pile", -110.0, 60.0, 20.0, 60.0, 30.0],
+				["row", "props/prop_car_wreck", -120.0, 140.0, 10.0, 140.0, 40.0],
+				["row", "props/prop_tank_trap", -60.0, -200.0, -60.0, 200.0, 30.0],
+				["row", "props/prop_robot_wreck", -30.0, -120.0, -30.0, 120.0, 38.0]]
+			# The village behind their gun line: the reason to come this far.
+			+ [["at", "landmarks/landmark_clock_tower", 420.0, -20.0, 0.0]]
+			+ town(["estates/estate_collapsed_corner", "estates/estate_frame_shell",
+				"estates/estate_slab_broken"], 370.0, -180.0, 500.0, 180.0, 3, 14.0),
+		"scatter": ["scatter_debris", "scatter_alpine_snags", "scatter_micro_terrain"],
+		# Behind the parapet, out in it, back from their side, and one straight
+		# down a communication trench — the camera sits on the cut floor there,
+		# which is the shot that says whether the trenches are trenches.
+		"cams": [[-212.0, 45.0, 60.0, 20.0, 62.0],
+			[-95.0, 105.0, 60.0, 55.0, 64.0],
+			[255.0, 135.0, -260.0, 60.0, 60.0],
+			[-390.0, 130.0, -180.0, 130.0, 60.0]],
+	})
 
 	# ═══ CROSSINGS ═══════════════════════════════════════════════════════════
 	# Water that the squad cannot wade, so a bridge is a decision and not

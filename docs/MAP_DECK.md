@@ -1,6 +1,6 @@
-# Map deck — fifty ideas, built and ranked
+# Map deck — fifty-one ideas, built and ranked
 
-Fifty map concepts, each one painted as a sketch, generated as terrain, dressed
+Fifty-one map concepts (fifty, plus The Salient by request), each one painted as a sketch, generated as terrain, dressed
 out of `maps/blocks/` and photographed. Rebuild the whole deck in about ninety
 seconds:
 
@@ -57,14 +57,15 @@ three hundred. That shows in the ranking.
 |---|---|---|---|
 | 1 | **Ford Town** | linear choke through dense cover | The river IS the main street and both banks are built right up to it. Every one of the five criteria at once: flat, cover the whole way, a crossing decision every 400 m, and a clock tower to steer by. It is the Mutaha formula — the one thing here already approved — but tighter and more legible. |
 | 2 | **Boulevard** | a killing ground with parallel safe routes | One forty-metre avenue you must cross and side streets that are the only sane way. The clearest single decision in the deck, and the eye-level shot proves it reads from inside. Cheap to build: it is a street grid and two rows of blocks. |
-| 3 | **Old Town** | concentric — outskirts, wall, warren | Outskirts you fight through, a wall you have to breach, a warren behind it. Gated by **built** geometry, which is the rule the ascent map had to learn the hard way. Gives a whole mission an arc. |
-| 4 | **Lock Ladder** | sequential chokes on one axis | Three staircase locks and the gates are the only dry crossings. Nothing in the repo plays like it, and the rule is legible the moment you see it. |
-| 5 | **Canal District** | grid of small forced crossings | Streets and canals alternate, so every block is an island and every bridge is narrow. The highest density of real decisions per hectare here. |
-| 6 | **Foundry** | big interior, heavy exterior approach | One vast shed with a crane down the middle. **The best interior in the deck**, and interiors are the biggest hole in the map roster. |
-| 7 | **Market Quarter** | close quarters, no sight lines | Nothing more than thirty metres away and none of it straight. The direct answer to a game where the long-range problem keeps coming up. |
-| 8 | **Two Bridges** | binary choice | One river, two crossings, six hundred metres apart. Simple in the way good maps are simple: you cannot cover both and neither can they. |
-| 9 | **Rail Station** | interior over an exterior | A shed you fight inside standing on a viaduct you fight under. Two maps, one footprint, and both are dense. |
-| 10 | **Grain Terminal** | solid barrier with one gap | A wall of silos between the town and the water. Reads from anywhere, and the single gap does all the work. |
+| 3 | **The Salient** | attrition frontage — parallel lines, one covered approach | Trench warfare in a valley: three traversed lines each side, 230 m of shelled ground between them, a mine crater, flooded shell holes and a ruined village behind the enemy guns. Added after the first fifty, by request. See the section below. |
+| 4 | **Old Town** | concentric — outskirts, wall, warren | Outskirts you fight through, a wall you have to breach, a warren behind it. Gated by **built** geometry, which is the rule the ascent map had to learn the hard way. Gives a whole mission an arc. |
+| 5 | **Lock Ladder** | sequential chokes on one axis | Three staircase locks and the gates are the only dry crossings. Nothing in the repo plays like it, and the rule is legible the moment you see it. |
+| 6 | **Canal District** | grid of small forced crossings | Streets and canals alternate, so every block is an island and every bridge is narrow. The highest density of real decisions per hectare here. |
+| 7 | **Foundry** | big interior, heavy exterior approach | One vast shed with a crane down the middle. **The best interior in the deck**, and interiors are the biggest hole in the map roster. |
+| 8 | **Market Quarter** | close quarters, no sight lines | Nothing more than thirty metres away and none of it straight. The direct answer to a game where the long-range problem keeps coming up. |
+| 9 | **Two Bridges** | binary choice | One river, two crossings, six hundred metres apart. Simple in the way good maps are simple: you cannot cover both and neither can they. |
+| 10 | **Rail Station** | interior over an exterior | A shed you fight inside standing on a viaduct you fight under. Two maps, one footprint, and both are dense. |
+| 11 | **Grain Terminal** | solid barrier with one gap | A wall of silos between the town and the water. Reads from anywhere, and the single gap does all the work. |
 
 ### Tier 2 — worth building, with a caveat each
 
@@ -139,6 +140,57 @@ navmesh, which has to be checked every time.
 **The real gap is interiors.** Foundry and Rail Station rank as high as they do
 mostly because almost nothing in the roster is a fight indoors. Whatever gets
 built next, an interior would add more than another field.
+
+---
+
+## The Salient — the trench map, in more detail
+
+1024 × 512 m at 1.5 m cells, in a valley with rough shoulders rising to crests
+north and south. Six trench lines: reserve, support and front on each side,
+with communication trenches running back from each front and two saps pushed
+out into no-man's-land. 230 m between the front lines. A sunken road crosses
+the middle of it, graded flat with a bank either side — the one covered
+approach, and the obvious place to be ambushed.
+
+**The trenches are CUT, not placed, and that distinction is the whole map.**
+`feature_trench_revetment` is a *lining*: its plank walls reach 2 m below its
+own origin and its sandbag parapet 0.45 m above. Stood on flat ground it reads
+as a sandbag kerb and nothing else. So each line here is a `TerrainPath` in
+TRENCH mode first and revetment second, which is what `mapdeck.gd` grew path
+modifiers for.
+
+**Every line traverses.** Stepped sideways every 30 m, the way real trenches
+are cut, so no length of one can be shot down end to end. It turns a 260 m
+ditch into a chain of 30 m rooms, and it is the single thing that makes the
+trenches worth fighting in rather than worth avoiding.
+
+**2.2 m deep on a 3.5 m falloff is about 32°** — steep enough to be cover,
+shallow enough that the navmesh baker walks it. That number is not arbitrary: a
+trench the squad cannot climb out of is the crater bug in a longer shape, and
+this project has built that before and had to dig it back out. Terrain craters
+are held to 0.28 depth with a 0.07 rim for the same reason.
+
+What is out there between the lines: two belts of wire each side, dragon's
+teeth, a parapet berm, a mine crater and a second smaller one, tank traps,
+robot and vehicle wrecks, rubble, spoil heaps, flooded shell holes two metres
+deep, and the burnt stumps of a wood that used to be there. The alpine set
+built for Hillfort turns out to be exactly right for this — `pine_skeleton`,
+`snag_broken` and `stump_burnt` are WW1 imagery without meaning to be.
+
+**The mission it wants:** cross, take their front line, roll up the support
+trenches along the communication runs, then the gun line, then the village.
+Four phases with a natural place to stop between each.
+
+**The risk, stated plainly.** 230 m of deliberately hostile open ground in the
+middle is the same shape as the thing that got Tidal Causeway ranked 28th. The
+difference is that no-man's-land here has cover *in* it — shell holes, craters,
+wrecks, two saps and a sunken road — and three separate ways across. If it
+plays as a walk into a wall anyway, the fix is more saps and more spoil, not a
+narrower gap.
+
+**Unverified:** that the cut trenches bake as connected walkable navmesh. That
+has to be checked the moment this becomes a real level, and it is the one thing
+that could sink it.
 
 ---
 
