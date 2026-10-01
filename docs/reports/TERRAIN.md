@@ -87,11 +87,39 @@ claimed four and it shot two, which is how a piece with an alcove on one face
 and cable runs on the opposite one got photographed without either being
 visible.
 
-**Gates.** `check.sh --changed`: **PASS** (8 scripts, 3 scenes/resources).
+**Landed — `tools/probe_shots_filtered.gd`, survey shots through the game's own
+signal filter.** 15 of them, in `D:/Godot Games/roboto_shots/environments`,
+across Pittsburgh, Hillfort, the Salient and Mutaha WIP. Every other shot tool
+here photographs the editor's view of a level, which is not what anybody plays.
+- **The material is read out of `Character/hud/hud.tscn`'s SceneState**, not
+  copied into the tool. A second set of numbers would drift from the real rect
+  the first time anyone tuned it, and the pictures would then be of a filter
+  that ships nowhere. SceneState rather than instantiating, because `hud.gd`
+  wants a player and a campaign.
+- **Shot at 1152x648 because that is what the game renders at.**
+  `window/stretch/mode="viewport"` with the default viewport size means the
+  filter never sees a 1080p image. I had it at 1920x1080 first, which made the
+  signal grid 3 screen pixels instead of 1 — a chunkier picture than anybody
+  plays. Also moved it from a SubViewport to the root viewport: a shader that
+  READS THE SCREEN is the one kind that can tell one render target from
+  another. Both paths turned out to agree, which is how I know the look is the
+  filter and not my rig.
+- **The filter is a shot-selection constraint, not just a coating.** It has ten
+  luma steps, so a slope whose near face is in shadow renders as one flat
+  black. Three Pittsburgh ground-level cameras had to be thrown out for that —
+  the Strip, the river approach to the Works, the dam — and two more were
+  raised 10-16 m to see over the near slope. The Salient and Mutaha needed no
+  changes at all. **The difference is the terrain**, which is the Pittsburgh
+  recipe problem under a new light rather than a new problem.
+
+**Gates.** `check.sh --changed`: **PASS** (43 scripts, 28 scenes/resources on the last run).
 `test.sh` and `smoke.sh` not run — nothing here touches the ledger, the armoury
 or anything that loads at startup; these are blocks and a text tool.
 
 **Needs the human.**
+- **The 15 filtered shots are in `D:/Godot Games/roboto_shots/environments`,**
+  not in the repo. Another lane is writing `*_hud.png` pairs into the parent
+  folder; these are in a subfolder of their own so the two sets do not mix.
 - **Pick a size, or say all three.** Renders are of each piece alone on a flat
   floor with a 1.5 m figure. I cannot run the game, so what I have not seen is
   how the glow reads at 150 m across a level, or whether the green is too loud
