@@ -110,10 +110,6 @@ description = "In the lock-keeper's post on the west bank of the Ohio dam: five 
 reward_resources = 40
 linked_squad_point = NodePath("../EnemySquadObjs/Pitt_Dam")
 
-[node name="Terminal2" parent="RelayDam" instance=ExtResource("10_o0w5r")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
 [node name="RelayShore" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("pitt_capture")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -155, -0.83, -45)
 channel_duration = 5.0
@@ -122,10 +118,6 @@ display_name = "North Shore Relay"
 description = "In the command post on the north shore. A fight here brings bombers in over the plateau to the south, and taking the relay brings their reserve across the bridges from the south bank."
 reward_resources = 40
 linked_squad_point = NodePath("../EnemySquadObjs/Pitt_Shore")
-
-[node name="Terminal2" parent="RelayShore" instance=ExtResource("10_o0w5r")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
 
 [node name="RelayStrip" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("pitt_capture")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, 0.58, -85)
@@ -136,10 +128,6 @@ description = "Behind the bunker on the Strip, up the Allegheny from the Point. 
 reward_resources = 40
 linked_squad_point = NodePath("../EnemySquadObjs/Pitt_Strip")
 
-[node name="Terminal2" parent="RelayStrip" instance=ExtResource("10_o0w5r")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
 [node name="RelayFurnace" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("pitt_capture")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 395, -1.47, 237)
 channel_duration = 5.0
@@ -148,10 +136,6 @@ display_name = "Furnace Relay"
 description = "Beside the blast furnace on the Monongahela, the heaviest garrison in the valleys. Bombers wait over the eastern plateau for the first shot, and a counter-attack comes up the river when the relay is yours."
 reward_resources = 50
 linked_squad_point = NodePath("../EnemySquadObjs/Pitt_Furnace")
-
-[node name="Terminal2" parent="RelayFurnace" instance=ExtResource("10_o0w5r")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
 
 [node name="RelayPort" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("pitt_capture")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 352, 0.49, -265)
@@ -162,10 +146,6 @@ description = "At the port far up the Allegheny, well off the road. Not needed t
 optional = true
 reward_resources = 75
 linked_squad_point = NodePath("../EnemySquadObjs/Pitt_Port")
-
-[node name="Terminal2" parent="RelayPort" instance=ExtResource("10_o0w5r")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
 
 [node name="HiveIsland" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -250, -2.09, -84)

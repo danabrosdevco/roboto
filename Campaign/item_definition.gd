@@ -220,7 +220,11 @@ func effect_summary() -> String:
 		parts.append("%+d EQUIP SLOT" % equipment_slot_bonus)
 	if self_revive_seconds > 0.0:
 		parts.append("SELF-REVIVE %.0fs" % self_revive_seconds)
-	if suppressive_fire:
+	# ONLY A MODULE ACTUALLY GRANTS THIS. SoldierRecord.recompute() aggregates
+	# suppressive_fire across module_ids and nothing else, so the flag set on a
+	# weapon never reaches the robot — the label was promising a firing mode
+	# that could not happen. Advertise it where it is real.
+	if suppressive_fire and kind == Kind.MODULE:
 		parts.append("SUPPRESSIVE FIRE")
 	if kind == Kind.EQUIPMENT and quantity > 0:
 		parts.append("x%d" % quantity)

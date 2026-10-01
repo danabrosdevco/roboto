@@ -2,21 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cdapyx73l0vic"
-path.s3tc="res://.godot/imported/dirt_6.png-f92216ed0e7b2d59a10fcf41ea751c57.s3tc.ctex"
+uid="uid://ckxxw6w13v3x3"
+path="res://.godot/imported/pitt_10_aerial_whole.png-be58e8183c239b1015329649bc5d2e58.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/PSX_Textures/dirt_6.png"
-dest_files=["res://.godot/imported/dirt_6.png-f92216ed0e7b2d59a10fcf41ea751c57.s3tc.ctex"]
+source_file="res://docs/deck/pitt_10_aerial_whole.png"
+dest_files=["res://.godot/imported/pitt_10_aerial_whole.png-be58e8183c239b1015329649bc5d2e58.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
@@ -32,4 +31,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=0
+detect_3d/compress_to=1

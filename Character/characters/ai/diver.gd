@@ -69,6 +69,9 @@ enum Phase { CLIMB, HUNT, DIVE, SPENT }
 ## Straight down a run, radians. Reads as commitment.
 @export var dive_pitch: float = 1.1
 @export var ground_ray: RayCast3D
+## Looks AHEAD, which ground_ray cannot. See air_clearance.gd.
+const _AirClearance := preload("res://Character/characters/ai/air_clearance.gd")
+var _clearance := _AirClearance.new()
 
 var phase: int = Phase.CLIMB
 var _phase_t: float = 0.0
@@ -291,6 +294,8 @@ func _steer_toward(point: Vector3, speed: float, delta: float) -> void:
 	if wish.length_squared() < 0.0001:
 		return
 	_fly_dir = _turn_toward(_fly_dir, wish.normalized(), turn_rate * delta)
+	# Refresh what is ahead; _hold_height() is solved from it.
+	_clearance.tick(get_physics_process_delta_time(), self, _fly_dir, Vector2(velocity.x, velocity.z).length())
 	var wanted := _fly_dir * speed
 	var k := clampf(steer_rate * delta, 0.0, 1.0)
 	velocity = velocity.lerp(wanted, k)
@@ -311,10 +316,11 @@ func _hold_height(want_y: float, delta: float) -> float:
 		clampf(4.0 * delta, 0.0, 1.0))
 
 
+# Whatever is UNDER it, or anything higher it is about to fly into. A down-ray
+# alone only notices an obstacle once it is already beneath. See air_clearance.gd.
 func _ground_height() -> float:
-	if ground_ray != null and ground_ray.is_colliding():
-		return ground_ray.get_collision_point().y
-	return _launch_y
+	var under: float = ground_ray.get_collision_point().y if (ground_ray != null and ground_ray.is_colliding()) else _launch_y
+	return maxf(under, _clearance.ground_ahead())
 
 
 # Yaw to the heading, pitch into the run. Past 90 degrees a Euler pitch flips,

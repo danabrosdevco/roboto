@@ -512,6 +512,7 @@ func _stagger_ai_timers() -> void:
 	_nav_think_timer = randf() * nav_think_interval
 
 
+
 func sight_range() -> float:
 	return maxf(4.0, sensor_range + sensor_bonus)
 
@@ -922,6 +923,7 @@ func initialize():
 	activation_distance_sq = activation_distance * activation_distance
 	_self_rid = get_rid()
 	_collision_shape = _find_collision_shape()
+	_measure_body_radius()
 
 	# PATH POINTS ARE JUDGED AT BODY HEIGHT. The nav agent counts a point
 	# reached within path_desired_distance in 3D, from this node's origin —
@@ -1122,9 +1124,11 @@ func _apply_motion() -> void:
 	# against whatever it hit, so afterwards there is no record of where the
 	# robot was trying to go.
 	var intent := Vector3(velocity.x, 0.0, velocity.z)
+	_apply_give_way()
 	move_and_slide()
 	_damp_shoving(before)
 	_step_over(before, intent)
+	_tick_give_way(before, intent)
 
 	# Leap landing is detected here now, after the move has resolved.
 	if movement_state == MovementState.LEAPING and is_on_floor() and velocity.y <= 0.0:
@@ -1159,7 +1163,17 @@ func _apply_motion() -> void:
 ## How much of its own walking step a shoved robot may be moved in one frame.
 const SHOVE_STEP_LIMIT := 1.5
 
+## This chassis's own half-width, measured off its collision shape at spawn
+## rather than authored. A hand-kept number drifts away from the shape it is
+## supposed to describe, and the give-way rule below needs two robots to agree
+## about which of them is the bigger without being able to confer.
+var body_radius: float = 0.5
+
 func _damp_shoving(before: Vector3) -> void:
+	# Cleared FIRST. Both early returns below leave the frame without looking at
+	# the slide collisions, and a stale contact would have the give-way rule
+	# yielding to a robot this one stopped touching several frames ago.
+	_touching = null
 	# A leap IS a big horizontal step, and a crashing gunship is meant to fly
 	# its wreck somewhere. Neither is a tangle.
 	if movement_state == MovementState.LEAPING or _crashing:
@@ -1169,6 +1183,9 @@ func _damp_shoving(before: Vector3) -> void:
 		var other = get_slide_collision(i).get_collider()
 		if other is CharacterBody3D:
 			touching = true
+			# Remembered for the give-way rule below, which would otherwise have
+			# to walk these same collisions a second time.
+			_touching = other
 			break
 	if not touching:
 		return
@@ -1411,7 +1428,16 @@ func handle_gravity(delta: float) -> void:
 		# arena reading 7/8 with nothing left standing. No leap or crash comes
 		# near this speed; five seconds of free fall does.
 		if fell_out_speed > 0.0 and velocity.y < -fell_out_speed and alive:
-			push_warning("%s fell out of the world at %s; counting it as down." % [name, global_position])
+			# WARNED ONCE, THEN COUNTED. push_warning captures a stack trace, which
+			# is nothing once and ruinous when a whole wave spawns over a hole and
+			# falls out together — twenty-eight in one frame measured 450ms, and a
+			# 450ms frame is indistinguishable from a hang. The information is kept
+			# (the first one names a position to go and look at, and the tally says
+			# how bad it is); only the per-robot stack trace goes.
+			_fell_out_count += 1
+			if not _fell_out_warned:
+				_fell_out_warned = true
+				push_warning("%s fell out of the world at %s; counting it as down. Further fall-outs this run are counted in Enemy._fell_out_count rather than logged." % [name, global_position])
 			die()
 
 # ─────────────────────────────────────────────
@@ -1537,6 +1563,13 @@ func _check_stuck(delta: float) -> void:
 	if moved > STUCK_MOVE_THRESHOLD:
 		_stuck_retry_count = 0
 		return
+	# A BODY IN THE WAY IS NOT A BLOCKED PATH. Give-way is already working on it
+	# and costs nothing; re-pathing on top would buy a navigation query and send
+	# the robot back through the robot, because the navmesh cannot see it. Once
+	# give-way has run out of sidesteps it stops claiming the tangle and this
+	# takes over.
+	if _touching != null and _give_way_tries > 0 and _give_way_tries < GIVE_WAY_MAX_TRIES:
+		return
 	# Still here — hand off to path blocked handler
 	velocity.x = 0
 	velocity.z = 0
@@ -1607,6 +1640,10 @@ func move_to(pos: Vector3, think_delay: float = 0.0):
 ## getting one; the rest steer on their cached direction and ask again next
 ## frame, which is what the interval above already assumes.
 @export var nav_query_budget_ms: float = 6.0
+
+## Robots that have fallen out of the world this run. See handle_gravity.
+static var _fell_out_count: int = 0
+static var _fell_out_warned: bool = false
 
 static var _nav_budget: int = 0
 static var _nav_budget_frame: int = -1
@@ -3822,3 +3859,169 @@ func get_aim_spread_multiplier() -> float:
 	if suppressive_fire:
 		mult *= SUPPRESSIVE_SPREAD
 	return mult
+
+
+# ─────────────────────────────────────────────
+# GIVING WAY.
+#
+# Two robots that meet in a gap only one of them fits through used to stand there
+# for three seconds before anything happened, and what happened then was a
+# NAVIGATION query: _handle_path_blocked() asks the server for a point a few
+# metres to one side and re-paths to it. That is the wrong tool twice over. It
+# costs a path resolution — the most expensive thing a robot can do — and the
+# navmesh has no idea another robot is standing there, so the new path can run
+# straight back through it. Both of them roll randf() independently for which
+# side to try, so they can keep choosing the same one; at nine seconds they give
+# up and stand still. From the outside the pair is welded together and the only
+# way out is to kill one.
+#
+# This resolves it in four tenths of a second and costs NOTHING: no raycast, no
+# navigation query, no change to movement_target. _damp_shoving() already walks
+# the slide collisions every frame to find out whether this body is touching
+# another one, so the contact is known for free; the response is a sideways
+# velocity for a fraction of a second.
+#
+# ONLY ONE OF THE PAIR MOVES. The smaller chassis steps aside and the bigger one
+# holds its line — a rover does not shuffle for a soldier. Equal sizes fall back
+# to instance order, which both of them compute the same way from the same two
+# numbers. That is what stops the mirroring, and it is also why this cannot turn
+# into the whole squad spreading out: a robot that is not the one yielding does
+# not move at all, and the one that is keeps its original destination and resumes
+# the moment it is clear.
+#
+# After GIVE_WAY_MAX_TRIES sidesteps that did not help, it stops trying and lets
+# the slow path above have it — at that point it is not a tangle, it is a wall.
+# ─────────────────────────────────────────────
+
+## Seconds of being in contact AND making no progress before one of them moves.
+const GIVE_WAY_BLOCKED_TIME: float = 0.4
+## How long a sidestep lasts once started.
+const GIVE_WAY_DURATION: float = 0.7
+## Sidestep speed, as a fraction of this chassis's own walking speed.
+const GIVE_WAY_SIDE_SPEED: float = 0.9
+## Sidesteps before this is declared not-a-tangle and handed to _check_stuck.
+const GIVE_WAY_MAX_TRIES: int = 4
+## A move counts as progress at this fraction of what was asked for. Contact
+## scrubs some speed off legitimately, so it cannot be judged against the full
+## intent.
+const GIVE_WAY_PROGRESS: float = 0.35
+
+## The other body this one is touching, if any. Set by _damp_shoving(), which
+## already has to look.
+var _touching: Node = null
+var _blocked_t: float = 0.0
+var _give_way_t: float = 0.0
+var _give_way_dir: Vector3 = Vector3.ZERO
+var _give_way_tries: int = 0
+
+## Warned once per run, then counted. A tangle that sidestepping cannot fix is
+## worth knowing about, but it is not worth a stack trace per robot per attempt —
+## see the fall-out counter for the same bargain.
+static var _wedged_count: int = 0
+static var _wedged_warned: bool = false
+
+
+## Folded into velocity before the move. Does nothing unless a sidestep is live.
+func _apply_give_way() -> void:
+	if _give_way_t <= 0.0:
+		return                      # not yielding; the common case, and free
+	velocity.x += _give_way_dir.x * move_speed * GIVE_WAY_SIDE_SPEED
+	velocity.z += _give_way_dir.z * move_speed * GIVE_WAY_SIDE_SPEED
+
+
+## Called after the move has resolved, with where it started and what it asked
+## for. Decides whether this robot is the one that should step aside.
+func _tick_give_way(before: Vector3, intent: Vector3) -> void:
+	var delta := get_physics_process_delta_time()
+	if _give_way_t > 0.0:
+		_give_way_t -= delta
+		return                      # already stepping aside; let it finish
+
+	if movement_state != MovementState.MOVING or _touching == null:
+		# Not trying to go anywhere, or not touching anybody. Nothing to resolve,
+		# and the counters must not carry over into the next tangle.
+		_blocked_t = 0.0
+		_give_way_tries = 0
+		return
+
+	var moved := Vector2(global_position.x - before.x, global_position.z - before.z).length()
+	var wanted := Vector2(intent.x, intent.z).length() * delta
+	if wanted < 0.0001:
+		_blocked_t = 0.0
+		return                      # asked for nothing, so being still is right
+	if moved > wanted * GIVE_WAY_PROGRESS:
+		_blocked_t = 0.0
+		return                      # still getting somewhere: brushing past, not wedged
+
+	_blocked_t += delta
+	if _blocked_t < GIVE_WAY_BLOCKED_TIME:
+		return                      # not long enough yet to call it a wedge
+	_blocked_t = 0.0
+
+	if _give_way_tries >= GIVE_WAY_MAX_TRIES:
+		# Sidestepping has not worked. Leave it to _check_stuck's re-path, which
+		# is the right tool for geometry even though it is the wrong one for a
+		# robot, and say so once.
+		_wedged_count += 1
+		if not _wedged_warned:
+			_wedged_warned = true
+			push_warning("%s could not get past %s in %d sidesteps, so it is being treated as blocked terrain. Further wedges this run are counted in Enemy._wedged_count rather than logged." % [
+				name, str(_touching.name) if _touching != null else "another body", GIVE_WAY_MAX_TRIES])
+		return
+
+	if not _should_yield_to(_touching):
+		return                      # the bigger chassis holds its line
+
+	_give_way_tries += 1
+	_give_way_dir = _give_way_side(_touching, intent)
+	_give_way_t = GIVE_WAY_DURATION
+
+
+## Which of the two moves. Both sides answer this identically from the same two
+## numbers, without talking to each other — that is the whole trick.
+func _should_yield_to(other: Node) -> bool:
+	var theirs: float = 0.5
+	var v = other.get("body_radius")
+	if v != null:
+		theirs = float(v)
+	if absf(body_radius - theirs) > 0.05:
+		return body_radius < theirs           # the smaller one steps aside
+	# Same size. Somebody still has to move, so the lower instance id does.
+	return get_instance_id() < other.get_instance_id()
+
+
+## Which way to step: perpendicular to the line between the pair, and of the two
+## perpendiculars the one that still makes progress toward where this robot was
+## already going. A sidestep that goes backwards buys nothing and is exactly what
+## "spreading out and then re-walking it" looks like.
+func _give_way_side(other: Node, intent: Vector3) -> Vector3:
+	var away := global_position - (other as Node3D).global_position
+	away.y = 0.0
+	if away.length_squared() < 0.0001:
+		# Exactly co-located. Any direction serves, but it has to be a STABLE
+		# one or the pair jitters instead of separating.
+		away = Vector3.RIGHT
+	var side := away.normalized().cross(Vector3.UP).normalized()
+	var want := Vector3(intent.x, 0.0, intent.z)
+	if want.length_squared() > 0.0001 and side.dot(want.normalized()) < 0.0:
+		side = -side
+	return side
+
+
+## This chassis's half-width, off its own shape. See body_radius.
+func _measure_body_radius() -> void:
+	var s: Shape3D = _collision_shape.shape if _collision_shape != null else null
+	if s is CapsuleShape3D:
+		body_radius = (s as CapsuleShape3D).radius
+	elif s is CylinderShape3D:
+		body_radius = (s as CylinderShape3D).radius
+	elif s is SphereShape3D:
+		body_radius = (s as SphereShape3D).radius
+	elif s is BoxShape3D:
+		var e := (s as BoxShape3D).size
+		body_radius = maxf(e.x, e.z) * 0.5
+	else:
+		# Left at the infantry default. Not fatal — give-way falls back to
+		# instance order — but this chassis will shuffle aside for things it
+		# actually outweighs, so it is worth knowing.
+		push_warning("%s has no measurable body shape, so its size is unknown and it will give way as though it were infantry." % name)

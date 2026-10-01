@@ -64,7 +64,9 @@ func has_charge() -> bool:
 
 
 func tick(delta: float) -> void:
-	super(delta)
+	# NOT super(). PlayerMelee.tick resolves the hit on one frame; _tick_swing
+	# below does the same job with a window. See its note.
+	_tick_swing(delta)
 	if charges >= max_charges:
 		_recharge_t = 0.0
 		return
@@ -85,15 +87,74 @@ func get_readout() -> Readout:
 	return r
 
 
+# ─────────────────────────────────────────────
+# A THRUST CONNECTS WHEN IT ARRIVES, NOT ON ONE FRAME.
+#
+# PlayerMelee resolves the hit with a single ray on the one frame _swing_t
+# crosses swing_time * impact_at. That is survivable when impact lands late in a
+# long swing — the old 0.62 of 1.1s gave you two thirds of a second to walk into
+# something after committing. With the stroke retimed to 0.154s the whole
+# question is decided almost the instant you click, so closing the last half
+# metre into a target no longer counts: you have to already be in reach when you
+# press, which is not how anyone uses a polearm.
+#
+# So the lance keeps asking for STRIKE_WINDOW after the point is out. It still
+# cannot hit before the lance has extended, it still lands at most once per
+# swing, and a swing at nothing is still a miss — it just stops being a single
+# frame's worth of luck.
+# ─────────────────────────────────────────────
+
+## How long after full extension the lance goes on looking for something to hit.
+@export var strike_window: float = 0.18
+
+## Why the last attempt of THIS swing came to nothing, reported once when the
+## window closes. Emitting from _mend() instead fired it on every frame of the
+## window — twelve "UNDAMAGED" messages for one thrust, which strobes the HUD.
+var _refusal: String = ""
+
+
+## Resets the per-swing refusal before the base class starts the swing.
+func primary_pressed() -> void:
+	_refusal = ""
+	super()
+
+
+## Replaces PlayerMelee.tick's swing handling. See the note above.
+func _tick_swing(delta: float) -> void:
+	if not _swinging:
+		return
+	_swing_t += delta
+	if not _impact_done:
+		var out_at: float = swing_time * impact_at
+		if _swing_t >= out_at:
+			if _strike_lands():
+				_impact_done = true
+			elif _swing_t >= out_at + strike_window:
+				# Nothing came into reach for the whole window. A miss, and it has
+				# to be recorded as one or the lance would go on hunting for the
+				# rest of the swing and connect during the recovery.
+				_impact_done = true
+				if _refusal != "":
+					denied.emit(_refusal)
+	if _swing_t >= swing_time:
+		_swinging = false
+		_swing_t = 0.0
+
+
 # ── THE ONE BRANCH ───────────────────────────
-func _strike() -> void:
-	var exclude: Array = [player] if player != null else []
+## True when it actually put damage or repair into something, which is what tells
+## tick() above to stop looking.
+func _strike_lands() -> bool:
+	# RIDs, not nodes: PhysicsRayQueryParameters3D.exclude is Array[RID], and the
+	# rest of the project passes get_rid(). It happens to be tolerated here, but
+	# agreeing with everything else costs nothing.
+	var exclude: Array = [player.get_rid()] if player != null else []
 	var result := aim_ray(range, exclude)
 	if result.is_empty():
-		return
+		return false                   # nothing in reach yet; tick() will ask again
 	var collider = result.get("collider")
 	if collider == null:
-		return
+		return false
 	# Same walk-up the melee base does: a hitbox is usually a child of the body
 	# that owns the health.
 	var victim = collider
@@ -101,28 +162,41 @@ func _strike() -> void:
 		victim = victim.get_parent()
 
 	if _is_friendly(victim):
-		_mend(victim)
-		return
+		return _mend(victim)
 	if victim.has_method("apply_damage"):
 		victim.apply_damage(damage, player)
 		if hit_sound != null:
 			hit_sound.play()
 		hit.emit(victim)
+		return true
+	# Something solid, but not something with health — a wall, a crate. That is a
+	# real stop: the point is buried in it and the swing is spent.
+	return true
 
 
-func _mend(victim: Node) -> void:
+## True when it actually mended something. A refusal returns false so the thrust
+## goes on looking — brushing an undamaged ally must not spend the swing you were
+## aiming past them.
+func _mend(victim: Node) -> bool:
 	if charges <= 0:
-		# EVERY EARLY RETURN SAYS WHY. Silence here reads as "the lance is
-		# broken" rather than "you are out", and the two want different
-		# reactions from the player.
+		# EVERY EARLY RETURN SAYS WHY, AND THIS ONE SAYS IT OUT LOUD. Silence
+		# reads as "the lance is broken" rather than "you are out", and the two
+		# want different reactions from the player. The scene wires no
+		# click_sound, so without the signal there was no feedback of any kind.
 		if click_sound != null:
 			click_sound.play()
-		return
+		_refusal = "%s : NO CHARGES" % display_name.to_upper()
+		return false
 	# Nothing spent on someone already whole — otherwise brushing past a
-	# full-health ally mid-swing eats a charge you were saving.
+	# full-health ally mid-swing eats a charge you were saving. BUT SAY SO: an
+	# undamaged ally is the most likely thing to be pointed at, and this did
+	# nothing whatsoever — no sound, no message, no charge spent. That is
+	# indistinguishable from a lance that does not work, which is exactly how it
+	# was reported.
 	if "health" in victim and "max_health" in victim \
 			and int(victim.health) >= int(victim.max_health):
-		return
+		_refusal = "%s : UNDAMAGED" % str(victim.name).to_upper()
+		return false
 	charges -= 1
 	charges_changed.emit()
 	if victim.has_method("apply_healing"):
@@ -133,6 +207,7 @@ func _mend(victim: Node) -> void:
 		hit_sound.play()
 	hit.emit(victim)
 	used.emit()
+	return true
 
 
 ## Anyone the player would not shoot. Same test player_repair_tool.gd uses, so
@@ -148,30 +223,40 @@ func _is_friendly(body: Node) -> bool:
 # ─────────────────────────────────────────────
 # PlayerMelee swings: _extra_rotation() arcs the model out and back, which is
 # right for a wrench held at arm's length and wrong for two and a half metres
-# of spear, where it reads as sweeping the floor. A lance goes FORWARD.
+# of spear. A lance goes FORWARD.
 #
-# Driving it from the pose position rather than the rotation also keeps it out
-# of the additive-rotation path, where PlayerEquipment mixes the pose (radians)
-# with _extra_rotation (degrees) on one line. Nothing here needs to go near
-# that.
-func _get_pose_target() -> Array:
-	var pose := super()
+# AND IT IS APPLIED OUTSIDE THE POSE LERP.
+#
+# It used to be folded into _get_pose_target(), which PlayerEquipment then LERPS
+# toward at pose_speed. That is the wrong side of the lerp for a movement with a
+# deadline: at pose_speed 10 the viewmodel chases its target with a 0.1s time
+# constant, so a fast extension arrived late and short and the lance looked like
+# it was being pushed rather than driven. Out here the offset is exact, which is
+# what lets the out-stroke be as quick as it reads.
+#
+# Driving it from position rather than rotation is also deliberate — a wrench
+# arcs, and an arc on two and a half metres of spear reads as sweeping the floor.
+# A lance goes FORWARD.
+func _extra_position() -> Vector3:
 	if not _swinging or swing_time <= 0.0:
-		return pose
+		return Vector3.ZERO
 	var t: float = clampf(_swing_t / swing_time, 0.0, 1.0)
 	var f: float
 	if t <= impact_at:
-		# Out fast, and still accelerating when it connects.
-		f = sin((t / maxf(impact_at, 0.01)) * PI * 0.5)
+		# OUT LINEARLY, AT FULL SPEED INTO THE HIT. This was a quarter-sine with a
+		# comment claiming it was "still accelerating when it connects" — sin over
+		# 0..PI/2 does the opposite, arriving at full extension with zero velocity,
+		# which is what "placed" looks like instead of "thrust". Linear is still
+		# travelling at the moment of impact.
+		f = t / maxf(impact_at, 0.01)
 	else:
 		# Recovered slowly: the lance is heavy and you are committed.
 		var back: float = (t - impact_at) / maxf(1.0 - impact_at, 0.01)
 		f = 1.0 - smoothstep(0.0, 1.0, back)
 	# -Z is forward in the weapon's space, which is the camera's.
-	var out: Vector3 = pose[0] + Vector3(0.0, thrust_rise * f, -thrust_distance * f)
-	return [out, pose[1]]
+	return Vector3(0.0, thrust_rise * f, -thrust_distance * f)
 
 
-# No arc. See _get_pose_target(): the swing is the thrust and nothing rotates.
+# No arc. See _extra_position(): the swing IS the thrust, and nothing rotates.
 func _extra_rotation() -> Vector3:
 	return Vector3.ZERO

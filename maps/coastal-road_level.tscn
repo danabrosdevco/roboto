@@ -1,19 +1,18 @@
-[gd_scene load_steps=24 format=3 uid="uid://be3pa15jtbg7"]
+[gd_scene load_steps=23 format=3 uid="uid://be3pa15jtbg7"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_d8y7d"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/spawn_point.tscn" id="2_lth2r"]
+[ext_resource type="PackedScene" uid="uid://g7fmy28elpah" path="res://Env/world_objects/spawn_point.tscn" id="2_lth2r"]
 [ext_resource type="Script" path="res://Campaign/squad_spawn_point.gd" id="3_nsgse"]
 [ext_resource type="PackedScene" path="res://maps/coastal-road_art.tscn" id="4_a2gwa"]
-[ext_resource type="PackedScene" path="res://maps/blocks/concrete_bridge.tscn" id="5_jfqq3"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/level_exit.tscn" id="10_o61hu"]
-[ext_resource type="PackedScene" path="res://Env/world_environment.tscn" id="11_547fh"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/dummy_terminal.tscn" id="11_palxv"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/components/template_interactible.tscn" id="12_ct1nk"]
+[ext_resource type="PackedScene" uid="uid://cjdmigpey8k6v" path="res://maps/blocks/concrete_bridge.tscn" id="5_jfqq3"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="10_o61hu"]
+[ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="11_547fh"]
+[ext_resource type="PackedScene" uid="uid://c35vac7u5e3gs" path="res://Env/world_objects/dummy_terminal.tscn" id="11_palxv"]
 [ext_resource type="Shader" path="res://Env/new_sky_oct.16.gdshader" id="12_rddao"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/squad_objective_point.tscn" id="20_sop"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/cover_point_spawner.tscn" id="21_ick0d"]
-[ext_resource type="PackedScene" path="res://Managers/AI/patrol_path.tscn" id="21_path"]
-[ext_resource type="PackedScene" path="res://Managers/AI/patrol_point.tscn" id="22_point"]
+[ext_resource type="PackedScene" uid="uid://62y43tyd5sx6" path="res://Env/world_objects/squad_objective_point.tscn" id="20_sop"]
+[ext_resource type="PackedScene" uid="uid://cyslwv078g4sk" path="res://Env/world_objects/cover_point_spawner.tscn" id="21_ick0d"]
+[ext_resource type="PackedScene" uid="uid://v7tw1nq0fdn0" path="res://Managers/AI/patrol_path.tscn" id="21_path"]
+[ext_resource type="PackedScene" uid="uid://b7uq15mvhy6vq" path="res://Managers/AI/patrol_point.tscn" id="22_point"]
 [ext_resource type="Script" path="res://Campaign/eliminate_objective.gd" id="24_eliminate"]
 [ext_resource type="Script" path="res://Campaign/reach_objective.gd" id="25_reach"]
 [ext_resource type="Script" path="res://Env/world_objects/cover_point.gd" id="74_gbts3"]
@@ -82,7 +81,7 @@ navigation_mesh = SubResource("NavigationMesh_g86po")
 
 [node name="Coastal-roadArt" parent="NavigationRegion3D" instance=ExtResource("4_a2gwa")]
 
-[node name="FuncGodotMap" parent="NavigationRegion3D/Coastal-roadArt" instance=ExtResource("5_jfqq3")]
+[node name="FuncGodotMap2" parent="NavigationRegion3D/Coastal-roadArt" instance=ExtResource("5_jfqq3")]
 
 [node name="LevelExit" parent="NavigationRegion3D" node_paths=PackedStringArray("live_parts") instance=ExtResource("10_o61hu")]
 transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 505, 0.8362, 20)
@@ -113,15 +112,6 @@ description = "The relay on the east end of the bridge. It takes three seconds a
 reward_resources = 35
 linked_squad_point = NodePath("../EnemySquadObjs/Coast_Bridge")
 
-[node name="Terminal" parent="RelayBridge" instance=ExtResource("11_palxv")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="RelayBridge/Terminal" instance=ExtResource("12_ct1nk")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
-
 [node name="RelayCraters" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("capture_point")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, -0.67, 75)
 id = &"coast_relay_craters"
@@ -129,15 +119,6 @@ display_name = "Crater Relay"
 description = "Out in the shelled ground by the shore, with nothing to hide behind but the holes. Taking it brings their armour back to retake it."
 reward_resources = 35
 linked_squad_point = NodePath("../EnemySquadObjs/Coast_Craters")
-
-[node name="Terminal" parent="RelayCraters" instance=ExtResource("11_palxv")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="RelayCraters/Terminal" instance=ExtResource("12_ct1nk")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
 
 [node name="RelayTown" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("capture_point")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 292, -0.53, -24)
@@ -147,15 +128,6 @@ display_name = "Town Relay"
 description = "In the middle of the ruined town, with a hive beside it. The last relay: the moment it is yours, everything they have left comes for the east road."
 reward_resources = 45
 linked_squad_point = NodePath("../EnemySquadObjs/Coast_Town")
-
-[node name="Terminal" parent="RelayTown" instance=ExtResource("11_palxv")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="RelayTown/Terminal" instance=ExtResource("12_ct1nk")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
 
 [node name="HiveBridge" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -98, -1.04, -35)
@@ -14130,6 +14102,3 @@ metadata/cover_direction = Vector3(1, 0, 0)
 metadata/is_crouch_cover = false
 
 [editable path="WorldEnvironment"]
-[editable path="RelayBridge/Terminal/Interactible"]
-[editable path="RelayCraters/Terminal/Interactible"]
-[editable path="RelayTown/Terminal/Interactible"]

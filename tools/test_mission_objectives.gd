@@ -171,8 +171,17 @@ func _objective_ids(packed: PackedScene) -> Dictionary:
 				id = StringName(v)
 			elif prop == "is_extraction":
 				extract = bool(v)
-		if is_objective and id != &"":
-			out[id] = extract
+		if id == &"":
+			continue
+		# AN INSTANCED OBJECTIVE HAS NO `script` PROPERTY OF ITS OWN. Capture
+		# points are instanced scenes: the script lives on the instanced scene's
+		# root and the level only overrides `id`, so testing for a script
+		# override missed every one of them — and then reported the mission that
+		# named them as pointing at nothing, and its reserves as unwakeable.
+		# Eleven false alarms across three maps, all of them real objectives.
+		if not is_objective and not _instance_is_objective(st.get_node_instance(i)):
+			continue
+		out[id] = extract
 	return out
 
 
@@ -187,3 +196,20 @@ func _missions(st: SceneState) -> Array:
 				return st.get_node_property_value(i, j)
 		return []
 	return []
+
+
+## True when `packed`'s own root carries one of the objective scripts — which
+## is where an instanced objective keeps it. See _objective_ids().
+func _instance_is_objective(packed: PackedScene) -> bool:
+	if packed == null:
+		return false
+	var st := packed.get_state()
+	if st.get_node_count() == 0:
+		return false
+	for j in st.get_node_property_count(0):
+		if String(st.get_node_property_name(0, j)) != "script":
+			continue
+		var v: Variant = st.get_node_property_value(0, j)
+		if v != null:
+			return OBJECTIVE_SCRIPTS.has(str(v.resource_path).get_file())
+	return false

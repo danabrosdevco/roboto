@@ -70,6 +70,26 @@ func _init() -> void:
 	var climbed := await _probe_step(LOW, 300.0)
 	_check("a %.0fcm kerb does not stop the player" % (LOW * 100.0), climbed > LOW * 0.6,
 		"only rose %.3fm" % climbed)
+	# IT LIFTS THE LEDGE, NOT THE MAXIMUM. Lifting the full step_height for any
+	# obstacle is what made small steps feel like a punch upward, so the rise
+	# has to track the thing being climbed.
+	_check("...and it lifts the height of the step, not step_height",
+		absf(climbed - LOW) < 0.06,
+		"rose %.3fm for a %.2fm kerb (step_height is %.2f)" % [climbed, LOW, _player.step_height])
+	# THE OTHER HALF OF THE FIX. The body has to move in one frame or it clips
+	# the ledge; the eye does not, and the eye is the only part anyone feels.
+	_check("...and the eye is held back so the step is not a jolt",
+		_player._step_smooth > 0.0, "camera snapped straight to the new height")
+	for _i in 60:
+		await physics_frame
+	_check("...and the eye catches up within a second",
+		_player._step_smooth < 0.01
+			and absf(_player.cam.position.y - _player._cam_rest_y) < 0.01,
+		"left %.3f behind" % _player._step_smooth)
+
+	var tiny := await _probe_step(0.07, 420.0)
+	_check("...and a 7cm lip lifts about 7cm", tiny > 0.01 and tiny < 0.14,
+		"rose %.3fm" % tiny)
 
 	var walled := await _probe_step(TALL, 340.0)
 	_check("...but a %.1fm wall still does" % TALL, walled < LOW,

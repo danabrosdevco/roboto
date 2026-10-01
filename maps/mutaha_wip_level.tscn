@@ -112,15 +112,6 @@ description = "Behind the wall on the island's south tip, where the road to the 
 reward_resources = 45
 linked_squad_point = NodePath("../EnemySquadObjs/Mutaha_Gate")
 
-[node name="Terminal" parent="RelayGate" instance=ExtResource("10_a6b27")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="RelayGate/Terminal" instance=ExtResource("11_1m4ed")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
-
 [node name="RelayServer" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("mut_capture")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -0.95, -53)
 channel_duration = 8.0
@@ -129,15 +120,6 @@ display_name = "Server Garden"
 description = "Nine rack rows in the open, half of them toppled, in the middle of the island. Eight seconds at the console with a marksman on every roof line that looks onto it."
 reward_resources = 55
 linked_squad_point = NodePath("../EnemySquadObjs/Mutaha_Server")
-
-[node name="Terminal" parent="RelayServer" instance=ExtResource("10_a6b27")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="RelayServer/Terminal" instance=ExtResource("11_1m4ed")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
 
 [node name="RelayCompute" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("mut_capture")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, -0.99, -86)
@@ -148,15 +130,6 @@ description = "The data hall itself, and the reason anybody is fighting over thi
 reward_resources = 110
 linked_squad_point = NodePath("../EnemySquadObjs/Mutaha_Compute")
 
-[node name="Terminal" parent="RelayCompute" instance=ExtResource("10_a6b27")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="RelayCompute/Terminal" instance=ExtResource("11_1m4ed")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
-
 [node name="RelayClock" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("mut_capture")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -238, 0.11, -217)
 channel_duration = 8.0
@@ -165,15 +138,6 @@ display_name = "Clock Square"
 description = "Across the west bridge, under the tower. The square is held in strength and the streets around it are theirs; the relay is in the open at the foot of the clock."
 reward_resources = 70
 linked_squad_point = NodePath("../EnemySquadObjs/Mutaha_Clock")
-
-[node name="Terminal" parent="RelayClock" instance=ExtResource("10_a6b27")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="RelayClock/Terminal" instance=ExtResource("11_1m4ed")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
 
 [node name="HiveFair" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 196, -0.53, -190)
@@ -20268,7 +20232,3 @@ metadata/cover_direction = Vector3(-0.164399, 0, 0.986394)
 metadata/is_crouch_cover = true
 
 [editable path="WorldEnvironment"]
-[editable path="RelayGate/Terminal/Interactible"]
-[editable path="RelayServer/Terminal/Interactible"]
-[editable path="RelayCompute/Terminal/Interactible"]
-[editable path="RelayClock/Terminal/Interactible"]

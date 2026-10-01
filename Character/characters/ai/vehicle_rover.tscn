@@ -21,7 +21,7 @@ height = 3.4
 [sub_resource type="SphereShape3D" id="SphereShape3D_qqiko"]
 radius = 25.0
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_7nk3q"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xapkv"]
 render_priority = 0
 shader = ExtResource("5_c8500")
 shader_parameter/use_normal_map = false
@@ -192,43 +192,43 @@ shape = SubResource("SphereShape3D_qqiko")
 
 [node name="Hull" type="CSGMesh3D" parent="Rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.22, 0)
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_xapkv")
 mesh = SubResource("BoxMesh_ti3ip")
 material = ExtResource("6_car7f")
 
 [node name="Glacis" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(1, 0, 0, 0, 0.92388, 0.382683, 0, -0.382683, 0.92388, 0, 0.627, -1.441)
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_xapkv")
 operation = 2
 size = Vector3(2.4, 1, 2.4)
 
 [node name="Tail" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(1, 0, 0, 0, 0.79653, -0.604599, 0, 0.604599, 0.79653, 0, 0.613, 1.778)
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_xapkv")
 operation = 2
 size = Vector3(2.4, 1, 1.4)
 
 [node name="BellyR" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(0.845262, -0.534352, 0, 0.534352, 0.845262, 0, 0, 0, 1, 0.868, -0.638, 0)
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_xapkv")
 operation = 2
 size = Vector3(1, 1, 3.6)
 
 [node name="BellyL" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(0.845262, 0.534352, 0, -0.534352, 0.845262, 0, 0, 0, 1, -0.868, -0.638, 0)
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_xapkv")
 operation = 2
 size = Vector3(1, 1, 3.6)
 
 [node name="FenderL" type="CSGMesh3D" parent="Rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, -0.03, 0)
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_xapkv")
 mesh = SubResource("BoxMesh_tgcgs")
 material = ExtResource("6_car7f")
 
 [node name="FenderR" type="CSGMesh3D" parent="Rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, -0.03, 0)
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_xapkv")
 mesh = SubResource("BoxMesh_tgcgs")
 material = ExtResource("6_car7f")
 
@@ -274,13 +274,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.19, 0.15)
 
 [node name="TurretBody" type="CSGMesh3D" parent="Rig/Turret"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, 0.05)
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_xapkv")
 mesh = SubResource("BoxMesh_fsqak")
 material = ExtResource("6_car7f")
 
 [node name="Face" type="CSGBox3D" parent="Rig/Turret/TurretBody"]
 transform = Transform3D(1, 0, 0, 0, 0.695913, 0.718126, 0, -0.718126, 0.695913, 0, 0.373, -0.809)
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_xapkv")
 operation = 2
 size = Vector3(1.2, 1, 1.2)
 

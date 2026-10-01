@@ -40,6 +40,7 @@ func deregister_enemy(enemy: AI) -> void:
 	# base object of type 'previously freed'". A cache must never outlive the
 	# roster it was built from.
 	_hostile_cache.clear()
+	_cover_cached = false
 	if stimulus_manager != null:
 		stimulus_manager.deregister_ai(enemy)
 
@@ -49,6 +50,7 @@ func _relay_ekill(victim: Node, by: Node) -> void:
 func reset_all_reg_enemies() -> void:
 	all_ai = []
 	_hostile_cache.clear()
+	_cover_cached = false
 	if stimulus_manager != null:
 		stimulus_manager.clear()
 
@@ -69,12 +71,57 @@ var _hostile_cache: Dictionary = {}     # faction -> Array[CharacterBody3D]
 var _hostile_cache_age: float = 0.0
 const HOSTILE_CACHE_LIFETIME: float = 0.4
 
+# ── COVER ────────────────────────────────────
+# COVER IS LEVEL GEOMETRY. It does not move, spawn or die during a mission, and
+# every soldier looking for cover was asking the SceneTree to rebuild the whole
+# group array first — on a map the size of Three Rivers that array is hundreds
+# of nodes, and it was the single most expensive thing a soldier in contact
+# did.
+#
+# The POSITIONS are cached alongside it, because the distance filter that
+# rejects almost all of them reads global_position per node, and that is a call
+# into the engine per candidate. Against a PackedVector3Array the same filter
+# is arithmetic.
+#
+# Aged rather than permanent so a level that streams cover in is picked up.
+var _cover_cache: Array = []
+var _cover_positions := PackedVector3Array()
+var _cover_cached: bool = false
+var _cover_cache_age: float = 0.0
+const COVER_CACHE_LIFETIME: float = 2.0
+
 
 func _process(delta: float) -> void:
 	_hostile_cache_age -= delta
 	if _hostile_cache_age <= 0.0:
 		_hostile_cache.clear()
 		_hostile_cache_age = HOSTILE_CACHE_LIFETIME
+	_cover_cache_age -= delta
+	if _cover_cache_age <= 0.0:
+		_cover_cached = false
+
+
+## Every cover point in the level, and their positions at the same indices.
+func cover_points() -> Array:
+	_rebuild_cover()
+	return _cover_cache
+
+
+func cover_positions() -> PackedVector3Array:
+	_rebuild_cover()
+	return _cover_positions
+
+
+func _rebuild_cover() -> void:
+	if _cover_cached:
+		return
+	_cover_cache = get_tree().get_nodes_in_group(&"cover_points")
+	_cover_positions.resize(_cover_cache.size())
+	for i in _cover_cache.size():
+		var n := _cover_cache[i] as Node3D
+		_cover_positions[i] = n.global_position if n != null else Vector3.INF
+	_cover_cached = true
+	_cover_cache_age = COVER_CACHE_LIFETIME
 
 
 func hostiles_for(faction) -> Array:

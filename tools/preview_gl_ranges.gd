@@ -106,13 +106,17 @@ func _one(out_dir: String, target_range: float, gravity: float) -> Dictionary:
 		vp.queue_free()
 		return {}
 	model.position = gun.ads_position
-	model.rotation = gun.ads_rotation
+	# DEGREES. ads_rotation is a degrees pose, the same as every other pose in
+	# PlayerEquipment, and update_view() writes rotation_degrees. Assigning
+	# .rotation here posed the gun in radians and every range picture this tool
+	# produced was taken against a sight line the game does not draw.
+	model.rotation_degrees = gun.ads_rotation
 
 	# WHERE THE CAMERA HAS TO POINT for this range's mark to cover the target.
 	# The pose puts the 50m line on the optical axis, so the gun is already
 	# elevated by ads_rotation.z; a longer shot needs the muzzle higher still,
 	# which drops the target in the frame by exactly the difference.
-	var ads_pitch: float = float(gun.ads_rotation.z)
+	var ads_pitch: float = deg_to_rad(float(gun.ads_rotation.z))
 	var elevation: float = _elevation_for(target_range, float(gun.launch_speed), gravity)
 	cam.rotation.x = elevation - ads_pitch
 	await process_frame

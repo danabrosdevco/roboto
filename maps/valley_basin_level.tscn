@@ -1,19 +1,18 @@
-[gd_scene load_steps=24 format=3 uid="uid://7i5feul0x8qv"]
+[gd_scene load_steps=23 format=3 uid="uid://7i5feul0x8qv"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_swp7i"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/spawn_point.tscn" id="2_l51of"]
+[ext_resource type="PackedScene" uid="uid://g7fmy28elpah" path="res://Env/world_objects/spawn_point.tscn" id="2_l51of"]
 [ext_resource type="PackedScene" path="res://maps/valley_basin_art.tscn" id="3_b8suk"]
 [ext_resource type="PackedScene" path="res://maps/blocks/landmarks/landmark_tether_anchor.tscn" id="4_3t31s"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/level_exit.tscn" id="5_406yi"]
-[ext_resource type="PackedScene" path="res://Env/world_environment.tscn" id="9_mpaex"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="5_406yi"]
+[ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="9_mpaex"]
 [ext_resource type="Shader" path="res://Env/new_sky_oct.16.gdshader" id="10_lr416"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/squad_objective_point.tscn" id="11_n4srd"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/dummy_terminal.tscn" id="12_cv6yp"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/cover_point_spawner.tscn" id="12_so3nt"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/components/template_interactible.tscn" id="13_k8gov"]
+[ext_resource type="PackedScene" uid="uid://62y43tyd5sx6" path="res://Env/world_objects/squad_objective_point.tscn" id="11_n4srd"]
+[ext_resource type="PackedScene" uid="uid://c35vac7u5e3gs" path="res://Env/world_objects/dummy_terminal.tscn" id="12_cv6yp"]
+[ext_resource type="PackedScene" uid="uid://cyslwv078g4sk" path="res://Env/world_objects/cover_point_spawner.tscn" id="12_so3nt"]
 [ext_resource type="Script" path="res://Env/world_objects/cover_point.gd" id="14_kns5m"]
-[ext_resource type="PackedScene" path="res://Managers/AI/patrol_path.tscn" id="15_hdm25"]
-[ext_resource type="PackedScene" path="res://Managers/AI/patrol_point.tscn" id="16_aymbr"]
+[ext_resource type="PackedScene" uid="uid://v7tw1nq0fdn0" path="res://Managers/AI/patrol_path.tscn" id="15_hdm25"]
+[ext_resource type="PackedScene" uid="uid://b7uq15mvhy6vq" path="res://Managers/AI/patrol_point.tscn" id="16_aymbr"]
 [ext_resource type="Script" path="res://Campaign/squad_spawn_point.gd" id="20_vd3ju"]
 [ext_resource type="Script" path="res://Campaign/reach_objective.gd" id="21_n1ec4"]
 [ext_resource type="Script" path="res://Campaign/eliminate_objective.gd" id="22_elim"]
@@ -71,7 +70,7 @@ navigation_mesh = SubResource("NavigationMesh_b87a8")
 
 [node name="ValleyBasinArt" parent="NavigationRegion3D" instance=ExtResource("3_b8suk")]
 
-[node name="TetherAnchor" parent="NavigationRegion3D/ValleyBasinArt" instance=ExtResource("4_3t31s")]
+[node name="TetherAnchor2" parent="NavigationRegion3D/ValleyBasinArt" instance=ExtResource("4_3t31s")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 194.95, -11.2, 128.35)
 
 [node name="LevelExit" parent="NavigationRegion3D" instance=ExtResource("5_406yi")]
@@ -8007,15 +8006,6 @@ display_name = "West Garrison"
 reward_resources = 30
 linked_squad_point = NodePath("../EnemySquadObjs/Valley_Garrison")
 
-[node name="Terminal" parent="InteractObjective" instance=ExtResource("12_cv6yp")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="InteractObjective/Terminal" instance=ExtResource("13_k8gov")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
-
 [node name="InteractObjective2" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("capture_point")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 193.479, -9.98749, 186.666)
 id = &"valley_garrison_cap_2"
@@ -8023,30 +8013,12 @@ display_name = "South Garrison"
 reward_resources = 30
 linked_squad_point = NodePath("../EnemySquadObjs/Valley_Garrison")
 
-[node name="Terminal" parent="InteractObjective2" instance=ExtResource("12_cv6yp")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="InteractObjective2/Terminal" instance=ExtResource("13_k8gov")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
-
 [node name="InteractObjective3" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("capture_point")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 241.128, -9.98749, 102.015)
 id = &"valley_garrison_cap_3"
 display_name = "North Garrison"
 reward_resources = 30
 linked_squad_point = NodePath("../EnemySquadObjs/Valley_Garrison")
-
-[node name="Terminal" parent="InteractObjective3" instance=ExtResource("12_cv6yp")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="InteractObjective3/Terminal" instance=ExtResource("13_k8gov")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
 
 [node name="HiveObjectiveSouth" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 201.584, -9.84348, 161.597)
@@ -8080,15 +8052,6 @@ display_name = "Tether Anchor"
 description = "The deck at the foot of the tower, up either ramp. Start the capture at the console, then stay on the deck for ten seconds. The trenches north and south answer the moment it is yours."
 reward_resources = 50
 linked_squad_point = NodePath("../EnemySquadObjs/Basin_Anchor")
-
-[node name="Terminal" parent="AnchorObjective" instance=ExtResource("12_cv6yp")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-label_text = ""
-
-[node name="Interactible" parent="AnchorObjective/Terminal" instance=ExtResource("13_k8gov")]
-collision_layer = 3
-type = 4
-destroy_on_use = false
 
 [node name="PlayerSpawnSquad" type="Node3D" parent="."]
 transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 16, -10.0555, 146)
@@ -8234,7 +8197,3 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 145, -10.2, 120)
 display_index = 2
 
 [editable path="WorldEnvironment"]
-[editable path="InteractObjective/Terminal/Interactible"]
-[editable path="InteractObjective2/Terminal/Interactible"]
-[editable path="InteractObjective3/Terminal/Interactible"]
-[editable path="AnchorObjective/Terminal/Interactible"]

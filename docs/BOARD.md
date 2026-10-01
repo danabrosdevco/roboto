@@ -275,6 +275,20 @@ Wanted, ordered loosely, not scheduled.
 - Anatomical drone soldier body. Built and rejected 2026-09-28 — the capsule
   stays. Kept in `tools/mockup_parts.drone_body()` in case the question comes
   back. Nothing ships it.
+
+**Multiplayer — co-op, parked with a brief**
+- `docs/briefs/MULTIPLAYER_PHASE0.md`. 1–4 players sharing one roster, armoury,
+  ledger and seat pool; each commands their own teams. The data model is
+  already this — `team_id`, `move_to_team()`, `members_of()`, one `supply_cap`,
+  and a debrief that already scores by team. A team gains an owner; the rest
+  exists.
+- **Phase 0 is a single-player performance fix, not multiplayer work.** A 10 v
+  20–30 fight profiles at **83.63 ms — about 12 FPS — today**. The decision
+  chain bottoms out in nav queries at **2.8 ms per call**, and the HUD rebuilds
+  itself every frame for another ~10 ms. Nothing starts until that same fight
+  runs under 16.6 ms.
+- Ruled already: no pause in multiplayer at all; MP gets its own save; a wiped
+  player repairs their team with the tool they always carry; no host migration.
 - Boss and mini-boss, dash, heat-or-stamina, melee weapons, weapon pick-ups,
   doors and elevators, suppression as a mechanic. From the original dump; still
   wanted in principle, none scoped, none blocking.

@@ -65,6 +65,13 @@ const MOUSE_SENS := 0.002
 ## How far past the intended motion to probe. Without a margin you only step
 ## once you are already touching, which reads as catching on the lip first.
 @export var step_probe: float = 0.08
+## How fast the EYE catches up with a step the body has already taken. The
+## body has to move instantly or it would clip the ledge; the camera does not,
+## and a hard snap of the view is what reads as a bump.
+@export var step_smooth_rate: float = 12.0
+
+var _step_smooth: float = 0.0
+var _cam_rest_y: float = INF
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var health = 100
 @export var max_health = 100
@@ -340,6 +347,7 @@ func _physics_process(delta: float) -> void:
 		loadout.update(delta, move_factor, obstructed, is_ads)
 
 	_step_up(delta)
+	_tick_step_smooth(delta)
 	move_and_slide()
 
 
@@ -788,6 +796,34 @@ func _step_up(delta: float) -> void:
 	var raised := global_transform.translated(Vector3.UP * step_height)
 	if test_move(raised, probe):
 		return                                  # too tall to step onto
-	if not test_move(raised.translated(probe), Vector3.DOWN * (step_height + 0.05)):
+	# HOW HIGH THE LEDGE ACTUALLY IS, not how high we are allowed to step. The
+	# first version lifted by the full step_height whatever it found, so a 5cm
+	# kerb and a 30cm crate both threw the body up 30cm — which is exactly the
+	# bump being complained about, and it happened on every doorway lip.
+	var drop := KinematicCollision3D.new()
+	if not test_move(raised.translated(probe), Vector3.DOWN * (step_height + 0.05), drop):
 		return                                  # nothing to land on
-	global_position.y += step_height
+	var rise: float = step_height - drop.get_travel().length()
+	if rise <= 0.001:
+		return
+	global_position.y += rise
+	# The body goes now, the eye follows. See _tick_step_smooth.
+	_step_smooth = minf(_step_smooth + rise, step_height)
+
+
+## Let the camera catch up with a step the body has already taken.
+##
+## The body must move in one frame or it clips the ledge it is climbing. The
+## VIEW does not, and the view is the only part the player feels — so the eye
+## is held back by however far the body jumped and eased in over about a fifth
+## of a second. Nothing else writes cam.position, so this owns it.
+func _tick_step_smooth(delta: float) -> void:
+	if cam == null:
+		return
+	if _cam_rest_y == INF:
+		_cam_rest_y = cam.position.y
+	if _step_smooth > 0.0001:
+		_step_smooth = lerpf(_step_smooth, 0.0, 1.0 - exp(-step_smooth_rate * delta))
+	else:
+		_step_smooth = 0.0
+	cam.position.y = _cam_rest_y - _step_smooth

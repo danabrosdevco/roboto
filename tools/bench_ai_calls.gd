@@ -108,8 +108,37 @@ func _init() -> void:
 	_time("roll_combat_action", who, func(): who.roll_combat_action())
 	if who.has_method("find_best_cover_point"):
 		_time("find_best_cover_point", who, func(): who.find_best_cover_point())
-	_time("find_advance_position", who, func(): who.find_advance_position())
+	_time("find_advance_target", who, func(): who.find_advance_target())
+	_time("find_reposition_target", who, func(): who.find_reposition_target())
+	# THE EXPENSIVE BRANCH. With a live target reconsider_target early-returns in
+	# three microseconds; the cost the profiler shows is the path taken when the
+	# target is gone and it has to go and find one.
+	_time("reconsider_target (no target)", who, func():
+		who.combat_target = null
+		who.reconsider_target())
+	var sm = who.get("stimulus_manager")
+	if sm != null:
+		_time("emit_stimulus ALLY_DIED", who, func():
+			sm.emit_stimulus(StimulusManager.StimulusType.ALLY_DIED,
+				who.global_position, who.faction, who))
+		_time("emit_stimulus GUNSHOT_HEARD", who, func():
+			sm.emit_stimulus(StimulusManager.StimulusType.GUNSHOT_HEARD,
+				who.global_position, who.faction, who))
 	_time("is_path_clear (one ray)", who, func():
 		who.is_path_clear(who.global_position + Vector3.UP * 0.8,
 			who.global_position + Vector3(20, 1, 20)))
+	# THE DEATH PATH. Destructive, so it cannot be repeated on one subject —
+	# twenty different robots, one fatal hit each, timed together.
+	var killed := 0
+	var kt0 := Time.get_ticks_usec()
+	for s in subjects:
+		if killed >= 20:
+			break
+		if not is_instance_valid(s) or not s.alive:
+			continue
+		s.apply_damage(99999, _player)
+		killed += 1
+	if killed > 0:
+		print("  %-34s %8.3f ms/call  (%d killed)" % ["apply_damage (fatal)",
+			float(Time.get_ticks_usec() - kt0) / float(killed) / 1000.0, killed])
 	quit(0)

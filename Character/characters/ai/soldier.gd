@@ -147,7 +147,19 @@ func takes_cover() -> bool:
 
 
 func find_best_cover_point() -> CoverPoint:
-	var cover_points = get_tree().get_nodes_in_group("cover_points")
+	# THE CACHED LIST, AND THE CACHED POSITIONS. Cover does not move, so
+	# rebuilding the group array here — and reading global_position off every
+	# node in it — was paid once per soldier per search. See
+	# AIManager.cover_points(). The fallback keeps a soldier with no manager
+	# (the lab, a test) working rather than silently finding no cover.
+	var cover_points: Array
+	var cover_pos: PackedVector3Array
+	if ai_manager != null and ai_manager.has_method("cover_points"):
+		cover_points = ai_manager.cover_points()
+		cover_pos = ai_manager.cover_positions()
+	else:
+		cover_points = get_tree().get_nodes_in_group("cover_points")
+		cover_pos = PackedVector3Array()
 	var best: CoverPoint = null
 	var best_score: float = -INF
 	var target_pos = combat_target.global_position if combat_target else global_position
@@ -159,8 +171,16 @@ func find_best_cover_point() -> CoverPoint:
 	# what the profiler was showing. Squared distance also drops the sqrt.
 	var radius_sq := cover_search_radius * cover_search_radius
 	var here := global_position
-	for cp in cover_points:
-		if here.distance_squared_to(cp.global_position) > radius_sq:
+	var have_pos: bool = cover_pos.size() == cover_points.size()
+	for i in cover_points.size():
+		# Squared distance against the cached position first: this rejects
+		# almost every point, and doing it without touching the node is the
+		# whole saving.
+		if have_pos:
+			if here.distance_squared_to(cover_pos[i]) > radius_sq:
+				continue
+		var cp = cover_points[i]
+		if not have_pos and here.distance_squared_to(cp.global_position) > radius_sq:
 			continue
 		if not cp is CoverPoint or cp.is_occupied():
 			continue

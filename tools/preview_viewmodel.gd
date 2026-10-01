@@ -135,11 +135,16 @@ func _shot(path: String, pose: String) -> Image:
 	# the lance's thrust — was drawn relative to a place the game never uses.
 	if gun.get("use_default_position") == false:
 		gun.base_position = model.position
-		gun.base_rotation = model.rotation
+		gun.base_rotation = model.rotation_degrees
 	model.position = _pose_pos(gun, pose)
-	# RADIANS, because player_equipment.gd lerps viewmodel.ROTATION, not
-	# rotation_degrees — posing this in degrees showed a pose the game never uses.
-	model.rotation = _pose_rot(gun, pose)
+	# DEGREES, matching PlayerEquipment.update_view(), which writes
+	# rotation_degrees. This said RADIANS before, on the grounds that the pose lerp
+	# ran on viewmodel.rotation — which it did, and that was the bug: the lerp read
+	# back 1/57.3 of what it had written and every pose settled at about 17% of the
+	# angle it named. So this preview agreed with the lerp's intermediate value and
+	# with nothing the player ever saw. Any sight solve taken from an older run of
+	# this tool was measured against a picture the game does not draw.
+	model.rotation_degrees = _pose_rot(gun, pose)
 	for _i in 6:
 		await process_frame
 	if pose == "ads":
@@ -336,7 +341,7 @@ func _rest_pos(gun: Node) -> Vector3:
 func _rest_rot(gun: Node) -> Vector3:
 	var vm := _viewmodel(gun)
 	if vm != null and gun.get("use_default_position") == false:
-		return vm.rotation
+		return vm.rotation_degrees
 	return gun.base_rotation
 
 
