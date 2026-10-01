@@ -16,6 +16,13 @@ extends "res://tools/block_bridges.gd"
 #   godot --headless --path . --script res://tools/block_fortress.gd -- maps/blocks
 #   godot --headless --path . --script res://tools/block_fortress.gd -- maps/blocks --force [piece names]
 #
+# fort_tower.map CARRIES HAND EDITS. It was opened in TrenchBroom and had its
+# clipping fixed — 136 faces that exist in the file and not in this source. DO
+# NOT PASS --force FOR IT. Running it once destroyed all of them, and they only
+# came back because they happened to be committed. To change a texture on it,
+# use tools/map_retexture.gd on the .map; to change its SHAPE, change it here
+# and then merge by hand, knowing what you are throwing away.
+#
 # TWO RULES RUN THROUGH ALL OF IT, both learnt the hard way:
 #
 # WALKABLE GROUND IS FLAT GROUND. The navmesh agent climbs 0.25 m and is 0.6 m
@@ -73,6 +80,9 @@ const CWAY_W := 16.0
 const CWAY_H := 4.0
 ## Machine work: the fort is new, and reads new — clean faces, lit seams.
 const SEAM := "PSX_Textures/glitch_tx_1@0.25"
+## The same band with no light in it, for the curtain walls. A different
+## concrete from TECH_WALL so the trim still reads, just unlit.
+const TRIM := "PSX_Textures/concrete_tx_5"
 
 
 func _initialize() -> void:
@@ -333,7 +343,7 @@ func _citadel_rim() -> void:
 	# the thing anyone looking at the causeway sees first. The tower keeps its
 	# lit seams; the walls it stands behind do not.
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-f - 0.25, s * GATE_HALF, FORT_YARD), Vector3(-inner, s * (GATE_HALF + 0.5), FORT_PARAPET + 2.0), CLAD)
+		box(Vector3(-f - 0.25, s * GATE_HALF, FORT_YARD), Vector3(-inner, s * (GATE_HALF + 0.5), FORT_PARAPET + 2.0), TRIM)
 	_citadel_ramps()
 	_citadel_bastions()
 
@@ -376,8 +386,11 @@ func _citadel_bastions() -> void:
 			# Parapet on the two outer sides only; the inner two are the way on.
 			box(Vector3(cx + sx * 8.0, cy - 12.0, top), Vector3(cx + sx * 12.0, cy + 12.0, top + 7.0), TECH_WALL)
 			box(Vector3(cx - 12.0, cy + sy * 8.0, top), Vector3(cx + 12.0, cy + sy * 12.0, top + 7.0), TECH_WALL)
-			box(Vector3(cx + sx * 8.0, cy - 12.0, top + 6.6), Vector3(cx + sx * 12.0, cy + 12.0, top + 7.0), CLAD)
-			box(Vector3(cx - 12.0, cy + sy * 8.0, top + 6.6), Vector3(cx + 12.0, cy + sy * 12.0, top + 7.0), CLAD)
+			# The band along the top of it. TRIM, not SEAM: lit, this put a
+			# glowing line round all four bastions and the gate, which read as
+			# an outline round the whole fort from down the causeway.
+			box(Vector3(cx + sx * 8.0, cy - 12.0, top + 6.6), Vector3(cx + sx * 12.0, cy + 12.0, top + 7.0), TRIM)
+			box(Vector3(cx - 12.0, cy + sy * 8.0, top + 6.6), Vector3(cx + 12.0, cy + sy * 12.0, top + 7.0), TRIM)
 			# The walk climbs the last 24 m to it along both adjoining walls.
 			var wall_lo: float = minf(sy * inner, sy * f)
 			var wall_hi: float = maxf(sy * inner, sy * f)
