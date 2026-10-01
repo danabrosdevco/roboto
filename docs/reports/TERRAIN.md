@@ -38,6 +38,77 @@ most wants and least often gets:
 
 
 
+## 2026-10-01 — a .map editor that is not the generator, and the core column
+
+**Landed — `tools/map_retexture.gd`, the tool that should have existed first.**
+It changes a texture on whole brushes inside a box, in the `.map` text, in
+place. Dry run unless `--apply`. It exists because I ran `block_fortress.gd
+--force` on `maps/blocks/fortress/fort_tower.map` to change ONE texture and
+destroyed 136 faces of the human's clipping fixes. They came back off
+`936639bb` — luck, not a safety net, because another lane happened to have
+committed them. **The file on disk is the source; the generator that first
+wrote it is not.** `tools/block_fortress.gd` now carries a header saying
+fort_tower holds hand edits. Other maps probably do too and say nothing.
+
+**Landed — three fixes to blocks already in levels.** `industrial_lock_dam`'s
+railing ran across the dam instead of along it, so it read as a gate blocking
+the crossing; it is now five runs of rail along the deck with gaps. The
+causeway's curtain walls stopped glowing — the emissive brushes are gone from
+`maps/causeway_art.tscn`. `fort_tower` got its concrete trim back on the
+bastion bands and gate jambs, this time with `map_retexture.gd`: exactly 60
+glitch faces became concrete and no other face moved, proved by diffing the
+sorted face lines before and after.
+
+**Landed — the core column, `compute_core_large` / `compute_core` /
+`compute_core_small`** (12.4, 7.0 and 4.2 m), in `maps/blocks/compute/`, built
+by `core_column()` in `tools/block_industrial.gd`. An alternative to
+`compute_monolith` as a capture objective, after the human said the current
+terminal was not doing it. A stack of compute cassettes in an open steel cage,
+lit through the recessed spines BETWEEN the cassettes rather than along its
+edges, standing clear of its own plinth, head cut off at 29° with a lit plate
+inset in the cut, and a service alcove at the foot.
+- **Every lit face is `glitch_tx_1` and nothing else uses it.** One surface
+  carries all of it, so going dark on capture is a single material swap. That
+  is the whole reason the piece is built this way, and it is the hook GAMEPLAY
+  needs — the interact objective keeps the piece in the world after use.
+- **The alcove is the other half of it.** Channelling pins a body inside 3 m
+  for several seconds and a sealed slab answers "where do I stand" with
+  nothing. Alcove and lit cut both face the prefab's **-X in Godot**.
+- Plinth is a 0.22 m pad and a 0.62–1.1 m collar with **nothing in between**:
+  under the 0.45 m a body steps over, or over the 0.5 m the baker climbs, never
+  the band where the bake says walkable and `move_and_slide` refuses.
+- First cut had a fixed 0.8 m collar and a concrete cage. At 3.3 m the small
+  one read as a monument plinth with a box on it, and the cage looked like
+  mossy scaffold. Collar now scales with the column, cage is steel, small is
+  3.8 m with three cassettes instead of two.
+
+**Landed — `tools/probe_shots_block.gd` shoots all four sides.** Its header
+claimed four and it shot two, which is how a piece with an alcove on one face
+and cable runs on the opposite one got photographed without either being
+visible.
+
+**Gates.** `check.sh --changed`: **PASS** (8 scripts, 3 scenes/resources).
+`test.sh` and `smoke.sh` not run — nothing here touches the ledger, the armoury
+or anything that loads at startup; these are blocks and a text tool.
+
+**Needs the human.**
+- **Pick a size, or say all three.** Renders are of each piece alone on a flat
+  floor with a 1.5 m figure. I cannot run the game, so what I have not seen is
+  how the glow reads at 150 m across a level, or whether the green is too loud
+  beside the monolith's.
+- **The captured state is not built.** The column going dark is a GAMEPLAY job:
+  swap the `glitch_tx_1` material on the instance. I have made that one swap
+  instead of twelve; I have not wired it.
+- Nothing is placed in a level yet. These are blocks and prefabs only.
+
+**Blocked / next.** Unchanged and still open: Pittsburgh's terrain recipe makes
+jagged spikes and that is the level's dominant visual defect; the Salient's
+1330 placed pieces want consolidating into one generated `.map`; and the other
+hand-edited `maps/blocks/*.map` files are still unmarked, so the next agent can
+repeat the fort_tower mistake on any of them.
+
+---
+
 
 ## 2026-09-30 (4) — nine levels split, and a Works pass on Pittsburgh
 

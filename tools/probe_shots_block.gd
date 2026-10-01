@@ -1,8 +1,8 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# SHOTS BLOCK — one piece out of maps/blocks, photographed from four sides and
-# from above, on a flat floor with a 1.5 m figure beside it for scale.
+# SHOTS BLOCK — one piece out of maps/blocks, photographed from all four sides
+# and from above, on a flat floor with a 1.5 m figure beside it for scale.
 #
 #   PIECE=industrial/industrial_lock_dam RENDER_OUT=<dir> \
 #       godot --path . --script res://tools/probe_shots_block.gd
@@ -57,9 +57,15 @@ func _initialize() -> void:
 	cam.make_current()
 	var c := box.get_center()
 	var reach: float = maxf(box.size.x, maxf(box.size.y, box.size.z))
+	var eye := Vector3(c.x, box.size.y * 0.4, c.z)
+	# ALL FOUR SIDES, not two. A block is rarely symmetrical — this family has
+	# its alcove on one face and its cable runs on the opposite one — and two
+	# views leave half of it unphotographed while the header claims otherwise.
 	var shots: Array = [
-		["01_along_x", Vector3(c.x + reach * 1.1, FIGURE, c.z), Vector3(c.x, box.size.y * 0.4, c.z), 55.0],
-		["02_along_z", Vector3(c.x, FIGURE, c.z + reach * 1.1), Vector3(c.x, box.size.y * 0.4, c.z), 55.0],
+		["01_plus_x", Vector3(c.x + reach * 1.1, FIGURE, c.z), eye, 55.0],
+		["02_plus_z", Vector3(c.x, FIGURE, c.z + reach * 1.1), eye, 55.0],
+		["02b_minus_x", Vector3(c.x - reach * 1.1, FIGURE, c.z), eye, 55.0],
+		["02c_minus_z", Vector3(c.x, FIGURE, c.z - reach * 1.1), eye, 55.0],
 		["03_three_quarter", Vector3(c.x + reach * 0.8, reach * 0.45, c.z + reach * 0.8), c, 50.0],
 		["04_plan", Vector3(c.x, reach * 1.5, c.z + reach * 0.35), c, 50.0],
 		["05_on_the_deck", Vector3(c.x, box.end.y + FIGURE, c.z - box.size.z * 0.45),
