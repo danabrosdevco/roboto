@@ -1976,7 +1976,10 @@ func _core_large() -> void:
 	core_column(2.6, 1.5, 12.0, 5)
 
 
-## The default core, on the monolith's footprint so it drops into its places.
+## The default core. 3.38 m square and 7.0 m against the monolith's 4.38 x 2.81
+## and 7.5 — near enough in bulk to stand where one stands, but it is 0.57 m
+## WIDER across the monolith's narrow axis, so check a tight slot before you
+## swap one for the other.
 func _core() -> void:
 	core_column(1.7, 0.95, 6.6, 3)
 
