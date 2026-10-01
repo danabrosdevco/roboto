@@ -327,8 +327,13 @@ func _citadel_rim() -> void:
 	# The gateway: 16 m wide and 8 m high, with its head carried across.
 	box(Vector3(-f, -GATE_HALF, FORT_YARD + 8.0), Vector3(-inner, GATE_HALF, FORT_PARAPET + 2.0), TECH_WALL)
 	box(Vector3(-f - 0.5, -GATE_HALF - 2.0, FORT_PARAPET + 2.0), Vector3(-inner, GATE_HALF + 2.0, FORT_PARAPET + 3.0), CLAD)
+	# UNLIT. These jambs and the bastion bands below were SEAM, which puts an
+	# emissive strip down both sides of the gate and along the top of all four
+	# bastion parapets — a glowing outline round the whole curtain wall, and
+	# the thing anyone looking at the causeway sees first. The tower keeps its
+	# lit seams; the walls it stands behind do not.
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-f - 0.25, s * GATE_HALF, FORT_YARD), Vector3(-inner, s * (GATE_HALF + 0.5), FORT_PARAPET + 2.0), SEAM)
+		box(Vector3(-f - 0.25, s * GATE_HALF, FORT_YARD), Vector3(-inner, s * (GATE_HALF + 0.5), FORT_PARAPET + 2.0), CLAD)
 	_citadel_ramps()
 	_citadel_bastions()
 
@@ -371,8 +376,8 @@ func _citadel_bastions() -> void:
 			# Parapet on the two outer sides only; the inner two are the way on.
 			box(Vector3(cx + sx * 8.0, cy - 12.0, top), Vector3(cx + sx * 12.0, cy + 12.0, top + 7.0), TECH_WALL)
 			box(Vector3(cx - 12.0, cy + sy * 8.0, top), Vector3(cx + 12.0, cy + sy * 12.0, top + 7.0), TECH_WALL)
-			box(Vector3(cx + sx * 8.0, cy - 12.0, top + 6.6), Vector3(cx + sx * 12.0, cy + 12.0, top + 7.0), SEAM)
-			box(Vector3(cx - 12.0, cy + sy * 8.0, top + 6.6), Vector3(cx + 12.0, cy + sy * 12.0, top + 7.0), SEAM)
+			box(Vector3(cx + sx * 8.0, cy - 12.0, top + 6.6), Vector3(cx + sx * 12.0, cy + 12.0, top + 7.0), CLAD)
+			box(Vector3(cx - 12.0, cy + sy * 8.0, top + 6.6), Vector3(cx + 12.0, cy + sy * 12.0, top + 7.0), CLAD)
 			# The walk climbs the last 24 m to it along both adjoining walls.
 			var wall_lo: float = minf(sy * inner, sy * f)
 			var wall_hi: float = maxf(sy * inner, sy * f)
