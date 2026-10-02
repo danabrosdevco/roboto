@@ -7,3 +7,4 @@ script = ExtResource("1_pmnwa")
 ammo_type = &"grenade"
 amount = 36
 capacity = 36
+requires_carrier = true

@@ -114,6 +114,18 @@ const PLAYER_DEFAULT_NAME := "PLAYER"
 # _first_team_name), and it is still written so an older build can read the save.
 @export var squad_name: String = "NAMELESS"
 
+## WHICH CAMPAIGN THIS IS, in a game that can now hold several. Separate from
+## squad_name on purpose: the squad is a thing in the fiction and the player may
+## rename it mid-run, while the profile is what they pick off the menu.
+@export var profile_name: String = ""
+@export var created_utc: String = ""
+@export var last_played_utc: String = ""
+
+## WHERE THIS CAMPAIGN LIVES. Deliberately not exported — it is the name of the
+## file, not something inside it, and writing it into the save would mean a save
+## copied to another slot insisted on overwriting the one it came from.
+var save_path: String = SAVE_PATH
+
 # ── TEAMS ─────────────────────────────────────
 # The squad goes into the field as these teams, in this order, each one a squad
 # you order on its own (G switches between them). {"id": StringName, "name":
@@ -1104,6 +1116,9 @@ func to_dict() -> Dictionary:
 		"selected_mission_id": String(selected_mission_id),
 		"next_id": _next_id,
 		"squad_name": squad_name,
+		"profile_name": profile_name,
+		"created_utc": created_utc,
+		"last_played_utc": last_played_utc,
 		"teams": teams.map(func(t: Dictionary) -> Dictionary:
 			return {"id": String(t["id"]), "name": String(t["name"])}),
 		"purchase_counter": _purchase_counter,
@@ -1118,6 +1133,9 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	s.allocations = data.get("allocations", {})
 	s._next_id = int(data.get("next_id", 1))
 	s.squad_name = str(data.get("squad_name", "NAMELESS"))
+	s.profile_name = str(data.get("profile_name", ""))
+	s.created_utc = str(data.get("created_utc", ""))
+	s.last_played_utc = str(data.get("last_played_utc", ""))
 	# A save from before teams has none; ensure_teams builds them once the
 	# catalogue can tell a vehicle.
 	for entry in data.get("teams", []):
@@ -1235,6 +1253,12 @@ func restore_from(data: Dictionary) -> void:
 	unlocked = was.unlocked
 	selected_mission_id = was.selected_mission_id
 	squad_name = was.squad_name
+	# WHICH CAMPAIGN THIS IS. Not progress, but it travels with the save and a
+	# profile that forgot its own name on load would show up as "Campaign" in the
+	# menu the next time it was listed.
+	profile_name = was.profile_name
+	created_utc = was.created_utc
+	last_played_utc = was.last_played_utc
 	teams = was.teams
 	player_record = was.player_record
 	armoury = was.armoury
@@ -1244,7 +1268,30 @@ func restore_from(data: Dictionary) -> void:
 	roster_changed.emit()
 
 
-func save_to_disk(path: String = SAVE_PATH) -> bool:
+## Writes to `path`, or to wherever this campaign lives when none is given.
+##
+## The default used to be the one hardcoded SAVE_PATH, which is why there could
+## only ever be one campaign: every caller in the project omits the argument.
+## Routing the default through save_path means the slot is chosen ONCE, when the
+## campaign is opened, and every existing call site follows it.
+## A CAMPAIGN WITH NOWHERE TO LIVE IS NEVER WRITTEN.
+##
+## save_path is empty for the scratch campaign that stands behind the main menu
+## before the player has chosen one. It used to fall back to SAVE_PATH here —
+## and SAVE_PATH is user://campaign.json, the save the player may still be
+## relying on. One roster change behind the menu was enough to overwrite a
+## finished campaign with a brand new one. It did exactly that.
+##
+## Refusing is the only safe answer: there is no correct file to write a campaign
+## that is not a profile to.
+func save_to_disk(path: String = "") -> bool:
+	if path == "":
+		path = save_path
+	if path == "":
+		if not _no_path_said:
+			_no_path_said = true
+			push_warning("CampaignState: this campaign is not a profile and has nowhere to be saved, so it was not written. Start or load one from the menu.")
+		return false
 	# `-- --no-save` on the command line: a run that boots the real game to
 	# look for errors (tools/smoke.sh) must never write the player's save. The
 	# game saves on reaching base, so without this every smoke run did.
@@ -1264,10 +1311,32 @@ func save_to_disk(path: String = SAVE_PATH) -> bool:
 
 
 var _no_save_said: bool = false
+var _no_path_said: bool = false
 
 
 # Returns null when there's no save yet — the caller decides whether that means
 # "new campaign" or "something is wrong".
+## The save at `path` as a migrated dictionary, or empty when there is none.
+##
+## Split out of load_from_disk so a caller can restore_from() it INTO the state
+## the game is already holding. See the note on restore_from: handing out a new
+## object leaves every HUD and screen wired to one nobody updates.
+static func load_dict(path: String = SAVE_PATH) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		push_error("CampaignState: could not read %s" % path)
+		return {}
+	var body := f.get_as_text()
+	f.close()
+	var got = JSON.parse_string(body)
+	if typeof(got) != TYPE_DICTIONARY:
+		push_error("CampaignState: save at %s is not valid JSON" % path)
+		return {}
+	return migrate(got)
+
+
 static func load_from_disk(path: String = SAVE_PATH) -> CampaignState:
 	if not FileAccess.file_exists(path):
 		return null

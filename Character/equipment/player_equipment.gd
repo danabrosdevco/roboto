@@ -71,7 +71,13 @@ class Readout:
 @export var base_position: Vector3 = Vector3(0.31, -0.425, -0.015)
 @export var base_rotation: Vector3 = Vector3(-0.3, 6.0, 2.8)
 @export var obstructed_position: Vector3 = Vector3(-0.5, -0.425, -1.0)
-@export var obstructed_rotation: Vector3 = Vector3(0.3, 270.0, 3.0)
+## Swung aside, muzzle to the LEFT of screen. 90, not 270: the two are the same
+## line mirrored, and 270 pointed the barrel out to the right and back across the
+## view, so a long weapon swept three quarters of a turn to get there instead of
+## a quarter. It reads as the gun whipping round the wrong way. The shotgun was
+## given 90 on its own when someone hit this before, which left eighteen other
+## items still inheriting the flip — fixed on the class this time.
+@export var obstructed_rotation: Vector3 = Vector3(0.3, 90.0, 3.0)
 ## Swing aside when something is right in front of the camera. Off for items
 ## used up close: the repair tool's whole job is standing against a robot,
 ## which is exactly what the obstruction ray sees.
@@ -187,7 +193,7 @@ func equip() -> void:
 	# rather than popping in at the ready pose.
 	if viewmodel != null:
 		viewmodel.position = obstructed_position
-		# Degrees. Assigning .rotation here put the default holster pose of
+		# Degrees. Assigning .rotation here put the then-default holster pose of
 		# (0.3, 270, 3) on screen as 15469 degrees of yaw and 172 of roll — every
 		# item in the game spun through forty-three turns each time you drew it.
 		viewmodel.rotation_degrees = obstructed_rotation

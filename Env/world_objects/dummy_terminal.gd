@@ -55,6 +55,7 @@ func _ready() -> void:
 	if not interactible.interacted.is_connected(_on_interacted):
 		interactible.interacted.connect(_on_interacted)
 
+	_apply_panel()
 	_refresh()
 	_claim_prompt.call_deferred()
 
@@ -106,3 +107,60 @@ func _find_interactible() -> Interactible:
 		if child is Interactible:
 			return child
 	return null
+
+# ── BEING SOMETHING ELSE'S FRONT PANEL ───────
+#
+# A capture point used to be this console on its own. It can also be the
+# interactive face of a much bigger object — a compute core — in which case the
+# casing has to go and the reach has to grow to match what the player is actually
+# walking up to.
+
+## The console's own casing. Hidden when `show_body` is false.
+@export var body_pieces: Array[Node3D] = []
+@export var show_body: bool = true
+
+## Reach volume in metres, in this terminal's own space. ZERO keeps whatever the
+## scene authored.
+##
+## SIZE IT TO THE FOOTPRINT OF WHAT IT IS THE PANEL FOR, not bigger. The player's
+## InteractRaycast is 2 m long, masks the Interactible layer ONLY — so it passes
+## straight through the core's solid body — and does NOT hit from inside. A
+## volume that reaches out past the player swallows the camera and the ray then
+## starts inside it and reports nothing at all. At the footprint exactly, the
+## player cannot stand closer than their own radius, which leaves the camera half
+## a metre outside and the ray crossing cleanly in.
+@export var reach_size: Vector3 = Vector3.ZERO
+## Where the reach volume is centred vertically. Eye height, not the middle of a
+## twelve-metre core.
+@export var reach_height: float = 1.0
+## Lift the indicator lamp to here. 0 leaves it where the scene put it — which is
+## inside the core, where it lights nothing.
+@export var indicator_height: float = 0.0
+
+
+## Casing, reach and lamp. Called from _ready once the interactible is resolved.
+func _apply_panel() -> void:
+	for piece in body_pieces:
+		if piece != null and is_instance_valid(piece):
+			piece.visible = show_body
+	if indicator_height != 0.0 and indicator != null:
+		indicator.position.y = indicator_height
+	if reach_size == Vector3.ZERO:
+		return
+	if interactible == null:
+		return                      # already warned about in _ready
+	var cs := interactible.get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if cs == null:
+		push_warning("DummyTerminal '%s' has no CollisionShape3D under its Interactible, so reach_size does nothing and it keeps the console-sized reach." % name)
+		return
+	var box := cs.shape as BoxShape3D
+	if box == null:
+		push_warning("DummyTerminal '%s' reach is not a BoxShape3D, so reach_size does nothing." % name)
+		return
+	# DUPLICATED FIRST. A shape set in a scene is ONE resource shared by every
+	# instance of that scene, so resizing it in place would resize the reach of
+	# every terminal in the level — and of every level loaded afterwards.
+	box = box.duplicate()
+	box.size = reach_size
+	cs.shape = box
+	cs.position = Vector3(0.0, reach_height, 0.0)

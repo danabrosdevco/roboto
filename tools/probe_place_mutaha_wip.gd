@@ -1,7 +1,7 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# PLACE MUTAHA WIP — writes the node text for the four changes asked for on the
+# PLACE QAMAREEN — writes the node text for the four changes asked for on the
 # temporary copy of Mutaha, against the terrain that is ON DISK.
 #
 #   godot --headless --path . --script res://tools/probe_place_mutaha_wip.gd

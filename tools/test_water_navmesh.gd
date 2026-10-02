@@ -132,10 +132,19 @@ func _wired() -> void:
 	root.add_child(level)
 	for _i in 4:
 		await physics_frame
-	var region := level.get_node_or_null("NavigationRegion3D") as NavigationRegion3D
-	var terrain := region.get_node_or_null("Terrain") if region != null else null
+	# FOUND, NOT ASSUMED. This looked for the terrain as a CHILD of the region,
+	# which is where it lived until the maps were split into an art scene and a
+	# level scene. The terrain is inside the art half now, instanced beside the
+	# region rather than under it — so this stopped finding it, and reported the
+	# level as unbaked when the real fault was its own stale assumption about the
+	# layout. generated_terrain.gd had the identical bug and that one was costing
+	# every river in the game.
+	var region := _first_of(level, "NavigationRegion3D") as NavigationRegion3D
+	var terrain := _first_terrain(level)
 	if region == null or terrain == null or region.navigation_mesh == null:
-		_check("%s has a terrain under a baked NavigationRegion3D" % END_TO_END.get_file(), false)
+		_check("%s has a baked NavigationRegion3D and a terrain somewhere in it" % END_TO_END.get_file(),
+			false, "region=%s terrain=%s mesh=%s" % [str(region != null), str(terrain != null),
+				str(region != null and region.navigation_mesh != null)])
 		root.remove_child(level)
 		level.free()
 		return
@@ -159,3 +168,30 @@ func _wired() -> void:
 			wading == 0, "%d polygon(s) still in the river, e.g. at %v" % [wading, worst])
 	root.remove_child(level)
 	level.free()
+
+
+## The first node of `type` anywhere under `root_node`. The art/level split moved
+## things a level without moving them out of the level, so nothing here should be
+## looking at fixed paths.
+func _first_of(root_node: Node, type: String) -> Node:
+	var stack: Array = [root_node]
+	while not stack.is_empty():
+		var n: Node = stack.pop_front()
+		if n.is_class(type):
+			return n
+		for c in n.get_children():
+			stack.append(c)
+	return null
+
+
+## The first generated terrain anywhere under `root_node`, found by what it
+## carries rather than by its name or its place in the tree.
+func _first_terrain(root_node: Node) -> Node:
+	var stack: Array = [root_node]
+	while not stack.is_empty():
+		var n: Node = stack.pop_front()
+		if n.get("data") != null and n.has_method("to_local"):
+			return n
+		for c in n.get_children():
+			stack.append(c)
+	return null

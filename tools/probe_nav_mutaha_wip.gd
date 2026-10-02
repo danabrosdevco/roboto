@@ -1,7 +1,7 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# NAV MUTAHA WIP — rebake the temporary copy's navmesh and walk it.
+# NAV QAMAREEN — rebake the temporary copy's navmesh and walk it.
 #
 #   godot --path . --script res://tools/probe_nav_mutaha_wip.gd
 #

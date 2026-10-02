@@ -29,7 +29,17 @@ extends SceneTree
 #   godot --headless --path . --script res://tools/test_objective_terminals.gd
 # ─────────────────────────────────────────────
 
-const CAPTURE := "res://Env/world_objects/capture_point.tscn"
+## EVERY capture-point scene, not one named path. The maps were swapped from
+## capture_point.tscn to compute_core_point_small.tscn and this suite went on
+## reporting every level "clean" — because it could no longer find a capture
+## point to have a problem with. A test that passes by looking in the wrong place
+## is worse than no test.
+const CAPTURES := [
+	"res://Env/world_objects/capture_point.tscn",
+	"res://Env/world_objects/compute_core_point_small.tscn",
+	"res://Env/world_objects/compute_core_point.tscn",
+	"res://Env/world_objects/compute_core_point_large.tscn",
+]
 const TERMINAL := "res://Env/world_objects/dummy_terminal.tscn"
 const MAPS := "res://maps"
 
@@ -43,11 +53,16 @@ func _init() -> void:
 	# What the capture point actually wires, read from the scene rather than
 	# assumed — if someone adds a second terminal to capture_point.tscn ITSELF
 	# and wires it, this test should stop complaining on its own.
-	var wired := _wired_paths(load(CAPTURE) as PackedScene)
+	var wired := PackedStringArray()
 	print("")
-	print("capture_point.tscn wires: %s" % (" ".join(wired) if not wired.is_empty() else "NOTHING"))
-	if wired.is_empty():
-		_fail("capture_point.tscn wires no interactible at all — every relay in the game is dead")
+	for cap in CAPTURES:
+		var w := _wired_paths(load(cap) as PackedScene)
+		print("  %-34s wires: %s" % [cap.get_file(), " ".join(w) if not w.is_empty() else "NOTHING"])
+		if w.is_empty():
+			_fail("%s wires no interactible at all — every relay built on it is dead" % cap.get_file())
+		for p in w:
+			if not wired.has(p):
+				wired.append(p)
 
 	print("")
 	print("══ TERMINALS ADDED TO CAPTURE POINTS ═════════════════════")
@@ -89,7 +104,7 @@ func _check(path: String, wired: PackedStringArray) -> void:
 	var captures := {}
 	for i in st.get_node_count():
 		var inst := st.get_node_instance(i)
-		if inst != null and inst.resource_path == CAPTURE:
+		if inst != null and CAPTURES.has(inst.resource_path):
 			captures[String(st.get_node_name(i))] = true
 	if captures.is_empty():
 		return

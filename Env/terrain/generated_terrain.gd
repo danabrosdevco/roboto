@@ -214,11 +214,38 @@ func _unpave_the_river() -> void:
 		return
 	if _data == null or not _data.has_water():
 		return   # dry level — the whole question does not arise
-	var region := get_parent() as NavigationRegion3D
+	var region := _navigation_region()
 	if region == null:
-		push_warning("%s has water but does not sit under a NavigationRegion3D, so its river bed stays walkable" % name)
+		push_warning("%s has water but no NavigationRegion3D anywhere above it, so its river bed stays walkable" % name)
 		return
 	WaterNavmesh.strip(region, self)
+
+
+## The NavigationRegion3D whose mesh this terrain's water should be cut out of.
+##
+## THIS USED TO BE get_parent(), FULL STOP. Then the maps were split into an art
+## scene and a level scene and the terrain moved into the art half — where its
+## parent is the art root and the region is a sibling of that whole instance, a
+## level further up. get_parent() stopped being a NavigationRegion3D for every
+## map in the game, so every river became wadeable and the only sign was one
+## warning line at load. Three Rivers reached all eight hardpoints and the exit
+## with sixteen of its seventeen bridges taken out.
+##
+## So it climbs: this node, then each ancestor, and at every step the children of
+## that ancestor — which is where the region sits when the terrain is inside an
+## instanced art scene. The old layout still resolves on the first step up.
+func _navigation_region() -> NavigationRegion3D:
+	var node: Node = self
+	while node != null:
+		if node is NavigationRegion3D:
+			return node as NavigationRegion3D
+		var parent := node.get_parent()
+		if parent != null:
+			for sibling in parent.get_children():
+				if sibling is NavigationRegion3D:
+					return sibling as NavigationRegion3D
+		node = parent
+	return null
 
 
 func _notification(what: int) -> void:

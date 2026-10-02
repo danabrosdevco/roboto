@@ -10,7 +10,7 @@
 [ext_resource type="Shader" path="res://Env/new_sky_oct.16.gdshader" id="11_sky"]
 [ext_resource type="PackedScene" uid="uid://cyslwv078g4sk" path="res://Env/world_objects/cover_point_spawner.tscn" id="62_c3y4d"]
 [ext_resource type="Script" path="res://Env/world_objects/cover_point.gd" id="63_ieng6"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/capture_point.tscn" id="mut_capture"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point_small.tscn" id="mut_capture"]
 [ext_resource type="Script" path="res://Campaign/eliminate_objective.gd" id="mut_eliminate"]
 [ext_resource type="PackedScene" uid="uid://v7tw1nq0fdn0" path="res://Managers/AI/patrol_path.tscn" id="mut_path"]
 [ext_resource type="PackedScene" uid="uid://b7uq15mvhy6vq" path="res://Managers/AI/patrol_point.tscn" id="mut_point"]
@@ -145,7 +145,7 @@ id = &"mutaha_hive_fair"
 display_name = "Fairground Hive"
 description = "Under the wheel in the east fairground. Leave it and it feeds chasers into the east streets for as long as the fight lasts."
 optional = true
-reward_resources = 45
+reward_resources = 0
 linked_squad_point = NodePath("../EnemySquadObjs/Mutaha_Fair")
 
 [node name="HiveCampus" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
@@ -156,7 +156,7 @@ id = &"mutaha_hive_campus"
 display_name = "Campus Hive"
 description = "In the chiller yard beside the data hall. Anything you leave it alive for arrives in the middle of the fifteen seconds you spend at the console."
 optional = true
-reward_resources = 50
+reward_resources = 0
 linked_squad_point = NodePath("../EnemySquadObjs/Mutaha_Compute")
 
 [node name="HiveClock" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
@@ -167,7 +167,7 @@ id = &"mutaha_hive_clock"
 display_name = "Clock Square Hive"
 description = "Dug into the arcade on the north side of the square."
 optional = true
-reward_resources = 45
+reward_resources = 0
 linked_squad_point = NodePath("../EnemySquadObjs/Mutaha_Clock")
 
 [node name="ListeningPost" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
@@ -178,7 +178,7 @@ id = &"mutaha_listening"
 display_name = "Listening Post"
 description = "Four dishes and a floodlight mast on the north island, and the crew that works them. It is what their marksmen shoot on: take it down and the long guns on this island are firing on what they can see themselves."
 optional = true
-reward_resources = 75
+reward_resources = 0
 linked_squad_point = NodePath("../EnemySquadObjs/Mutaha_Listen")
 
 [node name="EnemySquadObjs" type="Node" parent="."]

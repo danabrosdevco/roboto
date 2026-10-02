@@ -1,14 +1,13 @@
-[gd_scene load_steps=20 format=3 uid="uid://r8jyom1thto0"]
+[gd_scene load_steps=19 format=3 uid="uid://r8jyom1thto0"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_l0m7e"]
 [ext_resource type="PackedScene" uid="uid://g7fmy28elpah" path="res://Env/world_objects/spawn_point.tscn" id="2_abk6v"]
 [ext_resource type="Script" path="res://Campaign/squad_spawn_point.gd" id="3_a85we"]
 [ext_resource type="PackedScene" uid="uid://ojf0f5ntdqq5" path="res://maps/pittsburgh_art.tscn" id="4_6bsry"]
-[ext_resource type="PackedScene" uid="uid://c35vac7u5e3gs" path="res://Env/world_objects/dummy_terminal.tscn" id="10_o0w5r"]
 [ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="11_4278d"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="12_48tom"]
 [ext_resource type="Shader" path="res://Env/new_sky_oct.16.gdshader" id="13_b8tln"]
-[ext_resource type="PackedScene" path="res://Env/world_objects/capture_point.tscn" id="pitt_capture"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point_small.tscn" id="pitt_capture"]
 [ext_resource type="Script" path="res://Env/world_objects/cover_point.gd" id="pitt_coverpt"]
 [ext_resource type="PackedScene" uid="uid://cyslwv078g4sk" path="res://Env/world_objects/cover_point_spawner.tscn" id="pitt_coverspawn"]
 [ext_resource type="Script" path="res://Campaign/eliminate_objective.gd" id="pitt_eliminate"]
@@ -142,9 +141,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 352, 0.49, -265)
 channel_duration = 5.0
 id = &"pitt_relay_port"
 display_name = "Port Relay"
-description = "At the port far up the Allegheny, well off the road. Not needed to get out, but it pays."
-optional = true
-reward_resources = 75
+description = "At the port far up the Allegheny, well off the road. The longest leg of the operation, and the only one that takes you out of the river valleys."
+reward_resources = 40
 linked_squad_point = NodePath("../EnemySquadObjs/Pitt_Port")
 
 [node name="HiveIsland" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
@@ -155,7 +153,7 @@ id = &"pitt_hive_island"
 display_name = "Island Hive"
 description = "Dug in on the island below the dam. Left standing it hatches a chaser or a leaper every ten to twenty seconds into the fight for the lock."
 optional = true
-reward_resources = 45
+reward_resources = 0
 linked_squad_point = NodePath("../EnemySquadObjs/Pitt_Island")
 
 [node name="HiveBridge" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
@@ -166,7 +164,7 @@ id = &"pitt_hive_bridge"
 display_name = "Bridgehead Hive"
 description = "Behind the checkpoint at the south end of the Point's bridges, feeding runners to whoever holds the crossing."
 optional = true
-reward_resources = 45
+reward_resources = 0
 linked_squad_point = NodePath("../EnemySquadObjs/Pitt_Bridgehead")
 
 [node name="HiveCoke" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
@@ -177,7 +175,7 @@ id = &"pitt_hive_coke"
 display_name = "Coke Works Hive"
 description = "In the coke works at the east end of the Monongahela, feeding the furnace fight."
 optional = true
-reward_resources = 45
+reward_resources = 0
 linked_squad_point = NodePath("../EnemySquadObjs/Pitt_Coke")
 
 [node name="EnemySquadObjs" type="Node" parent="."]

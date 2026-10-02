@@ -32,10 +32,12 @@
 ; orientation exactly — the 107.88 of yaw and 12.69 of roll that initialize()
 ; reads off the Lance node below — and obstructed_position moves only in Y. So
 ; drawing the lance, and lowering it into a wall, slide it down and up and never
-; turn it. The inherited default is (0.3, 270, 3) against a rest of 107.88, which
-; on a 3.4m polearm is 162 degrees of yaw whipped through in four tenths of a
-; second. Authored here rather than left to the class because the class default
-; was written for a pistol.
+; turn it. The class default was (0.3, 270, 3) when this was authored, which
+; against a rest of 107.88 is 162 degrees of yaw whipped through in four tenths
+; of a second on a 3.4m polearm. That default has since been corrected to 90 — a
+; much smaller 18 — but it is still a TURN, and the point here is that the lance
+; does not turn at all. Authored rather than inherited for that reason, not just
+; because the old default was wrong.
 
 ; IT MAKES A NOISE NOW. The scene shipped with no AudioStreamPlayer at all, so
 ; swing_sound, hit_sound and click_sound were every one of them null: a thrust

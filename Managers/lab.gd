@@ -1,5 +1,13 @@
 extends Node
 
+## Robots are built through CsgBake.make() rather than scene.instantiate(): a
+## CSGShape3D rebuilds its geometry the first time it enters the tree, which cost
+## 8.6 ms per robot and made a 40-strong reserve wave a 336 ms frame. make()
+## hands back the same node with the CSG already replaced by the mesh baked once
+## at startup. It has to happen BEFORE the node is added to the tree — see
+## csg_bake.gd for why neither _enter_tree nor _ready will do.
+const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
+
 # ─────────────────────────────────────────────
 # LABORATORY — AI-vs-AI fights in the arena, watched from a ghost camera.
 #
@@ -241,7 +249,7 @@ func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, 
 		var frame = roster[i]
 		if frame == null or frame.scene == null:
 			continue
-		var s := frame.scene.instantiate() as Soldier
+		var s := _CsgBake.make(frame.scene) as Soldier
 		if s == null:
 			continue
 		s.faction = faction

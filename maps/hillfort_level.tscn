@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://bt27tf1xtntmx"]
+[gd_scene load_steps=19 format=3 uid="uid://bt27tf1xtntmx"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://Env/world_objects/spawn_point.tscn" id="2_spawn"]
@@ -9,6 +9,7 @@
 [ext_resource type="Shader" path="res://Env/new_sky_oct.16.gdshader" id="12_sky"]
 [ext_resource type="PackedScene" path="res://Env/world_objects/squad_objective_point.tscn" id="14_sqpoint"]
 [ext_resource type="Script" path="res://Campaign/interact_objective.gd" id="15_interact"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point_small.tscn" id="hf_capture"]
 [ext_resource type="Script" path="res://Campaign/reach_objective.gd" id="16_reach"]
 [ext_resource type="PackedScene" path="res://Env/world_objects/components/template_interactible.tscn" id="17_interactible"]
 [ext_resource type="PackedScene" path="res://3d_assets/HackerRoom/FBX/PersonalComputer.fbx" id="18_pc"]
@@ -242,23 +243,12 @@ objective_name = "North-West Spur"
 tag = &"obj_hillfort_north_spur"
 show_debug_label = false
 
-[node name="RelayObjective" type="Node3D" parent="." node_paths=PackedStringArray("interactibles", "linked_squad_point")]
+[node name="RelayObjective" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("hf_capture")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 132, -262)
-script = ExtResource("15_interact")
-interactibles = [NodePath("Interactible")]
 id = &"hillfort_relay"
 display_name = "The Relay"
-description = "Take the console in the fort yard."
+description = "Take the core in the fort yard."
 reward_resources = 40
 linked_squad_point = NodePath("../EnemySquadObjs/Hillfort_Dish")
 
-[node name="Interactible" parent="RelayObjective" instance=ExtResource("17_interactible")]
-collision_layer = 3
-type = 4
-respawns_on_reset = false
-destroy_on_use = false
-
-[node name="PersonalComputer" parent="RelayObjective" instance=ExtResource("18_pc")]
-
 [editable path="WorldEnvironment"]
-[editable path="RelayObjective/Interactible"]

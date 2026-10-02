@@ -30,7 +30,7 @@ const SFX_SHOW := preload("res://sounds/sfx/psx ui sfx/squad_manager/HoverG.ogg"
 const COL_HEAD := HUDPalette.BRIGHT
 const COL_BODY := Color(0.95, 1.0, 0.97)
 ## Added under the sign that finishes the tutorial, the one time it does.
-const FINISHED_LINE := "TUTORIAL COMPLETE. EVERY LESSON IS NOW IN THE PAUSE MENU:\nESC, THEN TUTORIALS."
+const FINISHED_LINE := "TUTORIAL COMPLETE. EVERY LESSON IS KEPT ON THE MAIN MENU\nUNDER TUTORIALS."
 
 ## Headline (the sign's first line) and body sizes. Big on purpose: this is the
 ## one piece of text in the game that has to be read on the move.

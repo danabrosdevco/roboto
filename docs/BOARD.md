@@ -39,7 +39,9 @@ Nothing else is waiting on you. Mutaha WIP approved, Bridge07 confirmed.
 - The Nest stays as it is — a structure that does not move, and the first of
   many enemy structures.
 - AI shotgun switched to pellets; the in-game number is correct as it stands.
-- `valley_level` is dead. `arena_level` and `homebase_level` look dead too.
+- `valley_level` is dead. `arena_level` is NOT — it opens the M2 ladder.
+  `homebase_level` is not out of service either: it is where the depot's lost
+  tutorial lessons get lifted from.
 - Chaser and Leaper are enemy frames, not stock. Removed from the shop.
 - Fitted kit is not faction-painted; it gets its own materials.
 - The capsule soldier stays. An anatomical body was built and rejected.
@@ -87,36 +89,40 @@ Ordered. Causeway waits for Mutaha, by your call.
 
 1. **Mutaha tuning.** Activation distance is **not level data** — it is a
    per-chassis `@export` on the robot scenes, so a change there is global to
-   every map, not Mutaha-only. The infantry are already 250 → 120 (rifle,
-   marksman, shotgun); still at 250 are the helicopter and the spotter drone,
-   at 200 the nest and the walker. Flyers arguably want the longer reach; that
-   is a judgement, not an oversight. Then re-measure on the reworked map.
+   every map, not Mutaha-only. Current values, read off the scenes: **120**
+   rifle, armoured rifle, marksman, shotgun · **200** nest, walker · **250**
+   helicopter, spotter drone, diver · **400** `enemy_watcher` · **30**
+   boss_guardian. The watcher at 400 is the widest in the project and nothing
+   has touched it. Flyers arguably want the longer reach; that is a judgement,
+   not an oversight. Then re-measure on the reworked map.
 2. **Three small finishes, all owed.** Spotters fly and make noise in the
    depot (should park and hush whenever `Campaign.in_mission` is false, which
-   covers home base too). Soldier weapons draw at quarter size — `WeaponMount`
-   bakes a 0.25 scale, and all five infantry mounts want the same new value or
-   the squad's guns and the enemy's disagree. Lobber Rover's icon is identical
-   to the Rover's.
+   covers home base too). Soldier weapons: only two infantry mounts are authored
+   and they disagree — `soldier_chassis.tscn` is already at **0.4** while
+   `mechanic_chassis.tscn` is still at **0.25** (rover and walker sit at 1.0).
+   Bring the mechanic up to match or the welder reads as a toy beside the
+   squad's rifles. Lobber Rover's icon is identical to the Rover's.
 3. **The onboarding regressed and it is an M2 blocker.** `test_tutorial.gd`
-   fails: the base level carries **6** tutorial signs where the test wants ten.
-   `homebase_level.tscn` has **14**; `depot_level.tscn` has **6**. Eight signs
-   were lost when the depot replaced homebase as the base and nobody noticed,
-   because the suite has been failing quietly. `TutorialToast` is also missing
-   at the tree root, and the suite hard-crashes at `test_tutorial.gd:87`.
-   TERRAIN owns the level file, GAMEPLAY owns the toast and the test; the
-   signs' *content* can be lifted from homebase. This is exactly what a
-   friend's first run hits, so it cannot wait for after the build.
+   wants ten signs, seven of them carrying a lesson, and a `TutorialToast` at
+   the tree root. The depot has **none of it**: `depot_level.tscn` contains zero
+   `TutorialLabel`s — only six plain `Label3D`s, DEPOT, TERMINAL, MUSTER, BAYS,
+   RANGE, TRANSIT, and not one carries `toast_text`. So the loss is total, not
+   eight-of-fourteen. The machinery is intact and the *content* was dropped with
+   the old layout; `homebase_level.tscn` still carries it, which is where the
+   lessons get lifted from. The suite does not crash — it bails deliberately at
+   `test_tutorial.gd:104` and prints why. TERRAIN owns the level file, GAMEPLAY
+   owns the toast and the test. This is exactly what a friend's first run hits,
+   so it cannot wait for after the build.
 4. **Causeway mission.** Largest map in the repo, intended end of the ladder,
    nothing points at it. Design agreed: advance the highway, fight the fort,
    room-by-room the tower, capture at the top.
 5. **Catalogue the dark frames.** Quadcopter Bomber, Marksman, Mortar Track,
    Lobber Rover exist and none is purchasable. Icons now exist for three.
 6. **Armour model — briefed and unblocked.** Full spec at
-   `docs/briefs/ARMOUR.md`. Two coordinator notes on it before anyone starts:
-   the `_collapse_pieces()` fix can no longer land on its own (it is entangled
-   with the culling work in the same uncommitted `enemy.gd`, so land that as
-   one commit first), and the Laboratory **before** measurement is perishable
-   — take it before the helper goes into `apply_damage`.
+   `docs/briefs/ARMOUR.md`. One coordinator note on it before anyone starts:
+   the Laboratory **before** measurement is perishable — take it before the
+   helper goes into `apply_damage`. The `enemy.gd` entanglement the brief warns
+   about is resolved; the culling and corpse work is in HEAD.
 
 ---
 
@@ -261,8 +267,9 @@ Wanted, ordered loosely, not scheduled.
 **Owed engineering**
 - Distance culling has no regression test. It needed guards in five separate
   places across two sessions; a sixth path would undo it silently.
-- Clean out leftover probe scripts: `tools/probe_arm.gd`, `probe_mutaha.gd` and
-  six terrain probes are untracked scratch files that survived their sessions.
+- Clean out the probe scripts. `tools/` holds 31 `probe_*.gd` scratch files left
+  over from finished sessions and 30 of them are committed, so this is project
+  weight now rather than untracked mess. `probe_arm.gd` is already gone.
 - Pittsburgh bridge spacing fails the suite — BridgeArch2/BridgeArch3 are 6.7 m
   apart. TERRAIN's, geometry not code.
 - Rover collision shape: correct shape built, caused an unexplained pack
@@ -308,7 +315,7 @@ generator had left empty. River wall round the island's south tip. A crossing
 at z = 316 added beyond the ask, because without it the extended town is
 unreachable. Awaiting a verdict.
 
-**2026-09-28, TERRAIN — reverted, and self-reported.** A depot ramp pass ran
+**2026-09-27, TERRAIN — reverted, and self-reported.** A depot ramp pass ran
 `block_homebase.gd -- maps --force` over a whole folder and overwrote
 `maps/depot/depot_level.map`, destroying TrenchBroom edits that had no backup
 and were unrecoverable. Rolled back to `4cc5ef2`, hash-verified. The rule that
@@ -358,7 +365,7 @@ which path, not by branching.
 | `Campaign/**` (missions included), `Character/**`, `Managers/**` | GAMEPLAY |
 | `tools/test_*.gd` EXCEPT the terrain suites below, `docs/GAMEPLAN.md`, `docs/BARK_LIBRARY.md` | GAMEPLAY |
 | `tools/test_terrain.gd`, `test_block_*.gd`, `test_prop_nav.gd`, `test_water_navmesh.gd` | TERRAIN |
-| `docs/BOARD.md`, `docs/GDD.md`, `docs/APPENDIX.md`, `docs/briefs/**` | COORDINATOR |
+| `docs/BOARD.md`, `docs/GDD.md`, `docs/APPENDIX.md`, `docs/briefs/**` EXCEPT `MARKETING.md` | COORDINATOR |
 | `docs/marketing/**`, `docs/briefs/MARKETING.md` | MARKETING |
 | `docs/reports/<LANE>.md` | that lane, and only that lane |
 

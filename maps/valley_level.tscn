@@ -6319,7 +6319,7 @@ id = &"valley_hive_south"
 display_name = "South Hive"
 description = "The spawner dug in at the south garrison. Left standing it hatches a chaser or a leaper every ten to twenty seconds, for as long as the fight lasts."
 optional = true
-reward_resources = 45
+reward_resources = 0
 linked_squad_point = NodePath("../EnemySquadObjs/Valley_Garrison2")
 
 [node name="HiveObjectiveNorth" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
@@ -6330,7 +6330,7 @@ id = &"valley_hive_north"
 display_name = "North Hive"
 description = "The second spawner, in the north garrison you have to take. Killing it stops the reinforcements before you go in."
 optional = true
-reward_resources = 45
+reward_resources = 0
 linked_squad_point = NodePath("../EnemySquadObjs/Valley_Garrison4")
 
 [node name="PlayerSpawnSquad" type="Node3D" parent="."]

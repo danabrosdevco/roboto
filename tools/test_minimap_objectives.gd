@@ -23,6 +23,8 @@ func _init() -> void:
 
 	var world := load("res://Env/world.tscn") as PackedScene
 	var missions: Array = _missions(world.get_state())
+	_check_arrow()
+
 	print("")
 	print("══ WHAT EACH MISSION MARKS ON THE MAP ════════════════════")
 	for m in missions:
@@ -126,3 +128,56 @@ func _missions(st: SceneState) -> Array:
 				return st.get_node_property_value(i, j)
 		return []
 	return []
+
+
+# ─────────────────────────────────────────────
+# THE "YOU ARE HERE" ARROW POINTS THE WAY YOU ARE FACING
+#
+# It did not. The old maths went through signed_angle_to and rebuilt a vector as
+# (sin, -cos), which negates the vertical component only — so the arrow was
+# right facing east or west and exactly backwards facing north or south. A
+# MIRROR, not a rotation, and that is why nobody caught it: half of every spin
+# looks correct. It was reported as "the arrow is reversed 180 degrees on
+# Qamareen", and it was on every map.
+#
+# CHECKED AGAINST to_uv'S OWN AXES, not against a second copy of the formula.
+# to_uv puts world X on u and world Z on v, so walking one metre in the facing
+# direction has to move the dot the way the arrow points. That is the invariant,
+# and it is the one thing a re-implementation inside the test would not catch.
+# ─────────────────────────────────────────────
+const _Briefing := preload("res://Character/hud/mission_briefing.gd")
+const _Minimap := preload("res://Campaign/minimap_data.gd")
+
+func _check_arrow() -> void:
+	print("")
+	print("══ THE PLAYER ARROW ══════════════════════════════════════")
+	var data = _Minimap.new()
+	data.world_min = Vector2(-100.0, -100.0)
+	data.world_max = Vector2(100.0, 100.0)
+	var here := Vector3(10.0, 0.0, -20.0)      # off-centre, so a sign error shows
+	for row in [
+			["north", Vector3(0, 0, -1)], ["south", Vector3(0, 0, 1)],
+			["east", Vector3(1, 0, 0)], ["west", Vector3(-1, 0, 0)],
+			["north-east", Vector3(1, 0, -1).normalized()]]:
+		var name: String = row[0]
+		var facing: Vector3 = row[1]
+		var arrow: Vector2 = _Briefing.map_arrow(facing)
+		# Where a step in that direction actually lands on the image.
+		var a: Vector2 = data.to_uv(here)
+		var b: Vector2 = data.to_uv(here + facing * 5.0)
+		var moved := (b - a).normalized()
+		var ok := arrow.distance_to(moved) < 0.01
+		if not ok:
+			_fail("facing %s: the arrow points %s but the dot moves %s" % [
+				name, arrow, moved])
+		print("     %-11s arrow %-16s dot moves %-16s %s" % [
+			name, "(%.2f, %.2f)" % [arrow.x, arrow.y],
+			"(%.2f, %.2f)" % [moved.x, moved.y], "ok" if ok else "WRONG"])
+
+	# A pitched-straight-down facing has no heading at all. It must still give a
+	# unit vector, or the arrow collapses to a dot with no warning.
+	var degenerate: Vector2 = _Briefing.map_arrow(Vector3(0, -1, 0))
+	if absf(degenerate.length() - 1.0) > 0.01:
+		_fail("a facing with no heading gave %s, which does not draw an arrow" % degenerate)
+	print("     %-11s arrow %-16s (must still be a unit vector)" % [
+		"straight down", "(%.2f, %.2f)" % [degenerate.x, degenerate.y]])

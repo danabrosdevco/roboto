@@ -361,6 +361,7 @@ func _build_debug() -> void:
 	_header("PERMANENT — GOES INTO THE SAVE AND CANNOT BE TAKEN BACK")
 	_give("GIVE RESOURCES", "ADDS 5000 TO THE PURSE.", "+5000", 5000, false)
 	_give("GIVE COMPUTE", "ADDS 50 UNSPENT COMPUTE.", "+50", 50, true)
+	_complete_mission_row()
 
 
 ## One handout row: a name, a button, and the campaign on the other end of it.
@@ -382,6 +383,40 @@ func _give(label: String, hint: String, button_text: String, amount: int, comput
 	row["enabled"] = Callable()
 	row["controls"] = [button]
 
+
+
+
+## The mission-clear row. Same shape as _give — a name, a button, and the
+## campaign on the other end — but it only does anything while you are actually
+## on an operation, so it reads back as unavailable at base and in the menu.
+func _complete_mission_row() -> void:
+	var row := _new_row("COMPLETE OPERATION",
+		"TICKS EVERY OBJECTIVE, OPTIONAL ONES INCLUDED, AND WALKS YOU INTO THE EXTRACTION POINT. PAYS OUT IN FULL AND CLEARS THE OPERATION. ONLY WORKS WHILE YOU ARE ON ONE.")
+	var line: HBoxContainer = row["line"]
+	line.add_child(_gap(ARROW_W))
+	var button := _flat_button("CLEAR", FONT_ROW)
+	button.custom_minimum_size = Vector2(VALUE_W, 0)
+	button.pressed.connect(_on_complete_mission)
+	line.add_child(button)
+	line.add_child(_gap(READOUT_W))
+	row["refresh"] = Callable()
+	row["enabled"] = Callable()
+	row["controls"] = [button]
+
+
+func _on_complete_mission() -> void:
+	_play(confirm_sound)
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	if campaign == null or not campaign.has_method("debug_complete_mission"):
+		# Says why rather than doing nothing. The options screen opens from the
+		# MAIN MENU too, where there is no campaign in the tree at all.
+		_flash("NO CAMPAIGN LOADED — START A RUN FIRST.", COL_WARN)
+		return
+	# One string back, because the campaign knows all the ways this can refuse
+	# — not on an operation, no tracker, no exit in the level — and the menu
+	# should not be guessing at them a second time.
+	var said: String = str(campaign.debug_complete_mission())
+	_flash(said, COL_BRIGHT if said.ends_with("EXTRACTING.") else COL_WARN)
 
 func _on_give(amount: int, compute: bool) -> void:
 	_play(confirm_sound)

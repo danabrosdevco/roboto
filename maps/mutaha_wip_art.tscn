@@ -1,13 +1,10 @@
-[gd_scene load_steps=78 format=3]
+[gd_scene load_steps=75 format=3 uid="uid://c0ly28dq0ebys"]
 
 [ext_resource type="Script" path="res://Env/terrain/generated_terrain.gd" id="1_onv5o"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="2_1w3lq"]
-[ext_resource type="Texture2D" path="res://Env/terrain/sketches/mutaha_wip.png" id="3_tvk31"]
+[ext_resource type="Texture2D" uid="uid://5uykb5l8kwuj" path="res://Env/terrain/sketches/mutaha_wip.png" id="3_tvk31"]
 [ext_resource type="Resource" path="res://maps/terrain_data/mutaha_wip_level_terrain.res" id="4_6tkai"]
-[ext_resource type="Material" path="res://Env/terrain/terrain_material.tres" id="5_8dfit"]
-[ext_resource type="Material" path="res://Env/terrain/water_material.tres" id="6_dvh23"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_scatter.gd" id="7_n31lq"]
-[ext_resource type="Script" path="res://Env/terrain/terrain_scatter_layer.gd" id="8_qpvh6"]
 [ext_resource type="PackedScene" path="res://maps/blocks/building_compound.tscn" id="9_a07et"]
 [ext_resource type="PackedScene" path="res://maps/blocks/building_warehouse.tscn" id="18_ueyb4"]
 [ext_resource type="PackedScene" path="res://maps/blocks/building_ruin_low.tscn" id="19_5su23"]
@@ -61,7 +58,7 @@
 [ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_substation.tscn" id="86_yh51o"]
 [ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_transformer.tscn" id="87_7avis"]
 [ext_resource type="PackedScene" path="res://maps/blocks/features/feature_fuel_tanks.tscn" id="88_d7k2l"]
-[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_cable_run.tscn" id="89_ogxri"]
+[ext_resource type="PackedScene" uid="uid://dnw7ptd8b8xg6" path="res://maps/blocks/compute/compute_cable_run.tscn" id="89_ogxri"]
 [ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_data_hall.tscn" id="90_yovqn"]
 [ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_cooling_unit.tscn" id="92_fvvrq"]
 [ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_rack_row.tscn" id="93_s603f"]
@@ -137,7 +134,7 @@ road_falloff = 5.0
 road_smoothing = 40.0
 bridge_clearance = 2.0
 
-[node name="MutahaWipArt" type="Node3D"]
+[node name="QamareenArt" type="Node3D"]
 
 [node name="Terrain" type="Node3D" parent="."]
 script = ExtResource("1_onv5o")
@@ -1085,9 +1082,6 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -74, -0.47733, 319)
 [node name="Chicane1" parent="Dressing/WestBridgehead" instance=ExtResource("76_sxar3")]
 transform = Transform3D(0.132991, 0, 0.991117, 0, 1, 0, -0.991117, 0, 0.132991, -167.328, -1.37018, -64.8741)
 
-[node name="Chicane2" parent="Dressing/WestBridgehead" instance=ExtResource("76_sxar3")]
-transform = Transform3D(0.690156, 0, 0.723661, 0, 1, 0, -0.723661, 0, 0.690156, -177.966, -1.27172, -58.8882)
-
 [node name="Chicane3" parent="Dressing/WestBridgehead" instance=ExtResource("76_sxar3")]
 transform = Transform3D(0.132991, 0, 0.991117, 0, 1, 0, -0.991117, 0, 0.132991, -179.949, -1.48183, -70.9326)
 
@@ -1140,7 +1134,7 @@ transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -164.855, -1.37994, -69.1103)
 
 [node name="Rubble2" parent="Dressing/WestBridgehead" instance=ExtResource("59_6hy75")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -188.316, -1.37635, -62.747)
+transform = Transform3D(0.635459, 0, 0.772135, 0, 1, 0, -0.772135, 0, 0.635459, -188.316, -1.37635, -53.1164)
 
 [node name="Blocks1" parent="Dressing/WestBridgehead" instance=ExtResource("68_pi8c8")]
 transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, -160.855, -1.11248, -41.1304)
@@ -1162,9 +1156,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -148.339, -1.22276, -71.1654)
 
 [node name="Mound2" parent="Dressing/WestBridgehead" instance=ExtResource("82_mw0a1")]
 transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -171.8, -1.18621, -37.0712)
-
-[node name="Hesco1" parent="Dressing/WestBridgehead" instance=ExtResource("83_sdsyr")]
-transform = Transform3D(0.978148, 0, 0.207912, 0, 1, 0, -0.207912, 0, 0.978148, -175.802, -1.29553, -63.3958)
 
 [node name="Hesco2" parent="Dressing/WestBridgehead" instance=ExtResource("83_sdsyr")]
 transform = Transform3D(0.978148, 0, 0.207912, 0, 1, 0, -0.207912, 0, 0.978148, -177.677, -1.45511, -68.7329)
@@ -1444,7 +1435,7 @@ transform = Transform3D(-0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, -0.866025, -200.5, 
 transform = Transform3D(-0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, -0.766044, -200.5, -1.0876, 85.5)
 
 [node name="Street65" parent="Dressing/SouthQuarter" instance=ExtResource("68_pi8c8")]
-transform = Transform3D(-0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, -0.766044, -204.5, -0.69687, 118.5)
+transform = Transform3D(-0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, -0.766044, -200.032, -0.69687, 118.5)
 
 [node name="Street66" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
 transform = Transform3D(-0.34202, 0, -0.939693, 0, 1, 0, 0.939693, 0, -0.34202, -214.5, -0.58228, 116.5)
@@ -1456,7 +1447,7 @@ transform = Transform3D(-0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, -0.5, -220.5, 
 transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, -217.5, -0.45811, 138.5)
 
 [node name="Street69" parent="Dressing/SouthQuarter" instance=ExtResource("84_t76os")]
-transform = Transform3D(-0.642788, 0, -0.766044, 0, 1, 0, 0.766044, 0, -0.642788, -208.5, -0.29041, 156.5)
+transform = Transform3D(-0.642788, 0, -0.766044, 0, 1, 0, 0.766044, 0, -0.642788, -203.35, -0.29041, 156.5)
 
 [node name="Street70" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
 transform = Transform3D(0.34202, 0, -0.939693, 0, 1, 0, 0.939693, 0, 0.34202, -200.5, -0.29231, 157.5)
@@ -1474,10 +1465,10 @@ transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, 
 transform = Transform3D(-0.173648, 0, -0.984808, 0, 1, 0, 0.984808, 0, -0.173648, -204.5, -0.21176, 187.5)
 
 [node name="Street75" parent="Dressing/SouthQuarter" instance=ExtResource("82_mw0a1")]
-transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, -207.5, -0.21453, 189.5)
+transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, -230.289, -0.21453, 186.63)
 
 [node name="Street76" parent="Dressing/SouthQuarter" instance=ExtResource("59_6hy75")]
-transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -219.5, -0.26029, 194.5)
+transform = Transform3D(0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, 0.766044, -204.546, -0.26029, 194.5)
 
 [node name="Street77" parent="Dressing/SouthQuarter" instance=ExtResource("64_fe2df")]
 transform = Transform3D(-0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, -0.5, -200.5, -0.3281, 223.5)

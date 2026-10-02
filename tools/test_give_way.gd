@@ -132,6 +132,8 @@ func _test_yield() -> void:
 
 	var gave_way := false
 	var tries_used := 0
+	var worst_step := 0.0
+	var prev: Vector3 = sol.global_position
 	for _f in 180:                                    # three seconds
 		# What the navigation layer would be asking for: straight at the rover.
 		sol.movement_state = sol.MovementState.MOVING
@@ -141,6 +143,9 @@ func _test_yield() -> void:
 			gave_way = true
 		tries_used = maxi(tries_used, int(sol.get("_give_way_tries")))
 		await physics_frame
+		worst_step = maxf(worst_step, Vector2(
+			sol.global_position.x - prev.x, sol.global_position.z - prev.z).length())
+		prev = sol.global_position
 
 	var sideways: float = absf(sol.global_position.x - start.x)
 	_check("a soldier driven into a rover gives way", gave_way)
@@ -158,6 +163,22 @@ func _test_yield() -> void:
 	# arriving four tenths of a second sooner.
 	_check("...and it cost no path re-plan", int(sol.get("_stuck_retry_count")) == 0,
 		"_stuck_retry_count = %d" % int(sol.get("_stuck_retry_count")))
+
+	# THE SIDESTEP SETS THE VELOCITY, IT DOES NOT ADD TO IT.
+	#
+	# It used to add — velocity.x += side.x, every frame for the whole 0.7s of
+	# the yield — on top of a velocity the movement code lerps towards its
+	# target rather than overwriting. So the nudge compounded: measured ramping
+	# 10 -> 35 -> 37 m/s over forty frames and carrying the robot twenty metres,
+	# which read in game as two robots brushing past each other and one of them
+	# being fired across the map. Nothing downstream caught it, because
+	# _damp_shoving only caps a body that is still in contact and by then they
+	# were long apart. A sidestep can never be faster than walking.
+	var step_budget: float = sol.move_speed * maxf(1.0, sol.GIVE_WAY_SIDE_SPEED) \
+		* sol.get_physics_process_delta_time() * 1.35
+	_check("...at walking pace, never faster", worst_step <= step_budget,
+		"worst step %.3f m, budget %.3f m (%.1f m/s)" % [
+			worst_step, step_budget, worst_step / sol.get_physics_process_delta_time()])
 
 	sol.free()
 	rover.free()

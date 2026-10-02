@@ -1,6 +1,14 @@
 [gd_scene load_steps=4 format=3]
 
 ; DRONE CARRIER PACK, in the player's hands. Thrown, like the Hatchling.
+;
+; HELD FURTHER OUT THAN A GRENADE, AND STRIPPED TO THE CANISTER. The depth was
+; inherited from grenade_hud_weapon, which is sized for a frag that fits in a
+; fist; this case is 0.34m across and filled the middle of the screen at that
+; distance. The two harness straps are the only parts that are not the canister
+; itself — they stand 0.15m proud, taller than the 0.14m case they are strapped
+; to, and read as webbing hanging in front of the view. Hidden here rather than
+; in the model, which is also the thrown canister and the armoury icon.
 
 [ext_resource type="PackedScene" path="res://Character/weapon/grenade_hud_weapon.tscn" id="1_base"]
 [ext_resource type="PackedScene" path="res://Character/weapon/drone_pack/drone_pack_canister.tscn" id="2_proj"]
@@ -17,4 +25,10 @@ viewmodel = NodePath("Pack")
 visible = false
 
 [node name="Pack" parent="." instance=ExtResource("3_model")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0237351, -0.473094)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0237351, -0.7)
+
+[node name="StrapL" parent="Pack"]
+visible = false
+
+[node name="StrapR" parent="Pack"]
+visible = false

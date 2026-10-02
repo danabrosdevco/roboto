@@ -621,6 +621,22 @@ func _hold_follow_formation() -> void:
 func _on_ground(slot: Vector3, robot: Node) -> Vector3:
 	if not (robot is Enemy) or (robot as Enemy).nav_agent == null:
 		return slot
+	# STRAIGHT AT THE SERVER, NOT THROUGH THE SNAP BUDGET.
+	#
+	# It went through Enemy.snap_on_map for one pass and that was a mistake. The
+	# budget is six queries a frame across every robot in the level, sized for
+	# advance targets — and roughly two hundred robots want a formation slot.
+	# Nearly all of them were refused, snap_on_map hands back the raw point when
+	# it refuses, and _slot_for CACHES the difference: so the correction cached
+	# as ZERO and stayed zero until the slot drifted.
+	#
+	# What that looked like: slots sitting wherever the formation maths put them,
+	# including out over the water beside a bridge, and robots jammed against the
+	# parapet walking at a slot that was not on the deck.
+	#
+	# _slot_for IS the throttle. It only asks when a slot has drifted
+	# follow_snap_refresh, which is already far less than once a frame. Putting a
+	# cache behind a budget bought nothing and broke the thing it was measuring.
 	var p := NavigationServer3D.map_get_closest_point((robot as Enemy).nav_agent.get_navigation_map(), slot)
 	return slot if p == Vector3.ZERO else p
 
@@ -997,6 +1013,18 @@ func set_objective(
 	_issue_objective_orders(force)
 
 func _issue_objective_orders(force: bool = false) -> void:
+	# WHO IS ON A ROUTE, FOR THE CULL. A hostile beyond activation_distance is
+	# frozen, which is right for a garrison and wrong for a patrol: measured,
+	# three of Qamareen's four patrol squads walked 0.0 m in two minutes and
+	# none advanced a leg, because they sat culled on point 0 until the player
+	# came within 75 m. Every patrol in the game was therefore found parked at
+	# the start of its route. Set here rather than in _issue_patrol_orders so
+	# that it is also CLEARED by every other objective, and the exemption never
+	# outlives the patrol that earned it.
+	var patrolling: bool = objective == SquadObjective.PATROL
+	for ai in get_orderable_members():
+		if "on_patrol" in ai:
+			ai.on_patrol = patrolling
 	match objective:
 		SquadObjective.ADVANCE:
 			var members: Array = get_orderable_members()

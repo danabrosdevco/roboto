@@ -13,7 +13,7 @@
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="10_mech"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="12_nest"]
 [ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="13_bomber"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_marksman.tres" id="14_marks"]
+[ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="14_marks"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="15_lobber"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_mortar_track.tres" id="16_mortar"]
 
@@ -543,7 +543,7 @@ map_position = Vector2(500, -60)
 enemy_force = Array[ExtResource("2_espec")]([SubResource("S_south_bridge"), SubResource("S_east_ford"), SubResource("S_gatehouse"), SubResource("S_solar"), SubResource("S_server"), SubResource("S_compute"), SubResource("S_hive_campus"), SubResource("S_avenue"), SubResource("S_listen"), SubResource("S_north_bridge"), SubResource("S_isle_north"), SubResource("S_north_road"), SubResource("S_west_bridge"), SubResource("S_fair"), SubResource("S_hive_fair"), SubResource("S_east_market"), SubResource("S_east_quarter"), SubResource("S_clock"), SubResource("S_hive_clock"), SubResource("S_west_market"), SubResource("S_west_quarter"), SubResource("S_street_east"), SubResource("S_street_west"), SubResource("S_spine_watch"), SubResource("S_sweep_south"), SubResource("S_gate_counter"), SubResource("S_campus_counter"), SubResource("S_hall_counter"), SubResource("S_clock_counter"), SubResource("S_swarm"), SubResource("S_column"), SubResource("S_air_hall"), SubResource("S_air_clock"), SubResource("S_air_fair")])
 replace_level_enemies = true
 active_objectives = Array[StringName]([&"mutaha_relay_gate", &"mutaha_relay_server", &"mutaha_relay_compute", &"mutaha_relay_clock", &"mutaha_listening", &"mutaha_extract"])
-reward_resources = 850
+reward_resources = 950
 compute_reward = 2
 unlocks = Array[StringName]([&"spotter"])
 squad_size = -1

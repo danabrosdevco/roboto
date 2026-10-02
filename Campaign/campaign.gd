@@ -1,6 +1,8 @@
 extends Node
 class_name CampaignManager
 
+const _SaveSlots := preload("res://Campaign/save_slots.gd")
+
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
 const _Induction := preload("res://Campaign/induction.gd")
@@ -142,30 +144,36 @@ func _ready() -> void:
 	if unlock_all_missions:
 		push_warning("Campaign: unlock_all_missions is ON. Every mission is selectable and none ever retire. Turn this off before exporting a build.")
 
-	state = CampaignState.load_from_disk()
-	if state == null:
-		state = CampaignState.new()
-		_seed_new_campaign()
-	state.catalogue = catalogue
-	if not state.soldier_repaired.is_connected(_on_soldier_repaired):
-		state.soldier_repaired.connect(_on_soldier_repaired)
+	# MENU FIRST, BUT THE WORLD BEHIND IT IS NOT EMPTY.
+	#
+	# The player still chooses on the front page — that is what menu-first means.
+	# What it cannot mean is that nothing is loaded underneath: World loads the
+	# depot before the menu is dismissed, on_level_loaded deploys the squad from
+	# the roster, and with no roster the depot came up with no allies, no
+	# casualty and no induction. Every tool that boots the world without a menu
+	# lost its squad the same way.
+	#
+	# So: open the most recent campaign speculatively. Picking a different one on
+	# the menu replaces it and re-deploys (see _adopt_state).
+	_SaveSlots.adopt_legacy()
+	var open_id := _SaveSlots.most_recent()
+	if open_id != "" and load_profile(open_id):
+		return
 
-	# Armoury transactions write straight through, so a crash at base can never
-	# cost you a purchase you already paid for.
-	if not state.ledger_changed.is_connected(_queue_base_save):
-		state.ledger_changed.connect(_queue_base_save)
-	if not state.roster_changed.is_connected(_queue_base_save):
-		state.roster_changed.connect(_queue_base_save)
-	_repair_roster()
-	state.recompute_roster()
-	# After the catalogue: a save from before teams gets its INFANTRY and ARMOR
-	# built from what each robot's frame is.
-	state.ensure_teams()
-	if not state.teams_changed.is_connected(_on_teams_changed):
-		state.teams_changed.connect(_on_teams_changed)
-	_pay_compute_owed()
-	_grant_owed_unlocks()
-	state_loaded.emit()
+	# Nothing saved. A scratch campaign, IN MEMORY ONLY, so the depot behind the
+	# menu is populated and headless tools still work. It is not a profile:
+	# active_slot stays empty, nothing is written, and START replaces it.
+	state = CampaignState.new()
+	state.catalogue = catalogue
+	# NOWHERE TO SAVE. Not a default, not the legacy path — nowhere. See
+	# CampaignState.save_to_disk: anything that writes this campaign would be
+	# writing over a real one.
+	state.save_path = ""
+	active_slot = ""
+	_seed_new_campaign()
+	_adopt_state("")
+	return
+
 
 
 # A save from before compute — or from before an op paid any — has cleared ops
@@ -338,9 +346,172 @@ func _seed_new_campaign() -> void:
 			for r in state.roster:
 				state.fit_item(r, gun, 0)
 
-	if autosave:
+	# ONLY A REAL PROFILE IS WRITTEN. A scratch campaign standing behind the main
+	# menu must not touch the disk — and with no profile open, save_path is still
+	# the legacy user://campaign.json, which is the save a player may well still
+	# be relying on.
+	if autosave and active_slot != "":
 		state.save_to_disk()
 
+
+# ─────────────────────────────────────────────
+# CAMPAIGN PROFILES
+# ─────────────────────────────────────────────
+# There used to be one save and one way to start over: delete campaign.json by
+# hand. A campaign is a file under user://saves now, and these are what a menu
+# drives. See save_slots.gd.
+#
+# NOTHING HERE TOUCHES THE OLD user://campaign.json. It is adopted — copied — on
+# first boot and then left alone, so a player who was mid-run when they updated
+# keeps it either way.
+
+## Which campaign is open. Empty before one has been chosen.
+var active_slot: String = ""
+
+## Emitted when the open campaign changes: a different profile loaded, a new one
+## started. The HUD and the menus reload from `state` on this.
+signal profile_changed(id: String)
+
+
+## True once a campaign is actually open. False while the main menu is up: the
+## state exists but it is a placeholder, not anybody's save.
+func has_open_profile() -> bool:
+	return active_slot != ""
+
+
+## The campaign CONTINUE should resume, or "" when there is nothing to continue.
+func most_recent_profile() -> String:
+	return _SaveSlots.most_recent()
+
+
+## Every campaign on disk, most recently played first. See SaveSlots.list().
+func profiles() -> Array:
+	return _SaveSlots.list()
+
+
+func active_profile_name() -> String:
+	return state.profile_name if state != null and state.profile_name != "" else "Campaign"
+
+
+## Start a fresh campaign and make it the open one.
+##
+## `squad_name` and `player_name` are what the player types before the game
+## starts; both fall back to the defaults rather than being left blank, because
+## an empty name reads as a bug everywhere it is then printed.
+func new_profile(profile_name: String, squad_name: String = "", player_name: String = "") -> String:
+	var wanted := profile_name.strip_edges()
+	if wanted == "":
+		wanted = _SaveSlots.UNTITLED
+	if not _SaveSlots.ensure_dir():
+		return ""
+	var id := _SaveSlots.unique_id(wanted)
+
+	# IN PLACE, for the same reason load_profile is. A blank campaign is just the
+	# dictionary of a blank CampaignState put through the one path that knows how
+	# to read a save.
+	if state == null:
+		state = CampaignState.new()
+	state.restore_from(CampaignState.new().to_dict())
+	state.catalogue = catalogue
+	state.save_path = _SaveSlots.path_for(id)
+	state.profile_name = wanted
+	state.created_utc = Time.get_datetime_string_from_system(true)
+	var squad := squad_name.strip_edges().to_upper()
+	if squad != "":
+		state.squad_name = squad
+	_seed_new_campaign()
+	if state.player_record != null:
+		var who := player_name.strip_edges()
+		if who != "":
+			state.player_record.display_name = who
+	_adopt_state(id)
+	# Written immediately, even with autosave off: a profile the player named and
+	# then could not find because nothing had been committed to disk is worse
+	# than a stray file.
+	state.save_to_disk()
+	return id
+
+
+## Open an existing campaign. False when it is missing or unreadable — the
+## campaign already open is left alone in that case rather than being replaced
+## with a blank one.
+func load_profile(id: String) -> bool:
+	if not _SaveSlots.exists(id):
+		push_warning("Campaign: no profile '%s' to load; staying on '%s'." % [id, active_slot])
+		return false
+	# RESTORED INTO THE STATE WE ALREADY HAVE, not swapped for a new one.
+	#
+	# Half the game holds a reference to this object and binds to ITS signals —
+	# the player's loadout to roster_changed, the squad manager, the wallet, the
+	# induction. Replacing it left every one of them listening to a state nobody
+	# emits on, so fitting a weapon at base changed the record and never reached
+	# your hands. restore_from exists for exactly this and says so.
+	var data := CampaignState.load_dict(_SaveSlots.path_for(id))
+	if data.is_empty():
+		push_warning("Campaign: profile '%s' could not be read; staying on '%s'." % [id, active_slot])
+		return false
+	if state == null:
+		state = CampaignState.new()
+	state.restore_from(data)
+	state.catalogue = catalogue
+	state.save_path = _SaveSlots.path_for(id)
+	_adopt_state(id)
+	return true
+
+
+## Delete a campaign. Deleting the one that is open leaves nothing open, which
+## the caller has to resolve — the menu does, by going back to the profile list.
+func delete_profile(id: String) -> bool:
+	if not _SaveSlots.delete(id):
+		return false
+	if id == active_slot:
+		active_slot = ""
+		profile_changed.emit("")
+	return true
+
+
+## Rename the open campaign. The FILE keeps its name: renaming it would break
+## anything holding the id, and the id is not shown to anyone.
+func rename_profile(new_name: String) -> void:
+	var wanted := new_name.strip_edges()
+	if wanted == "" or state == null:
+		push_warning("Campaign: refused to rename the profile to nothing.")
+		return
+	state.profile_name = wanted
+	if autosave:
+		state.save_to_disk()
+	profile_changed.emit(active_slot)
+
+
+## Wire up a state that has just become the open one. Shared by new and load so
+## the two cannot drift.
+func _adopt_state(id: String) -> void:
+	active_slot = id
+	if not state.soldier_repaired.is_connected(_on_soldier_repaired):
+		state.soldier_repaired.connect(_on_soldier_repaired)
+	if not state.ledger_changed.is_connected(_queue_base_save):
+		state.ledger_changed.connect(_queue_base_save)
+	if not state.roster_changed.is_connected(_queue_base_save):
+		state.roster_changed.connect(_queue_base_save)
+	_repair_roster()
+	state.recompute_roster()
+	# After the catalogue: a save from before teams gets its INFANTRY and ARMOR
+	# built from what each robot's frame is.
+	state.ensure_teams()
+	if not state.teams_changed.is_connected(_on_teams_changed):
+		state.teams_changed.connect(_on_teams_changed)
+	_pay_compute_owed()
+	_grant_owed_unlocks()
+	current_mission = null
+	in_mission = false
+	profile_changed.emit(id)
+	state_loaded.emit()
+	# RE-DEPLOY INTO THE LEVEL THAT IS ALREADY UP. The depot loads before the
+	# player has chosen a campaign, so its squad was spawned from whatever roster
+	# existed at the time. Opening one has to stand the right robots up.
+	var world_node := get_parent()
+	if world_node != null and world_node.get("current_level") != null:
+		on_level_loaded(world_node.current_level)
 
 # Wipes the save and starts over. Bind it to a debug key while you're iterating
 # — otherwise every change to the starting roster is invisible until you go and
@@ -385,6 +556,10 @@ func _queue_base_save() -> void:
 
 func _flush_base_save() -> void:
 	_save_queued = false
+	# No profile open means the scratch campaign behind the menu. It has nowhere
+	# to go and must not go looking.
+	if not has_open_profile():
+		return
 	# Re-checked: a deferred call lands a frame later, and that frame may be
 	# the one begin_deploy() ran in.
 	if in_mission or not autosave:
@@ -938,6 +1113,101 @@ func _write_back_player() -> void:
 		record.revives += body.revives
 		body.revives = 0
 	record.missions_survived += 1
+
+
+# ─────────────────────────────────────────────
+# DEBUG: CLEAR THE OPERATION FROM WHERE YOU ARE STANDING.
+#
+# Ticks every objective and then leaves, so you can see a debrief, a payout and
+# the state of the base after a mission without playing the mission. Used for
+# checking the things that only exist on the way out — rewards, compute, rank
+# ups, what the next operation unlocks.
+#
+# IT WALKS THE PLAYER INTO THE EXIT RATHER THAN CALLING extract() ITSELF, and
+# that is deliberate. Extraction is not one call: MissionExit runs extract() and
+# THEN emits next_level_signal, World.load_next_level does its own lifecycle on
+# the other side of that, and extract() clears in_mission in between, which the
+# second half reads. A debug path that called extract() direct would pay out and
+# then strand the player in a finished mission with no level change. Moving the
+# player is the one action that puts the real sequence in motion.
+#
+# OPTIONAL OBJECTIVES ARE TICKED TOO. The point is to see the full payout; a
+# debug clear that silently pays the minimum teaches you the wrong number.
+func debug_complete_mission() -> String:
+	if not in_mission:
+		return "NOT ON AN OPERATION — DEPLOY FIRST."
+	if objectives == null:
+		return "NO OBJECTIVE TRACKER — NOTHING TO COMPLETE."
+
+	var ticked := 0
+	# duplicate(): complete() emits, and a listener that prunes or adds an
+	# objective would otherwise mutate the array being walked.
+	for o in objectives.objectives().duplicate():
+		if o == null or not is_instance_valid(o):
+			continue
+		if o.completed or o.failed:
+			continue
+		# The extraction objective is the one you are about to satisfy by
+		# arriving. Ticking it here would mark it done before you got there.
+		if o.is_extraction:
+			continue
+		o.complete()
+		ticked += 1
+
+	var exit := _find_mission_exit()
+	if exit == null:
+		# NOT SILENT. The objectives are ticked either way, so this is still
+		# useful — you can walk out yourself — but the half that did not happen
+		# has to say so or it reads as the button doing nothing.
+		return "%d OBJECTIVE(S) CLEARED, BUT THIS LEVEL HAS NO EXIT TO SEND YOU TO." % ticked
+
+	# BY CLASS, NOT BY GROUP. The player node is called `test_character` in
+	# world.tscn and is in no group at all, so there is nothing to look up.
+	var player := _first_of_class(get_tree().root, "Player")
+	if player == null or not (player is Node3D):
+		return "%d OBJECTIVE(S) CLEARED, BUT THE PLAYER IS NOT IN THE TREE TO MOVE." % ticked
+	(player as Node3D).global_position = exit.global_position + Vector3.UP * 0.5
+	return "%d OBJECTIVE(S) CLEARED. EXTRACTING." % ticked
+
+
+## The way out of the level.
+##
+## IT IS A `LevelExit`, NOT A `MissionExit`. MissionExit is a subclass that no
+## map actually places — every level, proving ground included, instances the
+## plain LevelExit — so looking for the subclass found nothing and this reported
+## every level as having no exit. Both names are accepted in case that changes.
+##
+## NOT A DEPARTURE EXIT EITHER: `is_departure` marks the gate at base that sends
+## you OUT on an operation, which is the opposite of what is wanted here.
+func _find_mission_exit() -> Node3D:
+	for n in _all_of_class(get_tree().root, ["LevelExit", "MissionExit"]):
+		if n.get("is_departure"):
+			continue
+		if n.get("next_level") == null:
+			continue   # a door with nowhere to send you; a plain prop
+		return n as Node3D
+	return null
+
+
+func _all_of_class(n: Node, names: Array) -> Array[Node3D]:
+	var out: Array[Node3D] = []
+	var s: Script = n.get_script() as Script
+	if s != null and names.has(String(s.get_global_name())) and n is Node3D:
+		out.append(n as Node3D)
+	for c in n.get_children():
+		out.append_array(_all_of_class(c, names))
+	return out
+
+
+func _first_of_class(n: Node, cls: String) -> Node:
+	var s: Script = n.get_script() as Script
+	if s != null and s.get_global_name() == StringName(cls):
+		return n
+	for c in n.get_children():
+		var f := _first_of_class(c, cls)
+		if f != null:
+			return f
+	return null
 
 
 # Success path. Collect the squad, pay out, save, and head home.

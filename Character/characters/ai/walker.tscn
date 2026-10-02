@@ -108,7 +108,7 @@ visible_pieces = [NodePath("Rig/Hull"), NodePath("Rig/Turret/TurretBody")]
 activation_distance = 200
 health = 320
 max_health = 320
-move_speed = 3.2
+move_speed = 4.16
 soldier_name = "Walker"
 flatten_collider_when_downed = false
 

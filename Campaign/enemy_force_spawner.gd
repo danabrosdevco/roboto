@@ -1,6 +1,14 @@
 extends Node
 class_name EnemyForceSpawner
 
+## Robots are built through CsgBake.make() rather than scene.instantiate(): a
+## CSGShape3D rebuilds its geometry the first time it enters the tree, which cost
+## 8.6 ms per robot and made a 40-strong reserve wave a 336 ms frame. make()
+## hands back the same node with the CSG already replaced by the mesh baked once
+## at startup. It has to happen BEFORE the node is added to the tree — see
+## csg_bake.gd for why neither _enter_tree nor _ready will do.
+const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
+
 # ─────────────────────────────────────────────
 # ENEMY FORCE SPAWNER — builds a mission's opposition from EnemySquadSpecs.
 #
@@ -214,7 +222,7 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		if frame == null or frame.scene == null:
 			push_error("EnemyForceSpawner: '%s' roster slot %d has no scene." % [spec.callsign, i])
 			continue
-		var soldier := frame.scene.instantiate() as Soldier
+		var soldier := _CsgBake.make(frame.scene) as Soldier
 		if soldier == null:
 			push_error("EnemyForceSpawner: %s is not a Soldier scene." % frame.scene.resource_path)
 			continue

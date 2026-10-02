@@ -195,6 +195,10 @@ func _init() -> void:
 		and is_equal_approx(tool_clip.size.x, bar.icon_size.x * charge),
 		"visible=%s width=%s charge=%s" % [tool_clip.visible, tool_clip.size.x, charge])
 	_check("...and the rifle's, which has no charge, does not", not (bar._chips[0]["fill_clip"] as Control).visible)
+	_test_carrier_required_ammo(player, cat)
+	for _i in 3:
+		await physics_frame
+
 	# Back to this machine's own kit for the rest of the run.
 	var cm_node: Node = world_scene.get_node("CampaignManager")
 	player.loadout.apply_record(cm_node.state.player_record, cat)
@@ -345,3 +349,52 @@ func _init() -> void:
 	print("")
 	print("ALL EQUIPMENT CHECKS PASS" if _fails == 0 else "%d EQUIPMENT CHECK(S) FAILED" % _fails)
 	quit(1 if _fails > 0 else 0)
+
+
+# ── YOU ONLY CARRY WHAT YOU ARE CARRYING ─────
+## A thrown item's reserve used to exist whether or not the item did: thirty-six
+## frags in your pocket with no frag slot fitted. Two separate clamps enforced
+## it — set_carriers() and _carriers_of() both floored the count at one — so the
+## second one quietly undid the first, and fixing only one left a fitted frag
+## with NO grenades at all.
+##
+## A gun calibre still floors at one. That is deliberate and the comment in
+## _scale_thrown_capacity says so: a rifle's reserve is a reserve by calibre,
+## not a bandolier you have to be holding.
+func _test_carrier_required_ammo(player: Node3D, cat) -> void:
+	print("")
+	print("══ AMMO YOU HAVE TO CARRY ════════════════════════════════")
+	var pool: AmmoPool = player.ammo
+	var kit := SoldierRecord.new()
+	kit.chassis_id = &"soldier"
+	kit.weapon_ids = [&"cluster_launcher"] as Array[StringName]
+
+	kit.equipment_ids = [] as Array[StringName]
+	player.loadout.apply_record(kit, cat)
+	pool.refill_all()
+	_check("no frag fitted, no grenades", pool.get_count(&"grenade") == 0
+		and pool.get_capacity(&"grenade") == 0,
+		"%d / %d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])
+	# THE GUN CALIBRE MUST NOT FOLLOW IT DOWN. The launcher is a weapon, and a
+	# weapon's reserve is by calibre.
+	_check("...but the launcher still has its 40mm", pool.get_count(&"40mm") == 36,
+		"%d / %d" % [pool.get_count(&"40mm"), pool.get_capacity(&"40mm")])
+
+	kit.equipment_ids = [&"frag"] as Array[StringName]
+	player.loadout.apply_record(kit, cat)
+	pool.refill_all()
+	_check("fit one frag and the grenades arrive", pool.get_count(&"grenade") == 36,
+		"%d / %d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])
+
+	kit.equipment_ids = [&"frag", &"frag"] as Array[StringName]
+	player.loadout.apply_record(kit, cat)
+	pool.refill_all()
+	_check("...two frags carry twice as many", pool.get_count(&"grenade") == 72,
+		"%d / %d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])
+
+	# And back to nothing, which is the direction the two clamps broke.
+	kit.equipment_ids = [] as Array[StringName]
+	player.loadout.apply_record(kit, cat)
+	pool.refill_all()
+	_check("...unfit them all and they are gone again", pool.get_count(&"grenade") == 0,
+		"%d / %d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])

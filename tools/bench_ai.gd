@@ -12,7 +12,13 @@ extends SceneTree
 # The complaint is spikes, not throughput: a mean of 12ms with an 83ms spike
 # feels far worse than a flat 20ms, and averaging hides exactly that.
 #
-#   godot --headless --path . --script res://tools/bench_ai.gd -- [count] [frames]
+#   godot --headless --path . --script res://tools/bench_ai.gd -- [count] [frames] [mode] [map]
+#
+# THE MAP MATTERS, and for a long time this could only measure the valley. Three
+# Rivers is 1.3 km across and its navigation map has the polygon count to match,
+# so a query that costs 0.1 ms in the valley costs 1.0 ms out there. A change
+# benched only on the valley can look free and still cost 50 ms a frame on the
+# map the complaint came from.
 # ─────────────────────────────────────────────
 
 const RIFLE := "res://Character/characters/ai/soldier_rifle.tscn"
@@ -41,6 +47,7 @@ func _init() -> void:
 	var frames: int = int(args[1]) if args.size() > 1 else 400
 	var flat: bool = args.size() > 2 and String(args[2]) == "flat"
 	var immortal: bool = args.size() > 2 and String(args[2]) == "immortal"
+	var map: String = String(args[3]) if args.size() > 3 else "valley"
 
 	var world: Node = load("res://Env/world.tscn").instantiate()
 	world.get_node("CampaignManager").autosave = false
@@ -50,7 +57,7 @@ func _init() -> void:
 	_player = _find(root, "Player")
 	_level = _player.get_parent()
 	_mgr = _find(root, "AIManager")
-	_level.add_child(load("res://maps/valley_level.tscn").instantiate())
+	_level.add_child(load("res://maps/%s_level.tscn" % map).instantiate())
 	for _i in 20:
 		await physics_frame
 
@@ -60,7 +67,11 @@ func _init() -> void:
 		q.exclude = [_player.get_rid()]
 		var hit := space.intersect_ray(q)
 		return hit.position if hit else Vector3(x, -9.0, z)
-	_player.global_position = (ground.call(300.0, 200.0) as Vector3) + Vector3.UP
+	# ON THE NAVMESH, so this works on any map rather than at coordinates that
+	# only mean something in the valley.
+	var nmap: RID = _player.get_world_3d().navigation_map
+	var centre: Vector3 = NavigationServer3D.map_get_closest_point(nmap, Vector3(300, 0, 250))
+	_player.global_position = centre + Vector3.UP
 	for _i in 20:
 		await physics_frame
 
@@ -78,8 +89,8 @@ func _init() -> void:
 		# never exercised — the first version of this bench measured a change
 		# that could not possibly have fired. Three Rivers is a fight strung out
 		# over a couple of hundred metres, so this is too.
-		var x: float = 300.0 + randf_range(-60.0, 60.0)
-		var z: float = (randf_range(120.0, 195.0) if enemy_side else randf_range(205.0, 320.0))
+		var x: float = centre.x + randf_range(-60.0, 60.0)
+		var z: float = centre.z + (randf_range(-130.0, -55.0) if enemy_side else randf_range(-45.0, 70.0))
 		var body: Node = load(RIFLE).instantiate()
 		body.faction = fac
 		body.always_active = true
@@ -102,6 +113,17 @@ func _init() -> void:
 		await physics_frame
 
 	# ── MEASURE ──────────────────────────────────
+	# A RESERVE WAVE, MID-MEASUREMENT.
+	#
+	# The complaint is specifically "when new reserve squads spawn in and are
+	# advancing". Standing the whole population up before the clock starts and
+	# warming for ninety frames measures a settled fight and never that — which is
+	# how a spike that only happens on reinforcement stays invisible to a bench
+	# that reports a flat median. Pass a fifth argument to drop a wave in at the
+	# quarter mark and watch what it costs.
+	var wave: int = int(args[4]) if args.size() > 4 else 0
+	var wave_at: int = frames / 4
+
 	var samples: PackedFloat64Array = PackedFloat64Array()
 	# Nav spend alongside the frame time. Enemy keeps a static microsecond
 	# tally per physics frame for its own query budget; sampling it here says
@@ -109,7 +131,21 @@ func _init() -> void:
 	# between two completely different fixes.
 	var nav: PackedFloat64Array = PackedFloat64Array()
 	var states: PackedStringArray = PackedStringArray()
-	for _i in frames:
+	for _f in frames:
+		if wave > 0 and _f == wave_at:
+			# Everything a real reinforcement does at once: spawn, register, and be
+			# given somewhere to go.
+			for i in wave:
+				var body: Node = load(RIFLE).instantiate()
+				body.faction = Enums.Factions.ENEMY
+				body.always_active = true
+				_level.add_child(body)
+				var wx: float = centre.x + randf_range(-40.0, 40.0)
+				var wz: float = centre.z - 240.0 + randf_range(-30.0, 30.0)
+				(body as Node3D).global_position = (ground.call(wx, wz) as Vector3) + Vector3.UP
+				if _mgr != null and _mgr.has_method("register_enemy"):
+					_mgr.register_enemy(body)
+				body.move_to(centre)
 		var t0 := Time.get_ticks_usec()
 		await physics_frame
 		samples.append(float(Time.get_ticks_usec() - t0) / 1000.0)
@@ -144,7 +180,7 @@ func _init() -> void:
 	var p50: float = sorted[int(sorted.size() * 0.5)]
 
 	print("")
-	print("AI BENCH — %d robots, %d frames%s" % [count, frames, "  [FLAT: no LOD stride]" if flat else "  [distance-scaled thinking]"])
+	print("AI BENCH — %d robots on %s, %d frames%s" % [count, map, frames, "  [FLAT: no LOD stride]" if flat else "  [distance-scaled thinking]"])
 	print("  median %7.2f ms" % p50)
 	print("  mean   %7.2f ms" % (total / float(samples.size())))
 	print("  p95    %7.2f ms" % p95)
@@ -166,5 +202,10 @@ func _init() -> void:
 	for i in range(lo, hi + 1):
 		around.append("f%d %s %.0fms" % [i, states[i], samples[i]])
 	print("  in_combat/downed around the spike: %s" % "  |  ".join(around))
+	if wave > 0:
+		var at_wave := PackedStringArray()
+		for i in range(maxi(0, wave_at - 2), mini(samples.size() - 1, wave_at + 10)):
+			at_wave.append("f%d=%.0f" % [i, samples[i]])
+		print("  WAVE of %d at frame %d: %s" % [wave, wave_at, " ".join(at_wave)])
 	print("  registered with the manager: %d" % (_mgr.all_ai.size() if _mgr != null else -1))
 	quit(0)

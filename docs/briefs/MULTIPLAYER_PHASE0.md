@@ -106,10 +106,13 @@ would point at wave defence on a bounded site rather than open co-op missions.
 From the human, 2026-09-30:
 
 - **There is no pause in multiplayer.** Not "pause is synchronised" — removed.
-  Most games do it this way. This kills the four `PauseHold` takers
+  Most games do it this way. This settles the gameplay `PauseHold` takers
   (`master`, `briefing`, `debrief`, `squad_manager`) as a *design* question
-  rather than a sync problem, and it means **the loadout screen has to work in
-  a live world.** Refitting under fire becomes a mechanic.
+  rather than a sync problem. Three more takers exist and are not design
+  questions — `level_load`, `lab` and `test`. `level_load` is the one the
+  "level-load sync" note below actually rests on, so it stays and needs a
+  networked answer. It also means **the loadout screen has to work in a live
+  world.** Refitting under fire becomes a mechanic.
 - **Multiplayer gets its own save**, and the save/load system needs to be more
   robust before it can. A network is its own campaign file, separate from a
   solo campaign, so nobody's progress is hostage to someone else's schedule.

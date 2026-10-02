@@ -555,13 +555,38 @@ func _wait(seconds: float) -> void:
 # ─────────────────────────────────────────────
 # MENUS
 # ─────────────────────────────────────────────
+# WHAT THE FRONT PAGE OFFERS DEPENDS ON WHETHER YOU HAVE PLAYED.
+#
+# Nothing saved: one button, START, which goes straight to naming a campaign —
+# a LOAD entry that opens an empty list is a dead end dressed up as a choice.
+#
+# Something saved: CONTINUE first, because resuming is what almost every launch
+# is for, then NEW CAMPAIGN and LOAD CAMPAIGN under it.
 func _show_main_menu() -> void:
 	_menu = "main"
+	# THE OVERLAY MAY BE GONE. _start_play tears it down, so anything that comes
+	# back to a menu afterwards — quitting to the front page, or stepping back
+	# from a sub-screen — has to rebuild it first. _show_pause_menu has always
+	# done this; these did not, and built their buttons into nothing.
+	if _layer == null:
+		_build_overlay()
 	_hold_pause()
 	_show_mouse()
-	var items: Array = [{"text": "START", "action": _start_play}]
+	var items: Array = []
+	var cm := _campaign()
+	var resume: String = cm.most_recent_profile() if cm != null else ""
+	if resume == "":
+		items.append({"text": "START", "action": _open_new_campaign})
+	else:
+		items.append({"text": "CONTINUE", "action": func(): _open_profile_and_play(resume)})
+		items.append({"text": "NEW CAMPAIGN", "action": _open_new_campaign})
+		items.append({"text": "LOAD CAMPAIGN", "action": _open_load_campaign})
 	if _playtest_data_shown():
 		items.append({"text": "PLAYTEST DATA", "action": _open_playtest_data})
+	# TUTORIALS LIVES HERE NOW, not on the pause menu. Same browser, better
+	# place: this is where someone reads about the game, rather than mid-mission
+	# with the screen paused behind them.
+	items.append({"text": "TUTORIALS", "action": _open_tutorials})
 	items.append({"text": "OPTIONS", "action": _open_options})
 	items.append({"text": "QUIT", "action": _quit})
 	_build_menu(menu_title_text, items, HUDPalette.BRIGHT, title_suffix)
@@ -576,8 +601,12 @@ func _show_pause_menu() -> void:
 	_backdrop.color = Color(0.02, 0.03, 0.03, 0.82)
 	_hold_pause()
 	_show_mouse()
-	var items: Array = [{"text": "CONTINUE", "action": _resume_from_pause},
-		{"text": "TUTORIALS", "action": _open_tutorials}]
+	# TUTORIALS IS NOT HERE ANY MORE. It was the second thing on a pause menu
+	# that a player opens mid-mission to do one of three things: get back in,
+	# change a setting, or leave. _open_tutorials and the lesson browser are
+	# untouched — the tutorial signs still teach, and the pause menu stops
+	# advertising a reference manual to someone who is under fire.
+	var items: Array = [{"text": "CONTINUE", "action": _resume_from_pause}]
 	if _playtest_data_shown():
 		items.append({"text": "PLAYTEST DATA", "action": _open_playtest_data})
 	items.append({"text": "OPTIONS", "action": _open_options})
@@ -590,7 +619,14 @@ func _show_pause_menu() -> void:
 	# them is the point; letting them unlock the ladder is not.
 	if Settings.debug_tools_enabled():
 		items.append({"text": "DEBUG", "action": _open_debug})
-	items.append({"text": "QUIT", "action": _quit})
+	# Between the game and leaving it altogether, which is where a player looks
+	# for it. BOTH SAVE NOW, so neither label has to say so: the old pair read
+	# "SAVE AND QUIT TO MENU" beside a bare "QUIT TO DESKTOP", which implied the
+	# second one threw your campaign away. It never did much — autosave has
+	# already written at every depot change and at deploy and extraction — but
+	# the asymmetry in the wording was doing the scaring.
+	items.append({"text": "QUIT TO MENU", "action": _quit_to_menu})
+	items.append({"text": "QUIT TO DESKTOP", "action": _quit})
 	_build_menu("PAUSED", items, HUDPalette.WARN)
 
 
@@ -857,6 +893,224 @@ func _build_menu(title: String, entries: Array, title_col: Color,
 	_suppress_hover = true
 
 
+
+# ─────────────────────────────────────────────
+# CAMPAIGN PROFILES
+# ─────────────────────────────────────────────
+# There is more than one campaign now (see Campaign/save_slots.gd), so the front
+# page has to ask which one before the world is handed over. Everything here
+# runs on the same overlay as the other menus — _build_menu for lists, and a
+# hand-built form for the one screen that needs text fields.
+
+## The campaign manager, or null while the lab or a tool is running without one.
+## Everything here tolerates null rather than assuming: Master boots standalone
+## in several tools, and a crash in the front page would take all of them down.
+func _campaign() -> Node:
+	return get_tree().get_first_node_in_group("campaign")
+
+
+## Open a saved campaign and go straight into it.
+func _open_profile_and_play(id: String) -> void:
+	var cm := _campaign()
+	if cm == null:
+		push_warning("Master: no campaign manager, so '%s' cannot be opened." % id)
+		return
+	if not cm.load_profile(id):
+		# load_profile has already said why. Back to the list rather than into a
+		# world with nobody's campaign behind it.
+		_open_load_campaign()
+		return
+	_start_play()
+
+
+func _back_to_main() -> void:
+	_show_main_menu()
+
+
+# ── NAMING A NEW ONE ─────────────────────────
+# The one screen with text in it. Three fields, all optional: a campaign with no
+# name is still a campaign, and making someone type before they can play is a
+# worse first impression than a default they can change later.
+func _open_new_campaign() -> void:
+	_menu = "new_campaign"
+	# THE OVERLAY MAY BE GONE. _start_play tears it down, so anything that comes
+	# back to a menu afterwards — quitting to the front page, or stepping back
+	# from a sub-screen — has to rebuild it first. _show_pause_menu has always
+	# done this; these did not, and built their buttons into nothing.
+	if _layer == null:
+		_build_overlay()
+	_clear_content()
+	_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var box := VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 10)
+	_content.add_child(box)
+	box.add_child(_centred_label("NEW CAMPAIGN", HUDPalette.BRIGHT, 48))
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 18)
+	box.add_child(gap)
+
+	var campaign_field := _menu_field(box, "CAMPAIGN", "Campaign")
+	var squad_field := _menu_field(box, "SQUAD", "NAMELESS")
+	var player_field := _menu_field(box, "CALLSIGN", "PLAYER")
+
+	var gap2 := Control.new()
+	gap2.custom_minimum_size = Vector2(0, 18)
+	box.add_child(gap2)
+
+	box.add_child(_menu_button("BEGIN", func():
+		var cm := _campaign()
+		if cm == null:
+			push_warning("Master: no campaign manager, so nothing can be started.")
+			return
+		var id: String = cm.new_profile(campaign_field.text, squad_field.text, player_field.text)
+		if id == "":
+			push_warning("Master: the campaign could not be created, so the menu stayed up.")
+			return
+		_start_play()))
+	box.add_child(_menu_button("BACK", _back_to_main))
+	_stamp_build()
+	_suppress_hover = true
+	campaign_field.grab_focus()
+
+
+# ── PICKING AN OLD ONE ───────────────────────
+func _open_load_campaign() -> void:
+	_menu = "load_campaign"
+	# THE OVERLAY MAY BE GONE. _start_play tears it down, so anything that comes
+	# back to a menu afterwards — quitting to the front page, or stepping back
+	# from a sub-screen — has to rebuild it first. _show_pause_menu has always
+	# done this; these did not, and built their buttons into nothing.
+	if _layer == null:
+		_build_overlay()
+	_clear_content()
+	_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var cm := _campaign()
+	var all: Array = cm.profiles() if cm != null else []
+
+	var box := VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 8)
+	_content.add_child(box)
+	box.add_child(_centred_label("LOAD CAMPAIGN", HUDPalette.BRIGHT, 48))
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 18)
+	box.add_child(gap)
+
+	if all.is_empty():
+		# Reachable by deleting the last one while standing here.
+		box.add_child(_centred_label("NOTHING SAVED", HUDPalette.DIM, 26))
+	for entry in all:
+		box.add_child(_profile_row(entry))
+
+	var gap2 := Control.new()
+	gap2.custom_minimum_size = Vector2(0, 18)
+	box.add_child(gap2)
+	box.add_child(_menu_button("BACK", _back_to_main))
+	_stamp_build()
+	_suppress_hover = true
+
+
+## One campaign on the load screen: a button that opens it, and a DELETE beside
+## it. A broken save still gets a row — greyed and unopenable, but deletable, so
+## a file that has gone bad can be cleared out instead of silently vanishing,
+## which reads as the game having eaten it.
+func _profile_row(entry: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 14)
+	var id := String(entry["id"])
+	var broken: bool = entry["broken"]
+
+	var label := "%s   -   %s   %d OPS   %d RES" % [
+		String(entry["profile_name"]).to_upper(), String(entry["squad_name"]).to_upper(),
+		int(entry["missions"]), int(entry["resources"])]
+	if broken:
+		label = "%s   -   UNREADABLE" % String(entry["profile_name"]).to_upper()
+
+	var open := _menu_button(label, func(): _open_profile_and_play(id), 26)
+	if broken:
+		open.disabled = true
+		open.add_theme_color_override("font_disabled_color", HUDPalette.DIM)
+	row.add_child(open)
+
+	var kill := _menu_button("DELETE", func(): _confirm_delete_profile(entry), 22)
+	kill.add_theme_color_override("font_color", HUDPalette.CRIT)
+	row.add_child(kill)
+	return row
+
+
+## Deleting a campaign cannot be undone, so it asks first. The confirmation
+## NAMES the campaign: a bare "are you sure" after a misclick on a crowded list
+## is how the wrong one goes.
+func _confirm_delete_profile(entry: Dictionary) -> void:
+	_menu = "delete_campaign"
+	var id := String(entry["id"])
+	var shown := String(entry["profile_name"]).to_upper()
+	_build_menu("DELETE %s?" % shown, [
+		{"text": "KEEP IT", "action": _open_load_campaign},
+		{"text": "DELETE FOREVER", "action": func():
+			var cm := _campaign()
+			if cm != null:
+				cm.delete_profile(id)
+			_open_load_campaign()},
+	], HUDPalette.CRIT, "%d OPERATIONS COMPLETED" % int(entry["missions"]))
+
+
+# ── SHARED BITS ──────────────────────────────
+# _build_menu makes a whole screen out of a list of buttons; these are the
+# pieces, for the screens that are not just a list.
+
+func _menu_button(text: String, action: Callable, size: int = 34) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.custom_minimum_size = Vector2(0, 40)
+	button.add_theme_font_size_override("font_size", size)
+	button.add_theme_color_override("font_color", HUDPalette.BRIGHT)
+	button.add_theme_color_override("font_hover_color", Color(0.86, 1.0, 0.88))
+	button.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
+	button.add_theme_color_override("font_focus_color", HUDPalette.BRIGHT)
+	button.mouse_entered.connect(_on_menu_hover)
+	button.pressed.connect(func():
+		_sfx_confirm.play()
+		action.call())
+	return button
+
+
+## A labelled text box. `placeholder` is what the field means when left blank, so
+## it has to be the REAL default the campaign will use, not a hint.
+func _menu_field(box: VBoxContainer, label: String, placeholder: String) -> LineEdit:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 12)
+	var tag := _centred_label(label, HUDPalette.DIM, 24)
+	tag.custom_minimum_size = Vector2(160, 0)
+	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(tag)
+	var field := LineEdit.new()
+	field.placeholder_text = placeholder
+	field.max_length = 24
+	field.custom_minimum_size = Vector2(340, 40)
+	field.add_theme_font_size_override("font_size", 26)
+	field.add_theme_color_override("font_color", HUDPalette.BRIGHT)
+	field.add_theme_color_override("font_placeholder_color", HUDPalette.DIM)
+	row.add_child(field)
+	box.add_child(row)
+	return field
+
+
+## The build label every menu carries in its corner. _build_menu does this
+## itself; the hand-built screens above call it.
+func _stamp_build() -> void:
+	var build := _centred_label(_Build.label(), HUDPalette.DIM, 20)
+	_content.add_child(build)
+	build.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 18)
+
 func _on_menu_hover() -> void:
 	if _suppress_hover:
 		return
@@ -895,7 +1149,38 @@ func _resume_from_pause() -> void:
 	_teardown_overlay()
 
 
+
+## Back to the front page, with the campaign written out first.
+##
+## RELOADS THE WHOLE SCENE rather than just putting the overlay back. Quitting
+## from inside a mission leaves the world standing in that level; showing the
+## main menu over it and then letting the player CONTINUE a different campaign
+## would drop them into somebody else's mission. A reload lands on a clean boot,
+## and boot no longer opens a campaign by itself, so what they get is the menu.
+##
+## The cost is that the title cards play again. They are skippable, and the wrong
+## campaign behind the right menu is a far worse trade.
+func _quit_to_menu() -> void:
+	var cm := _campaign()
+	if cm != null and cm.has_open_profile():
+		cm.state.save_to_disk()
+	# The tree is paused under the menu, and a scene reloaded while paused comes
+	# back paused with nothing left holding it.
+	_release_pause()
+	_teardown_overlay()
+	get_tree().reload_current_scene()
+
 func _quit() -> void:
+	# SAVES FIRST. It used to drop straight out, which cost nothing most of the
+	# time — autosave has already written at every depot change and at deploy
+	# and extraction — but "QUIT TO DESKTOP" sitting beside "SAVE AND QUIT TO
+	# MENU" read as "and this one does not", and a player who had just bought a
+	# frame had no way to know they were safe. Now both exits do the same thing
+	# and neither label has to explain itself.
+	var cm := _campaign()
+	if cm != null and cm.has_open_profile():
+		cm.state.save_to_disk()
+	Settings.save_if_dirty()
 	get_tree().quit()
 
 

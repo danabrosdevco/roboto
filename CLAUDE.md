@@ -13,7 +13,9 @@ Structure is persistent squad + discrete missions from a home base.
 
 1. Read `docs/BRIEFING.md`. Sections 3 and 4 in particular — the invariants and
    the failure patterns. Most bugs in this project are repeats of those.
-2. Work on a branch: `git checkout -b agent/<short-task-name>`.
+2. Do not create or switch branches. Three lanes share one checkout and one
+   branch, and another agent is usually mid-edit — see `docs/BOARD.md` →
+   Protocol. Check where you are with `git branch --show-current`.
 
 ## Before you finish — non-negotiable
 
@@ -26,8 +28,9 @@ bash tools/check.sh --changed
 If it fails, fix it. Do not report a task complete with a failing check. If you
 genuinely cannot make it pass, say so explicitly and explain what's blocking.
 
-`bash tools/check.sh` with no argument checks the whole project (~90s, 91
-scripts and 175 resources). Use it when you have touched something shared.
+`bash tools/check.sh` with no argument checks the whole project — 309 scripts
+and 638 scenes and resources, so it is slow. Use it when you have touched
+something shared.
 
 Two more, both of which catch what a parse check cannot:
 
@@ -54,9 +57,11 @@ anything that loads at startup.
 
 ## Things that are true here and not elsewhere
 
-- **You cannot run the game.** No display, and the repo is missing art assets.
-  Parse checks and scene integrity are the only verification available. Say so
-  when it matters rather than implying you tested behaviour.
+- **You can run the game, but you cannot play it.** `tools/smoke.sh` boots it
+  headless, the Laboratory runs AI-vs-AI matchups, and `tools/mockup_shots.gd`
+  loads a real level, places a camera and writes the viewport to PNG. What you
+  cannot do is take the controls and judge how it feels — that is the human's.
+  Run muted (`--audio-driver Dummy`), and never let a run write `campaign.json`.
 - **Scene values beat script defaults.** Changing an `@export` default does
   nothing for a node already in a `.tscn`. Check the scene.
 - **`queue_free()` is deferred.** `remove_child()` first when rebuilding UI.

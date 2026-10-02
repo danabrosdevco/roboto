@@ -40,7 +40,6 @@ viewmodel = NodePath("Holder/Shotgun_22")
 base_position = Vector3(1, -1.5, 1)
 base_rotation = Vector3(5, 0, 2.8)
 obstructed_position = Vector3(0.3, 0, 3)
-obstructed_rotation = Vector3(0.3, 90, 3)
 
 [node name="Holder" type="Node3D" parent="."]
 transform = Transform3D(-1.44248e-08, 0, 0.33, 0, 0.33, 0, -0.33, 0, -1.44248e-08, 0.0244774, -0.103499, -0.560673)

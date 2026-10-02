@@ -519,8 +519,14 @@ func _scale_thrown_capacity() -> void:
 			continue
 		carriers[t] = int(carriers.get(t, 0)) + 1
 	for stock in ammo.starting_ammo:
-		if stock != null and stock.ammo_type != &"":
-			ammo.set_carriers(stock.ammo_type, int(carriers.get(stock.ammo_type, 1)))
+		if stock == null or stock.ammo_type == &"":
+			continue
+		# THE DEFAULT IS THE WHOLE RULE. A gun calibre falls back to one carrier —
+		# the reserve exists whether or not that gun is in your hands. A thrown
+		# item falls back to NONE: carry no frags and you have no frags, rather
+		# than a full pouch of something you cannot throw.
+		var floor_carriers: int = 0 if stock.requires_carrier else 1
+		ammo.set_carriers(stock.ammo_type, int(carriers.get(stock.ammo_type, floor_carriers)))
 
 
 func _build_item(catalogue, item_id: StringName) -> PlayerEquipment:

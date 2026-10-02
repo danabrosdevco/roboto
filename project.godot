@@ -33,7 +33,7 @@ window/stretch/mode="viewport"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/func_godot/plugin.cfg")
+enabled=PackedStringArray("res://addons/export_build/plugin.cfg", "res://addons/func_godot/plugin.cfg")
 
 [global_group]
 

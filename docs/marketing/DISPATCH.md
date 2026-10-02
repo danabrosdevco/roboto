@@ -93,6 +93,41 @@ answer.
 
 ---
 
+## 3b → GAMEPLAY · before the M2 export, added 2026-10-01
+
+**Four things in the export config that a build going outside will carry.**
+
+Found while answering how hard an itch page with Windows and Mac downloads would
+be (`docs/marketing/ITCH_SETUP.md`). `export_presets.cfg` and `project.godot` are
+not marketing's to edit, and `project.godot` is on the shared list.
+
+> 1. **`export_filter="all_resources"`** ships every resource in the project —
+>    `causeway_level` (4.1 MB, no mission), `valley_level`, `arena_level`,
+>    `homebase_level`, `civil-unrest_level`, `oyster-bay_level`, the
+>    `WIP_TERRAIN` / `tb_level` / `test_01` scaffolding, and the 15 mission files
+>    outside the live campaign. Switch to selected-scenes-with-dependencies, or add
+>    an `exclude_filter`. Smaller download, faster export, fewer things that can
+>    fail at export time.
+> 2. **`maps/homebase_level.tscn` contains an absolute path** —
+>    `D:/Godot Games/roboto/maps/homebase/homebase_level.map`, a dependency that
+>    exists on one machine. `homebase_level` is OBSOLETE per GDD §2, so excluding
+>    it fixes this and item 1 together. With `all_resources` on it is in the build
+>    today.
+> 3. **The output filename says 2019.** The preset writes
+>    `DataCenterWars2019_v0.007a.exe` into a folder named `..._2109_...`. That is
+>    the name on the download page and in the friend's Downloads folder.
+> 4. **There is only one export preset**, `Windows Desktop`. `docs/BOARD.md` says
+>    two — stale, worth correcting since M2 leans on it.
+>
+> Good news worth passing on: **both GDExtensions already ship complete macOS
+> universal frameworks** (`libdd3d.macos.template_release.universal.framework`,
+> `godot-jolt_macos.framework`), and Jolt is the live physics engine. The usual
+> Mac blocker for a Godot project is absent. What is not absent is that
+> `renderer/rendering_method="gl_compatibility"` runs on macOS through ANGLE and
+> cannot be verified from a Windows machine.
+
+---
+
 ## 4 → GAMEPLAY · not before M2; the enabler for everything visual
 
 **Generalise the screenshot tool that already exists.**

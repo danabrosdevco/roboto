@@ -93,7 +93,18 @@ func equip_coax_scene(scene: PackedScene) -> void:
 @export var particle_effects_hit: Array[ParticleEffect]
 @export var visible_pieces: Array[Node3D]
 
-# ── EXPORT DATA ───────────────────────────────
+## HOW FAR A PATROL KEEPS WALKING. Not an exemption — a bigger radius.
+##
+## A patrol exempted from culling outright ticks for the whole mission wherever
+## the fight is, and on a 1111 m map that is eighteen robots running full
+## brains and asking the navigation server for paths forever. Qamareen went
+## noticeably slow on it.
+##
+## This instead says a patrolling squad stays awake much further out than a
+## garrison does, and sleeps beyond that. Picked so the route is already in
+## motion by the time you can see down it: you still never find a patrol parked
+## on point 0, and the ones on the far side of the city cost nothing.
+@export var patrol_activation_distance: int = 260
 @export var activation_distance: int = 75
 @export var health: int = 30
 @export var max_health: int = 30
@@ -338,6 +349,27 @@ var _investigate_timer: float = 0.0
 # rather than an export so it cannot be set per scene by accident, and so
 # Enemy does not grow another property for an open editor to write into every
 # robot scene in the game.
+## A HOSTILE ON A PATROL ROUTE IS NOT CULLED.
+##
+## Distance culling asks how far this robot is from the nearest thing it would
+## fight, and freezes it beyond activation_distance. That is right for a
+## garrison — a robot standing on a post you have not reached yet costs nothing
+## and loses nothing by waiting. It is exactly wrong for a patrol, whose entire
+## job is to be somewhere unpredictable by the time you arrive.
+##
+## Measured before this existed: of the four patrol routes in Qamareen, three
+## squads walked 0.0 m in two minutes and not one advanced a single leg. They
+## sat on point 0 until the player came within 75 m, which meant every patrol in
+## the game was discovered parked at the start of its route. The fourth only
+## moved because it had blundered into a fight.
+##
+## NOT `always_active`, which every EnemySquadSpec in every mission sets and
+## which this check deliberately ignores — see the note on the cull below. This
+## is set by Squad._issue_objective_orders and cleared the moment the squad is
+## given anything else to do, so the exemption covers the patrol squads and
+## nothing else: eighteen robots in Qamareen rather than two hundred.
+var on_patrol: bool = false
+
 var never_culled: bool = false
 ## Seconds of that exemption left, for one given by exempt_from_culling().
 var _exempt_left: float = 0.0
@@ -746,7 +778,12 @@ var checking_for_target: bool = false
 var ai_state = AIState.COMBAT
 var movement_state = MovementState.NONE
 var weapon_state = WeaponState.IDLE
+@export var adrift_distance: float = 4.0
+@export var adrift_seconds: float = 4.0
+var _adrift_t: float = 0.0
+var _adrift_poll: float = 0.0
 var activation_distance_sq: float
+var patrol_activation_distance_sq: float
 
 var previous_combat_option: CombatOptions = CombatOptions.MOVE
 var previous_movement_option: MovementOptions = MovementOptions.ADVANCE
@@ -904,6 +941,8 @@ const SEEK_RING_RADII := [1.0, 1.5, 2.5, 4.0]
 var _seek_ring_index: int = 0
 
 # ── CACHED NODES ──────────────────────────────
+## See _enter_tree() and csg_bake.gd.
+const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
 var _collision_shape: CollisionShape3D = null
 var _self_rid: RID
 
@@ -921,6 +960,7 @@ signal combat_triggered(ai: AI)
 func initialize():
 	spawn_transform = transform
 	activation_distance_sq = activation_distance * activation_distance
+	patrol_activation_distance_sq = float(patrol_activation_distance) * float(patrol_activation_distance)
 	_self_rid = get_rid()
 	_collision_shape = _find_collision_shape()
 	_measure_body_radius()
@@ -1020,15 +1060,30 @@ func _physics_process(delta: float) -> void:
 
 	handle_gravity(delta)
 
-	# Signal always ticks, even when passive or disabled, so a robot can
-	# actually recover from an e-kill instead of being bricked forever.
-	_tick_signal(delta)
-
-	# E-KILL: electronically disabled — freeze in place, do nothing
-	if get_signal_state() == SignalState.EKILL:
-		_enter_ekill()
-		_apply_motion()
-		return
+	# Signal still ticks when passive or disabled, so a robot can actually
+	# recover from an e-kill instead of being bricked forever.
+	#
+	# NOMINAL SIGNAL COSTS NOTHING NOW.
+	#
+	# The whole signal machine is three values — integrity, the jam-lock timer
+	# and the e-kill latch — and on a robot that has never been jammed all three
+	# sit at rest. _tick_signal then makes five calls that each early-return,
+	# every frame, for every robot in the level. This runs AHEAD of the distance
+	# cull, so on Qamareen that was 186 robots paying it whether culled or not,
+	# and culling could do nothing about it.
+	#
+	# GATED, NOT MOVED BEHIND THE CULL. A jammed robot has to keep recovering
+	# while you are somewhere else: move this below the cull and walking away
+	# from an EMP'd robot leaves it latched in EKILL with nothing left running
+	# to climb it back out. The gate is exact rather than approximate — with all
+	# three at rest get_signal_state() returns CLEAN, so the branch below could
+	# not have fired anyway.
+	if signal_integrity < 1.0 or _signal_locked_t > 0.0 or _ekill_latched:
+		_tick_signal(delta)
+		if get_signal_state() == SignalState.EKILL:
+			_enter_ekill()
+			_apply_motion()
+			return
 
 	# The player's own side is never culled. Passive mode zeroes velocity and
 	# points the nav agent at the unit's own feet, so a soldier who falls more
@@ -1088,14 +1143,22 @@ func _physics_process(delta: float) -> void:
 			never_culled = false
 	if never_culled and dist_sq <= activation_distance_sq:
 		never_culled = false
-	if dist_sq > activation_distance_sq and not _is_player_side() \
-			and not never_culled and _woken_t <= 0.0 and not squad_is_engaged():
+	# A PATROL GETS A BIGGER RADIUS, NOT A FREE PASS. Exempting them outright
+	# kept eighteen robots on this map running full brains and path queries for
+	# the whole mission, wherever the fight was, and it cost real frame time.
+	var cull_sq: float = activation_distance_sq
+	if on_patrol:
+		cull_sq = maxf(cull_sq, patrol_activation_distance_sq)
+	if dist_sq > cull_sq and not _is_player_side() \
+			and not never_culled \
+			and _woken_t <= 0.0 and not squad_is_engaged():
 		enter_passive_mode()
 		_apply_motion()
 		return
 	else:
 		exit_passive_mode()
 
+	_tick_adrift(delta)
 	_tick_los(delta)
 	if checking_for_target and combat_target != null and _has_los:
 		trigger_combat(combat_target)
@@ -1256,6 +1319,58 @@ func _step_over(before: Vector3, intent: Vector3) -> void:
 # ─────────────────────────────────────────────
 # LOS CACHE
 # ─────────────────────────────────────────────
+
+
+# ─────────────────────────────────────────────
+# IN THE RIVER, AND NO PATH WILL EVER GET IT OUT.
+#
+# The navmesh stops at the bank on purpose — rivers exist to force the squad
+# onto a crossing. So a robot that ends up in the water is standing on nothing
+# walkable, and the nearest mesh point is the FLANK of a bridge or a bank it
+# cannot climb. It walks at that wall, bumps, re-paths to the same wall, and
+# does it until the mission ends. "Go round to the ramp" is not something a path
+# query can suggest, because from where it stands there is no path at all.
+#
+# GATED ON BEING GENUINELY ADRIFT, NOT ON BEING STUCK. An earlier version of
+# this hung off _check_stuck, which fires on "has not moved lately" — and a
+# Mechanic standing over a casualty has not moved lately either, so it got
+# rescued three metres away from the robot it was repairing and the repair
+# failed. Distance from the navmesh is the honest test: a Mechanic beside a
+# body is on walkable ground, metres inside the mesh. Four metres outside it,
+# for four seconds, is a robot in the water.
+#
+# Cheap because it only runs for robots that are awake — the cull returns long
+# before this — and asks the navigation server once a second, not once a frame.
+func _tick_adrift(delta: float) -> void:
+	if not alive or downed or nav_agent == null:
+		return
+	_adrift_poll -= delta
+	if _adrift_poll > 0.0:
+		return
+	_adrift_poll = 1.0
+	var on: Vector3 = NavigationServer3D.map_get_closest_point(
+		nav_agent.get_navigation_map(), global_position)
+	if on == Vector3.ZERO:
+		return   # no navmesh in this level at all; nothing to be adrift from
+	var gap := Vector2(on.x - global_position.x, on.z - global_position.z).length()
+	if gap < adrift_distance:
+		_adrift_t = 0.0
+		return
+	_adrift_t += 1.0
+	if _adrift_t < adrift_seconds:
+		return
+	_adrift_t = 0.0
+	var was := global_position
+	global_position = _Ground.stand(on, self, get_parent())
+	velocity = Vector3.ZERO
+	_stuck_last_position = global_position
+	movement_state = MovementState.NONE
+	# WARNED, because a robot teleporting is not normal and the interesting
+	# question is how it got in the water. If this fires in the same place
+	# repeatedly, that bank has a hole in it.
+	push_warning("%s was %.1fm off the navmesh at %s — put back on it. Check how it got there." % [
+		name, gap, was.round()])
+
 func _tick_los(delta: float) -> void:
 	_los_check_timer -= delta
 	if _los_check_timer > 0.0:
@@ -1367,7 +1482,20 @@ func handle_time_passing(delta):
 				reconsider_combat()
 			# Track time without LOS — if too long, seek a new position.
 			# Uses the cached LOS result now instead of its own raycast.
-			if combat_target != null and combat_target.alive:
+			# AND NOT WHILE AN ORDER IS IN FLIGHT. _seek_los_position walks to a
+			# ring around the TARGET — back towards the fight — which outvoted
+			# the move order that had just arrived: order a rover away from a
+			# contact, it loses sight on the way, sits out NO_LOS_PATIENCE, then
+			# re-routes itself to somewhere it can shoot from.
+			#
+			# _moving_under_orders(), NOT squad_directed. The blunt version
+			# stranded enemy garrisons: _tick_defend skips any member already in
+			# COMBAT, so a robot holding a target it cannot see gets no order
+			# from its squad — and with a blanket guard it could not reposition
+			# itself either, leaving it stood in the open doing nothing. This
+			# only suppresses the override while the robot is actually
+			# executing a move; a stationary one still works for its shot.
+			if combat_target != null and combat_target.alive and not _moving_under_orders():
 				if not _has_los:
 					_no_los_timer += delta
 					if _no_los_timer >= NO_LOS_PATIENCE:
@@ -1712,6 +1840,117 @@ static func _take_nav_query(budget: int, spend_us: int) -> bool:
 	return true
 
 
+
+# ─────────────────────────────────────────────
+# SNAPPING A POINT ONTO THE NAVMESH IS NOT FREE.
+#
+# NavigationServer3D.map_get_closest_point walks EVERY polygon in the navigation
+# map. Measured on Three Rivers: 1.021 ms a call. One call.
+#
+# find_advance_target used to spend THREE of them per decision — snap each
+# candidate step, then test whether it had line of sight — which is the 3.09 ms
+# the in-editor profiler showed, against a 16 ms frame. Sixteen robots walking
+# out of a reserve spawn all advanced on the same frame and that one function
+# ate 50 ms of it. find_reposition_target and find_fallback_target had the same
+# shape at two queries each.
+#
+# It was invisible to the existing nav budget, which only counts path
+# resolutions, and invisible to bench_ai_calls.gd, which reports
+# find_advance_target at 0.002 ms because its robots are already inside
+# engage_standoff and take the early return above the loop. Both numbers were
+# true of different branches.
+#
+# Two things fix it, and the first is most of it:
+#
+#   * TEST FIRST, SNAP THE WINNER. The raw candidate is a short step along the
+#     ground from a robot that is already standing on the navmesh, so it is as
+#     good a place to test sight FROM as the snapped one. The snap exists to make
+#     the destination walkable, not to make the test honest. N queries become 1.
+#   * A FRAME BUDGET, like path resolutions already answer to, but its own: a
+#     snap is a convenience and a path is not, so they must not be able to starve
+#     each other. Over budget, hand back the raw point — NavigationAgent3D
+#     resolves an off-mesh target itself when it paths to it, so the robot still
+#     goes somewhere sensible instead of standing still.
+# ─────────────────────────────────────────────
+
+## Snaps allowed across ALL robots in one physics frame...
+@export var snap_queries_per_frame: int = 6
+## ...and the milliseconds they may take between them.
+@export var snap_query_budget_ms: float = 3.0
+
+static var _snap_budget: int = 0
+static var _snap_budget_frame: int = -1
+static var _snap_spent_us: int = 0
+## Snaps refused for budget this run. Counted rather than warned: this is a
+## designed fallback on a hot path, not a fault.
+static var _snap_refused: int = 0
+
+
+static func _take_snap_query(budget: int, spend_us: int) -> bool:
+	var frame := Engine.get_physics_frames()
+	var first := frame != _snap_budget_frame
+	if first:
+		_snap_budget_frame = frame
+		_snap_budget = maxi(1, budget)
+		_snap_spent_us = 0
+	if _snap_budget <= 0:
+		return false
+	if _snap_spent_us >= spend_us and not first:
+		return false
+	_snap_budget -= 1
+	return true
+
+
+
+
+## THE SAME BUDGET, FOR CALLERS THAT ARE NOT AN Enemy.
+##
+## The budget above was private to this class, so every other snap on the map
+## went round it: Squad._on_ground, the Reclaimer's drive-up point, the
+## Mechanic's stand-beside point. Those are the ones a crowd pays — a squad
+## re-measuring a formation slot is once per robot — and between them they could
+## spend a frame's worth of navigation the budget never saw.
+##
+## Returns `p` unchanged when the frame is spent, which is the same designed
+## fallback _snap_to_nav uses: NavigationAgent3D resolves an off-mesh target
+## itself when it paths to it, so the caller still gets somewhere sensible.
+static func snap_on_map(map: RID, p: Vector3, budget: int = 6, spend_ms: float = 3.0) -> Vector3:
+	if not map.is_valid():
+		return p
+	if not _take_snap_query(budget, int(spend_ms * 1000.0)):
+		_snap_refused += 1
+		return p
+	var asked := Time.get_ticks_usec()
+	var out: Vector3 = NavigationServer3D.map_get_closest_point(map, p)
+	_snap_spent_us += Time.get_ticks_usec() - asked
+	return p if out == Vector3.ZERO else out
+
+## `p` placed on the navmesh, or `p` unchanged when this frame has spent its
+## share. See the note above for why giving back the raw point is safe.
+func _snap_to_nav(p: Vector3) -> Vector3:
+	if nav_agent == null:
+		return p
+	if not _take_snap_query(snap_queries_per_frame, int(snap_query_budget_ms * 1000.0)):
+		_snap_refused += 1
+		return p
+	var asked := Time.get_ticks_usec()
+	var out: Vector3 = NavigationServer3D.map_get_closest_point(nav_agent.get_navigation_map(), p)
+	_snap_spent_us += Time.get_ticks_usec() - asked
+	return out
+
+
+## The first candidate with line of sight to `target`, placed on the navmesh —
+## or where we already are, when none of them has it.
+##
+## ONE snap, on the winner. See the note above.
+func _first_clear_step(candidates: Array, target: Node3D) -> Vector3:
+	if target == null or not is_instance_valid(target):
+		return global_position
+	for p in candidates:
+		if is_path_clear(p + Vector3.UP * 0.8, target.global_position, target):
+			return _snap_to_nav(p)
+	return global_position
+
 func move_along_nav(delta):
 	# Queries happen in _tick_nav only; this just steers on the cached result.
 	var path_dir = _nav_dir
@@ -1765,6 +2004,33 @@ func _update_facing(delta: float) -> void:
 # walked. Shared with anything that aims a part of itself rather than its body.
 func _desired_facing() -> Vector3:
 	var face_dir := Vector3.ZERO
+	# MARCHING SOMEWHERE LOOKS WHERE IT IS GOING — UNLESS IT CAN STILL SHOOT.
+	#
+	# The combat branch below tracks the target whatever the legs are doing, and
+	# the note above _update_facing calls that deliberate: it is what gives
+	# strafing and backpedalling for free. Within weapon range that is a
+	# fighting withdrawal and it is exactly right — the robot gives ground with
+	# its gun still on the thing it is backing away from.
+	#
+	# Past that range it is just blindness. Ordered off a contact it can no
+	# longer reach, a rover kept its body square to the enemy and reversed the
+	# whole way, sensors and gun pointed behind it, and answered nothing in
+	# front of it until something shot it.
+	#
+	# Two tests, both needed. The order has to be taking it AWAY — destination
+	# further from the target than it is standing — so a step sideways or a push
+	# in still faces the threat. And the target has to be out of its own
+	# weapon's reach, so the withdrawal stays a fighting one for as long as it
+	# can actually fight.
+	if _moving_under_orders() and combat_target != null and is_instance_valid(combat_target) \
+			and movement_target != Vector3.ZERO:
+		var here := global_position.distance_to(combat_target.global_position)
+		var sent := movement_target.distance_to(combat_target.global_position)
+		if sent > here + 1.0 and here > _max_range():
+			face_dir = movement_target - global_position
+			face_dir.y = 0.0
+			if face_dir.length_squared() > 0.0001:
+				return face_dir.normalized()
 	if ai_state == AIState.COMBAT and combat_target != null and combat_target.alive:
 		face_dir = combat_target.global_position - global_position
 	elif weapon_target != Vector3.ZERO and ai_state == AIState.COMBAT:
@@ -1818,8 +2084,27 @@ func handle_weapon_logic(delta):
 		return
 
 	# Tracking builds while settled with LOS, decays while moving.
+	# A TURRET IS NOT SPOILED BY THE HULL MOVING.
+	#
+	# _aim_tracking is the settle timer the MAIN gun waits on before it will
+	# fire, and it DECAYS while the robot is moving. For infantry that is right:
+	# the whole body is the gun mount, so walking ruins the shot. For a turreted
+	# frame it is wrong — the gun is on its own bearing and the hull underneath
+	# it is irrelevant.
+	#
+	# What it cost: a Walker on the move never settled, so the autocannon never
+	# left WeaponState.AIM and only the coax fired — the coax has no settle gate
+	# at all, it shoots the moment the bearing is good. Worse, _prefire_threshold
+	# scales with RANGE (aim_settle_time * dist/max_range * 0.8), so the one time
+	# a moving Walker did fire its main gun was at something almost on top of it,
+	# where the threshold is near zero. Reported as exactly that: "fires once,
+	# and only when the turret is pointing at something very close."
+	#
+	# `turret` is declared on the frames that have one (Walker, Rover), so this
+	# asks the object rather than naming classes.
+	var hull_spoils_aim: bool = _is_moving() and not ("turret" in self and get("turret") != null)
 	if _has_los and combat_target != null:
-		if _is_moving():
+		if hull_spoils_aim:
 			_aim_tracking = maxf(0.0, _aim_tracking - delta * 1.5)
 		else:
 			_aim_tracking = minf(aim_settle_time, _aim_tracking + delta)
@@ -2135,6 +2420,27 @@ func _score_movement_option(option: int) -> float:
 				w *= 0.3
 	return w
 
+
+
+# ─────────────────────────────────────────────
+# WEDGED IS NOT BLOCKED, AND RE-PATHING WILL NEVER FIX IT.
+#
+# _handle_path_blocked answers a stuck robot with navigation: step left, step
+# right, then stand and fight. That is the right answer when something is IN THE
+# WAY — but not when the capsule itself is jammed in the geometry, because then
+# the body cannot move whatever the path says. The agent points somewhere, the
+# body pushes, collision refuses, and three retries later it stands there for
+# the rest of the mission. Reported as soldiers squeezing into terrain and never
+# coming out.
+#
+# So the third retry tries a PHYSICAL escape before it gives up. Every candidate
+# is proved free with test_move first, so this can never place a robot inside
+# something — it is the same technique _step_over already uses to clear a lip,
+# aimed at a different problem.
+#
+# Ordered by preference: towards the navmesh (somewhere it is known to be able
+# to stand), then the compass. Lifted slightly on the way, because most wedges
+# are a foot caught under a lip rather than a body in a wall.
 func _handle_path_blocked() -> void:
 	_stuck_retry_count += 1
 
@@ -2146,7 +2452,7 @@ func _handle_path_blocked() -> void:
 		var right = to_target.cross(Vector3.UP).normalized()
 		var lateral_dir = right if randf() > 0.5 else -right
 		var step = global_position + lateral_dir * 3.0 + to_target * 1.5
-		var nav_point = NavigationServer3D.map_get_closest_point(nav_map, step)
+		var nav_point = _snap_to_nav(step)
 		nav_agent.set_target_position(nav_point)
 		_nav_think_timer = 0.0  # new destination: refresh the cached direction now
 		return
@@ -2157,7 +2463,7 @@ func _handle_path_blocked() -> void:
 		var right = to_target.cross(Vector3.UP).normalized()
 		var lateral_dir = -right if randf() > 0.5 else right
 		var step = global_position + lateral_dir * 4.0
-		var nav_point = NavigationServer3D.map_get_closest_point(nav_map, step)
+		var nav_point = _snap_to_nav(step)
 		nav_agent.set_target_position(nav_point)
 		_nav_think_timer = 0.0  # new destination: refresh the cached direction now
 		return
@@ -2173,7 +2479,7 @@ func _handle_path_blocked() -> void:
 			perform_action(options[randi_range(0, options.size() - 1)])
 	else:
 		var random_offset = Vector3(randf_range(-5.0, 5.0), 0, randf_range(-5.0, 5.0))
-		var fallback = NavigationServer3D.map_get_closest_point(nav_map, global_position + random_offset)
+		var fallback = _snap_to_nav(global_position + random_offset)
 		move_to(fallback)
 
 ## One ring of 8 samples per call instead of 32 samples in a single frame.
@@ -2197,7 +2503,7 @@ func _seek_los_position() -> void:
 		var angle = angle_offset + (TAU / 8.0) * i
 		var dir = Vector3(cos(angle), 0.0, sin(angle))
 		var test = target_pos + dir * radius
-		var nav_point = NavigationServer3D.map_get_closest_point(nav_map, test)
+		var nav_point = _snap_to_nav(test)
 		if nav_point.distance_to(global_position) < 1.5:
 			continue
 		if is_path_clear(nav_point + check_from_height, target_pos, combat_target):
@@ -2454,8 +2760,31 @@ func _enter_search(target_down: bool = false) -> void:
 	change_ai_state(AIState.SEARCH)
 	search_time = 0.0
 	_search_look_timer = 0.0
-	move_to(last_seen_point.back())
+	# A SQUAD MEMBER SEARCHES FROM WHERE IT IS STANDING.
+	#
+	# This move_to was the one place in the search cycle that moved a
+	# squad-directed robot on its own authority. _tick_search refuses to roam
+	# one, _end_search hands it back to the squad, reconsider_patrol refuses to
+	# re-route one — and then this, which fires FIRST, drove it to the last
+	# place it saw the target.
+	#
+	# What that looked like: order a rover away from a fight, it starts moving,
+	# loses sight of what it was shooting at a few metres later, reconsider_
+	# target() finds nothing, and this sends it straight back to the spot it was
+	# engaging from. Re-issuing the order just restarts the loop, which is why
+	# spamming move and follow did not help — the squad and the robot were
+	# fighting over the same destination, and the robot got the last word.
+	#
+	# IT DOES NOT TURN TO WATCH IT EITHER. An earlier pass left look_target on
+	# the last contact here, reasoning that knowing where it came from was the
+	# useful half. It is not: the facing rules fall through to look_target once
+	# COMBAT ends, so that pinned a squad member's body to a spot behind it and
+	# it marched away backwards. The squad decides where its members look as
+	# well as where they stand.
+	if squad_directed:
+		return
 	look_target = last_seen_point.back()
+	move_to(last_seen_point.back())
 
 func _tick_search(delta: float) -> void:
 	if movement_state != MovementState.NONE:
@@ -2476,7 +2805,7 @@ func _tick_search(delta: float) -> void:
 	if randf() < 0.45:
 		var nav_map = nav_agent.get_navigation_map()
 		var offset = Vector3(randf_range(-7.0, 7.0), 0.0, randf_range(-7.0, 7.0))
-		move_to(NavigationServer3D.map_get_closest_point(nav_map, global_position + offset))
+		move_to(_snap_to_nav(global_position + offset))
 
 func _end_search() -> void:
 	search_time = 0.0
@@ -2542,8 +2871,7 @@ func _wander() -> void:
 	var nav_map = nav_agent.get_navigation_map()
 	var a = randf() * TAU
 	var r = randf_range(wander_radius * 0.4, wander_radius)
-	var pt = NavigationServer3D.map_get_closest_point(
-		nav_map, global_position + Vector3(cos(a), 0.0, sin(a)) * r)
+	var pt = _snap_to_nav(global_position + Vector3(cos(a), 0.0, sin(a)) * r)
 	move_to(pt)
 	look_target = pt
 
@@ -2691,12 +3019,10 @@ func find_reposition_target():
 	var to_target = (combat_target.global_position - global_position).normalized()
 	var right = to_target.cross(Vector3.UP).normalized()
 	var lateral_dir = right if randf() > 0.5 else -right
+	var steps: Array = []
 	for mult in [1.0, 0.5]:
-		var test_pos = global_position + lateral_dir * reposition_distance * mult
-		var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-		if is_path_clear(closest_point + Vector3.UP * 0.8, combat_target.global_position, combat_target):
-			return closest_point
-	return global_position
+		steps.append(global_position + lateral_dir * reposition_distance * mult)
+	return _first_clear_step(steps, combat_target)
 
 ## Step length now scales with range: long bounds when far, short careful
 ## steps when close, and it won't step inside a crowding distance.
@@ -2731,13 +3057,11 @@ func find_advance_target():
 	if step <= 0.2:
 		return global_position
 
+	# ONE navmesh query, on whichever step wins. See _first_clear_step.
+	var steps: Array = []
 	for mult in [1.0, 0.6, 0.3]:
-		var test_pos = global_position + direction * step * mult
-		var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-		# Previously this checked test_pos but returned closest_point.
-		if is_path_clear(closest_point + Vector3.UP * 0.8, combat_target.global_position, combat_target):
-			return closest_point
-	return global_position
+		steps.append(global_position + direction * step * mult)
+	return _first_clear_step(steps, combat_target)
 
 # True when whatever we're fighting can hit us from further away than we can hit
 # them. That asymmetry, not the raw numbers, is what should change how we move.
@@ -2778,13 +3102,10 @@ func find_fallback_target():
 		return global_position
 	var nav_map = nav_agent.get_navigation_map()
 	var away_dir = (global_position - combat_target.global_position).normalized()
+	var steps: Array = []
 	for mult in [1.0, 0.5]:
-		var test_pos = global_position + away_dir * fallback_distance * mult
-		var closest_point = NavigationServer3D.map_get_closest_point(nav_map, test_pos)
-		# Same copy-paste bug as find_advance_target had.
-		if is_path_clear(closest_point + Vector3.UP * 0.8, combat_target.global_position, combat_target):
-			return closest_point
-	return global_position
+		steps.append(global_position + away_dir * fallback_distance * mult)
+	return _first_clear_step(steps, combat_target)
 
 
 # ─────────────────────────────────────────────
@@ -2824,8 +3145,35 @@ func compute_leap_velocity_fixed_speed(target: Vector3, speed: float) -> Vector3
 		var max_time: float = sqrt(8.0 * leap_max_apex / gravity)
 		time = minf(time, max_time)
 
+	# AND A FLOOR UNDER THE FLIGHT TIME TOO. The cap above only ever SHORTENS
+	# the flight, and a short flight is exactly what makes the arc tall:
+	# `distance` is the HORIZONTAL gap, floored at 1cm, so a target nearly
+	# overhead — something stood on a hive's 2.2m roof, a helicopter hovering
+	# over the hatch — gives time = 0.002s and a `displacement.y / time` in the
+	# hundreds of metres per second. The hopper went straight up and out of the
+	# level, and nothing downstream caught it: it stays LEAPING the whole way
+	# up, so the landing check never runs, and fell_out_speed only notices the
+	# way back down.
+	#
+	# FLOOR THE TIME RATHER THAN CLAMP THE VELOCITY, because those two fail
+	# differently. Capping vy on its own leaves the horizontal at the full leap
+	# speed, so a hopper aimed at something directly overhead hurls itself
+	# sixteen metres sideways to get nowhere. Lengthening the flight spends the
+	# arc going UP instead, which is a robot visibly jumping at something it
+	# cannot reach and landing where it started — the honest read.
+	#
+	# The floor is the shortest flight whose apex still fits the budget: at most
+	# leap_max_apex above whichever end is higher. Solving 0.5*g*t^2 - vy*t + dy
+	# for that vy leaves the root below; an ordinary leap has dy near zero,
+	# which makes it zero, so nothing that could already make its jump moves.
+	if gravity > 0.0:
+		var apex: float = maxf(leap_max_apex, 0.0)
+		var vy_max: float = sqrt(2.0 * gravity * (apex + maxf(displacement.y, 0.0)))
+		time = maxf(time, (vy_max - sqrt(2.0 * gravity * apex)) / gravity)
+
 	var direction = horiz.normalized()
 	var vy = (displacement.y / time) + (0.5 * gravity * time)
+
 	return Vector3(direction.x * distance / time, vy, direction.z * distance / time)
 
 
@@ -3925,8 +4273,23 @@ static var _wedged_warned: bool = false
 func _apply_give_way() -> void:
 	if _give_way_t <= 0.0:
 		return                      # not yielding; the common case, and free
-	velocity.x += _give_way_dir.x * move_speed * GIVE_WAY_SIDE_SPEED
-	velocity.z += _give_way_dir.z * move_speed * GIVE_WAY_SIDE_SPEED
+	# SET, NOT ADD, AND THIS IS THE WHOLE BUG.
+	#
+	# This was `velocity.x += ...` every frame for the length of the sidestep.
+	# The movement code LERPS velocity toward what it wants rather than
+	# overwriting it, so the nudge did not get cleared between frames — it
+	# compounded. Measured: 5.4 m/s of sidestep climbing monotonically to 37 m/s
+	# over forty frames and throwing the robot twenty metres, long after the pair
+	# had separated. _damp_shoving never caught it because by then they were not
+	# touching, and it only caps a body that is.
+	#
+	# "Robots randomly bump and go flying" was this, not the physics solver.
+	#
+	# Stepping aside IS the whole of the movement for those seven tenths of a
+	# second, so setting it outright is also what the behaviour wants.
+	var side := _give_way_dir * move_speed * GIVE_WAY_SIDE_SPEED
+	velocity.x = side.x
+	velocity.z = side.z
 
 
 ## Called after the move has resolved, with where it started and what it asked

@@ -5,7 +5,7 @@ extends SceneTree
 #
 # Every held item's pose is a Vector3 of EULER ANGLES IN DEGREES. Everything
 # that authors one agrees: swing_rotation (-18, 6, 0), the default
-# reload_rotation (0.2, 20.5, 58.0), obstructed_rotation (0.3, 270, 3), and the
+# reload_rotation (0.2, 20.5, 58.0), obstructed_rotation (0.3, 90, 3), and the
 # bob term, which is amount * 20.0. PlayerEquipment.update_view() ends by
 # writing the result to viewmodel.rotation_DEGREES.
 #

@@ -394,6 +394,19 @@ func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false,
 	# Cover is released either way; you can't hold it and walk.
 	if force:
 		release_cover()
+		# AND THE NEW POSITION GETS A FULL HEARING. _no_los_timer is how long
+		# this robot has gone without sight of its target before it repositions
+		# itself. It does not tick while an order is in flight, but it carries
+		# whatever it had reached BEFORE the order — so a rover that was one
+		# tick short of its patience when you ordered it away would arrive and
+		# immediately decide to go back. Repositioning for a shot is wanted;
+		# doing it the moment you arrive somewhere you were sent is not.
+		_no_los_timer = 0.0
+		# AND IT LOOKS WHERE IT IS BEING SENT. A stale look_target is the other
+		# half of walking backwards: the facing rules fall through to it the
+		# moment the robot drops out of COMBAT, so a squad member that had been
+		# told to watch an old contact kept watching it on the march.
+		look_target = pos
 		if not keep_target:
 			combat_target = null
 
@@ -461,7 +474,7 @@ func find_flank_target() -> Vector3:
 	var right = to_target.cross(Vector3.UP).normalized()
 	var flank_dir = right if randf() > 0.5 else -right
 	var test_pos = combat_target.global_position + flank_dir * reposition_distance * 3.0
-	return NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+	return _snap_to_nav(test_pos)
 
 
 # ─────────────────────────────────────────────

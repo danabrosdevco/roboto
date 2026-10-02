@@ -1,0 +1,125 @@
+[gd_scene load_steps=13 format=3]
+
+; AUTOCANNON — the Walker's main gun.
+;
+; IT HAS TO READ AS A DIFFERENT GUN FROM THE HEAVY MG AT A GLANCE. Both ride the
+; same mount on the same turret, and until now they shared machine_gun_model and
+; the same rifle sample, so a 60-damage cannon firing 3-5 rounds every half
+; second was indistinguishable from a 22-damage MG firing 20 rounds a second.
+; The player could not tell which gun was working.
+;
+; So the silhouette is deliberately the MG's inverted, part for part:
+;
+;   MG                            AUTOCANNON
+;   slim jacket with cooling fins thick smooth barrel, no fins
+;   side-slung belt box           TOP-MOUNTED box magazine
+;   small conical flash hider     slotted muzzle brake, wider than the barrel
+;   narrow receiver               deep receiver with a breech block
+;
+; The fins and the top magazine are the two that carry at distance; the rest is
+; detail for when it is close.
+
+[sub_resource type="StandardMaterial3D" id="steel"]
+albedo_color = Color(0.15, 0.16, 0.17, 1)
+metallic = 0.65
+roughness = 0.42
+
+[sub_resource type="StandardMaterial3D" id="dark"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+metallic = 0.5
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="olive"]
+albedo_color = Color(0.27, 0.3, 0.18, 1)
+metallic = 0.1
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="m_receiver"]
+size = Vector3(0.62, 0.23, 0.2)
+
+[sub_resource type="BoxMesh" id="m_breech"]
+size = Vector3(0.17, 0.27, 0.23)
+
+[sub_resource type="BoxMesh" id="m_mag"]
+size = Vector3(0.19, 0.26, 0.17)
+
+[sub_resource type="BoxMesh" id="m_magcatch"]
+size = Vector3(0.21, 0.04, 0.19)
+
+[sub_resource type="CylinderMesh" id="m_barrel"]
+top_radius = 0.045
+bottom_radius = 0.05
+height = 0.95
+radial_segments = 10
+rings = 1
+
+[sub_resource type="CylinderMesh" id="m_collar"]
+top_radius = 0.068
+bottom_radius = 0.068
+height = 0.07
+radial_segments = 10
+rings = 1
+
+[sub_resource type="CylinderMesh" id="m_brake"]
+top_radius = 0.076
+bottom_radius = 0.076
+height = 0.18
+radial_segments = 10
+rings = 1
+
+[sub_resource type="BoxMesh" id="m_port"]
+size = Vector3(0.11, 0.03, 0.17)
+
+[sub_resource type="BoxMesh" id="m_lug"]
+size = Vector3(0.26, 0.09, 0.14)
+
+[node name="AutocannonModel" type="Node3D"]
+
+[node name="Receiver" type="MeshInstance3D" parent="."]
+material_override = SubResource("steel")
+mesh = SubResource("m_receiver")
+
+[node name="Breech" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0, 0)
+material_override = SubResource("dark")
+mesh = SubResource("m_breech")
+
+[node name="Magazine" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, 0.23, 0)
+material_override = SubResource("olive")
+mesh = SubResource("m_mag")
+
+[node name="MagCatch" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, 0.1, 0)
+material_override = SubResource("dark")
+mesh = SubResource("m_magcatch")
+
+[node name="Barrel" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 0.8, 0, 0)
+material_override = SubResource("steel")
+mesh = SubResource("m_barrel")
+
+[node name="Collar" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 0.36, 0, 0)
+material_override = SubResource("dark")
+mesh = SubResource("m_collar")
+
+[node name="MuzzleBrake" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.36, 0, 0)
+material_override = SubResource("dark")
+mesh = SubResource("m_brake")
+
+[node name="PortUpper" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.36, 0.055, 0)
+material_override = SubResource("steel")
+mesh = SubResource("m_port")
+
+[node name="PortLower" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.36, -0.055, 0)
+material_override = SubResource("steel")
+mesh = SubResource("m_port")
+
+[node name="MountLug" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, -0.15, 0)
+material_override = SubResource("dark")
+mesh = SubResource("m_lug")

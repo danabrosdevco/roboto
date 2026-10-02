@@ -1642,9 +1642,6 @@ transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 2, 0.1
 [node name="Sangar" parent="Dressing/Bridgehead" instance=ExtResource("58_aqyg5")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, -1.47466, -4)
 
-[node name="GunPit" parent="Dressing/Bridgehead" instance=ExtResource("61_l6j35")]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 37, 0.111286, -4)
-
 [node name="Teeth" parent="Dressing/Bridgehead" instance=ExtResource("79_pb3ss")]
 transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, 43, 0.111286, 14)
 

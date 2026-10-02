@@ -14,6 +14,20 @@ var all_ai: Array[AI] = []
 ## spawn and die throughout a mission.
 signal ekilled(victim: Node, by: Node)
 
+## Built once at startup so no robot ever pays for a CSG rebuild mid-mission.
+## See csg_bake.gd: a reserve wave of 40 soldiers cost 336 ms on the frame it
+## landed and 10 ms with the CSG gone, and the rover carries five times as much
+## of it as a soldier. Preloaded by path because a new class_name is not
+## resolvable headless until the editor rescans.
+const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
+
+
+func _ready() -> void:
+	# At boot rather than per level: the cache is static and keyed by scene path,
+	# so one pass covers every mission in the run and none of it lands during play.
+	await _CsgBake.warm(self)
+
+
 func register_enemy(new_enemy: AI) -> void:
 	if new_enemy in all_ai:
 		return

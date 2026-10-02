@@ -181,7 +181,7 @@ func _hatch() -> void:
 	if frame == null or frame.scene == null:
 		push_warning("%s: a hatchling frame has no scene, so nothing came out." % name)
 		return
-	var body := frame.scene.instantiate() as Soldier
+	var body := _CsgBake.make(frame.scene) as Soldier
 	if body == null:
 		push_warning("%s: %s is not a Soldier scene." % [name, frame.display_name])
 		return
