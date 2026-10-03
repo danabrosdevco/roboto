@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bagvtrfeuho3l"
+path="res://.godot/imported/prop_truss_now.map-c79d1bcc89505edae56a3fd229c058e5.tres"
+
+[deps]
+
+source_file="res://maps/blocks/proposals/prop_truss_now.map"
+dest_files=["res://.godot/imported/prop_truss_now.map-c79d1bcc89505edae56a3fd229c058e5.tres"]
+
+[params]
+
