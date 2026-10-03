@@ -52,9 +52,17 @@ const RAMP_RUN := 3.0
 const TOE := 0.5
 ## The bottom of the earth under the ramps.
 const EARTH_BASE := -1.0
-## Embankment sides fall 1 in SIDE_RUN, about 34°: under the navmesh's 45°,
-## so the squad can walk up them as well as up the ramp.
-const SIDE_RUN := 1.5
+## Embankment sides fall 1 in SIDE_RUN. This was 1.5 — about 34°, deliberately
+## UNDER the navmesh's 45° so the squad could walk up a bank anywhere and not
+## only up the ramp. On 2026-10-03 that turned out to be how bodies were ending
+## up in the river on qamareen: a 34° flank runs from the deck straight down to
+## EARTH_BASE, which on a bridge sunk into its banks is under the water, and the
+## bake calls the whole slope a legal route. 0.8 is 51°, over the 45°, so the
+## navmesh stops at the top of the embankment and the ramp is the only way on
+## or off. Being steeper, the mound is also NARROWER than it was — about 3.5 m
+## a side on bridge_long — which is the one thing to eyeball on bridges already
+## placed in a level. Nothing about the ramp's length or its top changes.
+const SIDE_RUN := 0.8
 const ROAD := DECK
 const SETTS := "PSX_Textures/tile_floor_tx_3@0.5"
 const ARCH_STONE := "PSX_Textures/concrete_7"
@@ -126,7 +134,7 @@ func _initialize() -> void:
 ## The earth ramp off the end of the deck at x = dir * x0: 0.5 m level with the
 ## deck, then down at 1 in RAMP_RUN to TOE below the origin, its sides falling
 ## away 1 in SIDE_RUN to EARTH_BASE. One brush, as the original's ramps are.
-func _embankment(x0: float, dir: float, w: float, h: float) -> void:
+func _embankment(x0: float, dir: float, w: float, h: float, par: float = 1.0) -> void:
 	var land := x0 + 0.5
 	var foot := land + (h + TOE) * RAMP_RUN
 	var pts: Array = []
@@ -137,6 +145,31 @@ func _embankment(x0: float, dir: float, w: float, h: float) -> void:
 		pts.append_array([Vector3(dir * x0, edge, h), Vector3(dir * land, edge, h), Vector3(dir * foot, edge, -TOE),
 				Vector3(dir * x0, toe_top, EARTH_BASE), Vector3(dir * land, toe_top, EARTH_BASE), Vector3(dir * foot, toe_foot, EARTH_BASE)])
 	solid(pts, SPOIL)
+	if par <= 0.0:
+		return
+	# THE PARAPET CARRIES ON PAST THE SPAN. _deck and _truss build theirs from
+	# -span/2 to +span/2 and stop dead at the abutment, which left every ramp in
+	# this file open down both sides, over the water, at exactly the place a
+	# squad is funnelling and shoving. It sits on the same line the deck's
+	# parapet does, y = w/2 .. w/2 + 1, so the two read as one wall.
+	#
+	# upstand and not rail: rail() is posts every 2.5 m with a bar over them,
+	# and a 0.4 m body walks between two of those without touching either. It
+	# is something to see through, not something to stop anybody.
+	# HALF A METRE THICK, NOT THE METRE THE DECK'S PARAPET IS. At a metre the
+	# top of this wall is a surface the baker stands on, and test_bridges.gd
+	# caught it: short, medium, very_long, damaged and gorge all came back with
+	# stranded polygons running down the ramp. Half a metre is narrower than
+	# the walkable area gets eroded by the agent's radius, so no polygon
+	# survives on top of it, and a solid half-metre wall stops a body just as
+	# dead as a solid metre one. It lines up with the INNER face of the deck's
+	# parapet, so the face a body slides along runs on unbroken.
+	for s: float in [-1.0, 1.0]:
+		var y0 := s * w * 0.5
+		var y1 := y0 + s * 0.5
+		var across := Vector2(minf(y0, y1), maxf(y0, y1))
+		upstand("y", across, minf(dir * x0, dir * land), maxf(dir * x0, dir * land), h, h, true, par)
+		upstand("y", across, minf(dir * land, dir * foot), maxf(dir * land, dir * foot), -TOE, h, dir < 0.0, par)
 
 
 ## The abutment under the end of the deck at x = dir * x0: a concrete wall 1 m
@@ -211,7 +244,7 @@ func _road_bridge(span: float, w: float, h: float, piers: int, kind: String = "w
 				push_warning("block_bridges: no pier kind '%s' — pier at x %.1f left out" % [kind, x])
 	for dir: float in [-1.0, 1.0]:
 		_abutment(span * 0.5, dir, w, h)
-		_embankment(span * 0.5, dir, w, h)
+		_embankment(span * 0.5, dir, w, h, par)
 	return depth
 
 
@@ -397,28 +430,32 @@ func _truss(span: float, w: float, h: float, tall: float, bay: float) -> void:
 	box(Vector3(-span * 0.5, -w * 0.5, h - 1.0), Vector3(span * 0.5, w * 0.5, h), ROAD)
 	for s: float in [-1.0, 1.0]:
 		var y := s * (w * 0.5 + 0.5)
-		# The bottom chord stands 0.5 m proud of the deck as a kerb.
-		box(Vector3(-span * 0.5, minf(s * w * 0.5, s * (w * 0.5 + 1.0)), h - 1.5), Vector3(span * 0.5, maxf(s * w * 0.5, s * (w * 0.5 + 1.0)), h + 0.5), RUST)
+		# The bottom chord stands 1.0 m proud of the deck as a parapet. It was
+		# 0.5, which is the worst number available: over the 0.25 m the navmesh
+		# baker climbs, so the bake stops at it, but only knee high on a 1.5 m
+		# body, so what a capsule does there is ride up it and grind along. The
+		# road bridges in this file have always used 1.0.
+		box(Vector3(-span * 0.5, minf(s * w * 0.5, s * (w * 0.5 + 1.0)), h - 1.5), Vector3(span * 0.5, maxf(s * w * 0.5, s * (w * 0.5 + 1.0)), h + 1.0), RUST)
 		box(Vector3(-span * 0.5 + bay, y - 0.375, zt - 0.375), Vector3(span * 0.5 - bay, y + 0.375, zt + 0.375), RUST)
 		for e: float in [-1.0, 1.0]:
-			beam(Vector3(e * span * 0.5, y, h + 0.5), Vector3(e * (span * 0.5 - bay), y, zt), 0.75, RUST)
+			beam(Vector3(e * span * 0.5, y, h + 1.0), Vector3(e * (span * 0.5 - bay), y, zt), 0.75, RUST)
 		for i in range(1, bays):
 			var x := -span * 0.5 + bay * i
-			box(Vector3(x - 0.1875, y - 0.1875, h + 0.5), Vector3(x + 0.1875, y + 0.1875, zt - 0.375), RUST)
+			box(Vector3(x - 0.1875, y - 0.1875, h + 1.0), Vector3(x + 0.1875, y + 0.1875, zt - 0.375), RUST)
 		# Pratt diagonals, each sloping down toward the middle of the span.
 		for i in range(1, bays - 1):
 			var xa := -span * 0.5 + bay * i
 			var xb := xa + bay
 			if xb <= 0.0:
-				beam(Vector3(xa, y, zt - 0.375), Vector3(xb, y, h + 0.5), 0.375, RUST)
+				beam(Vector3(xa, y, zt - 0.375), Vector3(xb, y, h + 1.0), 0.375, RUST)
 			else:
-				beam(Vector3(xb, y, zt - 0.375), Vector3(xa, y, h + 0.5), 0.375, RUST)
+				beam(Vector3(xb, y, zt - 0.375), Vector3(xa, y, h + 1.0), 0.375, RUST)
 	for i in range(1, bays):
 		var x := -span * 0.5 + bay * i
 		box(Vector3(x - 0.1875, -(w * 0.5 + 0.5), zt - 0.25), Vector3(x + 0.1875, w * 0.5 + 0.5, zt + 0.125), RUST)
 	for dir: float in [-1.0, 1.0]:
 		_abutment(span * 0.5, dir, w, h)
-		_embankment(span * 0.5, dir, w, h)
+		_embankment(span * 0.5, dir, w, h, 1.0)
 
 
 # ── Stone ────────────────────────────────────────────────────────────────────
