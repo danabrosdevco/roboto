@@ -367,6 +367,8 @@ const VOIDS: Array = [Vector2i(10, 3), Vector2i(10, 8)]
 const BLOCK := 64.0
 const B_BASIN := "res://maps/blocks/suburbs/suburb_retention_basin_64.tscn"
 
+## Objective positions recorded at placement time, which override OBJECTIVES.
+var _anchors: Dictionary = {}
 var _tiles := 0
 ## World-space XZ footprints of every surface piece placed so far.
 var _surfaces: Array = []
@@ -695,6 +697,9 @@ func _power_centre(art: Node3D) -> void:
 	_put(g, B_SUBURBAN % "suburban_big_box", x, -46.0, FACE_EAST, 0.0, "BigBoxNorth")
 	_put(g, B_SUBURBAN % "suburban_retail_strip", x - 12.0, 64.0, FACE_EAST, 0.0, "Strip")
 	_put(g, B_SUBURBS % "suburb_self_storage", x - 6.0, -158.0, ALONG_X, 0.0, "Storage")
+	# The yard between the two unit rows, which is where the objective belongs
+	# and where a squad can actually stand. Registered rather than typed.
+	_anchors["Polaris_Storage"] = Vector2(x - 6.0, -158.0)
 	_put(g, B_SUBURBS % "suburb_office_lowrise", x + 2.0, 168.0, FACE_EAST, 0.0, "Office")
 	# ACROSS the strip, not along it. These were ALONG_Z — 64 m long pieces
 	# running up the Z axis while being spaced 40 m apart ON THAT SAME AXIS, so
@@ -757,10 +762,19 @@ func _write_level() -> void:
 	var lines := PackedStringArray()
 	var objs := PackedStringArray()
 	for o: Array in OBJECTIVES:
+		# AN ANCHOR BEATS THE TYPED COORDINATE. Anything standing on a piece whose
+		# position is derived has to be derived too, or it drifts silently the
+		# first time the thing it names moves. The storage objective was typed at
+		# (-314, -150); RING_X changed by 6 m, the power centre moved with it, and
+		# the marker ended up inside the north unit row — unreachable, and nothing
+		# said so until the navmesh was baked and walked.
+		var at := Vector2(o[3], o[4])
+		if _anchors.has(o[0]):
+			at = _anchors[o[0]]
 		objs.append("""
 [node name="%s" type="Node3D" parent="NavigationRegion3D/Objectives"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, %s, 0, %s)
-""".strip_edges() % [o[0], o[3], o[4]])
+""".strip_edges() % [o[0], at.x, at.y])
 	lines.append("""[gd_scene load_steps=7 format=3]
 
 [ext_resource type="PackedScene" path="%s" id="1_art"]
