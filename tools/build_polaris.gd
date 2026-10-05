@@ -44,7 +44,10 @@ const B_POLARIS := "res://maps/blocks/polaris/%s.tscn"
 ## The ring road's rounded rectangle. The corner piece is 90° on a 50 m
 ## centreline with its origin AT THE CIRCLE CENTRE, so the four corners go in
 ## at the four corners of this rectangle and the straights fill between them.
-const RING_X := 150.0
+# 144 and not 150: the straights are laid as whole 32 m pieces, and 2 x 150 is
+# 9.375 of them. Rounding to 9 gave a 33.3 m pitch for a 32 m piece, so the
+# kerb broke by 1.3 m sixteen times round the ring. 2 x 144 is exactly 9.
+const RING_X := 144.0
 ## 112 and not 110: the straights are 32 m pieces and 2 x 112 is seven of them
 ## exactly. At 110 it is 220 m, seven pieces laid on a 31.4 m pitch overlapped
 ## each other and the corners by half a metre each.
@@ -589,10 +592,10 @@ func _parking(art: Node3D) -> void:
 						"NorthCars_%d_%s_%s" % [i, "E" if s > 0.0 else "W", "a" if e > 0.0 else "b"])
 	for s: float in [-1.0, 1.0]:
 		for i in 3:
-			_put(g, B_POLARIS % "polaris_aisle_long", s * (152.0 + i * END_PITCH), 0.0, ALONG_Z, 0.0,
+			_put(g, B_POLARIS % "polaris_aisle_long", s * (146.0 + i * END_PITCH), 0.0, ALONG_Z, 0.0,
 					"EndAisle_%s_%d" % ["E" if s > 0.0 else "W", i])
 			for e: float in [-1.0, 1.0]:
-				_put(cars, B_POLARIS % "lot_car_row_sparse", s * (152.0 + i * END_PITCH) + e * 4.3, 0.0, ALONG_Z, 0.0,
+				_put(cars, B_POLARIS % "lot_car_row_sparse", s * (146.0 + i * END_PITCH) + e * 4.3, 0.0, ALONG_Z, 0.0,
 						"EndCars_%s_%d_%s" % ["E" if s > 0.0 else "W", i, "a" if e > 0.0 else "b"])
 	# Things in the lot that are neither a car nor a kerb. Every one of these
 	# is between waist and head height on purpose: a car park's real cover is
@@ -614,7 +617,7 @@ func _parking(art: Node3D) -> void:
 	_put(g, B_POLARIS % "lot_charging_bank", 77.0, 56.0, ALONG_X, 0.0, "Chargers")
 	_put(g, B_POLARIS % "lot_garden_centre", 160.0, -49.0, FACE_WEST, 0.0, "GardenCentre")
 	for i: int in [0, 1]:
-		_put(g, B_POLARIS % "lot_snow_pile", -186.0 + i * 372.0, 96.0 - i * 190.0, 0.0, 0.0, "Heap_%d" % i)
+		_put(g, B_POLARIS % "lot_snow_pile", -180.0 + i * 360.0, 96.0 - i * 190.0, 0.0, 0.0, "Heap_%d" % i)
 	for i in 2:
 		_put(g, B_POLARIS % "lot_dumpster_corral", -70.0 + i * 120.0, -46.0, FACE_SOUTH, 0.0, "Bins_%d" % i)
 	# The third was beside the fieldhouse's garden centre; it is behind it now.
