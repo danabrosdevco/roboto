@@ -99,6 +99,46 @@ in — 4,455 m3 in one case. That needs a cell-sized basin piece and a void list
 in `_ground()`, which is a layout change to the car park, not a flooring fix.
 Plan for this is with the human; it is the obvious subagent brief.
 
+**Update, same day — both maps now measure clean.** Two subagents worked the
+two maps in parallel off written briefs, and I verified every number below
+myself rather than taking the reports:
+
+| | Polaris | Georgetown |
+|---|---|---|
+| holes in the ground | 0 of 9200 | 0 of 3248 |
+| two floors in one place | 0 (from 1231) | 0 (from 399) |
+| pieces inside each other | 44, all car rows on their own aisle | 0 |
+| navmesh | NOT re-baked | re-baked, 89.0% reach, REACH PASS |
+
+Polaris gained a build-time placement guard, which found 43 clashes the fault
+probe cannot see — it compares colliders, the probe compares envelopes. The two
+retention basins became `suburb_retention_basin_64`, a piece sized to exactly
+one 2x2 block of ground cells, with a `VOIDS` list driving both the missing
+tiles and the basin placement from one constant. I then closed the last thing
+left standing: `RING_X` was 150, which is 9.375 pieces of 32 m, so the kerb
+broke by 1.3 m sixteen times round the ring; it is 144 now, and the guard named
+each of the three things the smaller ring landed on.
+
+Georgetown's benches now top out at -0.06 like the Polaris tiles, which alone
+took 399 to 8. The rest: bridge decks sit on the prism rather than the benches
+so they got their own sunk top, the canal became a cell-aligned void driven
+from `CANAL_HALF` read out of `block_canal.gd`, and 1 m and 2 m bench pieces
+were added because 9 m is not a multiple of 4. The lock was the actual cause of
+the 5 holes — its piece stopped at 5.3 m where the open prism's towpaths run to
+9 m.
+
+One regression worth recording because it will recur: sinking the bridge decks
+dropped reachability from 90.9% to 49.3% and closed all four bridges. The
+prism's coping runs as a 0.3 m lip across every bridge mouth and the baker
+climbs 0.25 m — it only ever got over because the deck and the coping rounded
+to neighbouring voxels. `canal_prism_open_bridge` leaves the coping off the
+mouth. **A 6 cm change to a surface can close a route, and only a bake says so.**
+
+Corrections to the entry above: I wrote that Georgetown had no floating pieces.
+It has two, `LockGear` and `Bridge_9`, both present at HEAD and both intended —
+my grep hid them. Polaris's navmesh still needs baking.
+
+
 Georgetown has the same disease and has not been touched: its benches are the
 ground, and the canal kit has at least eight pieces whose own surface tops out
 at exactly 0.
