@@ -38,6 +38,71 @@ most wants and least often gets:
 
 
 
+## 2026-10-05 — Polaris stands on ground that is derived, not described
+
+**Landed.** Polaris's ground was a slab per material with the lot, the roads
+and every pad laid on top at the same height — 1,231 of 8,119 columns with two
+horizontal faces at one height, which is 15% of the map crawling. It is now
+0 holes in 9,200 columns and 2 coplanar ones, both at a retention basin rim.
+
+The mechanism is the point. Three attempts failed the same way because the
+ground was described by hand in one place and the things standing on it in
+another: holes cut for the roads left 451 empty columns, and tile-aligned
+asphalt corridors typed out by hand left 3,528 — `_corridor()` takes a centre
+and I passed it a left edge, so the frontage corridor ran from x -768 to 0,
+three hundred metres of asphalt off the west side of the map with bare dirt
+under the eastern half of its own road. Nothing said so, because nothing
+compared the two. So `_ground()` now runs LAST and is built from a record:
+`_put()` measures anything whose prefab brings its own walking surface, and
+every 32 m cell of the site gets exactly one tile — asphalt where a surface
+lands on it, dirt otherwise. One tile per cell makes an empty cell and a
+doubled cell both impossible, and a warning fires if a road leaves the site.
+
+Four bugs found on the way, all fixed: ground tiles now sit 0.06 m below zero,
+because half the kit carries its own surface at exactly 0 and the clearance
+has to be made in the ground (lifting the aprons instead drove them up into
+the shutters and walls standing on them — 32 overlapping pairs in the storage
+yard alone); the power centre's four aisles ran ALONG_Z while being spaced
+40 m apart on that same axis, so each 64 m aisle lay 24 m inside its
+neighbour; the lot entry throat's nose wedges pointed inwards, 2.4 m inside
+the island each one ends; and `probe_level_faults` did not know the new tiles
+were ground, so its arrangement list was 347 pairs of buildings correctly
+founded in their own slab.
+
+Files: `tools/build_polaris.gd` (the ground section rewritten),
+`tools/block_ground.gd`, `tools/block_suburbs.gd`, `tools/block_streets.gd`,
+`tools/probe_level_faults.gd`. Commit 728cb4db, which also carries the
+uncommitted overlap-clearing pass from earlier in the session — 136 maps
+regenerated from the current tools, 0 overlapping brush pairs.
+
+**Gates.** `check.sh --changed`: PASS (44 scripts, 172 scenes and resources,
+136 maps free of overlapping brushes). `test.sh` and `smoke.sh` not run — this
+session touched no runtime script, only block generators, level builders and
+probes. `probe_level_faults` on Polaris: 0 holes, 0 floating pieces, 2
+coplanar columns, 99 arrangement pairs still open (see below).
+
+**Needs the human.** Look at Polaris in the editor and in-game. The ground is
+204 tiles instead of three plates, so the thing to check is whether it READS
+as one surface or as tiling — the aisle slabs now sit 0.06 m proud, which in
+the renders looks like a car park's slab joints but is a judgement I cannot
+make from a still. The navmesh has NOT been rebaked and must be: the ground
+geometry under the whole site changed height by 6 cm and the power centre's
+aisles moved.
+
+**Blocked / next.** 99 pairs of pieces are inside each other on Polaris — not
+ground, arrangement. The two large ones are Sancus Boulevard laid straight
+through the ring road's west straight (15 pairs with RingZ_W and the corners),
+and the two retention basins fouling the ring corners, the cinema, the snow
+heaps and the ring lights (8 pairs). The basins are also the one thing one
+tile per cell cannot express: they are excavations, so the tiles now fill them
+in — 4,455 m3 in one case. That needs a cell-sized basin piece and a void list
+in `_ground()`, which is a layout change to the car park, not a flooring fix.
+Plan for this is with the human; it is the obvious subagent brief.
+
+Georgetown has the same disease and has not been touched: its benches are the
+ground, and the canal kit has at least eight pieces whose own surface tops out
+at exactly 0.
+
 ## 2026-10-01 — a .map editor that is not the generator, and the core column
 
 **Landed — `tools/map_retexture.gd`, the tool that should have existed first.**
