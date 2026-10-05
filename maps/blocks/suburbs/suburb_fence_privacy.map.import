@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dgi13wqljdv1r"
+path="res://.godot/imported/suburb_fence_privacy.map-f30a5d98b77a24182052be1d68c0183f.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_fence_privacy.map"
+dest_files=["res://.godot/imported/suburb_fence_privacy.map-f30a5d98b77a24182052be1d68c0183f.tres"]
+
+[params]
+

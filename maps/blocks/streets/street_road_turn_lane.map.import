@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cujxsmnutkxsi"
+path="res://.godot/imported/street_road_turn_lane.map-a3c09118f2563d22da7d49d205a46d05.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_road_turn_lane.map"
+dest_files=["res://.godot/imported/street_road_turn_lane.map-a3c09118f2563d22da7d49d205a46d05.tres"]
+
+[params]
+

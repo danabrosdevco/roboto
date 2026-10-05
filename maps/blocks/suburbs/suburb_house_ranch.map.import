@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bfi3o14p03jxs"
+path="res://.godot/imported/suburb_house_ranch.map-29260a5ec0b8f50d0f1d199070c13234.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_house_ranch.map"
+dest_files=["res://.godot/imported/suburb_house_ranch.map-29260a5ec0b8f50d0f1d199070c13234.tres"]
+
+[params]
+

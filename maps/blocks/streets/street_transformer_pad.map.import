@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ciy6nf3i8u0h8"
+path="res://.godot/imported/street_transformer_pad.map-aba642dcf77e1b84894dbd5d954fc0b5.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_transformer_pad.map"
+dest_files=["res://.godot/imported/street_transformer_pad.map-aba642dcf77e1b84894dbd5d954fc0b5.tres"]
+
+[params]
+

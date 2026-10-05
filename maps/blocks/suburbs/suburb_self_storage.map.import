@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ckm4tqbibgdrg"
+path="res://.godot/imported/suburb_self_storage.map-280a88a3def2e52dcb6c2e0ef409ffde.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_self_storage.map"
+dest_files=["res://.godot/imported/suburb_self_storage.map-280a88a3def2e52dcb6c2e0ef409ffde.tres"]
+
+[params]
+

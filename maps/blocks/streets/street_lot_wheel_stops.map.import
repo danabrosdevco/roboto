@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cn18d2pjidhjk"
+path="res://.godot/imported/street_lot_wheel_stops.map-948116e52786ad3d17744c89eb29bc45.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_lot_wheel_stops.map"
+dest_files=["res://.godot/imported/street_lot_wheel_stops.map-948116e52786ad3d17744c89eb29bc45.tres"]
+
+[params]
+

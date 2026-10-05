@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dy5xjdd8plc3w"
+path="res://.godot/imported/street_junction_t.map-48c049bcbd6d41b851c65f08b2b66e42.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_junction_t.map"
+dest_files=["res://.godot/imported/street_junction_t.map-48c049bcbd6d41b851c65f08b2b66e42.tres"]
+
+[params]
+

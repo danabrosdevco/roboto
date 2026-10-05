@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://yqo4o6kmyft4"
+path="res://.godot/imported/suburb_house_two_story.map-99d7c90e65273b245e2c34d689323877.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_house_two_story.map"
+dest_files=["res://.godot/imported/suburb_house_two_story.map-99d7c90e65273b245e2c34d689323877.tres"]
+
+[params]
+

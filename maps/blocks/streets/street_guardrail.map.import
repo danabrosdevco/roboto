@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://byopbqn6nyy7y"
+path="res://.godot/imported/street_guardrail.map-2a4538a96914fdae6a09794f87a2d445.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_guardrail.map"
+dest_files=["res://.godot/imported/street_guardrail.map-2a4538a96914fdae6a09794f87a2d445.tres"]
+
+[params]
+
