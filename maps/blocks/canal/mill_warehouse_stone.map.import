@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dgvip2krwd80m"
+path="res://.godot/imported/mill_warehouse_stone.map-3421334128b3497cbbe58bbe5d1cc96d.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/mill_warehouse_stone.map"
+dest_files=["res://.godot/imported/mill_warehouse_stone.map-3421334128b3497cbbe58bbe5d1cc96d.tres"]
+
+[params]
+

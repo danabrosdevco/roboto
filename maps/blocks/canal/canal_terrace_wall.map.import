@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bf6nsc50vjqfn"
+path="res://.godot/imported/canal_terrace_wall.map-47a2ca6d76a416ae7e9193f46b67d77a.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_terrace_wall.map"
+dest_files=["res://.godot/imported/canal_terrace_wall.map-47a2ca6d76a416ae7e9193f46b67d77a.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://df2vstcna5q44"
+path="res://.godot/imported/canal_outfall.map-a16a255f199e44055e7bd532bd55b787.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_outfall.map"
+dest_files=["res://.godot/imported/canal_outfall.map-a16a255f199e44055e7bd532bd55b787.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cv7xerx4gpgbf"
+path="res://.godot/imported/canal_lock.map-1374a0805ea20fb67263d8c9f7ebab52.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_lock.map"
+dest_files=["res://.godot/imported/canal_lock.map-1374a0805ea20fb67263d8c9f7ebab52.tres"]
+
+[params]
+

@@ -48,6 +48,12 @@ const EYE := 1.65
 # The cameras are the ones already proven in the per-level shot tools. This
 # tool is about the filter, not about finding new angles.
 const SHOTS: Array = [
+	["georgetown", "G1_the_towpath", Vector3(-100.0, 1.7, -7.0), Vector3(140.0, 1.0, -7.0), 62.0, "abs"],
+	["georgetown", "G2_in_the_prism", Vector3(-60.0, -1.3, 0.0), Vector3(160.0, -2.0, 0.0), 66.0, "abs"],
+	["georgetown", "G3_the_footbridge", Vector3(-178.0, -1.3, 0.0), Vector3(-144.0, 0.4, 0.0), 58.0, "abs"],
+	["georgetown", "G4_down_to_the_river", Vector3(0.0, 9.0, -80.0), Vector3(10.0, -6.0, 150.0), 62.0, "abs"],
+	["georgetown", "G5_the_esplanade", Vector3(-60.0, -5.3, 110.0), Vector3(90.0, -6.0, 118.0), 62.0, "abs"],
+	["georgetown", "G6_aerial", Vector3(-30.0, 190.0, -270.0), Vector3(0.0, -4.0, 70.0), 58.0, "abs"],
 	["polaris", "P1_the_row", Vector3(-70.0, 2.0, 252.0), Vector3(-70.0, 4.0, 180.0), 62.0, "abs"],
 	["polaris", "P2_across_the_lot", Vector3(0.0, 2.0, 190.0), Vector3(0.0, 14.0, 20.0), 60.0, "abs"],
 	["polaris", "P3_the_court", Vector3(-24.0, 2.0, 96.0), Vector3(8.0, 12.0, 40.0), 64.0, "abs"],

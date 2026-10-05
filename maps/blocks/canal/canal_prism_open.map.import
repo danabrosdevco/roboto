@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cod85n7bo2vfa"
+path="res://.godot/imported/canal_prism_open.map-f0942acf79ffc8761c71347da0095d1c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_prism_open.map"
+dest_files=["res://.godot/imported/canal_prism_open.map-f0942acf79ffc8761c71347da0095d1c.tres"]
+
+[params]
+
