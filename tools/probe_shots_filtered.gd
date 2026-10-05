@@ -96,6 +96,14 @@ const SHOTS: Array = [
 	["salient", "10_no_mans_land", Vector3(-95.0, EYE, 105.0), Vector3(60.0, 2.0, 55.0), 64.0, "eye"],
 	["salient", "11_the_crater", Vector3(-60.0, EYE, 46.0), Vector3(70.0, 2.0, -10.0), 64.0, "eye"],
 	["salient", "12_their_wire", Vector3(-20.0, EYE, -30.0), Vector3(120.0, 2.0, -10.0), 62.0, "eye"],
+	# Heliostat had no cameras at all — 407 pieces and two objectives that
+	# nobody had ever looked at. The field is x -236..236, z -220..215, with the
+	# tower at the origin and the plant on its east edge around x 200.
+	["heliostat", "H1_the_field", Vector3(0.0, 300.0, 460.0), Vector3(20.0, 0.0, 0.0), 58.0, "abs"],
+	["heliostat", "H2_among_the_mirrors", Vector3(-110.0, EYE, 70.0), Vector3(20.0, 14.0, 20.0), 64.0, "eye"],
+	["heliostat", "H3_the_wrecked_mirrors", Vector3(-96.0, EYE, 56.0), Vector3(-50.0, 2.0, 38.0), 66.0, "eye"],
+	["heliostat", "H4_the_plant", Vector3(150.0, EYE, 44.0), Vector3(234.0, 6.0, 10.0), 62.0, "eye"],
+	["heliostat", "H5_plant_aerial", Vector3(120.0, 110.0, 190.0), Vector3(215.0, 0.0, 20.0), 60.0, "abs"],
 	["mutaha_wip", "13_new_crossing_gate", Vector3(-150.0, 1.7, 312.0), Vector3(-80.0, 1.5, 318.0), 70.0, "abs"],
 	["mutaha_wip", "14_quarter_street", Vector3(-208.5, 1.7, 200.0), Vector3(-208.5, 1.4, 110.0), 70.0, "abs"],
 	["mutaha_wip", "15_island_tip_above", Vector3(-46.0, 96.0, 268.0), Vector3(-56.0, 0.0, 180.0), 64.0, "abs"],
