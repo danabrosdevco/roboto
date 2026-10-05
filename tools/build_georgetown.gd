@@ -63,10 +63,16 @@ const FACE_WEST := 180.0
 const FACE_SOUTH := 270.0
 
 ## The benches. Every height in this file is one of these.
-const Z_TOWN := 7.0
+# EVERY DROP IS EXACTLY 4.0 M, because canal_terrace_wall, canal_terrace_stair
+# and canal_street_ramp are all 4 m pieces. They were 7, 4 and 3 m apart to
+# start with and the stairs could not physically reach: the probe came back
+# with 36.9%% of the map reachable and every objective cut off, because the
+# squad was standing on the top bench with no way down. A terrace kit has one
+# height in it and the benches have to use it.
+const Z_TOWN := 4.0
 const Z_CANAL := 0.0
 const Z_YARDS := -4.0
-const Z_WHARF := -7.0
+const Z_WHARF := -8.0
 
 ## Where each bench sits across the site, in Godot Z. The canal's own
 ## cross-section is 9 m of prism plus a towpath and a berm, so the bench it
@@ -171,38 +177,66 @@ func _bay(i: int) -> float:
 
 ## The four flat levels and the walls between them.
 ##
-## EACH BENCH IS TILED FROM 32 M STRIPS TO THE DEPTH IT ACTUALLY NEEDS, and
-## the canal bench has a HOLE IN IT where the prism goes. The first version
-## used one 460 x 360 plate per bench; they overlapped by two hundred metres
-## and the town's plate lay on top of the canal and buried it completely. A
-## slab you cannot see the top of is the easiest thing in the world to get
-## wrong, because from inside the editor it looks like nothing at all.
+## EACH BENCH IS TILED TO AN EXACT DEPTH, from 32, 16 and 4 m pieces, and the
+## canal bench has a hole in it where the prism goes. Getting this wrong is
+## invisible and expensive, and it was wrong twice:
+##
+##   - one 460 x 360 plate per bench overlapped the next by two hundred metres
+##     and the town's plate buried the canal completely;
+##   - then 32 m tiles anchored at the far end overshot each boundary by the
+##     remainder, so the town bench lay 8 m over the canal bench and buried the
+##     top of every stair inside 4 m of slab.
+##
+## The probe read the same 43.8%% through three separate fixes before I stopped
+## blaming the stairs and looked at what they were climbing into. A bench slab
+## is 4 m thick and you cannot see the top of it from inside the editor, which
+## is why it keeps being the thing that is wrong.
+##
+## RULE: ranges are multiples of 4, they BUTT and never overlap, and the canal
+## bench stops where the prism's own ground starts.
 func _benches(art: Node3D) -> void:
 	var g := _group(art, "Benches")
-	# name, bench height, from Z, to Z. The canal's own prism piece brings its
-	# bed, walls, towpath and berm with it, so the bench skips -12 .. +12.
+	# name, bench height, from Z, to Z. The prism brings its own towpath, bed
+	# and berm, which span about -9 .. +10, so the bench skips -8 .. +10.
 	var strips: Array = [
 		["Town", Z_TOWN, -264.0, -48.0],
-		["CanalN", Z_CANAL, -48.0, -12.0],
-		["CanalS", Z_CANAL, 12.0, 44.0],
-		["Yards", Z_YARDS, 44.0, 104.0],
-		["Wharf", Z_WHARF, 104.0, 164.0],
+		["CanalN", Z_CANAL, -48.0, -8.0],
+		["CanalS", Z_CANAL, 6.0, 46.0],
+		["Yards", Z_YARDS, 46.0, 106.0],
+		["Wharf", Z_WHARF, 106.0, 226.0],
 	]
 	for s: Array in strips:
-		var from: float = s[2]
-		var to: float = s[3]
-		var rows := int(ceil((to - from) / 32.0))
-		for i in rows:
-			_put(g, B % "canal_bench", 0.0, from + 16.0 + i * 32.0, ALONG_X, s[1], "%s_%d" % [s[0], i])
-	# The retaining wall at the front of each bench, looking down at the next.
+		_tile_bench(g, s[0], s[1], s[2], s[3], s[0] == "Wharf")
+	# The retaining wall at the front of each bench, standing on the LOWER one
+	# and climbing 4 m to the ground it retains. Yaw 270 puts its backing slab
+	# to the north, which is the side the higher bench is on.
 	var walls: Array = [
-		[Z_TOWN, -46.0],
-		[Z_CANAL, 46.0],
-		[Z_YARDS, 106.0],
+		[Z_CANAL, -46.0],
+		[Z_YARDS, 46.0],
+		[Z_WHARF, 106.0],
 	]
 	for w: Array in walls:
 		for i in RUN:
 			_put(g, B % "canal_terrace_wall", _bay(i), w[1], ALONG_X + 180.0, w[0], "Wall_%.0f_%d" % [w[1], i])
+
+
+## Fill `from`..`to` exactly with 32, 16 and 4 m bench pieces, laid from the
+## `from` edge. Any depth that is a multiple of 4 comes out flush at both ends.
+func _tile_bench(g: Node3D, name: String, y: float, from: float, to: float, grass := false) -> void:
+	var at := from
+	var n := 0
+	for size: float in [32.0, 16.0, 4.0]:
+		var piece: String = {32.0: "canal_bench", 16.0: "canal_bench_16", 4.0: "canal_bench_4"}[size]
+		if grass:
+			piece = {32.0: "canal_bench_grass", 16.0: "canal_bench_grass_16", 4.0: "canal_bench_grass_4"}[size]
+		while to - at >= size - 0.01:
+			_put(g, B % piece, 0.0, at + size * 0.5, ALONG_X, y, "%s_%d" % [name, n])
+			at += size
+			n += 1
+	if absf(to - at) > 0.01:
+		# Say it rather than leaving a hole: a gap in a bench is a hole in the
+		# floor, and the squad simply stops at the edge of it.
+		push_warning("build_georgetown: %s leaves %.2f m unfilled — make the range a multiple of 4" % [name, to - at])
 
 
 # ── The canal ────────────────────────────────────────────────────────────────
@@ -228,14 +262,22 @@ func _canal(art: Node3D) -> void:
 			_put(g, B % "canal_lock", _bay(i), S_CANAL, ALONG_X, Z_CANAL, "Lock")
 			_put(w, B % "works_lock_gear", _bay(i), S_CANAL, ALONG_X, Z_CANAL, "LockGear")
 			continue
-		var piece := "canal_prism" if i < 10 else "canal_prism_open"
-		_put(g, B % piece, _bay(i), S_CANAL, ALONG_X, Z_CANAL, "Prism_%d" % i)
+		# canal_prism_open the whole way, not canal_prism. The latter carries a
+		# 3 m terrace wall on its berm side, which is right when the mills stand
+		# above it and wrong here — the benches are at the SAME height both
+		# sides of this canal, so that wall sealed the south bank off from the
+		# bridges entirely and the squad could never cross.
+		_put(g, B % "canal_prism_open", _bay(i), S_CANAL, ALONG_X, Z_CANAL, "Prism_%d" % i)
 	for i: int in BRIDGES:
 		var kind: String = BRIDGES[i]
 		var name: String = {"truss": "canal_truss_bridge", "road": "canal_road_bridge", "plank": "works_plank_bridge"}[kind]
 		_put(g, B % name, _bay(i), S_CANAL, ALONG_X, Z_CANAL, "Bridge_%d" % i)
-	for i: int in [4, 12]:
-		_put(g, B % "canal_stair_down", _bay(i) + 9.0, S_CANAL, ALONG_X, Z_CANAL, "CanalStair_%d" % i)
+	for i: int in [3, 4, 12]:
+		# YAW 180, not ALONG_X. The stair descends along its map X, so at 90 it
+		# ran ALONG the canal inside the wall instead of down into the bed, and
+		# the only two ways into the prism went nowhere. 180 points its foot at
+		# the bed and its head at the towpath.
+		_put(g, B % "canal_stair_down", _bay(i) + 9.0, S_CANAL, 180.0, Z_CANAL, "CanalStair_%d" % i)
 	for i: int in [3, 9]:
 		_put(g, B % "canal_cofferdam", _bay(i) - 6.0, S_CANAL + 1.5, ALONG_X, Z_CANAL, "Cofferdam_%d" % i)
 	for i: int in [1, 7, 13]:
@@ -273,10 +315,14 @@ func _mills(art: Node3D) -> void:
 	var kinds: Array = ["mill_brick_long", "mill_brick_short", "mill_warehouse_stone",
 			"mill_brick_tall", "mill_brick_short", "mill_brick_long", "mill_warehouse_stone"]
 	for i in 7:
-		_put(g, B % kinds[i], -212.0 + i * 68.0, z, FACE_SOUTH, Z_CANAL + 3.0, "Mill_%d" % i)
+		_put(g, B % kinds[i], -212.0 + i * 68.0, z, FACE_SOUTH, Z_CANAL, "Mill_%d" % i)
 	# Scaffold on the face of one of them, over the berm: a way up a building
 	# that has no other, and a thing to be shot off.
 	_put(g, B % "works_scaffold", -144.0, S_CANAL - 12.6, ALONG_X, Z_CANAL, "Scaffold")
+	# The stack, on the yards bench behind the mills: 44 m, which clears them
+	# by 28 and the office block by 16. The thing the whole map is read
+	# against, and the only piece on it visible from every bench.
+	_put(g, B % "mark_stack", 86.0, S_YARDS + 70.0, 0.0, Z_YARDS, "Stack")
 	for i: int in [0, 1]:
 		_put(g, B % "mill_cafe_terrace", -170.0 + i * 204.0, S_CANAL - 14.0, ALONG_X, Z_CANAL + 3.0, "Cafe_%d" % i)
 	_put(g, B % "mill_office_modern", 188.0, S_CANAL + 30.0, FACE_WEST, Z_CANAL, "OfficeBlock")
@@ -305,8 +351,13 @@ func _upper_town(art: Node3D) -> void:
 		_put(g, B_STREETS % "street_sign_stop", -120.0 + i * 120.0, S_TOWN - 11.0, 0.0, Z_TOWN, "TownStop_%d" % i)
 	# Down to the canal: two public stairs and one ramped street, which are
 	# the only three ways off this bench.
+	# YAW 270, NOT 0. The stair runs along its own map Y, not its map X, so
+	# ALONG_Z — which is for a piece that runs along its X — laid it across the
+	# terrace instead of up it. Every stair on this map climbs NORTH, from the
+	# lower bench onto the higher one, and sits at the lower bench height
+	# because its origin is the bottom step.
 	for i: int in [3, 10]:
-		_put(g, B % "canal_terrace_stair", _bay(i), S_TOWN + 42.0, ALONG_Z, Z_CANAL, "TownStair_%d" % i)
+		_put(g, B % "canal_terrace_stair", _bay(i), -37.0, 270.0, Z_CANAL, "TownStair_%d" % i)
 	_put(g, B % "canal_street_ramp", _bay(7) + 4.0, S_TOWN + 46.0, ALONG_Z, Z_CANAL, "TownRamp")
 
 
@@ -329,7 +380,7 @@ func _lower_yards(art: Node3D) -> void:
 		_put(g, B % "works_arch_viaduct", -92.0 + i * 184.0, S_YARDS + 24.0, ALONG_Z, Z_YARDS, "Viaduct_%d" % i)
 	_put(g, B % "works_site_compound", 44.0, S_YARDS + 44.0, ALONG_X, Z_YARDS, "YardCompound")
 	for i: int in [2, 9]:
-		_put(g, B % "canal_terrace_stair", _bay(i) + 12.0, S_YARDS - 2.0, ALONG_Z, Z_YARDS, "YardStair_%d" % i)
+		_put(g, B % "canal_terrace_stair", _bay(i) + 12.0, 55.0, 270.0, Z_YARDS, "YardStair_%d" % i)
 	_put(g, B % "canal_street_ramp", _bay(12), S_YARDS - 2.0, ALONG_Z, Z_YARDS, "YardRamp")
 	for i in RUN:
 		if posmod(i, 4) != 0:
@@ -339,26 +390,57 @@ func _lower_yards(art: Node3D) -> void:
 		_put(g, B_STREETS % "street_light_cobra", -160.0 + i * 82.0, S_YARDS + 10.0, FACE_SOUTH, Z_YARDS, "YardLight_%d" % i)
 
 
-## THE WATERFRONT: the esplanade, the piers, a boathouse and a barge, then the
-## river and Arlington. The bottom of the map and its one open flank — the
-## barge is the only thing on it with a drop on three sides.
+## THE WATERFRONT, now a derelict park rather than 450 m of bare esplanade.
+##
+## The bench was paving, a rail and a 3 m drop to the water — the most exposed
+## ground on the map with nothing on it. A park is the other kind of space:
+## paths that go round rather than through, beds and hedges that break sight
+## without stopping fire, a tennis court that is a room outdoors with two ways
+## in, a bandstand that is a roof in the open. The esplanade stays, but only
+## along the water's edge where it belongs.
+##
+## Everything here was built to the rules the reachability probe taught, and
+## the probe is run on this map after every change to it for that reason.
 func _waterfront(art: Node3D) -> void:
 	var g := _group(art, "Waterfront")
+	var p := _group(art, "Park")
 	for i in 10:
-		_put(g, B % "wharf_esplanade", -216.0 + i * 48.0, S_WHARF, ALONG_X, Z_WHARF, "Esplanade_%d" % i)
+		_put(g, B % "wharf_esplanade", -216.0 + i * 48.0, S_WHARF + 46.0, ALONG_X, Z_WHARF, "Esplanade_%d" % i)
 	for i: int in [0, 1, 2]:
-		_put(g, B % "wharf_pier", -140.0 + i * 140.0, S_WHARF + 14.0, ALONG_X, Z_WHARF, "Pier_%d" % i)
-	_put(g, B % "wharf_boathouse", -56.0, S_WHARF + 10.0, ALONG_X, Z_WHARF, "Boathouse")
-	_put(g, B % "wharf_barge", 72.0, S_WHARF + 20.0, ALONG_X + 4.0, Z_WHARF, "Barge")
-	_put(g, B % "works_market_stalls", 8.0, S_WHARF - 6.0, ALONG_X, Z_WHARF, "WharfMarket")
+		_put(g, B % "wharf_pier", -140.0 + i * 140.0, S_WHARF + 60.0, ALONG_X, Z_WHARF, "Pier_%d" % i)
+	_put(g, B % "wharf_boathouse", -56.0, S_WHARF + 56.0, ALONG_X, Z_WHARF, "Boathouse")
+	_put(g, B % "wharf_barge", 72.0, S_WHARF + 66.0, ALONG_X + 4.0, Z_WHARF, "Barge")
 	for i: int in [4, 11]:
-		_put(g, B % "canal_terrace_stair", _bay(i) + 6.0, S_WHARF - 4.0, ALONG_Z, Z_WHARF, "WharfStair_%d" % i)
-	_put(g, B % "wharf_river", 0.0, S_WHARF + 2.0, ALONG_X, Z_WHARF, "Potomac")
-	# Arlington, 320 m across the water. Mesh only and never walked on: it is
-	# a horizon, and the moment anything can reach it, it has to be a map.
-	_put(g, B % "wharf_far_shore", 0.0, S_WHARF + 330.0, ALONG_X, Z_WHARF + 1.0, "Arlington")
+		_put(g, B % "canal_terrace_stair", _bay(i) + 6.0, 115.0, 270.0, Z_WHARF, "WharfStair_%d" % i)
+
+	# THE PARK, between the stairs and the water's edge. Two path spines with
+	# the set pieces hung off them, because a park a squad crosses is a park
+	# with a route through it.
+	for i in 13:
+		_put(p, B % "park_path_run", -192.0 + i * 32.0, S_WHARF + 22.0, ALONG_X, Z_WHARF, "PathN_%d" % i)
+	for i in 9:
+		_put(p, B % "park_path_run", -128.0 + i * 32.0, S_WHARF + 38.0, ALONG_X, Z_WHARF, "PathS_%d" % i)
+	_put(p, B % "park_tennis_court", -148.0, S_WHARF + 32.0, ALONG_X, Z_WHARF, "TennisCourt")
+	_put(p, B % "park_pavilion", -34.0, S_WHARF + 34.0, 0.0, Z_WHARF, "Bandstand")
+	_put(p, B % "park_fountain_dry", 44.0, S_WHARF + 30.0, 0.0, Z_WHARF, "Fountain")
+	_put(p, B % "park_playground", 124.0, S_WHARF + 34.0, ALONG_X, Z_WHARF, "Playground")
+	_put(p, B % "park_pergola_ruin", -94.0, S_WHARF + 14.0, ALONG_X, Z_WHARF, "Pergola")
+	_put(p, B % "mark_statue", 4.0, S_WHARF + 22.0, 0.0, Z_WHARF, "Statue")
+	for i in 7:
+		_put(p, B % "park_overgrown_bed", -180.0 + i * 56.0, S_WHARF + 10.0, ALONG_X, Z_WHARF, "Bed_%d" % i)
+	for i in 6:
+		_put(p, B % "park_bench_row", -150.0 + i * 62.0, S_WHARF + 25.0, ALONG_X, Z_WHARF, "Benches_%d" % i)
 	for i in 8:
-		_put(g, B_STREETS % "street_light_cobra", -200.0 + i * 58.0, S_WHARF - 6.0, FACE_SOUTH, Z_WHARF, "WharfLight_%d" % i)
+		_put(p, B_STREETS % "street_light_cobra", -200.0 + i * 58.0, S_WHARF + 18.0, FACE_SOUTH, Z_WHARF,
+				"ParkLight_%d" % i)
+
+	_put(g, B % "works_market_stalls", 8.0, S_WHARF + 44.0, ALONG_X, Z_WHARF, "WharfMarket")
+	_put(g, B % "wharf_river", 0.0, S_WHARF + 52.0, ALONG_X, Z_WHARF, "Potomac")
+	# The piers of the bridge that used to cross here, standing in the water.
+	_put(g, B % "mark_aqueduct_piers", -176.0, S_WHARF + 48.0, ALONG_X + 180.0, Z_WHARF, "AqueductPiers")
+	# Arlington, across the water. Mesh only and never walked on: it is a
+	# horizon, and the moment anything can reach it, it has to be a map.
+	_put(g, B % "wharf_far_shore", 0.0, S_WHARF + 380.0, ALONG_X, Z_WHARF + 1.0, "Arlington")
 
 
 # ── The level ────────────────────────────────────────────────────────────────
@@ -367,15 +449,29 @@ func _waterfront(art: Node3D) -> void:
 ## does with them is GAMEPLAY's, which is why these are places and not tasks.
 ## node, tag, label, x, y, z
 const OBJECTIVES: Array = [
-	["GT_Lock", "obj_gt_lock", "The Lock", 80.0, -3.0, 0.0],
-	["GT_TrussWest", "obj_gt_truss_west", "West Footbridge", -112.0, 0.0, 0.0],
-	["GT_RoadBridge", "obj_gt_road_bridge", "The Street Bridge", 16.0, 0.0, 0.0],
-	["GT_Cofferdam", "obj_gt_cofferdam", "The Cofferdam", -86.0, -3.0, 1.5],
-	["GT_Mill", "obj_gt_mill", "The Long Mill", -200.0, 3.0, -22.0],
-	["GT_Ramp", "obj_gt_ramp", "The Ramped Street", 116.0, 3.5, -50.0],
-	["GT_Yards", "obj_gt_yards", "The Lower Yards", -62.0, -4.0, 88.0],
-	["GT_Esplanade", "obj_gt_esplanade", "The Esplanade", 40.0, -7.0, 116.0],
-	["GT_Pier", "obj_gt_pier", "The Centre Pier", 0.0, -7.0, 130.0],
+	# AT THE REAL BAY POSITIONS. These were written before the bay layout
+	# moved and then stayed put: the probe called half of them unreachable
+	# because they were sitting in the middle of the canal 32 m from the
+	# bridge they were named after. An anchor nothing can reach is a mission
+	# that cannot be finished, and nothing says so until someone plays it.
+	# At the coping, not on the chamber floor: the lock sills are 0.55 m, over
+	# the 0.5 the baker climbs, so the chamber is deliberately its own place
+	# and an anchor down there is one nothing can walk to.
+	["GT_Lock", "obj_gt_lock", "The Lock", 48.0, 0.0, -6.0],
+	["GT_TrussWest", "obj_gt_truss_west", "West Footbridge", -144.0, 0.0, 0.0],
+	["GT_RoadBridge", "obj_gt_road_bridge", "The Street Bridge", -16.0, 0.0, 0.0],
+	# On the bed BESIDE the bags, not on top of them: the stack is a stepped
+	# climb and its top is its own little island, so an anchor up there snapped
+	# to the one surface in the prism nothing can walk onto.
+	["GT_Cofferdam", "obj_gt_cofferdam", "The Cofferdam", -112.0, -3.0, -2.0],
+	["GT_Mill", "obj_gt_mill", "The Long Mill", -212.0, 0.0, -12.0],
+	["GT_Ramp", "obj_gt_ramp", "The Ramped Street", 132.0, 2.0, -50.0],
+	# Was at z 88, which is inside a warehouse.
+	["GT_Yards", "obj_gt_yards", "The Lower Yards", -62.0, -4.0, 70.0],
+	["GT_Esplanade", "obj_gt_esplanade", "The Esplanade", 40.0, -8.0, 162.0],
+	["GT_Pier", "obj_gt_pier", "The Centre Pier", 0.0, -8.0, 166.0],
+	["GT_Park", "obj_gt_park", "The Tennis Court", -148.0, -8.0, 148.0],
+	["GT_Stack", "obj_gt_stack", "The Stack", 86.0, -4.0, 112.0],
 ]
 
 
@@ -413,6 +509,8 @@ fog_light_color = Color(0.68, 0.69, 0.7, 1)
 fog_density = 0.0006
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_gt"]
+vertices = PackedVector3Array()
+polygons = []
 cell_size = 0.25
 agent_radius = 0.5
 agent_height = 1.8

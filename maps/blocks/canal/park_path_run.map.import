@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://d2808n718g6ix"
+path="res://.godot/imported/park_path_run.map-a6899e5f982a5da4bcdc38a20c3f5abb.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/park_path_run.map"
+dest_files=["res://.godot/imported/park_path_run.map-a6899e5f982a5da4bcdc38a20c3f5abb.tres"]
+
+[params]
+

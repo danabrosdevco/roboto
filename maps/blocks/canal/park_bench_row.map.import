@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dcalgqel2lui8"
+path="res://.godot/imported/park_bench_row.map-d33f96b6fbe97cf4517fe20da1b72d80.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/park_bench_row.map"
+dest_files=["res://.godot/imported/park_bench_row.map-d33f96b6fbe97cf4517fe20da1b72d80.tres"]
+
+[params]
+

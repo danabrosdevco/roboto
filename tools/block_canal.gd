@@ -76,6 +76,11 @@ const CANAL := {
 	"canal_outfall": "_outfall",
 	"canal_stair_down": "_stair_down",
 	"canal_bench": "_bench",
+	"canal_bench_16": "_bench_16",
+	"canal_bench_4": "_bench_4",
+	"canal_bench_grass": "_bench_grass",
+	"canal_bench_grass_16": "_bench_grass_16",
+	"canal_bench_grass_4": "_bench_grass_4",
 	"canal_terrace_wall": "_terrace_wall",
 	"canal_terrace_stair": "_terrace_stair",
 	"canal_street_ramp": "_street_ramp",
@@ -340,20 +345,6 @@ func _culvert_mouth(c: Vector3, outer: float, inner: float, length: float, sides
 				Vector3(c.x + cos(a1) * inner, c.y - length, c.z + sin(a1) * inner)], RUBBLE_WALL)
 
 
-## STONE STEPS from the towpath down into the bed, set into the wall. The
-## thing that decides where a fight in the prism can start and end, so it is
-## its own piece and gets placed deliberately.
-func _stair_down() -> void:
-	var y0 := BED_HALF
-	var steps := 16
-	for i in steps:
-		var z: float = BED_Z + (i + 1) * (0.0 - BED_Z) / steps
-		var x := -2.6 + i * 0.33
-		box(Vector3(x, y0 - 0.2, z - 0.4), Vector3(x + 0.34, y0 + WALL_T + 0.6, z), {"top": COPING, "side": RUBBLE_WALL, "bottom": CONCRETE})
-	box(Vector3(-3.0, y0 - 0.3, BED_Z - 1.0), Vector3(-2.6, y0 + WALL_T + 0.7, 0.4), STONE_W)
-	box(Vector3(3.1, y0 - 0.3, BED_Z - 1.0), Vector3(3.5, y0 + WALL_T + 0.7, 0.4), STONE_W)
-
-
 # ── The terraces ─────────────────────────────────────────────────────────────
 
 ## A STRIP OF BENCH, 448 x 32. The benches were one 460 x 360 slab each to
@@ -363,6 +354,33 @@ func _stair_down() -> void:
 ## anything.
 func _bench() -> void:
 	box(Vector3(-224.0, -16.0, -4.0), Vector3(224.0, 16.0, 0.0), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
+
+
+## 16 m and 4 m of the same, so a bench can be tiled to an EXACT depth. At 32 m
+## only, a bench whose depth is not a multiple of 32 either overshot its
+## boundary and lay on top of the next bench down, or stopped short and left a
+## hole nothing could cross. Both of those cost a full debugging pass each.
+func _bench_16() -> void:
+	box(Vector3(-224.0, -8.0, -4.0), Vector3(224.0, 8.0, 0.0), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
+
+
+func _bench_4() -> void:
+	box(Vector3(-224.0, -2.0, -4.0), Vector3(224.0, 2.0, 0.0), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
+
+
+## The same in grass, for the park bench. The ground under a thing is most of
+## what tells you what kind of place it is, and park furniture standing on
+## asphalt reads as a car park with benches in it.
+func _bench_grass() -> void:
+	box(Vector3(-224.0, -16.0, -4.0), Vector3(224.0, 16.0, 0.0), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
+
+
+func _bench_grass_16() -> void:
+	box(Vector3(-224.0, -8.0, -4.0), Vector3(224.0, 8.0, 0.0), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
+
+
+func _bench_grass_4() -> void:
+	box(Vector3(-224.0, -2.0, -4.0), Vector3(224.0, 2.0, 0.0), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
 
 
 ## 32 m of coursed rubble retaining wall, 4 m, with ground behind it at the
@@ -378,20 +396,72 @@ func _terrace_wall() -> void:
 		x += 4.0
 
 
-## A PUBLIC STAIR up a 4 m terrace, 2.8 m wide with a half landing and a wall
-## both sides. Nineteen risers at 0.21, which is a stair a body climbs rather
-## than a ramp pretending to be one.
+## A PUBLIC STAIR up a 4 m terrace, 2.8 m wide with a wall both sides.
+##
+## THE COLLISION IS A RAMP AND THE STEPS ARE A PICTURE OF STEPS. Built as
+## nineteen separate treads it baked no navmesh at all and the reachability
+## probe came back with every objective on the map cut off — a 0.34 m tread
+## cannot hold a 0.5 m agent radius, so Recast erodes each one to nothing and
+## there is no walkable surface anywhere on the flight. The riser height was
+## never the problem; the tread depth was.
+##
+## So the solid is one 20° ramp, which the baker sees and a body walks, and
+## the treads are laid on it as mesh only. From the outside it is a stair.
+## This is what enemy.gd means in its note about every level having had to
+## have a ramp built onto everything.
 func _terrace_stair() -> void:
 	var steps := 19
-	var rise := 4.0 / steps
 	var tread := 0.34
-	for i in steps:
-		var y := -float(i) * tread - (2.2 if i >= steps / 2 else 0.0)
-		box(Vector3(-1.4, y - tread, -1.0), Vector3(1.4, y, (i + 1) * rise), {"top": COPING, "side": RUBBLE_WALL, "bottom": CONCRETE})
 	var total := -float(steps) * tread - 2.2
-	box(Vector3(-1.4, total - 2.4, -1.0), Vector3(1.4, total, 4.0), {"top": COPING, "side": RUBBLE_WALL, "bottom": CONCRETE})
+	var run: float = -total
+	ramp(-1.4, total, 1.4, 0.0, -1.0, 0.0, 4.0, "-y", {"top": COPING, "side": RUBBLE_WALL, "bottom": CONCRETE})
+	# A FIVE METRE LANDING, not 2.4. The bench slabs are 4 m thick, so a ramp
+	# that reaches full height anywhere under one surfaces along a single line
+	# and connects to nothing — which is what happened, and why the probe found
+	# every objective cut off twice running. The ramp now tops out clear of the
+	# bench and the landing BRIDGES onto it, overlapping its top face.
+	box(Vector3(-1.4, total - 5.0, -1.0), Vector3(1.4, total, 4.0), {"top": COPING, "side": RUBBLE_WALL, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(s * 1.4, total - 2.4, -1.0), Vector3(s * 2.0, 0.6, 4.0), STONE_W)
+		box(Vector3(s * 1.4, total - 5.0, -1.0), Vector3(s * 2.0, 0.6, 4.0), STONE_W)
+	no_collision()
+	for i in steps:
+		var y := -float(i) * tread
+		var z: float = 4.0 * (run - absf(y)) / run
+		box(Vector3(-1.4, y - tread, z - 0.14), Vector3(1.4, y, z), {"top": COPING, "side": COPING, "bottom": COPING})
+
+
+## STONE STEPS from the towpath down into the bed, set into the wall. The
+## thing that decides where a fight in the prism can start and end, so it is
+## its own piece and gets placed deliberately.
+##
+## Same construction as the terrace stair and for the same reason: the ramp is
+## the collision, the treads are mesh. A 0.33 m tread holds nobody.
+func _stair_down() -> void:
+	var y0 := BED_HALF
+	var steps := 16
+	# 4.3 M OF CUT, not 1.6. The first version was a slot the thickness of the
+	# wall, which the baker erodes by the agent radius from both sides until
+	# the landings at each end are nothing at all — so it baked a strip with no
+	# way on or off, and the canal bed stayed unreachable. A stair has to reach
+	# WELL into the ground at both ends, not just touch it.
+	var lo := BED_HALF - 1.2
+	var hi := BED_HALF + WALL_T + 1.8
+	# IT DESCENDS ACROSS THE CANAL, not along it. Cut as a flight running
+	# parallel to the wall it is set into, the ramp only met the towpath along
+	# one short edge at its top and the bed along another at its bottom, and
+	# the baker erodes both of those away — so it baked a surface with no way
+	# on or off and the bed stayed an island through three attempts at it.
+	# Across, the whole top edge is on the towpath and the whole bottom edge is
+	# in the bed.
+	ramp(-2.2, lo, 2.2, hi, BED_Z - 1.2, BED_Z, 0.0, "+y",
+			{"top": COPING, "side": RUBBLE_WALL, "bottom": CONCRETE})
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(s * 2.2, lo, BED_Z - 1.2), Vector3(s * 2.8, hi, 0.4), STONE_W)
+	no_collision()
+	for i in steps:
+		var z: float = BED_Z + (i + 1) * (0.0 - BED_Z) / steps
+		var y := BED_HALF - 1.2 + i * 0.2625
+		box(Vector3(-2.2, y, z - 0.12), Vector3(2.2, y + 0.2625, z), {"top": COPING, "side": COPING, "bottom": COPING})
 
 
 ## A STREET RAMPED DOWN A TERRACE at 1 in 8, 7 m wide between stone walls.

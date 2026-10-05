@@ -382,7 +382,8 @@ func _housing(art: Node3D) -> void:
 ## does with them is GAMEPLAY's, which is why these are places and not tasks.
 ## node, tag, label, x, z
 const OBJECTIVES: Array = [
-	["Polaris_Row", "obj_polaris_row", "The Restaurant Row", -70.0, 212.0],
+	# In front of the row, not inside the steakhouse.
+	["Polaris_Row", "obj_polaris_row", "The Restaurant Row", -70.0, 190.0],
 	["Polaris_Court", "obj_polaris_court", "The Entry Court", 0.0, 48.0],
 	["Polaris_Dock", "obj_polaris_dock", "Mall Service Dock", -30.0, -30.0],
 	["Polaris_Garage", "obj_polaris_garage", "The Parking Deck", 96.0, 86.0],
@@ -430,6 +431,8 @@ ambient_light_energy = 0.7
 tonemap_mode = 2
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_polaris"]
+vertices = PackedVector3Array()
+polygons = []
 cell_size = 0.25
 agent_radius = 0.5
 agent_height = 1.8
