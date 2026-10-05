@@ -191,20 +191,20 @@
 }
 // brush 20
 {
-( -736 -8 30 ) ( 736 -11 30 ) ( 736 -8 30 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -736 -11 33 ) ( 736 -8 33 ) ( 736 -11 33 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -736 -11 30 ) ( 736 -11 33 ) ( 736 -11 30 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 736 -11 30 ) ( 736 -8 33 ) ( 736 -8 30 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 736 -8 30 ) ( -736 -8 33 ) ( -736 -8 30 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -736 -8 30 ) ( -736 -11 33 ) ( -736 -11 30 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -736 -5 30 ) ( 736 -7 30 ) ( 736 -5 30 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -736 -7 33 ) ( 736 -5 33 ) ( 736 -7 33 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -736 -7 30 ) ( 736 -7 33 ) ( 736 -7 30 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 736 -7 30 ) ( 736 -5 33 ) ( 736 -5 30 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 736 -5 30 ) ( -736 -5 33 ) ( -736 -5 30 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -736 -5 30 ) ( -736 -7 33 ) ( -736 -7 30 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 // brush 21
 {
-( -736 -8 45 ) ( 736 -11 45 ) ( 736 -8 45 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -736 -11 48 ) ( 736 -8 48 ) ( 736 -11 48 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -736 -11 45 ) ( 736 -11 48 ) ( 736 -11 45 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 736 -11 45 ) ( 736 -8 48 ) ( 736 -8 45 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 736 -8 45 ) ( -736 -8 48 ) ( -736 -8 45 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -736 -8 45 ) ( -736 -11 48 ) ( -736 -11 45 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -736 -5 45 ) ( 736 -7 45 ) ( 736 -5 45 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -736 -7 48 ) ( 736 -5 48 ) ( 736 -7 48 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -736 -7 45 ) ( 736 -7 48 ) ( 736 -7 45 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 736 -7 45 ) ( 736 -5 48 ) ( 736 -5 45 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 736 -5 45 ) ( -736 -5 48 ) ( -736 -5 45 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -736 -5 45 ) ( -736 -7 48 ) ( -736 -7 45 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }

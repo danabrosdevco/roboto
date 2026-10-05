@@ -25,39 +25,39 @@
 }
 // brush 2
 {
-( -60 -43 -2 ) ( -55 -47 -2 ) ( -55 -43 -2 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -60 -43 38 ) ( -55 -47 38 ) ( -55 -43 38 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
 ( -60 -47 83 ) ( -55 -43 83 ) ( -55 -47 83 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -60 -47 -2 ) ( -55 -47 83 ) ( -55 -47 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -55 -47 -2 ) ( -55 -43 83 ) ( -55 -43 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -55 -43 -2 ) ( -60 -43 83 ) ( -60 -43 -2 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -60 -43 -2 ) ( -60 -47 83 ) ( -60 -47 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -60 -47 38 ) ( -55 -47 83 ) ( -55 -47 38 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -55 -47 38 ) ( -55 -43 83 ) ( -55 -43 38 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -55 -43 38 ) ( -60 -43 83 ) ( -60 -43 38 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -60 -43 38 ) ( -60 -47 83 ) ( -60 -47 38 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 // brush 3
 {
-( -60 47 -2 ) ( -55 43 -2 ) ( -55 47 -2 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -60 47 38 ) ( -55 43 38 ) ( -55 47 38 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
 ( -60 43 83 ) ( -55 47 83 ) ( -55 43 83 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -60 43 -2 ) ( -55 43 83 ) ( -55 43 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -55 43 -2 ) ( -55 47 83 ) ( -55 47 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -55 47 -2 ) ( -60 47 83 ) ( -60 47 -2 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -60 47 -2 ) ( -60 43 83 ) ( -60 43 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -60 43 38 ) ( -55 43 83 ) ( -55 43 38 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -55 43 38 ) ( -55 47 83 ) ( -55 47 38 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -55 47 38 ) ( -60 47 83 ) ( -60 47 38 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -60 47 38 ) ( -60 43 83 ) ( -60 43 38 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 // brush 4
 {
-( 55 -43 -2 ) ( 60 -47 -2 ) ( 60 -43 -2 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 55 -43 38 ) ( 60 -47 38 ) ( 60 -43 38 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
 ( 55 -47 83 ) ( 60 -43 83 ) ( 60 -47 83 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( 55 -47 -2 ) ( 60 -47 83 ) ( 60 -47 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 60 -47 -2 ) ( 60 -43 83 ) ( 60 -43 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 60 -43 -2 ) ( 55 -43 83 ) ( 55 -43 -2 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 55 -43 -2 ) ( 55 -47 83 ) ( 55 -47 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 55 -47 38 ) ( 60 -47 83 ) ( 60 -47 38 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 60 -47 38 ) ( 60 -43 83 ) ( 60 -43 38 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 60 -43 38 ) ( 55 -43 83 ) ( 55 -43 38 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 55 -43 38 ) ( 55 -47 83 ) ( 55 -47 38 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 // brush 5
 {
-( 55 47 -2 ) ( 60 43 -2 ) ( 60 47 -2 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 55 47 38 ) ( 60 43 38 ) ( 60 47 38 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
 ( 55 43 83 ) ( 60 47 83 ) ( 60 43 83 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( 55 43 -2 ) ( 60 43 83 ) ( 60 43 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 60 43 -2 ) ( 60 47 83 ) ( 60 47 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 60 47 -2 ) ( 55 47 83 ) ( 55 47 -2 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 55 47 -2 ) ( 55 43 83 ) ( 55 43 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 55 43 38 ) ( 60 43 83 ) ( 60 43 38 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 60 43 38 ) ( 60 47 83 ) ( 60 47 38 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 60 47 38 ) ( 55 47 83 ) ( 55 47 38 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 55 47 38 ) ( 55 43 83 ) ( 55 43 38 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 // brush 6
 {
@@ -70,12 +70,12 @@
 }
 // brush 7
 {
-( 64 -35 -14 ) ( 179 35 -14 ) ( 64 35 -14 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 64 -35 -2 ) ( 179 35 -2 ) ( 64 35 -2 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
 ( 179 -35 0 ) ( 64 35 38 ) ( 179 35 0 ) PSX_Textures/metal_floor_3 [ 0 1 0 0 ] [ 0.949506 0 -0.31375 0 ] 0 0.25 0.25
-( 179 -35 -14 ) ( 179 35 0 ) ( 179 35 -14 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 179 35 -14 ) ( 64 35 38 ) ( 64 35 -14 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 64 35 -14 ) ( 64 -35 38 ) ( 64 -35 -14 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 64 -35 -14 ) ( 179 -35 0 ) ( 179 -35 -14 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 179 -35 -2 ) ( 179 35 0 ) ( 179 35 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 179 35 -2 ) ( 64 35 38 ) ( 64 35 -2 ) PSX_Textures/metal_rusty_tsk_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 64 35 -2 ) ( 64 -35 38 ) ( 64 -35 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 64 -35 -2 ) ( 179 -35 0 ) ( 179 -35 -2 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 // brush 8
 {

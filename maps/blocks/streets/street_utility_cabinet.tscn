@@ -1,19 +1,19 @@
 [gd_scene load_steps=12 format=4]
 
-[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_37xes"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_b7xl8"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="3_8t0is"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/metal_floor_1.tres" id="4_alwnm"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/metal_wall_2.tres" id="5_3738i"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_wqigx"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_cwo8f"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="3_d1u8q"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/metal_floor_1.tres" id="4_e8mqo"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/metal_wall_2.tres" id="5_dnoa3"]
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_xfs1s"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_a1x4y"]
 _surfaces = [{
 "aabb": AABB(-0.5, -0.3125, -1.09375, 1, 0.40625, 2.1875),
 "attribute_data": PackedByteArray("AAAMPgAAgD0AAAy+AACAPQAADL4AAIC9AAAMPgAAgL0AAAy+AACAPQAADL4AAIC9AAAMPgAAgL0AAAw+AACAPQAADL4AACA9AAAMvgAAQLwAAAw+AABAvAAADD4AACA9AACAvQAAID0AAIC9AABAvAAAgD0AAEC8AACAPQAAID0AAAy+AAAgPQAADL4AAEC8AAAMPgAAQLwAAAw+AAAgPQAAgL0AACA9AACAvQAAQLwAAIA9AABAvAAAgD0AACA9"),
 "format": 34359742487,
 "index_count": 36,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcA"),
-"material": ExtResource("3_8t0is"),
+"material": ExtResource("3_d1u8q"),
 "name": "PSX_Textures/concrete_tx_5",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -25,7 +25,7 @@ _surfaces = [{
 "format": 34359742487,
 "index_count": 84,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8AIAAhACIAIAAiACMAJAAlACYAJAAmACcAKAApACoAKAAqACsALAAtAC4ALAAuAC8AMAAxADIAMAAyADMANAA1ADYANAA2ADcA"),
-"material": ExtResource("4_alwnm"),
+"material": ExtResource("4_e8mqo"),
 "name": "PSX_Textures/metal_floor_1",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -37,7 +37,7 @@ _surfaces = [{
 "format": 34359742487,
 "index_count": 24,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8A"),
-"material": ExtResource("5_3738i"),
+"material": ExtResource("5_dnoa3"),
 "name": "PSX_Textures/metal_wall_2",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -45,44 +45,44 @@ _surfaces = [{
 "vertex_data": PackedByteArray("AADAvgAAwD0AAHC/AADAvgAAoD8AAHC/AADAvgAAoD8AAHA/AADAvgAAwD0AAHA/AADAvgAAwD0AAHA/AADAvgAAoD8AAHA/AADAPgAAoD8AAHA/AADAPgAAwD0AAHA/AADAPgAAwD0AAHA/AADAPgAAoD8AAHA/AADAPgAAoD8AAHC/AADAPgAAwD0AAHC/AADAPgAAwD0AAHC/AADAPgAAoD8AAHC/AADAvgAAoD8AAHC/AADAvgAAwD0AAHC/AAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//7//f/9/////v/9//3////+//3//f////7//f/9/////v////3//////////f/////////9//////////3///////////wAA/7//////AAD/v/////8AAP+//////wAA/78=")
 }]
 
-[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_aci1c"]
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_5yc3y"]
 vertices = PackedVector3Array(-0.5, -0.3125, -1.09375, -0.5, -0.3125, 1.09375, 0.5, -0.3125, 1.09375, 0.5, -0.3125, -1.09375, -0.5, 0.09375, -1.09375, 0.5, 0.09375, -1.09375, 0.5, 0.09375, 1.09375, -0.5, 0.09375, 1.09375, -0.5, -0.3125, -1.09375, -0.5, 0.09375, -1.09375, -0.5, 0.09375, 1.09375, -0.5, -0.3125, 1.09375, -0.5, -0.3125, 1.09375, -0.5, 0.09375, 1.09375, 0.5, 0.09375, 1.09375, 0.5, -0.3125, 1.09375, 0.5, -0.3125, 1.09375, 0.5, 0.09375, 1.09375, 0.5, 0.09375, -1.09375, 0.5, -0.3125, -1.09375, 0.5, -0.3125, -1.09375, 0.5, 0.09375, -1.09375, -0.5, 0.09375, -1.09375, -0.5, -0.3125, -1.09375, -0.375, 0.09375, -0.9375, -0.375, 0.09375, 0.9375, 0.375, 0.09375, 0.9375, 0.375, 0.09375, -0.9375, -0.375, 1.25, -0.9375, 0.375, 1.25, -0.9375, 0.375, 1.25, 0.9375, -0.375, 1.25, 0.9375, -0.4375, 1.25, -1.03125, -0.4375, 1.25, 1.03125, 0.4375, 1.25, 1.03125, 0.4375, 1.25, -1.03125, -0.4375, 1.34375, -1.03125, 0.4375, 1.34375, -1.03125, 0.4375, 1.34375, 1.03125, -0.4375, 1.34375, 1.03125, -0.4375, 1.25, -1.03125, -0.4375, 1.34375, -1.03125, -0.4375, 1.34375, 1.03125, -0.4375, 1.25, 1.03125, -0.4375, 1.25, 1.03125, -0.4375, 1.34375, 1.03125, 0.4375, 1.34375, 1.03125, 0.4375, 1.25, 1.03125, 0.4375, 1.25, 1.03125, 0.4375, 1.34375, 1.03125, 0.4375, 1.34375, -1.03125, 0.4375, 1.25, -1.03125, 0.4375, 1.25, -1.03125, 0.4375, 1.34375, -1.03125, -0.4375, 1.34375, -1.03125, -0.4375, 1.25, -1.03125, -0.40625, 0.5, -0.5, -0.40625, 0.5, 0.5, -0.375, 0.5, 0.5, -0.375, 0.5, -0.5, -0.40625, 1, -0.5, -0.375, 1, -0.5, -0.375, 1, 0.5, -0.40625, 1, 0.5, -0.40625, 0.5, -0.5, -0.40625, 1, -0.5, -0.40625, 1, 0.5, -0.40625, 0.5, 0.5, -0.40625, 0.5, 0.5, -0.40625, 1, 0.5, -0.375, 1, 0.5, -0.375, 0.5, 0.5, -0.375, 0.5, 0.5, -0.375, 1, 0.5, -0.375, 1, -0.5, -0.375, 0.5, -0.5, -0.375, 0.5, -0.5, -0.375, 1, -0.5, -0.40625, 1, -0.5, -0.40625, 0.5, -0.5, -0.375, 0.09375, -0.9375, -0.375, 1.25, -0.9375, -0.375, 1.25, 0.9375, -0.375, 0.09375, 0.9375, -0.375, 0.09375, 0.9375, -0.375, 1.25, 0.9375, 0.375, 1.25, 0.9375, 0.375, 0.09375, 0.9375, 0.375, 0.09375, 0.9375, 0.375, 1.25, 0.9375, 0.375, 1.25, -0.9375, 0.375, 0.09375, -0.9375, 0.375, 0.09375, -0.9375, 0.375, 1.25, -0.9375, -0.375, 1.25, -0.9375, -0.375, 0.09375, -0.9375)
 indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23, 24, 25, 26, 24, 26, 27, 28, 29, 30, 28, 30, 31, 32, 33, 34, 32, 34, 35, 36, 37, 38, 36, 38, 39, 40, 41, 42, 40, 42, 43, 44, 45, 46, 44, 46, 47, 48, 49, 50, 48, 50, 51, 52, 53, 54, 52, 54, 55, 56, 57, 58, 56, 58, 59, 60, 61, 62, 60, 62, 63, 64, 65, 66, 64, 66, 67, 68, 69, 70, 68, 70, 71, 72, 73, 74, 72, 74, 75, 76, 77, 78, 76, 78, 79, 80, 81, 82, 80, 82, 83, 84, 85, 86, 84, 86, 87, 88, 89, 90, 88, 90, 91, 92, 93, 94, 92, 94, 95)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_q5l26"]
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_36hk0"]
 points = PackedVector3Array(-0.5, -0.3125, -1.09375, -0.5, -0.3125, 1.09375, 0.5, -0.3125, 1.09375, 0.5, -0.3125, -1.09375, -0.5, 0.09375, -1.09375, 0.5, 0.09375, -1.09375, 0.5, 0.09375, 1.09375, -0.5, 0.09375, 1.09375)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_6oxk8"]
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_4xsir"]
 points = PackedVector3Array(-0.375, 0.09375, -0.9375, -0.375, 0.09375, 0.9375, 0.375, 0.09375, 0.9375, 0.375, 0.09375, -0.9375, -0.375, 1.25, -0.9375, 0.375, 1.25, -0.9375, 0.375, 1.25, 0.9375, -0.375, 1.25, 0.9375)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_dwp73"]
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_rtjd0"]
 points = PackedVector3Array(-0.4375, 1.25, -1.03125, -0.4375, 1.25, 1.03125, 0.4375, 1.25, 1.03125, 0.4375, 1.25, -1.03125, -0.4375, 1.34375, -1.03125, 0.4375, 1.34375, -1.03125, 0.4375, 1.34375, 1.03125, -0.4375, 1.34375, 1.03125)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_n0g11"]
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_vws2h"]
 points = PackedVector3Array(-0.40625, 0.5, -0.5, -0.40625, 0.5, 0.5, -0.375, 0.5, 0.5, -0.375, 0.5, -0.5, -0.40625, 1, -0.5, -0.375, 1, -0.5, -0.375, 1, 0.5, -0.40625, 1, 0.5)
 
 [node name="StreetUtilityCabinet" type="Node3D"]
-script = ExtResource("1_37xes")
+script = ExtResource("1_wqigx")
 local_map_file = "res://maps/blocks/streets/street_utility_cabinet.map"
-map_settings = ExtResource("2_b7xl8")
+map_settings = ExtResource("2_cwo8f")
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
 collision_mask = 0
 
 [node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
-mesh = SubResource("ArrayMesh_xfs1s")
+mesh = SubResource("ArrayMesh_a1x4y")
 
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
-occluder = SubResource("ArrayOccluder3D_aci1c")
+occluder = SubResource("ArrayOccluder3D_5yc3y")
 
 [node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_q5l26")
+shape = SubResource("ConvexPolygonShape3D_36hk0")
 
 [node name="entity_0_brush_1_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_6oxk8")
+shape = SubResource("ConvexPolygonShape3D_4xsir")
 
 [node name="entity_0_brush_2_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_dwp73")
+shape = SubResource("ConvexPolygonShape3D_rtjd0")
 
 [node name="entity_0_brush_3_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_n0g11")
+shape = SubResource("ConvexPolygonShape3D_vws2h")

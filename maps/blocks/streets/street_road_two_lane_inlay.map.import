@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ctkn67ryjis6b"
+path="res://.godot/imported/street_road_two_lane_inlay.map-d28d9ded216c397abef8f840dfcb4382.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_road_two_lane_inlay.map"
+dest_files=["res://.godot/imported/street_road_two_lane_inlay.map-d28d9ded216c397abef8f840dfcb4382.tres"]
+
+[params]
+

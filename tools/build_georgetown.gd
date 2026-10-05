@@ -120,7 +120,8 @@ func _initialize() -> void:
 		print("FAIL  could not save %s (%s)" % [ART, error_string(err)])
 		quit(1)
 		return
-	print("      %s  %d pieces" % [ART.get_file(), placed])
+	print("      %s  %d pieces%s" % [ART.get_file(), placed,
+			"" if _clashes == 0 else "  — %d PLACEMENT CLASH(ES), see the warnings" % _clashes])
 	_write_level()
 	print("      %s" % LEVEL.get_file())
 	print("BUILD GEORGETOWN DONE")
@@ -142,6 +143,48 @@ func _own(node: Node, root_node: Node) -> int:
 	return n
 
 
+## WHERE EACH TERRACE IS CROSSED. One list, used BOTH to skip the wall bay and
+## to place the stair or ramp in it, because when those were two separate lists
+## they drifted the first time a ramp moved and the wall closed over it again.
+## wall z -> bays with a crossing in them.
+# Yards crossings are all ODD bays: the service alleys sit on the even ones.
+const CROSSINGS := {-46.0: [3, 6, 11], 46.0: [1, 5, 9], 106.0: [4, 11]}
+
+## PAIRS THAT ARE SUPPOSED TO SHARE SPACE, as name prefixes. A guard that
+## cries about the same six intentional things every build is a guard people
+## stop reading, and the whole value of this one is that a new line in its
+## output means a new mistake.
+##
+##   Debris / Prism       the silt and fallen coping lie IN the bed
+##   CanalStair / Prism   the stair is cut INTO the canal wall, which is what
+##                        a stair down a quay is
+##   Bridge / Prism       the bridges carry their own abutments down into the
+##                        wall so the two read as one piece of masonry
+##   LockGear / Lock      the beams and winches sit on the lock
+##   Cofferdam / Prism    it is built in the bed
+## Each of these is an AABB envelope sharing, not two solids crossing.
+const EXPECTED: Array = [["Debris", "Prism"], ["CanalStair", "Prism"], ["Bridge", "Prism"],
+		["LockGear", "Lock"], ["Cofferdam", "Prism"], ["Outfall", "Prism"],
+		# A house front meets the pavement outside it. Its foundation runs four
+		# metres down and the walk slab is 0.45 thick, so their envelopes share
+		# a sliver — which is what a building on a street looks like.
+		["Row", "TownWalk"], ["Row", "MStreet"]]
+
+
+func _expected(a: String, b: String) -> bool:
+	for e: Array in EXPECTED:
+		if (a.begins_with(e[0]) and b.begins_with(e[1])) or (b.begins_with(e[0]) and a.begins_with(e[1])):
+			return true
+	return false
+
+
+## Pieces that are ground, and which everything else is MEANT to sit inside.
+const GROUND_NAMES: Array = ["canal_bench", "polaris_lot_main", "polaris_ground_grass"]
+
+var _placed: Array = []
+var _clashes := 0
+
+
 func _put(parent: Node3D, path: String, x: float, z: float, yaw: float = 0.0, y: float = 0.0, name := "") -> Node3D:
 	if not _cache.has(path):
 		var packed := load(path) as PackedScene
@@ -157,8 +200,65 @@ func _put(parent: Node3D, path: String, x: float, z: float, yaw: float = 0.0, y:
 	parent.add_child(inst)
 	inst.position = Vector3(x, y, z)
 	inst.rotation_degrees = Vector3(0.0, yaw, 0.0)
+	_guard(inst, path)
 	return inst
 
+
+## EVERY PLACEMENT IS CHECKED AGAINST EVERY PREVIOUS ONE AS IT GOES IN.
+##
+## Laying two hundred and fifty pieces at hand-chosen coordinates and checking
+## afterwards is whack-a-mole: each piece you move to clear one clash lands on
+## something else, and it took four passes to get from seventy clashes to
+## fifty. The builder knows the footprints — it should say so at the moment it
+## puts a piece down, naming both pieces, so the fix is one edit and not a
+## search.
+##
+## Ground plates are exempt in both directions: a building is MEANT to be
+## founded four metres into the slab it stands on.
+func _guard(inst: Node3D, path: String) -> void:
+	var box := _bounds_of(inst)
+	if box.size.length() < 0.01:
+		return
+	var ground := _is_ground(path)
+	if not ground:
+		for p: Dictionary in _placed:
+			if p.ground:
+				continue
+			var a: AABB = p.box
+			if not a.intersects(box):
+				continue
+			var s := a.intersection(box)
+			var vol := s.size.x * s.size.y * s.size.z
+			if vol > 40.0 and not _expected(String(inst.name), p.name):
+				_clashes += 1
+				push_warning("build_georgetown: %s is inside %s — %.0f m3 at (%.0f, %.0f, %.0f)" % [
+						inst.name, p.name, vol, s.get_center().x, s.get_center().y, s.get_center().z])
+	_placed.append({"name": String(inst.name), "box": box, "ground": ground})
+
+
+func _is_ground(path: String) -> bool:
+	for g: String in GROUND_NAMES:
+		if path.contains(g):
+			return true
+	return false
+
+
+## The world AABB of everything that collides under `n`. Collision and not
+## mesh: a mesh-only canopy is scenery and a mesh-only river is 600 m wide,
+## and neither is something the arrangement can be wrong about.
+func _bounds_of(n: Node) -> AABB:
+	var box := AABB()
+	var first := true
+	for cs: CollisionShape3D in n.find_children("*", "CollisionShape3D", true, false):
+		if cs.shape == null:
+			continue
+		var r := cs.shape.get_debug_mesh()
+		if r == null:
+			continue
+		var b := cs.global_transform * r.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	return box
 
 func _group(parent: Node3D, name: String) -> Node3D:
 	var g := Node3D.new()
@@ -215,8 +315,15 @@ func _benches(art: Node3D) -> void:
 		[Z_YARDS, 46.0],
 		[Z_WHARF, 106.0],
 	]
+	# THE WALL SKIPS THE BAYS A STAIR OR RAMP CROSSES. A stair up a terrace is
+	# a GAP in the wall, not a thing that passes through it — placed over the
+	# whole run the wall shared 500 m3 with the ramp and another 378 with the
+	# houses above it. The bays below are the ones _upper_town, _lower_yards
+	# and _waterfront put a crossing in; keep them in step.
 	for w: Array in walls:
 		for i in RUN:
+			if (CROSSINGS[w[1]] as Array).has(i):
+				continue
 			_put(g, B % "canal_terrace_wall", _bay(i), w[1], ALONG_X + 180.0, w[0], "Wall_%.0f_%d" % [w[1], i])
 
 
@@ -289,7 +396,7 @@ func _canal(art: Node3D) -> void:
 	for i: int in [3, 6, 9, 13]:
 		_put(w, B % "works_barrier_run", _bay(i) + 7.0, S_CANAL - 6.0, ALONG_X, Z_CANAL, "Barrier_%d" % i)
 	# The works compound on the towpath, at the lock, where the job is.
-	_put(w, B % "works_site_compound", _bay(7) - 2.0, S_CANAL - 18.0, ALONG_X, Z_CANAL, "Compound")
+	_put(w, B % "works_site_compound", _bay(7) + 14.0, S_CANAL - 34.0, ALONG_X, Z_CANAL, "Compound")
 	# Market along the towpath at the open end, where the canal is a place
 	# rather than a cut.
 	_put(w, B % "works_market_stalls", _bay(11) + 6.0, S_CANAL - 7.5, ALONG_X, Z_CANAL, "Market")
@@ -325,7 +432,12 @@ func _mills(art: Node3D) -> void:
 	_put(g, B % "mark_stack", 86.0, S_YARDS + 70.0, 0.0, Z_YARDS, "Stack")
 	for i: int in [0, 1]:
 		_put(g, B % "mill_cafe_terrace", -170.0 + i * 204.0, S_CANAL - 14.0, ALONG_X, Z_CANAL + 3.0, "Cafe_%d" % i)
-	_put(g, B % "mill_office_modern", 188.0, S_CANAL + 30.0, FACE_WEST, Z_CANAL, "OfficeBlock")
+	# Clear of the terrace wall at z = 46: it was at z 30 with a 13 m depth,
+	# so its south face ran straight through the wall for 665 m3.
+	# On the town bench at the west end, not over the canal. It is 32 m deep
+	# and the gap between the prism and the terrace wall is 28 — it never fit
+	# there, and every z I tried traded an overlap with one for the other.
+	_put(g, B % "mill_office_modern", -150.0, S_TOWN - 84.0, FACE_SOUTH, Z_TOWN, "OfficeBlock")
 
 
 ## THE TOWN ABOVE, in federal rowhouses rather than the suburban townhouses
@@ -344,7 +456,8 @@ func _upper_town(art: Node3D) -> void:
 		var x := -164.0 + i * 82.0
 		_put(g, B % "mill_rowhouse_run", x, S_TOWN - 32.0, FACE_SOUTH, Z_TOWN, "RowN_%d" % i)
 		_put(g, B % "mill_rowhouse_run", x + 20.0, S_TOWN + 30.0, FACE_NORTH, Z_TOWN, "RowS_%d" % i)
-	_put(g, B % "mill_brick_short", 196.0, S_TOWN - 30.0, FACE_SOUTH, Z_TOWN, "TownMill")
+	# East of the last rowhouse terrace, not inside it.
+	_put(g, B % "mill_brick_short", 224.0, S_TOWN - 30.0, FACE_SOUTH, Z_TOWN, "TownMill")
 	for i in 5:
 		_put(g, B_STREETS % "street_light_cobra", -150.0 + i * 76.0, S_TOWN - 12.0, FACE_SOUTH, Z_TOWN, "TownLight_%d" % i)
 	for i in 3:
@@ -356,9 +469,11 @@ func _upper_town(art: Node3D) -> void:
 	# terrace instead of up it. Every stair on this map climbs NORTH, from the
 	# lower bench onto the higher one, and sits at the lower bench height
 	# because its origin is the bottom step.
-	for i: int in [3, 10]:
+	for i: int in [3, 11]:
 		_put(g, B % "canal_terrace_stair", _bay(i), -37.0, 270.0, Z_CANAL, "TownStair_%d" % i)
-	_put(g, B % "canal_street_ramp", _bay(7) + 4.0, S_TOWN + 46.0, ALONG_Z, Z_CANAL, "TownRamp")
+	# At bay 7 the ramp ran straight through the south terrace of rowhouses.
+	# It is between two terraces now, which is also where a street would be.
+	_put(g, B % "canal_street_ramp", _bay(6), S_TOWN + 46.0, ALONG_Z, Z_CANAL, "TownRamp")
 
 
 ## THE LOWER YARDS between canal and river, with the viaduct carrying a street
@@ -369,25 +484,26 @@ func _lower_yards(art: Node3D) -> void:
 	for i in RUN:
 		if posmod(i, 2) != 0:
 			continue
-		_put(g, B_STREETS % "street_alley", _bay(i), S_YARDS + 16.0, ALONG_X, Z_YARDS, "YardAlley_%d" % i)
+		_put(g, B_STREETS % "street_alley", _bay(i), 54.0, ALONG_X, Z_YARDS, "YardAlley_%d" % i)
 	for i in 4:
-		_put(g, B % "mill_warehouse_stone", -170.0 + i * 108.0, S_YARDS + 34.0, FACE_SOUTH, Z_YARDS, "Yard_%d" % i)
+		_put(g, B % "mill_warehouse_stone", -170.0 + i * 108.0, 86.0, FACE_SOUTH, Z_YARDS, "Yard_%d" % i)
 	for i in 3:
-		_put(g, B % "mill_brick_short", -124.0 + i * 118.0, S_YARDS + 62.0, FACE_NORTH, Z_YARDS, "YardMill_%d" % i)
-	for i in 3:
-		_put(g, B_SUBURBAN % "suburban_service_dock", -120.0 + i * 120.0, S_YARDS + 6.0, FACE_NORTH, Z_YARDS, "YardDock_%d" % i)
+		_put(g, B % "mill_brick_short", -124.0 + i * 118.0, 68.0, FACE_NORTH, Z_YARDS, "YardMill_%d" % i)
 	for i: int in [0, 1]:
-		_put(g, B % "works_arch_viaduct", -92.0 + i * 184.0, S_YARDS + 24.0, ALONG_Z, Z_YARDS, "Viaduct_%d" % i)
-	_put(g, B % "works_site_compound", 44.0, S_YARDS + 44.0, ALONG_X, Z_YARDS, "YardCompound")
-	for i: int in [2, 9]:
-		_put(g, B % "canal_terrace_stair", _bay(i) + 12.0, 55.0, 270.0, Z_YARDS, "YardStair_%d" % i)
-	_put(g, B % "canal_street_ramp", _bay(12), S_YARDS - 2.0, ALONG_Z, Z_YARDS, "YardRamp")
+		# At the ends of the bench. In the middle they landed on the warehouses,
+		# the mills and the terrace wall in turn — the yards bench is 60 m deep
+		# and a 28 m viaduct crossing it leaves no room for anything else.
+		_put(g, B % "works_arch_viaduct", -206.0 + i * 412.0, 72.0, ALONG_Z, Z_YARDS, "Viaduct_%d" % i)
+	_put(g, B % "works_site_compound", 0.0, 86.0, ALONG_X, Z_YARDS, "YardCompound")
+	for i: int in [1, 9]:
+		_put(g, B % "canal_terrace_stair", _bay(i), 55.0, 270.0, Z_YARDS, "YardStair_%d" % i)
+	_put(g, B % "canal_street_ramp", _bay(5), S_YARDS - 2.0, ALONG_Z, Z_YARDS, "YardRamp")
 	for i in RUN:
 		if posmod(i, 4) != 0:
 			continue
-		_put(g, B_STREETS % "street_utility_cabinet", _bay(i) + 8.0, S_YARDS + 24.0, FACE_SOUTH, Z_YARDS, "Cab_%d" % i)
+		_put(g, B_STREETS % "street_utility_cabinet", _bay(i) + 8.0, 62.0, FACE_SOUTH, Z_YARDS, "Cab_%d" % i)
 	for i in 5:
-		_put(g, B_STREETS % "street_light_cobra", -160.0 + i * 82.0, S_YARDS + 10.0, FACE_SOUTH, Z_YARDS, "YardLight_%d" % i)
+		_put(g, B_STREETS % "street_light_cobra", -160.0 + i * 82.0, 49.0, FACE_SOUTH, Z_YARDS, "YardLight_%d" % i)
 
 
 ## THE WATERFRONT, now a derelict park rather than 450 m of bare esplanade.
@@ -407,8 +523,11 @@ func _waterfront(art: Node3D) -> void:
 	for i in 10:
 		_put(g, B % "wharf_esplanade", -216.0 + i * 48.0, S_WHARF + 46.0, ALONG_X, Z_WHARF, "Esplanade_%d" % i)
 	for i: int in [0, 1, 2]:
-		_put(g, B % "wharf_pier", -140.0 + i * 140.0, S_WHARF + 60.0, ALONG_X, Z_WHARF, "Pier_%d" % i)
-	_put(g, B % "wharf_boathouse", -56.0, S_WHARF + 56.0, ALONG_X, Z_WHARF, "Boathouse")
+		# Out past the esplanade, not through it. The piers and the boathouse
+		# were set 14 m inboard of the river wall and shared 400-1,700 m3 with
+		# it each.
+		_put(g, B % "wharf_pier", -140.0 + i * 140.0, S_WHARF + 72.0, ALONG_X, Z_WHARF, "Pier_%d" % i)
+	_put(g, B % "wharf_boathouse", -56.0, S_WHARF + 70.0, ALONG_X, Z_WHARF, "Boathouse")
 	_put(g, B % "wharf_barge", 72.0, S_WHARF + 66.0, ALONG_X + 4.0, Z_WHARF, "Barge")
 	for i: int in [4, 11]:
 		_put(g, B % "canal_terrace_stair", _bay(i) + 6.0, 115.0, 270.0, Z_WHARF, "WharfStair_%d" % i)
@@ -416,28 +535,32 @@ func _waterfront(art: Node3D) -> void:
 	# THE PARK, between the stairs and the water's edge. Two path spines with
 	# the set pieces hung off them, because a park a squad crosses is a park
 	# with a route through it.
+	# THE PARK IN FOUR BANDS, so nothing sits on a path and nothing sits on the
+	# river wall. Beds 108, north path 118, the set pieces 132, south path 150,
+	# esplanade 162. Every one of these was somewhere else first and the
+	# builder's own placement guard named each collision as it happened.
 	for i in 13:
-		_put(p, B % "park_path_run", -192.0 + i * 32.0, S_WHARF + 22.0, ALONG_X, Z_WHARF, "PathN_%d" % i)
+		_put(p, B % "park_path_run", -192.0 + i * 32.0, 118.0, ALONG_X, Z_WHARF, "PathN_%d" % i)
 	for i in 9:
-		_put(p, B % "park_path_run", -128.0 + i * 32.0, S_WHARF + 38.0, ALONG_X, Z_WHARF, "PathS_%d" % i)
-	_put(p, B % "park_tennis_court", -148.0, S_WHARF + 32.0, ALONG_X, Z_WHARF, "TennisCourt")
-	_put(p, B % "park_pavilion", -34.0, S_WHARF + 34.0, 0.0, Z_WHARF, "Bandstand")
-	_put(p, B % "park_fountain_dry", 44.0, S_WHARF + 30.0, 0.0, Z_WHARF, "Fountain")
-	_put(p, B % "park_playground", 124.0, S_WHARF + 34.0, ALONG_X, Z_WHARF, "Playground")
-	_put(p, B % "park_pergola_ruin", -94.0, S_WHARF + 14.0, ALONG_X, Z_WHARF, "Pergola")
-	_put(p, B % "mark_statue", 4.0, S_WHARF + 22.0, 0.0, Z_WHARF, "Statue")
+		_put(p, B % "park_path_run", -128.0 + i * 32.0, 150.0, ALONG_X, Z_WHARF, "PathS_%d" % i)
+	_put(p, B % "park_tennis_court", -148.0, 132.0, ALONG_X, Z_WHARF, "TennisCourt")
+	_put(p, B % "park_pavilion", -34.0, 132.0, 0.0, Z_WHARF, "Bandstand")
+	_put(p, B % "park_fountain_dry", 44.0, 132.0, 0.0, Z_WHARF, "Fountain")
+	_put(p, B % "park_playground", 124.0, 132.0, ALONG_X, Z_WHARF, "Playground")
+	_put(p, B % "park_pergola_ruin", -94.0, 132.0, ALONG_X, Z_WHARF, "Pergola")
+	_put(p, B % "mark_statue", 4.0, 108.0, 0.0, Z_WHARF, "Statue")
 	for i in 7:
-		_put(p, B % "park_overgrown_bed", -180.0 + i * 56.0, S_WHARF + 10.0, ALONG_X, Z_WHARF, "Bed_%d" % i)
+		_put(p, B % "park_overgrown_bed", -180.0 + i * 56.0, 108.0, ALONG_X, Z_WHARF, "Bed_%d" % i)
 	for i in 6:
-		_put(p, B % "park_bench_row", -150.0 + i * 62.0, S_WHARF + 25.0, ALONG_X, Z_WHARF, "Benches_%d" % i)
+		_put(p, B % "park_bench_row", -150.0 + i * 62.0, 143.0, ALONG_X, Z_WHARF, "Benches_%d" % i)
 	for i in 8:
-		_put(p, B_STREETS % "street_light_cobra", -200.0 + i * 58.0, S_WHARF + 18.0, FACE_SOUTH, Z_WHARF,
+		_put(p, B_STREETS % "street_light_cobra", -200.0 + i * 58.0, 125.0, FACE_SOUTH, Z_WHARF,
 				"ParkLight_%d" % i)
 
 	_put(g, B % "works_market_stalls", 8.0, S_WHARF + 44.0, ALONG_X, Z_WHARF, "WharfMarket")
 	_put(g, B % "wharf_river", 0.0, S_WHARF + 52.0, ALONG_X, Z_WHARF, "Potomac")
 	# The piers of the bridge that used to cross here, standing in the water.
-	_put(g, B % "mark_aqueduct_piers", -176.0, S_WHARF + 48.0, ALONG_X + 180.0, Z_WHARF, "AqueductPiers")
+	_put(g, B % "mark_aqueduct_piers", -176.0, S_WHARF + 62.0, ALONG_X + 180.0, Z_WHARF, "AqueductPiers")
 	# Arlington, across the water. Mesh only and never walked on: it is a
 	# horizon, and the moment anything can reach it, it has to be a map.
 	_put(g, B % "wharf_far_shore", 0.0, S_WHARF + 380.0, ALONG_X, Z_WHARF + 1.0, "Arlington")

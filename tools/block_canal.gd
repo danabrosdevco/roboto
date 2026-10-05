@@ -190,9 +190,11 @@ func _prism() -> void:
 	no_collision()
 	var x := -SEG * 0.5 + 1.5
 	while x < SEG * 0.5 - 1.0:
-		heap(Vector3(x, (_hash_f(int(x) * 7) - 0.5) * 6.0, BED_Z), 1.1, 0.9, 0.55, int(x) + 3, SPOIL)
+		_heap_on(Vector3(x, (_hash_f(int(x) * 7) - 0.5) * 6.0, BED_Z), 1.1, 0.9, 0.55, int(x) + 3, SPOIL)
 		if posmod(int(x), 5) == 0:
-			heap(Vector3(x, -(BED_HALF + 0.3), -0.4), 0.7, 0.4, 0.9, int(x) + 11, SPOIL)
+			# Clear of the wall, not buried in it: at -(BED_HALF + 0.3) the ivy sat
+			# inside the stone and shared its volume, where nothing could see it.
+			_heap_on(Vector3(x, -(BED_HALF - 0.5), -0.4), 0.7, 0.4, 0.9, int(x) + 11, SPOIL)
 		x += 2.5
 
 
@@ -209,7 +211,7 @@ func _prism_open() -> void:
 	no_collision()
 	var x := -SEG * 0.5 + 2.0
 	while x < SEG * 0.5 - 1.0:
-		heap(Vector3(x, (_hash_f(int(x) * 11) - 0.5) * 6.0, BED_Z), 1.0, 0.9, 0.5, int(x) + 5, SPOIL)
+		_heap_on(Vector3(x, (_hash_f(int(x) * 11) - 0.5) * 6.0, BED_Z), 1.0, 0.9, 0.5, int(x) + 5, SPOIL)
 		x += 3.0
 
 
@@ -227,31 +229,105 @@ func _truss_bridge() -> void:
 	box(Vector3(-w - 0.25, -half - 1.5, -0.45), Vector3(w + 0.25, half + 1.5, 0.0), {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * w - 0.1, -half - 1.0, -0.75), Vector3(s * w + 0.1, half + 1.0, -0.45), IRON)
-	# The truss: a bottom chord, a curved top chord in five chords, and the
-	# verticals and diagonals between them.
+	# THE TRUSS STANDS BESIDE THE DECK, NOT ON ITS EDGE. Its plane used to be
+	# 0.05 m inside the deck edge, so the bottom chord, every vertical and the
+	# chain link all shared volume with the concrete, and the chord was also
+	# built at the -X side twice (once per s) and never at +X. The plane moves
+	# out 0.15 m so the members butt the deck's side face instead.
+	var hd := 0.1                         # half the depth of the top chord
+	var base_z := -0.2
+	# The curved top chord's centreline, raised so the underside of its first
+	# and last chord rests on the bottom chord and does not dip into it.
+	var slope0: float = sin(PI / 5.0) * 1.5 / (2.0 * half / 5.0)
+	var lift: float = hd * sqrt(1.0 + slope0 * slope0)
+	var pts: Array = []
+	for i in 6:
+		var t := float(i) / 5.0
+		pts.append(Vector2(lerpf(-half, half, t), base_z + lift + sin(t * PI) * 1.5))
+	# Mitre the joints. Five straight bars end to end overlap on the inside of
+	# every bend and open on the outside; cutting each end on the bisector of
+	# the two bars means neighbours share one face and not a wedge of volume.
+	var ups: Array = []
+	var lows: Array = []
+	var normals: Array = []
+	for k in 5:
+		var dir: Vector2 = (pts[k + 1] - pts[k]).normalized()
+		normals.append(Vector2(-dir.y, dir.x))
+	for i in 6:
+		var m: Vector2
+		var scale: float
+		if i == 0:
+			m = normals[0]
+			scale = hd
+		elif i == 5:
+			m = normals[4]
+			scale = hd
+		else:
+			m = normals[i - 1] + normals[i]
+			scale = hd / (1.0 + normals[i - 1].dot(normals[i]))
+		ups.append(pts[i] + m * scale)
+		lows.append(pts[i] - m * scale)
 	for s: float in [-1.0, 1.0]:
-		var y := s * (w + 0.2)
-		box(Vector3(-w - 0.3, -half - 0.6, -0.5), Vector3(-w - 0.1, half + 0.6, -0.2), IRON)
-		var pts: Array = []
-		for i in 6:
-			var t := float(i) / 5.0
-			pts.append(Vector3(0.0, lerpf(-half, half, t), -0.2 + sin(t * PI) * 1.5))
-		for i in 5:
-			var a: Vector3 = pts[i]
-			var b: Vector3 = pts[i + 1]
-			beam(Vector3(y, a.y, a.z), Vector3(y, b.y, b.z), 0.2, IRON)
+		var px := s * (w + 0.35)
+		# The bottom chord, and the top chord in five mitred bars.
+		box(Vector3(px - hd, -half - 0.6, -0.5), Vector3(px + hd, half + 0.6, base_z), IRON)
+		for k in 5:
+			var hull: Array = []
+			for x: float in [px - hd, px + hd]:
+				for q: Vector2 in [lows[k], ups[k], lows[k + 1], ups[k + 1]]:
+					hull.append(Vector3(x, q.x, q.y))
+			solid(hull, IRON)
+		# Verticals from the bottom chord up to the underside of the top one,
+		# stopping 0.03 short of it: a sloped face snapped to the grid would
+		# otherwise land a unit inside the chord.
 		for i in range(1, 5):
-			var p: Vector3 = pts[i]
-			box(Vector3(y - 0.08, p.y - 0.08, -0.4), Vector3(y + 0.08, p.y + 0.08, p.z), IRON)
-			var q: Vector3 = pts[i + 1] if i < 4 else pts[4]
-			beam(Vector3(y, p.y, -0.4), Vector3(y, q.y, q.z), 0.1, IRON)
-		# Chain link over the deck. Mesh only — a 1.2 m fence either side of a
-		# 2.6 m deck with collision narrows the crossing to a metre and a half
-		# after the navmesh erodes it, and this is the only way over.
-		box(Vector3(y - 0.05, -half - 0.6, -0.2), Vector3(y + 0.05, half + 0.6, 1.25), IRON)
+			var p: Vector2 = pts[i]
+			var za: float = _chord_under(lows, p.x - 0.08) - 0.03
+			var zb: float = _chord_under(lows, p.x + 0.08) - 0.03
+			var hull: Array = []
+			for x: float in [px - 0.08, px + 0.08]:
+				hull.append(Vector3(x, p.x - 0.08, base_z))
+				hull.append(Vector3(x, p.x + 0.08, base_z))
+				hull.append(Vector3(x, p.x - 0.08, za))
+				hull.append(Vector3(x, p.x + 0.08, zb))
+			solid(hull, IRON)
+		# The diagonals, each a parallelogram between two verticals with its
+		# foot on the bottom chord and its head just under the top one. They
+		# used to run from the middle of one vertical to the middle of the
+		# next, through both; the last one went from a vertical to itself.
+		for i in range(1, 4):
+			var ya: float = (pts[i] as Vector2).x + 0.08
+			var yb: float = (pts[i + 1] as Vector2).x - 0.08
+			var head: float = _chord_under(lows, yb) - 0.03
+			var hv := 0.14
+			for _n in 3:
+				hv = 0.1 * sqrt(1.0 + pow((head - hv - base_z) / (yb - ya), 2.0))
+			var hull: Array = []
+			for x: float in [px - 0.05, px + 0.05]:
+				hull.append(Vector3(x, ya, base_z))
+				hull.append(Vector3(x, ya, base_z + hv))
+				hull.append(Vector3(x, yb, head - hv))
+				hull.append(Vector3(x, yb, head))
+			solid(hull, IRON)
+		# Chain link over the deck, on the deck side of the truss and above the
+		# deck's top face, so it stands on the concrete rather than in it.
+		# Collision, as it always was; the lattice beside it is the mesh.
+		box(Vector3(s * (w + 0.2), -half - 0.6, 0.0), Vector3(s * (w + 0.25), half + 0.6, 1.25), IRON)
 	no_collision()
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(s * (w + 0.22), -half - 0.6, 0.0), Vector3(s * (w + 0.26), half + 0.6, 1.2), GRATING)
+		box(Vector3(s * (w + 0.15), -half - 0.6, 0.0), Vector3(s * (w + 0.2), half + 0.6, 1.2), GRATING)
+
+
+## The height of a top chord's underside at `y`, read off the polyline of its
+## lower mitre points.
+func _chord_under(lows: Array, y: float) -> float:
+	for k in lows.size() - 1:
+		var a: Vector2 = lows[k]
+		var b: Vector2 = lows[k + 1]
+		if y >= a.x and y <= b.x:
+			return lerpf(a.y, b.y, (y - a.x) / (b.x - a.x))
+	push_warning("block_canal: no chord under y = %.2f — the verticals will be placed at the chord's end height" % y)
+	return (lows[0] as Vector2).y
 
 
 ## A LATER ROAD BRIDGE over the canal: a heavy concrete deck on the old iron,
@@ -260,14 +336,25 @@ func _truss_bridge() -> void:
 func _road_bridge() -> void:
 	var half := BED_HALF + WALL_T + 1.6
 	var w := 3.5
+	# The deck runs the full length and the abutments are cut round it: the
+	# stone sits UNDER the deck at each end (up to its soffit) and beside it
+	# (full height), never through it. They used to be one slab each and the
+	# deck was carried 1.6 m into them, so the two shared that volume.
 	box(Vector3(-w, -half - 2.0, -0.9), Vector3(w, half + 2.0, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * w - 0.45, -half - 2.0, 0.0), Vector3(s * w, half + 2.0, 0.55), {"top": COPING, "side": COPING, "bottom": COPING})
-		box(Vector3(s * w - 0.3, -half - 1.6, -1.25), Vector3(s * w - 0.1, half + 1.6, -0.9), IRON)
+		# The iron stops at the abutment face: past it, it was inside the stone.
+		box(Vector3(s * w - 0.3, -half - 0.4, -1.25), Vector3(s * w - 0.1, half + 0.4, -0.9), IRON)
 	# The abutments, carried down into the canal wall so the bridge and the
 	# prism are one piece of masonry and not two things meeting.
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-w - 0.4, s * (half + 0.4), BED_Z - 1.0), Vector3(w + 0.4, s * (half + 2.0), 0.0), STONE_W)
+		var y0: float = s * (half + 0.4)
+		var y1: float = s * (half + 2.0)
+		box(Vector3(-w, minf(y0, y1), BED_Z - 1.0), Vector3(w, maxf(y0, y1), -0.9), STONE_W)
+		for e: float in [-1.0, 1.0]:
+			var x0: float = e * w
+			var x1: float = e * (w + 0.4)
+			box(Vector3(minf(x0, x1), minf(y0, y1), BED_Z - 1.0), Vector3(maxf(x0, x1), maxf(y0, y1), 0.0), STONE_W)
 	no_collision()
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * (w - 0.22), -half - 1.8, 0.55), Vector3(s * (w - 0.18), half + 1.8, 1.65), GRATING)
@@ -276,8 +363,13 @@ func _road_bridge() -> void:
 ## A LOCK CHAMBER, 28 m: the chamber narrowed to 5 m between its coped walls,
 ## a sill at each end, and the gates standing open against the recesses. The
 ## one place the prism has a floor a body can be surprised on.
+## A FULL BAY LONG — 32 m, matching SEG — because the prism tiles in 32 m bays
+## and the builder drops the lock in place of one. At 28 m it left two metres
+## of nothing at each end of its bay: a void the squad walks up to and stops
+## at, and the only interior hole the level-fault probe could find on the
+## whole map. A piece that replaces a tile has to be the size of the tile.
 func _lock() -> void:
-	var half := 14.0
+	var half := SEG * 0.5
 	var ch := 2.5
 	box(Vector3(-half, -ch, BED_Z - 1.2), Vector3(half, ch, BED_Z), {"top": CONCRETE, "side": RUBBLE_WALL, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
@@ -290,7 +382,9 @@ func _lock() -> void:
 		box(Vector3(s * (half - 2.0), -ch, BED_Z), Vector3(s * half, ch, BED_Z + 0.55), {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
 		for e: float in [-1.0, 1.0]:
 			# A gate leaf, open, lying back along the chamber wall.
-			box(Vector3(s * (half - 2.2), e * (ch - 0.45), BED_Z + 0.55), Vector3(s * (half - 6.4), e * ch, 0.6), {"top": WOOD_DARK, "side": WOOD, "bottom": WOOD_DARK})
+			# The leaf stops at the coping's inner lip: it stands up past z = 0, and
+			# carried out to the wall face it ran through the coping beside it.
+			box(Vector3(s * (half - 2.2), e * (ch - 0.45), BED_Z + 0.55), Vector3(s * (half - 6.4), e * (ch - 0.1), 0.6), {"top": WOOD_DARK, "side": WOOD, "bottom": WOOD_DARK})
 			box(Vector3(s * (half - 2.2), e * (ch - 0.5), 0.6), Vector3(s * (half - 6.4), e * ch, 0.75), IRON)
 
 
@@ -314,19 +408,28 @@ func _cofferdam() -> void:
 			box(Vector3(x - 0.46, -1.1 + back, z), Vector3(x + 0.46, -0.2 + back, z + 0.88), {"top": BAG, "side": BAG, "bottom": BAG})
 			if r < rows - 1:
 				box(Vector3(x - 0.46, -0.2 + back, z), Vector3(x + 0.46, 0.7 + back, z + 0.88), {"top": BAG, "side": BAG, "bottom": BAG})
-	# The membrane behind it and the barrier on top.
-	box(Vector3(-3.0, 0.6, BED_Z), Vector3(3.0, 0.75, BED_Z + 2.8), {"top": RUBBER, "side": RUBBER, "bottom": RUBBER})
+	# The membrane behind it and the barrier on top. It starts behind the
+	# furthest-back course (0.9), not at 0.6, where it ran through the bags.
+	box(Vector3(-3.0, 0.9, BED_Z), Vector3(3.0, 1.05, BED_Z + 2.8), {"top": RUBBER, "side": RUBBER, "bottom": RUBBER})
 	var top: float = BED_Z + rows * 0.9
-	box(Vector3(-2.6, -0.4, top), Vector3(2.6, -0.3, top + 1.1), HAZARD)
+	# The rail runs BETWEEN the posts and not through them: a rail and a post
+	# sharing a volume is two surfaces fighting over the same pixels.
+	var post_x: Array = []
 	for i in 4:
-		var x := lerpf(-2.5, 2.5, float(i) / 3.0)
-		box(Vector3(x - 0.06, -0.42, top), Vector3(x + 0.06, -0.28, top + 1.15), HAZARD)
+		post_x.append(lerpf(-2.5, 2.5, float(i) / 3.0))
+		box(Vector3(post_x[i] - 0.06, -0.42, top), Vector3(post_x[i] + 0.06, -0.28, top + 1.15), HAZARD)
+	for i in 3:
+		box(Vector3(post_x[i] + 0.06, -0.4, top), Vector3(post_x[i + 1] - 0.06, -0.3, top + 1.1), HAZARD)
 
 
 ## A culvert mouth in the canal wall, with its apron and the stain below it.
 func _outfall() -> void:
-	box(Vector3(-1.6, BED_HALF - 0.1, BED_Z - 1.0), Vector3(1.6, BED_HALF + WALL_T, BED_Z + 1.9), STONE_W)
-	_culvert_mouth(Vector3(0.0, BED_HALF + WALL_T, BED_Z + 0.75), 0.75, 0.6, 1.2, 8)
+	# The mouth stands proud of the wall face. It used to start at the back of
+	# the block and run through it, which put a pipe inside solid stone; the
+	# 0.4 m that showed is the 0.4 m it still shows. Raised 0.1 so it clears
+	# the apron it discharges onto.
+	box(Vector3(-1.6, BED_HALF, BED_Z - 1.0), Vector3(1.6, BED_HALF + WALL_T, BED_Z + 1.9), STONE_W)
+	_culvert_mouth(Vector3(0.0, BED_HALF, BED_Z + 0.85), 0.75, 0.6, 0.4, 8)
 	box(Vector3(-1.1, BED_HALF - 2.2, BED_Z - 0.05), Vector3(1.1, BED_HALF, BED_Z + 0.08), CONCRETE)
 
 
@@ -392,7 +495,9 @@ func _terrace_wall() -> void:
 	no_collision()
 	var x := -SEG * 0.5 + 2.0
 	while x < SEG * 0.5 - 1.0:
-		heap(Vector3(x, 0.05, 2.4), 0.5, 0.25, 1.4, int(x) * 3 + 7, SPOIL)
+		# Standing off the wall face (y = 0) by its own depth: centred ON the face
+		# it sat half inside the stone.
+		_heap_on(Vector3(x, 0.35, 2.4), 0.5, 0.25, 1.4, int(x) * 3 + 7, SPOIL)
 		x += 4.0
 
 
@@ -424,10 +529,16 @@ func _terrace_stair() -> void:
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * 1.4, total - 5.0, -1.0), Vector3(s * 2.0, 0.6, 4.0), STONE_W)
 	no_collision()
+	# THE TREADS FOLLOW THE RAMP, which climbs toward -Y. They used to take
+	# their height from the other end (4 m at y = 0), so the picture of the
+	# stair ran the opposite way to the collision under it: the lower treads
+	# floated and the upper ones were buried in the ramp. Each is now a wedge
+	# whose underside lies on the ramp's own surface.
 	for i in steps:
 		var y := -float(i) * tread
-		var z: float = 4.0 * (run - absf(y)) / run
-		box(Vector3(-1.4, y - tread, z - 0.14), Vector3(1.4, y, z), {"top": COPING, "side": COPING, "bottom": COPING})
+		var z_near: float = 4.0 * absf(y) / run
+		var z_far: float = 4.0 * (absf(y) + tread) / run
+		_tread_wedge(-1.4, 1.4, y, z_near, y - tread, z_far, {"top": COPING, "side": COPING, "bottom": COPING})
 
 
 ## STONE STEPS from the towpath down into the bed, set into the wall. The
@@ -458,10 +569,19 @@ func _stair_down() -> void:
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * 2.2, lo, BED_Z - 1.2), Vector3(s * 2.8, hi, 0.4), STONE_W)
 	no_collision()
+	# Each tread is a wedge whose underside lies on the ramp. A flat box over a
+	# sloped surface has to sink into it somewhere, and that sunk wedge is
+	# volume shared with the ramp. The last treads run past the top of the
+	# ramp onto the towpath and stay plain slabs.
+	var slope: float = (0.0 - BED_Z) / (hi - lo)
 	for i in steps:
-		var z: float = BED_Z + (i + 1) * (0.0 - BED_Z) / steps
 		var y := BED_HALF - 1.2 + i * 0.2625
-		box(Vector3(-2.2, y, z - 0.12), Vector3(2.2, y + 0.2625, z), {"top": COPING, "side": COPING, "bottom": COPING})
+		var y_hi: float = y + 0.2625
+		if y >= hi:
+			box(Vector3(-2.2, y, -0.12), Vector3(2.2, y_hi, 0.0), {"top": COPING, "side": COPING, "bottom": COPING})
+			continue
+		y_hi = minf(y_hi, hi)
+		_tread_wedge(-2.2, 2.2, y, BED_Z + (y - lo) * slope, y_hi, BED_Z + (y_hi - lo) * slope, {"top": COPING, "side": COPING, "bottom": COPING})
 
 
 ## A STREET RAMPED DOWN A TERRACE at 1 in 8, 7 m wide between stone walls.
@@ -474,11 +594,12 @@ func _street_ramp() -> void:
 		var y0 := s * 3.5
 		var y1 := s * 4.4
 		box(Vector3(-run * 0.5, minf(y0, y1), -2.0), Vector3(run * 0.5, maxf(y0, y1), 4.6), STONE_W)
-	# The footway on one side, stepped so it keeps up with the road.
-	for i in 16:
-		var x := -run * 0.5 + i * 2.0
-		var z := lerpf(4.0, 0.0, float(i) / 15.0)
-		box(Vector3(x, 3.5, z - 0.6), Vector3(x + 2.0, 4.4, z + 0.15), {"top": TOW_BRICK, "side": COPING, "bottom": CONCRETE})
+	# There used to be a stepped footway here, y 3.5 to 4.4 along the +Y side.
+	# That is exactly where the +Y wall stands, so all sixteen brushes were
+	# buried in the stone and shared its volume without ever being seen. Left
+	# out rather than uncovered: its steps ran 0.4 m off the road surface, and
+	# a footway that is not on the surface is a ledge in the baker's 0.25 to
+	# 0.45 m band beside the only vehicle route between levels.
 
 
 # ── The buildings on the canal ───────────────────────────────────────────────
@@ -495,8 +616,11 @@ func _mill_brick_long() -> void:
 	# The corbel under the eaves: two courses standing proud, which is the one
 	# piece of ornament these buildings have and what makes the top read.
 	for z: float in [top - 0.9, top - 0.45]:
-		box(Vector3(-half - 0.18, -d - 0.18, z), Vector3(half + 0.18, d + 0.18, z + 0.35), MILL_BRICK)
-	box(Vector3(-half - 0.25, -d - 0.25, top), Vector3(half + 0.25, d + 0.25, top + 1.0), {"top": COPING, "side": MILL_BRICK, "bottom": MILL_BRICK})
+		_rim(-half, -d, half, d, 0.18, 0.0, z, z + 0.35, MILL_BRICK)
+	# The parapet is a collar round the roof edge, not a 1 m slab over all of
+	# it: as a slab it buried the rooftop plant, and as a collar it is what the
+	# comment on this function says it is, a flat roof behind a low parapet.
+	_rim(-half, -d, half, d, 0.25, 0.3, top, top + 1.0, {"top": COPING, "side": MILL_BRICK, "bottom": MILL_BRICK})
 	# EVERYTHING BELOW IS MESH ONLY. The first cut of this building was 451
 	# brushes and every one of them a collision shape, for a wall with some
 	# window reveals on it — the wall is the collision, the reveals are a
@@ -508,12 +632,20 @@ func _mill_brick_long() -> void:
 		for i in 8:
 			var x := lerpf(-half + 2.2, half - 2.2, float(i) / 7.0)
 			for s: float in [-1.0, 1.0]:
-				window("y", s * d, x - 0.55, z, 1.1, 1.9, true, DARK_GLASS)
-				# The arch over each: three stepped boxes, which at this size
-				# is a segmental arch and costs three brushes instead of ten.
-				box(Vector3(x - 0.62, s * d - s * 0.12, z + 1.9), Vector3(x + 0.62, s * (d + 0.08), z + 2.05), MILL_BRICK)
+				# The face is named for the side it is on: "y" always builds
+				# toward +Y, so on the -Y wall the windows were going up inside
+				# the brick, in the same volume as the wall.
+				window("y" if s > 0.0 else "-y", s * d, x, z, 1.1, 1.9, true, DARK_GLASS)
+				# The arch over each, standing on the lintel and on the wall
+				# face: it used to sink 0.12 into the wall and run through the
+				# lintel's height, which is two overlaps per window. Three
+				# stepped boxes at this size is a segmental arch and costs three
+				# brushes instead of ten.
+				box(Vector3(x - 0.62, s * d, z + 2.15), Vector3(x + 0.62, s * (d + 0.2), z + 2.3), MILL_BRICK)
 	# The downpipe, which every photograph of one of these has down its face.
-	box(Vector3(-4.0, d, -4.0), Vector3(-3.78, d + 0.22, top - 0.5), IRON)
+	# It stops under the first corbel course: carried up past it, it ran
+	# through the corbel.
+	box(Vector3(-4.0, d, -4.0), Vector3(-3.78, d + 0.22, top - 0.9), IRON)
 	_rooftop_plant(-half + 4.0, -d + 3.0, half - 4.0, d - 3.0, top, 211)
 
 
@@ -526,21 +658,23 @@ func _mill_brick_tall() -> void:
 	var top := 16.0
 	box(Vector3(-half, -d, -4.0), Vector3(half, d, top), {"top": CONCRETE, "side": MILL_BRICK, "bottom": CONCRETE})
 	for z: float in [top - 1.0, top - 0.5]:
-		box(Vector3(-half - 0.18, -d - 0.18, z), Vector3(half + 0.18, d + 0.18, z + 0.4), MILL_BRICK)
+		_rim(-half, -d, half, d, 0.18, 0.0, z, z + 0.4, MILL_BRICK)
 	no_collision()
 	for lvl in 4:
 		var z: float = 1.2 + lvl * 3.2
 		for i in 8:
 			var x := lerpf(-half + 2.4, half - 2.4, float(i) / 7.0)
 			for s: float in [-1.0, 1.0]:
-				window("y", s * d, x - 0.7, z, 1.4, 2.1, true, DARK_GLASS)
+				window("y" if s > 0.0 else "-y", s * d, x, z, 1.4, 2.1, true, DARK_GLASS)
 	# The added floor: steel and glass set back from the brick, with a
 	# shallow hipped lantern over it.
 	box(Vector3(-half + 1.2, -d + 1.2, top), Vector3(half - 1.2, d - 1.2, top + 3.4), STORE_GLASS)
 	for i in 9:
 		var x := lerpf(-half + 1.2, half - 1.2, float(i) / 8.0)
 		for s: float in [-1.0, 1.0]:
-			box(Vector3(x - 0.12, s * (d - 1.3), top), Vector3(x + 0.12, s * (d - 1.1), top + 3.4), METAL)
+			# Outside the glazing, on its face: centred on the face it ran half
+			# through the glass.
+			box(Vector3(x - 0.12, s * (d - 1.2), top), Vector3(x + 0.12, s * (d - 1.0), top + 3.4), METAL)
 	_hip(-half + 0.9, -d + 0.9, half - 0.9, d - 0.9, top + 3.4, top + 5.2, 0.5)
 
 
@@ -554,17 +688,21 @@ func _warehouse_stone() -> void:
 	box(Vector3(-half - 0.22, -d - 0.22, top), Vector3(half + 0.22, d + 0.22, top + 0.9), {"top": COPING, "side": RUBBLE_WALL, "bottom": RUBBLE_WALL})
 	for lvl in 3:
 		var z: float = 1.0 + lvl * 3.2
-		box(Vector3(-1.4, d - 0.3, z), Vector3(1.4, d + 0.1, z + 2.4), WOOD_DARK)
-		box(Vector3(-1.6, d - 0.1, z + 2.4), Vector3(1.6, d + 0.18, z + 2.6), MILL_BRICK)
+		# Door and head stand ON the wall face (y = d), proud of it; they used
+		# to start 0.3 and 0.1 inside it.
+		box(Vector3(-1.4, d, z), Vector3(1.4, d + 0.1, z + 2.4), WOOD_DARK)
+		box(Vector3(-1.6, d, z + 2.4), Vector3(1.6, d + 0.18, z + 2.6), MILL_BRICK)
 		for i in 3:
 			var x := lerpf(-half + 3.0, half - 3.0, float(i) / 2.0)
 			if absf(x) < 3.0:
 				continue
-			window("y", d, x - 0.6, z, 1.2, 1.8, true, DARK_GLASS)
-			window("y", -d, x - 0.6, z, 1.2, 1.8, true, DARK_GLASS)
-	# The hoist beam over the top door.
-	box(Vector3(-0.22, d, top - 1.6), Vector3(0.22, d + 2.2, top - 1.2), WOOD_DARK)
-	box(Vector3(-0.35, d + 1.8, top - 2.6), Vector3(0.35, d + 2.1, top - 1.2), IRON)
+			window("y", d, x, z, 1.2, 1.8, true, DARK_GLASS)
+			window("-y", -d, x, z, 1.2, 1.8, true, DARK_GLASS)
+	# The hoist beam over the top door, standing on its head instead of
+	# running back through the door leaf, and the pulley bracket hung from it
+	# instead of through it.
+	box(Vector3(-0.22, d, top - 1.0), Vector3(0.22, d + 2.2, top - 0.6), WOOD_DARK)
+	box(Vector3(-0.35, d + 1.8, top - 2.0), Vector3(0.35, d + 2.1, top - 1.0), IRON)
 
 
 ## THE MODERN BLOCK: eight storeys of dark brick and ribbon glazing set back
@@ -581,12 +719,17 @@ func _office_modern() -> void:
 	for lvl in 8:
 		var z: float = 1.4 + lvl * 2.8
 		for s: float in [-1.0, 1.0]:
-			box(Vector3(-half + 1.2, s * d - s * 0.22, z), Vector3(half - 1.2, s * d, z + 1.7), DARK_GLASS)
-			box(Vector3(s * half - s * 0.22, -d + 1.2, z), Vector3(s * half, d - 1.2, z + 1.7), DARK_GLASS)
+			# EVERYTHING HERE STANDS ON THE WALL FACE, not in it. The glazing and
+			# the mullions were sunk 0.22 and 0.26 m into the brick and the
+			# mullions through the glass as well — 224 of this piece's 320
+			# overlaps were that one line. Glazing is 0.06 proud, the mullions a
+			# further 0.14 over it.
+			box(Vector3(-half + 1.2, s * d, z), Vector3(half - 1.2, s * (d + 0.06), z + 1.7), DARK_GLASS)
+			box(Vector3(s * half, -d + 1.2, z), Vector3(s * (half + 0.06), d - 1.2, z + 1.7), DARK_GLASS)
 		for i in 9:
 			var x := lerpf(-half + 1.2, half - 1.2, float(i) / 8.0)
 			for s: float in [-1.0, 1.0]:
-				box(Vector3(x - 0.14, s * d - s * 0.26, z), Vector3(x + 0.14, s * d + s * 0.02, z + 1.7), MILL_BRICK)
+				box(Vector3(x - 0.14, s * (d + 0.06), z), Vector3(x + 0.14, s * (d + 0.2), z + 1.7), MILL_BRICK)
 	_rooftop_plant(-half + 4.0, -d + 4.0, half - 4.0, d - 4.0, top + 3.2, 311)
 
 
@@ -595,11 +738,14 @@ func _office_modern() -> void:
 ## trench, which is a firing position with tables on it.
 func _cafe_terrace() -> void:
 	box(Vector3(-9.0, -5.0, -2.0), Vector3(9.0, 5.0, 0.0), {"top": TOW_BRICK, "side": RUBBLE_WALL, "bottom": CONCRETE})
-	for e: Array in [[-9.0, 5.0, 9.0, 5.0], [-9.0, -5.0, -9.0, 5.0], [9.0, -5.0, 9.0, 5.0]]:
+	# The two end rails stop where the long rail begins (4.94) and do not run
+	# on through its end.
+	for e: Array in [[-9.0, 5.0, 9.0, 5.0], [-9.0, -5.0, -9.0, 4.88], [9.0, -5.0, 9.0, 4.88]]:
 		box(Vector3(e[0] - 0.06, e[1] - 0.06, 0.0), Vector3(e[2] + 0.06, e[3] + 0.06, 1.05), IRON)
 	for i in 7:
 		var x := lerpf(-8.6, 8.6, float(i) / 6.0)
-		box(Vector3(x - 0.05, 4.9, 0.0), Vector3(x + 0.05, 5.1, 1.1), IRON)
+		# On the inside face of the rail, not through it.
+		box(Vector3(x - 0.05, 4.84, 0.0), Vector3(x + 0.05, 4.94, 1.1), IRON)
 	no_collision()
 	for i in 3:
 		for j in 2:
@@ -627,8 +773,9 @@ func _esplanade() -> void:
 	for i in 17:
 		var x := lerpf(-half + 1.0, half - 1.0, float(i) / 16.0)
 		box(Vector3(x - 0.06, -0.35, 0.42), Vector3(x + 0.06, -0.23, 1.5), IRON)
+	# The bars run along the FACE of the posts, not through them.
 	for z: float in [0.95, 1.42]:
-		box(Vector3(-half + 1.0, -0.33, z), Vector3(half - 1.0, -0.25, z + 0.08), IRON)
+		box(Vector3(-half + 1.0, -0.23, z), Vector3(half - 1.0, -0.15, z + 0.08), IRON)
 
 
 ## A timber pier out over the water on its piles, 26 m. Somewhere to be
@@ -659,12 +806,158 @@ func _river() -> void:
 func _far_shore() -> void:
 	no_collision()
 	box(Vector3(-300.0, -14.0, -2.6), Vector3(300.0, 0.0, 1.5), {"top": DIRT, "side": RUBBLE_WALL, "bottom": CONCRETE})
+	# Laid end to end with a gap between them, not on a fixed 40 m pitch with a
+	# 22 m half-width: neighbours then overlapped by up to 4 m, and the heavier
+	# the hash the deeper they went through each other.
+	var cursor := -290.0
 	for i in 14:
-		var x := -270.0 + i * 40.0 + _hash_f(i * 17) * 14.0
 		var w := 9.0 + _hash_f(i * 5) * 13.0
+		var x := cursor + w
+		cursor = x + w + 3.0 + _hash_f(i * 17) * 6.0
+		if cursor > 300.0:
+			push_warning("block_canal: far shore ran out of room at slab %d — the rest are left off" % i)
+			break
 		var h := 12.0 + _hash_f(i * 23) * 26.0
 		box(Vector3(x - w, -14.0 - _hash_f(i) * 30.0, 0.0), Vector3(x + w, -14.0, h),
 				{"top": CONCRETE, "side": PALE, "bottom": CONCRETE})
 	for i in 30:
 		var x := -290.0 + i * 20.0
-		heap(Vector3(x, -10.0, 1.5), 7.0, 5.0, 7.0, i * 13 + 3, SPOIL)
+		# Held at y = -8.5 so the footprint (5 m deep) stays on the bank and does
+		# not reach out over the slabs standing at its foot.
+		_heap_on(Vector3(x, -8.5, 1.5), 7.0, 5.0, 7.0, i * 13 + 3, SPOIL)
+
+
+# ── Ground dressing that sits ON the ground ──────────────────────────────────
+
+## heap() from block_industrial, with the bottom ring at c.z instead of 0.3 m
+## under it. heap() sinks its skirt into whatever it stands on, which is right
+## for a prop on terrain and wrong in a brush file: the skirt then shares
+## volume with the slab beneath it, and two brushes with a shared volume
+## z-fight where they cross. The same hull shape, the same seed, just seated on
+## the surface instead of through it. Mesh only, as every caller here is.
+func _heap_on(c: Vector3, rx: float, ry: float, h: float, seed: int, tex: Variant) -> void:
+	c.z = _up_to_hull_grid(c.z)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	var pts: Array = []
+	for ring: Vector3 in [Vector3(0.0, 1.0, 8), Vector3(0.65, 0.6, 8), Vector3(1.0, 0.25, 6)]:
+		var count := int(ring.z)
+		var turn := rng.randf_range(0.0, TAU)
+		for i in count:
+			var a := turn + TAU * (i + rng.randf_range(-0.15, 0.15)) / count
+			var j := rng.randf_range(0.94, 1.04)
+			pts.append(c + Vector3(cos(a) * rx * ring.y * j, sin(a) * ry * ring.y * j, h * ring.x))
+	solid(pts, tex, 4)
+
+
+## mound() from block_doodads, seated the same way and for the same reason.
+func _mound_on(c: Vector3, rx: float, ry: float, h: float, seed: int, tex: Variant) -> void:
+	c.z = _up_to_hull_grid(c.z)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	var pts: Array = []
+	for ring in [[0.0, 1.0], [0.45, 0.8], [0.8, 0.5], [1.0, 0.15]]:
+		var t: float = ring[0]
+		var k: float = ring[1]
+		var count := 9 if k > 0.3 else 4
+		for i in count:
+			var a := TAU * i / count + rng.randf_range(-0.25, 0.25)
+			var j := rng.randf_range(0.92, 1.05)
+			pts.append(c + Vector3(cos(a) * rx * k * j, sin(a) * ry * k * j, t * h))
+	solid(pts, tex, 4)
+
+
+## A wedge of tread lying on a slope: its underside parallels the surface
+## through (y_low, z_low) and (y_high, z_high), its top is flat at the high end
+## and its riser faces the low end. Held 0.04 m off the surface, because a
+## coincident sloped face snapped to a 1/32 m grid lands a unit on the wrong
+## side of the plane it is meant to touch, and that unit is volume.
+func _tread_wedge(x0: float, x1: float, y_low: float, z_low: float, y_high: float, z_high: float, tex: Variant) -> void:
+	var e := 0.04
+	var pts: Array = []
+	for x: float in [x0, x1]:
+		pts.append(Vector3(x, y_low, z_low + e))
+		pts.append(Vector3(x, y_high, z_high + e))
+		pts.append(Vector3(x, y_low, z_high + e))
+	solid(pts, tex)
+
+
+## A collar round a rectangular mass: `out` proud of its faces and `inn` back
+## over its top, from z0 to z1, as four strips that butt at the corners. The
+## corbels and the parapets on these buildings were each ONE solid slab the
+## size of the whole footprint, which put the slab inside the mass it was
+## meant to wrap and, for the parapet, buried everything standing on the roof.
+func _rim(x0: float, y0: float, x1: float, y1: float, out: float, inn: float, z0: float, z1: float, tex: Variant) -> void:
+	# The long sides take the corners.
+	for s: float in [-1.0, 1.0]:
+		var ya: float = (y1 if s > 0.0 else y0) - s * inn
+		var yb: float = (y1 if s > 0.0 else y0) + s * out
+		box(Vector3(x0 - out, minf(ya, yb), z0), Vector3(x1 + out, maxf(ya, yb), z1), tex)
+	for s: float in [-1.0, 1.0]:
+		var xa: float = (x1 if s > 0.0 else x0) - s * inn
+		var xb: float = (x1 if s > 0.0 else x0) + s * out
+		box(Vector3(minf(xa, xb), y0 + inn, z0), Vector3(maxf(xa, xb), y1 - inn, z1), tex)
+
+
+# ── Scatter that keeps off what is already there ─────────────────────────────
+
+## Footprints already spoken for in the piece being built, as 2D rectangles.
+## Random scatter (heaps, rubbish, stones) was placed from a hash with no idea
+## what else stood there, so it landed on top of the pieces beside it — and in
+## a brush file two brushes sharing a volume z-fight where they cross. Anything
+## scattered now claims its footprint first and is dropped if it is taken.
+var _taken: Array = []
+
+
+func _claim_reset() -> void:
+	_taken = []
+
+
+## True, and the footprint is recorded, if the rectangle about `c` is free.
+## Rectangles that only touch are free: butting is what brush files are for.
+func _claim(c: Vector2, rx: float, ry: float) -> bool:
+	var r := Rect2(c.x - rx, c.y - ry, rx * 2.0, ry * 2.0)
+	for t: Rect2 in _taken:
+		if t.intersects(r):
+			return false
+	_taken.append(r)
+	return true
+
+
+## A seated heap that gives way to whatever already holds the ground. Its
+## footprint is padded by one snap cell (0.125 m, the hull grid) so rounding
+## cannot walk it into a neighbour. Returns whether it was placed; a skip is
+## reported by the caller's count, not silently.
+func _scatter_heap(c: Vector3, rx: float, ry: float, h: float, seed: int, tex: Variant) -> bool:
+	if not _claim(Vector2(c.x, c.y), rx * 1.05 + 0.13, ry * 1.05 + 0.13):
+		return false
+	_heap_on(c, rx, ry, h, seed, tex)
+	return true
+
+
+## Claim a footprint that is NOT optional — a piece placed by hand. A refusal
+## here means two fixed things overlap in the design, so it is a warning and
+## not a quiet skip.
+func _reserve(c: Vector2, rx: float, ry: float, what: String) -> void:
+	if not _claim(c, rx, ry):
+		push_warning("block_canal: %s at %s overlaps something already placed" % [what, c])
+
+
+## A gabled roof between two party walls, ridge along x: the same hull as
+## _gable but with NO overhang at the ends, only along the eaves. _gable
+## overhangs on all four sides by one figure, which in a terrace pushes each
+## roof 0.35 m into its neighbour's.
+func _gable_run(x0: float, x1: float, y0: float, y1: float, eaves: float, ridge: float, over_y: float) -> void:
+	var mid := (y0 + y1) * 0.5
+	solid([Vector3(x0, y0 - over_y, eaves), Vector3(x1, y0 - over_y, eaves),
+			Vector3(x1, y1 + over_y, eaves), Vector3(x0, y1 + over_y, eaves),
+			Vector3(x0, mid, ridge), Vector3(x1, mid, ridge)], SHINGLE)
+
+
+## `z` raised to the next multiple of 0.125 m (4 units), never lowered. solid()
+## snaps these hulls to a 4-unit grid, so a base resting on a surface at some
+## other height rounds to either side of it, and half the time that is the
+## side inside the surface. A gap of a few centimetres under a bush is
+## invisible; a shared volume is not.
+func _up_to_hull_grid(z: float) -> float:
+	return ceilf(z * UPM / 4.0 - 0.001) * 4.0 / UPM

@@ -16,12 +16,12 @@
 }
 // brush 1
 {
-( -42 46 32 ) ( 42 38 32 ) ( 42 46 32 ) PSX_Textures/glass_dark [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -42 38 67 ) ( 42 46 67 ) ( 42 38 67 ) PSX_Textures/glass_dark [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -42 38 32 ) ( 42 38 67 ) ( 42 38 32 ) PSX_Textures/glass_dark [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 42 38 32 ) ( 42 46 67 ) ( 42 46 32 ) PSX_Textures/glass_dark [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 42 46 32 ) ( -42 46 67 ) ( -42 46 32 ) PSX_Textures/glass_dark [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -42 46 32 ) ( -42 38 67 ) ( -42 38 32 ) PSX_Textures/glass_dark [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -42 53 32 ) ( 42 45 32 ) ( 42 53 32 ) PSX_Textures/glass_dark [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -42 45 67 ) ( 42 53 67 ) ( 42 45 67 ) PSX_Textures/glass_dark [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -42 45 32 ) ( 42 45 67 ) ( 42 45 32 ) PSX_Textures/glass_dark [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 42 45 32 ) ( 42 53 67 ) ( 42 53 32 ) PSX_Textures/glass_dark [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 42 53 32 ) ( -42 53 67 ) ( -42 53 32 ) PSX_Textures/glass_dark [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -42 53 32 ) ( -42 45 67 ) ( -42 45 32 ) PSX_Textures/glass_dark [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 // brush 2
 {

@@ -65,13 +65,14 @@ func _initialize() -> void:
 	root.add_child(art)
 	art.owner = null
 
-	_ground(art)
 	_ring_road(art)
 	_mall(art)
 	_parking(art)
 	_outlots(art)
 	_power_centre(art)
 	_housing(art)
+	# LAST, not first: it is built from what the others placed.
+	_ground(art)
 
 	var placed := _own(art, art)
 	var packed := PackedScene.new()
@@ -130,6 +131,14 @@ func _put(parent: Node3D, path: String, x: float, z: float, yaw: float = 0.0, y:
 	parent.add_child(inst)
 	inst.position = Vector3(x, y, z)
 	inst.rotation_degrees = Vector3(0.0, yaw, 0.0)
+	# Anything that brings its own walking surface is recorded here and the
+	# ground is laid from the record at the end. See _ground: three earlier
+	# attempts described the ground by hand and every one of them drifted from
+	# where the roads actually went.
+	for part: String in SURFACE_PARTS:
+		if path.contains(part):
+			_surfaces.append(_footprint(inst))
+			break
 	return inst
 
 
@@ -166,22 +175,140 @@ const FACE_SOUTH := 270.0
 
 # ── The site ─────────────────────────────────────────────────────────────────
 
-## The site it all stands on: the car park as ONE slab, and grass round it.
+## THE GROUND, ONE TILE PER CELL, DERIVED FROM WHAT WAS ACTUALLY PLACED.
 ##
-## The lot was nine asphalt fields in a 3 x 3 to start with, which put the
-## subdivision and the church on a car park. The ground under a building is
-## most of what tells you what kind of place you are in.
+## Four goes at this, and the first three were all the same mistake in
+## different clothes: the ground was described BY HAND and the things standing
+## on it were described somewhere else, so the two drifted.
+##
+##   - one plate per material, everything laid on top: 1,231 of 8,119 columns
+##     with two floors at the same height. 15% of the map crawling, because the
+##     depth buffer cannot choose between a road bed and the slab under it.
+##   - holes cut for the roads: the flicker went, and 451 empty columns
+##     arrived, because a tile is dropped if it so much as touches a hole and
+##     so every road had a gap beside it.
+##   - tile-aligned asphalt corridors under the roads, typed out as three
+##     rectangles: 3,528 empty columns. The rectangles were wrong. _corridor()
+##     takes a CENTRE and I passed it the left edge, so the frontage corridor
+##     ran from x -768 to 0 — three hundred metres of asphalt off the west side
+##     of the map and bare dirt under the eastern half of its own road.
+##
+## That last one is the lesson. A hand-typed rectangle describing where a road
+## is will be wrong the first time the road moves, and nothing will say so.
+##
+## So the ground is built LAST and it is built from the record: _put() measures
+## anything whose prefab brings its own walking surface, _ground() asks for
+## those footprints, and every 32 m cell of the site gets EXACTLY ONE tile —
+## asphalt where a surface lands on it, dirt everywhere else. One tile per cell
+## is what rules out both faults at once: no cell can be empty and no cell can
+## be covered twice. Then 2 x 2 blocks of one kind merge into a 64 m tile, which
+## is only an instance count, not a correctness matter.
+const B_GROUND := "res://maps/blocks/ground/%s.tscn"
+## The whole site, a whole number of cells each way: 26 x 24.
+const SITE := Rect2(-416.0, -384.0, 832.0, 768.0)
+const CELL := 32.0
+## The car park, which is asphalt whether or not anything is parked on it.
+const LOT := Rect2(-224.0, -192.0, 448.0, 384.0)
+## Prefabs that bring their own walking surface, and so need asphalt under
+## them rather than dirt. Matched as substrings of the prefab path.
+const SURFACE_PARTS: Array = [
+	"street_road", "street_lot_entry", "street_sidewalk", "street_kerb",
+	"polaris_aisle", "polaris_ring_corner", "polaris_entry",
+]
+
+var _tiles := 0
+## World-space XZ footprints of every surface piece placed so far.
+var _surfaces: Array = []
+
+
 func _ground(art: Node3D) -> void:
 	var g := _group(art, "Ground")
-	_put(g, B_POLARIS % "polaris_lot_main", 0.0, 0.0, 0.0, 0.0, "Lot")
-	# Grass fields butted to the lot's four edges. Same top height, so every
-	# join is a texture change and not a step for anything to catch on.
-	for j in 2:
-		var s: float = -1.0 if j == 0 else 1.0
-		_put(g, B_POLARIS % "polaris_ground_grass", -130.0, s * 280.0, 0.0, 0.0, "GrassZ_%d_a" % j)
-		_put(g, B_POLARIS % "polaris_ground_grass", 130.0, s * 280.0, 0.0, 0.0, "GrassZ_%d_b" % j)
-		_put(g, B_POLARIS % "polaris_ground_grass", s * 330.0, -100.0, 90.0, 0.0, "GrassX_%d_a" % j)
-		_put(g, B_POLARIS % "polaris_ground_grass", s * 330.0, 100.0, 90.0, 0.0, "GrassX_%d_b" % j)
+	# Ground first in the tree even though it is built last: in the editor the
+	# order is the only clue to what is scenery and what is the site.
+	art.move_child(g, 0)
+	var nx := int(SITE.size.x / CELL)
+	var nz := int(SITE.size.y / CELL)
+	var asphalt := {}
+	var strays := 0
+	for r: Rect2 in _surfaces:
+		strays += _mark(asphalt, r, nx, nz)
+	_mark(asphalt, LOT, nx, nz)
+	if strays > 0:
+		# Not fatal, but it means a road has moved off the site and the ground
+		# cannot follow it. Say which way to grow SITE.
+		push_warning("build_polaris: %d surface piece(s) lie outside SITE — the ground stops at the site edge" % strays)
+	# 2 x 2 cells of one kind become one 64 m tile; the rest stay 32s.
+	for bx in nx / 2:
+		for bz in nz / 2:
+			var kinds: Array = []
+			for i in 2:
+				for j in 2:
+					kinds.append("asphalt" if asphalt.has(Vector2i(bx * 2 + i, bz * 2 + j)) else "dirt")
+			if kinds[0] == kinds[1] and kinds[1] == kinds[2] and kinds[2] == kinds[3]:
+				_tile(g, kinds[0], 64.0,
+						SITE.position.x + bx * 64.0 + 32.0, SITE.position.y + bz * 64.0 + 32.0)
+			else:
+				for i in 2:
+					for j in 2:
+						var ix := bx * 2 + i
+						var iz := bz * 2 + j
+						_tile(g, kinds[i * 2 + j], CELL,
+								SITE.position.x + ix * CELL + CELL * 0.5,
+								SITE.position.y + iz * CELL + CELL * 0.5)
+	print("      ground: %d tile(s) over %d cell(s), %d asphalt" % [_tiles, nx * nz, asphalt.size()])
+
+
+## Mark every cell `r` touches. Returns 1 if it reached outside the site.
+func _mark(cells: Dictionary, r: Rect2, nx: int, nz: int) -> int:
+	# A hair inside each edge, so a piece that ENDS exactly on a cell line does
+	# not claim the cell beyond it. Road runs are 32 m long and land on the
+	# lines, and without this every one of them paved a spare cell each way.
+	var x0 := int(floorf((r.position.x - SITE.position.x + 0.01) / CELL))
+	var z0 := int(floorf((r.position.y - SITE.position.y + 0.01) / CELL))
+	var x1 := int(ceilf((r.end.x - SITE.position.x - 0.01) / CELL)) - 1
+	var z1 := int(ceilf((r.end.y - SITE.position.y - 0.01) / CELL)) - 1
+	var stray := 1 if x0 < 0 or z0 < 0 or x1 >= nx or z1 >= nz else 0
+	for ix in range(maxi(x0, 0), mini(x1, nx - 1) + 1):
+		for iz in range(maxi(z0, 0), mini(z1, nz - 1) + 1):
+			cells[Vector2i(ix, iz)] = true
+	return stray
+
+
+func _tile(g: Node3D, kind: String, size: float, cx: float, cz: float) -> void:
+	_put(g, B_GROUND % ("tile_%s_%d" % [kind, int(size)]), cx, cz, 0.0, 0.0,
+			"Ground_%s_%d" % [kind.substr(0, 3).to_upper(), _tiles])
+	_tiles += 1
+
+
+## The XZ footprint of everything under `n`, MESH INCLUDED.
+##
+## Mesh and not just collision, because a road inlay is exactly the piece that
+## has no collision of its own any more — it is kerbs, islands and markings on
+## ground somebody else brings. Measuring its colliders would give the kerbs
+## and miss the carriageway between them.
+func _footprint(n: Node3D) -> Rect2:
+	var box := AABB()
+	var first := true
+	for m: MeshInstance3D in n.find_children("*", "MeshInstance3D", true, false):
+		if m.mesh == null:
+			continue
+		var b := m.global_transform * m.mesh.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	for cs: CollisionShape3D in n.find_children("*", "CollisionShape3D", true, false):
+		if cs.shape == null:
+			continue
+		var r := cs.shape.get_debug_mesh()
+		if r == null:
+			continue
+		var b := cs.global_transform * r.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	if first:
+		return Rect2(n.position.x, n.position.z, 0.0, 0.0)
+	return Rect2(box.position.x, box.position.z, box.size.x, box.size.z)
+
+
 ## Godot sends +X +Z to +X -Z and not to -X +Z.
 func _ring_road(art: Node3D) -> void:
 	var g := _group(art, "RingRoad")
@@ -200,13 +327,13 @@ func _ring_road(art: Node3D) -> void:
 	for s: float in [-1.0, 1.0]:
 		for i in along_x:
 			var x := -RING_X + (i + 0.5) * (RING_X * 2.0 / along_x)
-			_put(g, B_STREETS % "street_road_two_lane", x, s * (RING_Y + RING_R), ALONG_X, 0.0,
+			_put(g, B_STREETS % "street_road_two_lane_inlay", x, s * (RING_Y + RING_R), ALONG_X, 0.0,
 					"RingX_%s_%d" % ["S" if s > 0.0 else "N", i])
 	var along_z := int(round((RING_Y * 2.0) / 32.0))
 	for s: float in [-1.0, 1.0]:
 		for i in along_z:
 			var z := -RING_Y + (i + 0.5) * (RING_Y * 2.0 / along_z)
-			_put(g, B_STREETS % "street_road_two_lane", s * (RING_X + RING_R), z, ALONG_Z, 0.0,
+			_put(g, B_STREETS % "street_road_two_lane_inlay", s * (RING_X + RING_R), z, ALONG_Z, 0.0,
 					"RingZ_%s_%d" % ["E" if s > 0.0 else "W", i])
 	for i in 16:
 		var a := TAU * i / 16.0
@@ -248,7 +375,9 @@ func _parking(art: Node3D) -> void:
 	var cars := _group(art, "ParkedCars")
 	for i in 5:
 		var z := 58.0 + i * 20.0
-		var fan := (i - 2) * 2.5
+		# 1.2 degrees, not 2.5: at 2.5 the outer aisles in a fan of five crossed
+		# their neighbours at the ends, two asphalt surfaces in one place.
+		var fan := (i - 2) * 1.2
 		for s: float in [-1.0, 1.0]:
 			var yaw: float = ALONG_X + s * fan
 			_put(g, B_POLARIS % "polaris_aisle_long", s * 34.0, z, yaw, 0.0,
@@ -327,11 +456,11 @@ func _outlots(art: Node3D) -> void:
 	_put(g, B_SUBURBAN % "suburban_gas_canopy", -216.0, z + 6.0, ALONG_X, 0.0, "Fuel")
 	# The frontage arterial beyond them, and the walk along the row.
 	for i in 14:
-		_put(g, B_STREETS % "street_road_turn_lane", -208.0 + i * 32.0, z + 44.0, ALONG_X, 0.0, "Frontage_%d" % i)
+		_put(g, B_STREETS % "street_road_turn_lane_inlay", -208.0 + i * 32.0, z + 44.0, ALONG_X, 0.0, "Frontage_%d" % i)
 	for i in 8:
 		_put(g, B_STREETS % "street_sidewalk_run", -176.0 + i * 32.0, z - 26.0, ALONG_X, 0.0, "RowWalk_%d" % i)
 	for i in 5:
-		_put(g, B_STREETS % "street_lot_entry_throat", -140.0 + i * 70.0, z - 40.0, 180.0, 0.0, "Throat_%d" % i)
+		_put(g, B_STREETS % "street_lot_entry_throat_inlay", -140.0 + i * 70.0, z - 40.0, 180.0, 0.0, "Throat_%d" % i)
 	_put(g, B_SUBURBAN % "suburban_pylon_sign", -4.0, z + 30.0, FACE_NORTH, 0.0, "Pylon")
 	_put(g, B_SUBURBAN % "suburban_entry_monument", 60.0, RING_Y + RING_R + 16.0, ALONG_X, 0.0, "Monument")
 	_put(g, B_SUBURBS % "suburb_billboard", 206.0, z + 36.0, ALONG_X, 0.0, "Billboard")
@@ -349,10 +478,15 @@ func _power_centre(art: Node3D) -> void:
 	_put(g, B_SUBURBAN % "suburban_retail_strip", x - 12.0, 64.0, FACE_EAST, 0.0, "Strip")
 	_put(g, B_SUBURBS % "suburb_self_storage", x - 6.0, -158.0, ALONG_X, 0.0, "Storage")
 	_put(g, B_SUBURBS % "suburb_office_lowrise", x + 2.0, 168.0, FACE_EAST, 0.0, "Office")
+	# ACROSS the strip, not along it. These were ALONG_Z — 64 m long pieces
+	# running up the Z axis while being spaced 40 m apart ON THAT SAME AXIS, so
+	# each one lay 24 m inside its neighbour. Turned to run east-west they are
+	# spaced across their own width and clear each other by 26 m, and they end
+	# 12 m short of the boulevard kerb at x + 92.
 	for i in 4:
-		_put(g, B_POLARIS % "polaris_aisle_long", x + 64.0, -96.0 + i * 40.0, ALONG_Z, 0.0, "PCAisle_%d" % i)
+		_put(g, B_POLARIS % "polaris_aisle_long", x + 52.0, -96.0 + i * 40.0, ALONG_X, 0.0, "PCAisle_%d" % i)
 	for i in 10:
-		_put(g, B_STREETS % "street_road_four_lane", x + 92.0, -128.0 + i * 32.0, ALONG_Z, 0.0, "Sancus_%d" % i)
+		_put(g, B_STREETS % "street_road_four_lane_inlay", x + 92.0, -128.0 + i * 32.0, ALONG_Z, 0.0, "Sancus_%d" % i)
 
 
 ## The subdivision behind the mall to the north, which is where the map stops
@@ -369,7 +503,7 @@ func _housing(art: Node3D) -> void:
 		_put(g, B_SUBURBS % kind, x + 17.0, z - 72.0, FACE_NORTH, 0.0, "HouseBack_%d" % i)
 		_put(g, B_SUBURBS % "suburb_fence_privacy", x, z - 47.0, ALONG_X, 0.0, "Fence_%d" % i)
 	for i in 9:
-		_put(g, B_STREETS % "street_road_two_lane", -144.0 + i * 32.0, z, ALONG_X, 0.0, "HouseStreet_%d" % i)
+		_put(g, B_STREETS % "street_road_two_lane_inlay", -144.0 + i * 32.0, z, ALONG_X, 0.0, "HouseStreet_%d" % i)
 	_put(g, B_SUBURBS % "suburb_townhouse_row", 162.0, z - 36.0, FACE_WEST, 0.0, "Townhouses")
 	_put(g, B_SUBURBS % "suburb_garden_apartment", 162.0, z - 96.0, FACE_WEST, 0.0, "Apartments")
 	_put(g, B_SUBURBS % "suburb_church", -184.0, z - 52.0, FACE_SOUTH, 0.0, "Church")

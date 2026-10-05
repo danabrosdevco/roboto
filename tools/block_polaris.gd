@@ -128,7 +128,10 @@ func _ring_corner() -> void:
 	var mid := 50.0
 	var half := LANE_W
 	var segs := 12
-	_ring_band(mid - half, mid + half, 0.0, 90.0, -0.3, 0.0, segs, {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	# NO CARRIAGEWAY BAND. The ring road runs across the car park, which is
+	# already asphalt — a second surface at the same height is what makes
+	# ground crawl, and a square hole cut in the lot for a quarter-circle of
+	# road would be 56 m on a side. The kerbs and the footways are the road.
 	for s: float in [-1.0, 1.0]:
 		var a := mid + s * half
 		var b := mid + s * (half + 0.3)
@@ -158,16 +161,22 @@ const LANE_W := 3.6
 ## a car park that is otherwise four hundred metres of open asphalt.
 func _aisle_long() -> void:
 	var half := 32.0
-	box(Vector3(-half, -9.0, -0.3), Vector3(half, 9.0, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
-	box(Vector3(-half, -1.5, -0.3), Vector3(half, 1.5, KERB_H), ISLAND)
+	# NO SLAB OF ITS OWN. The car park already has an asphalt surface under
+	# this; a second one at the same height made 244 columns of the Polaris lot
+	# flicker. The aisle is its island, its bays and its trees.
+	# The island stands on the asphalt, not in it, and the bays stop at the line
+	# that closes them.
+	box(Vector3(-half, -1.5, 0.0), Vector3(half, 1.5, KERB_H), ISLAND)
 	for s: float in [-1.0, 1.0]:
-		_bays(-half, half, s * 1.5, s * 7.0, 2.7, 0.0)
+		_bays(-half, half, s * 1.5, s * 6.94, 2.7, 0.0)
 		box(Vector3(-half, s * 7.0 - 0.06, 0.0), Vector3(half, s * 7.0 + 0.06, 0.0625), PAINT)
 	no_collision()
 	var x := -half + 5.0
 	while x < half - 4.0:
 		cylinder(Vector3(x, 0.0, KERB_H), 0.5, 0.35, 7, SPOIL, 0.36)
-		cylinder(Vector3(x, 0.0, KERB_H + 0.35), 0.2, 2.4, 6, SPOIL, 0.14)
+		# The trunk stops at the underside of the crown. It used to run on up
+		# through it.
+		cylinder(Vector3(x, 0.0, KERB_H + 0.35), 0.2, 1.95, 6, SPOIL, 0.14)
 		heap(Vector3(x, 0.0, KERB_H + 2.6), 1.7, 1.7, 1.7, int(x) * 5 + 9, SPOIL)
 		x += 9.0
 
@@ -210,25 +219,47 @@ func _mall_wing() -> void:
 	var d := 17.0
 	var top := 12.0
 	box(Vector3(-half, -d, -0.5), Vector3(half, d, top), STORE)
-	box(Vector3(-half, -d - 0.25, -0.5), Vector3(half, d + 0.25, 3.2), RETAIL_BRICK)
-	box(Vector3(-half - 0.4, -d - 0.4, top), Vector3(half + 0.4, d + 0.4, top + 1.6), {"top": CONCRETE, "side": EIFS, "bottom": EIFS})
+	# The brick course on the two long faces. It is cut where the court
+	# entrance comes down to the ground and where each dock door stands.
+	var doors: Array = []
+	for i in 4:
+		var x := lerpf(-26.0, 26.0, float(i) / 3.0)
+		doors.append([x - 2.0, x + 2.0])
+	wall_run("y", Vector2(d, d + 0.25), -half, half, -0.5, 3.2, [[-8.0, 8.0]], RETAIL_BRICK)
+	wall_run("y", Vector2(-d - 0.25, -d), -half, half, -0.5, 3.2, doors, RETAIL_BRICK)
+	# The cornice is a ring, open where the court entrance goes up through it.
+	_parapet_ring(-half, -d, half, d, top, 1.6, {"+y": [[-8.0, 8.0]]}, 0.4)
 	# Pilasters on both long faces, 9 m apart, which is what stops 72 m of
-	# render reading as one surface.
+	# render reading as one surface. They stop at the cornice, which carries on
+	# over them, and the ones beside the entrance are trimmed back to it.
 	for i in range(-3, 4):
 		for s: float in [-1.0, 1.0]:
-			box(Vector3(i * 9.0 - 1.1, s * d, 3.2), Vector3(i * 9.0 + 1.1, s * (d + 0.4), top + 1.0),
+			var lo: float = i * 9.0 - 1.1
+			var hi: float = i * 9.0 + 1.1
+			if s > 0.0 and hi > -8.0 and lo < 8.0:
+				if i > 0:
+					lo = 8.0
+				elif i < 0:
+					hi = -8.0
+				else:
+					continue
+			box(Vector3(lo, s * d, 3.2), Vector3(hi, s * (d + 0.4), top),
 					{"top": CONCRETE, "side": EIFS, "bottom": EIFS})
-	# The court entrance: a raised glazed bay in the middle of the front.
-	box(Vector3(-8.0, d - 0.5, -0.5), Vector3(8.0, d + 2.0, 15.5), {"top": CONCRETE, "side": EIFS, "bottom": EIFS})
-	box(Vector3(-6.4, d + 1.2, 4.0), Vector3(6.4, d + 2.2, 14.0), STORE_GLASS)
-	_shopfront(-5.0, 5.0, d + 1.6, 4.0)
+	# The court entrance: a raised glazed bay in the middle of the front. It
+	# stands on the wall face and carries on up behind the cornice line as a
+	# second brush, so it is never also a box inside the mass.
+	box(Vector3(-8.0, d, -0.5), Vector3(8.0, d + 2.0, 15.5), {"top": CONCRETE, "side": EIFS, "bottom": EIFS})
+	box(Vector3(-8.0, d - 0.5, top), Vector3(8.0, d, 15.5), {"top": CONCRETE, "side": EIFS, "bottom": EIFS})
+	box(Vector3(-6.4, d + 2.0, 4.2), Vector3(6.4, d + 2.2, 14.0), STORE_GLASS)
+	_shopfront(-5.0, 5.0, d + 2.0, 3.6)
 	box(Vector3(-10.0, d + 2.0, 3.6), Vector3(10.0, d + 7.5, 4.2), {"top": GRATING, "side": METAL, "bottom": METAL})
 	for s: float in [-1.0, 1.0]:
 		post(s * 9.0, d + 6.8, 0.0, 3.6, 0.32)
 	# The back: dock doors, because every mall wing has a service corridor.
-	for i in 4:
-		var x := lerpf(-26.0, 26.0, float(i) / 3.0)
-		box(Vector3(x - 2.0, -d - 0.3, -0.5), Vector3(x + 2.0, -d + 0.1, 4.6), SHUTTER)
+	# They fill the gaps in the brick course, standing as proud as it does and
+	# no taller: above that the pilasters are on the same wall.
+	for g: Array in doors:
+		box(Vector3(g[0], -d - 0.25, -0.5), Vector3(g[1], -d, 3.2), SHUTTER)
 	_rooftop_plant(-half + 5.0, -d + 5.0, half - 5.0, d - 5.0, top, 131)
 
 
@@ -245,21 +276,30 @@ func _cinema() -> void:
 	for z: Array in [[-22.0, -6.0, 17.0], [-6.0, 2.0, 13.5], [2.0, 9.0, 9.5]]:
 		box(Vector3(-half - 0.4, z[0], z[2]), Vector3(half + 0.4, z[1], z[2] + 1.4), {"top": CONCRETE, "side": EIFS, "bottom": EIFS})
 	# The fins up the blank side walls, which is the whole architecture of one
-	# of these buildings.
-	for i in range(-2, 3):
+	# of these buildings. Each stops at the roof of the step it stands on —
+	# the cornice above it is a slab that sticks out past the wall, and a fin
+	# running up through it is two brushes in one place. The one that used to
+	# stand at y = 16 was beside the lobby, on no wall at all, so it is gone.
+	for i in range(-2, 2):
+		var fin_top := 16.0 if i < 0 else (13.5 if i == 0 else 9.5)
 		for s: float in [-1.0, 1.0]:
-			box(Vector3(s * half, i * 8.0 - 0.8, -0.5), Vector3(s * (half + 0.7), i * 8.0 + 0.8, 16.0),
+			box(Vector3(s * half, i * 8.0 - 0.8, -0.5), Vector3(s * (half + 0.7), i * 8.0 + 0.8, fin_top),
 					{"top": CONCRETE, "side": SIGN_BAND, "bottom": EIFS})
-	# The lobby: glass the full width under a 6 m canopy on round columns.
+	# The lobby: glass the full width under a 6 m canopy on round columns. The
+	# mullions stand on the outside of the glass and are cut round the canopy
+	# and the shopfront that are bolted to it.
 	box(Vector3(-half, 9.0, -0.5), Vector3(half, 10.0, 8.0), STORE_GLASS)
 	for i in 13:
 		var x := lerpf(-half + 1.0, half - 1.0, float(i) / 12.0)
-		box(Vector3(x - 0.12, 8.8, -0.5), Vector3(x + 0.12, 10.2, 8.2), METAL)
+		if absf(x) < 10.2:
+			continue
+		box(Vector3(x - 0.12, 10.0, -0.5), Vector3(x + 0.12, 10.2, 6.0), METAL)
+		box(Vector3(x - 0.12, 10.0, 6.8), Vector3(x + 0.12, 10.2, 8.0), METAL)
 	box(Vector3(-half - 1.5, 10.0, 6.0), Vector3(half + 1.5, 19.0, 6.8), {"top": ROOF_MEMBRANE, "side": SIGN_BAND, "bottom": METAL})
 	for i in 5:
 		var x := lerpf(-24.0, 24.0, float(i) / 4.0)
 		cylinder(Vector3(x, 17.5, -0.5), 0.6, 6.5, 8, CONCRETE)
-	_shopfront(-10.0, 10.0, 9.3, 4.4)
+	_shopfront(-10.0, 10.0, 10.0, 4.4)
 	# The marquee over the doors.
 	box(Vector3(-12.0, 10.1, 8.0), Vector3(12.0, 10.9, 11.6), {"top": METAL, "side": SIGN_BAND, "bottom": METAL})
 
@@ -276,28 +316,38 @@ func _parking_garage() -> void:
 		# The spandrel: a 1.1 m upstand at every deck edge. Over cover height
 		# and solid, so a body on a deck is protected rather than merely
 		# hidden, which is the difference that makes a garage worth taking.
+		# The long ones run the full length; the end ones run BETWEEN them,
+		# and the west one is open at the stair core's door.
 		for s: float in [-1.0, 1.0]:
 			box(Vector3(-half, s * d - s * 0.4, z), Vector3(half, s * d, z + 1.15), {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
-			box(Vector3(s * half - s * 0.4, -d, z), Vector3(s * half, d, z + 1.15), {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
-		if lvl > 0:
-			continue
+			wall_run("x", Vector2(s * half - s * 0.4, s * half), -(d - 0.4), d - 0.4, z, z + 1.15,
+					[[-3.0, 3.0]] if s < 0.0 else [], {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
+		# Columns and the spine wall, one storey at a time. They stand on a
+		# deck and stop at the soffit of the next, because a column run through
+		# every deck is a column inside three slabs. The top storey's go on up
+		# to the roof line. They stand just inside the spandrel, not in it.
+		var z_top: float = z + 3.4 - 0.45 if lvl < 2 else 10.2
 		for i in 9:
+			if i == 4:
+				continue
 			var x := lerpf(-half + 3.0, half - 3.0, float(i) / 8.0)
 			for s: float in [-1.0, 1.0]:
-				box(Vector3(x - 0.45, s * d - s * 0.45, -0.5), Vector3(x + 0.45, s * d, 10.2), CONCRETE)
-		box(Vector3(-0.5, -d, -0.5), Vector3(0.5, d, 10.2), CONCRETE)
-	# The ramp between decks, at one end, as two straight flights.
-	for lvl in 2:
-		var z: float = lvl * 3.4
-		ramp(half, -d + 2.0, half + 15.0, d - 2.0, -0.5, z, z + 3.4, "+x", {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+				box(Vector3(x - 0.45, s * (d - 0.4) - s * 0.45, z), Vector3(x + 0.45, s * (d - 0.4), z_top), CONCRETE)
+		box(Vector3(-0.5, -(d - 0.4), z), Vector3(0.5, d - 0.4, z_top), CONCRETE)
+	# The ramp between decks, at one end, as two straight flights. The second
+	# is a slab laid ON the first — as a wedge from the ground it contained it.
+	ramp(half, -d + 2.0, half + 15.0, d - 2.0, -0.5, 0.0, 3.4, "+x", {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	flight(half, -d + 2.0, half + 15.0, d - 2.0, 3.4, 6.8, "+x", 3.4, {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	box(Vector3(half, -d, -0.5), Vector3(half + 15.2, -d + 1.2, 8.0), CONCRETE)
 	box(Vector3(half, d - 1.2, -0.5), Vector3(half + 15.2, d, 8.0), CONCRETE)
 	# The stair and lift core, which is the only enclosed thing on it.
 	box(Vector3(-half - 7.0, -6.0, -0.5), Vector3(-half, 6.0, 11.4), {"top": CONCRETE, "side": RETAIL_BRICK, "bottom": CONCRETE})
+	# The doors fill the gap in the west spandrel, in front of the core's face.
 	for lvl in 3:
-		box(Vector3(-half - 0.3, -3.0, lvl * 3.4), Vector3(-half + 0.2, 3.0, lvl * 3.4 + 2.3), SHUTTER)
+		box(Vector3(-half, -3.0, lvl * 3.4), Vector3(-half + 0.4, 3.0, lvl * 3.4 + 2.3), SHUTTER)
+	# On the core's -y face, so "-y": drawn the other way they were inside it.
 	for lvl in 3:
-		window("y", -6.0, -half - 5.5, lvl * 3.4 + 0.9, 1.4, 1.6, true, DARK_GLASS)
+		window("-y", -6.0, -half - 5.5, lvl * 3.4 + 0.9, 1.4, 1.6, true, DARK_GLASS)
 
 
 # ── Outside the loop: the restaurant row ─────────────────────────────────────
@@ -308,33 +358,46 @@ func _parking_garage() -> void:
 func _restaurant_casual() -> void:
 	box(Vector3(-13.0, -8.0, -0.4), Vector3(13.0, 8.0, 4.4), {"top": CONCRETE, "side": RETAIL_BRICK, "bottom": CONCRETE})
 	_hip(-13.0, -8.0, 13.0, 8.0, 4.4, 7.0, 1.3)
-	# The bar wing: lower, pushed out, so the roofline steps.
+	# The bar wing: lower, pushed out, so the roofline steps. Its roof starts
+	# where the main eave stops (14.3 m), not at the wall: from the wall it
+	# was inside the main roof and inside the main mass.
 	box(Vector3(13.0, -5.0, -0.4), Vector3(21.0, 5.0, 3.4), {"top": CONCRETE, "side": SIDING, "bottom": CONCRETE})
-	_hip(13.0, -5.0, 21.0, 5.0, 3.4, 5.4, 1.0)
+	_hip(15.3, -5.0, 21.0, 5.0, 3.4, 5.4, 1.0)
 	for s: float in [-1.0, 1.0]:
 		for i in 4:
 			var x := lerpf(-10.0, 10.0, float(i) / 3.0)
-			window("y", s * 8.0, x - 1.3, 1.2, 2.6, 2.0, true, DARK_GLASS)
+			# Not beside the porch on the front, where it would be inside it.
+			if s > 0.0 and absf(x) < 5.0:
+				continue
+			window("y" if s > 0.0 else "-y", s * 8.0, x - 1.3, 1.2, 2.6, 2.0, true, DARK_GLASS)
 	# The entry: a gabled porch on two posts, which is how every one of these
-	# tells you where the door is from the car park.
+	# tells you where the door is from the car park. Its roof begins past the
+	# main eave, which hangs over the first 1.3 m of it.
 	box(Vector3(-3.0, 8.0, -0.4), Vector3(3.0, 12.0, 3.6), {"top": CONCRETE, "side": RETAIL_BRICK, "bottom": CONCRETE})
-	_gable(-3.0, 8.0, 3.0, 12.0, 3.6, 5.6, 0.7)
-	box(Vector3(-1.3, 11.8, -0.3), Vector3(1.3, 12.3, 2.4), WOOD_DARK)
+	_gable(-3.0, 10.0, 3.0, 12.0, 3.6, 5.6, 0.7)
+	box(Vector3(-1.3, 12.0, KERB_H), Vector3(1.3, 12.3, 2.4), WOOD_DARK)
 	box(Vector3(-4.2, 12.0, -0.4), Vector3(4.2, 14.0, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
-	_patio_rail(-13.0, -8.0, -3.0, -16.0)
+	_patio_rail(-13.0, -8.0, -3.0, -16.0, true)
 
 
 ## Railed patio ground between (x0,y0) and (x1,y1), with its kerb and rail.
-## Pulled out of the restaurants because three of them have one.
-func _patio_rail(x0: float, y0: float, x1: float, y1: float) -> void:
+## Pulled out of the restaurants because three of them have one. `on_wall` is
+## for one whose edge on the +y side is a building wall, which needs no rail.
+func _patio_rail(x0: float, y0: float, x1: float, y1: float, on_wall: bool = false) -> void:
 	var a := Vector2(minf(x0, x1), minf(y0, y1))
 	var b := Vector2(maxf(x0, x1), maxf(y0, y1))
 	box(Vector3(a.x, a.y, -0.4), Vector3(b.x, b.y, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
 	# A 1.1 m rail. Under cover height on purpose — a patio you can shoot over
-	# is a place to be caught in, and that is what a patio should be.
-	for e: Array in [[a.x, a.y, b.x, a.y], [a.x, b.y, b.x, b.y], [a.x, a.y, a.x, b.y]]:
-		box(Vector3(e[0] - 0.07, e[1] - 0.07, KERB_H), Vector3(e[2] + 0.07, e[3] + 0.07, KERB_H + 1.1),
-				{"top": METAL, "side": METAL, "bottom": METAL})
+	# is a place to be caught in, and that is what a patio should be. The two
+	# long runs take the corners, and the short one runs between them.
+	var rail_tex := {"top": METAL, "side": METAL, "bottom": METAL}
+	box(Vector3(a.x - 0.07, a.y - 0.07, KERB_H), Vector3(b.x + 0.07, a.y + 0.07, KERB_H + 1.1), rail_tex)
+	var y_end := b.y - 0.07
+	if not on_wall:
+		box(Vector3(a.x - 0.07, b.y - 0.07, KERB_H), Vector3(b.x + 0.07, b.y + 0.07, KERB_H + 1.1), rail_tex)
+	else:
+		y_end = b.y
+	box(Vector3(a.x - 0.07, a.y + 0.07, KERB_H), Vector3(a.x + 0.07, y_end, KERB_H + 1.1), rail_tex)
 
 
 ## UPSCALE: a steakhouse. Stone to the sill, tall windows, a flat parapet
@@ -343,36 +406,47 @@ func _patio_rail(x0: float, y0: float, x1: float, y1: float) -> void:
 ## fuel pump.
 func _restaurant_upscale() -> void:
 	box(Vector3(-15.0, -9.0, -0.4), Vector3(15.0, 9.0, 6.2), {"top": ROOF_MEMBRANE, "side": EIFS, "bottom": CONCRETE})
-	box(Vector3(-15.3, -9.3, -0.4), Vector3(15.3, 9.3, 2.0), {"top": CONCRETE, "side": RETAIL_BRICK, "bottom": CONCRETE})
-	box(Vector3(-15.5, -9.5, 6.2), Vector3(15.5, 9.5, 7.6), {"top": CONCRETE, "side": EIFS, "bottom": EIFS})
+	_ring(-15.0, -9.0, 15.0, 9.0, 0.3, 0.0, -0.4, 2.0, RETAIL_BRICK)
+	_parapet_ring(-15.0, -9.0, 15.0, 9.0, 6.2, 1.4, {}, 0.5)
 	for i in 5:
 		var x := lerpf(-12.0, 12.0, float(i) / 4.0)
 		for s: float in [-1.0, 1.0]:
-			window("y", s * 9.0, x - 1.6, 2.2, 3.2, 3.0, true, DARK_GLASS)
-	_shopfront(-4.0, 4.0, 8.7, 4.2)
+			var h := 3.0
+			if s > 0.0:
+				# The door is in this one.
+				if i == 2:
+					continue
+				# Under the porte-cochere roof the window is a little shorter, so its
+				# lintel stops under the roof and not in it.
+				if absf(x - 1.6) - 1.725 < 9.0:
+					h = 2.1
+			window("y" if s > 0.0 else "-y", s * 9.0, x - 1.6, 2.2, 3.2, h, true, DARK_GLASS)
+	# The door stands on the pad, in front of the brick course.
+	_shopfront(-4.0, 4.0, 9.3, 4.2, 0.5, KERB_H)
 	# The porte-cochere: 4.6 m clear on four columns, with the drive under it.
 	box(Vector3(-9.0, 9.0, 4.6), Vector3(9.0, 20.0, 5.6), {"top": ROOF_MEMBRANE, "side": EIFS, "bottom": METAL})
 	for sx: float in [-1.0, 1.0]:
 		for sy: float in [0.0, 1.0]:
-			cylinder(Vector3(sx * 7.6, 11.0 + sy * 7.6, -0.4), 0.55, 5.0, 8, {"top": METAL, "side": RETAIL_BRICK, "bottom": CONCRETE})
-	box(Vector3(-9.0, 9.0, -0.4), Vector3(9.0, 20.0, -0.1), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
-	box(Vector3(-5.0, 9.0, -0.4), Vector3(5.0, 11.0, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
+			cylinder(Vector3(sx * 7.6, 11.0 + sy * 7.6, -0.1), 0.55, 4.7, 8, {"top": METAL, "side": RETAIL_BRICK, "bottom": CONCRETE})
+	box(Vector3(-9.0, 9.3, -0.4), Vector3(9.0, 20.0, -0.1), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(-4.0, 9.3, -0.1), Vector3(4.0, 11.0, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
 
 
 ## FAST CASUAL: the small one, 16 x 11, flat roof, glass on two sides and a
 ## tall sign parapet. These come in twos and threes sharing a lot.
 func _restaurant_fast() -> void:
 	box(Vector3(-8.0, -5.5, -0.4), Vector3(8.0, 5.5, 4.0), {"top": ROOF_MEMBRANE, "side": EIFS, "bottom": CONCRETE})
-	box(Vector3(-8.2, -5.7, -0.4), Vector3(8.2, 5.7, 1.1), RETAIL_BRICK)
-	box(Vector3(-8.4, -5.9, 4.0), Vector3(8.4, 5.9, 5.4), {"top": CONCRETE, "side": EIFS, "bottom": EIFS})
+	_ring(-8.0, -5.5, 8.0, 5.5, 0.2, 0.0, -0.4, 1.1, RETAIL_BRICK)
+	_parapet_ring(-8.0, -5.5, 8.0, 5.5, 4.0, 1.4, {"+y": [[-5.0, 5.0]]}, 0.4)
 	box(Vector3(-5.0, 5.4, 4.0), Vector3(5.0, 6.1, 7.0), {"top": CONCRETE, "side": EIFS, "bottom": EIFS})
-	box(Vector3(-4.2, 5.8, 4.6), Vector3(4.2, 6.2, 6.5), SIGN_BAND)
-	_shopfront(-6.5, 6.5, 5.2, 3.2)
-	box(Vector3(-8.0, -4.5, 1.3), Vector3(-7.8, 4.0, 3.4), STORE_GLASS)
-	box(Vector3(-9.5, 5.9, 3.2), Vector3(9.5, 9.0, 3.7), {"top": GRATING, "side": METAL, "bottom": METAL})
+	box(Vector3(-4.2, 6.1, 4.6), Vector3(4.2, 6.2, 6.5), SIGN_BAND)
+	# The door stands in front of the brick course, on the walk.
+	_shopfront(-6.5, 6.5, 5.7, 3.2, 0.5, KERB_H)
+	box(Vector3(-8.2, -4.5, 1.3), Vector3(-8.0, 4.0, 3.4), STORE_GLASS)
+	box(Vector3(-9.5, 5.5, 3.2), Vector3(9.5, 9.0, 3.7), {"top": GRATING, "side": METAL, "bottom": METAL})
 	for s: float in [-1.0, 1.0]:
 		post(s * 8.4, 8.4, KERB_H, 3.2, 0.2)
-	box(Vector3(-9.5, 5.9, -0.4), Vector3(9.5, 9.2, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
+	box(Vector3(-9.5, 5.7, -0.4), Vector3(9.5, 9.2, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
 
 
 ## A patio on its own, for putting beside any of them: railed, with tables
@@ -395,17 +469,20 @@ func _patio() -> void:
 ## can fight along, and the canopy is 4 m clear so it is roof and not ceiling.
 func _bank_outlot() -> void:
 	box(Vector3(-10.0, -7.0, -0.4), Vector3(10.0, 7.0, 4.6), {"top": ROOF_MEMBRANE, "side": EIFS, "bottom": CONCRETE})
-	box(Vector3(-10.2, -7.2, -0.4), Vector3(10.2, 7.2, 1.3), RETAIL_BRICK)
-	box(Vector3(-10.5, -7.5, 4.6), Vector3(10.5, 7.5, 6.2), {"top": CONCRETE, "side": EIFS, "bottom": EIFS})
+	_ring(-10.0, -7.0, 10.0, 7.0, 0.2, 0.0, -0.4, 1.3, RETAIL_BRICK)
+	# The cornice is open over the sign and over the drive-up canopy's roof,
+	# which meets the wall on that side.
+	_parapet_ring(-10.0, -7.0, 10.0, 7.0, 4.6, 1.6, {"+y": [[-6.0, 6.0]], "+x": [[-7.5, 5.0]], "-y": [[10.0, 10.5]]}, 0.5)
 	box(Vector3(-6.0, 6.9, 4.6), Vector3(6.0, 7.6, 6.0), SIGN_BAND)
-	_shopfront(-7.0, 7.0, 6.7, 3.6)
+	# The door stands in front of the brick course.
+	_shopfront(-7.0, 7.0, 7.2, 3.6)
 	# The drive-up: canopy over three lanes, with the island teller between.
 	box(Vector3(10.0, -8.0, 4.0), Vector3(24.0, 5.0, 4.8), {"top": ROOF_MEMBRANE, "side": SIGN_BAND, "bottom": METAL})
 	for sy: float in [-1.0, 1.0]:
-		cylinder(Vector3(21.5, sy * 5.5, -0.4), 0.45, 4.4, 8, {"top": METAL, "side": CONCRETE, "bottom": CONCRETE})
-	box(Vector3(10.0, -8.0, -0.4), Vector3(24.0, 5.0, -0.1), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+		cylinder(Vector3(21.5, sy * 5.5, -0.1), 0.45, 4.1, 8, {"top": METAL, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(10.2, -8.0, -0.4), Vector3(24.0, 6.0, -0.1), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	for i in 2:
 		var y := -4.6 + i * 3.4
-		box(Vector3(12.0, y - 0.7, -0.4), Vector3(20.0, y + 0.7, KERB_H), ISLAND)
+		box(Vector3(12.0, y - 0.7, -0.1), Vector3(20.0, y + 0.7, KERB_H), ISLAND)
 		box(Vector3(14.0, y - 0.5, KERB_H), Vector3(15.6, y + 0.5, 1.9), {"top": METAL, "side": SHUTTER, "bottom": METAL})
 	box(Vector3(10.2, 1.0, 1.0), Vector3(10.6, 3.4, 2.4), DARK_GLASS)

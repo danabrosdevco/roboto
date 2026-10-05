@@ -47,8 +47,11 @@ const MARK := 0.0625
 const STREETS := {
 	# Carriageways and junctions
 	"street_road_two_lane": "_road_two_lane",
+	"street_road_two_lane_inlay": "_road_two_lane_inlay",
 	"street_road_four_lane": "_road_four_lane",
+	"street_road_four_lane_inlay": "_road_four_lane_inlay",
 	"street_road_turn_lane": "_road_turn_lane",
+	"street_road_turn_lane_inlay": "_road_turn_lane_inlay",
 	"street_junction_cross": "_junction_cross",
 	"street_junction_t": "_junction_t",
 	"street_road_bend": "_road_bend",
@@ -67,6 +70,7 @@ const STREETS := {
 	"street_lot_accessible": "_lot_accessible",
 	"street_lot_wheel_stops": "_lot_wheel_stops",
 	"street_lot_entry_throat": "_lot_entry_throat",
+	"street_lot_entry_throat_inlay": "_lot_entry_throat_inlay",
 	"street_lot_cart_shelter": "_lot_cart_shelter",
 	# Furniture
 	"street_signal_mast": "_signal_mast",
@@ -129,6 +133,10 @@ func _initialize() -> void:
 		f.close()
 		written += 1
 		print("      %-30s %3d brushes  %s" % [name, _brushes.size(), _extent_text()])
+		# Brushes may touch but never share volume — it z-fights, ghosts included.
+		var shared := brush_overlaps()
+		if not shared.is_empty():
+			print("      !! %s: %d overlapping brush pair(s)" % [name, shared.size()])
 	print("BLOCK STREETS DONE: %d written%s" % [written, (" (%d skipped)" % skipped) if skipped > 0 else ""])
 	quit()
 
@@ -138,6 +146,30 @@ func _initialize() -> void:
 ## The carriageway slab: asphalt from -0.3 to 0, `half` either side of centre.
 func _bed(x0: float, x1: float, half: float) -> void:
 	box(Vector3(x0, -half, -0.3), Vector3(x1, half, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+
+
+## The carriageway slab with a strip left out of the middle for a median that
+## stands there: asphalt under a median is a second solid in the same space.
+func _bed_around(x0: float, x1: float, half: float, gap: float) -> void:
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(x0, minf(s * gap, s * half), -0.3), Vector3(x1, maxf(s * gap, s * half), 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+
+
+## fence_run, but with the rails running BETWEEN the posts, which is how the
+## one in block_industrial would be if its rails did not pass through every
+## post they cross. Axis-aligned runs only.
+func _fence_clean(a: Vector2, b: Vector2, z0: float = -0.2, h: float = 2.2) -> void:
+	var n := maxi(1, int(ceil(a.distance_to(b) / 2.5)))
+	var post_w := 0.08
+	var dir := (b - a).normalized()
+	for i in n + 1:
+		var p := a.lerp(b, float(i) / n)
+		post(p.x, p.y, z0, z0 + h + 0.1, post_w, METAL)
+	for z: float in [z0 + 1.0, z0 + h]:
+		for i in n:
+			var p := a.lerp(b, float(i) / n) + dir * post_w * 0.5
+			var q := a.lerp(b, float(i + 1) / n) - dir * post_w * 0.5
+			beam(Vector3(p.x, p.y, z), Vector3(q.x, q.y, z), 0.05, METAL)
 
 
 ## Kerb and the sidewalk behind it, on the side `s` of a carriageway `half`
@@ -152,8 +184,10 @@ func _kerb_walk(x0: float, x1: float, half: float, s: float, walk: float = WALK_
 
 
 ## A solid painted line along x at y.
-func _line_x(x0: float, x1: float, y: float, t: float = 0.075) -> void:
-	box(Vector3(x0, y - t, 0.0), Vector3(x1, y + t, MARK), PAINT)
+func _line_x(x0: float, x1: float, y: float, t: float = 0.075, gaps: Array = []) -> void:
+	# `gaps` is where something else is painted across the line (a crossing, a
+	# stop bar): a line drawn through it is two paint brushes in the same space.
+	wall_run("y", Vector2(y - t, y + t), x0, x1, 0.0, MARK, gaps, PAINT)
 
 
 ## A dashed line along x at y: `on` metres of paint every `pitch`.
@@ -165,10 +199,10 @@ func _dash_x(x0: float, x1: float, y: float, on: float = 3.0, pitch: float = 9.0
 
 
 ## A ladder crossing across the carriageway at x, `half` either side.
-func _ladder(x: float, half: float, bars: int = 9) -> void:
+func _ladder(x: float, half: float, bars: int = 9, z: float = 0.0) -> void:
 	for i in bars:
 		var y := lerpf(-half + 0.6, half - 0.6, float(i) / float(bars - 1))
-		box(Vector3(x - 1.4, y - 0.25, 0.0), Vector3(x + 1.4, y + 0.25, MARK), PAINT)
+		box(Vector3(x - 1.4, y - 0.25, z), Vector3(x + 1.4, y + 0.25, z + MARK), PAINT)
 
 
 ## The stop bar short of a crossing.
@@ -190,13 +224,29 @@ func _road_two_lane() -> void:
 	_dash_x(-SEG * 0.5, SEG * 0.5, 0.0)
 
 
+## THE SAME ROAD WITH NO BED, for laying into ground that is already hard —
+## the ring road round a car park is asphalt on asphalt. Its kerbs and
+## footways still sink into whatever is there, which is invisible, but it
+## brings no second road surface at the same height as the one underneath.
+##
+## Two horizontal faces at one height is the fault that makes a surface crawl,
+## and on Polaris the ring road laid over the car park was a hundred and
+## thirty columns of it.
+func _road_two_lane_inlay() -> void:
+	var half := LANE
+	for s: float in [-1.0, 1.0]:
+		_kerb_walk(-SEG * 0.5, SEG * 0.5, half, s)
+		_line_x(-SEG * 0.5, SEG * 0.5, s * (half - 0.35))
+	_dash_x(-SEG * 0.5, SEG * 0.5, 0.0)
+
+
 ## AN ARTERIAL: four lanes with a raised planted median, which is the road the
 ## mall's ring road meets. The median is a 0.15 kerb like everything else, so
 ## a squad crosses it without a thought — it is a sightline break and a bit of
 ## cover from vehicles, not a wall.
 func _road_four_lane() -> void:
 	var half := LANE * 2.0 + 1.5
-	_bed(-SEG * 0.5, SEG * 0.5, half)
+	_bed_around(-SEG * 0.5, SEG * 0.5, half, 1.5)
 	box(Vector3(-SEG * 0.5, -1.5, -0.3), Vector3(SEG * 0.5, 1.5, KERB_H), ISLAND)
 	for s: float in [-1.0, 1.0]:
 		_kerb_walk(-SEG * 0.5, SEG * 0.5, half, s)
@@ -208,7 +258,10 @@ func _road_four_lane() -> void:
 	no_collision()
 	var x := -SEG * 0.5 + 3.0
 	while x < SEG * 0.5 - 2.0:
-		heap(Vector3(x, 0.0, KERB_H), 0.9, 0.9, 0.85, int(x) + 7, SPOIL)
+		# A heap's lowest ring is 0.3 below its centre and snaps to a 1/8 m grid,
+		# so on a 0.15 kerb the ring lands at 0.25: 0.1 clear of the median, not
+		# 0.025 into it. Same crown height as before.
+		heap(Vector3(x, 0.0, 0.55), 0.9, 0.9, 0.45, int(x) + 7, SPOIL)
 		x += 6.0
 
 
@@ -227,8 +280,9 @@ func _road_turn_lane() -> void:
 	# The chevrons inside the turn lane.
 	var x := -SEG * 0.5 + 2.0
 	while x < SEG * 0.5 - 2.0:
-		for s: float in [-1.0, 1.0]:
-			box(Vector3(x, -0.1, 0.0), Vector3(x + 2.4, 0.1, MARK), PAINT)
+		# Once: this sat in a loop over both sides and drew the same chevron
+		# twice, on itself.
+		box(Vector3(x, -0.1, 0.0), Vector3(x + 2.4, 0.1, MARK), PAINT)
 		x += 5.0
 
 
@@ -239,7 +293,9 @@ func _junction_cross() -> void:
 	var half := LANE
 	var reach := 12.0
 	_bed(-reach, reach, half)
-	box(Vector3(-half, -reach, -0.3), Vector3(half, reach, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	# The cross arm in two, either side of the carriageway bed it crosses.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-half, minf(s * half, s * reach), -0.3), Vector3(half, maxf(s * half, s * reach), 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	# The four corner islands, with their kerb radius faked as a 45° cut —
 	# a true radius costs a dozen brushes a corner and reads the same.
 	for sx: float in [-1.0, 1.0]:
@@ -264,10 +320,12 @@ func _junction_t() -> void:
 	var half := LANE
 	var reach := 12.0
 	_bed(-reach, reach, half)
-	box(Vector3(-half, -reach, -0.3), Vector3(half, 0.0, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(-half, -reach, -0.3), Vector3(half, -half, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	# The footway across the top of the T, once: these two sat inside the loop
+	# and were drawn twice, each on top of itself.
+	_kerb_walk(-reach, -half - 2.2, half, 1.0)
+	_kerb_walk(half + 2.2, reach, half, 1.0)
 	for s: float in [-1.0, 1.0]:
-		_kerb_walk(-reach, -half - 2.2, half, 1.0)
-		_kerb_walk(half + 2.2, reach, half, 1.0)
 		solid([Vector3(s * half, -half, -0.3), Vector3(s * reach, -half, -0.3),
 				Vector3(s * reach, -reach, -0.3), Vector3(s * half, -reach, -0.3),
 				Vector3(s * (half + 2.2), -half, KERB_H), Vector3(s * reach, -half, KERB_H),
@@ -275,7 +333,10 @@ func _junction_t() -> void:
 				{"top": WALK, "side": KERB, "bottom": CONCRETE})
 	_line_x(-reach, -half - 2.2, half - 0.35)
 	_line_x(half + 2.2, reach, half - 0.35)
-	_stop_bar(0.0, -half, 0.0)
+	# The side street's stop bar goes ACROSS the side street, on the lane that
+	# approaches the junction. It was drawn along it, down the middle, through
+	# the crossing it is meant to stop short of.
+	box(Vector3(0.0, -reach + 0.3, 0.0), Vector3(half, -reach + 0.9, MARK), PAINT)
 	_ladder(0.0, half, 7)
 
 
@@ -285,7 +346,7 @@ func _road_bend() -> void:
 	var half := LANE
 	var reach := 12.0
 	_bed(-reach, half, half)
-	box(Vector3(-half, -half, -0.3), Vector3(half, reach, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(-half, half, -0.3), Vector3(half, reach, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	# Inside of the bend.
 	solid([Vector3(half, -half, -0.3), Vector3(reach, -half, -0.3), Vector3(reach, -reach, -0.3), Vector3(half, -reach, -0.3),
 			Vector3(half + 2.2, -half, KERB_H), Vector3(reach, -half, KERB_H),
@@ -293,8 +354,10 @@ func _road_bend() -> void:
 			{"top": WALK, "side": KERB, "bottom": CONCRETE})
 	# Outside of it, which is just two straight footways meeting.
 	_kerb_walk(-reach, -half, half, -1.0)
-	box(Vector3(-half - 0.3 - WALK_W, half, -0.3), Vector3(-half, reach, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
-	box(Vector3(-half, half, -0.3), Vector3(-half + 0.3, reach, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
+	# The kerb sits OUTSIDE the carriageway edge (-half), as in _kerb_walk, and
+	# the footway behind it; the kerb was drawn 0.3 m onto the road.
+	box(Vector3(-half - 0.3 - WALK_W, half, -0.3), Vector3(-half - 0.3, reach, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
+	box(Vector3(-half - 0.3, half, -0.3), Vector3(-half, reach, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
 	_dash_x(-reach, -2.0, 0.0, 2.0, 6.0)
 
 
@@ -305,7 +368,8 @@ func _crosswalk() -> void:
 	_bed(-7.0, 7.0, half)
 	for s: float in [-1.0, 1.0]:
 		_kerb_walk(-7.0, 7.0, half, s)
-		_line_x(-7.0, 7.0, s * (half - 0.35))
+		# The edge line stops for the ladder and for its own stop bar.
+		_line_x(-7.0, 7.0, s * (half - 0.35), 0.075, [[-1.4, 1.4], [s * 3.0 - 0.3, s * 3.0 + 0.3]])
 		_stop_bar(s * 3.0, minf(0.0, s * half), maxf(0.0, s * half))
 	_ladder(0.0, half, 9)
 
@@ -317,8 +381,10 @@ func _curb_cut() -> void:
 	var half := LANE
 	_bed(-9.0, 9.0, half)
 	_line_x(-9.0, 9.0, -(half - 0.35))
-	_kerb_walk(-9.0, -5.0, half, 1.0)
-	_kerb_walk(5.0, 9.0, half, 1.0)
+	# The kerb runs out where the wedges below start, at 7, not at 5: carried
+	# on to 5 it was inside them.
+	_kerb_walk(-9.0, -7.0, half, 1.0)
+	_kerb_walk(7.0, 9.0, half, 1.0)
 	_kerb_walk(-9.0, 9.0, half, -1.0)
 	# The apron: asphalt from the carriageway out past the footway line, with
 	# the dropped kerb either side of it cut as a wedge.
@@ -342,7 +408,8 @@ func _median_island() -> void:
 	no_collision()
 	for i in 4:
 		var x := lerpf(-8.0, 8.0, float(i) / 3.0)
-		heap(Vector3(x, 0.0, KERB_H), 1.0, 1.0, 0.8, i * 13 + 2, SPOIL)
+		# Raised to clear the island (see _road_four_lane): ring at 0.25.
+		heap(Vector3(x, 0.0, 0.55), 1.0, 1.0, 0.4, i * 13 + 2, SPOIL)
 
 
 ## A RAISED TABLE: the whole crossing lifted to kerb height on 1 in 15 ramps.
@@ -351,14 +418,18 @@ func _median_island() -> void:
 ## road, not that it slows anything down.
 func _speed_table() -> void:
 	var half := LANE
-	_bed(-9.0, 9.0, half)
+	# The carriageway stops where the table starts: it is the table that is the
+	# road between 3 and 5.3, and a slab under it would be a second solid there.
+	_bed(-9.0, -5.3, half)
+	_bed(5.3, 9.0, half)
 	for s: float in [-1.0, 1.0]:
 		_kerb_walk(-9.0, 9.0, half, s)
 	box(Vector3(-3.0, -half, -0.3), Vector3(3.0, half, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
 		ramp(minf(s * 3.0, s * 5.3), -half, maxf(s * 3.0, s * 5.3), half, -0.3, 0.0, KERB_H,
 				"-x" if s > 0.0 else "+x", {"top": WALK, "side": KERB, "bottom": CONCRETE})
-	_ladder(0.0, half, 9)
+	# On the table's top, which is 0.15 up.
+	_ladder(0.0, half, 9, KERB_H)
 
 
 ## A rural edge: carriageway, a gravel shoulder and W-beam guardrail on one
@@ -371,16 +442,18 @@ func _road_shoulder() -> void:
 	_dash_x(-SEG * 0.5, SEG * 0.5, 0.0)
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(-SEG * 0.5, s * half, -0.3), Vector3(SEG * 0.5, s * (half + 2.4), -0.05), {"top": BALLAST, "side": CONCRETE, "bottom": CONCRETE})
-	_rail_run(-SEG * 0.5, SEG * 0.5, half + 2.0)
+	_rail_run(-SEG * 0.5, SEG * 0.5, half + 2.0, -0.05)
 
 
 ## W-beam on posts. The beam is one box because a real W section at this
 ## distance is one box, and the posts are 1.9 m apart as they are on the road.
-func _rail_run(x0: float, x1: float, y: float) -> void:
+func _rail_run(x0: float, x1: float, y: float, foot: float = -0.3) -> void:
 	box(Vector3(x0, y - 0.09, 0.45), Vector3(x1, y + 0.09, 0.78), METAL)
 	var x := x0 + 0.9
 	while x < x1:
-		box(Vector3(x - 0.09, y - 0.05, -0.3), Vector3(x + 0.09, y + 0.12, 0.72), METAL)
+		# The post stops under the beam it carries, and starts on `foot`, the
+		# ground it stands on (the gravel shoulder is -0.05, not -0.3).
+		box(Vector3(x - 0.09, y - 0.05, foot), Vector3(x + 0.09, y + 0.12, 0.45), METAL)
 		x += 1.9
 
 
@@ -388,7 +461,11 @@ func _rail_run(x0: float, x1: float, y: float) -> void:
 ## piece of street in the kit that is a corridor, and so the one a squad can
 ## be ambushed in.
 func _alley() -> void:
-	_bed(-SEG * 0.5, SEG * 0.5, 3.0)
+	# The slab in two with the drain trench left between, and a thin bed under
+	# the drain: the drain sits IN the slab, so the slab goes round it.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-SEG * 0.5, minf(s * 0.25, s * 3.0), -0.3), Vector3(SEG * 0.5, maxf(s * 0.25, s * 3.0), 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(-SEG * 0.5, -0.25, -0.3), Vector3(SEG * 0.5, 0.25, -0.1), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(-SEG * 0.5, s * 3.0, -0.4), Vector3(SEG * 0.5, s * 3.4, 4.2), {"top": CONCRETE, "side": RETAIL_BRICK, "bottom": CONCRETE})
 	# A strip drain down the middle, which is the only detail an alley has.
@@ -400,34 +477,58 @@ func _alley() -> void:
 ## 32 m of sidewalk with its kerb, scored into bays, and tree pits. Free
 # standing, for running along a lot frontage where there is no carriageway.
 func _sidewalk_run() -> void:
-	box(Vector3(-SEG * 0.5, -0.3, -0.3), Vector3(SEG * 0.5, WALK_W, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
-	# Scoring: the joints every 1.5 m. One sixteenth of a metre deep, which is
-	# nothing to anything, and it is what stops 32 m of concrete reading as
-	# one enormous tile.
-	var x := -SEG * 0.5 + 1.5
-	while x < SEG * 0.5:
-		box(Vector3(x - 0.04, -0.3, KERB_H - MARK), Vector3(x + 0.04, WALK_W, KERB_H), KERB)
-		x += 1.5
+	# The tree pits are holes in the slab, so the slab is cut round them: four
+	# lengths between the pits, and a pit column of two strips and the soil
+	# between. Still 32 m, end to end.
+	var tile := {"top": WALK, "side": KERB, "bottom": CONCRETE}
+	var from := -SEG * 0.5
 	for i in 4:
 		var tx := lerpf(-12.0, 12.0, float(i) / 3.0)
+		box(Vector3(from, -0.3, -0.3), Vector3(tx - 0.8, WALK_W, KERB_H), tile)
+		box(Vector3(tx - 0.8, -0.3, -0.3), Vector3(tx + 0.8, 0.2, KERB_H), tile)
+		box(Vector3(tx - 0.8, 1.8, -0.3), Vector3(tx + 0.8, WALK_W, KERB_H), tile)
 		box(Vector3(tx - 0.8, 0.2, -0.3), Vector3(tx + 0.8, 1.8, KERB_H - 0.1), {"top": DIRT, "side": KERB, "bottom": CONCRETE})
+		from = tx + 0.8
+	box(Vector3(from, -0.3, -0.3), Vector3(SEG * 0.5, WALK_W, KERB_H), tile)
+	# Scoring: the joints every 1.5 m, standing one sixteenth of a metre PROUD
+	# of the slab rather than cut into it (a cut is a hole, and the slab is
+	# solid). Nothing to anything underfoot, and it is what stops 32 m of
+	# concrete reading as one enormous tile. None over a tree pit.
+	var x := -SEG * 0.5 + 1.5
+	while x < SEG * 0.5:
+		var over_pit := false
+		for i in 4:
+			if absf(x - lerpf(-12.0, 12.0, float(i) / 3.0)) < 0.85:
+				over_pit = true
+		if not over_pit:
+			box(Vector3(x - 0.04, -0.3, KERB_H), Vector3(x + 0.04, WALK_W, KERB_H + MARK), KERB)
+		x += 1.5
 	no_collision()
 	for i in 4:
 		var tx := lerpf(-12.0, 12.0, float(i) / 3.0)
-		cylinder(Vector3(tx, 1.0, KERB_H - 0.1), 0.22, 2.6, 6, SPOIL, 0.16)
-		heap(Vector3(tx, 1.0, KERB_H + 2.3), 1.5, 1.5, 1.6, i * 7 + 3, SPOIL)
+		# The trunk runs from the soil to the underside of the crown, where the
+		# heap's lowest ring is (0.3 below its centre, on the heap's 1/8 m grid).
+		cylinder(Vector3(tx, 1.0, KERB_H - 0.1), 0.22, 2.075, 6, SPOIL, 0.16)
+		heap(Vector3(tx, 1.0, 2.425), 1.5, 1.5, 1.6, i * 7 + 3, SPOIL)
 
 
 ## The corner of two footways, with the dropped ramps onto both crossings.
 func _sidewalk_corner() -> void:
 	var r := 8.0
-	box(Vector3(-0.3, -0.3, -0.3), Vector3(r, WALK_W, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
-	box(Vector3(-0.3, -0.3, -0.3), Vector3(WALK_W, r, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
-	# The 45° cut across the corner, with the ramp down it. This is the piece
-	# of a street a body uses most and the one that is wrong most often.
-	solid([Vector3(-0.3, -0.3, -0.3), Vector3(2.6, -0.3, -0.3), Vector3(-0.3, 2.6, -0.3),
-			Vector3(-0.3, -0.3, 0.0), Vector3(2.6, -0.3, KERB_H), Vector3(-0.3, 2.6, KERB_H)],
-			{"top": WALK, "side": KERB, "bottom": CONCRETE})
+	var tile := {"top": WALK, "side": KERB, "bottom": CONCRETE}
+	# The two arms start where the corner square ends (WALK_W), so they run out
+	# from it and not through it.
+	box(Vector3(WALK_W, -0.3, -0.3), Vector3(r, WALK_W, KERB_H), tile)
+	box(Vector3(-0.3, WALK_W, -0.3), Vector3(WALK_W, r, KERB_H), tile)
+	# The corner square, cut on the diagonal: the half toward the origin is the
+	# ramp down to the crossing, the half away from it is level footway. This is
+	# the piece of a street a body uses most and the one that is wrong most often.
+	solid([Vector3(-0.3, -0.3, -0.3), Vector3(WALK_W, -0.3, -0.3), Vector3(-0.3, WALK_W, -0.3),
+			Vector3(-0.3, -0.3, 0.0), Vector3(WALK_W, -0.3, KERB_H), Vector3(-0.3, WALK_W, KERB_H)],
+			tile)
+	solid([Vector3(WALK_W, -0.3, -0.3), Vector3(WALK_W, WALK_W, -0.3), Vector3(-0.3, WALK_W, -0.3),
+			Vector3(WALK_W, -0.3, KERB_H), Vector3(WALK_W, WALK_W, KERB_H), Vector3(-0.3, WALK_W, KERB_H)],
+			tile)
 
 
 # ── The car park ─────────────────────────────────────────────────────────────
@@ -437,10 +538,13 @@ func _sidewalk_corner() -> void:
 ## result is a car park.
 func _lot_parking_row() -> void:
 	var half := 18.0
-	box(Vector3(-half, -7.2, -0.3), Vector3(half, 7.2, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	# The asphalt either side of the island, not under it.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-half, minf(s * 1.4, s * 7.2), -0.3), Vector3(half, maxf(s * 1.4, s * 7.2), 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	box(Vector3(-half, -1.4, -0.3), Vector3(half, 1.4, KERB_H), ISLAND)
 	for s: float in [-1.0, 1.0]:
-		_bays(-half, half, s * 1.4, s * 7.0, 2.7, 0.0)
+		# The bays stop at the edge of the boundary line, not under it.
+		_bays(-half, half, s * 1.4, s * 6.94, 2.7, 0.0)
 		box(Vector3(-half, s * 7.0 - 0.06, 0.0), Vector3(half, s * 7.0 + 0.06, MARK), PAINT)
 	no_collision()
 	for i in 4:
@@ -460,25 +564,33 @@ func _lot_aisle_cap() -> void:
 	box(Vector3(-0.55, -0.55, KERB_H), Vector3(0.55, 0.55, 0.75), {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
 	box(Vector3(-0.26, -0.26, 0.75), Vector3(0.26, 0.26, 9.0), METAL)
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(s * 0.2, -0.22, 8.6), Vector3(s * 2.2, 0.22, 8.9), METAL)
-		box(Vector3(s * 1.5, -0.75, 8.25), Vector3(s * 2.6, 0.75, 8.65), {"top": METAL, "side": METAL, "bottom": SIGN_BAND})
+		# The arm starts at the pole and the lamp hangs from it: neither is
+		# drawn through the other.
+		box(Vector3(s * 0.26, -0.22, 8.6), Vector3(s * 2.2, 0.22, 8.9), METAL)
+		box(Vector3(s * 1.5, -0.75, 8.25), Vector3(s * 2.6, 0.75, 8.6), {"top": METAL, "side": METAL, "bottom": SIGN_BAND})
 
 
 ## Accessible bays: the wide ones by the door, their hatching, and the signs
 ## on posts at the head of each.
 func _lot_accessible() -> void:
-	box(Vector3(-9.0, -6.0, -0.3), Vector3(9.0, 0.6, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	# The asphalt stops at the footway (y 0), which stands on its own slab.
+	box(Vector3(-9.0, -6.0, -0.3), Vector3(9.0, 0.0, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	box(Vector3(-9.0, 0.0, -0.3), Vector3(9.0, 0.6, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
 	for i in 3:
 		var x := -9.0 + i * 6.0
-		box(Vector3(x - 0.06, -6.0, 0.0), Vector3(x + 0.06, 0.0, MARK), PAINT)
-		box(Vector3(x + 3.5 - 0.06, -6.0, 0.0), Vector3(x + 3.5 + 0.06, 0.0, MARK), PAINT)
-		# The hatched aisle beside each bay.
+		# Every line starts at the foot line (-5.94), which is painted last and
+		# along the whole row: lines running down to -6.0 crossed it.
+		box(Vector3(x - 0.06, -5.94, 0.0), Vector3(x + 0.06, 0.0, MARK), PAINT)
+		box(Vector3(x + 3.5 - 0.06, -5.94, 0.0), Vector3(x + 3.5 + 0.06, 0.0, MARK), PAINT)
+		# The hatched aisle beside each bay, clear of the bay lines either side.
 		var h := x + 3.5
 		for k in 6:
 			var t := float(k) / 5.0
-			box(Vector3(h + t * 2.3 - 0.07, -6.0 + t * 5.4, 0.0), Vector3(h + t * 2.3 + 0.07, -5.4 + t * 5.4, MARK), PAINT)
-		box(Vector3(x + 1.6, -0.1, 0.0), Vector3(x + 1.75, 0.1, 2.1), METAL)
+			var y0 := -5.94 + t * 5.34
+			box(Vector3(h + 0.2 + t * 2.0 - 0.07, y0, 0.0), Vector3(h + 0.2 + t * 2.0 + 0.07, y0 + 0.6, MARK), PAINT)
+		# The sign post stands on the footway, and its plate hangs off its face
+		# over the bay (-y), rather than the two passing through each other.
+		box(Vector3(x + 1.6, 0.0, KERB_H), Vector3(x + 1.75, 0.2, 2.1), METAL)
 		box(Vector3(x + 1.35, -0.12, 1.5), Vector3(x + 2.0, 0.0, 2.05), SIGN_BAND)
 	box(Vector3(-9.0, -6.0, 0.0), Vector3(9.0, -5.94, MARK), PAINT)
 
@@ -496,16 +608,26 @@ func _lot_wheel_stops() -> void:
 ## where a lot meets the road. One of the two or three places a whole map's
 ## traffic has to funnel, and so worth building properly.
 func _lot_entry_throat() -> void:
-	box(Vector3(-11.0, -14.0, -0.3), Vector3(11.0, 0.0, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	# The asphalt round the splitter island, not under it: a slab either side
+	# and the two short lengths at the island's ends.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(minf(s * 1.6, s * 11.0), -14.0, -0.3), Vector3(maxf(s * 1.6, s * 11.0), 0.0, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(-1.6, -14.0, -0.3), Vector3(1.6, -12.0, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(-1.6, -2.0, -0.3), Vector3(1.6, 0.0, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
 		solid([Vector3(s * 11.0, -14.0, -0.3), Vector3(s * 18.0, -14.0, -0.3), Vector3(s * 11.0, 0.0, -0.3),
 				Vector3(s * 11.0, -14.0, 0.0), Vector3(s * 18.0, -14.0, 0.0), Vector3(s * 11.0, 0.0, 0.0)],
 				{"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
-	box(Vector3(-1.6, -12.0, -0.3), Vector3(1.6, -2.0, KERB_H), ISLAND)
+	# The island is the body between the noses, and the noses are what taper it
+	# at each end. The noses used to be built pointing INTO the body (tip at
+	# y + s * -2.4), buried in it; they now point out, so the island still runs
+	# -12 to -2 and has the pointed ends it was written to have.
+	box(Vector3(-1.6, -9.6, -0.3), Vector3(1.6, -4.4, KERB_H), ISLAND)
 	for s: float in [-1.0, 1.0]:
-		var y: float = -12.0 if s < 0.0 else -2.0
-		solid([Vector3(-1.6, y, -0.3), Vector3(1.6, y, -0.3), Vector3(0.0, y + s * -2.4, -0.3),
-				Vector3(-1.6, y, KERB_H), Vector3(1.6, y, KERB_H), Vector3(0.0, y + s * -2.4, KERB_H)],
+		var base: float = -9.6 if s < 0.0 else -4.4
+		var tip: float = -12.0 if s < 0.0 else -2.0
+		solid([Vector3(-1.6, base, -0.3), Vector3(1.6, base, -0.3), Vector3(0.0, tip, -0.3),
+				Vector3(-1.6, base, KERB_H), Vector3(1.6, base, KERB_H), Vector3(0.0, tip, KERB_H)],
 				ISLAND)
 	_stop_bar(0.0, 1.9, 9.0)
 	box(Vector3(2.0, -3.0, 0.0), Vector3(9.0, -2.88, MARK), PAINT)
@@ -518,12 +640,14 @@ func _lot_entry_throat() -> void:
 func _lot_cart_shelter() -> void:
 	box(Vector3(-5.0, -2.0, -0.3), Vector3(5.0, 2.0, 0.05), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-5.0, s * 2.0 - s * 0.14, 0.0), Vector3(5.0, s * 2.0, COVER_H), {"top": METAL, "side": SHUTTER, "bottom": METAL})
-	box(Vector3(-5.0, -2.0, 0.0), Vector3(-4.86, 2.0, COVER_H), {"top": METAL, "side": SHUTTER, "bottom": METAL})
-	box(Vector3(4.86, -2.0, 0.0), Vector3(5.0, 2.0, COVER_H), {"top": METAL, "side": SHUTTER, "bottom": METAL})
+		# The panels stand on the slab (0.05), and the end panels run between
+		# the side panels, not through them.
+		box(Vector3(-5.0, minf(s * 2.0 - s * 0.14, s * 2.0), 0.05), Vector3(5.0, maxf(s * 2.0 - s * 0.14, s * 2.0), COVER_H), {"top": METAL, "side": SHUTTER, "bottom": METAL})
+	box(Vector3(-5.0, -1.86, 0.05), Vector3(-4.86, 1.86, COVER_H), {"top": METAL, "side": SHUTTER, "bottom": METAL})
+	box(Vector3(4.86, -1.86, 0.05), Vector3(5.0, 1.86, COVER_H), {"top": METAL, "side": SHUTTER, "bottom": METAL})
 	for sx: float in [-1.0, 1.0]:
 		for sy: float in [-1.0, 1.0]:
-			post(sx * 4.6, sy * 1.7, 0.0, 3.0, 0.2)
+			post(sx * 4.6, sy * 1.7, 0.05, 3.0, 0.2)
 	box(Vector3(-5.6, -2.5, 3.0), Vector3(5.6, 2.5, 3.25), {"top": ROOF_MEMBRANE, "side": SIGN_BAND, "bottom": METAL})
 
 
@@ -535,7 +659,8 @@ func _lot_cart_shelter() -> void:
 func _signal_mast() -> void:
 	box(Vector3(-0.6, -0.6, -0.5), Vector3(0.6, 0.6, 0.35), {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
 	box(Vector3(-0.24, -0.24, 0.35), Vector3(0.24, 0.24, 7.8), METAL)
-	box(Vector3(-0.16, -0.16, 7.5), Vector3(9.0, 0.16, 7.8), METAL)
+	# The arm starts at the mast's face, not at its axis.
+	box(Vector3(0.24, -0.16, 7.5), Vector3(9.0, 0.16, 7.8), METAL)
 	for x: float in [3.2, 6.2, 8.4]:
 		box(Vector3(x - 0.22, -0.3, 6.5), Vector3(x + 0.22, 0.3, 7.5), {"top": METAL, "side": GREEN, "bottom": METAL})
 	# The pedestrian head and the push button, down at the kerb.
@@ -548,16 +673,19 @@ func _signal_mast() -> void:
 func _light_cobra() -> void:
 	box(Vector3(-0.45, -0.45, -0.5), Vector3(0.45, 0.45, 0.25), {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
 	box(Vector3(-0.2, -0.2, 0.25), Vector3(0.2, 0.2, 8.4), METAL)
-	beam(Vector3(0.0, 0.0, 8.2), Vector3(1.1, 0.0, 9.0), 0.26, METAL)
-	box(Vector3(1.0, -0.16, 8.9), Vector3(2.6, 0.16, 9.1), METAL)
+	# The bracket leaves the column's face (0.2), not its axis, and the arm
+	# starts where the bracket ends: three bars in a row, not overlapping.
+	beam(Vector3(0.35, 0.0, 8.2), Vector3(1.15, 0.0, 9.0), 0.26, METAL)
+	box(Vector3(1.25, -0.16, 8.9), Vector3(2.3, 0.16, 9.1), METAL)
 	box(Vector3(2.3, -0.4, 8.7), Vector3(3.4, 0.4, 9.0), {"top": METAL, "side": METAL, "bottom": SIGN_BAND})
 
 
 ## A stop sign on its post, and the street name blade over it.
 func _sign_stop() -> void:
 	box(Vector3(-0.07, -0.07, -0.4), Vector3(0.07, 0.07, 3.0), METAL)
-	box(Vector3(-0.5, -0.04, 1.7), Vector3(0.5, 0.04, 2.7), SIGN_BAND)
-	box(Vector3(-0.04, -0.75, 2.8), Vector3(0.04, 0.75, 3.1), SIGN_BAND)
+	# The face on the post's face, the blade on its top.
+	box(Vector3(-0.5, 0.07, 1.7), Vector3(0.5, 0.15, 2.7), SIGN_BAND)
+	box(Vector3(-0.04, -0.75, 3.0), Vector3(0.04, 0.75, 3.3), SIGN_BAND)
 
 
 ## An overhead sign gantry across two lanes: a truss on two columns with the
@@ -565,13 +693,21 @@ func _sign_stop() -> void:
 func _sign_gantry() -> void:
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * 7.0 - 0.45, -0.45, -0.5), Vector3(s * 7.0 + 0.45, 0.45, 6.6), {"top": METAL, "side": CONCRETE, "bottom": CONCRETE})
+	# The chords run between the columns, not through them.
 	for z: float in [6.1, 6.9]:
-		box(Vector3(-7.0, -0.2, z - 0.14), Vector3(7.0, 0.2, z + 0.14), METAL)
-	for i in 9:
+		box(Vector3(-6.55, -0.2, z - 0.14), Vector3(6.55, 0.2, z + 0.14), METAL)
+	# The web members are slanted prisms that start on the lower chord's top
+	# and end on the upper one's underside, so they touch both and run through
+	# neither. The last one would have left the truss past the column; it is
+	# dropped.
+	for i in 8:
 		var x := lerpf(-6.4, 6.4, float(i) / 8.0)
-		beam(Vector3(x, 0.0, 6.1), Vector3(x + 1.4, 0.0, 6.9), 0.14, METAL)
-	box(Vector3(-5.2, -0.3, 4.4), Vector3(0.6, -0.1, 6.1), {"top": METAL, "side": GREEN, "bottom": METAL})
-	box(Vector3(1.4, -0.3, 4.8), Vector3(5.4, -0.1, 6.1), {"top": METAL, "side": GREEN, "bottom": METAL})
+		solid([Vector3(x - 0.1, -0.07, 6.24), Vector3(x + 0.1, -0.07, 6.24), Vector3(x - 0.1, 0.07, 6.24), Vector3(x + 0.1, 0.07, 6.24),
+				Vector3(x + 1.3, -0.07, 6.76), Vector3(x + 1.5, -0.07, 6.76), Vector3(x + 1.3, 0.07, 6.76), Vector3(x + 1.5, 0.07, 6.76)],
+				METAL)
+	# The panels hang from the lower chord's underside.
+	box(Vector3(-5.2, -0.3, 4.4), Vector3(0.6, -0.1, 5.96), {"top": METAL, "side": GREEN, "bottom": METAL})
+	box(Vector3(1.4, -0.3, 4.8), Vector3(5.4, -0.1, 5.96), {"top": METAL, "side": GREEN, "bottom": METAL})
 
 
 ## 16 m of W-beam on its own, for a lot edge or a drop.
@@ -614,7 +750,7 @@ func _transformer_pad() -> void:
 	box(Vector3(-1.5, -1.2, 1.75), Vector3(1.5, 1.2, 1.9), METAL)
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * 0.9 - 0.14, -1.2, 1.9), Vector3(s * 0.9 + 0.14, -0.92, 2.5), METAL)
-	fence_run(Vector2(-2.6, 2.3), Vector2(2.6, 2.3), -0.3, 2.1)
+	_fence_clean(Vector2(-2.6, 2.3), Vector2(2.6, 2.3), -0.3, 2.1)
 
 
 ## A kerb inlet and its gutter pan. The grate is mesh only — a 0.1 m lip in a
@@ -622,7 +758,63 @@ func _transformer_pad() -> void:
 ## project has been caught by exactly that before.
 func _storm_inlet() -> void:
 	box(Vector3(-1.2, 0.0, -0.3), Vector3(1.2, 0.3, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
-	box(Vector3(-0.9, 0.02, -0.02), Vector3(0.9, 0.28, KERB_H - 0.02), CONCRETE)
+	# (There was a second CONCRETE box here, 0.02 inside the kerb on every side:
+	# wholly buried, invisible, and a second solid in the same space.)
 	box(Vector3(-1.6, -0.6, -0.3), Vector3(1.6, 0.0, -0.06), {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
 	no_collision()
 	box(Vector3(-0.85, -0.5, -0.06), Vector3(0.85, -0.05, -0.0), GRATING)
+
+
+## THE ARTERIAL AND THE FIVE-LANE WITH NO BED, to lay into ground that is
+## already hard. Same argument as _road_two_lane_inlay: a carriageway laid on
+## a surface that is already there is two floors in one place, and the ground
+## tiles under these are asphalt for exactly that reason.
+func _road_four_lane_inlay() -> void:
+	var half := LANE * 2.0 + 1.5
+	box(Vector3(-SEG * 0.5, -1.5, -0.3), Vector3(SEG * 0.5, 1.5, KERB_H), ISLAND)
+	for s: float in [-1.0, 1.0]:
+		_kerb_walk(-SEG * 0.5, SEG * 0.5, half, s)
+		_line_x(-SEG * 0.5, SEG * 0.5, s * (half - 0.35))
+		_dash_x(-SEG * 0.5, SEG * 0.5, s * (1.5 + LANE))
+	no_collision()
+	var x := -SEG * 0.5 + 3.0
+	while x < SEG * 0.5 - 2.0:
+		# Same offsets as _road_four_lane: the heap ring snaps to a 1/8 m grid
+		# and lands 0.1 m clear of a 0.15 kerb rather than 0.025 m into it.
+		heap(Vector3(x, 0.0, 0.55), 0.9, 0.9, 0.45, int(x) + 7, SPOIL)
+		x += 6.0
+
+
+func _road_turn_lane_inlay() -> void:
+	var half := LANE * 2.5
+	for s: float in [-1.0, 1.0]:
+		_kerb_walk(-SEG * 0.5, SEG * 0.5, half, s)
+		_line_x(-SEG * 0.5, SEG * 0.5, s * (half - 0.35))
+		_dash_x(-SEG * 0.5, SEG * 0.5, s * LANE)
+		_line_x(-SEG * 0.5, SEG * 0.5, s * LANE * 0.5)
+	# ONE chevron per step. I copied this loop with a `for s in [-1, 1]` round
+	# it that never used s, so it drew every chevron twice in the same place —
+	# the exact duplicate-in-a-loop bug that had already been fixed in the
+	# piece I copied from.
+	var x := -SEG * 0.5 + 2.0
+	while x < SEG * 0.5 - 2.0:
+		box(Vector3(x, -0.1, 0.0), Vector3(x + 2.4, 0.1, MARK), PAINT)
+		x += 5.0
+
+
+## THE ENTRY THROAT WITH NO APRON, for a lot that is already asphalt. The
+## splitter island and the markings are the whole piece; the apron underneath
+## is the car park.
+func _lot_entry_throat_inlay() -> void:
+	box(Vector3(-1.6, -12.0, -0.3), Vector3(1.6, -2.0, KERB_H), ISLAND)
+	for s: float in [-1.0, 1.0]:
+		var y: float = -12.0 if s < 0.0 else -2.0
+		# The apex goes BEYOND the island end, not back into it. With s * -2.4
+		# both noses pointed inwards and each one lay 2.4 m inside the island it
+		# was supposed to be the end of.
+		solid([Vector3(-1.6, y, -0.3), Vector3(1.6, y, -0.3), Vector3(0.0, y + s * 2.4, -0.3),
+				Vector3(-1.6, y, KERB_H), Vector3(1.6, y, KERB_H), Vector3(0.0, y + s * 2.4, KERB_H)],
+				ISLAND)
+	_stop_bar(0.0, 1.9, 9.0)
+	box(Vector3(2.0, -3.0, 0.0), Vector3(9.0, -2.88, MARK), PAINT)
+	box(Vector3(-9.0, -3.0, 0.0), Vector3(-2.0, -2.88, MARK), PAINT)

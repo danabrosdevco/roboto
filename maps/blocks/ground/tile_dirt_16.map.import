@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b2dywklepty0a"
+path="res://.godot/imported/tile_dirt_16.map-145e446deff8dc3c54d0cc8827fb9949.tres"
+
+[deps]
+
+source_file="res://maps/blocks/ground/tile_dirt_16.map"
+dest_files=["res://.godot/imported/tile_dirt_16.map-145e446deff8dc3c54d0cc8827fb9949.tres"]
+
+[params]
+

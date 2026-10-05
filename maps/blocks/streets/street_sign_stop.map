@@ -16,20 +16,20 @@
 }
 // brush 1
 {
-( -16 1 54 ) ( 16 -1 54 ) ( 16 1 54 ) PSX_Textures/metal_wall_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -16 -1 86 ) ( 16 1 86 ) ( 16 -1 86 ) PSX_Textures/metal_wall_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -16 -1 54 ) ( 16 -1 86 ) ( 16 -1 54 ) PSX_Textures/metal_wall_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 16 -1 54 ) ( 16 1 86 ) ( 16 1 54 ) PSX_Textures/metal_wall_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 16 1 54 ) ( -16 1 86 ) ( -16 1 54 ) PSX_Textures/metal_wall_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -16 1 54 ) ( -16 -1 86 ) ( -16 -1 54 ) PSX_Textures/metal_wall_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 5 54 ) ( 16 2 54 ) ( 16 5 54 ) PSX_Textures/metal_wall_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -16 2 86 ) ( 16 5 86 ) ( 16 2 86 ) PSX_Textures/metal_wall_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -16 2 54 ) ( 16 2 86 ) ( 16 2 54 ) PSX_Textures/metal_wall_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 16 2 54 ) ( 16 5 86 ) ( 16 5 54 ) PSX_Textures/metal_wall_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 16 5 54 ) ( -16 5 86 ) ( -16 5 54 ) PSX_Textures/metal_wall_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 5 54 ) ( -16 2 86 ) ( -16 2 54 ) PSX_Textures/metal_wall_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 // brush 2
 {
-( -1 24 90 ) ( 1 -24 90 ) ( 1 24 90 ) PSX_Textures/metal_wall_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -1 -24 99 ) ( 1 24 99 ) ( 1 -24 99 ) PSX_Textures/metal_wall_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -1 -24 90 ) ( 1 -24 99 ) ( 1 -24 90 ) PSX_Textures/metal_wall_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 1 -24 90 ) ( 1 24 99 ) ( 1 24 90 ) PSX_Textures/metal_wall_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 1 24 90 ) ( -1 24 99 ) ( -1 24 90 ) PSX_Textures/metal_wall_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -1 24 90 ) ( -1 -24 99 ) ( -1 -24 90 ) PSX_Textures/metal_wall_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -1 24 96 ) ( 1 -24 96 ) ( 1 24 96 ) PSX_Textures/metal_wall_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -1 -24 106 ) ( 1 24 106 ) ( 1 -24 106 ) PSX_Textures/metal_wall_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -1 -24 96 ) ( 1 -24 106 ) ( 1 -24 96 ) PSX_Textures/metal_wall_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1 -24 96 ) ( 1 24 106 ) ( 1 24 96 ) PSX_Textures/metal_wall_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1 24 96 ) ( -1 24 106 ) ( -1 24 96 ) PSX_Textures/metal_wall_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -1 24 96 ) ( -1 -24 106 ) ( -1 -24 96 ) PSX_Textures/metal_wall_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }

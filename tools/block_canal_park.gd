@@ -114,7 +114,7 @@ func _path_run() -> void:
 	no_collision()
 	var x := -15.0
 	while x < 15.0:
-		heap(Vector3(x, (_hash_f(int(x) * 7) - 0.5) * 2.4, 0.0), 0.5, 0.35, 0.18, int(x) + 3, SPOIL)
+		_heap_on(Vector3(x, (_hash_f(int(x) * 7) - 0.5) * 2.4, 0.0), 0.5, 0.35, 0.18, int(x) + 3, SPOIL)
 		x += 2.2
 
 
@@ -143,8 +143,10 @@ func _pavilion() -> void:
 				Vector3(cos(a1) * (r + 0.7), sin(a1) * (r + 0.7), 3.35),
 				Vector3(cos(a1) * 0.6, sin(a1) * 0.6, 4.85), Vector3(cos(a0) * 0.6, sin(a0) * 0.6, 4.85)], SHINGLE)
 	# The fallen pieces on the floor beside it.
-	tipped_box(Vector3(r + 1.4, 2.6, 0.3), Vector3(3.2, 2.6, 0.2), Vector3(12.0, 0.0, 28.0), SHINGLE)
-	tipped_box(Vector3(r + 2.6, -1.0, 0.25), Vector3(2.4, 1.8, 0.2), Vector3(-8.0, 6.0, 64.0), SHINGLE)
+	# Both are clear of the ramps (x 5 to 7.4, y +-1.6): they used to lie
+	# across them.
+	tipped_box(Vector3(r + 1.4, 3.7, 0.3), Vector3(3.2, 2.6, 0.2), Vector3(12.0, 0.0, 28.0), SHINGLE)
+	tipped_box(Vector3(r + 2.2, -3.4, 0.25), Vector3(2.4, 1.8, 0.2), Vector3(-8.0, 6.0, 64.0), SHINGLE)
 
 
 ## A row of park benches, some on their backs. Mesh only: a bench is 0.45 m to
@@ -160,7 +162,8 @@ func _bench_row() -> void:
 		box(Vector3(x - 0.95, -0.28, 0.0), Vector3(x + 0.95, 0.28, 0.45), {"top": WOOD, "side": WOOD_DARK, "bottom": IRON})
 		box(Vector3(x - 0.95, 0.18, 0.45), Vector3(x + 0.95, 0.32, 1.0), {"top": WOOD, "side": WOOD_DARK, "bottom": WOOD_DARK})
 		for s: float in [-1.0, 1.0]:
-			box(Vector3(x + s * 0.88, -0.3, -0.1), Vector3(x + s * 0.95, 0.34, 0.45), IRON)
+			# Side frames at the ends of the seat, not through them.
+			box(Vector3(x + s * 0.95, -0.3, -0.1), Vector3(x + s * 1.02, 0.34, 0.45), IRON)
 
 
 ## A RUSTED PLAY STRUCTURE on a sunken safety surface: a deck 1.2 m up on four
@@ -171,10 +174,12 @@ func _playground() -> void:
 	box(Vector3(-2.0, -1.6, -0.05), Vector3(2.0, 1.6, 1.2), {"top": GRATING, "side": IRON, "bottom": IRON})
 	for sx: float in [-1.0, 1.0]:
 		for sy: float in [-1.0, 1.0]:
-			post(sx * 1.8, sy * 1.4, -0.05, 2.6, 0.14, IRON)
+			# The deck is solid up to 1.2, so the posts start on it and carry the roof.
+			post(sx * 1.8, sy * 1.4, 1.2, 2.6, 0.14, IRON)
 	box(Vector3(-2.2, -1.8, 2.6), Vector3(2.2, 1.8, 2.8), {"top": RUST_PANEL, "side": IRON, "bottom": IRON})
 	# The ramp up, 2.2 m wide so it survives the erosion, and the slide down.
-	ramp(2.0, -1.1, 5.6, 1.1, -0.45, 0.0, 1.2, "-x", {"top": GRATING, "side": IRON, "bottom": IRON})
+	# Based on the safety surface's top (-0.05), not sunk through it to -0.45.
+	ramp(2.0, -1.1, 5.6, 1.1, -0.05, 0.0, 1.2, "-x", {"top": GRATING, "side": IRON, "bottom": IRON})
 	solid([Vector3(-2.0, -1.5, 1.2), Vector3(-2.0, -0.3, 1.2), Vector3(-5.4, -0.3, -0.05), Vector3(-5.4, -1.5, -0.05),
 			Vector3(-2.0, -1.5, 1.35), Vector3(-2.0, -0.3, 1.35), Vector3(-5.4, -0.3, 0.1), Vector3(-5.4, -1.5, 0.1)],
 			{"top": RUST_PANEL, "side": IRON, "bottom": IRON})
@@ -190,13 +195,26 @@ func _playground() -> void:
 func _overgrown_bed() -> void:
 	var w := 7.0
 	var d := 3.0
-	for e: Array in [[-w, -d, w, -d + 0.4], [-w, d - 0.4, w, d], [-w, -d, -w + 0.4, d], [w - 0.4, -d, w, d]]:
+	# The end walls run between the long ones, so the corners belong to one wall
+	# and not two.
+	for e: Array in [[-w, -d, w, -d + 0.4], [-w, d - 0.4, w, d], [-w, -d + 0.4, -w + 0.4, d - 0.4], [w - 0.4, -d + 0.4, w, d - 0.4]]:
 		box(Vector3(e[0], e[1], -0.4), Vector3(e[2], e[3], 0.95), {"top": COPING, "side": PARK_WALL, "bottom": CONCRETE})
-	box(Vector3(-w + 0.4, -d + 0.4, -0.4), Vector3(w - 0.4, d - 0.4, 0.8), {"top": DIRT, "side": SPOIL, "bottom": SPOIL})
+	box(Vector3(-w + 0.4, -d + 0.4, -0.4), Vector3(w - 0.4, d - 0.4, 0.75), {"top": DIRT, "side": SPOIL, "bottom": SPOIL})
 	no_collision()
+	# The scrub claims its ground and keeps off the walls and off itself, with
+	# several tries per slot; it used to overlap its neighbours and run into the
+	# walls, and a thinner bed is better than a z-fighting one.
+	_claim_reset()
+	_reserve(Vector2(0.0, -d + 0.2), w, 0.2, "the near wall")
+	_reserve(Vector2(0.0, d - 0.2), w, 0.2, "the far wall")
+	_reserve(Vector2(-w + 0.2, 0.0), 0.2, d - 0.4, "the west wall")
+	_reserve(Vector2(w - 0.2, 0.0), 0.2, d - 0.4, "the east wall")
 	for i in 9:
-		var x := lerpf(-w + 1.2, w - 1.2, float(i) / 8.0)
-		heap(Vector3(x, (_hash_f(i * 13) - 0.5) * 3.4, 0.8), 1.1, 0.9, 1.3, i * 7 + 2, SPOIL)
+		for attempt in 8:
+			var x := lerpf(-w + 1.2, w - 1.2, float(i) / 8.0) + (_hash_f(i * 5 + attempt * 71) - 0.5) * 1.4
+			var y := (_hash_f(i * 13 + attempt * 43) - 0.5) * 3.4
+			if _scatter_heap(Vector3(x, y, 0.75), 1.1, 0.9, 1.3, i * 7 + 2, SPOIL):
+				break
 
 
 ## A DRY FOUNTAIN: a round basin 0.8 m down with a ramped break in its wall,
@@ -205,17 +223,43 @@ func _overgrown_bed() -> void:
 ## way out, which is what the retention basin taught.
 func _fountain_dry() -> void:
 	var r := 6.0
-	cylinder(Vector3(0.0, 0.0, -1.4), r + 0.8, 1.4, 12, {"top": COPING, "side": PARK_WALL, "bottom": CONCRETE})
-	# The basin floor, and a ramp out of it on one side.
-	cylinder(Vector3(0.0, 0.0, -0.9), r, 0.1, 12, {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
-	ramp(-1.6, -r - 0.8, 1.6, r * 0.2, -1.4, 0.0, -0.8, "-y", {"top": CONCRETE, "side": PARK_WALL, "bottom": CONCRETE})
+	_claim_reset()
+	# THE BASIN IS A RING, NOT A DRUM. The wall used to be a solid cylinder 1.4 m
+	# deep and r + 0.8 across, topped at z = 0, with the "basin floor" and the
+	# pedestal built inside it — so there was no basin at all, and all of that
+	# sat in the drum's volume. Now the wall is twelve segments between r and
+	# r + 0.8, the floor is a disc filling the bowl to -0.8, and the segment
+	# that would face the ramp is left out.
+	var sides := 12
+	for i in sides:
+		if i == 8:
+			continue                      # the gap, centred on -Y, where the ramp comes in
+		var a0 := TAU * (i + 0.5) / sides
+		var a1 := TAU * (i + 1.5) / sides
+		var pts: Array = []
+		for z: float in [-1.4, 0.0]:
+			pts.append(Vector3(cos(a0) * r, sin(a0) * r, z))
+			pts.append(Vector3(cos(a1) * r, sin(a1) * r, z))
+			pts.append(Vector3(cos(a0) * (r + 0.8), sin(a0) * (r + 0.8), z))
+			pts.append(Vector3(cos(a1) * (r + 0.8), sin(a1) * (r + 0.8), z))
+		solid(pts, {"top": COPING, "side": PARK_WALL, "bottom": CONCRETE})
+	# The basin floor, filling the bowl up to -0.8, and the stone under the
+	# ramp where the wall is open.
+	cylinder(Vector3(0.0, 0.0, -1.4), r, 0.6, sides, {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(-1.5, -r * cos(PI / sides) - 0.77, -1.4), Vector3(1.5, -r * cos(PI / sides), -0.8), {"top": CONCRETE, "side": PARK_WALL, "bottom": CONCRETE})
+	# The ramp climbs OUT of the basin toward -Y (it was given its heights the
+	# wrong way round, so it ran down toward the rim), lies on the floor and
+	# stops short of the pedestal.
+	var ramp_y: float = -r * cos(PI / sides) - 0.77
+	ramp(-1.5, ramp_y, 1.5, -2.6, -0.8, -0.8, 0.0, "-y", {"top": CONCRETE, "side": PARK_WALL, "bottom": CONCRETE})
 	cylinder(Vector3(0.0, 0.0, -0.8), 1.3, 0.9, 8, {"top": COPING, "side": PARK_WALL, "bottom": CONCRETE})
 	cylinder(Vector3(0.0, 0.0, 0.1), 0.55, 1.5, 8, PARK_WALL, 0.4)
 	no_collision()
+	_reserve(Vector2(0.0, 0.0), 1.45, 1.45, "the pedestal")
+	_reserve(Vector2(0.0, (ramp_y - 2.6) * 0.5), 1.6, (-2.6 - ramp_y) * 0.5, "the ramp")
 	for i in 11:
 		var a := TAU * i / 11.0
-		heap(Vector3(cos(a) * r * 0.7, sin(a) * r * 0.7, -0.8), 0.7, 0.5, 0.3, i * 11 + 4, SPOIL)
-
+		_scatter_heap(Vector3(cos(a) * r * 0.7, sin(a) * r * 0.7, -0.8), 0.7, 0.5, 0.3, i * 11 + 4, SPOIL)
 
 ## A TENNIS COURT gone to weeds inside a sagging chain-link cage. The best
 ## piece of ground in the park: a 36 x 18 room outdoors with exactly two ways
@@ -226,10 +270,12 @@ func _tennis_court() -> void:
 	var d := 9.0
 	box(Vector3(-w, -d, -0.4), Vector3(w, d, 0.0), {"top": CLAY, "side": CONCRETE, "bottom": CONCRETE})
 	# The lines, what is left of them.
+	# The side lines take the corners; the end lines and the centre line run
+	# BETWEEN them, so no two lines cross each other's volume.
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(-w + 2.0, s * (d - 2.0) - 0.06, 0.0), Vector3(w - 2.0, s * (d - 2.0) + 0.06, 0.0625), PAINT_LINE)
-		box(Vector3(s * (w - 2.0) - 0.06, -d + 2.0, 0.0), Vector3(s * (w - 2.0) + 0.06, d - 2.0, 0.0625), PAINT_LINE)
-	box(Vector3(-0.06, -d + 2.0, 0.0), Vector3(0.06, d - 2.0, 0.0625), PAINT_LINE)
+		box(Vector3(s * (w - 2.0) - 0.06, -d + 2.0 + 0.06, 0.0), Vector3(s * (w - 2.0) + 0.06, d - 2.0 - 0.06, 0.0625), PAINT_LINE)
+	box(Vector3(-0.06, -d + 2.0 + 0.06, 0.0), Vector3(0.06, d - 2.0 - 0.06, 0.0625), PAINT_LINE)
 	# The net posts, and the net down.
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(-0.12, s * (d - 1.2) - 0.12, 0.0), Vector3(0.12, s * (d - 1.2) + 0.12, 1.1), IRON)
@@ -244,12 +290,27 @@ func _tennis_court() -> void:
 		for run: Array in [[-w, gap0], [gap1, w]]:
 			if run[1] - run[0] < 0.5:
 				continue
-			box(Vector3(run[0], s * d - s * 0.08, -0.4), Vector3(run[1], s * d + s * 0.08, 3.4), HERAS)
-		box(Vector3(s * w - s * 0.08, -d, -0.4), Vector3(s * w + s * 0.08, d, 3.4), HERAS)
+			# The cage stands ON the court (z = 0) and not sunk through it, and the
+			# end walls run between the side runs, not through their corners.
+			box(Vector3(run[0], s * d - s * 0.08, 0.0), Vector3(run[1], s * d + s * 0.08, 3.4), HERAS)
+		box(Vector3(s * w - s * 0.08, -d + 0.08, 0.0), Vector3(s * w + s * 0.08, d - 0.08, 3.4), HERAS)
 	no_collision()
+	# The weeds claim their ground first, and are dropped where it is already
+	# taken by a line, a net post or the cage, instead of lying across it.
+	_claim_reset()
+	for s: float in [-1.0, 1.0]:
+		_reserve(Vector2(0.0, s * (d - 2.0)), w - 2.0, 0.06, "a side line")
+		_reserve(Vector2(s * (w - 2.0), 0.0), 0.06, d - 2.12, "an end line")
+		_reserve(Vector2(0.0, s * (d - 1.2)), 0.12, 0.12, "a net post")
+		_reserve(Vector2(0.0, s * d), w, 0.08, "a cage side")
+		_reserve(Vector2(s * w, 0.0), 0.08, d - 0.08, "a cage end")
+	_reserve(Vector2(0.0, 0.0), 0.06, d - 2.12, "the centre line")
 	for i in 24:
 		var x := -w + 1.0 + i * 1.5
-		heap(Vector3(x, (_hash_f(i * 17) - 0.5) * 15.0, 0.0), 0.6, 0.45, 0.3, i * 5 + 7, SPOIL)
+		for attempt in 3:
+			var y := (_hash_f(i * 17 + attempt * 61) - 0.5) * 15.0
+			if _scatter_heap(Vector3(x, y, 0.0), 0.6, 0.45, 0.3, i * 5 + 7, SPOIL):
+				break
 
 
 ## A PERGOLA half fallen: four bays of columns with the beams off two of them,
@@ -271,11 +332,26 @@ func _pergola_ruin() -> void:
 		box(Vector3(x - 0.12, -2.1, 3.2), Vector3(x + 0.12, 2.1, 3.38), WOOD_DARK)
 	# The fallen column and beam.
 	log_x(Vector3(half * 0.55, 1.4, 0.3), 0.3, 2.8, 8, PARK_WALL, "x")
-	tipped_box(Vector3(half * 0.8, -0.4, 0.28), Vector3(4.4, 0.4, 0.36), Vector3(0.0, 4.0, 22.0), WOOD_DARK)
+	# Raised so its low corner clears the slab it lies on.
+	tipped_box(Vector3(half * 0.8, -0.4, 0.42), Vector3(4.4, 0.4, 0.36), Vector3(0.0, 4.0, 22.0), WOOD_DARK)
 	no_collision()
+	# The overgrowth keeps off the columns and the fallen pieces: it used to be
+	# dropped at fixed spots that two of the columns stand on.
+	_claim_reset()
+	for i in 5:
+		for s: float in [-1.0, 1.0]:
+			if not (i == 3 and s > 0.0):
+				_reserve(Vector2(lerpf(-half, half, float(i) / 4.0), s * 1.6), 0.34, 0.34, "a column")
+	_reserve(Vector2(half * 0.55, 1.4), 1.45, 0.34, "the fallen column")
+	_reserve(Vector2(half * 0.8, -0.4), 1.85, 0.95, "the fallen beam")
 	for i in 6:
-		var x := lerpf(-half, half, float(i) / 5.0)
-		heap(Vector3(x, 1.9, 0.0), 0.9, 0.6, 1.4, i * 9 + 3, SPOIL)
+		for attempt in 4:
+			# Retries slide toward the middle, so a blocked heap never ends up
+			# outside the slab it is dressing.
+			var x0 := lerpf(-half, half, float(i) / 5.0)
+			var x := x0 - signf(x0) * attempt * 1.1
+			if _scatter_heap(Vector3(x, 1.9, 0.0), 0.9, 0.6, 1.4, i * 9 + 3, SPOIL):
+				break
 
 
 # ── Landmarks ────────────────────────────────────────────────────────────────
@@ -289,17 +365,28 @@ func _stack() -> void:
 	box(Vector3(-4.2, -4.2, 3.0), Vector3(4.2, 4.2, 6.5), MILL_BRICK)
 	# The shaft, in six tapering drums rather than one cone: at this distance
 	# the steps read as the brick courses they would be.
+	# THE BANDS REPLACE A SLICE OF THE SHAFT, they are not laid over it: a band
+	# is a solid drum, and a solid drum round a solid drum is the shaft's whole
+	# cross-section shared twice. So each drum is cut where a band goes, and
+	# the band fills the gap a little wider than the shaft either side.
+	var band_z: Array = [12.0, 20.0, 28.0, 36.0]
 	for i in 6:
-		var z: float = 6.5 + i * 6.0
-		var r0: float = 3.3 - i * 0.33
-		var r1: float = 3.3 - (i + 1) * 0.33
-		cylinder(Vector3(0.0, 0.0, z), r0, 6.0, 8, MILL_BRICK, r1)
+		var z0: float = 6.5 + i * 6.0
+		var z1: float = z0 + 6.0
+		var cursor: float = z0
+		for b: float in band_z:
+			if b >= z0 - 0.001 and b + 0.5 <= z1 + 0.001:
+				if b > cursor + 0.001:
+					cylinder(Vector3(0.0, 0.0, cursor), _shaft_r(cursor), b - cursor, 8, MILL_BRICK, _shaft_r(b))
+				cursor = b + 0.5
+		if z1 > cursor + 0.001:
+			cylinder(Vector3(0.0, 0.0, cursor), _shaft_r(cursor), z1 - cursor, 8, MILL_BRICK, _shaft_r(z1))
 	cylinder(Vector3(0.0, 0.0, 42.5), 1.5, 1.5, 8, MILL_BRICK, 1.75)
 	no_collision()
 	# The bands and the ladder, which is what tells you how big it is.
-	for i in 4:
-		var z: float = 12.0 + i * 8.0
-		cylinder(Vector3(0.0, 0.0, z), 3.1 - i * 0.44, 0.5, 8, COPING, 3.05 - i * 0.44)
+	# Each is the shaft's own radius at that height plus 0.12, standing proud.
+	for z: float in band_z:
+		cylinder(Vector3(0.0, 0.0, z), _shaft_r(z) + 0.12, 0.5, 8, COPING, _shaft_r(z + 0.5) + 0.12)
 	for i in 34:
 		box(Vector3(-0.22, 3.4 - i * 0.055, 7.0 + i * 1.05), Vector3(0.22, 3.5 - i * 0.055, 7.1 + i * 1.05), IRON)
 
@@ -336,3 +423,11 @@ func _statue() -> void:
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * 0.34 - 0.2, -0.45, 4.0), Vector3(s * 0.34 + 0.2, 0.35, 4.55), IRON)
 	box(Vector3(-1.1, -1.72, 1.4), Vector3(1.1, -1.66, 2.1), IRON)
+
+
+## The radius of the stack's shaft at height z: six drums of 6 m, each tapering
+## from one radius to the next (see _stack).
+func _shaft_r(z: float) -> float:
+	var i: int = clampi(int(floorf((z - 6.5) / 6.0)), 0, 5)
+	var t: float = (z - (6.5 + i * 6.0)) / 6.0
+	return lerpf(3.3 - i * 0.33, 3.3 - (i + 1) * 0.33, t)

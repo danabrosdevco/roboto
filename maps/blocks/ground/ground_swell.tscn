@@ -1,22 +1,22 @@
 [gd_scene load_steps=8 format=4]
 
-[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_xluh8"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_u7jpv"]
-[ext_resource type="Texture2D" path="res://textures/PSX_Textures/dirt_2.png" id="3_mp2ey"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_n7a4d"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_hodkx"]
+[ext_resource type="Texture2D" path="res://textures/PSX_Textures/dirt_2.png" id="3_kgyof"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jnp8e"]
-albedo_texture = ExtResource("3_mp2ey")
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qdrdm"]
+albedo_texture = ExtResource("3_kgyof")
 metallic_specular = 0.0
 texture_filter = 2
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_fto0w"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_e1r0h"]
 _surfaces = [{
 "aabb": AABB(-6.5, 0, -9, 13, 0.90625, 18),
 "attribute_data": PackedByteArray("AACQvwEAUD8AAJC/AQBQvwAAkD8BAFC/AACQPwEAUD8AAJA/4wFOPwAAkL/jAU4//v+fvg0lgLz//58+DiWAvAEAUL/Yno4/AAAAAEd1lj4BAFA/2J6OPwAAkL/jAU4///+fvg4lgLz+/58+DSWAvAAAkD/jAU4/AQBQP9iejj8BAFC/2J6OPwAAAABIdZY+"),
 "format": 34359742487,
 "index_count": 24,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACwAMAA0ACwANAA4ADwAQABEA"),
-"material": SubResource("StandardMaterial3D_jnp8e"),
+"material": SubResource("StandardMaterial3D_qdrdm"),
 "name": "PSX_Textures/dirt_2",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -24,28 +24,28 @@ _surfaces = [{
 "vertex_data": PackedByteArray("AQDQwAAAAAAAABBBAQDQQAAAAAAAABBBAQDQQAAAAAAAABDBAQDQwAAAAAAAABDBAQDQwAAAAAAAABBBAQDQwAAAAAAAABDBAAAAAP//Zz/+/x/AAAAAAAEAaD///x9AAQDQQAAAAAAAABDBAAAAAP//Zz/+/x/AAQDQwAAAAAAAABDBAQDQQAAAAAAAABBBAAAAAAEAaD///x9AAAAAAP//Zz/+/x/AAQDQQAAAAAAAABDBAQDQQAAAAAAAABBBAQDQwAAAAAAAABBBAAAAAAEAaD///x9A/38AAP//////fwAA//////9/AAD//////38AAP////9VcFXw/3//v1VwVfD/f/+/VXBV8P9//79VcFXw/3//v6mP//8AAP+/qY///wAA/7+pj///AAD/v6mPVfD/////qY9V8P////+pj1Xw/////6mPVfD//////39V8P///7//f1Xw////v/9/VfD///+/")
 }]
 
-[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_kmjdx"]
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_kos7a"]
 vertices = PackedVector3Array(-6.5, 0, 9, 6.5, 0, 9, 6.5, 0, -9, -6.5, 0, -9, -6.5, 0, 9, -6.5, 0, -9, 0, 0.90625, -2.5, 0, 0.90625, 2.5, 6.5, 0, -9, 0, 0.90625, -2.5, -6.5, 0, -9, 6.5, 0, 9, 0, 0.90625, 2.5, 0, 0.90625, -2.5, 6.5, 0, -9, 6.5, 0, 9, -6.5, 0, 9, 0, 0.90625, 2.5)
 indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 11, 12, 13, 11, 13, 14, 15, 16, 17)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_jf8ss"]
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_5lutu"]
 points = PackedVector3Array(-6.5, 0, 9, 6.5, 0, 9, 6.5, 0, -9, -6.5, 0, -9, 0, 0.90625, -2.5, 0, 0.90625, 2.5)
 
 [node name="GroundSwell" type="Node3D"]
-script = ExtResource("1_xluh8")
+script = ExtResource("1_n7a4d")
 local_map_file = "res://maps/blocks/ground/ground_swell.map"
-map_settings = ExtResource("2_u7jpv")
+map_settings = ExtResource("2_hodkx")
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
 collision_mask = 0
 
 [node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
-mesh = SubResource("ArrayMesh_fto0w")
+mesh = SubResource("ArrayMesh_e1r0h")
 
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
-occluder = SubResource("ArrayOccluder3D_kmjdx")
+occluder = SubResource("ArrayOccluder3D_kos7a")
 
 [node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
 
 [node name="entity_0_brush_1_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_jf8ss")
+shape = SubResource("ConvexPolygonShape3D_5lutu")

@@ -95,6 +95,22 @@ func _initialize() -> void:
 	quit()
 
 
+## A parked car: block_industrial's car_at, except that the tyres stand OUTSIDE
+## the body. In car_at each axle is one prism the full width of the car, which
+## is a rod pushed through the body, and the body is the body in the same
+## space. Four short stubs read the same from the side and share nothing.
+func _park_car(c: Vector3, yaw: float, tex: String) -> void:
+	psolid(c, yaw, [Vector3(-2.2, -0.9, 0.3), Vector3(2.2, -0.9, 0.3), Vector3(2.2, 0.9, 0.3), Vector3(-2.2, 0.9, 0.3),
+			Vector3(-2.15, -0.88, 0.95), Vector3(2.1, -0.88, 0.88), Vector3(2.1, 0.88, 0.88), Vector3(-2.15, 0.88, 0.95)], {"top": tex, "side": tex, "bottom": RUST})
+	psolid(c, yaw, [Vector3(-1.4, -0.82, 0.93), Vector3(1.0, -0.82, 0.9), Vector3(1.0, 0.82, 0.9), Vector3(-1.4, 0.82, 0.93),
+			Vector3(-1.0, -0.72, 1.45), Vector3(0.45, -0.72, 1.45), Vector3(0.45, 0.72, 1.45), Vector3(-1.0, 0.72, 1.45)], {"top": tex, "side": GLASS, "bottom": tex})
+	for x: float in [-1.35, 1.35]:
+		for s: float in [-1.0, 1.0]:
+			# A few cm clear of the body: both are turned and snapped to the grid
+			# separately, and flush they would still catch each other.
+			ppipe(c, yaw, Vector3(x, s * 0.95, 0.33), Vector3(x, s * 1.08, 0.33), 0.33, RUBBER, 8)
+
+
 ## `n` cars nose-in on a 2.7 m bay pitch, each sitting a little crooked in its
 ## bay because nobody parks straight. `fill` is the chance a bay has a car in
 ## it, so the same function gives a packed row and an emptying one.
@@ -106,7 +122,7 @@ func _park_row(n: int, fill: float, seed: int) -> void:
 		var skew := (_hash_f(i * 7 + seed) - 0.5) * 9.0
 		var creep := (_hash_f(i * 13 + seed) - 0.5) * 0.7
 		var paint: String = CAR_PAINT[int(_hash_f(i * 17 + seed) * CAR_PAINT.size()) % CAR_PAINT.size()]
-		car_at(Vector3(x, creep, 0.0), 90.0 + skew, paint)
+		_park_car(Vector3(x, creep, 0.0), 90.0 + skew, paint)
 
 
 ## A FULL ROW, ten cars nose to tail across 27 m. The piece that gives the car
@@ -129,13 +145,16 @@ func _car_row_sparse() -> void:
 func _planter_bed() -> void:
 	var w := 4.5
 	var d := 1.75
-	for e: Array in [[-w, -d, w, -d + 0.35], [-w, d - 0.35, w, d], [-w, -d, -w + 0.35, d], [w - 0.35, -d, w, d]]:
+	# The two long walls take the corners; the short ones run between them.
+	for e: Array in [[-w, -d, w, -d + 0.35], [-w, d - 0.35, w, d], [-w, -d + 0.35, -w + 0.35, d - 0.35], [w - 0.35, -d + 0.35, w, d - 0.35]]:
 		box(Vector3(e[0], e[1], -0.3), Vector3(e[2], e[3], COVER_H), {"top": COPING_TOP, "side": RETAIL_BRICK, "bottom": CONCRETE})
 	box(Vector3(-w + 0.35, -d + 0.35, -0.3), Vector3(w - 0.35, d - 0.35, COVER_H - 0.25), {"top": DIRT, "side": SPOIL, "bottom": SPOIL})
 	no_collision()
 	for i in 3:
 		var x := lerpf(-3.0, 3.0, float(i) / 2.0)
-		cylinder(Vector3(x, 0.0, COVER_H - 0.25), 0.2, 2.4, 6, SPOIL, 0.14)
+		# The trunk ends where the crown begins (the heap's flat base is at
+		# COVER_H + 1.7); it used to run up into it.
+		cylinder(Vector3(x, 0.0, COVER_H - 0.25), 0.2, 1.95, 6, SPOIL, 0.14)
 		heap(Vector3(x, 0.0, COVER_H + 2.0), 1.5, 1.4, 1.5, i * 11 + 5, SPOIL)
 
 
@@ -149,14 +168,20 @@ func _transit_shelter() -> void:
 	box(Vector3(-2.6, -1.0, -0.3), Vector3(2.6, 1.0, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
 	box(Vector3(-2.6, -1.0, KERB_H), Vector3(-2.45, 1.0, 2.4), STORE_GLASS)
 	box(Vector3(2.45, -1.0, KERB_H), Vector3(2.6, 1.0, 2.4), STORE_GLASS)
-	box(Vector3(-2.6, -1.0, KERB_H), Vector3(2.6, -0.85, 2.4), STORE_GLASS)
+	# The back pane runs between the two end panes, not through them.
+	box(Vector3(-2.45, -1.0, KERB_H), Vector3(2.45, -0.85, 2.4), STORE_GLASS)
+	# Posts at the four corners, just outside the glass: they used to stand
+	# in it.
 	for sx: float in [-1.0, 1.0]:
 		for sy: float in [-1.0, 1.0]:
-			post(sx * 2.5, sy * 0.92, KERB_H, 2.6, 0.13)
+			post(sx * 2.665, sy * 1.065, KERB_H, 2.6, 0.13)
 	box(Vector3(-2.9, -1.2, 2.6), Vector3(2.9, 1.7, 2.82), {"top": ROOF_MEMBRANE, "side": SIGN_BAND, "bottom": METAL})
 	box(Vector3(-2.2, -0.8, 0.55), Vector3(2.2, -0.42, 0.72), {"top": WOOD, "side": METAL, "bottom": METAL})
-	box(Vector3(2.9, 0.7, KERB_H), Vector3(3.08, 0.88, 3.3), METAL)
-	box(Vector3(2.7, 0.68, 2.6), Vector3(3.28, 0.9, 3.2), SIGN_BAND)
+	# The route board: a short post with the sign standing on it, beside the
+	# roof's edge. The post used to run up through the sign and the sign into
+	# the roof.
+	box(Vector3(2.9, 0.7, KERB_H), Vector3(3.08, 0.88, 2.6), METAL)
+	box(Vector3(2.9, 0.68, 2.6), Vector3(3.28, 0.9, 3.2), SIGN_BAND)
 
 
 ## THE EVENT MARQUEE: a 24 x 14 white tent on poles, the kind a mall puts up
@@ -173,19 +198,20 @@ func _event_marquee() -> void:
 	solid([Vector3(-w - 0.8, -d - 0.8, eave), Vector3(w + 0.8, -d - 0.8, eave),
 			Vector3(w + 0.8, d + 0.8, eave), Vector3(-w - 0.8, d + 0.8, eave),
 			Vector3(-w - 0.8, 0.0, ridge), Vector3(w + 0.8, 0.0, ridge)], {"top": BAG_WHITE, "side": BAG_WHITE, "bottom": BAG_WHITE})
+	# Poles stand on the slab and stop at the canopy's underside, which is flat
+	# at the eave height all the way across: a pole run on up to the ridge is a
+	# pole inside the roof. The edge ones are against the inside of the wall,
+	# on their ballast, rather than half in it.
 	for i in 5:
 		var x := lerpf(-w + 1.0, w - 1.0, float(i) / 4.0)
 		for s: float in [-1.0, 1.0]:
-			box(Vector3(x - 0.14, s * d - 0.14, 0.0), Vector3(x + 0.14, s * d + 0.14, eave), METAL)
-		box(Vector3(x - 0.16, -0.16, 0.0), Vector3(x + 0.16, 0.16, ridge - 0.2), METAL)
+			var wall_in := s * (d - 0.08)
+			box(Vector3(x - 0.5, wall_in - s * 1.0, 0.05), Vector3(x + 0.5, wall_in, 0.45), CONCRETE)
+			box(Vector3(x - 0.14, wall_in - s * 0.28, 0.45), Vector3(x + 0.14, wall_in, eave), METAL)
+		box(Vector3(x - 0.16, -0.16, 0.05), Vector3(x + 0.16, 0.16, eave), METAL)
 	# The walls, open at both ends: a tent is a corridor with a roof.
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(-w + 2.5, s * d - s * 0.08, 0.05), Vector3(w - 2.5, s * d, eave), {"top": BAG_WHITE, "side": BAG_WHITE, "bottom": BAG_WHITE})
-	# Ballast blocks at every leg, which is how they are really held down.
-	for i in 5:
-		var x := lerpf(-w + 1.0, w - 1.0, float(i) / 4.0)
-		for s: float in [-1.0, 1.0]:
-			box(Vector3(x - 0.5, s * d - 0.5, 0.05), Vector3(x + 0.5, s * d + 0.5, 0.45), CONCRETE)
 
 
 const BAG_WHITE := "PSX_Textures/fabric_tx_1"
@@ -196,19 +222,22 @@ const BAG_WHITE := "PSX_Textures/fabric_tx_1"
 ## sounds.
 func _dumpster_corral() -> void:
 	box(Vector3(-4.0, -3.0, -0.3), Vector3(4.0, 3.0, 0.05), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
-	for e: Array in [[-4.0, -3.0, 4.0, -2.6], [-4.0, 2.6, 4.0, 3.0], [-4.0, -3.0, -3.6, 3.0]]:
-		box(Vector3(e[0], e[1], -0.3), Vector3(e[2], e[3], COVER_H + 0.35), {"top": COPING_TOP, "side": RETAIL_BRICK, "bottom": CONCRETE})
+	# The walls stand on the slab, and the back wall runs between the side ones.
+	for e: Array in [[-4.0, -3.0, 4.0, -2.6], [-4.0, 2.6, 4.0, 3.0], [-4.0, -2.6, -3.6, 2.6]]:
+		box(Vector3(e[0], e[1], 0.05), Vector3(e[2], e[3], COVER_H + 0.35), {"top": COPING_TOP, "side": RETAIL_BRICK, "bottom": CONCRETE})
 	box(Vector3(-3.2, -2.2, 0.05), Vector3(0.2, 1.6, 2.0), {"top": METAL, "side": GREEN, "bottom": METAL})
 	box(Vector3(0.8, -2.2, 0.05), Vector3(3.4, 0.9, 1.65), {"top": METAL, "side": GREEN, "bottom": METAL})
-	# The gate, standing open against the wall.
-	box(Vector3(3.9, 2.6, 0.0), Vector3(4.1, 3.0, 2.0), METAL)
-	box(Vector3(3.9, -0.4, 0.0), Vector3(4.02, 2.6, 1.9), SHUTTER)
+	# The gate, standing open against the wall: just past the slab's edge, where
+	# it used to stand half on it and half in the wall.
+	box(Vector3(4.0, 2.6, 0.0), Vector3(4.2, 3.0, 2.0), METAL)
+	box(Vector3(4.0, -0.4, 0.0), Vector3(4.12, 2.6, 1.9), SHUTTER)
 
 
 ## A valet or security stand: a hut and a small canopy at the court door.
 func _valet_canopy() -> void:
 	box(Vector3(-1.6, -1.4, -0.3), Vector3(1.6, 1.4, 2.6), {"top": ROOF_MEMBRANE, "side": EIFS, "bottom": CONCRETE})
-	box(Vector3(-1.3, 1.2, 1.0), Vector3(1.3, 1.45, 2.1), DARK_GLASS)
+	# The window stands on the hut's face, not in it.
+	box(Vector3(-1.3, 1.4, 1.0), Vector3(1.3, 1.65, 2.1), DARK_GLASS)
 	box(Vector3(-1.75, -1.55, 2.6), Vector3(1.75, 1.55, 2.85), {"top": ROOF_MEMBRANE, "side": SIGN_BAND, "bottom": METAL})
 	box(Vector3(2.4, -3.6, 2.9), Vector3(9.0, 2.6, 3.15), {"top": ROOF_MEMBRANE, "side": SIGN_BAND, "bottom": METAL})
 	for sx: float in [0.0, 1.0]:
@@ -218,16 +247,37 @@ func _valet_canopy() -> void:
 		cylinder(Vector3(-3.0 + i * 1.6, 2.4, -0.3), 0.13, 1.1, 8, METAL)
 
 
+## The points of one lumpy mound, as block_doodads' mound() builds them but
+## without making the brush, so that two of them can be hulled as one.
+func _mound_points(c: Vector3, rx: float, ry: float, h: float, seed: int) -> Array:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	var pts: Array = []
+	for ring in [[-0.3, 1.0], [0.45, 0.8], [0.8, 0.5], [1.0, 0.15]]:
+		var t: float = ring[0]
+		var k: float = ring[1]
+		var count := 9 if k > 0.3 else 4
+		for i in count:
+			var a := TAU * i / count + rng.randf_range(-0.25, 0.25)
+			var j := rng.randf_range(0.92, 1.05)
+			pts.append(c + Vector3(cos(a) * rx * k * j, sin(a) * ry * k * j, t * h if t > 0.0 else t))
+	return pts
+
+
 ## A PLOUGHED HEAP at the edge of the lot — snow in winter, grit and swept
 ## rubbish the rest of the year. Three metres of soft cover that was not put
 ## there on purpose, which is what a car park's cover mostly is.
 func _snow_pile() -> void:
-	mound(Vector3(0.0, 0.0, -0.2), 7.0, 3.4, 2.9, 77, SPOIL)
-	mound(Vector3(6.5, 1.2, -0.2), 3.6, 2.2, 1.8, 91, SPOIL)
+	# The two lumps are one hull. Two separate mounds this close interpenetrate
+	# over a third of their length, and a hull of both is just a longer heap.
+	solid(_mound_points(Vector3(0.0, 0.0, -0.2), 7.0, 3.4, 2.9, 77) + _mound_points(Vector3(6.5, 1.2, -0.2), 3.6, 2.2, 1.8, 91), SPOIL, 4)
 	no_collision()
-	for i in 7:
-		var a := TAU * i / 7.0
-		heap(Vector3(cos(a) * 6.5, sin(a) * 3.2, 0.0), 0.8, 0.6, 0.45, i * 23 + 4, RUBBLE)
+	# Rubble scattered round the foot of it, clear of the heap: on the old
+	# ring they stood half inside it.
+	var foot: Array = [Vector2(-6.3, -2.9), Vector2(-6.3, 2.9), Vector2(-3.4, -3.6), Vector2(3.0, -3.6), Vector2(7.0, -2.8), Vector2(8.8, -1.6), Vector2(-3.4, 3.5)]
+	for i in foot.size():
+		var p: Vector2 = foot[i]
+		heap(Vector3(p.x, p.y, 0.0), 0.8, 0.6, 0.45, i * 23 + 4, RUBBLE)
 
 
 ## AN OUTDOOR FOOD COURT: a pergola over tables between two kiosks. Open
@@ -239,7 +289,8 @@ func _food_pavilion() -> void:
 	box(Vector3(-w - 1.0, -d - 1.0, -0.3), Vector3(w + 1.0, d + 1.0, KERB_H), {"top": WALK, "side": KERB, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * (w - 3.0), -d, KERB_H), Vector3(s * w, d - 2.0, 3.4), {"top": ROOF_MEMBRANE, "side": EIFS, "bottom": CONCRETE})
-		box(Vector3(s * (w - 2.9), d - 2.1, 1.1), Vector3(s * (w - 0.1), d - 2.0, 2.4), DARK_GLASS)
+		# The serving window is on the kiosk's face, not in it.
+		box(Vector3(s * (w - 2.9), d - 2.0, 1.1), Vector3(s * (w - 0.1), d - 1.9, 2.4), DARK_GLASS)
 		box(Vector3(s * (w - 3.2), -d - 0.2, 3.4), Vector3(s * (w + 0.2), d - 1.8, 3.8), {"top": ROOF_MEMBRANE, "side": SIGN_BAND, "bottom": METAL})
 	# The pergola between them: beams on posts, open to the sky, which still
 	# breaks every sightline through it.
@@ -250,7 +301,8 @@ func _food_pavilion() -> void:
 		box(Vector3(-w + 3.2, s * (d - 0.6) - 0.16, 2.7), Vector3(w - 3.2, s * (d - 0.6) + 0.16, 3.0), WOOD_DARK)
 		for i in 4:
 			var x := lerpf(-w + 3.6, w - 3.6, float(i) / 3.0)
-			post(x, s * (d - 0.6), KERB_H, 3.0, 0.22, WOOD_DARK)
+			# The posts hold the side beam up; they stop under it.
+			post(x, s * (d - 0.6), KERB_H, 2.7, 0.22, WOOD_DARK)
 	no_collision()
 	for i in 4:
 		for j in 2:
@@ -266,8 +318,9 @@ func _garden_centre() -> void:
 	var w := 16.0
 	var d := 11.0
 	box(Vector3(-w, -d, -0.3), Vector3(w, d, 0.05), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
-	for e: Array in [[-w, -d, w, -d + 0.2], [-w, d - 0.2, w, d], [-w, -d, -w + 0.2, d]]:
-		box(Vector3(e[0], e[1], 0.0), Vector3(e[2], e[3], 2.3), {"top": METAL, "side": SHUTTER, "bottom": METAL})
+	# The fence stands on the slab, and its west run goes between the other two.
+	for e: Array in [[-w, -d, w, -d + 0.2], [-w, d - 0.2, w, d], [-w, -d + 0.2, -w + 0.2, d - 0.2]]:
+		box(Vector3(e[0], e[1], 0.05), Vector3(e[2], e[3], 2.3), {"top": METAL, "side": SHUTTER, "bottom": METAL})
 	for i in 4:
 		var x := lerpf(-w + 3.0, w - 3.0, float(i) / 3.0)
 		box(Vector3(x - 0.7, -d + 2.0, 0.05), Vector3(x + 0.7, d - 2.0, 1.9), {"top": GRATING, "side": SHUTTER, "bottom": METAL})
@@ -284,9 +337,11 @@ func _garden_centre() -> void:
 func _sign_cluster() -> void:
 	box(Vector3(-0.6, -0.6, -0.4), Vector3(0.6, 0.6, KERB_H), ISLAND)
 	box(Vector3(-0.1, -0.1, KERB_H), Vector3(0.1, 0.1, 3.4), METAL)
-	box(Vector3(-0.55, -0.06, 2.5), Vector3(0.55, 0.06, 3.3), SIGN_BAND)
-	box(Vector3(-0.06, -0.5, 1.9), Vector3(0.06, 0.5, 2.4), SIGN_BAND)
-	box(Vector3(-0.4, -0.05, 1.1), Vector3(0.4, 0.05, 1.6), SIGN_BAND)
+	# The three signs are bolted to the faces of the post rather than passed
+	# through it: one on the front, one on the side, one on the back.
+	box(Vector3(-0.55, 0.1, 2.5), Vector3(0.55, 0.22, 3.3), SIGN_BAND)
+	box(Vector3(0.1, -0.5, 1.9), Vector3(0.22, 0.5, 2.4), SIGN_BAND)
+	box(Vector3(-0.4, -0.22, 1.1), Vector3(0.4, -0.1, 1.6), SIGN_BAND)
 
 
 ## A BANK OF CHARGERS under a small canopy with a PV deck on it, which is
@@ -298,7 +353,8 @@ func _charging_bank() -> void:
 	for i in 4:
 		var x := lerpf(-6.0, 6.0, float(i) / 3.0)
 		box(Vector3(x - 0.35, -0.45, KERB_H), Vector3(x + 0.35, 0.45, 1.75), {"top": METAL, "side": SHUTTER, "bottom": METAL})
-		box(Vector3(x - 0.28, -0.5, 1.1), Vector3(x + 0.28, -0.42, 1.6), DARK_GLASS)
+		# The screen is on the charger's face.
+		box(Vector3(x - 0.28, -0.53, 1.1), Vector3(x + 0.28, -0.45, 1.6), DARK_GLASS)
 	box(Vector3(-w - 0.5, -3.2, 4.2), Vector3(w + 0.5, 3.2, 4.45), {"top": "PSX_Textures/solar_pv", "side": METAL, "bottom": METAL})
 	for sx: float in [-1.0, 1.0]:
 		for sy: float in [-1.0, 1.0]:
