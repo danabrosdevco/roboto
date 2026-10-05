@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bk8tlty1jkt80"
+path="res://.godot/imported/lot_food_pavilion.map-e2773f27ce2a78dc7a4fba8fb283446d.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/lot_food_pavilion.map"
+dest_files=["res://.godot/imported/lot_food_pavilion.map-e2773f27ce2a78dc7a4fba8fb283446d.tres"]
+
+[params]
+

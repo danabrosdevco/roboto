@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bxslybh1esfgd"
+path="res://.godot/imported/lot_transit_shelter.map-9c7fe91cb2fcb472e120f3796faf522f.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/lot_transit_shelter.map"
+dest_files=["res://.godot/imported/lot_transit_shelter.map-9c7fe91cb2fcb472e120f3796faf522f.tres"]
+
+[params]
+

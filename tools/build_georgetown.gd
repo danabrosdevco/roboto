@@ -207,69 +207,102 @@ func _benches(art: Node3D) -> void:
 
 # ── The canal ────────────────────────────────────────────────────────────────
 
-## THE PRISM, bay by bay, with the bridges and the one lock. The bridges are
-## placed at bays 2, 6 and 11 — three crossings in 450 m, which is enough that
-## the canal is a barrier and few enough that holding one matters.
+## THE PRISM, bay by bay, with the bridges, the lock and what is in the bed.
+##
+## FOUR CROSSINGS IN 450 M, of three different kinds: two riveted footbridges,
+## one street bridge heavy enough to fight under, and one plank. They are far
+## enough apart that holding one matters and the plank is deliberately the
+## worst of them — 1.2 m wide, no cover, and it reads as temporary, which
+## tells a player what it will cost before they step on it.
+##
+## AND THE BED IS NOT CLEAN NOW. Silt, fallen coping, a trolley, barriers
+## round the holes and a compound where the work is. In a 3 m trench with
+## vertical sides that debris is the only cover there is, so it decides
+## whether the prism is a corridor or a place to fight.
 func _canal(art: Node3D) -> void:
 	var g := _group(art, "Canal")
-	const BRIDGES := {2: "truss", 6: "road", 11: "truss"}
+	var w := _group(art, "CanalWorks")
+	const BRIDGES := {2: "truss", 6: "road", 11: "truss", 9: "plank"}
 	for i in RUN:
 		if i == 8:
 			_put(g, B % "canal_lock", _bay(i), S_CANAL, ALONG_X, Z_CANAL, "Lock")
+			_put(w, B % "works_lock_gear", _bay(i), S_CANAL, ALONG_X, Z_CANAL, "LockGear")
 			continue
 		var piece := "canal_prism" if i < 10 else "canal_prism_open"
 		_put(g, B % piece, _bay(i), S_CANAL, ALONG_X, Z_CANAL, "Prism_%d" % i)
 	for i: int in BRIDGES:
 		var kind: String = BRIDGES[i]
-		_put(g, B % ("canal_truss_bridge" if kind == "truss" else "canal_road_bridge"),
-				_bay(i), S_CANAL, ALONG_X, Z_CANAL, "Bridge_%d" % i)
-	# The stairs into the bed. Only two, and both well away from a bridge, so
-	# getting into the prism and getting out of it are separate decisions.
+		var name: String = {"truss": "canal_truss_bridge", "road": "canal_road_bridge", "plank": "works_plank_bridge"}[kind]
+		_put(g, B % name, _bay(i), S_CANAL, ALONG_X, Z_CANAL, "Bridge_%d" % i)
 	for i: int in [4, 12]:
 		_put(g, B % "canal_stair_down", _bay(i) + 9.0, S_CANAL, ALONG_X, Z_CANAL, "CanalStair_%d" % i)
-	# The dewatering works in the bed: bags, barriers and an outfall.
 	for i: int in [3, 9]:
 		_put(g, B % "canal_cofferdam", _bay(i) - 6.0, S_CANAL + 1.5, ALONG_X, Z_CANAL, "Cofferdam_%d" % i)
 	for i: int in [1, 7, 13]:
 		_put(g, B % "canal_outfall", _bay(i) + 4.0, S_CANAL, ALONG_X, Z_CANAL, "Outfall_%d" % i)
+	# What is lying in the bed, and the barriers round the holes.
+	for i: int in [0, 4, 5, 10, 12]:
+		_put(w, B % "works_bed_debris", _bay(i), S_CANAL + (_hash(i) - 0.5) * 3.0, ALONG_X, Z_CANAL - 3.0,
+				"Debris_%d" % i)
+	for i: int in [3, 6, 9, 13]:
+		_put(w, B % "works_barrier_run", _bay(i) + 7.0, S_CANAL - 6.0, ALONG_X, Z_CANAL, "Barrier_%d" % i)
+	# The works compound on the towpath, at the lock, where the job is.
+	_put(w, B % "works_site_compound", _bay(7) - 2.0, S_CANAL - 18.0, ALONG_X, Z_CANAL, "Compound")
+	# Market along the towpath at the open end, where the canal is a place
+	# rather than a cut.
+	_put(w, B % "works_market_stalls", _bay(11) + 6.0, S_CANAL - 7.5, ALONG_X, Z_CANAL, "Market")
 	for i in RUN:
 		if posmod(i, 3) != 0:
 			continue
 		_put(g, B_STREETS % "street_light_cobra", _bay(i), S_CANAL + 11.0, FACE_NORTH, Z_CANAL, "TowLight_%d" % i)
 
 
-## THE MILLS along the canal's north side, standing on the terrace above the
-## berm so their ground floors ARE the wall. Mixed heights deliberately: a row
-## of one building repeated is a wall, a row of three is a street.
+## A deterministic 0..1 from an integer, so the dressing is scattered the same
+## way every build.
+func _hash(n: int) -> float:
+	var h: int = n * 374761393 + 668265263
+	h = (h ^ (h >> 13)) * 1274126177
+	return float((h ^ (h >> 16)) & 0xFFFF) / 65535.0
+
+
+## THE MILLS along the canal, now in three sizes with scaffold up one of them.
+## A row of one building repeated is a wall; a row of three sizes is a street.
 func _mills(art: Node3D) -> void:
 	var g := _group(art, "Mills")
 	var z := S_CANAL - 22.0
-	var kinds: Array = ["mill_brick_long", "mill_warehouse_stone", "mill_brick_tall",
-			"mill_brick_long", "mill_warehouse_stone"]
-	for i in 5:
-		_put(g, B % kinds[i], -200.0 + i * 92.0, z, FACE_SOUTH, Z_CANAL + 3.0, "Mill_%d" % i)
-	# The café terraces, cantilevered over the canal wall between the mills.
+	var kinds: Array = ["mill_brick_long", "mill_brick_short", "mill_warehouse_stone",
+			"mill_brick_tall", "mill_brick_short", "mill_brick_long", "mill_warehouse_stone"]
+	for i in 7:
+		_put(g, B % kinds[i], -212.0 + i * 68.0, z, FACE_SOUTH, Z_CANAL + 3.0, "Mill_%d" % i)
+	# Scaffold on the face of one of them, over the berm: a way up a building
+	# that has no other, and a thing to be shot off.
+	_put(g, B % "works_scaffold", -144.0, S_CANAL - 12.6, ALONG_X, Z_CANAL, "Scaffold")
 	for i: int in [0, 1]:
-		_put(g, B % "mill_cafe_terrace", -154.0 + i * 184.0, S_CANAL - 14.0, ALONG_X, Z_CANAL + 3.0, "Cafe_%d" % i)
-	# The modern block at the east end, on the far side of the towpath — the
-	# one that throws its shadow across the canal in the photograph.
+		_put(g, B % "mill_cafe_terrace", -170.0 + i * 204.0, S_CANAL - 14.0, ALONG_X, Z_CANAL + 3.0, "Cafe_%d" % i)
 	_put(g, B % "mill_office_modern", 188.0, S_CANAL + 30.0, FACE_WEST, Z_CANAL, "OfficeBlock")
 
 
-## THE TOWN ABOVE: streets, blocks and the stairs down to the canal. This is
-## where a mission starts, and it is deliberately the tightest ground on the
-## map — the open stuff is all below.
+## THE TOWN ABOVE, in federal rowhouses rather than the suburban townhouses
+## the first pass borrowed — those were the wrong country entirely. Flat brick
+## fronts straight onto the pavement with a stoop, which makes the top bench
+## the tightest ground on the map. The open stuff is all below it.
 func _upper_town(art: Node3D) -> void:
 	var g := _group(art, "UpperTown")
 	for i in RUN:
 		_put(g, B_STREETS % "street_road_two_lane", _bay(i), S_TOWN, ALONG_X, Z_TOWN, "MStreet_%d" % i)
 		if posmod(i, 2) == 0:
 			_put(g, B_STREETS % "street_sidewalk_run", _bay(i), S_TOWN - 22.0, ALONG_X, Z_TOWN, "TownWalk_%d" % i)
-	var kinds: Array = ["suburb_townhouse_row", "mill_brick_long", "suburb_townhouse_row"]
-	for i in 6:
-		var kind: String = kinds[i % 3]
-		var path: String = (B % kind) if kind.begins_with("mill") else ("res://maps/blocks/suburbs/%s.tscn" % kind)
-		_put(g, path, -190.0 + i * 76.0, S_TOWN - 40.0, FACE_SOUTH, Z_TOWN, "TownBlock_%d" % i)
+	# Two facing terraces, so the street between them is a corridor with
+	# doors on both sides.
+	for i in 5:
+		var x := -164.0 + i * 82.0
+		_put(g, B % "mill_rowhouse_run", x, S_TOWN - 32.0, FACE_SOUTH, Z_TOWN, "RowN_%d" % i)
+		_put(g, B % "mill_rowhouse_run", x + 20.0, S_TOWN + 30.0, FACE_NORTH, Z_TOWN, "RowS_%d" % i)
+	_put(g, B % "mill_brick_short", 196.0, S_TOWN - 30.0, FACE_SOUTH, Z_TOWN, "TownMill")
+	for i in 5:
+		_put(g, B_STREETS % "street_light_cobra", -150.0 + i * 76.0, S_TOWN - 12.0, FACE_SOUTH, Z_TOWN, "TownLight_%d" % i)
+	for i in 3:
+		_put(g, B_STREETS % "street_sign_stop", -120.0 + i * 120.0, S_TOWN - 11.0, 0.0, Z_TOWN, "TownStop_%d" % i)
 	# Down to the canal: two public stairs and one ramped street, which are
 	# the only three ways off this bench.
 	for i: int in [3, 10]:
@@ -277,8 +310,9 @@ func _upper_town(art: Node3D) -> void:
 	_put(g, B % "canal_street_ramp", _bay(7) + 4.0, S_TOWN + 46.0, ALONG_Z, Z_CANAL, "TownRamp")
 
 
-## THE LOWER YARDS between canal and river: the old working level, still
-## industrial. Open enough to cross, broken enough to cross badly.
+## THE LOWER YARDS between canal and river, with the viaduct carrying a street
+## across them. The viaduct is two levels for the price of one: a roofed route
+## under it and a street over it.
 func _lower_yards(art: Node3D) -> void:
 	var g := _group(art, "LowerYards")
 	for i in RUN:
@@ -288,7 +322,12 @@ func _lower_yards(art: Node3D) -> void:
 	for i in 4:
 		_put(g, B % "mill_warehouse_stone", -170.0 + i * 108.0, S_YARDS + 34.0, FACE_SOUTH, Z_YARDS, "Yard_%d" % i)
 	for i in 3:
+		_put(g, B % "mill_brick_short", -124.0 + i * 118.0, S_YARDS + 62.0, FACE_NORTH, Z_YARDS, "YardMill_%d" % i)
+	for i in 3:
 		_put(g, B_SUBURBAN % "suburban_service_dock", -120.0 + i * 120.0, S_YARDS + 6.0, FACE_NORTH, Z_YARDS, "YardDock_%d" % i)
+	for i: int in [0, 1]:
+		_put(g, B % "works_arch_viaduct", -92.0 + i * 184.0, S_YARDS + 24.0, ALONG_Z, Z_YARDS, "Viaduct_%d" % i)
+	_put(g, B % "works_site_compound", 44.0, S_YARDS + 44.0, ALONG_X, Z_YARDS, "YardCompound")
 	for i: int in [2, 9]:
 		_put(g, B % "canal_terrace_stair", _bay(i) + 12.0, S_YARDS - 2.0, ALONG_Z, Z_YARDS, "YardStair_%d" % i)
 	_put(g, B % "canal_street_ramp", _bay(12), S_YARDS - 2.0, ALONG_Z, Z_YARDS, "YardRamp")
@@ -296,16 +335,22 @@ func _lower_yards(art: Node3D) -> void:
 		if posmod(i, 4) != 0:
 			continue
 		_put(g, B_STREETS % "street_utility_cabinet", _bay(i) + 8.0, S_YARDS + 24.0, FACE_SOUTH, Z_YARDS, "Cab_%d" % i)
+	for i in 5:
+		_put(g, B_STREETS % "street_light_cobra", -160.0 + i * 82.0, S_YARDS + 10.0, FACE_SOUTH, Z_YARDS, "YardLight_%d" % i)
 
 
-## THE WATERFRONT: the esplanade, a pier, the river and Arlington across it.
-## The bottom of the map and its one open flank.
+## THE WATERFRONT: the esplanade, the piers, a boathouse and a barge, then the
+## river and Arlington. The bottom of the map and its one open flank — the
+## barge is the only thing on it with a drop on three sides.
 func _waterfront(art: Node3D) -> void:
 	var g := _group(art, "Waterfront")
 	for i in 10:
 		_put(g, B % "wharf_esplanade", -216.0 + i * 48.0, S_WHARF, ALONG_X, Z_WHARF, "Esplanade_%d" % i)
 	for i: int in [0, 1, 2]:
 		_put(g, B % "wharf_pier", -140.0 + i * 140.0, S_WHARF + 14.0, ALONG_X, Z_WHARF, "Pier_%d" % i)
+	_put(g, B % "wharf_boathouse", -56.0, S_WHARF + 10.0, ALONG_X, Z_WHARF, "Boathouse")
+	_put(g, B % "wharf_barge", 72.0, S_WHARF + 20.0, ALONG_X + 4.0, Z_WHARF, "Barge")
+	_put(g, B % "works_market_stalls", 8.0, S_WHARF - 6.0, ALONG_X, Z_WHARF, "WharfMarket")
 	for i: int in [4, 11]:
 		_put(g, B % "canal_terrace_stair", _bay(i) + 6.0, S_WHARF - 4.0, ALONG_Z, Z_WHARF, "WharfStair_%d" % i)
 	_put(g, B % "wharf_river", 0.0, S_WHARF + 2.0, ALONG_X, Z_WHARF, "Potomac")

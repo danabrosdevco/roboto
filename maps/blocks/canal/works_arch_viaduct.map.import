@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b4cja5j3syyp4"
+path="res://.godot/imported/works_arch_viaduct.map-c8901e84871c43433f27a05add257236.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/works_arch_viaduct.map"
+dest_files=["res://.godot/imported/works_arch_viaduct.map-c8901e84871c43433f27a05add257236.tres"]
+
+[params]
+

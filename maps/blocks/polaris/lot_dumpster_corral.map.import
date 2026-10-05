@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bxjerfvrsu5gt"
+path="res://.godot/imported/lot_dumpster_corral.map-0125aed0eefbf966368796d6ba61e455.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/lot_dumpster_corral.map"
+dest_files=["res://.godot/imported/lot_dumpster_corral.map-0125aed0eefbf966368796d6ba61e455.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b1yd8s0a2nj06"
+path="res://.godot/imported/lot_valet_canopy.map-d177704eee6b1a777db548ac742a1915.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/lot_valet_canopy.map"
+dest_files=["res://.godot/imported/lot_valet_canopy.map-d177704eee6b1a777db548ac742a1915.tres"]
+
+[params]
+

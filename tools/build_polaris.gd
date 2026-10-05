@@ -233,39 +233,81 @@ func _mall(art: Node3D) -> void:
 	_put(g, B_SUBURBAN % "suburban_big_box", 112.0, -74.0, FACE_NORTH, 0.0, "Fieldhouse")
 
 
-## THE PARKING FAN. The aisles run ACROSS the site, parallel to the mall's
-## long face, stacked twenty metres apart — which is the aisle plus its drive
-## lanes, so they tile without overlapping. Each is turned a couple of degrees
-## more than the last so the field fans instead of reading as graph paper,
-## which is what the real one does.
+## THE PARKING FAN, and the cars in it.
+##
+## THE CAR ROWS ARE THE POINT OF THIS PASS. The first assembly gave the mall
+## four hundred metres of flat asphalt with nothing on it taller than a kerb,
+## and a squad crossing that had no decision to make and nowhere to make it.
+## A parked car is 1.45 m: over the 1.2 m a standing cover point probes at and
+## under a head, so a row of them is cover you fire over from a crouch and get
+## shot over from a stand. The lot nearest the doors is packed, the far corners
+## are emptying, and the gradient between those is the map telling a player
+## where it is safe to cross.
 func _parking(art: Node3D) -> void:
 	var g := _group(art, "Parking")
+	var cars := _group(art, "ParkedCars")
 	for i in 5:
 		var z := 58.0 + i * 20.0
 		var fan := (i - 2) * 2.5
 		for s: float in [-1.0, 1.0]:
-			_put(g, B_POLARIS % "polaris_aisle_long", s * 34.0, z, ALONG_X + s * fan, 0.0,
+			var yaw: float = ALONG_X + s * fan
+			_put(g, B_POLARIS % "polaris_aisle_long", s * 34.0, z, yaw, 0.0,
 					"SouthAisle_%d_%s" % [i, "E" if s > 0.0 else "W"])
+			# A row of cars down each side of every aisle. The near aisles are
+			# full and the far ones are not, which is what a car park does.
+			var full: bool = i < 3
+			for e: float in [-1.0, 1.0]:
+				_put(cars, B_POLARIS % ("lot_car_row" if full else "lot_car_row_sparse"),
+						s * 34.0 + e * 0.0, z + e * 4.3, yaw, 0.0,
+						"SouthCars_%d_%s_%s" % [i, "E" if s > 0.0 else "W", "a" if e > 0.0 else "b"])
 	for i in 3:
 		var z := -58.0 - i * 20.0
 		for s: float in [-1.0, 1.0]:
-			_put(g, B_POLARIS % "polaris_aisle_long", s * 36.0, z, ALONG_X - s * (i - 1) * 3.0, 0.0,
+			var yaw: float = ALONG_X - s * (i - 1) * 3.0
+			_put(g, B_POLARIS % "polaris_aisle_long", s * 36.0, z, yaw, 0.0,
 					"NorthAisle_%d_%s" % [i, "E" if s > 0.0 else "W"])
-	# The ends, where the aisles turn to run up the site instead.
+			for e: float in [-1.0, 1.0]:
+				_put(cars, B_POLARIS % "lot_car_row_sparse", s * 36.0, z + e * 4.3, yaw, 0.0,
+						"NorthCars_%d_%s_%s" % [i, "E" if s > 0.0 else "W", "a" if e > 0.0 else "b"])
 	for s: float in [-1.0, 1.0]:
 		for i in 3:
 			_put(g, B_POLARIS % "polaris_aisle_long", s * (152.0 + i * 20.0), 0.0, ALONG_Z, 0.0,
 					"EndAisle_%s_%d" % ["E" if s > 0.0 else "W", i])
-	# The two basins, wedged into the parking where the real ones are. The
-	# only ground on the whole site that is not flat.
+			for e: float in [-1.0, 1.0]:
+				_put(cars, B_POLARIS % "lot_car_row_sparse", s * (152.0 + i * 20.0) + e * 4.3, 0.0, ALONG_Z, 0.0,
+						"EndCars_%s_%d_%s" % ["E" if s > 0.0 else "W", i, "a" if e > 0.0 else "b"])
+	# The two basins, wedged into the parking where the real ones are.
 	_put(g, B_SUBURBS % "suburb_retention_pond", -158.0, 126.0, 20.0, 0.0, "BasinWest")
 	_put(g, B_SUBURBS % "suburb_retention_pond", 168.0, -126.0, 200.0, 0.0, "BasinEast")
+	# Things in the lot that are neither a car nor a kerb. Every one of these
+	# is between waist and head height on purpose: a car park's real cover is
+	# all accidental, and this is the accident.
 	for i in 6:
 		_put(g, B_SUBURBAN % "suburban_cart_corral", -80.0 + i * 32.0, 48.0, ALONG_X, 0.0, "Corral_%d" % i)
+	for i in 5:
+		_put(g, B_POLARIS % "lot_planter_bed", -112.0 + i * 56.0, 74.0, ALONG_X, 0.0, "Planter_%d" % i)
+	for i in 4:
+		_put(g, B_POLARIS % "lot_planter_bed", -96.0 + i * 64.0, 134.0, ALONG_X + 4.0, 0.0, "PlanterS_%d" % i)
+	for i in 3:
+		_put(g, B_POLARIS % "lot_sign_cluster", -92.0 + i * 92.0, 96.0, 0.0, 0.0, "AisleSign_%d" % i)
+	# The marquee: a building-sized thing in the middle of open ground, which
+	# makes it the obvious objective and the obvious ambush at the same time.
+	_put(g, B_POLARIS % "lot_event_marquee", 10.0, 116.0, ALONG_X + 6.0, 0.0, "Marquee")
+	_put(g, B_POLARIS % "lot_food_pavilion", -58.0, 52.0, ALONG_X, 0.0, "FoodPavilion")
+	_put(g, B_POLARIS % "lot_charging_bank", 88.0, 56.0, ALONG_X, 0.0, "Chargers")
+	_put(g, B_POLARIS % "lot_garden_centre", 150.0, -52.0, FACE_WEST, 0.0, "GardenCentre")
+	for i: int in [0, 1]:
+		_put(g, B_POLARIS % "lot_snow_pile", -186.0 + i * 372.0, 96.0 - i * 190.0, 0.0, 0.0, "Heap_%d" % i)
+	for i in 3:
+		_put(g, B_POLARIS % "lot_dumpster_corral", -70.0 + i * 108.0, -46.0, FACE_SOUTH, 0.0, "Bins_%d" % i)
+	_put(g, B_POLARIS % "lot_valet_canopy", -26.0, 44.0, FACE_SOUTH, 0.0, "Valet")
 	for i in 12:
 		var a := TAU * i / 12.0
 		_put(g, B_SUBURBAN % "suburban_lot_light", cos(a) * 118.0, 40.0 + sin(a) * 64.0, 0.0, 0.0,
 				"LotLight_%d" % i)
+	for i in 4:
+		_put(g, B_POLARIS % "lot_transit_shelter", -120.0 + i * 80.0, RING_Y + RING_R + 10.0, FACE_NORTH, 0.0,
+				"Shelter_%d" % i)
 
 
 ## THE RESTAURANT ROW and the other outlots, OUTSIDE the loop along the south

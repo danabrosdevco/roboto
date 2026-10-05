@@ -55,7 +55,7 @@ const SHOTS: Array = [
 	["georgetown", "G5_the_esplanade", Vector3(-60.0, -5.3, 110.0), Vector3(90.0, -6.0, 118.0), 62.0, "abs"],
 	["georgetown", "G6_aerial", Vector3(-30.0, 190.0, -270.0), Vector3(0.0, -4.0, 70.0), 58.0, "abs"],
 	["polaris", "P1_the_row", Vector3(-70.0, 2.0, 252.0), Vector3(-70.0, 4.0, 180.0), 62.0, "abs"],
-	["polaris", "P2_across_the_lot", Vector3(0.0, 2.0, 190.0), Vector3(0.0, 14.0, 20.0), 60.0, "abs"],
+	["polaris", "P2_across_the_lot", Vector3(-14.0, 2.0, 128.0), Vector3(4.0, 10.0, 24.0), 62.0, "abs"],
 	["polaris", "P3_the_court", Vector3(-24.0, 2.0, 96.0), Vector3(8.0, 12.0, 40.0), 64.0, "abs"],
 	["polaris", "P4_aerial", Vector3(0.0, 300.0, 430.0), Vector3(0.0, 0.0, 0.0), 56.0, "abs"],
 	["polaris", "P5_aerial_high", Vector3(-120.0, 470.0, 420.0), Vector3(-30.0, 0.0, -40.0), 58.0, "abs"],

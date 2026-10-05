@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ci43hinpi658x"
+path="res://.godot/imported/works_bed_debris.map-8dd092f166464911ceeecf7a49221cdc.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/works_bed_debris.map"
+dest_files=["res://.godot/imported/works_bed_debris.map-8dd092f166464911ceeecf7a49221cdc.tres"]
+
+[params]
+
