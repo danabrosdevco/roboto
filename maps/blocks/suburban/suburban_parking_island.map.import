@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dc7xk0h8m8gib"
+path="res://.godot/imported/suburban_parking_island.map-c82ea5d96fc4802a76fb14fa07fe9ac2.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_parking_island.map"
+dest_files=["res://.godot/imported/suburban_parking_island.map-c82ea5d96fc4802a76fb14fa07fe9ac2.tres"]
+
+[params]
+

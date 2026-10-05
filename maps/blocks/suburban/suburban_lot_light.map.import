@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bl77dkj56ec0h"
+path="res://.godot/imported/suburban_lot_light.map-b594289c21afa00dc00ad50297ec4b5b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_lot_light.map"
+dest_files=["res://.godot/imported/suburban_lot_light.map-b594289c21afa00dc00ad50297ec4b5b.tres"]
+
+[params]
+

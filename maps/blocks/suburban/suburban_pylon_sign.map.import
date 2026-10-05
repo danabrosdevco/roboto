@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://d0cams2adogfu"
+path="res://.godot/imported/suburban_pylon_sign.map-9cffe03bcd4455a6e9796f8376f5143b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_pylon_sign.map"
+dest_files=["res://.godot/imported/suburban_pylon_sign.map-9cffe03bcd4455a6e9796f8376f5143b.tres"]
+
+[params]
+

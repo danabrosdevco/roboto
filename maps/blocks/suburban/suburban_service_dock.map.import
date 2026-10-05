@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://lwn17vuedi61"
+path="res://.godot/imported/suburban_service_dock.map-9410883f86791d794ce4286f4a1b789f.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_service_dock.map"
+dest_files=["res://.godot/imported/suburban_service_dock.map-9410883f86791d794ce4286f4a1b789f.tres"]
+
+[params]
+

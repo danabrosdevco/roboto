@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://8d3gjoxnsk8m"
+path="res://.godot/imported/suburban_retail_strip.map-24888c821dff2cec1e06bc4cf5421c46.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_retail_strip.map"
+dest_files=["res://.godot/imported/suburban_retail_strip.map-24888c821dff2cec1e06bc4cf5421c46.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dp5mne31bqynn"
+path="res://.godot/imported/suburban_gas_canopy.map-f7b8f31d136479e309b288f6911534c7.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_gas_canopy.map"
+dest_files=["res://.godot/imported/suburban_gas_canopy.map-f7b8f31d136479e309b288f6911534c7.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bjofo2va7als3"
+path="res://.godot/imported/suburban_entry_monument.map-7b6a1f0025b2bcf1118345498f1e6b62.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_entry_monument.map"
+dest_files=["res://.godot/imported/suburban_entry_monument.map-7b6a1f0025b2bcf1118345498f1e6b62.tres"]
+
+[params]
+

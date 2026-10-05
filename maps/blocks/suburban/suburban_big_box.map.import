@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cn8j1h144bhtp"
+path="res://.godot/imported/suburban_big_box.map-52701f841ab0fc23b979576a9d529443.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_big_box.map"
+dest_files=["res://.godot/imported/suburban_big_box.map-52701f841ab0fc23b979576a9d529443.tres"]
+
+[params]
+
