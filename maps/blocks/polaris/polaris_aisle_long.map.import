@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://p0bxnusqvx7t"
+path="res://.godot/imported/polaris_aisle_long.map-111f649c9f679b7e5c27562cd8477135.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_aisle_long.map"
+dest_files=["res://.godot/imported/polaris_aisle_long.map-111f649c9f679b7e5c27562cd8477135.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://drc0gepxvw7dd"
+path="res://.godot/imported/polaris_cinema.map-886db6fd9a3bf7083accda0b3d0e3387.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_cinema.map"
+dest_files=["res://.godot/imported/polaris_cinema.map-886db6fd9a3bf7083accda0b3d0e3387.tres"]
+
+[params]
+

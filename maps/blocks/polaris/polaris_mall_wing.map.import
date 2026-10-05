@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://brpgft4y3ylji"
+path="res://.godot/imported/polaris_mall_wing.map-c16d9fd4112314afd54f3c62ff6e84ed.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_mall_wing.map"
+dest_files=["res://.godot/imported/polaris_mall_wing.map-c16d9fd4112314afd54f3c62ff6e84ed.tres"]
+
+[params]
+

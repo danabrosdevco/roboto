@@ -1,0 +1,2170 @@
+[gd_scene load_steps=44 format=3]
+
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_lot_main.tscn" id="1_1eaa2"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_rnn1b"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_dlnir"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_ground_grass.tscn" id="4_10c2k"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_ring_corner.tscn" id="5_7b4k8"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_road_two_lane.tscn" id="6_wuw3v"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_lot_light.tscn" id="7_t3mxg"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_mall_wing.tscn" id="8_hyywr"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_mall_anchor.tscn" id="9_4x144"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_mall_entry.tscn" id="10_pxc6x"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_service_dock.tscn" id="11_8y1am"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_cinema.tscn" id="12_wtijn"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_parking_garage.tscn" id="13_j31m1"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_big_box.tscn" id="14_ukg85"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_aisle_long.tscn" id="15_nrtf3"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_retention_pond.tscn" id="16_d8qfn"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_cart_corral.tscn" id="17_fljvs"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_restaurant_casual.tscn" id="18_pfiw5"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_restaurant_upscale.tscn" id="19_rncdx"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_restaurant_fast.tscn" id="20_cmkqe"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_patio.tscn" id="21_p55x8"]
+[ext_resource type="PackedScene" path="res://maps/blocks/polaris/polaris_bank_outlot.tscn" id="22_wkwdq"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_drive_thru.tscn" id="23_7sswd"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_gas_canopy.tscn" id="24_03d25"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_road_turn_lane.tscn" id="25_ytblu"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_sidewalk_run.tscn" id="26_j4k35"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_lot_entry_throat.tscn" id="27_enqlp"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_pylon_sign.tscn" id="28_63tep"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_entry_monument.tscn" id="29_k68ud"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_billboard.tscn" id="30_wdy6p"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_signal_mast.tscn" id="31_obg2t"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburban/suburban_retail_strip.tscn" id="32_meaqk"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_self_storage.tscn" id="33_w27s5"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_office_lowrise.tscn" id="34_ufq7x"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_road_four_lane.tscn" id="35_oe0xc"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_house_ranch.tscn" id="36_h8y1d"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_fence_privacy.tscn" id="37_uk8pq"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_house_two_story.tscn" id="38_rx6dw"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_house_split.tscn" id="39_kwvit"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_townhouse_row.tscn" id="40_u1dms"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_garden_apartment.tscn" id="41_ur75x"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_church.tscn" id="42_fi3iw"]
+[ext_resource type="PackedScene" path="res://maps/blocks/suburbs/suburb_school_wing.tscn" id="43_gfv1n"]
+
+[node name="PolarisArt" type="Node3D"]
+
+[node name="Ground" type="Node3D" parent="."]
+
+[node name="Lot" type="Node3D" parent="Ground" instance=ExtResource("1_1eaa2")]
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_lot_main.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="GrassZ_0_a" type="Node3D" parent="Ground" instance=ExtResource("4_10c2k")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130, 0, -280)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ground_grass.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="GrassZ_0_b" type="Node3D" parent="Ground" instance=ExtResource("4_10c2k")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130, 0, -280)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ground_grass.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="GrassX_0_a" type="Node3D" parent="Ground" instance=ExtResource("4_10c2k")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -330, 0, -100)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ground_grass.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="GrassX_0_b" type="Node3D" parent="Ground" instance=ExtResource("4_10c2k")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -330, 0, 100)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ground_grass.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="GrassZ_1_a" type="Node3D" parent="Ground" instance=ExtResource("4_10c2k")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130, 0, 280)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ground_grass.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="GrassZ_1_b" type="Node3D" parent="Ground" instance=ExtResource("4_10c2k")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130, 0, 280)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ground_grass.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="GrassX_1_a" type="Node3D" parent="Ground" instance=ExtResource("4_10c2k")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 330, 0, -100)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ground_grass.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="GrassX_1_b" type="Node3D" parent="Ground" instance=ExtResource("4_10c2k")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 330, 0, 100)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ground_grass.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingRoad" type="Node3D" parent="."]
+
+[node name="Corner_0" type="Node3D" parent="RingRoad" instance=ExtResource("5_7b4k8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0, 110)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ring_corner.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Corner_1" type="Node3D" parent="RingRoad" instance=ExtResource("5_7b4k8")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -150, 0, 110)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ring_corner.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Corner_2" type="Node3D" parent="RingRoad" instance=ExtResource("5_7b4k8")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -150, 0, -110)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ring_corner.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Corner_3" type="Node3D" parent="RingRoad" instance=ExtResource("5_7b4k8")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 150, 0, -110)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_ring_corner.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_N_0" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -133.333, 0, -160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_N_1" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -100, 0, -160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_N_2" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -66.6667, 0, -160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_N_3" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -33.3333, 0, -160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_N_4" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, -160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_N_5" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 33.3333, 0, -160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_N_6" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 66.6667, 0, -160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_N_7" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 100, 0, -160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_N_8" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 133.333, 0, -160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_S_0" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -133.333, 0, 160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_S_1" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -100, 0, 160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_S_2" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -66.6667, 0, 160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_S_3" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -33.3333, 0, 160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_S_4" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_S_5" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 33.3333, 0, 160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_S_6" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 66.6667, 0, 160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_S_7" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 100, 0, 160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingX_S_8" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 133.333, 0, 160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_W_0" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200, 0, -94.2857)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_W_1" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200, 0, -62.8571)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_W_2" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200, 0, -31.4286)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_W_3" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_W_4" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200, 0, 31.4286)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_W_5" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200, 0, 62.8571)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_W_6" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200, 0, 94.2857)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_E_0" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 0, -94.2857)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_E_1" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 0, -62.8571)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_E_2" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 0, -31.4286)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_E_3" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_E_4" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 0, 31.4286)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_E_5" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 0, 62.8571)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingZ_E_6" type="Node3D" parent="RingRoad" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 0, 94.2857)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_0" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 207, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_1" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 191.243, 0, 63.9081)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_2" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 146.371, 0, 118.087)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_3" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 79.2155, 0, 154.288)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_4" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.26747e-14, 0, 167)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_5" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -79.2155, 0, 154.288)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_6" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -146.371, 0, 118.087)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_7" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -191.243, 0, 63.9081)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_8" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -207, 0, 2.04509e-14)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_9" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -191.243, 0, -63.9081)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_10" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -146.371, 0, -118.087)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_11" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -79.2155, 0, -154.288)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_12" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8024e-14, 0, -167)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_13" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 79.2155, 0, -154.288)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_14" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 146.371, 0, -118.087)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RingLight_15" type="Node3D" parent="RingRoad" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 191.243, 0, -63.9081)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Mall" type="Node3D" parent="."]
+
+[node name="WingWest" type="Node3D" parent="Mall" instance=ExtResource("8_hyywr")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -38, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_mall_wing.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="WingEast" type="Node3D" parent="Mall" instance=ExtResource("8_hyywr")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 38, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_mall_wing.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="AnchorWest" type="Node3D" parent="Mall" instance=ExtResource("9_4x144")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -108, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_mall_anchor.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="AnchorEast" type="Node3D" parent="Mall" instance=ExtResource("9_4x144")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 108, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_mall_anchor.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="EntryCourt" type="Node3D" parent="Mall" instance=ExtResource("10_pxc6x")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 0, 0, 34)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_mall_entry.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="ServiceDock" type="Node3D" parent="Mall" instance=ExtResource("11_8y1am")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -40, 0, -30)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_service_dock.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="ServiceDockEast" type="Node3D" parent="Mall" instance=ExtResource("11_8y1am")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 52, 0, -30)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_service_dock.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Cinema" type="Node3D" parent="Mall" instance=ExtResource("12_wtijn")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -120, 0, 84)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_cinema.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Garage" type="Node3D" parent="Mall" instance=ExtResource("13_j31m1")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 128, 0, 74)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_parking_garage.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Fieldhouse" type="Node3D" parent="Mall" instance=ExtResource("14_ukg85")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 112, 0, -74)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_big_box.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Parking" type="Node3D" parent="."]
+
+[node name="SouthAisle_0_W" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(-0.0871558, 0, 0.996195, 0, 1, 0, -0.996195, 0, -0.0871558, -34, 0, 58)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="SouthAisle_0_E" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(0.0871558, 0, 0.996195, 0, 1, 0, -0.996195, 0, 0.0871558, 34, 0, 58)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="SouthAisle_1_W" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(-0.0436194, 0, 0.999048, 0, 1, 0, -0.999048, 0, -0.0436194, -34, 0, 78)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="SouthAisle_1_E" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(0.0436195, 0, 0.999048, 0, 1, 0, -0.999048, 0, 0.0436195, 34, 0, 78)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="SouthAisle_2_W" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -34, 0, 98)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="SouthAisle_2_E" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 34, 0, 98)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="SouthAisle_3_W" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(0.0436195, 0, 0.999048, 0, 1, 0, -0.999048, 0, 0.0436195, -34, 0, 118)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="SouthAisle_3_E" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(-0.0436194, 0, 0.999048, 0, 1, 0, -0.999048, 0, -0.0436194, 34, 0, 118)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="SouthAisle_4_W" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(0.0871558, 0, 0.996195, 0, 1, 0, -0.996195, 0, 0.0871558, -34, 0, 138)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="SouthAisle_4_E" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(-0.0871558, 0, 0.996195, 0, 1, 0, -0.996195, 0, -0.0871558, 34, 0, 138)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="NorthAisle_0_W" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(0.052336, 0, 0.99863, 0, 1, 0, -0.99863, 0, 0.052336, -36, 0, -58)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="NorthAisle_0_E" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(-0.0523359, 0, 0.99863, 0, 1, 0, -0.99863, 0, -0.0523359, 36, 0, -58)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="NorthAisle_1_W" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -36, 0, -78)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="NorthAisle_1_E" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 36, 0, -78)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="NorthAisle_2_W" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(-0.0523359, 0, 0.99863, 0, 1, 0, -0.99863, 0, -0.0523359, -36, 0, -98)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="NorthAisle_2_E" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(0.052336, 0, 0.99863, 0, 1, 0, -0.99863, 0, 0.052336, 36, 0, -98)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="EndAisle_W_0" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -152, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="EndAisle_W_1" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -172, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="EndAisle_W_2" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -192, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="EndAisle_E_0" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 152, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="EndAisle_E_1" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 172, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="EndAisle_E_2" type="Node3D" parent="Parking" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 192, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="BasinWest" type="Node3D" parent="Parking" instance=ExtResource("16_d8qfn")]
+transform = Transform3D(0.939693, 0, 0.34202, 0, 1, 0, -0.34202, 0, 0.939693, -158, 0, 126)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_retention_pond.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="BasinEast" type="Node3D" parent="Parking" instance=ExtResource("16_d8qfn")]
+transform = Transform3D(-0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, -0.939693, 168, 0, -126)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_retention_pond.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Corral_0" type="Node3D" parent="Parking" instance=ExtResource("17_fljvs")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -80, 0, 48)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_cart_corral.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Corral_1" type="Node3D" parent="Parking" instance=ExtResource("17_fljvs")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48, 0, 48)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_cart_corral.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Corral_2" type="Node3D" parent="Parking" instance=ExtResource("17_fljvs")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -16, 0, 48)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_cart_corral.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Corral_3" type="Node3D" parent="Parking" instance=ExtResource("17_fljvs")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 16, 0, 48)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_cart_corral.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Corral_4" type="Node3D" parent="Parking" instance=ExtResource("17_fljvs")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 48, 0, 48)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_cart_corral.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Corral_5" type="Node3D" parent="Parking" instance=ExtResource("17_fljvs")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 80, 0, 48)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_cart_corral.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_0" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 118, 0, 40)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_1" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 102.191, 0, 72)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_2" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 59, 0, 95.4256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_3" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.22518e-15, 0, 104)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_4" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -59, 0, 95.4256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_5" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -102.191, 0, 72)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_6" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -118, 0, 40)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_7" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -102.191, 0, 8)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_8" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -59, 0, -15.4256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_9" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.16755e-14, 0, -24)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_10" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 59, 0, -15.4256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LotLight_11" type="Node3D" parent="Parking" instance=ExtResource("7_t3mxg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 102.191, 0, 8)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_lot_light.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Outlots" type="Node3D" parent="."]
+
+[node name="Fridays" type="Node3D" parent="Outlots" instance=ExtResource("18_pfiw5")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -150, 0, 212)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_restaurant_casual.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Steakhouse" type="Node3D" parent="Outlots" instance=ExtResource("19_rncdx")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -72, 0, 216)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_restaurant_upscale.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="FastA" type="Node3D" parent="Outlots" instance=ExtResource("20_cmkqe")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -8, 0, 212)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_restaurant_fast.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="FastB" type="Node3D" parent="Outlots" instance=ExtResource("20_cmkqe")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 28, 0, 212)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_restaurant_fast.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Patio" type="Node3D" parent="Outlots" instance=ExtResource("21_p55x8")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 52, 0, 200)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_patio.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Bank" type="Node3D" parent="Outlots" instance=ExtResource("22_wkwdq")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 104, 0, 212)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_bank_outlot.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="DriveThru" type="Node3D" parent="Outlots" instance=ExtResource("23_7sswd")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 162, 0, 210)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_drive_thru.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Fuel" type="Node3D" parent="Outlots" instance=ExtResource("24_03d25")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -216, 0, 218)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_gas_canopy.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_0" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -208, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_1" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -176, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_2" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_3" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -112, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_4" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -80, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_5" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_6" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -16, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_7" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 16, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_8" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 48, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_9" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 80, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_10" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 112, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_11" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 144, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_12" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 176, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Frontage_13" type="Node3D" parent="Outlots" instance=ExtResource("25_ytblu")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 208, 0, 256)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_turn_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RowWalk_0" type="Node3D" parent="Outlots" instance=ExtResource("26_j4k35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -176, 0, 186)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RowWalk_1" type="Node3D" parent="Outlots" instance=ExtResource("26_j4k35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, 0, 186)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RowWalk_2" type="Node3D" parent="Outlots" instance=ExtResource("26_j4k35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -112, 0, 186)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RowWalk_3" type="Node3D" parent="Outlots" instance=ExtResource("26_j4k35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -80, 0, 186)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RowWalk_4" type="Node3D" parent="Outlots" instance=ExtResource("26_j4k35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48, 0, 186)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RowWalk_5" type="Node3D" parent="Outlots" instance=ExtResource("26_j4k35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -16, 0, 186)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RowWalk_6" type="Node3D" parent="Outlots" instance=ExtResource("26_j4k35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 16, 0, 186)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="RowWalk_7" type="Node3D" parent="Outlots" instance=ExtResource("26_j4k35")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 48, 0, 186)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Throat_0" type="Node3D" parent="Outlots" instance=ExtResource("27_enqlp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -140, 0, 172)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_lot_entry_throat.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Throat_1" type="Node3D" parent="Outlots" instance=ExtResource("27_enqlp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -70, 0, 172)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_lot_entry_throat.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Throat_2" type="Node3D" parent="Outlots" instance=ExtResource("27_enqlp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 172)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_lot_entry_throat.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Throat_3" type="Node3D" parent="Outlots" instance=ExtResource("27_enqlp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 70, 0, 172)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_lot_entry_throat.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Throat_4" type="Node3D" parent="Outlots" instance=ExtResource("27_enqlp")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 140, 0, 172)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_lot_entry_throat.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Pylon" type="Node3D" parent="Outlots" instance=ExtResource("28_63tep")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -4, 0, 242)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_pylon_sign.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Monument" type="Node3D" parent="Outlots" instance=ExtResource("29_k68ud")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 60, 0, 176)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_entry_monument.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Billboard" type="Node3D" parent="Outlots" instance=ExtResource("30_wdy6p")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 206, 0, 248)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_billboard.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Signal_0" type="Node3D" parent="Outlots" instance=ExtResource("31_obg2t")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -160, 0, 248)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_signal_mast.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Signal_1" type="Node3D" parent="Outlots" instance=ExtResource("31_obg2t")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -90, 0, 248)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_signal_mast.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Signal_2" type="Node3D" parent="Outlots" instance=ExtResource("31_obg2t")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -20, 0, 248)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_signal_mast.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Signal_3" type="Node3D" parent="Outlots" instance=ExtResource("31_obg2t")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 50, 0, 248)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_signal_mast.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Signal_4" type="Node3D" parent="Outlots" instance=ExtResource("31_obg2t")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 120, 0, 248)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_signal_mast.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="PowerCentre" type="Node3D" parent="."]
+
+[node name="BigBoxNorth" type="Node3D" parent="PowerCentre" instance=ExtResource("14_ukg85")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -296, 0, -46)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_big_box.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Strip" type="Node3D" parent="PowerCentre" instance=ExtResource("32_meaqk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -308, 0, 64)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburban/suburban_retail_strip.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Storage" type="Node3D" parent="PowerCentre" instance=ExtResource("33_w27s5")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -302, 0, -158)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_self_storage.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Office" type="Node3D" parent="PowerCentre" instance=ExtResource("34_ufq7x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -294, 0, 168)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_office_lowrise.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="PCAisle_0" type="Node3D" parent="PowerCentre" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -232, 0, -96)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="PCAisle_1" type="Node3D" parent="PowerCentre" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -232, 0, -56)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="PCAisle_2" type="Node3D" parent="PowerCentre" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -232, 0, -16)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="PCAisle_3" type="Node3D" parent="PowerCentre" instance=ExtResource("15_nrtf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -232, 0, 24)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/polaris/polaris_aisle_long.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Sancus_0" type="Node3D" parent="PowerCentre" instance=ExtResource("35_oe0xc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204, 0, -128)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_four_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Sancus_1" type="Node3D" parent="PowerCentre" instance=ExtResource("35_oe0xc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204, 0, -96)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_four_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Sancus_2" type="Node3D" parent="PowerCentre" instance=ExtResource("35_oe0xc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204, 0, -64)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_four_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Sancus_3" type="Node3D" parent="PowerCentre" instance=ExtResource("35_oe0xc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204, 0, -32)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_four_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Sancus_4" type="Node3D" parent="PowerCentre" instance=ExtResource("35_oe0xc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204, 0, 0)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_four_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Sancus_5" type="Node3D" parent="PowerCentre" instance=ExtResource("35_oe0xc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204, 0, 32)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_four_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Sancus_6" type="Node3D" parent="PowerCentre" instance=ExtResource("35_oe0xc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204, 0, 64)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_four_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Sancus_7" type="Node3D" parent="PowerCentre" instance=ExtResource("35_oe0xc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204, 0, 96)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_four_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Sancus_8" type="Node3D" parent="PowerCentre" instance=ExtResource("35_oe0xc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204, 0, 128)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_four_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Sancus_9" type="Node3D" parent="PowerCentre" instance=ExtResource("35_oe0xc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204, 0, 160)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_four_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Housing" type="Node3D" parent="."]
+
+[node name="House_0" type="Node3D" parent="Housing" instance=ExtResource("36_h8y1d")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -130, 0, -244)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_ranch.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseBack_0" type="Node3D" parent="Housing" instance=ExtResource("36_h8y1d")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -113, 0, -294)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_ranch.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Fence_0" type="Node3D" parent="Housing" instance=ExtResource("37_uk8pq")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -130, 0, -269)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_fence_privacy.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="House_1" type="Node3D" parent="Housing" instance=ExtResource("38_rx6dw")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -96, 0, -244)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_two_story.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseBack_1" type="Node3D" parent="Housing" instance=ExtResource("38_rx6dw")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -79, 0, -294)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_two_story.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Fence_1" type="Node3D" parent="Housing" instance=ExtResource("37_uk8pq")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -96, 0, -269)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_fence_privacy.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="House_2" type="Node3D" parent="Housing" instance=ExtResource("39_kwvit")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -62, 0, -244)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_split.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseBack_2" type="Node3D" parent="Housing" instance=ExtResource("39_kwvit")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -45, 0, -294)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_split.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Fence_2" type="Node3D" parent="Housing" instance=ExtResource("37_uk8pq")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -62, 0, -269)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_fence_privacy.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="House_3" type="Node3D" parent="Housing" instance=ExtResource("36_h8y1d")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -28, 0, -244)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_ranch.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseBack_3" type="Node3D" parent="Housing" instance=ExtResource("36_h8y1d")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -11, 0, -294)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_ranch.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Fence_3" type="Node3D" parent="Housing" instance=ExtResource("37_uk8pq")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -28, 0, -269)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_fence_privacy.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="House_4" type="Node3D" parent="Housing" instance=ExtResource("38_rx6dw")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 6, 0, -244)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_two_story.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseBack_4" type="Node3D" parent="Housing" instance=ExtResource("38_rx6dw")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 23, 0, -294)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_two_story.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Fence_4" type="Node3D" parent="Housing" instance=ExtResource("37_uk8pq")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 6, 0, -269)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_fence_privacy.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="House_5" type="Node3D" parent="Housing" instance=ExtResource("39_kwvit")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 40, 0, -244)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_split.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseBack_5" type="Node3D" parent="Housing" instance=ExtResource("39_kwvit")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 57, 0, -294)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_split.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Fence_5" type="Node3D" parent="Housing" instance=ExtResource("37_uk8pq")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 40, 0, -269)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_fence_privacy.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="House_6" type="Node3D" parent="Housing" instance=ExtResource("36_h8y1d")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 74, 0, -244)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_ranch.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseBack_6" type="Node3D" parent="Housing" instance=ExtResource("36_h8y1d")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 91, 0, -294)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_ranch.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Fence_6" type="Node3D" parent="Housing" instance=ExtResource("37_uk8pq")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 74, 0, -269)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_fence_privacy.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="House_7" type="Node3D" parent="Housing" instance=ExtResource("38_rx6dw")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 108, 0, -244)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_two_story.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseBack_7" type="Node3D" parent="Housing" instance=ExtResource("38_rx6dw")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 125, 0, -294)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_house_two_story.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Fence_7" type="Node3D" parent="Housing" instance=ExtResource("37_uk8pq")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 108, 0, -269)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_fence_privacy.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseStreet_0" type="Node3D" parent="Housing" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, 0, -222)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseStreet_1" type="Node3D" parent="Housing" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -112, 0, -222)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseStreet_2" type="Node3D" parent="Housing" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -80, 0, -222)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseStreet_3" type="Node3D" parent="Housing" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48, 0, -222)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseStreet_4" type="Node3D" parent="Housing" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -16, 0, -222)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseStreet_5" type="Node3D" parent="Housing" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 16, 0, -222)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseStreet_6" type="Node3D" parent="Housing" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 48, 0, -222)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseStreet_7" type="Node3D" parent="Housing" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 80, 0, -222)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="HouseStreet_8" type="Node3D" parent="Housing" instance=ExtResource("6_wuw3v")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 112, 0, -222)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Townhouses" type="Node3D" parent="Housing" instance=ExtResource("40_u1dms")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 162, 0, -258)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_townhouse_row.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Apartments" type="Node3D" parent="Housing" instance=ExtResource("41_ur75x")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 162, 0, -318)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_garden_apartment.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Church" type="Node3D" parent="Housing" instance=ExtResource("42_fi3iw")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -184, 0, -274)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_church.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="School" type="Node3D" parent="Housing" instance=ExtResource("43_gfv1n")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -44, 0, -342)
+script = ExtResource("2_rnn1b")
+local_map_file = "res://maps/blocks/suburbs/suburb_school_wing.map"
+global_map_file = ""
+map_settings = ExtResource("3_dlnir")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000

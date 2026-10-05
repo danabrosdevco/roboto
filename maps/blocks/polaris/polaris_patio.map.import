@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://4633u1ovhlh0"
+path="res://.godot/imported/polaris_patio.map-7b70ac157b367dc369dcc5fe1f07234b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_patio.map"
+dest_files=["res://.godot/imported/polaris_patio.map-7b70ac157b367dc369dcc5fe1f07234b.tres"]
+
+[params]
+
