@@ -66,9 +66,30 @@ const TOW_W := 3.7
 const BERM_W := 3.7
 const TERRACE_Z := 3.0
 
+## HOW FAR THE CANAL REACHES ACROSS THE SITE, from its centreline to the outer
+## edge of a towpath: 9.0 m. build_georgetown.gd reads this to know where the
+## bench ground must stop, so the bench and the prism butt on one line and the
+## number is typed once. Nothing may widen the towpath without moving it.
+const CANAL_HALF := BED_HALF + WALL_T + TOW_W
+
+## THE TOP OF A BRIDGE DECK, 6 cm under the banks it joins. The decks run on
+## over the towpaths and wall tops to bear on them, and a deck at exactly 0
+## there is two horizontal faces at one height — the depth buffer cannot
+## choose, so the bridge crawls as the camera moves. The clearance is made in
+## the deck and not in the banks, for the same reason as the bench tops
+## (block_ground.gd): the banks have everything else standing on them. 6 cm is
+## under what the baker climbs and a twentieth of what a body calls a step, so
+## the squad still walks straight on.
+const DECK_TOP := -0.06
+
+## Half the width of the gap in the coping where a bridge lands. The widest deck
+## is the street bridge at +-3.5, so 4 clears them all.
+const BRIDGE_MOUTH := 4.0
+
 const CANAL := {
 	"canal_prism": "_prism",
 	"canal_prism_open": "_prism_open",
+	"canal_prism_open_bridge": "_prism_open_bridge",
 	"canal_truss_bridge": "_truss_bridge",
 	"canal_road_bridge": "_road_bridge",
 	"canal_lock": "_lock",
@@ -81,6 +102,10 @@ const CANAL := {
 	"canal_bench_grass": "_bench_grass",
 	"canal_bench_grass_16": "_bench_grass_16",
 	"canal_bench_grass_4": "_bench_grass_4",
+	"canal_bench_2": "_bench_2",
+	"canal_bench_1": "_bench_1",
+	"canal_bench_grass_2": "_bench_grass_2",
+	"canal_bench_grass_1": "_bench_grass_1",
 	"canal_terrace_wall": "_terrace_wall",
 	"canal_terrace_stair": "_terrace_stair",
 	"canal_street_ramp": "_street_ramp",
@@ -162,10 +187,27 @@ func _channel(x0: float, x1: float) -> void:
 ## The brick towpath on the +Y side, with its granite coping at the canal
 ## edge. The coping is 0.3 m proud: under the 0.45 a body steps over, so it
 ## is a line you can see and not a kerb anyone has to climb.
-func _towpath(x0: float, x1: float) -> void:
+func _towpath(x0: float, x1: float, mouth: float = 0.0) -> void:
 	var y0 := BED_HALF + WALL_T
 	box(Vector3(x0, y0, -1.0), Vector3(x1, y0 + TOW_W, 0.0), TOWPATH)
-	box(Vector3(x0, y0 - 0.1, 0.0), Vector3(x1, y0 + 0.55, 0.3), {"top": COPING, "side": COPING, "bottom": COPING})
+	_coping(x0, x1, y0 - 0.1, y0 + 0.55, mouth)
+
+
+## A RUN OF COPING 0.3 m proud, with a gap `mouth` either side of x = 0 where a
+## bridge lands. THE COPING USED TO RUN STRAIGHT ACROSS EVERY BRIDGE, a 0.3 m
+## lip over the deck at both ends. The navmesh baker climbs 0.25, and 0.3 only
+## got over because the deck and the coping top happened to round to
+## neighbouring voxels; the moment the deck sank 6 cm (DECK_TOP) they were two
+## apart and all four bridges closed -- the squad could not cross the canal.
+## A lip across a bridge mouth was never what a bridge is, so it is gone and
+## the crossing is level, not lucky.
+func _coping(x0: float, x1: float, ya: float, yb: float, mouth: float) -> void:
+	var tex := {"top": COPING, "side": COPING, "bottom": COPING}
+	if mouth <= 0.0:
+		box(Vector3(x0, ya, 0.0), Vector3(x1, yb, 0.3), tex)
+		return
+	box(Vector3(x0, ya, 0.0), Vector3(-mouth, yb, 0.3), tex)
+	box(Vector3(mouth, ya, 0.0), Vector3(x1, yb, 0.3), tex)
 
 
 ## The grass berm on the -Y side and the wall up to the next terrace. This is
@@ -198,16 +240,36 @@ func _prism() -> void:
 		x += 2.5
 
 
-## The same with a towpath BOTH sides and no terrace: for the stretch where
-## the canal runs between two walks instead of under the mills.
-func _prism_open() -> void:
-	_channel(-SEG * 0.5, SEG * 0.5)
-	_towpath(-SEG * 0.5, SEG * 0.5)
+## A TOWPATH ON EACH SIDE OF THE CHANNEL, from x0 to x1. Shared by the open
+## prism and the lock so that every bay of the canal is the same width: the
+## bench ground butts the outside edge of the towpaths at +-CANAL_HALF, and a
+## bay that stopped at the wall left a hole beside it that the level-fault
+## probe found as the only empty ground on the map.
+func _towpaths(x0: float, x1: float, mouth: float = 0.0) -> void:
+	_towpath(x0, x1, mouth)
 	# Mirrored, by hand rather than by a flag, because the coping sits on the
 	# canal side of the path and a mirrored call would put it on the outside.
 	var y0 := -(BED_HALF + WALL_T)
-	box(Vector3(-SEG * 0.5, y0 - TOW_W, -1.0), Vector3(SEG * 0.5, y0, 0.0), TOWPATH)
-	box(Vector3(-SEG * 0.5, y0, 0.0), Vector3(SEG * 0.5, y0 + 0.1 + 0.55, 0.3), {"top": COPING, "side": COPING, "bottom": COPING})
+	box(Vector3(x0, y0 - TOW_W, -1.0), Vector3(x1, y0, 0.0), TOWPATH)
+	_coping(x0, x1, y0, y0 + 0.1 + 0.55, mouth)
+
+
+## The same with a towpath BOTH sides and no terrace: for the stretch where
+## the canal runs between two walks instead of under the mills.
+func _prism_open() -> void:
+	_prism_open_with(0.0)
+
+
+## THE OPEN PRISM FOR A BAY A BRIDGE CROSSES: the same, with the coping left
+## off the mouth of the bridge (see _coping). The gap is wider than any deck,
+## so the one constant serves all three bridges.
+func _prism_open_bridge() -> void:
+	_prism_open_with(BRIDGE_MOUTH)
+
+
+func _prism_open_with(mouth: float) -> void:
+	_channel(-SEG * 0.5, SEG * 0.5)
+	_towpaths(-SEG * 0.5, SEG * 0.5, mouth)
 	no_collision()
 	var x := -SEG * 0.5 + 2.0
 	while x < SEG * 0.5 - 1.0:
@@ -219,14 +281,15 @@ func _prism_open() -> void:
 ## deck laid over it, and chain link up both sides. The thing in the second
 ## photograph, and the piece that makes the canal crossable.
 ##
-## The deck is 2.6 m wide and its surface is at z = 0, LEVEL WITH BOTH BANKS.
+## The deck is 2.6 m wide and its surface is at DECK_TOP, 6 cm under both banks:
+## level to a body, and not the same plane as the towpath it runs onto.
 ## A bridge that arrives a step above the towpath is a bridge half the squad
 ## stands in front of, and 0.3 m is all it takes.
 func _truss_bridge() -> void:
 	var half := BED_HALF + WALL_T + 1.0
 	var w := 1.3
 	# The deck and the beams under it.
-	box(Vector3(-w - 0.25, -half - 1.5, -0.45), Vector3(w + 0.25, half + 1.5, 0.0), {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(-w - 0.25, -half - 1.5, -0.45), Vector3(w + 0.25, half + 1.5, DECK_TOP), {"top": CONCRETE, "side": CONCRETE, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * w - 0.1, -half - 1.0, -0.75), Vector3(s * w + 0.1, half + 1.0, -0.45), IRON)
 	# THE TRUSS STANDS BESIDE THE DECK, NOT ON ITS EDGE. Its plane used to be
@@ -312,10 +375,10 @@ func _truss_bridge() -> void:
 		# Chain link over the deck, on the deck side of the truss and above the
 		# deck's top face, so it stands on the concrete rather than in it.
 		# Collision, as it always was; the lattice beside it is the mesh.
-		box(Vector3(s * (w + 0.2), -half - 0.6, 0.0), Vector3(s * (w + 0.25), half + 0.6, 1.25), IRON)
+		box(Vector3(s * (w + 0.2), -half - 0.6, DECK_TOP), Vector3(s * (w + 0.25), half + 0.6, 1.25), IRON)
 	no_collision()
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(s * (w + 0.15), -half - 0.6, 0.0), Vector3(s * (w + 0.2), half + 0.6, 1.2), GRATING)
+		box(Vector3(s * (w + 0.15), -half - 0.6, DECK_TOP), Vector3(s * (w + 0.2), half + 0.6, 1.2), GRATING)
 
 
 ## The height of a top chord's underside at `y`, read off the polyline of its
@@ -340,9 +403,9 @@ func _road_bridge() -> void:
 	# stone sits UNDER the deck at each end (up to its soffit) and beside it
 	# (full height), never through it. They used to be one slab each and the
 	# deck was carried 1.6 m into them, so the two shared that volume.
-	box(Vector3(-w, -half - 2.0, -0.9), Vector3(w, half + 2.0, 0.0), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
+	box(Vector3(-w, -half - 2.0, -0.9), Vector3(w, half + 2.0, DECK_TOP), {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(s * w - 0.45, -half - 2.0, 0.0), Vector3(s * w, half + 2.0, 0.55), {"top": COPING, "side": COPING, "bottom": COPING})
+		box(Vector3(s * w - 0.45, -half - 2.0, DECK_TOP), Vector3(s * w, half + 2.0, 0.55), {"top": COPING, "side": COPING, "bottom": COPING})
 		# The iron stops at the abutment face: past it, it was inside the stone.
 		box(Vector3(s * w - 0.3, -half - 0.4, -1.25), Vector3(s * w - 0.1, half + 0.4, -0.9), IRON)
 	# The abutments, carried down into the canal wall so the bridge and the
@@ -354,7 +417,7 @@ func _road_bridge() -> void:
 		for e: float in [-1.0, 1.0]:
 			var x0: float = e * w
 			var x1: float = e * (w + 0.4)
-			box(Vector3(minf(x0, x1), minf(y0, y1), BED_Z - 1.0), Vector3(maxf(x0, x1), maxf(y0, y1), 0.0), STONE_W)
+			box(Vector3(minf(x0, x1), minf(y0, y1), BED_Z - 1.0), Vector3(maxf(x0, x1), maxf(y0, y1), DECK_TOP), STONE_W)
 	no_collision()
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * (w - 0.22), -half - 1.8, 0.55), Vector3(s * (w - 0.18), half + 1.8, 1.65), GRATING)
@@ -371,6 +434,7 @@ func _road_bridge() -> void:
 func _lock() -> void:
 	var half := SEG * 0.5
 	var ch := 2.5
+	_towpaths(-half, half)
 	box(Vector3(-half, -ch, BED_Z - 1.2), Vector3(half, ch, BED_Z), {"top": CONCRETE, "side": RUBBLE_WALL, "bottom": CONCRETE})
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(-half, s * ch, BED_Z - 1.2), Vector3(half, s * (BED_HALF + WALL_T), 0.0), STONE_W)
@@ -450,13 +514,22 @@ func _culvert_mouth(c: Vector3, outer: float, inner: float, length: float, sides
 
 # ── The terraces ─────────────────────────────────────────────────────────────
 
+## EVERY BENCH TOP IS AT z = -0.06, NOT 0. The benches ARE the ground on this
+## map, and every road, path, esplanade, court and wall laid on them brings its
+## own surface at exactly 0 — two horizontal faces at one height, which the
+## depth buffer cannot choose between, so the ground crawls as the camera
+## moves (399 of 3243 columns before this). The clearance is made HERE and not
+## in the pieces: lifting them drives them up into the kerbs, shutters and
+## walls standing on them. See the same note at the top of block_ground.gd.
+## 6 cm is twice what the coplanar check calls one plane and a twentieth of
+## what anything in the game calls a step. The 4 m thickness is unchanged.
 ## A STRIP OF BENCH, 448 x 32. The benches were one 460 x 360 slab each to
 ## start with, four of them at four heights — and they overlapped so hard that
 ## the town's bench lay on top of the canal and buried it. A bench is only as
 ## deep as it is; tile these to the depth it actually needs and nothing covers
 ## anything.
 func _bench() -> void:
-	box(Vector3(-224.0, -16.0, -4.0), Vector3(224.0, 16.0, 0.0), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
+	box(Vector3(-224.0, -16.0, -4.0), Vector3(224.0, 16.0, -0.06), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
 
 
 ## 16 m and 4 m of the same, so a bench can be tiled to an EXACT depth. At 32 m
@@ -464,26 +537,47 @@ func _bench() -> void:
 ## boundary and lay on top of the next bench down, or stopped short and left a
 ## hole nothing could cross. Both of those cost a full debugging pass each.
 func _bench_16() -> void:
-	box(Vector3(-224.0, -8.0, -4.0), Vector3(224.0, 8.0, 0.0), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
+	box(Vector3(-224.0, -8.0, -4.0), Vector3(224.0, 8.0, -0.06), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
 
 
 func _bench_4() -> void:
-	box(Vector3(-224.0, -2.0, -4.0), Vector3(224.0, 2.0, 0.0), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
+	box(Vector3(-224.0, -2.0, -4.0), Vector3(224.0, 2.0, -0.06), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
 
 
 ## The same in grass, for the park bench. The ground under a thing is most of
 ## what tells you what kind of place it is, and park furniture standing on
 ## asphalt reads as a car park with benches in it.
 func _bench_grass() -> void:
-	box(Vector3(-224.0, -16.0, -4.0), Vector3(224.0, 16.0, 0.0), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
+	box(Vector3(-224.0, -16.0, -4.0), Vector3(224.0, 16.0, -0.06), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
 
 
 func _bench_grass_16() -> void:
-	box(Vector3(-224.0, -8.0, -4.0), Vector3(224.0, 8.0, 0.0), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
+	box(Vector3(-224.0, -8.0, -4.0), Vector3(224.0, 8.0, -0.06), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
 
 
 func _bench_grass_4() -> void:
-	box(Vector3(-224.0, -2.0, -4.0), Vector3(224.0, 2.0, 0.0), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
+	box(Vector3(-224.0, -2.0, -4.0), Vector3(224.0, 2.0, -0.06), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
+
+
+## 2 m and 1 m OF THE SAME, because the canal is 18 m wide: its towpaths end 9 m
+## either side of the centreline, and the bench has to END THERE, on the same
+## line, or it lies under the towpath (and, where it stopped short, leaves a
+## hole). 9 m from a bench boundary that is a multiple of 4 is never a multiple
+## of 4, so the tiling needs a 2 and a 1 to land on it exactly.
+func _bench_2() -> void:
+	box(Vector3(-224.0, -1.0, -4.0), Vector3(224.0, 1.0, -0.06), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
+
+
+func _bench_1() -> void:
+	box(Vector3(-224.0, -0.5, -4.0), Vector3(224.0, 0.5, -0.06), {"top": ASPHALT, "side": RUBBLE_WALL, "bottom": CONCRETE})
+
+
+func _bench_grass_2() -> void:
+	box(Vector3(-224.0, -1.0, -4.0), Vector3(224.0, 1.0, -0.06), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
+
+
+func _bench_grass_1() -> void:
+	box(Vector3(-224.0, -0.5, -4.0), Vector3(224.0, 0.5, -0.06), {"top": WEED, "side": RUBBLE_WALL, "bottom": SPOIL})
 
 
 ## 32 m of coursed rubble retaining wall, 4 m, with ground behind it at the

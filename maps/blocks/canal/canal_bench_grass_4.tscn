@@ -1,70 +1,70 @@
 [gd_scene load_steps=9 format=4]
 
-[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_eqmej"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_nyct0"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/dirt_5.tres" id="3_e6xxl"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/grass_4.tres" id="4_75635"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/stone_3.tres" id="5_i48ev"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_pemud"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_xukxc"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/dirt_5.tres" id="3_fxac8"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/grass_4.tres" id="4_cmtu4"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/stone_3.tres" id="5_sm6w1"]
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_xssri"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_2gyp5"]
 _surfaces = [{
 "aabb": AABB(-2, -4, -224, 4, 1e-05, 448),
 "attribute_data": PackedByteArray("AADgQQAAgD4AAODBAACAPgAA4MEAAIC+AADgQQAAgL4="),
 "format": 34359742487,
 "index_count": 6,
 "index_data": PackedByteArray("AAABAAIAAAACAAMA"),
-"material": ExtResource("3_e6xxl"),
+"material": ExtResource("3_fxac8"),
 "name": "PSX_Textures/dirt_5",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 4,
 "vertex_data": PackedByteArray("AAAAwAAAgMAAAGDDAAAAwAAAgMAAAGBDAAAAQAAAgMAAAGBDAAAAQAAAgMAAAGDD/38AAP//////fwAA//////9/AAD//////38AAP////8=")
 }, {
-"aabb": AABB(-2, 0, -224, 4, 1e-05, 448),
+"aabb": AABB(-2, -0.0625, -224, 4, 1e-05, 448),
 "attribute_data": PackedByteArray("AADgwQAAgD4AAODBAACAvgAA4EEAAIC+AADgQQAAgD4="),
 "format": 34359742487,
 "index_count": 6,
 "index_data": PackedByteArray("AAABAAIAAAACAAMA"),
-"material": ExtResource("4_75635"),
+"material": ExtResource("4_cmtu4"),
 "name": "PSX_Textures/grass_4",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 4,
-"vertex_data": PackedByteArray("AAAAwAAAAAAAAGDDAAAAQAAAAAAAAGDDAAAAQAAAAAAAAGBDAAAAwAAAAAAAAGBD/3////9//7//f////3//v/9/////f/+//3////9//78=")
+"vertex_data": PackedByteArray("AAAAwAAAgL0AAGDDAAAAQAAAgL0AAGDDAAAAQAAAgL0AAGBDAAAAwAAAgL0AAGBD/3////9//7//f////3//v/9/////f/+//3////9//78=")
 }, {
-"aabb": AABB(-2, -4, -224, 4, 4, 448),
-"attribute_data": PackedByteArray("AADgwQAAAD8AAODBAAAAAAAA4EEAAAAAAADgQQAAAD8AAIC+AAAAPwAAgL4AAAAAAACAPgAAAAAAAIA+AAAAPwAA4MEAAAA/AADgwQAAAAAAAOBBAAAAAAAA4EEAAAA/AACAvgAAAD8AAIC+AAAAAAAAgD4AAAAAAACAPgAAAD8="),
+"aabb": AABB(-2, -4, -224, 4, 3.9375, 448),
+"attribute_data": PackedByteArray("AADgwQAAAD8AAODBAAAAPAAA4EEAAAA8AADgQQAAAD8AAIC+AAAAPwAAgL4AAAA8AACAPgAAADwAAIA+AAAAPwAA4MEAAAA/AADgwQAAADwAAOBBAAAAPAAA4EEAAAA/AACAvgAAAD8AAIC+AAAAPAAAgD4AAAA8AACAPgAAAD8="),
 "format": 34359742487,
 "index_count": 24,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8A"),
-"material": ExtResource("5_i48ev"),
+"material": ExtResource("5_sm6w1"),
 "name": "PSX_Textures/stone_3",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 16,
-"vertex_data": PackedByteArray("AAAAwAAAgMAAAGDDAAAAwAAAAAAAAGDDAAAAwAAAAAAAAGBDAAAAwAAAgMAAAGBDAAAAwAAAgMAAAGBDAAAAwAAAAAAAAGBDAAAAQAAAAAAAAGBDAAAAQAAAgMAAAGBDAAAAQAAAgMAAAGBDAAAAQAAAAAAAAGBDAAAAQAAAAAAAAGDDAAAAQAAAgMAAAGDDAAAAQAAAgMAAAGDDAAAAQAAAAAAAAGDDAAAAwAAAAAAAAGDDAAAAwAAAgMAAAGDDAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//7//f/9/////v/9//3////+//3//f////7//f/9/////v////3//////////f/////////9//////////3///////////wAA/7//////AAD/v/////8AAP+//////wAA/78=")
+"vertex_data": PackedByteArray("AAAAwAAAgMAAAGDDAAAAwAAAgL0AAGDDAAAAwAAAgL0AAGBDAAAAwAAAgMAAAGBDAAAAwAAAgMAAAGBDAAAAwAAAgL0AAGBDAAAAQAAAgL0AAGBDAAAAQAAAgMAAAGBDAAAAQAAAgMAAAGBDAAAAQAAAgL0AAGBDAAAAQAAAgL0AAGDDAAAAQAAAgMAAAGDDAAAAQAAAgMAAAGDDAAAAQAAAgL0AAGDDAAAAwAAAgL0AAGDDAAAAwAAAgMAAAGDDAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//7//f/9/////v/9//3////+//3//f////7//f/9/////v////3//////////f/////////9//////////3///////////wAA/7//////AAD/v/////8AAP+//////wAA/78=")
 }]
 
-[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_uanl5"]
-vertices = PackedVector3Array(-2, -4, -224, -2, -4, 224, 2, -4, 224, 2, -4, -224, -2, 0, -224, 2, 0, -224, 2, 0, 224, -2, 0, 224, -2, -4, -224, -2, 0, -224, -2, 0, 224, -2, -4, 224, -2, -4, 224, -2, 0, 224, 2, 0, 224, 2, -4, 224, 2, -4, 224, 2, 0, 224, 2, 0, -224, 2, -4, -224, 2, -4, -224, 2, 0, -224, -2, 0, -224, -2, -4, -224)
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_kebqe"]
+vertices = PackedVector3Array(-2, -4, -224, -2, -4, 224, 2, -4, 224, 2, -4, -224, -2, -0.0625, -224, 2, -0.0625, -224, 2, -0.0625, 224, -2, -0.0625, 224, -2, -4, -224, -2, -0.0625, -224, -2, -0.0625, 224, -2, -4, 224, -2, -4, 224, -2, -0.0625, 224, 2, -0.0625, 224, 2, -4, 224, 2, -4, 224, 2, -0.0625, 224, 2, -0.0625, -224, 2, -4, -224, 2, -4, -224, 2, -0.0625, -224, -2, -0.0625, -224, -2, -4, -224)
 indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_2seu0"]
-points = PackedVector3Array(-2, -4, -224, -2, -4, 224, 2, -4, 224, 2, -4, -224, -2, 0, -224, 2, 0, -224, 2, 0, 224, -2, 0, 224)
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_1ipj7"]
+points = PackedVector3Array(-2, -4, -224, -2, -4, 224, 2, -4, 224, 2, -4, -224, -2, -0.0625, -224, 2, -0.0625, -224, 2, -0.0625, 224, -2, -0.0625, 224)
 
 [node name="CanalBenchGrass4" type="Node3D"]
-script = ExtResource("1_eqmej")
+script = ExtResource("1_pemud")
 local_map_file = "res://maps/blocks/canal/canal_bench_grass_4.map"
-map_settings = ExtResource("2_nyct0")
+map_settings = ExtResource("2_xukxc")
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
 collision_mask = 0
 
 [node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
-mesh = SubResource("ArrayMesh_xssri")
+mesh = SubResource("ArrayMesh_2gyp5")
 
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
-occluder = SubResource("ArrayOccluder3D_uanl5")
+occluder = SubResource("ArrayOccluder3D_kebqe")
 
 [node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_2seu0")
+shape = SubResource("ConvexPolygonShape3D_1ipj7")

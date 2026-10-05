@@ -1,70 +1,70 @@
 [gd_scene load_steps=9 format=4]
 
-[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_4ohcq"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_xhyvq"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="3_d2c68"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_3.tres" id="4_kvjd5"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/stone_3.tres" id="5_w71j0"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_6vao7"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_ldidx"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="3_huaxl"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_3.tres" id="4_ljyjl"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/stone_3.tres" id="5_alucp"]
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_vc8md"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_m25di"]
 _surfaces = [{
 "aabb": AABB(-16, -4, -224, 32, 1e-05, 448),
 "attribute_data": PackedByteArray("AADgQQAAAEAAAODBAAAAQAAA4MEAAADAAADgQQAAAMA="),
 "format": 34359742487,
 "index_count": 6,
 "index_data": PackedByteArray("AAABAAIAAAACAAMA"),
-"material": ExtResource("3_d2c68"),
+"material": ExtResource("3_huaxl"),
 "name": "PSX_Textures/concrete_tx_5",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 4,
 "vertex_data": PackedByteArray("AACAwQAAgMAAAGDDAACAwQAAgMAAAGBDAACAQQAAgMAAAGBDAACAQQAAgMAAAGDD/38AAP//////fwAA//////9/AAD//////38AAP////8=")
 }, {
-"aabb": AABB(-16, 0, -224, 32, 1e-05, 448),
+"aabb": AABB(-16, -0.0625, -224, 32, 1e-05, 448),
 "attribute_data": PackedByteArray("AADgwQAAAEAAAODBAAAAwAAA4EEAAADAAADgQQAAAEA="),
 "format": 34359742487,
 "index_count": 6,
 "index_data": PackedByteArray("AAABAAIAAAACAAMA"),
-"material": ExtResource("4_kvjd5"),
+"material": ExtResource("4_ljyjl"),
 "name": "PSX_Textures/concrete_3",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 4,
-"vertex_data": PackedByteArray("AACAwQAAAAAAAGDDAACAQQAAAAAAAGDDAACAQQAAAAAAAGBDAACAwQAAAAAAAGBD/3////9//7//f////3//v/9/////f/+//3////9//78=")
+"vertex_data": PackedByteArray("AACAwQAAgL0AAGDDAACAQQAAgL0AAGDDAACAQQAAgL0AAGBDAACAwQAAgL0AAGBD/3////9//7//f////3//v/9/////f/+//3////9//78=")
 }, {
-"aabb": AABB(-16, -4, -224, 32, 4, 448),
-"attribute_data": PackedByteArray("AADgwQAAAD8AAODBAAAAAAAA4EEAAAAAAADgQQAAAD8AAADAAAAAPwAAAMAAAAAAAAAAQAAAAAAAAABAAAAAPwAA4MEAAAA/AADgwQAAAAAAAOBBAAAAAAAA4EEAAAA/AAAAwAAAAD8AAADAAAAAAAAAAEAAAAAAAAAAQAAAAD8="),
+"aabb": AABB(-16, -4, -224, 32, 3.9375, 448),
+"attribute_data": PackedByteArray("AADgwQAAAD8AAODBAAAAPAAA4EEAAAA8AADgQQAAAD8AAADAAAAAPwAAAMAAAAA8AAAAQAAAADwAAABAAAAAPwAA4MEAAAA/AADgwQAAADwAAOBBAAAAPAAA4EEAAAA/AAAAwAAAAD8AAADAAAAAPAAAAEAAAAA8AAAAQAAAAD8="),
 "format": 34359742487,
 "index_count": 24,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8A"),
-"material": ExtResource("5_w71j0"),
+"material": ExtResource("5_alucp"),
 "name": "PSX_Textures/stone_3",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 16,
-"vertex_data": PackedByteArray("AACAwQAAgMAAAGDDAACAwQAAAAAAAGDDAACAwQAAAAAAAGBDAACAwQAAgMAAAGBDAACAwQAAgMAAAGBDAACAwQAAAAAAAGBDAACAQQAAAAAAAGBDAACAQQAAgMAAAGBDAACAQQAAgMAAAGBDAACAQQAAAAAAAGBDAACAQQAAAAAAAGDDAACAQQAAgMAAAGDDAACAQQAAgMAAAGDDAACAQQAAAAAAAGDDAACAwQAAAAAAAGDDAACAwQAAgMAAAGDDAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//7//f/9/////v/9//3////+//3//f////7//f/9/////v////3//////////f/////////9//////////3///////////wAA/7//////AAD/v/////8AAP+//////wAA/78=")
+"vertex_data": PackedByteArray("AACAwQAAgMAAAGDDAACAwQAAgL0AAGDDAACAwQAAgL0AAGBDAACAwQAAgMAAAGBDAACAwQAAgMAAAGBDAACAwQAAgL0AAGBDAACAQQAAgL0AAGBDAACAQQAAgMAAAGBDAACAQQAAgMAAAGBDAACAQQAAgL0AAGBDAACAQQAAgL0AAGDDAACAQQAAgMAAAGDDAACAQQAAgMAAAGDDAACAQQAAgL0AAGDDAACAwQAAgL0AAGDDAACAwQAAgMAAAGDDAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//7//f/9/////v/9//3////+//3//f////7//f/9/////v////3//////////f/////////9//////////3///////////wAA/7//////AAD/v/////8AAP+//////wAA/78=")
 }]
 
-[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_3lnxs"]
-vertices = PackedVector3Array(-16, -4, -224, -16, -4, 224, 16, -4, 224, 16, -4, -224, -16, 0, -224, 16, 0, -224, 16, 0, 224, -16, 0, 224, -16, -4, -224, -16, 0, -224, -16, 0, 224, -16, -4, 224, -16, -4, 224, -16, 0, 224, 16, 0, 224, 16, -4, 224, 16, -4, 224, 16, 0, 224, 16, 0, -224, 16, -4, -224, 16, -4, -224, 16, 0, -224, -16, 0, -224, -16, -4, -224)
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_hd652"]
+vertices = PackedVector3Array(-16, -4, -224, -16, -4, 224, 16, -4, 224, 16, -4, -224, -16, -0.0625, -224, 16, -0.0625, -224, 16, -0.0625, 224, -16, -0.0625, 224, -16, -4, -224, -16, -0.0625, -224, -16, -0.0625, 224, -16, -4, 224, -16, -4, 224, -16, -0.0625, 224, 16, -0.0625, 224, 16, -4, 224, 16, -4, 224, 16, -0.0625, 224, 16, -0.0625, -224, 16, -4, -224, 16, -4, -224, 16, -0.0625, -224, -16, -0.0625, -224, -16, -4, -224)
 indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_rkutp"]
-points = PackedVector3Array(-16, -4, -224, -16, -4, 224, 16, -4, 224, 16, -4, -224, -16, 0, -224, 16, 0, -224, 16, 0, 224, -16, 0, 224)
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_v64jr"]
+points = PackedVector3Array(-16, -4, -224, -16, -4, 224, 16, -4, 224, 16, -4, -224, -16, -0.0625, -224, 16, -0.0625, -224, 16, -0.0625, 224, -16, -0.0625, 224)
 
 [node name="CanalBench" type="Node3D"]
-script = ExtResource("1_4ohcq")
+script = ExtResource("1_6vao7")
 local_map_file = "res://maps/blocks/canal/canal_bench.map"
-map_settings = ExtResource("2_xhyvq")
+map_settings = ExtResource("2_ldidx")
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
 collision_mask = 0
 
 [node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
-mesh = SubResource("ArrayMesh_vc8md")
+mesh = SubResource("ArrayMesh_m25di")
 
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
-occluder = SubResource("ArrayOccluder3D_3lnxs")
+occluder = SubResource("ArrayOccluder3D_hd652")
 
 [node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_rkutp")
+shape = SubResource("ConvexPolygonShape3D_v64jr")

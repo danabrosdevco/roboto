@@ -308,15 +308,17 @@ func _market_stalls() -> void:
 ## handrail. The third kind of crossing and the worst one — 1.2 m wide, no
 ## cover, and it tells a player it is temporary.
 func _plank_bridge() -> void:
+	# The deck top is DECK_TOP, not 0: it runs on over the towpath and a deck at
+	# exactly 0 there is two floors at one height. See block_canal.gd.
 	var half := BED_HALF + WALL_T + 0.9
-	box(Vector3(-0.6, -half, -0.22), Vector3(0.6, half, 0.0), {"top": WOOD, "side": WOOD_DARK, "bottom": WOOD_DARK})
+	box(Vector3(-0.6, -half, -0.22), Vector3(0.6, half, DECK_TOP), {"top": WOOD, "side": WOOD_DARK, "bottom": WOOD_DARK})
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(s * 0.5 - 0.1, -half, -0.45), Vector3(s * 0.5 + 0.1, half, -0.22), METAL)
 	no_collision()
 	for s: float in [-1.0, 1.0]:
 		for i in 6:
 			var y := lerpf(-half + 0.4, half - 0.4, float(i) / 5.0)
-			box(Vector3(s * 0.62 - 0.05, y - 0.05, 0.0), Vector3(s * 0.62 + 0.05, y + 0.05, 0.98), METAL)
+			box(Vector3(s * 0.62 - 0.05, y - 0.05, DECK_TOP), Vector3(s * 0.62 + 0.05, y + 0.05, 0.98), METAL)
 		# The rope runs along the tops of the posts, which stop where it begins.
 		box(Vector3(s * 0.62 - 0.035, -half + 0.4, 0.98), Vector3(s * 0.62 + 0.035, half - 0.4, 1.05), RUBBER)
 

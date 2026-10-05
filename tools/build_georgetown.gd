@@ -47,6 +47,15 @@ const B_SUBURBAN := "res://maps/blocks/suburban/%s.tscn"
 const B_PROPS := "res://maps/blocks/props/%s.tscn"
 const B_POLARIS := "res://maps/blocks/polaris/%s.tscn"
 
+## The canal's own cross-section, read from the block that draws it, so the
+## bench ground and the prism butt on ONE line and the number is typed once.
+## A hand-typed second copy of where the canal is, is the bug that cost the
+## Polaris ground two failed attempts.
+const CANAL_BLOCK := preload("res://tools/block_canal.gd")
+## Metres from the canal's centreline to the outer edge of its towpaths. Every
+## canal bay (prism, open prism, lock) is exactly this wide on each side.
+const CANAL_HALF: float = CANAL_BLOCK.CANAL_HALF
+
 # ── Which way round everything goes ──────────────────────────────────────────
 #
 # FUNCGODOT MAPS QUAKE (x, y, z) TO GODOT (y, z, x), so a block built along
@@ -84,6 +93,9 @@ const S_WHARF := 116.0
 
 ## How far the map runs east-west. The prism tiles in 32 m pieces.
 const RUN := 14
+
+## Where the stack stands, east-west. The park lights keep clear of it.
+const STACK_X := 86.0
 
 var _cache := {}
 
@@ -182,6 +194,10 @@ func _expected(a: String, b: String) -> bool:
 const GROUND_NAMES: Array = ["canal_bench", "polaris_lot_main", "polaris_ground_grass"]
 
 var _placed: Array = []
+## The same threshold tools/probe_level_faults.gd reports at. The guard used to
+## say 40 m3, which let eighteen pairs through that the probe then found
+## afterwards — a guard that is quieter than the probe is not guarding.
+const SHARED_M3 := 12.0
 var _clashes := 0
 
 
@@ -229,7 +245,7 @@ func _guard(inst: Node3D, path: String) -> void:
 				continue
 			var s := a.intersection(box)
 			var vol := s.size.x * s.size.y * s.size.z
-			if vol > 40.0 and not _expected(String(inst.name), p.name):
+			if vol > SHARED_M3 and not _expected(String(inst.name), p.name):
 				_clashes += 1
 				push_warning("build_georgetown: %s is inside %s — %.0f m3 at (%.0f, %.0f, %.0f)" % [
 						inst.name, p.name, vol, s.get_center().x, s.get_center().y, s.get_center().z])
@@ -292,16 +308,19 @@ func _bay(i: int) -> float:
 ## is 4 m thick and you cannot see the top of it from inside the editor, which
 ## is why it keeps being the thing that is wrong.
 ##
-## RULE: ranges are multiples of 4, they BUTT and never overlap, and the canal
+## RULE: ranges are whole metres, they BUTT and never overlap, and the canal
 ## bench stops where the prism's own ground starts.
 func _benches(art: Node3D) -> void:
 	var g := _group(art, "Benches")
-	# name, bench height, from Z, to Z. The prism brings its own towpath, bed
-	# and berm, which span about -9 .. +10, so the bench skips -8 .. +10.
+	# name, bench height, from Z, to Z. The prism brings its own towpaths, bed
+	# and walls and is the ground from -CANAL_HALF to +CANAL_HALF, so the canal
+	# bench is a VOID there: it stops on the towpath's outer edge and starts
+	# again on the other side. The two bench strips and the prism are driven by
+	# the same constant, so they butt and neither lies under the other.
 	var strips: Array = [
 		["Town", Z_TOWN, -264.0, -48.0],
-		["CanalN", Z_CANAL, -48.0, -8.0],
-		["CanalS", Z_CANAL, 6.0, 46.0],
+		["CanalN", Z_CANAL, -48.0, -CANAL_HALF],
+		["CanalS", Z_CANAL, CANAL_HALF, 46.0],
 		["Yards", Z_YARDS, 46.0, 106.0],
 		["Wharf", Z_WHARF, 106.0, 226.0],
 	]
@@ -327,15 +346,17 @@ func _benches(art: Node3D) -> void:
 			_put(g, B % "canal_terrace_wall", _bay(i), w[1], ALONG_X + 180.0, w[0], "Wall_%.0f_%d" % [w[1], i])
 
 
-## Fill `from`..`to` exactly with 32, 16 and 4 m bench pieces, laid from the
-## `from` edge. Any depth that is a multiple of 4 comes out flush at both ends.
+## Fill `from`..`to` exactly with 32, 16, 4, 2 and 1 m bench pieces, laid from
+## the `from` edge. Any depth that is a whole number of metres comes out flush
+## at both ends; the 2 and the 1 exist for the 9 m from the canal's centreline
+## to its towpath edge, which no multiple of 4 reaches.
 func _tile_bench(g: Node3D, name: String, y: float, from: float, to: float, grass := false) -> void:
 	var at := from
 	var n := 0
-	for size: float in [32.0, 16.0, 4.0]:
-		var piece: String = {32.0: "canal_bench", 16.0: "canal_bench_16", 4.0: "canal_bench_4"}[size]
+	for size: float in [32.0, 16.0, 4.0, 2.0, 1.0]:
+		var piece: String = {32.0: "canal_bench", 16.0: "canal_bench_16", 4.0: "canal_bench_4", 2.0: "canal_bench_2", 1.0: "canal_bench_1"}[size]
 		if grass:
-			piece = {32.0: "canal_bench_grass", 16.0: "canal_bench_grass_16", 4.0: "canal_bench_grass_4"}[size]
+			piece = {32.0: "canal_bench_grass", 16.0: "canal_bench_grass_16", 4.0: "canal_bench_grass_4", 2.0: "canal_bench_grass_2", 1.0: "canal_bench_grass_1"}[size]
 		while to - at >= size - 0.01:
 			_put(g, B % piece, 0.0, at + size * 0.5, ALONG_X, y, "%s_%d" % [name, n])
 			at += size
@@ -343,7 +364,7 @@ func _tile_bench(g: Node3D, name: String, y: float, from: float, to: float, gras
 	if absf(to - at) > 0.01:
 		# Say it rather than leaving a hole: a gap in a bench is a hole in the
 		# floor, and the squad simply stops at the edge of it.
-		push_warning("build_georgetown: %s leaves %.2f m unfilled — make the range a multiple of 4" % [name, to - at])
+		push_warning("build_georgetown: %s leaves %.2f m unfilled — make the range a whole number of metres" % [name, to - at])
 
 
 # ── The canal ────────────────────────────────────────────────────────────────
@@ -374,7 +395,10 @@ func _canal(art: Node3D) -> void:
 		# above it and wrong here — the benches are at the SAME height both
 		# sides of this canal, so that wall sealed the south bank off from the
 		# bridges entirely and the squad could never cross.
-		_put(g, B % "canal_prism_open", _bay(i), S_CANAL, ALONG_X, Z_CANAL, "Prism_%d" % i)
+		# A bay a bridge crosses gets the prism with no coping across the bridge
+		# mouth, so the deck lands level with the towpath and not behind a lip.
+		_put(g, B % ("canal_prism_open_bridge" if BRIDGES.has(i) else "canal_prism_open"), _bay(i), S_CANAL,
+				ALONG_X, Z_CANAL, "Prism_%d" % i)
 	for i: int in BRIDGES:
 		var kind: String = BRIDGES[i]
 		var name: String = {"truss": "canal_truss_bridge", "road": "canal_road_bridge", "plank": "works_plank_bridge"}[kind]
@@ -390,8 +414,15 @@ func _canal(art: Node3D) -> void:
 	for i: int in [1, 7, 13]:
 		_put(g, B % "canal_outfall", _bay(i) + 4.0, S_CANAL, ALONG_X, Z_CANAL, "Outfall_%d" % i)
 	# What is lying in the bed, and the barriers round the holes.
-	for i: int in [0, 4, 5, 10, 12]:
-		_put(w, B % "works_bed_debris", _bay(i), S_CANAL + (_hash(i) - 0.5) * 3.0, ALONG_X, Z_CANAL - 3.0,
+	# Bays 0, 2, 5, 10 and 11: a heap spans 28 m of the bed, so it cannot share a
+	# bay with a stair cut into the wall (3, 4, 12), the cofferdam (3, 9) or the
+	# street bridge (6), whose abutments reach the bed. It
+	# was in 4 and 12 and lay across both stairs.
+	for i: int in [0, 2, 5, 10, 11]:
+		# The +7 in the seed only picks a scatter whose pipes do not lie with a
+		# rim within 3 cm of the bed at a probe sample: a round pipe on a floor has
+		# a thin band that reads as two floors, and the old offset put one there.
+		_put(w, B % "works_bed_debris", _bay(i), S_CANAL + (_hash(i + 7) - 0.5) * 3.0, ALONG_X, Z_CANAL - 3.0,
 				"Debris_%d" % i)
 	for i: int in [3, 6, 9, 13]:
 		_put(w, B % "works_barrier_run", _bay(i) + 7.0, S_CANAL - 6.0, ALONG_X, Z_CANAL, "Barrier_%d" % i)
@@ -399,7 +430,11 @@ func _canal(art: Node3D) -> void:
 	_put(w, B % "works_site_compound", _bay(7) + 14.0, S_CANAL - 34.0, ALONG_X, Z_CANAL, "Compound")
 	# Market along the towpath at the open end, where the canal is a place
 	# rather than a cut.
-	_put(w, B % "works_market_stalls", _bay(11) + 6.0, S_CANAL - 7.5, ALONG_X, Z_CANAL, "Market")
+	# On the bench just BEYOND the towpath, not on it. At -7.5 its 3.8 m of depth
+	# sat inside the prism's own envelope and across the bay-11 bridge, whose
+	# truss runs out to -7.8. The prism ends at -CANAL_HALF and the stalls start
+	# 2 m past it.
+	_put(w, B % "works_market_stalls", _bay(11) + 6.0, S_CANAL - CANAL_HALF - 2.0, ALONG_X, Z_CANAL, "Market")
 	for i in RUN:
 		if posmod(i, 3) != 0:
 			continue
@@ -429,7 +464,7 @@ func _mills(art: Node3D) -> void:
 	# The stack, on the yards bench behind the mills: 44 m, which clears them
 	# by 28 and the office block by 16. The thing the whole map is read
 	# against, and the only piece on it visible from every bench.
-	_put(g, B % "mark_stack", 86.0, S_YARDS + 70.0, 0.0, Z_YARDS, "Stack")
+	_put(g, B % "mark_stack", STACK_X, S_YARDS + 70.0, 0.0, Z_YARDS, "Stack")
 	for i: int in [0, 1]:
 		_put(g, B % "mill_cafe_terrace", -170.0 + i * 204.0, S_CANAL - 14.0, ALONG_X, Z_CANAL + 3.0, "Cafe_%d" % i)
 	# Clear of the terrace wall at z = 46: it was at z 30 with a 13 m depth,
@@ -486,7 +521,9 @@ func _lower_yards(art: Node3D) -> void:
 			continue
 		_put(g, B_STREETS % "street_alley", _bay(i), 54.0, ALONG_X, Z_YARDS, "YardAlley_%d" % i)
 	for i in 4:
-		_put(g, B % "mill_warehouse_stone", -170.0 + i * 108.0, 86.0, FACE_SOUTH, Z_YARDS, "Yard_%d" % i)
+		# z 85.5, not 86: its back runs 11.2 m to the south and the terrace wall
+		# at 106 has a backing slab from 97, so at 86 the two shared 20 m3.
+		_put(g, B % "mill_warehouse_stone", -170.0 + i * 108.0, 85.5, FACE_SOUTH, Z_YARDS, "Yard_%d" % i)
 	for i in 3:
 		_put(g, B % "mill_brick_short", -124.0 + i * 118.0, 68.0, FACE_NORTH, Z_YARDS, "YardMill_%d" % i)
 	for i: int in [0, 1]:
@@ -548,13 +585,23 @@ func _waterfront(art: Node3D) -> void:
 	_put(p, B % "park_fountain_dry", 44.0, 132.0, 0.0, Z_WHARF, "Fountain")
 	_put(p, B % "park_playground", 124.0, 132.0, ALONG_X, Z_WHARF, "Playground")
 	_put(p, B % "park_pergola_ruin", -94.0, 132.0, ALONG_X, Z_WHARF, "Pergola")
-	_put(p, B % "mark_statue", 4.0, 108.0, 0.0, Z_WHARF, "Statue")
-	for i in 7:
-		_put(p, B % "park_overgrown_bed", -180.0 + i * 56.0, 108.0, ALONG_X, Z_WHARF, "Bed_%d" % i)
+	# In the set-piece band with the rest, not in the beds. At z 108 its plinth
+	# (6.4 m across) ran back into the terrace wall's lip, and 108 is where the
+	# wall's backing slab ends.
+	_put(p, B % "mark_statue", 4.0, 132.0, 0.0, Z_WHARF, "Statue")
+	# z 110: a bed is 6 m deep and the wall at 106 has a lip to 106.6, so at 108
+	# the beds ran into it. x kept out of the WharfStairs (-74 and 150, 4 m
+	# wide): beds 2 and 6 moved 12 m clear of them.
+	var bed_x: Array = [-180.0, -124.0, -56.0, -12.0, 44.0, 100.0, 168.0]
+	for i in bed_x.size():
+		_put(p, B % "park_overgrown_bed", bed_x[i], 110.0, ALONG_X, Z_WHARF, "Bed_%d" % i)
 	for i in 6:
 		_put(p, B % "park_bench_row", -150.0 + i * 62.0, 143.0, ALONG_X, Z_WHARF, "Benches_%d" % i)
-	for i in 8:
-		_put(p, B_STREETS % "street_light_cobra", -200.0 + i * 58.0, 125.0, FACE_SOUTH, Z_WHARF,
+	# Every 58 m, except where that lands on a set piece: light 1 stood inside
+	# the tennis court (x -166..-130) and light 5 inside the stack (x 81..91).
+	var light_x: Array = [-200.0, -174.0, -84.0, -26.0, 32.0, STACK_X + 12.0, 148.0, 206.0]
+	for i in light_x.size():
+		_put(p, B_STREETS % "street_light_cobra", light_x[i], 125.0, FACE_SOUTH, Z_WHARF,
 				"ParkLight_%d" % i)
 
 	_put(g, B % "works_market_stalls", 8.0, S_WHARF + 44.0, ALONG_X, Z_WHARF, "WharfMarket")

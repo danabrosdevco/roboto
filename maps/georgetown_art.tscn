@@ -1,2646 +1,2659 @@
-[gd_scene load_steps=57 format=3]
+[gd_scene load_steps=60 format=3]
 
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench.tscn" id="1_sf4uf"]
-[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_36dx1"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_3flm3"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_16.tscn" id="4_oap2w"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_4.tscn" id="5_tv1pt"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_grass.tscn" id="6_rpbgj"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_grass_16.tscn" id="7_wlsj4"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_grass_4.tscn" id="8_kq681"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_terrace_wall.tscn" id="9_a0la4"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_prism_open.tscn" id="10_pw723"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_lock.tscn" id="11_0r802"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_truss_bridge.tscn" id="12_v2v8l"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_road_bridge.tscn" id="13_8hrgx"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_plank_bridge.tscn" id="14_a8f6d"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_stair_down.tscn" id="15_17gam"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_cofferdam.tscn" id="16_elo3y"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_outfall.tscn" id="17_6fagr"]
-[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_light_cobra.tscn" id="18_qwib8"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_lock_gear.tscn" id="19_w4uqv"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_bed_debris.tscn" id="20_8d8xy"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_barrier_run.tscn" id="21_w73wu"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_site_compound.tscn" id="22_6k3mf"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_market_stalls.tscn" id="23_ly7em"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_brick_long.tscn" id="24_6ohpu"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_brick_short.tscn" id="25_b1s7r"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_warehouse_stone.tscn" id="26_e30hw"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_brick_tall.tscn" id="27_ydv3b"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_scaffold.tscn" id="28_iieo3"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/mark_stack.tscn" id="29_7duh5"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_cafe_terrace.tscn" id="30_7f7c1"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_office_modern.tscn" id="31_h5j2s"]
-[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_road_two_lane.tscn" id="32_ysfkr"]
-[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_sidewalk_run.tscn" id="33_ley7n"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_rowhouse_run.tscn" id="34_r0qhg"]
-[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_sign_stop.tscn" id="35_sweod"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_terrace_stair.tscn" id="36_u4h7m"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_street_ramp.tscn" id="37_3iuer"]
-[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_alley.tscn" id="38_pjbl1"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_arch_viaduct.tscn" id="39_0wgfl"]
-[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_utility_cabinet.tscn" id="40_rp67t"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_esplanade.tscn" id="41_jugs1"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_pier.tscn" id="42_ijtal"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_boathouse.tscn" id="43_3sqbi"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_barge.tscn" id="44_aoh6p"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_river.tscn" id="45_hwyiu"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/mark_aqueduct_piers.tscn" id="46_11nfe"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_far_shore.tscn" id="47_cjnv7"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_path_run.tscn" id="48_ipq01"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_tennis_court.tscn" id="49_vm161"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_pavilion.tscn" id="50_tjilk"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_fountain_dry.tscn" id="51_sooti"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_playground.tscn" id="52_7my3r"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_pergola_ruin.tscn" id="53_vdq7r"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/mark_statue.tscn" id="54_ey66d"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_overgrown_bed.tscn" id="55_cuo1p"]
-[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_bench_row.tscn" id="56_wbdw3"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench.tscn" id="1_2lsm1"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_8vnxr"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_ou8f5"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_16.tscn" id="4_kl01m"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_4.tscn" id="5_n2gxp"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_2.tscn" id="6_c6e16"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_1.tscn" id="7_w7yrl"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_grass.tscn" id="8_s1jua"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_grass_16.tscn" id="9_p61ga"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_bench_grass_4.tscn" id="10_034ik"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_terrace_wall.tscn" id="11_on07w"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_prism_open.tscn" id="12_d284o"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_prism_open_bridge.tscn" id="13_kavd1"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_lock.tscn" id="14_oc2p4"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_truss_bridge.tscn" id="15_gvfqr"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_road_bridge.tscn" id="16_vv5y4"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_plank_bridge.tscn" id="17_36u0m"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_stair_down.tscn" id="18_2aj66"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_cofferdam.tscn" id="19_hy3dp"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_outfall.tscn" id="20_ppiot"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_light_cobra.tscn" id="21_6o07l"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_lock_gear.tscn" id="22_ywj6v"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_bed_debris.tscn" id="23_jrf27"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_barrier_run.tscn" id="24_lp682"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_site_compound.tscn" id="25_qm4d3"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_market_stalls.tscn" id="26_el5mi"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_brick_long.tscn" id="27_robon"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_brick_short.tscn" id="28_dd0re"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_warehouse_stone.tscn" id="29_b3rhq"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_brick_tall.tscn" id="30_vmx26"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_scaffold.tscn" id="31_ts8kb"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/mark_stack.tscn" id="32_w8juk"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_cafe_terrace.tscn" id="33_whle7"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_office_modern.tscn" id="34_ltgcm"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_road_two_lane.tscn" id="35_1jajo"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_sidewalk_run.tscn" id="36_ecwji"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/mill_rowhouse_run.tscn" id="37_5v7ot"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_sign_stop.tscn" id="38_ghxsc"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_terrace_stair.tscn" id="39_7700d"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/canal_street_ramp.tscn" id="40_w2tx1"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_alley.tscn" id="41_e16tx"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/works_arch_viaduct.tscn" id="42_d3v6d"]
+[ext_resource type="PackedScene" path="res://maps/blocks/streets/street_utility_cabinet.tscn" id="43_8ndk3"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_esplanade.tscn" id="44_prlw5"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_pier.tscn" id="45_b1250"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_boathouse.tscn" id="46_55mf6"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_barge.tscn" id="47_00jyy"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_river.tscn" id="48_1w7lm"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/mark_aqueduct_piers.tscn" id="49_ym5cf"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/wharf_far_shore.tscn" id="50_ran5o"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_path_run.tscn" id="51_l4h1p"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_tennis_court.tscn" id="52_idgk6"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_pavilion.tscn" id="53_xxyri"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_fountain_dry.tscn" id="54_6omri"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_playground.tscn" id="55_up444"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_pergola_ruin.tscn" id="56_pq8x5"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/mark_statue.tscn" id="57_mffru"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_overgrown_bed.tscn" id="58_446r3"]
+[ext_resource type="PackedScene" path="res://maps/blocks/canal/park_bench_row.tscn" id="59_75rt2"]
 
 [node name="GeorgetownArt" type="Node3D"]
 
 [node name="Benches" type="Node3D" parent="."]
 
-[node name="Town_0" type="Node3D" parent="Benches" instance=ExtResource("1_sf4uf")]
+[node name="Town_0" type="Node3D" parent="Benches" instance=ExtResource("1_2lsm1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 4, -248)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Town_1" type="Node3D" parent="Benches" instance=ExtResource("1_sf4uf")]
+[node name="Town_1" type="Node3D" parent="Benches" instance=ExtResource("1_2lsm1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 4, -216)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Town_2" type="Node3D" parent="Benches" instance=ExtResource("1_sf4uf")]
+[node name="Town_2" type="Node3D" parent="Benches" instance=ExtResource("1_2lsm1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 4, -184)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Town_3" type="Node3D" parent="Benches" instance=ExtResource("1_sf4uf")]
+[node name="Town_3" type="Node3D" parent="Benches" instance=ExtResource("1_2lsm1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 4, -152)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Town_4" type="Node3D" parent="Benches" instance=ExtResource("1_sf4uf")]
+[node name="Town_4" type="Node3D" parent="Benches" instance=ExtResource("1_2lsm1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 4, -120)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Town_5" type="Node3D" parent="Benches" instance=ExtResource("1_sf4uf")]
+[node name="Town_5" type="Node3D" parent="Benches" instance=ExtResource("1_2lsm1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 4, -88)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Town_6" type="Node3D" parent="Benches" instance=ExtResource("4_oap2w")]
+[node name="Town_6" type="Node3D" parent="Benches" instance=ExtResource("4_kl01m")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 4, -64)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_16.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Town_7" type="Node3D" parent="Benches" instance=ExtResource("5_tv1pt")]
+[node name="Town_7" type="Node3D" parent="Benches" instance=ExtResource("5_n2gxp")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 4, -54)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_4.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Town_8" type="Node3D" parent="Benches" instance=ExtResource("5_tv1pt")]
+[node name="Town_8" type="Node3D" parent="Benches" instance=ExtResource("5_n2gxp")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 4, -50)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_4.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="CanalN_0" type="Node3D" parent="Benches" instance=ExtResource("1_sf4uf")]
+[node name="CanalN_0" type="Node3D" parent="Benches" instance=ExtResource("1_2lsm1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, -32)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="CanalN_1" type="Node3D" parent="Benches" instance=ExtResource("5_tv1pt")]
+[node name="CanalN_1" type="Node3D" parent="Benches" instance=ExtResource("5_n2gxp")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, -14)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_4.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="CanalN_2" type="Node3D" parent="Benches" instance=ExtResource("5_tv1pt")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, -10)
-script = ExtResource("2_36dx1")
-local_map_file = "res://maps/blocks/canal/canal_bench_4.map"
+[node name="CanalN_2" type="Node3D" parent="Benches" instance=ExtResource("6_c6e16")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, -11)
+script = ExtResource("2_8vnxr")
+local_map_file = "res://maps/blocks/canal/canal_bench_2.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="CanalS_0" type="Node3D" parent="Benches" instance=ExtResource("1_sf4uf")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 22)
-script = ExtResource("2_36dx1")
+[node name="CanalN_3" type="Node3D" parent="Benches" instance=ExtResource("7_w7yrl")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, -9.5)
+script = ExtResource("2_8vnxr")
+local_map_file = "res://maps/blocks/canal/canal_bench_1.map"
+global_map_file = ""
+map_settings = ExtResource("3_ou8f5")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="CanalS_0" type="Node3D" parent="Benches" instance=ExtResource("1_2lsm1")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 25)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="CanalS_1" type="Node3D" parent="Benches" instance=ExtResource("5_tv1pt")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 40)
-script = ExtResource("2_36dx1")
+[node name="CanalS_1" type="Node3D" parent="Benches" instance=ExtResource("5_n2gxp")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 43)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_4.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="CanalS_2" type="Node3D" parent="Benches" instance=ExtResource("5_tv1pt")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 44)
-script = ExtResource("2_36dx1")
-local_map_file = "res://maps/blocks/canal/canal_bench_4.map"
+[node name="CanalS_2" type="Node3D" parent="Benches" instance=ExtResource("7_w7yrl")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 45.5)
+script = ExtResource("2_8vnxr")
+local_map_file = "res://maps/blocks/canal/canal_bench_1.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Yards_0" type="Node3D" parent="Benches" instance=ExtResource("1_sf4uf")]
+[node name="Yards_0" type="Node3D" parent="Benches" instance=ExtResource("1_2lsm1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -4, 62)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Yards_1" type="Node3D" parent="Benches" instance=ExtResource("4_oap2w")]
+[node name="Yards_1" type="Node3D" parent="Benches" instance=ExtResource("4_kl01m")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -4, 86)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_16.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Yards_2" type="Node3D" parent="Benches" instance=ExtResource("5_tv1pt")]
+[node name="Yards_2" type="Node3D" parent="Benches" instance=ExtResource("5_n2gxp")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -4, 96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_4.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Yards_3" type="Node3D" parent="Benches" instance=ExtResource("5_tv1pt")]
+[node name="Yards_3" type="Node3D" parent="Benches" instance=ExtResource("5_n2gxp")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -4, 100)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_4.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Yards_4" type="Node3D" parent="Benches" instance=ExtResource("5_tv1pt")]
+[node name="Yards_4" type="Node3D" parent="Benches" instance=ExtResource("5_n2gxp")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -4, 104)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_4.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wharf_0" type="Node3D" parent="Benches" instance=ExtResource("6_rpbgj")]
+[node name="Wharf_0" type="Node3D" parent="Benches" instance=ExtResource("8_s1jua")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -8, 122)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_grass.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wharf_1" type="Node3D" parent="Benches" instance=ExtResource("6_rpbgj")]
+[node name="Wharf_1" type="Node3D" parent="Benches" instance=ExtResource("8_s1jua")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -8, 154)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_grass.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wharf_2" type="Node3D" parent="Benches" instance=ExtResource("6_rpbgj")]
+[node name="Wharf_2" type="Node3D" parent="Benches" instance=ExtResource("8_s1jua")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -8, 186)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_grass.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wharf_3" type="Node3D" parent="Benches" instance=ExtResource("7_wlsj4")]
+[node name="Wharf_3" type="Node3D" parent="Benches" instance=ExtResource("9_p61ga")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -8, 210)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_grass_16.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wharf_4" type="Node3D" parent="Benches" instance=ExtResource("8_kq681")]
+[node name="Wharf_4" type="Node3D" parent="Benches" instance=ExtResource("10_034ik")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -8, 220)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_grass_4.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wharf_5" type="Node3D" parent="Benches" instance=ExtResource("8_kq681")]
+[node name="Wharf_5" type="Node3D" parent="Benches" instance=ExtResource("10_034ik")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -8, 224)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_bench_grass_4.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_0" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_0" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -208, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_1" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_1" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -176, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_2" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_2" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -144, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_4" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_4" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -80, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_5" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_5" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -48, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_7" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_7" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 16, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_8" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_8" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 48, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_9" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_9" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 80, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_10" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_10" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 112, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_12" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_12" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 176, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_-46_13" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_-46_13" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 208, 0, -46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_0" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_0" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -208, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_2" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_2" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -144, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_3" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_3" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -112, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_4" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_4" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -80, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_6" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_6" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -16, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_7" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_7" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 16, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_8" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_8" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 48, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_10" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_10" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 112, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_11" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_11" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 144, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_12" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_12" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 176, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_46_13" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_46_13" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 208, -4, 46)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_0" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_0" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -208, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_1" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_1" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -176, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_2" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_2" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -144, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_3" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_3" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -112, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_5" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_5" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -48, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_6" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_6" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -16, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_7" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_7" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 16, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_8" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_8" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 48, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_9" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_9" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 80, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_10" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_10" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 112, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_12" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_12" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 176, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Wall_106_13" type="Node3D" parent="Benches" instance=ExtResource("9_a0la4")]
+[node name="Wall_106_13" type="Node3D" parent="Benches" instance=ExtResource("11_on07w")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 208, -8, 106)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_wall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
 [node name="Canal" type="Node3D" parent="."]
 
-[node name="Prism_0" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_0" type="Node3D" parent="Canal" instance=ExtResource("12_d284o")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -208, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_1" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_1" type="Node3D" parent="Canal" instance=ExtResource("12_d284o")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -176, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_2" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_2" type="Node3D" parent="Canal" instance=ExtResource("13_kavd1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, 0, 0)
-script = ExtResource("2_36dx1")
-local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
+script = ExtResource("2_8vnxr")
+local_map_file = "res://maps/blocks/canal/canal_prism_open_bridge.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_3" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_3" type="Node3D" parent="Canal" instance=ExtResource("12_d284o")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -112, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_4" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_4" type="Node3D" parent="Canal" instance=ExtResource("12_d284o")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -80, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_5" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_5" type="Node3D" parent="Canal" instance=ExtResource("12_d284o")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_6" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_6" type="Node3D" parent="Canal" instance=ExtResource("13_kavd1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -16, 0, 0)
-script = ExtResource("2_36dx1")
-local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
+script = ExtResource("2_8vnxr")
+local_map_file = "res://maps/blocks/canal/canal_prism_open_bridge.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_7" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_7" type="Node3D" parent="Canal" instance=ExtResource("12_d284o")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 16, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Lock" type="Node3D" parent="Canal" instance=ExtResource("11_0r802")]
+[node name="Lock" type="Node3D" parent="Canal" instance=ExtResource("14_oc2p4")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 48, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_lock.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_9" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_9" type="Node3D" parent="Canal" instance=ExtResource("13_kavd1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 80, 0, 0)
-script = ExtResource("2_36dx1")
-local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
+script = ExtResource("2_8vnxr")
+local_map_file = "res://maps/blocks/canal/canal_prism_open_bridge.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_10" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_10" type="Node3D" parent="Canal" instance=ExtResource("12_d284o")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 112, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_11" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_11" type="Node3D" parent="Canal" instance=ExtResource("13_kavd1")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 144, 0, 0)
-script = ExtResource("2_36dx1")
-local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
+script = ExtResource("2_8vnxr")
+local_map_file = "res://maps/blocks/canal/canal_prism_open_bridge.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_12" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_12" type="Node3D" parent="Canal" instance=ExtResource("12_d284o")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 176, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Prism_13" type="Node3D" parent="Canal" instance=ExtResource("10_pw723")]
+[node name="Prism_13" type="Node3D" parent="Canal" instance=ExtResource("12_d284o")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 208, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_prism_open.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bridge_2" type="Node3D" parent="Canal" instance=ExtResource("12_v2v8l")]
+[node name="Bridge_2" type="Node3D" parent="Canal" instance=ExtResource("15_gvfqr")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_truss_bridge.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bridge_6" type="Node3D" parent="Canal" instance=ExtResource("13_8hrgx")]
+[node name="Bridge_6" type="Node3D" parent="Canal" instance=ExtResource("16_vv5y4")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -16, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_road_bridge.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bridge_11" type="Node3D" parent="Canal" instance=ExtResource("12_v2v8l")]
+[node name="Bridge_11" type="Node3D" parent="Canal" instance=ExtResource("15_gvfqr")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 144, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_truss_bridge.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bridge_9" type="Node3D" parent="Canal" instance=ExtResource("14_a8f6d")]
+[node name="Bridge_9" type="Node3D" parent="Canal" instance=ExtResource("17_36u0m")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 80, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_plank_bridge.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="CanalStair_3" type="Node3D" parent="Canal" instance=ExtResource("15_17gam")]
+[node name="CanalStair_3" type="Node3D" parent="Canal" instance=ExtResource("18_2aj66")]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -103, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_stair_down.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="CanalStair_4" type="Node3D" parent="Canal" instance=ExtResource("15_17gam")]
+[node name="CanalStair_4" type="Node3D" parent="Canal" instance=ExtResource("18_2aj66")]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -71, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_stair_down.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="CanalStair_12" type="Node3D" parent="Canal" instance=ExtResource("15_17gam")]
+[node name="CanalStair_12" type="Node3D" parent="Canal" instance=ExtResource("18_2aj66")]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 185, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_stair_down.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Cofferdam_3" type="Node3D" parent="Canal" instance=ExtResource("16_elo3y")]
+[node name="Cofferdam_3" type="Node3D" parent="Canal" instance=ExtResource("19_hy3dp")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -118, 0, 1.5)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_cofferdam.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Cofferdam_9" type="Node3D" parent="Canal" instance=ExtResource("16_elo3y")]
+[node name="Cofferdam_9" type="Node3D" parent="Canal" instance=ExtResource("19_hy3dp")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 74, 0, 1.5)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_cofferdam.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Outfall_1" type="Node3D" parent="Canal" instance=ExtResource("17_6fagr")]
+[node name="Outfall_1" type="Node3D" parent="Canal" instance=ExtResource("20_ppiot")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -172, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_outfall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Outfall_7" type="Node3D" parent="Canal" instance=ExtResource("17_6fagr")]
+[node name="Outfall_7" type="Node3D" parent="Canal" instance=ExtResource("20_ppiot")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 20, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_outfall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Outfall_13" type="Node3D" parent="Canal" instance=ExtResource("17_6fagr")]
+[node name="Outfall_13" type="Node3D" parent="Canal" instance=ExtResource("20_ppiot")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 212, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_outfall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TowLight_0" type="Node3D" parent="Canal" instance=ExtResource("18_qwib8")]
+[node name="TowLight_0" type="Node3D" parent="Canal" instance=ExtResource("21_6o07l")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -208, 0, 11)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TowLight_3" type="Node3D" parent="Canal" instance=ExtResource("18_qwib8")]
+[node name="TowLight_3" type="Node3D" parent="Canal" instance=ExtResource("21_6o07l")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -112, 0, 11)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TowLight_6" type="Node3D" parent="Canal" instance=ExtResource("18_qwib8")]
+[node name="TowLight_6" type="Node3D" parent="Canal" instance=ExtResource("21_6o07l")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -16, 0, 11)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TowLight_9" type="Node3D" parent="Canal" instance=ExtResource("18_qwib8")]
+[node name="TowLight_9" type="Node3D" parent="Canal" instance=ExtResource("21_6o07l")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 80, 0, 11)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TowLight_12" type="Node3D" parent="Canal" instance=ExtResource("18_qwib8")]
+[node name="TowLight_12" type="Node3D" parent="Canal" instance=ExtResource("21_6o07l")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 176, 0, 11)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
 [node name="CanalWorks" type="Node3D" parent="."]
 
-[node name="LockGear" type="Node3D" parent="CanalWorks" instance=ExtResource("19_w4uqv")]
+[node name="LockGear" type="Node3D" parent="CanalWorks" instance=ExtResource("22_ywj6v")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 48, 0, 0)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_lock_gear.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Debris_0" type="Node3D" parent="CanalWorks" instance=ExtResource("20_8d8xy")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -208, -3, 0.423598)
-script = ExtResource("2_36dx1")
+[node name="Debris_0" type="Node3D" parent="CanalWorks" instance=ExtResource("23_jrf27")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -208, -3, 0.915564)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_bed_debris.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Debris_4" type="Node3D" parent="CanalWorks" instance=ExtResource("20_8d8xy")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -80, -3, -0.197642)
-script = ExtResource("2_36dx1")
+[node name="Debris_2" type="Node3D" parent="CanalWorks" instance=ExtResource("23_jrf27")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, -3, -0.360884)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_bed_debris.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Debris_5" type="Node3D" parent="CanalWorks" instance=ExtResource("20_8d8xy")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48, -3, 0.875601)
-script = ExtResource("2_36dx1")
+[node name="Debris_5" type="Node3D" parent="CanalWorks" instance=ExtResource("23_jrf27")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48, -3, 0.472168)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_bed_debris.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Debris_10" type="Node3D" parent="CanalWorks" instance=ExtResource("20_8d8xy")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 112, -3, 1.15754)
-script = ExtResource("2_36dx1")
+[node name="Debris_10" type="Node3D" parent="CanalWorks" instance=ExtResource("23_jrf27")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 112, -3, -1.07116)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_bed_debris.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Debris_12" type="Node3D" parent="CanalWorks" instance=ExtResource("20_8d8xy")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 176, -3, 0.472168)
-script = ExtResource("2_36dx1")
+[node name="Debris_11" type="Node3D" parent="CanalWorks" instance=ExtResource("23_jrf27")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 144, -3, -0.782719)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_bed_debris.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Barrier_3" type="Node3D" parent="CanalWorks" instance=ExtResource("21_w73wu")]
+[node name="Barrier_3" type="Node3D" parent="CanalWorks" instance=ExtResource("24_lp682")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -105, 0, -6)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_barrier_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Barrier_6" type="Node3D" parent="CanalWorks" instance=ExtResource("21_w73wu")]
+[node name="Barrier_6" type="Node3D" parent="CanalWorks" instance=ExtResource("24_lp682")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -9, 0, -6)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_barrier_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Barrier_9" type="Node3D" parent="CanalWorks" instance=ExtResource("21_w73wu")]
+[node name="Barrier_9" type="Node3D" parent="CanalWorks" instance=ExtResource("24_lp682")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 87, 0, -6)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_barrier_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Barrier_13" type="Node3D" parent="CanalWorks" instance=ExtResource("21_w73wu")]
+[node name="Barrier_13" type="Node3D" parent="CanalWorks" instance=ExtResource("24_lp682")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 215, 0, -6)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_barrier_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Compound" type="Node3D" parent="CanalWorks" instance=ExtResource("22_6k3mf")]
+[node name="Compound" type="Node3D" parent="CanalWorks" instance=ExtResource("25_qm4d3")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 30, 0, -34)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_site_compound.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Market" type="Node3D" parent="CanalWorks" instance=ExtResource("23_ly7em")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 150, 0, -7.5)
-script = ExtResource("2_36dx1")
+[node name="Market" type="Node3D" parent="CanalWorks" instance=ExtResource("26_el5mi")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 150, 0, -11)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_market_stalls.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
 [node name="Mills" type="Node3D" parent="."]
 
-[node name="Mill_0" type="Node3D" parent="Mills" instance=ExtResource("24_6ohpu")]
+[node name="Mill_0" type="Node3D" parent="Mills" instance=ExtResource("27_robon")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -212, 0, -22)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_brick_long.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Mill_1" type="Node3D" parent="Mills" instance=ExtResource("25_b1s7r")]
+[node name="Mill_1" type="Node3D" parent="Mills" instance=ExtResource("28_dd0re")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -144, 0, -22)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_brick_short.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Mill_2" type="Node3D" parent="Mills" instance=ExtResource("26_e30hw")]
+[node name="Mill_2" type="Node3D" parent="Mills" instance=ExtResource("29_b3rhq")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -76, 0, -22)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_warehouse_stone.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Mill_3" type="Node3D" parent="Mills" instance=ExtResource("27_ydv3b")]
+[node name="Mill_3" type="Node3D" parent="Mills" instance=ExtResource("30_vmx26")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -8, 0, -22)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_brick_tall.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Mill_4" type="Node3D" parent="Mills" instance=ExtResource("25_b1s7r")]
+[node name="Mill_4" type="Node3D" parent="Mills" instance=ExtResource("28_dd0re")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 60, 0, -22)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_brick_short.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Mill_5" type="Node3D" parent="Mills" instance=ExtResource("24_6ohpu")]
+[node name="Mill_5" type="Node3D" parent="Mills" instance=ExtResource("27_robon")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 128, 0, -22)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_brick_long.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Mill_6" type="Node3D" parent="Mills" instance=ExtResource("26_e30hw")]
+[node name="Mill_6" type="Node3D" parent="Mills" instance=ExtResource("29_b3rhq")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 196, 0, -22)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_warehouse_stone.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Scaffold" type="Node3D" parent="Mills" instance=ExtResource("28_iieo3")]
+[node name="Scaffold" type="Node3D" parent="Mills" instance=ExtResource("31_ts8kb")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, 0, -12.6)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_scaffold.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Stack" type="Node3D" parent="Mills" instance=ExtResource("29_7duh5")]
+[node name="Stack" type="Node3D" parent="Mills" instance=ExtResource("32_w8juk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 86, -4, 124)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mark_stack.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Cafe_0" type="Node3D" parent="Mills" instance=ExtResource("30_7f7c1")]
+[node name="Cafe_0" type="Node3D" parent="Mills" instance=ExtResource("33_whle7")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -170, 3, -14)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_cafe_terrace.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Cafe_1" type="Node3D" parent="Mills" instance=ExtResource("30_7f7c1")]
+[node name="Cafe_1" type="Node3D" parent="Mills" instance=ExtResource("33_whle7")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 34, 3, -14)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_cafe_terrace.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="OfficeBlock" type="Node3D" parent="Mills" instance=ExtResource("31_h5j2s")]
+[node name="OfficeBlock" type="Node3D" parent="Mills" instance=ExtResource("34_ltgcm")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -150, 4, -180)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_office_modern.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
 [node name="UpperTown" type="Node3D" parent="."]
 
-[node name="MStreet_0" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_0" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -208, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownWalk_0" type="Node3D" parent="UpperTown" instance=ExtResource("33_ley7n")]
+[node name="TownWalk_0" type="Node3D" parent="UpperTown" instance=ExtResource("36_ecwji")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -208, 4, -118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_1" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_1" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -176, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_2" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_2" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownWalk_2" type="Node3D" parent="UpperTown" instance=ExtResource("33_ley7n")]
+[node name="TownWalk_2" type="Node3D" parent="UpperTown" instance=ExtResource("36_ecwji")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, 4, -118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_3" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_3" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -112, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_4" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_4" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -80, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownWalk_4" type="Node3D" parent="UpperTown" instance=ExtResource("33_ley7n")]
+[node name="TownWalk_4" type="Node3D" parent="UpperTown" instance=ExtResource("36_ecwji")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -80, 4, -118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_5" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_5" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -48, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_6" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_6" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -16, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownWalk_6" type="Node3D" parent="UpperTown" instance=ExtResource("33_ley7n")]
+[node name="TownWalk_6" type="Node3D" parent="UpperTown" instance=ExtResource("36_ecwji")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -16, 4, -118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_7" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_7" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 16, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_8" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_8" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 48, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownWalk_8" type="Node3D" parent="UpperTown" instance=ExtResource("33_ley7n")]
+[node name="TownWalk_8" type="Node3D" parent="UpperTown" instance=ExtResource("36_ecwji")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 48, 4, -118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_9" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_9" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 80, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_10" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_10" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 112, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownWalk_10" type="Node3D" parent="UpperTown" instance=ExtResource("33_ley7n")]
+[node name="TownWalk_10" type="Node3D" parent="UpperTown" instance=ExtResource("36_ecwji")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 112, 4, -118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_11" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_11" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 144, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_12" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_12" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 176, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownWalk_12" type="Node3D" parent="UpperTown" instance=ExtResource("33_ley7n")]
+[node name="TownWalk_12" type="Node3D" parent="UpperTown" instance=ExtResource("36_ecwji")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 176, 4, -118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_sidewalk_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="MStreet_13" type="Node3D" parent="UpperTown" instance=ExtResource("32_ysfkr")]
+[node name="MStreet_13" type="Node3D" parent="UpperTown" instance=ExtResource("35_1jajo")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 208, 4, -96)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_road_two_lane.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="RowN_0" type="Node3D" parent="UpperTown" instance=ExtResource("34_r0qhg")]
+[node name="RowN_0" type="Node3D" parent="UpperTown" instance=ExtResource("37_5v7ot")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -164, 4, -128)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_rowhouse_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="RowS_0" type="Node3D" parent="UpperTown" instance=ExtResource("34_r0qhg")]
+[node name="RowS_0" type="Node3D" parent="UpperTown" instance=ExtResource("37_5v7ot")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, 4, -66)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_rowhouse_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="RowN_1" type="Node3D" parent="UpperTown" instance=ExtResource("34_r0qhg")]
+[node name="RowN_1" type="Node3D" parent="UpperTown" instance=ExtResource("37_5v7ot")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -82, 4, -128)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_rowhouse_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="RowS_1" type="Node3D" parent="UpperTown" instance=ExtResource("34_r0qhg")]
+[node name="RowS_1" type="Node3D" parent="UpperTown" instance=ExtResource("37_5v7ot")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -62, 4, -66)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_rowhouse_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="RowN_2" type="Node3D" parent="UpperTown" instance=ExtResource("34_r0qhg")]
+[node name="RowN_2" type="Node3D" parent="UpperTown" instance=ExtResource("37_5v7ot")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 0, 4, -128)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_rowhouse_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="RowS_2" type="Node3D" parent="UpperTown" instance=ExtResource("34_r0qhg")]
+[node name="RowS_2" type="Node3D" parent="UpperTown" instance=ExtResource("37_5v7ot")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 20, 4, -66)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_rowhouse_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="RowN_3" type="Node3D" parent="UpperTown" instance=ExtResource("34_r0qhg")]
+[node name="RowN_3" type="Node3D" parent="UpperTown" instance=ExtResource("37_5v7ot")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 82, 4, -128)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_rowhouse_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="RowS_3" type="Node3D" parent="UpperTown" instance=ExtResource("34_r0qhg")]
+[node name="RowS_3" type="Node3D" parent="UpperTown" instance=ExtResource("37_5v7ot")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 102, 4, -66)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_rowhouse_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="RowN_4" type="Node3D" parent="UpperTown" instance=ExtResource("34_r0qhg")]
+[node name="RowN_4" type="Node3D" parent="UpperTown" instance=ExtResource("37_5v7ot")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 164, 4, -128)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_rowhouse_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="RowS_4" type="Node3D" parent="UpperTown" instance=ExtResource("34_r0qhg")]
+[node name="RowS_4" type="Node3D" parent="UpperTown" instance=ExtResource("37_5v7ot")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 184, 4, -66)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_rowhouse_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownMill" type="Node3D" parent="UpperTown" instance=ExtResource("25_b1s7r")]
+[node name="TownMill" type="Node3D" parent="UpperTown" instance=ExtResource("28_dd0re")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 224, 4, -126)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_brick_short.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownLight_0" type="Node3D" parent="UpperTown" instance=ExtResource("18_qwib8")]
+[node name="TownLight_0" type="Node3D" parent="UpperTown" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -150, 4, -108)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownLight_1" type="Node3D" parent="UpperTown" instance=ExtResource("18_qwib8")]
+[node name="TownLight_1" type="Node3D" parent="UpperTown" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -74, 4, -108)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownLight_2" type="Node3D" parent="UpperTown" instance=ExtResource("18_qwib8")]
+[node name="TownLight_2" type="Node3D" parent="UpperTown" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 2, 4, -108)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownLight_3" type="Node3D" parent="UpperTown" instance=ExtResource("18_qwib8")]
+[node name="TownLight_3" type="Node3D" parent="UpperTown" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 78, 4, -108)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownLight_4" type="Node3D" parent="UpperTown" instance=ExtResource("18_qwib8")]
+[node name="TownLight_4" type="Node3D" parent="UpperTown" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 154, 4, -108)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownStop_0" type="Node3D" parent="UpperTown" instance=ExtResource("35_sweod")]
+[node name="TownStop_0" type="Node3D" parent="UpperTown" instance=ExtResource("38_ghxsc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -120, 4, -107)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_sign_stop.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownStop_1" type="Node3D" parent="UpperTown" instance=ExtResource("35_sweod")]
+[node name="TownStop_1" type="Node3D" parent="UpperTown" instance=ExtResource("38_ghxsc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -107)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_sign_stop.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownStop_2" type="Node3D" parent="UpperTown" instance=ExtResource("35_sweod")]
+[node name="TownStop_2" type="Node3D" parent="UpperTown" instance=ExtResource("38_ghxsc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120, 4, -107)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_sign_stop.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownStair_3" type="Node3D" parent="UpperTown" instance=ExtResource("36_u4h7m")]
+[node name="TownStair_3" type="Node3D" parent="UpperTown" instance=ExtResource("39_7700d")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -112, 0, -37)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_stair.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownStair_11" type="Node3D" parent="UpperTown" instance=ExtResource("36_u4h7m")]
+[node name="TownStair_11" type="Node3D" parent="UpperTown" instance=ExtResource("39_7700d")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 144, 0, -37)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_stair.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TownRamp" type="Node3D" parent="UpperTown" instance=ExtResource("37_3iuer")]
+[node name="TownRamp" type="Node3D" parent="UpperTown" instance=ExtResource("40_w2tx1")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, -50)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_street_ramp.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
 [node name="LowerYards" type="Node3D" parent="."]
 
-[node name="YardAlley_0" type="Node3D" parent="LowerYards" instance=ExtResource("38_pjbl1")]
+[node name="YardAlley_0" type="Node3D" parent="LowerYards" instance=ExtResource("41_e16tx")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -208, -4, 54)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_alley.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardAlley_2" type="Node3D" parent="LowerYards" instance=ExtResource("38_pjbl1")]
+[node name="YardAlley_2" type="Node3D" parent="LowerYards" instance=ExtResource("41_e16tx")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -144, -4, 54)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_alley.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardAlley_4" type="Node3D" parent="LowerYards" instance=ExtResource("38_pjbl1")]
+[node name="YardAlley_4" type="Node3D" parent="LowerYards" instance=ExtResource("41_e16tx")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -80, -4, 54)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_alley.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardAlley_6" type="Node3D" parent="LowerYards" instance=ExtResource("38_pjbl1")]
+[node name="YardAlley_6" type="Node3D" parent="LowerYards" instance=ExtResource("41_e16tx")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -16, -4, 54)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_alley.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardAlley_8" type="Node3D" parent="LowerYards" instance=ExtResource("38_pjbl1")]
+[node name="YardAlley_8" type="Node3D" parent="LowerYards" instance=ExtResource("41_e16tx")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 48, -4, 54)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_alley.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardAlley_10" type="Node3D" parent="LowerYards" instance=ExtResource("38_pjbl1")]
+[node name="YardAlley_10" type="Node3D" parent="LowerYards" instance=ExtResource("41_e16tx")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 112, -4, 54)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_alley.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardAlley_12" type="Node3D" parent="LowerYards" instance=ExtResource("38_pjbl1")]
+[node name="YardAlley_12" type="Node3D" parent="LowerYards" instance=ExtResource("41_e16tx")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 176, -4, 54)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_alley.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Yard_0" type="Node3D" parent="LowerYards" instance=ExtResource("26_e30hw")]
-transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -170, -4, 86)
-script = ExtResource("2_36dx1")
+[node name="Yard_0" type="Node3D" parent="LowerYards" instance=ExtResource("29_b3rhq")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -170, -4, 85.5)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_warehouse_stone.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Yard_1" type="Node3D" parent="LowerYards" instance=ExtResource("26_e30hw")]
-transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -62, -4, 86)
-script = ExtResource("2_36dx1")
+[node name="Yard_1" type="Node3D" parent="LowerYards" instance=ExtResource("29_b3rhq")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -62, -4, 85.5)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_warehouse_stone.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Yard_2" type="Node3D" parent="LowerYards" instance=ExtResource("26_e30hw")]
-transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 46, -4, 86)
-script = ExtResource("2_36dx1")
+[node name="Yard_2" type="Node3D" parent="LowerYards" instance=ExtResource("29_b3rhq")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 46, -4, 85.5)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_warehouse_stone.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Yard_3" type="Node3D" parent="LowerYards" instance=ExtResource("26_e30hw")]
-transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 154, -4, 86)
-script = ExtResource("2_36dx1")
+[node name="Yard_3" type="Node3D" parent="LowerYards" instance=ExtResource("29_b3rhq")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 154, -4, 85.5)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_warehouse_stone.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardMill_0" type="Node3D" parent="LowerYards" instance=ExtResource("25_b1s7r")]
+[node name="YardMill_0" type="Node3D" parent="LowerYards" instance=ExtResource("28_dd0re")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -124, -4, 68)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_brick_short.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardMill_1" type="Node3D" parent="LowerYards" instance=ExtResource("25_b1s7r")]
+[node name="YardMill_1" type="Node3D" parent="LowerYards" instance=ExtResource("28_dd0re")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -6, -4, 68)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_brick_short.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardMill_2" type="Node3D" parent="LowerYards" instance=ExtResource("25_b1s7r")]
+[node name="YardMill_2" type="Node3D" parent="LowerYards" instance=ExtResource("28_dd0re")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 112, -4, 68)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mill_brick_short.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Viaduct_0" type="Node3D" parent="LowerYards" instance=ExtResource("39_0wgfl")]
+[node name="Viaduct_0" type="Node3D" parent="LowerYards" instance=ExtResource("42_d3v6d")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -206, -4, 72)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_arch_viaduct.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Viaduct_1" type="Node3D" parent="LowerYards" instance=ExtResource("39_0wgfl")]
+[node name="Viaduct_1" type="Node3D" parent="LowerYards" instance=ExtResource("42_d3v6d")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 206, -4, 72)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_arch_viaduct.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardCompound" type="Node3D" parent="LowerYards" instance=ExtResource("22_6k3mf")]
+[node name="YardCompound" type="Node3D" parent="LowerYards" instance=ExtResource("25_qm4d3")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -4, 86)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_site_compound.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardStair_1" type="Node3D" parent="LowerYards" instance=ExtResource("36_u4h7m")]
+[node name="YardStair_1" type="Node3D" parent="LowerYards" instance=ExtResource("39_7700d")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -176, -4, 55)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_stair.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardStair_9" type="Node3D" parent="LowerYards" instance=ExtResource("36_u4h7m")]
+[node name="YardStair_9" type="Node3D" parent="LowerYards" instance=ExtResource("39_7700d")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 80, -4, 55)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_stair.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardRamp" type="Node3D" parent="LowerYards" instance=ExtResource("37_3iuer")]
+[node name="YardRamp" type="Node3D" parent="LowerYards" instance=ExtResource("40_w2tx1")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, -4, 52)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_street_ramp.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Cab_0" type="Node3D" parent="LowerYards" instance=ExtResource("40_rp67t")]
+[node name="Cab_0" type="Node3D" parent="LowerYards" instance=ExtResource("43_8ndk3")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -200, -4, 62)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_utility_cabinet.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Cab_4" type="Node3D" parent="LowerYards" instance=ExtResource("40_rp67t")]
+[node name="Cab_4" type="Node3D" parent="LowerYards" instance=ExtResource("43_8ndk3")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -72, -4, 62)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_utility_cabinet.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Cab_8" type="Node3D" parent="LowerYards" instance=ExtResource("40_rp67t")]
+[node name="Cab_8" type="Node3D" parent="LowerYards" instance=ExtResource("43_8ndk3")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 56, -4, 62)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_utility_cabinet.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Cab_12" type="Node3D" parent="LowerYards" instance=ExtResource("40_rp67t")]
+[node name="Cab_12" type="Node3D" parent="LowerYards" instance=ExtResource("43_8ndk3")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 184, -4, 62)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_utility_cabinet.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardLight_0" type="Node3D" parent="LowerYards" instance=ExtResource("18_qwib8")]
+[node name="YardLight_0" type="Node3D" parent="LowerYards" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -160, -4, 49)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardLight_1" type="Node3D" parent="LowerYards" instance=ExtResource("18_qwib8")]
+[node name="YardLight_1" type="Node3D" parent="LowerYards" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -78, -4, 49)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardLight_2" type="Node3D" parent="LowerYards" instance=ExtResource("18_qwib8")]
+[node name="YardLight_2" type="Node3D" parent="LowerYards" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 4, -4, 49)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardLight_3" type="Node3D" parent="LowerYards" instance=ExtResource("18_qwib8")]
+[node name="YardLight_3" type="Node3D" parent="LowerYards" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 86, -4, 49)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="YardLight_4" type="Node3D" parent="LowerYards" instance=ExtResource("18_qwib8")]
+[node name="YardLight_4" type="Node3D" parent="LowerYards" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 168, -4, 49)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
 [node name="Waterfront" type="Node3D" parent="."]
 
-[node name="Esplanade_0" type="Node3D" parent="Waterfront" instance=ExtResource("41_jugs1")]
+[node name="Esplanade_0" type="Node3D" parent="Waterfront" instance=ExtResource("44_prlw5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -216, -8, 162)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Esplanade_1" type="Node3D" parent="Waterfront" instance=ExtResource("41_jugs1")]
+[node name="Esplanade_1" type="Node3D" parent="Waterfront" instance=ExtResource("44_prlw5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -168, -8, 162)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Esplanade_2" type="Node3D" parent="Waterfront" instance=ExtResource("41_jugs1")]
+[node name="Esplanade_2" type="Node3D" parent="Waterfront" instance=ExtResource("44_prlw5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -120, -8, 162)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Esplanade_3" type="Node3D" parent="Waterfront" instance=ExtResource("41_jugs1")]
+[node name="Esplanade_3" type="Node3D" parent="Waterfront" instance=ExtResource("44_prlw5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -72, -8, 162)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Esplanade_4" type="Node3D" parent="Waterfront" instance=ExtResource("41_jugs1")]
+[node name="Esplanade_4" type="Node3D" parent="Waterfront" instance=ExtResource("44_prlw5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -24, -8, 162)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Esplanade_5" type="Node3D" parent="Waterfront" instance=ExtResource("41_jugs1")]
+[node name="Esplanade_5" type="Node3D" parent="Waterfront" instance=ExtResource("44_prlw5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 24, -8, 162)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Esplanade_6" type="Node3D" parent="Waterfront" instance=ExtResource("41_jugs1")]
+[node name="Esplanade_6" type="Node3D" parent="Waterfront" instance=ExtResource("44_prlw5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 72, -8, 162)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Esplanade_7" type="Node3D" parent="Waterfront" instance=ExtResource("41_jugs1")]
+[node name="Esplanade_7" type="Node3D" parent="Waterfront" instance=ExtResource("44_prlw5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 120, -8, 162)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Esplanade_8" type="Node3D" parent="Waterfront" instance=ExtResource("41_jugs1")]
+[node name="Esplanade_8" type="Node3D" parent="Waterfront" instance=ExtResource("44_prlw5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 168, -8, 162)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Esplanade_9" type="Node3D" parent="Waterfront" instance=ExtResource("41_jugs1")]
+[node name="Esplanade_9" type="Node3D" parent="Waterfront" instance=ExtResource("44_prlw5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 216, -8, 162)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Pier_0" type="Node3D" parent="Waterfront" instance=ExtResource("42_ijtal")]
+[node name="Pier_0" type="Node3D" parent="Waterfront" instance=ExtResource("45_b1250")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -140, -8, 188)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_pier.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Pier_1" type="Node3D" parent="Waterfront" instance=ExtResource("42_ijtal")]
+[node name="Pier_1" type="Node3D" parent="Waterfront" instance=ExtResource("45_b1250")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -8, 188)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_pier.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Pier_2" type="Node3D" parent="Waterfront" instance=ExtResource("42_ijtal")]
+[node name="Pier_2" type="Node3D" parent="Waterfront" instance=ExtResource("45_b1250")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 140, -8, 188)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_pier.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Boathouse" type="Node3D" parent="Waterfront" instance=ExtResource("43_3sqbi")]
+[node name="Boathouse" type="Node3D" parent="Waterfront" instance=ExtResource("46_55mf6")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -56, -8, 186)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_boathouse.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Barge" type="Node3D" parent="Waterfront" instance=ExtResource("44_aoh6p")]
+[node name="Barge" type="Node3D" parent="Waterfront" instance=ExtResource("47_00jyy")]
 transform = Transform3D(-0.0697565, 0, 0.997564, 0, 1, 0, -0.997564, 0, -0.0697565, 72, -8, 182)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_barge.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="WharfStair_4" type="Node3D" parent="Waterfront" instance=ExtResource("36_u4h7m")]
+[node name="WharfStair_4" type="Node3D" parent="Waterfront" instance=ExtResource("39_7700d")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -74, -8, 115)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_stair.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="WharfStair_11" type="Node3D" parent="Waterfront" instance=ExtResource("36_u4h7m")]
+[node name="WharfStair_11" type="Node3D" parent="Waterfront" instance=ExtResource("39_7700d")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 150, -8, 115)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/canal_terrace_stair.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="WharfMarket" type="Node3D" parent="Waterfront" instance=ExtResource("23_ly7em")]
+[node name="WharfMarket" type="Node3D" parent="Waterfront" instance=ExtResource("26_el5mi")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 8, -8, 160)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/works_market_stalls.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Potomac" type="Node3D" parent="Waterfront" instance=ExtResource("45_hwyiu")]
+[node name="Potomac" type="Node3D" parent="Waterfront" instance=ExtResource("48_1w7lm")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -8, 168)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_river.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="AqueductPiers" type="Node3D" parent="Waterfront" instance=ExtResource("46_11nfe")]
+[node name="AqueductPiers" type="Node3D" parent="Waterfront" instance=ExtResource("49_ym5cf")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -176, -8, 178)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mark_aqueduct_piers.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Arlington" type="Node3D" parent="Waterfront" instance=ExtResource("47_cjnv7")]
+[node name="Arlington" type="Node3D" parent="Waterfront" instance=ExtResource("50_ran5o")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -7, 496)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/wharf_far_shore.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
 [node name="Park" type="Node3D" parent="."]
 
-[node name="PathN_0" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_0" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -192, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_1" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_1" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -160, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_2" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_2" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -128, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_3" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_3" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -96, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_4" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_4" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -64, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_5" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_5" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -32, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_6" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_6" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_7" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_7" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 32, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_8" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_8" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 64, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_9" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_9" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 96, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_10" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_10" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 128, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_11" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_11" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 160, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathN_12" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathN_12" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 192, -8, 118)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathS_0" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathS_0" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -128, -8, 150)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathS_1" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathS_1" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -96, -8, 150)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathS_2" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathS_2" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -64, -8, 150)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathS_3" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathS_3" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -32, -8, 150)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathS_4" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathS_4" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, -8, 150)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathS_5" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathS_5" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 32, -8, 150)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathS_6" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathS_6" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 64, -8, 150)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathS_7" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathS_7" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 96, -8, 150)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="PathS_8" type="Node3D" parent="Park" instance=ExtResource("48_ipq01")]
+[node name="PathS_8" type="Node3D" parent="Park" instance=ExtResource("51_l4h1p")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 128, -8, 150)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_path_run.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="TennisCourt" type="Node3D" parent="Park" instance=ExtResource("49_vm161")]
+[node name="TennisCourt" type="Node3D" parent="Park" instance=ExtResource("52_idgk6")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -148, -8, 132)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_tennis_court.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bandstand" type="Node3D" parent="Park" instance=ExtResource("50_tjilk")]
+[node name="Bandstand" type="Node3D" parent="Park" instance=ExtResource("53_xxyri")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, -8, 132)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_pavilion.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Fountain" type="Node3D" parent="Park" instance=ExtResource("51_sooti")]
+[node name="Fountain" type="Node3D" parent="Park" instance=ExtResource("54_6omri")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, -8, 132)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_fountain_dry.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Playground" type="Node3D" parent="Park" instance=ExtResource("52_7my3r")]
+[node name="Playground" type="Node3D" parent="Park" instance=ExtResource("55_up444")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 124, -8, 132)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_playground.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Pergola" type="Node3D" parent="Park" instance=ExtResource("53_vdq7r")]
+[node name="Pergola" type="Node3D" parent="Park" instance=ExtResource("56_pq8x5")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -94, -8, 132)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_pergola_ruin.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Statue" type="Node3D" parent="Park" instance=ExtResource("54_ey66d")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, -8, 108)
-script = ExtResource("2_36dx1")
+[node name="Statue" type="Node3D" parent="Park" instance=ExtResource("57_mffru")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, -8, 132)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/mark_statue.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bed_0" type="Node3D" parent="Park" instance=ExtResource("55_cuo1p")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -180, -8, 108)
-script = ExtResource("2_36dx1")
+[node name="Bed_0" type="Node3D" parent="Park" instance=ExtResource("58_446r3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -180, -8, 110)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_overgrown_bed.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bed_1" type="Node3D" parent="Park" instance=ExtResource("55_cuo1p")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -124, -8, 108)
-script = ExtResource("2_36dx1")
+[node name="Bed_1" type="Node3D" parent="Park" instance=ExtResource("58_446r3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -124, -8, 110)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_overgrown_bed.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bed_2" type="Node3D" parent="Park" instance=ExtResource("55_cuo1p")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -68, -8, 108)
-script = ExtResource("2_36dx1")
+[node name="Bed_2" type="Node3D" parent="Park" instance=ExtResource("58_446r3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -56, -8, 110)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_overgrown_bed.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bed_3" type="Node3D" parent="Park" instance=ExtResource("55_cuo1p")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -12, -8, 108)
-script = ExtResource("2_36dx1")
+[node name="Bed_3" type="Node3D" parent="Park" instance=ExtResource("58_446r3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -12, -8, 110)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_overgrown_bed.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bed_4" type="Node3D" parent="Park" instance=ExtResource("55_cuo1p")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 44, -8, 108)
-script = ExtResource("2_36dx1")
+[node name="Bed_4" type="Node3D" parent="Park" instance=ExtResource("58_446r3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 44, -8, 110)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_overgrown_bed.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bed_5" type="Node3D" parent="Park" instance=ExtResource("55_cuo1p")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 100, -8, 108)
-script = ExtResource("2_36dx1")
+[node name="Bed_5" type="Node3D" parent="Park" instance=ExtResource("58_446r3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 100, -8, 110)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_overgrown_bed.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Bed_6" type="Node3D" parent="Park" instance=ExtResource("55_cuo1p")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 156, -8, 108)
-script = ExtResource("2_36dx1")
+[node name="Bed_6" type="Node3D" parent="Park" instance=ExtResource("58_446r3")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 168, -8, 110)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_overgrown_bed.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Benches_0" type="Node3D" parent="Park" instance=ExtResource("56_wbdw3")]
+[node name="Benches_0" type="Node3D" parent="Park" instance=ExtResource("59_75rt2")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -150, -8, 143)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_bench_row.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Benches_1" type="Node3D" parent="Park" instance=ExtResource("56_wbdw3")]
+[node name="Benches_1" type="Node3D" parent="Park" instance=ExtResource("59_75rt2")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -88, -8, 143)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_bench_row.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Benches_2" type="Node3D" parent="Park" instance=ExtResource("56_wbdw3")]
+[node name="Benches_2" type="Node3D" parent="Park" instance=ExtResource("59_75rt2")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -26, -8, 143)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_bench_row.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Benches_3" type="Node3D" parent="Park" instance=ExtResource("56_wbdw3")]
+[node name="Benches_3" type="Node3D" parent="Park" instance=ExtResource("59_75rt2")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 36, -8, 143)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_bench_row.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Benches_4" type="Node3D" parent="Park" instance=ExtResource("56_wbdw3")]
+[node name="Benches_4" type="Node3D" parent="Park" instance=ExtResource("59_75rt2")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 98, -8, 143)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_bench_row.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="Benches_5" type="Node3D" parent="Park" instance=ExtResource("56_wbdw3")]
+[node name="Benches_5" type="Node3D" parent="Park" instance=ExtResource("59_75rt2")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 160, -8, 143)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/canal/park_bench_row.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="ParkLight_0" type="Node3D" parent="Park" instance=ExtResource("18_qwib8")]
+[node name="ParkLight_0" type="Node3D" parent="Park" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -200, -8, 125)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="ParkLight_1" type="Node3D" parent="Park" instance=ExtResource("18_qwib8")]
-transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -142, -8, 125)
-script = ExtResource("2_36dx1")
+[node name="ParkLight_1" type="Node3D" parent="Park" instance=ExtResource("21_6o07l")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -174, -8, 125)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="ParkLight_2" type="Node3D" parent="Park" instance=ExtResource("18_qwib8")]
+[node name="ParkLight_2" type="Node3D" parent="Park" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -84, -8, 125)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="ParkLight_3" type="Node3D" parent="Park" instance=ExtResource("18_qwib8")]
+[node name="ParkLight_3" type="Node3D" parent="Park" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -26, -8, 125)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="ParkLight_4" type="Node3D" parent="Park" instance=ExtResource("18_qwib8")]
+[node name="ParkLight_4" type="Node3D" parent="Park" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 32, -8, 125)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="ParkLight_5" type="Node3D" parent="Park" instance=ExtResource("18_qwib8")]
-transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 90, -8, 125)
-script = ExtResource("2_36dx1")
+[node name="ParkLight_5" type="Node3D" parent="Park" instance=ExtResource("21_6o07l")]
+transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 98, -8, 125)
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="ParkLight_6" type="Node3D" parent="Park" instance=ExtResource("18_qwib8")]
+[node name="ParkLight_6" type="Node3D" parent="Park" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 148, -8, 125)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000
 
-[node name="ParkLight_7" type="Node3D" parent="Park" instance=ExtResource("18_qwib8")]
+[node name="ParkLight_7" type="Node3D" parent="Park" instance=ExtResource("21_6o07l")]
 transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, 206, -8, 125)
-script = ExtResource("2_36dx1")
+script = ExtResource("2_8vnxr")
 local_map_file = "res://maps/blocks/streets/street_light_cobra.map"
 global_map_file = ""
-map_settings = ExtResource("3_3flm3")
+map_settings = ExtResource("3_ou8f5")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000

@@ -170,18 +170,21 @@ func _bench_row() -> void:
 ## legs, a slide off one side, a ramp up the other. Head height, which makes it
 ## the only thing in the park you can shoot from.
 func _playground() -> void:
-	box(Vector3(-7.0, -5.0, -0.45), Vector3(7.0, 5.0, -0.05), {"top": RUBBER, "side": COPING, "bottom": CONCRETE})
-	box(Vector3(-2.0, -1.6, -0.05), Vector3(2.0, 1.6, 1.2), {"top": GRATING, "side": IRON, "bottom": IRON})
+	# The safety surface tops out at 0, ON the grass bench. It was at -0.05, which
+	# was a clear 5 cm under a bench at 0 but is 1 cm off one at -0.06 -- two
+	# floors again. The bench is the ground, so this piece rises to meet it.
+	box(Vector3(-7.0, -5.0, -0.45), Vector3(7.0, 5.0, 0.0), {"top": RUBBER, "side": COPING, "bottom": CONCRETE})
+	box(Vector3(-2.0, -1.6, 0.0), Vector3(2.0, 1.6, 1.2), {"top": GRATING, "side": IRON, "bottom": IRON})
 	for sx: float in [-1.0, 1.0]:
 		for sy: float in [-1.0, 1.0]:
 			# The deck is solid up to 1.2, so the posts start on it and carry the roof.
 			post(sx * 1.8, sy * 1.4, 1.2, 2.6, 0.14, IRON)
 	box(Vector3(-2.2, -1.8, 2.6), Vector3(2.2, 1.8, 2.8), {"top": RUST_PANEL, "side": IRON, "bottom": IRON})
 	# The ramp up, 2.2 m wide so it survives the erosion, and the slide down.
-	# Based on the safety surface's top (-0.05), not sunk through it to -0.45.
-	ramp(2.0, -1.1, 5.6, 1.1, -0.05, 0.0, 1.2, "-x", {"top": GRATING, "side": IRON, "bottom": IRON})
-	solid([Vector3(-2.0, -1.5, 1.2), Vector3(-2.0, -0.3, 1.2), Vector3(-5.4, -0.3, -0.05), Vector3(-5.4, -1.5, -0.05),
-			Vector3(-2.0, -1.5, 1.35), Vector3(-2.0, -0.3, 1.35), Vector3(-5.4, -0.3, 0.1), Vector3(-5.4, -1.5, 0.1)],
+	# Based on the safety surface's top (0.0), not sunk through it to -0.45.
+	ramp(2.0, -1.1, 5.6, 1.1, 0.0, 0.0, 1.2, "-x", {"top": GRATING, "side": IRON, "bottom": IRON})
+	solid([Vector3(-2.0, -1.5, 1.2), Vector3(-2.0, -0.3, 1.2), Vector3(-5.4, -0.3, 0.0), Vector3(-5.4, -1.5, 0.0),
+			Vector3(-2.0, -1.5, 1.35), Vector3(-2.0, -0.3, 1.35), Vector3(-5.4, -0.3, 0.15), Vector3(-5.4, -1.5, 0.15)],
 			{"top": RUST_PANEL, "side": IRON, "bottom": IRON})
 	no_collision()
 	for s: float in [-1.0, 1.0]:
