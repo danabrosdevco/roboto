@@ -45,8 +45,27 @@ const B_POLARIS := "res://maps/blocks/polaris/%s.tscn"
 ## centreline with its origin AT THE CIRCLE CENTRE, so the four corners go in
 ## at the four corners of this rectangle and the straights fill between them.
 const RING_X := 150.0
-const RING_Y := 110.0
+## 112 and not 110: the straights are 32 m pieces and 2 x 112 is seven of them
+## exactly. At 110 it is 220 m, seven pieces laid on a 31.4 m pitch overlapped
+## each other and the corners by half a metre each.
+const RING_Y := 112.0
 const RING_R := 50.0
+
+## Half-widths of the pieces that have to be laid side by side, MEASURED from
+## their collision (6.31, 11.41, 7.06, 32.06) and rounded UP to a tenth, so two
+## pieces placed edge to edge touch and never share a sliver.
+const ROAD2_HALF := 6.4
+const ROAD4_HALF := 11.5
+const AISLE_HALF_W := 7.1
+const AISLE_HALF_L := 32.1
+## The lot-entry throat is 18 m across the road it meets (measured); a throat
+## meets a road as a junction, so it starts at the carriageway's edge and
+## not 3 m inside it, which is where it stood.
+const THROAT_HALF_Z := 9.1
+## The end aisles stand INSIDE the ring road's straights, which are at x = +-200
+## and 6.4 wide each side. 152 + 2 x 17 puts the outermost one's outer edge at
+## 193.1; at the old pitch of 20 it was 199.1, inside the road.
+const END_PITCH := 17.0
 
 var _cache := {}
 
@@ -90,6 +109,10 @@ func _initialize() -> void:
 
 	_write_level()
 	print("      %s" % LEVEL.get_file())
+	if _clashes > 0:
+		print("      PLACEMENT GUARD: %d clash(es) — see the warnings above" % _clashes)
+	else:
+		print("      PLACEMENT GUARD: clean")
 	print("BUILD POLARIS DONE")
 	quit()
 
@@ -139,7 +162,112 @@ func _put(parent: Node3D, path: String, x: float, z: float, yaw: float = 0.0, y:
 		if path.contains(part):
 			_surfaces.append(_footprint(inst))
 			break
+	_guard(inst, path)
 	return inst
+
+
+# ── The placement guard ──────────────────────────────────────────────────────
+#
+# THE BUILDER KNOWS EVERY FOOTPRINT AT THE MOMENT IT PUTS A PIECE DOWN, so it
+# says so then. The alternative — build, probe, move one piece to clear one
+# clash, probe again — is whack-a-mole: each piece moved lands on something
+# else, and Georgetown took four passes to get from seventy clashes to fifty
+# that way. Here the warning names both pieces and the volume they share, and
+# the fix is one edit.
+#
+# THE STANDING RULE: pieces may touch, they may not overlap. A face shared
+# exactly, back to back, is fine; interpenetration of any depth flickers.
+#
+# MEASURED SHAPE AGAINST SHAPE, NOT PIECE AGAINST PIECE. A piece's envelope is
+# a box round everything it collides with, and a car park aisle's envelope is
+# 64 x 14 m even though the aisle itself is a few kerbs and islands. Two
+# envelopes sharing a corner is not a fault; two COLLIDERS sharing volume is.
+# So the envelopes are a cheap first cut and the answer is the sum over every
+# pair of colliders inside them.
+#
+# Colliders only, which is what the level probe measures too. A mesh-only
+# piece (a sign face, a hedge) has nothing for the guard to compare.
+
+## Paths that are the site's ground. A building is MEANT to be founded into its
+## slab, so a ground piece is never compared with anything.
+const GROUND_PIECES: Array = ["ground/tile_", "polaris_lot_main", "polaris_lot_field", "polaris_ground_grass"]
+## Volume two pieces must share before it is called a clash. Below this is the
+## rounding of a rotated box's own envelope, not a fault.
+const PLACEMENT_M3 := 0.25
+
+var _placed: Array = []
+var _clashes := 0
+
+
+func _is_ground(path: String) -> bool:
+	for p: String in GROUND_PIECES:
+		if path.contains(p):
+			return true
+	return false
+
+
+## Pairs of piece names (as prefixes) that are MEANT to share volume. EMPTY, and
+## it should stay that way unless something genuinely founds into something.
+##
+## The car rows are not in it, and the brief for this pass expected them to be:
+## a row and its aisle share an ENVELOPE (a 64 x 14 m box round the aisle's
+## kerbs and islands holds the cars parked beside them), which is what the
+## level probe counts, so the probe lists about 38 of them. Measured collider
+## against collider there is NO shared volume at all: switching this list off
+## and building again gave zero car-row warnings. Suppressing them would only
+## have blinded the guard to a car parked ON an island, which is a real fault.
+const EXPECTED: Array = []
+
+
+func _expected(a: String, b: String) -> bool:
+	for e: Array in EXPECTED:
+		if (a.begins_with(e[0]) and b.begins_with(e[1])) or (b.begins_with(e[0]) and a.begins_with(e[1])):
+			return true
+	return false
+
+
+## World AABB of every collider under `n`, one per shape.
+func _shape_boxes(n: Node3D) -> Array:
+	var out: Array = []
+	for cs: CollisionShape3D in n.find_children("*", "CollisionShape3D", true, false):
+		if cs.shape == null:
+			continue
+		var m := cs.shape.get_debug_mesh()
+		if m == null:
+			continue
+		out.append(cs.global_transform * m.get_aabb())
+	return out
+
+
+func _guard(inst: Node3D, path: String) -> void:
+	if _is_ground(path):
+		return
+	var shapes := _shape_boxes(inst)
+	if shapes.is_empty():
+		return
+	var box: AABB = shapes[0]
+	for s: AABB in shapes:
+		box = box.merge(s)
+	for other: Dictionary in _placed:
+		if not box.intersects(other.box) or _expected(inst.name, other.name):
+			continue
+		var shared := 0.0
+		var where := AABB()
+		var first := true
+		for a: AABB in shapes:
+			for b: AABB in other.shapes:
+				if not a.intersects(b):
+					continue
+				var s := a.intersection(b)
+				shared += s.size.x * s.size.y * s.size.z
+				where = s if first else where.merge(s)
+				first = false
+		if shared > PLACEMENT_M3:
+			_clashes += 1
+			var c := where.get_center()
+			push_warning("build_polaris: %s overlaps %s by %.1f m3 around (%.0f, %.0f, %.0f) — move one of them" % [
+					inst.name, other.name, shared, c.x, c.y, c.z])
+	_placed.append({"name": String(inst.name), "box": box, "shapes": shapes})
 
 
 func _group(parent: Node3D, name: String) -> Node3D:
@@ -216,6 +344,26 @@ const SURFACE_PARTS: Array = [
 	"polaris_aisle", "polaris_ring_corner", "polaris_entry",
 ]
 
+## THE HOLES IN THE GROUND, AND THE BASINS THAT FILL THEM, ARE ONE LIST.
+##
+## Each entry is a 64 m block of the site, counted in blocks from SITE's
+## north-west corner (so (0, 0) is x -416..-352, z -384..-320). _ground() lays
+## no tile in a void and puts a suburb_retention_basin_64 in it, whose outer
+## footprint is exactly 64 x 64 m. They cannot drift apart because there is
+## only this list: the lesson of the whole ground rewrite is that a second,
+## hand-typed set of rectangles is the bug.
+##
+## WHERE, AND WHY. Both are in the dirt EAST of the car park, one beside each
+## of the ring road's eastern corners, at x 224..288. A real detention basin is
+## on the perimeter at the low corner of a site, not in the middle of the
+## parking; the east side is the one with nothing on it (the west has the
+## power centre and the north has the houses), and a squad crossing the ring
+## road on that flank gets a hole to fight round in place of more asphalt.
+## Blocks (10, 3) and (10, 8) are x 224..288, z -192..-128 and 128..192.
+const VOIDS: Array = [Vector2i(10, 3), Vector2i(10, 8)]
+const BLOCK := 64.0
+const B_BASIN := "res://maps/blocks/suburbs/suburb_retention_basin_64.tscn"
+
 var _tiles := 0
 ## World-space XZ footprints of every surface piece placed so far.
 var _surfaces: Array = []
@@ -237,9 +385,24 @@ func _ground(art: Node3D) -> void:
 		# Not fatal, but it means a road has moved off the site and the ground
 		# cannot follow it. Say which way to grow SITE.
 		push_warning("build_polaris: %d surface piece(s) lie outside SITE — the ground stops at the site edge" % strays)
+	# A void is checked against the record before anything is laid in it: a
+	# road, aisle or lot that reached into a hole would be paved over by the
+	# basin and nobody would be told.
+	for v: Vector2i in VOIDS:
+		var vr := _block_rect(v)
+		for r: Rect2 in _surfaces:
+			if r.size.x > 0.0 and vr.grow(-0.01).intersects(r):
+				push_warning("build_polaris: a surface piece reaches into the void at block %s — move it or move the void" % v)
+				break
+		if vr.intersection(LOT).has_area():
+			push_warning("build_polaris: the void at block %s lies on the car park — the basin would replace asphalt" % v)
 	# 2 x 2 cells of one kind become one 64 m tile; the rest stay 32s.
 	for bx in nx / 2:
 		for bz in nz / 2:
+			if VOIDS.has(Vector2i(bx, bz)):
+				var vr := _block_rect(Vector2i(bx, bz))
+				_put(g, B_BASIN, vr.get_center().x, vr.get_center().y, 0.0, 0.0, "Basin_%d_%d" % [bx, bz])
+				continue
 			var kinds: Array = []
 			for i in 2:
 				for j in 2:
@@ -272,6 +435,11 @@ func _mark(cells: Dictionary, r: Rect2, nx: int, nz: int) -> int:
 		for iz in range(maxi(z0, 0), mini(z1, nz - 1) + 1):
 			cells[Vector2i(ix, iz)] = true
 	return stray
+
+
+## The 64 m block `b` of the site, as a rectangle in world XZ.
+func _block_rect(b: Vector2i) -> Rect2:
+	return Rect2(SITE.position.x + b.x * BLOCK, SITE.position.y + b.y * BLOCK, BLOCK, BLOCK)
 
 
 func _tile(g: Node3D, kind: String, size: float, cx: float, cz: float) -> void:
@@ -335,11 +503,32 @@ func _ring_road(art: Node3D) -> void:
 			var z := -RING_Y + (i + 0.5) * (RING_Y * 2.0 / along_z)
 			_put(g, B_STREETS % "street_road_two_lane_inlay", s * (RING_X + RING_R), z, ALONG_Z, 0.0,
 					"RingZ_%s_%d" % ["E" if s > 0.0 else "W", i])
-	for i in 16:
-		var a := TAU * i / 16.0
-		_put(g, B_SUBURBAN % "suburban_lot_light",
-				cos(a) * (RING_X + RING_R + 7.0), sin(a) * (RING_Y + RING_R + 7.0), 0.0, 0.0,
-				"RingLight_%d" % i)
+	_ring_lights(g)
+
+
+## THE RING ROAD'S LIGHTS, standing outside the carriageway on its own lines.
+##
+## They used to be sixteen points on an ellipse, which is not the road's shape:
+## a rounded rectangle is straight for most of its length, and an ellipse
+## drawn through its corners crosses the straights, so four of them stood in
+## the kerb. Each straight now gets its own, and the corners get one on the
+## arc. The west straight gets none: the power centre's boulevard runs right
+## beside it and a light there would stand on that carriageway.
+func _ring_lights(g: Node3D) -> void:
+	var off := ROAD2_HALF + 3.0
+	var n := 0
+	for s: float in [-1.0, 1.0]:
+		for x: float in [-105.0, -45.0, 45.0, 105.0]:
+			_put(g, B_SUBURBAN % "suburban_lot_light", x, s * (RING_Y + RING_R + off), 0.0, 0.0, "RingLight_%d" % n)
+			n += 1
+	for z: float in [-56.0, 56.0]:
+		_put(g, B_SUBURBAN % "suburban_lot_light", RING_X + RING_R + off, z, 0.0, 0.0, "RingLight_%d" % n)
+		n += 1
+	var d := (RING_R + off) * 0.7071
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			_put(g, B_SUBURBAN % "suburban_lot_light", sx * (RING_X + d), sz * (RING_Y + d), 0.0, 0.0, "RingLight_%d" % n)
+			n += 1
 
 
 ## THE MALL: two wings side by side along the site's X with an anchor pushed
@@ -353,7 +542,7 @@ func _mall(art: Node3D) -> void:
 	_put(g, B_SUBURBAN % "suburban_mall_anchor", 108.0, 0.0, FACE_EAST, 0.0, "AnchorEast")
 	_put(g, B_SUBURBAN % "suburban_mall_entry", 0.0, 34.0, FACE_SOUTH, 0.0, "EntryCourt")
 	_put(g, B_SUBURBAN % "suburban_service_dock", -40.0, -30.0, FACE_NORTH, 0.0, "ServiceDock")
-	_put(g, B_SUBURBAN % "suburban_service_dock", 52.0, -30.0, FACE_NORTH, 0.0, "ServiceDockEast")
+	_put(g, B_SUBURBAN % "suburban_service_dock", 51.0, -30.0, FACE_NORTH, 0.0, "ServiceDockEast")
 	# The cinema and the deck, inside the loop at the two free corners.
 	_put(g, B_POLARIS % "polaris_cinema", -120.0, 84.0, FACE_SOUTH, 0.0, "Cinema")
 	_put(g, B_POLARIS % "polaris_parking_garage", 128.0, 74.0, ALONG_X, 0.0, "Garage")
@@ -400,43 +589,60 @@ func _parking(art: Node3D) -> void:
 						"NorthCars_%d_%s_%s" % [i, "E" if s > 0.0 else "W", "a" if e > 0.0 else "b"])
 	for s: float in [-1.0, 1.0]:
 		for i in 3:
-			_put(g, B_POLARIS % "polaris_aisle_long", s * (152.0 + i * 20.0), 0.0, ALONG_Z, 0.0,
+			_put(g, B_POLARIS % "polaris_aisle_long", s * (152.0 + i * END_PITCH), 0.0, ALONG_Z, 0.0,
 					"EndAisle_%s_%d" % ["E" if s > 0.0 else "W", i])
 			for e: float in [-1.0, 1.0]:
-				_put(cars, B_POLARIS % "lot_car_row_sparse", s * (152.0 + i * 20.0) + e * 4.3, 0.0, ALONG_Z, 0.0,
+				_put(cars, B_POLARIS % "lot_car_row_sparse", s * (152.0 + i * END_PITCH) + e * 4.3, 0.0, ALONG_Z, 0.0,
 						"EndCars_%s_%d_%s" % ["E" if s > 0.0 else "W", i, "a" if e > 0.0 else "b"])
-	# The two basins, wedged into the parking where the real ones are.
-	_put(g, B_SUBURBS % "suburb_retention_pond", -158.0, 126.0, 20.0, 0.0, "BasinWest")
-	_put(g, B_SUBURBS % "suburb_retention_pond", 168.0, -126.0, 200.0, 0.0, "BasinEast")
 	# Things in the lot that are neither a car nor a kerb. Every one of these
 	# is between waist and head height on purpose: a car park's real cover is
 	# all accidental, and this is the accident.
-	for i in 6:
+	# Not the two at x +-16: the entry court stands there, down to z 48.
+	for i: int in [0, 1, 4, 5]:
 		_put(g, B_SUBURBAN % "suburban_cart_corral", -80.0 + i * 32.0, 48.0, ALONG_X, 0.0, "Corral_%d" % i)
-	for i in 5:
-		_put(g, B_POLARIS % "lot_planter_bed", -112.0 + i * 56.0, 74.0, ALONG_X, 0.0, "Planter_%d" % i)
+	# Three, not five: the outer two stood in the cinema and the garage.
+	for i in 3:
+		_put(g, B_POLARIS % "lot_planter_bed", -56.0 + i * 56.0, 74.0, ALONG_X, 0.0, "Planter_%d" % i)
 	for i in 4:
-		_put(g, B_POLARIS % "lot_planter_bed", -96.0 + i * 64.0, 134.0, ALONG_X + 4.0, 0.0, "PlanterS_%d" % i)
+		_put(g, B_POLARIS % "lot_planter_bed", -96.0 + i * 64.0, 128.0, ALONG_X, 0.0, "PlanterS_%d" % i)
 	for i in 3:
 		_put(g, B_POLARIS % "lot_sign_cluster", -92.0 + i * 92.0, 96.0, 0.0, 0.0, "AisleSign_%d" % i)
 	# The marquee: a building-sized thing in the middle of open ground, which
 	# makes it the obvious objective and the obvious ambush at the same time.
-	_put(g, B_POLARIS % "lot_event_marquee", 10.0, 116.0, ALONG_X + 6.0, 0.0, "Marquee")
-	_put(g, B_POLARIS % "lot_food_pavilion", -58.0, 52.0, ALONG_X, 0.0, "FoodPavilion")
-	_put(g, B_POLARIS % "lot_charging_bank", 88.0, 56.0, ALONG_X, 0.0, "Chargers")
-	_put(g, B_POLARIS % "lot_garden_centre", 150.0, -52.0, FACE_WEST, 0.0, "GardenCentre")
+	_put(g, B_POLARIS % "lot_event_marquee", 124.0, 124.0, ALONG_X + 6.0, 0.0, "Marquee")
+	_put(g, B_POLARIS % "lot_food_pavilion", -118.0, 52.0, ALONG_X, 0.0, "FoodPavilion")
+	_put(g, B_POLARIS % "lot_charging_bank", 77.0, 56.0, ALONG_X, 0.0, "Chargers")
+	_put(g, B_POLARIS % "lot_garden_centre", 160.0, -49.0, FACE_WEST, 0.0, "GardenCentre")
 	for i: int in [0, 1]:
 		_put(g, B_POLARIS % "lot_snow_pile", -186.0 + i * 372.0, 96.0 - i * 190.0, 0.0, 0.0, "Heap_%d" % i)
-	for i in 3:
-		_put(g, B_POLARIS % "lot_dumpster_corral", -70.0 + i * 108.0, -46.0, FACE_SOUTH, 0.0, "Bins_%d" % i)
+	for i in 2:
+		_put(g, B_POLARIS % "lot_dumpster_corral", -70.0 + i * 120.0, -46.0, FACE_SOUTH, 0.0, "Bins_%d" % i)
+	# The third was beside the fieldhouse's garden centre; it is behind it now.
+	_put(g, B_POLARIS % "lot_dumpster_corral", 170.0, -84.0, FACE_SOUTH, 0.0, "Bins_2")
 	_put(g, B_POLARIS % "lot_valet_canopy", -26.0, 44.0, FACE_SOUTH, 0.0, "Valet")
-	for i in 12:
-		var a := TAU * i / 12.0
-		_put(g, B_SUBURBAN % "suburban_lot_light", cos(a) * 118.0, 40.0 + sin(a) * 64.0, 0.0, 0.0,
-				"LotLight_%d" % i)
+	_lot_lights(g)
 	for i in 4:
 		_put(g, B_POLARIS % "lot_transit_shelter", -120.0 + i * 80.0, RING_Y + RING_R + 10.0, FACE_NORTH, 0.0,
 				"Shelter_%d" % i)
+
+
+## THE CAR PARK'S LIGHTS, in the gaps between aisles and nowhere else.
+##
+## They were twelve points on an ellipse, which put half of them inside the
+## mall wings, the cinema and the garage. The aisles are on a 20 m pitch and
+## 14.1 m wide, which leaves a 5.9 m strip between each pair, and a light is
+## 1.5 m across. x is each aisle's own centre, where a fanned aisle has not
+## swung away from the strip.
+func _lot_lights(g: Node3D) -> void:
+	var n := 0
+	for z: float in [68.0, 88.0, 108.0]:
+		for x: float in [-34.0, 34.0]:
+			_put(g, B_SUBURBAN % "suburban_lot_light", x, z, 0.0, 0.0, "LotLight_%d" % n)
+			n += 1
+	for z: float in [-68.0, -88.0]:
+		for x: float in [-36.0, 36.0]:
+			_put(g, B_SUBURBAN % "suburban_lot_light", x, z, 0.0, 0.0, "LotLight_%d" % n)
+			n += 1
 
 
 ## THE RESTAURANT ROW and the other outlots, OUTSIDE the loop along the south
@@ -460,7 +666,7 @@ func _outlots(art: Node3D) -> void:
 	for i in 8:
 		_put(g, B_STREETS % "street_sidewalk_run", -176.0 + i * 32.0, z - 26.0, ALONG_X, 0.0, "RowWalk_%d" % i)
 	for i in 5:
-		_put(g, B_STREETS % "street_lot_entry_throat_inlay", -140.0 + i * 70.0, z - 40.0, 180.0, 0.0, "Throat_%d" % i)
+		_put(g, B_STREETS % "street_lot_entry_throat_inlay", -140.0 + i * 70.0, RING_Y + RING_R + ROAD2_HALF + THROAT_HALF_Z, 180.0, 0.0, "Throat_%d" % i)
 	_put(g, B_SUBURBAN % "suburban_pylon_sign", -4.0, z + 30.0, FACE_NORTH, 0.0, "Pylon")
 	_put(g, B_SUBURBAN % "suburban_entry_monument", 60.0, RING_Y + RING_R + 16.0, ALONG_X, 0.0, "Monument")
 	_put(g, B_SUBURBS % "suburb_billboard", 206.0, z + 36.0, ALONG_X, 0.0, "Billboard")
@@ -473,7 +679,16 @@ func _outlots(art: Node3D) -> void:
 ## the mall, for the same reason the row faces north.
 func _power_centre(art: Node3D) -> void:
 	var g := _group(art, "PowerCentre")
-	var x := -(RING_X + RING_R + 96.0)
+	# THE BOULEVARD, THEN THE AISLES, THEN THE BUILDINGS, outward from the ring
+	# road, each placed from the one inside it. The boulevard used to be hand-
+	# typed at x + 92 = -204, which is 4 m from the ring road's west straight at
+	# -200 when both are wider than that, so it was laid straight through it.
+	# The aisles run east-west and are 64 m long; they sit between the boulevard
+	# and the building fronts, and the buildings (the nearest front is 19 m east
+	# of its origin) are placed last, from the aisles, with 1 m clear.
+	var x_blvd := -(RING_X + RING_R + ROAD2_HALF + ROAD4_HALF)
+	var x_aisle := x_blvd - ROAD4_HALF - AISLE_HALF_L
+	var x := x_aisle - AISLE_HALF_L - 20.0
 	_put(g, B_SUBURBAN % "suburban_big_box", x, -46.0, FACE_EAST, 0.0, "BigBoxNorth")
 	_put(g, B_SUBURBAN % "suburban_retail_strip", x - 12.0, 64.0, FACE_EAST, 0.0, "Strip")
 	_put(g, B_SUBURBS % "suburb_self_storage", x - 6.0, -158.0, ALONG_X, 0.0, "Storage")
@@ -482,11 +697,11 @@ func _power_centre(art: Node3D) -> void:
 	# running up the Z axis while being spaced 40 m apart ON THAT SAME AXIS, so
 	# each one lay 24 m inside its neighbour. Turned to run east-west they are
 	# spaced across their own width and clear each other by 26 m, and they end
-	# 12 m short of the boulevard kerb at x + 92.
+	# 0.1 m short of the boulevard kerb.
 	for i in 4:
-		_put(g, B_POLARIS % "polaris_aisle_long", x + 52.0, -96.0 + i * 40.0, ALONG_X, 0.0, "PCAisle_%d" % i)
+		_put(g, B_POLARIS % "polaris_aisle_long", x_aisle, -96.0 + i * 40.0, ALONG_X, 0.0, "PCAisle_%d" % i)
 	for i in 10:
-		_put(g, B_STREETS % "street_road_four_lane_inlay", x + 92.0, -128.0 + i * 32.0, ALONG_Z, 0.0, "Sancus_%d" % i)
+		_put(g, B_STREETS % "street_road_four_lane_inlay", x_blvd, -128.0 + i * 32.0, ALONG_Z, 0.0, "Sancus_%d" % i)
 
 
 ## The subdivision behind the mall to the north, which is where the map stops
@@ -499,7 +714,7 @@ func _housing(art: Node3D) -> void:
 	for i in 8:
 		var x := -130.0 + i * 34.0
 		var kind: String = ["suburb_house_ranch", "suburb_house_two_story", "suburb_house_split"][i % 3]
-		_put(g, B_SUBURBS % kind, x, z - 22.0, FACE_SOUTH, 0.0, "House_%d" % i)
+		_put(g, B_SUBURBS % kind, x, z - 22.5, FACE_SOUTH, 0.0, "House_%d" % i)
 		_put(g, B_SUBURBS % kind, x + 17.0, z - 72.0, FACE_NORTH, 0.0, "HouseBack_%d" % i)
 		_put(g, B_SUBURBS % "suburb_fence_privacy", x, z - 47.0, ALONG_X, 0.0, "Fence_%d" % i)
 	for i in 9:
@@ -522,8 +737,8 @@ const OBJECTIVES: Array = [
 	["Polaris_Dock", "obj_polaris_dock", "Mall Service Dock", -30.0, -30.0],
 	["Polaris_Garage", "obj_polaris_garage", "The Parking Deck", 96.0, 86.0],
 	["Polaris_Cinema", "obj_polaris_cinema", "The Multiplex", -92.0, 92.0],
-	["Polaris_Storage", "obj_polaris_storage", "The Storage Lanes", -296.0, -150.0],
-	["Polaris_Basin", "obj_polaris_basin", "The West Basin", -150.0, 120.0],
+	["Polaris_Storage", "obj_polaris_storage", "The Storage Lanes", -314.0, -150.0],
+	["Polaris_Basin", "obj_polaris_basin", "The East Basin", 256.0, 124.0],
 	["Polaris_Houses", "obj_polaris_houses", "The Subdivision", -40.0, -196.0],
 ]
 

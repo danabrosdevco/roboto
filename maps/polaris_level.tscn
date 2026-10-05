@@ -57,10 +57,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96, 0, 86)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -92, 0, 92)
 
 [node name="Polaris_Storage" type="Node3D" parent="NavigationRegion3D/Objectives"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -296, 0, -150)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -314, 0, -150)
 
 [node name="Polaris_Basin" type="Node3D" parent="NavigationRegion3D/Objectives"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -150, 0, 120)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 256, 0, 124)
 
 [node name="Polaris_Houses" type="Node3D" parent="NavigationRegion3D/Objectives"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 0, -196)

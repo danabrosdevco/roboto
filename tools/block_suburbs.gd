@@ -56,6 +56,7 @@ const SUBURBS := {
 	"suburb_fire_station": "_fire_station",
 	# Landscape and edges
 	"suburb_retention_pond": "_retention_pond",
+	"suburb_retention_basin_64": "_retention_basin_64",
 	"suburb_berm_landscape": "_berm_landscape",
 	"suburb_fence_privacy": "_fence_privacy",
 	"suburb_hedge_row": "_hedge_row",
@@ -600,25 +601,53 @@ func _retention_pond() -> void:
 	var rim := 26.0
 	var deep := -2.6
 	var floor_r := rim - (0.0 - deep) * 4.0
-	var rim_y := rim * 0.7
-	var floor_y := floor_r * 0.7
+	_excavation(rim, rim * 0.7, floor_r, floor_r * 0.7, 0.0, deep, 0.0)
+
+
+## THE DETENTION BASIN AS GROUND: the pond's geometry with its outer footprint
+## EXACTLY 64 x 64 m, so it can stand in for a 2 x 2 block of ground tiles.
+##
+## WHY THIS EXISTS. The pond is 52 x 36 m, and Polaris is now floored with one
+## tile in every 32 m cell. A tile lays itself across a hole of any size that is
+## not a whole number of cells, so the pond's rim sat on tiles that filled the
+## excavation in (4,455 m3 of it) and left two columns with a floor at the same
+## height as the rim. "One tile per cell" cannot express a hole unless the hole
+## is the size of the cells. This piece IS the ground for its four cells:
+## solid from -4 m at the outer edge, sloping down 2.6 m to a floor, so the
+## builder lays no tile there and nothing is under it twice.
+##
+## ITS RIM IS AT -0.06, the top of a ground tile (see block_ground.gd), so the
+## outside face meets its neighbours' faces and there is no step to walk over.
+## The same 1 in 4 bank on every side, which is what the pond only had on two.
+func _retention_basin_64() -> void:
+	var rim := 32.0
+	var deep := -2.6
+	var floor_r := rim - (0.0 - deep) * 4.0
+	_excavation(rim, rim, floor_r, floor_r, -0.06, deep, 0.05)
+
+
+## An excavation: a floor slab and four wedges standing on it, running from the
+## rim edge (half-extents `rx`, `ry` at height `top`) down to the floor edge
+## (`fx`, `fy` at height `deep`). `inset` pulls the fence in from the rim line,
+## so a post's own width does not stand outside the footprint it was sized to.
+func _excavation(rx: float, ry: float, fx: float, fy: float, top: float, deep: float, inset: float) -> void:
 	var ground := {"top": DIRT, "side": SPOIL, "bottom": SPOIL}
-	box(Vector3(-rim, -rim_y, -4.0), Vector3(rim, rim_y, deep), ground)
-	# Each wedge is the rim edge (at z 0 and at the floor's level) and the floor
+	box(Vector3(-rx, -ry, -4.0), Vector3(rx, ry, deep), ground)
+	# Each wedge is the rim edge (at `top` and at the floor's level) and the floor
 	# edge it slopes down to. Neighbours share their mitre triangle exactly.
 	for s: float in [-1.0, 1.0]:
-		solid([Vector3(s * rim, -rim_y, 0.0), Vector3(s * rim, rim_y, 0.0),
-				Vector3(s * rim, -rim_y, deep), Vector3(s * rim, rim_y, deep),
-				Vector3(s * floor_r, -floor_y, deep), Vector3(s * floor_r, floor_y, deep)], ground)
-		solid([Vector3(-rim, s * rim_y, 0.0), Vector3(rim, s * rim_y, 0.0),
-				Vector3(-rim, s * rim_y, deep), Vector3(rim, s * rim_y, deep),
-				Vector3(-floor_r, s * floor_y, deep), Vector3(floor_r, s * floor_y, deep)], ground)
+		solid([Vector3(s * rx, -ry, top), Vector3(s * rx, ry, top),
+				Vector3(s * rx, -ry, deep), Vector3(s * rx, ry, deep),
+				Vector3(s * fx, -fy, deep), Vector3(s * fx, fy, deep)], ground)
+		solid([Vector3(-rx, s * ry, top), Vector3(rx, s * ry, top),
+				Vector3(-rx, s * ry, deep), Vector3(rx, s * ry, deep),
+				Vector3(-fx, s * fy, deep), Vector3(fx, s * fy, deep)], ground)
 	# The outfall structure, which is the one hard thing in it and the only
 	# cover down there.
-	box(Vector3(floor_r - 5.0, -2.0, deep), Vector3(floor_r - 2.0, 2.0, deep + 2.2), CONCRETE)
-	box(Vector3(floor_r - 5.3, -2.3, deep + 2.2), Vector3(floor_r - 1.7, 2.3, deep + 2.5), CONCRETE)
-	_fence_clean(Vector2(-rim, -rim_y), Vector2(rim, -rim_y), 0.0, 1.4)
-	_fence_clean(Vector2(-rim, rim_y), Vector2(rim, rim_y), 0.0, 1.4)
+	box(Vector3(fx - 5.0, -2.0, deep), Vector3(fx - 2.0, 2.0, deep + 2.2), CONCRETE)
+	box(Vector3(fx - 5.3, -2.3, deep + 2.2), Vector3(fx - 1.7, 2.3, deep + 2.5), CONCRETE)
+	_fence_clean(Vector2(-rx + inset, -ry + inset), Vector2(rx - inset, -ry + inset), top, 1.4)
+	_fence_clean(Vector2(-rx + inset, ry - inset), Vector2(rx - inset, ry - inset), top, 1.4)
 
 
 ## A LANDSCAPE BERM: the long low mound between a lot and the road, with
