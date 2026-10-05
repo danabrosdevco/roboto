@@ -710,6 +710,13 @@ func _power_centre(art: Node3D) -> void:
 		_put(g, B_POLARIS % "polaris_aisle_long", x_aisle, -96.0 + i * 40.0, ALONG_X, 0.0, "PCAisle_%d" % i)
 	for i in 10:
 		_put(g, B_STREETS % "street_road_four_lane_inlay", x_blvd, -128.0 + i * 32.0, ALONG_Z, 0.0, "Sancus_%d" % i)
+	# THE WHOLE STRIP IS PAVED, not just the four aisles. _ground() lays asphalt
+	# only where a surface piece landed, which is right for a road crossing open
+	# ground and wrong for a car park: the aisles came out as four strips of
+	# asphalt with twenty-six metres of dirt between them. Registering the lot
+	# as a surface is the same mechanism, used for what it is for.
+	var front: float = x + 20.0
+	_surfaces.append(Rect2(front, -176.0, (x_blvd + ROAD4_HALF) - front, 360.0))
 
 
 ## The subdivision behind the mall to the north, which is where the map stops

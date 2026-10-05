@@ -62,6 +62,14 @@ const SHOTS: Array = [
 	["polaris", "P4_aerial", Vector3(0.0, 300.0, 430.0), Vector3(0.0, 0.0, 0.0), 56.0, "abs"],
 	["polaris", "P5_aerial_high", Vector3(-120.0, 470.0, 420.0), Vector3(-30.0, 0.0, -40.0), 58.0, "abs"],
 	["polaris", "P6_the_subdivision", Vector3(-40.0, 2.0, -150.0), Vector3(-40.0, 5.0, -250.0), 62.0, "abs"],
+	# The work of 2026-10-05: the basins are real holes, the power centre was
+	# rebuilt outward from the ring road, and the storage yard is where the
+	# objective now stands. None of it was in a camera before.
+	["polaris", "P7_the_east_basin", Vector3(196.0, 26.0, 160.0), Vector3(256.0, -2.6, 160.0), 62.0, "abs"],
+	["polaris", "P8_basin_from_the_rim", Vector3(256.0, 2.4, 120.0), Vector3(256.0, -2.6, 170.0), 70.0, "abs"],
+	["polaris", "P9_sancus_boulevard", Vector3(-218.0, 2.5, -150.0), Vector3(-218.0, 4.0, 60.0), 62.0, "abs"],
+	["polaris", "P10_the_storage_lanes", Vector3(-280.0, 2.0, -158.0), Vector3(-340.0, 3.0, -158.0), 64.0, "abs"],
+	["polaris", "P11_power_centre_aerial", Vector3(-300.0, 150.0, 120.0), Vector3(-270.0, 0.0, -80.0), 60.0, "abs"],
 	["pittsburgh", "01_ohio_works", Vector3(-300.0, EYE, -60.0), Vector3(-400.0, 2.0, -170.0), 62.0, "eye"],
 	["pittsburgh", "02_ohio_works_lane", Vector3(-352.0, EYE, -20.0), Vector3(-352.0, 2.0, -200.0), 62.0, "eye"],
 	# The Strip was here and came back almost black: the camera stands in the
