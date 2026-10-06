@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c4qn7tn6tdnxj"
+path="res://.godot/imported/sunken_road_run.map-c33a52170776921d152707722857204a.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/sunken_road_run.map"
+dest_files=["res://.godot/imported/sunken_road_run.map-c33a52170776921d152707722857204a.tres"]
+
+[params]
+

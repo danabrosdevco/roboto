@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bmpqwiqk4ppvx"
+path="res://.godot/imported/trench_collapsed.map-2ac3b8cfd1c0f3c74c5bbd1273b19484.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/trench_collapsed.map"
+dest_files=["res://.godot/imported/trench_collapsed.map-2ac3b8cfd1c0f3c74c5bbd1273b19484.tres"]
+
+[params]
+

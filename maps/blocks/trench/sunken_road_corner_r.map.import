@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://crg0qa0xp84jk"
+path="res://.godot/imported/sunken_road_corner_r.map-e88401ae3ce6886a5c07d2caee7ed442.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/sunken_road_corner_r.map"
+dest_files=["res://.godot/imported/sunken_road_corner_r.map-e88401ae3ce6886a5c07d2caee7ed442.tres"]
+
+[params]
+

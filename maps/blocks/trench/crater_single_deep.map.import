@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://je4e2b2xhmth"
+path="res://.godot/imported/crater_single_deep.map-f79523092c859841d3e210a4616586d1.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/crater_single_deep.map"
+dest_files=["res://.godot/imported/crater_single_deep.map-f79523092c859841d3e210a4616586d1.tres"]
+
+[params]
+

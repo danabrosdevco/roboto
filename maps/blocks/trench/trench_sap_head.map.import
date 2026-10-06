@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dyuo0wlsbhdu0"
+path="res://.godot/imported/trench_sap_head.map-a7655e5ab7865ee7970e2a09983c5d19.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/trench_sap_head.map"
+dest_files=["res://.godot/imported/trench_sap_head.map-a7655e5ab7865ee7970e2a09983c5d19.tres"]
+
+[params]
+

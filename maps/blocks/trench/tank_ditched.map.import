@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dxxamy5e2f48b"
+path="res://.godot/imported/tank_ditched.map-8d36f9e1238293f0794d8eca135c8f97.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/tank_ditched.map"
+dest_files=["res://.godot/imported/tank_ditched.map-8d36f9e1238293f0794d8eca135c8f97.tres"]
+
+[params]
+

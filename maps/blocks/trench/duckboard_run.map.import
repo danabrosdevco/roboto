@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dtf0jwj85cfpv"
+path="res://.godot/imported/duckboard_run.map-0137fbf7cb61edf173d4572d4bb69fc4.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/duckboard_run.map"
+dest_files=["res://.godot/imported/duckboard_run.map-0137fbf7cb61edf173d4572d4bb69fc4.tres"]
+
+[params]
+

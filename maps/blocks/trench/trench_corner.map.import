@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c2l32ngf0wga6"
+path="res://.godot/imported/trench_corner.map-55297067cefcf75929cf80c25f5395d1.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/trench_corner.map"
+dest_files=["res://.godot/imported/trench_corner.map-55297067cefcf75929cf80c25f5395d1.tres"]
+
+[params]
+

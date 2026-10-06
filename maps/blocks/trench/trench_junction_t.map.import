@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c8e2qs11rlyjb"
+path="res://.godot/imported/trench_junction_t.map-5b4c28183019f7ecb7d33ef8ec41f22e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/trench_junction_t.map"
+dest_files=["res://.godot/imported/trench_junction_t.map-5b4c28183019f7ecb7d33ef8ec41f22e.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bt7aierttuteb"
+path="res://.godot/imported/wire_belt_run.map-3f14d75a6ebf48fae5fcce6a69dfa706.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/wire_belt_run.map"
+dest_files=["res://.godot/imported/wire_belt_run.map-3f14d75a6ebf48fae5fcce6a69dfa706.tres"]
+
+[params]
+
