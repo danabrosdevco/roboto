@@ -70,6 +70,8 @@ const SHOTS: Array = [
 	["polaris", "P9_sancus_boulevard", Vector3(-218.0, 2.5, -150.0), Vector3(-218.0, 4.0, 60.0), 62.0, "abs"],
 	["polaris", "P10_the_storage_lanes", Vector3(-280.0, 2.0, -158.0), Vector3(-340.0, 3.0, -158.0), 64.0, "abs"],
 	["polaris", "P11_power_centre_aerial", Vector3(-300.0, 150.0, 120.0), Vector3(-270.0, 0.0, -80.0), 60.0, "abs"],
+	["polaris", "P12_ring_corner", Vector3(118.0, 34.0, 136.0), Vector3(168.0, 0.0, 186.0), 62.0, "abs"],
+	["polaris", "P13_kerb_crossing", Vector3(150.0, EYE, 150.0), Vector3(186.0, 0.5, 186.0), 66.0, "eye"],
 	["pittsburgh", "01_ohio_works", Vector3(-300.0, EYE, -60.0), Vector3(-400.0, 2.0, -170.0), 62.0, "eye"],
 	["pittsburgh", "02_ohio_works_lane", Vector3(-352.0, EYE, -20.0), Vector3(-352.0, 2.0, -200.0), 62.0, "eye"],
 	# The Strip was here and came back almost black: the camera stands in the

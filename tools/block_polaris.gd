@@ -135,10 +135,10 @@ func _ring_corner() -> void:
 	for s: float in [-1.0, 1.0]:
 		var a := mid + s * half
 		var b := mid + s * (half + 0.3)
-		_ring_band(minf(a, b), maxf(a, b), 0.0, 90.0, -0.3, KERB_H, segs, {"top": WALK, "side": KERB, "bottom": CONCRETE})
+		_ring_crossed(minf(a, b), maxf(a, b), -0.3, KERB_H, segs, {"top": WALK, "side": KERB, "bottom": CONCRETE})
 		var c := mid + s * (half + 0.3)
 		var d := mid + s * (half + 0.3 + 2.4)
-		_ring_band(minf(c, d), maxf(c, d), 0.0, 90.0, -0.3, KERB_H, segs, {"top": WALK, "side": KERB, "bottom": CONCRETE})
+		_ring_crossed(minf(c, d), maxf(c, d), -0.3, KERB_H, segs, {"top": WALK, "side": KERB, "bottom": CONCRETE})
 	# The centre line, dashed round the arc.
 	for i in range(0, segs, 2):
 		var t0 := deg_to_rad(lerpf(0.0, 90.0, float(i) / segs))
@@ -486,3 +486,38 @@ func _bank_outlot() -> void:
 		box(Vector3(12.0, y - 0.7, -0.1), Vector3(20.0, y + 0.7, KERB_H), ISLAND)
 		box(Vector3(14.0, y - 0.5, KERB_H), Vector3(15.6, y + 0.5, 1.9), {"top": METAL, "side": SHUTTER, "bottom": METAL})
 	box(Vector3(10.2, 1.0, 1.0), Vector3(10.6, 3.4, 2.4), DARK_GLASS)
+
+
+## WHERE THE RING'S KERB IS DROPPED. Four crossings round each quarter-arc.
+##
+## The kerb and its 2.7 m footway used to run the whole 90 degrees unbroken, so
+## crossing the ring anywhere on a corner meant FOUR steps: up 0.22 m onto the
+## footway, down 0.22 to the carriageway, up again and down again. Every one of
+## those is under the 0.45 m a frame steps over, so the navmesh crosses it at
+## x1.00 and no probe in this project says a word — but a step-over is a retried
+## move, not a walk, and four of them in six metres is what a reclaimer feels as
+## a wall. The report was "the step is a touch too high", and the measurement
+## agreeing with the design is exactly why it needed walking to find.
+##
+## At the ring's radius a 6 degree gap is about 5.5 m of flush ground, wide
+## enough for a squad abreast rather than a file.
+const RING_CROSS: Array = [15.0, 37.5, 60.0, 82.5]
+const RING_CROSS_W := 6.0
+
+
+## A band round the arc, in spans, with the crossings left out.
+func _ring_crossed(r0: float, r1: float, z0: float, z1: float, segs: int, tex: Variant) -> void:
+	var at := 0.0
+	var spans: Array = []
+	for c: float in RING_CROSS:
+		spans.append(Vector2(at, c - RING_CROSS_W * 0.5))
+		at = c + RING_CROSS_W * 0.5
+	spans.append(Vector2(at, 90.0))
+	for sp: Vector2 in spans:
+		if sp.y - sp.x < 0.5:
+			push_warning("_ring_crossed: a %.1f degree span is too short to draw — crossings overlap" % (sp.y - sp.x))
+			continue
+		# Keep the segment density the full arc had, so the chords stay short
+		# enough that the band reads as a curve and not as a polygon.
+		var n: int = maxi(1, int(round(segs * (sp.y - sp.x) / 90.0)))
+		_ring_band(r0, r1, sp.x, sp.y, z0, z1, n, tex)

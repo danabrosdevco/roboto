@@ -1,18 +1,18 @@
 [gd_scene load_steps=8 format=4]
 
-[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_tnet7"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_1omcx"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="3_d2oq0"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_3.tres" id="4_dsdqb"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_cv723"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_ut3ja"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="3_2f0gc"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_3.tres" id="4_0dekk"]
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_odq1q"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_8vthu"]
 _surfaces = [{
 "aabb": AABB(-180, -3, -230, 360, 3, 460),
 "attribute_data": PackedByteArray("AADmQQAAtEEAAObBAAC0QQAA5sEAALTBAADmQQAAtMEAAObBAADAPgAA5sEAAAAAAADmQQAAAAAAAOZBAADAPgAAtMEAAMA+AAC0wQAAAAAAALRBAAAAAAAAtEEAAMA+AADmwQAAwD4AAObBAAAAAAAA5kEAAAAAAADmQQAAwD4AALTBAADAPgAAtMEAAAAAAAC0QQAAAAAAALRBAADAPg=="),
 "format": 34359742487,
 "index_count": 30,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMA"),
-"material": ExtResource("3_d2oq0"),
+"material": ExtResource("3_2f0gc"),
 "name": "PSX_Textures/concrete_tx_5",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -24,7 +24,7 @@ _surfaces = [{
 "format": 34359742487,
 "index_count": 6,
 "index_data": PackedByteArray("AAABAAIAAAACAAMA"),
-"material": ExtResource("4_dsdqb"),
+"material": ExtResource("4_0dekk"),
 "name": "PSX_Textures/concrete_3",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -32,26 +32,26 @@ _surfaces = [{
 "vertex_data": PackedByteArray("AAA0wwAAAAAAAGbDAAA0QwAAAAAAAGbDAAA0QwAAAAAAAGZDAAA0wwAAAAAAAGZD/3////9//7//f////3//v/9/////f/+//3////9//78=")
 }]
 
-[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_8xbr4"]
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_h48hl"]
 vertices = PackedVector3Array(-180, -3, -230, -180, -3, 230, 180, -3, 230, 180, -3, -230, -180, -3, -230, -180, 0, -230, -180, 0, 230, -180, -3, 230, -180, -3, 230, -180, 0, 230, 180, 0, 230, 180, -3, 230, 180, -3, 230, 180, 0, 230, 180, 0, -230, 180, -3, -230, 180, -3, -230, 180, 0, -230, -180, 0, -230, -180, -3, -230, -180, 0, -230, 180, 0, -230, 180, 0, 230, -180, 0, 230)
 indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_qg7rm"]
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_7c48p"]
 points = PackedVector3Array(-180, -3, -230, -180, -3, 230, 180, -3, 230, 180, -3, -230, -180, 0, -230, 180, 0, -230, 180, 0, 230, -180, 0, 230)
 
 [node name="PolarisLotMain" type="Node3D"]
-script = ExtResource("1_tnet7")
+script = ExtResource("1_cv723")
 local_map_file = "res://maps/blocks/polaris/polaris_lot_main.map"
-map_settings = ExtResource("2_1omcx")
+map_settings = ExtResource("2_ut3ja")
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
 collision_mask = 0
 
 [node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
-mesh = SubResource("ArrayMesh_odq1q")
+mesh = SubResource("ArrayMesh_8vthu")
 
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
-occluder = SubResource("ArrayOccluder3D_8xbr4")
+occluder = SubResource("ArrayOccluder3D_h48hl")
 
 [node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_qg7rm")
+shape = SubResource("ConvexPolygonShape3D_7c48p")

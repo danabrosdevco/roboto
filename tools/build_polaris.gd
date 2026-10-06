@@ -529,7 +529,12 @@ func _ring_lights(g: Node3D) -> void:
 	for z: float in [-56.0, 56.0]:
 		_put(g, B_SUBURBAN % "suburban_lot_light", RING_X + RING_R + off, z, 0.0, 0.0, "RingLight_%d" % n)
 		n += 1
-	var d := (RING_R + off) * 0.7071
+	# 2 m further out than the straights' lights. The corner band is drawn as
+	# chords, and once the arc was broken into spans for the crossings those
+	# chords land in slightly different places — enough to catch a light that
+	# used to stand just clear of it. Out here it does not matter where the
+	# chord falls.
+	var d := (RING_R + off + 2.0) * 0.7071
 	for sx: float in [-1.0, 1.0]:
 		for sz: float in [-1.0, 1.0]:
 			_put(g, B_SUBURBAN % "suburban_lot_light", sx * (RING_X + d), sz * (RING_Y + d), 0.0, 0.0, "RingLight_%d" % n)
