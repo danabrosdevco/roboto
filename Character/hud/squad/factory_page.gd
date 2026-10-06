@@ -19,6 +19,16 @@ const Icons := preload("res://Character/hud/icons/icons.gd")
 ## Every card the same width, so the row reads as one object however many
 ## frames are unlocked — and so a card is never squeezed to fit.
 const CARD_WIDTH: float = 300.0
+## A frame's real speed lives on its SCENE, as move_speed: base_speed on the
+## definition is 1.00 for all six, because it is a multiplier modules scale
+## rather than a speed. By path, not class_name — see the note in item_facts.gd.
+const _Facts := preload("res://Campaign/item_facts.gd")
+## Tops of the three bars. FIXED across the row and generous enough that a frame
+## added later still fits inside them: a bar that rescales per card cannot be
+## compared with the card beside it, which is the whole reason to draw bars.
+const HULL_TOP := 400.0
+const SPEED_TOP := 20.0
+const SENSOR_TOP := 120.0
 ## Pixels per wheel notch along the row: about one card.
 const WHEEL_STEP: int = 320
 
@@ -159,22 +169,47 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 	var title := Kit.label(Kit.frame_word(frame), Kit.BRIGHT, 26, true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(title)
-	if frame.description != "":
-		var about := Kit.text_block(frame.description, Kit.DIM, Kit.SMALL)
-		about.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		col.add_child(about)
+	# NO DESCRIPTION. A paragraph per card was the only thing on these cards whose
+	# length varied, so six cards side by side had their bars starting at six
+	# different heights and nothing lined up to compare. The badges, the bars and
+	# the mount line say the same things in a fixed number of rows.
 
+	# WHAT IT IS, as badges. Every one is a rule over fields the chassis already
+	# carries, so a frame added later gets its badges by being defined and
+	# nobody has to remember to tick a box. Positives only: a frame with no
+	# turret says nothing about turrets.
+	col.add_child(_badges(frame))
+
+	# The three figures you choose a frame on. Bars rather than a sentence,
+	# because choosing is comparing and "180 HP" against "320 HP" is two numbers
+	# to subtract while two bars is a glance. Each scale is FIXED across the row,
+	# never per card — a bar scaled to its own value cannot be read against the
+	# one beside it.
+	col.add_child(Kit.stat_bar("HULL", frame.base_health, frame.base_health, HULL_TOP,
+		str(frame.base_health), 52.0, 48.0))
+	var speed := _Facts.chassis_speed(frame)
+	if speed > 0.0:
+		col.add_child(Kit.stat_bar("SPEED", speed, speed, SPEED_TOP, "%.1f" % speed, 52.0, 48.0))
+	col.add_child(Kit.stat_bar("SENSOR", frame.base_sensor_range, frame.base_sensor_range,
+		SENSOR_TOP, "%d M" % int(round(frame.base_sensor_range)), 52.0, 48.0))
+
+	# What goes on it, named by the MOUNT rather than by the frame's own class —
+	# "SMALL ARMS", not "INFANTRY", because infantry is what the frame is and the
+	# slot is a pair of hands.
+	var mount := _mount_line(frame)
+	if mount != "":
+		var m := Kit.label(mount, Kit.DIM, Kit.SMALL)
+		m.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		m.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		col.add_child(m)
 	col.add_child(_slot_layout(frame))
-	var facts := PackedStringArray(["%d HP" % frame.base_health])
-	# Every frame took one seat until the rover; say so when it is more.
-	if frame.supply > 1:
-		facts.append("TAKES %d SEATS" % frame.supply)
 	var starting: ItemDefinition = ui.item(frame.starting_weapon_id)
 	if starting != null:
-		facts.append("COMES WITH %s" % _with_article(starting.short_label().to_upper()))
-	var fact_label := Kit.label(" · ".join(facts), Kit.BRIGHT, Kit.BODY)
-	fact_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(fact_label)
+		var comes := Kit.label("COMES WITH %s" % _with_article(starting.short_label().to_upper()),
+			Kit.BRIGHT, Kit.SMALL)
+		comes.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		comes.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		col.add_child(comes)
 
 	col.add_child(Kit.fill())
 	# A frame an operation unlocks waits for it: beat the mission where you
@@ -195,6 +230,13 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 	build.pressed.connect(func(): _build(frame))
 	buy_row.add_child(build)
 	buy_row.add_child(Kit.label(str(frame.cost), Kit.MONEY, 18, true))
+	# A frame has TWO prices and they are different currencies: resources, and
+	# the seats its supply holds — compute is what pays for seats. Amber and
+	# blue say which is which without a word of explanation, and it belongs here
+	# beside the other price rather than down among the badges, where it read as
+	# just another trait.
+	buy_row.add_child(Kit.label("%d SEAT%s" % [frame.supply, "" if frame.supply == 1 else "S"],
+		Kit.COMPUTE, Kit.SMALL, true))
 	col.add_child(buy_row)
 	var seat := frame.supply <= state.supply_free()
 	var where := Kit.label("JOINS THE SQUAD" if seat else "%s: WAITS ON THE BENCH" % _seat_shortfall(frame.supply),
@@ -211,15 +253,17 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 func _slot_layout(frame: ChassisDefinition) -> Control:
 	var row := Kit.hbox(4)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	# A frame with no weapon slot shows its built-in instead, which IS the thing
+	# in that position: a Mechanic's welder, a Spotter's optics.
 	if frame.weapon_slots == 0:
-		row.add_child(_tile(frame.built_in, 52))
+		row.add_child(_tile(frame.built_in, 56))
+	# WEP / EQUIP / MOD: three kinds of slot, not five words for them. The mount
+	# line directly above already says which kind of weapon it takes, so spelling
+	# TURRET or WELDER again on the tile spent a word saying it twice.
 	for i in frame.weapon_slots:
-		var what := "TURRET" if frame.turret else "GUN"
-		if frame.weapon_replaces_built_in:
-			what = frame.built_in   # comes with it, and the slot can swap it out
-		row.add_child(_tile(what, 64 if frame.turret else 52))
+		row.add_child(_tile("WEP", 52))
 	for i in frame.equipment_slots:
-		row.add_child(_tile("GEAR", 38))
+		row.add_child(_tile("EQUIP", 44))
 	for i in frame.module_slots:
 		row.add_child(_tile("MOD", 38))
 	return row
@@ -262,3 +306,47 @@ static func _with_article(word: String) -> String:
 # one seat is free.
 static func _seat_shortfall(seats: int) -> String:
 	return "NO FREE SEAT" if seats <= 1 else "NEEDS %d FREE SEATS" % seats
+
+
+## WHAT A FRAME IS, as badges — each one a rule over fields the chassis already
+## carries, so nothing is authored twice and a frame added later classifies
+## itself. POSITIVES ONLY: a card listing what a frame is NOT is the longest way
+## to say nothing.
+func _badges(frame: ChassisDefinition) -> Control:
+	var words: Array[String] = []
+	if frame.turret:
+		words.append("TURRET")
+	if frame.vehicle:
+		words.append("VEHICLE FRAME")
+	if not frame.vehicle and not frame.drives and not frame.turret:
+		words.append("INFANTRY")
+	if frame.built_in == "WELDER" and frame.weapon_replaces_built_in:
+		words.append("ARTICULATED ARM")
+	# A welder it still HAS. The enemy mortar track carries one and starts with
+	# the mortar in its place, so it is not a medic.
+	if frame.built_in == "WELDER" and frame.starting_weapon_id == &"":
+		words.append("MEDIC")
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 4)
+	flow.add_theme_constant_override("v_separation", 3)
+	flow.alignment = FlowContainer.ALIGNMENT_CENTER
+	for w in words:
+		var chip := PanelContainer.new()
+		chip.add_theme_stylebox_override("panel", Kit.box(Kit.FAINT, Color(0, 0, 0, 0), 1, 3.0))
+		chip.add_child(Kit.label(w, Kit.BRIGHT, 11))
+		flow.add_child(chip)
+	return flow
+
+
+## The kind of mounting a frame offers, named after the MOUNT. "SMALL ARMS" and
+## not "INFANTRY": infantry is what the frame is, and the slot is a pair of
+## hands — the Soldier card was saying the word twice, once as its class and
+## again as its mount.
+func _mount_line(frame: ChassisDefinition) -> String:
+	if frame.weapon_slots == 0:
+		return "BUILT-IN %s" % frame.built_in if frame.built_in != "" else ""
+	if frame.turret:
+		return "%d X TURRET" % frame.weapon_slots
+	if frame.weapon_replaces_built_in and frame.built_in == "WELDER":
+		return "%d X ARM" % frame.weapon_slots
+	return "%d X SMALL ARMS" % frame.weapon_slots

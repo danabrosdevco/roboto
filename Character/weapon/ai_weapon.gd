@@ -184,6 +184,28 @@ func _finish_reload() -> void:
 	magazine_current = magazine_size
 	reload_finished.emit()
 
+## WHAT ONE SHOT IS ACTUALLY WORTH, counting anything the round breaks up into.
+##
+## base_damage is what a HITSCAN round does, and for a rifle that is the whole
+## story. A LAUNCHED round carries its damage on its projectile instead, and a
+## CLUSTER round carries six more bomblets inside that projectile — neither of
+## which the weapon node could see. So anything reading base_damage undercounted
+## the Cluster Launcher by 180 a round: 40 for the shell, 6 x 30 for the
+## bomblets it throws on burst. A spec card, a balance pass or a shop screen
+## built on base_damage would have called the most expensive infantry weapon in
+## the game weaker than a Mark One.
+##
+## Subclasses that fire a projectile override this. Returns:
+##   impact        what lands where it was aimed
+##   submunitions  how many smaller charges come out of it — 0 for most things
+##   each          what one of those is worth
+##   total         impact + submunitions * each, if every one of them finds
+##                 something. It is a ceiling, not an average: say so wherever
+##                 it is shown.
+func shot_damage() -> Dictionary:
+	return {"impact": base_damage, "submunitions": 0, "each": 0, "total": base_damage}
+
+
 func calculate_damage(distance: float) -> int:
 	if distance <= damage_falloff_start:
 		return base_damage

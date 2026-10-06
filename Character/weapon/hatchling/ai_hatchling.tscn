@@ -1,7 +1,31 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="PackedScene" path="res://Character/characters/ai/equipment/ai_grenade.tscn" id="1_base"]
-[ext_resource type="PackedScene" path="res://Character/weapon/hatchling/hatchling_canister.tscn" id="2_proj"]
+; THE HATCHLING, AS A DEPLOY RATHER THAN A THROW.
+;
+; It used to instance ai_grenade.tscn with the canister swapped in for the
+; grenade, which meant it inherited every condition a grenade has: a target that
+; is standing still, or clustered, or behind cover, at four to thirty metres. A
+; squad carrying these would stand in a fight and never open one.
+;
+; Nothing about a hatchling wants any of that. The canister opens and the units
+; inside find their own way to whatever is near — so the only question is
+; whether there IS anything near, which is what AIDeploy asks.
+;
+; min_hostiles is 1 because they are cheap and they swarm; the Drone Carrier
+; Pack, when it becomes AI-usable, should extend the same script with a higher
+; bar and a longer spacing, since spending two Divers on a rifleman is a waste
+; and spending them on a Walker is the point.
 
-[node name="AI_Hatchling" instance=ExtResource("1_base")]
-grenade_scene = ExtResource("2_proj")
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_deploy.gd" id="1_deploy"]
+[ext_resource type="PackedScene" path="res://Character/weapon/hatchling/hatchling_canister.tscn" id="2_canister"]
+
+[node name="AI_Hatchling" type="Node3D"]
+script = ExtResource("1_deploy")
+equipment_name = "Hatchling Charge"
+ordered_at_point = false
+cooldown = 14.0
+canister_scene = ExtResource("2_canister")
+release_radius = 40.0
+min_hostiles = 1
+squad_spacing_seconds = 6.0
+toss_speed = 7.0

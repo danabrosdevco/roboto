@@ -207,8 +207,40 @@ func nest_ids() -> Dictionary:
 	if packed == null:
 		push_warning("%s names level %s, which did not load; hives will be drawn as objectives." % [resource_path, level_scene_path])
 		return _nest_ids
+	_collect_nests(packed, 0, {}, _nest_ids)
+	return _nest_ids
+
+
+## How deep to follow instanced scenes. See _collect_nests().
+const MAX_INSTANCE_DEPTH := 3
+
+
+## IT HAS TO FOLLOW INSTANCED SCENES, which it did not. Reading only the
+## level's own SceneState was right while every objective was declared in the
+## level file; Georgetown, Polaris and Causeway keep their whole gameplay layer
+## in maps/gameplay/<name>_ops.tscn and instance it, because the first two have
+## their level .tscn rewritten from a template by the terrain builders and
+## anything added to one dies on the next rebuild.
+##
+## An instanced scene's nodes are not in the parent's state at all, so every
+## hive on those three maps came back unrecognised and the briefing drew it as
+## a capture point — the exact bug this filter exists to prevent, reappearing
+## for a different reason. Caught by tools/test_minimap_objectives.gd.
+##
+## Depth-limited and cycle-safe by path: a scene that instanced itself would
+## otherwise recurse forever.
+func _collect_nests(packed: PackedScene, depth: int, seen: Dictionary, out: Dictionary) -> void:
+	if packed == null:
+		return
+	var key := str(packed.resource_path)
+	if key != "" and seen.has(key):
+		return
+	seen[key] = true
 	var st := packed.get_state()
 	for i in st.get_node_count():
+		var instanced: PackedScene = st.get_node_instance(i)
+		if instanced != null and depth < MAX_INSTANCE_DEPTH:
+			_collect_nests(instanced, depth + 1, seen, out)
 		var id: StringName = &""
 		var eliminates := false
 		var optional := false
@@ -227,10 +259,9 @@ func nest_ids() -> Dictionary:
 		# sits on the instanced scene's root and the level overrides only `id`.
 		# Checking for a script override alone misses every one of them.
 		if not eliminates:
-			eliminates = _instance_is_nest(st.get_node_instance(i))
+			eliminates = _instance_is_nest(instanced)
 		if eliminates:
-			_nest_ids[id] = true
-	return _nest_ids
+			out[id] = true
 
 
 ## True when `packed`'s own root carries the nest script — where an instanced

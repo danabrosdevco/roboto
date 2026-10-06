@@ -198,6 +198,9 @@ func _ready() -> void:
 		commander.contact_called.connect(_on_contact_called)
 		commander.team_selected.connect(_on_team_selected)
 		commander.no_team_to_switch.connect(_on_no_team_to_switch)
+		commander.equipment_ordered.connect(_on_equipment_ordered)
+		commander.equipment_refused.connect(_on_equipment_refused)
+		commander.equipment_queued.connect(_on_equipment_queued)
 
 
 # Unassigned exports are the single most likely reason nothing shows up, and
@@ -837,6 +840,32 @@ func _on_order_issued(squad: Squad, verb: int, _position: Vector3, target: Node)
 		who = squad.team_name() if commander.has_teams() else squad.get_display_name().to_upper()
 	_show_toast("%s : %s%s" % [who, verb_text, suffix], COL_BRIGHT)
 	order_ux_sound_confirm.play()
+
+
+## The squad spent kit because you told it to. The COUNT is the informative
+## part: "SMOKE x2" is how you learn that the squad allocates rather than every
+## holder answering, which is otherwise invisible.
+func _on_equipment_ordered(squad: Squad, label: String, count: int) -> void:
+	var who := "SQUAD"
+	if squad != null and is_instance_valid(squad):
+		who = squad.team_name() if commander.has_teams() else squad.get_display_name().to_upper()
+	var tail := " X%d" % count if count > 1 else ""
+	_show_toast("%s : %s%s" % [who, label.to_upper(), tail], COL_BRIGHT)
+	order_ux_sound_confirm.play()
+
+
+## ...and why it did not. This is the whole reason the designator is not a key
+## that sometimes appears to do nothing: a refusal that says "TOO FAR" tells
+## the player to move, and one that says "NONE LEFT" tells them to buy more.
+func _on_equipment_refused(reason: String) -> void:
+	_show_toast(reason.to_upper(), COL_WARN)
+
+
+## Held, not refused. The squad is between uses and the order will fire on its
+## own in a few seconds, so this is a status and not a problem — DIM rather than
+## the warning colour, which would read as something having gone wrong.
+func _on_equipment_queued(label: String) -> void:
+	_show_toast("%s : STANDING BY" % label.to_upper(), COL_DIM)
 
 
 func _on_contact_called(_position: Vector3, target: Node) -> void:

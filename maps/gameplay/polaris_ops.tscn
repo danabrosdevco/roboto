@@ -1,0 +1,642 @@
+[gd_scene load_steps=12 format=3]
+
+; ─────────────────────────────────────────────
+; POLARIS — THE GAMEPLAY LAYER, AS ITS OWN SCENE.
+;
+; Same split as Georgetown and for the same reason: maps/polaris_level.tscn is
+; written from a template by tools/build_polaris.gd, so anything hand-added to
+; it dies on the next --force rebuild. tools/mission_ops.sh puts this back in
+; two lines.
+;
+; Every position here was snapped to the baked navmesh and walked to from the
+; spawn by tools/probe_mission_anchors.gd before it was written down.
+;
+; ── WHAT THIS MAP IS FOR ─────────────────────
+; A WAVE DEFENCE, and it is the only map in the project shaped for one.
+;
+; The reason is the ring road. It is a CLOSED loop round the mall with four
+; arterial approaches into it — the frontage to the south, Sancus Boulevard to
+; the west, the subdivision street to the north, the basin side to the east —
+; and no corner of the site a vehicle cannot reach. On every other map the
+; opposition arrives along an axis. Here it can arrive from any of four, and
+; keep arriving.
+;
+; THE GROUND YOU HOLD is the mall's entry court. It is not a fort and that is
+; the point: the mall is at your back with no way through it, the cinema looks
+; into the court from the west and the parking deck from the east, and in front
+; of it is four hundred metres of car park whose only cover is parked cars at
+; 1.45 m — over the 1.2 m a standing cover point probes at and under a head, so
+; a row of them is cover you fire over from a crouch and get shot over from a
+; stand. The aisles and their islands run north-south, which means they are
+; cover for whoever is crossing and not for whoever is holding.
+;
+; So the court is defensible in one direction and open in three, and holding it
+; is about who you send where rather than about standing in the right spot.
+;
+; ── HOW THE WAVES ARE BUILT ──────────────────
+; With nothing new. A reserve's `reinforcement_tag` IS an objective id, so:
+;
+;   pol_breach completes  ->  spawner.wake("pol_breach")   ->  wave 1 arrives
+;   pol_wave_1 completes  ->  spawner.wake("pol_wave_1")   ->  wave 2 arrives
+;   ...and so on to wave 5.
+;
+; Each wave's objective carries `starts_active = false` and the PREVIOUS wave
+; as its prerequisite, so it activates on exactly the frame its own squads are
+; built. That matters twice: EliminateObjective pushes a warning when it has
+; been active for six seconds with no targets found, and the objective HUD
+; would otherwise show all five waves from the first minute and give the whole
+; shape away.
+;
+; `required_kills` on each wave is deliberately BELOW the wave's body count.
+; The classic wave-defence stall is one surviving chaser hiding behind the
+; garden centre while the player hunts the map for it; two or three bodies of
+; slack means the wave ends when the wave is broken.
+; ─────────────────────────────────────────────
+
+[ext_resource type="PackedScene" uid="uid://g7fmy28elpah" path="res://Env/world_objects/spawn_point.tscn" id="1_spawn"]
+[ext_resource type="Script" path="res://Campaign/squad_spawn_point.gd" id="2_squad"]
+[ext_resource type="PackedScene" uid="uid://62y43tyd5sx6" path="res://Env/world_objects/squad_objective_point.tscn" id="3_post"]
+[ext_resource type="PackedScene" uid="uid://v7tw1nq0fdn0" path="res://Managers/AI/patrol_path.tscn" id="4_route"]
+[ext_resource type="PackedScene" uid="uid://b7uq15mvhy6vq" path="res://Managers/AI/patrol_point.tscn" id="5_point"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point_small.tscn" id="6_capture"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point_large.tscn" id="11_capture_big"]
+[ext_resource type="Script" path="res://Campaign/eliminate_objective.gd" id="7_eliminate"]
+[ext_resource type="Script" path="res://Campaign/reach_objective.gd" id="8_reach"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="9_exit"]
+
+[sub_resource type="SphereShape3D" id="Sphere_pol_extract"]
+radius = 11.0
+
+[node name="PolarisOps" type="Node3D"]
+
+; WHERE YOU COME IN. The south-west corner of the frontage, outside the loop,
+; facing north-east up the restaurant row toward the mall — so the first thing
+; on screen is the row you have to fight through and the mass of the mall
+; behind it. This is the same spot build_polaris.gd puts its own SpawnPoint,
+; kept because it is already the right end of the map; the level's export is
+; pointed here so the mission does not depend on which of the two survives a
+; rebuild.
+[node name="MissionStart" parent="." instance=ExtResource("1_spawn")]
+transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.7071, 0, 0.7071, -210, 0, 244)
+
+[node name="SquadSpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.7071, 0, 0.7071, -206, 0, 250)
+script = ExtResource("2_squad")
+max_slots = 999
+
+; ── THE POSTS ────────────────────────────────
+[node name="Posts" type="Node" parent="."]
+
+; ── THE COURT AND ITS COVER. The ground the operation is about. ──
+[node name="POL_Court" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 48)
+objective_name = "The Entry Court"
+tag = &"obj_pol_court"
+show_debug_label = false
+
+[node name="POL_Valet" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0, 44)
+objective_name = "The Valet Canopy"
+tag = &"obj_pol_valet"
+show_debug_label = false
+
+[node name="POL_CorralW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, 48)
+objective_name = "West Cart Corral"
+tag = &"obj_pol_corral_w"
+show_debug_label = false
+
+[node name="POL_CorralE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 48)
+objective_name = "East Cart Corral"
+tag = &"obj_pol_corral_e"
+show_debug_label = false
+
+[node name="POL_Chargers" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 77, 0, 56)
+objective_name = "The Charging Bank"
+tag = &"obj_pol_chargers"
+show_debug_label = false
+
+[node name="POL_Food" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -118, 0, 52)
+objective_name = "The Food Pavilion"
+tag = &"obj_pol_food"
+show_debug_label = false
+
+[node name="POL_Planters" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 74)
+objective_name = "The Planter Line"
+tag = &"obj_pol_planters"
+show_debug_label = false
+
+[node name="POL_MallW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -108, 0, 36)
+objective_name = "West Mall Front"
+tag = &"obj_pol_mall_w"
+show_debug_label = false
+
+[node name="POL_MallE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 108, 0, 36)
+objective_name = "East Mall Front"
+tag = &"obj_pol_mall_e"
+show_debug_label = false
+
+[node name="POL_AnchorW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -144, 0, 30)
+objective_name = "West Anchor"
+tag = &"obj_pol_anchor_w"
+show_debug_label = false
+
+[node name="POL_AnchorE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 144, 0, 30)
+objective_name = "East Anchor"
+tag = &"obj_pol_anchor_e"
+show_debug_label = false
+
+; ── THE LOT, between the court and the loop. The killing ground. ──
+; The cinema and the deck are the two things inside the loop that look into
+; the court, which is why both get posted and both get an optional objective
+; of their own: they are the cover the player has to take away.
+[node name="POL_Signs" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 96)
+objective_name = "The Aisle Signs"
+tag = &"obj_pol_signs"
+show_debug_label = false
+
+[node name="POL_LotMid" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 110)
+objective_name = "Mid Lot"
+tag = &"obj_pol_lot_mid"
+show_debug_label = false
+
+[node name="POL_LotSouth" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 138)
+objective_name = "South Lot"
+tag = &"obj_pol_lot_south"
+show_debug_label = false
+
+[node name="POL_Cinema" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -92, 0, 92)
+objective_name = "The Multiplex"
+tag = &"obj_pol_cinema"
+show_debug_label = false
+
+[node name="POL_Garage" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96, 0, 86)
+objective_name = "The Parking Deck"
+tag = &"obj_pol_garage"
+show_debug_label = false
+
+[node name="POL_Marquee" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 124, 0, 124)
+objective_name = "The Event Marquee"
+tag = &"obj_pol_marquee"
+show_debug_label = false
+
+; ── THE SOUTH APPROACH, outside the loop. Where you start. ──
+; The restaurant pads are detached, face north at the mall, and have open
+; ground between them — so a squad coming off the frontage arrives at the BACK
+; of the row. It is the best infantry ground on the site and it is the three
+; hundred metres you have to cross before the mission's real job starts.
+[node name="POL_Fuel" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -216, 0, 214)
+objective_name = "The Fuel Canopy"
+tag = &"obj_pol_fuel"
+show_debug_label = false
+
+[node name="POL_RowWest" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -150, 0, 202)
+objective_name = "The West Row"
+tag = &"obj_pol_row_west"
+show_debug_label = false
+
+[node name="POL_Row" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 0, 190)
+objective_name = "The Restaurant Row"
+tag = &"obj_pol_row"
+show_debug_label = false
+
+[node name="POL_Pads" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 214)
+objective_name = "The Fast Food Pads"
+tag = &"obj_pol_pads"
+show_debug_label = false
+
+[node name="POL_Bank" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 104, 0, 202)
+objective_name = "The Bank Outlot"
+tag = &"obj_pol_bank"
+show_debug_label = false
+
+[node name="POL_DriveThru" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 162, 0, 205)
+objective_name = "The Drive-Thru"
+tag = &"obj_pol_drive_thru"
+show_debug_label = false
+
+[node name="POL_Frontage" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 258)
+objective_name = "The Frontage Road"
+tag = &"obj_pol_frontage"
+show_debug_label = false
+
+[node name="POL_RingS" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 162)
+objective_name = "South Ring Road"
+tag = &"obj_pol_ring_s"
+show_debug_label = false
+
+; ── WEST: the power centre across Sancus Boulevard. ──
+[node name="POL_RingW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -194, 0, 0)
+objective_name = "West Ring Road"
+tag = &"obj_pol_ring_w"
+show_debug_label = false
+
+[node name="POL_Blvd" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -212, 0, 0)
+objective_name = "Sancus Boulevard"
+tag = &"obj_pol_blvd"
+show_debug_label = false
+
+[node name="POL_Strip" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -300, 0, 64)
+objective_name = "The Retail Strip"
+tag = &"obj_pol_strip"
+show_debug_label = false
+
+[node name="POL_BigBox" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -313, 0, -100)
+objective_name = "The Big Box"
+tag = &"obj_pol_big_box"
+show_debug_label = false
+
+; The yard BETWEEN the two storage unit rows, which is the one place out here a
+; squad can actually stand. build_polaris.gd derives this position rather than
+; typing it, because the ring road's width changed once and the typed version
+; ended up inside the north unit row with nothing to say about it.
+[node name="POL_Storage" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -313, 0, -158)
+objective_name = "The Storage Lanes"
+tag = &"obj_pol_storage"
+show_debug_label = false
+
+; ── EAST: the basin side and the garden centre. ──
+[node name="POL_RingE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 194, 0, 0)
+objective_name = "East Ring Road"
+tag = &"obj_pol_ring_e"
+show_debug_label = false
+
+[node name="POL_Basin" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 256, 0, 124)
+objective_name = "The East Basin"
+tag = &"obj_pol_basin"
+show_debug_label = false
+
+[node name="POL_BasinN" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 256, 0, 60)
+objective_name = "North Basin"
+tag = &"obj_pol_basin_n"
+show_debug_label = false
+
+[node name="POL_Garden" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 160, 0, -49)
+objective_name = "The Garden Centre"
+tag = &"obj_pol_garden"
+show_debug_label = false
+
+[node name="POL_EastYard" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 230, 0, -60)
+objective_name = "East Yard"
+tag = &"obj_pol_east_yard"
+show_debug_label = false
+
+; ── NORTH: behind the mall, and the way home. ──
+; The docks are where nobody arrives, which is exactly why the operation
+; leaves by them — out through the north lot, which is where the fourth wave
+; came in from.
+[node name="POL_Dock" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 0, -42)
+objective_name = "Mall Service Dock"
+tag = &"obj_pol_dock"
+show_debug_label = false
+
+[node name="POL_DockE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 51, 0, -42)
+objective_name = "East Service Dock"
+tag = &"obj_pol_dock_e"
+show_debug_label = false
+
+[node name="POL_Bins" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 0, -46)
+objective_name = "The Bin Corral"
+tag = &"obj_pol_bins"
+show_debug_label = false
+
+[node name="POL_Fieldhouse" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112, 0, -52)
+objective_name = "The Fieldhouse"
+tag = &"obj_pol_fieldhouse"
+show_debug_label = false
+
+[node name="POL_NorthLot" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -80)
+objective_name = "North Lot"
+tag = &"obj_pol_north_lot"
+show_debug_label = false
+
+[node name="POL_RingN" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -162)
+objective_name = "North Ring Road"
+tag = &"obj_pol_ring_n"
+show_debug_label = false
+
+[node name="POL_Houses" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 0, -196)
+objective_name = "The Subdivision"
+tag = &"obj_pol_houses"
+show_debug_label = false
+
+[node name="POL_HousesW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -160, 0, -224)
+objective_name = "West Subdivision"
+tag = &"obj_pol_houses_w"
+show_debug_label = false
+
+[node name="POL_HousesE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 160, 0, -224)
+objective_name = "East Subdivision"
+tag = &"obj_pol_houses_e"
+show_debug_label = false
+
+[node name="POL_School" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, 0, -318)
+objective_name = "The School"
+tag = &"obj_pol_school"
+show_debug_label = false
+
+[node name="POL_Apartments" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 146, 0, -300)
+objective_name = "The Apartments"
+tag = &"obj_pol_apartments"
+show_debug_label = false
+
+; ── THE ROUTES ───────────────────────────────
+[node name="Routes" type="Node" parent="."]
+
+; THE ONE GENUINE CIRCUIT IN THE PROJECT, and the only route here with
+; ping_pong OFF. The ring road is a closed loop, so a squad walking it should
+; come back round rather than turn and retrace — which is also the thing that
+; makes a patrol on it dangerous: it arrives from a different side each time.
+[node name="PatrolRing" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_pol_ring"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = false
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolRing" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 162)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolRing" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 194, 0, 0)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolRing" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -162)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolRing" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -194, 0, 0)
+display_index = 3
+
+; Across the lot rather than down it: the aisles run north-south, so a patrol
+; that walked one aisle would be in cover its whole circuit and never seen.
+[node name="PatrolLot" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_pol_lot"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolLot" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, 48)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolLot" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 96)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolLot" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96, 0, 86)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolLot" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 138)
+display_index = 3
+
+[node name="PatrolRow" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_pol_row"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4"), NodePath("P5")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolRow" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -216, 0, 214)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolRow" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -150, 0, 202)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolRow" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 0, 190)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolRow" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 104, 0, 202)
+display_index = 3
+
+[node name="P5" parent="Routes/PatrolRow" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 162, 0, 205)
+display_index = 4
+
+[node name="PatrolNorth" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_pol_north"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolNorth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 0, -46)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolNorth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -80)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolNorth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112, 0, -52)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolNorth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -162)
+display_index = 3
+
+; ── THE OBJECTIVES ───────────────────────────
+; One capture that starts everything, five waves, one way out, and three
+; optional targets that are all "take away a place they are shooting you from".
+
+; THE BIGGEST CORE IN THE PROJECT, and this is the place for it: 12.4 m
+; standing in the open in front of the mall doors with four hundred metres of
+; car park in front of it, which makes it the thing you steer by from the
+; frontage and the thing every wave converges on. Its 5.19 m footprint goes in
+; AFTER the navmesh is baked, so it wants open ground round it — the court has
+; it in every direction but north, where the mall is.
+;
+; Yawed 90 so the service alcove — the prefab's -X, and the only spot a body
+; can stand while it channels — opens SOUTH, back down the car park you crossed
+; to get here, instead of into the mall wall.
+[node name="Breach" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("11_capture_big")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 56)
+channel_duration = 6.0
+id = &"pol_breach"
+display_name = "The Court Uplink"
+description = "In the open in front of the mall doors, where the valet canopy used to be. Six seconds to open the drain. It is the shortest channel in the operation and it is the one that calls everything on this site down on you — once it is running you do not get to leave until the drain is finished."
+reward_resources = 60
+linked_squad_point = NodePath("../Posts/POL_Court")
+
+; EACH WAVE IS AN ELIMINATE ON THE CALLSIGNS THAT ARRIVE WITH IT, not a zone.
+; A zone round the court would also count the garrison already standing in it
+; and every later wave that walked into the volume, so the count would never
+; settle. A callsign list is exactly "these ones".
+;
+; starts_active = false with the previous wave as prerequisite: see the header.
+[node name="Wave1" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point", "prerequisites")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 96)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"SLEET", &"HAIL", &"RIME"])
+required_kills = 12
+id = &"pol_wave_1"
+display_name = "The First Push"
+description = "Up the car park from the frontage you just walked in over, so your way back is the first thing they take. Infantry and chasers, nothing armoured."
+reward_resources = 70
+starts_active = false
+prerequisites = [NodePath("../Breach")]
+linked_squad_point = NodePath("../Posts/POL_Signs")
+
+[node name="Wave2" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point", "prerequisites")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96, 0, 86)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"GRAUPEL", &"SQUALL", &"FROST", &"GLAZE"])
+required_kills = 15
+id = &"pol_wave_2"
+display_name = "Round The Deck"
+description = "East side, round the parking deck and the marquee. Marksmen working forward through the aisles and hoppers going over the islands rather than round them — this is the wave that makes the east half of the court unusable."
+reward_resources = 90
+starts_active = false
+prerequisites = [NodePath("../Wave1")]
+linked_squad_point = NodePath("../Posts/POL_Garage")
+
+[node name="Wave3" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point", "prerequisites")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -144, 0, 30)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"WHITEOUT", &"BLIZZARD", &"DRIFT", &"FLURRY"])
+required_kills = 18
+id = &"pol_wave_3"
+display_name = "Down The Boulevard"
+description = "West, off Sancus Boulevard and in past the cinema. Armour this time, a rover with it, and a mechanic behind them standing it back up. The food pavilion is the only thing between the west anchor and the court."
+reward_resources = 120
+starts_active = false
+prerequisites = [NodePath("../Wave2")]
+linked_squad_point = NodePath("../Posts/POL_AnchorW")
+
+[node name="Wave4" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point", "prerequisites")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -80)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"NORTHER", &"GALE", &"BORA", &"KATABAT"])
+required_kills = 18
+id = &"pol_wave_4"
+display_name = "Out Of The Houses"
+description = "North, out of the subdivision and round both ends of the mall at once — the one direction the court has nothing covering. A lobber and a mortar track come with them and they do not need to see you to drop on the court."
+reward_resources = 150
+starts_active = false
+prerequisites = [NodePath("../Wave3")]
+linked_squad_point = NodePath("../Posts/POL_NorthLot")
+
+[node name="Wave5" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point", "prerequisites")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 48)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"AVALANCHE", &"CORNICE", &"SERAC", &"CREVASSE", &"MORAINE", &"GLACIER"])
+required_kills = 24
+id = &"pol_wave_5"
+display_name = "All Four Roads"
+description = "Everything left, from all four approaches on the same minute, with a walker up the middle of the car park and a bomber over the top of it. If the cinema and the deck are still theirs when this starts, the court is not holdable."
+reward_resources = 240
+compute_reward = 1
+starts_active = false
+prerequisites = [NodePath("../Wave4")]
+linked_squad_point = NodePath("../Posts/POL_Court")
+
+; ── OPTIONAL: the two roofs and the nest. ──
+; All three are things that shoot into the court for the whole operation. They
+; are optional because the player can choose to eat that instead of spending
+; the time, and the fifth wave is where that choice gets settled.
+[node name="CinemaRoof" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -92, 0, 92)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"PROJECTION"])
+id = &"pol_cinema"
+display_name = "The Multiplex"
+description = "Four marksmen dug in along the multiplex frontage. It is the only hard cover inside the loop on that side and there is ninety metres of open asphalt between it and the court, which is the whole problem: they can see you crossing and you cannot get at them without crossing. There from the first minute, and they stay."
+optional = true
+reward_resources = 80
+linked_squad_point = NodePath("../Posts/POL_Cinema")
+
+[node name="DeckTop" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96, 0, 86)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"DECKHAND"])
+id = &"pol_garage"
+display_name = "The Parking Deck"
+description = "The deck garrison, in and around the structure at the east end of the aisles. Same job as the multiplex on the other side and the same hundred metres of open ground in front of it. The deck itself is sealed — there is no way up onto it — so this is a fight at its feet."
+optional = true
+reward_resources = 80
+linked_squad_point = NodePath("../Posts/POL_Garage")
+
+[node name="StorageHive" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -313, 0, -158)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"ICEHOUSE"])
+id = &"pol_hive_storage"
+display_name = "The Storage Hive"
+description = "In the yard between the self-storage rows, four hundred metres west and well off the fight. It is what keeps feeding chasers up the boulevard, and going to it means leaving the court."
+optional = true
+reward_resources = 110
+linked_squad_point = NodePath("../Posts/POL_Storage")
+
+; ── THE WAY OUT ──────────────────────────────
+; The service dock behind the mall. You came in the front and you leave by the
+; back, which means the last thing the operation asks is that you cross the
+; north lot — where the fourth wave came from and where anything still alive
+; from it is standing.
+[node name="LevelExit" parent="." instance=ExtResource("9_exit")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, -40, 0, -42)
+requires_objectives_complete = true
+
+[node name="POLExtract" type="Node3D" parent="LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
+script = ExtResource("8_reach")
+area = NodePath("Area3D")
+squad_radius = 30.0
+id = &"pol_extract"
+display_name = "Out The Service Dock"
+description = "Behind the mall, on the loading apron. Out through the north lot."
+prerequisites = [NodePath("../../Wave5")]
+is_extraction = true
+
+[node name="Area3D" type="Area3D" parent="LevelExit/POLExtract"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LevelExit/POLExtract/Area3D"]
+shape = SubResource("Sphere_pol_extract")

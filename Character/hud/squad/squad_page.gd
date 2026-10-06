@@ -31,6 +31,15 @@ const Kit := preload("res://Character/hud/squad/ui_kit.gd")
 const Icons := preload("res://Character/hud/icons/icons.gd")
 const DETAIL_WIDTH := 400.0
 const REPAIR_TOOL := &"repair_tool"
+## A frame's real speed lives on its SCENE. By path, not class_name — see the
+## note in item_facts.gd.
+const _Facts := preload("res://Campaign/item_facts.gd")
+## Tops of the stat bars, FIXED so two robots can be compared by eye. Shared
+## with the Factory's frame cards on purpose: the same stat should be the same
+## length of bar wherever it is drawn.
+const HULL_TOP := 400.0
+const SPEED_TOP := 20.0
+const SENSOR_TOP := 120.0
 ## What a dragged card carries: {DRAG_KEY: the robot's record}.
 const DRAG_KEY := "squad_page_robot"
 
@@ -112,7 +121,11 @@ func setup(owner_ui) -> void:
 	side.add_theme_stylebox_override("panel", line)
 	side.custom_minimum_size = Vector2(DETAIL_WIDTH, 0)
 	add_child(side)
-	_detail = Kit.vbox(8)
+	# FIVE, NOT EIGHT. The detail column is exactly full at 544px: measured, its
+	# children came to 448 and twelve eight-pixel gaps came to 96, which left the
+	# stores list underneath 79 pixels — one and a half rows of a list you are
+	# meant to choose from. Four pixels a gap is forty-eight back.
+	_detail = Kit.vbox(4)
 	side.add_child(_detail)
 
 
@@ -714,7 +727,10 @@ func _build_detail() -> void:
 	var destroyed := r.status == SoldierRecord.Status.DESTROYED
 
 	var head := Kit.hbox(12)
-	head.add_child(Kit.icon(Icons.chassis(frame, "m"), Kit.PROBLEM if destroyed else Kit.BRIGHT, Vector2(64, 64)))
+	# 48, not 64. The name, the frame line and the history sit beside it and are
+	# what the block is actually for; the portrait is identification, and it only
+	# has to be big enough to tell a Walker from a soldier at a glance.
+	head.add_child(Kit.icon(Icons.chassis(frame, "m"), Kit.PROBLEM if destroyed else Kit.BRIGHT, Vector2(48, 48)))
 	var who := Kit.vbox(2)
 	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(who)
@@ -737,13 +753,12 @@ func _build_detail() -> void:
 	name_edit.focus_exited.connect(func():
 		if is_instance_valid(name_edit) and not ui.is_rebuilding():
 			commit.call(name_edit.text))
-	# The frame's health beside the name: the one number a refit changes that
-	# the slot tiles below do not show.
-	var name_row := Kit.hbox(10)
+	# Health used to sit beside the name as the one number a refit changed that
+	# the slot tiles did not show. It is in the STATS block now, with the four
+	# others a refit changes and with the part the modules bought drawn in white —
+	# which is the thing a lone "75 HP" could never say.
 	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_row.add_child(name_edit)
-	name_row.add_child(Kit.label("%d HP" % r.max_health, Kit.DIM, 18, true))
-	who.add_child(name_row)
+	who.add_child(name_edit)
 	var rank_row := Kit.hbox(6)
 	rank_row.add_child(Kit.label(_frame_line(r), Kit.DIM, Kit.SMALL))
 	if not is_player:
@@ -779,6 +794,8 @@ func _build_detail() -> void:
 			row.add_child(Kit.label("STAYS AT BASE · EARNS NO XP", Kit.DIM, Kit.SMALL))
 		_detail.add_child(row)
 
+	_stat_block(r, frame)
+
 	# The weapon (and the player's built-in repair tool) on one row, gear and
 	# modules side by side on the next: stacked, they left the stores list
 	# below room for barely one row.
@@ -798,12 +815,15 @@ func _build_detail() -> void:
 	_detail.add_child(weapon_row)
 	var kit_row := Kit.hbox(18)
 	if not r.equipment_ids.is_empty():
-		kit_row.add_child(_group("GEAR", _tiles(ItemDefinition.Kind.EQUIPMENT, r.equipment_ids)))
+		kit_row.add_child(_group("EQUIPMENT", _tiles(ItemDefinition.Kind.EQUIPMENT, r.equipment_ids)))
 	if not r.module_ids.is_empty():
 		kit_row.add_child(_group("MODULES", _tiles(ItemDefinition.Kind.MODULE, r.module_ids)))
 	_detail.add_child(kit_row)
 
-	_detail.add_child(Kit.spacer(0, 2))
+	# The spacer that used to sit here is gone. It separated the slot tiles from
+	# the stores list, which the "IN STORES" heading already does, and seven
+	# pixels of column was the difference between that list showing two rows and
+	# three.
 	_stores()
 
 
@@ -828,13 +848,13 @@ func _tiles(kind: int, ids: Array) -> Array:
 func _fixed_tile(item: ItemDefinition, text: String) -> Control:
 	var tile := PanelContainer.new()
 	tile.add_theme_stylebox_override("panel", Kit.box(Kit.FAINT, Color(0, 0, 0, 0.2), 1, 4.0))
-	tile.custom_minimum_size = Vector2(120, 56)
+	tile.custom_minimum_size = Vector2(120, 44)
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var col := Kit.vbox(2)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	tile.add_child(col)
 	if item != null:
-		col.add_child(Kit.icon(Icons.item(item, "m"), Kit.DIM, Vector2(96, 36)))
+		col.add_child(Kit.icon(Icons.item(item, "m"), Kit.DIM, Vector2(80, 28)))
 		text = item.short_label().to_upper()
 	var l := Kit.label(text, Kit.DIM, 11)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -856,7 +876,10 @@ func _slot_tile(kind: int, index: int, item_id: StringName) -> Control:
 		ui.play(&"select")
 		_rebuild_detail()
 	var tile := Kit.card(border, pick, ui.hover, 4.0)
-	tile.custom_minimum_size = Vector2(120, 56) if wide else Vector2(56, 56)
+	# 44 tall rather than 56. Two rows of these sit between the stats and the
+	# stores list, so twelve pixels off each is twenty-four back for the list —
+	# and the tile still holds its icon and its name.
+	tile.custom_minimum_size = Vector2(120, 44) if wide else Vector2(56, 44)
 	# Right-click takes it off: the commonest thing to do to a full slot.
 	tile.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT \
@@ -867,7 +890,7 @@ func _slot_tile(kind: int, index: int, item_id: StringName) -> Control:
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	tile.add_child(col)
 	if item != null:
-		col.add_child(Kit.icon(Icons.item(item, "m"), Kit.BRIGHT, Vector2(96, 36) if wide else Vector2(36, 36)))
+		col.add_child(Kit.icon(Icons.item(item, "m"), Kit.BRIGHT, Vector2(80, 28) if wide else Vector2(28, 28)))
 		var l := Kit.label(item.short_label().to_upper(), Kit.DIM, 11)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.clip_text = true
@@ -917,14 +940,23 @@ func _stores() -> void:
 		list.add_child(off)
 
 	var offered := 0
+	var elsewhere := 0
 	for item in ui.shop_items():
 		if item.kind != slot_kind or state.armoury.spare(item.id) <= 0:
+			continue
+		if _never_fits(r, item):
+			elsewhere += 1
 			continue
 		var reason := _cannot_fit(r, item)
 		list.add_child(_store_row(item, reason))
 		offered += 1
 	if offered == 0:
 		list.add_child(Kit.label("NOTHING IN STORES FOR THIS SLOT", Kit.DIM, Kit.SMALL))
+	if elsewhere > 0:
+		# WHAT WAS HIDDEN, COUNTED. Silence here would make a gun you own look
+		# lost, which is the exact thing the dim rows were there to prevent.
+		list.add_child(Kit.label("%d MORE IN STORES, FOR OTHER FRAMES" % elsewhere,
+			Kit.DIM, Kit.SMALL))
 	# THE WAY TO THE SHOP IS ALWAYS THERE. It used to appear only when stores
 	# were empty for this slot, which is exactly backwards: having one spare
 	# rifle is the moment you are most likely to want a second, and the button
@@ -950,7 +982,11 @@ func _store_row(item: ItemDefinition, reason: String) -> Control:
 	var row := Kit.hbox(10)
 	row_box.add_child(row)
 	var tint := Kit.BRIGHT if usable else Kit.DIM
-	row.add_child(Kit.icon(Icons.item(item, "m"), tint, Vector2(96, 36) if wide else Vector2(36, 36)))
+	# Matched to the slot tiles above, which is both consistent and the last
+	# twenty pixels needed: at 36 the rows were 48 tall and the list showed two
+	# and a half of them, which is the worst possible number for a list you pick
+	# from — enough to look complete, not enough to be.
+	row.add_child(Kit.icon(Icons.item(item, "m"), tint, Vector2(80, 28) if wide else Vector2(28, 28)))
 	var words := Kit.vbox(1)
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.add_child(Kit.label(item.display_name.to_upper(), tint, Kit.BODY, true))
@@ -963,6 +999,32 @@ func _store_row(item: ItemDefinition, reason: String) -> Control:
 	if not usable:
 		row_box.modulate = Color(1, 1, 1, 0.7)
 	return row_box
+
+
+## REFUSALS THAT CAN NEVER BECOME YESES ARE NOT LISTED AT ALL.
+##
+## A dim row with a reason is the right answer for something you could fit
+## later: "needs rank 3" is a goal, and "one per robot" is a thing you have
+## already done once. But a turret gun will never go on a soldier and a rifle
+## will never go on a Rover, and listing those is a list of what this robot is
+## NOT — which on a frame with three slots was most of what you scrolled past.
+##
+## The rows do not vanish without a word: _stores() counts them and says how
+## many are in stores for other frames, so a gun you own never looks lost.
+func _never_fits(record: SoldierRecord, item: ItemDefinition) -> bool:
+	var state: CampaignState = ui.state
+	# The player is a special case in the other direction: a squad-only item is
+	# permanently not theirs.
+	if state.is_player_record(record):
+		return not item.fits_player()
+	if not item.fits_ai():
+		return true
+	if not item.fits_chassis(record.chassis_id):
+		return true
+	var frame := _frame(record)
+	# frame.takes() is the one place that knows a turret takes only what was made
+	# for it, and that a frame which drives has no use for kit written for legs.
+	return frame != null and not frame.takes(item)
 
 
 # Why an item in stores cannot go on this robot, in words; "" if it can.
@@ -1016,3 +1078,58 @@ func _frame_line(record: SoldierRecord) -> String:
 	if ui.state.is_player_record(record):
 		return "%s FRAME · YOU" % Kit.frame_word(_frame(record))
 	return "%s · %s" % [Kit.frame_word(_frame(record)), record.rank_title().to_upper()]
+
+
+## WHAT THIS ROBOT IS NOW, and how much of that you bought.
+##
+## The page used to show one number — max_health beside the name — and it was
+## the FINISHED figure, so a Walker with armour plating read 335 and nothing
+## said that 15 of it came out of a module slot. Everything else a module
+## changed was invisible: a Sensor Relay adds thirty metres of sight and the
+## page never mentioned sensors at all.
+##
+## Each bar is drawn twice over: the frame's own figure in BRIGHT, and the part
+## the modules added continuing it in UPGRADE white. No attribution text — the
+## module tiles are a few rows below, and a line reading "+15 ARMOUR PLATE" says
+## in words what the white already says in place.
+##
+## Nothing was added to the data for this. recompute_stats() already folds every
+## module into these fields and the base sits on the chassis, so the block is a
+## reader.
+func _stat_block(r: SoldierRecord, frame: ChassisDefinition) -> void:
+	if frame == null:
+		# EVERY EARLY RETURN WARNS. A record naming a frame the catalogue has
+		# dropped has no base to compare against, so a block here would be
+		# comparing its stats with nothing and drawing everything as a bonus.
+		push_warning("SquadPage: '%s' has no chassis in the catalogue, so its stats block is skipped." % r.display_name)
+		return
+	_detail.add_child(Kit.heading("STATS"))
+	_detail.add_child(Kit.stat_bar("HULL", frame.base_health, r.max_health, HULL_TOP,
+		str(r.max_health)))
+	# effective_speed is a MULTIPLIER — base_speed is 1.00 on every frame — so
+	# the metres per second only exist on the chassis scene.
+	var base_speed := _Facts.chassis_speed(frame)
+	if base_speed > 0.0:
+		var now := base_speed * r.effective_speed
+		_detail.add_child(Kit.stat_bar("SPEED", base_speed, now, SPEED_TOP, "%.1f M/S" % now))
+	_detail.add_child(Kit.stat_bar("SENSOR", frame.base_sensor_range, r.effective_sensor_range,
+		SENSOR_TOP, "%d M" % int(round(r.effective_sensor_range))))
+	_detail.add_child(Kit.stat_bar("ACCURACY", frame.base_accuracy * 100.0,
+		r.effective_accuracy * 100.0, 100.0, "%d%%" % int(round(r.effective_accuracy * 100.0))))
+	if r.effective_signal_resistance_bonus > 0.0:
+		# Shown as the reduction you actually get, not the raw divisor: "+100%
+		# RES" means nothing, "-50% JAM" means something.
+		var cut: float = 1.0 - 1.0 / (1.0 + r.effective_signal_resistance_bonus)
+		_detail.add_child(Kit.stat_bar("JAM RES", 0.0, cut * 100.0, 100.0,
+			"-%d%%" % int(round(cut * 100.0))))
+
+	# POSITIVES ONLY. A frame without suppressive fire says nothing about
+	# suppressive fire: a row of NO THIS and NO THAT is a panel telling you what
+	# a robot is not, which is the longest way to say nothing.
+	var extras: Array[String] = []
+	if r.effective_suppressive:
+		extras.append("SUPPRESSIVE FIRE")
+	if r.effective_self_revive > 0.0:
+		extras.append("SELF-REVIVE %ds" % int(round(r.effective_self_revive)))
+	if not extras.is_empty():
+		_detail.add_child(Kit.label(" · ".join(extras), Kit.BRIGHT, Kit.SMALL, true))

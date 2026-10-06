@@ -96,12 +96,35 @@ func _levels() -> Array:
 
 
 ## id -> { optional, reward, nest } for every objective in a level.
-func _objectives(packed: PackedScene) -> Dictionary:
+##
+## FOLLOWS INSTANCED SUB-SCENES. Georgetown, Polaris and Causeway keep their
+## objectives in maps/gameplay/<name>_ops.tscn and only instance it — their
+## level files are written from a template by the terrain builders — and an
+## instanced scene's nodes are not in the parent's SceneState at all, so all
+## three contributed nothing to either half of this report. Georgetown alone
+## has four optional objectives worth 340 between them that it could not see.
+##
+## Only into res://maps and never an _art scene.
+const MAX_SUB_DEPTH := 2
+
+
+func _objectives(packed: PackedScene, depth: int = 0, seen: Dictionary = {}) -> Dictionary:
 	var out := {}
 	if packed == null:
 		return out
+	var key := str(packed.resource_path)
+	if key != "" and seen.has(key):
+		return out
+	seen[key] = true
 	var st := packed.get_state()
 	for i in st.get_node_count():
+		var sub := st.get_node_instance(i)
+		if sub != null and depth < MAX_SUB_DEPTH:
+			var p := str(sub.resource_path)
+			if p.begins_with("res://maps/") and not p.get_basename().ends_with("_art"):
+				var inner := _objectives(sub, depth + 1, seen)
+				for k in inner:
+					out[k] = inner[k]
 		var id: StringName = &""
 		var optional := false
 		var reward := 0

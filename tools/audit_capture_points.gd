@@ -77,12 +77,41 @@ func _init() -> void:
 
 
 ## Every InteractObjective in a level, and whether it can actually be used.
-func _capture_rows(path: String) -> Array:
+## IT FOLLOWS INSTANCED SUB-SCENES, scene by scene rather than node by node.
+##
+## Georgetown, Polaris and Causeway keep their capture points in
+## maps/gameplay/<name>_ops.tscn and only INSTANCE it, because their level
+## files are rewritten from a template by the terrain builders. An instanced
+## scene's nodes are not in the parent's SceneState, so all three returned an
+## empty row list — and the caller's `rows.is_empty(): continue` meant the
+## three levels disappeared from this report with no line printed at all.
+##
+## Per scene and not per node, because _shape_under() matches node paths
+## WITHIN one state and cannot cross an instance boundary.
+##
+## Only into res://maps and never into an _art scene: a level's art is hundreds
+## of instances and holds no objectives.
+const MAX_SUB_DEPTH := 2
+
+
+func _capture_rows(path: String, depth: int = 0, seen: Dictionary = {}) -> Array:
 	var out: Array = []
+	if seen.has(path):
+		return out
+	seen[path] = true
 	var packed := load(path) as PackedScene
 	if packed == null:
 		return out
 	var st := packed.get_state()
+	if depth < MAX_SUB_DEPTH:
+		for i in st.get_node_count():
+			var sub := st.get_node_instance(i)
+			if sub == null:
+				continue
+			var sub_path := str(sub.resource_path)
+			if not sub_path.begins_with("res://maps/") or sub_path.get_basename().ends_with("_art"):
+				continue
+			out.append_array(_capture_rows(sub_path, depth + 1, seen))
 	for i in st.get_node_count():
 		var id: StringName = &""
 		var script_file := ""

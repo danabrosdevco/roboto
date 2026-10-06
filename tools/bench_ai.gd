@@ -130,6 +130,13 @@ func _init() -> void:
 	# whether a spike is pathfinding or something else, which is the difference
 	# between two completely different fixes.
 	var nav: PackedFloat64Array = PackedFloat64Array()
+	# AND HOW MUCH OF THE FRAME WAS THINKING. Enemy keeps a microsecond tally of
+	# its own decision slices per physics frame, the same way it does for nav, and
+	# it is the only honest answer to "would thinking less help here" — a frame
+	# time alone cannot tell a brain-bound population from a body-bound one, and
+	# optimising the wrong half of the tick is the whole hazard this file exists
+	# to avoid.
+	var think: PackedFloat64Array = PackedFloat64Array()
 	var states: PackedStringArray = PackedStringArray()
 	for _f in frames:
 		if wave > 0 and _f == wave_at:
@@ -150,6 +157,7 @@ func _init() -> void:
 		await physics_frame
 		samples.append(float(Time.get_ticks_usec() - t0) / 1000.0)
 		nav.append(float(Enemy._nav_spent_us) / 1000.0)
+		think.append(float(Enemy._think_spent_us) / 1000.0)
 		# A cheap per-frame signature of what the population is doing. If the
 		# spike frame is also the frame a hundred robots change state, the spike
 		# is that transition and not the steady-state cost of anything.
@@ -186,6 +194,22 @@ func _init() -> void:
 	print("  p95    %7.2f ms" % p95)
 	print("  WORST  %7.2f ms   (nav %.2f ms of it)" % [worst, nav[worst_i]])
 	print("  nav    %7.2f ms mean" % (nav_total / float(nav.size())))
+	# AND WHETHER THE THINK BACKSTOP IS BITING. Enemy rations decisions by a
+	# per-frame microsecond budget that tunes itself off measured frame time
+	# (see "HOW OFTEN A ROBOT DECIDES ANYTHING"), and the one thing you cannot
+	# tell from a frame time is whether a cheap number was bought by starving the
+	# AI. A budget pinned at its floor with a large refusal count says the tiers
+	# are not doing the work and the backstop is — which is a different, worse
+	# answer to the same question. Printed after the measurement loop, so it
+	# cannot affect what was measured.
+	var think_total := 0.0
+	var think_worst := 0.0
+	for v in think:
+		think_total += v
+		think_worst = maxf(think_worst, v)
+	print("  think  %7.2f ms mean, %.2f ms worst   (budget %d us at the end, %d refused)" % [
+		think_total / float(think.size()), think_worst,
+		Enemy._think_budget_us, Enemy._think_refused])
 	# WHICH frames were bad, not just how bad. One outlier is an event; a run of
 	# them every N frames is a timer or a cache expiring.
 	var idx: Array = []

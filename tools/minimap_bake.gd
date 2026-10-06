@@ -45,6 +45,14 @@ var _levels := [
 	"res://maps/hillfort_level.tscn",
 	"res://maps/pittsburgh_level.tscn",
 	"res://maps/causeway_level.tscn",
+	# The three operations at the end of the ladder. Causeway was already in
+	# this list but was baked while the level held no objectives at all, so its
+	# .tres carried an image and an empty marker set — a briefing map with
+	# nothing on it. All three need re-baking whenever their ops layer moves,
+	# because the markers come from the objectives in the scene and not from
+	# the mission.
+	"res://maps/georgetown_level.tscn",
+	"res://maps/polaris_level.tscn",
 	"res://maps/depot_level.tscn",
 	"res://maps/proving_level.tscn",
 	"res://maps/heliostat_level.tscn"

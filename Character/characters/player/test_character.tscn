@@ -1,9 +1,10 @@
-[gd_scene load_steps=28 format=3 uid="uid://bgj56y7q1pyxr"]
+[gd_scene load_steps=29 format=3 uid="uid://bgj56y7q1pyxr"]
 
 [ext_resource type="Script" path="res://Character/characters/player/test_character.gd" id="1_xw2ar"]
 [ext_resource type="PackedScene" uid="uid://dpfbodwgxmxj3" path="res://Character/components/command.tscn" id="2_ysmyv"]
 [ext_resource type="PackedScene" uid="uid://cia7d1ywjwrgf" path="res://Character/components/scanner.tscn" id="6_pxhlj"]
 [ext_resource type="PackedScene" uid="uid://dyy7uujbxb11q" path="res://Character/weapon/repair tool_hud_weapon.tscn" id="6_repair"]
+[ext_resource type="PackedScene" path="res://Character/weapon/designator_hud_weapon.tscn" id="6_desig"]
 [ext_resource type="Script" path="res://Character/characters/camera_3d.gd" id="6_umrcu"]
 [ext_resource type="Script" path="res://Character/components/squad_commander.gd" id="8_pc27j"]
 [ext_resource type="AudioStream" uid="uid://cjb3ght3deqbq" path="res://sounds/sfx/mini-sfx/healing-4.wav" id="9_umkd4"]
@@ -57,6 +58,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 display_name = "Repair Tool"
 slot = 2
 
+; THE DESIGNATOR — a BUILT-IN, beside the repair tool. Never bought, never
+; fitted: the squad being able to use its own smoke must not depend on what the
+; commander went shopping for. equipment_order -1 in its own scene keeps it on
+; key 4 whatever else the player is carrying.
+[node name="Designator" parent="Camera3D" instance=ExtResource("6_desig")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
 [node name="AudioListener3D" type="AudioListener3D" parent="Camera3D"]
 current = true
 
@@ -104,4 +112,4 @@ script = ExtResource("16_load")
 player = NodePath("..")
 cam = NodePath("../Camera3D")
 ammo = NodePath("../AmmoPool")
-permanent_items = [NodePath("../Camera3D/RepairTool")]
+permanent_items = [NodePath("../Camera3D/RepairTool"), NodePath("../Camera3D/Designator")]

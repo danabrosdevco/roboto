@@ -120,17 +120,26 @@ func _init() -> void:
 	# nothing in the script profile to show for it.
 	var settled := 0
 	var unsettled := 0
+	# AND HOW MANY OF THEM ARE ACTUALLY SWITCHED OFF. The cull now takes the
+	# callback away as well as the brain (Enemy.cull_frozen), and the whole
+	# saving depends on that landing for every culled robot rather than most of
+	# them — a figure below `culled` means something in _can_freeze_for_cull is
+	# refusing, and the ms number above is measuring a partial fix.
+	var frozen := 0
 	for b in bots:
 		if b.get("faction") != Enums.Factions.ENEMY:
 			continue
 		if int(b.get("ai_state")) != 5:
 			continue
+		if bool(b.get("cull_frozen")) and not bool(b.call("is_physics_processing")):
+			frozen += 1
 		if bool(b.call("is_on_floor")) and (b.get("velocity") as Vector3).length_squared() < 0.01:
 			settled += 1
 		else:
 			unsettled += 1
 	print("  culled AND settled       %d  (cheap: skips move_and_slide)" % settled)
 	print("  culled but NOT settled   %d  (pays a full move_and_slide every frame)" % unsettled)
+	print("  culled AND frozen        %d  (no _physics_process call at all)" % frozen)
 	print("  jolt active bodies       %d" % int(Performance.get_monitor(Performance.PHYSICS_3D_ACTIVE_OBJECTS)))
 	print("  total collision pairs    %d" % int(Performance.get_monitor(Performance.PHYSICS_3D_COLLISION_PAIRS)))
 	quit(0)

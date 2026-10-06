@@ -41,5 +41,5 @@ visible = false
 stream = ExtResource("5_shot")
 volume_db = -8.0
 unit_size = 24.0
-pitch_scale = 0.72
-attenuation_filter_cutoff_hz = 3000.0
+pitch_scale = 0.85
+max_polyphony = 3

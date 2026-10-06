@@ -79,49 +79,15 @@ func _report_level(path: String, missions: Array) -> void:
 	if packed == null:
 		print("  %-34s  COULD NOT LOAD" % path.get_file())
 		return
-	var st := packed.get_state()
 	var objectives := {}
 	var counts := {"cover_point.gd": 0, "squad_spawn_point.gd": 0, "level_exit.gd": 0,
 		"bonfire.gd": 0, "spawn_point.gd": 0, "cover_point_spawner.gd": 0}
-	var has_spawn := false
-	var has_nav := false
-
-	for i in st.get_node_count():
-		var script_file := ""
-		var id: StringName = &""
-		var extract := false
-		for j in st.get_node_property_count(i):
-			var prop := String(st.get_node_property_name(i, j))
-			var v: Variant = st.get_node_property_value(i, j)
-			if prop == "script" and v != null:
-				script_file = str(v.resource_path).get_file()
-			elif prop == "id":
-				id = StringName(v)
-			elif prop == "is_extraction":
-				extract = bool(v)
-			elif prop == "spawn_point" and v != null:
-				has_spawn = true
-			elif prop == "nav_region" and v != null:
-				has_nav = true
-		if counts.has(script_file):
-			counts[script_file] += 1
-		else:
-			# Instanced nodes keep their script on the instanced scene, so they
-			# are identified by which scene they are. Exits and cover points are
-			# both authored that way; counting only script overrides reported
-			# every level in the game as having no way off it.
-			var inst := st.get_node_instance(i)
-			if inst != null:
-				var f := inst.resource_path.get_file()
-				for key in counts:
-					if f == key.replace(".gd", ".tscn"):
-						counts[key] += 1
-		if id != &"" and (OBJECTIVE_SCRIPTS.has(script_file)
-				or _instance_is_objective(st.get_node_instance(i))):
-			objectives[id] = extract
-		# A NavigationRegion3D does not carry a script, so it is found by type.
-		if st.get_node_type(i) == &"NavigationRegion3D":
-			has_nav = true
+	# Bools in a dictionary so the recursive scan below can write to them: a
+	# Dictionary is passed by reference and a bool is not.
+	var found := {"spawn": false, "nav": false}
+	_scan_state(packed, 0, {}, objectives, counts, found)
+	var has_spawn: bool = found["spawn"]
+	var has_nav: bool = found["nav"]
 
 	var extracts := 0
 	for k in objectives:
@@ -219,35 +185,14 @@ func _bodies(force) -> int:
 	return n
 
 
+## id -> is-extraction for a level, for the per-mission half of the report.
+##
+## The same walk the level half does, so it is the same function: there were
+## two copies of this loop in this file and they had already drifted once over
+## whether an INSTANCED objective counts. One walker, two callers.
 func _objective_ids(packed: PackedScene) -> Dictionary:
 	var out := {}
-	if packed == null:
-		return out
-	var st := packed.get_state()
-	for i in st.get_node_count():
-		var id: StringName = &""
-		var extract := false
-		var is_objective := false
-		for j in st.get_node_property_count(i):
-			var prop := String(st.get_node_property_name(i, j))
-			var v: Variant = st.get_node_property_value(i, j)
-			if prop == "script" and v != null:
-				is_objective = OBJECTIVE_SCRIPTS.has(str(v.resource_path).get_file())
-			elif prop == "id":
-				id = StringName(v)
-			elif prop == "is_extraction":
-				extract = bool(v)
-		if id == &"":
-			continue
-		# AN INSTANCED OBJECTIVE HAS NO `script` PROPERTY OF ITS OWN. Capture
-		# points are instanced scenes: the script lives on the instanced scene's
-		# root and the level only overrides `id`, so testing for a script
-		# override missed every one of them — and then reported the mission that
-		# named them as pointing at nothing, and its reserves as unwakeable.
-		# Eleven false alarms across three maps, all of them real objectives.
-		if not is_objective and not _instance_is_objective(st.get_node_instance(i)):
-			continue
-		out[id] = extract
+	_scan_state(packed, 0, {}, out, {}, {})
 	return out
 
 
@@ -260,6 +205,80 @@ func _missions(st: SceneState) -> Array:
 				return st.get_node_property_value(i, j)
 		return []
 	return []
+
+
+## WHAT A LEVEL ACTUALLY CONTAINS, instanced sub-scenes included.
+##
+## This used to be the body of _report_level()'s single loop over the level's
+## own SceneState. That was right while every level declared its objectives,
+## exits and spawns itself. Georgetown, Polaris and Causeway now keep all of
+## that in maps/gameplay/<name>_ops.tscn and only INSTANCE it — their level
+## files are written from a template by the terrain builders, so anything added
+## to one dies on the next rebuild — and an instanced scene's nodes are not in
+## the parent's state at all.
+##
+## Without the recursion all three audited as `objectives 0  exits 0  squad
+## spawns 0`, flagged NO WAY OFF THE MAP and PLAYED BUT HAS NO OBJECTIVES, and
+## then every mission on them reported each active objective as missing and
+## each reinforcement_tag as untriggerable — the same cascade of false alarms
+## the note in _report_mission() was written about.
+##
+## Accumulators are passed in rather than returned: a Dictionary is by
+## reference, which is also why `found` holds the two bools.
+##
+## ONLY INTO res://maps, and never into an _art scene. A level's art is
+## hundreds of instances and holds nothing this audit counts.
+const MAX_SUB_DEPTH := 2
+
+
+func _scan_state(packed: PackedScene, depth: int, seen: Dictionary,
+		objectives: Dictionary, counts: Dictionary, found: Dictionary) -> void:
+	if packed == null:
+		return
+	var key := str(packed.resource_path)
+	if key != "" and seen.has(key):
+		return
+	seen[key] = true
+	var st := packed.get_state()
+	for i in st.get_node_count():
+		var inst := st.get_node_instance(i)
+		if inst != null and depth < MAX_SUB_DEPTH:
+			var sub := str(inst.resource_path)
+			if sub.begins_with("res://maps/") and not sub.get_basename().ends_with("_art"):
+				_scan_state(inst, depth + 1, seen, objectives, counts, found)
+
+		var script_file := ""
+		var id: StringName = &""
+		var extract := false
+		for j in st.get_node_property_count(i):
+			var prop := String(st.get_node_property_name(i, j))
+			var v: Variant = st.get_node_property_value(i, j)
+			if prop == "script" and v != null:
+				script_file = str(v.resource_path).get_file()
+			elif prop == "id":
+				id = StringName(v)
+			elif prop == "is_extraction":
+				extract = bool(v)
+			elif prop == "spawn_point" and v != null:
+				found["spawn"] = true
+			elif prop == "nav_region" and v != null:
+				found["nav"] = true
+		if counts.has(script_file):
+			counts[script_file] += 1
+		elif inst != null:
+			# Instanced nodes keep their script on the instanced scene, so they
+			# are identified by which scene they are. Exits and cover points are
+			# both authored that way; counting only script overrides reported
+			# every level in the game as having no way off it.
+			var f := inst.resource_path.get_file()
+			for k in counts:
+				if f == k.replace(".gd", ".tscn"):
+					counts[k] += 1
+		if id != &"" and (OBJECTIVE_SCRIPTS.has(script_file) or _instance_is_objective(inst)):
+			objectives[id] = extract
+		# A NavigationRegion3D does not carry a script, so it is found by type.
+		if st.get_node_type(i) == &"NavigationRegion3D":
+			found["nav"] = true
 
 
 ## True when `packed`'s own root carries one of the objective scripts — which

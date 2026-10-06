@@ -29,8 +29,6 @@ const SFX_SHOW := preload("res://sounds/sfx/psx ui sfx/squad_manager/HoverG.ogg"
 
 const COL_HEAD := HUDPalette.BRIGHT
 const COL_BODY := Color(0.95, 1.0, 0.97)
-## Added under the sign that finishes the tutorial, the one time it does.
-const FINISHED_LINE := "TUTORIAL COMPLETE. EVERY LESSON IS KEPT ON THE MAIN MENU\nUNDER TUTORIALS."
 
 ## Headline (the sign's first line) and body sizes. Big on purpose: this is the
 ## one piece of text in the game that has to be read on the move.
@@ -230,12 +228,13 @@ func _pick_sign() -> Node3D:
 func _show(sign_node: Node3D) -> void:
 	_current = sign_node
 	_linger = linger_seconds
-	# The last sign of the walkthrough records that the tutorial is done — and
-	# on that one showing, and never again, says where the lessons went.
-	var just_finished: bool = sign_node.has_method("mark_read") and sign_node.mark_read()
+	# mark_read() still RUNS — it is what records the walkthrough as done, and
+	# that is what retires the signs. Nothing is appended to the last one any
+	# more: it used to add a line pointing at a TUTORIALS menu entry, and that
+	# entry is gone from both menus, so the line had nowhere to send anyone.
+	if sign_node.has_method("mark_read"):
+		sign_node.mark_read()
 	var raw: String = expand_keys(str(sign_node.toast_text)).strip_edges()
-	if just_finished:
-		raw += "\n\n" + FINISHED_LINE
 	_put(raw)
 
 

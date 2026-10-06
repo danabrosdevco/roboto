@@ -26,7 +26,19 @@ class_name TrenchBroomLevel
 #
 # Set from the level's OWN mesh rather than a project setting, so each map
 # carries its own bake and a coarse one cannot quietly re-cut every other map.
-func _ready() -> void:
+# BEFORE THE REGION REGISTERS, not after. A parent's _enter_tree runs before any
+# child's, so this is the last moment the map can be put on the right grid while
+# the NavigationRegion3D is still outside the tree. Done in _ready instead — as
+# it was — the region has already registered against the old grid, the server
+# has already answered with
+#
+#   "Attempted to merge a navigation mesh polygon edge with another
+#    already-merged edge ... or a mismatch of the NavigationMesh baked
+#    cell_size and navigation map cell_size"
+#
+# and the edges that failed to merge are the seams agents catch on. Correcting
+# the map afterwards does not re-run that merge.
+func _enter_tree() -> void:
 	_match_map_cell_size()
 
 
@@ -36,10 +48,18 @@ func _match_map_cell_size() -> void:
 		# Silent here on purpose: the navigation server already warns loudly for
 		# a level that needs one and has none.
 		return
+	# The region's own map, once it has one; before that, the map it is ABOUT to
+	# join — the root viewport's world, which exists long before this level does.
+	# Asking the region in _enter_tree would get an empty RID, because it is not
+	# in the tree yet, which is the whole point.
 	var map := nav_region.get_navigation_map()
 	if not map.is_valid():
-		push_warning("%s: no navigation map to configure; its region may be refused." % name)
-		return
+		var world := get_tree().root.world_3d if get_tree() != null else null
+		if world == null:
+			push_warning("%s: no navigation map to configure; its region may be refused." % name)
+			return
+		map = world.navigation_map
 	var want: float = nav_region.navigation_mesh.cell_size
-	if absf(NavigationServer3D.map_get_cell_size(map) - want) > 0.0001:
-		NavigationServer3D.map_set_cell_size(map, want)
+	if absf(NavigationServer3D.map_get_cell_size(map) - want) <= 0.0001:
+		return
+	NavigationServer3D.map_set_cell_size(map, want)

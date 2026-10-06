@@ -10,7 +10,16 @@ class_name AIEquipmentSlot
 
 @export var equipment_scene: PackedScene   # the AIEquipment scene to instantiate
 @export var quantity: int = 2              # how many uses this enemy starts with
-@export var label: String = ""             # optional display name for debug
+## What to call this on screen. NOT just for debug any more: the squad HUD prints
+## it when a robot spends something, and the designator groups the squad's kit by
+## it, so a slot built with this empty showed up as the word "EQUIPMENT".
+@export var label: String = ""
+## Which catalogue item this came out of, when it came out of one. The slot used
+## to know only its scene, and a scene cannot be turned back into an icon or a
+## price — so anything wanting to DRAW a squadmate's kit had to walk the whole
+## catalogue matching ai_scene paths. Empty for a slot authored by hand in a
+## .tres, which is how the enemy garrisons get theirs.
+@export var item_id: StringName = &""
 
 var _quantity_remaining: int = 0
 

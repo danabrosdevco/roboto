@@ -1,15 +1,15 @@
 [gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_ie0rd"]
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_c3xbg"]
 
 [resource]
-script = ExtResource("1_ie0rd")
+script = ExtResource("1_c3xbg")
 level_scene_path = "res://maps/causeway_level.tscn"
 image_path = "res://maps/minimaps/causeway_level.png"
 world_min = Vector2(-881.125, -881.125)
 world_max = Vector2(881.125, 881.125)
-objective_ids = Array[StringName]([])
-objective_names = Array[String]([])
-objective_positions = Array[Vector3]([])
-objective_kinds = Array[StringName]([])
-insertion_positions = Array[Vector3]([])
+objective_ids = Array[StringName]([&"cway_relay_staging", &"cway_relay_crossing", &"cway_relay_checkpoint", &"cway_relay_yard", &"cway_relay_basement", &"cway_relay_twelfth", &"cway_uplink", &"cway_guns", &"cway_mortars", &"cway_bunker", &"cway_walls", &"cway_ammo", &"cway_extract"])
+objective_names = Array[String](["The Staging Yard", "Mid Causeway", "The Checkpoint", "The West Yard", "The Basement Hall", "The Twelfth Hall", "The Crown Uplink", "The Gun Emplacements", "The Mortar Pits", "The Command Bunker", "The Wall Walk", "The Ammunition Dump", "Off The Crown"])
+objective_positions = Array[Vector3]([Vector3(-350, 1, 30), Vector3(12, 5, 0), Vector3(352, 1, 58), Vector3(470, 10, 0), Vector3(513, 0, 0), Vector3(530, 72, 17), Vector3(513, 138, 0), Vector3(404, 1, -86), Vector3(452, 1, -132), Vector3(520, 1, -148), Vector3(530, 14, -96), Vector3(548, 1, 146), Vector3(530, 138, 17)])
+objective_kinds = Array[StringName]([&"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"extract"])
+insertion_positions = Array[Vector3]([Vector3(-500, 1.23712, 30)])

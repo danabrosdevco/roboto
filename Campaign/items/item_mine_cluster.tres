@@ -1,23 +1,25 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3 uid="uid://r6xgp5wf0x88"]
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3 uid="uid://r6xgp5wf0x88"]
 
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
 [ext_resource type="PackedScene" path="res://Character/weapon/mines/mine_cluster_hud_weapon.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://Character/weapon/mines/ai_mine_cluster.tscn" id="3_ai"]
 
 [resource]
 script = ExtResource("1_itemdef")
 id = &"mine_cluster"
 display_name = "Cluster Mine"
 short_name = "Cluster"
-description = "Thrown. Bursts into five proximity submines over six metres, and clears itself after forty-five seconds."
+description = "Thrown. Bursts into five proximity submines over six metres. They stay where they land."
 kind = 1
 cost = 45
 player_scene = ExtResource("2_player")
+ai_scene = ExtResource("3_ai")
 player_mount_offset = Vector3(0, 0, 0)
 player_mount_rotation_degrees = Vector3(0, 0, 0)
 ammo_type = &"mine_cluster"
 weapon_damage = 0
 usable_by_player = true
-usable_by_ai = false
+usable_by_ai = true
 fits_vehicles = true
 one_per_robot = false
 in_shop = true

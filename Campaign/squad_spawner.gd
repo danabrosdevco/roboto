@@ -322,6 +322,12 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 		var slot := AIEquipmentSlot.new()
 		slot.equipment_scene = kit.ai_scene
 		slot.quantity = kit.quantity
+		# WHAT IT IS, not just what to instantiate. Both of these were left
+		# unset, and both are read downstream: the squad HUD printed the word
+		# "EQUIPMENT" for every spend because Enemy falls back to that on an
+		# empty label, and the designator needs the id to find the icon.
+		slot.label = kit.short_label()
+		slot.item_id = kit.id
 		slots.append(slot)
 	if not slots.is_empty():
 		soldier.equipment_slots = slots

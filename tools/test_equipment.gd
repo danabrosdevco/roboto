@@ -383,13 +383,19 @@ func _test_carrier_required_ammo(player: Node3D, cat) -> void:
 	kit.equipment_ids = [&"frag"] as Array[StringName]
 	player.loadout.apply_record(kit, cat)
 	pool.refill_all()
-	_check("fit one frag and the grenades arrive", pool.get_count(&"grenade") == 36,
+	# FROM THE ITEM, not a number typed here. One frag fitted carries exactly
+	# what the item says a frag is — four, the standard for every grenade-type
+	# item — and the whole point of the per-carrier rule is that those two agree.
+	# Hardcoding 36 pinned a stock that was eighteen times every other thrown item
+	# in the game, so the test defended the bug.
+	var per_nade: int = cat.item(&"frag").quantity
+	_check("fit one frag and the grenades arrive", pool.get_count(&"grenade") == per_nade,
 		"%d / %d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])
 
 	kit.equipment_ids = [&"frag", &"frag"] as Array[StringName]
 	player.loadout.apply_record(kit, cat)
 	pool.refill_all()
-	_check("...two frags carry twice as many", pool.get_count(&"grenade") == 72,
+	_check("...two frags carry twice as many", pool.get_count(&"grenade") == per_nade * 2,
 		"%d / %d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])
 
 	# And back to nothing, which is the direction the two clamps broke.

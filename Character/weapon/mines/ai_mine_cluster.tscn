@@ -1,0 +1,30 @@
+[gd_scene load_steps=3 format=3]
+
+; THE CLUSTER MINE, AS THE SQUAD USES IT.
+;
+; Thrown further out than the heavy one (12 m rather than 7) because it does not
+; land as a mine — it bursts and scatters five proximity submines over about six
+; metres, so what it is really placing is a patch of ground, and the patch wants
+; to be on the approach rather than underfoot.
+;
+; Its submines stay for the mission, as the Heavy Mine does. min_contact_metres
+; 14 is still a little further out than the heavy mine's, but for a different
+; reason now: five bomblets scattered over six metres need the room to land and
+; settle before anything walks into the patch, and nothing about laying one early
+; is wasted any more.
+;
+; cooldown is short for a mine because quantity is 4: the item is a field, and a
+; robot that can only lay one every forty seconds never builds one.
+
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_mine.gd" id="1_mine"]
+[ext_resource type="PackedScene" path="res://Character/weapon/mines/mine_cluster_canister.tscn" id="2_canister"]
+
+[node name="AI_Mine_Cluster" type="Node3D"]
+script = ExtResource("1_mine")
+equipment_name = "Cluster Mine"
+cooldown = 14.0
+mine_scene = ExtResource("2_canister")
+place_metres = 12.0
+min_contact_metres = 14.0
+watch_radius = 60.0
+squad_spacing_seconds = 8.0

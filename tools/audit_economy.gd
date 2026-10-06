@@ -281,12 +281,42 @@ func _force(m: MissionDefinition) -> Dictionary:
 
 
 ## Every active objective's payout, read out of the level scene as packed data.
+##
+## IT HAS TO FOLLOW INSTANCED SUB-SCENES. Georgetown, Polaris and Causeway keep
+## their objectives in maps/gameplay/<name>_ops.tscn and only instance it —
+## their level files are written from a template by the terrain builders — and
+## an instanced scene's nodes are not in the parent's SceneState at all. Without
+## the recursion all three reported an objective payout of exactly zero and an
+## empty row list, which is the same shape as the starting_squad_size bug noted
+## further up this file: a number read from the wrong place and believed.
 func _objective_pay(m: MissionDefinition) -> Dictionary:
 	var out := {"resources": 0, "compute": 0, "rows": []}
 	if m.level_scene == null:
 		return out
-	var st: SceneState = m.level_scene.get_state()
+	_pay_from(m, m.level_scene, 0, {}, out)
+	return out
+
+
+const MAX_SUB_DEPTH := 2
+
+
+func _pay_from(m: MissionDefinition, packed: PackedScene, depth: int,
+		seen: Dictionary, out: Dictionary) -> void:
+	if packed == null:
+		return
+	var key := str(packed.resource_path)
+	if key != "" and seen.has(key):
+		return
+	seen[key] = true
+	var st: SceneState = packed.get_state()
 	for i in st.get_node_count():
+		var sub := st.get_node_instance(i)
+		if sub != null and depth < MAX_SUB_DEPTH:
+			var p := str(sub.resource_path)
+			# Only into maps, never into an _art scene: a level's art is
+			# hundreds of instances and pays nothing.
+			if p.begins_with("res://maps/") and not p.get_basename().ends_with("_art"):
+				_pay_from(m, sub, depth + 1, seen, out)
 		var id: StringName = &""
 		var res := 0
 		var compute := 0
@@ -312,7 +342,6 @@ func _objective_pay(m: MissionDefinition) -> Dictionary:
 		out["resources"] = int(out["resources"]) + res
 		out["compute"] = int(out["compute"]) + compute
 		out["rows"].append({"id": id, "res": res, "compute": compute, "optional": optional})
-	return out
 
 
 func _force_line(force: Dictionary) -> String:

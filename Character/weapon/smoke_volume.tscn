@@ -29,8 +29,8 @@ rings = 6
 [node name="SmokeVolume" type="Node3D" node_paths=PackedStringArray("puffs")]
 script = ExtResource("1_smoke")
 radius = 7.0
-duration = 14.0
-fade_seconds = 3.0
+duration = 45.0
+fade_seconds = 6.0
 puffs = [NodePath("PuffA"), NodePath("PuffB"), NodePath("PuffC"), NodePath("PuffD"), NodePath("PuffE")]
 
 [node name="PuffA" type="MeshInstance3D" parent="."]

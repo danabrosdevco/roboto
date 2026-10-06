@@ -46,6 +46,17 @@ func register_enemy(new_enemy: AI) -> void:
 
 func deregister_enemy(enemy: AI) -> void:
 	all_ai.erase(enemy)
+	# REGISTER IMPLIES DEREGISTER, and this registry holds hard references to
+	# bodies that are usually on their way out of the tree — the same mistake
+	# all_ai made for months. _poll_frozen would drop it on its own pass, but
+	# only when the round-robin reached it.
+	#
+	# Cast rather than passed straight through: _frozen is Array[Enemy] and
+	# this takes an AI, and erase() on a typed array with the wrong type is the
+	# kind of failure that does nothing and says nothing.
+	var frozen_entry := enemy as Enemy
+	if frozen_entry != null:
+		_frozen.erase(frozen_entry)
 	# The cache holds hard references to the bodies it listed. Leaving it intact
 	# after removing one meant it kept handing out a node that was about to be
 	# freed — and on level unload that is EVERY node, for up to
@@ -63,6 +74,8 @@ func _relay_ekill(victim: Node, by: Node) -> void:
 
 func reset_all_reg_enemies() -> void:
 	all_ai = []
+	_frozen.clear()
+	_frozen_cursor = 0
 	_hostile_cache.clear()
 	_cover_cached = false
 	if stimulus_manager != null:
@@ -262,3 +275,87 @@ func nearest_hostile_distance_sq(faction, at: Vector3) -> float:
 		if d < best:
 			best = d
 	return best
+
+
+# ─────────────────────────────────────────────
+# WAKING THE FROZEN — the outside half of the distance cull.
+# ─────────────────────────────────────────────
+# A culled robot now switches its own `_physics_process` off rather than
+# early-returning out of it every frame: on Qamareen that is 176 of 186
+# hostiles, and it is worth ~2.8 ms of a 26 ms physics frame (bench_qamareen,
+# three runs each way) with Jolt reporting zero active bodies either way. See
+# Enemy.cull_frozen.
+#
+# THE WHOLE RISK LIVES HERE. A robot whose tick is off cannot notice that the
+# player has walked towards it, so if nothing outside it looks, it sleeps for
+# the rest of the mission and the level quietly stops fighting back. Enemy
+# thaws itself from wake(), exempt_from_culling() and trigger_combat(), all of
+# which are called from outside its tick — but closing the DISTANCE is nobody's
+# event, so it is polled, here, and this poll is the only thing standing
+# between the saving and a dead level.
+#
+# Round-robin rather than all of them: polling 176 robots a frame would hand
+# back most of what freezing them earned. The slice is sized so the whole list
+# is swept in FROZEN_SWEEP_SECONDS however long it is, which bounds the latency
+# instead of the cost — 12 robots a frame on Qamareen.
+var _frozen: Array[Enemy] = []
+var _frozen_cursor: int = 0
+
+## Worst case between a robot becoming worth running and it running. Everything
+## that is an EVENT (being shot, a squadmate making contact, walking into a
+## sensor cone) thaws immediately and does not wait for this; what waits is the
+## player closing the distance on his own. At 75 m activation and a few m/s of
+## closing speed a quarter of a second is a couple of metres of approach.
+const FROZEN_SWEEP_SECONDS: float = 0.25
+
+
+## Called by Enemy._freeze_for_cull. Nothing else should call it: a robot in
+## this list and still ticking would be polled for no reason, and one that is
+## frozen and NOT in it never wakes.
+func watch_frozen(enemy: Enemy) -> void:
+	if enemy == null or enemy in _frozen:
+		return
+	_frozen.append(enemy)
+	set_physics_process(true)
+
+
+func _physics_process(delta: float) -> void:
+	_poll_frozen(delta)
+
+
+func _poll_frozen(delta: float) -> void:
+	if _frozen.is_empty():
+		# Nothing to watch. CLAUDE.md's "disable it when idle" applies to this
+		# tick as much as to the robots'; watch_frozen() turns it back on.
+		set_physics_process(false)
+		_frozen_cursor = 0
+		return
+	# Ceil, so a list of one is still swept and the cursor always advances.
+	var slice: int = clampi(
+		ceili(float(_frozen.size()) * delta / FROZEN_SWEEP_SECONDS),
+		1, _frozen.size())
+	for _i in slice:
+		if _frozen.is_empty():
+			return
+		if _frozen_cursor >= _frozen.size():
+			_frozen_cursor = 0
+		var e: Enemy = _frozen[_frozen_cursor]
+		# Gone from under us. deregister_enemy normally gets these first.
+		if e == null or not is_instance_valid(e):
+			_frozen.remove_at(_frozen_cursor)
+			continue
+		# Not ours any more. Something outside the cull gave the tick back — a
+		# revive, a repair, reset() on a respawn, a test rig — or the robot
+		# died, in which case die()/destroy()/_tick_settle own its tick and
+		# handing it back here would restart a wreck's brain. Drop the flag so
+		# the robot can be culled and frozen again cleanly from its own tick.
+		if not e.cull_frozen or e.is_physics_processing() or not e.alive or e.downed:
+			e.cull_frozen = false
+			_frozen.remove_at(_frozen_cursor)
+			continue
+		var dist_sq: float = nearest_hostile_distance_sq(e.faction, e.global_position)
+		if e.cull_wake_wanted(dist_sq):
+			_frozen.remove_at(_frozen_cursor)
+			e.thaw_from_cull()
+			continue
+		_frozen_cursor += 1

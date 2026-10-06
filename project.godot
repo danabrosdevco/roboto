@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Roboto"
+config/name="Data Center Wars"
 run/main_scene="res://Managers/master.tscn"
 config/features=PackedStringArray("4.3", "Mobile")
 boot_splash/bg_color=Color(0.031, 0.047, 0.039, 1)

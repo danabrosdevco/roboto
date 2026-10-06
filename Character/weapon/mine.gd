@@ -29,9 +29,14 @@ class_name Mine
 ## How close a hostile has to get. Measured to the body's origin, so it is
 ## roughly ankle-height on a soldier.
 @export var trigger_radius: float = 2.2
-## Seconds before it clears itself. 0 means it stays for the mission — the
-## Heavy Mine is placed once and meant to still be there, the Cluster Mine's
-## submines are area denial that has to expire or the map fills up with them.
+## Seconds before it clears itself. 0 means it stays for the mission, which is
+## what BOTH mines now do: a mine you place is meant to still be there when they
+## come, and a timer turns the item into a window you have to spend at exactly
+## the right moment rather than ground you can deny.
+##
+## The usual objection — that area denial which never expires is a map you cannot
+## use any more — does not apply here, because _candidates is faction-gated and
+## your own squad and the player can walk over these all day.
 @export var mine_lifetime: float = 0.0
 ## Rescans this often rather than every frame. Nothing crosses two metres in
 ## a tenth of a second, and a mine that is still there in ten minutes should

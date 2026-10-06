@@ -50,6 +50,7 @@ const FRAMES := {
 	"spotter": "res://Character/characters/ai/spotter_drone.tscn",
 	"mechanic": "res://Character/characters/ai/mechanic_chassis.tscn",
 	"walker": "res://Character/characters/ai/walker.tscn",
+	"reclaimer": "res://Character/characters/ai/vehicle_reclaimer.tscn",
 }
 
 # ─────────────────────────────────────────────
@@ -159,6 +160,14 @@ func _run() -> void:
 
 	if what == "kit":
 		await _kit_shots(out_dir)
+	elif what == "rank":
+		await _rank_shots(out_dir)
+	elif what == "vrank":
+		await _vehicle_rank_shots(out_dir)
+	elif what == "trials":
+		await _vehicle_trial_shots(out_dir)
+	elif what == "vhat":
+		await _vehicle_rank_shots(out_dir, _Parts.vehicle_hat_list(), "vhat")
 	else:
 		await _store_shots(out_dir, what)
 	print("mockup_shots: written to %s" % ProjectSettings.globalize_path(out_dir))
@@ -228,6 +237,208 @@ func _kit_shots(out_dir: String) -> void:
 	for entry in _Parts.hat_list():
 		if str(entry[0]) == "PEAKED CAP":
 			await _portrait(entry[1], out_dir + "/ingame_nco_peaked_cap.png")
+
+
+# ─────────────────────────────────────────────
+# THE PROMOTION LADDER
+# ─────────────────────────────────────────────
+# `godot --audio-driver Dummy --path . --script res://tools/mockup_shots.gd -- <dir> rank`
+#
+# Three forms, photographed from the three angles that decide whether this
+# works. A rank mark is not a design question, it is a RECOGNITION question, so
+# the test is whether you can name the form from each view:
+#
+#   PROFILE   where a cap reads and pads do not
+#   HEAD-ON   where pads read and a cap does not
+#   LINE-UP   all three together at squad distance, which is the only view that
+#             answers "can I tell Bravo-1 from Bravo-2 in a fight"
+#
+# The line-up is the one to look at first. The other two explain it.
+func _rank_shots(out_dir: String) -> void:
+	var level: Node = load(LEVEL).instantiate()
+	root.add_child(level)
+	_cam = Camera3D.new()
+	_cam.fov = 42.0
+	root.add_child(_cam)
+	_cam.current = true
+	for _i in 30:
+		await process_frame
+
+	var forms: Array = _Parts.rank_list()
+	await _group(forms, out_dir + "/rank_lineup.png")
+	await _rank_front(forms, out_dir + "/rank_headon.png")
+	await _rank_side(forms, out_dir + "/rank_profile.png")
+	for entry in forms:
+		await _portrait(entry[1], "%s/rank_%s.png" % [out_dir, _slug(entry[0])])
+
+
+## All three head-on, which is the view the shoulder pads exist for. Same row
+## as _group, the robots simply turned to face the camera instead of away.
+func _rank_front(forms: Array, file: String) -> void:
+	await _rank_row(forms, file, 180.0)
+
+
+## All three in profile, which is the view the cap exists for.
+func _rank_side(forms: Array, file: String) -> void:
+	await _rank_row(forms, file, 90.0)
+
+
+## A row of forms at one yaw. Pulled back further than _group because a turned
+## robot is wider than a robot seen from behind, and the far one was clipping
+## the frame edge at the kit line-up's distance.
+func _rank_row(forms: Array, file: String, yaw_deg: float) -> void:
+	var made: Array[Node3D] = []
+	var span := float(forms.size() - 1) * SPACING
+	for i in forms.size():
+		var at := STAGE + Vector3(-span * 0.5 + float(i) * SPACING, 0, 0)
+		var bot := _soldier((forms[i] as Array)[1], at)
+		bot.rotation.y = deg_to_rad(yaw_deg)
+		made.append(bot)
+	_cam.global_position = STAGE + Vector3(0, 1.25, -span * 0.62 - 6.8)
+	_cam.look_at(STAGE + Vector3(0, 0.05, 0), Vector3.UP)
+	await _shoot(file)
+	for n in made:
+		n.free()
+
+
+# ─────────────────────────────────────────────
+# VETERAN KIT ON THE VEHICLE FRAMES
+# ─────────────────────────────────────────────
+# `godot --audio-driver Dummy --path . --script res://tools/mockup_shots.gd -- <dir> vrank`
+#
+# Each frame photographed bare and kitted, as a PAIR in one frame rather than
+# as two files. A vehicle gains less proportionally than a soldier does — a
+# rover is already three metres of hardware — so the only honest way to judge
+# whether the kit reads is to put the two side by side and see if the eye
+# picks the difference out without being told where to look.
+func _vehicle_rank_shots(out_dir: String, forms: Array = [], prefix: String = "vrank") -> void:
+	var level: Node = load(LEVEL).instantiate()
+	root.add_child(level)
+	_cam = Camera3D.new()
+	_cam.fov = 42.0
+	root.add_child(_cam)
+	_cam.current = true
+	for _i in 30:
+		await process_frame
+
+	if forms.is_empty():
+		forms = _Parts.vehicle_rank_list()
+	# Two at a time: [base, veteran] of the same frame.
+	for i in range(0, forms.size(), 2):
+		var kind: String = str((forms[i] as Array)[0])
+		await _vehicle_pair(kind, (forms[i] as Array)[2], (forms[i + 1] as Array)[2],
+				"%s/%s_%s.png" % [out_dir, prefix, kind])
+		await _vehicle_single(kind, (forms[i + 1] as Array)[2],
+				"%s/%s_%s_close.png" % [out_dir, prefix, kind])
+
+
+## Every hat on every frame, one close each, so seven options compare directly.
+func _vehicle_trial_shots(out_dir: String) -> void:
+	var level: Node = load(LEVEL).instantiate()
+	root.add_child(level)
+	_cam = Camera3D.new()
+	_cam.fov = 42.0
+	root.add_child(_cam)
+	_cam.current = true
+	for _i in 30:
+		await process_frame
+	for row: Array in _Parts.vehicle_hat_trials():
+		var bot := _vehicle(str(row[0]), row[2], STAGE)
+		# PULLED BACK AND RAISED from _vehicle_single. That framing is cut for a
+		# vehicle with no hat on it, and a bearskin adds 1.12 m — the first run
+		# ran the crown straight out of the top of the frame.
+		_cam.global_position = STAGE + Vector3(-5.0, 2.3, -6.4)
+		_cam.look_at(STAGE + Vector3(0, 0.7, 0), Vector3.UP)
+		if bot != null:
+			# FACING THE CAMERA, unlike the other vehicle shots. Every hat here
+			# carries its character at the FRONT — peak, brim, badge, plume —
+			# and the 206 degrees those use showed the back of all seven.
+			bot.rotation.y = deg_to_rad(28.0)
+		await _shoot("%s/trial_%s.png" % [out_dir, str(row[1])])
+		if bot != null:
+			bot.free()
+
+
+## Bare on the left, kitted on the right, both three-quarter on.
+func _vehicle_pair(kind: String, bare: Callable, kitted: Callable, file: String) -> void:
+	# Wider than the soldier spacing: these are 3 m long and would overlap.
+	var gap := 4.6
+	var a := _vehicle(kind, bare, STAGE + Vector3(-gap * 0.5, 0, 0))
+	var b := _vehicle(kind, kitted, STAGE + Vector3(gap * 0.5, 0, 0))
+	for n in [a, b]:
+		if n != null:
+			n.rotation.y = deg_to_rad(214.0)
+	_cam.global_position = STAGE + Vector3(0, 2.6, -9.4)
+	_cam.look_at(STAGE + Vector3(0, -0.2, 0), Vector3.UP)
+	await _shoot(file)
+	for n in [a, b]:
+		if n != null:
+			n.free()
+
+
+## The kitted one on its own, close, from the side the kit is on.
+func _vehicle_single(kind: String, kitted: Callable, file: String) -> void:
+	var bot := _vehicle(kind, kitted, STAGE)
+	_cam.global_position = STAGE + Vector3(-3.5, 1.5, -4.6)
+	_cam.look_at(STAGE + Vector3(0, -0.1, 0), Vector3.UP)
+	if bot != null:
+		bot.rotation.y = deg_to_rad(206.0)
+	await _shoot(file)
+	if bot != null:
+		bot.free()
+
+
+## Same contract as _soldier: in the tree, then bolt things on, then paint only
+## what was added. A vehicle brings no weapon mount worth filling here — the
+## kit is the subject, not the gun.
+func _vehicle(kind: String, build: Callable, at: Vector3) -> Node3D:
+	if not FRAMES.has(kind):
+		push_warning("mockup_shots: no frame called '%s'." % kind)
+		return null
+	var bot: Node3D = load(FRAMES[kind]).instantiate()
+	bot.faction = Enums.Factions.PLAYER
+	root.add_child(bot)
+	var before := bot.get_child_count()
+	build.call(bot)
+	_paint(bot, before)
+	# A WALKER'S KNEE ARMOUR IS NOT A CHILD OF THE ROOT. It is parented to the
+	# leg node so it rides the walk, which means _paint's range over the root's
+	# own children cannot see it. Paint those by hand.
+	_paint_deep(bot)
+	bot.set_physics_process(false)
+	bot.set_process(false)
+	bot.global_position = at
+	return bot
+
+
+## Anything added below the root — leg armour, mostly — identified by having no
+## material of its own yet. CSG nodes in the shipped scenes all carry one.
+func _paint_deep(bot: Node3D) -> void:
+	var armor := _Parts.armor_material()
+	var cloth := _Parts.fabric_material()
+	var steel := _Parts.plate_material()
+	var lame := _Parts.lame_material()
+	var hivis := _Parts.hivis_material()
+	var wool := _Parts.wool_material()
+	var fur := _Parts.fur_material()
+	for n in bot.find_children("*", "CSGShape3D", true, false):
+		var shape := n as CSGShape3D
+		if shape.material != null:
+			continue
+		if shape.has_meta("fabric"):
+			shape.material = cloth
+		elif shape.has_meta("plate"):
+			shape.material = steel
+		elif shape.has_meta("lame"):
+			shape.material = lame
+		elif shape.has_meta("hivis"):
+			shape.material = hivis
+		elif shape.has_meta("wool"):
+			shape.material = wool
+		elif shape.has_meta("fur"):
+			shape.material = fur
+		else:
+			shape.material = armor
 
 
 # ─────────────────────────────────────────────
@@ -490,14 +701,41 @@ func _soldier(build: Callable, at: Vector3) -> Node3D:
 # the body. It is also RUSTED rather than flat matte: the hull it bolts to is
 # a rusted texture was tried and read as varnished wood at this scale, and as
 # tweed once the noise was fine enough not to.
+#
+# CLOTH IS NOT METAL. A piece that calls _Parts.as_fabric() carries a "fabric"
+# meta and takes the camo instead — a cap crown painted rusted steel reads as a
+# helmet, which is a different rank entirely.
 func _paint(bot: Node3D, from: int) -> void:
 	var armor := _Parts.armor_material()
+	var cloth := _Parts.fabric_material()
+	var steel := _Parts.plate_material()
+	var lame := _Parts.lame_material()
+	var hivis := _Parts.hivis_material()
+	var wool := _Parts.wool_material()
+	var fur := _Parts.fur_material()
 	for i in range(from, bot.get_child_count()):
 		var child := bot.get_child(i)
+		# Three materials now: flat armour for bought hardware, camo for cloth,
+		# and TERRAIN's pauldron_plate for the rank pads. Rivets and studs are
+		# deliberately left on flat armour — the brief holds them out of the
+		# paint band so they read as bare metal against the painted field.
+		var mat: Material = armor
+		if child.has_meta("fabric"):
+			mat = cloth
+		elif child.has_meta("plate"):
+			mat = steel
+		elif child.has_meta("lame"):
+			mat = lame
+		elif child.has_meta("hivis"):
+			mat = hivis
+		elif child.has_meta("wool"):
+			mat = wool
+		elif child.has_meta("fur"):
+			mat = fur
 		if child is CSGCombiner3D:
-			(child as CSGCombiner3D).material_override = armor
+			(child as CSGCombiner3D).material_override = mat
 		elif child is CSGShape3D:
-			(child as CSGShape3D).material = armor
+			(child as CSGShape3D).material = mat
 
 
 func _shoot(file: String) -> void:

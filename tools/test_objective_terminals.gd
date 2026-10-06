@@ -94,11 +94,43 @@ func _wired_paths(packed: PackedScene) -> PackedStringArray:
 	return out
 
 
-func _check(path: String, wired: PackedStringArray) -> void:
+## WHERE A LEVEL KEEPS ITS GAMEPLAY IS NOT THIS TEST'S BUSINESS, but it has to
+## be able to find it. Georgetown, Polaris and Causeway keep their capture
+## points in maps/gameplay/<name>_ops.tscn and only INSTANCE it, and an
+## instanced scene's nodes are not in the parent's SceneState at all — so all
+## three dropped out of this report entirely and the suite went on printing
+## PASS. That is the same failure as the capture_point/compute_core swap the
+## header above is about: a test that passes by looking in the wrong place.
+##
+## So the check follows instances, one scene at a time rather than node by
+## node. The parent/child name logic below only makes sense WITHIN one state —
+## `get_node_path` and `get_node_name` are state-local — so running the whole
+## check again on the sub-scene is both simpler and more correct than trying to
+## flatten the two states together.
+##
+## Only into scenes under res://maps, and never into an _art scene: a level's
+## art is hundreds of instances and holds no objectives.
+const MAX_SUB_DEPTH := 2
+
+
+func _check(path: String, wired: PackedStringArray, depth: int = 0, seen: Dictionary = {}) -> void:
+	if seen.has(path):
+		return
+	seen[path] = true
 	var packed := load(path) as PackedScene
 	if packed == null:
 		return
 	var st := packed.get_state()
+
+	if depth < MAX_SUB_DEPTH:
+		for i in st.get_node_count():
+			var sub := st.get_node_instance(i)
+			if sub == null:
+				continue
+			var sub_path := str(sub.resource_path)
+			if not sub_path.begins_with(MAPS + "/") or sub_path.get_basename().ends_with("_art"):
+				continue
+			_check(sub_path, wired, depth + 1, seen)
 
 	# Which nodes in this level ARE capture points, by name.
 	var captures := {}

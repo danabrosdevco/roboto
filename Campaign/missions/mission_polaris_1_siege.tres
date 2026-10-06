@@ -1,0 +1,917 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=75 format=3 uid="uid://dnuyyo4868s2o"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" path="res://maps/polaris_level.tscn" id="3_map"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rif"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="6_hvy"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shg"]
+[ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="8_mks"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="9_cha"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="10_hop"]
+[ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="11_rov"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="12_lob"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mortar_track.tres" id="13_mor"]
+[ext_resource type="Resource" uid="uid://daikhvrvnhg7g" path="res://Campaign/chassis/chassis_walker.tres" id="14_wal"]
+[ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="15_bom"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="16_mec"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="17_nst"]
+
+[sub_resource type="Resource" id="G_fuel"]
+script = ExtResource("2_espec")
+callsign = "FORECOURT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_fuel"
+spawn_tag = &"obj_pol_fuel"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_roww"]
+script = ExtResource("2_espec")
+callsign = "GRIDDLE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_row_west"
+spawn_tag = &"obj_pol_row_west"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_row"]
+script = ExtResource("2_espec")
+callsign = "BOOTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_row"
+spawn_tag = &"obj_pol_row"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_pads"]
+script = ExtResource("2_espec")
+callsign = "COUNTER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_pads"
+spawn_tag = &"obj_pol_pads"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_bank"]
+script = ExtResource("2_espec")
+callsign = "VAULT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_bank"
+spawn_tag = &"obj_pol_bank"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_drive"]
+script = ExtResource("2_espec")
+callsign = "WINDOW"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_drive_thru"
+spawn_tag = &"obj_pol_drive_thru"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_rowpat"]
+script = ExtResource("2_espec")
+callsign = "KERBSIDE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha")])
+count = 0
+posture = 0
+route_tag = &"patrol_pol_row"
+post_tag = &""
+spawn_tag = &"obj_pol_frontage"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_rings"]
+script = ExtResource("2_espec")
+callsign = "TOLLGATE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_ring_s"
+spawn_tag = &"obj_pol_ring_s"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_lots"]
+script = ExtResource("2_espec")
+callsign = "AISLEMAN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_lot_south"
+spawn_tag = &"obj_pol_lot_south"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_lotm"]
+script = ExtResource("2_espec")
+callsign = "TROLLEY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("10_hop"), ExtResource("10_hop")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_lot_mid"
+spawn_tag = &"obj_pol_lot_mid"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_signs"]
+script = ExtResource("2_espec")
+callsign = "PYLON"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_signs"
+spawn_tag = &"obj_pol_signs"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_cinema"]
+script = ExtResource("2_espec")
+callsign = "PROJECTION"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("8_mks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_cinema"
+spawn_tag = &"obj_pol_cinema"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_garage"]
+script = ExtResource("2_espec")
+callsign = "DECKHAND"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_garage"
+spawn_tag = &"obj_pol_garage"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_marq"]
+script = ExtResource("2_espec")
+callsign = "CANVAS"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_marquee"
+spawn_tag = &"obj_pol_marquee"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_ringpat"]
+script = ExtResource("2_espec")
+callsign = "RINGER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 0
+route_tag = &"patrol_pol_ring"
+post_tag = &""
+spawn_tag = &"obj_pol_ring_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_court"]
+script = ExtResource("2_espec")
+callsign = "CONCOURSE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("16_mec")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_court"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_valet"]
+script = ExtResource("2_espec")
+callsign = "VALETMAN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_valet"
+spawn_tag = &"obj_pol_valet"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_cartw"]
+script = ExtResource("2_espec")
+callsign = "CARTWEST"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_corral_w"
+spawn_tag = &"obj_pol_corral_w"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_carte"]
+script = ExtResource("2_espec")
+callsign = "CARTEAST"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_corral_e"
+spawn_tag = &"obj_pol_corral_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_charge"]
+script = ExtResource("2_espec")
+callsign = "PLUGBANK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_chargers"
+spawn_tag = &"obj_pol_chargers"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_food"]
+script = ExtResource("2_espec")
+callsign = "PAVILION"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_food"
+spawn_tag = &"obj_pol_food"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_anchw"]
+script = ExtResource("2_espec")
+callsign = "ANCHORAGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_anchor_w"
+spawn_tag = &"obj_pol_anchor_w"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_anche"]
+script = ExtResource("2_espec")
+callsign = "KEYSTONE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_anchor_e"
+spawn_tag = &"obj_pol_anchor_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_dock"]
+script = ExtResource("2_espec")
+callsign = "LOADING"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_dock"
+spawn_tag = &"obj_pol_dock"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_bins"]
+script = ExtResource("2_espec")
+callsign = "BINYARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_bins"
+spawn_tag = &"obj_pol_bins"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_field"]
+script = ExtResource("2_espec")
+callsign = "FIELDHOUSE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_fieldhouse"
+spawn_tag = &"obj_pol_fieldhouse"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_garden"]
+script = ExtResource("2_espec")
+callsign = "NURSERY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("10_hop")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_garden"
+spawn_tag = &"obj_pol_garden"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_hive"]
+script = ExtResource("2_espec")
+callsign = "ICEHOUSE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("17_nst")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_storage"
+spawn_tag = &"obj_pol_storage"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_bigbox"]
+script = ExtResource("2_espec")
+callsign = "WAREHOUSED"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_big_box"
+spawn_tag = &"obj_pol_big_box"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_northpat"]
+script = ExtResource("2_espec")
+callsign = "NIGHTSHIFT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha")])
+count = 0
+posture = 0
+route_tag = &"patrol_pol_north"
+post_tag = &""
+spawn_tag = &"obj_pol_ring_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_lotarmour"]
+script = ExtResource("2_espec")
+callsign = "FIRN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("8_mks"), ExtResource("11_rov")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_lot_south"
+spawn_tag = &"obj_pol_ring_s"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="G_walker"]
+script = ExtResource("2_espec")
+callsign = "NEVE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_wal"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_pol_anchor_e"
+spawn_tag = &"obj_pol_ring_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W1_a"]
+script = ExtResource("2_espec")
+callsign = "SLEET"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_s"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_breach"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W1_b"]
+script = ExtResource("2_espec")
+callsign = "HAIL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_lot_mid"
+spawn_tag = &"obj_pol_pads"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_breach"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W1_c"]
+script = ExtResource("2_espec")
+callsign = "RIME"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("10_hop")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_planters"
+spawn_tag = &"obj_pol_row"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_breach"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W2_a"]
+script = ExtResource("2_espec")
+callsign = "GRAUPEL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_1"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W2_b"]
+script = ExtResource("2_espec")
+callsign = "SQUALL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop"), ExtResource("10_hop"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_chargers"
+spawn_tag = &"obj_pol_basin"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_1"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W2_c"]
+script = ExtResource("2_espec")
+callsign = "FROST"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_garage"
+spawn_tag = &"obj_pol_marquee"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_1"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W2_d"]
+script = ExtResource("2_espec")
+callsign = "GLAZE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_corral_e"
+spawn_tag = &"obj_pol_garden"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_1"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W3_a"]
+script = ExtResource("2_espec")
+callsign = "WHITEOUT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("16_mec")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_blvd"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_2"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W3_b"]
+script = ExtResource("2_espec")
+callsign = "BLIZZARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_corral_w"
+spawn_tag = &"obj_pol_ring_w"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_2"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W3_c"]
+script = ExtResource("2_espec")
+callsign = "DRIFT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_food"
+spawn_tag = &"obj_pol_strip"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_2"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W3_d"]
+script = ExtResource("2_espec")
+callsign = "FLURRY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_cinema"
+spawn_tag = &"obj_pol_big_box"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_2"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W4_a"]
+script = ExtResource("2_espec")
+callsign = "NORTHER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("16_mec")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_3"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W4_b"]
+script = ExtResource("2_espec")
+callsign = "GALE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_lob"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("7_shg")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_mall_w"
+spawn_tag = &"obj_pol_houses"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_3"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W4_c"]
+script = ExtResource("2_espec")
+callsign = "BORA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_mor"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_north_lot"
+spawn_tag = &"obj_pol_houses_w"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_3"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W4_d"]
+script = ExtResource("2_espec")
+callsign = "KATABAT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_mall_e"
+spawn_tag = &"obj_pol_houses_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_3"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W5_a"]
+script = ExtResource("2_espec")
+callsign = "AVALANCHE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_wal"), ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("8_mks")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_lot_south"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_4"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W5_b"]
+script = ExtResource("2_espec")
+callsign = "CORNICE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("16_mec")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_w"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_4"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W5_c"]
+script = ExtResource("2_espec")
+callsign = "SERAC"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("12_lob"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_4"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W5_d"]
+script = ExtResource("2_espec")
+callsign = "CREVASSE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha"), ExtResource("10_hop"), ExtResource("10_hop")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_planters"
+spawn_tag = &"obj_pol_ring_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_4"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W5_e"]
+script = ExtResource("2_espec")
+callsign = "MORAINE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_signs"
+spawn_tag = &"obj_pol_lot_mid"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_4"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W5_f"]
+script = ExtResource("2_espec")
+callsign = "GLACIER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("15_bom")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_s"
+spawn_offset = Vector3(0, 50, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_4"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="W5_dock"]
+script = ExtResource("2_espec")
+callsign = "COLDSNAP"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("8_mks"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_dock"
+spawn_tag = &"obj_pol_houses"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_wave_5"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="K_seventy"]
+script = ExtResource("2_espec")
+callsign = "SLUSH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_w"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_losses_70"
+wake_after_kills = 70
+
+[sub_resource type="Resource" id="K_onefourty"]
+script = ExtResource("2_espec")
+callsign = "BRASH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_losses_140"
+wake_after_kills = 140
+
+[sub_resource type="Resource" id="K_oneeighty"]
+script = ExtResource("2_espec")
+callsign = "SASTRUGI"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("8_mks")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"pol_losses_180"
+wake_after_kills = 180
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"polaris_1_siege"
+display_name = "Polaris"
+briefing = "POLARIS FASHION PLACE. THIS ONE IS NOT AN ADVANCE. YOU GO IN, YOU START THE DRAIN, AND THEN YOU HOLD.
+
+The site is a dead mall on a graded slab with a CLOSED RING ROAD round it, and four arterial approaches into that loop: the frontage to the south, Sancus Boulevard to the west, the subdivision street to the north, the retention basin side to the east. There is no corner of this place a vehicle cannot reach and no straight longer than about a hundred and fifty metres. That is the whole reason the operation is shaped the way it is — everywhere else, they come along an axis. Here they can come from any of four, and keep coming.
+
+YOU COME IN AT THE SOUTH-WEST CORNER, outside the loop, and the first three hundred metres are the restaurant row: detached pads facing north at the mall with open ground between them, which means you arrive at the BACK of the row. It is the best infantry ground on the site and it is the last of it you will see.
+
+THEN THE CAR PARK. Four hundred metres of asphalt in a fan of aisles, each with an island its whole length, and the only other cover is parked cars at about a metre and a half — you fire over them from a crouch and get shot over them from a stand. The lot nearest the doors is packed and the far corners are emptying, which is the map telling you where it is safe to cross. The aisles run north-south, so they are cover for whoever is crossing and not for whoever is holding.
+
+THE UPLINK IS IN THE ENTRY COURT, in the open in front of the mall doors. Six seconds to start it. The mall is at your back with no way through it, the multiplex looks into the court from the west, the parking deck from the east, and the car park is in front of it.
+
+THEN FIVE WAVES, and each one comes from a different road:
+
+  ONE    up the car park from the frontage you just walked in over, so your way
+         back out is the first thing they take. Infantry and chasers.
+  TWO    east, round the parking deck. Marksmen working up the aisles and
+         hoppers going over the islands rather than round them.
+  THREE  west, off the boulevard and in past the multiplex. Armour, a rover,
+         and a mechanic behind them standing it back up.
+  FOUR   north, out of the subdivision and round BOTH ends of the mall — the
+         one direction the court has nothing covering. A lobber and a mortar
+         track come with them, and they do not need to see you.
+  FIVE   all four roads on the same minute, with a walker up the middle of the
+         car park and a bomber over the top of it.
+
+The multiplex and the parking deck are the two bits of hard cover inside the loop, one on each flank of the court, and both are garrisoned from the first minute. Neither can be climbed — the fight is at their feet, across open asphalt. Both are optional. If they are still theirs when the fifth wave starts, the court is not holdable.
+
+OUT THE BACK when the drain is finished — the service dock behind the mall, through the north lot, which is where the fourth wave came from."
+level_scene = ExtResource("3_map")
+map_position = Vector2(0, 0)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("G_fuel"), SubResource("G_roww"), SubResource("G_row"), SubResource("G_pads"), SubResource("G_bank"), SubResource("G_drive"), SubResource("G_rowpat"), SubResource("G_rings"), SubResource("G_lots"), SubResource("G_lotm"), SubResource("G_signs"), SubResource("G_cinema"), SubResource("G_garage"), SubResource("G_marq"), SubResource("G_ringpat"), SubResource("G_court"), SubResource("G_valet"), SubResource("G_cartw"), SubResource("G_carte"), SubResource("G_charge"), SubResource("G_food"), SubResource("G_anchw"), SubResource("G_anche"), SubResource("G_dock"), SubResource("G_bins"), SubResource("G_field"), SubResource("G_garden"), SubResource("G_hive"), SubResource("G_bigbox"), SubResource("G_northpat"), SubResource("G_lotarmour"), SubResource("G_walker"), SubResource("W1_a"), SubResource("W1_b"), SubResource("W1_c"), SubResource("W2_a"), SubResource("W2_b"), SubResource("W2_c"), SubResource("W2_d"), SubResource("W3_a"), SubResource("W3_b"), SubResource("W3_c"), SubResource("W3_d"), SubResource("W4_a"), SubResource("W4_b"), SubResource("W4_c"), SubResource("W4_d"), SubResource("W5_a"), SubResource("W5_b"), SubResource("W5_c"), SubResource("W5_d"), SubResource("W5_e"), SubResource("W5_f"), SubResource("W5_dock"), SubResource("K_seventy"), SubResource("K_onefourty"), SubResource("K_oneeighty")])
+replace_level_enemies = false
+active_objectives = Array[StringName]([&"pol_breach", &"pol_wave_1", &"pol_wave_2", &"pol_wave_3", &"pol_wave_4", &"pol_wave_5", &"pol_cinema", &"pol_garage", &"pol_hive_storage", &"pol_extract"])
+reward_resources = 1400
+compute_reward = 4
+unlocks = Array[StringName]([&"heavy_mg"])
+squad_size = -1
+repeatable = false
+requires = Array[StringName]([&"georgetown_1_ascent"])

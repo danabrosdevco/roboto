@@ -377,6 +377,23 @@ var _exempt_left: float = 0.0
 ## walk in from 90 m out at any speed, nowhere near long enough to last a
 ## mission.
 const CULL_EXEMPT_SECONDS := 90.0
+## Culled AND switched off: `_physics_process` is not running on this robot.
+##
+## PASSIVE already costs almost nothing to RUN — the early returns above the
+## cull and the cheap-out in _apply_motion see to that — but the engine still
+## pays to CALL the callback on every one of them. bench_qamareen measures the
+## Qamareen garrison (186 hostiles, 176 culled) at 26.1 ms a physics frame and
+## 23.3 ms with the callback switched off on the culled ones, with Jolt
+## reporting zero active bodies and zero collision pairs either way: none of
+## that is simulation, it is 176 script calls that early-return.
+##
+## A ROBOT WITH `_physics_process` OFF CANNOT NOTICE THAT IT SHOULD WAKE UP.
+## That is the whole hazard here, and it is why waking lives outside the robot:
+## AIManager polls the frozen ones on a slow round-robin (see _poll_frozen),
+## and wake(), exempt_from_culling() and trigger_combat() thaw on the spot
+## because they are already called from outside the tick. Nothing may be added
+## to _physics_process that a frozen robot needs in order to come back.
+var cull_frozen: bool = false
 ## SHOOT WITHOUT WAITING FOR THE SIGHT PICTURE. Set from a module at spawn.
 ##
 ## Normally a robot holds its trigger until _aim_tracking passes
@@ -525,7 +542,328 @@ var sensor_bonus: float = 0.0
 @export var lod_far_distance: float = 80.0
 @export var lod_far_multiplier: float = 4.0
 var _vision_timer: float = 0.0
+## Real seconds since the last vision scan actually ran. See _tick_vision.
+var _vision_since: float = 0.0
 var _awareness: Dictionary = {}   # body -> 0..1
+
+
+# ─────────────────────────────────────────────
+# HOW OFTEN A ROBOT DECIDES ANYTHING
+# ─────────────────────────────────────────────
+# THINKING IS SLICED. ACTING NEVER IS. That line is the whole of this, and
+# putting it in the wrong place is how it ships broken — see the two halves of
+# _physics_process.
+#
+# DECIDING is who to shoot, where to walk, can I see it, is something nearer,
+# am I off the navmesh. All of it costs per robot per decision, which is what
+# makes the frame scale with the size of the battle rather than with the size
+# of the map.
+#
+# ACTING is movement, facing, animation and the trigger. None of it is sliced,
+# at any distance, in any state: a robot that moves every other frame stutters
+# and a robot that fires on a cadence feels broken, and both are visible from
+# across the level.
+#
+# Three inputs decide the cadence, not one:
+#
+#   1. DISTANCE SETS THE FLOOR. Near, full rate. Mid, a quarter of it. Far,
+#      much slower. The same question lod_scale() asks, in bands.
+#   2. STATE MODIFIES IT, AND COMBAT IS THE *CHEAP* TIER. This is deliberate
+#      and it is the opposite of what you would guess — see THINK_COMBAT_SCALE.
+#   3. AN ADAPTIVE PER-FRAME BUDGET IS THE BACKSTOP. Tiers say who deserves a
+#      slice; the budget says how many of this frame's candidates get one. See
+#      take_think_slice().
+#
+# There is no setting for any of it. It tunes itself off measured frame time.
+
+## Seconds a NEAR robot may go without thinking: one physics frame, which is
+## exactly what every robot did before this existed.
+const THINK_NEAR: float = 1.0 / 60.0
+## MID — out past lod_near_distance. Quarter rate.
+const THINK_MID: float = 4.0 / 60.0
+## FAR — out past lod_far_distance. Much slower: at that range a robot reads as
+## a silhouette that is either there or not, and nothing about its decisions
+## reaches the player at all.
+const THINK_FAR: float = 18.0 / 60.0
+
+## COMBAT IS THE CHEAP TIER, AND THAT IS NOT A MISTAKE.
+##
+## A robot already trading fire can think far less often than one that is not.
+## The human's words: "once they're in combat they're fine, they wiggle and
+## shoot, it gets chaotic, the player can't track". A firefight hides latency —
+## nobody is following an individual unit through it, and the acting half (the
+## wiggling and the shooting) still runs every single frame.
+##
+## The EXPENSIVE moments are the watched ones: a fresh order, first contact, a
+## robot crossing open ground. None of them gets this discount, the first two get
+## full rate at any range (mark_watched), and all three get the top priority when
+## the budget is rationing (_think_share). Do not invert this.
+const THINK_COMBAT_SCALE: float = 12.0
+## ...BUT NOTHING WAITS LONGER THAN THIS FOR A DECISION, whatever the tiers
+## multiply out to, and this number was bought with a measurement.
+##
+## At 1.0 s the discount reached 0.8 s in the mid band and the ceiling itself out
+## past 80 m, and the Laboratory's engagement-range plan said plainly what that
+## costs: melee closers took 25% more kills per body and shotgun troopers 15%
+## fewer, with rifle troopers unchanged — against a two-run noise band of about
+## 6 percentage points on the aggregate. COARSE THINKING FAVOURS THE AGGRESSOR,
+## which makes sense and is worth writing down: a charger's plan is "run at them"
+## and running is the acting half, which never slowed down. A defender's whole
+## advantage is REACTING — re-checking line of sight, re-picking a target, giving
+## ground — and that is the half being rationed.
+##
+## 0.35 s is a shade over targeting_recon_time (0.33 s), so no robot's decisions
+## go staler than the slowest timer the old code already ran them at. It costs
+## almost nothing: the saving that matters is a near-band brawl, where the
+## discount lands at 0.2 s and is nowhere near this cap.
+##
+## THE SIDE EFFECT, SAID OUT LOUD: out past lod_far_distance the distance tier is
+## already at 0.3 s, so capping the discount at 0.35 s leaves the far band with
+## no meaningful discount for being in combat. That is the ceiling overriding the
+## model, not a bug in it — a robot nobody can see is already thinking rarely,
+## and there was never much left for the firefight to take off it.
+const THINK_CEILING: float = 0.35
+
+## How long a watched moment stays watched. Long enough to cover the beat after
+## an order arrives or a contact is called; short enough that it is an event
+## rather than a state, because a 50v50 generates these constantly.
+const THINK_WATCHED_SECONDS: float = 0.75
+
+## HOW FAR INTO THE FRAME'S BUDGET EACH PRIORITY CLASS MAY REACH.
+##
+## This is how tiers become priority without a sort. Nobody can see the whole
+## frame's candidate list — robots arrive one at a time, in tree order, through
+## their own callbacks — so instead of ranking them, each class is simply told
+## how much of the budget it is allowed to touch. The cheap classes hit their
+## ceiling first and are refused, while the watched ones still have room. That is
+## the degradation the human asked for: the far and the already-fighting starve
+## before anything you are looking at does.
+##
+## AND IT ONLY APPLIES UNDER PRESSURE — see `_think_pressed`. A ceiling that
+## bites on a frame with room to spare is not triage, it is just a slower AI:
+## measured on the 100-robot bench, about ten robots sat permanently refused
+## against a budget that was at its MAXIMUM and barely a third spent, each of
+## them waiting out the full THINK_OVERDUE before being let through. Nothing was
+## bought by that.
+const THINK_SHARE_WATCHED: float = 1.0
+const THINK_SHARE_PLAIN: float = 0.7
+const THINK_SHARE_CHEAP: float = 0.3
+
+## What the game may spend on its own scripts in a frame before the budget
+## starts shrinking. 16.6 ms is the whole frame at 60 Hz; this leaves room for
+## the physics solver, the servers and rendering.
+const THINK_TARGET_MS: float = 11.0
+## The budget never drops below this. A frame can always afford a handful of
+## decisions, and a level that stops deciding anything is worse than a slow one.
+const THINK_BUDGET_MIN_US: int = 400
+const THINK_BUDGET_MAX_US: int = 4000
+## ...AND IT WILL NOT SQUEEZE BELOW THINKING THAT IS NOT THE PROBLEM.
+##
+## A controller watching only total frame time pulls the only lever it has
+## whenever the frame is late, whatever the frame is late FOR. Measured: Qamareen
+## sits at 16 ms of physics with ten robots awake, almost none of it thinking, and
+## the first version of this pinned the budget to its floor and refused 24,013
+## slices in 400 frames to save nothing at all. Starving an AI that is not the
+## bottleneck is the worst of both — slower frames and worse robots.
+##
+## So the frame has to be late AND thinking has to be a real part of why. Below
+## this much spent per frame it is not, and the budget stops shrinking. Above it,
+## squeezing works, which is exactly the 50v50 brawl this is for.
+const THINK_WORTH_SQUEEZING_US: int = 1000
+## Shrinks fast, grows slow — the usual asymmetry, so a spike is answered at
+## once and recovery does not re-spike.
+const THINK_BUDGET_SQUEEZE: float = 0.90
+const THINK_BUDGET_EASE_US: int = 60
+## A robot the budget has refused for this long thinks anyway, at the top
+## priority, whatever its tier says.
+##
+## THIS IS THE SAFETY NET AND IT IS LOAD-BEARING. Without it a saturated frame
+## starves the cheap classes indefinitely and a firefight on the far side of the
+## level quietly stops being a firefight — the same hazard AIManager's frozen
+## poll closes for the distance cull, by the same route through a different door.
+const THINK_OVERDUE: float = 1.5
+
+## Microseconds of thinking allowed across ALL robots in one physics frame.
+## Static, like the nav and snap budgets above it, because the thing being
+## rationed is the frame and not the robot.
+static var _think_budget_us: int = THINK_BUDGET_MAX_US
+static var _think_budget_frame: int = -1
+static var _think_spent_us: int = 0
+## IS THE FRAME ACTUALLY IN TROUBLE, AND IS THINKING PART OF WHY?
+##
+## Both halves, for the reason THINK_WORTH_SQUEEZING_US gives. This is the one
+## flag that decides whether the cost model is rationing or merely scheduling:
+## off it, the tiers alone set the cadence and every candidate that is due gets
+## its slice; on it, the priority shares come in and the cheap classes are turned
+## away. Set once a frame by the retune, off a measurement, with no setting
+## anywhere near it.
+static var _think_pressed: bool = false
+## Slices refused this run. Counted rather than warned, exactly like
+## `_snap_refused`: this is a designed fallback on a hot path, not a fault, and
+## a warning per refusal would be a warning per frame.
+static var _think_refused: int = 0
+
+## Delta owed to the think half since its last slice. Handed to the decision
+## functions in place of this frame's delta — see the note in _physics_process.
+var _think_owed: float = 0.0
+## Seconds until this robot wants another slice.
+var _think_wait: float = 0.0
+## Seconds of "the player is looking at this" left. Set by mark_watched(),
+## wake() and trigger_combat() — which is to say by an order arriving from
+## outside, by being shot at, and by first contact.
+var _watched_t: float = 0.0
+
+
+## This robot is in the middle of something the player is watching, so it thinks
+## at full rate for a moment whatever its distance band says.
+##
+## FROM OUTSIDE ONLY. The point of a watched moment is that something happened
+## TO the robot; a robot that marks its own decisions watched grants itself full
+## rate for making decisions, which is a loop and not a model (see the note in
+## move_to). Callers: Squad.set_objective, wake(), trigger_combat().
+func mark_watched() -> void:
+	_watched_t = maxf(_watched_t, THINK_WATCHED_SECONDS)
+
+
+## 0 near, 1 mid, 2 far — the same bands lod_scale() lerps between, and the same
+## exemption for your own robots.
+##
+## MEASURED TO THE PLAYER'S EYE, not to the nearest hostile. The distance CULL
+## asks the other question deliberately (a robot 300 m away still has to fight
+## your squad, so it stays awake), and this is not that question: this one is
+## about FIDELITY, and fidelity is only owed to what someone can see.
+func _think_tier() -> int:
+	if squad_directed and not Enums.are_hostile(Enums.Factions.PLAYER, faction):
+		return 0
+	if player == null:
+		return 0
+	var d_sq: float = global_position.distance_squared_to(player.get_focus_position())
+	if d_sq <= lod_near_distance * lod_near_distance:
+		return 0
+	if d_sq <= lod_far_distance * lod_far_distance:
+		return 1
+	return 2
+
+
+## Is this robot in the open, under way, and not yet shooting at anything? The
+## third of the human's three watched moments, and the only one of them that is a
+## STATE rather than an event — which is why it is asked rather than timed.
+func _crossing_open_ground() -> bool:
+	return movement_state != MovementState.NONE and ai_state != AIState.COMBAT
+
+
+## Seconds this robot may go without a decision. The cost model, assembled.
+##
+## Deliberately takes no tier: the tick reads this AFTER the thinking, off the
+## state the decisions left behind, by which point the robot has moved and the
+## tier it was PRIORITISED on is a frame out of date. One distance test per
+## think, not per frame.
+func think_wait_seconds() -> float:
+	# A WATCHED MOMENT IS NEVER CHEAP, at any range.
+	if _watched_t > 0.0:
+		return 0.0
+	var tier: int = _think_tier()
+	var floor_s: float = THINK_NEAR if tier == 0 else (THINK_MID if tier == 1 else THINK_FAR)
+	# ...and here is the cheap tier. has_live_target() rather than the state
+	# alone: a robot sitting in COMBAT holding a target that has been downed is
+	# not in a firefight, it is about to go and look for another one, which is a
+	# decision worth making promptly.
+	#
+	# NOTHING ELSE MODIFIES THE FLOOR, and that is deliberate. The other two
+	# watched moments are events and set _watched_t above; the third — crossing
+	# open ground — is not in combat, so it never had the discount to lose, and
+	# the band it is standing in is already its full rate.
+	#
+	# IT WAS PROMOTED A BAND AND THAT WAS WRONG. Handing every mid-band mover the
+	# near band's every-frame cadence put about thirty of the bench's hundred
+	# robots on full rate permanently — 33 candidates a frame against a budget
+	# that could serve a handful, so the backstop refused 13,403 slices in 400
+	# frames and the frame time did not move. A mover gets the top PRIORITY
+	# instead (see _think_share), which is what being watched is actually worth:
+	# never starved, not re-rated.
+	if ai_state == AIState.COMBAT and has_live_target():
+		return minf(floor_s * THINK_COMBAT_SCALE, THINK_CEILING)
+	return floor_s
+
+
+## How far into this frame's budget this robot is allowed to reach. `tier` comes
+## from the tick, which has already worked it out; -1 asks for it.
+func _think_share(tier: int = -1) -> float:
+	# OVERDUE OUTRANKS EVERYTHING. See THINK_OVERDUE.
+	if _think_owed >= THINK_OVERDUE:
+		return THINK_SHARE_WATCHED
+	# The three watched moments, and all three get the whole budget to reach into:
+	# an order just arrived, contact was just called or this robot was just shot,
+	# or it is out in the open on its way somewhere. Those are the frames a player
+	# is reading a robot's behaviour on, so they are the last thing to starve.
+	if _watched_t > 0.0 or _crossing_open_ground():
+		return THINK_SHARE_WATCHED
+	if ai_state == AIState.COMBAT and has_live_target():
+		return THINK_SHARE_CHEAP
+	if tier < 0:
+		tier = _think_tier()
+	if tier == 2:
+		return THINK_SHARE_CHEAP
+	return THINK_SHARE_PLAIN
+
+
+## May this frame afford another decision from a robot of this priority class?
+##
+## The first candidate of a frame is always allowed, like the nav budget's, so
+## that a pathologically tight frame still decides SOMETHING rather than nothing
+## — and so that a single robot in an empty level never answers to a budget.
+static func take_think_slice(share: float) -> bool:
+	var frame := Engine.get_physics_frames()
+	if frame != _think_budget_frame:
+		_think_budget_frame = frame
+		_retune_think_budget()
+		_think_spent_us = 0
+		return true
+	# The budget is the ceiling on any frame; the SHARE narrows it to this
+	# priority class, and only while the frame is in trouble. See _think_pressed.
+	var ceiling: int = _think_budget_us
+	if _think_pressed:
+		ceiling = int(float(_think_budget_us) * share)
+	if _think_spent_us >= ceiling:
+		_think_refused += 1
+		return false
+	return true
+
+
+## Charged by the caller once the thinking is done, because only the caller
+## knows where its own decisions ended.
+static func spend_think(us: int) -> void:
+	_think_spent_us += us
+
+
+## SELF-TUNING, OFF MEASURED FRAME TIME, WITH NO SETTING.
+##
+## Both monitors, summed: the think half runs in _physics_process and the squad
+## half runs in _process, and what is being rationed is the CPU the game spends
+## on its own scripts — the number the player feels. Reading one of them would
+## leave the budget blind to half of its own cost.
+##
+## The monitors report the frame that has just finished, which is the only
+## sample available part-way through this one, and is exactly the feedback this
+## wants: spend less after an expensive frame, a little more after a cheap one.
+static func _retune_think_budget() -> void:
+	var spent_ms: float = (Performance.get_monitor(Performance.TIME_PROCESS) \
+		+ Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0
+	# No sample yet — the first frames of a level, or a harness that never ran a
+	# frame. Left exactly as it is rather than tuned off a zero, which would peg
+	# the budget to its maximum on the frame a level loads, which is the single
+	# most expensive frame there is.
+	if spent_ms <= 0.0:
+		return
+	# `_think_spent_us` is still the frame that has just finished: the caller
+	# zeroes it immediately after this returns. Both halves of the test are
+	# needed — see THINK_WORTH_SQUEEZING_US.
+	_think_pressed = spent_ms > THINK_TARGET_MS and _think_spent_us > THINK_WORTH_SQUEEZING_US
+	if _think_pressed:
+		_think_budget_us = maxi(THINK_BUDGET_MIN_US,
+			int(float(_think_budget_us) * THINK_BUDGET_SQUEEZE))
+	else:
+		_think_budget_us = mini(THINK_BUDGET_MAX_US, _think_budget_us + THINK_BUDGET_EASE_US)
 
 
 # Every periodic timer starts at a random point in its cycle. Without this all
@@ -542,6 +880,17 @@ func _stagger_ai_timers() -> void:
 	# forever, which is the spike the global budget then has to absorb every
 	# single frame instead of it being spread out.
 	_nav_think_timer = randf() * nav_think_interval
+	# AND THE ADRIFT POLL, WHICH HAD BEEN MISSED ALL ALONG.
+	#
+	# It resets to a flat second and started at zero on every robot, so the whole
+	# population asked NavigationServer3D.map_get_closest_point on the SAME frame
+	# once a second, for the whole mission. bench_ai with 100 robots on Mutaha:
+	# 50-65 ms frames at f31, f91, f151, f211, f271, f331, f391 — every sixtieth
+	# frame, to the frame — against a 14 ms median. See _tick_adrift.
+	_adrift_poll = randf()
+	# Think slices spread too, so a squad spawned in one loop does not queue its
+	# whole first round of decisions onto one frame either.
+	_think_wait = randf() * THINK_FAR
 
 
 
@@ -572,11 +921,28 @@ func _tick_vision(delta: float) -> void:
 		return
 
 	_vision_timer -= delta
+	_vision_since += delta
 	if _vision_timer > 0.0:
 		return
 	var lod: float = lod_scale()
-	var elapsed: float = vision_interval * lod
-	_vision_timer = elapsed
+	# CHARGED IN REAL SECONDS, NOT NOMINAL ONES.
+	#
+	# `elapsed` is the time step the awareness arithmetic below integrates over —
+	# a contact is called after `needed` seconds of clear view, built up
+	# elapsed-at-a-time. It used to be the INTERVAL this tick was scheduled at
+	# rather than the time that actually passed, which was close enough while
+	# vision was the only thing throttling it (one frame of overshoot) and stops
+	# being close enough the moment anything coarser does: the think slice can be
+	# a fifth of a second apart in a firefight and a whole second apart out past
+	# lod_far_distance, and charging 0.15 s for 1.0 s of looking would have made
+	# acquisition take six times as long for robots out there.
+	#
+	# With the real figure, acquiring a contact takes `acquire_time * penalty`
+	# seconds under ANY cadence, which is what acquire_time claims to mean. The
+	# decay path below wants the same number for the same reason.
+	var elapsed: float = _vision_since
+	_vision_since = 0.0
+	_vision_timer = vision_interval * lod
 
 	var reach := sight_range()
 	var forward: Vector3 = _sight_forward()
@@ -903,6 +1269,19 @@ var _target_stationary_time: float = 0.0
 var _target_last_position: Vector3 = Vector3.ZERO
 const EQUIPMENT_RECON_TIME: float = 1.5
 var _equipment_recon_timer: float = 0.0
+## Seconds since anything last hit this robot, for EquipmentContext. Counted
+## rather than flagged so "under fire" can be asked with a threshold instead of
+## something having to remember to clear a bool. Starts at NEVER_HIT.
+var _since_hit: float = AIEquipment.NEVER_HIT
+## How far out we are willing to look for the hostiles standing around a
+## prospective landing point. Beyond this a throw is not on anyway.
+const EQUIPMENT_CLUSTER_RADIUS: float = 6.0
+## How far a robot will throw to a point the player designated. AIGrenade's own
+## max_throw_distance is 30 and it is the longest throw in the kit, so this is
+## that with a little slack: a robot a metre outside the grenade's own limit
+## should walk-to-throw eventually rather than refuse on a rounding error.
+## Beyond it the order is refused OUT LOUD — see order_use_equipment.
+const ORDERED_THROW_RANGE: float = 34.0
 
 # ── STUCK DETECTION ───────────────────────────
 const STUCK_CHECK_INTERVAL: float = 3.0
@@ -1154,18 +1533,103 @@ func _physics_process(delta: float) -> void:
 			and _woken_t <= 0.0 and not squad_is_engaged():
 		enter_passive_mode()
 		_apply_motion()
+		# AND STOP BEING CALLED AT ALL. Everything above this line that a culled
+		# robot still needed — the signal recovery, the wake countdown, the
+		# exemption countdown — is either excluded by _can_freeze_for_cull() or
+		# already at rest by the time we get here, so the only thing left to pay
+		# for is the call itself. 176 of them on Qamareen; see `cull_frozen`.
+		#
+		# Not an early return: when the robot cannot be frozen safely it keeps
+		# its tick and the behaviour is exactly what it was before.
+		if _can_freeze_for_cull():
+			_freeze_for_cull()
 		return
 	else:
 		exit_passive_mode()
 
-	_tick_adrift(delta)
+	# ── THINK ─────────────────────────────────────
+	# Sliced. See "HOW OFTEN A ROBOT DECIDES ANYTHING" for the cost model.
+	#
+	# EVERY DECISION BELOW IS ALREADY A TIMER MEASURED IN SECONDS — _tick_vision
+	# at vision_interval, reconsider_target at targeting_recon_time,
+	# reconsider_combat at combat_recon_time, the adrift poll at a second. So
+	# they are handed the delta OWED since the last slice
+	# rather than this frame's, and every one of those periods stays exactly what
+	# it was authored to be. What coarsens is the GRANULARITY, and it coarsens by
+	# at most think_wait_seconds() — which is the number the tiers above are choosing.
+	#
+	# That is why the cadence can be changed without the behaviour drifting: a
+	# robot does not think LESS over a second, it thinks in fewer, bigger steps.
+	_watched_t = maxf(0.0, _watched_t - delta)
+	_think_owed += delta
+	_think_wait -= delta
+	# A robot that is not due does not even ask for a slice: asking costs a
+	# distance test and a static check, and a refused candidate pays both for
+	# nothing. The tier is worked out ONCE and handed to both halves of the
+	# decision below.
+	var thinking := false
+	var tier := 0
+	if _think_wait <= 0.0:
+		tier = _think_tier()
+		thinking = take_think_slice(_think_share(tier))
+	if thinking:
+		var owed: float = _think_owed
+		var asked := Time.get_ticks_usec()
+		_think_owed = 0.0
+		_tick_adrift(owed)
+		if checking_for_target and combat_target != null and _has_los:
+			trigger_combat(combat_target)
+		handle_time_passing(owed)
+		# Still AFTER handle_time_passing, which is where reconsider_target may
+		# have just written weapon_target: a self-targeting weapon's pick has to
+		# win over the body's, and that precedence is the order of these two.
+		_tick_weapon_target(owed)
+		# THE NEXT WAIT IS SET FROM THE STATE THE THINKING LEFT BEHIND, not the
+		# one it started from, and the order of these two lines is the whole
+		# reason. The commonest decision made above is "my target is dead" —
+		# reconsider_target drops it and enters SEARCH — and a robot that was in
+		# the cheap tier when the slice began would otherwise have been handed a
+		# firefight's wait on its way OUT of the firefight: up to a second of
+		# standing in the open with nothing to shoot at before it was allowed to
+		# notice. Read afterwards, it is already in SEARCH and gets its band's
+		# ordinary rate.
+		_think_wait = think_wait_seconds()
+		spend_think(Time.get_ticks_usec() - asked)
+
+	# ── ACT ───────────────────────────────────────
+	# NEVER sliced. Not at range, not in a firefight, not when the budget is
+	# spent. These run on THIS frame's delta for every awake robot in the level,
+	# and they are what makes a robot look alive: the legs, the facing and the
+	# trigger. handle_movement steers on the cached nav direction, _update_facing
+	# lerps toward a target the think half chose, and handle_weapon_logic settles
+	# its own aim and fires — so a robot whose thinking is a tenth of a second
+	# stale still walks, turns and shoots smoothly on every single frame.
+	#
+	# _tick_los IS ON THIS SIDE OF THE LINE, AND IT WAS NOT AT FIRST.
+	#
+	# It looks like a decision — it is a raycast, and the brief for this work lists
+	# line-of-sight tests among the things that may be sliced. But `_has_los` is
+	# not consulted by any decision; it is the GATE ON THE TRIGGER. A stale "no"
+	# is a robot that will not shoot at something standing in front of it, and a
+	# stale "yes" is a robot emptying a magazine into a wall. Both of those are
+	# firing behaviour.
+	#
+	# It cost exactly what that argument predicts. Sliced, the refresh went from a
+	# flat 0.15 s to the think cadence, and the Laboratory found the damage where a
+	# shooter can least afford to be a fifth of a second behind: against LEAPERS,
+	# which are ballistic and go airborne, rifle troopers lost about a quarter of
+	# their damage output and 4 hoppers vs 4 rifles moved from ~33% to ~55% ally
+	# wins across two runs of six. Staleness barely touches a fight between things
+	# that walk and badly hurts the one shooting at something that jumps.
+	#
+	# It costs one raycast per robot per 0.15 s, which is what it always cost:
+	# LOS_CHECK_INTERVAL is a constant and was never LOD-scaled, so nothing is
+	# given back here that the old code was saving. Everything genuinely expensive
+	# — the vision scan and its three rays, target selection, repathing, the
+	# combat rolls — stays sliced.
 	_tick_los(delta)
-	if checking_for_target and combat_target != null and _has_los:
-		trigger_combat(combat_target)
-	handle_time_passing(delta)
 	handle_movement(delta)
 	_update_facing(delta)
-	_tick_weapon_target(delta)
 	handle_weapon_logic(delta)
 	_apply_motion()
 
@@ -1347,16 +1811,47 @@ func _tick_adrift(delta: float) -> void:
 	_adrift_poll -= delta
 	if _adrift_poll > 0.0:
 		return
+	# THIS SNAP WENT ROUND THE BUDGET, AND IT WAS THE WORST FRAME IN THE GAME.
+	#
+	# map_get_closest_point walks EVERY polygon in the navigation map — 1.021 ms
+	# a call on Three Rivers (see the note above _take_snap_query). The poll
+	# resets to a flat second and _adrift_poll started at zero on every robot, so
+	# the whole population asked on the same frame, once a second, and the snap
+	# budget could not see it: bench_ai with 100 robots on Mutaha reported 50-65
+	# ms frames at f31, f91, f151, f211, f271, f331 and f391 — every sixtieth
+	# frame — against a 14.3 ms median, with the NAV budget reporting only 1.8 ms
+	# of it because this is not a path resolution.
+	#
+	# Two fixes, the same pair the nav queries got: a stagger so the hundred
+	# calls land on a hundred different frames (_stagger_ai_timers), and the
+	# existing per-frame budget so no frame can be made expensive by them however
+	# they happen to land.
+	if not _take_snap_query(snap_queries_per_frame, int(snap_query_budget_ms * 1000.0)):
+		# Counted rather than warned, like every other refusal of this budget:
+		# nothing is lost and nothing is skipped. _adrift_poll is deliberately
+		# NOT reset, so a refused robot asks again next frame instead of waiting
+		# another whole second to find out it is standing in a river.
+		_snap_refused += 1
+		return
+	# How long since this poll last ran, which is not a flat second any more:
+	# the poll is staggered, can be refused for budget, and is called from the
+	# think slice with the delta owed since the last one. _adrift_t is patience
+	# measured in SECONDS (adrift_seconds, 4.0), so it has to be charged in
+	# seconds — adding a flat 1.0 per poll made it count polls and called that
+	# four seconds.
+	var since: float = 1.0 - _adrift_poll
 	_adrift_poll = 1.0
+	var asked := Time.get_ticks_usec()
 	var on: Vector3 = NavigationServer3D.map_get_closest_point(
 		nav_agent.get_navigation_map(), global_position)
+	_snap_spent_us += Time.get_ticks_usec() - asked
 	if on == Vector3.ZERO:
 		return   # no navmesh in this level at all; nothing to be adrift from
 	var gap := Vector2(on.x - global_position.x, on.z - global_position.z).length()
 	if gap < adrift_distance:
 		_adrift_t = 0.0
 		return
-	_adrift_t += 1.0
+	_adrift_t += since
 	if _adrift_t < adrift_seconds:
 		return
 	_adrift_t = 0.0
@@ -1411,6 +1906,30 @@ func _is_player_side() -> bool:
 ## group of statues standing beside it.
 func wake(seconds: float) -> void:
 	_woken_t = maxf(_woken_t, seconds)
+	# AND IT IS BEING WATCHED — BUT ONLY IF IT IS NOT ALREADY IN A FIGHT.
+	#
+	# This is the "first contact" case of the cost model: wake() is called from
+	# apply_damage and from Squad._on_combat_triggered, so it covers being shot
+	# and a squadmate calling contact, which are the two moments that most need a
+	# prompt decision and the two the player is most certainly reading.
+	#
+	# THE GUARD IS THE WHOLE VALUE OF IT. Unguarded, "being shot" fires several
+	# times a second for every robot in a firefight, so a brawl marked its entire
+	# population watched and every one of them asked for a slice on every frame:
+	# measured at 35 refused candidates a frame on the 100-robot bench, with the
+	# cheap tier never actually applying to anybody. Being shot at while already
+	# trading fire is not first contact, it is the chaotic middle — which is
+	# exactly what the cheap tier is for. Same guard, same reasoning as the one in
+	# trigger_combat().
+	if not (ai_state == AIState.COMBAT and has_live_target()):
+		mark_watched()
+	# AND GIVE IT ITS TICK BACK, NOW. Setting the countdown is useless on a
+	# frozen robot: the thing that reads it is the cull branch of
+	# _physics_process, which is exactly what is switched off. Called from
+	# apply_damage and from Squad._on_combat_triggered, both of which run
+	# outside this robot's tick, so this is allowed to act immediately rather
+	# than waiting for AIManager's round-robin to come round.
+	thaw_from_cull()
 
 
 ## Walk in from wherever you were dropped without being frozen on the way:
@@ -1419,6 +1938,9 @@ func wake(seconds: float) -> void:
 func exempt_from_culling(seconds: float = CULL_EXEMPT_SECONDS) -> void:
 	never_culled = true
 	_exempt_left = maxf(_exempt_left, seconds)
+	# Same reasoning as wake(): the exemption is read inside the tick, so a
+	# reinforcement handed one while frozen would never read it.
+	thaw_from_cull()
 
 
 
@@ -1462,6 +1984,82 @@ func exit_passive_mode():
 	# Re-issue movement if we had an active target before going passive
 	if movement_target != Vector3.ZERO:
 		move_to(movement_target)
+
+
+# ── FREEZING THE CALLBACK ─────────────────────
+# See `cull_frozen` for the measurement and for the hazard.
+
+## May this robot's `_physics_process` be switched off outright? Asked on the
+## frame the cull puts it in PASSIVE, and deliberately conservative: everything
+## below is something the tick is still doing for a culled robot, and freezing
+## through it would strand the robot rather than rest it.
+func _can_freeze_for_cull() -> bool:
+	# NOTHING COULD WAKE IT. Waking is AIManager's job, and the lab, the test
+	# rigs and a hand-placed robot in a bare scene run without one. 23 µs a
+	# frame is a far better trade than a level that quietly stops fighting back.
+	if ai_manager == null or not is_instance_valid(ai_manager):
+		return false
+	# ONLY A BODY THAT HAS ALREADY STOPPED. This is the same test _apply_motion
+	# cheaps out on, asked deliberately: where the cheap-out fires, the tick was
+	# not moving the robot anyway, so freezing changes nothing about its motion.
+	# A body still falling or still sliding has move_and_slide and
+	# handle_gravity to finish — freeze it and it hangs in the air where the
+	# cull caught it, and the fell-out-of-the-world check in handle_gravity
+	# never fires either. On Qamareen all 176 culled robots are settled, so
+	# this costs nothing in practice.
+	if not is_on_floor() or velocity.length_squared() >= 0.01:
+		return false
+	# A JAMMED ROBOT HAS TO KEEP RECOVERING. _tick_signal runs ABOVE the cull
+	# precisely so that walking away from an EMP'd robot does not leave it
+	# latched in EKILL forever — see the gate in _physics_process. Freezing the
+	# callback would brick it by the same route through a different door.
+	if signal_integrity < 1.0 or _signal_locked_t > 0.0 or _ekill_latched:
+		return false
+	return true
+
+
+## Switch the tick off and hand this robot to AIManager, which is the only
+## thing that can give it back. Called from the cull branch, so physics is
+## running by definition; the current invocation of _physics_process finishes
+## normally, which is what lets the subclass tails below `super(delta)`
+## (enemy_nest's flames, mechanic's _stop_welding, reclaimer's _drop_wreck) run
+## their passive cleanup one last time before the tick stops.
+func _freeze_for_cull() -> void:
+	cull_frozen = true
+	set_physics_process(false)
+	ai_manager.watch_frozen(self)
+
+
+## Give the tick back. Safe to call on a robot that was never frozen.
+func thaw_from_cull() -> void:
+	if not cull_frozen:
+		return
+	cull_frozen = false
+	# NEVER ON A WRECK. destroy() and the end of the settle switch the tick off
+	# on purpose; a thaw arriving afterwards — a stray stimulus, AIManager's
+	# poll one frame late — would restart a dead robot's brain.
+	if not alive or downed or ai_state == AIState.DEAD:
+		return
+	set_physics_process(true)
+	# exit_passive_mode is left to the robot's own next tick, where the cull
+	# branch owns that transition. Doing it here as well would mean two places
+	# deciding when a robot stops being passive.
+
+
+## Has this robot got a reason to be awake again? Asked from OUTSIDE, by
+## AIManager._poll_frozen, because a frozen robot cannot ask it of itself.
+##
+## This is the cull predicate in _physics_process read the other way round, and
+## it has to STAY that way: a wake reason the cull honours but this does not is
+## a robot that sleeps through the rest of the mission. `dist_sq` is passed in
+## because the manager already has the per-frame activation positions cached.
+func cull_wake_wanted(dist_sq: float) -> bool:
+	if _is_player_side() or never_culled or _woken_t > 0.0 or squad_is_engaged():
+		return true
+	var cull_sq: float = activation_distance_sq
+	if on_patrol:
+		cull_sq = maxf(cull_sq, patrol_activation_distance_sq)
+	return dist_sq <= cull_sq
 
 
 # ─────────────────────────────────────────────
@@ -1734,6 +2332,20 @@ func move_to(pos: Vector3, think_delay: float = 0.0):
 	# the blind bearing walked robots into walls, stuck recovery re-pathed them,
 	# and one order turned into two seconds of solid pathfinding.
 	_nav_think_timer = maxf(0.0, think_delay)
+	# NO WATCHED MARK HERE, AND IT WAS TRIED. "A fresh order is a watched moment"
+	# is right, and this is the wrong place to say it: move_to is not where orders
+	# arrive, it is where EVERY movement in the game ends up. The robot's own
+	# decisions come through here too — roll_combat_action's advance and fallback,
+	# _handle_path_blocked, _seek_los_position, the search roam, the wander — so
+	# marking it meant a robot that had just decided to move was granted full rate
+	# for 0.75 s, inside which it decided to move again. Measured: 60 of 100 robots
+	# permanently watched, the think budget pinned to its floor, 24,013 slices
+	# refused in 400 frames and no change to the frame time at all — the model
+	# turned itself off and left the backstop holding it.
+	#
+	# A real order comes from outside, so it is marked from outside:
+	# Squad.set_objective calls mark_watched() on its members, and wake() covers
+	# being shot at and a squadmate calling contact.
 	movement_target = pos
 	movement_state = MovementState.MOVING
 	movement_time = 0
@@ -2880,6 +3492,11 @@ func _wander() -> void:
 # EQUIPMENT
 # ─────────────────────────────────────────────
 func _tick_equipment(delta: float) -> void:
+	# Counted here rather than in _physics_process so the hot path gains
+	# nothing. This tick is handed the delta OWED since the last one, so the
+	# total is right even when thinking is sliced.
+	if _since_hit < AIEquipment.NEVER_HIT:
+		_since_hit = minf(_since_hit + delta, AIEquipment.NEVER_HIT)
 	for i in _equipment_cooldowns.keys():
 		_equipment_cooldowns[i] = maxf(0.0, _equipment_cooldowns[i] - delta)
 	if combat_target != null and combat_target.alive:
@@ -2895,49 +3512,190 @@ func _tick_equipment(delta: float) -> void:
 	_equipment_recon_timer = 0.0
 	_evaluate_equipment_use()
 
+## NO COMBAT TARGET IS NOT A REASON TO SKIP THIS.
+##
+## It used to return here unless the robot already had something to shoot, which
+## is the one condition a grenade wants and the exact opposite of what the rest
+## of the kit is for — smoke exists to stop a firefight, a mine is laid before
+## one. AIGrenade.can_use() makes the same check itself, first line, so nothing
+## that worked before behaves differently now; what changes is that equipment
+## which does NOT need a target finally gets asked.
 func _evaluate_equipment_use() -> void:
-	if combat_target == null:
-		return
 	var context = AIEquipment.EquipmentContext.new()
 	context.owner_ai = self
 	context.combat_target = combat_target
-	context.target_position = combat_target.global_position
+	# Where the fight is, when there is one. Our own feet otherwise, so an
+	# equipment that places something on the ground has somewhere to start.
+	context.target_position = combat_target.global_position if combat_target != null \
+		else global_position
 	context.time_since_target_moved = _target_stationary_time
 	context.owner_is_reloading = weapon != null and weapon.is_reloading
+	context.under_fire_seconds = _since_hit
+	context.squad_objective = _squad_objective()
+	context.downed_friendly = _nearest_downed_friendly()
+	# One lookup, three answers. The bearing says "something is out there", the
+	# point says how far, the body is what a sight test has to exclude — the
+	# grenade only ever needed the first.
+	var threat: Node3D = _threat_actor()
+	context.threat_actor = threat
+	context.threat_position = threat.global_position if threat != null else Vector3.ZERO
+	context.threat_bearing = _bearing_to(context.threat_position) if threat != null \
+		else Vector3.ZERO
+	context.squad_last_equipment_ms = _squad_last_equipment_ms()
 	context.nearby_hostiles = []
+	context.hostiles_near_target = []
 	if ai_manager != null:
 		context.nearby_hostiles = ai_manager.get_hostiles_in_radius(self, 5.0)
+		context.hostiles_near_target = _hostiles_around(context.target_position,
+			EQUIPMENT_CLUSTER_RADIUS)
 	for i in equipment_slots.size():
 		var slot: AIEquipmentSlot = equipment_slots[i]
-		if not slot.has_uses():
-			continue
-		if _equipment_cooldowns.get(i, 0.0) > 0.0:
-			continue
-		if slot.equipment_scene == null:
+		if not _equipment_slot_ready(i):
 			continue
 		var equipment = slot.equipment_scene.instantiate() as AIEquipment
 		if equipment == null:
 			continue
 		if equipment.can_use(context):
-			# The running scene when there is one; the level this robot is in
-			# when the tree was started by a script (the tests, a lab run from
-			# the command line), which has none — the grenade was never thrown.
-			var host: Node = get_tree().current_scene if get_tree().current_scene != null else get_parent()
-			host.add_child(equipment)
-			equipment.execute(context)
-			slot.consume()
-			# Recorded for the squad HUD. Equipment use is instantaneous —
-			# instantiate, execute, free — so there is no "currently using" state
-			# to read anywhere; a timestamp is the only way the readout can say
-			# what a squadmate just did.
-			_last_equipment_ms = Time.get_ticks_msec()
-			_last_equipment_label = slot.label if slot.label != "" else "EQUIPMENT"
-			_equipment_cooldowns[i] = equipment.cooldown
-			if equipment.is_inside_tree():
-				equipment.queue_free()
+			_spend_equipment(i, equipment, context)
 			return
 		else:
 			equipment.free()
+
+
+## Has this slot anything left, and has it cooled down? Shared by the
+## autonomous path and the ordered one so a slot cannot be spendable to the
+## player and not to the robot, or the reverse.
+func _equipment_slot_ready(index: int) -> bool:
+	if index < 0 or index >= equipment_slots.size():
+		return false
+	var slot: AIEquipmentSlot = equipment_slots[index]
+	if slot == null or slot.equipment_scene == null:
+		return false
+	if not slot.has_uses():
+		return false
+	return _equipment_cooldowns.get(index, 0.0) <= 0.0
+
+
+## Actually spend it. Takes an already-instantiated equipment because both
+## callers have had to build one to ask it a question first — the autonomous
+## path asks `can_use`, the ordered path asks `ordered_at_point`.
+##
+## ONE PLACE, because the accounting is the easy thing to get half right: the
+## slot has to be consumed, the cooldown set, AND the timestamp recorded, or the
+## squad spends the same canister twice, or four of them answer one order
+## because nobody logged that the first one went.
+func _spend_equipment(index: int, equipment: AIEquipment,
+		context: AIEquipment.EquipmentContext) -> void:
+	var slot: AIEquipmentSlot = equipment_slots[index]
+	# The running scene when there is one; the level this robot is in when the
+	# tree was started by a script (the tests, a lab run from the command line),
+	# which has none — the grenade was never thrown.
+	var host: Node = get_tree().current_scene if get_tree().current_scene != null else get_parent()
+	host.add_child(equipment)
+	equipment.execute(context)
+	slot.consume()
+	# Recorded for the squad HUD. Equipment use is instantaneous — instantiate,
+	# execute, free — so there is no "currently using" state to read anywhere; a
+	# timestamp is the only way the readout can say what a squadmate just did.
+	_last_equipment_ms = Time.get_ticks_msec()
+	_last_equipment_label = slot.label if slot.label != "" else "EQUIPMENT"
+	_equipment_cooldowns[index] = equipment.cooldown
+	if equipment.is_inside_tree():
+		equipment.queue_free()
+
+
+# ─────────────────────────────────────────────
+# ORDERED EQUIPMENT — the player pointed, this robot answers
+# ─────────────────────────────────────────────
+
+## Which slot holds `item_id`, or -1. Used by the designator to turn "throw
+## smoke" into "spend slot 1 on this robot".
+func equipment_slot_for(item_id: StringName) -> int:
+	for i in equipment_slots.size():
+		var slot: AIEquipmentSlot = equipment_slots[i]
+		if slot != null and slot.item_id == item_id:
+			return i
+	return -1
+
+
+## Can this robot answer an order for `item_id` right now? Separate from
+## `order_use_equipment` so the designator can count holders and grey its
+## readout without spending anything to find out.
+func can_answer_equipment_order(item_id: StringName) -> bool:
+	if not alive or downed:
+		return false
+	return _equipment_slot_ready(equipment_slot_for(item_id))
+
+
+## THE PLAYER HAS DECIDED. Spend `item_id` at `at`.
+##
+## `can_use()` IS NOT CONSULTED, and that is the whole difference between this
+## and the autonomous path. can_use answers "is this a good idea", which is a
+## judgement the player has just overridden by pointing at something. What still
+## applies is everything the player cannot see: the slot has to have a use left
+## and be off cooldown (`_equipment_slot_ready`), and the throw has to be
+## physically possible, which `execute()` checks for itself and warns about.
+##
+## Returns why it refused, or "" on success — a verb that does nothing is worse
+## than one that says no, and the only place that knows the reason is here.
+func order_use_equipment(item_id: StringName, at: Vector3, use_point: bool) -> String:
+	if not alive or downed:
+		return "down"
+	var index := equipment_slot_for(item_id)
+	if index < 0:
+		return "not carried"
+	if not _equipment_slot_ready(index):
+		var slot: AIEquipmentSlot = equipment_slots[index]
+		return "none left" if (slot != null and not slot.has_uses()) else "reloading"
+	var equipment = equipment_slots[index].equipment_scene.instantiate() as AIEquipment
+	if equipment == null:
+		push_warning("%s: equipment slot %d has a scene that is not an AIEquipment." % [name, index])
+		return "broken"
+	# OUT OF RANGE IS THE REFUSAL THE PLAYER WILL HIT MOST. A robot sixty metres
+	# from the mark cannot throw to it, and silently doing nothing would read as
+	# the designator being broken.
+	if use_point and equipment.ordered_at_point:
+		var reach: float = global_position.distance_to(at)
+		if reach > ORDERED_THROW_RANGE:
+			equipment.free()
+			return "too far"
+	var context := _ordered_context(at, use_point and equipment.ordered_at_point)
+	_spend_equipment(index, equipment, context)
+	return ""
+
+
+## A context for an ordered use. The situational fields are still filled in —
+## an ordered smoke should know where the threat is so it can aim its own
+## fallbacks — but `ordered_position` overrides the placement every equipment
+## would have chosen.
+func _ordered_context(at: Vector3, use_point: bool) -> AIEquipment.EquipmentContext:
+	var context := AIEquipment.EquipmentContext.new()
+	context.owner_ai = self
+	context.combat_target = combat_target
+	context.target_position = at
+	context.time_since_target_moved = _target_stationary_time
+	context.owner_is_reloading = weapon != null and weapon.is_reloading
+	context.under_fire_seconds = _since_hit
+	context.squad_objective = _squad_objective()
+	context.downed_friendly = _nearest_downed_friendly()
+	var threat: Node3D = _threat_actor()
+	context.threat_actor = threat
+	context.threat_position = threat.global_position if threat != null else at
+	# TOWARD THE MARK when nothing is known, not ZERO. An ordered throw with no
+	# located threat is the normal case — you are pointing at a corner you want
+	# screened precisely because nobody has eyes on it — and a ZERO bearing
+	# makes every directional fallback in the kit refuse to place anything.
+	context.threat_bearing = _bearing_to(context.threat_position if threat != null else at)
+	context.squad_last_equipment_ms = _squad_last_equipment_ms()
+	context.nearby_hostiles = []
+	context.hostiles_near_target = []
+	if ai_manager != null:
+		context.nearby_hostiles = ai_manager.get_hostiles_in_radius(self, 5.0)
+		context.hostiles_near_target = _hostiles_around(at, EQUIPMENT_CLUSTER_RADIUS)
+	context.ordered_position = at
+	context.has_ordered_position = use_point
+	return context
+
 
 func change_ai_state(new_state: AIState):
 	if ai_state != new_state:
@@ -3203,6 +3961,10 @@ func apply_damage(damage, source) -> void:
 	# Whatever else happens, a robot being shot is not asleep. See the passive
 	# gate in _physics_process for the bug this closes.
 	wake(wake_on_damage_seconds)
+	# "Under fire" starts here and is counted down in _tick_equipment. Set on
+	# EVERY hit including friendly splash: a robot does not know who shot it,
+	# and for deciding to throw smoke it does not matter.
+	_since_hit = 0.0
 	if source is Player:
 		player = source
 		damaged_by_player = true
@@ -3444,6 +4206,8 @@ func revive() -> void:
 	_set_colliders_disabled(false)
 	if weapon != null:
 		weapon.show()
+	# Same reasoning as in reset(): cleared alongside the tick it stands for.
+	cull_frozen = false
 	set_physics_process(true)
 	set_process(true)
 	seen_bodies.clear()
@@ -3737,6 +4501,15 @@ func reset():
 	_no_los_timer = 0.0
 	_has_los = false
 	_los_check_timer = 0.0
+	# The think half's own state. A robot that comes back owes nothing and is
+	# watched for the moment it does, the same as one that has just been ordered
+	# somewhere — see think_wait_seconds().
+	_think_owed = 0.0
+	_think_wait = 0.0
+	_watched_t = THINK_WATCHED_SECONDS
+	_vision_since = 0.0
+	_adrift_poll = randf()
+	_adrift_t = 0.0
 	_aim_tracking = 0.0
 	_burst_left = 0
 	_last_move_dir = Vector3.ZERO
@@ -3759,6 +4532,11 @@ func reset():
 	_equipment_recon_timer = 0.0
 	for slot in equipment_slots:
 		slot.initialize()
+	# Cleared alongside the tick it stands for. AIManager's poll would notice
+	# the tick came back and drop the robot on its own pass, but this is the
+	# same shape as always_active above — a flag set by one system and left for
+	# another to tidy up is how always_active ended up never being reset at all.
+	cull_frozen = false
 	set_physics_process(true)
 	set_process(true)
 	_set_colliders_disabled(false)
@@ -3870,6 +4648,15 @@ func get_signal_state() -> SignalState:
 # the one that tips a robot over is rarely the interesting one — what the
 # player wants told is who had been working on them.
 func receive_signal_damage(amount: float, source: Node = null) -> void:
+	# AND IT HAS TO BE TICKING TO CLIMB BACK OUT. _tick_signal is the only thing
+	# that recovers signal, and it is gated above the cull precisely so a culled
+	# robot keeps recovering — see the gate in _physics_process. A frozen robot
+	# has no tick at all, so suppression landing near one (a near-miss carries
+	# 250 m, well past the 75 m that froze it) would degrade it and leave it
+	# degraded until something else happened to wake it. _can_freeze_for_cull
+	# refuses while signal is off nominal, so it stays awake only for the second
+	# or so the recovery takes and then freezes itself again.
+	thaw_from_cull()
 	if source != null:
 		_signal_source = source
 		_signal_cause = _Analytics.cause()
@@ -3923,6 +4710,13 @@ func _enter_ekill() -> void:
 ## Uplink shortens the lock as well as softening the hit.
 func lock_signal(seconds: float) -> void:
 	_signal_locked_t = maxf(_signal_locked_t, seconds / maxf(signal_resistance, 0.01))
+	# Same reasoning as receive_signal_damage: the lock is a countdown only
+	# _tick_signal decrements, so handing one to a frozen robot would hold it
+	# down for however long it stayed asleep rather than for `seconds`. In
+	# practice the EMP that calls this has a 9 m radius and can never reach a
+	# robot the cull has frozen at 75 m — this is here so that holds by design
+	# and not by luck, if the blast ever grows or something else locks signal.
+	thaw_from_cull()
 
 
 func _tick_signal(delta: float) -> void:
@@ -4136,9 +4930,25 @@ func trigger_combat(body: AI):
 	# the same enemy still produce one call.
 	if bark != null and ai_state != AIState.COMBAT:
 		bark.bark(BarkSet.Line.CONTACT, body.soldier_name if "soldier_name" in body else "")
+	# AND ONLY THE TRANSITION IS A WATCHED MOMENT, for exactly the reason the bark
+	# above only fires on it. Inside a firefight trigger_combat is called over and
+	# over — Squad._tick_aggressive_pull alone hands every targetless rusher a
+	# contact four times a second — and a firefight is the CHEAP tier, not an
+	# event. Marking every one of those watched would hand the whole brawl full
+	# rate and undo the model.
+	if ai_state != AIState.COMBAT:
+		mark_watched()
 	change_combat_target(body)
 	movement_target = Vector3.ZERO
 	change_ai_state(AIState.COMBAT)
+	# A ROBOT HANDED A TARGET MUST BE ABLE TO ACT ON IT. The detection Area3D is
+	# engine-driven: _on_detection_body_entered fires on a culled robot whose
+	# tick is off, and the state change above would leave it in COMBAT with
+	# nothing running to fight. AIManager's poll would catch it anyway (the
+	# detection radius is well inside activation_distance), but that is a sweep
+	# of latency for a contact, and contact is the one thing not worth being
+	# late about.
+	thaw_from_cull()
 	combat_triggered.emit(self)
 	checking_for_target = false
 	combat_time = combat_recon_time
@@ -4388,3 +5198,117 @@ func _measure_body_radius() -> void:
 		# instance order — but this chassis will shuffle aside for things it
 		# actually outweighs, so it is worth knowing.
 		push_warning("%s has no measurable body shape, so its size is unknown and it will give way as though it were infantry." % name)
+
+
+# ── EQUIPMENT CONTEXT ─────────────────────────
+#
+# What the kit needs to know beyond who it is shooting. All four are asked once
+# per EQUIPMENT_RECON_TIME (1.5s), not per frame, so they can afford to look
+# around a little.
+#
+# `squad` lives on Soldier rather than on Enemy — a garrison robot in no squad
+# is a perfectly ordinary thing — so it is reached the way this file reaches
+# other optional members, by asking whether the property is there at all.
+
+## The squad's current order, or NONE when this robot is in no squad. Returned
+## as an int because Squad.SquadObjective is not visible from here.
+func _squad_objective() -> int:
+	var sq = get("squad") if "squad" in self else null
+	if sq == null or not is_instance_valid(sq):
+		return 0   # SquadObjective.NONE
+	return int(sq.objective)
+
+
+## The nearest squadmate on the floor, or null. Downed rather than dead: a wreck
+## is nobody's problem, a downed robot is something a mechanic can still stand
+## back up — and the thing worth screening with smoke.
+func _nearest_downed_friendly() -> Node3D:
+	var sq = get("squad") if "squad" in self else null
+	if sq == null or not is_instance_valid(sq) or not sq.has_method("get_orderable_members"):
+		return null
+	var best: Node3D = null
+	var best_d := INF
+	for m in sq.get_orderable_members():
+		if m == null or not is_instance_valid(m) or m == self:
+			continue
+		if not bool(m.get("downed")):
+			continue
+		var d: float = global_position.distance_squared_to((m as Node3D).global_position)
+		if d < best_d:
+			best_d = d
+			best = m
+	return best
+
+
+## WHAT the trouble is. The target if there is one, the nearest hostile
+## otherwise — a robot taking fire from something it has not identified still
+## knows roughly where the trouble is. Null when nothing is known.
+##
+## Returns the BODY rather than a point, and the one caller derives the point
+## and the bearing from it, so the manager is asked once. The body is the part
+## that matters: anything that wants to know whether that threat can see it has
+## to exclude it from the raycast, because a ray cast at something's own
+## position stops inside its collider (see `_update_los`, which passes
+## combat_target to is_path_clear for this reason).
+func _threat_actor() -> Node3D:
+	if combat_target != null and is_instance_valid(combat_target) and combat_target.alive:
+		return combat_target
+	if ai_manager == null:
+		return null
+	var near: Array = ai_manager.get_hostiles_in_radius(self, sensor_range)
+	var best := INF
+	var who: Node3D = null
+	for h in near:
+		if h == null or not is_instance_valid(h) or not (h is Node3D):
+			continue
+		var d: float = global_position.distance_squared_to((h as Node3D).global_position)
+		if d < best:
+			best = d
+			who = h
+	return who
+
+
+## The flat unit vector from here to `at`. Flat on purpose: everything this aims
+## is placed on the ground, and a bearing that tilts up toward a walker's head
+## puts the cloud short.
+##
+## ZERO means "nowhere to point" — either nothing was found or it is standing on
+## top of us, and both of those mean "do not place anything directional".
+func _bearing_to(at: Vector3) -> Vector3:
+	var flat := Vector3(at.x - global_position.x, 0.0, at.z - global_position.z)
+	return flat.normalized() if flat.length_squared() > 0.0001 else Vector3.ZERO
+
+
+## Hostiles standing within `radius` of a POINT, which is a different question
+## to the ones standing near us. One manager call, then filtered: asking the
+## manager for a radius big enough to reach the point and trimming is cheaper
+## than teaching it a second query shape.
+func _hostiles_around(point: Vector3, radius: float) -> Array:
+	if ai_manager == null:
+		return []
+	var reach: float = global_position.distance_to(point) + radius
+	var out: Array = []
+	for h in ai_manager.get_hostiles_in_radius(self, reach):
+		if h == null or not is_instance_valid(h):
+			continue
+		if (h as Node3D).global_position.distance_to(point) <= radius:
+			out.append(h)
+	return out
+
+
+## When anyone in this squad last spent a piece of equipment. Four soldiers
+## evaluating the same situation on the same tick is how a squad answers one
+## grenade's worth of problem with four grenades; this is what lets a rule say
+## "not if somebody just did".
+func _squad_last_equipment_ms() -> int:
+	var sq = get("squad") if "squad" in self else null
+	if sq == null or not is_instance_valid(sq) or not sq.has_method("get_orderable_members"):
+		return _last_equipment_ms
+	var newest := _last_equipment_ms
+	for m in sq.get_orderable_members():
+		if m == null or not is_instance_valid(m):
+			continue
+		if not ("_last_equipment_ms" in m):
+			continue
+		newest = maxi(newest, int(m.get("_last_equipment_ms")))
+	return newest

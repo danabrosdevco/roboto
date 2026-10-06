@@ -67,6 +67,9 @@ const FRAMINGS := {
 	# A two-handed spear reads lengthways like a gun, not stood on end.
 	&"repair_lance": "side",
 	&"hatchling": "three_quarter",
+	# A slab with a screen on top is nothing side-on — a bar. Three-quarter is the
+	# only angle that shows it has a face.
+	&"designator": "three_quarter",
 }
 
 const MODEL_EXTENSIONS := ["blend", "glb", "gltf", "fbx", "dae"]
@@ -125,6 +128,10 @@ static func drawing_box(cls: String) -> Vector2:
 ## need no entry: that item's icon is found first.
 const BUILT_INS := {
 	&"welder": "res://3d_assets/chatgptg/frontline_maintainer_arcwelder_tool_v2.glb",
+	# The command designator. A built-in like the welder: never bought, so it has
+	# no catalogue entry to hang an icon on, and the weapon bar drew a blank chip
+	# on key 2 because of it.
+	&"designator": "res://Character/weapon/models/designator_model.tscn",
 }
 
 

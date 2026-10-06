@@ -30,7 +30,10 @@ class_name Diver
 const _Kinds := preload("res://Campaign/kill_kinds.gd")
 const EXPLOSION := preload("res://Character/weapon/explosion.tscn")
 
-enum Phase { CLIMB, HUNT, DIVE, SPENT }
+## DITCH is the end of the clock: out of time, nose down, and it goes off on
+## the ground rather than evaporating in mid-air. APPEND-ONLY, like every enum
+## in this project — these are stored as ints.
+enum Phase { CLIMB, HUNT, DIVE, SPENT, DITCH }
 
 @export_group("Flight")
 ## Metres above the ground it climbs to before it starts choosing.
@@ -59,7 +62,18 @@ enum Phase { CLIMB, HUNT, DIVE, SPENT }
 @export var trigger_radius: float = 2.2
 @export var blast_damage: int = 90
 ## Seconds before it runs out and drops, whatever happened.
-@export var lifetime: float = 30.0
+## Seconds in the air before it ditches. Two minutes: long enough that a drone
+## released at the start of a push is still useful when the push arrives, short
+## enough that none is ever left circling a map the fight has moved off.
+##
+## It does NOT simply vanish at the end of this — see _expire. A charge that
+## quietly disappears is one the player cannot account for.
+@export var lifetime: float = 120.0
+## How close to the ground a ditching drone gets before it goes off.
+@export var ditch_trigger: float = 1.6
+## A ceiling on the ditch itself, so a drone wedged under an overhang cannot
+## hang there nose-down for the rest of the mission.
+@export var ditch_seconds: float = 6.0
 
 @export_group("Rig")
 ## The whole model, so the rotors can spin and the body can bank.
@@ -145,9 +159,11 @@ func handle_movement(delta: float) -> void:
 	_phase_t += delta
 	_spin_rotors(delta)
 
-	if _age >= lifetime:
+	# Out of time. It does not get to abandon a dive it is already committed to
+	# — that is a hit about to land, and cutting it short wastes the drone for
+	# the sake of a second.
+	if _age >= lifetime and phase != Phase.DIVE and phase != Phase.DITCH:
 		_expire()
-		return
 
 	match phase:
 		Phase.CLIMB:
@@ -156,6 +172,8 @@ func handle_movement(delta: float) -> void:
 			_tick_hunt(delta)
 		Phase.DIVE:
 			_tick_dive(delta)
+		Phase.DITCH:
+			_tick_ditch(delta)
 
 
 # Straight up, in the open, for a fixed beat. Leaving when it reaches height
@@ -197,6 +215,26 @@ func _tick_dive(delta: float) -> void:
 		return
 	_steer_toward(_target.global_position, dive_speed, delta)
 	_orient(_fly_dir, dive_pitch * clampf(-to.normalized().y, 0.0, 1.0), delta)
+
+
+# OUT OF TIME, SO IT PUTS ITSELF INTO THE GROUND.
+#
+# It used to drop silently, on the reasoning that a charge going off on a timer
+# wherever it happens to be is a mine nobody placed. True — so it does not go
+# off where it is. It flies down first, and detonates on the dirt, which is
+# both accountable (the player sees and hears the drone they paid for end) and
+# harmless in a way a mid-air burst over a squad is not.
+#
+# Straight down rather than at anything: this is a disposal, not a last attack,
+# and picking a target here would make the timer a weapon.
+func _tick_ditch(delta: float) -> void:
+	var floor_y := _ground_height()
+	if global_position.y - floor_y <= ditch_trigger or _phase_t >= ditch_seconds:
+		_detonate()
+		return
+	_steer_toward(Vector3(global_position.x, floor_y - 2.0, global_position.z),
+		dive_speed, delta)
+	_orient(_fly_dir, dive_pitch, delta)
 
 
 func _enter(next: int) -> void:
@@ -274,14 +312,12 @@ func _detonate() -> void:
 	_vanish()
 
 
-# Out of time. It drops rather than going off: a charge that detonates on a
-# timer wherever it happens to be is a mine nobody placed.
+# Out of time. Nose down — see _tick_ditch for why it is not just dropped.
 func _expire() -> void:
-	if phase == Phase.SPENT:
+	if phase == Phase.SPENT or phase == Phase.DITCH:
 		return
-	_enter(Phase.SPENT)
-	die()
-	_vanish()
+	_target = null
+	_enter(Phase.DITCH)
 
 
 # ─────────────────────────────────────────────
@@ -354,6 +390,21 @@ func _spin_rotors(delta: float) -> void:
 ## deferred, and a frame of rotor noise coming out of a fireball is a frame too
 ## many. The blast itself is a separate node parented to the level, so it
 ## outlives this and finishes properly.
+## A MUNITION LEAVES NO WRECK, WHICHEVER WAY IT ENDS.
+##
+## _detonate called _vanish itself, so a drone that went off cleaned up — but a
+## drone SHOT DOWN, EMP'd, or cut short by the payload's backstop timer went
+## through Enemy.destroy() instead, which hides the body and disables the
+## colliders and then leaves the node in the level for the rest of the mission.
+## Invisible, inert, and permanent: one per drone, every mission.
+##
+## Overriding here catches every one of those paths at once, because they all
+## end in destroy().
+func destroy() -> void:
+	super()
+	_vanish()
+
+
 func _vanish() -> void:
 	for c in get_children():
 		if c is AudioStreamPlayer3D:

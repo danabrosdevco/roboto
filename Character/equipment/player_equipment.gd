@@ -61,6 +61,20 @@ class Readout:
 # Position within the EQUIPMENT list. 0 is key 4, 1 is key 5, and so on.
 # Ignored for PRIMARY/SIDEARM/MELEE.
 @export var equipment_order: int = 0
+## RESERVES ONE KEY FOR THIS ITEM instead of giving it a position in the
+## equipment row. Empty for everything you buy, which is almost everything.
+##
+## The row is POSITIONAL: apply_record numbers bought equipment 0, 1, 2 and the
+## loadout turns those into keys 4, 5 and 6. That is right for ordnance — the
+## key means "the second thing I bought" — and wrong for a built-in tool, whose
+## key has to be the same every mission however much the player has in their
+## pouches. A built-in squatting a position either moves with your shopping or
+## pushes a bought item off the end of the row, and the designator did both
+## before this existed.
+##
+## Set it to an InputMap action the loadout's `slot_actions` also lists; the
+## item is then bound to that action alone and left out of the row entirely.
+@export var fixed_slot_action: StringName = &""
 @export var icon: Texture2D
 
 # ── VIEWMODEL ─────────────────────────────────

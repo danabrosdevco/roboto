@@ -20,7 +20,7 @@ height = 3.0
 [sub_resource type="SphereShape3D" id="SphereShape3D_detect"]
 radius = 25.0
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_xapkv"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gbm0r"]
 render_priority = 0
 shader = ExtResource("5_xsq0h")
 shader_parameter/use_normal_map = false
@@ -131,31 +131,31 @@ shape = SubResource("SphereShape3D_detect")
 
 [node name="Hull" type="CSGMesh3D" parent="Rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_hull")
 material = ExtResource("5_metal")
 
 [node name="Glacis" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, -0.62, -1.06)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 operation = 2
 size = Vector3(2, 1, 1.4)
 
 [node name="ShoulderL" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(0.866025, -0.5, 0, 0.5, 0.866025, 0, 0, 0, 1, -0.98, 0.62, 0)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 operation = 2
 size = Vector3(1, 1, 2.2)
 
 [node name="ShoulderR" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(0.866025, 0.5, 0, -0.5, 0.866025, 0, 0, 0, 1, 0.98, 0.62, 0)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 operation = 2
 size = Vector3(1, 1, 2.2)
 
 [node name="Tail" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, -0.58, 1.12)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 operation = 2
 size = Vector3(2, 1, 1)
 
@@ -171,7 +171,7 @@ mesh = SubResource("BoxMesh_lamp")
 
 [node name="TurretRing" type="MeshInstance3D" parent="Rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.76, 0)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("CylinderMesh_ring")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -179,19 +179,19 @@ surface_material_override/0 = ExtResource("5_metal")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
 
 [node name="TurretBody" type="CSGMesh3D" parent="Rig/Turret"]
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_turret")
 material = ExtResource("5_metal")
 
 [node name="Cheek" type="CSGBox3D" parent="Rig/Turret/TurretBody"]
 transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, -0.44, -0.86)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 operation = 2
 size = Vector3(1.6, 0.8, 1)
 
 [node name="Brow" type="CSGBox3D" parent="Rig/Turret/TurretBody"]
 transform = Transform3D(1, 0, 0, 0, 0.906308, -0.422618, 0, 0.422618, 0.906308, 0, 0.5, -0.78)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 operation = 2
 size = Vector3(1.6, 0.6, 0.8)
 
@@ -202,7 +202,7 @@ mesh = SubResource("SphereMesh_eye")
 
 [node name="Antenna" type="MeshInstance3D" parent="Rig/Turret"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.68, 0.48)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_antenna")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -211,7 +211,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, -0.5)
 
 [node name="Mantlet" type="MeshInstance3D" parent="Rig/Turret/GunPivot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.06, -0.1)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_mantlet")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -225,13 +225,13 @@ transform = Transform3D(-3.0598e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.0598e-08, 0.
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, -0.2, 0)
 
 [node name="HipCapL" type="MeshInstance3D" parent="Rig/HipL"]
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_hip")
 surface_material_override/0 = ExtResource("5_metal")
 
 [node name="ThighL" type="MeshInstance3D" parent="Rig/HipL"]
 transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, -0.32, 0.14)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_thigh")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -240,13 +240,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.62, 0.28)
 
 [node name="ShinL" type="MeshInstance3D" parent="Rig/HipL/KneeL"]
 transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, -0.38, -0.16)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_shin")
 surface_material_override/0 = ExtResource("5_metal")
 
 [node name="FootL" type="MeshInstance3D" parent="Rig/HipL/KneeL"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.78, -0.46)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_foot")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -254,13 +254,13 @@ surface_material_override/0 = ExtResource("5_metal")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, -0.2, 0)
 
 [node name="HipCapR" type="MeshInstance3D" parent="Rig/HipR"]
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_hip")
 surface_material_override/0 = ExtResource("5_metal")
 
 [node name="ThighR" type="MeshInstance3D" parent="Rig/HipR"]
 transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, -0.32, 0.14)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_thigh")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -269,13 +269,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.62, 0.28)
 
 [node name="ShinR" type="MeshInstance3D" parent="Rig/HipR/KneeR"]
 transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, -0.38, -0.16)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_shin")
 surface_material_override/0 = ExtResource("5_metal")
 
 [node name="FootR" type="MeshInstance3D" parent="Rig/HipR/KneeR"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.78, -0.46)
-material_override = SubResource("ShaderMaterial_xapkv")
+material_override = SubResource("ShaderMaterial_gbm0r")
 mesh = SubResource("BoxMesh_foot")
 surface_material_override/0 = ExtResource("5_metal")
 

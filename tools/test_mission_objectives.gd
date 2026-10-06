@@ -21,11 +21,14 @@ extends SceneTree
 # sees AUTHORED properties, which is exactly right here: an objective that does
 # not author an `id` has id &"" and could not be named by a mission anyway.
 #
-# One known limit, stated rather than worked around: an objective hidden inside
-# an instanced sub-scene is not visible in the level's own state and would be
-# reported missing. No level in this project authors one that way. If that
-# changes, this fails loudly and points at the file, which is the direction an
-# error of this kind should fail in.
+# IT FOLLOWS INSTANCED SUB-SCENES. This used to be a stated limit — an
+# objective inside an instanced scene is not in the parent's SceneState, so it
+# read as missing — on the grounds that no level authored one that way. Three
+# now do: Georgetown, Polaris and Causeway keep their whole gameplay layer in
+# maps/gameplay/<name>_ops.tscn, because the first two have their level .tscn
+# written from a template by the terrain builders and anything added to one
+# dies on the next rebuild. The limit announced itself as sixty failures, which
+# is the direction this kind of error should fail in; see _collect_ids().
 # ─────────────────────────────────────────────
 
 ## Scripts whose nodes are objectives. Matched on the file name so this does
@@ -155,10 +158,45 @@ func _has_extract(m, found: Dictionary) -> bool:
 
 
 ## Every objective id the level authors, mapped to whether it is an extraction.
+##
+## FOLLOWS INSTANCED SUB-SCENES, which it used to refuse to do. The header
+## said so and said it would fail loudly if a level ever authored an objective
+## that way; three did at once. Georgetown, Polaris and Causeway keep their
+## whole gameplay layer in maps/gameplay/<name>_ops.tscn and instance it,
+## because the first two have their level .tscn regenerated from a template by
+## the terrain builders and anything written into one dies on the next
+## rebuild. An instanced scene's nodes are not in the parent's SceneState at
+## all, so the sixty failures that found this were the test being honest about
+## a limit rather than the data being wrong.
+##
+## DEPTH-LIMITED and cycle-safe by path: a scene that instances itself would
+## otherwise recurse forever, and a deep tree of instanced props is not where
+## objectives live.
+const MAX_INSTANCE_DEPTH := 3
+
+
 func _objective_ids(packed: PackedScene) -> Dictionary:
+	return _collect_ids(packed, 0, {})
+
+
+func _collect_ids(packed: PackedScene, depth: int, seen: Dictionary) -> Dictionary:
 	var out := {}
+	if packed == null:
+		return out
+	var key := str(packed.resource_path)
+	if key != "" and seen.has(key):
+		return out
+	seen[key] = true
 	var st := packed.get_state()
 	for i in st.get_node_count():
+		var instanced: PackedScene = st.get_node_instance(i)
+		# WHAT IS INSIDE THE INSTANCE, first. Anything this scene overrides on
+		# the instance is read below and wins, which is the right precedence: a
+		# level that instances an ops layer and rewrites an id meant the rewrite.
+		if instanced != null and depth < MAX_INSTANCE_DEPTH:
+			var inner := _collect_ids(instanced, depth + 1, seen)
+			for inner_id in inner:
+				out[inner_id] = inner[inner_id]
 		var id: StringName = &""
 		var extract := false
 		var is_objective := false
@@ -179,7 +217,7 @@ func _objective_ids(packed: PackedScene) -> Dictionary:
 		# override missed every one of them — and then reported the mission that
 		# named them as pointing at nothing, and its reserves as unwakeable.
 		# Eleven false alarms across three maps, all of them real objectives.
-		if not is_objective and not _instance_is_objective(st.get_node_instance(i)):
+		if not is_objective and not _instance_is_objective(instanced):
 			continue
 		out[id] = extract
 	return out

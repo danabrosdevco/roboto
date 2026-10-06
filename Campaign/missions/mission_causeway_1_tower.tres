@@ -1,0 +1,1316 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=102 format=3 uid="uid://bu5n0k87wqkyd"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://e03bilyr2fo7" path="res://maps/causeway_level.tscn" id="3_map"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rif"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="6_hvy"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shg"]
+[ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="8_mks"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="9_cha"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="10_hop"]
+[ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="11_rov"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="12_lob"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mortar_track.tres" id="13_mor"]
+[ext_resource type="Resource" uid="uid://daikhvrvnhg7g" path="res://Campaign/chassis/chassis_walker.tres" id="14_wal"]
+[ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="15_bom"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="16_mec"]
+[ext_resource type="Resource" uid="uid://dnn5fqbfxwsln" path="res://Campaign/chassis/chassis_spotter.tres" id="18_spo"]
+
+[sub_resource type="Resource" id="B_bank"]
+script = ExtResource("2_espec")
+callsign = "TOLLBOOTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_bank"
+spawn_tag = &"obj_cway_bank"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="B_ware"]
+script = ExtResource("2_espec")
+callsign = "REVETMENT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_warehouse"
+spawn_tag = &"obj_cway_warehouse"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="B_ruin"]
+script = ExtResource("2_espec")
+callsign = "KERBSTONE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_ruin_south"
+spawn_tag = &"obj_cway_ruin_south"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="B_terr"]
+script = ExtResource("2_espec")
+callsign = "GANTRY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_terrace"
+spawn_tag = &"obj_cway_terrace"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="B_stage"]
+script = ExtResource("2_espec")
+callsign = "HARDSTAND"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_staging"
+spawn_tag = &"obj_cway_staging"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="B_patrol"]
+script = ExtResource("2_espec")
+callsign = "VERGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha")])
+count = 0
+posture = 0
+route_tag = &"patrol_cway_bank"
+post_tag = &""
+spawn_tag = &"obj_cway_ruin_west"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="B_ramp"]
+script = ExtResource("2_espec")
+callsign = "ABUTMENT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_ramp_west"
+spawn_tag = &"obj_cway_ramp_west"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="D_west"]
+script = ExtResource("2_espec")
+callsign = "CULVERT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_ramp_west"
+spawn_tag = &"obj_cway_deck_west"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="D_a"]
+script = ExtResource("2_espec")
+callsign = "SOFFIT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
+count = 0
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_deck_west"
+spawn_tag = &"obj_cway_deck_a"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="D_breakw"]
+script = ExtResource("2_espec")
+callsign = "SPALL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_breach_west"
+spawn_tag = &"obj_cway_breach_west"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="D_b"]
+script = ExtResource("2_espec")
+callsign = "REBAR"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("10_hop")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_deck_b"
+spawn_tag = &"obj_cway_deck_b"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="D_mid"]
+script = ExtResource("2_espec")
+callsign = "EXPANSION"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_deck_mid"
+spawn_tag = &"obj_cway_deck_mid"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="D_c"]
+script = ExtResource("2_espec")
+callsign = "SCUPPER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_deck_c"
+spawn_tag = &"obj_cway_deck_c"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="D_breake"]
+script = ExtResource("2_espec")
+callsign = "CRIBWORK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_breach_east"
+spawn_tag = &"obj_cway_breach_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="D_d"]
+script = ExtResource("2_espec")
+callsign = "CORBEL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_deck_d"
+spawn_tag = &"obj_cway_deck_d"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="D_patrol"]
+script = ExtResource("2_espec")
+callsign = "PARAPETRUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 0
+route_tag = &"patrol_cway_deck"
+post_tag = &""
+spawn_tag = &"obj_cway_deck_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="D_rampe"]
+script = ExtResource("2_espec")
+callsign = "BEARING"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_ramp_east"
+spawn_tag = &"obj_cway_ramp_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="E_wire"]
+script = ExtResource("2_espec")
+callsign = "WIREMAN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_wire"
+spawn_tag = &"obj_cway_wire"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="E_check"]
+script = ExtResource("2_espec")
+callsign = "TOLLHOUSE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_checkpoint"
+spawn_tag = &"obj_cway_checkpoint"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="E_teeth"]
+script = ExtResource("2_espec")
+callsign = "TEETH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_teeth"
+spawn_tag = &"obj_cway_teeth"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="E_sangn"]
+script = ExtResource("2_espec")
+callsign = "SANGARNORTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("8_mks"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_sangar_n"
+spawn_tag = &"obj_cway_sangar_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="E_sangs"]
+script = ExtResource("2_espec")
+callsign = "SANGARSOUTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("8_mks"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_sangar_s"
+spawn_tag = &"obj_cway_sangar_s"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="E_hesco"]
+script = ExtResource("2_espec")
+callsign = "GABION"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_hesco"
+spawn_tag = &"obj_cway_hesco"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="E_gunn"]
+script = ExtResource("2_espec")
+callsign = "BOMBARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_gun_n"
+spawn_tag = &"obj_cway_gun_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="E_guns"]
+script = ExtResource("2_espec")
+callsign = "BALLISTA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_gun_s"
+spawn_tag = &"obj_cway_gun_s"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="E_patrol"]
+script = ExtResource("2_espec")
+callsign = "GLACISRUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 0
+route_tag = &"patrol_cway_glacis"
+post_tag = &""
+spawn_tag = &"obj_cway_toe"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="E_gate"]
+script = ExtResource("2_espec")
+callsign = "PORTCULLIS"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("8_mks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_gate"
+spawn_tag = &"obj_cway_gate"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_yardw"]
+script = ExtResource("2_espec")
+callsign = "GARRISON"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("16_mec")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_yard_west"
+spawn_tag = &"obj_cway_yard_west"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_yardnw"]
+script = ExtResource("2_espec")
+callsign = "YARDNORTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_yard_nw"
+spawn_tag = &"obj_cway_yard_nw"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_yardsw"]
+script = ExtResource("2_espec")
+callsign = "YARDSOUTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_yard_sw"
+spawn_tag = &"obj_cway_yard_sw"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_yardn"]
+script = ExtResource("2_espec")
+callsign = "CENTREYARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_yard_n"
+spawn_tag = &"obj_cway_yard_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_yarde"]
+script = ExtResource("2_espec")
+callsign = "EASTYARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_lob"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_yard_east"
+spawn_tag = &"obj_cway_yard_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_walkn"]
+script = ExtResource("2_espec")
+callsign = "PARAPET"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_walk_n"
+spawn_tag = &"obj_cway_walk_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_walks"]
+script = ExtResource("2_espec")
+callsign = "MERLON"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_walk_s"
+spawn_tag = &"obj_cway_walk_s"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_basnw"]
+script = ExtResource("2_espec")
+callsign = "BASTIONNW"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_bastion_nw"
+spawn_tag = &"obj_cway_bastion_nw"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_bassw"]
+script = ExtResource("2_espec")
+callsign = "BASTIONSW"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_bastion_sw"
+spawn_tag = &"obj_cway_bastion_sw"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_basne"]
+script = ExtResource("2_espec")
+callsign = "BASTIONNE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_bastion_ne"
+spawn_tag = &"obj_cway_bastion_ne"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_basse"]
+script = ExtResource("2_espec")
+callsign = "BASTIONSE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_bastion_se"
+spawn_tag = &"obj_cway_bastion_se"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_wallnp"]
+script = ExtResource("2_espec")
+callsign = "WALLRUNNORTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 0
+route_tag = &"patrol_cway_walls_n"
+post_tag = &""
+spawn_tag = &"obj_cway_bastion_nw"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_wallsp"]
+script = ExtResource("2_espec")
+callsign = "WALLRUNSOUTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 0
+route_tag = &"patrol_cway_walls_s"
+post_tag = &""
+spawn_tag = &"obj_cway_bastion_sw"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_yardp"]
+script = ExtResource("2_espec")
+callsign = "YARDRUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 0
+route_tag = &"patrol_cway_yard"
+post_tag = &""
+spawn_tag = &"obj_cway_yard_s"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="F_pit"]
+script = ExtResource("2_espec")
+callsign = "PITHEAD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_pit_head"
+spawn_tag = &"obj_cway_pit_head"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="O_mortn"]
+script = ExtResource("2_espec")
+callsign = "HOWITZER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_mor"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_mortar_n"
+spawn_tag = &"obj_cway_mortar_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="O_morts"]
+script = ExtResource("2_espec")
+callsign = "CULVERIN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_mor"), ExtResource("5_rif"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_mortar_s"
+spawn_tag = &"obj_cway_mortar_s"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="O_bunker"]
+script = ExtResource("2_espec")
+callsign = "SIGNUM"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("18_spo")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_bunker"
+spawn_tag = &"obj_cway_bunker"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="O_ammo"]
+script = ExtResource("2_espec")
+callsign = "MAGAZINE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_ammo"
+spawn_tag = &"obj_cway_ammo"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="O_flood"]
+script = ExtResource("2_espec")
+callsign = "LANTERN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("5_rif")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_flood_east"
+spawn_tag = &"obj_cway_flood_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="O_rear"]
+script = ExtResource("2_espec")
+callsign = "REARGUARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_sangar_east"
+spawn_tag = &"obj_cway_sangar_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_00"]
+script = ExtResource("2_espec")
+callsign = "THRESHOLD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_hall_00"
+spawn_tag = &"obj_cway_hall_00n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_01"]
+script = ExtResource("2_espec")
+callsign = "RACKONE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_hall_01"
+spawn_tag = &"obj_cway_hall_01"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_02"]
+script = ExtResource("2_espec")
+callsign = "RACKTWO"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_hall_02"
+spawn_tag = &"obj_cway_hall_02"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_03"]
+script = ExtResource("2_espec")
+callsign = "RACKTHREE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_hall_03"
+spawn_tag = &"obj_cway_hall_03"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_04"]
+script = ExtResource("2_espec")
+callsign = "RACKFOUR"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("10_hop")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_hall_04"
+spawn_tag = &"obj_cway_hall_04"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_05"]
+script = ExtResource("2_espec")
+callsign = "RACKFIVE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("7_shg")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_hall_05"
+spawn_tag = &"obj_cway_hall_05"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_06"]
+script = ExtResource("2_espec")
+callsign = "RACKSIX"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_hall_06"
+spawn_tag = &"obj_cway_hall_06"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_07"]
+script = ExtResource("2_espec")
+callsign = "RACKSEVEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_cway_hall_07"
+spawn_tag = &"obj_cway_hall_07"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_08"]
+script = ExtResource("2_espec")
+callsign = "RACKEIGHT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_07"
+spawn_tag = &"obj_cway_hall_08"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_basement"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_09"]
+script = ExtResource("2_espec")
+callsign = "RACKNINE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_08"
+spawn_tag = &"obj_cway_hall_09"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_basement"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_10"]
+script = ExtResource("2_espec")
+callsign = "RACKTEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_09"
+spawn_tag = &"obj_cway_hall_10"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_basement"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_11"]
+script = ExtResource("2_espec")
+callsign = "RACKELEVEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_10"
+spawn_tag = &"obj_cway_hall_11"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_basement"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="T_12"]
+script = ExtResource("2_espec")
+callsign = "SETBACK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("8_mks"), ExtResource("16_mec")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_11"
+spawn_tag = &"obj_cway_hall_12n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_basement"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_13"]
+script = ExtResource("2_espec")
+callsign = "RACKTHIRTEEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_12"
+spawn_tag = &"obj_cway_hall_13"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_14"]
+script = ExtResource("2_espec")
+callsign = "RACKFOURTEEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_13"
+spawn_tag = &"obj_cway_hall_14"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_15"]
+script = ExtResource("2_espec")
+callsign = "RACKFIFTEEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_14"
+spawn_tag = &"obj_cway_hall_15"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_16"]
+script = ExtResource("2_espec")
+callsign = "RACKSIXTEEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_15"
+spawn_tag = &"obj_cway_hall_16"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_17"]
+script = ExtResource("2_espec")
+callsign = "RACKSEVENTEEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_16"
+spawn_tag = &"obj_cway_hall_17"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_18"]
+script = ExtResource("2_espec")
+callsign = "RACKEIGHTEEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_17"
+spawn_tag = &"obj_cway_hall_18"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_19"]
+script = ExtResource("2_espec")
+callsign = "RACKNINETEEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_18"
+spawn_tag = &"obj_cway_hall_19"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_20"]
+script = ExtResource("2_espec")
+callsign = "RACKTWENTY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_19"
+spawn_tag = &"obj_cway_hall_20"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_21"]
+script = ExtResource("2_espec")
+callsign = "RACKTWENTYONE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("7_shg")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_20"
+spawn_tag = &"obj_cway_hall_21"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_22"]
+script = ExtResource("2_espec")
+callsign = "RACKTWENTYTWO"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("8_mks")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_21"
+spawn_tag = &"obj_cway_hall_22"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="U_23"]
+script = ExtResource("2_espec")
+callsign = "CROWNGUARD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("7_shg"), ExtResource("16_mec")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_22"
+spawn_tag = &"obj_cway_hall_23n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_twelfth"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="R_stage"]
+script = ExtResource("2_espec")
+callsign = "FLOTSAM"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_breach_west"
+spawn_tag = &"obj_cway_deck_mid"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_staging"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="R_crossa"]
+script = ExtResource("2_espec")
+callsign = "JETSAM"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop"), ExtResource("10_hop")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_deck_mid"
+spawn_tag = &"obj_cway_ramp_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_crossing"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="R_crossb"]
+script = ExtResource("2_espec")
+callsign = "LAGAN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_breach_east"
+spawn_tag = &"obj_cway_toe"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_crossing"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="R_checka"]
+script = ExtResource("2_espec")
+callsign = "BULWARK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("8_mks"), ExtResource("7_shg")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_toe"
+spawn_tag = &"obj_cway_gate"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_checkpoint"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="R_checkb"]
+script = ExtResource("2_espec")
+callsign = "SORTIE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_lob"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_wire"
+spawn_tag = &"obj_cway_yard_west"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_checkpoint"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="R_bomber"]
+script = ExtResource("2_espec")
+callsign = "STOOP"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("15_bom")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_checkpoint"
+spawn_tag = &"obj_cway_yard_east"
+spawn_offset = Vector3(0, 50, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_checkpoint"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="R_yarda"]
+script = ExtResource("2_espec")
+callsign = "COUNTERMARCH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("16_mec")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_yard_west"
+spawn_tag = &"obj_cway_sangar_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_yard"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="R_yardb"]
+script = ExtResource("2_espec")
+callsign = "RELIEF"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_wal"), ExtResource("6_hvy"), ExtResource("6_hvy")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_gate"
+spawn_tag = &"obj_cway_yard_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_yard"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="R_base"]
+script = ExtResource("2_espec")
+callsign = "DESCENT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_00"
+spawn_tag = &"obj_cway_hall_04"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_relay_basement"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="K_ninety"]
+script = ExtResource("2_espec")
+callsign = "GRAPNEL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_deck_mid"
+spawn_tag = &"obj_cway_ramp_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_losses_90"
+wake_after_kills = 90
+
+[sub_resource type="Resource" id="K_onesev"]
+script = ExtResource("2_espec")
+callsign = "SIEGEWORK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_gate"
+spawn_tag = &"obj_cway_yard_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_losses_170"
+wake_after_kills = 170
+
+[sub_resource type="Resource" id="K_twofif"]
+script = ExtResource("2_espec")
+callsign = "LASTDITCH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_wal"), ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("8_mks")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_cway_hall_12"
+spawn_tag = &"obj_cway_hall_23"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"cway_losses_250"
+wake_after_kills = 250
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"causeway_1_tower"
+display_name = "The Causeway"
+briefing = "THE CAUSEWAY. END OF THE LADDER. TWO KILOMETRES OF GROUND AND THREE FIGHTS, AND NONE OF THEM IS THE SAME FIGHT.
+
+YOU START AT THE END OF THE HIGHWAY, on the west bank, in the ruins of whatever was here before. A picket holds the staging yard where the road runs out; the uplink is on that hardstanding and it takes six seconds, and finishing it is how the deck knows you are coming.
+
+THEN SIX HUNDRED METRES OF OPEN DECK. Thirteen spans on column piers, sixteen metres wide, four metres above the water, with a one-metre parapet each side and nothing else on it at all. There is no cover worth the word out there and they know it.
+
+What makes it survivable is that the deck is BROKEN IN TWO PLACES. Two spans have been shelled — the north half of the carriageway is gone over twenty metres and the lane pinches to seven — and three more have settled over their middle piers. Those pinch points are where they are dug in, and they are dug in close: shotguns, chasers and leapers in the breach itself, not marksmen at four hundred metres. The near picket does not wait, either — the first two sections on the deck come back down it at you, so the opening fight is in the first hundred metres with the west bank still behind you, not three hundred metres out with nothing either side. The old carriageway on its own piers runs alongside the whole way and you cannot get onto it. The relay is at the midpoint, on a sound span, and it takes ten seconds standing still with three hundred metres of nothing behind you and three hundred ahead.
+
+THEN THE GLACIS. A hundred metres of prepared ground off the east ramp: razor wire, dragon's teeth, T-walls, two sangars, two sentry turrets, a checkpoint, and two gun emplacements laid back down the crossing whose crews never stand down — they are watching the east ramp before you get to it. Take the checkpoint — twelve seconds — and then sixty metres of ramp up the outside of the west wall to the gate.
+
+THEN THE FORT. Two hundred metres square. The curtain wall is eight metres thick from the ground to a walk four metres above the yard, with a bastion at each corner standing four metres above that, and there is exactly ONE opening in it: the sixteen-metre gateway you came through. Everything on the walk looks down into the yard and the ramps up to it are inside. Fourteen seconds in the middle of that courtyard. The mortar pits, the command bunker and the ammunition dump are all OUTSIDE the walls, which means reaching any of them is a decision to leave.
+
+THEN THE PIT: sixty metres at one in six, down from the yard to the tower's basement, on the far side of the yard from the gate so you have to cross the whole fort and go round the tower to find it.
+
+AND THEN THE TOWER. TWENTY-FOUR DATA HALLS, one above the other, forty-one metres square, six metres floor to floor, a hundred and thirty-eight metres from the basement to the top. One ramp per floor and it moves to a different wall each time, so every hall is entered through a hole in its own floor with the defence on the far side of the room. The inside and the outside do not meet: one portal at the foot of the pit, one door at the top, no windows, no gunloops. Nothing comes in and nothing gets out.
+
+The basement hall is empty and it is the quietest the tower ever gets. The twelfth hall is the first set-back and the halfway mark — sixteen seconds there, and finishing it wakes everything above you, which comes DOWN to meet you rather than waiting to be found.
+
+The crown uplink is in the top hall. Twenty-four seconds, the longest channel in the game, a hundred and thirty-eight metres up, with nowhere left to fall back to. The pad is at the other end of the room.
+
+FIVE OPTIONAL TARGETS and every one of them is a thing shooting at you from somewhere you are not: the two gun emplacements, the two mortar pits, the command bunker, the marksmen on the wall walk, and the ammunition dump round the back of the fort."
+level_scene = ExtResource("3_map")
+map_position = Vector2(0, 0)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("B_bank"), SubResource("B_ware"), SubResource("B_ruin"), SubResource("B_terr"), SubResource("B_stage"), SubResource("B_patrol"), SubResource("B_ramp"), SubResource("D_west"), SubResource("D_a"), SubResource("D_breakw"), SubResource("D_b"), SubResource("D_mid"), SubResource("D_c"), SubResource("D_breake"), SubResource("D_d"), SubResource("D_patrol"), SubResource("D_rampe"), SubResource("E_wire"), SubResource("E_check"), SubResource("E_teeth"), SubResource("E_sangn"), SubResource("E_sangs"), SubResource("E_hesco"), SubResource("E_gunn"), SubResource("E_guns"), SubResource("E_patrol"), SubResource("E_gate"), SubResource("F_yardw"), SubResource("F_yardnw"), SubResource("F_yardsw"), SubResource("F_yardn"), SubResource("F_yarde"), SubResource("F_walkn"), SubResource("F_walks"), SubResource("F_basnw"), SubResource("F_bassw"), SubResource("F_basne"), SubResource("F_basse"), SubResource("F_wallnp"), SubResource("F_wallsp"), SubResource("F_yardp"), SubResource("F_pit"), SubResource("O_mortn"), SubResource("O_morts"), SubResource("O_bunker"), SubResource("O_ammo"), SubResource("O_flood"), SubResource("O_rear"), SubResource("T_00"), SubResource("T_01"), SubResource("T_02"), SubResource("T_03"), SubResource("T_04"), SubResource("T_05"), SubResource("T_06"), SubResource("T_07"), SubResource("T_08"), SubResource("T_09"), SubResource("T_10"), SubResource("T_11"), SubResource("T_12"), SubResource("U_13"), SubResource("U_14"), SubResource("U_15"), SubResource("U_16"), SubResource("U_17"), SubResource("U_18"), SubResource("U_19"), SubResource("U_20"), SubResource("U_21"), SubResource("U_22"), SubResource("U_23"), SubResource("R_stage"), SubResource("R_crossa"), SubResource("R_crossb"), SubResource("R_checka"), SubResource("R_checkb"), SubResource("R_bomber"), SubResource("R_yarda"), SubResource("R_yardb"), SubResource("R_base"), SubResource("K_ninety"), SubResource("K_onesev"), SubResource("K_twofif")])
+replace_level_enemies = false
+active_objectives = Array[StringName]([&"cway_relay_staging", &"cway_relay_crossing", &"cway_relay_checkpoint", &"cway_relay_yard", &"cway_relay_basement", &"cway_relay_twelfth", &"cway_uplink", &"cway_guns", &"cway_mortars", &"cway_bunker", &"cway_walls", &"cway_ammo", &"cway_extract"])
+reward_resources = 2200
+compute_reward = 6
+unlocks = Array[StringName]([&"autocannon"])
+squad_size = -1
+repeatable = false
+requires = Array[StringName]([&"polaris_1_siege"])

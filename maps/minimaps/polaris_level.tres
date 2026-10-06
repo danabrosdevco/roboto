@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_f6k73"]
+
+[resource]
+script = ExtResource("1_f6k73")
+level_scene_path = "res://maps/polaris_level.tscn"
+image_path = "res://maps/minimaps/polaris_level.png"
+world_min = Vector2(-338.67, -338.67)
+world_max = Vector2(338.67, 338.67)
+objective_ids = Array[StringName]([&"pol_breach", &"pol_wave_1", &"pol_wave_2", &"pol_wave_3", &"pol_wave_4", &"pol_wave_5", &"pol_cinema", &"pol_garage", &"pol_hive_storage", &"pol_extract"])
+objective_names = Array[String](["The Court Uplink", "The First Push", "Round The Deck", "Down The Boulevard", "Out Of The Houses", "All Four Roads", "The Multiplex", "The Parking Deck", "The Storage Hive", "Out The Service Dock"])
+objective_positions = Array[Vector3]([Vector3(0, 0, 56), Vector3(0, 0, 96), Vector3(96, 0, 86), Vector3(-144, 0, 30), Vector3(0, 0, -80), Vector3(0, 0, 48), Vector3(-92, 0, 92), Vector3(96, 0, 86), Vector3(-313, 0, -158), Vector3(-40, 0, -42)])
+objective_kinds = Array[StringName]([&"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"extract"])
+insertion_positions = Array[Vector3]([Vector3(-210, 0, 244)])

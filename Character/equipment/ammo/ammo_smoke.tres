@@ -5,6 +5,6 @@
 [resource]
 script = ExtResource("1_stock")
 ammo_type = &"smoke"
-amount = 2
-capacity = 2
+amount = 4
+capacity = 4
 requires_carrier = true

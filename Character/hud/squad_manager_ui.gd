@@ -444,6 +444,12 @@ func buildable_frames() -> Array:
 	for frame in catalogue.chassis:
 		if frame != null and frame.purchasable and locked_by(frame.id) == null:
 			out.append(frame)
+	# CHEAPEST FIRST, left to right. The row is a ladder and "what can I afford
+	# next" runs in one direction; read the other way the Walker led and the
+	# Soldier — the thing you actually buy early — was first off the end when
+	# the row overflowed its scroller.
+	out.sort_custom(func(a: ChassisDefinition, b: ChassisDefinition) -> bool:
+		return a.cost < b.cost)
 	return out
 
 

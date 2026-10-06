@@ -96,9 +96,17 @@ func _run() -> void:
 		if tool_model == null:
 			skipped.append("%s (no model at %s)" % [built_in_id, _Art.BUILT_INS[built_in_id]])
 			continue
+		# Framed like an item of the same name can be. A welder is a tube and reads
+		# side-on; the designator is a slab with a screen and reads as a bar from
+		# the side, so it says so in FRAMINGS rather than every built-in being
+		# assumed to be a tube.
+		var tool_framing: int = _Studio.Framing.SIDE
+		match str(_Art.FRAMINGS.get(built_in_id, "")):
+			"upright": tool_framing = _Studio.Framing.UPRIGHT
+			"three_quarter": tool_framing = _Studio.Framing.THREE_QUARTER
 		for size_name in _Art.SIZES["wide"]:
 			var size: Vector2i = _Art.SIZES["wide"][size_name]
-			var img: Image = await studio.render_model(tool_model, size, _Studio.Framing.SIDE,
+			var img: Image = await studio.render_model(tool_model, size, tool_framing,
 				false, false, 1.0 if size_name == "s" else 0.0)
 			if img == null:
 				skipped.append("%s (%s)" % [built_in_id, size_name])

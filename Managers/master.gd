@@ -43,6 +43,7 @@ const _Analytics := preload("res://Managers/analytics.gd")
 const _Lab := preload("res://Managers/lab.gd")
 const _LabResults := preload("res://Character/hud/lab_results.gd")
 # Which export this is; tools/export.ps1 writes it.
+const _GodotMark := preload("res://Managers/godot_mark.gd")
 const _Build := preload("res://Managers/build_version.gd")
 
 @export_group("Skip")
@@ -65,6 +66,9 @@ const _Build := preload("res://Managers/build_version.gd")
 @export var title_text: String = "DATA CENTER WARS"
 @export var title_suffix: String = "2109"
 @export var presents_text: String = "presents"
+## The engine card, first of the three. Godot's logo is CC BY 4.0 (Andrea
+## Calabró); Managers/godot_mark.gd draws this game's version of it and says so.
+@export var engine_text: String = "MADE WITH GODOT"
 
 @export_group("Title music")
 @export var title_music_volume_db: float = -6.0
@@ -72,6 +76,8 @@ const _Build := preload("res://Managers/build_version.gd")
 @export var title_music_fade_out: float = 1.5
 
 @export_group("Splash timing")
+## The engine card is the shortest of the three: it is a courtesy, not an act.
+@export var engine_seconds: float = 1.8
 @export var company_seconds: float = 2.4
 @export var title_seconds: float = 3.4
 @export var fade_seconds: float = 0.45
@@ -454,7 +460,13 @@ func _run_boot() -> void:
 	# is the headline and "presents" is the thing it does, so it reads
 	# "DANA ENTERTAINMENT PRODUCTS presents" top to bottom. In the `above` slot
 	# it read as "presents DANA ENTERTAINMENT PRODUCTS", which is backwards.
-	await _play_card("", company_text, presents_text, company_seconds, HUDPalette.DIM, HUDPalette.DIM)
+	# The engine first, then the studio, then the game — smallest claim to
+	# largest. It goes through the same CRT filter and the same skip as the
+	# others, so it is a card in the sequence rather than a thing bolted in
+	# front of it.
+	await _play_engine_card()
+	if _booting:
+		await _play_card("", company_text, presents_text, company_seconds, HUDPalette.DIM, HUDPalette.DIM)
 	if _booting:
 		await _play_card("", title_text, title_suffix, title_seconds, HUDPalette.BRIGHT, HUDPalette.WARN)
 
@@ -465,6 +477,58 @@ func _run_boot() -> void:
 		_show_main_menu()
 	else:
 		_start_play()
+
+
+## The engine card: the mark, and the words under it. Built by hand rather than
+## through _play_card because that one types its headline out a character at a
+## time, which is right for a title and wrong for an attribution — "MADE WITH
+## GODOT" clattering onto the screen reads as a joke about the engine.
+##
+## A mark that will not rasterise leaves the words, which still say the thing
+## that has to be said. The card is never the reason a build fails to boot.
+func _play_engine_card() -> void:
+	_clear_content()
+
+	var box := VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 26)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_content.add_child(box)
+
+	var mark := _GodotMark.texture(200)
+	if mark != null:
+		var art := TextureRect.new()
+		art.texture = mark
+		art.custom_minimum_size = Vector2(200, 200)
+		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(art)
+
+	var words := _centred_label(engine_text, HUDPalette.DIM, 34)
+	box.add_child(words)
+
+	# The whole card fades up together, where the others type. Same CRT power-on
+	# underneath, so it still belongs to the sequence.
+	_content.modulate.a = 0.0
+	_filter_material.set_shader_parameter("boot", 1.0)
+	var boot_tween := _filter.create_tween()
+	boot_tween.tween_method(
+		func(v: float): _filter_material.set_shader_parameter("boot", v),
+		1.0, 0.0, minf(0.8, engine_seconds * 0.4))
+	var up := _content.create_tween()
+	up.tween_property(_content, "modulate:a", 1.0, minf(0.5, engine_seconds * 0.3))
+
+	await _wait(engine_seconds)
+
+	if not _skip_requested:
+		var fade := _content.create_tween()
+		fade.tween_property(_content, "modulate:a", 0.0, fade_seconds)
+		await _wait(fade_seconds)
+	_content.modulate.a = 1.0
+	_clear_content()
 
 
 # One card: an optional small line above, a headline, an optional suffix in a
@@ -583,10 +647,6 @@ func _show_main_menu() -> void:
 		items.append({"text": "LOAD CAMPAIGN", "action": _open_load_campaign})
 	if _playtest_data_shown():
 		items.append({"text": "PLAYTEST DATA", "action": _open_playtest_data})
-	# TUTORIALS LIVES HERE NOW, not on the pause menu. Same browser, better
-	# place: this is where someone reads about the game, rather than mid-mission
-	# with the screen paused behind them.
-	items.append({"text": "TUTORIALS", "action": _open_tutorials})
 	items.append({"text": "OPTIONS", "action": _open_options})
 	items.append({"text": "QUIT", "action": _quit})
 	_build_menu(menu_title_text, items, HUDPalette.BRIGHT, title_suffix)
@@ -601,11 +661,8 @@ func _show_pause_menu() -> void:
 	_backdrop.color = Color(0.02, 0.03, 0.03, 0.82)
 	_hold_pause()
 	_show_mouse()
-	# TUTORIALS IS NOT HERE ANY MORE. It was the second thing on a pause menu
-	# that a player opens mid-mission to do one of three things: get back in,
-	# change a setting, or leave. _open_tutorials and the lesson browser are
-	# untouched — the tutorial signs still teach, and the pause menu stops
-	# advertising a reference manual to someone who is under fire.
+	# NO TUTORIALS ENTRY, on this menu or the main one. The signs in the depot
+	# still teach; nothing sends the player to a reference manual to read.
 	var items: Array = [{"text": "CONTINUE", "action": _resume_from_pause}]
 	if _playtest_data_shown():
 		items.append({"text": "PLAYTEST DATA", "action": _open_playtest_data})
