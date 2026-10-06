@@ -79,6 +79,7 @@ const MADE := {
 	"bearskin_fur_worn": "_bearskin_fur_worn",
 	"roach_comb": "_roach_comb_plain",
 	"roach_comb_worn": "_roach_comb_worn",
+	"roach_fur": "_roach_fur",
 }
 
 ## Textures that ship a second image beside the albedo: <name>_mask.png, whose
@@ -1324,3 +1325,87 @@ func _roach_comb_plain() -> void:
 
 func _roach_comb_worn() -> void:
 	_roach_comb(true)
+
+
+## ROACH FUR. The Tarleton's crest as clipped horsehair (the human reversed the
+## metal-comb decision; roach_comb is kept beside this). It is NOT the bearskin:
+## that hangs, long and shaggy; this STANDS, short, stiff and clipped to a ridge.
+## So: bristles run straight along v with almost no bend, the bright part is the
+## clipped tips along the crest edge, and the base is denser and darker.
+##
+## SCALE, from the same arithmetic as the comb: PLATE_TILING is 3x in u and 1x in
+## v, ~12 texels per pixel across and ~6 down at 20 m. Nothing that must read is
+## finer than ~28 texels in u: seven bristle CLUMPS of 26-52 texels (summing to
+## SIZE, so it tiles), not hairs. A second, shallower split inside each clump is
+## a modulation only.
+## FLOOR 0.05 (quantises to 0.0645): black leaves a cut-out. CEILING 0.34: a fur
+## highlight above that is wet plastic. Mask is not written (no faction paint).
+const ROACH_CLUMPS := [34, 46, 30, 40, 52, 28, 26]
+
+
+func _roach_fur() -> void:
+	_ceil = 0.33
+	_floor = 0.05
+	var tint := Color(1.0, 0.97, 0.945)
+	var n := ROACH_CLUMPS.size()
+	var edges := []
+	var acc := 0
+	for w: int in ROACH_CLUMPS:
+		edges.append(acc)
+		acc += w
+	var tone := []      # each clump's own brightness
+	var cut := []       # each clump's clipped height: where its tips start
+	var split := []     # position of the shallow inner split
+	var phase := []
+	for k in n:
+		tone.append(0.80 + 0.40 * _hash(k, 1, 5101))
+		cut.append(0.10 + 0.14 * _hash(k, 2, 5102))
+		split.append(0.35 + 0.30 * _hash(k, 3, 5103))
+		phase.append(_hash(k, 4, 5104) * TAU)
+	for y in SIZE:
+		var v := float(y) / SIZE
+		var b := []
+		for k in n:
+			# Stiff: a few texels of sway, no taper.
+			b.append(float(edges[k]) + 3.0 * sin(v * TAU + float(phase[k])))
+		b.append(float(b[0]) + float(SIZE))
+		# Denser toward the base: valleys shallow, tone falls.
+		var dense := smoothstep(0.35, 0.90, v)
+		for x in SIZE:
+			var u := float(x) / SIZE
+			var k := 0
+			var xx := float(x)
+			var found := false
+			for kk in n:
+				for off in [0.0, float(SIZE), -float(SIZE)]:
+					if xx + off >= float(b[kk]) and xx + off < float(b[kk + 1]):
+						k = kk
+						xx += off
+						found = true
+						break
+				if found:
+					break
+			var wk: float = float(b[k + 1]) - float(b[k])
+			var t := clampf((xx - float(b[k])) / wk, 0.0, 1.0)
+			# Across a clump: valley at each edge, a body, a shallow inner split.
+			var body := pow(sin(PI * t), 0.8)
+			var sp := 1.0 - 0.35 * exp(-pow((t - float(split[k])) / 0.09, 2.0))
+			var depth := lerpf(1.0, 0.55, dense)
+			var shape := lerpf(1.0, body * sp, depth)
+			# Coarse bright and dark masses along the clump (32 texels across,
+			# 85 down), so a clump is not a flat stripe.
+			var mass := 0.6 * _value_aniso(u, v, 8, 3, 5110) + 0.4 * _value_aniso(u, v, 5, 2, 5111)
+			var lum := 0.055 + 0.175 * pow(shape, 1.3) * float(tone[k]) * (0.7 + 0.6 * mass)
+			# Gentle darkening toward the base.
+			lum *= lerpf(1.0, 0.70, dense)
+			# Clipped tips: each clump is cut at its own height, with a ragged
+			# lower edge (coarse noise, 32 texels) so the ridge is straight-ish at
+			# a glance and broken up close. Brightest at the very crest.
+			var rag := 0.045 * (_value_aniso(u, v, 8, 6, 5120) - 0.5) \
+					+ 0.03 * (_value(u, 0.4, 16, 5121) - 0.5)
+			var tipv := float(cut[k]) + rag
+			var tip := 1.0 - smoothstep(tipv - 0.015, tipv + 0.045, v)
+			# Not every bristle in a clump is cut equal: tips pool on its lit side.
+			tip *= 0.55 + 0.45 * smoothstep(0.2, 0.7, t)
+			lum = lerpf(lum, 0.12 + 0.21 * pow(shape, 1.2) * (0.8 + 0.4 * mass), tip)
+			_img.set_pixel(x, y, Color(tint.r * lum, tint.g * lum, tint.b * lum))
