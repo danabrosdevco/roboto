@@ -1050,11 +1050,13 @@ func _bear_strands(seed: int, wmin: int, wmax: int) -> Array:
 		var k := 0
 		while total < SIZE:
 			var ln := 120 + int(_hash(i * 31 + k, seed, 17) * 110.0)
-			var gap := 3 + int(_hash(i * 31 + k, seed, 19) * 12.0)
+			# NO GAP: at 3x tiling a gap is a dark horizontal rule round the column
+			# (round six). Segments abut; the step is in brightness only.
+			var gap := 0
 			# Brightness is mostly the STRAND's (constant down its length) with a small
 			# per-segment step: vertical streaks, not a brick pattern, because the
 			# material tiles 3x down the column and every step is a horizontal edge.
-			segs.append([y, ln, 0.82 * _hash(i, seed, 41) + 0.18 * _hash(i * 31 + k, seed, 23)])
+			segs.append([y, ln, 0.9 * _hash(i, seed, 41) + 0.10 * _hash(i * 31 + k, seed, 23)])
 			y += ln + gap
 			total += ln + gap
 			k += 1
@@ -1079,8 +1081,12 @@ func _bearskin(tier: int) -> void:
 	_floor = 0.05
 	var worn := tier == 1
 	var tint := Color(1.0, 0.97, 0.945)   # near neutral, a touch warm: sat ~0.055
-	var under := _bear_strands(100 + tier, 8, 14)
-	var over := _bear_strands(200 + tier, 9, 14)
+	# SCALE IS SET BY THE TILING, NOT THE TEXEL COUNT. The material tiles 3x3, so
+	# a texel is a third of its apparent size: the brief's 8-14 texel strands are
+	# 2.7-4.7 effective, under a pixel at 20 m (round five: invisible). 26-42
+	# texels, clumps on lattices of 2-3 cells (85-128 texels), same two-scale ratio.
+	var under := _bear_strands(100 + tier, 16, 26)
+	var over := _bear_strands(200 + tier, 17, 26)
 	var crown_mask := Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
 	for y in SIZE:
 		var v := float(y) / SIZE
@@ -1099,7 +1105,7 @@ func _bearskin(tier: int) -> void:
 				if x >= int(st[0]) and x < int(st[1]):
 					var sg := _bear_seg(st[2], y)
 					if not sg.is_empty():
-						lum = 0.10 + 0.07 * float(sg[2])
+						lum = 0.09 + 0.05 * float(sg[2])
 					break
 			# Layer 1: the nap on top. Missing in gaps, so the dark under-coat
 			# shows through between strands.
@@ -1111,13 +1117,13 @@ func _bearskin(tier: int) -> void:
 					var d: int = sg[0]
 					var ln: int = sg[1]
 					var b: float = sg[2]
-					lum = 0.10 + 0.15 * b
+					lum = 0.085 + 0.16 * b
 					# Darker toward the root (the foot) of each strand: the
 					# valley between hairs.
 					lum *= 0.80 + 0.20 * (1.0 - float(d) / float(ln))
 					# Tips: about 1 strand in 8, the head of the segment only.
-					if _hash(int(st[0]), int(sg[1]), 29) < 0.125 and d < 12:
-						lum += 0.10 * (1.0 - float(d) / 12.0)
+					if _hash(int(st[0]), int(sg[1]), 29) < 0.2 and d < 24:
+						lum += 0.10 * (1.0 - float(d) / 24.0)
 						tip = true
 					# Flat shiny strands, worn only: laid down, even, lighter.
 					if worn and _hash(int(st[0]), int(ln), 31) < 0.13:
@@ -1125,14 +1131,14 @@ func _bearskin(tier: int) -> void:
 						flat = true
 					break
 			# Clumps: soft, 40-65 texels (period 4 = 64, period 5 = 51).
-			var cn := 0.6 * _value_aniso(u, v, 4, 2, 301) + 0.4 * _value_aniso(u, v, 5, 3, 302)
+			var cn := 0.6 * _value_aniso(u, v, 2, 2, 301) + 0.4 * _value_aniso(u, v, 3, 2, 302)
 			var cd := 0.55 if worn else 0.70
 			var cf := cd + (1.0 - cd) * smoothstep(0.30, 0.62, cn)
 			lum *= cf
 			if worn:
 				# Matted patches: fur felted into a flat, even, slightly paler
 				# mass, soft-edged, ~60 texels.
-				var mat := _value_aniso(u, v, 4, 2, 311)
+				var mat := _value_aniso(u, v, 2, 2, 311)
 				var m := smoothstep(0.55, 0.68, mat)
 				lum = lerpf(lum, 0.125 + 0.015 * _value(u, v, 16, 312), m)
 			lum *= grad
