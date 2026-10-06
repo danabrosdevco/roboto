@@ -75,6 +75,8 @@ const MADE := {
 	"pauldron_plate_worn": "_pauldron_worn",
 	"pauldron_plate_dress": "_pauldron_dress",
 	"pauldron_lame": "_pauldron_lame",
+	"bearskin_fur": "_bearskin_fur",
+	"bearskin_fur_worn": "_bearskin_fur_worn",
 }
 
 ## Textures that ship a second image beside the albedo: <name>_mask.png, whose
@@ -82,7 +84,8 @@ const MADE := {
 ## when derive_mask_from_albedo is off. See _epaulette for why these cannot use
 ## the shader's luminance band instead.
 const MASKED := ["epaulette_plain", "epaulette_braid", "epaulette_pips", "pauldron_plate",
-		"pauldron_plate_worn", "pauldron_plate_dress", "pauldron_lame"]
+		"pauldron_plate_worn", "pauldron_plate_dress", "pauldron_lame",
+		"bearskin_fur", "bearskin_fur_worn"]
 
 ## Emission for the few that want it, as {name: [colour, energy]}. The pack's
 ## own glitch_tx_1.tres is the pattern being followed.
@@ -94,6 +97,9 @@ var _mask: Image
 ## The ceiling for the texture being drawn. CEIL unless a texture raises it for
 ## itself; reset per texture so nothing else in the pack moves.
 var _ceil := CEIL
+## Per-channel floor for the texture being drawn; 0 unless a texture sets one
+## (the bearskin must never reach black). Reset per texture.
+var _floor := 0.0
 
 
 func _initialize() -> void:
@@ -128,6 +134,8 @@ func _initialize() -> void:
 		_img = Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
 		_mask = null
 		_ceil = CEIL
+		_floor = 0.0
+		_bear_alt_mask = null
 		if MASKED.has(name):
 			_mask = Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
 		call(MADE[name])
@@ -143,6 +151,10 @@ func _initialize() -> void:
 				print("FAIL  could not write mask for %s (%s)" % [name, error_string(merr)])
 				quit(1)
 				return
+		# Bearskin only: the optional crown-band mask, kept beside the real one so
+		# the human can pick from a picture. Wire it by renaming it over _mask.png.
+		if _bear_alt_mask != null:
+			_bear_alt_mask.save_png(base.path_join(name + "_mask_crown.png"))
 		_material(base, name)
 		written += 1
 		print("      %-20s %s" % [name, _report()])
@@ -161,9 +173,9 @@ func _finish() -> void:
 			var g := (_hash(x, y, 9901) - 0.5) * 0.045
 			var d := (_bayer(x, y) - 0.5) / float(LEVELS)
 			var out := Color(
-					_q(clampf(c.r + g + d, 0.0, _ceil)),
-					_q(clampf(c.g + g + d, 0.0, _ceil)),
-					_q(clampf(c.b + g + d, 0.0, _ceil)))
+					_q(clampf(c.r + g + d, _floor, _ceil)),
+					_q(clampf(c.g + g + d, _floor, _ceil)),
+					_q(clampf(c.b + g + d, _floor, _ceil)))
 			_img.set_pixel(x, y, out)
 
 
@@ -991,3 +1003,174 @@ func _pauldron_dress() -> void:
 
 func _pauldron_lame() -> void:
 	_pauldron(0, true)
+
+
+## BEARSKIN. The Walker's officer hat: a 0.96 m column and a 0.63 m crown, the
+## largest cloth in the game, drawn as fur. docs/briefs/BEARSKIN_FUR.md governs.
+##
+## THE TWO NUMBERS THAT DECIDE IT, both unusual. A FLOOR: luminance never below
+## BEAR_FLOOR, because pure black leaves a cut-out silhouette with no interior
+## (pauldron_plate measures 0.000 and that is most of why it reads as chrome).
+## And a low CEILING, 0.34, because a bright highlight on fur is wet plastic.
+## The faction colour is NOT carried (mask is all 0 bar the optional crown
+## band), so there is no multiply to feed and no excuse for brightness.
+##
+## NOTHING HORIZONTAL. The column is a 16-sided cylinder: any horizontal band
+## becomes sixteen marching rings. Every field below varies along u fast and
+## along v slowly, except the strand segments, which are hard-edged in u and
+## long in v.
+##
+## Structure, in order of work done at distance:
+##   1. strands     hard-edged vertical streaks 8-14 texels wide, in segments
+##                  of 70-200 texels that never span the full height; two
+##                  layers with different edges so the silhouette of a strand
+##                  is broken by the one beneath it (that is the depth)
+##   2. clumps      soft darker masses 40-65 texels, grouping the strands
+##   3. gradient    gentle, brighter in the top third
+##   4. tips        short bright strokes at the head of about 1 segment in 8
+## tier 0 issue, tier 1 worn: matted felted patches, heavier clumping, some
+## strands laid flat and shinier.
+const BEAR_FLOOR := 0.075
+## Optional faction highlight: the top rows of the crown. See _bearskin.
+const BEAR_CROWN_BAND := 10
+
+func _bear_strands(seed: int, wmin: int, wmax: int) -> Array:
+	# Returns [[x0, x1, [[y0, len, bright], ...]], ...] covering 0..SIZE exactly.
+	var out := []
+	var x := int(_hash(seed, 1, 7) * 6.0)
+	var first := x
+	var i := 0
+	while x < first + SIZE:
+		var w := wmin + int(_hash(i, seed, 11) * float(wmax - wmin + 1))
+		if first + SIZE - (x + w) < wmin:
+			w = first + SIZE - x
+		var segs := []
+		var y := int(_hash(i, seed, 13) * SIZE)
+		var total := 0
+		var k := 0
+		while total < SIZE:
+			var ln := 120 + int(_hash(i * 31 + k, seed, 17) * 110.0)
+			var gap := 3 + int(_hash(i * 31 + k, seed, 19) * 12.0)
+			# Brightness is mostly the STRAND's (constant down its length) with a small
+			# per-segment step: vertical streaks, not a brick pattern, because the
+			# material tiles 3x down the column and every step is a horizontal edge.
+			segs.append([y, ln, 0.82 * _hash(i, seed, 41) + 0.18 * _hash(i * 31 + k, seed, 23)])
+			y += ln + gap
+			total += ln + gap
+			k += 1
+		out.append([x, x + w, segs])
+		x += w
+		i += 1
+	return out
+
+
+## The segment covering row y on a strand, or [] if it is in a gap. Segments
+## wrap vertically, so the texture has no seam, but none is the full height.
+func _bear_seg(segs: Array, y: int) -> Array:
+	for s: Array in segs:
+		var d := posmod(y - int(s[0]), SIZE)
+		if d < int(s[1]):
+			return [d, s[1], s[2]]
+	return []
+
+
+func _bearskin(tier: int) -> void:
+	_ceil = 0.34
+	_floor = 0.05
+	var worn := tier == 1
+	var tint := Color(1.0, 0.97, 0.945)   # near neutral, a touch warm: sat ~0.055
+	var under := _bear_strands(100 + tier, 8, 14)
+	var over := _bear_strands(200 + tier, 9, 14)
+	var crown_mask := Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
+	for y in SIZE:
+		var v := float(y) / SIZE
+		# Gentle, and PERIODIC: the material tiles 3x down the column (FUR_TILING),
+		# so a one-way ramp restarts every 0.32 m as a ring (round one saw exactly
+		# that). +-6% on a cosine has no seam. Any steeper and
+		# it reads as a gradient fill.
+		var grad := 1.0 + 0.06 * cos(v * TAU)
+		for x in SIZE:
+			var u := float(x) / SIZE
+			# Layer 0: the under-coat, darker, always present (no black holes).
+			var lum := 0.095
+			var tip := false
+			var flat := false
+			for st: Array in under:
+				if x >= int(st[0]) and x < int(st[1]):
+					var sg := _bear_seg(st[2], y)
+					if not sg.is_empty():
+						lum = 0.10 + 0.07 * float(sg[2])
+					break
+			# Layer 1: the nap on top. Missing in gaps, so the dark under-coat
+			# shows through between strands.
+			for st: Array in over:
+				if x >= int(st[0]) and x < int(st[1]):
+					var sg := _bear_seg(st[2], y)
+					if sg.is_empty():
+						break
+					var d: int = sg[0]
+					var ln: int = sg[1]
+					var b: float = sg[2]
+					lum = 0.10 + 0.15 * b
+					# Darker toward the root (the foot) of each strand: the
+					# valley between hairs.
+					lum *= 0.80 + 0.20 * (1.0 - float(d) / float(ln))
+					# Tips: about 1 strand in 8, the head of the segment only.
+					if _hash(int(st[0]), int(sg[1]), 29) < 0.125 and d < 12:
+						lum += 0.10 * (1.0 - float(d) / 12.0)
+						tip = true
+					# Flat shiny strands, worn only: laid down, even, lighter.
+					if worn and _hash(int(st[0]), int(ln), 31) < 0.13:
+						lum = 0.205 + 0.02 * b
+						flat = true
+					break
+			# Clumps: soft, 40-65 texels (period 4 = 64, period 5 = 51).
+			var cn := 0.6 * _value_aniso(u, v, 4, 2, 301) + 0.4 * _value_aniso(u, v, 5, 3, 302)
+			var cd := 0.55 if worn else 0.70
+			var cf := cd + (1.0 - cd) * smoothstep(0.30, 0.62, cn)
+			lum *= cf
+			if worn:
+				# Matted patches: fur felted into a flat, even, slightly paler
+				# mass, soft-edged, ~60 texels.
+				var mat := _value_aniso(u, v, 4, 2, 311)
+				var m := smoothstep(0.55, 0.68, mat)
+				lum = lerpf(lum, 0.125 + 0.015 * _value(u, v, 16, 312), m)
+			lum *= grad
+			lum = clampf(lum, BEAR_FLOOR, 0.31)
+			_img.set_pixel(x, y, Color(tint.r * lum, tint.g * lum, tint.b * lum))
+			if y < BEAR_CROWN_BAND:
+				crown_mask.set_pixel(x, y, Color(1, 0, 0))
+	# Mask: everything held out. The silhouette does the rank-reading.
+	if _mask != null:
+		_mask.fill(Color(0, 0, 0))
+	if tier == 0:
+		_bear_alt_mask = crown_mask
+
+
+var _bear_alt_mask: Image
+
+
+func _bearskin_fur() -> void:
+	_bearskin(0)
+
+
+func _bearskin_fur_worn() -> void:
+	_bearskin(1)
+
+
+## _value with separate lattice periods across (pu) and down (pv): clumps that
+## are narrow but long, so they group strands instead of banding the column.
+func _value_aniso(u: float, v: float, pu: int, pv: int, seed: int) -> float:
+	var fx := u * pu
+	var fy := v * pv
+	var ix := int(floorf(fx))
+	var iy := int(floorf(fy))
+	var tx := fx - ix
+	var ty := fy - iy
+	tx = tx * tx * (3.0 - 2.0 * tx)
+	ty = ty * ty * (3.0 - 2.0 * ty)
+	var a := _hash(posmod(ix, pu), posmod(iy, pv), seed)
+	var b := _hash(posmod(ix + 1, pu), posmod(iy, pv), seed)
+	var c := _hash(posmod(ix, pu), posmod(iy + 1, pv), seed)
+	var d := _hash(posmod(ix + 1, pu), posmod(iy + 1, pv), seed)
+	return lerpf(lerpf(a, b, tx), lerpf(c, d, tx), ty)
