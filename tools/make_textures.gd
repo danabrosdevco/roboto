@@ -41,8 +41,9 @@ extends SceneTree
 # ─────────────────────────────────────────────
 
 const SIZE := 256
-## Nothing in the pack goes brighter than about 0.45. Neither does anything
-## here, so a new surface sits in a level at the same exposure as its
+## The convention for textures we generate: about 0.45. It is NOT a measured
+## property of the pack (peaks there reach 1.0; mean ~0.175 is the signature).
+## Nothing generated here goes brighter, so a new surface sits in a level at the same exposure as its
 ## neighbours instead of glowing.
 const CEIL := 0.46
 ## Levels per channel in the final quantise.
@@ -90,6 +91,9 @@ const EMISSIVE := {}
 var _img: Image
 ## Only set while a MASKED texture is being drawn; null otherwise.
 var _mask: Image
+## The ceiling for the texture being drawn. CEIL unless a texture raises it for
+## itself; reset per texture so nothing else in the pack moves.
+var _ceil := CEIL
 
 
 func _initialize() -> void:
@@ -123,6 +127,7 @@ func _initialize() -> void:
 			continue
 		_img = Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
 		_mask = null
+		_ceil = CEIL
 		if MASKED.has(name):
 			_mask = Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
 		call(MADE[name])
@@ -156,9 +161,9 @@ func _finish() -> void:
 			var g := (_hash(x, y, 9901) - 0.5) * 0.045
 			var d := (_bayer(x, y) - 0.5) / float(LEVELS)
 			var out := Color(
-					_q(clampf(c.r + g + d, 0.0, CEIL)),
-					_q(clampf(c.g + g + d, 0.0, CEIL)),
-					_q(clampf(c.b + g + d, 0.0, CEIL)))
+					_q(clampf(c.r + g + d, 0.0, _ceil)),
+					_q(clampf(c.g + g + d, 0.0, _ceil)),
+					_q(clampf(c.b + g + d, 0.0, _ceil)))
 			_img.set_pixel(x, y, out)
 
 
@@ -722,6 +727,7 @@ func _epaulette(kind: int) -> void:
 			var edge: int = mini(mini(x, SIZE - 1 - x), mini(y, SIZE - 1 - y))
 			var c: Color
 			var painted := true
+			var chipped := false
 			if edge < 10:
 				c = _shade(trim, 0.88 + 0.24 * _fbm(u, v, 701, 3, 8))
 				painted = false
@@ -762,7 +768,12 @@ func _epaulette(kind: int) -> void:
 								c = _shade(trim, 0.58)    # the dished centre
 			_img.set_pixel(x, y, c)
 			if _mask != null:
-				_mask.set_pixel(x, y, Color(1, 0, 0) if painted else Color(0, 0, 0))
+				# A chip keeps 40% of the paint weight. Fully unpainted bare metal
+				# beside a saturated cyan field reads pinkish by contrast alone (the
+				# measured pixels are neutral, see the round-three notes), so the
+				# worn metal keeps a little of the livery. Rim and rivets stay at 0.
+				var mv := 1.0 if painted else (0.4 if chipped else 0.0)
+				_mask.set_pixel(x, y, Color(mv, 0, 0))
 
 
 func _epaulette_plain() -> void:
@@ -827,10 +838,10 @@ func _brush(x: int, y: int, xcell: int, seed: int) -> float:
 func _sweep_base(v: float, lo: float, peak: float) -> float:
 	var knots := [
 		Vector2(0.00, lo * 1.5),
-		Vector2(0.12, lerpf(lo, peak, 0.62)),
+		Vector2(0.12, lerpf(lo, peak, 0.78)),
 		Vector2(0.285, peak),
-		Vector2(0.44, lerpf(lo, peak, 0.52)),
-		Vector2(0.62, lerpf(lo, peak, 0.20)),
+		Vector2(0.44, lerpf(lo, peak, 0.66)),
+		Vector2(0.62, lerpf(lo, peak, 0.32)),
 		Vector2(0.80, lo),
 		Vector2(1.00, lo * 1.2),
 	]
@@ -857,16 +868,24 @@ func _sweep_base(v: float, lo: float, peak: float) -> float:
 ## and it lands along x on the lames. The sweep stays on v; it is long-
 ## wavelength and survives either mapping.
 func _pauldron(tier: int, lame: bool = false) -> void:
+	# THE CEILING IS RAISED FOR THIS FAMILY ONLY. faction_metal paints with
+	# albedo * colour * 2, a multiply, so the faction colour is only as bright as
+	# the albedo under it; at CEIL 0.46 a strong sweep forced the mean down and
+	# took the colour with it. CEIL is our convention, not a pack property: the
+	# pack's own peaks reach 1.0 (grass_6 0.999, grass_3 0.976, stone_3_2 0.937)
+	# with a mean near 0.175. The headroom goes to the crest and upper shoulder,
+	# not to a wider ramp; the lower third stays where it was.
+	_ceil = 0.72
 	var field := Color(0.318, 0.305, 0.272)    # paint colour: sets hue and sat
 	var field_lum := field.r * 0.2126 + field.g * 0.7152 + field.b * 0.0722
 	var steel := Color(0.15, 0.157, 0.165)      # bare rolled steel, a touch cool
 	var bare := Color(0.40, 0.415, 0.415)       # worn through to bright metal
 	var seam := Color(0.045, 0.045, 0.05)
 	var rim := 14                               # rolled edge, top and bottom
-	var peak: float = [0.31, 0.29, 0.32][tier]        # the broad shoulder of light
-	var crest_add: float = [0.14, 0.13, 0.15][tier]   # narrow crest on top of it
+	var peak: float = [0.53, 0.54, 0.54][tier]        # the broad shoulder of light
+	var crest_add: float = [0.21, 0.21, 0.22][tier]   # narrow crest on top of it
 	var lo: float = [0.085, 0.075, 0.09][tier]        # floor of the lower third
-	var wear: float = [1.45, 2.35, 0.95][tier]          # scuff appetite
+	var wear: float = [2.1, 3.2, 1.5][tier]          # scuff appetite
 	var dirt: float = [0.12, 0.26, 0.06][tier]
 	var rivets := []
 	if not lame:
@@ -879,6 +898,7 @@ func _pauldron(tier: int, lame: bool = false) -> void:
 			var u := float(x) / SIZE
 			var c: Color
 			var painted := true
+			var chipped := false
 			# Fine grain: along x on the plate, along y on the lame.
 			var g1 := _brush(y, x, 64, 801) if lame else _brush(x, y, 64, 801)
 			var g2 := _brush(y, x, 16, 802) if lame else _brush(x, y, 16, 802)
@@ -918,13 +938,16 @@ func _pauldron(tier: int, lame: bool = false) -> void:
 				# the dark lower third does not glow like a lamp.
 				var near := 1.0 - smoothstep(rim + 2.0, rim + 36.0, float(edge))
 				var rub := (1.15 * near + 0.5 * crest) * wear
-				var chip := _brush(x, int(y / 3), 20, 830) * 0.7 + _value(u, v, 6, 831) * 0.3
+				# CHUNKY AND FEW: nothing finer than ~8 texels survives at squad
+				# distance, so round two's many small chips were invisible.
+				var chip := _brush(x, int(y / 6), 40, 830) * 0.6 + _value(u, v, 5, 831) * 0.4
 				if lame:
-					chip = _brush(int(x / 3), y, 20, 830) * 0.7 + _value(u, v, 6, 831) * 0.3
-				if chip > 0.9 - rub * 0.55:
-					var bl := clampf(0.16 + 0.55 * lum_target, 0.0, 0.42)
+					chip = _brush(int(x / 6), y, 40, 830) * 0.6 + _value(u, v, 5, 831) * 0.4
+				if chip > 0.93 - rub * 0.42:
+					var bl := clampf(0.16 + 0.55 * lum_target, 0.0, 0.60)
 					c = _shade(bare, (bl / 0.41) * (0.85 + 0.3 * grain))
 					painted = false
+					chipped = true
 				# Dress trim: a pair of bare lines across the dome, held out of
 				# the mask so the faction field reads as inlaid between them.
 				if tier == 2 and not lame and (absi(y - 98) < 2 or absi(y - 106) < 2):
@@ -946,7 +969,12 @@ func _pauldron(tier: int, lame: bool = false) -> void:
 			c = _shade(c, _grime(u, v, 840, dirt))
 			_img.set_pixel(x, y, c)
 			if _mask != null:
-				_mask.set_pixel(x, y, Color(1, 0, 0) if painted else Color(0, 0, 0))
+				# A chip keeps 40% of the paint weight. Fully unpainted bare metal
+				# beside a saturated cyan field reads pinkish by contrast alone (the
+				# measured pixels are neutral, see the round-three notes), so the
+				# worn metal keeps a little of the livery. Rim and rivets stay at 0.
+				var mv := 1.0 if painted else (0.4 if chipped else 0.0)
+				_mask.set_pixel(x, y, Color(mv, 0, 0))
 
 
 func _pauldron_plate() -> void:
