@@ -70,13 +70,14 @@ const MADE := {
 	"epaulette_plain": "_epaulette_plain",
 	"epaulette_braid": "_epaulette_braid",
 	"epaulette_pips": "_epaulette_pips",
+	"pauldron_plate": "_pauldron_plate",
 }
 
 ## Textures that ship a second image beside the albedo: <name>_mask.png, whose
 ## red channel is the faction-paint mask Character/faction_metal.gdshader reads
 ## when derive_mask_from_albedo is off. See _epaulette for why these cannot use
 ## the shader's luminance band instead.
-const MASKED := ["epaulette_plain", "epaulette_braid", "epaulette_pips"]
+const MASKED := ["epaulette_plain", "epaulette_braid", "epaulette_pips", "pauldron_plate"]
 
 ## Emission for the few that want it, as {name: [colour, energy]}. The pack's
 ## own glitch_tx_1.tres is the pattern being followed.
@@ -770,3 +771,112 @@ func _epaulette_braid() -> void:
 
 func _epaulette_pips() -> void:
 	_epaulette(2)
+
+
+# ── Pauldron plate ───────────────────────────────────────────────────────────
+#
+# Painted steel for the shoulder dome and its lames, as opposed to the cloth
+# board above. Seen only on curves, small (a lame is ~12 px tall at squad
+# distance) and kit the robot has earned, so: a clean field, not a rusted one.
+#
+# THE MASK IS THE DESIGN. Same arrangement as _epaulette — red is paint, and the
+# trim cannot be held out by luminance because CEIL sits inside the shader's
+# band — but inverted in emphasis: here the FIELD is the larger part (about 65%
+# of the tile) and what is held out is the places real painted armour wears back
+# to metal first: the rolled edge top and bottom, the rivet heads, and chipped
+# scuffs that gather toward the edges and on the highlight crest.
+#
+# GRAIN RUNS HORIZONTALLY, per row. Rolled steel is finished that way, and it
+# is the one direction that does not skew as the UVs wrap round a sphere or a
+# cylinder arc. Every noise below is stretched along x for that reason, and
+# lattices wrap on x so the tile joins.
+#
+# THE HIGHLIGHT IS PAINTED IN. GL compatibility lights flat and these pieces are
+# curved, so the sweep of light has to be in the albedo. It sits in the upper
+# third, is broad with a narrower crest inside it, wobbles and breaks along u
+# so it reads as a reflection travelling over a curve and not as a stripe, and
+# tops out below CEIL so the field stays inside the paint band.
+
+## Noise that is smooth along x (cells `xcell` px wide, wrapping) and independent
+## per row, which is what brushed grain looks like.
+func _brush(x: int, y: int, xcell: int, seed: int) -> float:
+	var cells := SIZE / xcell
+	var fx := float(x) / float(xcell)
+	var i := int(floorf(fx))
+	var t := fx - i
+	t = t * t * (3.0 - 2.0 * t)
+	return lerpf(_hash(posmod(i, cells), y, seed), _hash(posmod(i + 1, cells), y, seed), t)
+
+
+func _pauldron_plate() -> void:
+	var field := Color(0.318, 0.305, 0.272)    # the paint, inside the band
+	var steel := Color(0.15, 0.157, 0.165)      # bare rolled steel, a touch cool
+	var bare := Color(0.40, 0.415, 0.415)      # worn through to bright metal
+	var seam := Color(0.045, 0.045, 0.05)
+	var rim := 14                              # rolled edge, top and bottom
+	var rivets := []
+	for i in 16:
+		rivets.append(Vector2(8 + i * 16, 168))
+	for y in SIZE:
+		var v := float(y) / SIZE
+		# Distance in rows to the nearest edge, wrapping the tile vertically.
+		var edge := mini(y, SIZE - 1 - y)
+		# The highlight: broad shoulder of light centred a third of the way
+		# down, with the crest a little above it.
+		var crest := exp(-pow((v - 0.285) / 0.035, 2.0))
+		for x in SIZE:
+			var u := float(x) / SIZE
+			var c: Color
+			var painted := true
+			# Grain per row: long fibres plus a finer long layer.
+			var grain := 0.5 * _brush(x, y, 64, 801) + 0.5 * _brush(x, y, 16, 802)
+			var wob := 0.03 * sin(u * TAU * 2.0 + 1.3) + 0.02 * sin(u * TAU * 3.0)
+			# The sweep breaks up along u, so it is a reflection and not a rule.
+			var gap := _value(u, v * 0.3, 5, 810)
+			var sweep := exp(-pow((v + wob - 0.32) / 0.13, 2.0)) * (0.55 + 0.9 * gap)
+			var spec := exp(-pow((v + wob - 0.285) / 0.035, 2.0)) * smoothstep(0.30, 0.70, gap)
+			if edge < rim:
+				# Rolled edge in four hard steps across its section, like the
+				# turned lip on the reference: dark underside, bright crest.
+				var s := edge
+				var k := 0.62 if s < 3 else (1.55 if s < 6 else (1.15 if s < 9 else 0.8))
+				if y >= SIZE / 2:
+					k = 0.62 if s < 3 else (1.0 if s < 6 else (1.3 if s < 9 else 0.8))
+				c = _shade(steel, k * (0.85 + 0.3 * grain))
+				painted = false
+			elif edge < rim + 2:
+				c = seam
+				painted = false
+			else:
+				# Field. Lighter toward the highlight, a little darker down the
+				# lower third where the plate turns from the light.
+				var f := 0.84 + 0.46 * sweep + 0.22 * spec
+				f *= 1.0 - 0.14 * smoothstep(0.55, 0.9, v)
+				f *= 0.93 + 0.14 * grain
+				# Soft mottling in the paint itself, long in x.
+				f *= 0.94 + 0.12 * _value(u * 2.0, v * 0.5, 4, 820)
+				c = _shade(field, f)
+				# Scuffs: chipped to metal, gathering toward the edges and on
+				# the crest of the highlight where a hand or a strap rubs.
+				var near := 1.0 - smoothstep(rim + 2.0, rim + 20.0, float(edge))
+				var rub := 0.80 * near + 0.5 * crest
+				var chip := _brush(x, int(y / 3), 20, 830) * 0.7 + _value(u, v, 6, 831) * 0.3
+				if chip > 0.9 - rub * 0.55:
+					c = _shade(bare, 0.85 + 0.3 * grain)
+					painted = false
+			# Rivet heads: a dome with a lit upper-left and a dark lower-right,
+			# nine texels across, in a tight row of sixteen: ten-texel rivets in a row of eight rendered as two staring eyes on the dome, because a sphere shows only two of them.
+			for rv: Vector2 in rivets:
+				var dx := float(x) - rv.x
+				var dy := float(y) - rv.y
+				var r := sqrt(dx * dx + dy * dy)
+				if r < 4.5:
+					painted = false
+					if r >= 3.6:
+						c = seam
+					else:
+						c = _shade(bare, 1.15 if (dx + dy) < 0.0 else 0.7)
+			c = _shade(c, _grime(u, v, 840, 0.12))
+			_img.set_pixel(x, y, c)
+			if _mask != null:
+				_mask.set_pixel(x, y, Color(1, 0, 0) if painted else Color(0, 0, 0))
