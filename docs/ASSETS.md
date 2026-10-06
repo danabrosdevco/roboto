@@ -46,8 +46,18 @@ changed under me mid-project and I quoted the old ones for weeks.
 | agent max climb | **0.25 m**, i.e. exactly 1 voxel | same — but `salient` uses 0.5; **check the scene** |
 | edge max error | **1.3 cells = 0.33 m** | same |
 | texture size / format | **256 x 256, RGB8** | the PSX pack, bar two files |
-| texture luminance | mean ~0.20, peak **capped 0.46** | `CEIL` in `tools/make_textures.gd` |
-| texture quantise | **32 levels/channel, 4x4 Bayer** | `LEVELS`, same file |
+| texture **mean luminance** | **0.175 average**, nearly all 0.10–0.28 | measured over all 212, `tools/probe_texture_stats.gd` |
+| texture peak / saturation | **wide — do not match these** | peaks reach 1.0 (emission maps, grass), saturation reaches 0.92 (the hell set) |
+| new textures: ceiling | peak **capped 0.46** | `CEIL` in `tools/make_textures.gd` — a rule we impose, **not** a property of the pack |
+| new textures: quantise | **32 levels/channel, 4x4 Bayer** | `LEVELS`, same file |
+
+**Mean luminance is the pack's signature; peak and saturation are not.** An
+earlier version of this table said "mean ~0.20, peak ~0.45, saturation
+0.08–0.25" as if all three were measured. Only the first was. The other two
+described the nine textures this project had generated, and were quoted back as
+though they described the 203 it had not — which is how a measured number
+becomes folklore. `tools/probe_texture_stats.gd` prints all three for any
+folder; run it rather than trusting this table.
 
 **Axis mapping.** FuncGodot maps Quake `(x, y, z)` to Godot `(y, z, x)`.
 
