@@ -96,6 +96,20 @@ const SHOTS: Array = [
 	["salient", "10_no_mans_land", Vector3(-95.0, EYE, 105.0), Vector3(60.0, 2.0, 55.0), 64.0, "eye"],
 	["salient", "11_the_crater", Vector3(-60.0, EYE, 46.0), Vector3(70.0, 2.0, -10.0), 64.0, "eye"],
 	["salient", "12_their_wire", Vector3(-20.0, EYE, -30.0), Vector3(120.0, 2.0, -10.0), 62.0, "eye"],
+	# The three ways across, from the Trenchworks/Anchors markers the builder
+	# writes. "eye" puts the camera 1.65 m above whatever is under it, so inside
+	# a trench that is 1.65 above the FLOOR — which is the only way to see what
+	# a trench actually looks like to the squad in it.
+	["salient", "T1_along_the_trench", Vector3(-104.0, EYE, -14.0), Vector3(-30.0, 1.2, -14.0), 64.0, "eye"],
+	["salient", "T2_over_the_parapet", Vector3(-62.0, EYE, -14.0), Vector3(-62.0, 3.0, -92.0), 64.0, "eye"],
+	["salient", "T3_the_dugout", Vector3(-26.0, EYE, -26.0), Vector3(-26.0, 0.8, -17.0), 66.0, "eye"],
+	["salient", "T4_the_sap_head", Vector3(-70.5, EYE, -20.0), Vector3(-70.5, 0.8, -36.0), 64.0, "eye"],
+	["salient", "T5_the_sunken_road", Vector3(-108.0, EYE, -122.0), Vector3(-62.0, 1.2, -103.0), 64.0, "eye"],
+	["salient", "T6_the_blown_span", Vector3(-84.0, EYE, -110.0), Vector3(-38.0, 2.0, -98.0), 62.0, "eye"],
+	["salient", "T7_the_crater_chain", Vector3(-92.0, EYE, 130.0), Vector3(-16.0, 1.5, 130.0), 64.0, "eye"],
+	["salient", "T8_their_uncut_wire", Vector3(-14.0, EYE, 130.0), Vector3(34.0, 1.5, 130.0), 62.0, "eye"],
+	["salient", "T9_the_ditched_tank", Vector3(-52.0, EYE, -114.0), Vector3(-34.0, 2.0, -102.0), 62.0, "eye"],
+	["salient", "T10_the_works_aerial", Vector3(-70.0, 210.0, 210.0), Vector3(-50.0, 0.0, -40.0), 60.0, "abs"],
 	# Heliostat had no cameras at all — 407 pieces and two objectives that
 	# nobody had ever looked at. The field is x -236..236, z -220..215, with the
 	# tower at the origin and the plant on its east edge around x 200.
