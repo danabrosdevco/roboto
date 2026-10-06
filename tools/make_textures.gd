@@ -71,13 +71,17 @@ const MADE := {
 	"epaulette_braid": "_epaulette_braid",
 	"epaulette_pips": "_epaulette_pips",
 	"pauldron_plate": "_pauldron_plate",
+	"pauldron_plate_worn": "_pauldron_worn",
+	"pauldron_plate_dress": "_pauldron_dress",
+	"pauldron_lame": "_pauldron_lame",
 }
 
 ## Textures that ship a second image beside the albedo: <name>_mask.png, whose
 ## red channel is the faction-paint mask Character/faction_metal.gdshader reads
 ## when derive_mask_from_albedo is off. See _epaulette for why these cannot use
 ## the shader's luminance band instead.
-const MASKED := ["epaulette_plain", "epaulette_braid", "epaulette_pips", "pauldron_plate"]
+const MASKED := ["epaulette_plain", "epaulette_braid", "epaulette_pips", "pauldron_plate",
+		"pauldron_plate_worn", "pauldron_plate_dress", "pauldron_lame"]
 
 ## Emission for the few that want it, as {name: [colour, energy]}. The pack's
 ## own glitch_tx_1.tres is the pattern being followed.
@@ -794,8 +798,9 @@ func _epaulette_pips() -> void:
 # THE HIGHLIGHT IS PAINTED IN. GL compatibility lights flat and these pieces are
 # curved, so the sweep of light has to be in the albedo. It sits in the upper
 # third, is broad with a narrower crest inside it, wobbles and breaks along u
-# so it reads as a reflection travelling over a curve and not as a stripe, and
-# tops out below CEIL so the field stays inside the paint band.
+# so it reads as a reflection travelling over a curve and not as a stripe. The
+# mask bypasses the paint band, so luminance is NOT constrained to it: the crest
+# goes to the ceiling and the lower third near black (round two, see _sweep_base).
 
 ## Noise that is smooth along x (cells `xcell` px wide, wrapping) and independent
 ## per row, which is what brushed grain looks like.
@@ -808,64 +813,126 @@ func _brush(x: int, y: int, xcell: int, seed: int) -> float:
 	return lerpf(_hash(posmod(i, cells), y, seed), _hash(posmod(i + 1, cells), y, seed), t)
 
 
-func _pauldron_plate() -> void:
-	var field := Color(0.318, 0.305, 0.272)    # the paint, inside the band
+## Luminance of the field's sweep at height v (0..1 down the tile), BEFORE the
+## crest is added. Knots are {v, luminance}; smoothstep between them so the
+## ramp has no kinks for the eye to catch as bands.
+##
+## ROUND TWO'S WHOLE POINT. Round one hit every number and photographed as
+## plastic because it spent its luminance on an even mid-field (0.25 everywhere)
+## and left the sweep subtle. Two facts in faction_metal.gdshader decide
+## where luminance should go: an explicit mask BYPASSES the paint band, so
+## luminance is free to be anything; and the paint is albedo * colour * 2, a
+## multiply, so the faction colour only reads where the albedo is bright. So
+## the ramp takes the full range: crest at the ceiling, lower third near black.
+func _sweep_base(v: float, lo: float, peak: float) -> float:
+	var knots := [
+		Vector2(0.00, lo * 1.5),
+		Vector2(0.12, lerpf(lo, peak, 0.62)),
+		Vector2(0.285, peak),
+		Vector2(0.44, lerpf(lo, peak, 0.52)),
+		Vector2(0.62, lerpf(lo, peak, 0.20)),
+		Vector2(0.80, lo),
+		Vector2(1.00, lo * 1.2),
+	]
+	for i in knots.size() - 1:
+		var a: Vector2 = knots[i]
+		var b: Vector2 = knots[i + 1]
+		if v <= b.x:
+			return lerpf(a.y, b.y, smoothstep(a.x, b.x, v))
+	return (knots[knots.size() - 1] as Vector2).y
+
+
+## One plate texture, four ages and a lame variant.
+##   tier 0 service   clean, light wear: the tier a new pauldron wears
+##   tier 1 worn      more chips and edge-wear, darker grime, crest a little lower
+##   tier 2 dress     cleanest, brightest crest, and a bare trim line held out
+##                    of the mask across the dome: the lieutenant's
+##   lame             the service plate with its grain turned 90 degrees in
+##                    texture space (see below)
+##
+## THE LAME'S GRAIN. The lames' UVs come from faceted wrapped-plate geometry
+## in mockup_parts.gd, which is off limits, and round one found they photograph
+## with VERTICAL grain from a texture drawn with horizontal grain. A texture
+## cannot fix a UV problem, but it can cancel it: draw the grain along y here
+## and it lands along x on the lames. The sweep stays on v; it is long-
+## wavelength and survives either mapping.
+func _pauldron(tier: int, lame: bool = false) -> void:
+	var field := Color(0.318, 0.305, 0.272)    # paint colour: sets hue and sat
+	var field_lum := field.r * 0.2126 + field.g * 0.7152 + field.b * 0.0722
 	var steel := Color(0.15, 0.157, 0.165)      # bare rolled steel, a touch cool
-	var bare := Color(0.40, 0.415, 0.415)      # worn through to bright metal
+	var bare := Color(0.40, 0.415, 0.415)       # worn through to bright metal
 	var seam := Color(0.045, 0.045, 0.05)
-	var rim := 14                              # rolled edge, top and bottom
+	var rim := 14                               # rolled edge, top and bottom
+	var peak: float = [0.31, 0.29, 0.32][tier]        # the broad shoulder of light
+	var crest_add: float = [0.14, 0.13, 0.15][tier]   # narrow crest on top of it
+	var lo: float = [0.085, 0.075, 0.09][tier]        # floor of the lower third
+	var wear: float = [1.45, 2.35, 0.95][tier]          # scuff appetite
+	var dirt: float = [0.12, 0.26, 0.06][tier]
 	var rivets := []
-	for i in 16:
-		rivets.append(Vector2(8 + i * 16, 168))
+	if not lame:
+		for i in 16:
+			rivets.append(Vector2(8 + i * 16, 168))
 	for y in SIZE:
 		var v := float(y) / SIZE
-		# Distance in rows to the nearest edge, wrapping the tile vertically.
 		var edge := mini(y, SIZE - 1 - y)
-		# The highlight: broad shoulder of light centred a third of the way
-		# down, with the crest a little above it.
-		var crest := exp(-pow((v - 0.285) / 0.035, 2.0))
 		for x in SIZE:
 			var u := float(x) / SIZE
 			var c: Color
 			var painted := true
-			# Grain per row: long fibres plus a finer long layer.
-			var grain := 0.5 * _brush(x, y, 64, 801) + 0.5 * _brush(x, y, 16, 802)
+			# Fine grain: along x on the plate, along y on the lame.
+			var g1 := _brush(y, x, 64, 801) if lame else _brush(x, y, 64, 801)
+			var g2 := _brush(y, x, 16, 802) if lame else _brush(x, y, 16, 802)
+			var grain := 0.5 * g1 + 0.5 * g2
 			var wob := 0.03 * sin(u * TAU * 2.0 + 1.3) + 0.02 * sin(u * TAU * 3.0)
-			# The sweep breaks up along u, so it is a reflection and not a rule.
+			# The crest is a reflection, so it breaks along u instead of
+			# running as a ruled stripe, but never drops below 55%: the sweep
+			# must survive wherever it is looked at.
 			var gap := _value(u, v * 0.3, 5, 810)
-			var sweep := exp(-pow((v + wob - 0.32) / 0.13, 2.0)) * (0.55 + 0.9 * gap)
-			var spec := exp(-pow((v + wob - 0.285) / 0.035, 2.0)) * smoothstep(0.30, 0.70, gap)
+			var crest := exp(-pow((v + wob - 0.275) / 0.04, 2.0)) * (0.55 + 0.45 * smoothstep(0.25, 0.75, gap))
+			var lum_target := _sweep_base(clampf(v + wob, 0.0, 1.0), lo, peak) + crest_add * crest
 			if edge < rim:
-				# Rolled edge in four hard steps across its section, like the
-				# turned lip on the reference: dark underside, bright crest.
+				# Rolled edge in four hard steps across its section: dark
+				# underside, bright crest. The top lip catches the light, the
+				# bottom one is in shadow.
 				var s := edge
 				var k := 0.62 if s < 3 else (1.55 if s < 6 else (1.15 if s < 9 else 0.8))
+				var tone := 1.0
 				if y >= SIZE / 2:
 					k = 0.62 if s < 3 else (1.0 if s < 6 else (1.3 if s < 9 else 0.8))
-				c = _shade(steel, k * (0.85 + 0.3 * grain))
+					tone = 0.7
+				c = _shade(steel, tone * k * (0.85 + 0.3 * grain))
 				painted = false
 			elif edge < rim + 2:
 				c = seam
 				painted = false
 			else:
-				# Field. Lighter toward the highlight, a little darker down the
-				# lower third where the plate turns from the light.
-				var f := 0.84 + 0.46 * sweep + 0.22 * spec
-				f *= 1.0 - 0.14 * smoothstep(0.55, 0.9, v)
-				f *= 0.93 + 0.14 * grain
-				# Soft mottling in the paint itself, long in x.
-				f *= 0.94 + 0.12 * _value(u * 2.0, v * 0.5, 4, 820)
+				# Field: the ramp, with grain and mottle as SMALL modulations
+				# on top (about +-8% and +-5%), so they never compete with it.
+				var f := lum_target / field_lum
+				f *= 0.92 + 0.16 * grain
+				f *= 0.95 + 0.10 * _value(u * 2.0, v * 0.5, 4, 820)
 				c = _shade(field, f)
-				# Scuffs: chipped to metal, gathering toward the edges and on
-				# the crest of the highlight where a hand or a strap rubs.
-				var near := 1.0 - smoothstep(rim + 2.0, rim + 20.0, float(edge))
-				var rub := 0.80 * near + 0.5 * crest
+				# Scuffs: chipped to cool bare metal, gathering toward the
+				# edges and on the crest where a hand or strap rubs. Bare metal
+				# follows the ramp (lit where the plate is lit), so a chip on
+				# the dark lower third does not glow like a lamp.
+				var near := 1.0 - smoothstep(rim + 2.0, rim + 36.0, float(edge))
+				var rub := (1.15 * near + 0.5 * crest) * wear
 				var chip := _brush(x, int(y / 3), 20, 830) * 0.7 + _value(u, v, 6, 831) * 0.3
+				if lame:
+					chip = _brush(int(x / 3), y, 20, 830) * 0.7 + _value(u, v, 6, 831) * 0.3
 				if chip > 0.9 - rub * 0.55:
-					c = _shade(bare, 0.85 + 0.3 * grain)
+					var bl := clampf(0.16 + 0.55 * lum_target, 0.0, 0.42)
+					c = _shade(bare, (bl / 0.41) * (0.85 + 0.3 * grain))
 					painted = false
-			# Rivet heads: a dome with a lit upper-left and a dark lower-right,
-			# nine texels across, in a tight row of sixteen: ten-texel rivets in a row of eight rendered as two staring eyes on the dome, because a sphere shows only two of them.
+				# Dress trim: a pair of bare lines across the dome, held out of
+				# the mask so the faction field reads as inlaid between them.
+				if tier == 2 and not lame and (absi(y - 98) < 2 or absi(y - 106) < 2):
+					c = _shade(bare, 0.78 + 0.2 * grain)
+					painted = false
+			# Rivet heads: a dome, lit upper-left and dark lower-right, nine
+			# texels across, in a tight row of sixteen (ten-texel rivets in a
+			# row of eight rendered as two staring eyes on the dome).
 			for rv: Vector2 in rivets:
 				var dx := float(x) - rv.x
 				var dy := float(y) - rv.y
@@ -875,8 +942,24 @@ func _pauldron_plate() -> void:
 					if r >= 3.6:
 						c = seam
 					else:
-						c = _shade(bare, 1.15 if (dx + dy) < 0.0 else 0.7)
-			c = _shade(c, _grime(u, v, 840, 0.12))
+						c = _shade(bare, 1.1 if (dx + dy) < 0.0 else 0.6)
+			c = _shade(c, _grime(u, v, 840, dirt))
 			_img.set_pixel(x, y, c)
 			if _mask != null:
 				_mask.set_pixel(x, y, Color(1, 0, 0) if painted else Color(0, 0, 0))
+
+
+func _pauldron_plate() -> void:
+	_pauldron(0)
+
+
+func _pauldron_worn() -> void:
+	_pauldron(1)
+
+
+func _pauldron_dress() -> void:
+	_pauldron(2)
+
+
+func _pauldron_lame() -> void:
+	_pauldron(0, true)
