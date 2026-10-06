@@ -51,7 +51,11 @@ func _initialize() -> void:
 	d.list_dir_end()
 	names.sort()
 
-	print("\n   %-26s %5s %6s %6s %6s %7s" % ["texture", "size", "mean", "peak", "sat", "inband"])
+	# MIN is here because of the bearskin brief: for a very dark texture the
+	# floor matters more than the ceiling. Pure black kills the interior of a
+	# shape and leaves a cut-out silhouette with no volume, and nothing else
+	# reported here would have caught it.
+	print("\n   %-26s %5s %6s %6s %6s %6s %7s" % ["texture", "size", "min", "mean", "peak", "sat", "inband"])
 	var shown := 0
 	for n: String in names:
 		if not filters.is_empty():
@@ -70,6 +74,7 @@ func _initialize() -> void:
 		var h := img.get_height()
 		var sum := 0.0
 		var peak := 0.0
+		var low := 1.0
 		var sat := 0.0
 		var inband := 0
 		for y in h:
@@ -79,16 +84,22 @@ func _initialize() -> void:
 				var l := v.dot(LUM)
 				sum += l
 				peak = maxf(peak, l)
+				low = minf(low, l)
 				var hi: float = maxf(c.r, maxf(c.g, c.b))
 				var lo: float = minf(c.r, minf(c.g, c.b))
 				sat += 0.0 if hi <= 0.0 else (hi - lo) / hi
 				if absf(l - BAND_CENTRE) <= BAND_HALF:
 					inband += 1
 		var px := float(w * h)
-		print("   %-26s %5s %6.3f %6.3f %6.3f %6.1f%%" % [
-				n.get_basename(), "%dx%d" % [w, h], sum / px, peak, sat / px,
+		print("   %-26s %5s %6.3f %6.3f %6.3f %6.3f %6.1f%%" % [
+				n.get_basename(), "%dx%d" % [w, h], low, sum / px, peak, sat / px,
 				100.0 * float(inband) / px])
 		shown += 1
-	print("\n   %d texture(s). pack: mean ~0.20, peak <= 0.46, sat 0.08-0.25." % shown)
+	# Measured over all 212, not quoted. Mean luminance is the pack's signature
+	# and the only one of the three that is consistent; an earlier version of
+	# this line claimed a peak and a saturation range that described the nine
+	# textures this project had generated, not the 203 it had not.
+	print("\n   %d texture(s). pack: mean averages 0.175, nearly all 0.10-0.28." % shown)
+	print("   peak and saturation vary widely — match the mean, not those")
 	print("   inband = share repainted in the faction colour by the derived mask")
 	quit()
