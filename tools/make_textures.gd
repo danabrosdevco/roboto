@@ -77,6 +77,8 @@ const MADE := {
 	"pauldron_lame": "_pauldron_lame",
 	"bearskin_fur": "_bearskin_fur",
 	"bearskin_fur_worn": "_bearskin_fur_worn",
+	"roach_comb": "_roach_comb_plain",
+	"roach_comb_worn": "_roach_comb_worn",
 }
 
 ## Textures that ship a second image beside the albedo: <name>_mask.png, whose
@@ -85,7 +87,7 @@ const MADE := {
 ## the shader's luminance band instead.
 const MASKED := ["epaulette_plain", "epaulette_braid", "epaulette_pips", "pauldron_plate",
 		"pauldron_plate_worn", "pauldron_plate_dress", "pauldron_lame",
-		"bearskin_fur", "bearskin_fur_worn"]
+		"bearskin_fur", "bearskin_fur_worn", "roach_comb", "roach_comb_worn"]
 
 ## Emission for the few that want it, as {name: [colour, energy]}. The pack's
 ## own glitch_tx_1.tres is the pattern being followed.
@@ -1180,3 +1182,145 @@ func _value_aniso(u: float, v: float, pu: int, pv: int, seed: int) -> float:
 	var c := _hash(posmod(ix, pu), posmod(iy + 1, pv), seed)
 	var d := _hash(posmod(ix + 1, pu), posmod(iy + 1, pv), seed)
 	return lerpf(lerpf(a, b, tx), lerpf(c, d, tx), ty)
+
+
+## ROACH COMB. The Tarleton's crest, deliberately metal (docs/briefs/BEARSKIN_FUR.md
+## records the decision): a polished fluted comb, not fur.
+##
+## THE ARITHMETIC, done before any drawing. The roach is a CSG sphere squashed
+## to a blade 1.32 m long, 0.92 m tall, 0.22 m thick, so the mapping is spherical:
+## u runs around the polar axis, which is FORE-AND-AFT along the blade, and v is
+## height with the crest at one pole. The plate material tiles 3x in u and 1x in
+## v (PLATE_TILING), and the blade is about 62 x 43 px at 20 m. That is ~12 texels
+## per pixel in u (256 over 62 px across 3 repeats) and ~6 in v. So:
+##   - flutes are vertical stripes in texture space, 36-48 texels wide, which is
+##     three to four pixels each: six per repeat, eighteen round the blade;
+##   - nothing may be finer than ~24 texels in u or ~12 in v. The bearskin
+##     shipped 8-14 texel strands against the same 3x and lost two rounds to it;
+##   - the crest is a pole, so detail converges there, which suits a comb.
+## Anything horizontal in texture space becomes a ring round the blade, so the
+## only horizontal things here are the ones that should be: the crest band, the
+## clamp strip at the base and the dark seat below it.
+##
+## FLOOR 0.032 (one quantise level): pauldron_plate has a minimum of 0.000 and
+## photographs as chrome. PEAK 0.55: polished is the intent, but 0.70 against a
+## 0.000 floor is what made the pauldron read as plastic.
+## Scuffs are cool-neutral: warm bare-metal scuffs render as dirt under GL
+## compatibility (it cost the pauldron a round).
+const COMB_FLUTES := [44, 38, 46, 40, 42, 46]    # sums to SIZE; irregular on purpose
+const COMB_STRIP_Y := 122
+const COMB_STRIP_H := 34
+
+
+func _roach_comb(worn: bool) -> void:
+	_ceil = 0.55
+	_floor = 0.032
+	var tint := Color(0.96, 1.0, 1.06)        # steel, very slightly cool
+	var n := COMB_FLUTES.size()
+	var edges := []                            # nominal left edge of each flute
+	var acc := 0
+	for w: int in COMB_FLUTES:
+		edges.append(acc)
+		acc += w
+	# Per-flute character, so no two read as the same stamping.
+	var gain := []
+	var lit := []
+	var phase := []
+	for k in n:
+		gain.append(0.88 + 0.24 * _hash(k, 1, 4101))
+		lit.append(0.27 + 0.12 * _hash(k, 2, 4102))
+		phase.append(_hash(k, 3, 4103) * TAU)
+	for y in SIZE:
+		var v := float(y) / SIZE
+		# Flute edges drift with height by a few texels, telescoping so the
+		# widths still sum to SIZE and the texture still tiles.
+		var b := []
+		for k in n:
+			b.append(float(edges[k]) + 3.0 * sin(v * TAU + phase[k]))
+		b.append(float(SIZE) + float(b[0]) - float(edges[0]))
+		# Crest: a band at the top edge, broken along u but never below 55%.
+		var crest_w := 0.26 if worn else 0.32
+		for x in SIZE:
+			var u := float(x) / SIZE
+			var k := 0
+			var xx := float(x)
+			var found := false
+			for kk in n:
+				for off in [0.0, float(SIZE), -float(SIZE)]:
+					if xx + off >= float(b[kk]) and xx + off < float(b[kk + 1]):
+						k = kk
+						xx += off
+						found = true
+						break
+				if found:
+					break
+			var wk: float = float(b[k + 1]) - float(b[k])
+			var t := clampf((xx - float(b[k])) / wk, 0.0, 1.0)
+			var s := sin(PI * t)
+			var prof := pow(s, 0.6) * (0.45 + 0.55 * exp(-pow((t - float(lit[k])) / 0.30, 2.0)))
+			prof *= float(gain[k])
+			var gap := _value_aniso(u, v, 6, 3, 4110)
+			var crest := (1.0 - smoothstep(0.04, crest_w, v)) * (0.55 + 0.45 * smoothstep(0.25, 0.75, gap))
+			# Height: bright shoulder in the upper half, falling to the seat.
+			var hf := lerpf(1.0, 0.86, smoothstep(0.2, 0.55, v))
+			hf = lerpf(hf, 0.55, smoothstep(0.60, 0.95, v))
+			var floor_l := lerpf(0.07, 0.33, crest)
+			var peak_l := lerpf(0.45 * hf, 0.54, crest)
+			if worn:
+				floor_l *= 0.75
+				peak_l *= 0.92
+			var lum := floor_l + (peak_l - floor_l) * clampf(prof, 0.0, 1.0)
+			var painted := true
+			# Soft mottle so the flutes are not one flat ramp (large: 85+ texels).
+			lum *= 0.94 + 0.12 * _value_aniso(u, v, 3, 2, 4120)
+			if worn:
+				lum *= _grime(u, v, 4130, 0.5)
+			# Highlight on each flute: held out of the mask, bare steel.
+			if prof > 0.80 and v > 0.03:
+				painted = false
+			# Wear: crest edge ONLY. Cool bright scuffs, chunky (cells of 32 texels).
+			var rub := 1.0 - smoothstep(0.06, 0.20 if worn else 0.14, v)
+			var chip := _value_aniso(u, v, 8, 8, 4140) * 0.7 + _value_aniso(u, v, 16, 6, 4141) * 0.3
+			if rub > 0.0 and chip > (0.62 if worn else 0.70) - 0.12 * rub:
+				lum = maxf(lum, 0.50 - 0.06 * (1.0 - rub))
+				painted = false
+			# Clamp strip and rivets: a ring round the base where the comb seats
+			# into the skull. Bare steel, so held out of the mask.
+			var sy := y - COMB_STRIP_Y
+			var c: Color
+			if sy >= 0 and sy < COMB_STRIP_H:
+				painted = false
+				var grain := _brush(x, y, 64, 4150)
+				if sy < 8:
+					lum = 0.30 + 0.06 * grain
+				elif sy < COMB_STRIP_H - 6:
+					lum = 0.12 + 0.05 * grain
+				else:
+					lum = 0.05
+				# One rivet at each flute boundary: 28 x 16 texels, which is
+				# roughly round on screen once the 3x u tiling is allowed for.
+				for kk in n:
+					var dx := (xx - float(b[kk])) / 14.0
+					if absf(dx) > 1.0:
+						dx = (xx - float(b[kk]) - float(SIZE)) / 14.0
+					if absf(dx) > 1.0:
+						dx = (xx - float(b[kk]) + float(SIZE)) / 14.0
+					var dy := (float(sy) - 15.0) / 8.0
+					var r := sqrt(dx * dx + dy * dy)
+					if r < 1.0:
+						if r > 0.78:
+							lum = 0.04
+						else:
+							lum = 0.34 if (dx + dy) < 0.0 else 0.15
+			c = Color(tint.r * lum, tint.g * lum, tint.b * lum)
+			_img.set_pixel(x, y, c)
+			if _mask != null:
+				_mask.set_pixel(x, y, Color(1.0 if painted else 0.0, 0, 0))
+
+
+func _roach_comb_plain() -> void:
+	_roach_comb(false)
+
+
+func _roach_comb_worn() -> void:
+	_roach_comb(true)
