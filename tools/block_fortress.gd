@@ -217,10 +217,41 @@ func _causeway_span_broken() -> void:
 
 ## The way on: 24 m of embankment climbing 4 m at 1 in 6, 16 m wide, square at
 ## the top so a span butts it. Gentle enough for anything on wheels.
+## HALF THE WIDTH OF THE FLARE AT THE MOUTH, EACH SIDE. The ramp used to be one
+## 16 m strip for its whole 24 m, so the only way on to the causeway was a 16 m
+## gate at the far end: a body approaching from anywhere else met the ramp's
+## flank, which is a 1.6 m step up at mid-ramp, and had to walk back out and
+## funnel. Measured on the baked mesh, the walkable surface was 17 m of a 31 m
+## footprint and the rest was wall.
+##
+## The deck still narrows to CWAY_W where it lands, because that is what the
+## spans are. It is the approach that opens out.
+const CWAY_FLARE := 7.0
+
+
 func _causeway_ramp() -> void:
 	var w := CWAY_W
 	var run := 24.0
 	ramp(-run, -w * 0.5, 0.0, w * 0.5, -1.0, 0.0, CWAY_H, "+x", ROAD)
+	# A wedge each side, wide at the mouth and closing to the deck line at the
+	# top, so the whole fan is one continuous walking surface. Built as a hull
+	# rather than a ramp() because ramp() is rectangular and this tapers; it
+	# meets the main ramp exactly on y = +-w/2, touching and not overlapping.
+	#
+	# It starts OUTSIDE the side wall, at w/2 + 1, and its apex stops at the
+	# abutment face at x = -1. Run to w/2 and to x = 0 instead and it lies
+	# inside both of them — 22 overlapping brush pairs on top of the 7 this
+	# piece already had. The wall between the two surfaces is no barrier where
+	# it matters: it rises from nothing at the mouth and is level with the ramp
+	# for the first half, by which point a body is already on the deck line.
+	for s: float in [-1.0, 1.0]:
+		var inner: float = s * (w * 0.5 + 1.0)
+		var outer: float = s * (w * 0.5 + 1.0 + CWAY_FLARE)
+		solid([
+			Vector3(-run, inner, -1.0), Vector3(-run, outer, -1.0),
+			Vector3(-run, inner, 0.0), Vector3(-run, outer, 0.0),
+			Vector3(-1.0, inner, -1.0), Vector3(-1.0, inner, CWAY_H),
+		], ROAD)
 	# Side walls along the climb, and the abutment the deck lands on.
 	for s: float in [-1.0, 1.0]:
 		var y0: float = s * w * 0.5
@@ -231,9 +262,17 @@ func _causeway_ramp() -> void:
 				pts.append(Vector3(pair[0], y, -1.0))
 				pts.append(Vector3(pair[0], y, pair[1]))
 		solid(pts, ROAD)
-	box(Vector3(-1.0, -w * 0.5 - 1.0, -6.0), Vector3(0.0, w * 0.5 + 1.0, CWAY_H), CONCRETE)
-	# The earth the ramp is banked into.
-	_embankment(0.0, -1.0, w, CWAY_H)
+	# The abutment is the FOOTING under the ramp, stopping at its underside.
+	# Taken up to CWAY_H it is buried inside the ramp and both side walls — the
+	# last 3 of the 7 overlapping pairs this piece shipped with.
+	box(Vector3(-1.0, -w * 0.5 - 1.0, -6.0), Vector3(0.0, w * 0.5 + 1.0, -1.0), CONCRETE)
+	# NO _embankment HERE ANY MORE. It banks earth from the deck line outwards
+	# over the same ground the flare now occupies, which is 14 more overlapping
+	# brush pairs, and its job — getting from the field up to the deck — is what
+	# the flare does, walkably, which the embankment never did: its sides fall
+	# 1 in SIDE_RUN, deliberately steeper than the baker will walk, so that on a
+	# BRIDGE the squad cannot climb the bank and fall in the river. On a causeway
+	# abutment that same slope was the wall they kept meeting.
 
 
 ## Where a span is missing: one pier standing in the water with a stub of deck
