@@ -48,6 +48,13 @@ const CEIL := 0.46
 ## Levels per channel in the final quantise.
 const LEVELS := 32
 
+## The faction shader's derived paint band: paint_band_center 0.45 and
+## paint_band_width 0.425 as the shader is called (the shader's own defaults
+## are 0.28 wide). Only used to
+## REPORT how much of a texture would be repainted, never to draw with.
+const BAND_CENTER := 0.45
+const BAND_WIDTH := 0.425
+
 const MADE := {
 	"glass_dark": "_glass_dark",
 	"glass_window": "_glass_window",
@@ -58,13 +65,26 @@ const MADE := {
 	"solar_array": "_solar_array",
 	"mirror_heliostat": "_mirror_heliostat",
 	"grate_perf": "_grate_perf",
+	"camo_fabric": "_camo_fabric",
+	"camo_fabric_worn": "_camo_fabric_worn",
+	"epaulette_plain": "_epaulette_plain",
+	"epaulette_braid": "_epaulette_braid",
+	"epaulette_pips": "_epaulette_pips",
 }
+
+## Textures that ship a second image beside the albedo: <name>_mask.png, whose
+## red channel is the faction-paint mask Character/faction_metal.gdshader reads
+## when derive_mask_from_albedo is off. See _epaulette for why these cannot use
+## the shader's luminance band instead.
+const MASKED := ["epaulette_plain", "epaulette_braid", "epaulette_pips"]
 
 ## Emission for the few that want it, as {name: [colour, energy]}. The pack's
 ## own glitch_tx_1.tres is the pattern being followed.
 const EMISSIVE := {}
 
 var _img: Image
+## Only set while a MASKED texture is being drawn; null otherwise.
+var _mask: Image
 
 
 func _initialize() -> void:
@@ -97,6 +117,9 @@ func _initialize() -> void:
 			print("SKIP  %s exists — pass --force to redraw it." % png)
 			continue
 		_img = Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
+		_mask = null
+		if MASKED.has(name):
+			_mask = Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
 		call(MADE[name])
 		_finish()
 		var err := _img.save_png(png)
@@ -104,6 +127,12 @@ func _initialize() -> void:
 			print("FAIL  could not write %s (%s)" % [png, error_string(err)])
 			quit(1)
 			return
+		if _mask != null:
+			var merr := _mask.save_png(base.path_join(name + "_mask.png"))
+			if merr != OK:
+				print("FAIL  could not write mask for %s (%s)" % [name, error_string(merr)])
+				quit(1)
+				return
 		_material(base, name)
 		written += 1
 		print("      %-20s %s" % [name, _report()])
@@ -141,13 +170,50 @@ func _bayer(x: int, y: int) -> float:
 func _report() -> String:
 	var sum := 0.0
 	var hi := 0.0
+	# Luminance and saturation as the faction shader and the pack measurement see
+	# them, so a number here means the same thing as the number in the brief.
+	var lsum := 0.0
+	var lhi := 0.0
+	var ssum := 0.0
+	# The shader's real paint weight, averaged: how much of the texture the
+	# faction colour actually lands on.
+	var wsum := 0.0
+	var in_band := 0
+	# Band occupancy split by the explicit mask, where there is one.
+	var mask_on := 0
+	var on_band := 0
+	var off_band := 0
 	for y in SIZE:
 		for x in SIZE:
 			var c := _img.get_pixel(x, y)
 			var l := (c.r + c.g + c.b) / 3.0
 			sum += l
 			hi = maxf(hi, l)
-	return "mean %.2f  peak %.2f" % [sum / float(SIZE * SIZE), hi]
+			var lum := c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722
+			lsum += lum
+			lhi = maxf(lhi, lum)
+			ssum += c.s
+			var w := 1.0 - smoothstep(0.0, BAND_WIDTH, absf(lum - BAND_CENTER))
+			wsum += w
+			# Weight 0.5 is the edge of the band the brief quotes (0.24 to 0.66).
+			var inb := w >= 0.5
+			if inb:
+				in_band += 1
+			if _mask != null:
+				if _mask.get_pixel(x, y).r > 0.5:
+					mask_on += 1
+					if inb:
+						on_band += 1
+				elif inb:
+					off_band += 1
+	var n := float(SIZE * SIZE)
+	var s := "mean %.2f peak %.2f | lum %.3f (peak %.3f) sat %.2f in-band %.1f%% paint-weight %.2f" % [
+			sum / n, hi, lsum / n, lhi, ssum / n, 100.0 * in_band / n, wsum / n]
+	if _mask != null:
+		s += " | mask covers %.1f%%, of it in band %.1f%%; unmasked in band %.1f%%" % [
+				100.0 * mask_on / n, 100.0 * on_band / maxf(mask_on, 1.0),
+				100.0 * off_band / maxf(n - mask_on, 1.0)]
+	return s
 
 
 func _material(base: String, name: String) -> void:
@@ -541,3 +607,166 @@ func _grate_perf() -> void:
 			elif r < 6.2:
 				c = _shade(c, 1.25)                  # and its bright edge
 			_img.set_pixel(x, y, _shade(c, _grime(u, v, 42, 0.25)))
+
+
+# ── Robot clothing ───────────────────────────────────────────────────────────
+#
+# The robots are machines wearing the remains of a uniform, so these two
+# families have to read as CLOTH against metal. Both pass through the faction
+# shader (Character/faction_metal.gdshader), which repaints the mid-tones of the
+# albedo (luminance 0.24 to 0.66 at half weight) in the faction colour. That is
+# decided deliberately per family:
+#
+#   camo       must NOT be repainted — a disruptive pattern that turns flat
+#              faction orange is not camo. Everything here stays under about
+#              0.22 luminance, which is where the pack sits anyway, so the
+#              shader's paint weight on it is small and the pattern survives.
+#   epaulette  MUST be repainted, it is where a faction is read at a glance —
+#              but only the board, not the braid and pips. See _epaulette.
+
+## Large disruptive blobs in four tones. Four to six blobs across the tile,
+## because at the size a sleeve is seen on a 1152 x 648 screen anything finer
+## turns to grey mush. The warp is what makes them read as camo rather than as
+## contour lines: a plain noise threshold gives round puddles.
+##
+## `fade` 0 is issue cloth, 1 is cloth that has been out in the weather for
+## years: tones pulled toward one dusty grey, sun-bleached streaks, and stains.
+func _camo(fade: float) -> void:
+	# Dark to light. Kept at saturation 0.15 to 0.25, and luminance 0.08 to 0.22:
+	# the pack mean is 0.20, but the faction shader paints from 0.24 up, so the
+	# lightest tone sits just under where paint begins to bite.
+	var tones := [
+		Color(0.075, 0.088, 0.066),    # deep olive
+		Color(0.138, 0.15, 0.115),     # olive drab
+		Color(0.185, 0.168, 0.142),    # earth brown
+		Color(0.222, 0.222, 0.192),    # dry khaki
+	]
+	var faded := Color(0.175, 0.17, 0.148)
+	for y in SIZE:
+		for x in SIZE:
+			var u := float(x) / SIZE
+			var v := float(y) / SIZE
+			# Warp in both axes with a wrapped noise, so the pattern is bent but
+			# still tiles: the warp is periodic, and so is the lattice it feeds.
+			var wu := u + 0.16 * (_fbm(u, v, 601, 2, 3) - 0.5)
+			var wv := v + 0.16 * (_fbm(u, v, 602, 2, 3) - 0.5)
+			var n := _fbm(wu, wv, 603, 2, 4)
+			# Thresholds sit at the measured quartiles of this noise (median 0.44, not 0.5):
+			# value noise on so few lattice cells is lopsided, and evenly spaced thresholds gave
+			# two tones nearly everything and the outer two a few specks.
+			var t := 0
+			if n > 0.53:
+				t = 3
+			elif n > 0.44:
+				t = 2
+			elif n > 0.36:
+				t = 1
+			# A second, independent field cuts dark patches across all of it.
+			# That crossing is what the eye takes for disruption.
+			var d := _fbm(wu, wv, 604, 2, 5)
+			if d > 0.72:
+				t = 0
+			var c: Color = tones[t]
+			if fade > 0.0:
+				c = c.lerp(faded, 0.55 * fade)
+				# Sun-bleach along streaks: long in one axis, like cloth that has
+				# hung folded in a window.
+				var sun := _value(u, v * 0.25, 22, 611)
+				c = _shade(c, 1.0 + fade * 0.25 * smoothstep(0.62, 0.9, sun))
+				# Stains darken, they never lighten.
+				c = _shade(c, 1.0 - fade * 0.5 * smoothstep(0.6, 0.85, _fbm(u, v, 612, 4, 3)))
+			# The weave: a 2 px twill, a few per cent either way. It is what
+			# separates cloth from painted plastic at this resolution.
+			var twill: float = 1.0 + (0.045 if posmod(x + y, 4) < 2 else -0.045)
+			c = _shade(c, twill * _grime(u, v, 613, 0.18 + 0.12 * fade))
+			_img.set_pixel(x, y, c)
+
+
+func _camo_fabric() -> void:
+	_camo(0.0)
+
+
+func _camo_fabric_worn() -> void:
+	_camo(1.0)
+
+
+## A shoulder board. One strong idea per texture, because it is a few dozen
+## pixels on screen: a metal-edged board of cloth, plus either nothing, a braid
+## or rank pips.
+##
+## WHY THESE SHIP A MASK. The faction shader's derived mask paints luminance
+## 0.24 to 0.66, and the pack's ceiling is CEIL (0.46). Braid and pips ought to
+## stay bright metal, but "bright" in this pack is 0.40 to 0.46 — which is
+## still inside the band, so on the derived mask the braid turns faction orange
+## along with the cloth. There is no luminance above the band to put it in. The
+## red channel of <name>_mask.png says exactly which pixels are the board:
+## 1 on the cloth, 0 on the edge, braid and pips. Use it with
+## derive_mask_from_albedo = false. (Green is 0: no emissive markers here.)
+##
+## `kind`: 0 plain, 1 braid, 2 pips.
+func _epaulette(kind: int) -> void:
+	var trim := Color(0.40, 0.385, 0.35)       # the bright metal edge, braid, pips
+	var field := Color(0.325, 0.315, 0.28)     # the cloth — inside the paint band
+	var seam := Color(0.04, 0.04, 0.042)
+	var mid := SIZE / 2
+	var pips := [40, 128, 216]
+	for y in SIZE:
+		for x in SIZE:
+			var u := float(x) / SIZE
+			var v := float(y) / SIZE
+			var edge: int = mini(mini(x, SIZE - 1 - x), mini(y, SIZE - 1 - y))
+			var c: Color
+			var painted := true
+			if edge < 10:
+				c = _shade(trim, 0.88 + 0.24 * _fbm(u, v, 701, 3, 8))
+				painted = false
+				if edge < 2:
+					c = _shade(c, 0.6)         # the lit lip of the rim
+			elif edge < 13:
+				c = seam                       # a shadow line between rim and cloth
+			else:
+				# Cloth: a coarse twill and the dirt of use. Painted in the
+				# faction colour, so the weave has to survive the multiply.
+				var twill: float = 1.0 + (0.07 if posmod(x + y, 4) < 2 else -0.07)
+				c = _shade(field, twill * _grime(u, v, 702, 0.3))
+				if kind == 1:
+					var dy := y - mid
+					if absi(dy) <= 33:
+						painted = false
+						if absi(dy) >= 32:
+							c = seam
+						else:
+							# A chevron rope along the board: bright and dark
+							# strands, which is what braid is.
+							var strand := posmod(x + absi(dy) * 2, 16) < 8
+							c = _shade(trim, 1.0 if strand else 0.62)
+							if absi(dy) >= 29:
+								c = _shade(trim, 0.8)    # the braid's own edging
+				elif kind == 2:
+					for px: int in pips:
+						var dx := float(x - px)
+						var dy := float(y - mid)
+						var r := sqrt(dx * dx + dy * dy)
+						if r < 23.0:
+							painted = false
+							if r >= 20.0:
+								c = seam                  # outline
+							elif r >= 9.0:
+								c = _shade(trim, 1.0 - 0.18 * smoothstep(12.0, 20.0, r))
+							else:
+								c = _shade(trim, 0.58)    # the dished centre
+			_img.set_pixel(x, y, c)
+			if _mask != null:
+				_mask.set_pixel(x, y, Color(1, 0, 0) if painted else Color(0, 0, 0))
+
+
+func _epaulette_plain() -> void:
+	_epaulette(0)
+
+
+func _epaulette_braid() -> void:
+	_epaulette(1)
+
+
+func _epaulette_pips() -> void:
+	_epaulette(2)
