@@ -1402,5 +1402,3 @@ func _weighted(tally: Dictionary, rate: int) -> int:
 		var supply: int = frame.supply if frame != null else 1
 		total += rate * maxi(supply, 1) * int(tally[kind])
 	return total
-
-

@@ -368,7 +368,13 @@ func update_view(delta: float, p_move_factor: float, p_obstructed: bool, p_ads: 
 	viewmodel.position -= _last_bob
 	_last_bob = Vector3.ZERO
 
-	if viewmodel.position.distance_to(target_pos) > 0.001:
+	# AN ITEM MAY DRIVE ITS OWN POSE EXACTLY. pose_speed is an exponential chase:
+	# it is right for the handful of poses this used to switch between, and wrong
+	# for a scripted sequence, where it rounds every beat off into one slow
+	# wallow. See PlayerWeapon._reload_frame.
+	if _pose_is_exact():
+		viewmodel.position = target_pos
+	elif viewmodel.position.distance_to(target_pos) > 0.001:
 		viewmodel.position = viewmodel.position.lerp(target_pos, delta * pose_speed)
 	# THE ROTATION LERP KEEPS ITS OWN STATE AND NEVER READS THE NODE BACK.
 	#
@@ -378,7 +384,9 @@ func update_view(delta: float, p_move_factor: float, p_obstructed: bool, p_ads: 
 	# angle it named — the 270 degree holster yaw arrived as 45.8. Same shape as
 	# the bob double-count above, same cure: the lerp owns its state rather than
 	# reading it off the thing it just drove.
-	if _pose_rotation.distance_to(target_rot) > 0.001:
+	if _pose_is_exact():
+		_pose_rotation = target_rot
+	elif _pose_rotation.distance_to(target_rot) > 0.001:
 		_pose_rotation = _pose_rotation.lerp(target_rot, delta * pose_speed)
 
 	# BOB AND ANY ADDITIVE OFFSET GO ON AFTER THE LERP, and come back off at the
@@ -418,6 +426,13 @@ func _extra_position() -> Vector3:
 
 
 # [position, rotation]. Guns override to add the ADS and reload poses.
+## Does this item put the viewmodel exactly where it says, rather than having it
+## chased there at pose_speed? False for everything that just switches between a
+## few poses; true while a weapon is running a scripted reload.
+func _pose_is_exact() -> bool:
+	return false
+
+
 func _get_pose_target() -> Array:
 	if is_obstructed:
 		return [obstructed_position, obstructed_rotation]

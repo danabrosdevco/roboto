@@ -1,6 +1,6 @@
 [gd_scene load_steps=9 format=3 uid="uid://d1halv6ax74u3"]
 
-[ext_resource type="Script" path="res://Character/weapon/hud_weapon_template.gd" id="1_hudwep"]
+[ext_resource type="Script" path="res://Character/weapon/player_squad_automatic.gd" id="1_hudwep"]
 [ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/weapon/appx/bullet.tscn" id="2_bullet"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="3_tracer"]
 [ext_resource type="PackedScene" path="res://Character/weapon/models/squad_automatic_model.tscn" id="4_model"]

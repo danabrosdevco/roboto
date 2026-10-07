@@ -33,6 +33,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_band"]
 script = ExtResource("2_espec")
@@ -48,6 +49,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_fount"]
 script = ExtResource("2_espec")
@@ -63,6 +65,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_play"]
 script = ExtResource("2_espec")
@@ -78,6 +81,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_market"]
 script = ExtResource("2_espec")
@@ -93,6 +97,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_perg"]
 script = ExtResource("2_espec")
@@ -108,6 +113,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_espe"]
 script = ExtResource("2_espec")
@@ -123,6 +129,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_patrol"]
 script = ExtResource("2_espec")
@@ -138,6 +145,7 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_wfoot"]
 script = ExtResource("2_espec")
@@ -153,6 +161,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_efoot"]
 script = ExtResource("2_espec")
@@ -168,6 +177,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_whead"]
 script = ExtResource("2_espec")
@@ -183,6 +193,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_ehead"]
 script = ExtResource("2_espec")
@@ -198,6 +209,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_stack"]
 script = ExtResource("2_espec")
@@ -213,6 +225,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_comp"]
 script = ExtResource("2_espec")
@@ -228,6 +241,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_yards"]
 script = ExtResource("2_espec")
@@ -243,6 +257,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_ware"]
 script = ExtResource("2_espec")
@@ -258,6 +273,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_mill"]
 script = ExtResource("2_espec")
@@ -273,6 +289,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_viadw"]
 script = ExtResource("2_espec")
@@ -288,6 +305,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_viade"]
 script = ExtResource("2_espec")
@@ -303,6 +321,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_patrol"]
 script = ExtResource("2_espec")
@@ -318,6 +337,7 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_hive"]
 script = ExtResource("2_espec")
@@ -333,6 +353,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_ramp"]
 script = ExtResource("2_espec")
@@ -348,6 +369,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_trussw"]
 script = ExtResource("2_espec")
@@ -363,6 +385,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_road"]
 script = ExtResource("2_espec")
@@ -378,6 +401,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_plank"]
 script = ExtResource("2_espec")
@@ -393,6 +417,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_trusse"]
 script = ExtResource("2_espec")
@@ -408,6 +433,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_lock"]
 script = ExtResource("2_espec")
@@ -423,6 +449,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_coffer"]
 script = ExtResource("2_espec")
@@ -438,6 +465,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_towpw"]
 script = ExtResource("2_espec")
@@ -453,6 +481,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_towpe"]
 script = ExtResource("2_espec")
@@ -468,6 +497,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_mill"]
 script = ExtResource("2_espec")
@@ -483,6 +513,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_cmark"]
 script = ExtResource("2_espec")
@@ -498,6 +529,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_patrol"]
 script = ExtResource("2_espec")
@@ -513,6 +545,7 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_scaff"]
 script = ExtResource("2_espec")
@@ -528,6 +561,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_works"]
 script = ExtResource("2_espec")
@@ -543,6 +577,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="C_berm"]
 script = ExtResource("2_espec")
@@ -558,6 +593,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="Y_walker"]
 script = ExtResource("2_espec")
@@ -573,6 +609,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_stairw"]
 script = ExtResource("2_espec")
@@ -588,6 +625,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_staire"]
 script = ExtResource("2_espec")
@@ -603,6 +641,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_ramp"]
 script = ExtResource("2_espec")
@@ -618,6 +657,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_street"]
 script = ExtResource("2_espec")
@@ -633,6 +673,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_stw"]
 script = ExtResource("2_espec")
@@ -648,6 +689,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_ste"]
 script = ExtResource("2_espec")
@@ -663,6 +705,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_rown"]
 script = ExtResource("2_espec")
@@ -678,6 +721,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_rows"]
 script = ExtResource("2_espec")
@@ -693,6 +737,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_rowse"]
 script = ExtResource("2_espec")
@@ -708,6 +753,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_tmill"]
 script = ExtResource("2_espec")
@@ -723,6 +769,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_hive"]
 script = ExtResource("2_espec")
@@ -738,6 +785,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_patrol"]
 script = ExtResource("2_espec")
@@ -753,6 +801,7 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_out"]
 script = ExtResource("2_espec")
@@ -768,6 +817,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_parkw"]
 script = ExtResource("2_espec")
@@ -783,6 +833,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_relay_park"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_parke"]
 script = ExtResource("2_espec")
@@ -798,6 +849,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_relay_park"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_stacka"]
 script = ExtResource("2_espec")
@@ -813,6 +865,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_relay_stack"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_stackb"]
 script = ExtResource("2_espec")
@@ -828,6 +881,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_relay_stack"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_locka"]
 script = ExtResource("2_espec")
@@ -843,6 +897,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_relay_lock"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_lockb"]
 script = ExtResource("2_espec")
@@ -858,6 +913,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_relay_lock"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_bomber"]
 script = ExtResource("2_espec")
@@ -873,6 +929,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_relay_lock"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_street"]
 script = ExtResource("2_espec")
@@ -888,6 +945,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_relay_street"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_street2"]
 script = ExtResource("2_espec")
@@ -903,6 +961,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_relay_street"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_outroad"]
 script = ExtResource("2_espec")
@@ -918,6 +977,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_relay_street"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="K_sixty"]
 script = ExtResource("2_espec")
@@ -933,6 +993,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_losses_60"
 wake_after_kills = 60
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="K_hundred"]
 script = ExtResource("2_espec")
@@ -948,6 +1009,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_losses_110"
 wake_after_kills = 110
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="K_last"]
 script = ExtResource("2_espec")
@@ -963,6 +1025,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"gt_losses_150"
 wake_after_kills = 150
+wake_after_seconds = 0.0
 
 [resource]
 script = ExtResource("1_missdef")
