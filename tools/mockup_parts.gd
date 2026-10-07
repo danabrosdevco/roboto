@@ -627,61 +627,63 @@ static func _cock(lean_deg: float) -> Array:
 	return [Vector3(0, cos(a), -sin(a)), Vector3(-a, 0, 0)]
 
 
-## ROVER — a beret.
+## ROVER — a beret, as ONE MASS.
 ##
-## SITED ROUND THE SENSOR, which stands 0.14 proud of the roof at starboard
-## forward and which the last build ran straight through. The crown is rolled
-## +13 about Z so it leans to PORT: the droop falls on the port side and the
-## starboard side rides UP, over the sensor. A real beret is pulled to the right
-## with the badge over the left eye; this is the mirror of that, because the
-## sensor is on the right and clearance beats correctness.
+## The last build hung a second sphere off the port side for the droop and it
+## photographed as a lump stuck to the hat — a bit hanging off, not a fold. A
+## beret droops because the crown is soft and PULLED OVER, so the droop is the
+## same piece of cloth: one squashed sphere rolled 17 degrees about Z, which
+## drops the port edge 0.13 and lifts the starboard edge by the same.
+##
+## That roll is also what gets it past the Sensor, which stands 0.14 proud of
+## the roof at starboard forward — the side that rides up. Sat aft at z 0.46 for
+## the same reason. A real beret is pulled to the right with the badge over the
+## left eye; this is the mirror, because the sensor is on the right.
 static func rover_beret(to: Node) -> void:
-	var rot := Vector3(7 * DEG, 0, 13 * DEG)
-	ring(to, 0.30, 0.37, Vector3(-0.03, 0.66, 0.34))
-	# THE FOLD — the lip where the wool is pulled over the leather and turns
-	# under. Without it the crown melts into the band and it is a pebble.
-	as_wool(cyl(to, 0.47, 0.03, Vector3(-0.05, 0.70, 0.34), rot, false, 18))
-	var crown := sphere(to, 0.46, Vector3(-0.08, 0.75, 0.34), Vector3(1.0, 0.27, 0.94))
+	var rot := Vector3(6 * DEG, 0, 17 * DEG)
+	ring(to, 0.30, 0.37, Vector3(-0.04, 0.63, 0.44))
+	var crown := sphere(to, 0.45, Vector3(-0.10, 0.72, 0.46), Vector3(1.0, 0.30, 0.92))
 	crown.rotation = rot
 	as_wool(crown)
-	# The droop, to port and well aft of the sensor.
-	as_wool(sphere(to, 0.22, Vector3(-0.40, 0.62, 0.40), Vector3(1.0, 0.50, 0.88)))
-	as_wool(cyl(to, 0.02, 0.045, Vector3(-0.10, 0.83, 0.34), rot, false, 6))
-	# Flash and badge to starboard forward, clear of the sensor in z.
-	as_wool(plate(to, 0.20, 0.22, 0.03, 0.05, Vector3(0.21, 0.71, -0.14), rot))
-	as_plate(plate(to, 0.12, 0.16, 0.05, 0.03, Vector3(0.21, 0.71, -0.18), rot))
+	# The stalk, and the flash and badge forward on the starboard side where the
+	# brim rides up — the one place on this frame with clear air.
+	as_wool(cyl(to, 0.02, 0.045, Vector3(-0.12, 0.84, 0.46), rot, false, 6))
+	as_wool(plate(to, 0.18, 0.20, 0.03, 0.05, Vector3(0.14, 0.76, 0.06), rot))
+	as_plate(plate(to, 0.11, 0.14, 0.05, 0.03, Vector3(0.14, 0.76, 0.02), rot))
 
 
-## ROVER — a shako, rebuilt.
+## ROVER — a slouch hat, replacing the shako.
 ##
-## The last one was a squat drum with a ball on a stick and it read as a bin
-## with a lollipop. Three changes: TALLER AND NARROWER (0.33 rising to 0.37 over
-## 0.74, where it was 0.36/0.40 over 0.62), the pompom-on-a-mast replaced with a
-## proper tapered plume rising straight off the false top, and the festoon hoop
-## dropped — at this scale it read as a ring someone had left on it.
+## THE SHAKO IS GONE. It was a 0.74 m drum standing on a 0.36 m turret and it
+## swallowed the thing it was meant to sit on — the front plate ended up inside
+## the body, the peak inside the glacis, and the plume read as a spike through
+## the roof. Twice rebuilt, twice wrong; a tall cylinder has no business on a
+## frame this flat.
 ##
-## Pushed to z 0.32 so the body clears the sensor at (0.3, *, 0.03).
-static func rover_shako(to: Node) -> void:
-	var c: Array = _cock(7.0)
-	var axis: Vector3 = c[0]
-	var rot: Vector3 = c[1]
-	var base := Vector3(0, 0.55, 0.32)
-	as_wool(cyl(to, 0.33, 0.40, base + axis * 0.20, rot, false, 14))
-	as_wool(cyl(to, 0.37, 0.36, base + axis * 0.56, rot, false, 14))
-	as_plate(cyl(to, 0.43, 0.05, base + axis * 0.76, rot, false, 14))
-	# THE FRONT PLATE, which is what a shako IS seen head-on. Big and bright.
-	as_plate(plate(to, 0.46, 0.52, 0.05, 0.10, Vector3(0, 0.96, -0.08),
-			Vector3(-6 * DEG, 0, 0)))
-	as_plate(plate(to, 0.66, 0.26, 0.05, 0.09, Vector3(0, 0.64, -0.22),
-			Vector3(76 * DEG, 0, 0)))
-	# One tapered plume off the false top. No mast, no ball.
-	as_plate(cyl(to, 0.085, 0.52, base + axis * 1.06 + Vector3(-0.04, 0, -0.06),
-			Vector3(-5 * DEG, 0, 6 * DEG), true, 8))
-	for s in [1.0, -1.0]:
-		as_plate(cyl(to, 0.05, 0.03, base + axis * 0.30 + Vector3(0.33 * s, 0, 0),
-				Vector3(0, 0, PI * 0.5), false, 8))
-
-
+## A slouch hat is the opposite shape and it suits the Rover for a reason that
+## is not only aesthetic: it is ASYMMETRIC by nature — one side of the brim
+## pinned up — which is exactly the licence needed to clear the Sensor. Rolled
+## 15 degrees about Z, the starboard brim rises to 0.73 over a sensor topping
+## out at 0.69, while the port brim falls past the turret edge at 0.49 and
+## hangs, which is what the hat is supposed to do.
+static func rover_slouch(to: Node) -> void:
+	var rot := Vector3(0, 0, 15 * DEG)
+	var at := Vector3(-0.06, 0.62, 0.34)
+	# The brim: wide, thin, and well proud of a 0.96 turret.
+	as_wool(cyl(to, 0.60, 0.045, at, rot, false, 20))
+	# The puggaree — the cloth band round the base of the crown.
+	as_wool(cyl(to, 0.36, 0.09, at + Vector3(0.02, 0.09, 0), rot, false, 14))
+	# A dented crown, squashed and rolled with the brim.
+	var crown := sphere(to, 0.34, at + Vector3(0.03, 0.20, 0), Vector3(1.0, 0.68, 0.94))
+	crown.rotation = rot
+	as_wool(crown)
+	# THE PINNED SIDE. A slouch hat is only a slouch hat because one side of the
+	# brim is turned up against the crown; without this it is a sunhat.
+	as_wool(plate(to, 0.40, 0.30, 0.05, 0.11, at + Vector3(-0.50, 0.14, 0),
+			Vector3(0, 0, 72 * DEG)))
+	# The badge that pins it.
+	as_plate(plate(to, 0.12, 0.15, 0.05, 0.03, at + Vector3(-0.56, 0.18, -0.05),
+			Vector3(0, PI * 0.5, 0)))
 ## WALKER — a Tarleton.
 ##
 ## THE PEAK BINDING IS GONE and the peak itself has moved up to y 1.33, because
@@ -700,8 +702,9 @@ static func walker_tarleton(to: Node) -> void:
 	# it is tall, and a 1:1 version reads as a fin.
 	as_plate(sphere(to, 1.0, Vector3(0, 1.68, 0.06), Vector3(0.11, 0.46, 0.66)))
 	# Peak: shallower, higher, and stopping at y 1.26 against the eye's 1.23.
-	as_plate(plate(to, 0.88, 0.30, 0.05, 0.12, Vector3(0, 1.33, -0.80),
-			Vector3(72 * DEG, 0, 0)))
+	# NO PEAK. A Tarleton has one, but on this turret it read as a little visor
+	# stuck to the front and it had already been moved twice to keep it off the
+	# Eye. The turban and the roach carry the helmet without it.
 	as_plate(cyl(to, 0.08, 0.44, Vector3(-0.58, 1.74, -0.20),
 			Vector3(0, 0, 11 * DEG), true, 8))
 	as_plate(cyl(to, 0.11, 0.05, Vector3(-0.60, 1.46, -0.20),
@@ -796,12 +799,17 @@ static func reclaimer_flatcap(to: Node) -> void:
 static func vehicle_hat_trials() -> Array:
 	return [
 		["rover", "rover_beret", func(b): rover_beret(b)],
-		["rover", "rover_shako", func(b): rover_shako(b)],
+		["rover", "rover_slouch", func(b): rover_slouch(b)],
 		["walker", "walker_tarleton", func(b): walker_tarleton(b)],
 		["walker", "walker_peaked_cap", func(b): walker_peaked_cap(b)],
 		["walker", "walker_bearskin", func(b): walker_bearskin(b)],
 		["reclaimer", "reclaimer_hardhat", func(b): reclaimer_hardhat(b)],
 		["reclaimer", "reclaimer_flatcap", func(b): reclaimer_flatcap(b)],
+		["soldier", "soldier_brodie", func(b): soldier_brodie(b)],
+		["soldier", "soldier_pickelhaube", func(b): soldier_pickelhaube(b)],
+		["soldier", "soldier_cap", func(b): soldier_cap(b)],
+		["soldier", "soldier_pads", func(b): soldier_pads(b)],
+		["soldier", "soldier_pads_cap", func(b): soldier_pads_cap(b)],
 	]
 
 
@@ -1642,3 +1650,71 @@ static func wrapped_plate(to: Node, yaw_deg: float, y: float, w: float, h: float
 		# the bevel; the middle of a plate has no edge to soften.
 
 		frustum(to, seg, h, thick, 0.88 if facets > 1 else 0.86, seat[0], seat[1])
+
+
+# ─────────────────────────────────────────────
+# SOLDIER HEADGEAR, AS BAKEABLE ENTRY POINTS
+# ─────────────────────────────────────────────
+# rank_list() holds these as inline lambdas for the mock-up sheet, which cannot
+# be addressed by name from tools/bake_hats.gd. These are the same two builders
+# under names a baker can call, so the shipped soldier wears exactly what the
+# sheet showed and the two cannot drift.
+#
+# Coordinates are soldier-body local — the capsule's own origin — so a RankKit
+# mounting these wants `mount` and `authored_in` both pointing at the body.
+
+static func soldier_pads(to: Node) -> void:
+	shoulder_pads(to)
+
+
+static func soldier_cap(to: Node) -> void:
+	hat("PEAKED CAP").call(to)
+
+
+static func soldier_pads_cap(to: Node) -> void:
+	shoulder_pads(to)
+	hat("PEAKED CAP").call(to)
+
+
+## SOLDIER — a Pickelhaube, built on the PEAKED CAP's proportions.
+##
+## That cap works because of two measurements and both are reused here: the
+## crown is squashed and raised so its underside stops at 0.66, clear of the
+## sensor pod that tops out at 0.583; and the band sits at the height where the
+## capsule is 0.40 across, because a rim only reads as a rim if it meets the
+## head.
+##
+## The spike is the whole point and it is the one thing allowed to break the
+## silhouette. Everything else — the peak, the rear guard, the brow plate —
+## hugs, which is the same rule the pauldrons cost eight renders to learn.
+static func soldier_pickelhaube(to: Node) -> void:
+	as_plate(sphere(to, 0.46, Vector3(0, 0.92, 0), Vector3(1.0, 0.70, 1.0)))
+	as_plate(ring(to, 0.42, 0.49, Vector3(0, 0.80, 0)))
+	# Cruciform base and the spike itself, standing 0.32 above the dome.
+	as_plate(cyl(to, 0.11, 0.035, Vector3(0, 1.24, 0), Vector3.ZERO, false, 8))
+	as_plate(cyl(to, 0.055, 0.30, Vector3(0, 1.41, 0), Vector3.ZERO, true, 8))
+	# Front peak and rear neck guard, both stopping well above the pod.
+	as_plate(plate(to, 0.46, 0.26, 0.04, 0.09, Vector3(0, 0.80, -0.44),
+			Vector3(76 * DEG, 0, 0)))
+	as_plate(plate(to, 0.50, 0.28, 0.04, 0.09, Vector3(0, 0.78, 0.44),
+			Vector3(-72 * DEG, 0, 0)))
+	# The wappen on the brow.
+	as_plate(plate(to, 0.24, 0.20, 0.035, 0.03, Vector3(0, 0.97, -0.37),
+			Vector3(14 * DEG, 0, 0)))
+
+
+## SOLDIER — a Brodie, on the same base.
+##
+## THE BRIM IS THE HELMET. A Brodie is a shallow bowl on a very wide flat brim,
+## and the brim is what makes it unmistakable in silhouette — 1.32 across on a
+## body 1.0 wide, overhanging by 0.26 all round. It is set at y 0.80, which puts
+## it a clear 0.2 above the sensor pod; the bowl above it is barely more than a
+## lid.
+static func soldier_brodie(to: Node) -> void:
+	as_plate(cyl(to, 0.66, 0.04, Vector3(0, 0.80, 0), Vector3.ZERO, false, 20))
+	as_plate(sphere(to, 0.44, Vector3(0, 0.90, 0), Vector3(1.0, 0.48, 1.0)))
+	as_plate(ring(to, 0.40, 0.47, Vector3(0, 0.83, 0)))
+	as_plate(cyl(to, 0.06, 0.035, Vector3(0, 1.12, 0), Vector3.ZERO, false, 8))
+	# The chinstrap, across the front below the brim and above the pod.
+	as_plate(cyl(to, 0.022, 0.78, Vector3(0, 0.70, -0.30),
+			Vector3(0, 0, PI * 0.5), false, 6))

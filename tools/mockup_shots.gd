@@ -397,6 +397,11 @@ func _vehicle(kind: String, build: Callable, at: Vector3) -> Node3D:
 		return null
 	var bot: Node3D = load(FRAMES[kind]).instantiate()
 	bot.faction = Enums.Factions.PLAYER
+	# THE SCENE'S OWN HAT OFF, BEFORE IT ENTERS THE TREE. RankKit reads this meta
+	# in _ready and an empty one means "chose none", so the frame arrives bare and
+	# the only hat in the shot is the one the builder puts on. Without it the
+	# three vehicles wore their default underneath whatever was being trialled.
+	bot.set_meta("cosmetic_id", &"")
 	root.add_child(bot)
 	var before := bot.get_child_count()
 	build.call(bot)
@@ -423,22 +428,32 @@ func _paint_deep(bot: Node3D) -> void:
 	var fur := _Parts.fur_material()
 	for n in bot.find_children("*", "CSGShape3D", true, false):
 		var shape := n as CSGShape3D
-		if shape.material != null:
+		# A CSGCombiner3D HAS NO `material` — reading it is an error, not null,
+		# and the pauldrons are built from combiners, so this threw mid-loop and
+		# left the rest of the kit unpainted. It takes material_override.
+		var combiner := shape as CSGCombiner3D
+		if combiner != null:
+			if combiner.material_override != null:
+				continue
+		elif shape.material != null:
 			continue
+		var mat: Material = armor
 		if shape.has_meta("fabric"):
-			shape.material = cloth
+			mat = cloth
 		elif shape.has_meta("plate"):
-			shape.material = steel
+			mat = steel
 		elif shape.has_meta("lame"):
-			shape.material = lame
+			mat = lame
 		elif shape.has_meta("hivis"):
-			shape.material = hivis
+			mat = hivis
 		elif shape.has_meta("wool"):
-			shape.material = wool
+			mat = wool
 		elif shape.has_meta("fur"):
-			shape.material = fur
+			mat = fur
+		if combiner != null:
+			combiner.material_override = mat
 		else:
-			shape.material = armor
+			shape.material = mat
 
 
 # ─────────────────────────────────────────────

@@ -967,8 +967,8 @@ wake_after_kills = 150
 [resource]
 script = ExtResource("1_missdef")
 id = &"georgetown_1_ascent"
-display_name = "Georgetown"
-briefing = "GEORGETOWN. YOU COME ASHORE AT THE BOTTOM AND THE OPERATION IS UPHILL ALL OF IT.
+display_name = "Lockside"
+briefing = "LOCKSIDE. YOU COME ASHORE AT THE BOTTOM AND THE OPERATION IS UPHILL ALL OF IT.
 
 The town steps down to the river in four flat terraces, each held up by a stone wall, and the only ways between them are the public stairs, two ramped streets and the canal crossings. Fourteen metres of fall in about a hundred and fifty, every metre of it in a wall you can see — so you always know what is above you, and so does everything on it.
 

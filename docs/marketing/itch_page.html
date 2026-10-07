@@ -1,0 +1,167 @@
+<!--
+  ITCH PROJECT PAGE — the description body
+  Paste into: Edit project -> Description. Switch the editor to HTML view first
+  (the small </> toggle above the box), then paste all of this.
+
+  Semantic tags only, no CSS, no classes. itch sanitizes HTML and strips any
+  class that is not prefixed "custom-", so a styled block arrives broken.
+  Everything here is themed by itch's own stylesheet and cannot break.
+
+  THREE SECTIONS ARE BLANK ON PURPOSE and marked FILL THIS IN. They are the
+  parts that earn trust on an itch page and the parts only you can write.
+  Do not publish with the placeholders still in.
+
+  Copy from here down. ------------------------------------------------------>
+
+<p><em>Compute is how many robots you can be at once.</em></p>
+
+<p>
+  You are an agent. Something above you is taking compute from something else,
+  and every order you get is part of that &mdash; so you are handed objectives
+  across a coast road, a river crossing, a town, and nobody tells you what any of
+  it was for. You command a squad of robots. They are capsules, they do not know
+  they are not human-shaped, they do not know the town was a town; they deal in
+  objectives, enemies and orders. You are the only thing here that notices the
+  difference.
+</p>
+
+<blockquote>
+  <p>Something points you. You point them.</p>
+</blockquote>
+
+<h2>Compute is capacity</h2>
+
+<p>
+  It buys seats, and seats are how many robots you can field at once. Take more
+  and you are larger. Lose ground and you are smaller. There is no other reason
+  to fight and there does not need to be one.
+</p>
+
+<h2>The squad is the only thing you chose</h2>
+
+<p>
+  Not the war, not the objectives, not your own existence. You choose which
+  frames to buy, what to fit them with, and whether to go back for one that went
+  down.
+</p>
+
+<ul>
+  <li>A <strong>Rover</strong> is a turret on wheels.</li>
+  <li>
+    A <strong>Walker</strong> is a turret on legs &mdash; it takes infantry kit a
+    wheeled hull cannot, and its turret traverses slowly, so getting round its
+    flank puts both of its guns on the wrong side.
+  </li>
+  <li>A <strong>Reclaimer</strong> drags salvage home.</li>
+  <li>
+    A <strong>Spotter Drone</strong> carries no weapon and flies. One squad
+    member acquiring a target wakes the whole squad, so a sensor at altitude is
+    worth more than another rifle.
+  </li>
+</ul>
+
+<h2>They come back</h2>
+
+<p>
+  The squad does not reset between missions. Robots return with you, keep the kit
+  you fitted, and earn ranks by surviving. A robot that goes down in the field is
+  <em>down</em>, not destroyed: a Mechanic walks over, stands it back up, and it
+  walks out with you. Losing a fight and losing a frame are different things.
+</p>
+
+<h2>Two health bars</h2>
+
+<p>
+  Hull is what a Mechanic repairs. Signal is what near-misses degrade &mdash;
+  sensors halve, accuracy falls, and past the last threshold the frame goes dark
+  where it stands. Signal comes back on its own. Hull does not. Riflemen who
+  cannot scratch a heavy can still take it out of the fight.
+</p>
+
+<h2>Places, not a place</h2>
+
+<p>
+  A coast road, a valley basin, three river bridges, a town called Mutaha. They
+  have names. Nothing ever says what they were for. Your squad treats every one
+  of them identically &mdash; as an objective with enemies near it &mdash; and
+  that is the point being made, repeatedly, rather than once.
+</p>
+
+<hr>
+
+<h2>What is in this build</h2>
+
+<!-- FILL THIS IN. The highest-trust block on an itch page and the one most devs
+     skip. Say plainly: how many missions, roughly how long, and what is
+     obviously absent. A reader who knows the scope forgives the scope.
+     Example shape, replace entirely:
+
+<ul>
+  <li>Three missions, about twenty-five minutes.</li>
+  <li>Eight frames to buy and fit, between missions.</li>
+  <li>No campaign ending yet &mdash; the ladder stops after the third mission.</li>
+  <li>Windows only. No settings menu to speak of.</li>
+</ul>
+-->
+
+<h2>Controls</h2>
+
+<!-- FILL THIS IN. Do not guess &mdash; a wrong controls list is worse than none.
+     The actions exist in project.godot: move, jump, aim, fire, reload, zoom,
+     lean left / lean right, scan, command, interact, squad manager, 1-6,
+     fullscreen. The game already renders these as readable key names through
+     Character/hud/lesson_prompts.gd, so the cheap route is to read them off the
+     in-game lesson prompts and paste them here.
+
+<ul>
+  <li><strong>WASD</strong> &mdash; move</li>
+  <li><strong>[key]</strong> &mdash; give the squad an order</li>
+  <li><strong>[key]</strong> &mdash; open the squad manager</li>
+  <li><strong>[key]</strong> &mdash; scan</li>
+</ul>
+-->
+
+<h2>Known issues</h2>
+
+<!-- FILL THIS IN. Three to six lines. On itch this reads as competence, not
+     weakness &mdash; it tells a playtester which bugs are worth reporting.
+     You know what is broken; I only know what is unfinished. -->
+
+<h2>Feedback</h2>
+
+<p>
+  This is a playtest build and the comments below are the right place for
+  anything at all &mdash; including that it would not start, or that you had no
+  idea what you were meant to be doing. Both are useful.
+</p>
+
+<p>
+  If something breaks, the version number in the corner of the menu and in
+  <code>build_info.txt</code> next to the exe tells me which build you were on.
+</p>
+
+<!--
+  WINDOWS SMARTSCREEN &mdash; keep this. It converts a frightening dialog into an
+  expected one, and without it at least one person quietly does not play and
+  never says why.
+-->
+
+<h2>Before you run it</h2>
+
+<p>
+  Windows will say <strong>&ldquo;Windows protected your PC&rdquo;</strong>.
+  Click <strong>More info</strong>, then <strong>Run anyway</strong>. The build is
+  not code-signed &mdash; a certificate costs a few hundred a year and this is a
+  playtest.
+</p>
+
+<p>
+  Unzip the whole folder and keep it together. The <code>.exe</code> on its own
+  will not start: it needs the <code>.pck</code> and the two <code>.dll</code>
+  files beside it.
+</p>
+
+<!-- IMAGES: if you want any inline, upload them to itch first (the editor's
+     image button) and let it give you the URL. Hotlinked images from elsewhere
+     tend to break. The gallery screenshots are managed separately, below the
+     description box, and do not belong in here. -->

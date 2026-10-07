@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://t51su0vouiu6"]
+[gd_scene load_steps=24 format=3 uid="uid://t51su0vouiu6"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_nty0a"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
@@ -16,6 +16,7 @@
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
 [ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="11_n4p1p"]
 [ext_resource type="Script" path="res://faction_livery.gd" id="14_agla4"]
+[ext_resource type="Script" path="res://Character/components/rank_kit.gd" id="90_rankkit"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
@@ -106,5 +107,10 @@ pieces = [NodePath("../CSGMesh3D")]
 paint_blend = 1.0
 marker_energy = 6.0
 
+[node name="RankKit" type="Node" parent="." node_paths=PackedStringArray("mount", "livery", "authored_in")]
+script = ExtResource("90_rankkit")
+mount = NodePath("..")
+livery = NodePath("../FactionLivery")
+authored_in = NodePath("..")
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

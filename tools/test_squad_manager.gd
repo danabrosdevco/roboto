@@ -231,8 +231,11 @@ func _run() -> void:
 	_check("a Reclaimer on its welder is not an unarmed robot", _card("RECLAIMER-1") != null
 		and not _says(_card("RECLAIMER-1"), "NO WEAPON"))
 	_click(_card("RECLAIMER-1"))
+	# ARTICULATED ARM, not "TOOL". The slot is named for what it IS — a mount a
+	# later frame could also have — rather than for the welder that happens to be
+	# on it, and it matches the mount class the armorer card prints.
 	_check("...its empty slot shows the welder, and is a slot to fill",
-		_says(squad._detail, "WELDER") and _says(squad._detail, "TOOL"))
+		_says(squad._detail, "WELDER") and _says(squad._detail, "ARTICULATED ARM"))
 	_click(_card("MECHANIC-1"))
 	_check("a mechanic has no weapon slot to pick, so it shows its built-in welder",
 		_says(squad._detail, "WELDER"))

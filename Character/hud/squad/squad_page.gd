@@ -443,7 +443,7 @@ func _card(record: SoldierRecord, where: Dictionary = {}) -> Control:
 	# Under the icon, what the frame and its modules add up to: the number you
 	# are actually comparing when you pick who goes.
 	var mugshot := Kit.vbox(2)
-	mugshot.add_child(Kit.icon(Icons.chassis(frame, "s"), tint, Vector2(40, 40)))
+	mugshot.add_child(Kit.icon(Icons.chassis(frame, "s", record.cosmetic_id), tint, Vector2(40, 40)))
 	var hp := Kit.label("%d HP" % record.max_health, Kit.DIM, 11)
 	hp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mugshot.add_child(hp)
@@ -486,7 +486,7 @@ func _drag(record: SoldierRecord, card: Control) -> Variant:
 	var ghost := PanelContainer.new()
 	ghost.add_theme_stylebox_override("panel", Kit.box(Kit.BRIGHT, Kit.PANEL, 2, 8.0))
 	var row := Kit.hbox(8)
-	row.add_child(Kit.icon(Icons.chassis(_frame(record), "s"), Kit.BRIGHT, Vector2(28, 28), true))
+	row.add_child(Kit.icon(Icons.chassis(_frame(record), "s", record.cosmetic_id), Kit.BRIGHT, Vector2(28, 28), true))
 	row.add_child(Kit.label(record.display_name.to_upper(), Kit.BRIGHT, 18, true))
 	ghost.add_child(row)
 	ghost.modulate.a = 0.85
@@ -730,7 +730,7 @@ func _build_detail() -> void:
 	# 48, not 64. The name, the frame line and the history sit beside it and are
 	# what the block is actually for; the portrait is identification, and it only
 	# has to be big enough to tell a Walker from a soldier at a glance.
-	head.add_child(Kit.icon(Icons.chassis(frame, "m"), Kit.PROBLEM if destroyed else Kit.BRIGHT, Vector2(48, 48)))
+	head.add_child(Kit.icon(Icons.chassis(frame, "m", r.cosmetic_id), Kit.PROBLEM if destroyed else Kit.BRIGHT, Vector2(48, 48)))
 	var who := Kit.vbox(2)
 	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(who)
@@ -793,6 +793,8 @@ func _build_detail() -> void:
 		if r.benched:
 			row.add_child(Kit.label("STAYS AT BASE · EARNS NO XP", Kit.DIM, Kit.SMALL))
 		_detail.add_child(row)
+		_cosmetic_row(r)
+		_pauldron_row(r)
 
 	_stat_block(r, frame)
 
@@ -804,11 +806,20 @@ func _build_detail() -> void:
 		weapon_row.add_child(_group("WEAPON", [_fixed_tile(null, frame.built_in)]))
 	else:
 		# Named for what it takes, so a rifle refused by a rover reads as a rule.
+		# THE SAME THREE WORDS THE ARMORER CARD USES. A weapon's card names its
+		# mount class — TURRET, INFANTRY, ARTICULATED ARM (see Kit.mount_class)
+		# — and the slot it drops into has to be called the same thing, or the
+		# player is matching two vocabularies for one idea.
+		#
+		# This said "TOOL", which named the Reclaimer's boom by what happens to
+		# be on it rather than by what it is. An arm is a mount: the welder is
+		# what it holds today and a mortar is what it holds instead, and nothing
+		# stops a later frame having one.
 		var slot_name := "WEAPON"
 		if frame != null and frame.turret:
 			slot_name = "TURRET"
 		elif frame != null and frame.weapon_replaces_built_in:
-			slot_name = "TOOL"   # the Reclaimer's boom: the welder, or a mortar in its place
+			slot_name = "ARTICULATED ARM"
 		weapon_row.add_child(_group(slot_name, _tiles(ItemDefinition.Kind.WEAPON, r.weapon_ids)))
 	if is_player and ui.item(REPAIR_TOOL) != null:
 		weapon_row.add_child(_group("BUILT IN · KEY 3", [_fixed_tile(ui.item(REPAIR_TOOL), "")]))
@@ -1133,3 +1144,70 @@ func _stat_block(r: SoldierRecord, frame: ChassisDefinition) -> void:
 		extras.append("SELF-REVIVE %ds" % int(round(r.effective_self_revive)))
 	if not extras.is_empty():
 		_detail.add_child(Kit.label(" · ".join(extras), Kit.BRIGHT, Kit.SMALL, true))
+
+
+## THE HAT. One button that cycles whatever this frame can wear, with the name
+## of what it has on beside it.
+##
+## A cycle rather than a list because there are at most three per frame and the
+## detail column is already dense — a dropdown would cost a row and a popup to
+## say the same thing. The icon beside the name redraws with it, so the choice
+## is visible from the card as well as from here.
+##
+## NOTHING IS SHOWN FOR A FRAME WITH NO KIT. Cosmetics.for_frame always returns
+## NONE, so a size of one means there is genuinely nothing to pick and a control
+## would be dead the moment it was drawn.
+func _cosmetic_row(r: SoldierRecord) -> void:
+	var options := Cosmetics.for_frame(r.chassis_id)
+	if options.size() <= 1:
+		return
+	var state: CampaignState = ui.state
+	var row := Kit.hbox(10)
+	row.add_child(Kit.label("DRESS", Kit.DIM, Kit.SMALL))
+	var button := Kit.button(Cosmetics.display_name(r.cosmetic_id), Kit.BRIGHT, Kit.SMALL)
+	button.tooltip_text = "Headgear for %s. Appearance only — it changes no stat, and earns and costs nothing." % r.display_name
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.mouse_entered.connect(ui.hover)
+	var record := r
+	button.pressed.connect(func():
+		var next := Cosmetics.next_for_frame(record.chassis_id, record.cosmetic_id)
+		ui.play(&"fit" if state.set_cosmetic(record, next) else &"denied"))
+	row.add_child(button)
+	row.add_child(Kit.label("%d OF %d" % [maxi(options.find(r.cosmetic_id), 0) + 1, options.size()],
+			Kit.DIM, Kit.SMALL))
+	row.add_child(Kit.fill())
+	_detail.add_child(row)
+
+
+## PAULDRONS, as their own tick rather than another hat.
+##
+## They are not headgear and do not compete with it — a Captain wears both — so
+## putting them in the DRESS cycle meant the only way to have both was a third
+## combined entry, FULL DRESS, which said nothing the two separate things did
+## not. The tick replaces it.
+##
+## Shown greyed below Captain rather than hidden, because a locked thing you can
+## see is a reason to keep promoting and a thing you cannot see is not.
+func _pauldron_row(r: SoldierRecord) -> void:
+	if not Cosmetics.pauldrons_fit(r.chassis_id):
+		return
+	var state: CampaignState = ui.state
+	var earned := r.rank >= Cosmetics.PAULDRONS_RANK
+	var row := Kit.hbox(10)
+	row.add_child(Kit.label("PAULDRONS", Kit.DIM, Kit.SMALL))
+	var button := Kit.button("ON" if r.pauldrons else "OFF",
+			Kit.BRIGHT if earned else Kit.DIM, Kit.SMALL)
+	button.disabled = not earned
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.tooltip_text = ("Shoulder plates for %s. Appearance only." % r.display_name) \
+			if earned else "Earned at %s." % SoldierRecord.rank_title_at(Cosmetics.PAULDRONS_RANK)
+	button.mouse_entered.connect(ui.hover)
+	var record := r
+	button.pressed.connect(func():
+		ui.play(&"fit" if state.set_pauldrons(record, not record.pauldrons) else &"denied"))
+	row.add_child(button)
+	if not earned:
+		row.add_child(Kit.label("LOCKED · %s" % SoldierRecord.rank_title_at(Cosmetics.PAULDRONS_RANK).to_upper(),
+				Kit.DIM, Kit.SMALL))
+	row.add_child(Kit.fill())
+	_detail.add_child(row)

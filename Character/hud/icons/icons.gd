@@ -25,9 +25,21 @@ static func item(item_def: ItemDefinition, size: String) -> Texture2D:
 	return _load(path("items", item_def.id, size))
 
 
-static func chassis(frame: ChassisDefinition, size: String) -> Texture2D:
+## A frame, optionally wearing a cosmetic.
+##
+## FALLS BACK TO THE BARE ICON when the variant has not been baked, rather than
+## to nothing: a robot in a hat nobody has re-baked for should still draw as
+## itself, not vanish off its own card. Passing NONE is exactly the lookup this
+## always was, so every existing call keeps working unchanged.
+static func chassis(frame: ChassisDefinition, size: String,
+		cosmetic: StringName = &"") -> Texture2D:
 	if frame == null:
 		return null
+	if cosmetic != &"":
+		var worn := _load(path("chassis",
+				StringName(str(frame.id) + Cosmetics.icon_suffix(cosmetic)), size))
+		if worn != null:
+			return worn
 	if frame.icon != null:
 		return frame.icon
 	return _load(path("chassis", frame.id, size))

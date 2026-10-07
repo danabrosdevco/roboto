@@ -167,6 +167,9 @@ var kills_by_kind: Dictionary = {}
 # Squadmates this one got back on their feet this mission. Credited in
 # apply_healing, read and cleared at extraction like the kills above.
 var revives: int = 0
+## Frame id -> how many of that frame this robot got back up, so XP can be paid
+## by what was saved. A walker is worth more to recover than a rifleman.
+var revives_by_kind: Dictionary = {}
 # Whose kills these really are. A hatchling is a thrown weapon that happens to
 # have legs: it lives 25 seconds and has no record, so a kill credited to it was
 # a kill nobody got. HatchlingPayload points this at the thrower, and a victim's
@@ -4186,6 +4189,11 @@ func apply_healing(amount: int, healer: Node = null) -> void:
 	if was_down and not downed and healer != null and is_instance_valid(healer) \
 			and healer != self and "revives" in healer:
 		healer.revives += 1
+		# AND WHAT WAS SAVED. Same guard and the same reason as the kill tally
+		# above: not every healer carries a counter.
+		if "revives_by_kind" in healer:
+			var rkind := _KillKinds.kind_of(self)
+			healer.revives_by_kind[rkind] = int(healer.revives_by_kind.get(rkind, 0)) + 1
 	_Analytics.heal(self, health - before, healer, was_down and not downed)
 
 

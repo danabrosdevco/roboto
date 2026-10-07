@@ -36,6 +36,53 @@ most wants and least often gets:
 
 ---
 
+## 2026-10-06 — paste-ready HTML for the itch profile and the project page
+
+**Landed.** Two fragments, both paste-ready, both verified rendering in a browser.
+
+- **`docs/marketing/itch_profile.html`** — the user profile bio. Short: who you
+  are, what the game is, Godot, one link. Two bracketed placeholders.
+- **`docs/marketing/itch_page.html`** — the project page description, built from
+  `PITCH.md`'s one-page structure: tagline, the opening paragraph, the
+  "Something points you" card, then Compute is capacity / The squad is the only
+  thing you chose / They come back / Two health bars / Places, not a place.
+  Plus a Feedback section and a **Before you run it** section carrying the
+  SmartScreen instruction and the keep-the-folder-together warning.
+
+**"Profile" was ambiguous** — it could mean the user profile or the project page,
+and the session has been about the latter while the word points at the former. I
+wrote both rather than ask, since both are short and guessing wrong would have
+cost a round trip.
+
+**No CSS, deliberately, and this is the load-bearing decision.** itch sanitizes
+HTML in descriptions and **strips any class not prefixed `custom-`**, so a styled
+block arrives as a mess. Everything in both files is semantic tags only —
+`h2`, `p`, `ul`, `blockquote`, `strong`, `em`, `code`, `hr` — which itch themes
+itself and no sanitiser can break. Checked rather than assumed; the custom-class
+rule is in itch's own CSS guide.
+
+**Three sections are deliberately blank**, marked `FILL THIS IN` with guidance
+and an example shape in the comment: what is in this build, controls, known
+issues. These are the three I flagged last session as the human's own. The
+controls one specifically says **do not guess** and points at
+`Character/hud/lesson_prompts.gd`, which already renders readable key names at
+runtime, so reading them off the in-game prompts is the cheap route. Rendered,
+the blanks show as bare headings, which is a visible reminder not to publish with
+them empty.
+
+**Gates.** `check.sh --changed`: **PASS**. HTML and Markdown only. Also opened
+both files in a browser and read the rendered text back: headings, lists,
+blockquote and entities all resolve, and the commented sections correctly do not
+render.
+
+**Needs the human.** The same three blanks, plus the two bracketed links in the
+profile file. Nothing new.
+
+**Blocked / next.** Unchanged from last session: the page can go up now with the
+`environments/` frames as the gallery; the reshoot at 1920×1080 upgrades it
+rather than gating it, and the revive video for the GIF is still the one missing
+asset with no substitute.
+
 ## 2026-10-01 (sixth pass) — the cover, and an honest look at the first shot set
 
 **Landed.**

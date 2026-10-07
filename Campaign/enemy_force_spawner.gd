@@ -67,6 +67,10 @@ signal reinforcements_woken(tag: StringName, squads: int)
 var _losses: int = 0
 var _counted: Dictionary = {}
 var _kill_waves: Array = []        # [{"after": int, "tag": StringName}]
+## [{"after": float, "tag": StringName}], by MISSION SECONDS since the force
+## deployed. Physics time, so a paused game does not spend it.
+var _time_waves: Array = []
+var _elapsed: float = 0.0
 ## Reserves listening for this tag come in when any nest is destroyed. A
 ## convention rather than a field: a mission names the wave, the building does
 ## not have to know about it.
@@ -128,6 +132,8 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 			_reserves[spec.reinforcement_tag].append(spec)
 			if spec.wake_after_kills > 0:
 				_kill_waves.append({"after": spec.wake_after_kills, "tag": spec.reinforcement_tag})
+			if spec.wake_after_seconds > 0.0:
+				_time_waves.append({"after": spec.wake_after_seconds, "tag": spec.reinforcement_tag})
 			continue
 
 		var squad := _spawn_squad(level, spec)
@@ -136,6 +142,14 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 			hostiles += squad.squad_members.size()
 	if not _reserves.is_empty():
 		print("[EnemyForce] reserves held: %s" % str(pending_reserve_tags()))
+	# THE CLOCK STARTS HERE, and only if something is waiting on it. Set
+	# explicitly rather than left to the default: physics processing is ON by
+	# default, so without this every spawner in the game would tick once a frame
+	# to look at an empty array.
+	_elapsed = 0.0
+	set_physics_process(not _time_waves.is_empty())
+	if not _time_waves.is_empty():
+		print("[EnemyForce] timed waves: %s" % str(_time_waves))
 	force_deployed.emit(_squads.size(), hostiles)
 
 
@@ -183,11 +197,9 @@ func wake(tag: StringName) -> int:
 		squad.set_objective(Squad.SquadObjective.ADVANCE, destination, true)
 		# They come in from outside activation_distance on purpose, so they are
 		# exempt from the culling that would otherwise freeze them where they
-		# landed until the player walked out to meet them. Only reinforcements
-		# get this: see the note on the gate in Enemy._physics_process.
-		for member in squad.squad_members:
-			if member != null and is_instance_valid(member):
-				member.exempt_from_culling()
+		# landed until the player walked out to meet them. See _let_them_walk_in,
+		# and the note on the gate in Enemy._physics_process.
+		_let_them_walk_in(squad, destination)
 		woken += 1
 
 	if woken > 0:
@@ -320,6 +332,27 @@ func _watch_losses(body: Enemy) -> void:
 		return   # nothing spawned to watch
 	body.went_down.connect(_on_body_lost.bind(body))
 	body.destroyed.connect(_on_body_lost.bind(body))
+
+
+## THE ONLY THING THIS TICKS FOR is a wave waiting on the clock, and it turns
+## itself off the moment the last one has gone in. A spawner that ticked for the
+## whole mission to watch a number nothing reads is the cost this avoids — most
+## missions have no timed wave at all and never run this once.
+func _physics_process(delta: float) -> void:
+	if _time_waves.is_empty():
+		set_physics_process(false)
+		return
+	_elapsed += delta
+	var due: Array = []
+	for wave in _time_waves:
+		if float(wave["after"]) <= _elapsed:
+			due.append(wave)
+	for wave in due:
+		_time_waves.erase(wave)
+		print("[EnemyForce] %.0fs in: calling in '%s'" % [_elapsed, wave["tag"]])
+		wake(wave["tag"])
+	if _time_waves.is_empty():
+		set_physics_process(false)
 
 
 func _on_body_lost(body: Enemy) -> void:
@@ -469,6 +502,57 @@ func _apply_frame(soldier: Soldier, frame: ChassisDefinition) -> void:
 		soldier.sensor_range = frame.base_sensor_range
 
 
+# ─────────────────────────────────────────────
+# A SQUAD WALKING IN FROM A LONG WAY OUT HAS TO BE LET TO WALK.
+#
+# Distance culling freezes any hostile further than activation_distance (75 m)
+# from the nearest thing it would fight, and it deliberately IGNORES
+# always_active — see the note on the gate in Enemy._physics_process for why.
+# So an ADVANCE squad authored to come in from 200 m does not come in. It stands
+# on its spawn until the fight happens to reach it, and on a mission built around
+# the fight coming to the PLAYER, that never happens.
+#
+# Measured on the Georgetown landing: WHARF, four riflemen on ADVANCE with
+# always_active set, 208 m out, moved 0.0 m in 160 s of mission. The squad 30 m
+# FURTHER out walked in fine — because it was a RESERVE, and wake() had already
+# been exempting the squads it sent in.
+#
+# So the exemption is granted wherever an ADVANCE is issued rather than only at
+# wake(), and it is SIZED TO THE WALK. The flat 90 s covers the 90 m a
+# reinforcement used to spawn at and nothing further: at the pace a squad
+# actually advances it leaves anything past ~200 m frozen short of its
+# objective, which is the same bug one wave later.
+#
+# Narrow on purpose. Only a squad actually ordered to cross open ground gets it,
+# only until it ARRIVES (the cull clears never_culled inside the activation
+# radius), and never a garrison or a patrol — those are what the 70 idle brains
+# in the Foundry note were about.
+# ─────────────────────────────────────────────
+## The pace an advancing squad actually keeps, in m/s, which is far below any
+## chassis move_speed: a squad under orders stops for cover, for contact and for
+## each other. Measured at 2.4 m/s over open ground with shooting on the
+## Georgetown landing (tools/_gt_advance.gd), so this is deliberately slower —
+## the number only sets how long the exemption lasts, and the cost of being
+## generous is one brain ticking a little past its arrival.
+const ADVANCE_PACE := 2.0
+
+
+func _let_them_walk_in(squad: Squad, destination: Vector3) -> void:
+	if squad == null or not is_instance_valid(squad):
+		push_warning("EnemyForceSpawner: asked to let a squad walk in that is not there, so nothing was exempted and a distant advance may freeze on its spawn.")
+		return
+	var walk: float = squad.get_center().distance_to(destination)
+	for member in squad.squad_members:
+		if member == null or not is_instance_valid(member):
+			continue
+		# Already inside the radius: it was never going to be culled on the way,
+		# and an exemption it does not need is a brain running for the rest of the
+		# mission for nothing.
+		if walk <= float(member.activation_distance):
+			continue
+		member.exempt_from_culling(maxf(Enemy.CULL_EXEMPT_SECONDS, walk / ADVANCE_PACE))
+
+
 # Posture is applied AFTER the squad is in the tree, because set_patrol and
 # set_objective both read member positions via get_center().
 func _apply_posture(squad: Squad, spec: EnemySquadSpec, route: PatrolPath, post: SquadObjectivePoint) -> void:
@@ -484,8 +568,11 @@ func _apply_posture(squad: Squad, spec: EnemySquadSpec, route: PatrolPath, post:
 				post.global_position if post != null else squad.get_center(), true)
 		EnemySquadSpec.Posture.ADVANCE:
 			squad.target_objective = post
-			squad.set_objective(Squad.SquadObjective.ADVANCE,
-				_advance_destination(squad, spec, post), true)
+			var push_to: Vector3 = _advance_destination(squad, spec, post)
+			squad.set_objective(Squad.SquadObjective.ADVANCE, push_to, true)
+			# An ADVANCE authored from outside the activation radius is a walk the
+			# squad has to be allowed to take. See _let_them_walk_in.
+			_let_them_walk_in(squad, push_to)
 		EnemySquadSpec.Posture.RESERVE:
 			# Inert until something wakes them. This is the hook reinforcements
 			# will hang off — a director flips them to ADVANCE on a trigger.
@@ -783,8 +870,11 @@ func _is_hostile_squad(squad: Squad) -> bool:
 # Drops references only. The level unload frees the nodes.
 func clear() -> void:
 	_losses = 0
+	_elapsed = 0.0
 	_counted.clear()
 	_kill_waves.clear()
+	_time_waves.clear()
+	set_physics_process(false)
 	_squads.clear()
 	# Holds specs waiting on an objective that will never fire now, and a stale
 	# entry would send the next mission's reinforcements into the wrong level.

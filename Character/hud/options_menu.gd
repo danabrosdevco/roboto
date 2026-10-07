@@ -362,6 +362,7 @@ func _build_debug() -> void:
 	_give("GIVE RESOURCES", "ADDS 5000 TO THE PURSE.", "+5000", 5000, false)
 	_give("GIVE COMPUTE", "ADDS 50 UNSPENT COMPUTE.", "+50", 50, true)
 	_complete_mission_row()
+	_promote_all_row()
 
 
 ## One handout row: a name, a button, and the campaign on the other end of it.
@@ -939,3 +940,49 @@ class _Bar extends Control:
 	func _pick_at(x: float) -> void:
 		var frac := clampf(x / maxf(size.x, 1.0), 0.0, 1.0)
 		picked.emit(snap(lerpf(min_value, max_value, frac)))
+
+
+## Promote the whole roster to the top rank, so the rank-gated kit can be seen
+## without playing twenty operations for it.
+##
+## PERMANENT, and sitting under that header for a reason: rank is saved state
+## and there is no undo. It is here rather than in a console because it is the
+## only way to look at Captain-rank cosmetics on a fresh save.
+func _promote_all_row() -> void:
+	var row := _new_row("PROMOTE EVERYONE",
+		"EVERY ROBOT ON THE ROSTER STRAIGHT TO CAPTAIN, BENCHED ONES INCLUDED. XP IS ZEROED AT THE TOP RANK BECAUSE THERE IS NOTHING LEFT TO SPEND IT ON.")
+	var line: HBoxContainer = row["line"]
+	line.add_child(_gap(ARROW_W))
+	var button := _flat_button("MAX", FONT_ROW)
+	button.custom_minimum_size = Vector2(VALUE_W, 0)
+	button.pressed.connect(_on_promote_all)
+	line.add_child(button)
+	line.add_child(_gap(READOUT_W))
+	row["refresh"] = Callable()
+	row["enabled"] = Callable()
+	row["controls"] = [button]
+
+
+func _on_promote_all() -> void:
+	_play(confirm_sound)
+	# Through the "campaign" group, not a path: this screen lives above World
+	# and opens from the main menu too, where there is no campaign at all.
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	var state = campaign.get("state") if campaign != null else null
+	if state == null:
+		_flash("NO CAMPAIGN LOADED — START A RUN FIRST.", COL_WARN)
+		return
+	var promoted := 0
+	for record in state.roster:
+		if record == null or record.rank >= record.max_rank:
+			continue
+		record.rank = record.max_rank
+		record.xp = 0
+		# Through the same path a real promotion takes, so the kit changes here
+		# exactly as it would after twenty operations.
+		record.adopt_best_cosmetic()
+		promoted += 1
+	if promoted == 0:
+		_flash("EVERY ROBOT IS ALREADY AT TOP RANK.", COL_BRIGHT)
+		return
+	_flash("%d ROBOT(S) PROMOTED TO %s." % [promoted, state.roster[0].rank_title()], COL_BRIGHT)

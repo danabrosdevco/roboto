@@ -1,4 +1,4 @@
-[gd_scene load_steps=57 format=3]
+[gd_scene load_steps=59 format=3]
 
 [ext_resource type="Script" path="res://Character/characters/ai/reclaimer.gd" id="1_l406q"]
 [ext_resource type="PackedScene" path="res://Character/components/bark.tscn" id="3_ch5dl"]
@@ -11,6 +11,8 @@
 [ext_resource type="AudioStream" path="res://sounds/sfx/psx ui sfx/ScoreG-loop.wav" id="10_fl5go"]
 [ext_resource type="PackedScene" path="res://Character/components/oil_spray.tscn" id="11_u0i70"]
 [ext_resource type="Script" path="res://faction_livery.gd" id="12_mrjdl"]
+[ext_resource type="Script" path="res://Character/components/rank_kit.gd" id="90_rankkit"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/hats/hat_reclaimer_hardhat.tscn" id="91_hat"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ecj6v"]
 size = Vector3(1.5, 0.8, 3.1)
@@ -747,5 +749,11 @@ pieces = [NodePath("../Rig/Hull")]
 paint_blend = 1.0
 marker_energy = 6.0
 
+[node name="RankKit" type="Node" parent="." node_paths=PackedStringArray("mount", "livery", "authored_in")]
+script = ExtResource("90_rankkit")
+hat = ExtResource("91_hat")
+mount = NodePath("../Rig")
+livery = NodePath("../FactionLivery")
+authored_in = NodePath("../Rig")
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

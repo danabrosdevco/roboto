@@ -39,7 +39,7 @@
 [ext_resource type="Resource" uid="uid://cmoo8kwpv0p6r" path="res://Campaign/items/item_repair_lance.tres" id="34_lance"]
 [ext_resource type="Resource" uid="uid://br4dphbkqbmqr" path="res://Campaign/items/item_mine_heavy.tres" id="35_mheavy"]
 [ext_resource type="Resource" uid="uid://r6xgp5wf0x88" path="res://Campaign/items/item_mine_cluster.tres" id="36_mcluster"]
-[ext_resource type="Resource" path="res://Campaign/items/item_smoke.tres" id="37_smoke"]
+[ext_resource type="Resource" uid="uid://b0orscos67suy" path="res://Campaign/items/item_smoke.tres" id="37_smoke"]
 
 [resource]
 script = ExtResource("3_rvros")

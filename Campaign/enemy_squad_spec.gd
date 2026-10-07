@@ -87,6 +87,19 @@ enum Posture {
 ## "after ten of ours are down" is one number rather than a table of triggers.
 ## The tag still has to be set: it is what the wave is called in the log.
 @export var wake_after_kills: int = 0
+## Wakes itself this many seconds into the mission, whatever else has happened.
+## 0 leaves it on the objective or the kill count alone.
+##
+## THE TRIGGER FOR "YOU ARE STILL HERE". A kill count asks how well the player
+## is doing and an objective asks how far they have got; neither can express
+## "three minutes have passed", which is the only question a scripted last stand
+## has — it does not matter whether they are winning, it matters that they have
+## not finished losing yet.
+##
+## Counted from the moment the force deploys, so it is mission time rather than
+## wall clock and a paused game does not spend it. The tag still has to be set:
+## it is what the wave is called in the log.
+@export var wake_after_seconds: float = 0.0
 
 
 ## How many bodies this spec describes, whichever form it was authored in.

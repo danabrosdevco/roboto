@@ -7,6 +7,7 @@ const _SaveSlots := preload("res://Campaign/save_slots.gd")
 const _Analytics := preload("res://Managers/analytics.gd")
 const _Induction := preload("res://Campaign/induction.gd")
 const _SoftwareTree := preload("res://Campaign/software_tree.gd")
+const _KillKinds := preload("res://Campaign/kill_kinds.gd")
 
 # ─────────────────────────────────────────────
 # CAMPAIGN — the autoload that owns state across level loads.
@@ -807,8 +808,6 @@ func select_mission(id: StringName) -> void:
 	# UI, gets the behaviour for free.
 	_push_destination()
 	mission_selected.emit(selected_mission())
-
-
 func selected_mission() -> MissionDefinition:
 	return get_mission(state.selected_mission_id)
 
@@ -979,8 +978,18 @@ func on_level_loaded(level: Node) -> void:
 # Contribution is counted in KILLS rather than damage only because kills are
 # what the body already tracks; damage dealt would be the better measure and is
 # the natural upgrade when something records it.
+## XP IS PAID BY WEIGHT, not by headcount.
+##
+## A kill is worth half what it was and is then multiplied by the SUPPLY the
+## dead frame occupied — the same number that decides how many seats it takes in
+## your own squad. A rifleman is 1, a rover or a reclaimer 2, a walker 3. So
+## killing a walker is worth three riflemen, which is roughly what it costs.
+##
+## Revives are paid the same way and at the full rate, because getting a walker
+## back on its feet is worth more than shooting a rifleman.
 const XP_SURVIVED := 25
-const XP_PER_KILL := 6
+const XP_PER_KILL := 3
+const XP_PER_REVIVE := 6
 const XP_MISSION_SUCCESS := 15
 
 
@@ -1004,7 +1013,8 @@ func _award_experience(success: bool) -> Array:
 		if not went.has(record):
 			continue
 		var before := record.rank
-		var gained := XP_PER_KILL * record.confirmed_kills_this_mission
+		var gained := _weighted(record.kills_by_kind_this_mission, XP_PER_KILL)
+		gained += _weighted(record.revives_by_kind_this_mission, XP_PER_REVIVE)
 		gained += XP_SURVIVED
 		if success:
 			gained += XP_MISSION_SUCCESS
@@ -1377,3 +1387,20 @@ func on_returned_to_base() -> void:
 
 func save() -> void:
 	state.save_to_disk()
+
+
+## A tally of frame id -> count, paid at `rate` per supply point.
+##
+## FALLS BACK TO SUPPLY 1 for anything it cannot identify, which is the same
+## thing supply_of() does for a record with no frame. An unknown kind is still
+## worth something: the robot did the work whether or not the catalogue has an
+## entry for what it shot.
+func _weighted(tally: Dictionary, rate: int) -> int:
+	var total := 0
+	for kind: StringName in tally:
+		var frame := _KillKinds.frame_of(kind)
+		var supply: int = frame.supply if frame != null else 1
+		total += rate * maxi(supply, 1) * int(tally[kind])
+	return total
+
+

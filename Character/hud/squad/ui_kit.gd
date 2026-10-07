@@ -142,16 +142,41 @@ static func button(text: String, color: Color = BRIGHT, size: int = BODY, bold: 
 
 
 ## Seats: one square per point of supply, filled while taken.
+## One square per seat. IT WRAPS, and that is the whole reason this is not a
+## one-liner.
+##
+## A seat is 14px, so a fifty-seat hangar laid in one row is 700px wide — and the
+## HANGAR strip puts the seat count and both buttons AFTER it, so past about
+## forty-five seats they were shoved off the right-hand edge of the screen. The
+## strip is deliberately pinned above the scrolling card list (so the buttons
+## never scroll away), which meant there was nothing to scroll to reach them
+## either: the controls were simply gone.
+##
+## Rows of SEATS_PER_ROW grow the block DOWNWARD instead. Vertical space is what
+## that strip has going spare; horizontal space is what it has none of.
+const SEAT_PX := 14.0
+const SEAT_BOX := 10.0
+## Chosen so a full row stays well inside the strip at the narrowest window the
+## rest of the UI supports, rather than at the width it happens to break at.
+const SEATS_PER_ROW := 30
+
+
 static func seats(used: int, cap: int) -> Control:
 	var c := Control.new()
 	var n := maxi(cap, used)
-	c.custom_minimum_size = Vector2(n * 14, 14)
+	var cols: int = mini(maxi(n, 1), SEATS_PER_ROW)
+	var rows: int = maxi(1, int(ceil(float(n) / float(SEATS_PER_ROW))))
+	c.custom_minimum_size = Vector2(cols * SEAT_PX, rows * SEAT_PX)
 	c.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	c.draw.connect(func():
-		var top := (c.size.y - 10.0) * 0.5
+		# The whole block centred, not each row: with one row this is exactly
+		# what it did before.
+		var top: float = (c.size.y - rows * SEAT_PX) * 0.5 + (SEAT_PX - SEAT_BOX) * 0.5
 		for i in n:
-			var r := Rect2(i * 14 + 1, top, 10, 10)
+			var col: int = i % SEATS_PER_ROW
+			var line: int = i / SEATS_PER_ROW
+			var r := Rect2(col * SEAT_PX + 1.0, top + line * SEAT_PX, SEAT_BOX, SEAT_BOX)
 			if i < used:
 				c.draw_rect(r, PROBLEM if i >= cap else BRIGHT)
 			else:

@@ -276,6 +276,40 @@ func set_benched(record: SoldierRecord, benched: bool) -> bool:
 	return true
 
 
+
+## Put a hat on a robot, or take it off.
+##
+## PURELY COSMETIC and deliberately unguarded by rank, supply or anything else:
+## nothing downstream reads cosmetic_id to make a gameplay decision, so the only
+## thing that can go wrong is a hat that does not fit the frame — which is what
+## Cosmetics.fits refuses. A refit onto a different chassis drops it the same
+## way, in SoldierRecord.write_to.
+## Pauldrons on or off. Earned at Captain and never taken away by rank, but you
+## may still take them off by hand — the tick is yours, the unlock is not.
+func set_pauldrons(record: SoldierRecord, on: bool) -> bool:
+	if record == null or not roster.has(record):
+		return false
+	if on and (record.rank < Cosmetics.PAULDRONS_RANK or not Cosmetics.pauldrons_fit(record.chassis_id)):
+		return false
+	if record.pauldrons == on:
+		return true
+	record.pauldrons = on
+	roster_changed.emit()
+	return true
+
+
+func set_cosmetic(record: SoldierRecord, id: StringName) -> bool:
+	if record == null or not roster.has(record):
+		return false
+	if not Cosmetics.fits(record.chassis_id, id):
+		return false
+	if record.cosmetic_id == id:
+		return true
+	record.cosmetic_id = id
+	roster_changed.emit()
+	return true
+
+
 # ── SUPPLY ────────────────────────────────────
 func supply_of(record: SoldierRecord) -> int:
 	var frame := catalogue.chassis_def(record.chassis_id) if catalogue != null and record != null else null
