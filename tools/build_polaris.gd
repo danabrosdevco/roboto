@@ -110,7 +110,27 @@ func _initialize() -> void:
 		return
 	print("      %s  %d pieces" % [ART.get_file(), placed])
 
-	_write_level()
+	# THE LEVEL SCENE IS NOT REWRITTEN BY --force, AND MUST NOT BE.
+	#
+	# _write_level() writes polaris_level.tscn from scratch: the art, a spawn,
+	# the objective anchors, an environment. Everything ELSE a level grows is
+	# added to that file by other hands — the Ops node carrying the missions, the
+	# cover point spawner, the level script — and this tool knows nothing about
+	# any of it, so rewriting the file deletes it without a word.
+	#
+	# That is not hypothetical. A --force run to take four cart corrals out of
+	# the ART scene also dropped Ops, CoverPointSpawner, CoverPoint_0 and
+	# trench_broom_level.gd out of the LEVEL scene, and the first anyone knew was
+	# the missions being broken.
+	#
+	# The art scene is generated and safe to rebuild as often as you like. The
+	# level scene is authored the moment it first exists.
+	var level_exists := FileAccess.file_exists(ProjectSettings.globalize_path(LEVEL))
+	if level_exists and not OS.get_cmdline_user_args().has("--force-level"):
+		print("      %s left alone — it carries gameplay nodes this tool did not" % LEVEL.get_file())
+		print("      write and cannot reproduce. Pass --force-level to overwrite it anyway.")
+	else:
+		_write_level()
 	print("      %s" % LEVEL.get_file())
 	if _clashes > 0:
 		print("      PLACEMENT GUARD: %d clash(es) — see the warnings above" % _clashes)

@@ -134,7 +134,22 @@ func _initialize() -> void:
 		return
 	print("      %s  %d pieces%s" % [ART.get_file(), placed,
 			"" if _clashes == 0 else "  — %d PLACEMENT CLASH(ES), see the warnings" % _clashes])
-	_write_level()
+	# THE LEVEL SCENE IS NOT REWRITTEN BY --force, AND MUST NOT BE.
+	#
+	# This tool writes georgetown_level.tscn from scratch: the art, a spawn, the
+	# objective anchors, an environment. Everything ELSE a level grows is added
+	# to that file by other hands — this one carries an Ops scene out of
+	# maps/gameplay — and rewriting the file deletes all of it without a word.
+	#
+	# It has already happened once on polaris: a --force run to change four
+	# pieces of ART also dropped Ops, the cover point spawner and the level
+	# script out of the LEVEL, and the first anyone knew was broken missions.
+	var level_exists := FileAccess.file_exists(ProjectSettings.globalize_path(LEVEL))
+	if level_exists and not OS.get_cmdline_user_args().has("--force-level"):
+		print("      %s left alone — it carries gameplay nodes this tool did not" % LEVEL.get_file())
+		print("      write and cannot reproduce. Pass --force-level to overwrite it anyway.")
+	else:
+		_write_level()
 	print("      %s" % LEVEL.get_file())
 	print("BUILD GEORGETOWN DONE")
 	quit()

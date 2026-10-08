@@ -1,7 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://maps/polaris_art.tscn" id="1_art"]
 [ext_resource type="PackedScene" uid="uid://g7fmy28elpah" path="res://Env/world_objects/spawn_point.tscn" id="2_spawn"]
+[ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="90_level"]
+[ext_resource type="PackedScene" path="res://maps/gameplay/polaris_ops.tscn" id="91_ops"]
+[ext_resource type="PackedScene" uid="uid://cyslwv078g4sk" path="res://Env/world_objects/cover_point_spawner.tscn" id="92_coverspawn"]
+[ext_resource type="Script" path="res://Env/world_objects/cover_point.gd" id="93_coverpt"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_horizon_color = Color(0.64, 0.66, 0.67, 1)
@@ -32,7 +36,11 @@ detail_sample_distance = 6.0
 geometry_parsed_geometry_type = 1
 filter_baking_aabb = AABB(-320, -12, -320, 640, 48, 640)
 
-[node name="PolarisLevel" type="Node3D"]
+[node name="PolarisLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region", "level_exits")]
+script = ExtResource("90_level")
+spawn_point = NodePath("Ops/MissionStart")
+nav_region = NodePath("NavigationRegion3D")
+level_exits = [NodePath("Ops/LevelExit")]
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_polaris")
@@ -76,3 +84,16 @@ directional_shadow_max_distance = 420.0
 
 [node name="SpawnPoint" parent="." instance=ExtResource("2_spawn")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -210, 0, 244)
+
+[node name="Ops" parent="." instance=ExtResource("91_ops")]
+
+[node name="CoverPointSpawner" parent="." node_paths=PackedStringArray("navigation_region") instance=ExtResource("92_coverspawn")]
+navigation_region = NodePath("../NavigationRegion3D")
+min_spacing = 4.0
+sample_radius = 0.0
+debug_visualize = false
+
+[node name="CoverPoint_0" type="Node3D" parent="CoverPointSpawner"]
+script = ExtResource("93_coverpt")
+cover_direction = Vector3(0, 0, 1)
+metadata/cover_direction = Vector3(0, 0, 1)
