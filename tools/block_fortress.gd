@@ -352,6 +352,43 @@ func _citadel_podium() -> void:
 	box(Vector3(-FORT_HALF, -GATE_HALF, -1.0), Vector3(-i, GATE_HALF, FORT_YARD), PAD)
 	# The way in: 60 m of ramp outside the west wall, 16 m wide, at 1 in 6.
 	ramp(-FORT_HALF - 60.0, -GATE_HALF, -FORT_HALF, GATE_HALF, -1.0, 0.0, FORT_YARD, "+x", PAD)
+	# A PARAPET DOWN BOTH SIDES OF IT, which it has never had.
+	#
+	# The ramp is a free-standing wedge with vertical flanks, ten metres high at
+	# the top and open to the air down both sides. Walked on the baked mesh, the
+	# ground beside it joins the ramp only at the very foot: from about five
+	# metres up it is a separate island, so a body halfway along has walkable
+	# mesh right next to it in plan and no way onto it. The path solver sends
+	# them back to the foot while crowd steering shoves them at the straight
+	# line, and they grind along the flank — which is what "the AI get stuck on
+	# the edges" is. On the mesh itself there is only the agent radius, 0.6 m,
+	# between a body and a ten metre drop.
+	#
+	# block_bridges already fixed this exact thing for the bridge ramps, and its
+	# comment says why: it "left every ramp in this file open down both sides,
+	# over the water, at exactly the place a squad is funnelling and shoving".
+	# This is the same wall on the same kind of edge.
+	#
+	# 0.9 m, NOT 0.3: anything from 0.25 to 0.5 is the band where the baker will
+	# not climb it but a body steps straight over it, which is how the canal
+	# coping put squads in the water. Above the 0.45 m step-over it stops them
+	# dead. It sits OUTSIDE the gate line, so the 16 m of roadway is untouched.
+	# One convex wedge a side, not upstand(): upstand builds its slope as a
+	# stack of brushes that overlap each other, which put 26 new overlapping
+	# pairs into a piece that already carries 461. This is one brush — top
+	# following the ramp, bottom flat on the ramp's own base — and it meets the
+	# ramp's flank at exactly y = +-GATE_HALF, touching and not overlapping.
+	var foot := -FORT_HALF - 60.0
+	for s: float in [-1.0, 1.0]:
+		var inner: float = s * GATE_HALF
+		var outer: float = inner + s * 0.5
+		solid([
+			Vector3(foot, inner, -1.0), Vector3(foot, outer, -1.0),
+			Vector3(foot, inner, 0.9), Vector3(foot, outer, 0.9),
+			Vector3(-FORT_HALF - 0.3, inner, -1.0), Vector3(-FORT_HALF - 0.3, outer, -1.0),
+			Vector3(-FORT_HALF - 0.3, inner, FORT_YARD + 0.75),
+			Vector3(-FORT_HALF - 0.3, outer, FORT_YARD + 0.75),
+		], TECH_WALL)
 
 
 ## The wall: 8 m thick to a walk 4 m above the yard, with a parapet outside it,
