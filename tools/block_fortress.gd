@@ -217,6 +217,21 @@ func _causeway_span_broken() -> void:
 
 ## The way on: 24 m of embankment climbing 4 m at 1 in 6, 16 m wide, square at
 ## the top so a span butts it. Gentle enough for anything on wheels.
+## WARNING: fort_tower.map IS HAND-EDITED. DO NOT REGENERATE IT.
+##
+## Running this generator over maps/blocks/fortress/fort_tower.map rewrites
+## 136 planes around the wall-top and bastion ramps that are NOT what this
+## code produces — they are the human's own clipping fixes, and regenerating
+## silently undoes them and adds 24 overlapping brush pairs. It has happened
+## before on this very file.
+##
+## The ramp parapet below was added by splicing its two brushes into the
+## committed .map by hand, not by regenerating. The code is here so the intent
+## is recorded and so a future full rebuild keeps it; it is not the route by
+## which the shipped .map got it. For small changes to an edited map, see
+## tools/map_retexture.gd.
+
+
 ## HALF THE WIDTH OF THE FLARE AT THE MOUTH, EACH SIDE. The ramp used to be one
 ## 16 m strip for its whole 24 m, so the only way on to the causeway was a 16 m
 ## gate at the far end: a body approaching from anywhere else met the ramp's

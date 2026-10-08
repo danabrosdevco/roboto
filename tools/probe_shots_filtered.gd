@@ -48,6 +48,12 @@ const EYE := 1.65
 # The cameras are the ones already proven in the per-level shot tools. This
 # tool is about the filter, not about finding new angles.
 const SHOTS: Array = [
+	# The fort approach, to see whether the ramp parapet is actually there.
+	["causeway", "F1_fort_ramp", Vector3(350.0, 16.0, 44.0), Vector3(410.0, 6.0, 0.0), 62.0, "abs"],
+	["causeway", "F2_up_the_ramp", Vector3(372.0, 2.4, 0.0), Vector3(430.0, 10.0, 0.0), 64.0, "abs"],
+	["causeway", "F3_ramp_side", Vector3(400.0, 3.0, 34.0), Vector3(400.0, 6.0, 0.0), 62.0, "abs"],
+	["causeway", "F4_highway_ramp", Vector3(378.0, 15.0, 44.0), Vector3(332.0, 3.0, 0.0), 62.0, "abs"],
+	["causeway", "F5_up_the_highway_ramp", Vector3(352.0, 2.2, 0.0), Vector3(300.0, 6.0, 0.0), 66.0, "abs"],
 	["georgetown", "G1_the_towpath", Vector3(-100.0, 1.7, -7.0), Vector3(140.0, 1.0, -7.0), 62.0, "abs"],
 	["georgetown", "G2_in_the_prism", Vector3(-60.0, -1.3, 0.0), Vector3(160.0, -2.0, 0.0), 66.0, "abs"],
 	["georgetown", "G3_the_footbridge", Vector3(-178.0, -1.3, 0.0), Vector3(-144.0, 0.4, 0.0), 58.0, "abs"],
