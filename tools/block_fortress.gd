@@ -244,24 +244,47 @@ func _causeway_ramp() -> void:
 	# piece already had. The wall between the two surfaces is no barrier where
 	# it matters: it rises from nothing at the mouth and is level with the ramp
 	# for the first half, by which point a body is already on the deck line.
+	# THE FLARE STARTS AT THE RAMP'S OWN EDGE, AND IN THE RAMP'S OWN PLANE.
+	#
+	# It used to start at w/2 + 1, outside the old side walls, which left those
+	# walls standing between the two walking surfaces: a one-metre ridge, low at
+	# the mouth and rising to head height at the top. That ridge is the "mini
+	# ramp between the two ramps" the squad gets stuck in — at the mouth end it
+	# is a few centimetres, right in the range where a body neither walks over
+	# it cleanly nor is stopped by it.
+	#
+	# The apex was also at CWAY_H while the ramp's own surface at x = -1 is
+	# CWAY_H * 23/24, so the flare stood 0.17 m proud of the thing it was
+	# supposed to continue. APEX puts it exactly in the ramp's plane: every
+	# point below satisfies z = (x + run) / run * CWAY_H, so the fan and the
+	# ramp are one unbroken surface with no join to catch on.
+	var apex: float = CWAY_H * (run - 1.0) / run
+	var flare_out: float = w * 0.5 + 1.0 + CWAY_FLARE
 	for s: float in [-1.0, 1.0]:
-		var inner: float = s * (w * 0.5 + 1.0)
-		var outer: float = s * (w * 0.5 + 1.0 + CWAY_FLARE)
 		solid([
-			Vector3(-run, inner, -1.0), Vector3(-run, outer, -1.0),
-			Vector3(-run, inner, 0.0), Vector3(-run, outer, 0.0),
-			Vector3(-1.0, inner, -1.0), Vector3(-1.0, inner, CWAY_H),
+			Vector3(-run, s * w * 0.5, -1.0), Vector3(-run, s * flare_out, -1.0),
+			Vector3(-run, s * w * 0.5, 0.0), Vector3(-run, s * flare_out, 0.0),
+			Vector3(-1.0, s * w * 0.5, -1.0), Vector3(-1.0, s * w * 0.5, apex),
 		], ROAD)
-	# Side walls along the climb, and the abutment the deck lands on.
+	# A parapet along the OUTER edge of the fan, replacing those side walls.
+	#
+	# The walls were doing two jobs badly: dividing the surface, and stopping a
+	# body going over the side. Only the second is wanted, and it belongs at the
+	# outside edge, not through the middle. It follows the taper, so it is a
+	# hull like the fan rather than anything axis-aligned, and its inner face
+	# lies on the fan's outer face — touching, not overlapping.
+	#
+	# 0.9 m, as on the fort ramp: over the 0.45 m step-over, and clear of the
+	# 0.25-0.5 m band where the baker will not climb it but a body steps
+	# straight over, which is how the canal coping put squads in the water.
 	for s: float in [-1.0, 1.0]:
-		var y0: float = s * w * 0.5
-		var y1: float = s * (w * 0.5 + 1.0)
-		var pts: Array = []
-		for pair: Array in [[-run, -1.0], [0.0, CWAY_H + 1.0]]:
-			for y: float in [y0, y1]:
-				pts.append(Vector3(pair[0], y, -1.0))
-				pts.append(Vector3(pair[0], y, pair[1]))
-		solid(pts, ROAD)
+		solid([
+			Vector3(-run, s * flare_out, -1.0), Vector3(-run, s * (flare_out + 0.5), -1.0),
+			Vector3(-run, s * flare_out, 0.9), Vector3(-run, s * (flare_out + 0.5), 0.9),
+			Vector3(-1.0, s * w * 0.5, -1.0), Vector3(-1.0, s * (w * 0.5 + 0.5), -1.0),
+			Vector3(-1.0, s * w * 0.5, apex + 0.9),
+			Vector3(-1.0, s * (w * 0.5 + 0.5), apex + 0.9),
+		], ROAD)
 	# The abutment is the FOOTING under the ramp, stopping at its underside.
 	# Taken up to CWAY_H it is buried inside the ramp and both side walls — the
 	# last 3 of the 7 overlapping pairs this piece shipped with.
