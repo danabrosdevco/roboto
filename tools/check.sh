@@ -81,8 +81,16 @@ while IFS= read -r f; do
 	[ -n "$f" ] || continue
 	[ -f "$f" ] || continue
 	CHECKED=$((CHECKED + 1))
+	# "contains invalid unicode" is in the pattern because a script Godot refuses
+	# to READ never reaches the parser, so it reports none of the three error
+	# strings above and this check used to print PASS on it. That happened: an
+	# in-place rewrite of enemy.gd flattened two characters out of UTF-8, Godot
+	# would not load the file at all, every robot in the game lost its script,
+	# and the gate said the project was fine. A vacuous pass is worse than a
+	# failure.
 	out=$("$GODOT" --headless --path . --check-only --script "res://${f#./}" 2>&1 \
-	      | grep -E "Parse Error|Compile Error|SCRIPT ERROR" | grep -Ev "$NOISE" | head -5)
+	      | grep -E "Parse Error|Compile Error|SCRIPT ERROR|contains invalid unicode" \
+	      | grep -Ev "$NOISE" | head -5)
 	if [ -n "$out" ]; then
 		echo "FAIL  $f"
 		echo "$out" | sed 's/^/        /'

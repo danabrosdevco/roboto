@@ -23,6 +23,24 @@ const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
 
 
 func _ready() -> void:
+	# ─────────────────────────────────────────────
+	# THE GROUP NOBODY WAS IN.
+	#
+	# Three things look the manager up this way — mine.gd, squad_commander.gd and
+	# hatchling_payload.gd — and NOTHING had ever joined the group, so all three
+	# silently took their fallback path forever. Every one of those fallbacks is
+	# "walk the enemies group and re-test hostility per node", which is the work
+	# hostiles_for() exists to do once per faction per tick and cache.
+	#
+	# It showed up as the most expensive thing in the game. In-editor profile of
+	# a real firefight: Mine._physics_process 68.56 ms of a 128.16 ms script
+	# total, with Mine._faction called 2686 times and Enums.are_hostile 2735 —
+	# the per-node signature of the fallback, from ~232 mines that each believed
+	# there was no AI manager in the level.
+	#
+	# BEFORE the await below. Anything after it happens a frame later at best,
+	# and a mine that scans in between would miss the group and cache the miss.
+	add_to_group(&"ai_manager")
 	# At boot rather than per level: the cache is static and keyed by scene path,
 	# so one pass covers every mission in the run and none of it lands during play.
 	await _CsgBake.warm(self)

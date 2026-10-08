@@ -82,6 +82,22 @@ var _near_miss_shape: SphereShape3D
 var _near_miss_query: PhysicsShapeQueryParameters3D
 # Reused across the four friendly-fire passes rather than reallocated per pass.
 var _ff_query: PhysicsRayQueryParameters3D
+
+# ─────────────────────────────────────────────
+# WHAT SHOOTING COSTS, COUNTED.
+#
+# Measured: 80 robots walking cost 11.01 ms of physics frame; the same 80 in
+# sustained combat cost 16.94 ms. Of that 5.93 ms, the nav and think timers
+# accounted for 0.68 — so 5.25 ms of combat was not the AI, and nothing in the
+# game could say what it was. These two counters say.
+#
+# Every shot fires up to five rays: four in the friendly-fire loop below, then
+# one for the round. The comment there already calls that loop the
+# second-hottest path in the game. Cumulative rather than per-frame, so a
+# reader divides by frames; same purpose as Enemy._nav_spent_us.
+# ─────────────────────────────────────────────
+static var _shot_spent_us: int = 0
+static var _shot_rays: int = 0
 var _melee_shape: SphereShape3D
 var _melee_query: PhysicsShapeQueryParameters3D
 
@@ -318,7 +334,10 @@ func friendly_in_line(weapon_target: Vector3) -> bool:
 		query.from = from
 		query.to = to_point
 		query.exclude = exclusion
+		var _ff_at := Time.get_ticks_usec()
 		var hit = space.intersect_ray(query)
+		_shot_spent_us += Time.get_ticks_usec() - _ff_at
+		_shot_rays += 1
 		if not hit:
 			return false
 		var collider = hit.collider
@@ -396,7 +415,10 @@ func _one_round(from: Vector3, direction: Vector3, exclusion: Array[RID],
 	# changes how hard it lands.
 	var query := PhysicsRayQueryParameters3D.create(from, from + direction * 250.0)
 	query.exclude = exclusion
+	var _rd_at := Time.get_ticks_usec()
 	var result = space_state.intersect_ray(query)
+	_shot_spent_us += Time.get_ticks_usec() - _rd_at
+	_shot_rays += 1
 	if result:
 		var collider = result.collider
 		var damageable: Node = null

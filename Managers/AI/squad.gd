@@ -359,7 +359,30 @@ func think_wait_seconds() -> float:
 	return floor_s
 
 
+# ─────────────────────────────────────────────
+# WHAT THE SQUAD LAYER COSTS, COUNTED.
+#
+# This tick runs in _process, not _physics_process — so it lands in the IDLE
+# frame, and every performance measurement taken on this project reads
+# TIME_PHYSICS_PROCESS. The squad layer has been invisible to all of them. It
+# cannot be measured through TIME_PROCESS either: in headless the idle frame
+# includes the main loop's pacing sleep, which is why idle time goes DOWN as
+# physics goes up and why an empty map reads ~6-9 ms of "idle work".
+#
+# An explicit timer does not care about any of that. Cumulative, read by
+# tools/bench_qamareen.gd; same pattern as Enemy._nav_spent_us.
+static var _squad_spent_us: int = 0
+static var _squad_ticks: int = 0
+
+
 func _process(delta: float) -> void:
+	var _at := Time.get_ticks_usec()
+	_tick_body(delta)
+	_squad_spent_us += Time.get_ticks_usec() - _at
+
+
+func _tick_body(delta: float) -> void:
+	_squad_ticks += 1
 	_think_owed += delta
 	_think_wait -= delta
 	if _think_wait > 0.0:

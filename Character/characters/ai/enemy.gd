@@ -2392,9 +2392,53 @@ static var _nav_budget: int = 0
 static var _nav_budget_frame: int = -1
 static var _nav_spent_us: int = 0
 
+## Microseconds and ray count spent in is_path_clear — every sight question the
+## AI asks: can I see it, can I shoot it from that cover point, who shot me.
+## Cumulative, read by tools/bench_ai.gd, same purpose as _nav_spent_us. Added
+## because 5.25 ms of combat cost was not nav and not think, and nothing in the
+## game could say what it was. See the note by AIWeapon._shot_spent_us.
+static var _sight_spent_us: int = 0
+static var _sight_rays: int = 0
+
 var _nav_dir: Vector3 = Vector3.ZERO
 var _nav_think_timer: float = 0.0
 var _nav_finished: bool = false
+
+# ─────────────────────────────────────────────
+# WALKING THE PATH, EVERY FRAME, FOR NOTHING.
+#
+# _tick_nav is throttled — nav_think_interval times lod_scale(), which past
+# lod_far_distance is 0.15 * 4 = 0.6 s. It used to cache a DIRECTION, and
+# move_along_nav then drove at full speed along that vector for the whole
+# interval. A direction is only true at the position it was computed from: a
+# 12 m/s chaser travels 7.2 m on it, toward a path corner it passed six metres
+# back, and the next query points it the way it came. Measured on Georgetown:
+# 0.5 m of progress in five seconds at an average speed of 9.6 m/s. It was
+# sprinting in a circle, and every chassis above 5 m/s does it.
+#
+# The fix is that the PATH is cheap even though resolving it is not.
+# get_current_navigation_path() hands back the array the agent already holds
+# without re-resolving anything — measured at 0.6 us a call against 135 us for
+# a resolve. So the robot reads its own path every frame and steers at the leg
+# it is on, which stays correct however far it has travelled, while the
+# expensive resolve stays exactly as throttled as it was. Smoothness is no
+# longer tied to query rate.
+#
+# Path points are navmesh corners, not a fixed grid: 17 points across 167 m on
+# Georgetown, so legs run about ten metres and the robot walks long straight
+# runs between them.
+# ─────────────────────────────────────────────
+
+## How close, flat, counts as having reached a corner. Small, because the point
+## is to round the corner rather than to stop on it.
+const NAV_LEG_REACHED := 0.75
+## Which leg of the current path the robot is walking.
+var _nav_leg: int = 0
+## What the path looked like last frame, so a re-resolve restarts the walk.
+## Size alone does not catch it — a new path can have the same corner count —
+## so the endpoint is compared too.
+var _nav_path_size: int = 0
+var _nav_path_end: Vector3 = Vector3.ZERO
 ## The agent's path_height_offset as initialize() set it; _tick_nav levels it
 ## with a point underfoot for one query at a time and puts this back.
 var _path_height_base: float = 0.0
@@ -2566,9 +2610,47 @@ func _first_clear_step(candidates: Array, target: Node3D) -> Vector3:
 			return _snap_to_nav(p)
 	return global_position
 
+## Which way to steer RIGHT NOW, read off the path the agent already holds. See
+## the note by NAV_LEG_REACHED: this is what makes throttled thinking and smooth
+## walking compatible.
+##
+## Returns ZERO when there is no path worth walking, and the caller falls back
+## to the cached _nav_dir so arrival and the underfoot case behave as before.
+func _path_steer_dir() -> Vector3:
+	if nav_agent == null or _nav_finished:
+		return Vector3.ZERO
+	var path: PackedVector3Array = nav_agent.get_current_navigation_path()
+	if path.size() < 2:
+		return Vector3.ZERO   # nothing resolved yet, or a single-point path
+	# A RE-RESOLVE MEANS WALK IT AGAIN FROM THE FRONT. This is also the safety
+	# net for a robot shoved off its route: the agent re-resolves once it drifts
+	# past path_max_distance, which arrives here as a new path and resets the leg.
+	var last: Vector3 = path[path.size() - 1]
+	if path.size() != _nav_path_size or last != _nav_path_end:
+		_nav_path_size = path.size()
+		_nav_path_end = last
+		_nav_leg = 1   # 0 is where the path started, which is behind us
+	_nav_leg = clampi(_nav_leg, 1, path.size() - 1)
+	# Walk past every corner already rounded. FLAT distance: the navmesh sits at
+	# a different height than the robot's origin, and a 3D measure leaves a
+	# point underfoot permanently unreached — the same trap as NAV_UNDERFOOT.
+	while _nav_leg < path.size() - 1:
+		var leg: Vector3 = path[_nav_leg] - global_position
+		leg.y = 0.0
+		if leg.length() > NAV_LEG_REACHED:
+			break
+		_nav_leg += 1
+	var steer: Vector3 = path[_nav_leg] - global_position
+	steer.y = 0.0
+	return steer
+
+
 func move_along_nav(delta):
-	# Queries happen in _tick_nav only; this just steers on the cached result.
-	var path_dir = _nav_dir
+	# Steering reads the cached PATH every frame; only resolving it is throttled,
+	# in _tick_nav. _nav_dir is the fallback for when there is no path to walk.
+	var path_dir = _path_steer_dir()
+	if path_dir == Vector3.ZERO:
+		path_dir = _nav_dir
 	var t = 1.0 - exp(-acceleration * delta)
 	if path_dir.length() < 0.15:
 		velocity.x = lerp(velocity.x, 0.0, t)
@@ -4847,7 +4929,11 @@ func is_path_clear(from: Vector3, to: Vector3, ignore: Node3D = null) -> bool:
 	if ignore != null and ignore is CollisionObject3D:
 		exclusion.append((ignore as CollisionObject3D).get_rid())
 	query.exclude = exclusion
-	if space_state.intersect_ray(query):
+	var _los_at := Time.get_ticks_usec()
+	var _los_hit = space_state.intersect_ray(query)
+	_sight_spent_us += Time.get_ticks_usec() - _los_at
+	_sight_rays += 1
+	if _los_hit:
 		return false
 	# SMOKE BLOCKS SIGHT AND NOTHING ELSE. It cannot be a collider or the ray
 	# above would stop bullets too, so it is asked separately — and it is asked

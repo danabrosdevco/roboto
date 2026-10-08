@@ -101,6 +101,10 @@ func _init() -> void:
 	# Godot still paces physics to 60 Hz, so timing the await loop measures the
 	# 16.6 ms interval and nothing about the work — which is exactly the wrong
 	# answer, and a confident-looking one.
+	# Zeroed here so the squad figure describes the measured window, not the
+	# deploy burst that precedes it.
+	Squad._squad_spent_us = 0
+	Squad._squad_ticks = 0
 	var ms := 0.0
 	for _i in 600:
 		await physics_frame
@@ -113,6 +117,10 @@ func _init() -> void:
 	print("  AWAKE (brain running)    %d   of which patrolling %d" % [awake, awake_patrol])
 	print("  culled                   %d" % (hostile - awake))
 	print("  physics CPU              %.2f ms per frame, averaged over 600" % ms)
+	# THE SQUAD LAYER, which runs in _process and is therefore absent from the
+	# physics figure above and from every other measurement on this project.
+	print("  squad layer              %.2f ms per frame   (%d Squad ticks over 600 frames)" % [
+		float(Squad._squad_spent_us) / 1000.0 / 600.0, Squad._squad_ticks])
 
 	# THE CHEAP-OUT IN _apply_motion ONLY FIRES FOR A SETTLED BODY: PASSIVE,
 	# on the floor, and velocity under 0.01. A culled robot that never settles

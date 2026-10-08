@@ -104,13 +104,24 @@ func _init() -> void:
 			body.health = 100000000
 			body.max_health = 100000000
 		if flat:
-			# A/B control: every robot thinks every frame, which is what the
-			# code did before the distance-scaled stride.
-			body.far_think_every = 1
-			body.distant_think_every = 1
+			# A/B control: no distance scaling at all, so every robot thinks at
+			# full rate however far away it is. This is what the code did before
+			# the stride existed, and it is the ceiling on what AI logic can cost.
+			#
+			# It used to set far_think_every/distant_think_every, which the LOD
+			# rework deleted — so this mode threw "Invalid assignment of property
+			# 'far_think_every'" and printed NOTHING, for every run, unnoticed.
+			# lod_scale() lerps 1.0 -> lod_far_multiplier with distance, so
+			# pinning the multiplier at 1.0 is the same control.
+			body.lod_far_multiplier = 1.0
 
 	for _i in WARMUP:
 		await physics_frame
+	# Zeroed AFTER the warmup, or the spawn-in burst is charged to the fight.
+	AIWeapon._shot_spent_us = 0
+	AIWeapon._shot_rays = 0
+	Enemy._sight_spent_us = 0
+	Enemy._sight_rays = 0
 
 	# ── MEASURE ──────────────────────────────────
 	# A RESERVE WAVE, MID-MEASUREMENT.
@@ -125,6 +136,9 @@ func _init() -> void:
 	var wave_at: int = frames / 4
 
 	var samples: PackedFloat64Array = PackedFloat64Array()
+	## CPU actually spent in the physics frame, which is the only one of the two
+	## that measures work. See the note above the print block.
+	var cpu: PackedFloat64Array = PackedFloat64Array()
 	# Nav spend alongside the frame time. Enemy keeps a static microsecond
 	# tally per physics frame for its own query budget; sampling it here says
 	# whether a spike is pathfinding or something else, which is the difference
@@ -155,7 +169,10 @@ func _init() -> void:
 				body.move_to(centre)
 		var t0 := Time.get_ticks_usec()
 		await physics_frame
+		# TWO CLOCKS, AND THEY MEASURE DIFFERENT THINGS. Read the note above the
+		# print block before quoting either of them.
 		samples.append(float(Time.get_ticks_usec() - t0) / 1000.0)
+		cpu.append(float(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0)
 		nav.append(float(Enemy._nav_spent_us) / 1000.0)
 		think.append(float(Enemy._think_spent_us) / 1000.0)
 		# A cheap per-frame signature of what the population is doing. If the
@@ -187,8 +204,33 @@ func _init() -> void:
 	var p95: float = sorted[int(sorted.size() * 0.95)]
 	var p50: float = sorted[int(sorted.size() * 0.5)]
 
+	# ─────────────────────────────────────────────
+	# WHICH NUMBER TO QUOTE. Headless Godot still paces physics to 60 Hz, so the
+	# wall clock around `await physics_frame` reads the 16.67 ms TICK PERIOD
+	# whenever the work fits inside it. For two days this bench's median and mean
+	# were quoted as the cost of the AI: they came out 14.4-14.5 and 16.6 ms on
+	# every run — 20 robots and 160, a bare proving ground and a 1.3 km city —
+	# because they were measuring the clock. A number that will not move whatever
+	# you change is not a measurement, and it is a confident-looking wrong answer.
+	#
+	# So: CPU is the cost. The wall clock is still printed because it is the only
+	# thing that catches a frame that OVERRAN its tick, which is what the worst
+	# frame and the spike list below are for — but it cannot be the headline.
+	# bench_qamareen.gd has carried this warning since it was written.
+	# ─────────────────────────────────────────────
+	var cpu_total := 0.0
+	for i in cpu.size():
+		cpu_total += cpu[i]
+
 	print("")
 	print("AI BENCH — %d robots on %s, %d frames%s" % [count, map, frames, "  [FLAT: no LOD stride]" if flat else "  [distance-scaled thinking]"])
+	print("  CPU    %7.2f ms mean in the physics frame   <- THE COST" % (cpu_total / maxf(float(cpu.size()), 1.0)))
+	var fr := maxf(float(cpu.size()), 1.0)
+	print("  shoot  %7.2f ms mean  (%.0f rays/frame)  <- weapon raycasts, NOT ai logic" % [
+		float(AIWeapon._shot_spent_us) / 1000.0 / fr, float(AIWeapon._shot_rays) / fr])
+	print("  sight  %7.2f ms mean  (%.0f rays/frame)  <- is_path_clear" % [
+		float(Enemy._sight_spent_us) / 1000.0 / fr, float(Enemy._sight_rays) / fr])
+	print("  -- below: wall clock between ticks, pinned at ~16.67 ms unless a frame overran --")
 	print("  median %7.2f ms" % p50)
 	print("  mean   %7.2f ms" % (total / float(samples.size())))
 	print("  p95    %7.2f ms" % p95)
