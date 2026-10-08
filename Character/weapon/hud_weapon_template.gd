@@ -91,6 +91,22 @@ const _WeaponAudio := preload("res://Managers/weapon_audio.gd")
 # that doesn't exist.
 @export var friendly_fire_multiplier: float = 0.34
 
+# ── SUPPRESSION ───────────────────────────────
+# Signal damage to hostiles near each round, exactly as AIWeapon does it — the
+# pass itself is AIWeapon.suppress_near, called from both so the two cannot
+# drift. Until this existed the exchange was one-way: enemy fire pinned your
+# squad and your own fire did nothing to theirs, which quietly made the whole
+# mechanic something that only ever happened TO you.
+#
+# Same units as the AI side: signal_integrity × 100, so 3.5 is 0.035 a round.
+# Set per weapon in its scene; these defaults match the AI rifle.
+@export var suppression_per_shot: float = 3.5
+@export var near_miss_radius: float = 2.5
+# What the centre round connected with, or null if it missed. Written by
+# _one_round and read by _fire_shot immediately after; see the same member on
+# AIWeapon for why this is not a second return value.
+var _struck_this_shot: Node = null
+
 signal request_status
 
 var recoil_amount: float = 0.0
@@ -254,11 +270,29 @@ func _fire_shot() -> void:
 	var each: int = int(floor(float(damage) / float(count)))
 	var spare: int = damage - each * count
 	var exclude: Array = [self, player] if player != null else [self]
+	var centre_impact: Vector3 = to
+	var struck: Node = null
 	for i in count:
 		var dir := centre
 		if count > 1 and pellet_spread_mrad > 0.0:
 			dir = AIWeapon.scatter(centre, pellet_spread_mrad)
-		_one_round(from, dir, exclude, each + (spare if i == 0 else 0))
+		var landed := _one_round(from, dir, exclude, each + (spare if i == 0 else 0))
+		if i == 0:
+			centre_impact = landed
+			# The centre round only, matching the one-pass-per-shot rule below:
+			# a shotgun must not land the hit bonus nine times over.
+			struck = _struck_this_shot
+
+	# One suppression pass per shot, down the middle of the pattern — not one
+	# per pellet, or a shotgun would suppress eight times as hard as the pellet
+	# count alone implies. The same rule AIWeapon follows.
+	#
+	# Measured along the whole flight path rather than at the impact: see the
+	# note on suppress_along for why the impact point was the wrong place.
+	if suppression_per_shot > 0.0:
+		var mine = player.faction if player != null and "faction" in player else null
+		AIWeapon.suppress_along(get_tree(), from, centre_impact,
+				near_miss_radius, suppression_per_shot / 100.0, player, mine, struck)
 
 	if tracer:
 		fire_tracer()
@@ -267,14 +301,19 @@ func _fire_shot() -> void:
 
 
 # One round down one line, carrying `share` of the shot's damage.
-func _one_round(origin: Vector3, direction: Vector3, exclude: Array, share: int) -> void:
+#
+# Returns WHERE IT LANDED — the hit point, or the end of the ray when it hit
+# nothing. A miss still has a place, and suppression is centred on it: the
+# whole point of suppressing fire is the rounds that do not connect.
+func _one_round(origin: Vector3, direction: Vector3, exclude: Array, share: int) -> Vector3:
+	_struck_this_shot = null
 	var query := PhysicsRayQueryParameters3D.new()
 	query.from = origin
 	query.to = origin + direction * hitscan_range
 	query.exclude = exclude
 	var result := get_world_3d().direct_space_state.intersect_ray(query)
 	if not result:
-		return
+		return query.to
 	var victim = result.collider
 	if not victim.has_method("apply_damage") and victim.get_parent() != null:
 		victim = victim.get_parent()
@@ -283,6 +322,8 @@ func _one_round(origin: Vector3, direction: Vector3, exclude: Array, share: int)
 	# uses, so both sides agree on who can be shot.
 	if victim.has_method("apply_damage"):
 		victim.apply_damage(_damage_for(victim, share), player)
+		_struck_this_shot = victim
+	return result.position
 
 
 func _damage_for(victim: Node, share: int) -> int:
@@ -300,7 +341,10 @@ func fire_tracer() -> void:
 	var world: Node = level_node()
 	var new_tracer = tracer_scene.instantiate()
 	world.add_child(new_tracer)
+	if new_tracer.has_method("set_side"):
+		new_tracer.set_side(player.faction if player != null and "faction" in player else Enums.Factions.PLAYER)
 	new_tracer.global_position = tracer_origin.global_position
 	var dir := tracer_origin.global_transform.basis.x.normalized()
 	new_tracer.direction = dir
 	new_tracer.look_at(new_tracer.global_position + dir)
+

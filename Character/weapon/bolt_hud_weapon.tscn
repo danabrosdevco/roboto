@@ -33,6 +33,7 @@
 
 [node name="BoltRifle" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "pump_sound", "click_stream_player", "viewmodel")]
 script = ExtResource("1_hudwep")
+suppression_per_shot = 7.0
 tracer_origin = NodePath("Holder/BoltRifleModel/Muzzle")
 muzzle_flash = NodePath("Holder/BoltRifleModel/MuzzleFlash")
 weapon_model = NodePath("Holder/BoltRifleModel")

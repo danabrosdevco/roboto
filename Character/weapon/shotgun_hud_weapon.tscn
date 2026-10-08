@@ -11,6 +11,8 @@
 [node name="Shotgun" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "pump_sound", "click_stream_player", "viewmodel")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.140767)
 script = ExtResource("1_hudwep")
+suppression_per_shot = 5.0
+near_miss_radius = 3.0
 tracer_origin = NodePath("Holder/Shotgun_22/Muzzle")
 muzzle_flash = NodePath("Holder/Shotgun_22/MuzzleFlash")
 weapon_model = NodePath("Holder/Shotgun_22")

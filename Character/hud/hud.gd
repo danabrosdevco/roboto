@@ -165,7 +165,12 @@ func _objective_prompt(objective: Object) -> String:
 var _current_interactible: Interactible
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	# FOLDED IN RATHER THAN A SECOND _process. The HUD already had one, and it
+	# returns early on every frame nothing is being looked at — so a decay put
+	# below those returns would never run, and a set_process(false) to stop the
+	# decay would have silently killed the interact prompt.
+	_tick_damage_pulse(delta)
 	if _current_interactible == null or not is_instance_valid(_current_interactible):
 		return   # looking at nothing
 	if not interact_box.visible:
@@ -188,3 +193,124 @@ func update_status(health: int, max_health: int, magazine_capacity: int, magazin
 	ui.update_status(health, max_health, magazine_capacity, magazine_size)
 	#health_label.text = "Health: %d" % health
 	#ammo_label.text = "Ammo: %d / %d" % [magazine_capacity, magazine_size]
+
+
+# ─────────────────────────────────────────────
+# DAMAGE AND SIGNAL — WIP
+# ─────────────────────────────────────────────
+# signal_filter.gdshader has carried a `damage` uniform labelled "chassis
+# integrity loss" since it was written, and nothing in the game has ever set it.
+# This sets it.
+#
+# TWO SOURCES, ONE UNIFORM. A FLOOR from how hurt you are, which does not
+# recover, and a SPIKE on each hit, which does. The screen reacting to a hit and
+# the screen looking damaged are different statements, and a single value driven
+# only by health can make neither.
+#
+# The artefact knobs ride along with the spike, scaled by the player's SCREEN
+# NOISE option exactly as they already are for the ambient look — so someone who
+# has turned the noise down does not get it back through the damage path.
+
+const _DamageDirections := preload("res://Character/hud/damage_directions.gd")
+
+# ─────────────────────────────────────────────
+# THE FEED IS THE PLAYER'S SIGNAL INTEGRITY. One number, read twice: the blue
+# strip shows it and the shader degrades by it, so the bar and the picture
+# cannot disagree.
+#
+# IT USED TO BE DERIVED FROM HEALTH, which was a proxy invented because the
+# player had no signal_integrity of its own. It has one now — see AI — and the
+# two sources that already existed (near-miss suppression from every shot, and
+# EMP) drive it without anything here being involved. Health is health; being
+# shot at is what costs you the link.
+# ─────────────────────────────────────────────
+
+## How far one hit punches the feed past where signal alone has it, and how
+## fast that falls back. This is the FLINCH, not the damage: the lasting
+## degradation comes from signal, which the same shot already suppressed.
+@export var damage_spike: float = 0.2
+@export var damage_spike_decay: float = 2.2
+## The most the spike may ever reach, however many hits land in one frame.
+##
+## This is the knob that stops a burst of automatic fire blinding you. At 0.45
+## a spike per hit, three rounds arriving on the same frame pinned the uniform
+## at 1.0 and the screen went to unreadable static — photographed, and three
+## rounds in a frame is an ordinary burst, not an edge case.
+@export var damage_spike_cap: float = 0.3
+## Ceiling on signal loss and spike together. Past roughly here the feed stops
+## being a degraded picture and becomes no picture, and a player who cannot see
+## cannot fight back out of trouble.
+@export var damage_ceiling: float = 0.85
+
+var _signal: float = 1.0
+var _damage_pulse: float = 0.0
+var _directions: Control = null
+
+
+## The player's live signal_integrity, pushed every physics frame. 1.0 clean,
+## 0.0 e-killed.
+func set_signal(integrity: float) -> void:
+	var v: float = clampf(integrity, 0.0, 1.0)
+	if is_equal_approx(v, _signal):
+		return
+	_signal = v
+	_apply_damage_uniform()
+
+
+## A hit landed. `from` may be null — a fall, or something that did not announce
+## itself — in which case the screen still reacts but no arc is drawn, because
+## an arc pointing in an arbitrary direction is worse than none.
+func register_hit(amount: float, from = null) -> void:
+	_damage_pulse = minf(_damage_pulse + damage_spike, damage_spike_cap)
+	_apply_damage_uniform()
+	if from == null or not (from is Node3D) or not is_instance_valid(from):
+		return
+	_ensure_directions()
+	if _directions != null:
+		_directions.add_hit((from as Node3D).global_position, amount)
+
+
+func _ensure_directions() -> void:
+	if _directions != null and is_instance_valid(_directions):
+		return
+	_directions = _DamageDirections.new()
+	_directions.name = "DamageDirections"
+	add_child(_directions)
+	# UNDER the signal filter, so the arcs are quantised and dithered with
+	# everything else. Drawn on top they read as a different game's UI.
+	var filter := get_node_or_null("SignalFilter")
+	if filter != null:
+		move_child(_directions, filter.get_index())
+
+
+func _apply_damage_uniform() -> void:
+	var d: float = clampf((1.0 - _signal) + _damage_pulse, 0.0, damage_ceiling)
+	# THE BAR IS THE SIGNAL ITSELF, 1:1, not the shader value. The spike is a
+	# flinch on the picture and must not move the readout — a strip that dipped
+	# every time you were grazed would stop being a reading of anything.
+	#
+	# Outside the filter's null check, because the strip is the only readout of
+	# this number and has to survive a HUD with no SignalFilter — the headless
+	# harnesses build exactly that.
+	if ui != null and ui.has_method("update_signal"):
+		ui.update_signal(_signal, d)
+	if _filter_mat == null:
+		return
+	_filter_mat.set_shader_parameter("damage", d)
+	# The artefacts lift with the SPIKE only. Riding the signal loss as well
+	# would leave a suppressed player permanently staring through static, which
+	# reads as a broken game rather than a broken robot.
+	var noise := Settings.get_float("display.screen_noise")
+	for p in _base_noise:
+		# A light lift only. The uniform itself now drives resolution, posterising
+		# and chroma loss, so multiplying the grain on top of that as well was
+		# counting the same hit twice and was most of why a burst whited out.
+		var lift: float = 1.0 + _damage_pulse * 1.2
+		_filter_mat.set_shader_parameter(p, float(_base_noise[p]) * noise * lift)
+
+
+func _tick_damage_pulse(delta: float) -> void:
+	if _damage_pulse <= 0.0:
+		return
+	_damage_pulse = maxf(_damage_pulse - delta * damage_spike_decay, 0.0)
+	_apply_damage_uniform()

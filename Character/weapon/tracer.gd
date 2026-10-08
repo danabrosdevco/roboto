@@ -26,10 +26,61 @@ var _has_end_point: bool = false
 var _spawn_hit_effect: bool = true
 
 
+# ── WHOSE ROUND IS IT ─────────────────────────
+# Every weapon in the game fired the same orange tracer, so your fire and
+# theirs were pixel-identical and a firefight had no readable direction to it.
+# Incoming is now red and outgoing is yellow-white.
+#
+# TWO SHARED MATERIALS, MADE ONCE. The authored material is a sub-resource of
+# tracer.tscn, which means every instance gets the SAME object — setting a
+# shader parameter on one tracer would recolour every tracer in the game, which
+# is the resource-sharing trap this project has paid for before. Duplicating
+# per tracer would be correct and would also allocate a ShaderMaterial on every
+# bullet fired. Two variants built on first use and handed out by reference
+# cost one allocation each, ever.
+static var _tint_cache: Dictionary = {}
+
+## Incoming. A deep red that is still clearly a hot round, not a laser.
+const HOSTILE_HEAD := Color(1.0, 0.80, 0.72)
+const HOSTILE_BODY := Color(1.0, 0.30, 0.16)
+const HOSTILE_TAIL := Color(0.70, 0.06, 0.03)
+## Outgoing. Pushed well off the hostile hue rather than merely lightened,
+## because signal_filter subsamples chroma and quantises it to five levels —
+## two colours a hue apart survive that, two shades of the same one do not.
+const FRIENDLY_HEAD := Color(1.0, 0.99, 0.90)
+const FRIENDLY_BODY := Color(1.0, 0.88, 0.30)
+const FRIENDLY_TAIL := Color(0.92, 0.58, 0.08)
+
+
 func _ready() -> void:
 	# Never inherit the shooter's transform. Tracers were parented to the
 	# weapon, so they were dragged sideways whenever the shooter turned.
 	top_level = true
+
+
+## Colour this round by who fired it. `shooter_faction` is an Enums.Factions,
+## or null when nothing claimed the shot — which stays the friendly colour,
+## since an unattributed round is almost always scenery or the player's own.
+func set_side(shooter_faction) -> void:
+	var hostile: bool = shooter_faction != null \
+			and Enums.are_hostile(Enums.Factions.PLAYER, shooter_faction)
+	var mesh := get_node_or_null("MeshInstance3D") as MeshInstance3D
+	if mesh == null:
+		return
+	mesh.material_override = _tint_for(hostile, mesh.material_override)
+
+
+static func _tint_for(hostile: bool, base: Material) -> Material:
+	if _tint_cache.has(hostile):
+		return _tint_cache[hostile]
+	if not (base is ShaderMaterial):
+		return base
+	var m: ShaderMaterial = (base as ShaderMaterial).duplicate()
+	m.set_shader_parameter("head_color", HOSTILE_HEAD if hostile else FRIENDLY_HEAD)
+	m.set_shader_parameter("body_color", HOSTILE_BODY if hostile else FRIENDLY_BODY)
+	m.set_shader_parameter("tail_color", HOSTILE_TAIL if hostile else FRIENDLY_TAIL)
+	_tint_cache[hostile] = m
+	return m
 
 
 ## Preferred entry point: travel from `from` to a known impact point.

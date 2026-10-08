@@ -472,9 +472,18 @@ func _call_contact(position: Vector3, target: Node) -> void:
 			target,
 			45.0)
 
+	# AND A DESIGNATION, which is the half the stimulus cannot carry. The bus is
+	# fire-and-forget, so it tells whoever is in earshot right now and remembers
+	# nothing; the contact table holds the mark for as long as the HUD shows it.
+	# A patient weapon reads that and swings onto it — a report that becomes a
+	# fire mission without ever being an order.
+	var mgr = _get_ai_manager()
+	if mgr != null and target != null:
+		mgr.designate(Enums.Factions.ALLIED, target, CONTACT_MARKER_SECONDS)
+
 	# Reuse the scanner's existing world-space marker for the visual.
 	if hud != null and target is Node3D and hud.has_method("activate_enemy_marker"):
-		hud.activate_enemy_marker(target, 8.0)
+		hud.activate_enemy_marker(target, CONTACT_MARKER_SECONDS)
 
 	contact_called.emit(position, target)
 
@@ -953,3 +962,17 @@ func _snap_to_ground(pos: Vector3) -> Vector3:
 			continue
 		return hit.position + Vector3.UP * 0.05
 	return pos   # four bodies deep and still no ground: keep the point as given
+
+
+## How long a called contact stays marked. ONE constant for the HUD marker and
+## the designation both, so what you can see and what the tubes believe can
+## never disagree.
+const CONTACT_MARKER_SECONDS := 8.0
+
+
+## The AI manager, through World, the same way _get_stimulus_manager does it —
+## Player has no ai_manager property of its own.
+func _get_ai_manager():
+	if world != null and "ai_manager" in world:
+		return world.ai_manager
+	return null

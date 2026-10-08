@@ -11,6 +11,8 @@
 
 [node name="SquadAutomatic" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "click_stream_player", "viewmodel")]
 script = ExtResource("1_hudwep")
+suppression_per_shot = 4.0
+near_miss_radius = 3.2
 tracer_origin = NodePath("Holder/SquadAutomaticModel/Muzzle")
 muzzle_flash = NodePath("Holder/SquadAutomaticModel/MuzzleFlash")
 weapon_model = NodePath("Holder/SquadAutomaticModel")

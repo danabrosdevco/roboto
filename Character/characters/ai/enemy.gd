@@ -11,6 +11,9 @@ const _Analytics := preload("res://Managers/analytics.gd")
 const _SignalArc := preload("res://Character/weapon/appx/signal_arc.gd")
 const _KillKinds := preload("res://Campaign/kill_kinds.gd")
 const _Ground := preload("res://Campaign/ground_snap.gd")
+## By path, not by class_name: a direct GeneratedTerrain reference from here is
+## the cyclic-resolution trap this file already documents for SmokeVolume.
+const _GeneratedTerrain := preload("res://Env/terrain/generated_terrain.gd")
 ## Smoke blocks sight but not bullets, so is_path_clear() asks it separately.
 ## By path for the same reason as the others: a brand-new class_name is not
 ## resolvable until the editor rescans, and enemy.gd is depended on by almost
@@ -170,6 +173,10 @@ var revives: int = 0
 ## Frame id -> how many of that frame this robot got back up, so XP can be paid
 ## by what was saved. A walker is worth more to recover than a rifleman.
 var revives_by_kind: Dictionary = {}
+
+## What this robot last told the contact ledger it was shooting. Held so the
+## release can be exact even after combat_target has already moved on.
+var _claimed = null
 # Whose kills these really are. A hatchling is a thrown weapon that happens to
 # have legs: it lives 25 seconds and has no record, so a kill credited to it was
 # a kill nobody got. HatchlingPayload points this at the thrower, and a victim's
@@ -336,13 +343,9 @@ var _investigate_timer: float = 0.0
 @export var search_duration: float = 9.0
 @export var search_look_interval: float = 1.6
 
-# ── SIGNAL INTEGRITY ──────────────────────────
-# The health of this robot's networked systems.
-# Degraded by suppressing fire, EMP, jamming. Recovers passively.
-# Drives a cascade of behavioral degradation.
-@export var signal_integrity: float = 1.0
-@export var signal_recovery_rate: float = 0.08   # per second, passive recovery
-@export var signal_resistance: float = 1.0       # damage multiplier. >1 = more resistant
+# signal_integrity, signal_recovery_rate and signal_resistance are declared on
+# AI now — see the header there. What stays in this file is the BEHAVIOUR the
+# number drives: the cascade below, the chassis arcs, and the e-kill broadcast.
 
 # Never enters passive mode — set true on soldiers with active squad objectives
 @export var always_active: bool = false
@@ -432,27 +435,34 @@ const SUPPRESSIVE_FLOOR := 0.08
 ## Skipping the sight picture was meant to be the cost, and it is not one: the
 ## aim goes on settling WHILE the burst fires, so a second in, the robot was
 ## putting out three rounds for one at a full sight picture. A rifleman with a
-## Cyclic Feed came home ahead of a rover. The module's own description is what
-## it should do — "It will hit far less and put a great deal more lead past
-## them" — so the spread stays wide the whole time. Roughly: a third of the
-## hits at three times the rate, which is suppression rather than damage.
-const SUPPRESSIVE_SPREAD := 3.0
+## Cyclic Feed came home ahead of a rover, and the answer at the time was to
+## make it miss a great deal — 3.0, roughly a third of the hits at three times
+## the rate.
+##
+## TONED DOWN TO 1.6, because the thing it was paying for now pays for itself.
+## When 3.0 was set, suppression was measured at the round's IMPACT point, so a
+## stream of near misses mostly did nothing at all and volume of fire had no
+## value except the hits it happened to land — the penalty had to be brutal or
+## the module was simply a damage upgrade. Volume is now worth something on its
+## own: fire is measured along the whole flight path, a connecting round is
+## worth 1.5x a passing one, and signal recovery is half what it was. A Cyclic
+## Feed robot earns its seat by pinning things, so it no longer has to be
+## crippled to stop it also winning the damage race.
+##
+## One const, deliberately: this is the global ratio between aimed and cyclic
+## accuracy, not a per-robot dial.
+const SUPPRESSIVE_SPREAD := 1.6
 var _suppress_pause: float = 0.0
 ## Seconds after going down before this robot gets back up by itself, once per
 ## deployment. Set from the Nanite Reboot module at spawn; 0 is never.
 @export var self_revive_seconds: float = 0.0
 var _self_revive_used: bool = false
 var _self_revive_gen: int = 0
-# Seconds of blocked signal recovery left. See lock_signal().
-var _signal_locked_t: float = 0.0
 # The arcs coming off this one while its signal is down. Made on demand, freed
 # when it recovers. See _tick_signal_vfx.
 var _signal_arc: Node3D = null
 # Edge flag for `ekilled` — the E-KILL check runs every frame.
 var _ekill_announced: bool = false
-# Set on the way down through SIGNAL_EKILL, cleared only on the way back up
-# through SIGNAL_EKILL_RECOVER. See _update_ekill_latch.
-var _ekill_latched: bool = false
 # Whoever last put signal damage into this robot, so an e-kill can be credited.
 var _signal_source: Node = null
 # ...and what the playtest log was crediting at that moment ("EMP"), since the
@@ -1087,20 +1097,9 @@ enum MovementOptions { ADVANCE, REPOSITION, FALLBACK, LEAP, CHASE }
 ## log can hear about every robot in the level from one place.
 signal ekilled(victim: Enemy, by: Node)
 
-enum SignalState { CLEAN, FUZZED, DEGRADED, CRITICAL, EKILL }
-const SIGNAL_FUZZED: float   = 0.75  # below here: accuracy penalty kicks in
-const SIGNAL_DEGRADED: float = 0.50  # below here: sensors halved, movement stutters
-const SIGNAL_CRITICAL: float = 0.25  # below here: ignores squad orders, erratic
-const SIGNAL_EKILL: float    = 0.01  # below here: fully disabled
-## ...and it STAYS disabled until signal has climbed back to here. The same
-## shape as revive_at_fraction on a downed robot: going out takes one threshold,
-## coming back takes another. Without it an e-kill was a flinch — recovery is
-## 0.08/s, so a robot knocked to zero ticked back over 0.01 in an eighth of a
-## second once its lock ran out and was fighting again. Now it is out for about
-## six seconds after the lock, and it comes back at the top of DEGRADED — in
-## practice FUZZED, since release is the first frame at or over 0.50 and
-## DEGRADED ends at exactly 0.50 — then climbs to CLEAN the ordinary way.
-const SIGNAL_EKILL_RECOVER: float = 0.50
+# SignalState, the four thresholds and SIGNAL_EKILL_RECOVER now live on AI, so
+# the player shares them. Still reachable unqualified here, and as
+# Enemy.SignalState from outside, because Enemy extends AI.
 
 @export var DefaultAIState: AIState
 @export var AllowedMovementOptions: Array[MovementOptions]
@@ -1149,8 +1148,19 @@ var movement_state = MovementState.NONE
 var weapon_state = WeaponState.IDLE
 @export var adrift_distance: float = 4.0
 @export var adrift_seconds: float = 4.0
+## How far back the recovery will reach for the spot this robot fell from.
+## Beyond it the remembered point is stale and the nearest mesh point is used
+## instead — see the note in _tick_adrift.
+@export var adrift_return_limit: float = 25.0
+## How deep it has to be before it drowns. Measured from the water SURFACE, so
+## this is "up to its neck", not "its feet are wet" — wading a shallow margin
+## at the edge of a river has to stay survivable or every bank becomes a cliff.
+@export var drown_depth: float = 2.5
 var _adrift_t: float = 0.0
 var _adrift_poll: float = 0.0
+## The last place this robot stood that was ON the navmesh.
+var _last_on_mesh: Vector3 = Vector3.ZERO
+var _has_last_on_mesh: bool = false
 var activation_distance_sq: float
 var patrol_activation_distance_sq: float
 
@@ -1408,6 +1418,8 @@ func _set_colliders_disabled(off: bool) -> void:
 # PHYSICS PROCESS
 # ─────────────────────────────────────────────
 func _physics_process(delta: float) -> void:
+	# BEFORE ANYTHING READS A TARGET. See the note on the function.
+	_drop_freed_references()
 	# Downed robots run NOTHING except the sink, and once that finishes the tick
 	# disables itself — so a battlefield full of wrecks costs zero per frame
 	# rather than a permanent _process each. This branch is why enter_downed()
@@ -1808,9 +1820,22 @@ func _step_over(before: Vector3, intent: Vector3) -> void:
 #
 # Cheap because it only runs for robots that are awake — the cull returns long
 # before this — and asks the navigation server once a second, not once a frame.
+## Whether being far from the navmesh is this chassis's normal state.
+##
+## FALSE for anything that walks, which is what _tick_adrift is for. TRUE for
+## anything that flies: a Spotter Drone on station is permanently 11-26 m off
+## the mesh because that is what flying is, and the recovery below was hauling
+## it out of the sky onto the ground every four seconds. Six of the nine
+## recoveries in one Causeway run were this, not a stranding.
+func off_navmesh_is_normal() -> bool:
+	return false
+
+
 func _tick_adrift(delta: float) -> void:
 	if not alive or downed or nav_agent == null:
 		return
+	if off_navmesh_is_normal():
+		return   # it is supposed to be up there
 	_adrift_poll -= delta
 	if _adrift_poll > 0.0:
 		return
@@ -1853,13 +1878,41 @@ func _tick_adrift(delta: float) -> void:
 	var gap := Vector2(on.x - global_position.x, on.z - global_position.z).length()
 	if gap < adrift_distance:
 		_adrift_t = 0.0
+		# WHERE IT WAS WHEN IT WAS STILL FINE. Kept every poll it is on the
+		# mesh, and it is what the recovery below puts it back on. See the note
+		# there: the nearest mesh point is the wrong answer on a causeway.
+		_last_on_mesh = global_position
+		_has_last_on_mesh = true
+		return
+	# DROWNED, rather than recovered. Checked BEFORE the teleport, or a robot in
+	# deep water gets fished out and put on the far bank instead of dying.
+	if _drown_check():
 		return
 	_adrift_t += since
 	if _adrift_t < adrift_seconds:
 		return
 	_adrift_t = 0.0
 	var was := global_position
-	global_position = _Ground.stand(on, self, get_parent())
+	# ─────────────────────────────────────────────
+	# PUT IT BACK WHERE IT FELL FROM, NOT WHERE THE MESH HAPPENS TO BE NEAREST.
+	#
+	# map_get_closest_point is geometry and knows nothing about where the robot
+	# came from. A hostile that falls off the Causeway lands in the channel
+	# roughly between the carriageway and the main island, so "nearest" is a
+	# coin toss — and when it came up island, the recovery walked a dead squad
+	# onto the shore BEHIND the player and they attacked from the rear. From the
+	# outside that reads as deliberate AI flanking, which is the worst kind of
+	# bug: it looks like a feature.
+	#
+	# The last on-mesh position is almost always the lip it fell from. Capped,
+	# because a robot can be adrift for a long time and travel while adrift —
+	# a stale point from the other end of the map would be a worse teleport than
+	# the nearest one.
+	# ─────────────────────────────────────────────
+	var home: Vector3 = on
+	if _has_last_on_mesh and global_position.distance_to(_last_on_mesh) <= adrift_return_limit:
+		home = _last_on_mesh
+	global_position = _Ground.stand(home, self, get_parent())
 	velocity = Vector3.ZERO
 	_stuck_last_position = global_position
 	movement_state = MovementState.NONE
@@ -1868,6 +1921,45 @@ func _tick_adrift(delta: float) -> void:
 	# repeatedly, that bank has a hole in it.
 	push_warning("%s was %.1fm off the navmesh at %s — put back on it. Check how it got there." % [
 		name, gap, was.round()])
+
+# ─────────────────────────────────────────────
+# DEEP WATER DROWNS.
+#
+# Before this, a robot that went in simply stood on the bottom: off the navmesh
+# with nowhere to path to, alive, still a valid target. The squad stopped and
+# stared at something they could neither reach nor finish, and an
+# EliminateObjective waited on it for the rest of the mission. "It drowned" is
+# a thing a player can read off the screen; "it is standing underwater forever"
+# is not.
+#
+# The depth test is GeneratedTerrain.submersion_at, which is the same test
+# water_navmesh.strip() uses to cut the bed out of the navmesh — so the water
+# that has no paths through it is exactly the water that drowns you, by
+# construction rather than by two numbers being kept in step by hand.
+#
+# Only on the adrift poll, so it costs a group lookup a second on robots that
+# are ALREADY off the mesh — a robot walking around on dry land never reaches
+# this function at all.
+# ─────────────────────────────────────────────
+func _drown_check() -> bool:
+	if drown_depth <= 0.0 or not alive or downed:
+		return false
+	if off_navmesh_is_normal():
+		return false   # it is flying over the water, not in it
+	var deep: float = _GeneratedTerrain.submersion_in(get_tree(), global_position)
+	if deep < drown_depth:
+		return false
+	# YOUR SIDE GOES DOWN, NOT AWAY. The squad is persistent and a soldier lost
+	# to a shove off a bridge is a mission's worth of progress gone to physics.
+	# Downed is recoverable with the repair tool and still costs you the body
+	# for the fight, which is the right price. Hostiles are simply destroyed.
+	if _is_player_side():
+		enter_downed()
+	else:
+		die()
+	push_warning("%s drowned in %.1fm of water at %s." % [name, deep, global_position.round()])
+	return true
+
 
 func _tick_los(delta: float) -> void:
 	_los_check_timer -= delta
@@ -3337,7 +3429,10 @@ func _nearest_hostile() -> CharacterBody3D:
 
 func _compute_nearest_hostile() -> CharacterBody3D:
 	if ai_manager != null:
-		return ai_manager.get_nearest_hostile(self)
+		# Scored rather than purely nearest. Falls back to nearest on its own
+		# when distribution is switched off, so this is the only call site that
+		# ever needed changing.
+		return ai_manager.get_best_hostile(self)
 	if player != null and _is_hostile(player) and player.is_targetable():
 		return player
 	return null
@@ -3606,12 +3701,24 @@ func _tick_equipment(delta: float) -> void:
 ## that worked before behaves differently now; what changes is that equipment
 ## which does NOT need a target finally gets asked.
 func _evaluate_equipment_use() -> void:
+	# RESOLVED ONCE, AND VALIDATED. The assignment below is unconditional, and
+	# EquipmentContext.combat_target is typed — so handing it a freed node is
+	# not a null that something downstream copes with, it is an immediate
+	# "Invalid assignment ... previously freed" and the game is gone.
+	#
+	# _drop_freed_references() at the top of the tick should mean this never
+	# sees one. This is the belt to that braces, because the cost of being
+	# wrong here is a crash rather than a wrong decision, and the robot that
+	# proved it — a Diver, which frees itself outright instead of leaving a
+	# wreck — can die between the guard and this line.
+	var target = combat_target if combat_target != null and is_instance_valid(combat_target) \
+			else null
 	var context = AIEquipment.EquipmentContext.new()
 	context.owner_ai = self
-	context.combat_target = combat_target
+	context.combat_target = target
 	# Where the fight is, when there is one. Our own feet otherwise, so an
 	# equipment that places something on the ground has somewhere to start.
-	context.target_position = combat_target.global_position if combat_target != null \
+	context.target_position = target.global_position if target != null \
 		else global_position
 	context.time_since_target_moved = _target_stationary_time
 	context.owner_is_reloading = weapon != null and weapon.is_reloading
@@ -3801,6 +3908,14 @@ func change_combat_target(body):
 		_burst_left = 0
 		_has_los = false
 		_los_check_timer = 0.0
+		# THE CLAIM LEDGER, and this is the ONLY place it is touched. Every
+		# target assignment in the game funnels through here — trigger_combat,
+		# the squad push, the aggressive pull, return fire — so one decrement
+		# and one increment keeps `by` and `incoming` exact. The moment
+		# something else learns to assign a target directly, the ledger drifts
+		# and every distribution decision after it is quietly wrong.
+		_release_claim()
+		_claim(body)
 	combat_target = body
 	weapon_target = body.global_position
 	look_target = body.global_position
@@ -4147,6 +4262,10 @@ func _arm_self_revive() -> void:
 
 
 func enter_downed() -> void:
+	# Out of the fight, so let go of whatever we were shooting. A claim held by
+	# a wreck occupies a slot in `incoming` forever and makes every robot still
+	# standing think that target is already handled.
+	_release_claim()
 	if downed:
 		return
 	_quiet_signal_arc()
@@ -4221,6 +4340,7 @@ func _on_crash_landed() -> void:
 # Actually gone. Kept for can_be_downed = false, and as the place a finishing
 # blow or a salvage system would eventually call into.
 func destroy():
+	_release_claim()
 	force_release_hold()
 	_quiet_signal_arc()
 	downed = false
@@ -4706,6 +4826,15 @@ func receive_stimulus(
 					if is_path_clear(global_position + Vector3.UP * 0.8, source_node.global_position, source_node):
 						trigger_combat(source_node)
 		StimulusManager.StimulusType.ENEMY_SPOTTED:
+			# A SQUADMATE SAW IT, SO WE KNOW ABOUT IT. This is the line that makes
+			# seeing a squad property rather than a private one — the caller has
+			# eyes on, so the contact is fresh for everybody on this side, whether
+			# or not they are in a fight and whether or not they can see it
+			# themselves. Written before the state guard below deliberately: a
+			# robot already in COMBAT still benefits from the knowledge even
+			# though it will not break off to go and look.
+			if ai_manager != null and source_node != null and _is_hostile(source_node):
+				ai_manager.note_seen(faction, source_node)
 			if ai_state != AIState.COMBAT and ai_state != AIState.SEARCH:
 				_remember_last_seen(source_position)
 				if distance < 20.0:
@@ -4715,66 +4844,41 @@ func receive_stimulus(
 
 
 # ─────────────────────────────────────────────
-# SIGNAL INTEGRITY
-# ─────────────────────────────────────────────
-func get_signal_state() -> SignalState:
-	# Latched OR at the floor: the second covers a frame where signal was set
-	# directly and the latch has not been updated yet.
-	if _ekill_latched or signal_integrity <= SIGNAL_EKILL:
-		return SignalState.EKILL
-	elif signal_integrity <= SIGNAL_CRITICAL:
-		return SignalState.CRITICAL
-	elif signal_integrity <= SIGNAL_DEGRADED:
-		return SignalState.DEGRADED
-	elif signal_integrity <= SIGNAL_FUZZED:
-		return SignalState.FUZZED
-	return SignalState.CLEAN
-
-# Called by near-miss suppression, EMP grenades, jamming, etc.
+# SIGNAL INTEGRITY — the robot half
 #
-# `source` is whoever did it, so an e-kill can be credited to the robot that
-# suppressed them or the hand that threw the EMP. Optional, and remembered
-# rather than passed on: signal damage arrives in dozens of tiny helpings and
-# the one that tips a robot over is rarely the interesting one — what the
-# player wants told is who had been working on them.
+# get_signal_state, receive_signal_damage, lock_signal and the e-kill latch are
+# on AI now, shared with the player. What is left here is everything that only
+# makes sense for a robot with a body and a squad: crediting whoever did it,
+# thawing out of the distance cull so a suppressed robot can actually recover,
+# stopping the chassis dead on an e-kill, and the arcs.
+# ─────────────────────────────────────────────
+
+## Thaw first, then the shared arithmetic.
+##
+## AND IT HAS TO BE TICKING TO CLIMB BACK OUT. _tick_signal is the only thing
+## that recovers signal, and it is gated above the cull precisely so a culled
+## robot keeps recovering — see the gate in _physics_process. A frozen robot
+## has no tick at all, so suppression landing near one (a near-miss carries
+## 250 m, well past the 75 m that froze it) would degrade it and leave it
+## degraded until something else happened to wake it. _can_freeze_for_cull
+## refuses while signal is off nominal, so it stays awake only for the second
+## or so the recovery takes and then freezes itself again.
 func receive_signal_damage(amount: float, source: Node = null) -> void:
-	# AND IT HAS TO BE TICKING TO CLIMB BACK OUT. _tick_signal is the only thing
-	# that recovers signal, and it is gated above the cull precisely so a culled
-	# robot keeps recovering — see the gate in _physics_process. A frozen robot
-	# has no tick at all, so suppression landing near one (a near-miss carries
-	# 250 m, well past the 75 m that froze it) would degrade it and leave it
-	# degraded until something else happened to wake it. _can_freeze_for_cull
-	# refuses while signal is off nominal, so it stays awake only for the second
-	# or so the recovery takes and then freezes itself again.
 	thaw_from_cull()
+	super(amount, source)
+
+
+## `source` is remembered rather than passed on: signal damage arrives in
+## dozens of tiny helpings and the one that tips a robot over is rarely the
+## interesting one — what the player wants told is who had been working on them.
+func _on_signal_damaged(before: float, after: float, source: Node) -> void:
 	if source != null:
 		_signal_source = source
 		_signal_cause = _Analytics.cause()
-	var actual = amount / maxf(signal_resistance, 0.01)
-	var before = signal_integrity
-	signal_integrity = maxf(0.0, signal_integrity - actual)
 	# What was actually taken off, not what was thrown at it: a robot already
 	# at zero loses nothing to a second EMP.
-	_Analytics.signal_damage(self, before - signal_integrity, source)
-	_on_signal_damaged(before, signal_integrity)
-	_update_ekill_latch()
-	if signal_integrity <= SIGNAL_EKILL:
-		_enter_ekill()
+	_Analytics.signal_damage(self, before - after, source)
 
-
-# In at SIGNAL_EKILL, out only at SIGNAL_EKILL_RECOVER. Updated where signal
-# goes down (receive_signal_damage) and where it comes back (_tick_signal),
-# rather than inside get_signal_state(), which half the game calls every frame
-# and which should not have side effects.
-func _update_ekill_latch() -> void:
-	if signal_integrity <= SIGNAL_EKILL:
-		_ekill_latched = true
-	elif _ekill_latched and signal_integrity >= SIGNAL_EKILL_RECOVER:
-		_ekill_latched = false
-
-## Hook for subclasses. Soldier uses this to enter SUPPRESSED.
-func _on_signal_damaged(_before: float, _after: float) -> void:
-	pass
 
 func _enter_ekill() -> void:
 	# Robot is electronically disabled — physically intact, non-functional.
@@ -4787,19 +4891,9 @@ func _enter_ekill() -> void:
 	_burst_left = 0
 	_aim_tracking = 0.0
 
-## Hold signal where it is for `seconds` — no passive recovery.
-##
-## What turns an EMP from a flicker into a stun. E-KILL is a threshold at 0.01
-## and recovery is 0.08/s, so a robot knocked flat to zero climbed back out of
-## E-KILL in about an eighth of a second: it twitched and carried on. Locked, it
-## stays down for the duration, then climbs back through CRITICAL, DEGRADED and
-## FUZZED the ordinary way — so the whole disruption lasts several seconds and
-## tapers rather than switching off.
-##
-## Divided by signal_resistance, the same as the damage itself: a Hardened
-## Uplink shortens the lock as well as softening the hit.
+
 func lock_signal(seconds: float) -> void:
-	_signal_locked_t = maxf(_signal_locked_t, seconds / maxf(signal_resistance, 0.01))
+	super(seconds)
 	# Same reasoning as receive_signal_damage: the lock is a countdown only
 	# _tick_signal decrements, so handing one to a frozen robot would hold it
 	# down for however long it stayed asleep rather than for `seconds`. In
@@ -4810,12 +4904,8 @@ func lock_signal(seconds: float) -> void:
 
 
 func _tick_signal(delta: float) -> void:
-	# Passive signal recovery, unless something is holding it down.
-	if _signal_locked_t > 0.0:
-		_signal_locked_t = maxf(0.0, _signal_locked_t - delta)
-	elif signal_integrity < 1.0:
-		signal_integrity = minf(1.0, signal_integrity + signal_recovery_rate * delta)
-	_update_ekill_latch()
+	# The lock countdown, the passive climb and the latch — all shared.
+	tick_signal(delta)
 
 	# DEGRADED: movement hesitation — occasional stutter
 	if get_signal_state() == SignalState.DEGRADED:
@@ -4992,6 +5082,11 @@ func _on_detection_body_entered(body: Node3D) -> void:
 		if global_position.distance_to(body.global_position) > eff_range:
 			return
 	if is_path_clear(global_position + Vector3.UP * 0.8, body.global_position, body):
+		# A confirmed sighting, into the faction's contact table. This is the
+		# other half of the callout below: the stimulus tells the squad, this
+		# tells the table, and both are needed for a contact to be FRESH.
+		if ai_manager != null:
+			ai_manager.note_seen(faction, body)
 		trigger_combat(body)
 		if stimulus_manager != null:
 			stimulus_manager.emit_stimulus(
@@ -5110,7 +5205,27 @@ func get_aim_spread_multiplier() -> float:
 		mult *= moving_accuracy_penalty
 	if suppressive_fire:
 		mult *= SUPPRESSIVE_SPREAD
+	# SOMEBODY HAS EYES ON IT. A fresh contact does not let you shoot further —
+	# it lets you shoot straighter, which is the version of spotting that costs
+	# no sensor or range value anywhere. It is also what turns the Spotter from
+	# a frame that sees things into a damage multiplier for the whole squad.
+	if _contact_assisted():
+		mult *= SPOTTED_SPREAD
 	return mult
+
+
+## Multiplier applied while a squadmate has current eyes on what we are shooting.
+## Below 1.0 because this function returns SPREAD: smaller is tighter.
+const SPOTTED_SPREAD := 0.82
+
+
+func _contact_assisted() -> bool:
+	if ai_manager == null or combat_target == null or not is_instance_valid(combat_target):
+		return false
+	if Settings.debug_tools_enabled():
+		if not bool(Settings.get_value("debug.contact_accuracy")):
+			return false
+	return ai_manager.is_fresh(faction, combat_target)
 
 
 # ─────────────────────────────────────────────
@@ -5406,3 +5521,71 @@ func _squad_last_equipment_ms() -> int:
 			continue
 		newest = maxi(newest, int(m.get("_last_equipment_ms")))
 	return newest
+
+
+# ─────────────────────────────────────────────
+# CLAIM LEDGER
+# ─────────────────────────────────────────────
+# What this robot contributes to a target's `incoming`: its own sustained
+# damage per second. Weapon-accurate rather than a headcount, because that is
+# the whole point — a mortar at 20 DPS and a Heavy MG at 183 should not count
+# the same towards "this one is already handled".
+func sustained_dps() -> float:
+	if weapon == null:
+		return 0.0
+	var cd: float = maxf(weapon.fire_cooldown, 0.01)
+	return float(weapon.base_damage) * maxf(float(weapon.pellets), 1.0) / cd
+
+
+## The reach the scorer asks about, so "inside my effective band" means the same
+## thing here as it does when the robot decides to fire.
+func weapon_max_range() -> float:
+	return _max_range()
+
+
+func _claim(body) -> void:
+	if ai_manager == null or body == null or not is_instance_valid(body):
+		return
+	ai_manager.claim(faction, body, sustained_dps())
+	_claimed = body
+
+
+func _release_claim() -> void:
+	if ai_manager == null or _claimed == null or not is_instance_valid(_claimed):
+		_claimed = null
+		return
+	ai_manager.release(faction, _claimed, sustained_dps())
+	_claimed = null
+
+
+# ─────────────────────────────────────────────
+# A FREED NODE IS NOT NULL
+# ─────────────────────────────────────────────
+# In GDScript a freed object is a DANGLING reference: it fails is_instance_valid
+# but it is not `null`, so `if combat_target != null` passes and the next line
+# touching it takes the game down.
+#
+# About twenty places in this file read combat_target behind exactly that
+# `!= null` check, and every one of them is correct ONLY while the invariant
+# "combat_target is either null or valid" holds. Rather than add twenty guards —
+# and miss the twenty-first — this restores the invariant once, at the top of
+# the tick, before anything reads it.
+#
+# FOUND BY A DIVER. An equipment drone frees itself outright rather than leaving
+# a repairable wreck, so a soldier holding one as a target was left with a
+# dangling reference the moment it was shot down; _evaluate_equipment_use then
+# assigned it into an EquipmentContext and crashed.
+#
+# Note what is NOT done here: nothing is released from the contact ledger for a
+# freed body, because there is nothing to release it from. AIManager._prune_contacts
+# drops rows whose body has gone invalid on the same 0.4 s tick that clears the
+# hostile cache, so the row and its `incoming` disappear together.
+func _drop_freed_references() -> void:
+	if combat_target != null and not is_instance_valid(combat_target):
+		combat_target = null
+		weapon_target = Vector3.ZERO
+		_has_los = false
+	if _preempted_target != null and not is_instance_valid(_preempted_target):
+		_preempted_target = null
+	if _claimed != null and not is_instance_valid(_claimed):
+		_claimed = null

@@ -384,3 +384,10 @@ func _on_crash_landed() -> void:
 func _on_revived() -> void:
 	if rotor_loop != null and not rotor_loop.playing:
 		rotor_loop.play()
+
+
+## Airborne: see Enemy.off_navmesh_is_normal. Being off the navmesh is the
+## whole point of this chassis, and the adrift recovery used to teleport it to
+## the ground every four seconds.
+func off_navmesh_is_normal() -> bool:
+	return true

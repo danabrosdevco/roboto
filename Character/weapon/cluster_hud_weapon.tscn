@@ -49,6 +49,8 @@
 
 [node name="ClusterLauncher" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "click_stream_player", "viewmodel")]
 script = ExtResource("1_cluster")
+suppression_per_shot = 22.0
+near_miss_radius = 6.0
 tracer_origin = NodePath("Holder/ClusterLauncherModel/Muzzle")
 muzzle_flash = NodePath("Holder/ClusterLauncherModel/MuzzleFlash")
 weapon_model = NodePath("Holder/ClusterLauncherModel")

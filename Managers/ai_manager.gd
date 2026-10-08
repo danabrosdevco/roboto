@@ -141,9 +141,11 @@ func _process(delta: float) -> void:
 	if _hostile_cache_age <= 0.0:
 		_hostile_cache.clear()
 		_hostile_cache_age = HOSTILE_CACHE_LIFETIME
+		_prune_contacts()
 	_cover_cache_age -= delta
 	if _cover_cache_age <= 0.0:
 		_cover_cached = false
+	_tick_overlay()
 
 
 ## Every cover point in the level, and their positions at the same indices.
@@ -169,6 +171,170 @@ func _rebuild_cover() -> void:
 	_cover_cache_age = COVER_CACHE_LIFETIME
 
 
+
+
+# ─────────────────────────────────────────────
+# CONTACTS — who we know about, how fresh, and who is already shooting it
+# ─────────────────────────────────────────────
+# One table per faction, maintained INCREMENTALLY. Nothing here sweeps every
+# frame: positions are written when something is seen, claims when a target is
+# assigned, and decay is computed on READ from `seen_at`. The vision tick is
+# already LOD'd because it was expensive, and a per-frame pass over contacts
+# would undo that for nothing.
+#
+# WHY IT LIVES HERE. hostiles_for() already builds and caches one living-hostile
+# list per faction, and this is the same shape of answer about the same bodies.
+# Putting the table beside it means eviction is free: anything that stops being
+# `alive` falls out of the hostile list, and the prune below drops its row on
+# the same 0.4 s tick.
+#
+# IT IS NOT EVICTED ON `ekilled`. An e-killed robot is STUNNED, not dead — alive
+# stays true and it recovers at 0.08 signal a second. Forgetting it would drop
+# the squad's attention at the exact moment the thing is helpless, so e-kill is
+# a priority BONUS in the score instead.
+#
+# faction -> { instance_id: { body, pos, seen_at, by, incoming, designated_to } }
+var _contacts: Dictionary = {}
+
+## How long a sighting counts as current. Past this a contact is STALE: you know
+## roughly where it was, not where it is.
+@export var contact_fresh_seconds: float = 3.0
+
+## How far ahead "already dying" looks, in seconds of committed fire. Raising it
+## makes robots spread sooner.
+@export var ttk_window: float = 2.0
+
+## Score weights. Distance is the baseline — everything else nudges it — so
+## these are all in metres-of-apparent-distance, which is the only unit that
+## makes them comparable to each other.
+@export var w_saturation: float = 45.0   ## pushed AWAY from an already-dying target
+@export var w_ekill: float = 30.0        ## pulled TOWARD a stunned one
+@export var w_designated: float = 60.0   ## pulled toward what the player called
+@export var w_fresh: float = 10.0        ## mild preference for something someone can see
+@export var w_in_range: float = 15.0     ## prefer what this weapon can actually reach
+@export var w_sticky: float = 18.0       ## hysteresis: do not re-aim every tick
+
+
+func _contacts_for(faction) -> Dictionary:
+	if not _contacts.has(faction):
+		_contacts[faction] = {}
+	return _contacts[faction]
+
+
+func _row(faction, body: Node) -> Dictionary:
+	var table: Dictionary = _contacts_for(faction)
+	var id: int = body.get_instance_id()
+	if not table.has(id):
+		table[id] = {
+			"body": body,
+			"pos": (body as Node3D).global_position if body is Node3D else Vector3.ZERO,
+			"seen_at": -INF,
+			"by": 0,
+			"incoming": 0.0,
+			"designated_to": 0.0,
+		}
+	return table[id]
+
+
+## A confirmed sighting, from a robot's own eyes or from a squadmate's callout.
+## O(1), and the only thing that makes a contact fresh.
+func note_seen(faction, body: Node) -> void:
+	if body == null or not is_instance_valid(body) or not (body is Node3D):
+		return
+	var row: Dictionary = _row(faction, body)
+	row["pos"] = (body as Node3D).global_position
+	row["seen_at"] = _now()
+
+
+## The player pointed at something. Holds for `seconds` — the same window the
+## HUD marker uses, so what you see and what the tubes believe agree.
+func designate(faction, body: Node, seconds: float) -> void:
+	if body == null or not is_instance_valid(body):
+		return
+	var row: Dictionary = _row(faction, body)
+	row["designated_to"] = _now() + seconds
+	row["pos"] = (body as Node3D).global_position if body is Node3D else row["pos"]
+	row["seen_at"] = _now()
+
+
+## Claim/release, called ONLY from Enemy.change_combat_target — the single funnel
+## every target assignment in the game passes through. If anything else learns to
+## assign a target without going through there, `by` and `incoming` drift and
+## every decision downstream is quietly wrong.
+func claim(faction, body: Node, dps: float) -> void:
+	if body == null or not is_instance_valid(body):
+		return
+	var row: Dictionary = _row(faction, body)
+	row["by"] = int(row["by"]) + 1
+	row["incoming"] = float(row["incoming"]) + maxf(dps, 0.0)
+
+
+func release(faction, body: Node, dps: float) -> void:
+	if body == null or not is_instance_valid(body):
+		return
+	var table: Dictionary = _contacts_for(faction)
+	var id: int = body.get_instance_id()
+	if not table.has(id):
+		return
+	var row: Dictionary = table[id]
+	row["by"] = maxi(int(row["by"]) - 1, 0)
+	row["incoming"] = maxf(float(row["incoming"]) - maxf(dps, 0.0), 0.0)
+
+
+## The row for a body, or an empty dictionary. Callers treat "we have never
+## heard of it" and "we have not seen it lately" as different things, so this
+## does not invent a row for a stranger.
+func contact_for(faction, body: Node) -> Dictionary:
+	if body == null or not is_instance_valid(body):
+		return {}
+	var table: Dictionary = _contacts_for(faction)
+	return table.get(body.get_instance_id(), {})
+
+
+func is_fresh(faction, body: Node) -> bool:
+	var row: Dictionary = contact_for(faction, body)
+	if row.is_empty():
+		return false
+	return (_now() - float(row["seen_at"])) <= contact_fresh_seconds
+
+
+func is_designated(faction, body: Node) -> bool:
+	var row: Dictionary = contact_for(faction, body)
+	if row.is_empty():
+		return false
+	return _now() < float(row["designated_to"])
+
+
+## Every live contact for a faction, for the debug overlay. Not used by the AI —
+## the AI only ever asks about a body it already has in hand.
+func contacts_snapshot(faction) -> Array:
+	var out: Array = []
+	for id in _contacts_for(faction):
+		var row: Dictionary = _contacts_for(faction)[id]
+		var body = row["body"]
+		if body == null or not is_instance_valid(body):
+			continue
+		out.append(row)
+	return out
+
+
+func _now() -> float:
+	return float(Time.get_ticks_msec()) * 0.001
+
+
+## Drop rows for bodies that are gone or out of the fight. Runs on the same
+## 0.4 s tick that clears the hostile cache — not per frame — and is bounded by
+## the number of things that have ever been seen this mission.
+func _prune_contacts() -> void:
+	for faction in _contacts:
+		var table: Dictionary = _contacts[faction]
+		var dead: Array = []
+		for id in table:
+			var body = table[id]["body"]
+			if body == null or not is_instance_valid(body) or not body.alive:
+				dead.append(id)
+		for id in dead:
+			table.erase(id)
 func hostiles_for(faction) -> Array:
 	if _hostile_cache.has(faction):
 		return _hostile_cache[faction]
@@ -223,6 +389,95 @@ func get_nearest_hostile(requesting_ai: AI) -> CharacterBody3D:
 # ─────────────────────────────────────────────
 # Get all living hostiles within a radius
 # ─────────────────────────────────────────────
+
+
+## Who this robot should be shooting — nearest, adjusted for everything the
+## faction collectively knows.
+##
+## SAME SCAN, SAME CACHED LIST, SAME COST as get_nearest_hostile(). Only the
+## comparison changes. That is the whole reason distribution is affordable: the
+## walk over hostiles_for() already happens every targeting tick.
+##
+## SATURATION, NOT HEADCOUNT. Subtracting a fixed amount per robot already
+## shooting would stop five riflemen correctly focusing a Walker. What matters
+## is whether the target is ALREADY GOING TO DIE: a Rifle Trooper is 60 HP and
+## one Squad Automatic is ~164 DPS, so a single shooter is already overkill and
+## the second should look elsewhere — while five Soldiers on a 320 HP Walker is
+## only just enough and they should all stay. One rule, both behaviours, and
+## counting claims could never tell a mortar (20 DPS) from a Heavy MG (183).
+func get_best_hostile(requesting_ai: AI) -> CharacterBody3D:
+	if not distribution_enabled(requesting_ai):
+		return get_nearest_hostile(requesting_ai)
+
+	var faction = requesting_ai.faction
+	var from: Vector3 = requesting_ai.global_position
+	var current = requesting_ai.get("combat_target")
+	var reach: float = 0.0
+	if requesting_ai.has_method("weapon_max_range"):
+		reach = float(requesting_ai.weapon_max_range())
+
+	var best: CharacterBody3D = null
+	var best_score: float = -INF
+	for body in hostiles_for(faction):
+		if body == requesting_ai or body == null or not is_instance_valid(body):
+			continue
+		# The cache can outlive a death inside its 0.4 s window.
+		if not body.alive:
+			continue
+
+		var prio := 1.0
+		if body is Enemy:
+			prio = maxf((body as Enemy).target_priority, 0.01)
+		var dist: float = from.distance_to((body as Node3D).global_position)
+		# Distance is the baseline and every other term is a nudge in metres,
+		# which is the only unit that makes them comparable. target_priority
+		# divides it exactly as it did before, so existing per-frame tuning
+		# keeps meaning what it meant.
+		var score: float = -(dist / prio)
+
+		var row: Dictionary = contact_for(faction, body)
+		if not row.is_empty():
+			var health: float = maxf(float(body.health) if "health" in body else 1.0, 1.0)
+			var overkill: float = clampf(
+					float(row["incoming"]) * ttk_window / health, 0.0, 2.0)
+			score -= w_saturation * overkill
+			if is_designated(faction, body):
+				score += w_designated
+			if (_now() - float(row["seen_at"])) <= contact_fresh_seconds:
+				score += w_fresh
+
+		# STUNNED IS A BONUS, NOT AN EVICTION. An e-killed robot cannot shoot
+		# back and climbs out at 0.08 signal a second, so it is the best thing
+		# on the field to be finishing.
+		if body is Enemy and (body as Enemy).get_signal_state() == Enemy.SignalState.EKILL:
+			score += w_ekill
+
+		if reach > 0.0 and dist <= reach:
+			score += w_in_range
+		# Hysteresis. Without it a score flipping between two near-equal
+		# candidates re-aims every targeting tick and the robot hits nothing —
+		# which is the same reason aim_settle_time exists.
+		if body == current:
+			score += w_sticky
+
+		if score > best_score:
+			best_score = score
+			best = body
+	return best
+
+
+## Whether this robot distributes at all. Two switches: one for the whole
+## system, one that leaves it on for your side and off for theirs, so the
+## difficulty change can be separated from the behaviour change.
+func distribution_enabled(requesting_ai: AI) -> bool:
+	if not Settings.debug_tools_enabled():
+		return true
+	if not bool(Settings.get_value("debug.contact_distribution")):
+		return false
+	if requesting_ai != null and requesting_ai.faction == Enums.Factions.ENEMY \
+			and not bool(Settings.get_value("debug.contact_enemy_distribution")):
+		return false
+	return true
 func get_hostiles_in_radius(requesting_ai: AI, radius: float) -> Array:
 	var result: Array = []
 	var radius_sq = radius * radius
@@ -377,3 +632,34 @@ func _poll_frozen(delta: float) -> void:
 			e.thaw_from_cull()
 			continue
 		_frozen_cursor += 1
+
+
+# ─────────────────────────────────────────────
+# THE OVERLAY
+# ─────────────────────────────────────────────
+# Built and torn down from the debug switch rather than wired into hud.tscn:
+# three lanes share this checkout and that scene is busy, and a readout that
+# needs a scene edit to exist is one nobody turns on. See contact_overlay.gd.
+const _ContactOverlay := preload("res://Character/hud/contact_overlay.gd")
+
+var _overlay: Control = null
+var _overlay_layer: CanvasLayer = null
+
+
+func _tick_overlay() -> void:
+	var want: bool = Settings.debug_tools_enabled() \
+			and bool(Settings.get_value("debug.contact_overlay"))
+	if want == (_overlay != null and is_instance_valid(_overlay)):
+		return
+	if want:
+		_overlay_layer = CanvasLayer.new()
+		_overlay_layer.layer = 64
+		add_child(_overlay_layer)
+		_overlay = _ContactOverlay.new()
+		_overlay.manager = self
+		_overlay_layer.add_child(_overlay)
+	else:
+		if _overlay_layer != null and is_instance_valid(_overlay_layer):
+			_overlay_layer.queue_free()
+		_overlay_layer = null
+		_overlay = null

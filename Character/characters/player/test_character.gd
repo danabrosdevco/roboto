@@ -139,6 +139,16 @@ signal healed(amount: int, healer: Node)
 
 
 func initialize() -> void:
+	# THE "player" GROUP, WHICH NOTHING EVER JOINED.
+	#
+	# mission_briefing, tutorial_toast and weapon_bar all look the player up
+	# with get_first_node_in_group("player") and all three were getting null —
+	# the group is not set in test_character.tscn, not in world.tscn, and was
+	# not added anywhere in code. The guard is for the reader, not the engine:
+	# add_to_group is already idempotent, and this says plainly that the scene
+	# is allowed to declare the group itself without this fighting it.
+	if not is_in_group("player"):
+		add_to_group("player")
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	update_last_bonfire(null)
 	_wire_loadout()
@@ -331,6 +341,12 @@ func _physics_process(delta: float) -> void:
 	if spectator_mode == true:
 		_handle_spectator(delta)
 		return
+	# THE PLAYER'S SIGNAL RECOVERS LIKE EVERY OTHER ROBOT'S. Without this call
+	# nothing ever climbs back: suppression and EMP would be permanent, which
+	# is the one way a shared signal system is worse than no signal system.
+	tick_signal(delta)
+	if hud != null:
+		hud.set_signal(signal_integrity)
 	check_interactible()
 	if use_gravity == true:
 		handle_gravity(delta)
@@ -507,7 +523,7 @@ func handle_movement(_delta: float) -> void:
 	# like a decision instead of a punishment.
 	# _speed_mult is the Overclock Servos module (and anything else with a
 	# speed_multiplier). SPEED is a const, so this is the one place it can bend.
-	var speed := SPEED * _move_scale() * _speed_mult
+	var speed := SPEED * _move_scale() * _speed_mult * _signal_move_scale()
 
 	if dir.length_squared() > 0.001:
 		dir = dir.normalized() * speed
@@ -695,6 +711,11 @@ func apply_damage(damage, source):
 		if is_instance_valid(item) and not item.is_queued_for_deletion() \
 				and item is PlayerRepairTool:
 			(item as PlayerRepairTool).interrupt()
+	# The screen reacts: an arc towards whoever did it, and a brief punch. The
+	# LASTING degradation is not from here — it is signal_integrity, which the
+	# same shot already knocked down through near-miss suppression.
+	if hud != null:
+		hud.register_hit(float(whole), source)
 	update_status()
 	if health <= 0:
 		health = 0
@@ -827,3 +848,40 @@ func _tick_step_smooth(delta: float) -> void:
 	else:
 		_step_smooth = 0.0
 	cam.position.y = _cam_rest_y - _step_smooth
+
+
+# ─────────────────────────────────────────────
+# A FAILING LINK COSTS YOU YOUR LEGS.
+#
+# Before this, being e-killed did nothing to the player but blur the picture:
+# AI._enter_ekill is a no-op and only Enemy overrides it to stop the chassis.
+# So the one state the whole suppression system builds towards had no
+# mechanical weight on the one actor it matters most for.
+#
+# GRADUATED, NOT A SWITCH. _enter_ekill fires on the crossing, but signal is a
+# meter that hovers — pushed under by near-misses and pulled back by recovery —
+# so a one-shot hook would fire repeatedly and a binary slow would snap on and
+# off around the threshold. Scaling off the band instead means the squeeze
+# arrives before the cliff and you can feel it coming.
+#
+# NOT TO ZERO. A player who cannot move cannot break contact, and this already
+# takes most of the screen; being frozen blind while something shoots you is a
+# cutscene, not a fight. At E-KILL you are slow enough to be caught and fast
+# enough to crawl into cover.
+# ─────────────────────────────────────────────
+
+## Movement multiplier per signal band. Exported so the squeeze can be tuned
+## without touching the ladder it reads from.
+@export var signal_speed_fuzzed: float = 1.0
+@export var signal_speed_degraded: float = 0.82
+@export var signal_speed_critical: float = 0.58
+@export var signal_speed_ekill: float = 0.3
+
+
+func _signal_move_scale() -> float:
+	match get_signal_state():
+		SignalState.EKILL:    return signal_speed_ekill
+		SignalState.CRITICAL: return signal_speed_critical
+		SignalState.DEGRADED: return signal_speed_degraded
+		SignalState.FUZZED:   return signal_speed_fuzzed
+	return 1.0

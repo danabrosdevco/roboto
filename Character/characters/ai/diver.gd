@@ -410,3 +410,10 @@ func _vanish() -> void:
 		if c is AudioStreamPlayer3D:
 			(c as AudioStreamPlayer3D).stop()
 	queue_free()
+
+
+## Airborne: see Enemy.off_navmesh_is_normal. Being off the navmesh is the
+## whole point of this chassis, and the adrift recovery used to teleport it to
+## the ground every four seconds.
+func off_navmesh_is_normal() -> bool:
+	return true

@@ -101,9 +101,9 @@ float graded_luma(vec2 p) {
 	return black_lift + x * (1.0 - black_lift);
 }
 
-vec3 palette(float l) {
+vec3 palette(float l, vec3 sh) {
 	return l < 0.5
-		? mix(shadow_tint, mid_tint, l * 2.0)
+		? mix(sh, mid_tint, l * 2.0)
 		: mix(mid_tint, high_tint, (l - 0.5) * 2.0);
 }
 
@@ -112,7 +112,29 @@ vec3 palette(float l) {
 void fragment() {
 	vec2  px    = SCREEN_PIXEL_SIZE;
 	vec2  res   = 1.0 / px;
-	float scale = max(floor(res.y / signal_height), 1.0);
+	// DAMAGE COSTS YOU RESOLUTION FIRST.
+	//
+	// The uniform used to feed nothing but two artefact knobs that sit near
+	// zero at rest, so turning it all the way up moved the image less than one
+	// frame of grain does — measured, not guessed: full health against eight
+	// hit points differed by 0.077 mean channel error, and two consecutive
+	// frames at full health differed by 0.075. It was wired and invisible.
+	//
+	// Resolution is the one axis you cannot miss. A hurt drone's feed resolves
+	// coarser, which reads as bandwidth loss rather than as a broken monitor,
+	// and it degrades the WORLD without touching the HUD text drawn over it.
+	//
+	// THE CURVE IS SHAPED, NOT LINEAR. The first version drained colour almost
+	// at once and then had little left to give, so a lightly suppressed feed
+	// already looked greyscale while a nearly e-killed one looked much the
+	// same. `heavy` keeps the expensive-looking failures — deep posterising,
+	// chroma smear, the rust cast — out of the bottom half entirely and stacks
+	// them in the last third, which is where being nearly out should live.
+	// Resolution and packet loss stay closer to linear: those read as a bad
+	// link rather than as a broken screen, and they are the right early tell.
+	float heavy = damage * damage * damage;
+	float sig_h = signal_height / (1.0 + damage * 0.75);
+	float scale = max(floor(res.y / sig_h), 1.0);
 	vec2  cell  = quantize_resolution ? px * scale : px;
 
 	vec2 uv   = SCREEN_UV;
@@ -126,7 +148,7 @@ void fragment() {
 	// ── macroblock displacement ──────────────────────────────
 	vec2  blk    = floor(grid / block_size);
 	float blk_h  = hash12(blk + vec2(t * 61.0, 0.0));
-	float active = step(1.0 - block_glitch * (0.25 + damage), blk_h);
+	float active = step(1.0 - block_glitch * (0.25 + damage * 2.5), blk_h);
 	suv += vec2((hash12(blk.yx + t) - 0.5) * 24.0, 0.0) * cell * active;
 
 	// ── luma sample ──────────────────────────────────────────
@@ -142,7 +164,9 @@ void fragment() {
 	base *= exposure;
 
 	// ── chroma sampled on a coarser grid (4:2:0-ish) ─────────
-	vec2 ccell = cell * chroma_divisor;
+	// Chroma subsamples coarser as the link degrades, so colour smears across
+	// block boundaries before it drains away entirely below.
+	vec2 ccell = cell * (chroma_divisor + heavy * 2.5);
 	vec3 cbase = fetch((floor(suv / ccell) + 0.5) * ccell) * exposure;
 	vec3 chroma = cbase - vec3(luma_of(cbase));
 
@@ -154,7 +178,9 @@ void fragment() {
 	// ── ordered dither, then quantise ────────────────────────
 	float d = bayer8(grid) * dither_strength;
 
-	float lsteps = max(luma_levels - 1.0, 1.0);
+	// Fewer luma steps with damage: the image posterises down towards four
+	// levels, which is banding you can read at a glance rather than noise.
+	float lsteps = max(mix(luma_levels, 4.0, heavy) - 1.0, 1.0);
 	float lq = clamp(floor(l * lsteps + d) / lsteps, 0.0, 1.0);
 
 	float csteps = max(chroma_levels - 1.0, 1.0);
@@ -172,7 +198,11 @@ void fragment() {
 	float edge = smoothstep(edge_threshold, edge_threshold * 2.5, e) * edge_strength;
 
 	// ── compose ──────────────────────────────────────────────
-	vec3 col = mix(vec3(lq), palette(lq), palette_strength);
+	// The shadow end rusts. On a green-and-teal palette
+	// a red-brown dark end is the single most legible "this is wrong" signal
+	// available, and it costs no extra pass.
+	vec3 sh = mix(shadow_tint, vec3(0.17, 0.045, 0.035), heavy * 0.9);
+	vec3 col = mix(vec3(lq), palette(lq, sh), palette_strength);
 	col += chroma * saturation;
 	col = mix(col, edge_color, clamp(edge, 0.0, 1.0));
 
@@ -181,8 +211,17 @@ void fragment() {
 
 	// ── packet loss / dead pixels ────────────────────────────
 	float dp   = hash12(grid * 1.37 + vec2(t * 13.0, t * 7.0));
-	float loss = step(1.0 - dropout * (1.0 + damage * 4.0), dp);
-	col = mix(col, mix(shadow_tint, high_tint, step(0.5, fract(dp * 91.0))), loss * 0.7);
+	float loss = step(1.0 - dropout * (1.0 + damage * 18.0), dp);
+	col = mix(col, mix(sh, high_tint, step(0.5, fract(dp * 91.0))), loss * 0.7);
+
+	// NO COLOUR DRAIN. There was a desaturation pass here and it is gone on
+	// purpose: greyscale is a dead end with nowhere worse to go, and it washed
+	// out the palette the whole game is built on. A failing link now shows as
+	// resolution, banding, packet loss and a rusting shadow end — all of which
+	// get worse the further down you go, and none of which cost the picture
+	// its colour. If you are reaching for desaturation again, make something
+	// else worse instead.
+
 	// ── mode-change / reinitialise wipe ──────────────────────
 	float band = 1.0 - smoothstep(0.0, 0.25, abs(uv.y - (1.0 - boot)));
 	col = mix(col, vec3(hash12(grid + t)) * high_tint, band * boot);

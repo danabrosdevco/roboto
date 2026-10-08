@@ -196,6 +196,13 @@ var _base_cache := {}
 
 func _ready() -> void:
 	_ready_done = true
+	# FINDABLE AT RUNTIME. Anything that needs to ask "is this spot under water"
+	# has to locate the terrain first, and a class-name search down the tree is
+	# not something a robot can afford once a second. The group is the cheap
+	# answer — and it is joined HERE rather than in the scene so a map that
+	# forgets the group still works. See submersion_at() below, and the note in
+	# AIManager._ready about the "ai_manager" group that nothing ever joined.
+	add_to_group(&"terrain")
 	# The water instances live outside the node tree, so they have to be told
 	# when the terrain moves.
 	set_notify_transform(true)
@@ -203,6 +210,50 @@ func _ready() -> void:
 		recipe.changed.connect(_on_recipe_changed)
 	rebuild()
 	_unpave_the_river()
+
+
+# ─────────────────────────────────────────────
+# HOW DEEP IS THE WATER HERE?
+#
+# Asked by anything that drowns. It deliberately uses the SAME test
+# water_navmesh.strip() uses to decide which polygons to cut — below
+# water_level + FREEBOARD, and inside the painted water mask — so "there is no
+# navmesh here" and "this would drown you" can never disagree. If they drifted
+# apart you would get water you can stand in but not path through, or ground
+# that kills you for walking on it.
+#
+# The mask matters as much as the height: water_level is a single plane across
+# the whole map, so a height test alone would drown anything standing in a
+# quarry or a cellar that happens to sit low. water_at_local() is painted, per
+# sample, and only true where a surface is actually drawn.
+#
+# Returns metres BELOW the surface, and 0.0 for anywhere that is not water —
+# so a caller compares against its own tolerance rather than testing two things.
+# ─────────────────────────────────────────────
+func submersion_at(world: Vector3) -> float:
+	if data == null or not data.has_water():
+		return 0.0
+	var surface: float = data.water_level
+	if world.y >= surface + WaterNavmesh.FREEBOARD:
+		return 0.0   # above the deck line: a bridge, a bank, anything dry
+	var local: Vector3 = to_local(world)
+	if not data.water_at_local(local.x, local.z):
+		return 0.0   # low ground, but no water painted over it
+	return maxf(surface - world.y, 0.0)
+
+
+## Metres below the surface at `world`, or 0.0 when there is no terrain with
+## water in the level. Static so a caller does not have to hold a reference to
+## the terrain, and group-based so it costs one lookup rather than a tree walk.
+static func submersion_in(tree: SceneTree, world: Vector3) -> float:
+	if tree == null:
+		return 0.0
+	for t in tree.get_nodes_in_group(&"terrain"):
+		if t is GeneratedTerrain:
+			var d: float = (t as GeneratedTerrain).submersion_at(world)
+			if d > 0.0:
+				return d
+	return 0.0
 
 
 ## Rivers are not navigable. The bake cannot tell a river bed from any other

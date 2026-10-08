@@ -33,6 +33,17 @@ const _WeaponAudio := preload("res://Managers/weapon_audio.gd")
 @export var suppression_per_shot: float = 3.0   # signal_integrity units × 100
 @export var near_miss_radius: float = 2.5       # metres
 
+## What a round that CONNECTS is worth, against one that merely went past.
+##
+## A const and not an export, because it is a global rule rather than a
+## property of any one gun: every weapon's suppression_per_shot is already its
+## own dial, and this is the single ratio between hitting and missing. Change
+## it here and it changes everywhere, which is the point.
+##
+## Applies to the body the centre round struck, and only that one — everyone
+## else in the sphere takes the flat near-miss dose.
+const HIT_SUPPRESSION: float = 1.5
+
 ## Collision mask used for near-miss and melee queries. Restricting this to
 ## character layers stops every shot from testing terrain geometry.
 @export_flags_3d_physics var character_mask: int = 1 | 2 | 4 | 8
@@ -82,6 +93,15 @@ var _near_miss_shape: SphereShape3D
 var _near_miss_query: PhysicsShapeQueryParameters3D
 # Reused across the four friendly-fire passes rather than reallocated per pass.
 var _ff_query: PhysicsRayQueryParameters3D
+
+# What the CENTRE round of this shot connected with, or null if it missed.
+#
+# A member rather than a second return value from _one_round: this is the hot
+# fire path — it already counts its own raycast microseconds — and handing back
+# a Dictionary or Array per round to carry one reference would allocate on
+# every bullet in the game. Written by _one_round, read by check_damage
+# immediately afterwards, and valid only for that span.
+var _struck_this_shot: Node = null
 
 # ─────────────────────────────────────────────
 # WHAT SHOOTING COSTS, COUNTED.
@@ -388,6 +408,7 @@ func check_damage(weapon_target: Vector3) -> void:
 	var spare: int = base_damage - each * count
 
 	var centre_impact := from + centre * max_effective_range
+	var struck: Node = null
 	for i in count:
 		var dir := centre
 		if count > 1 and pellet_spread_mrad > 0.0:
@@ -395,12 +416,15 @@ func check_damage(weapon_target: Vector3) -> void:
 		var impact := _one_round(from, dir, exclusion, shooter, each + (spare if i == 0 else 0))
 		if i == 0:
 			centre_impact = impact
+			# The centre round only, to match the one-suppression-pass-per-shot
+			# rule above: a shotgun must not land the hit bonus nine times.
+			struck = _struck_this_shot
 
 	# One tracer for the shot, down the middle of the pattern.
 	fire_tracer_to(from, centre_impact)
 
 	if suppression_per_shot > 0.0:
-		_apply_near_miss_suppression(centre_impact)
+		_apply_near_miss_suppression(from, centre_impact, struck)
 
 
 # One round down one line. Returns where it stopped.
@@ -410,6 +434,7 @@ func _one_round(from: Vector3, direction: Vector3, exclusion: Array[RID],
 	var impact = from + direction * max_effective_range
 	var hit_body: Node = null
 	var hit_dist: float = max_effective_range
+	_struck_this_shot = null
 
 	# The round stops at the FIRST thing it meets, ally or not. Who it was only
 	# changes how hard it lands.
@@ -439,34 +464,81 @@ func _one_round(from: Vector3, direction: Vector3, exclusion: Array[RID],
 			dealt = maxi(1, int(round(float(dealt) * friendly_fire_multiplier)))
 			friendly_hit.emit(hit_body)
 		hit_body.apply_damage(dealt, shooter)
+		_struck_this_shot = hit_body
 	return impact
-
-
-func _apply_near_miss_suppression(shot_pos: Vector3) -> void:
-	var space_state = get_world_3d().direct_space_state
-	_near_miss_shape.radius = near_miss_radius
-	_near_miss_query.transform = Transform3D(Basis(), shot_pos)
-	_near_miss_query.collision_mask = character_mask
-	var results = space_state.intersect_shape(_near_miss_query, 8)
-	var suppression_amount = suppression_per_shot / 100.0
-	var shooter = _owner_body()
-	for hit in results:
-		var body = hit.collider
-		if body == null:
+## THE ONE SUPPRESSION PASS, shared with the player's guns.
+##
+## Static, and taking everything it needs as arguments, because
+## hud_weapon_template is not an AIWeapon and never will be — it is a viewmodel
+## with a hitscan, not a robot's mount. Before this, suppression existed only on
+## the AI side, so enemy fire pinned your squad while your own fire did nothing
+## to theirs. Copying twenty lines across would have let the two drift; one
+## function called from both cannot.
+##
+## ALONG THE ROUND'S PATH, NOT AT ITS IMPACT.
+##
+## This used to drop a sphere at centre_impact — where the round STOPPED — and
+## call that a near miss. It is not the same thing at all. A round that whips
+## past your head and buries itself in a wall twenty metres behind you puts
+## that sphere on the wall, so you felt nothing; a shot that misses into open
+## ground puts it up to max_effective_range away. The closer an enemy came to
+## hitting you without connecting, the more reliably the round carried past and
+## cost you nothing, which is exactly backwards. Reported from play: "enemies
+## were shooting pretty close to me but I didn't get any suppression at all".
+##
+## Now it measures each candidate's distance to the SEGMENT from muzzle to
+## impact, which is what "a round went by close" actually means.
+##
+## BY GROUP, NOT BY PHYSICS QUERY. Everything with a signal is in
+## AI.SIGNAL_GROUP, so the candidate list is already in hand and the test is a
+## clamped dot product each — cheaper than sweeping a hundred-metre capsule
+## through the broadphase, exact rather than approximate, and it hands back the
+## body itself instead of a collider whose parent has to be guessed at. There
+## is no occlusion test and none is needed: the segment already ends at the
+## first thing the round met, so it cannot reach through a wall.
+##
+## `shooter_faction` may be null, in which case nothing is treated as friendly.
+## `struck` is the body the round actually CONNECTED with, if any. It takes
+## HIT_SUPPRESSION in place of the flat near-miss amount — see the constant.
+static func suppress_along(tree: SceneTree, from: Vector3, to: Vector3,
+		radius: float, amount: float, shooter: Node, shooter_faction,
+		struck: Node = null) -> int:
+	if tree == null or amount <= 0.0 or radius <= 0.0:
+		return 0
+	var seg: Vector3 = to - from
+	var seg_len2: float = seg.length_squared()
+	var r2: float = radius * radius
+	var touched: int = 0
+	for body in tree.get_nodes_in_group(AI.SIGNAL_GROUP):
+		if not (body is Node3D) or not is_instance_valid(body):
 			continue
-		if not body.has_method("apply_damage"):
-			var parent_body = body.get_parent()
-			if parent_body != null and parent_body.has_method("apply_damage"):
-				body = parent_body
 		if body == shooter:
 			continue
-		if _is_friendly(body):
+		if "alive" in body and not body.alive:
 			continue
-		if "signal_integrity" in body:
-			if body.has_method("receive_signal_damage"):
-				body.receive_signal_damage(suppression_amount, shooter)
-			else:
-				body.signal_integrity = maxf(0.0, body.signal_integrity - suppression_amount)
+		if shooter_faction != null and body.has_method("get_faction") \
+				and not Enums.are_hostile(shooter_faction, body.get_faction()):
+			continue
+		# Closest point on the segment, clamped to its ends so a round that
+		# stopped short of someone does not suppress them from behind.
+		var p: Vector3 = (body as Node3D).global_position
+		var t: float = 0.0 if seg_len2 < 0.0001 else clampf((p - from).dot(seg) / seg_len2, 0.0, 1.0)
+		if p.distance_squared_to(from + seg * t) > r2:
+			continue
+		# A round that connected is worth more than one that went past.
+		var dose: float = amount * (HIT_SUPPRESSION if body == struck else 1.0)
+		if body.has_method("receive_signal_damage"):
+			body.receive_signal_damage(dose, shooter)
+		else:
+			body.signal_integrity = maxf(0.0, body.signal_integrity - dose)
+		touched += 1
+	return touched
+
+
+## The whole flight path, muzzle to impact — see suppress_along.
+func _apply_near_miss_suppression(from: Vector3, impact: Vector3, struck: Node = null) -> void:
+	suppress_along(get_tree(), from, impact, near_miss_radius,
+			suppression_per_shot / 100.0, _owner_body(), _owner_faction(), struck)
 
 # A SWING GOES WHERE IT IS LOOKING, not down the weapon node's own X axis.
 #
@@ -560,6 +632,8 @@ func fire_tracer_to(from: Vector3, to: Vector3) -> void:
 		return
 	var new_tracer = tracer_scene.instantiate()
 	_level_node().add_child(new_tracer)
+	if new_tracer.has_method("set_side"):
+		new_tracer.set_side(_owner_faction())
 
 	var end_point = to
 	if tracer_jitter_degrees > 0.0:
@@ -668,10 +742,37 @@ func acquire(owner: Node3D, candidates: Array, delta: float) -> CharacterBody3D:
 		var d := owner.global_position.distance_to(c.global_position)
 		if d > max_effective_range or d < min_effective_range:
 			continue
+		# A TUBE SHOOTS AT WHAT SOMEBODY ELSE CAN SEE.
+		#
+		# This used to pick from every hostile the manager knew about, which is
+		# how a mortar with a 40 m sensor landed rounds at 85 m on its own. It
+		# now needs a FRESH contact — its own eyes, a squadmate's callout, or
+		# the player pointing at it. That makes the mortar worse alone and
+		# lethal with a spotter, which is the trade it should always have had.
+		var mgr = owner.get("ai_manager")
+		var spotted := true
+		if mgr != null and _needs_eyes():
+			spotted = mgr.is_fresh(owner.faction, c)
+		if not spotted:
+			continue
 		# SOMEONE ELSE'S ALREADY. The whole failure this mode exists to stop is
 		# a row of tubes all dropping on one robot, so a target another patient
 		# weapon is holding is worth far less than a fresh one.
-		var score := 0.0 if _claimed_by_squadmate(owner, c) else 1000.0
+		# Was _claimed_by_squadmate, an O(members) walk asking each squadmate what
+		# its tube was on. The contact ledger answers the same question better and
+		# in O(1): `incoming` knows a mortar from a machine gun, where a headcount
+		# could not.
+		var score := 1000.0
+		if mgr != null:
+			var row: Dictionary = mgr.contact_for(owner.faction, c)
+			if not row.is_empty():
+				var hp: float = maxf(float(c.health), 1.0)
+				score -= 1000.0 * clampf(float(row["incoming"]) * mgr.ttk_window / hp, 0.0, 1.0)
+			if mgr.is_designated(owner.faction, c):
+				# THE FIRE MISSION. Calling contact swings the tube onto what you
+				# pointed at, without an order being issued — which is exactly what
+				# Verb.CONTACT's own comment says that verb is for.
+				score += 4000.0
 		# Still alive when the round lands, roughly: how much health it has, and
 		# how far it is from the fight it is about to lose.
 		score += float(c.health)
@@ -697,3 +798,12 @@ func _claimed_by_squadmate(owner: Node3D, who: CharacterBody3D) -> bool:
 		if w is AIWeapon and (w as AIWeapon).own_target == who:
 			return true
 	return false
+
+
+## Whether a patient weapon insists on somebody having eyes on. A debug switch
+## so the restriction can be lifted in a running game — it is the one change
+## here that makes a weapon strictly worse on its own.
+func _needs_eyes() -> bool:
+	if not Settings.debug_tools_enabled():
+		return true
+	return bool(Settings.get_value("debug.contact_mortar_needs_eyes"))
