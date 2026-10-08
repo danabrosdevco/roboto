@@ -607,9 +607,16 @@ func _parking(art: Node3D) -> void:
 	# Things in the lot that are neither a car nor a kerb. Every one of these
 	# is between waist and head height on purpose: a car park's real cover is
 	# all accidental, and this is the accident.
-	# Not the two at x +-16: the entry court stands there, down to z 48.
-	for i: int in [0, 1, 4, 5]:
-		_put(g, B_SUBURBAN % "suburban_cart_corral", -80.0 + i * 32.0, 48.0, ALONG_X, 0.0, "Corral_%d" % i)
+	# NO CART CORRALS. They stood at z 48, four of them across the lot, and they
+	# are the thing the squad kept catching on: the piece is a slab with rails at
+	# COVER_H, 1.25 m, and a roof at 2.6 m on four posts, so a chassis driving the
+	# lot meets a waist-high rail with an overhang above it and wedges.
+	#
+	# Removed from THIS MAP only — suburban_cart_corral is untouched and still in
+	# the kit. It costs the lot four pieces of the accidental cover this comment
+	# is about, which is a real loss; the planters, bins and chargers still carry
+	# it, and a replacement that is cover without an overhang would be better
+	# than nothing here.
 	# Three, not five: the outer two stood in the cinema and the garage.
 	for i in 3:
 		_put(g, B_POLARIS % "lot_planter_bed", -56.0 + i * 56.0, 74.0, ALONG_X, 0.0, "Planter_%d" % i)
