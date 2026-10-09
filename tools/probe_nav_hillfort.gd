@@ -199,7 +199,13 @@ func _bake() -> bool:
 	var verts := mesh.get_vertices()
 	print("   baked %d vertices, %d polygons in %.1f s" % [
 			verts.size(), mesh.get_polygon_count(), (Time.get_ticks_msec() - t0) / 1000.0])
-	if verts.size() < 500:
+	# 500 is a guard against baking headless with no display, where the whole
+	# mesh comes back empty or nearly so. It assumes an outdoor level. A small
+	# interior legitimately bakes a few hundred — the railhead train is 303
+	# polygons and entirely real — so the floor is overridable rather than a
+	# reason to go and lower it in the file.
+	var floor_verts := int(OS.get_environment("MIN_VERTS")) if OS.get_environment("MIN_VERTS") != "" else 500
+	if verts.size() < floor_verts:
 		print("FAIL  that is far too few — is this running with a display?")
 		return false
 	var ok := _write_back(verts, mesh)
