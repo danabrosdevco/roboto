@@ -435,19 +435,451 @@
 // brush 47
 {
 ( -512 -638 -38 ) ( 512 -640 -38 ) ( 512 -638 -38 ) PSX_Textures/stratcom_concrete_board [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -512 -640 320 ) ( 512 -638 320 ) ( 512 -640 320 ) PSX_Textures/stratcom_concrete_board [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -512 -640 -38 ) ( 512 -640 320 ) ( 512 -640 -38 ) PSX_Textures/stratcom_concrete_board [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 512 -640 -38 ) ( 512 -638 320 ) ( 512 -638 -38 ) PSX_Textures/stratcom_concrete_board [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 512 -638 -38 ) ( -512 -638 320 ) ( -512 -638 -38 ) PSX_Textures/stratcom_concrete_board [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -512 -638 -38 ) ( -512 -640 320 ) ( -512 -640 -38 ) PSX_Textures/stratcom_concrete_board [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -512 -640 256 ) ( 512 -638 256 ) ( 512 -640 256 ) PSX_Textures/stratcom_concrete_board [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 -640 -38 ) ( 512 -640 256 ) ( 512 -640 -38 ) PSX_Textures/stratcom_concrete_board [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 -640 -38 ) ( 512 -638 256 ) ( 512 -638 -38 ) PSX_Textures/stratcom_concrete_board [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 -638 -38 ) ( -512 -638 256 ) ( -512 -638 -38 ) PSX_Textures/stratcom_concrete_board [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -512 -638 -38 ) ( -512 -640 256 ) ( -512 -640 -38 ) PSX_Textures/stratcom_concrete_board [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 // brush 48
 {
+( -392 -634 -38 ) ( -376 -638 -38 ) ( -376 -634 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -392 -638 256 ) ( -376 -634 256 ) ( -376 -638 256 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -392 -638 -38 ) ( -376 -638 256 ) ( -376 -638 -38 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -376 -638 -38 ) ( -376 -634 256 ) ( -376 -634 -38 ) PSX_Textures/stratcom_green_panel [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -376 -634 -38 ) ( -392 -634 256 ) ( -392 -634 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 -634 -38 ) ( -392 -638 256 ) ( -392 -638 -38 ) PSX_Textures/stratcom_green_panel [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 49
+{
+( -136 -634 -38 ) ( -120 -638 -38 ) ( -120 -634 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -136 -638 256 ) ( -120 -634 256 ) ( -120 -638 256 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -136 -638 -38 ) ( -120 -638 256 ) ( -120 -638 -38 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -120 -638 -38 ) ( -120 -634 256 ) ( -120 -634 -38 ) PSX_Textures/stratcom_green_panel [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -120 -634 -38 ) ( -136 -634 256 ) ( -136 -634 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 -634 -38 ) ( -136 -638 256 ) ( -136 -638 -38 ) PSX_Textures/stratcom_green_panel [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 50
+{
+( 120 -634 -38 ) ( 136 -638 -38 ) ( 136 -634 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 120 -638 256 ) ( 136 -634 256 ) ( 136 -638 256 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 120 -638 -38 ) ( 136 -638 256 ) ( 136 -638 -38 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 136 -638 -38 ) ( 136 -634 256 ) ( 136 -634 -38 ) PSX_Textures/stratcom_green_panel [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 136 -634 -38 ) ( 120 -634 256 ) ( 120 -634 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 -634 -38 ) ( 120 -638 256 ) ( 120 -638 -38 ) PSX_Textures/stratcom_green_panel [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 51
+{
+( 376 -634 -38 ) ( 392 -638 -38 ) ( 392 -634 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 376 -638 256 ) ( 392 -634 256 ) ( 392 -638 256 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 376 -638 -38 ) ( 392 -638 256 ) ( 392 -638 -38 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 -638 -38 ) ( 392 -634 256 ) ( 392 -634 -38 ) PSX_Textures/stratcom_green_panel [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 -634 -38 ) ( 376 -634 256 ) ( 376 -634 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 -634 -38 ) ( 376 -638 256 ) ( 376 -638 -38 ) PSX_Textures/stratcom_green_panel [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 52
+{
+( -512 -634 32 ) ( -392 -638 32 ) ( -392 -634 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 -638 36 ) ( -392 -634 36 ) ( -392 -638 36 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 -638 32 ) ( -392 -638 36 ) ( -392 -638 32 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 -638 32 ) ( -392 -634 36 ) ( -392 -634 32 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 -634 32 ) ( -512 -634 36 ) ( -512 -634 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -512 -634 32 ) ( -512 -638 36 ) ( -512 -638 32 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 53
+{
+( -512 -634 42 ) ( -392 -638 42 ) ( -392 -634 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 -638 46 ) ( -392 -634 46 ) ( -392 -638 46 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 -638 42 ) ( -392 -638 46 ) ( -392 -638 42 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 -638 42 ) ( -392 -634 46 ) ( -392 -634 42 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 -634 42 ) ( -512 -634 46 ) ( -512 -634 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -512 -634 42 ) ( -512 -638 46 ) ( -512 -638 42 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 54
+{
+( -512 -634 192 ) ( -392 -638 192 ) ( -392 -634 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 -638 196 ) ( -392 -634 196 ) ( -392 -638 196 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 -638 192 ) ( -392 -638 196 ) ( -392 -638 192 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 -638 192 ) ( -392 -634 196 ) ( -392 -634 192 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 -634 192 ) ( -512 -634 196 ) ( -512 -634 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -512 -634 192 ) ( -512 -638 196 ) ( -512 -638 192 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 55
+{
+( -476 -634 208 ) ( -428 -638 208 ) ( -428 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -476 -638 216 ) ( -428 -634 216 ) ( -428 -638 216 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -476 -638 208 ) ( -428 -638 216 ) ( -428 -638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -428 -638 208 ) ( -428 -634 216 ) ( -428 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -428 -634 208 ) ( -476 -634 216 ) ( -476 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -476 -634 208 ) ( -476 -638 216 ) ( -476 -638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 56
+{
+( -376 -634 32 ) ( -136 -638 32 ) ( -136 -634 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 -638 36 ) ( -136 -634 36 ) ( -136 -638 36 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 -638 32 ) ( -136 -638 36 ) ( -136 -638 32 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 -638 32 ) ( -136 -634 36 ) ( -136 -634 32 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 -634 32 ) ( -376 -634 36 ) ( -376 -634 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -376 -634 32 ) ( -376 -638 36 ) ( -376 -638 32 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 57
+{
+( -376 -634 42 ) ( -136 -638 42 ) ( -136 -634 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 -638 46 ) ( -136 -634 46 ) ( -136 -638 46 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 -638 42 ) ( -136 -638 46 ) ( -136 -638 42 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 -638 42 ) ( -136 -634 46 ) ( -136 -634 42 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 -634 42 ) ( -376 -634 46 ) ( -376 -634 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -376 -634 42 ) ( -376 -638 46 ) ( -376 -638 42 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 58
+{
+( -376 -634 192 ) ( -136 -638 192 ) ( -136 -634 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 -638 196 ) ( -136 -634 196 ) ( -136 -638 196 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 -638 192 ) ( -136 -638 196 ) ( -136 -638 192 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 -638 192 ) ( -136 -634 196 ) ( -136 -634 192 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 -634 192 ) ( -376 -634 196 ) ( -376 -634 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -376 -634 192 ) ( -376 -638 196 ) ( -376 -638 192 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 59
+{
+( -280 -634 208 ) ( -232 -638 208 ) ( -232 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -280 -638 216 ) ( -232 -634 216 ) ( -232 -638 216 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -280 -638 208 ) ( -232 -638 216 ) ( -232 -638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -232 -638 208 ) ( -232 -634 216 ) ( -232 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -232 -634 208 ) ( -280 -634 216 ) ( -280 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -280 -634 208 ) ( -280 -638 216 ) ( -280 -638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 60
+{
+( -120 -634 32 ) ( 120 -638 32 ) ( 120 -634 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 -638 36 ) ( 120 -634 36 ) ( 120 -638 36 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 -638 32 ) ( 120 -638 36 ) ( 120 -638 32 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 -638 32 ) ( 120 -634 36 ) ( 120 -634 32 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 -634 32 ) ( -120 -634 36 ) ( -120 -634 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -120 -634 32 ) ( -120 -638 36 ) ( -120 -638 32 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 61
+{
+( -120 -634 42 ) ( 120 -638 42 ) ( 120 -634 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 -638 46 ) ( 120 -634 46 ) ( 120 -638 46 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 -638 42 ) ( 120 -638 46 ) ( 120 -638 42 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 -638 42 ) ( 120 -634 46 ) ( 120 -634 42 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 -634 42 ) ( -120 -634 46 ) ( -120 -634 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -120 -634 42 ) ( -120 -638 46 ) ( -120 -638 42 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 62
+{
+( -120 -634 192 ) ( 120 -638 192 ) ( 120 -634 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 -638 196 ) ( 120 -634 196 ) ( 120 -638 196 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 -638 192 ) ( 120 -638 196 ) ( 120 -638 192 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 -638 192 ) ( 120 -634 196 ) ( 120 -634 192 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 -634 192 ) ( -120 -634 196 ) ( -120 -634 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -120 -634 192 ) ( -120 -638 196 ) ( -120 -638 192 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 63
+{
+( -24 -634 208 ) ( 24 -638 208 ) ( 24 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -24 -638 216 ) ( 24 -634 216 ) ( 24 -638 216 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -24 -638 208 ) ( 24 -638 216 ) ( 24 -638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 24 -638 208 ) ( 24 -634 216 ) ( 24 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 24 -634 208 ) ( -24 -634 216 ) ( -24 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -24 -634 208 ) ( -24 -638 216 ) ( -24 -638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 64
+{
+( 136 -634 32 ) ( 376 -638 32 ) ( 376 -634 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 -638 36 ) ( 376 -634 36 ) ( 376 -638 36 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 -638 32 ) ( 376 -638 36 ) ( 376 -638 32 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 -638 32 ) ( 376 -634 36 ) ( 376 -634 32 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 -634 32 ) ( 136 -634 36 ) ( 136 -634 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 136 -634 32 ) ( 136 -638 36 ) ( 136 -638 32 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 65
+{
+( 136 -634 42 ) ( 376 -638 42 ) ( 376 -634 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 -638 46 ) ( 376 -634 46 ) ( 376 -638 46 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 -638 42 ) ( 376 -638 46 ) ( 376 -638 42 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 -638 42 ) ( 376 -634 46 ) ( 376 -634 42 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 -634 42 ) ( 136 -634 46 ) ( 136 -634 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 136 -634 42 ) ( 136 -638 46 ) ( 136 -638 42 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 66
+{
+( 136 -634 192 ) ( 376 -638 192 ) ( 376 -634 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 -638 196 ) ( 376 -634 196 ) ( 376 -638 196 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 -638 192 ) ( 376 -638 196 ) ( 376 -638 192 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 -638 192 ) ( 376 -634 196 ) ( 376 -634 192 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 -634 192 ) ( 136 -634 196 ) ( 136 -634 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 136 -634 192 ) ( 136 -638 196 ) ( 136 -638 192 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 67
+{
+( 232 -634 208 ) ( 280 -638 208 ) ( 280 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 232 -638 216 ) ( 280 -634 216 ) ( 280 -638 216 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 232 -638 208 ) ( 280 -638 216 ) ( 280 -638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 280 -638 208 ) ( 280 -634 216 ) ( 280 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 280 -634 208 ) ( 232 -634 216 ) ( 232 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 232 -634 208 ) ( 232 -638 216 ) ( 232 -638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 68
+{
+( 392 -634 32 ) ( 512 -638 32 ) ( 512 -634 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 -638 36 ) ( 512 -634 36 ) ( 512 -638 36 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 -638 32 ) ( 512 -638 36 ) ( 512 -638 32 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 -638 32 ) ( 512 -634 36 ) ( 512 -634 32 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 -634 32 ) ( 392 -634 36 ) ( 392 -634 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 -634 32 ) ( 392 -638 36 ) ( 392 -638 32 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 69
+{
+( 392 -634 42 ) ( 512 -638 42 ) ( 512 -634 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 -638 46 ) ( 512 -634 46 ) ( 512 -638 46 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 -638 42 ) ( 512 -638 46 ) ( 512 -638 42 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 -638 42 ) ( 512 -634 46 ) ( 512 -634 42 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 -634 42 ) ( 392 -634 46 ) ( 392 -634 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 -634 42 ) ( 392 -638 46 ) ( 392 -638 42 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 70
+{
+( 392 -634 192 ) ( 512 -638 192 ) ( 512 -634 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 -638 196 ) ( 512 -634 196 ) ( 512 -638 196 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 -638 192 ) ( 512 -638 196 ) ( 512 -638 192 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 -638 192 ) ( 512 -634 196 ) ( 512 -634 192 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 -634 192 ) ( 392 -634 196 ) ( 392 -634 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 -634 192 ) ( 392 -638 196 ) ( 392 -638 192 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 71
+{
+( 428 -634 208 ) ( 476 -638 208 ) ( 476 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 428 -638 216 ) ( 476 -634 216 ) ( 476 -638 216 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 428 -638 208 ) ( 476 -638 216 ) ( 476 -638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 476 -638 208 ) ( 476 -634 216 ) ( 476 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 476 -634 208 ) ( 428 -634 216 ) ( 428 -634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 428 -634 208 ) ( 428 -638 216 ) ( 428 -638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 72
+{
 ( -512 640 -38 ) ( 512 638 -38 ) ( 512 640 -38 ) PSX_Textures/stratcom_concrete_board [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -512 638 320 ) ( 512 640 320 ) ( 512 638 320 ) PSX_Textures/stratcom_concrete_board [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( -512 638 -38 ) ( 512 638 320 ) ( 512 638 -38 ) PSX_Textures/stratcom_concrete_board [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 512 638 -38 ) ( 512 640 320 ) ( 512 640 -38 ) PSX_Textures/stratcom_concrete_board [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 512 640 -38 ) ( -512 640 320 ) ( -512 640 -38 ) PSX_Textures/stratcom_concrete_board [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( -512 640 -38 ) ( -512 638 320 ) ( -512 638 -38 ) PSX_Textures/stratcom_concrete_board [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -512 638 256 ) ( 512 640 256 ) ( 512 638 256 ) PSX_Textures/stratcom_concrete_board [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 638 -38 ) ( 512 638 256 ) ( 512 638 -38 ) PSX_Textures/stratcom_concrete_board [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 638 -38 ) ( 512 640 256 ) ( 512 640 -38 ) PSX_Textures/stratcom_concrete_board [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 640 -38 ) ( -512 640 256 ) ( -512 640 -38 ) PSX_Textures/stratcom_concrete_board [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -512 640 -38 ) ( -512 638 256 ) ( -512 638 -38 ) PSX_Textures/stratcom_concrete_board [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 73
+{
+( -392 638 -38 ) ( -376 634 -38 ) ( -376 638 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -392 634 256 ) ( -376 638 256 ) ( -376 634 256 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -392 634 -38 ) ( -376 634 256 ) ( -376 634 -38 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -376 634 -38 ) ( -376 638 256 ) ( -376 638 -38 ) PSX_Textures/stratcom_green_panel [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -376 638 -38 ) ( -392 638 256 ) ( -392 638 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 638 -38 ) ( -392 634 256 ) ( -392 634 -38 ) PSX_Textures/stratcom_green_panel [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 74
+{
+( -136 638 -38 ) ( -120 634 -38 ) ( -120 638 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -136 634 256 ) ( -120 638 256 ) ( -120 634 256 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -136 634 -38 ) ( -120 634 256 ) ( -120 634 -38 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -120 634 -38 ) ( -120 638 256 ) ( -120 638 -38 ) PSX_Textures/stratcom_green_panel [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -120 638 -38 ) ( -136 638 256 ) ( -136 638 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 638 -38 ) ( -136 634 256 ) ( -136 634 -38 ) PSX_Textures/stratcom_green_panel [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 75
+{
+( 120 638 -38 ) ( 136 634 -38 ) ( 136 638 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 120 634 256 ) ( 136 638 256 ) ( 136 634 256 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 120 634 -38 ) ( 136 634 256 ) ( 136 634 -38 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 136 634 -38 ) ( 136 638 256 ) ( 136 638 -38 ) PSX_Textures/stratcom_green_panel [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 136 638 -38 ) ( 120 638 256 ) ( 120 638 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 638 -38 ) ( 120 634 256 ) ( 120 634 -38 ) PSX_Textures/stratcom_green_panel [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 76
+{
+( 376 638 -38 ) ( 392 634 -38 ) ( 392 638 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 376 634 256 ) ( 392 638 256 ) ( 392 634 256 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 376 634 -38 ) ( 392 634 256 ) ( 392 634 -38 ) PSX_Textures/stratcom_green_panel [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 634 -38 ) ( 392 638 256 ) ( 392 638 -38 ) PSX_Textures/stratcom_green_panel [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 638 -38 ) ( 376 638 256 ) ( 376 638 -38 ) PSX_Textures/stratcom_green_panel [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 638 -38 ) ( 376 634 256 ) ( 376 634 -38 ) PSX_Textures/stratcom_green_panel [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 77
+{
+( -512 638 32 ) ( -392 634 32 ) ( -392 638 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 634 36 ) ( -392 638 36 ) ( -392 634 36 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 634 32 ) ( -392 634 36 ) ( -392 634 32 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 634 32 ) ( -392 638 36 ) ( -392 638 32 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 638 32 ) ( -512 638 36 ) ( -512 638 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -512 638 32 ) ( -512 634 36 ) ( -512 634 32 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 78
+{
+( -512 638 42 ) ( -392 634 42 ) ( -392 638 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 634 46 ) ( -392 638 46 ) ( -392 634 46 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 634 42 ) ( -392 634 46 ) ( -392 634 42 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 634 42 ) ( -392 638 46 ) ( -392 638 42 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 638 42 ) ( -512 638 46 ) ( -512 638 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -512 638 42 ) ( -512 634 46 ) ( -512 634 42 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 79
+{
+( -512 638 192 ) ( -392 634 192 ) ( -392 638 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 634 196 ) ( -392 638 196 ) ( -392 634 196 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -512 634 192 ) ( -392 634 196 ) ( -392 634 192 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 634 192 ) ( -392 638 196 ) ( -392 638 192 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -392 638 192 ) ( -512 638 196 ) ( -512 638 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -512 638 192 ) ( -512 634 196 ) ( -512 634 192 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 80
+{
+( -476 638 208 ) ( -428 634 208 ) ( -428 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -476 634 216 ) ( -428 638 216 ) ( -428 634 216 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -476 634 208 ) ( -428 634 216 ) ( -428 634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -428 634 208 ) ( -428 638 216 ) ( -428 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -428 638 208 ) ( -476 638 216 ) ( -476 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -476 638 208 ) ( -476 634 216 ) ( -476 634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 81
+{
+( -376 638 32 ) ( -136 634 32 ) ( -136 638 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 634 36 ) ( -136 638 36 ) ( -136 634 36 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 634 32 ) ( -136 634 36 ) ( -136 634 32 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 634 32 ) ( -136 638 36 ) ( -136 638 32 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 638 32 ) ( -376 638 36 ) ( -376 638 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -376 638 32 ) ( -376 634 36 ) ( -376 634 32 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 82
+{
+( -376 638 42 ) ( -136 634 42 ) ( -136 638 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 634 46 ) ( -136 638 46 ) ( -136 634 46 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 634 42 ) ( -136 634 46 ) ( -136 634 42 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 634 42 ) ( -136 638 46 ) ( -136 638 42 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 638 42 ) ( -376 638 46 ) ( -376 638 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -376 638 42 ) ( -376 634 46 ) ( -376 634 42 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 83
+{
+( -376 638 192 ) ( -136 634 192 ) ( -136 638 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 634 196 ) ( -136 638 196 ) ( -136 634 196 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -376 634 192 ) ( -136 634 196 ) ( -136 634 192 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 634 192 ) ( -136 638 196 ) ( -136 638 192 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -136 638 192 ) ( -376 638 196 ) ( -376 638 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -376 638 192 ) ( -376 634 196 ) ( -376 634 192 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 84
+{
+( -280 638 208 ) ( -232 634 208 ) ( -232 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -280 634 216 ) ( -232 638 216 ) ( -232 634 216 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -280 634 208 ) ( -232 634 216 ) ( -232 634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -232 634 208 ) ( -232 638 216 ) ( -232 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -232 638 208 ) ( -280 638 216 ) ( -280 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -280 638 208 ) ( -280 634 216 ) ( -280 634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 85
+{
+( -120 638 32 ) ( 120 634 32 ) ( 120 638 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 634 36 ) ( 120 638 36 ) ( 120 634 36 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 634 32 ) ( 120 634 36 ) ( 120 634 32 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 634 32 ) ( 120 638 36 ) ( 120 638 32 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 638 32 ) ( -120 638 36 ) ( -120 638 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -120 638 32 ) ( -120 634 36 ) ( -120 634 32 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 86
+{
+( -120 638 42 ) ( 120 634 42 ) ( 120 638 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 634 46 ) ( 120 638 46 ) ( 120 634 46 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 634 42 ) ( 120 634 46 ) ( 120 634 42 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 634 42 ) ( 120 638 46 ) ( 120 638 42 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 638 42 ) ( -120 638 46 ) ( -120 638 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -120 638 42 ) ( -120 634 46 ) ( -120 634 42 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 87
+{
+( -120 638 192 ) ( 120 634 192 ) ( 120 638 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 634 196 ) ( 120 638 196 ) ( 120 634 196 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -120 634 192 ) ( 120 634 196 ) ( 120 634 192 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 634 192 ) ( 120 638 196 ) ( 120 638 192 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 120 638 192 ) ( -120 638 196 ) ( -120 638 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -120 638 192 ) ( -120 634 196 ) ( -120 634 192 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 88
+{
+( -24 638 208 ) ( 24 634 208 ) ( 24 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -24 634 216 ) ( 24 638 216 ) ( 24 634 216 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -24 634 208 ) ( 24 634 216 ) ( 24 634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 24 634 208 ) ( 24 638 216 ) ( 24 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 24 638 208 ) ( -24 638 216 ) ( -24 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -24 638 208 ) ( -24 634 216 ) ( -24 634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 89
+{
+( 136 638 32 ) ( 376 634 32 ) ( 376 638 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 634 36 ) ( 376 638 36 ) ( 376 634 36 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 634 32 ) ( 376 634 36 ) ( 376 634 32 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 634 32 ) ( 376 638 36 ) ( 376 638 32 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 638 32 ) ( 136 638 36 ) ( 136 638 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 136 638 32 ) ( 136 634 36 ) ( 136 634 32 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 90
+{
+( 136 638 42 ) ( 376 634 42 ) ( 376 638 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 634 46 ) ( 376 638 46 ) ( 376 634 46 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 634 42 ) ( 376 634 46 ) ( 376 634 42 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 634 42 ) ( 376 638 46 ) ( 376 638 42 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 638 42 ) ( 136 638 46 ) ( 136 638 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 136 638 42 ) ( 136 634 46 ) ( 136 634 42 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 91
+{
+( 136 638 192 ) ( 376 634 192 ) ( 376 638 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 634 196 ) ( 376 638 196 ) ( 376 634 196 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 136 634 192 ) ( 376 634 196 ) ( 376 634 192 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 634 192 ) ( 376 638 196 ) ( 376 638 192 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 376 638 192 ) ( 136 638 196 ) ( 136 638 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 136 638 192 ) ( 136 634 196 ) ( 136 634 192 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 92
+{
+( 232 638 208 ) ( 280 634 208 ) ( 280 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 232 634 216 ) ( 280 638 216 ) ( 280 634 216 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 232 634 208 ) ( 280 634 216 ) ( 280 634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 280 634 208 ) ( 280 638 216 ) ( 280 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 280 638 208 ) ( 232 638 216 ) ( 232 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 232 638 208 ) ( 232 634 216 ) ( 232 634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 93
+{
+( 392 638 32 ) ( 512 634 32 ) ( 512 638 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 634 36 ) ( 512 638 36 ) ( 512 634 36 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 634 32 ) ( 512 634 36 ) ( 512 634 32 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 634 32 ) ( 512 638 36 ) ( 512 638 32 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 638 32 ) ( 392 638 36 ) ( 392 638 32 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 638 32 ) ( 392 634 36 ) ( 392 634 32 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 94
+{
+( 392 638 42 ) ( 512 634 42 ) ( 512 638 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 634 46 ) ( 512 638 46 ) ( 512 634 46 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 634 42 ) ( 512 634 46 ) ( 512 634 42 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 634 42 ) ( 512 638 46 ) ( 512 638 42 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 638 42 ) ( 392 638 46 ) ( 392 638 42 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 638 42 ) ( 392 634 46 ) ( 392 634 42 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 95
+{
+( 392 638 192 ) ( 512 634 192 ) ( 512 638 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 634 196 ) ( 512 638 196 ) ( 512 634 196 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 634 192 ) ( 512 634 196 ) ( 512 634 192 ) PSX_Textures/stratcom_conduit [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 634 192 ) ( 512 638 196 ) ( 512 638 192 ) PSX_Textures/stratcom_conduit [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 512 638 192 ) ( 392 638 196 ) ( 392 638 192 ) PSX_Textures/stratcom_conduit [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 638 192 ) ( 392 634 196 ) ( 392 634 192 ) PSX_Textures/stratcom_conduit [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 96
+{
+( 428 638 208 ) ( 476 634 208 ) ( 476 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 428 634 216 ) ( 476 638 216 ) ( 476 634 216 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 428 634 208 ) ( 476 634 216 ) ( 476 634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 476 634 208 ) ( 476 638 216 ) ( 476 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 476 638 208 ) ( 428 638 216 ) ( 428 638 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 428 638 208 ) ( 428 634 216 ) ( 428 634 208 ) PSX_Textures/hl_office_complex_style_drop_ceiling_1_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }

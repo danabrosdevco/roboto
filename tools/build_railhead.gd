@@ -64,7 +64,7 @@ var _solid_ok: Array = ["HoloTable"]
 ## machine mounts, fitted or empty. They sit inside or against solid things on
 ## purpose, so neither the inside-a-collider check nor the reach test applies.
 func _fixture(k: String) -> bool:
-	return _solid_ok.has(k) or k.begins_with("FabricationMount") or k == "Station_RampFoot" or k.begins_with("Station_TrackCut") or k.begins_with("Station_Mast") or k == "BriefingBoard"
+	return _solid_ok.has(k) or k.begins_with("FabricationMount") or k == "Station_RampFoot" or k.begins_with("Station_TrackCut") or k.begins_with("Station_Mast") or k == "BriefingBoard" or k.begins_with("PlatformDoor_Leaf") or k.begins_with("Backdrop_")
 var _cars: Dictionary = {}
 
 
@@ -122,7 +122,8 @@ func _initialize() -> void:
 	else:
 		print("      PLACEMENT GUARD: clean")
 	var bad := _check_markers()
-	_reach()
+	_reach(R.WALKER_W, "Walker 1.7 m x 3.0 m")
+	_reach(2.0, "Bulwark 1.9 m across the shoulders, 2.0 m allowed for the carried shield")
 	print("BUILD RAILHEAD DONE")
 	quit(1 if (_clashes > 0 or bad > 0) else 0)
 
@@ -240,14 +241,11 @@ func _record_markers() -> void:
 	for i in R.FAB_X.size():
 		_anchors["FabricationMount_%d_Fitted" % (i + 1)] = _at("Fabrication", R.FAB_X[i], -3.7, 0.0)
 		_anchors["FabricationMount_%d_Empty" % (i + 1)] = _at("Fabrication", R.FAB_X[i], 3.7, 0.0)
-	# Barracks: twelve racks, numbered 1..6 down the +Y wall then 7..12 down the
-	# -Y wall, matching the numerals on the plates.
-	var n := 1
-	for s: float in [1.0, -1.0]:
-		for i in 6:
-			var cx: float = -R.RACK_PITCH * 2.5 + i * R.RACK_PITCH
-			_anchors["BarracksRack_%02d" % n] = _at("Barracks", cx, s * R.RACK_Y, 0.0)
-			n += 1
+	# Barracks: twelve bays down the +Y wall, numbered from the platform end, each
+	# marker at the middle of the bay where a chassis is parked nose-in.
+	for i in 12:
+		var cx: float = -R.END + R.BAR_PITCH * (i + 0.5)
+		_anchors["BarracksRack_%02d" % (i + 1)] = _at("Barracks", cx, R.BAR_Y0 + R.BAR_DEPTH * 0.5, 0.0)
 	# Platform: where the player arrives, where the squad forms up, the door.
 	_anchors["PlayerArrival"] = _at("Platform", -8.0, 0.0, 1.0)
 	_anchors["SquadMuster"] = _at("Platform", 4.0, 0.0, 0.0)
@@ -256,6 +254,10 @@ func _record_markers() -> void:
 	# The platform door is the side door onto the station, at the car's middle.
 	_anchors["PlatformDoor"] = _at("Platform", 0.0, R.HW, 0.0)
 	_anchors["PlatformDoor_Outside"] = _at("Platform", 0.0, R.OW + 2.5, 0.0)
+	# The leaf slides +X into a pocket of real space beside the opening.
+	_anchors["PlatformDoor_LeafClosed"] = _at("Platform", 0.0, R.HW - 0.05, 1.7)
+	_anchors["PlatformDoor_LeafOpen"] = _at("Platform", 2.0 * R.DOOR, R.HW - 0.05, 1.7)
+	_anchors["PlatformDoor_Zone"] = _at("Platform", 0.0, 2.0, 0.0)
 	# Where the view hangs, one plate each side. Left is the platform side: the
 	# +Y wall, which is on the left walking toward the locomotive.
 	_anchors["Backdrop_Left"] = _at("Armoury", 0.0, R.BACKDROP_Y, 3.5)
@@ -285,8 +287,8 @@ func _lights(g: Node3D) -> void:
 			l.light_color = TUNGSTEN
 			# Operations is dark on purpose; the table is the light.
 			# Operations is lower and dimmer than the rest, but not dark to the point of being out.
-			l.light_energy = 0.8 if car == "Operations" else 1.3
-			l.omni_range = 6.0
+			l.light_energy = 0.7 if car == "Operations" else 1.0
+			l.omni_range = 5.5
 			i += 1
 	var t := OmniLight3D.new()
 	t.name = "Lamp_HoloTable"
@@ -335,12 +337,12 @@ const GZ0 := -152.0
 const GZ1 := 152.0
 
 
-func _reach() -> void:
+func _reach(width: float = R.WALKER_W, label: String = "Walker 1.7 m x 3.0 m") -> void:
 	var nx := int((GX1 - GX0) / CELL)
 	var nz := int((GZ1 - GZ0) / CELL)
 	var blocked := PackedByteArray()
 	blocked.resize(nx * nz)
-	var r := R.WALKER_W * 0.5
+	var r := width * 0.5
 	var lo: float = R.DECK_RISE + 0.3
 	var hi: float = R.DECK_RISE + R.WALKER_H
 	for o: Dictionary in _placed:
@@ -385,9 +387,9 @@ func _reach() -> void:
 		var cx := int((p.x - GX0) / CELL)
 		var cz := int((p.z - GZ0) / CELL)
 		if seen[cz * nx + cx] != 1:
-			print("      REACH    %s is NOT reachable by a 1.7 m body" % k)
+			print("      REACH    %s is NOT reachable by the %s" % [k, label])
 			unreachable += 1
-	print("      REACH    geometric flood-fill for a 1.7 m x 3.0 m body from the platform centre: %d of %d markers reachable (NOT a bake)" % [
+	print("      REACH    geometric flood-fill, %s, from the platform centre: %d of %d markers reachable (NOT a bake)" % [label, 
 			_standing() - unreachable, _standing()])
 
 
@@ -446,10 +448,10 @@ func _write_station() -> bool:
 		var l := OmniLight3D.new()
 		l.name = "Canopy_%d" % i
 		lg.add_child(l)
-		l.position = Vector3(8.7, top + 5.5, R.POSTS[i])
+		l.position = Vector3(R.ST_LAMP_Y, R.ST_LAMP_Z, R.POSTS[i])
 		l.light_color = TUNGSTEN
-		l.light_energy = 1.3
-		l.omni_range = 7.0
+		l.light_energy = 1.1
+		l.omni_range = 8.0
 	var hl := OmniLight3D.new()
 	hl.name = "HeadHouse"
 	lg.add_child(hl)

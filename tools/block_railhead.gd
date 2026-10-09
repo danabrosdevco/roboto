@@ -85,21 +85,30 @@ const GAUGE := 1.435
 ## platform, so Bay 1 is the first one you reach.
 const BAYS: Array = [Vector2(-8.0, 3.0), Vector2(-8.0, -3.0), Vector2(8.0, 3.0), Vector2(8.0, -3.0)]
 ## The barracks has twelve racks and the squad is four.
-const RACK_PITCH := 4.0
-const RACK_Y := 3.3
+## The barracks: ONE wall of twelve bays, 2.625 m pitch (12 x 2.625 = 31.5 m, exactly
+## the car's interior), each 3.6 m deep, so a Bulwark, Walker, Rover or Reclaimer
+## stands in one and the lane in front is 5.4 m. Bays are on the +Y side.
+const BAR_PITCH := 2.625
+const BAR_Y0 := 0.9          ## the front of the bays, and the edge of the lane
+const BAR_DEPTH := 3.6
+const BAR_FIN := 0.125
+const BAR_STUB := 1.5
+const BAR_CLEAR_H := 3.6
+## The platform door's leaf slides +X into a pocket that ends here.
+const DOOR_POCKET_END := 4.875
 ## Fabrication's mounts: the three with machines on them and the three without.
 const FAB_X: Array = [-8.0, 0.0, 8.0]
 
 ## Lamp positions (map x, map y) per car; the builder puts a light under each.
-## Evenly spaced on the 4 m module: a pair either side of the lane every 8 m, so
-## every car is lit the way a building is that expects people to read in it.
+## Evenly spaced, one every 8 m down the lane, and FEW: this is a dark vehicle in
+## a dark tunnel, and each warm pool is an island, not general illumination.
 const LAMPS := {
-	"ops": [[-8.0, 2.0], [-8.0, -2.0], [8.0, 2.0], [8.0, -2.0]],
-	"repair": [[-8.0, 2.0], [-8.0, -2.0], [0.0, 2.0], [0.0, -2.0], [8.0, 2.0], [8.0, -2.0]],
-	"armoury": [[-8.0, 2.0], [-8.0, -2.0], [0.0, 2.0], [0.0, -2.0], [8.0, 2.0], [8.0, -2.0]],
-	"fab": [[-8.0, 2.0], [-8.0, -2.0], [0.0, 2.0], [0.0, -2.0], [8.0, 2.0], [8.0, -2.0]],
-	"barracks": [[-8.0, 2.0], [-8.0, -2.0], [0.0, 2.0], [0.0, -2.0], [8.0, 2.0], [8.0, -2.0]],
-	"platform": [[-8.0, 2.0], [-8.0, -2.0], [0.0, 2.0], [0.0, -2.0], [8.0, 2.0], [8.0, -2.0]],
+	"ops": [[-8.0, 0.0], [8.0, 0.0]],
+	"repair": [[-12.0, 0.0], [-4.0, 0.0], [4.0, 0.0], [12.0, 0.0]],
+	"armoury": [[-12.0, 0.0], [-4.0, 0.0], [4.0, 0.0], [12.0, 0.0]],
+	"fab": [[-12.0, 0.0], [-4.0, 0.0], [4.0, 0.0], [12.0, 0.0]],
+	"barracks": [[-12.0, -1.8], [-4.0, -1.8], [4.0, -1.8], [12.0, -1.8]],
+	"platform": [[-12.0, 0.0], [-4.0, 0.0], [4.0, 0.0], [12.0, 0.0]],
 }
 
 # ── Textures. Every one has a material in textures/PSX_Textures/. ────────────
@@ -137,6 +146,8 @@ const BALLAST := "PSX_Textures/concrete_3"
 const DADO := 1.125
 
 var _failed := false
+## Which side wall has no windows (+1 or -1), or 0 for none: the barracks bays stand against a blank wall.
+var _no_win_side := 0.0
 
 
 func _initialize() -> void:
@@ -176,6 +187,7 @@ func _initialize() -> void:
 		_brushes = []
 		_ghost_from = -1
 		_entities = []
+		_no_win_side = 0.0
 		call(RAILHEAD[name])
 		print("      %-26s %3d brushes  %s" % [name, _brushes.size(), _extent_text()])
 		# Checked BEFORE it is written: a piece that fails is not left on disk
@@ -226,6 +238,8 @@ const WALL_IN := 4.6875
 
 func _window_xs(s: float, side_door: bool) -> Array:
 	var out: Array = []
+	if s == _no_win_side:
+		return out
 	for i in WIN_COUNT:
 		var wx := -14.0 + WIN_PITCH * i
 		# The door takes the two apertures either side of the middle.
@@ -321,13 +335,41 @@ func _glaze(side_door: bool) -> void:
 	_backdrop()
 
 
-## One plate each side, BACKDROP_Y out from the centreline, as long as the car
-## and standing on the ground. Where the view hangs; gameplay puts whatever it
-## scrolls on it. Adjacent cars' plates touch end to end.
+## THE TUNNEL WALL: one plate each side, BACKDROP_Y out from the centreline, as
+## long as the car, standing on the ground. The line is underground, so what
+## passes the windows is tunnel: board-marked concrete, a rib every 8 m, cable
+## runs between the ribs, lamp bars between those. Where the view hangs;
+## gameplay scrolls or strobes whatever it likes on it, and hides the plates
+## in a station, where the station's own wall stands 0 m behind them. Adjacent
+## cars' plates touch end to end, and every run stops short of a rib.
+const TUNNEL_TOP := 8.0
+
+
 func _backdrop() -> void:
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-HL, s * BACKDROP_Y - (0.0625 if s > 0.0 else 0.0), -DECK_RISE),
-				Vector3(HL, s * BACKDROP_Y + (0.0 if s > 0.0 else 0.0625), 10.0), CONC)
+		var pa: float = s * BACKDROP_Y - (0.0625 if s > 0.0 else 0.0)
+		var pb: float = s * BACKDROP_Y + (0.0 if s > 0.0 else 0.0625)
+		box(Vector3(-HL, pa, -DECK_RISE), Vector3(HL, pb, TUNNEL_TOP), CONC)
+		# Inner face of the plate: y = s * (BACKDROP_Y - 0.0625); everything
+		# stands proud of it toward the train.
+		var fy: float = s * (BACKDROP_Y - 0.0625)
+		var yo: float = s * (BACKDROP_Y - 0.1875)
+		var ribs: Array = [-12.0, -4.0, 4.0, 12.0]
+		for rx: float in ribs:
+			box(Vector3(rx - 0.25, minf(fy, yo), -DECK_RISE), Vector3(rx + 0.25, maxf(fy, yo), TUNNEL_TOP), GREEN_P)
+		var edges: Array = [-HL]
+		for rx: float in ribs:
+			edges.append(rx - 0.25)
+			edges.append(rx + 0.25)
+		edges.append(HL)
+		for i in range(0, edges.size(), 2):
+			var a: float = edges[i]
+			var b: float = edges[i + 1]
+			for z: float in [1.0, 1.3, 6.0]:
+				box(Vector3(a, minf(fy, yo), z), Vector3(b, maxf(fy, yo), z + 0.125), CONDUIT)
+			# A lamp bar mid-bay, above the windows' band.
+			var cx := (a + b) * 0.5
+			box(Vector3(cx - 0.75, minf(fy, yo), 6.5), Vector3(cx + 0.75, maxf(fy, yo), 6.75), LAMP_T)
 
 
 # ── Detail every car shares. All of it is mesh-only. ─────────────────────────
@@ -370,15 +412,25 @@ func _ducts() -> void:
 				x = bands[i] + 0.125
 
 
-## Floor markings: the 3.0 m lane edges as stencilled lines, 0.0625 m proud and
+## Floor markings: the lane's edges as stencilled lines, 0.0625 m proud and
 ## mesh-only, and an arrow on the lane at every 8 m: the baker climbs 0.25 m,
-## so paint costs the squad nothing. `skip` are x values to leave bare.
-func _lane_lines(skip: Array = []) -> void:
-	for s: float in [-1.0, 1.0]:
-		box(Vector3(-15.5, s * LANE - (0.0625 if s > 0.0 else 0.0), 0.0), Vector3(15.5, s * LANE + (0.0 if s > 0.0 else 0.0625), 0.0625), STENCIL)
+## so paint costs the squad nothing. `edges` are the lane's two sides (y) and
+## `yc` its centre; `skip` are x values to leave bare.
+func _lane_lines(skip: Array = [], edges: Array = [-LANE, LANE], yc: float = 0.0) -> void:
+	for e: float in edges:
+		box(Vector3(-15.5, e - (0.0625 if e > yc else 0.0), 0.0), Vector3(15.5, e + (0.0 if e > yc else 0.0625), 0.0625), STENCIL)
 	for ax: float in [-12.0, -4.0, 4.0, 12.0]:
 		if not skip.has(ax):
-			box(Vector3(ax - 0.75, -0.75, 0.0), Vector3(ax + 0.75, 0.75, 0.0625), ARROW)
+			box(Vector3(ax - 0.75, yc - 0.75, 0.0), Vector3(ax + 0.75, yc + 0.75, 0.0625), ARROW)
+
+
+## The deck track: two flush steel rails down the lane, 2.2 m apart, where a
+## chassis is moved. Mesh-only and 0.0625 m proud, so a body walks across them
+## and the baker never sees them.
+func _deck_track(yc: float = 0.0) -> void:
+	for s: float in [-1.0, 1.0]:
+		var y := yc + s * 1.1
+		box(Vector3(-15.5, y - 0.0625, 0.0), Vector3(15.5, y + 0.0625, 0.0625), DOOR_T)
 
 
 ## Handrails at 1.0 m, along the side walls wherever the wall is free. They are
@@ -644,6 +696,7 @@ func _car_repair() -> void:
 	_glaze(false)
 	_ducts()
 	_lane_lines()
+	_deck_track()
 	var rblk: Array = [[-15.5, -12.5], [-12.25, -11.75], [-8.8, -7.2], [-4.25, -3.7], [-3.7, -1.2], [-1.2, 1.2], [1.2, 3.7], [3.7, 4.25], [7.2, 8.8], [11.75, 12.25], [12.5, 15.5]]
 	_handrails(rblk, rblk)
 	_beams([-10.0, -6.0, -2.0, 2.0, 6.0, 10.0])
@@ -679,6 +732,7 @@ func _car_armoury() -> void:
 	_glaze(false)
 	_ducts()
 	_lane_lines()
+	_deck_track()
 	var blk: Array = []
 	for p: float in PIERS:
 		blk.append([p - 1.0, p + 1.0])
@@ -723,6 +777,7 @@ func _car_fab() -> void:
 	_glaze(false)
 	_ducts()
 	_lane_lines()
+	_deck_track()
 	var neg: Array = []
 	for x: float in FAB_X:
 		neg.append([x - 1.5, x + 1.5])
@@ -731,38 +786,68 @@ func _car_fab() -> void:
 	_bogies()
 
 
-## 6. BARRACKS. Twelve standing racks, numbered, in a car that could hold twice
-## that. The player will have four. A rack is a charge pad between two fins; the
-## fins stand on the piers and each rack stands in front of an aperture. There
-## is no back plate: robots do not sleep, and there is a window behind each
-## one. The emptiness is the content.
+## 6. BARRACKS. THE BIG CHASSIS LIVE HERE. Twelve bays down ONE wall, the +Y one,
+## on a 2.625 m pitch (12 x 2.625 = 31.5 m, the car's whole interior), each
+## 3.6 m deep and 3.6 m clear. Measured against the four chassis: a Walker
+## (1.7 x 3.0 tall), a Bulwark (1.9 across the shoulders and a 1.55 m shield on
+## the forearm), a Rover (1.5 x 3.2 LONG, 3.4 tall) and a Reclaimer (1.5 x 3.1
+## long) each stand nose-in with room to spare: 2.5 m clear between fins, 3.6 m
+## deep, a 3.6 m ceiling under the hoist. The lane in front is 5.4 m. The wall
+## behind the bays has no windows; the other side keeps its eight.
+## Each bay has a floor outline, two feed rails from the lane, four tie-down
+## cleats, wall clamps and a trolley on the overhead hoist, because underneath
+## the institutional paint this is a freight system. The player will have
+## four; the emptiness is the content.
 func _car_barracks() -> void:
+	_no_win_side = 1.0
 	_shell(true, true, HULL, false, TILE)
-	for s: float in [-1.0, 1.0]:
-		for i in 7:
-			var fx := -RACK_PITCH * 3.0 + i * RACK_PITCH
-			box(Vector3(fx - 0.1, minf(s * 2.4, s * HW), 0.0), Vector3(fx + 0.1, maxf(s * 2.4, s * HW), 4.0), GREEN_P)
+	for i in range(1, 12):
+		var fx := -END + BAR_PITCH * i
+		# SOLID ONLY AT THE BACK. A full-depth solid fin would leave 2.5 m between
+		# colliders, which the baker erodes by 1.0 m each side to a 0.5 m ribbon and
+		# drops: the bay would bake as a wall. So the partition is a 1.5 m solid
+		# stub at the back wall and the rest of it is drawn.
+		box(Vector3(fx - BAR_FIN * 0.5, HW - BAR_STUB, 0.0), Vector3(fx + BAR_FIN * 0.5, HW, 3.9), GREEN_P)
 	no_collision()
+	# The rest of each partition, drawn: it joins the solid stub at y = HW - BAR_STUB.
+	for i in range(1, 12):
+		var gx := -END + BAR_PITCH * i
+		box(Vector3(gx - BAR_FIN * 0.5, BAR_Y0, 0.0), Vector3(gx + BAR_FIN * 0.5, HW - BAR_STUB, 3.9), GREEN_P)
 	var n := 1
-	for s: float in [1.0, -1.0]:
-		for i in 6:
-			var cx := -RACK_PITCH * 2.5 + i * RACK_PITCH
-			# Charge pad on the floor (0.125 m), and the rack's number above the
-			# aperture on the wall's face: warm white on dark green glass.
-			box(Vector3(cx - 1.2, minf(s * 2.4, s * 4.4), 0.0), Vector3(cx + 1.2, maxf(s * 2.4, s * 4.4), 0.125), GRATE)
-			_number(n, cx, 3.3, 0.5, s * HW, s, READOUT, true)
-			n += 1
+	for i in 12:
+		var cx := -END + BAR_PITCH * (i + 0.5)
+		var y1 := BAR_Y0 + BAR_DEPTH
+		# The bay's outline on the floor, in stencil: sides and ends.
+		for sx: float in [-1.0, 1.0]:
+			box(Vector3(minf(cx + sx * 1.0, cx + sx * 1.1), BAR_Y0 + 0.1, 0.0), Vector3(maxf(cx + sx * 1.0, cx + sx * 1.1), y1 - 0.1, 0.0625), STENCIL)
+		box(Vector3(cx - 1.0, BAR_Y0 + 0.1, 0.0), Vector3(cx + 1.0, BAR_Y0 + 0.2, 0.0625), STENCIL)
+		box(Vector3(cx - 1.0, y1 - 0.2, 0.0), Vector3(cx + 1.0, y1 - 0.1, 0.0625), STENCIL)
+		# Two feed rails from the lane into the bay, flush.
+		for sx: float in [-1.0, 1.0]:
+			box(Vector3(cx + sx * 0.6 - 0.05, BAR_Y0 + 0.2, 0.0), Vector3(cx + sx * 0.6 + 0.05, y1 - 0.2, 0.0625), DOOR_T)
+			# Tie-down cleats at the four corners, brass, 0.15 m, between the outline and the rails.
+			for yy: float in [BAR_Y0 + 0.5, y1 - 0.5]:
+				box(Vector3(cx + sx * 0.8 - 0.1, yy - 0.1, 0.0), Vector3(cx + sx * 0.8 + 0.1, yy + 0.1, 0.15), BRASS)
+			# Wall clamps on the back wall at chest height, one each side.
+			box(Vector3(cx + sx * 0.8 - 0.15, y1 - 0.2, 0.6), Vector3(cx + sx * 0.8 + 0.15, y1, 0.9), BRASS)
+		# The hoist trolley hanging from the overhead rail, over the bay's middle.
+		box(Vector3(cx - 0.3, 2.55, 3.7), Vector3(cx + 0.3, 2.85, 4.0), GREEN_P)
+		# The bay's number, on the back wall above the clearance line: warm white
+		# on dark green glass.
+		_number(n, cx, 3.7, 0.5, HW, 1.0, READOUT, true)
+		n += 1
+	# The overhead hoist rail runs the length of the bays, above everything.
+	box(Vector3(-15.5, 2.6, 4.0), Vector3(15.5, 2.8, 4.4), GREEN_P)
+	# The lane's edge in stencil; the lane is the empty side, 5.4 m wide.
+	box(Vector3(-15.5, BAR_Y0 - 0.0625, 0.0), Vector3(15.5, BAR_Y0, 0.0625), STENCIL)
 	_door_furniture(1.0, 4)
 	_door_furniture(-1.0, 5)
 	_lamps("barracks")
 	_glaze(false)
 	_ducts()
-	_lane_lines()
-	var blk: Array = []
-	for i in 7:
-		var fx := -RACK_PITCH * 3.0 + i * RACK_PITCH
-		blk.append([fx - 0.25, fx + 0.25])
-	_handrails(blk, blk)
+	_lane_lines([], [-HW + 0.0625], -1.8)
+	_deck_track(-1.8)
+	_handrails([[-16.0, 16.0]], [])
 	_beams([-14.0, -10.0, -6.0, -2.0, 2.0, 6.0, 10.0, 14.0])
 	_bogies()
 
@@ -792,10 +877,18 @@ func _car_platform(ramp_end: bool = false) -> void:
 		var xb: float = DOOR + 0.25 if s > 0.0 else -DOOR
 		box(Vector3(xa, OW, 0.0), Vector3(xb, OW + 0.125, DOOR_H), DOOR_T)
 	box(Vector3(-DOOR - 0.25, OW, DOOR_H), Vector3(DOOR + 0.25, OW + 0.125, DOOR_H + 0.25), DOOR_T)
-	# Its inside: the number above it on the wall's face, two grab rails.
+	# Its inside: the number above it on the wall's face, one grab rail on the
+	# side the leaf does NOT go. THE LEAF SLIDES +X into a pocket of real space:
+	# the 3.25 m of wall face from x 1.625 to 4.875, kept clear of every fitting
+	# (no rail, locker or placard stands there), with a header rail and a floor
+	# guide drawn for it. The floor guide is 0.03 m high and mesh-only; there is
+	# no threshold, no sill, nothing between 0.25 m and 0.5 m.
 	_number(6, 0.0, 3.5, 0.5, HW, 1.0, STENCIL, true)
-	for s: float in [-1.0, 1.0]:
-		box(Vector3(s * 1.8125 - 0.03125, 4.4375, 0.8), Vector3(s * 1.8125 + 0.03125, HW, 1.9), BRASS)
+	box(Vector3(-1.8125 - 0.03125, 4.4375, 0.8), Vector3(-1.8125 + 0.03125, HW, 1.9), BRASS)
+	box(Vector3(-1.7, 4.3125, 3.4375), Vector3(DOOR_POCKET_END + 0.025, 4.4375, 3.5), GREEN_P)
+	for bx: float in [-1.7, 1.9, DOOR_POCKET_END - 0.1]:
+		box(Vector3(bx, 4.4375, 3.4375), Vector3(bx + 0.1, HW, 3.5), BRASS)
+	box(Vector3(-1.7, 4.375, 0.0), Vector3(DOOR_POCKET_END + 0.025, 4.4375, 0.03125), DOOR_T)
 	# Lockers are numbered.
 	var ln := 1
 	for s: float in [1.0, -1.0]:
@@ -813,8 +906,9 @@ func _car_platform(ramp_end: bool = false) -> void:
 	_glaze(true)
 	_ducts()
 	_lane_lines()
+	_deck_track()
 	var blk: Array = [[-13.0, -7.0], [7.0, 13.0]]
-	_handrails([[-13.0, -7.0], [-1.9, 1.9], [7.0, 13.0]], blk)
+	_handrails([[-13.0, -7.0], [-1.9, 5.1], [7.0, 13.0]], blk)
 	_beams([-14.0, -5.0, 5.0, 14.0])
 	_bogies()
 
@@ -831,12 +925,29 @@ func _trackbed() -> void:
 
 # ── The station ──────────────────────────────────────────────────────────────
 #
+# AN UNDERGROUND STATION, A CUT-AND-COVER BOX. The line runs in tunnel; the
+# station is a concrete box 40 m wide inside, 10 m high, 300 m long, with a
+# roof slab over the lot. The platform, the head house and the cargo gear are
+# under it. The track leaves through a portal in each end wall: the prefab is
+# CUT there, and a mission map joins its own tunnel to the two mouths.
+#
+# THE MAST goes UP A SHAFT. It stands on the ground at the rear of the box,
+# passes through a square hole in the roof slab, and carries on to 40 m above
+# the station floor: the one StratCom object with a reason to exist, because it
+# is why you still get briefings. On a surface map it is the landmark.
+#
 # THE HELD STATE ONLY: lit, working, StratCom's. Unheld (dark, derelict) and
 # contested (damaged, fought over) are later work and are not built here.
 #
-# THE SAME STATION EVERY TIME, because the manual has one station in it:
-# board-marked concrete, a stencilled designation, warm even light, a steel door
-# on the head house, and an aerial mast, which is why you still get briefings.
+# THE SAME STATION EVERY TIME, because the manual has one station in it: board-
+# marked concrete, a stencilled designation, tungsten pendants on a 16 m
+# module, a steel door on the head house. Underneath the trappings it is a
+# freight stop: deck rails across the platform, a gantry over them, cleats at
+# the edge and loading marks on the floor.
+#
+# THE SIDE WALLS STAND EXACTLY AT THE CARS' BACKDROP PLATES (y = +-20): in
+# transit the plates are the view; in a station gameplay hides them and the
+# wall is right behind.
 #
 # THE ARITHMETIC. The car floor is DECK_RISE (1.1875 m) above the ground and
 # the car's outer wall face is at OW (4.75 m). The platform top is therefore
@@ -845,22 +956,27 @@ func _trackbed() -> void:
 # height. The side door (3.25 x 3.41 m) is cut in that wall. The end ramp is
 # 1.1875 m over 7.5 m, 1 in 6.3, as the boarding ramp is.
 #
-# Track runs along map X, centred on y = 0, and is CUT FLAT at x = +-ST_CUT.
+# Track runs along map X, centred on y = 0.
 
 const ST_CUT := 150.0
 const ST_X0 := -141.0       ## platform's rear end: the head house stands on it
 const ST_X1 := 125.0        ## platform's front end, 13 m past the rake's nose
 const ST_Y0 := OW
-const ST_Y1 := 14.75        ## 10 m of platform, clear of cover
+const ST_Y1 := 20.0         ## the back wall: a 15.25 m platform, clear of cover
+const ST_ROOF := 10.0       ## the roof slab's underside, above the ground
+const ST_WALL := 1.0
+const PORTAL_HALF := 3.5
+const PORTAL_H := 6.0
 const HH_X1 := -127.0
 const HH_Y0 := 6.75
 const HH_H := 4.0
+## The pendant lamps over the platform, on a 32 m module (every second car).
 const POSTS: Array = [-96.0, -64.0, -32.0, 0.0, 32.0, 64.0, 96.0]
+const ST_LAMP_Y := 12.0
+const ST_LAMP_Z := 6.8      ## where the light stands; the fitting hangs just above it
 const ST_RAMP_Y := 10.75    ## the end ramp's and the head house door's centreline
 const HH_LAMPS: Array = [-137.0, -131.0]
-## The aerial mast stands on the ground behind the head house, off the platform:
-## the tallest thing for a long way, and the only StratCom object with a reason
-## to exist.
+## The aerial mast: footing and column solid, arms and beacon drawn.
 const MAST_X := -146.0
 const MAST_Y := 9.75
 const MAST_H := 40.0
@@ -871,11 +987,27 @@ func _station() -> void:
 	box(Vector3(ST_X0, ST_Y0, 0.0), Vector3(ST_X1, ST_Y1, top), {"top": CONC, "side": CONC, "bottom": CONC})
 	# The end ramp down to the ground, 4.0 m wide, a wedge with no lip.
 	ramp(ST_X1, ST_RAMP_Y - 2.0, ST_X1 + RAMP_LEN, ST_RAMP_Y + 2.0, 0.0, 0.0, top, "-x", {"top": CONC, "side": CONC, "bottom": CONC})
-	# Canopy posts on the back edge, 9.5 m from the train: cover for nobody.
-	for x: float in POSTS:
-		box(Vector3(x - 0.25, ST_Y1 - 0.5, top), Vector3(x + 0.25, ST_Y1, top + 6.2), GREEN_P)
+	# THE BOX. Two side walls, two end walls with a portal each, and a roof with
+	# a shaft hole in it for the mast.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-ST_CUT, minf(s * 20.0, s * (20.0 + ST_WALL)), 0.0), Vector3(ST_CUT, maxf(s * 20.0, s * (20.0 + ST_WALL)), ST_ROOF), {"top": CONC, "side": CONC, "bottom": CONC})
+	for e: float in [-1.0, 1.0]:
+		var xa := minf(e * (ST_CUT - ST_WALL), e * ST_CUT)
+		var xb := maxf(e * (ST_CUT - ST_WALL), e * ST_CUT)
+		box(Vector3(xa, -20.0, 0.0), Vector3(xb, -PORTAL_HALF, ST_ROOF), CONC)
+		box(Vector3(xa, PORTAL_HALF, 0.0), Vector3(xb, 20.0, ST_ROOF), CONC)
+		box(Vector3(xa, -PORTAL_HALF, PORTAL_H), Vector3(xb, PORTAL_HALF, ST_ROOF), CONC)
+	var rz := {"top": CONC, "side": CONC, "bottom": CEIL_T}
+	var sx0 := MAST_X - 1.5
+	var sx1 := MAST_X + 1.5
+	var sy0 := MAST_Y - 1.5
+	var sy1 := MAST_Y + 1.5
+	box(Vector3(-ST_CUT, -20.0 - ST_WALL, ST_ROOF), Vector3(sx0, 20.0 + ST_WALL, ST_ROOF + 1.0), rz)
+	box(Vector3(sx1, -20.0 - ST_WALL, ST_ROOF), Vector3(ST_CUT, 20.0 + ST_WALL, ST_ROOF + 1.0), rz)
+	box(Vector3(sx0, -20.0 - ST_WALL, ST_ROOF), Vector3(sx1, sy0, ST_ROOF + 1.0), rz)
+	box(Vector3(sx0, sy1, ST_ROOF), Vector3(sx1, 20.0 + ST_WALL, ST_ROOF + 1.0), rz)
 	# The head house: a room on the platform's rear end with its door toward
-	# the train's side of the platform. Painted inside, concrete outside.
+	# the train's side of the platform. Concrete outside, painted inside.
 	var hx0 := ST_X0
 	var hy1 := ST_Y1
 	var cy := ST_RAMP_Y
@@ -886,7 +1018,7 @@ func _station() -> void:
 	box(Vector3(HH_X1 - 0.25, cy + DOOR, top), Vector3(HH_X1, hy1, top + HH_H), CONC)
 	box(Vector3(HH_X1 - 0.25, cy - DOOR, top + DOOR_H), Vector3(HH_X1, cy + DOOR, top + HH_H), CONC)
 	box(Vector3(hx0, HH_Y0, top + HH_H), Vector3(HH_X1, hy1, top + HH_H + 0.25), {"top": CONC, "side": CONC, "bottom": CEIL_T})
-	# The mast: a footing and a column, solid. The arms and the beacon are drawn.
+	# The mast: a footing and a column, solid, the column passing through the shaft.
 	box(Vector3(MAST_X - 1.5, MAST_Y - 1.5, 0.0), Vector3(MAST_X + 1.5, MAST_Y + 1.5, 0.75), CONC)
 	box(Vector3(MAST_X - 0.3, MAST_Y - 0.3, 0.75), Vector3(MAST_X + 0.3, MAST_Y + 0.3, MAST_H), CONDUIT)
 	no_collision()
@@ -906,13 +1038,43 @@ func _station() -> void:
 	for i in 8:
 		var bx := -112.0 + i * 32.0
 		box(Vector3(bx - 0.125, ST_Y0 + 0.25, top), Vector3(bx + 0.125, ST_Y0 + 1.25, top + 0.0625), STENCIL)
-	# Canopy arms and their light strips: high, mesh-only, out of every sightline.
-	for x: float in POSTS:
-		box(Vector3(x - 0.15, 8.0, top + 6.2), Vector3(x + 0.15, ST_Y1, top + 6.5), GREEN_P)
-		box(Vector3(x - 1.0, 8.2, top + 5.9), Vector3(x + 1.0, 9.2, top + 6.2), LAMP_T)
-	# Each post is numbered, in stencil, on the face toward the train.
+	# THE FREIGHT LAYER. Two deck rails along the platform at y = 9 where a load
+	# is moved, cleats in pairs along the edge on the 8 m module, a loading arrow
+	# on the floor every 48 m, and a gantry rail overhead. All flush or high and
+	# all mesh-only: nothing here stands between 0.25 m and 0.5 m.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-120.0, 9.0 + s * 0.6 - 0.05, top), Vector3(120.0, 9.0 + s * 0.6 + 0.05, top + 0.0625), DOOR_T)
+	for k in 29:
+		var cx := -112.0 + k * 8.0
+		if k % 4 == 0:
+			continue
+		box(Vector3(cx - 0.1, ST_Y0 + 1.9, top), Vector3(cx + 0.1, ST_Y0 + 2.1, top + 0.15), BRASS)
+	for ax: float in [-96.0, -48.0, 0.0, 48.0, 96.0]:
+		box(Vector3(ax - 0.75, 13.5, top), Vector3(ax + 0.75, 15.0, top + 0.0625), ARROW)
+	box(Vector3(-120.0, 17.0, 8.0), Vector3(120.0, 17.3, 8.4), GREEN_P)
+	for k in 8:
+		var hx := -112.0 + k * 32.0
+		box(Vector3(hx - 0.1, 17.0, 8.4), Vector3(hx + 0.1, 17.3, ST_ROOF), GREEN_P)
+	# Wall pilasters on the back wall under every pendant, numbered: drawn, not
+	# built, so the platform stays clear of cover. And a cable run above where
+	# the cars' backdrop plates stop, on both walls.
 	for i in POSTS.size():
-		_number(i + 1, POSTS[i], top + 2.0, 0.4, ST_Y1 - 0.5, 1.0, STENCIL, true)
+		var x: float = POSTS[i]
+		box(Vector3(x - 0.4, ST_Y1 - 0.5, top), Vector3(x + 0.4, ST_Y1, 9.2), GREEN_P)
+		_number(i + 1, x, top + 2.0, 0.4, ST_Y1 - 0.5, 1.0, STENCIL, true)
+		# The pendant: a stem from the roof and a lamp head at the working band.
+		box(Vector3(x - 0.0625, ST_LAMP_Y - 0.0625, ST_LAMP_Z + 0.5), Vector3(x + 0.0625, ST_LAMP_Y + 0.0625, ST_ROOF), BRASS)
+		box(Vector3(x - 0.5, ST_LAMP_Y - 0.25, ST_LAMP_Z + 0.2), Vector3(x + 0.5, ST_LAMP_Y + 0.25, ST_LAMP_Z + 0.5), LAMP_T)
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-ST_CUT + ST_WALL, minf(s * 20.0, s * 19.9375), 9.3), Vector3(ST_CUT - ST_WALL, maxf(s * 20.0, s * 19.9375), 9.5), CONDUIT)
+	# The portals: a steel frame round each mouth, and the tunnel's number.
+	for e: float in [-1.0, 1.0]:
+		var fx0 := minf(e * (ST_CUT - ST_WALL - 0.0625), e * (ST_CUT - ST_WALL))
+		var fx1 := maxf(e * (ST_CUT - ST_WALL - 0.0625), e * (ST_CUT - ST_WALL))
+		for s: float in [-1.0, 1.0]:
+			box(Vector3(fx0, minf(s * PORTAL_HALF, s * (PORTAL_HALF + 0.25)), 0.0), Vector3(fx1, maxf(s * PORTAL_HALF, s * (PORTAL_HALF + 0.25)), PORTAL_H), DOOR_T)
+		box(Vector3(fx0, -PORTAL_HALF - 0.25, PORTAL_H), Vector3(fx1, PORTAL_HALF + 0.25, PORTAL_H + 0.25), DOOR_T)
+		_number(1 if e < 0.0 else 2, 0.0, PORTAL_H + 0.6, 0.6, e * (ST_CUT - ST_WALL), e, STENCIL, true, true)
 	# The head house door: steel jambs and a lintel, standing on the outer face.
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(HH_X1, minf(cy + s * DOOR, cy + s * (DOOR + 0.125)), top), Vector3(HH_X1 + 0.0625, maxf(cy + s * DOOR, cy + s * (DOOR + 0.125)), top + DOOR_H), DOOR_T)
@@ -930,13 +1092,13 @@ func _station() -> void:
 		box(Vector3(lx - 0.0625, cy - 0.0625, top + 3.4), Vector3(lx + 0.0625, cy + 0.0625, top + HH_H), BRASS)
 		box(Vector3(lx - 0.5, cy - 0.25, top + 3.1), Vector3(lx + 0.5, cy + 0.25, top + 3.4), LAMP_T)
 	# The mast's arms, at 14, 22, 30 and 38 m, either side of the column, and a
-	# beacon on top. Right angles only: no guys, no diagonals.
+	# beacon on top. Right angles only: no guys, no diagonals. All above the roof.
 	for h: float in [14.0, 22.0, 30.0, 38.0]:
 		box(Vector3(MAST_X - 0.1, MAST_Y - 3.0, h), Vector3(MAST_X + 0.1, MAST_Y - 0.3, h + 0.15), BRASS)
 		box(Vector3(MAST_X - 0.1, MAST_Y + 0.3, h), Vector3(MAST_X + 0.1, MAST_Y + 3.0, h + 0.15), BRASS)
 	box(Vector3(MAST_X - 0.3, MAST_Y - 0.3, MAST_H), Vector3(MAST_X + 0.3, MAST_Y + 0.3, MAST_H + 0.5), LAMP_T)
-	# Track: ballast, sleepers, rails, running to the boundary and stopping
-	# there flat. Each stands on the one before; none overlaps.
+	# Track: ballast, sleepers, rails, running out through both portals to the
+	# boundary and stopping there flat. Each stands on the one before.
 	box(Vector3(-ST_CUT, -1.7, 0.0), Vector3(ST_CUT, 1.7, 0.0625), BALLAST)
 	var tx := -ST_CUT + 0.5
 	while tx + 0.3 <= ST_CUT:
