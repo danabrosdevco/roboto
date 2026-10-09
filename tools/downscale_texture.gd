@@ -40,6 +40,13 @@ const PACK_MEAN := 0.175
 ## told not to.
 const CEIL := 0.46
 ## Levels per channel in the final quantise.
+## Nothing goes to black: a pure-black pixel reads as a hole rather than a
+## shadow, which is half of why pauldron_plate photographs as plastic.
+# 0.05, not 0.03: the dither runs AFTER this and one quantise step is 1/31,
+# so a pixel clamped to 0.03 lands on either 0.032 or zero depending which way
+# the dither pushes it. 0.05 survives the rounding.
+const FLOOR_MIN := 0.05
+## Levels per channel in the final quantise.
 const LEVELS := 32
 ## The same 4x4 ordered Bayer matrix the pack is dithered with.
 const BAYER: Array = [
@@ -72,12 +79,19 @@ func _initialize() -> void:
 	var was := "%dx%d" % [img.get_width(), img.get_height()]
 	var before := _stats(img)
 
-	# Lanczos, not nearest: we are throwing away 99% of the pixels and want the
-	# average of what is discarded, not one survivor from each block.
-	img.resize(size, size, Image.INTERPOLATE_LANCZOS)
+	var dark := float(OS.get_environment("DARK")) if OS.get_environment("DARK") != "" else 0.0
+	if dark > 0.0:
+		img = _shrink_keep_dark(img, size, dark)
+	else:
+		# Lanczos, not nearest: we are throwing away 99% of the pixels and want
+		# the average of what is discarded, not one survivor from each block.
+		img.resize(size, size, Image.INTERPOLATE_LANCZOS)
 	img.convert(Image.FORMAT_RGB8)
 
 	_retone(img, want_mean)
+	var gain := float(OS.get_environment("CONTRAST")) if OS.get_environment("CONTRAST") != "" else 1.0
+	if gain != 1.0:
+		_contrast(img, gain, want_mean)
 	_finish(img)
 
 	var out_dir := "res://textures/PSX_Textures"
@@ -188,3 +202,69 @@ func _write_material(dir: String, name: String) -> void:
 		return
 	f.store_string(text)
 	f.close()
+
+
+## Downscale keeping thin DARK structure, instead of averaging it away.
+##
+## A 4096 texture going to 256 throws away 255 of every 256 pixels. An average
+## is the right answer for a surface and the wrong one for a line: grout, panel
+## seams and outlines are a few pixels wide at source, so a 16x16 box dilutes
+## them into the face they sit on and they vanish. That is exactly what
+## happened to the eye texture's tile outlines.
+##
+## So take BOTH the mean and the minimum of each source block, and lean toward
+## the minimum by `dark`. Where a block is flat the two are equal and nothing
+## changes; where a line crosses it, the minimum is the line and the result
+## keeps it. The image comes out darker overall, which does not matter: _retone
+## runs afterwards and sets the mean, so the net effect is contrast rather than
+## gloom.
+##
+## dark = 0 is a plain average, 1 is pure minimum (every block becomes its
+## darkest pixel, which eats the surface as well as the lines). 0.5 to 0.7 is
+## the useful range.
+func _shrink_keep_dark(src: Image, size: int, dark: float) -> Image:
+	var w := src.get_width()
+	var h := src.get_height()
+	var bx: int = maxi(1, w / size)
+	var by: int = maxi(1, h / size)
+	var out := Image.create_empty(size, size, false, Image.FORMAT_RGB8)
+	for oy in size:
+		for ox in size:
+			var sum := Vector3.ZERO
+			var lo := Vector3(1.0, 1.0, 1.0)
+			var n := 0
+			for sy in range(oy * by, mini((oy + 1) * by, h)):
+				for sx in range(ox * bx, mini((ox + 1) * bx, w)):
+					var c := src.get_pixel(sx, sy)
+					var v := Vector3(c.r, c.g, c.b)
+					sum += v
+					lo = Vector3(minf(lo.x, v.x), minf(lo.y, v.y), minf(lo.z, v.z))
+					n += 1
+			if n == 0:
+				push_warning("downscale_texture: empty block at %d,%d — left black" % [ox, oy])
+				continue
+			var mean := sum / float(n)
+			var v2 := mean.lerp(lo, dark)
+			out.set_pixel(ox, oy, Color(v2.x, v2.y, v2.z))
+	return out
+
+
+## Push the range apart about `pivot`, so outlines read.
+##
+## Preserving a thin dark line through the downscale is only half of it: once
+## _retone has pulled the mean back to the pack's, the line and the face it
+## sits on are both squeezed into a narrow band and the line is there but not
+## legible. This pulls them apart again — faces up, lines down — about the
+## mean, so the mean itself does not move.
+##
+## The clamps are the pack's: nothing above CEIL, nothing below FLOOR_MIN. A
+## line that would go blacker than the floor stops there rather than becoming
+## a hole, for the same reason pauldron_plate's 0.000 minimum reads as plastic.
+func _contrast(img: Image, gain: float, pivot: float) -> void:
+	for y in img.get_height():
+		for x in img.get_width():
+			var c := img.get_pixel(x, y)
+			img.set_pixel(x, y, Color(
+					clampf(pivot + (c.r - pivot) * gain, FLOOR_MIN, CEIL),
+					clampf(pivot + (c.g - pivot) * gain, FLOOR_MIN, CEIL),
+					clampf(pivot + (c.b - pivot) * gain, FLOOR_MIN, CEIL)))
