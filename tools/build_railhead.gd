@@ -35,6 +35,8 @@ extends SceneTree
 const R := preload("res://tools/block_railhead.gd")
 
 const ART := "res://maps/railhead_art.tscn"
+## THE STATION, as one droppable scene: the prefab, its lights and its markers.
+const STATION := "res://maps/railhead_station.tscn"
 const B := "res://maps/blocks/railhead/%s.tscn"
 
 ## Car order, front to back: the thing you do last to the thing you do first.
@@ -47,7 +49,7 @@ const CARS: Array = [
 	["Barracks", "railhead_car_barracks"],
 	["Platform", "railhead_car_platform"],
 ]
-const PITCH := 24.0
+const PITCH := 32.0
 
 var _cache := {}
 var _placed: Array = []
@@ -62,7 +64,7 @@ var _solid_ok: Array = ["HoloTable"]
 ## machine mounts, fitted or empty. They sit inside or against solid things on
 ## purpose, so neither the inside-a-collider check nor the reach test applies.
 func _fixture(k: String) -> bool:
-	return _solid_ok.has(k) or k.begins_with("FabricationMount")
+	return _solid_ok.has(k) or k.begins_with("FabricationMount") or k == "Station_RampFoot" or k.begins_with("Station_TrackCut")
 var _cars: Dictionary = {}
 
 
@@ -80,6 +82,10 @@ func _initialize() -> void:
 
 	var ground := _group(art, "Ground")
 	_put(ground, B % "railhead_trackbed", 0.0, 0.0, 0.0, "Trackbed")
+	if not _write_station():
+		quit(1)
+		return
+	_put(ground, STATION, 0.0, 0.0, 0.0, "Station")
 
 	var rake := _group(art, "Rake")
 	rake.position.y = R.DECK_RISE
@@ -240,13 +246,17 @@ func _record_markers() -> void:
 			_anchors["BarracksRack_%02d" % n] = _at("Barracks", cx, s * R.RACK_Y, 0.0)
 			n += 1
 	# Platform: where the player arrives, where the squad forms up, the door.
-	_anchors["PlayerArrival"] = _at("Platform", -6.0, 0.0, 1.0)
+	_anchors["PlayerArrival"] = _at("Platform", -8.0, 0.0, 1.0)
 	_anchors["SquadMuster"] = _at("Platform", 4.0, 0.0, 0.0)
 	for i in 4:
 		_anchors["SquadMuster_Slot%d" % (i + 1)] = _at("Platform", 1.0 + i * 2.5, 0.0, 0.0)
-	_anchors["PlatformDoor"] = _at("Platform", -R.HL, 0.0, 0.0)
-	var foot: Vector3 = _at("Platform", -R.HL - R.RAMP_LEN, 0.0, -R.DECK_RISE)
-	_anchors["BoardingRampFoot"] = foot
+	# The platform door is the side door onto the station, at the car's middle.
+	_anchors["PlatformDoor"] = _at("Platform", 0.0, R.HW, 0.0)
+	_anchors["PlatformDoor_Outside"] = _at("Platform", 0.0, R.OW + 2.5, 0.0)
+	# Where the view hangs, one plate each side. Left is the platform side: the
+	# +Y wall, which is on the left walking toward the locomotive.
+	_anchors["Backdrop_Left"] = _at("Armoury", 0.0, R.BACKDROP_Y, 3.5)
+	_anchors["Backdrop_Right"] = _at("Armoury", 0.0, -R.BACKDROP_Y, 3.5)
 
 
 # ── Lights ───────────────────────────────────────────────────────────────────
@@ -291,10 +301,10 @@ func _lights(g: Node3D) -> void:
 func _check_markers() -> int:
 	var bad := 0
 	var walk_top: float = R.DECK_RISE + 0.3
-	for k: String in _anchors:
+	for k: String in _all():
 		if _fixture(k):
 			continue
-		var p: Vector3 = _anchors[k]
+		var p: Vector3 = _all()[k]
 		for o: Dictionary in _placed:
 			for a: AABB in o.shapes:
 				# A floor or a ramp under the marker is not a collision with it.
@@ -304,7 +314,7 @@ func _check_markers() -> int:
 					print("      MARKER   %s is inside a collider of %s" % [k, o.name])
 					bad += 1
 	if bad == 0:
-		print("      MARKERS  %d, none inside a collider" % _anchors.size())
+		print("      MARKERS  %d, none inside a collider" % _all().size())
 	return bad
 
 
@@ -317,10 +327,10 @@ func _check_markers() -> int:
 ## do: the baker erodes 0.5 m, has no per-agent clearance, and only a bake can
 ## show what it makes of any of this.
 const CELL := 0.25
-const GX0 := -12.0
-const GX1 := 12.0
-const GZ0 := -112.0
-const GZ1 := 96.0
+const GX0 := -24.0
+const GX1 := 24.0
+const GZ0 := -152.0
+const GZ1 := 152.0
 
 
 func _reach() -> void:
@@ -335,14 +345,15 @@ func _reach() -> void:
 		for a: AABB in o.shapes:
 			if a.end.y <= lo or a.position.y >= hi:
 				continue
-			var ix0 := maxi(0, int(floor((a.position.x - r - GX0) / CELL)))
-			var ix1 := mini(nx - 1, int(ceil((a.end.x + r - GX0) / CELL)) - 1)
-			var iz0 := maxi(0, int(floor((a.position.z - r - GZ0) / CELL)))
-			var iz1 := mini(nz - 1, int(ceil((a.end.z + r - GZ0) / CELL)) - 1)
+			var ix0 := maxi(0, int(ceil((a.position.x - r - GX0) / CELL - 0.5)))
+			var ix1 := mini(nx - 1, int(floor((a.end.x + r - GX0) / CELL - 0.5)))
+			var iz0 := maxi(0, int(ceil((a.position.z - r - GZ0) / CELL - 0.5)))
+			var iz1 := mini(nz - 1, int(floor((a.end.z + r - GZ0) / CELL - 0.5)))
 			for ix in range(ix0, ix1 + 1):
 				for iz in range(iz0, iz1 + 1):
 					blocked[iz * nx + ix] = 1
-	var start: Vector3 = _anchors["BoardingRampFoot"] + Vector3(-3.0 * 0.0, 0.0, -2.0)
+	# From the middle of the platform: the ramp up to it is a plain 1 in 6.3 wedge 4 m wide, and the bake below is what proves it.
+	var start: Vector3 = _st["Station_PlatformCentre"]
 	var s := Vector2i(int((start.x - GX0) / CELL), int((start.z - GZ0) / CELL))
 	if blocked[s.y * nx + s.x] == 1:
 		print("      REACH    the start cell is blocked — the test cannot run")
@@ -365,22 +376,98 @@ func _reach() -> void:
 			seen[idx] = 1
 			queue.append(n)
 	var unreachable := 0
-	for k: String in _anchors:
+	for k: String in _all():
 		if _fixture(k):
 			continue
-		var p: Vector3 = _anchors[k]
+		var p: Vector3 = _all()[k]
 		var cx := int((p.x - GX0) / CELL)
 		var cz := int((p.z - GZ0) / CELL)
 		if seen[cz * nx + cx] != 1:
 			print("      REACH    %s is NOT reachable by a 1.7 m body" % k)
 			unreachable += 1
-	print("      REACH    geometric flood-fill for a 1.7 m x 3.0 m body from the ramp foot: %d of %d markers reachable (NOT a bake)" % [
+	print("      REACH    geometric flood-fill for a 1.7 m x 3.0 m body from the platform centre: %d of %d markers reachable (NOT a bake)" % [
 			_standing() - unreachable, _standing()])
 
 
 func _standing() -> int:
 	var n := 0
-	for k: String in _anchors:
+	for k: String in _all():
 		if not _fixture(k):
 			n += 1
 	return n
+
+
+# ── The station: one scene, so it can be dropped into a mission map ──────────
+
+## Station-local points (map x along the track, map y across, map z up), which
+## are world points too: the station is placed at the origin with no yaw.
+var _st: Dictionary = {}
+
+
+func _write_station() -> bool:
+	var top: float = R.DECK_RISE
+	var cy: float = R.ST_RAMP_Y
+	_st["Station_RampFoot"] = Vector3(cy, 0.0, R.ST_X1 + R.RAMP_LEN)
+	_st["Station_RampTop"] = Vector3(cy, top, R.ST_X1)
+	_st["Station_HeadHouseDoor"] = Vector3(cy, top, R.HH_X1)
+	_st["Station_HeadHouse"] = Vector3(cy, top, (R.ST_X0 + R.HH_X1) * 0.5)
+	_st["Station_PlatformCentre"] = Vector3((R.ST_Y0 + R.ST_Y1) * 0.5, top, 0.0)
+	_st["Station_BerthRear"] = Vector3(R.ST_Y0 + 1.75, top, -7.0 * R.HL)
+	_st["Station_BerthFront"] = Vector3(R.ST_Y0 + 1.75, top, 7.0 * R.HL)
+	# The track is cut here. A mission map joins its own track to these.
+	_st["Station_TrackCut_Rear"] = Vector3(0.0, 0.0, -R.ST_CUT)
+	_st["Station_TrackCut_Front"] = Vector3(0.0, 0.0, R.ST_CUT)
+
+	var st := Node3D.new()
+	st.name = "RailheadStation"
+	root.add_child(st)
+	var packed := load(B % "railhead_station") as PackedScene
+	if packed == null:
+		print("FAIL  no prefab at %s — run block_prefabs.gd first" % (B % "railhead_station"))
+		return false
+	var inst := packed.instantiate() as Node3D
+	inst.name = "Station"
+	st.add_child(inst)
+	var mk := _group(st, "Markers")
+	for k: String in _st:
+		var m := Node3D.new()
+		m.name = k
+		mk.add_child(m)
+		m.position = _st[k]
+	# At most eight lights reach the platform mesh in GL compatibility: seven
+	# canopy lights and one in the head house.
+	var lg := _group(st, "Lights")
+	for i in R.POSTS.size():
+		var l := OmniLight3D.new()
+		l.name = "Canopy_%d" % i
+		lg.add_child(l)
+		l.position = Vector3(8.7, top + 5.5, R.POSTS[i])
+		l.light_color = Color(1.0, 0.95, 0.85)
+		l.light_energy = 1.3
+		l.omni_range = 7.0
+	var hl := OmniLight3D.new()
+	hl.name = "HeadHouse"
+	lg.add_child(hl)
+	hl.position = Vector3(cy, top + 3.0, (R.ST_X0 + R.HH_X1) * 0.5)
+	hl.light_color = Color(1.0, 0.95, 0.85)
+	hl.light_energy = 1.0
+	hl.omni_range = 8.0
+	_own(st, st)
+	var ps := PackedScene.new()
+	var err := ps.pack(st)
+	if err == OK:
+		err = ResourceSaver.save(ps, STATION)
+	root.remove_child(st)
+	st.free()
+	if err != OK:
+		print("FAIL  could not save %s (%s)" % [STATION, error_string(err)])
+		return false
+	print("      %s  one prefab, %d markers" % [STATION.get_file(), _st.size()])
+	return true
+
+
+## Every marker, the train's and the station's.
+func _all() -> Dictionary:
+	var d := _anchors.duplicate()
+	d.merge(_st)
+	return d

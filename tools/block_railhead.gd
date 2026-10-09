@@ -55,16 +55,18 @@ const RAILHEAD := {
 	"railhead_car_fab": "_car_fab",
 	"railhead_car_barracks": "_car_barracks",
 	"railhead_car_platform": "_car_platform",
+	"railhead_car_platform_ramp": "_car_platform_ramp",
+	"railhead_station": "_station",
 	"railhead_trackbed": "_trackbed",
 }
 
 # ── The envelope. The builder reads these too: describe once. ────────────────
 
-const HL := 12.0            ## half the car's outer length (24 m)
-const END := 11.75          ## the inside face of an end bulkhead
+const HL := 16.0            ## half the car's outer length (32 m)
+const END := 15.75          ## the inside face of an end bulkhead
 const HW := 4.5             ## half the internal width (9.0 m)
 const OW := 4.75            ## half the outer width
-const H := 4.0              ## internal height, floor to roof underside
+const H := 5.0              ## internal height, floor to roof underside
 const LANE := 1.5           ## half the central lane, which is never built on
 const DOOR := 1.625          ## half a car-to-car doorway (3.25 m clear)
 const DOOR_H := 3.40625      ## doorway clear height
@@ -81,21 +83,21 @@ const GAUGE := 1.435
 
 ## Repair bays, car-local (map x, map y). Numbered in walking order from the
 ## platform, so Bay 1 is the first one you reach.
-const BAYS: Array = [Vector2(-6.0, 3.0), Vector2(-6.0, -3.0), Vector2(6.0, 3.0), Vector2(6.0, -3.0)]
+const BAYS: Array = [Vector2(-8.0, 3.0), Vector2(-8.0, -3.0), Vector2(8.0, 3.0), Vector2(8.0, -3.0)]
 ## The barracks has twelve racks and the squad is four.
-const RACK_PITCH := 3.7
-const RACK_Y := 3.2
+const RACK_PITCH := 4.0
+const RACK_Y := 3.3
 ## Fabrication's mounts: the three with machines on them and the three without.
-const FAB_X: Array = [-7.0, -0.5, 6.0]
+const FAB_X: Array = [-8.0, 0.0, 8.0]
 
 ## Lamp positions (map x, map y) per car; the builder puts a light under each.
 const LAMPS := {
-	"ops": [[-8.5, 0.0], [8.5, 0.0]],
-	"repair": [[-6.0, 3.0], [-6.0, -3.0], [6.0, 3.0], [6.0, -3.0], [0.0, 0.0]],
-	"armoury": [[-8.0, 0.0], [0.0, 0.0], [8.0, 0.0]],
-	"fab": [[-8.0, 0.0], [0.0, 0.0], [8.0, 0.0]],
-	"barracks": [[-8.0, 0.0], [0.0, 0.0], [8.0, 0.0]],
-	"platform": [[-6.0, 0.0], [6.0, 0.0]],
+	"ops": [[-12.0, 0.0], [12.0, 0.0]],
+	"repair": [[-8.0, 3.0], [-8.0, -3.0], [8.0, 3.0], [8.0, -3.0], [0.0, 0.0]],
+	"armoury": [[-12.0, 0.0], [-4.0, 0.0], [4.0, 0.0], [12.0, 0.0]],
+	"fab": [[-12.0, 0.0], [-4.0, 0.0], [4.0, 0.0], [12.0, 0.0]],
+	"barracks": [[-12.0, 0.0], [-4.0, 0.0], [4.0, 0.0], [12.0, 0.0]],
+	"platform": [[-10.0, 0.0], [0.0, 0.0], [10.0, 0.0]],
 }
 
 # ── Textures. Every one has a material in textures/PSX_Textures/. ────────────
@@ -177,19 +179,102 @@ func _initialize() -> void:
 
 # ── The shell every car shares ───────────────────────────────────────────────
 
-## Floor, roof, two side walls and two end bulkheads. An open end has a 3.2 m x
-## 3.4 m doorway; a sealed end is a wall. The walls butt the floor and the roof
-## and never overlap them: the floor and roof run the full outer width, the
-## walls stand between them, the bulkheads stand between the walls.
-func _shell(open_front: bool, open_rear: bool, wall: Variant = HULL) -> void:
+## WINDOWS. Eight apertures a side, 2.0 m wide on a 4.0 m pitch, between 1.25 m
+## and 3.0 m above the floor. They exist to show MOVEMENT during a transition,
+## so they are regular: a passing backdrop reads as motion across eight
+## openings and as a porthole across one. The band is a soldier's eye and the
+## player's, and an opening is not furniture: there is NO sill, ledge or rail
+## at the player's height, only the wall's own thickness.
+##
+## RULE THAT FOLLOWS FROM THEM: anything standing against a side wall is either
+## on a PIER (the 2.0 m of wall between two apertures, at x = -12 ... +12 every
+## 4 m) or no taller than 1.1 m. A tall rack across an aperture would make the
+## window a painting of a rack.
+const WIN_Z0 := 1.25
+const WIN_Z1 := 3.0
+const WIN_PITCH := 4.0
+const WIN_HALF := 1.0
+const WIN_COUNT := 8
+## How far outside the car's skin the backdrop plate stands, each side.
+const BACKDROP_Y := 20.0
+const PIERS: Array = [-12.0, -8.0, -4.0, 0.0, 4.0, 8.0, 12.0]
+
+
+func _window_xs(s: float, side_door: bool) -> Array:
+	var out: Array = []
+	for i in WIN_COUNT:
+		var wx := -14.0 + WIN_PITCH * i
+		# The door takes the two apertures either side of the middle.
+		if side_door and s > 0.0 and absf(wx) < 3.0:
+			continue
+		out.append(wx)
+	return out
+
+
+## Floor, roof, two side walls and two end bulkheads. An open end has a doorway
+## 3.25 m wide x 3.4 m high; a sealed end is a wall. The walls butt the floor
+## and the roof and never overlap them. `side_door` cuts a doorway in the +Y
+## wall at x = 0, onto a station platform that stands against the car.
+func _shell(open_front: bool, open_rear: bool, wall: Variant = HULL, side_door: bool = false) -> void:
 	box(Vector3(-HL, -OW, -0.5), Vector3(HL, OW, 0.0), {"top": FLOOR_T, "side": wall, "bottom": RUST})
 	box(Vector3(-HL, -OW, H), Vector3(HL, OW, H + 0.25), {"top": wall, "side": wall, "bottom": PLATE})
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-HL, s * HW, 0.0), Vector3(HL, s * OW, H), wall)
+		_wall(s, wall, side_door)
 	_bulkhead(1.0, open_front, wall)
 	_bulkhead(-1.0, open_rear, wall)
 
 
+## A side wall as boxes around its openings. The wall is cut in columns between
+## every opening edge, and each column is solid wherever no opening covers it.
+func _wall(s: float, wall: Variant, side_door: bool) -> void:
+	var ops: Array = []
+	for wx: float in _window_xs(s, side_door):
+		ops.append([wx - WIN_HALF, wx + WIN_HALF, WIN_Z0, WIN_Z1])
+	if side_door and s > 0.0:
+		ops.append([-DOOR, DOOR, 0.0, DOOR_H])
+	var xs: Array = [-HL, HL]
+	for o: Array in ops:
+		xs.append(o[0])
+		xs.append(o[1])
+	xs.sort()
+	for i in xs.size() - 1:
+		var a: float = xs[i]
+		var b: float = xs[i + 1]
+		if b - a < 1e-4:
+			continue
+		var cover: Array = ops.filter(func(o: Array) -> bool: return o[0] <= a + 1e-4 and o[1] >= b - 1e-4)
+		cover.sort_custom(func(p: Array, q: Array) -> bool: return p[2] < q[2])
+		var z := 0.0
+		for o: Array in cover:
+			if o[2] > z + 1e-4:
+				box(Vector3(a, s * HW, z), Vector3(b, s * OW, o[2]), wall)
+			z = o[3]
+		if z < H - 1e-4:
+			box(Vector3(a, s * HW, z), Vector3(b, s * OW, H), wall)
+
+
+## Glass and mullions for every aperture, and the backdrop plate. MESH-ONLY, and
+## called after no_collision(). The pane sits inside the wall's own thickness
+## in two halves either side of a heavy mullion: standing clear of every
+## brush, never laid on a face.
+func _glaze(side_door: bool, glass: Variant = SCREEN) -> void:
+	for s: float in [-1.0, 1.0]:
+		for wx: float in _window_xs(s, side_door):
+			box(Vector3(wx - 0.125, s * HW, WIN_Z0), Vector3(wx + 0.125, s * OW, WIN_Z1), PLATE)
+			for h: float in [-1.0, 1.0]:
+				var xa := wx + (0.125 if h > 0.0 else -WIN_HALF)
+				var xb := wx + (WIN_HALF if h > 0.0 else -0.125)
+				box(Vector3(xa, s * 4.59375, WIN_Z0), Vector3(xb, s * 4.65625, WIN_Z1), glass)
+	_backdrop()
+
+
+## One plate each side, BACKDROP_Y out from the centreline, as long as the car
+## and standing on the ground. Where the view hangs; gameplay puts whatever it
+## scrolls on it. Adjacent cars' plates touch end to end.
+func _backdrop() -> void:
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-HL, s * BACKDROP_Y - (0.0625 if s > 0.0 else 0.0), -DECK_RISE),
+				Vector3(HL, s * BACKDROP_Y + (0.0 if s > 0.0 else 0.0625), 10.0), PLATE)
 func _bulkhead(end: float, open: bool, wall: Variant) -> void:
 	var x0: float = END if end > 0.0 else -HL
 	var x1: float = HL if end > 0.0 else -END
@@ -203,6 +288,8 @@ func _bulkhead(end: float, open: bool, wall: Variant) -> void:
 
 # ── Detail every car shares. All of it is mesh-only. ─────────────────────────
 
+## Lamps stay in their working band, 3.1 m, however tall the car is: the extra
+## height is for plant and gantries ABOVE them, and the stem is just longer.
 func _lamp(x: float, y: float, top: float = H) -> void:
 	box(Vector3(x - 0.0625, y - 0.0625, 3.4), Vector3(x + 0.0625, y + 0.0625, top), FRAME_T)
 	box(Vector3(x - 0.5, y - 0.25, 3.1), Vector3(x + 0.5, y + 0.25, 3.4), LAMP_T)
@@ -213,25 +300,30 @@ func _lamps(car: String, top: float = H) -> void:
 		_lamp(p[0], p[1], top)
 
 
-## Roof beams across the car, between the lamps. They hang from the roof
-## underside and stop at 3.85, well above a Walker.
+## Roof beams across the car, hung from the roof underside, in the top 0.4 m.
 func _beams(xs: Array) -> void:
 	for x: float in xs:
-		box(Vector3(x - 0.15, -HW, 3.75), Vector3(x + 0.15, HW, H), FRAME_T)
+		box(Vector3(x - 0.15, -HW, 4.6), Vector3(x + 0.15, HW, H), FRAME_T)
+
+
+## Overhead plant: a duct run each side along the car at 4.0-4.6 m, under the
+## beams and clear of every lamp and gantry. The height the extra metre buys.
+func _ducts() -> void:
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-14.0, minf(s * 4.0, s * 4.4), 4.0), Vector3(14.0, maxf(s * 4.0, s * 4.4), 4.6), RUST)
 
 
 ## Floor markings: the 3.0 m lane edges. 0.0625 m proud and mesh-only; the
 ## baker climbs 0.25 m, so a paint line costs the squad nothing.
 func _lane_lines() -> void:
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-11.5, s * LANE - (0.0625 if s > 0.0 else 0.0) , 0.0), Vector3(11.5, s * LANE + (0.0 if s > 0.0 else 0.0625), 0.0625), HAZARD)
+		box(Vector3(-15.5, s * LANE - (0.0625 if s > 0.0 else 0.0), 0.0), Vector3(15.5, s * LANE + (0.0 if s > 0.0 else 0.0625), 0.0625), HAZARD)
 
 
 ## Two bogies and their wheels under the floor, between the floor's underside
-## and the rail head 1.0 m below it. The wheels rest on rail tops that
-## railhead_trackbed puts at exactly this depth.
+## and the rail head 1.0 m below it.
 func _bogies() -> void:
-	for cx: float in [-7.5, 7.5]:
+	for cx: float in [-10.0, 10.0]:
 		box(Vector3(cx - 1.8, -1.05, -0.75), Vector3(cx + 1.8, 1.05, -0.5), PLATE)
 		for wx: float in [-1.0, 1.0]:
 			for s: float in [-1.0, 1.0]:
@@ -286,80 +378,78 @@ func _number(n: int, uc: float, v0: float, h: float, face: float, s: float, tex:
 ## drawn. Its rear (-X) face is flush against Operations' sealed front.
 func _hull_motive() -> void:
 	box(Vector3(-HL, -OW, -0.5), Vector3(HL, OW, H + 0.25), {"top": HULL, "side": HULL, "bottom": RUST})
-	box(Vector3(-HL, -3.5, H + 0.25), Vector3(-4.0, 3.5, 6.0), HULL)
+	box(Vector3(-HL, -3.5, H + 0.25), Vector3(-6.0, 3.5, 7.0), HULL)
 	no_collision()
 	# Radiator louvres on both flanks, standing clear of the hull face.
 	for s: float in [-1.0, 1.0]:
 		for i in 5:
-			var x := -10.0 + i * 4.0
+			var x := -13.0 + i * 5.0
 			box(Vector3(x, s * OW if s > 0.0 else -OW - 0.0625, 1.0), Vector3(x + 3.0, (OW + 0.0625) if s > 0.0 else -OW, 3.0), GRATE)
-	# Exhaust stacks and a roof vent on the long deck forward of the cab.
-	for sx: float in [2.0, 6.0, 10.0]:
-		box(Vector3(sx - 0.4, -0.4, H + 0.25), Vector3(sx + 0.4, 0.4, 5.2), RUST)
-		box(Vector3(sx - 0.6, -0.6, 5.2), Vector3(sx + 0.6, 0.6, 5.4), FRAME_T)
+	# Exhaust stacks forward of the cab.
+	for sx: float in [2.0, 8.0, 14.0]:
+		box(Vector3(sx - 0.4, -0.4, H + 0.25), Vector3(sx + 0.4, 0.4, 6.2), RUST)
+		box(Vector3(sx - 0.6, -0.6, 6.2), Vector3(sx + 0.6, 0.6, 6.4), FRAME_T)
 	# Headlamp bank on the front (+X) face.
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(HL, s * 3.0 - 0.5, 2.6), Vector3(HL + 0.0625, s * 3.0 + 0.5, 3.4), LAMP_T)
 	# The cab's windowless slit. Armoured, so no glass, just a dark reveal.
-	box(Vector3(-4.0, -2.5, 5.0), Vector3(-3.9375, 2.5, 5.5), SCREEN)
+	box(Vector3(-6.0, -2.5, 6.0), Vector3(-5.9375, 2.5, 6.5), SCREEN)
 	_bogies()
+	_backdrop()
 
 
 ## 2. OPERATIONS. Low, dark. The brightest thing is the projection. The table
-## is at chest height for a Walker's crew, so the player looks DOWN on it.
-## The table is 2.5 m wide, leaving 3.25 m each side of it: it is the one thing
-## in the base that stands in the lane, and the lane goes round it.
+## is at chest height for a Walker's crew, so the player looks DOWN on it. It is
+## 2.5 m wide and 8 m long, leaving 3.25 m each side: the one thing in the base
+## that stands in the lane, and the lane goes round it. The ceiling is dropped
+## to 3.6 m on purpose, though the car is 5.0 m: the plant above it is hidden.
 func _car_ops() -> void:
 	_shell(false, true, OPS_T)
-	# Pedestal, then the slab on it. Tops at 1.1 and 1.3 m: nothing in the
-	# 0.25-0.5 m band.
-	box(Vector3(-0.7, -0.7, 0.0), Vector3(0.7, 0.7, 1.1), PLATE)
-	box(Vector3(-3.0, -1.25, 1.1), Vector3(3.0, 1.25, 1.3), {"top": SCREEN, "side": PLATE, "bottom": PLATE})
-	# Equipment cabinets along the walls, clear of the table's length so the
-	# side lanes stay 3.25 m wide where they pass it.
+	# Pedestal, then the slab on it. Tops at 1.1 and 1.3 m.
+	box(Vector3(-0.8, -0.8, 0.0), Vector3(0.8, 0.8, 1.1), PLATE)
+	box(Vector3(-4.0, -1.25, 1.1), Vector3(4.0, 1.25, 1.3), {"top": SCREEN, "side": PLATE, "bottom": PLATE})
+	# Equipment cabinets on the piers, clear of the table's length.
 	for s: float in [-1.0, 1.0]:
-		for x0: float in [-10.5, -6.5, 3.5, 7.5]:
-			box(Vector3(x0, s * 3.9, 0.0), Vector3(x0 + 3.0, s * HW, 3.0), PLATE)
+		for p: float in [-12.0, -8.0, 8.0, 12.0]:
+			box(Vector3(p - 1.0, s * 3.9, 0.0), Vector3(p + 1.0, s * HW, 3.0), PLATE)
 	no_collision()
-	# The dropped ceiling is what makes it low: 3.5 m clear, 0.5 above a Walker.
-	box(Vector3(-END, -HW, 3.5), Vector3(END, HW, H), {"top": PLATE, "side": PLATE, "bottom": OPS_T})
+	box(Vector3(-END, -HW, 3.6), Vector3(END, HW, H), {"top": PLATE, "side": PLATE, "bottom": OPS_T})
 	# The projection: a flat plan 0.15 m above the slab (1.45 m, under the
 	# player's 1.7), a relief on it, and the projector ring hanging above.
-	box(Vector3(-2.7, -1.05, 1.3), Vector3(2.7, 1.05, 1.34375), GLOW)
-	box(Vector3(-2.2, -0.6, 1.34375), Vector3(-1.4, 0.0, 1.5), GLOW)
+	box(Vector3(-3.7, -1.05, 1.3), Vector3(3.7, 1.05, 1.34375), GLOW)
+	box(Vector3(-3.0, -0.6, 1.34375), Vector3(-2.0, 0.0, 1.5), GLOW)
 	box(Vector3(0.2, 0.1, 1.34375), Vector3(0.8, 0.7, 1.45), GLOW)
-	box(Vector3(1.6, -0.5, 1.34375), Vector3(2.4, 0.4, 1.4), GLOW)
-	box(Vector3(-1.5, -1.5, 3.3), Vector3(1.5, 1.5, 3.5), LAMP_T)
+	box(Vector3(2.0, -0.5, 1.34375), Vector3(3.0, 0.4, 1.4), GLOW)
+	box(Vector3(-2.0, -1.5, 3.4), Vector3(2.0, 1.5, 3.6), LAMP_T)
 	# Screens on the cabinet fronts, above the dim band.
 	for s: float in [-1.0, 1.0]:
-		for x0: float in [-10.5, -6.5, 3.5, 7.5]:
+		for p: float in [-12.0, -8.0, 8.0, 12.0]:
 			var face: float = s * 3.9
 			var y0: float = face - 0.0625 if s > 0.0 else face
 			var y1: float = face if s > 0.0 else face + 0.0625
-			box(Vector3(x0 + 0.4, y0, 2.0), Vector3(x0 + 2.6, y1, 2.9), SCREEN)
-	_lamps("ops", 3.5)
+			box(Vector3(p - 0.8, y0, 2.0), Vector3(p + 0.8, y1, 2.9), SCREEN)
+	_lamps("ops", 3.6)
+	_glaze(false)
 	_lane_lines()
 	_bogies()
 
 
-## 3. REPAIR. Four bays, two a side, each a separate 6 m bay between full-depth
-## divider fins, so the count is four at a glance. Each is 3.0 m deep: a Walker
-## (1.7 m) stands in it with 0.65 m to spare, and the 3.0 m lane in front is
-## untouched. Empty bays read as capacity. Parts racks in between and at the
-## ends carry their bins at the top and bottom and nothing across the middle:
-## the player's band stays empty.
+## 3. REPAIR. Four bays, two a side, each 7.7 m between full-depth divider fins
+## standing on piers, so the count is four at a glance. Each is 3.0 m deep: a
+## Walker (1.7 m) stands in it with 0.65 m to spare, and the lane in front is
+## untouched. Parts racks sit on piers or stay under 1.1 m so no aperture is
+## blocked. Gantries and tool arms use the extra height above 3.2 m.
 func _car_repair() -> void:
 	_shell(true, true, HULL)
 	for s: float in [-1.0, 1.0]:
-		for fx: float in [-9.0, -3.0, 3.0, 9.0]:
-			box(Vector3(fx - 0.15, s * 1.75, 0.0), Vector3(fx + 0.15, s * HW, 3.6), FRAME_T)
-		# Parts racks: the centre run and both ends.
-		box(Vector3(-2.85, s * 3.5, 0.0), Vector3(2.85, s * HW, 3.2), PLATE)
-		box(Vector3(-END, s * 3.5, 0.0), Vector3(-9.15, s * HW, 3.2), PLATE)
-		box(Vector3(9.15, s * 3.5, 0.0), Vector3(END, s * HW, 3.2), PLATE)
-	# Cradle clamps against the back wall, one pair per bay.
+		for fx: float in [-12.0, -4.0, 4.0, 12.0]:
+			box(Vector3(fx - 0.15, minf(s * 1.75, s * HW), 0.0), Vector3(fx + 0.15, maxf(s * 1.75, s * HW), 3.9), FRAME_T)
+		box(Vector3(-1.0, minf(s * 3.5, s * HW), 0.0), Vector3(1.0, maxf(s * 3.5, s * HW), 3.2), PLATE)
+		for run: Array in [[-15.5, -12.5], [-3.7, -1.2], [1.2, 3.7], [12.5, 15.5]]:
+			box(Vector3(run[0], minf(s * 3.5, s * HW), 0.0), Vector3(run[1], maxf(s * 3.5, s * HW), 1.1), PLATE)
+	# Cradle clamps against the back wall, one pair per bay, on the pier.
 	for b: Vector2 in BAYS:
-		for dx: float in [-1.3, 1.3]:
+		for dx: float in [-0.65, 0.65]:
 			var ya: float = 4.1 if b.y > 0.0 else -HW
 			var yb: float = HW if b.y > 0.0 else -4.1
 			box(Vector3(b.x + dx - 0.15, ya, 0.0), Vector3(b.x + dx + 0.15, yb, 3.4), FRAME_T)
@@ -367,178 +457,255 @@ func _car_repair() -> void:
 	var n := 1
 	for b: Vector2 in BAYS:
 		var s: float = signf(b.y)
-		# The cradle: two saddles on foot plates, flat to the floor and shaped
-		# for a chassis. Mesh-only, so a Walker steps into it.
-		for dx: float in [-1.25, 1.25]:
+		# The cradle: two saddles on foot plates, flat to the floor.
+		for dx: float in [-1.5, 1.5]:
 			box(Vector3(b.x + dx - 0.2, s * 2.0 if s > 0.0 else -4.0, 0.0), Vector3(b.x + dx + 0.2, 4.0 if s > 0.0 else s * 2.0, 0.1875), HAZARD)
 			box(Vector3(b.x + dx - 0.2, s * 2.4 if s > 0.0 else -3.6, 0.1875), Vector3(b.x + dx + 0.2, 3.6 if s > 0.0 else s * 2.4, 0.5), RUST)
-		# The bay's front edge on the floor, and its number on the back wall.
-		box(Vector3(b.x - 2.7, s * LANE if s > 0.0 else -LANE - 0.125, 0.0), Vector3(b.x + 2.7, (LANE + 0.125) if s > 0.0 else s * LANE, 0.0625), HAZARD)
-		_number(n, b.x, 2.2, 1.0, s * HW, s)
-		# Overhead gantry beam over the bay and two tool arms off it, all at or
-		# above 3.2 m: a Walker's head clears them.
+		# The bay's front edge on the floor, and its number above the aperture band.
+		box(Vector3(b.x - 3.6, s * LANE if s > 0.0 else -LANE - 0.125, 0.0), Vector3(b.x + 3.6, (LANE + 0.125) if s > 0.0 else s * LANE, 0.0625), HAZARD)
+		_number(n, b.x, 3.4, 1.0, s * HW, s)
+		# Gantry beam over the bay and two tool arms hanging off it.
 		var by0: float = 2.3 if s > 0.0 else -2.5
 		var by1: float = 2.5 if s > 0.0 else -2.3
-		box(Vector3(b.x - 2.8, by0, 3.55), Vector3(b.x + 2.8, by1, 3.85), FRAME_T)
-		for dx: float in [-1.8, 1.8]:
-			box(Vector3(b.x + dx - 0.15, by0, 3.2), Vector3(b.x + dx + 0.15, by1, 3.55), RUST)
+		box(Vector3(b.x - 3.6, by0, 4.0), Vector3(b.x + 3.6, by1, 4.4), FRAME_T)
+		for dx: float in [-2.5, 2.5]:
+			box(Vector3(b.x + dx - 0.15, by0, 3.2), Vector3(b.x + dx + 0.15, by1, 4.0), RUST)
 		n += 1
-	# Bins on the racks' faces, bottom and top rows only.
+	# Bins on the racks' faces. The tall rack: bottom and top rows only, the
+	# player's band left empty. The low racks: two rows, all under 1.1 m.
 	for s: float in [-1.0, 1.0]:
-		for run: Array in [[-2.85, 2.85], [-END, -9.15], [9.15, END]]:
+		var runs := [[-1.0, 1.0, 0], [-15.5, -12.5, 1], [-3.7, -1.2, 1], [1.2, 3.7, 1], [12.5, 15.5, 1]]
+		for run: Array in runs:
+			var rows: Array = [[0.3, 0.8], [0.9, 1.3], [2.3, 2.75], [2.85, 3.1]] if run[2] == 0 else [[0.15, 0.55], [0.6, 1.0]]
 			var x := float(run[0]) + 0.1
 			while x + 0.9 <= float(run[1]) - 0.05:
-				for row: Array in [[0.3, 0.8], [0.9, 1.3], [2.3, 2.75], [2.85, 3.1]]:
+				for row: Array in rows:
 					var ya: float = s * 3.5 - 0.3 if s > 0.0 else s * 3.5
 					var yb: float = s * 3.5 if s > 0.0 else s * 3.5 + 0.3
 					box(Vector3(x, minf(ya, yb), row[0]), Vector3(x + 0.9, maxf(ya, yb), row[1]), RUST)
 				x += 1.0
 	_lamps("repair")
+	_glaze(false)
+	_ducts()
 	_lane_lines()
-	_beams([-10.0, -2.0, 2.0, 10.0])
+	_beams([-10.0, -6.0, -2.0, 2.0, 6.0, 10.0])
 	_bogies()
 
 
-## 4. ARMOURY. Wall racks, three sections a side, one per frame type, each with
-## its own colour so a Walker's crew can find theirs. Racks not crates: you see
-## what you own. The racks are 0.6 m deep and everything on them is drawn.
+## 4. ARMOURY. Wall racks on the piers, one per pier, in three sections by frame
+## type, each its own colour so a Walker's crew can find theirs. Racks not
+## crates: you see what you own. Racks are 0.6 m deep; everything on them is
+## drawn.
 func _car_armoury() -> void:
 	_shell(true, true, HULL)
 	for s: float in [-1.0, 1.0]:
-		for x0: float in [-11.0, -3.5, 4.0]:
-			box(Vector3(x0, s * 3.9, 0.0), Vector3(x0 + 7.0, s * HW, 3.2), PLATE)
+		for p: float in PIERS:
+			box(Vector3(p - 1.0, minf(s * 3.9, s * HW), 0.0), Vector3(p + 1.0, maxf(s * 3.9, s * HW), 3.4), PLATE)
 	no_collision()
 	var tex := [HAZARD, GRATE, RUST]
 	for s: float in [-1.0, 1.0]:
 		var ya: float = s * 3.9 - 0.25 if s > 0.0 else s * 3.9
 		var yb: float = s * 3.9 if s > 0.0 else s * 3.9 + 0.25
-		var si := 0
-		for x0: float in [-11.0, -3.5, 4.0]:
-			# A header bar naming the section, then the weapons hung under it.
-			box(Vector3(x0 + 0.2, minf(ya, yb), 3.0), Vector3(x0 + 6.8, maxf(ya, yb), 3.15), tex[si])
-			var x := x0 + 0.5
-			while x + 0.2 <= x0 + 6.6:
+		for p: float in PIERS:
+			var si := 0 if p <= -8.0 else (1 if p <= 4.0 else 2)
+			box(Vector3(p - 0.9, minf(ya, yb), 3.0), Vector3(p + 0.9, maxf(ya, yb), 3.15), tex[si])
+			var x := p - 0.8
+			while x + 0.2 <= p + 0.8:
 				box(Vector3(x, minf(ya, yb), 0.5), Vector3(x + 0.2, maxf(ya, yb), 2.8), tex[si])
-				x += 0.45
-			si += 1
+				x += 0.4
 	_lamps("armoury")
+	_glaze(false)
+	_ducts()
 	_lane_lines()
-	_beams([-10.0, -4.0, 4.0, 10.0])
+	_beams([-14.0, -8.0, 0.0, 8.0, 14.0])
 	_bogies()
 
 
 ## 5. FABRICATION. A machine shop, half-finished. Three mounts along the -Y wall
-## carry machines; the same three along the +Y wall are bare plates with their
-## anchor studs and an unfinished frame beside them. The software branch that
-## builds it out is not here yet, and the empty mounts say so.
+## carry machines: a low bed under the sill line and a head on the pier. The
+## same three along the +Y wall are bare plates with their anchor studs, and
+## an unfinished frame stands beside them. The software branch that builds it
+## out is not here yet, and the empty mounts say so.
 func _car_fab() -> void:
 	_shell(true, true, HULL)
 	for x: float in FAB_X:
-		# Fitted: a bed and a head, standing 2.2 m, against the -Y wall.
 		box(Vector3(x - 1.5, -HW, 0.0), Vector3(x + 1.5, -3.0, 1.0), PLATE)
-		box(Vector3(x - 1.5, -HW, 1.0), Vector3(x - 0.3, -3.2, 2.2), FRAME_T)
+		box(Vector3(x - 1.0, -HW, 1.0), Vector3(x + 1.0, -3.2, 2.8), FRAME_T)
 	no_collision()
 	for x: float in FAB_X:
-		# Empty: a floor plate (0.1875 m, under the baker's climb and mesh-only
-		# anyway) and four studs on it.
 		box(Vector3(x - 1.5, 3.0, 0.0), Vector3(x + 1.5, HW, 0.1875), GRATE)
 		for dx: float in [-1.2, 1.2]:
-			for yy: float in [3.3, 4.2]:
+			for yy: float in [3.3, 4.1]:
 				box(Vector3(x + dx - 0.1, yy - 0.1, 0.1875), Vector3(x + dx + 0.1, yy + 0.1, 0.4), RUST)
 		# Overhead rail with an empty hook block, for the tool that is not here.
-		box(Vector3(x - 1.5, 3.6, 3.55), Vector3(x + 1.5, 3.8, 3.85), FRAME_T)
+		box(Vector3(x - 1.5, 3.6, 4.0), Vector3(x + 1.5, 3.8, 4.4), FRAME_T)
+		# And the fitted machine's rail, with its tool head hanging below.
+		box(Vector3(x - 1.5, -3.8, 4.0), Vector3(x + 1.5, -3.6, 4.4), FRAME_T)
+		box(Vector3(x - 0.5, -3.8, 3.2), Vector3(x + 0.5, -3.6, 4.0), RUST)
 	# The unfinished frame: uprights and one cross-member, no panels.
-	for dx: float in [-1.2, 1.2]:
-		box(Vector3(10.0 + dx - 0.1, 3.4, 0.0), Vector3(10.0 + dx + 0.1, 3.6, 3.0), FRAME_T)
-	box(Vector3(8.7, 3.4, 3.0), Vector3(11.3, 3.6, 3.2), FRAME_T)
-	# Fitted machines' tool heads, hanging at 3.2 m and above.
-	for x: float in FAB_X:
-		box(Vector3(x - 1.5, -3.8, 3.55), Vector3(x + 1.5, -3.6, 3.85), FRAME_T)
-		box(Vector3(x - 0.5, -3.8, 3.2), Vector3(x + 0.5, -3.6, 3.55), RUST)
+	for fx: float in [11.1, 12.9]:
+		box(Vector3(fx - 0.1, 3.4, 0.0), Vector3(fx + 0.1, 3.6, 3.0), FRAME_T)
+	box(Vector3(11.0, 3.4, 3.0), Vector3(13.0, 3.6, 3.2), FRAME_T)
 	_lamps("fab")
+	_glaze(false)
+	_ducts()
 	_lane_lines()
-	_beams([-10.0, -4.0, 4.0])
+	_beams([-14.0, -8.0, 0.0, 8.0, 14.0])
 	_bogies()
 
 
-## 6. BARRACKS. Twelve standing racks, numbered, in a car built for a squad of
-## twelve. The player will have four. A rack is a back plate and fins, 3.5 m
-## between fins for a 1.7 m body. Robots do not sleep; there is nowhere to
-## sleep. The emptiness is the content.
+## 6. BARRACKS. Twelve standing racks, numbered, in a car that could hold twice
+## that. The player will have four. A rack is a charge pad between two fins; the
+## fins stand on the piers and each rack stands in front of an aperture. There
+## is no back plate: robots do not sleep, and there is a window behind each
+## one. The emptiness is the content.
 func _car_barracks() -> void:
 	_shell(true, true, HULL)
-	var half := RACK_PITCH * 3.0 + 0.1
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-half, s * 4.2, 0.0), Vector3(half, s * HW, 3.4), PLATE)
 		for i in 7:
 			var fx := -RACK_PITCH * 3.0 + i * RACK_PITCH
-			box(Vector3(fx - 0.1, s * 2.4, 0.0), Vector3(fx + 0.1, s * 4.2, 3.4), FRAME_T)
+			box(Vector3(fx - 0.1, minf(s * 2.4, s * HW), 0.0), Vector3(fx + 0.1, maxf(s * 2.4, s * HW), 4.0), FRAME_T)
 	no_collision()
 	var n := 1
 	for s: float in [1.0, -1.0]:
 		for i in 6:
 			var cx := -RACK_PITCH * 2.5 + i * RACK_PITCH
-			# Charge pad on the floor (0.125 m) and the rack's number above.
-			box(Vector3(cx - 0.9, s * RACK_Y - 0.9, 0.0), Vector3(cx + 0.9, s * RACK_Y + 0.9, 0.125), GRATE)
-			_number(n, cx, 2.75, 0.5, s * 4.2, s, GLOW, true)
-			# Charge connector on the back plate, at a Walker's chest.
-			box(Vector3(cx - 0.2, minf(s * 4.2 - 0.125 * s, s * 4.2), 1.6), Vector3(cx + 0.2, maxf(s * 4.2 - 0.125 * s, s * 4.2), 1.9), LAMP_T)
+			# Charge pad on the floor (0.125 m), and the rack's number above the
+			# aperture on the wall's face.
+			box(Vector3(cx - 1.2, minf(s * 2.4, s * 4.4), 0.0), Vector3(cx + 1.2, maxf(s * 2.4, s * 4.4), 0.125), GRATE)
+			_number(n, cx, 3.3, 0.5, s * HW, s, GLOW, true)
 			n += 1
 	_lamps("barracks")
+	_glaze(false)
+	_ducts()
 	_lane_lines()
-	_beams([-10.0, -4.0, 4.0, 10.0])
+	_beams([-14.0, -8.0, 0.0, 8.0, 14.0])
 	_bogies()
 
 
-## 7. PLATFORM. The door, and a boarding ramp down to the station. Departure and
-## return; the level exit is at the rear door. The ramp is the one change of
-## level in the base: 1.2 m over 7.5 m, 4.0 m wide, a wedge that meets the floor
-## flush at the door and the ground at its toe with no lip.
-func _car_platform() -> void:
-	_shell(true, true, HULL)
-	ramp(-HL - RAMP_LEN, -RAMP_HALF_W, -HL, RAMP_HALF_W, -DECK_RISE, -DECK_RISE, 0.0, "+x", {"top": GRATE, "side": PLATE, "bottom": PLATE})
-	# Lockers, tall and against the walls, in the forward half.
+## 7. PLATFORM. The door. A side door at x = 0 in the +Y wall opens onto a
+## station platform whose top is at the car's floor height, so the squad walks
+## straight off with no step. The rear (-X) end is sealed.
+## railhead_car_platform_ramp is the same car with the rear open onto a
+## boarding ramp: the way off at a stop with no station.
+func _car_platform(ramp_end: bool = false) -> void:
+	_shell(true, ramp_end, HULL, true)
+	if ramp_end:
+		ramp(-HL - RAMP_LEN, -RAMP_HALF_W, -HL, RAMP_HALF_W, -DECK_RISE, -DECK_RISE, 0.0, "+x", {"top": GRATE, "side": PLATE, "bottom": PLATE})
 	for s: float in [-1.0, 1.0]:
-		for x0: float in [3.0, 7.0]:
-			box(Vector3(x0, s * 3.9, 0.0), Vector3(x0 + 3.0, s * HW, 3.0), PLATE)
+		for p: float in [-12.0, -8.0, 8.0, 12.0]:
+			box(Vector3(p - 1.0, minf(s * 3.9, s * HW), 0.0), Vector3(p + 1.0, maxf(s * 3.9, s * HW), 3.0), PLATE)
 	no_collision()
-	# The rear door's frame, proud of the outer face and clear of the opening.
+	if ramp_end:
+		for s: float in [-1.0, 1.0]:
+			var ya: float = DOOR if s > 0.0 else -DOOR - 0.25
+			var yb: float = DOOR + 0.25 if s > 0.0 else -DOOR
+			box(Vector3(-HL - 0.125, ya, 0.0), Vector3(-HL, yb, DOOR_H), HAZARD)
+		box(Vector3(-HL - 0.125, -DOOR - 0.25, DOOR_H), Vector3(-HL, DOOR + 0.25, DOOR_H + 0.25), HAZARD)
+	# The platform door's frame, proud of the outer face and clear of the opening.
 	for s: float in [-1.0, 1.0]:
-		var ya: float = DOOR if s > 0.0 else -DOOR - 0.25
-		var yb: float = DOOR + 0.25 if s > 0.0 else -DOOR
-		box(Vector3(-HL - 0.125, ya, 0.0), Vector3(-HL, yb, DOOR_H), HAZARD)
-	box(Vector3(-HL - 0.125, -DOOR - 0.25, DOOR_H), Vector3(-HL, DOOR + 0.25, DOOR_H + 0.25), HAZARD)
+		var xa: float = DOOR if s > 0.0 else -DOOR - 0.25
+		var xb: float = DOOR + 0.25 if s > 0.0 else -DOOR
+		box(Vector3(xa, OW, 0.0), Vector3(xb, OW + 0.125, DOOR_H), HAZARD)
+	box(Vector3(-DOOR - 0.25, OW, DOOR_H), Vector3(DOOR + 0.25, OW + 0.125, DOOR_H + 0.25), HAZARD)
 	# Muster squares on the floor, forward of the arrival point.
 	for i in 4:
 		var cx := 1.0 + i * 2.5
 		box(Vector3(cx - 0.9, -0.9, 0.0), Vector3(cx + 0.9, -0.8125, 0.0625), HAZARD)
 		box(Vector3(cx - 0.9, 0.8125, 0.0), Vector3(cx + 0.9, 0.9, 0.0625), HAZARD)
 	_lamps("platform")
+	_glaze(true)
+	_ducts()
 	_lane_lines()
-	_beams([-10.0, -2.0, 2.0, 10.0])
+	_beams([-14.0, -5.0, 5.0, 14.0])
 	_bogies()
 
 
-## THE BED. A slab at the ground's height, rails on sleepers down the middle,
-## and the station apron where the ramp comes down. Map X runs along the train
-## and is longer at the platform (-X) end: the ramp and 13.5 m of apron.
-## The ground is ONE brush with its top at 0; the car floors are 1.2 m above.
+func _car_platform_ramp() -> void:
+	_car_platform(true)
+
+
+## THE GROUND under the whole scene: one slab, top at 0, 48 m across, cut flat
+## at the boundary. It brings no rails: railhead_station owns the track.
 func _trackbed() -> void:
-	var rear := -(HL * 7.0 + RAMP_LEN + 13.5)
-	var front := HL * 7.0 + 6.0
-	box(Vector3(rear + 0.0, -12.0, -2.0), Vector3(front, 12.0, 0.0), {"top": BED, "side": BALLAST, "bottom": BALLAST})
+	box(Vector3(-ST_CUT, -24.0, -2.0), Vector3(ST_CUT, 24.0, 0.0), {"top": BED, "side": BALLAST, "bottom": BALLAST})
+
+
+# ── The station ──────────────────────────────────────────────────────────────
+#
+# THE HELD STATE ONLY: lit, working, StratCom's. Unheld (dark, derelict) and
+# contested (damaged, fought over) are later work and are not built here.
+#
+# THE SAME STATION EVERY TIME, because the manual has one station in it.
+#
+# THE ARITHMETIC. The car floor is DECK_RISE (1.1875 m) above the ground and
+# the car's outer wall face is at OW (4.75 m). The platform top is therefore
+# DECK_RISE, and the platform's near edge is OW, so it butts the car skin: the
+# floor slab runs to y = OW and the platform starts there, one surface at one
+# height. The side door (3.25 x 3.41 m) is cut in that wall. The end ramp is
+# 1.1875 m over 7.5 m, 1 in 6.3, as the boarding ramp is.
+#
+# Track runs along map X, centred on y = 0, and is CUT FLAT at x = +-ST_CUT.
+
+const ST_CUT := 150.0
+const ST_X0 := -141.0       ## platform's rear end: the head house stands on it
+const ST_X1 := 125.0        ## platform's front end, 13 m past the rake's nose
+const ST_Y0 := OW
+const ST_Y1 := 14.75        ## 10 m of platform, clear of cover
+const HH_X1 := -127.0
+const HH_Y0 := 6.75
+const HH_H := 4.0
+const POSTS: Array = [-96.0, -64.0, -32.0, 0.0, 32.0, 64.0, 96.0]
+const ST_RAMP_Y := 10.75    ## the end ramp's and the head house door's centreline
+const HH_LAMPS: Array = [-137.0, -131.0]
+
+
+func _station() -> void:
+	var top := DECK_RISE
+	box(Vector3(ST_X0, ST_Y0, 0.0), Vector3(ST_X1, ST_Y1, top), {"top": BED, "side": BALLAST, "bottom": BALLAST})
+	# The end ramp down to the ground, 4.0 m wide, a wedge with no lip.
+	ramp(ST_X1, ST_RAMP_Y - 2.0, ST_X1 + RAMP_LEN, ST_RAMP_Y + 2.0, 0.0, 0.0, top, "-x", {"top": GRATE, "side": PLATE, "bottom": PLATE})
+	# Canopy posts on the back edge, 9.5 m from the train: cover for nobody.
+	for x: float in POSTS:
+		box(Vector3(x - 0.25, ST_Y1 - 0.5, top), Vector3(x + 0.25, ST_Y1, top + 6.2), FRAME_T)
+	# The head house: a room on the platform's rear end with its door toward
+	# the train's side of the platform. Walls on the platform top, roof over.
+	var hx0 := ST_X0
+	var hy1 := ST_Y1
+	var cy := ST_RAMP_Y
+	box(Vector3(hx0, HH_Y0, top), Vector3(hx0 + 0.25, hy1, top + HH_H), PLATE)
+	box(Vector3(hx0 + 0.25, HH_Y0, top), Vector3(HH_X1 - 0.25, HH_Y0 + 0.25, top + HH_H), PLATE)
+	box(Vector3(hx0 + 0.25, hy1 - 0.25, top), Vector3(HH_X1 - 0.25, hy1, top + HH_H), PLATE)
+	box(Vector3(HH_X1 - 0.25, HH_Y0, top), Vector3(HH_X1, cy - DOOR, top + HH_H), PLATE)
+	box(Vector3(HH_X1 - 0.25, cy + DOOR, top), Vector3(HH_X1, hy1, top + HH_H), PLATE)
+	box(Vector3(HH_X1 - 0.25, cy - DOOR, top + DOOR_H), Vector3(HH_X1, cy + DOOR, top + HH_H), PLATE)
+	box(Vector3(hx0, HH_Y0, top + HH_H), Vector3(HH_X1, hy1, top + HH_H + 0.25), HULL)
 	no_collision()
-	# Ballast, sleepers, rails. Each stands on the one before; none overlaps.
-	var x0 := -HL * 7.0
-	var x1 := HL * 7.0 + 6.0
-	box(Vector3(x0, -1.7, 0.0), Vector3(x1, 1.7, 0.0625), BALLAST)
-	var x := x0 + 0.5
-	while x + 0.3 < x1:
-		box(Vector3(x, -1.3, 0.0625), Vector3(x + 0.3, 1.3, 0.125), RUST)
-		x += 1.0
+	# Platform edge line and a mark at each car's end, so the berth reads.
+	box(Vector3(ST_X0, ST_Y0, top), Vector3(ST_X1, ST_Y0 + 0.25, top + 0.0625), HAZARD)
+	for i in 8:
+		var x := -112.0 + i * 32.0
+		box(Vector3(x - 0.125, ST_Y0 + 0.25, top), Vector3(x + 0.125, ST_Y0 + 1.25, top + 0.0625), HAZARD)
+	# Canopy arms and their light strips: high, mesh-only, out of every sightline.
+	for x: float in POSTS:
+		box(Vector3(x - 0.15, 8.0, top + 6.2), Vector3(x + 0.15, ST_Y1, top + 6.5), FRAME_T)
+		box(Vector3(x - 1.0, 8.2, top + 5.9), Vector3(x + 1.0, 9.2, top + 6.2), LAMP_T)
+	# Head house dressing, furniture-free: a departures board on the far wall
+	# above the 1.7 m band, and lamps at the working height.
+	box(Vector3(hx0 + 0.25, 8.0, top + 2.0), Vector3(hx0 + 0.3125, 13.5, top + 3.0), GLOW)
+	for lx: float in HH_LAMPS:
+		box(Vector3(lx - 0.0625, cy - 0.0625, top + 3.4), Vector3(lx + 0.0625, cy + 0.0625, top + HH_H), FRAME_T)
+		box(Vector3(lx - 0.5, cy - 0.25, top + 3.1), Vector3(lx + 0.5, cy + 0.25, top + 3.4), LAMP_T)
+	# Track: ballast, sleepers, rails, running to the boundary and stopping
+	# there flat. Each stands on the one before; none overlaps.
+	box(Vector3(-ST_CUT, -1.7, 0.0), Vector3(ST_CUT, 1.7, 0.0625), BALLAST)
+	var tx := -ST_CUT + 0.5
+	while tx + 0.3 <= ST_CUT:
+		box(Vector3(tx, -1.3, 0.0625), Vector3(tx + 0.3, 1.3, 0.125), RUST)
+		tx += 1.0
 	for s: float in [-1.0, 1.0]:
 		var ym := s * GAUGE * 0.5
-		box(Vector3(x0, ym - 0.0625, 0.125), Vector3(x1, ym + 0.0625, 0.1875), FRAME_T)
+		box(Vector3(-ST_CUT, ym - 0.0625, 0.125), Vector3(ST_CUT, ym + 0.0625, 0.1875), FRAME_T)
 
 
 # ── The audit ────────────────────────────────────────────────────────────────
@@ -601,7 +768,7 @@ func _audit(name: String) -> bool:
 			ok = false
 			print("      BAND     solid b%d tops out at %.3f m — inside 0.25..0.5 m: %s" % [b, bb.end.z, bb])
 
-	if name == "railhead_trackbed" or name == "railhead_hull_motive":
+	if name in ["railhead_trackbed", "railhead_hull_motive", "railhead_station"]:
 		return ok
 
 	# 3. The lane. At every x, the widest free gap for a 3.0 m tall body.
