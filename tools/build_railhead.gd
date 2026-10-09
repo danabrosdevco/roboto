@@ -64,7 +64,7 @@ var _solid_ok: Array = ["HoloTable"]
 ## machine mounts, fitted or empty. They sit inside or against solid things on
 ## purpose, so neither the inside-a-collider check nor the reach test applies.
 func _fixture(k: String) -> bool:
-	return _solid_ok.has(k) or k.begins_with("FabricationMount") or k == "Station_RampFoot" or k.begins_with("Station_TrackCut")
+	return _solid_ok.has(k) or k.begins_with("FabricationMount") or k == "Station_RampFoot" or k.begins_with("Station_TrackCut") or k.begins_with("Station_Mast") or k == "BriefingBoard"
 var _cars: Dictionary = {}
 
 
@@ -227,6 +227,9 @@ func _record_markers() -> void:
 	_anchors["HoloTable"] = _at("Operations", 0.0, 0.0, 1.3)
 	_anchors["HoloTable_ViewA"] = _at("Operations", 0.0, -2.9, 0.0)
 	_anchors["HoloTable_ViewB"] = _at("Operations", 0.0, 2.9, 0.0)
+	# The raked seating bay and the board it faces, at the front of the map room.
+	_anchors["BriefingBoard"] = _at("Operations", R.END - 0.1, 0.0, 2.2)
+	_anchors["Seating_Aisle"] = _at("Operations", 12.0, 0.0, 0.0)
 	# Repair: one marker per bay, where a chassis stands.
 	for i in R.BAYS.size():
 		var b: Vector2 = R.BAYS[i]
@@ -264,11 +267,9 @@ func _record_markers() -> void:
 # range that stops short of the neighbouring car's mesh: this project renders in
 # GL compatibility, which lights at most eight lights per mesh.
 
-const TINT := {
-	"Operations": Color(0.55, 0.7, 1.0), "Repair": Color(1.0, 0.92, 0.75),
-	"Armoury": Color(1.0, 0.9, 0.7), "Fabrication": Color(1.0, 0.85, 0.6),
-	"Barracks": Color(0.8, 0.85, 1.0), "Platform": Color(1.0, 0.95, 0.85),
-}
+## StratCom lights warm and even, the light of a building that expects people to
+## read in it: tungsten, every lamp, no flicker, no exceptions. No amber, no cyan.
+const TUNGSTEN := Color("F2D9A8")
 const KEY := {"Operations": "ops", "Repair": "repair", "Armoury": "armoury", "Fabrication": "fab",
 		"Barracks": "barracks", "Platform": "platform"}
 
@@ -281,16 +282,17 @@ func _lights(g: Node3D) -> void:
 			l.name = "Lamp_%s_%d" % [car, i]
 			g.add_child(l)
 			l.global_position = _at(car, p[0], p[1], 3.0)
-			l.light_color = TINT[car]
+			l.light_color = TUNGSTEN
 			# Operations is dark on purpose; the table is the light.
-			l.light_energy = 0.45 if car == "Operations" else 1.1
+			# Operations is lower and dimmer than the rest, but not dark to the point of being out.
+			l.light_energy = 0.8 if car == "Operations" else 1.3
 			l.omni_range = 6.0
 			i += 1
 	var t := OmniLight3D.new()
 	t.name = "Lamp_HoloTable"
 	g.add_child(t)
 	t.global_position = _at("Operations", 0.0, 0.0, 1.9)
-	t.light_color = Color(0.45, 1.0, 0.6)
+	t.light_color = TUNGSTEN
 	t.light_energy = 1.6
 	t.omni_range = 5.0
 
@@ -414,6 +416,9 @@ func _write_station() -> bool:
 	_st["Station_PlatformCentre"] = Vector3((R.ST_Y0 + R.ST_Y1) * 0.5, top, 0.0)
 	_st["Station_BerthRear"] = Vector3(R.ST_Y0 + 1.75, top, -7.0 * R.HL)
 	_st["Station_BerthFront"] = Vector3(R.ST_Y0 + 1.75, top, 7.0 * R.HL)
+	# The aerial mast: a landmark, and the reason you still get briefings.
+	_st["Station_Mast"] = Vector3(R.MAST_Y, 0.0, R.MAST_X)
+	_st["Station_MastTop"] = Vector3(R.MAST_Y, R.MAST_H, R.MAST_X)
 	# The track is cut here. A mission map joins its own track to these.
 	_st["Station_TrackCut_Rear"] = Vector3(0.0, 0.0, -R.ST_CUT)
 	_st["Station_TrackCut_Front"] = Vector3(0.0, 0.0, R.ST_CUT)
@@ -442,14 +447,14 @@ func _write_station() -> bool:
 		l.name = "Canopy_%d" % i
 		lg.add_child(l)
 		l.position = Vector3(8.7, top + 5.5, R.POSTS[i])
-		l.light_color = Color(1.0, 0.95, 0.85)
+		l.light_color = TUNGSTEN
 		l.light_energy = 1.3
 		l.omni_range = 7.0
 	var hl := OmniLight3D.new()
 	hl.name = "HeadHouse"
 	lg.add_child(hl)
 	hl.position = Vector3(cy, top + 3.0, (R.ST_X0 + R.HH_X1) * 0.5)
-	hl.light_color = Color(1.0, 0.95, 0.85)
+	hl.light_color = TUNGSTEN
 	hl.light_energy = 1.0
 	hl.omni_range = 8.0
 	_own(st, st)

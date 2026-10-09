@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bluvk0fsbhrgp"
+path="res://.godot/imported/railhead_car_barracks.map-f0de317645a11d469a973d2a46231786.tres"
+
+[deps]
+
+source_file="res://maps/blocks/railhead/railhead_car_barracks.map"
+dest_files=["res://.godot/imported/railhead_car_barracks.map-f0de317645a11d469a973d2a46231786.tres"]
+
+[params]
+

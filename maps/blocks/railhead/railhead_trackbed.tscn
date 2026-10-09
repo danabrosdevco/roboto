@@ -1,18 +1,18 @@
 [gd_scene load_steps=8 format=4]
 
-[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_wqhq2"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_i1dxe"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_3.tres" id="3_3t7p8"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_4.tres" id="4_k65n4"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_vnpxs"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_3hhqf"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_3.tres" id="3_uwlaw"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/stratcom_concrete_board.tres" id="4_xd0bg"]
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_kmf5v"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_7ix1r"]
 _surfaces = [{
 "aabb": AABB(-24, -2, -150, 48, 2, 300),
 "attribute_data": PackedByteArray("AACWQQAAQEAAAJbBAABAQAAAlsEAAEDAAACWQQAAQMAAAJbBAACAPgAAlsEAAAAAAACWQQAAAAAAAJZBAACAPgAAQMAAAIA+AABAwAAAAAAAAEBAAAAAAAAAQEAAAIA+AACWwQAAgD4AAJbBAAAAAAAAlkEAAAAAAACWQQAAgD4AAEDAAACAPgAAQMAAAAAAAABAQAAAAAAAAEBAAACAPg=="),
 "format": 34359742487,
 "index_count": 30,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMA"),
-"material": ExtResource("3_3t7p8"),
+"material": ExtResource("3_uwlaw"),
 "name": "PSX_Textures/concrete_3",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -24,34 +24,34 @@ _surfaces = [{
 "format": 34359742487,
 "index_count": 6,
 "index_data": PackedByteArray("AAABAAIAAAACAAMA"),
-"material": ExtResource("4_k65n4"),
-"name": "PSX_Textures/concrete_tx_4",
+"material": ExtResource("4_xd0bg"),
+"name": "PSX_Textures/stratcom_concrete_board",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 4,
 "vertex_data": PackedByteArray("AADAwQAAAAAAABbDAADAQQAAAAAAABbDAADAQQAAAAAAABZDAADAwQAAAAAAABZD/3////9//7//f////3//v/9/////f/+//3////9//78=")
 }]
 
-[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_afry1"]
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_0ifka"]
 vertices = PackedVector3Array(-24, -2, -150, -24, -2, 150, 24, -2, 150, 24, -2, -150, -24, -2, -150, -24, 0, -150, -24, 0, 150, -24, -2, 150, -24, -2, 150, -24, 0, 150, 24, 0, 150, 24, -2, 150, 24, -2, 150, 24, 0, 150, 24, 0, -150, 24, -2, -150, 24, -2, -150, 24, 0, -150, -24, 0, -150, -24, -2, -150, -24, 0, -150, 24, 0, -150, 24, 0, 150, -24, 0, 150)
 indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_h2wmx"]
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_ain4v"]
 points = PackedVector3Array(-24, -2, -150, -24, -2, 150, 24, -2, 150, 24, -2, -150, -24, 0, -150, 24, 0, -150, 24, 0, 150, -24, 0, 150)
 
 [node name="RailheadTrackbed" type="Node3D"]
-script = ExtResource("1_wqhq2")
+script = ExtResource("1_vnpxs")
 local_map_file = "res://maps/blocks/railhead/railhead_trackbed.map"
-map_settings = ExtResource("2_i1dxe")
+map_settings = ExtResource("2_3hhqf")
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
 collision_mask = 0
 
 [node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
-mesh = SubResource("ArrayMesh_kmf5v")
+mesh = SubResource("ArrayMesh_7ix1r")
 
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
-occluder = SubResource("ArrayOccluder3D_afry1")
+occluder = SubResource("ArrayOccluder3D_0ifka")
 
 [node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_h2wmx")
+shape = SubResource("ConvexPolygonShape3D_ain4v")
