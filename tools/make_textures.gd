@@ -80,6 +80,19 @@ const MADE := {
 	"roach_comb": "_roach_comb_plain",
 	"roach_comb_worn": "_roach_comb_worn",
 	"roach_fur": "_roach_fur",
+	"stratcom_green": "_sc_green",
+	"stratcom_green_panel": "_sc_green_panel",
+	"stratcom_cream": "_sc_cream",
+	"stratcom_cream_ceiling": "_sc_cream_ceiling",
+	"stratcom_concrete_board": "_sc_concrete_board",
+	"stratcom_floor_tile": "_sc_floor_tile",
+	"stratcom_floor_arrow": "_sc_floor_arrow",
+	"stratcom_brass": "_sc_brass",
+	"stratcom_readout": "_sc_readout",
+	"stratcom_placard": "_sc_placard",
+	"stratcom_stencil": "_sc_stencil",
+	"stratcom_door_steel": "_sc_door_steel",
+	"stratcom_conduit": "_sc_conduit",
 }
 
 ## Textures that ship a second image beside the albedo: <name>_mask.png, whose
@@ -1409,3 +1422,430 @@ func _roach_fur() -> void:
 			tip *= 0.55 + 0.45 * smoothstep(0.2, 0.7, t)
 			lum = lerpf(lum, 0.12 + 0.21 * pow(shape, 1.2) * (0.8 + 0.4 * mass), tip)
 			_img.set_pixel(x, y, Color(tint.r * lum, tint.g * lum, tint.b * lum))
+
+
+# ── StratCom ─────────────────────────────────────────────────────────────────
+# Thirteen institutional surfaces. The voice, from the faction brief: everything
+# here is correct, maintained and pointless. So NO rust, NO grime, NO stains, NO
+# wear. Where the rest of this file calls _grime(), these do not; the only
+# variation allowed is the faint unevenness of a fresh roller coat (_sc_coat) and
+# the tone difference between boards and tiles.
+#
+# NO AMBER AND NO CYAN. Amber is the Swarm, cyan is the player. Every hue below
+# is a green, a bone, a grey or a brass, and the readout's white leans warm.
+#
+# PALETTE, RESCALED. The faction brief's hexes (cream #D8D2C0 is luminance
+# 0.823) are the colours as seen under warm tungsten, not albedo; the pack
+# averages 0.175. The HUE (as r:g:b ratios) and the LADDER are kept and the value
+# is scaled into the pack: cream 0.28 > concrete 0.21 > brass 0.18 > green 0.15.
+# The brightness the brief's hexes carry belongs on the lamps, not here.
+#
+# THE MODULE. Everything structural sits on a 32 px module that divides 256:
+# floor tile 64, ceiling tile 64, green panel 64, concrete board height 32.
+# A wall, a ceiling and a floor therefore look cut from one specification.
+
+const SC_GREEN := Vector3(0.84, 1.0, 0.79)
+const SC_CREAM := Vector3(1.0, 0.98, 0.91)
+const SC_CONCRETE := Vector3(1.0, 0.985, 0.945)
+const SC_BRASS := Vector3(1.0, 0.86, 0.66)
+const SC_GLASS := Vector3(0.50, 1.0, 0.72)
+const SC_LAMP := Vector3(1.0, 0.93, 0.78)    # warm white; deliberately not amber
+
+## Stencil face: 5x7 dot matrix, one string per row. The sheet takes the first
+## 32 of SC_FONT_ORDER.
+const SC_FONT_ORDER := "0123456789ABCDEFGHIKLMNOPRSTUWXZVY"
+const SC_FONT := {
+	"0": ["01110", "10001", "10011", "10101", "11001", "10001", "01110"],
+	"1": ["00100", "01100", "00100", "00100", "00100", "00100", "01110"],
+	"2": ["01110", "10001", "00001", "00010", "00100", "01000", "11111"],
+	"3": ["11110", "00001", "00001", "01110", "00001", "00001", "11110"],
+	"4": ["00010", "00110", "01010", "10010", "11111", "00010", "00010"],
+	"5": ["11111", "10000", "11110", "00001", "00001", "10001", "01110"],
+	"6": ["00110", "01000", "10000", "11110", "10001", "10001", "01110"],
+	"7": ["11111", "00001", "00010", "00100", "01000", "01000", "01000"],
+	"8": ["01110", "10001", "10001", "01110", "10001", "10001", "01110"],
+	"9": ["01110", "10001", "10001", "01111", "00001", "00010", "01100"],
+	"A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+	"B": ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
+	"C": ["01110", "10001", "10000", "10000", "10000", "10001", "01110"],
+	"D": ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+	"E": ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+	"F": ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
+	"G": ["01110", "10001", "10000", "10111", "10001", "10001", "01111"],
+	"H": ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
+	"I": ["01110", "00100", "00100", "00100", "00100", "00100", "01110"],
+	"K": ["10001", "10010", "10100", "11000", "10100", "10010", "10001"],
+	"L": ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
+	"M": ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+	"N": ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
+	"O": ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
+	"P": ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
+	"R": ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
+	"S": ["01111", "10000", "10000", "01110", "00001", "00001", "11110"],
+	"T": ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+	"U": ["10001", "10001", "10001", "10001", "10001", "10001", "01110"],
+	"V": ["10001", "10001", "10001", "10001", "10001", "01010", "00100"],
+	"W": ["10001", "10001", "10001", "10101", "10101", "11011", "10001"],
+	"X": ["10001", "10001", "01010", "00100", "01010", "10001", "10001"],
+	"Y": ["10001", "10001", "01010", "00100", "00100", "00100", "00100"],
+	"Z": ["11111", "00001", "00010", "00100", "01000", "10000", "11111"],
+}
+
+
+## A hue given as r:g:b ratios, scaled so its luminance is exactly `lum`.
+func _tone(ratio: Vector3, lum: float) -> Color:
+	var k := lum / (ratio.x * 0.2126 + ratio.y * 0.7152 + ratio.z * 0.0722)
+	return Color(ratio.x * k, ratio.y * k, ratio.z * k)
+
+
+## The unevenness of a fresh roller coat: 2-texel orange peel and one very broad
+## swell, a few percent either way. This is NOT _grime — nothing accumulates,
+## nothing is darker in a corner.
+func _sc_coat(x: int, y: int, seed: int, amt: float = 0.035) -> float:
+	var peel := _hash(x >> 1, y >> 1, seed) - 0.5
+	var swell := _value(float(x) / SIZE, float(y) / SIZE, 2, seed + 7) - 0.5
+	return 1.0 + amt * peel * 1.4 + amt * swell * 1.2
+
+
+func _rect(x: int, y: int, w: int, h: int, c: Color) -> void:
+	for j in h:
+		for i in w:
+			_put(x + i, y + j, c)
+
+
+## One dot-matrix glyph at `scale` texels per dot. `stencil` cuts the bridges a
+## real stencil plate has, so the letters read as stencilled rather than typed.
+func _sc_glyph(ch: String, x: int, y: int, scale: int, c: Color, stencil: bool = true) -> void:
+	if not SC_FONT.has(ch):
+		return    # a space, or a character the font does not carry
+	var rows: Array = SC_FONT[ch]
+	var bridge := maxi(2, scale / 2)
+	for r in 7:
+		var row: String = rows[r]
+		for k in 5:
+			if row[k] != "1":
+				continue
+			for j in scale:
+				for i in scale:
+					var px := k * scale + i
+					var py := r * scale + j
+					if stencil:
+						# Bridge across the middle of the side strokes, and across
+						# the top and bottom bars at the centre.
+						var mid := 3 * scale + scale / 2
+						if absi(py - mid) < bridge / 2 + 1 and (px < scale or px >= 4 * scale):
+							continue
+						var cx := 2 * scale + scale / 2
+						if absi(px - cx) < bridge / 2 + 1 and (py < scale or py >= 6 * scale):
+							continue
+					_put(x + px, y + py, c)
+
+
+func _sc_text(s: String, x: int, y: int, scale: int, c: Color, pitch: int = -1, stencil: bool = true) -> void:
+	if pitch < 0:
+		pitch = 6 * scale
+	for i in s.length():
+		_sc_glyph(s[i], x + i * pitch, y, scale, c, stencil)
+
+
+
+
+# ── Walls ────────────────────────────────────────────────────────────────────
+
+## Institutional green, dado height. Flat even paint: this is the signature
+## surface, so it is deliberately the plainest thing in the set.
+func _sc_green() -> void:
+	var c := _tone(SC_GREEN, 0.150)
+	for y in SIZE:
+		for x in SIZE:
+			_put(x, y, _shade(c, _sc_coat(x, y, 7100)))
+
+
+## The same green on a 64 px panel grid with 4 px grooves and a 2 px lit lip,
+## and a screw head at each panel corner. Equipment housings, door furniture.
+func _sc_green_panel() -> void:
+	var c := _tone(SC_GREEN, 0.155)
+	for y in SIZE:
+		for x in SIZE:
+			var d := mini(_grid_d(x, 64), _grid_d(y, 64))
+			var f := _sc_coat(x, y, 7200, 0.03)
+			if d < 2:
+				f *= 0.55                  # the groove
+			elif d < 4:
+				# Light from the upper left: the lip is lit on the lower-right
+				# side of a groove and shadowed on the upper-left side.
+				var lit := posmod(x, 64) < 32 and posmod(y, 64) < 32
+				f *= 0.82 if lit else 1.18
+			_put(x, y, _shade(c, f))
+	# Screw heads, 6 texels, 12 in from every panel corner.
+	for gy in 4:
+		for gx in 4:
+			var cx := gx * 64 + 12
+			var cy := gy * 64 + 12
+			_rect(cx - 3, cy - 3, 6, 6, _shade(c, 1.35))
+			_rect(cx - 1, cy - 3, 2, 6, _shade(c, 0.7))
+
+
+## Bone cream. Yellowed, not white: the ratio carries it, and the broad mottle
+## is plaster, not dirt, so it stays within a few percent either way.
+func _sc_cream() -> void:
+	var c := _tone(SC_CREAM, 0.280)
+	for y in SIZE:
+		for x in SIZE:
+			var m := (_value(float(x) / SIZE, float(y) / SIZE, 4, 7300) - 0.5) * 0.05
+			_put(x, y, _shade(c, _sc_coat(x, y, 7301, 0.03) + m))
+
+
+## Ceiling: 64 px tiles in a 4 px T-bar grid, a 4 px perforation on a 16 px
+## pitch inside each. Regular to the texel; that regularity is the point.
+func _sc_cream_ceiling() -> void:
+	var c := _tone(SC_CREAM, 0.285)
+	for y in SIZE:
+		for x in SIZE:
+			var d := mini(_grid_d(x, 64), _grid_d(y, 64))
+			var f := _sc_coat(x, y, 7400, 0.025)
+			if d < 2:
+				f *= 0.62              # the T-bar's shadow line
+			elif d < 4:
+				f *= 1.08
+			else:
+				if posmod(x - 8, 16) < 4 and posmod(y - 8, 16) < 4:
+					f *= 0.7           # perforation
+			_put(x, y, _shade(c, f))
+
+
+## Board-marked concrete. Shuttering boards 32 px tall, each its own tone, each
+## with a long horizontal grain, a seam between boards, a butt joint per board
+## and form-tie holes on the 128 px grid. Structure and exterior: board-marked,
+## NOT polished.
+func _sc_concrete_board() -> void:
+	var c := _tone(SC_CONCRETE, 0.210)
+	var tone: Array = []
+	var joint: Array = []
+	for b in 8:
+		tone.append(0.93 + 0.14 * _hash(b, 3, 7500))
+		joint.append(int(_hash(b, 5, 7501) * 8.0) * 32)    # joint lands on the module
+	for y in SIZE:
+		var b := y / 32
+		for x in SIZE:
+			var u := float(x) / SIZE
+			var v := float(y) / SIZE
+			var grain := (_value_aniso(u, v, 3, 48, 7502 + b) - 0.5) * 0.12
+			var f: float = float(tone[b]) + grain + (_fbm(u, v, 7510, 3, 3) - 0.5) * 0.06
+			var ym := posmod(y, 32)
+			if ym < 2:
+				f *= 0.62                        # board seam
+			elif ym == 31:
+				f *= 1.10                        # the fin of grout squeezed up
+			if posmod(x - int(joint[b]), 256) < 2 and ym >= 2:
+				f *= 0.70                        # butt joint
+			_put(x, y, _shade(c, f))
+	# Form-tie holes: 8 texel dark squares on a 128 px grid.
+	for ty in 2:
+		for tx in 2:
+			var hx := 64 + tx * 128
+			var hy := 48 + ty * 128
+			_rect(hx - 4, hy - 4, 8, 8, _shade(c, 0.45))
+			_rect(hx - 4, hy - 4, 8, 2, _shade(c, 0.30))
+
+
+# ── Floor ────────────────────────────────────────────────────────────────────
+
+const SC_TILE_LUM := 0.170
+
+
+## Tile body shared by the plain floor and the arrow floor: 64 px tiles, a 4 px
+## grout line, checker tone +-5%. Swept: no scuffs, no stains, nothing.
+func _sc_tile_body() -> void:
+	var c := _tone(SC_CONCRETE, SC_TILE_LUM)
+	for y in SIZE:
+		for x in SIZE:
+			var checker := ((x / 64) + (y / 64)) % 2
+			var f := (1.05 if checker == 0 else 0.95) * _sc_coat(x, y, 7600, 0.03)
+			if mini(_grid_d(x, 64), _grid_d(y, 64)) < 2:
+				f = 0.62                          # grout
+			_put(x, y, _shade(c, f))
+
+
+func _sc_floor_tile() -> void:
+	_sc_tile_body()
+
+
+## The same tile with a directional arrow painted on it, pointing up the image.
+## 24 texels of shaft and a 96 texel head: legible from standing height. The
+## grout shows through the paint as a faint line, because it would.
+func _sc_floor_arrow() -> void:
+	_sc_tile_body()
+	var paint := _tone(SC_CREAM, 0.290)
+	for y in SIZE:
+		for x in SIZE:
+			var inside := false
+			if x >= 116 and x < 140 and y >= 100 and y < 212:
+				inside = true
+			# Head: triangle apex (128, 36), base y = 108, half-width 48.
+			if y >= 36 and y < 108:
+				var half := int(round(48.0 * float(y - 36) / 72.0))
+				if absi(x - 128) <= half:
+					inside = true
+			if inside:
+				var f := _sc_coat(x, y, 7650, 0.02)
+				if mini(_grid_d(x, 64), _grid_d(y, 64)) < 2:
+					f *= 0.80
+				_put(x, y, _shade(paint, f))
+
+
+# ── Metal, glass, signage ────────────────────────────────────────────────────
+
+## Oxidised brass: warm, mottled in VALUE only (a hue shift to green would be
+## tarnish gone to ruin), with the long horizontal polish lines of a rubbed
+## fitting. Mild patina, the kind a maintained plaque has.
+func _sc_brass() -> void:
+	var c := _tone(SC_BRASS, 0.185)
+	for y in SIZE:
+		for x in SIZE:
+			var u := float(x) / SIZE
+			var v := float(y) / SIZE
+			var brush := (_value_aniso(u, v, 2, 64, 7700) - 0.5) * 0.16
+			var patina := (_fbm(u, v, 7710, 4, 3) - 0.5) * 0.18
+			_put(x, y, _shade(c, 1.0 + brush + patina))
+
+
+## Warm white on dark green glass: the one display here that glows, so it may
+## reach 0.60. Seven-segment time, a bar of cells, a row of ticks. The edges are
+## all glass so it tiles.
+func _sc_readout() -> void:
+	_ceil = 0.62
+	_floor = 0.032    # pure black leaves a cut-out with no volume
+	var glass := _tone(SC_GLASS, 0.075)
+	var ink := _tone(SC_LAMP, 0.55)
+	var dim := _tone(SC_LAMP, 0.095)
+	for y in SIZE:
+		for x in SIZE:
+			var f := _sc_coat(x, y, 7800, 0.05)
+			if posmod(y, 8) < 2:
+				f *= 0.8                          # scan line
+			_put(x, y, _shade(glass, f))
+	# Seven-segment digits "0412": segments 8 thick, digits 40 x 80.
+	var segs := {
+		"0": "abcdef", "1": "bc", "2": "abdeg", "3": "abcdg", "4": "bcfg",
+		"5": "acdfg", "6": "acdefg", "7": "abc", "8": "abcdefg", "9": "abcdfg"}
+	var digits := "0412"
+	for i in digits.length():
+		var ox := 20 + i * 52 + (14 if i >= 2 else 0)
+		var oy := 28
+		var s: String = segs[digits[i]]
+		# Unlit segments are drawn too, so each digit has a face behind it.
+		var all := {"a": Rect2i(ox + 8, oy, 24, 8), "b": Rect2i(ox + 32, oy + 8, 8, 28),
+				"c": Rect2i(ox + 32, oy + 44, 8, 28), "d": Rect2i(ox + 8, oy + 72, 24, 8),
+				"e": Rect2i(ox, oy + 44, 8, 28), "f": Rect2i(ox, oy + 8, 8, 28),
+				"g": Rect2i(ox + 8, oy + 36, 24, 8)}
+		for k: String in all:
+			var r: Rect2i = all[k]
+			_rect(r.position.x, r.position.y, r.size.x, r.size.y, ink if s.contains(k) else dim)
+	# Colon between the pairs.
+	_rect(121, 52, 8, 8, ink)
+	_rect(121, 84, 8, 8, ink)
+	# A bar of 16 cells, 12 lit.
+	for i in 16:
+		_rect(8 + i * 15, 136, 11, 24, ink if i < 12 else dim)
+	# A row of ticks, the long one every fourth.
+	for i in 16:
+		var h := 28 if i % 4 == 0 else 14
+		_rect(8 + i * 15, 184, 6, h, ink)
+	_rect(0, 244, 256, 4, dim)
+
+
+## Procedure placard: bone ground, brass frame with a dark keyline just inside,
+## a stencilled heading, a rule, four numbered lines. Accurate and unread.
+func _sc_placard() -> void:
+	var ground := _tone(SC_CREAM, 0.285)
+	var brass := _tone(SC_BRASS, 0.185)
+	var ink := _tone(SC_GREEN, 0.075)
+	for y in SIZE:
+		for x in SIZE:
+			var d := mini(mini(x, 255 - x), mini(y, 255 - y))
+			if d < 14:
+				var shade := 1.0
+				if d < 3:
+					shade = 1.25
+				elif d >= 11:
+					shade = 0.7
+				_put(x, y, _shade(brass, shade * _sc_coat(x, y, 7901, 0.12)))
+			elif d < 18:
+				_put(x, y, ink)
+			else:
+				_put(x, y, _shade(ground, _sc_coat(x, y, 7900, 0.03)))
+	_sc_text("ENTER BAY", 22, 30, 4, ink, 24)
+	_rect(24, 70, 208, 4, ink)
+	var lines := ["1 TEST SEAL", "2 CLEAR BAY", "3 LOG ENTRY", "4 AWAIT"]
+	for i in lines.size():
+		_sc_text(lines[i], 28, 88 + i * 36, 3, ink, 18)
+
+
+## Stencilled characters on institutional green: 32 glyphs in an 8 x 4 grid of
+## 32 x 64 cells. Bone paint at 0.50 on green at 0.15; high contrast is the job.
+func _sc_stencil() -> void:
+	_ceil = 0.62
+	var ground := _tone(SC_GREEN, 0.150)
+	var paint := _tone(SC_CREAM, 0.50)
+	for y in SIZE:
+		for x in SIZE:
+			_put(x, y, _shade(ground, _sc_coat(x, y, 8000, 0.03)))
+	for i in 32:
+		var gx := (i % 8) * 32 + 3
+		var gy := (i / 8) * 64 + 14
+		_sc_glyph(SC_FONT_ORDER[i], gx, gy, 5, paint)
+
+
+## Steel door face, painted: a grooved 14 px field edge, a bone designation
+## panel with a stencilled number, and a brass lever on the right.
+func _sc_door_steel() -> void:
+	var c := _tone(SC_GREEN, 0.135)
+	var panel := _tone(SC_CREAM, 0.270)
+	var ink := _tone(SC_GREEN, 0.075)
+	var brass := _tone(SC_BRASS, 0.185)
+	for y in SIZE:
+		for x in SIZE:
+			var f := _sc_coat(x, y, 8100, 0.03)
+			var d := mini(mini(x, 255 - x), mini(y, 255 - y))
+			if d >= 14 and d < 18:
+				f *= 0.6
+			elif d >= 18 and d < 20:
+				f *= 1.15
+			_put(x, y, _shade(c, f))
+	# Designation panel 128 x 80.
+	_rect(56, 88, 128, 80, ink)
+	_rect(60, 92, 120, 72, panel)
+	_sc_text("A04", 66, 107, 3, ink, 20)
+	_sc_text("BAY", 66, 137, 2, ink, 12, false)
+	# Lever handle: plate and bar.
+	_rect(212, 108, 16, 40, brass)
+	_rect(214, 110, 4, 36, _shade(brass, 1.3))
+	_rect(196, 122, 32, 12, _shade(brass, 0.85))
+
+
+## Two conduits side by side, running horizontally, in five hard shade bands
+## (no gradient: the pack draws structure hard), clamped with brass straps on a
+## 128 px pitch. Between and beside them, wall in shadow.
+func _sc_conduit() -> void:
+	var tube := _tone(SC_CONCRETE, 0.200)
+	var strap := _tone(SC_BRASS, 0.190)
+	var wall := _tone(SC_GREEN, 0.075)
+	var bands := [0.62, 0.86, 1.08, 1.0, 0.80]
+	for y in SIZE:
+		for x in SIZE:
+			var f := _sc_coat(x, y, 8200, 0.025)
+			var cy := 64 if y < 128 else 192
+			var s := float(y - cy) / 56.0             # -1 top .. +1 bottom
+			if absf(s) >= 1.0:
+				_put(x, y, _shade(wall, f))
+				continue
+			var idx := clampi(int((s + 1.0) * 0.5 * 5.0), 0, 4)
+			_put(x, y, _shade(tube, float(bands[idx]) * f))
+	# Straps: 16 wide, a little taller than the tube, with a bolt in the middle.
+	for sx in [56, 184]:
+		for cy in [64, 192]:
+			_rect(sx, cy - 60, 16, 120, strap)
+			_rect(sx, cy - 60, 4, 120, _shade(strap, 1.25))
+			_rect(sx + 12, cy - 60, 4, 120, _shade(strap, 0.72))
+			_rect(sx + 4, cy - 4, 8, 8, _shade(strap, 0.55))
