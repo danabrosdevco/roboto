@@ -80,6 +80,8 @@ const MADE := {
 	"roach_comb": "_roach_comb_plain",
 	"roach_comb_worn": "_roach_comb_worn",
 	"roach_fur": "_roach_fur",
+	"shield_plate": "_shield_plate",
+	"shield_plate_scarred": "_shield_plate_scarred",
 	"stratcom_green": "_sc_green",
 	"stratcom_green_panel": "_sc_green_panel",
 	"stratcom_cream": "_sc_cream",
@@ -101,7 +103,8 @@ const MADE := {
 ## the shader's luminance band instead.
 const MASKED := ["epaulette_plain", "epaulette_braid", "epaulette_pips", "pauldron_plate",
 		"pauldron_plate_worn", "pauldron_plate_dress", "pauldron_lame",
-		"bearskin_fur", "bearskin_fur_worn", "roach_comb", "roach_comb_worn"]
+		"bearskin_fur", "bearskin_fur_worn", "roach_comb", "roach_comb_worn",
+		"shield_plate", "shield_plate_scarred"]
 
 ## Emission for the few that want it, as {name: [colour, energy]}. The pack's
 ## own glitch_tx_1.tres is the pattern being followed.
@@ -1849,3 +1852,260 @@ func _sc_conduit() -> void:
 			_rect(sx, cy - 60, 4, 120, _shade(strap, 1.25))
 			_rect(sx + 12, cy - 60, 4, 120, _shade(strap, 0.72))
 			_rect(sx + 4, cy - 4, 8, 8, _shade(strap, 0.55))
+
+
+
+# ── Bulwark tower shield ─────────────────────────────────────────────────────
+#
+# shield_plate (issued) and shield_plate_scarred (the same plate after a
+# campaign). ONE layout function with a damage parameter, so the seams, the
+# straps and every bolt sit on the same texel in both and the scarred one reads
+# as the same object hit, not a different shield.
+#
+# THIS SURFACE DOES NOT TILE, AND IT IS NOT 256 TEXELS ACROSS. The shield is a
+# BoxMesh and Godot 4's BoxMesh lays its six faces out on a 3x2 atlas: each face
+# gets one cell of 1/3 x 1/2 of the image, 85 x 128 texels. The outer (-z) face,
+# which carries the boss and the slot, is the TOP-RIGHT cell, x 171..255, and it
+# is MIRRORED in u (world +x is the cell's left edge). The inner (+z) face is
+# the top-left cell, unmirrored. The other four cells are the 0.18 m edges.
+# Measured with a throwaway dump of get_mesh_arrays(), not remembered.
+# So the real density is 85 texels / 1.55 m = 55 texels a metre, and the brief's
+# "256 across 120 px" arithmetic is about three times too coarse: at 73-120 px
+# across the cell is 0.7 to 1.2 texels a pixel, not 2 to 3.5. Structure is sized
+# for that (a 0.15 m strap is 8 texels), and nothing is finer than 3 texels.
+#
+# The cell is padded by a bare border band, because nearest-mipmap sampling
+# bleeds a texel or two across a cell edge at distance.
+#
+# MASK. Authored for derive_mask_from_albedo = false: red 1 on the plate, red 0
+# on bolt heads, seam lines, the slot's reinforcing rim, scrapes, gouges and the
+# stripped metal round the boss. Luminance never decides anything there, so the
+# marks need no help from the ceiling: they read by CONTRAST against painted
+# plate. Peak stays under CEIL (0.46), floor 0.032 (one quantise level).
+# If a material derives the mask instead (Cosmetics.surface_base does today),
+# the body at 0.30-0.40 sits inside the band and the marks at <0.10 outside it,
+# so it degrades to roughly the same picture; scrapes then get painted.
+const SH_OX := 171            # front cell origin; width 85, height 128
+const SH_BX := 0              # back cell origin
+const SH_W := 85
+const SH_H := 128
+const SH_SLOT := Rect2(31.5, 21.9, 35.0, 7.5)     # cell texels: the cut in build_bulwark
+const SH_BOSS := Vector3(42.5, 68.7, 11.0)        # x, y, r of the hemisphere
+const SH_STRAPS := [41, 97]                        # top row of each 8-texel butt strap
+
+
+func _shield_plate() -> void:
+	_shield(0)
+
+
+func _shield_plate_scarred() -> void:
+	_shield(1)
+
+
+## Distance from (px,py) to segment a-b, and which side of it the point is on.
+func _seg(px: float, py: float, ax: float, ay: float, bx: float, by: float) -> Vector3:
+	var abx := bx - ax
+	var aby := by - ay
+	var l2 := maxf(abx * abx + aby * aby, 0.0001)
+	var t := clampf(((px - ax) * abx + (py - ay) * aby) / l2, 0.0, 1.0)
+	var qx := ax + abx * t - px
+	var qy := ay + aby * t - py
+	var side := signf(abx * (py - ay) - aby * (px - ax))
+	return Vector3(sqrt(qx * qx + qy * qy), side, t)
+
+
+## The wear is generated once and in a fixed order so the issued plate carries a
+## SUBSET of the scarred plate's scrapes. Each is [ax, ay, bx, by, thickness].
+func _shield_scrapes(count: int) -> Array:
+	var out := []
+	for i in count:
+		var h1 := _hash(i, 1, 4401)
+		var h2 := _hash(i, 2, 4401)
+		var h3 := _hash(i, 3, 4401)
+		var h4 := _hash(i, 4, 4401)
+		var ln := 9.0 + 16.0 * h3
+		# Mostly along the grain with a lean; a graze, not a stab.
+		var ang := (h4 - 0.5) * 0.9
+		var cx := 6.0 + h1 * (SH_W - 12.0)
+		var cy := 6.0 + h2 * (SH_H - 12.0)
+		out.append([cx - cos(ang) * ln * 0.5, cy - sin(ang) * ln * 0.5,
+				cx + cos(ang) * ln * 0.5, cy + sin(ang) * ln * 0.5, 2.2 + 1.4 * _hash(i, 5, 4401)])
+	return out
+
+
+func _shield_gouges() -> Array:
+	var out := []
+	for i in 4:
+		var cx := 14.0 + _hash(i, 1, 4406) * (SH_W - 28.0)
+		var cy := 12.0 + _hash(i, 2, 4406) * (SH_H - 24.0)
+		var ang := (_hash(i, 3, 4406) - 0.5) * 1.3 + (0.0 if i % 2 == 0 else 1.2)
+		var ln := 11.0 + 9.0 * _hash(i, 4, 4406)
+		out.append([cx - cos(ang) * ln * 0.5, cy - sin(ang) * ln * 0.5,
+				cx + cos(ang) * ln * 0.5, cy + sin(ang) * ln * 0.5])
+	return out
+
+
+func _shield(damage: int) -> void:
+	_floor = 0.032
+	var steel := Color(0.93, 0.96, 1.0)          # cool-neutral: warm renders as dirt
+	var scrapes := _shield_scrapes(14 if damage > 0 else 6)
+	var gouges := _shield_gouges()
+	# Everything starts as bare edge steel, mask 0; the two big cells overwrite it.
+	for y in SIZE:
+		for x in SIZE:
+			var g := 0.5 * _brush(x, y, 64, 4410) + 0.5 * _brush(x, y, 16, 4411)
+			_img.set_pixel(x, y, _shade(steel, 0.17 * (0.85 + 0.3 * g)))
+			if _mask != null:
+				_mask.set_pixel(x, y, Color(0, 0, 0))
+	for face in 2:
+		var ox := SH_OX if face == 0 else SH_BX
+		for cy in SH_H:
+			for cx in SH_W:
+				var r := _shield_texel(cx, cy, ox, face == 0, damage if face == 0 else 0,
+						scrapes if face == 0 else scrapes.slice(0, 4), gouges, steel)
+				_img.set_pixel(ox + cx, cy, r[0])
+				if _mask != null:
+					_mask.set_pixel(ox + cx, cy, Color(r[1], 0, 0))
+
+
+## One texel of one face: returns [colour, paint 0..1]. `front` is the outer face,
+## which has the slot and the boss.
+func _shield_texel(cx: int, cy: int, ox: int, front: bool, damage: int,
+		scrapes: Array, gouges: Array, steel: Color) -> Array:
+	var fx := float(cx) + 0.5
+	var fy := float(cy) + 0.5
+	var u := float(ox + cx) / SIZE
+	var v := float(cy) / SIZE
+	var grain := 0.5 * _brush(ox + cx, cy, 64, 4420) + 0.5 * _brush(ox + cx, cy, 16, 4421)
+	var edge := mini(mini(cx, SH_W - 1 - cx), mini(cy, SH_H - 1 - cy))
+	var seam := 0.065
+	var bright := 0.43
+
+	# Course: the plate is three sheets joined by two straps, each a hair
+	# different in tone, and lighter toward the top where the sky is.
+	var course := 0 if cy < SH_STRAPS[0] else (1 if cy < SH_STRAPS[1] else 2)
+	var body: float = [0.425, 0.40, 0.38][course] * (1.04 - 0.10 * float(cy) / SH_H)
+	var lum := body * (0.93 + 0.14 * grain) * _grime(u * 2.0, v * 2.0, 4430, 0.20)
+	var paint := 1.0
+
+	# Rolled border: two dark lines, a bare lip, the painted band between.
+	if edge == 0:
+		lum = seam
+		paint = 0.0
+	elif edge == 1:
+		lum = bright * (0.9 + 0.2 * grain)
+		paint = 0.0
+	elif edge < 9:
+		lum *= 0.88
+	elif edge == 9:
+		lum = seam
+		paint = 0.0
+
+	# Butt straps: a darker painted band with a dark line above and a bright lip
+	# below, and its own bolt row.
+	var bolt_rows := []
+	for s: int in SH_STRAPS:
+		if cy >= s and cy < s + 8 and edge > 10:
+			if cy == s:
+				lum = seam
+				paint = 0.0
+			elif cy == s + 7:
+				lum = bright * (0.9 + 0.2 * grain)
+				paint = 0.0
+			else:
+				lum *= 0.86
+		bolt_rows.append(s + 4)
+
+	if front:
+		# Slot reinforcing rim, bare steel, with a dark line outside it.
+		var sx0 := SH_SLOT.position.x - 4.0
+		var sx1 := SH_SLOT.end.x + 4.0
+		var sy0 := SH_SLOT.position.y - 4.0
+		var sy1 := SH_SLOT.end.y + 4.0
+		if fx >= sx0 - 1.0 and fx < sx1 + 1.0 and fy >= sy0 - 1.0 and fy < sy1 + 1.0:
+			if fx < sx0 or fx >= sx1 or fy < sy0 or fy >= sy1:
+				lum = seam
+			else:
+				lum = 0.27 * (0.9 + 0.2 * grain)
+			paint = 0.0
+		# Boss seat: dark ring just outside the dome.
+		var bd := sqrt(pow(fx - SH_BOSS.x, 2.0) + pow(fy - SH_BOSS.y, 2.0))
+		if bd > SH_BOSS.z + 1.5 and bd < SH_BOSS.z + 3.5:
+			lum = seam
+			paint = 0.0
+
+	# Bolt heads: the border, and a row on each strap. Six texels, a dome lit
+	# from the upper left, dark ring.
+	var bolts := []
+	for i in 9:
+		var by: float = 5.0 + float(i) * (SH_H - 11.0) / 8.0
+		bolts.append(Vector2(5.5, by))
+		bolts.append(Vector2(SH_W - 5.5, by))
+	for i in 4:
+		var bx: float = 5.5 + float(i + 1) * (SH_W - 11.0) / 5.0
+		bolts.append(Vector2(bx, 5.5))
+		bolts.append(Vector2(bx, SH_H - 5.5))
+	for row: int in bolt_rows:
+		for i in 5:
+			bolts.append(Vector2(15.5 + float(i) * (SH_W - 31.0) / 4.0, float(row)))
+	for b: Vector2 in bolts:
+		var dx := fx - (floorf(b.x) + 0.5)
+		var dy := fy - (floorf(b.y) + 0.5)
+		var rr := sqrt(dx * dx + dy * dy)
+		if rr < 2.7:
+			paint = 0.0
+			if rr >= 2.0:
+				lum = seam
+			else:
+				lum = bright * (1.0 if (dx + dy) < 0.0 else 0.55)
+
+	# DAMAGE ----------------------------------------------------------------
+	# Scrapes: bare metal, graze direction, unpainted. A dark undercut on one
+	# side keeps them from reading as stripes of light.
+	var in_slot_zone := front and fx > SH_SLOT.position.x - 5.0 and fx < SH_SLOT.end.x + 5.0 \
+			and fy > SH_SLOT.position.y - 5.0 and fy < SH_SLOT.end.y + 5.0
+	if edge > 10 and not in_slot_zone:
+		for sc: Array in scrapes:
+			var d := _seg(fx, fy, sc[0], sc[1], sc[2], sc[3])
+			var th: float = sc[4]
+			if d.x < th * 0.5:
+				lum = bright * (0.82 + 0.3 * grain)
+				paint = 0.0
+			elif d.x < th * 0.5 + 1.2 and d.y > 0.0:
+				lum *= 0.55
+
+	if damage > 0 and edge > 10:
+		# Gouges: dark cut with a bright lip on one side.
+		for gg: Array in gouges:
+			var d := _seg(fx, fy, gg[0], gg[1], gg[2], gg[3])
+			# Tapered: a gouge is deepest in the middle and runs out at both ends.
+			var gw := 0.4 + 1.5 * sin(PI * d.z)
+			if d.x < gw:
+				lum = 0.05
+				paint = 0.0
+			elif d.x < gw + 1.6 and d.y > 0.0:
+				lum = bright * 0.95
+				paint = 0.0
+		# The dent: lower-left quadrant, a shallow bowl lit from the upper left, so
+		# its upper-left rim is in shadow and its lower-right rim catches light.
+		# The paint has cracked and flaked along the rim.
+		var dd := sqrt(pow(fx - 22.0, 2.0) + pow(fy - 100.0, 2.0))
+		if dd < 19.0:
+			var rim := smoothstep(11.0, 19.0, dd)
+			var lit := ((fx - 22.0) + (fy - 100.0)) / maxf(dd * 1.414, 1.0)   # + toward lower-right
+			lum *= 1.0 + 0.55 * rim * clampf(lit, -1.0, 1.0)
+			lum *= 0.82
+			if rim > 0.55 and _hash(cx, cy, 4440) > 0.55:
+				lum = bright * 0.85
+				paint = 0.0
+		# Paint stripped round the boss: ragged edge, bare steel, scorched.
+		if front:
+			var bd2 := sqrt(pow(fx - SH_BOSS.x, 2.0) + pow(fy - SH_BOSS.y, 2.0))
+			var reach := SH_BOSS.z + 3.5 + 5.0 * _value(u, v, 6, 4450) \
+					+ 2.0 * _hash(cx / 3, cy / 3, 4451)
+			if bd2 < reach and lum > seam + 0.001:
+				var scorch := 0.78 + 0.35 * _fbm(u, v, 4452, 3, 8)
+				lum = 0.33 * scorch * (0.9 + 0.2 * grain)
+				paint = 0.0
+
+	return [_shade(steel, lum), paint]
