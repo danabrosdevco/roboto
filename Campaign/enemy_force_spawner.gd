@@ -33,6 +33,24 @@ const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
 ## the walkable ground, small enough that a squad never silently appears in a
 ## different part of the map from the one it was authored into.
 @export var max_spawn_snap: float = 45.0
+
+# ── VARIED KIT ────────────────────────────────
+## Roll each hostile's modules, equipment and gun from EnemyLoadouts.TABLES
+## rather than giving every body of a frame the same thing. Off restores the
+## old behaviour exactly: the chassis' issued weapon and nothing else.
+@export var randomise_loadouts: bool = true
+## Mixed into every body's seed, so the whole force can be rerolled without
+## touching the mission. Change it and every hostile in the game is carrying
+## something different; leave it and a mission plays the same way twice.
+@export var loadout_seed: int = 0
+
+## By path, not by class_name: a brand-new class_name is not resolvable until
+## the editor rescans, and that rescan must not be run with the editor open.
+const _Loadouts := preload("res://Campaign/enemy_loadouts.gd")
+
+## Set at deploy time from the mission id, so two missions on the same map do
+## not field the same kit, and a retry of one of them does.
+var _mission_seed: String = ""
 ## Stands each spawned body on the real ground: see ground_snap.gd. By path,
 ## not class_name, so an open editor never compiles this before it exists.
 const _Ground := preload("res://Campaign/ground_snap.gd")
@@ -93,6 +111,7 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 		push_warning("EnemyForceSpawner: no current mission. Campaign.current_mission is null, which usually means the level was launched directly instead of deployed to from base. See Campaign.debug_mission.")
 		return
 	_level = level
+	_mission_seed = "%s:%d" % [mission.id, loadout_seed]
 	if mission.replace_level_enemies:
 		_clear_level_hostiles(level)
 	if mission.enemy_force.is_empty():
@@ -245,6 +264,7 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		# garrison reads RELAY-1..RELAY-6 instead of RELAY-L-1 / RELAY-M-1.
 		soldier.soldier_name = "%s-%d" % [spec.callsign, i + 1]
 		_apply_frame(soldier, frame)
+		_apply_loadout(soldier, frame, "%s/%s/%d" % [_mission_seed, spec.callsign, i])
 		# For the playtest log: "Chaser", not "enemy_chaser". Legacy count-form
 		# frames are built on the fly and have no name worth reporting.
 		if frame.resource_path != "":
@@ -701,12 +721,37 @@ func _seat_for(at: Vector3, soldier: Soldier, level: Node, anchor: Vector3, take
 				return candidate
 			if step == 0:
 				break   # the drawn seat is one spot, not eight
-	# NOBODY STACKS, EVER. A post wedged between buildings can fail the clear
-	# test at every candidate — and falling back to one spot for all of them
-	# put three bodies inside each other at Mutaha's north island, which is
+	# SECOND BEST IS OUT OF THE WALL, NOT OUT OF A SQUADMATE.
+	#
+	# This used to fall straight through to the spacing-only search below, and
+	# on a brush map that is how bodies end up INSIDE the level. Audited across
+	# every mission: 124 hostiles standing in worldspawn geometry, including
+	# the ones reported from play on Polaris, inside the ramp down to the
+	# basement. Every one of them is on a TrenchBroom map; the generated-
+	# terrain valleys are almost clean, because open ground always has a free
+	# AND clear seat and the fallback never runs.
+	#
+	# The old ordering reasoned that standing inside a squadmate is worse than
+	# standing in a doorway. That is true, and it is also already handled:
+	# _spread_from below is a pass whose entire job is pushing overlapping
+	# bodies apart after the ground has had its say. Nothing anywhere digs a
+	# body out of a wall. So the preference inverts — take the seat that is
+	# clear of the level and let the spacing pass separate them.
+	for step in SEAT_STEPS:
+		var out := float(step) * SEAT_STEP
+		for turn in SEAT_TURNS:
+			var angle := TAU * float(turn) / float(SEAT_TURNS)
+			var candidate: Vector3 = at if step == 0 else at + Vector3(cos(angle), 0.0, sin(angle)) * out
+			if _seat_is_clear(candidate, reach, space, level as Node3D):
+				return candidate
+			if step == 0:
+				break
+
+	# NOBODY STACKS, EVER. A post wedged between buildings can fail both tests
+	# at every candidate — and falling back to one spot for all of them put
+	# three bodies inside each other at Mutaha's north island, which is
 	# precisely the pile this pass exists to prevent (see Enemy._damp_shoving
-	# for what an overlapping pair then does). Standing in a doorway is a bad
-	# spawn; standing INSIDE a squadmate is a broken one.
+	# for what an overlapping pair then does).
 	for step in SEAT_STEPS:
 		var out := float(step) * SEAT_STEP
 		for turn in SEAT_TURNS:
@@ -880,3 +925,11 @@ func clear() -> void:
 	# entry would send the next mission's reinforcements into the wrong level.
 	_reserves.clear()
 	_level = null
+
+
+## Rolled kit for one body. The arithmetic lives in EnemyLoadouts so that the
+## nest, which hatches bodies on a path of its own, cannot drift from this one.
+func _apply_loadout(soldier: Soldier, frame: ChassisDefinition, seed_text: String) -> void:
+	if not randomise_loadouts:
+		return
+	_Loadouts.apply(soldier, frame, _catalogue(), seed_text)

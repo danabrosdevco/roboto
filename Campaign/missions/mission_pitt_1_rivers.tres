@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3 uid="uid://4ctfgm8cxpe7"]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=41 format=3 uid="uid://4ctfgm8cxpe7"]
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
@@ -14,6 +14,7 @@
 [ext_resource type="Resource" uid="uid://c543tvfyia5hs" path="res://Campaign/chassis/chassis_reclaimer.tres" id="11_recl"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="12_nest"]
 [ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="13_bomber"]
+[ext_resource type="Resource" uid="uid://dnn5fqbfxwsln" path="res://Campaign/chassis/chassis_spotter.tres" id="90_spotter"]
 
 [sub_resource type="Resource" id="S_rail"]
 script = ExtResource("2_espec")
@@ -93,7 +94,7 @@ wake_after_kills = 0
 [sub_resource type="Resource" id="S_shore"]
 script = ExtResource("2_espec")
 callsign = "NORTH-SHORE"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("11_recl")])
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("11_recl"), ExtResource("90_spotter")])
 count = 0
 posture = 1
 route_tag = &""
@@ -123,7 +124,7 @@ wake_after_kills = 0
 [sub_resource type="Resource" id="S_strip"]
 script = ExtResource("2_espec")
 callsign = "STRIP"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("10_mech")])
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("10_mech"), ExtResource("90_spotter")])
 count = 0
 posture = 1
 route_tag = &""
@@ -183,7 +184,7 @@ wake_after_kills = 0
 [sub_resource type="Resource" id="S_furnace"]
 script = ExtResource("2_espec")
 callsign = "FURNACE"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("10_mech")])
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("10_mech"), ExtResource("90_spotter")])
 count = 0
 posture = 1
 route_tag = &""

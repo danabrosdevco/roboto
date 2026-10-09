@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=83 format=3 uid="uid://cry1dne04yl1u"]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=84 format=3 uid="uid://cry1dne04yl1u"]
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
@@ -16,6 +16,7 @@
 [ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="14_marks"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="15_lobber"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_mortar_track.tres" id="16_mortar"]
+[ext_resource type="Resource" uid="uid://dnn5fqbfxwsln" path="res://Campaign/chassis/chassis_spotter.tres" id="90_spotter"]
 
 [sub_resource type="Resource" id="S_crossw"]
 script = ExtResource("2_espec")
@@ -350,7 +351,7 @@ wake_after_kills = 0
 [sub_resource type="Resource" id="W_clock"]
 script = ExtResource("2_espec")
 callsign = "ZARYA"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks")])
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks"), ExtResource("90_spotter")])
 count = 0
 posture = 1
 route_tag = &""
@@ -560,7 +561,7 @@ wake_after_kills = 0
 [sub_resource type="Resource" id="I_compute"]
 script = ExtResource("2_espec")
 callsign = "NEFRIT"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("10_mech")])
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("10_mech"), ExtResource("90_spotter")])
 count = 0
 posture = 1
 route_tag = &""
@@ -965,7 +966,7 @@ wake_after_kills = 0
 [sub_resource type="Resource" id="N_road"]
 script = ExtResource("2_espec")
 callsign = "TAOTIE"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks")])
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks"), ExtResource("90_spotter")])
 count = 0
 posture = 1
 route_tag = &""

@@ -4380,7 +4380,14 @@ func apply_healing(amount: int, healer: Node = null) -> void:
 	var before: int = health
 	var was_down := downed
 	health = mini(max_health, health + amount)
-	if downed and health >= int(ceil(max_health * revive_at_fraction)):
+	# SPENT BODIES DO NOT GET UP. Patching one is not refused outright — the
+	# health still goes in, so a medic topping up a wreck is not doing nothing
+	# — but it will not stand. The repair tool declines to target it in the
+	# first place (see _is_repairable_ally), which is where the player is told
+	# why; a silent no here would be the bug, a documented one is the rule.
+	if downed and _revive_spent:
+		pass
+	elif downed and health >= int(ceil(max_health * revive_at_fraction)):
 		revive()
 	# WHO GOT THEM BACK UP. Every revive in the game comes through here — the
 	# player's repair tool, a mechanic's kit, a reclaimer's welder — so this is
@@ -4399,9 +4406,46 @@ func apply_healing(amount: int, healer: Node = null) -> void:
 	_Analytics.heal(self, health - before, healer, was_down and not downed)
 
 
-func revive() -> void:
+# ─────────────────────────────────────────────
+# ONE REVIVE PER ROBOT PER MISSION.
+#
+# A squadmate can be stood back up once. The second time it goes down it stays
+# down for the rest of the operation — NOT destroyed, and not lost: it comes
+# home, it just takes no further part. The whole point is that a revive stops
+# being a reflex and becomes a decision made while people are shooting at you.
+#
+# ONE ALLOWANCE, WHATEVER SPENDS IT. The player's repair tool, a mechanic's
+# kit, a reclaimer's welder and a self-revive nanite charge all come through
+# here, so all of them cost the same single charge. That deliberately changes
+# what the self-revive module is worth: it no longer grants an EXTRA life, it
+# means nobody has to walk over and spend yours. Said plainly because it is a
+# balance decision, not a side effect.
+#
+# `spends` is false for the repair-shop restoration between missions
+# (SquadSpawner), which is not a field revive and must not burn the next
+# operation's charge before it starts.
+# ─────────────────────────────────────────────
+## True once this robot's single field revive has been used. Lives on the node,
+## not the record, so it clears itself when the squad is rebuilt for the next
+## mission — "per mission" is exactly this node's lifetime.
+var _revive_spent: bool = false
+
+
+## Whether this robot can still be stood back up. Read by the repair tool so a
+## spent body is not even offered as a patient.
+func can_revive() -> bool:
+	return downed and not _revive_spent
+
+
+func revive(spends: bool = true) -> void:
 	if not downed:
 		return
+	# ASSIGNED, NOT JUST SET. A field revive spends the charge; a refit between
+	# operations RESTORES it. The first version only skipped setting the flag on
+	# a refit, which left a robot that had been patched up at base deploying
+	# with last mission's charge already gone — it came home repaired and went
+	# out with no revive left, which is the opposite of what the repair bought.
+	_revive_spent = spends
 	# Cancels any nanite timer still running. If a squadmate or the player got
 	# here first, the charge was not spent and stays available for next time.
 	_self_revive_gen += 1
@@ -4681,6 +4725,9 @@ func show_body():
 
 func reset():
 	ai_state = DefaultAIState
+	# A NEW MISSION IS A NEW ALLOWANCE. reset() is the fresh-start path, so the
+	# single field revive comes back with it.
+	_revive_spent = false
 	transform = spawn_transform
 	health = max_health
 	alive = true

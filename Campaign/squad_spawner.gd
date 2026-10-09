@@ -486,7 +486,10 @@ func sync_record(record: SoldierRecord) -> Soldier:
 		existing.health = record.current_health()
 		existing.signal_integrity = record.signal_integrity
 		if "downed" in existing and existing.downed and record.is_deployable():
-			existing.revive()
+			# spends = false: this is the repair shop between operations, not a
+			# field revive. Burning the allowance here would send a robot into
+			# the next mission with its one charge already gone.
+			existing.revive(false)
 		return existing
 
 	# Not in the world. If they're deployable now, they should be — unless they

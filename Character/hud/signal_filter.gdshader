@@ -124,17 +124,32 @@ void fragment() {
 	// coarser, which reads as bandwidth loss rather than as a broken monitor,
 	// and it degrades the WORLD without touching the HUD text drawn over it.
 	//
-	// THE CURVE IS SHAPED, NOT LINEAR. The first version drained colour almost
-	// at once and then had little left to give, so a lightly suppressed feed
-	// already looked greyscale while a nearly e-killed one looked much the
-	// same. `heavy` keeps the expensive-looking failures — deep posterising,
-	// chroma smear, the rust cast — out of the bottom half entirely and stacks
-	// them in the last third, which is where being nearly out should live.
-	// Resolution and packet loss stay closer to linear: those read as a bad
-	// link rather than as a broken screen, and they are the right early tell.
-	float heavy = damage * damage * damage;
-	float sig_h = signal_height / (1.0 + damage * 0.75);
-	float scale = max(floor(res.y / sig_h), 1.0);
+	// DAMAGE TOUCHES NO COLOUR. NONE. Not saturation, not the palette, not the
+	// luma step count, not the chroma grid.
+	//
+	// Three attempts went the other way and all three looked wrong. A straight
+	// desaturation washed the game out. Posterising luma was the worst of them:
+	// with the step count pushed down, a smooth sky snapped into two flat bands,
+	// and because palette() ramps shadow -> mid -> high those neighbouring bands
+	// landed on completely different hues — half the sky blue and half of it
+	// cream, with a hard seam between. That is not a degraded picture, it is a
+	// different picture.
+	//
+	// AND IT DOES NOT TOUCH THE CELL SIZE EITHER.
+	//
+	// Driving signal_height down with damage was the first thing tried and it
+	// is the thing that made the screenshot above look wrong. Growing the grid
+	// does not read as a worse signal, it reads as giant squares — and it is
+	// also what made the colour banding so violent, because each flat cell then
+	// paints one quantised palette band across a huge area and the seam between
+	// two bands becomes a hard line halfway up the sky.
+	//
+	// The grid stays exactly where it was authored. What a failing link costs
+	// you is the ability to MAKE THINGS OUT at that resolution: softer, less
+	// edge definition, more holes. None of those is hue and none of them is
+	// block size, so the world stays the colour and the shape it was drawn at
+	// and simply gets harder to read.
+	float scale = max(floor(res.y / signal_height), 1.0);
 	vec2  cell  = quantize_resolution ? px * scale : px;
 
 	vec2 uv   = SCREEN_UV;
@@ -152,12 +167,19 @@ void fragment() {
 	suv += vec2((hash12(blk.yx + t) - 0.5) * 24.0, 0.0) * cell * active;
 
 	// ── luma sample ──────────────────────────────────────────
+	// THE BLUR IS THE DAMAGE. The four taps already here exist to kill shimmer
+	// at a quarter of a cell apart; widening them with damage turns the same
+	// four fetches into a real smear at no extra cost. Combined with the
+	// coarser grid above, a bad link stops resolving detail — which is the
+	// thing being asked for, and the one degradation that cannot be mistaken
+	// for an art direction change.
+	float tap = 0.25 + damage * 1.6;
 	vec3 base;
 	if (cell_average) {
-		base = (fetch(suv + cell * vec2(-0.25, -0.25))
-			  + fetch(suv + cell * vec2( 0.25, -0.25))
-			  + fetch(suv + cell * vec2(-0.25,  0.25))
-			  + fetch(suv + cell * vec2( 0.25,  0.25))) * 0.25;
+		base = (fetch(suv + cell * vec2(-tap, -tap))
+			  + fetch(suv + cell * vec2( tap, -tap))
+			  + fetch(suv + cell * vec2(-tap,  tap))
+			  + fetch(suv + cell * vec2( tap,  tap))) * 0.25;
 	} else {
 		base = fetch(suv);
 	}
@@ -166,7 +188,7 @@ void fragment() {
 	// ── chroma sampled on a coarser grid (4:2:0-ish) ─────────
 	// Chroma subsamples coarser as the link degrades, so colour smears across
 	// block boundaries before it drains away entirely below.
-	vec2 ccell = cell * (chroma_divisor + heavy * 2.5);
+	vec2 ccell = cell * chroma_divisor;
 	vec3 cbase = fetch((floor(suv / ccell) + 0.5) * ccell) * exposure;
 	vec3 chroma = cbase - vec3(luma_of(cbase));
 
@@ -178,9 +200,7 @@ void fragment() {
 	// ── ordered dither, then quantise ────────────────────────
 	float d = bayer8(grid) * dither_strength;
 
-	// Fewer luma steps with damage: the image posterises down towards four
-	// levels, which is banding you can read at a glance rather than noise.
-	float lsteps = max(mix(luma_levels, 4.0, heavy) - 1.0, 1.0);
+	float lsteps = max(luma_levels - 1.0, 1.0);
 	float lq = clamp(floor(l * lsteps + d) / lsteps, 0.0, 1.0);
 
 	float csteps = max(chroma_levels - 1.0, 1.0);
@@ -195,13 +215,17 @@ void fragment() {
 		    abs(graded_luma(suv - vec2(cell.x, 0.0)) - l)),
 		max(abs(graded_luma(suv + vec2(0.0, cell.y)) - l),
 		    abs(graded_luma(suv - vec2(0.0, cell.y)) - l)));
-	float edge = smoothstep(edge_threshold, edge_threshold * 2.5, e) * edge_strength;
+	// ...AND THE SILHOUETTES GO WITH IT. The edge pass is what puts shape back
+	// into low-poly geometry that has no internal detail of its own — see the
+	// legibility strategy at the top of this file. Fading it is the most
+	// direct way to make things hard to tell apart, because it removes the
+	// exact thing that was telling them apart. Not to zero: without any edges
+	// at all the world stops reading as objects.
+	float edge = smoothstep(edge_threshold, edge_threshold * 2.5, e)
+			* edge_strength * (1.0 - damage * 0.65);
 
 	// ── compose ──────────────────────────────────────────────
-	// The shadow end rusts. On a green-and-teal palette
-	// a red-brown dark end is the single most legible "this is wrong" signal
-	// available, and it costs no extra pass.
-	vec3 sh = mix(shadow_tint, vec3(0.17, 0.045, 0.035), heavy * 0.9);
+	vec3 sh = shadow_tint;
 	vec3 col = mix(vec3(lq), palette(lq, sh), palette_strength);
 	col += chroma * saturation;
 	col = mix(col, edge_color, clamp(edge, 0.0, 1.0));

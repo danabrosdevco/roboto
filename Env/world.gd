@@ -83,6 +83,24 @@ func load_next_level(next_level_scene: PackedScene, success: bool = true) -> voi
 		player.place_at(new_level.spawn_point.global_transform)
 		player.last_bonfire = current_level.spawn_point.global_position
 	await get_tree().process_frame
+	# AND A PHYSICS FRAME, because the enemy force is placed against the
+	# NAVIGATION MAP and the navigation server only commits its regions on a
+	# physics step. A process frame is not one.
+	#
+	# Everything that keeps a spawned body out of the level asks the nav map
+	# first: EnemyForceSpawner._seat_is_clear refuses a candidate it cannot
+	# find walkable ground near, _resolve_anchor pulls a post onto the mesh,
+	# and GroundSnap.stand pulls a seat off a wall top. On an unsynced map
+	# every one of those queries returns Vector3.ZERO and every one of those
+	# safeguards turns itself off — the force lands on its raw ring offsets,
+	# inside whatever happens to be there.
+	#
+	# Measured on Polaris with tools/spawn_geometry_audit.gd: one body ends up
+	# inside the level with the map live, sixteen with it unsynced, including
+	# the garage squad in the ramp. Deploying one process frame after the level
+	# is added was a race against that sync, and nothing in the result says
+	# which way it went.
+	await get_tree().physics_frame
 	PauseHold.release(&"level_load")
 	register_world_objects(current_level)
 	_register_exits()

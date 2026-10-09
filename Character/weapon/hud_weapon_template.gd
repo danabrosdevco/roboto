@@ -347,4 +347,3 @@ func fire_tracer() -> void:
 	var dir := tracer_origin.global_transform.basis.x.normalized()
 	new_tracer.direction = dir
 	new_tracer.look_at(new_tracer.global_position + dir)
-

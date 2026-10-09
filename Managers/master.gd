@@ -523,11 +523,7 @@ func _play_engine_card() -> void:
 
 	await _wait(engine_seconds)
 
-	if not _skip_requested:
-		var fade := _content.create_tween()
-		fade.tween_property(_content, "modulate:a", 0.0, fade_seconds)
-		await _wait(fade_seconds)
-	_content.modulate.a = 1.0
+	await _fade_out_content()
 	_clear_content()
 
 
@@ -585,11 +581,7 @@ func _play_card(above: String, headline: String, suffix: String, seconds: float,
 	await _wait(seconds)
 
 	# Fade the card out, unless the player is skipping — then cut.
-	if not _skip_requested:
-		var fade := _content.create_tween()
-		fade.tween_property(_content, "modulate:a", 0.0, fade_seconds)
-		await _wait(fade_seconds)
-	_content.modulate.a = 1.0
+	await _fade_out_content()
 	_clear_content()
 
 
@@ -607,6 +599,33 @@ func _centred_label(text: String, col: Color, size: int) -> Label:
 # skip lands. Accumulates frame deltas rather than using a SceneTreeTimer,
 # because a timer cannot be cut short — a skip would start the next card while
 # the previous one's timer was still pending.
+## Fade the current card out, unless the player is skipping — then cut.
+##
+## KILL THE TWEEN WHEN THE WAIT IS CUT SHORT. This is the whole reason this is
+## a function rather than four lines pasted into each card.
+##
+## _wait returns the instant _skip_requested flips, so a skip that lands DURING
+## the fade left the tween running. The `modulate.a = 1.0` below then executed,
+## the live tween carried on driving the same property down, finished at 0.0 —
+## and stopped there, because the only thing that would have restored it had
+## already run. Everything built into _content afterwards inherited an alpha of
+## zero, which is how pressing a key on a splash card made the whole main menu
+## invisible: _build_menu clears _content and adds the buttons straight back
+## into the container the dead tween had emptied out.
+##
+## It looked like a keyboard-only bug and was not. A click goes through exactly
+## the same branch in _input; it is simply harder to land inside a 0.45 s
+## window with one deliberate click than with a key you are resting on.
+func _fade_out_content() -> void:
+	if not _skip_requested:
+		var fade := _content.create_tween()
+		fade.tween_property(_content, "modulate:a", 0.0, fade_seconds)
+		await _wait(fade_seconds)
+		if fade.is_valid():
+			fade.kill()
+	_content.modulate.a = 1.0
+
+
 func _wait(seconds: float) -> void:
 	var elapsed := 0.0
 	while elapsed < seconds:

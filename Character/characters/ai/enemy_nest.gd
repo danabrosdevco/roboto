@@ -1,5 +1,9 @@
 extends Soldier
 
+## By path, not by class_name: a brand-new class_name is not resolvable until
+## the editor rescans, and that rescan must not be run with the editor open.
+const _Loadouts := preload("res://Campaign/enemy_loadouts.gd")
+
 # ─────────────────────────────────────────────
 # NEST — an enemy building that makes more enemies.
 #
@@ -190,6 +194,13 @@ func _hatch() -> void:
 	body.max_health = frame.base_health
 	body.health = frame.base_health
 	body.soldier_name = "%s-%d" % [frame.display_name.to_upper(), hatched + 1]
+	# THE SAME ROLLED KIT A DEPLOYED HOSTILE GETS. A nest is the other place in
+	# the game that builds enemies, and without this every chaser it ever hatched
+	# was identical while the ones the mission placed were not — the difference
+	# would read as the nest being a lesser kind of enemy rather than a source of
+	# the same ones. Seeded on this nest and the hatch number, so a mission
+	# replayed produces the same wave in the same order.
+	_Loadouts.apply(body, frame, _loadout_catalogue(), "%s/%s/%d" % [get_path(), frame.id, hatched])
 	get_parent().add_child(body)
 	body.global_position = _hatch_spot()
 	if ai_manager != null:
@@ -224,3 +235,19 @@ func _forget_dead() -> void:
 		if body != null and is_instance_valid(body) and body.get("alive"):
 			live.append(body)
 	_mine = live
+
+
+# The catalogue, looked up through the campaign group rather than wired — the
+# same way squad_spawner.gd and enemy_force_spawner.gd find it. Null in the
+# Laboratory and in a level opened directly, where _Loadouts.apply does nothing
+# and the nest hatches exactly what it always did.
+var _loadout_cat: ItemCatalogue = null
+
+
+func _loadout_catalogue() -> ItemCatalogue:
+	if _loadout_cat != null:
+		return _loadout_cat
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	if campaign != null:
+		_loadout_cat = campaign.get("catalogue")
+	return _loadout_cat

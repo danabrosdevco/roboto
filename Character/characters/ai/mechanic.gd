@@ -250,7 +250,10 @@ func _needs_work(e: Enemy) -> bool:
 	if global_position.distance_to(e.global_position) > search_radius:
 		return false
 	if e.downed:
-		return true
+		# A body that has spent its one revive cannot be stood up again this
+		# mission (Enemy.revive), so welding it is time the squad's only medic
+		# does not have. It is not a patient; it is scenery until extraction.
+		return e.can_revive()
 	return _frac(e) < (patch_to if e == _patient else patch_below)
 
 
