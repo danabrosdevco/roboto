@@ -11,13 +11,13 @@
 [ext_resource type="PackedScene" uid="uid://v11ihb3rf0ny" path="res://3d_assets/chatgptg/drone_variant_02_interceptor.glb" id="8_sbw46"]
 [ext_resource type="Shader" path="res://Character/faction_metal.gdshader" id="9_4s073"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
-[ext_resource type="Texture2D" uid="uid://bvk26224sihon" path="res://2d_assets/metal textures poly.com/metal_plate_02_diff_4k.jpg" id="10_gmfse"]
+[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_metal_psx.png" id="10_gmfse"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
-[ext_resource type="Texture2D" uid="uid://o8ik6rntdl2v" path="res://2d_assets/metal textures poly.com/metal_plate_02_disp_4k.png" id="11_vf535"]
+[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_metal_disp_psx.png" id="11_vf535"]
 [ext_resource type="Script" path="res://faction_livery.gd" id="14_agla4"]
 [ext_resource type="AudioStream" uid="uid://dw0e386o42h2o" path="res://sounds/sfx/quadcopter loop/freesound_community-mini-quadcopter-flying-loop-80330.mp3" id="14_pou81"]
 [ext_resource type="PackedScene" uid="uid://cyssps1ojdxmr" path="res://Character/weapon/ai-wep_grenade_launcher.tscn" id="20_gl"]
-[ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="21_eyes"]
+[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_eye_psx.png" id="21_eyes"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_cusma"]
 radius = 0.6

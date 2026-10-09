@@ -88,12 +88,22 @@ func _initialize() -> void:
 		img.resize(size, size, Image.INTERPOLATE_LANCZOS)
 	img.convert(Image.FORMAT_RGB8)
 
+	# RAW: a normal or displacement map is DATA, not albedo. Retoning it to the
+	# pack mean, pushing its contrast and dithering it would corrupt the values
+	# the shader reads. Resize and stop.
+	if OS.get_environment("RAW") != "":
+		_save(img, out_name, force, src_path, before, size, was)
+		return
 	_retone(img, want_mean)
 	var gain := float(OS.get_environment("CONTRAST")) if OS.get_environment("CONTRAST") != "" else 1.0
 	if gain != 1.0:
 		_contrast(img, gain, want_mean)
 	_finish(img)
 
+	_save(img, out_name, force, src_path, before, size, was)
+
+
+func _save(img: Image, out_name: String, force: bool, src_path: String, before: Dictionary, size: int, was: String) -> void:
 	var out_dir := "res://textures/PSX_Textures"
 	var out_png := out_dir.path_join(out_name + ".png")
 	if FileAccess.file_exists(ProjectSettings.globalize_path(out_png)) and not force:

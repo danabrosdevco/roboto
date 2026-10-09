@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://i1sokhxesxia"
-path.s3tc="res://.godot/imported/robot_eye_psx.png-03373dadecbf49e9a771a52d445133c7.s3tc.ctex"
+uid="uid://dhe0gv1d5qif2"
+path.s3tc="res://.godot/imported/robot_metal_disp_psx.png-6b4b2a3a7472a536a24d6b5b260cb0e7.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://textures/PSX_Textures/robot_eye_psx.png"
-dest_files=["res://.godot/imported/robot_eye_psx.png-03373dadecbf49e9a771a52d445133c7.s3tc.ctex"]
+source_file="res://textures/PSX_Textures/robot_metal_disp_psx.png"
+dest_files=["res://.godot/imported/robot_metal_disp_psx.png-6b4b2a3a7472a536a24d6b5b260cb0e7.s3tc.ctex"]
 
 [params]
 
@@ -20,7 +20,7 @@ compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1

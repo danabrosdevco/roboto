@@ -5,7 +5,7 @@
 [ext_resource type="AudioStream" uid="uid://oqt8mtt15bwf" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="3_biu6s"]
 [ext_resource type="AudioStream" uid="uid://2qhhukpllf7e" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_ape12"]
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_ukn8i"]
-[ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="6_5gj2i"]
+[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_eye_psx.png" id="6_5gj2i"]
 [ext_resource type="Material" uid="uid://dym8xecxayc67" path="res://Campaign/faction_material_shader.tres" id="7_4gcnj"]
 [ext_resource type="PackedScene" uid="uid://gymujiepqrjl" path="res://Character/weapon/ai-wep_melee.tscn" id="8_nvx10"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_sjywf"]

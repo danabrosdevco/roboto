@@ -28,10 +28,21 @@ class_name AI
 # The health of this robot's networked systems.
 # Degraded by suppressing fire, EMP, jamming. Recovers passively.
 enum SignalState { CLEAN, FUZZED, DEGRADED, CRITICAL, EKILL }
-const SIGNAL_FUZZED: float   = 0.75  # below here: accuracy penalty kicks in
-const SIGNAL_DEGRADED: float = 0.50  # below here: sensors halved, movement stutters
-const SIGNAL_CRITICAL: float = 0.25  # below here: ignores squad orders, erratic
-const SIGNAL_EKILL: float    = 0.01  # below here: fully disabled
+# RAISED 2026-10-09, all four. The old floor was 0.01, which meant an e-kill
+# wanted the link essentially at zero -- and with passive recovery running the
+# whole time you bounced off it instead of landing on it. The most interesting
+# state in the system was the one that almost never happened.
+#
+# GLOBAL, NOT JUST THE PLAYER. Every robot reads these, so enemies are now
+# easier to suppress and to EMP by the same amount. That is the intent -- the
+# player is an AI on the same rules -- but it is a real balance change and
+# jamming is now a much stronger tool for both sides.
+#
+# Previous: 0.75 / 0.50 / 0.25 / 0.01
+const SIGNAL_FUZZED: float   = 0.85  # below here: accuracy penalty kicks in
+const SIGNAL_DEGRADED: float = 0.62  # below here: sensors halved, movement stutters
+const SIGNAL_CRITICAL: float = 0.38  # below here: ignores squad orders, erratic
+const SIGNAL_EKILL: float    = 0.12  # below here: fully disabled
 ## ...and it STAYS disabled until signal has climbed back to here. The same
 ## shape as revive_at_fraction on a downed robot: going out takes one threshold,
 ## coming back takes another. Without it an e-kill was a flinch — recovery is

@@ -5,7 +5,7 @@
 [ext_resource type="AudioStream" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__19.wav" id="4_7rccs"]
 [ext_resource type="AudioStream" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="5_ifcs8"]
 [ext_resource type="Material" path="res://Character/characters/ai/robot_metal.tres" id="6_ss66h"]
-[ext_resource type="Texture2D" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="7_snhro"]
+[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_eye_psx.png" id="7_snhro"]
 [ext_resource type="PackedScene" path="res://Character/components/spark_burst.tscn" id="8_bpqlw"]
 [ext_resource type="AudioStream" path="res://sounds/sfx/free cinematic sfx/freesound_community-gear-spinning-loop-6981.mp3" id="9_x83pv"]
 [ext_resource type="AudioStream" path="res://sounds/sfx/psx ui sfx/ScoreG-loop.wav" id="10_fl5go"]

@@ -4,6 +4,12 @@ extends Soldier
 ## the editor rescans, and that rescan must not be run with the editor open.
 const _Loadouts := preload("res://Campaign/enemy_loadouts.gd")
 
+## How much of what this nest hatches comes out upgraded — the same dial as
+## EnemySquadSpec.kit_variance, and 0 for the same reason: a hive that starts
+## producing armoured chasers because a system was switched on globally is a
+## difficulty change nobody authored. Set it on the nests of a later mission.
+@export_range(0.0, 1.0, 0.05) var kit_variance: float = 0.0
+
 # ─────────────────────────────────────────────
 # NEST — an enemy building that makes more enemies.
 #
@@ -200,7 +206,8 @@ func _hatch() -> void:
 	# would read as the nest being a lesser kind of enemy rather than a source of
 	# the same ones. Seeded on this nest and the hatch number, so a mission
 	# replayed produces the same wave in the same order.
-	_Loadouts.apply(body, frame, _loadout_catalogue(), "%s/%s/%d" % [get_path(), frame.id, hatched])
+	if kit_variance > 0.0:
+		_Loadouts.apply(body, frame, _loadout_catalogue(), "%s/%s/%d" % [get_path(), frame.id, hatched])
 	get_parent().add_child(body)
 	body.global_position = _hatch_spot()
 	if ai_manager != null:
