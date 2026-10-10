@@ -52,7 +52,7 @@ a line would simply replace the soldier.
 |---|---|---|
 | `id` | `&"sapper"` | permanent once a kill is saved |
 | `supply` | 1 | |
-| `cost` | 75 | above the soldier's 50, below the mechanic's 70? no — above it |
+| `cost` | 75 | above the soldier's 50 and the mechanic's 70 |
 | `base_health` | 55 | slightly under the soldier's 60 |
 | `base_speed` | 0.95 | carrying a load |
 | `base_sensor_range` | 45 | infantry standard |

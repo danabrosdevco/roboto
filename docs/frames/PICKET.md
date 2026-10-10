@@ -6,9 +6,12 @@ Supply 2 · ground · anti-air · **status: concept selected, not built**
 
 ## 1. Concept
 
-Selected **C2** from the second concept round: launcher-led, six tubes canted
-up and unmistakable, a sensor dish demoted to a shoulder fitting, Walker legs
-underneath. 2.24 W × 3.27 H × 1.76 L as drawn.
+**Selected: C2 — LAUNCHER-LED.** 2.24 W x 3.27 H x 1.76 L.
+
+Six tubes canted up and unmistakable, a sensor dish demoted to a shoulder
+fitting, Walker legs underneath. Two rounds rather than one: C2 is a revision
+of round one's winner, not a fifth option — `concepts/picket_concepts.png` is
+the round, `concepts/picket_refine.png` is the fix.
 
 Round one put up five answers — a tripod gun, a Rover with a high-angle
 turret, a dish-led "umbrella", a crouched "mantis" holding guns up on two
@@ -54,7 +57,7 @@ is a frame that is GOOD at the job everything else is merely CAPABLE of — see
 |---|---|---|
 | `id` | `&"picket"` | permanent once a kill is saved — `kills_by_kind` keys persist |
 | `supply` | 2 | the specialist band, alongside Rover and Reclaimer |
-| `cost` | 210 | above Rover (150), below Spotter (180)? no — above both; it is a counter-pick |
+| `cost` | 210 | above the Rover (150) and the Spotter (180); it is a counter-pick |
 | `base_health` | 140 | thinner than a Rover's 180. It is not meant to be shot at |
 | `base_speed` | 0.9 | legs, and it wants to be positioned rather than driven |
 | `base_sensor_range` | 75 | second only to the Spotter's 90 — it has to see them coming |
