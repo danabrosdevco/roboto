@@ -72,6 +72,21 @@ static func head(to: Node, at: Vector3, scale_f: float = 1.0) -> Node3D:
 			Vector3(-0.34, 0.14, -0.66) * scale_f, Vector3(1, 0.82, 1))
 	_Parts.box(turret, Vector3(0.03, 0.85, 0.03) * scale_f,
 			Vector3(-0.5, 0.68, 0.48) * scale_f)
+	# THE MANTLET SWALLOWS THE EYE, AT EVERY SCALE. The eye is at x -0.34*s and
+	# the mantlet box below spans -0.45*s..0.05*s in x, -0.75*s..-0.49*s in z
+	# and -0.16*s..0.20*s in y — and the eye's centre (-0.34, 0.14, -0.66)*s is
+	# inside all three. Scaling cannot fix it: both terms scale together.
+	#
+	# It is invisible on the Walker because at scale 1.0 the head is 1.18 wide
+	# and the eye still stands proud of the plate. Below about 0.8 it does not:
+	# the Kite's pod at 0.6 had its gun-port ring passing 5.2 cm THROUGH the
+	# eye, measured, and build_kite.gd fixes it by mirroring the whole gun to
+	# starboard so the eye keeps the canonical Walker offset and the two sit on
+	# opposite cheeks.
+	#
+	# Left as drawn here, because the concept sheets were selected from this
+	# geometry. Any new frame calling head() below ~0.8 inherits the fault and
+	# should mirror the gun the same way.
 	# Mantlet and barrel.
 	_Parts.box(turret, Vector3(0.5, 0.36, 0.26) * scale_f, Vector3(-0.2, 0.02, -0.62) * scale_f)
 	_Parts.cyl(turret, 0.075 * scale_f, 1.5 * scale_f,

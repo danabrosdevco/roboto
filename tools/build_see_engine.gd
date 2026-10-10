@@ -652,10 +652,11 @@ func _leg(rig: Node3D, hub_tag: String, tag: String, yaw_deg: float) -> Node3D:
 ##
 ##   Yoke      stood upright in the XY plane, carrying the trunnions at its
 ##             left and right extremes. It yaws with GimbalYaw.
-##   Equator   lying flat round the lens's own equator. It PITCHES with the
-##             lens, which is what sells the trunnions as a real axis — a
-##             hoop that stayed level while the lens tipped inside it would
-##             read as a hula hoop.
+##   Equator   a great circle round the lens, CANTED 30 degrees about the
+##             trunnion axis so it clears the pupil (see below — it used to cut
+##             straight through it). It PITCHES with the lens, which is what
+##             sells the trunnions as a real axis — a hoop that stayed level
+##             while the lens tipped inside it would read as a hula hoop.
 ##
 ## THE TRUNNIONS BELONG TO THE YAW NODE, NOT THE PITCH NODE. They are the pins
 ## the lens turns on; bolted to the lens they would swing with it and the
@@ -669,15 +670,49 @@ func _gimbal(rig: Node3D) -> Node3D:
 
 	var pitch := _node(gimbal, "LensPitch", Vector3.ZERO)
 	_mesh(pitch, "Lens", _spherem(1.15), Vector3.ZERO)
-	_mesh(pitch, "Equator", _torusm(1.18, 1.42), Vector3.ZERO)
+	# ── THE EQUATOR IS CANTED, AND THE CANT IS THE PUPIL'S ──
+	#
+	# The hoop below the comment said the hoops "pass well outboard" of the
+	# pupil. THEY DID NOT. Measured on the built scene, the Equator's centreline
+	# circle (radius 1.30, tube radius 0.12) ran 0.224 m THROUGH the pupil
+	# sphere and 0.142 m through its bezel: the pupil is 0.44 in radius and
+	# stands 0.307 m proud of a 1.15 lens, so at y 0 it is squarely in the
+	# hoop's band. The human's note was "the ring can't cut into the eye
+	# itself". Only the Equator was at fault — the Yoke clears the pupil by
+	# 0.890 m and is untouched.
+	#
+	# THE FIX IS THE HOOP'S PLANE, WHICH IS THE ONLY FREE ONE. The hoop is
+	# concentric with the lens, so ANY plane through the lens centre keeps every
+	# point of it at the same 1.30 from the centre and therefore hugging the
+	# lens exactly as closely as before — it costs nothing and the measured box
+	# does not move. The alternatives all do cost: lifting the hoop to y 0.363
+	# clears the pupil but leaves it floating 0.09 m off a surface it is
+	# supposed to be strapped to, and widening its inner radius to 1.443 both
+	# detaches it and grows the frame by a quarter of a metre a side.
+	#
+	# 30 DEGREES, ABOUT X, POSITIVE. Positive X raises the FRONT of the hoop
+	# (y = -z tan t, and the pupil is at -Z), so the belt arcs up and over the
+	# pupil instead of across it. About X specifically because the X axis lies
+	# IN the hoop's plane at any tilt, so the hoop still passes through
+	# (±1.30, 0, 0) — exactly where the trunnions are — and the pins still have
+	# a ring to bear against. 25 degrees is the minimum that clears the bezel
+	# (by 0.003 m); 30 leaves 0.243 m on the pupil and 0.069 m on the bezel.
+	#
+	# THE PUPIL DID NOT MOVE AND MUST NOT. Off-centre and low is the detail the
+	# concept was chosen for; centring it would "fix" this by throwing the frame
+	# away.
+	_mesh(pitch, "Equator", _torusm(1.18, 1.42), Vector3.ZERO,
+			Vector3(30.0 * DEG, 0, 0))
 
 	# ── THE PUPIL, OFF-CENTRE AND LOW ──
 	#
 	# A CENTRED PUPIL IS A FACE. This one is looking somewhere you are not,
 	# which is the whole character of the faction and the detail that makes the
 	# frame uncomfortable to look at. KEEP IT OFF-CENTRE. Nothing is allowed to
-	# cross it: the gimbal hoops pass well outboard of it and the column stops
-	# a metre below.
+	# cross it, and MEASURE THAT RATHER THAN ASSERTING IT — the line that used
+	# to stand here said the hoops passed well outboard, and the Equator was in
+	# fact 0.224 m inside this sphere. It is canted now; the Yoke clears by
+	# 0.890 m; the column stops a metre below.
 	#
 	# NOTE THE NAME. There is no node called "Eye" anywhere on this frame, on
 	# purpose — the Walker's single offset eye is StratCom's grammar and the

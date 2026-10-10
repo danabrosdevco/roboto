@@ -74,10 +74,12 @@ extends SceneTree
 # body's -Z. Built the other way the gun fits, elevates, tracks and fires
 # directly behind the frame, and nothing complains.
 #
-# ITS OFFSET IS THE WALKER'S, SCALED. Walker turret space puts the mantlet at
-# (-0.2, 0.02, -0.6) and the mount at (-0.2, 0.02, -0.72) — 0.01 inside the
-# mantlet's front face. The Kite's pod is the same head at scale 0.6, so those
-# become (-0.12, 0.012, -0.36) and (-0.12, 0.012, -0.432). A fitted machine_gun
+# ITS OFFSET IS THE WALKER'S, SCALED AND MIRRORED. Walker turret space puts the
+# mantlet at (-0.2, 0.02, -0.6) and the mount at (-0.2, 0.02, -0.72) — 0.01
+# inside the mantlet's front face. The Kite's pod is the same head at scale 0.6,
+# so those become (±0.12, 0.012, -0.36) and (±0.12, 0.012, -0.432); the sign is
+# POSITIVE here, which is the Walker's own offset about the pod's centreline, and
+# the reason is the eye — see GUN_X. A fitted machine_gun
 # is 0.56 of receiver centred on the mount and 1.4 m of jacket, fins and flash
 # hider in front of it, so the receiver sits in the pod and the barrel comes out
 # of the port.
@@ -139,6 +141,40 @@ const DATUM := 2.00
 ## The concept builds the gun pod from ConceptKit.head() at this scale, and the
 ## Walker's own mount offsets are scaled by it below.
 const POD_SCALE := 0.60
+
+## THE GUN IS ON STARBOARD BECAUSE THE EYE IS ON PORT. Mantlet, GunPort and
+## WeaponMount all sit at this x, and it is the Walker's -0.2 * POD_SCALE
+## MIRRORED.
+##
+## The first build put the gun at -0.12 and the eye at -0.204, which is
+## concept_kit.head()'s own arrangement: mantlet at -0.2 * scale, eye at
+## -0.34 * scale, both to port. Those two overlap at every scale and the
+## overlap is INHERITED, not introduced here — the Walker has it at scale 1.0
+## and it is simply invisible on a head that big. On a 0.6 pod it is not:
+## measured on the built scene the eye sphere (r 0.102, centred turret-local
+## (-0.204, 0.078, -0.396)) ran 0.052 m INTO the GunPort torus and 0.102 m into
+## the Mantlet box. The human's review note was "eye needs to be clear of the
+## ring", and it was the ring passing through the eye, not near it.
+##
+## WHY THE GUN MOVED AND NOT THE RING OR THE EYE. The ring's inner radius of
+## 0.12 is sized against a fitted machine_gun receiver's 0.113 half-diagonal,
+## so it can be neither shrunk nor grown without either fouling the weapon or
+## becoming a hoop round nothing. And the eye cannot be cleared in place: with
+## the ring where the barrel line is, the eye would have to move to x -0.349 or
+## up to y 0.250 to get radially outboard of it, and both are outside a head
+## body 0.708 wide and 0.36 tall — the eye would hang off the pod. Pushing the
+## ring forward in z instead leaves it floating 0.06 m in front of the mantlet
+## face with no barrel modelled to carry it.
+##
+## So the gun crosses to the other side of the pod, which is the same fix
+## another frame in this batch used for the same inherited overlap. Measured
+## after: 0.087 m from eye to ring and 0.072 m from eye to mantlet. It also
+## puts the gun on the flank the AmmoDrum is already bolted to (they clear each
+## other by 0.334 m in z, nowhere near touching), which reads as a feed rather
+## than as a drum for a gun on the far side. The EYE DOES NOT MOVE: its offset
+## is concept_kit.head()'s canonical Walker eye and the one feature that
+## identifies a robot in this game at forty pixels.
+const GUN_X := 0.12
 
 var _metal: Material
 var _root: CharacterBody3D
@@ -621,6 +657,10 @@ func _gun_pod(rig: Node3D) -> Node3D:
 	# albedo. Deliberately left out of the livery list above: painting it with the
 	# faction colour like everything else would make the one feature that
 	# identifies a robot change colour per side. KITE.md asks for exactly one.
+	#
+	# IT IS AT concept_kit.head()'s OWN OFFSET AND IT STAYS THERE. The gun is on
+	# the opposite flank for this piece's sake, not the other way round — see
+	# GUN_X for the measured overlap that cost, and for why nothing here moved.
 	var eye := _mesh(head, "Eye", _spherem(0.102), Vector3(-0.204, 0.084, -0.396))
 	eye.scale = Vector3(1.0, 0.82, 1.0)
 	eye.material_override = _eye_material()
@@ -643,17 +683,19 @@ func _gun_pod(rig: Node3D) -> Node3D:
 	# straight back to level the moment something pitched it. It is unwired: see
 	# WHAT THIS PASS CANNOT WIRE in the header.
 	var pivot := _node(turret, "GunPivot", Vector3(0, -0.024, -0.30))
-	_mesh(pivot, "Mantlet", _boxm(Vector3(0.30, 0.216, 0.156)), Vector3(-0.12, 0.036, -0.072))
+	_mesh(pivot, "Mantlet", _boxm(Vector3(0.30, 0.216, 0.156)), Vector3(GUN_X, 0.036, -0.072))
 	# The aperture ring on the mantlet face — the concept's muzzle brake, moved
 	# to where the barrel now begins instead of where a stand-in barrel used to
 	# end. Inner radius 0.12 clears a fitted machine_gun's receiver, whose
 	# half-diagonal is 0.113, so the weapon passes through rather than into it.
-	_mesh(pivot, "GunPort", _torusm(0.12, 0.15), Vector3(-0.12, 0.036, -0.155),
+	# THAT RADIUS IS THE RING'S JOB AND IT IS NOT NEGOTIABLE — see GUN_X above
+	# for why the ring moved sideways instead of growing or shrinking.
+	_mesh(pivot, "GunPort", _torusm(0.12, 0.15), Vector3(GUN_X, 0.036, -0.155),
 			Vector3(PI * 0.5, 0, 0))
 	# YAW +PI/2 AND NOTHING ELSE. The down-cant is the pod's, inherited; putting
 	# any of it here would both double it and break the one assertion that
 	# catches a backwards mount. See the header.
-	_node(pivot, "WeaponMount", Vector3(-0.12, 0.036, -0.132), Vector3(0, PI * 0.5, 0))
+	_node(pivot, "WeaponMount", Vector3(GUN_X, 0.036, -0.132), Vector3(0, PI * 0.5, 0))
 
 	# AMMO DRUM on the pod's flank, laid across the airflow. With the port and
 	# the mantlet it is what says "gun" on a frame carrying no barrel of its own,
