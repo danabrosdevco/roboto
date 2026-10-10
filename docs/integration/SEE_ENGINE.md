@@ -730,3 +730,25 @@ paths and a parallel run produces a FAIL that looks real and does not reproduce.
    exist.** `icons/items/designator_*.png`, listed and confirmed. `icons.gd:60-62`
    says the Spotter's `"OPTICS"` resolving is the same coincidence. A rename to
    anything else is a silent blank (`FRAME_ANATOMY.md` §6.10).
+
+---
+
+# AMENDMENT — 2026-10-10, human review. THE FACTION IS **HOME COMMAND**.
+
+The human's words: *"homecommand etc was requested and is fine."*
+
+So the rename another lane made on disk is intended, and §0's enum must follow
+it. **Do not write `STRATCOM`.** Match whatever identifier the working tree
+already uses — `hud_palette.gd` has `FAC_HOME`, not `FAC_STRATCOM`, so
+`HOME` is the likely answer; **read the file and match it rather than
+inventing a third spelling.**
+
+This is not cosmetic. `FRAME_ANATOMY.md` §2.5 establishes that a faction's
+enum identifier is permanent the day a kill is saved against it, for the same
+reason the quadcopter bomber is still called `gunship` in `kill_kinds.gd:21`.
+Getting it wrong costs a rename table forever.
+
+Check all five mechanical append sites for the same spelling before writing
+any of them: `Managers/enums.gd`, `faction_livery.gd`'s `COLORS`,
+`hud_palette.gd`, `kill_kinds.gd`'s `FRAMES`, and the two hardcoded
+`== ENEMY` comparisons at `squad_commander.gd:756` and `ai_manager.gd:497`.

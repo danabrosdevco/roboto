@@ -753,3 +753,51 @@ measurable here (CLAUDE.md). Stop and ask.
     frame: **nothing in the project leads a moving target**, so "is the round
     hitscan?" is not only a question about which base class to use — it is the
     question of whether the weapon can hit a mover at all.
+
+---
+
+# AMENDMENT — 2026-10-10, human review. READ THIS BEFORE SECTION 3.
+
+**The launcher fires rockets that land at a distance. It is INDIRECT FIRE, and
+the hitscan recommendation above is overruled.**
+
+The human's words: *"that's fine, the launcher should shoot rockets that land
+at a distance."* "That's fine" answers §4's pitch question — **the 42°–89°
+clamp stays**, and the recommendation to widen it to −6°…89° is dropped. At
+artillery elevation a launcher that arcs is correct and a launcher that fires
+flat is not.
+
+## What changes
+
+- **`flak` becomes a rocket, not a hitscan burst.** The reasoning that chose
+  hitscan — nothing in this project leads a moving target, so a projectile
+  misses an orbiting aircraft every time — **is still true and is now a
+  design consequence rather than a blocker.** See the open question below.
+- **The base class changes.** `ai_weapon_grenade_launcher.gd` is the indirect
+  family and is already shared by four shipped weapons (mortar, GL, turret GL,
+  cluster) with nothing but different exports. Check whether a fifth set of
+  exports is enough before writing a subclass — that is `FRAME_ANATOMY.md`
+  §3.4's rule and it probably answers this one for free.
+- **The template changes** from `ai-wep_heavy_mg.tscn` to the mortar's. Read
+  `item_mortar.tres` and its `ai_scene` together.
+- **§4's spread reasoning no longer applies.** `ai_spread_mrad = 6.0` was
+  chosen so a flat burst would not miss a small target. An arcing rocket is
+  placed, not sprayed; re-derive it.
+
+## The open question this creates, which the builder must NOT resolve alone
+
+**A frame called Picket, designed and selected as the answer to being bombed,
+now has a weapon that cannot hit an aircraft.** Nothing leads a target, so a
+rocket lands where the aircraft was. Three readings, and the human picks:
+
+1. **It is rocket artillery and the anti-air identity goes.** Honest, and the
+   silhouette still works — six tubes at 54° read as artillery perfectly well.
+   `PICKET.md` §2's whole argument would need rewriting.
+2. **It is both**: rockets at ground targets, and air defence comes from
+   something else on the frame.
+3. **Leading gets built.** `AIWeaponSAM extends AIWeaponRecoilless` overriding
+   `_aim` is about twenty lines and it is the thing that would make the model
+   true — but it is a weapon-system feature for the whole game and must not
+   ride in on one chassis.
+
+**Build the rocket. Do not decide the identity.** Flag it in your report.

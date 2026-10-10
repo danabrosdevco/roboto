@@ -432,3 +432,28 @@ the stopping point, but it is a safe checkpoint.
    cheap and would make the frame's state readable the way the Vessel's bay is.
    Not specified above because it is an art call. **Recommend it** — it is the
    same argument `VESSEL.md` §5 makes, and it costs a loop over named nodes.
+
+---
+
+# AMENDMENT — 2026-10-10, human review.
+
+**Approved, and it gets more equipment slots.**
+
+The human's words: *"drayman. yes and we can give it more equipment slots as
+well."* Two things follow.
+
+1. **The narrow-gap warning in §1 is answered — build it.** The job is
+   restoring squad equipment charges, which this brief established is the one
+   consumable in the game with no escape hatch (`AIEquipmentSlot` has
+   `initialize`, `has_uses`, `consume` and `remaining`, and no way back). The
+   ammunition half is dropped as the premise it was.
+2. **Raise `equipment_slots` above the value in §2's table**, and say in your
+   report what you chose and why. The frame now has two reasons for them: what
+   it restores to others, and what it carries itself. Those are different
+   arguments and the number should follow whichever the build settles on —
+   check whether `AIEquipmentSlot` restore works slot-for-slot or by item id,
+   because that decides whether a Drayman must *carry* smoke to refill smoke.
+
+The two-line `AIEquipmentSlot.restore()` this brief specifies is a change to a
+shared resource script. It needs the full `tools/test.sh`, not just
+`check.sh --changed`.

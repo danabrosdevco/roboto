@@ -611,3 +611,48 @@ cut in this batch.
     (`hatchling_payload.gd:109-113`, no zero guard). Not a Vessel bug, but it
     is directly in this frame's path. Worth a one-line guard in that file by
     whoever touches it next.
+
+---
+
+# AMENDMENT — 2026-10-10, human review. READ THIS BEFORE SECTION 3.
+
+**The Hatchlings come from a RECHARGING WEAPON, not from an equipment slot.**
+
+The human's words: *"vessel - can have a recharging weapon that releases
+hoppers."* This answers the economics problem this brief raised — 340 compute
+for two hoppers alive 25 seconds each — and it answers it better than the
+three-`.tscn` variant fix proposed above, which is therefore **dropped**.
+
+## What changes
+
+- **`equipment_slots` is no longer the delivery mechanism.** The brief's whole
+  §3 equipment analysis — `item_hatchling.tres`, `quantity = 2`, the
+  `AIEquipmentSlot` charge counting, the "one slot is two releases" correction
+  — stops being the design. Keep it in the document as the record of why.
+- **A new weapon item occupies the weapon mount and spawns on a cooldown.**
+  `weapon_slots = 1` is now spent on this, not on a machine gun. Decide and
+  state whether the Vessel keeps a gun at all; if it does not, the
+  `machine_gun` whitelist entry added for it on 2026-10-10 is harmless but
+  should be noted as unused rather than quietly left.
+- **Reload IS the recharge.** `AIWeapon` already has `magazine_size`,
+  `magazine_current`, `reload_time` and `_finish_reload()` setting the
+  magazine back to full with no reserve — which everywhere else in this
+  project is the bug that makes squad ammunition infinite, and here is exactly
+  the mechanic wanted. A magazine of 1 and a long `reload_time` **is** a
+  recharging launcher, with no new timer and no new state.
+- **It is the Nest's spawn logic on a weapon's trigger.** `enemy_nest.gd` for
+  what to spawn and how to cap live offspring; `hatchling_payload.gd` for the
+  release itself. Note `hatchling_payload.gd` ships `count = 1` and
+  `lifetime = 25.0`, and `lifetime = 0.0` meaning "forever" is a live bug
+  (`_expire_later` creates a zero-length timer) — §4 of this brief has it.
+- **The doors still key off the same state.** The `_committed()` gate in §5
+  stands; `bay_has_charges()` now reads the weapon's magazine rather than an
+  equipment slot. That is a smaller change than it sounds and it makes the
+  door state and the launcher state the same fact, which is better.
+
+## What to settle and report
+
+Whether a release costs a magazine round that recharges forever, or whether
+there is a per-mission cap on top. Forever is simpler, needs no new state, and
+makes the Vessel a presence rather than a consumable — but it is a balance
+call and it is the human's.

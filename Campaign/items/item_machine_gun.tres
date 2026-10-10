@@ -34,4 +34,4 @@ equipment_slot_bonus = 0
 suppressive_fire = false
 required_rank = 0
 requires_chassis = Array[StringName]([])
-chassis_whitelist = Array[StringName]([&"rover", &"walker"])
+chassis_whitelist = Array[StringName]([&"rover", &"walker", &"kite", &"vessel"])

@@ -765,3 +765,56 @@ paths and a parallel run produces a FAIL that looks real and does not reproduce.
     leave a tween driving a freed node. `MEMORY.md`: coroutines must not outlive
     the tree — kill the tweens in `die()`, and this is a crash, not a
     cosmetic.
+
+---
+
+# AMENDMENT — 2026-10-10, human review.
+
+**The `shield_projector` stays an item. The recommendation above to cut it is
+overruled.**
+
+The human's words: *"bastion can have a special weapon as well."* So the
+hardening field is a fitted weapon on the mount, not `built_in = "EMITTER"`
+plus code.
+
+What that changes from §3:
+
+- The `ItemDefinition` **is** written. `kind = 0`, `base_damage = 0`,
+  `usable_by_player = false`, whitelisted to `[&"bastion"]` and nothing else.
+  The precedent is the **Reclaimer**, not the repair lance — see
+  `FRAME_ANATOMY.md` §3.3 and the correction block in `docs/frames/DRAYMAN.md`.
+- **The frame carries two things and has one mount.** §2 gives it
+  `weapon_slots = 1` and `starting_weapon_id = &"heavy_mg"`. Decide and state
+  how the projector and the MG coexist: a second mount on the model, the
+  projector as the `built_in` the MG replaces, or the MG dropped. The model
+  has one `WeaponMount` today, so if the answer needs two this becomes a model
+  change and must be reported rather than improvised.
+- **The hardening mechanism is unchanged.** §4's stamp-with-expiry read
+  through an accessor still stands, and the reason still stands: a receiver
+  frozen by the distance cull has `_physics_process` off and would keep a
+  recomputed bonus forever. An item wrapping it does not change that.
+
+`heavy_mg` now whitelists `bastion` (added 2026-10-10), so §3.1's blocker is
+cleared.
+
+---
+
+# AMENDMENT — 2026-10-10, human review. THE FACTION IS **HOME COMMAND**.
+
+The human's words: *"homecommand etc was requested and is fine."*
+
+So the rename another lane made on disk is intended, and §0's enum must follow
+it. **Do not write `STRATCOM`.** Match whatever identifier the working tree
+already uses — `hud_palette.gd` has `FAC_HOME`, not `FAC_STRATCOM`, so
+`HOME` is the likely answer; **read the file and match it rather than
+inventing a third spelling.**
+
+This is not cosmetic. `FRAME_ANATOMY.md` §2.5 establishes that a faction's
+enum identifier is permanent the day a kill is saved against it, for the same
+reason the quadcopter bomber is still called `gunship` in `kill_kinds.gd:21`.
+Getting it wrong costs a rename table forever.
+
+Check all five mechanical append sites for the same spelling before writing
+any of them: `Managers/enums.gd`, `faction_livery.gd`'s `COLORS`,
+`hud_palette.gd`, `kill_kinds.gd`'s `FRAMES`, and the two hardcoded
+`== ENEMY` comparisons at `squad_commander.gd:756` and `ai_manager.gd:497`.
