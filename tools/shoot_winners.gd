@@ -42,7 +42,6 @@ func _winners() -> Array:
 		["WALKER", "SUPPLY 3 - SHIPPING TODAY, FOR SCALE", _walker_reference],
 		["LANCE", "SUPPLY 1 - CHEAP WHEELS, NO TURRET", _A.lance_a],
 		["PICKET", "SUPPLY 2 - ANTI-AIR, TUBES CANTED UP", _P.picket_c2],
-		["WARDEN", "SUPPLY 2 - A JAMMING FIELD, NO GUN", _B.warden_a],
 		["DRAYMAN", "SUPPLY 2 - REFILLS MAGAZINES", _B.drayman_a],
 		["KITE", "SUPPLY 2 - FIRST ARMED FLYER YOU OWN", _A.kite_d],
 		["VESSEL", "SUPPLY 3 - DROPS TWO HATCHLINGS", _B.vessel_a],

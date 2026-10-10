@@ -1,4 +1,33 @@
-# WARDEN — design document
+# WARDEN — CUT
+
+**Killed 2026-10-10, after the model was built and photographed.**
+`warden.tscn` and `tools/build_warden.gd` are deleted and it is out of the
+roster, the winners sheet and the shot rig.
+
+**Why, in the human's words: "i'm just not sure what the drayman or warden are
+supposed to actually 'do'".** The model did not answer it and neither did this
+document. Two things found while trying to:
+
+1. **It pins, it does not degrade.** Measured in `_score_combat_option`
+   (`enemy.gd:3086-3131`), a jammed enemy gets MOVE x0.5, AIM x0.6 and FIRE
+   **+0.8** — it stands still and keeps shooting, less accurately. That is a
+   real effect and arguably a good one, but it is not the effect section 2
+   promises, and a frame whose own design doc describes the wrong verb is a
+   frame nobody can brief an artist or a tester on.
+2. **Nothing can ever leave the field.** No AI knows it is being jammed —
+   `EquipmentContext` has no term for it — so the field is strictly stronger
+   against AI than against a human, and the counter-play the frame was
+   supposed to create does not exist on either side.
+
+The document is kept because the gap is real: suppression, EMP,
+`signal_resistance` and the contact ledger all exist and **nothing in the
+roster has the signal layer as its job.** If it comes back, it should come
+back as a frame that pins — and the jamming emitter should be an articulated
+arm off a Reclaimer-pattern chassis, not a mast grown out of a hull, which is
+the one thing the build pass did settle.
+
+---
+
 
 Supply 2 · ground · **emitter platform** · **status: concept selected, not built**
 

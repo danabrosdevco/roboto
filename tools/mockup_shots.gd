@@ -56,7 +56,6 @@ const FRAMES := {
 	# yet, which is why bake_icons.gd cannot see them: it reads the catalogue.
 	"lance": "res://Character/characters/ai/lance.tscn",
 	"picket": "res://Character/characters/ai/picket.tscn",
-	"warden": "res://Character/characters/ai/warden.tscn",
 	"drayman": "res://Character/characters/ai/drayman.tscn",
 	"kite": "res://Character/characters/ai/kite.tscn",
 	"vessel": "res://Character/characters/ai/vessel.tscn",
@@ -417,7 +416,7 @@ func _vehicle_single(kind: String, kitted: Callable, file: String) -> void:
 ## Bastion, and one distance either crops the big ones or loses the small ones
 ## in the middle of the shot. So the subject is measured once it is staged and
 ## the camera is pushed back along the same bearing in proportion.
-const NEW_FRAMES := ["lance", "picket", "warden", "drayman",
+const NEW_FRAMES := ["lance", "picket", "drayman",
 		"kite", "vessel", "brood", "bastion", "see_engine"]
 ## The three that belong to an enemy faction, so they are photographed in the
 ## livery they will actually wear rather than in the player's blue.
