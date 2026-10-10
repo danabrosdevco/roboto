@@ -117,10 +117,10 @@ A vertical object against the sky produces one every time.
 
 ### 2c. Filmic tonemapping destroys three of the four steps that exist.
 
-`ENV=proposal` (filmic tonemap, `background_energy_multiplier` 2.0 → 1.0,
+`ENV=filmic` (filmic tonemap, `background_energy_multiplier` 2.0 → 1.0,
 sky ambient, plus the fog): near→far spread collapses from **4.1 steps to 1.1**.
 Filmic compresses the highlights, and the highlights are where the entire far
-field lives. See `env/salient_S3_no_mans_land_proposal.png` — the far ridges
+field lives. See `env/salient_S3_no_mans_land_filmic.png` — the far ridges
 come out *paler than the near ground* and the frame is one flat wash. **Do not
 copy Hillfort's and Georgetown's `tonemap_mode = 2` onto this map.**
 
@@ -134,7 +134,28 @@ field from 0.239 to 0.372 and leaves the far field untouched at 0.699 — spread
 looking. Leave `fog_height` where it is, or set `fog_height_density = 0.0` and
 delete the dead knob.
 
-### 2e. A converging ground line does not survive on shelled mud.
+### 2e. Spreading landmarks evenly is worse than clustering them near the player.
+
+This one overturned the first draft of this document. `MOCKUP=marks` is four
+pieces placed deliberately close to the cameras; `MOCKUP=lattice` is sixteen on
+a 110 m stagger covering the whole contested ground. Mean "standing at range"
+across the seven Salient views:
+
+| | pieces | mean standing at 25-200 m |
+|---|---|---|
+| authored | — | 0.24% |
+| `MOCKUP=poles` (63 poles) | 63 | 0.32% |
+| `MOCKUP=lattice` (even grid) | 16 | 0.34% |
+| **`MOCKUP=marks` (four, placed close)** | **4** | **0.44%** |
+
+**Four well-placed pieces beat sixteen evenly-spread ones and sixty-three
+poles.** Screen area at range is dominated by *proximity*, not by count: a 27 m
+tower subtends 15 degrees at 100 m and 5 degrees at 300 m, so a landmark two
+hundred metres off the line of advance is costing a piece and buying almost
+nothing. The rule that falls out of this is in P1 below, and it is not the rule
+I would have written before measuring.
+
+### 2f. A converging ground line does not survive on shelled mud.
 
 Georgetown's towpath reads largely on linear perspective: a hard-edged brick
 path running to the vanishing point, warm against cool grey. Salient already
@@ -156,55 +177,21 @@ Ranked by effect per unit of work. All of it goes in the `the_salient` entry in
 `["row", piece, x1, z1, x2, z2, spacing]` / `["at", piece, x, z, yaw]` forms.
 Nothing here needs a new asset or a new generator feature.
 
-### P1 — THE TELEGRAPH LADDER. *Do this one first.*
+### P1 — MID-GROUND MASSES, HUNG ON THE LINES OF ADVANCE. *Do this one first.*
 
-Five lines of `props/prop_power_pole` running **along** the axis of advance, a
-pole every 40 m, the lines 88 m apart across the frontage.
+**The rule, which is the part that matters:** every landmark goes **50 to
+150 m off a line the squad actually walks** — the three crossing routes and the
+objective anchors — and no two consecutive ones are the same piece. A landmark
+200 m off the advance costs a piece and buys almost nothing (section 2e).
+Do not lay them on an even grid. Hang them on the routes.
 
-```gdscript
-+ [["row", "props/prop_power_pole", -390.0, -184.0, 390.0, -184.0, 40.0],
-   ["row", "props/prop_power_pole", -390.0,  -96.0, 390.0,  -96.0, 40.0],
-   ["row", "props/prop_power_pole", -390.0,   -8.0, 390.0,   -8.0, 40.0],
-   ["row", "props/prop_power_pole", -390.0,   80.0, 390.0,   80.0, 40.0],
-   ["row", "props/prop_power_pole", -390.0,  168.0, 390.0,  168.0, 40.0]]
-```
+The routes are not typed anywhere and must not be: `build_salient.gd` already
+writes `Trenchworks/Anchors` markers for every feature of all three crossings,
+and `_landmarks()` already places the ditched tank and the op tower ruin off
+`_marks["A.blown"]` precisely so they follow the road if it moves. New
+landmarks go in the same function, off the same marks.
 
-**Why this and not more landmarks.** Salient's existing dressing is twenty-odd
-`row` entries and **every one of them runs at a constant x** — across the
-frontage, perpendicular to the advance. That puts every copy of a repeated
-object at *the same distance* from an attacker, so the repetition carries no
-ranging information whatsoever. Turning the same trick through ninety degrees
-turns it into a ruler. This is one inversion, not a new idea.
-
-**Measured, not guessed.** `prop_power_pole` is **9.50 m** tall (`KIT=1`). At
-648p / 70 degrees that is 124 px at 40 m, 50 px at 100 m, 25 px at 200 m,
-12 px at 400 m — a clean halving ladder that stays resolvable past the far
-objectives, and it subtends one degree at 544 m. It is a thin dark vertical
-against a luma-0.83 sky, which is the exact signal the filter's edge pass is
-built to draw.
-
-**Shot:** `mockup/salient_S3_no_mans_land.png` against
-`salient_S3_no_mans_land.png`. In the baseline the only two vertical objects in
-the frame are a power pole at ~100 m and the clock tower at 420 m, and they are
-the **same apparent size** — you cannot tell them apart. In the mock-up there
-is a diminishing row and you can read the ground.
-
-- **Count:** 105 poles, +8.2% on the map's 1285 pieces. Static meshes with a
-  ~1 m footprint; run `tools/probe_level_baseline.gd` after and confirm it has
-  not moved.
-- **88 m spacing, not 90:** it keeps every line off the objective anchors'
-  own z values (0, 10, 34, 70, −70, 95, −95, −142, −195) by at least 6 m.
-- **Clashes:** poles will land in trench cuts and on the wire and berm rows at
-  x = −152, −140, −126, 12, 26, 40, 44. The builder already counts and reports
-  guard clashes at placement — check the count it prints. If dress rows are
-  **not** guarded, nudge each line's z by up to ±6 m until
-  `tools/probe_map_overlap.gd` and `tools/probe_level_faults.gd` come back
-  clean. Do not leave an interpenetrating pole: there is no depth small enough.
-- **Navmesh:** 105 new obstacles in open ground. Rebake and re-run the reach
-  probe before calling it done — this is the map where a 6 cm change closed
-  four bridges.
-
-### P2 — TWO MID-GROUND MASSES PER APPROACH
+A starting set, measured and photographed:
 
 ```gdscript
 + [["at", "industrial/industrial_water_tower", -120.0,  86.0,   0.0],
@@ -213,22 +200,82 @@ is a diminishing row and you can read the ground.
    ["at", "trench/op_tower_ruin",               124.0,  70.0, 180.0]]
 ```
 
-Measured heights: `industrial_water_tower` **27.00 m** (one degree at 1547 m),
-`op_tower_ruin` **16.22 m** (929 m). Both are already in the map's kit; the
-op tower is already used once, at the blown span.
+Measured heights (`KIT=1`): `industrial_water_tower` **27.00 m**, one degree at
+1547 m; `op_tower_ruin` **16.22 m**, 929 m. Also available and already in the
+kit: `feature_watchtower` 8.72 m, `fort_floodlight_mast` 9.91 m,
+`estate_frame_shell` 22.9 m. All are built assets standing on flat ground, so
+**playable ground must be flat** and **gate with walls, not cliffs** are both
+satisfied — none of this is terrain.
 
-These are the thing the eye locks onto, and they tell you *which sector* you
-are looking at — the second missing cue, because the map is built from one
-repeated module and nothing says which part of it is in front of you. The
-positions put a 27 m mass at **99 m** from the jump-off and a second at
-**158 m** from the front line, i.e. inside the dead band, flanking the axis
-rather than blocking it.
+These four pieces take the front-line view from **0.24% to 1.20%** standing at
+range, a five-fold improvement for four pieces, and they are the strongest
+effect per unit of work anything in this investigation produced.
 
-**Shot:** `mockup/salient_S5_front_line_east.png`. The water tower on the left
+**Shots:** `marks/salient_S5_front_line_east.png` — the water tower on the left
 and the tower ruin on the right frame the village between them, and the village
-now reads as *behind* them instead of as part of the same strip.
+now reads as *behind* them instead of as part of the same horizon strip.
+`lattice/salient_S3_no_mans_land.png` shows the same thing from no-man's-land:
+one big near mass with a clear silhouette and a smaller one behind it, which is
+two planes where the baseline had one.
 
-Four pieces. This is the cheapest real improvement on the list.
+Expect to need **ten to fourteen** of them before the map matches Georgetown,
+not four — four fixed one view and left six of the seven where they were. Add
+them in pairs tied to route marks and re-shoot, rather than committing a grid.
+
+- **Navmesh:** these are solid obstacles in open ground. Rebake and re-run the
+  reach probe. This is the map where a 6 cm change closed four bridges.
+- **Overlap:** `tools/probe_map_overlap.gd` and `tools/probe_level_faults.gd`
+  must stay clean. A water tower dropped on a wire row interpenetrates, and
+  there is no depth small enough to be safe.
+
+### P2 — FINISH THE TELEGRAPH LADDER THAT IS ALREADY HALF BUILT
+
+This map **already has the right idea in it.** Two rows of
+`props/prop_power_pole` run the entire length of it, along the advance axis:
+
+```gdscript
+["row", "props/prop_power_pole", -520.0, 160.0, 500.0, 160.0, 46.0],
+["row", "props/prop_power_pole", -520.0, -160.0, 500.0, -160.0, 52.0],
+```
+
+They are at z = ±160, which is **160 m off the axis everybody advances along**.
+From the jump-off the nearest pole is 161 m away at 83 degrees off the look
+direction — out at the rim of a 101-degree frame, where a receding line cannot
+be read as a receding line. The asset, the idiom and the spacing are all here;
+only the placement puts them where nobody is looking. Fill the 320 m gap:
+
+```gdscript
++ [["row", "props/prop_power_pole", -400.0, -88.0, 400.0, -88.0, 40.0],
+   ["row", "props/prop_power_pole", -400.0,  -8.0, 400.0,  -8.0, 40.0],
+   ["row", "props/prop_power_pole", -400.0,  84.0, 400.0,  84.0, 40.0]]
+```
+
+**And re-space the two existing lines from 46 m and 52 m to 40 m.** A ruler
+whose lines disagree about how long a step is is not a ruler. 40 m on all five.
+
+`prop_power_pole` is **9.50 m**. At 648p / 70 degrees that is 124 px at 40 m,
+50 px at 100 m, 25 px at 200 m, 12 px at 400 m — a clean halving ladder that
+stays resolvable past the far objectives (one degree at 544 m), drawn as a thin
+dark vertical against a luma-0.83 sky, which is exactly the discontinuity the
+filter's edge pass exists to outline.
+
+This is ranked **below** P1 because the measurement says so: 63 poles moved the
+mean from 0.24% to 0.32%, where four towers moved it to 0.44%. But the metric
+measures *area*, and a ruler works by count and spacing rather than by area, so
+treat that ranking as "do both, towers first" and not as an argument against
+the poles. The complaint has two halves — "what is coming up" and "how far
+things are from me" — and the poles are the half that answers the second.
+
+- **63 poles**, +4.9% on the map's 1285 pieces. Static meshes, ~1 m footprint;
+  re-run `tools/probe_level_baseline.gd` and confirm frame cost has not moved.
+- **z −88, −8, +84 rather than round numbers:** every objective anchor sits at
+  z 0, 10, 34, ±70, ±95, −142 or −195, and this clears all of them by 8 m or
+  more.
+- **Clashes:** poles will land on the wire, berm and dragon-teeth rows at
+  x = −152, −140, −126, 12, 26, 40, 44 and in the trench cuts. The builder
+  prints a guard clash count at placement — read it. If dress rows turn out
+  not to be guarded, nudge each line's z by up to ±6 m until the overlap and
+  fault probes come back clean.
 
 ### P3 — MORE WATER IN NO-MAN'S-LAND
 
@@ -276,18 +323,27 @@ looking at is a hue and not a guess. That is a texture pass, not a dress line.
 
 ## 4. If only one change were allowed
 
-**P1, the telegraph ladder.**
+**P1 — ten to fourteen tall built masses, hung 50 to 150 m off the lines of
+advance.**
 
-It is the only item on the list that supplies a *ruler* rather than a landmark,
-and ranging is precisely what the human asked for ("how far things are from
-me"). It is five lines in a table that already has twenty like them, using an
-asset the map already ships, and it is the one change for which there is a
-before-and-after photograph taken through the real filter. P2 is cheaper and I
-would take it in the same commit, but four towers tell you *where* you are;
-only the ladder tells you *how far*.
+It is the largest measured effect per unit of work by a factor of about
+fifteen: four pieces took one view from 0.24% to 1.20% standing at range, where
+sixty-three poles moved the seven-view mean from 0.24% to 0.32%. It needs no
+new asset, no generator change and no terrain work — the kit already holds a
+27 m water tower and a 16 m tower ruin, and `build_salient.gd` already has the
+function that hangs landmarks off route marks. And it is the only change that
+puts *mass* into the 31-pixel strip where all of 25 m to the horizon is
+currently drawn, which is the geometric cause of the whole complaint.
 
-And do not touch the fog. It is not the problem, and three of the four things
-you would naturally do to the environment measurably make it worse.
+The honest caveat is that four is not enough — it fixed one view of seven. Add
+them in pairs off route marks and re-shoot with
+`MOCKUP=marks tools/probe_legibility.gd` until every forward view has two
+masses in it.
+
+And **do not touch the fog.** It is not the problem, Salient already has more
+near-to-far value separation than either map that reads well, and three of the
+four things you would naturally reach for in the environment resource
+measurably make the picture worse.
 
 ---
 
@@ -300,10 +356,15 @@ O="D:/Godot Games/roboto_shots/legibility"
 TALL=1 "$G" --headless --path . --script res://tools/probe_legibility.gd
 KIT=1  "$G" --headless --path . --script res://tools/probe_legibility.gd
 
-RENDER_OUT="$O"          "$G" --audio-driver Dummy --path . --script res://tools/probe_legibility.gd
-RENDER_OUT="$O/mockup" MOCKUP=poles ONLY=salient "$G" --audio-driver Dummy --path . --script res://tools/probe_legibility.gd
+RENDER_OUT="$O"        "$G" --audio-driver Dummy --path . --script res://tools/probe_legibility.gd
+RENDER_OUT="$O/marks"  MOCKUP=marks ONLY=salient "$G" --audio-driver Dummy --path . --script res://tools/probe_legibility.gd
 RENDER_OUT="$O/env"    ENV=fogonly  ONLY=S3      "$G" --audio-driver Dummy --path . --script res://tools/probe_legibility.gd
 ```
+
+`MOCKUP` takes `poles`, `marks`, `lattice`, `track` or `both`; `ENV` takes
+`fogonly`, `heightfog` or `filmic` (all three rejected — see section 2). Everything either flag does is applied to
+the loaded scene **in memory** and nothing is written back, so none of it can
+collide with whoever is editing the level.
 
 Not `--headless` for anything that renders: the dummy driver returns a blank
 image, and a screen-reading shader with no screen reports a perfectly flat

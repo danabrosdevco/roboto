@@ -7,7 +7,7 @@ extends SceneTree
 #   RENDER_OUT="D:/Godot Games/roboto_shots/legibility" \
 #       godot --path . --script res://tools/probe_legibility.gd
 #   RENDER_OUT=... ONLY=salient godot --path . --script res://tools/probe_legibility.gd
-#   RENDER_OUT=... ENV=proposal godot --path . --script res://tools/probe_legibility.gd
+#   RENDER_OUT=... ENV=filmic godot --path . --script res://tools/probe_legibility.gd
 #   RENDER_OUT=... MOCKUP=both godot --path . --script res://tools/probe_legibility.gd
 #   TALL=1 godot --path . --script res://tools/probe_legibility.gd   (inventory only)
 #   KIT=1  godot --path . --script res://tools/probe_legibility.gd   (piece heights)
@@ -102,15 +102,24 @@ const VIEWS: Array = [
 ##   deck's own `row` dressing entry, so a line that works here transcribes
 ##   into tools/mapdeck_data.gd without being re-derived.
 const MOCKUP_SETS: Dictionary = {
-	# THE RANGING LADDER. A 9.5 m pole every 40 m, five lines 90 m apart, so
-	# whatever part of a 430 m frontage you are on, one line is within 45 m and
-	# runs away from you to the vanishing point.
+	# THE RANGING LADDER — THREE LINES ADDED TO TWO THAT ARE ALREADY THERE.
+	#
+	# The map ALREADY has a telegraph line, and it already runs the right way:
+	# two rows of prop_power_pole the full length of it, at z +160 and z -160.
+	# They are 160 m off the axis everybody advances along, so from the
+	# jump-off the nearest pole is 161 m away at 83 degrees off the look
+	# direction — out at the edge of a 101-degree horizontal frame, where a
+	# receding line cannot be read as one. The idea, the asset and the idiom
+	# are all in the level; only the placement puts them where nobody is
+	# looking. These three fill the 320 m gap between them.
+	#
+	# z -88, -8, +84 rather than round numbers: every objective anchor on this
+	# map sits at z 0, 10, 34, +-70, +-95, -142 or -195, and a pole through an
+	# objective is a pole the builder's guard throws away.
 	"poles": [
-		["props/prop_power_pole", -400.0, -180.0, 400.0, -180.0, 40.0, 90.0],
-		["props/prop_power_pole", -400.0, -90.0, 400.0, -90.0, 40.0, 90.0],
-		["props/prop_power_pole", -400.0, 0.0, 400.0, 0.0, 40.0, 90.0],
-		["props/prop_power_pole", -400.0, 90.0, 400.0, 90.0, 40.0, 90.0],
-		["props/prop_power_pole", -400.0, 180.0, 400.0, 180.0, 40.0, 90.0],
+		["props/prop_power_pole", -400.0, -88.0, 400.0, -88.0, 40.0, 90.0],
+		["props/prop_power_pole", -400.0, -8.0, 400.0, -8.0, 40.0, 90.0],
+		["props/prop_power_pole", -400.0, 84.0, 400.0, 84.0, 40.0, 90.0],
 	],
 	# THE CONVERGING LINE. ground_track is ALREADY on this map in four rows,
 	# and all four of them are in the rear areas: x -520..-190 behind our line
@@ -121,14 +130,45 @@ const MOCKUP_SETS: Dictionary = {
 		["ground/ground_track", -190.0, -100.0, 210.0, -120.0, 4.0, 90.0],
 		["ground/ground_track", -190.0, 14.0, 210.0, 26.0, 4.0, 90.0],
 	],
+	# THE MID-GROUND MASSES. Four pieces, as single-item lines so one set can
+	# be shot WITHOUT the other. They were added to every mock-up at first and
+	# that made the comparison worthless: "poles" was really poles plus four
+	# towers, and the towers turn out to be carrying most of the improvement,
+	# which is the opposite of the conclusion the confounded run supported.
+	"marks": [
+		["industrial/industrial_water_tower", -120.0, 86.0, -120.0, 86.0, 1.0, 0.0],
+		["industrial/industrial_water_tower", 150.0, -96.0, 150.0, -96.0, 1.0, 0.0],
+		["trench/op_tower_ruin", -34.0, -88.0, -34.0, -88.0, 1.0, 0.0],
+		["trench/op_tower_ruin", 124.0, 70.0, 124.0, 70.0, 1.0, 180.0],
+	],
+	# THE FULL LATTICE. Four marks got one view from 0.24% to 1.20% and left
+	# the other six where they were, because a landmark only works from
+	# somewhere it is visible. The deficit against Georgetown is a factor of
+	# ten, so the question is not "which four" but "how many, how far apart".
+	# This is a 110 m stagger over the contested ground, x -150..300 and the
+	# full z frontage, so that from anywhere on the advance two or three are
+	# inside 200 m. Heights are mixed ON PURPOSE: the ruler is the pole line,
+	# whose spacing is fixed, and these are the landmarks, whose job is to say
+	# WHICH sector you are looking at rather than how far away it is.
+	"lattice": [
+		["industrial/industrial_water_tower", -150.0, -165.0, -150.0, -165.0, 1.0, 0.0],
+		["trench/op_tower_ruin", -150.0, -55.0, -150.0, -55.0, 1.0, 0.0],
+		["features/feature_watchtower", -150.0, 55.0, -150.0, 55.0, 1.0, 180.0],
+		["industrial/industrial_water_tower", -150.0, 165.0, -150.0, 165.0, 1.0, 0.0],
+		["fortifications/fort_floodlight_mast", -40.0, -110.0, -40.0, -110.0, 1.0, 0.0],
+		["trench/op_tower_ruin", -40.0, 110.0, -40.0, 110.0, 1.0, 90.0],
+		["industrial/industrial_water_tower", 90.0, -165.0, 90.0, -165.0, 1.0, 0.0],
+		["features/feature_watchtower", 90.0, -60.0, 90.0, -60.0, 1.0, 180.0],
+		["fortifications/fort_floodlight_mast", 90.0, 160.0, 90.0, 160.0, 1.0, 0.0],
+		["trench/op_tower_ruin", 200.0, -110.0, 200.0, -110.0, 1.0, 180.0],
+		["industrial/industrial_water_tower", 200.0, 110.0, 200.0, 110.0, 1.0, 0.0],
+		["features/feature_watchtower", 270.0, -165.0, 270.0, -165.0, 1.0, 180.0],
+		["trench/op_tower_ruin", 270.0, 165.0, 270.0, 165.0, 1.0, 180.0],
+		["fortifications/fort_floodlight_mast", -260.0, -60.0, -260.0, -60.0, 1.0, 0.0],
+		["industrial/industrial_water_tower", -260.0, 120.0, -260.0, 120.0, 1.0, 0.0],
+		["trench/op_tower_ruin", -260.0, -180.0, -260.0, -180.0, 1.0, 0.0],
+	],
 }
-## Single pieces, added with every set. kit path, x, z, yaw
-const MOCKUP_MARKS: Array = [
-	["industrial/industrial_water_tower", -120.0, 86.0, 0.0],
-	["industrial/industrial_water_tower", 150.0, -96.0, 0.0],
-	["trench/op_tower_ruin", -34.0, -88.0, 0.0],
-	["trench/op_tower_ruin", 124.0, 70.0, 180.0],
-]
 
 
 func _initialize() -> void:
@@ -153,7 +193,7 @@ func _initialize() -> void:
 			quit(1)
 			return
 	var only := OS.get_environment("ONLY")
-	# ENV=proposal applies the proposal's environment numbers IN MEMORY before
+	# ENV=<variant> applies a candidate set of environment numbers IN MEMORY
 	# rendering. Nothing is written back — the point is a before/after pair of
 	# pictures of the same cameras, which is the only honest way to argue for
 	# an environment change in a game that posterises its own output.
@@ -464,10 +504,7 @@ func _kit_heights() -> void:
 	for key: String in MOCKUP_SETS:
 		for line: Array in MOCKUP_SETS[key]:
 			if not want.has(line[0]):
-				want.append(line[0])
-	for mark: Array in MOCKUP_MARKS:
-		if not want.has(mark[0]):
-			want.append(mark[0])
+				want.append(String(line[0]))
 	for extra: String in ["features/feature_watchtower", "fortifications/fort_floodlight_mast",
 			"props/prop_lamp_post", "landmarks/landmark_clock_tower",
 			"props/prop_robot_wreck", "props/prop_tank_trap"]:
@@ -517,9 +554,6 @@ func _mockup(level: Node, space: PhysicsDirectSpaceState3D, which: String) -> vo
 				var p := a.lerp(b, float(i) / float(maxi(count, 1)))
 				if _place(host, space, String(line[0]), p.x, p.y, float(line[6])):
 					n += 1
-	for mark: Array in MOCKUP_MARKS:
-		if _place(host, space, String(mark[0]), float(mark[1]), float(mark[2]), float(mark[3])):
-			n += 1
 	print("   MOCKUP %s: %d piece(s) added in memory — nothing written" % [
 			", ".join(sets), n])
 
@@ -537,10 +571,15 @@ func _place(host: Node3D, space: PhysicsDirectSpaceState3D, kit: String,
 	return true
 
 
-# ── THE PROPOSAL'S NUMBERS, APPLIED IN MEMORY ───────────────────────────────
+# ── ENVIRONMENT CANDIDATES, APPLIED IN MEMORY ──────────────────────────────
 
-## ENV=proposal. The environment half of docs/briefs/SALIENT_LEGIBILITY.md,
-## so the argument comes with a picture of itself. Nothing is saved.
+## ENV=<variant>. The three environment moves weighed in
+## docs/briefs/SALIENT_LEGIBILITY.md. ALL THREE WERE REJECTED, and they are
+## kept here because that is the useful part: the document claims that fog,
+## filmic tonemapping and the dead height-fog layer respectively do nothing,
+## make it much worse and make it worse, and anyone who doubts that should be
+## able to re-shoot it in one command rather than take it on trust.
+## Nothing is saved; the Environment is duplicated before it is touched.
 func _apply_variant(level: Node, variant: String) -> void:
 	var we: WorldEnvironment = null
 	for n in level.find_children("*", "WorldEnvironment", true, false):
@@ -553,7 +592,7 @@ func _apply_variant(level: Node, variant: String) -> void:
 	# would hand the next level in the loop this one's sky.
 	var env: Environment = we.environment.duplicate()
 	match variant:
-		"proposal":
+		"filmic":
 			# FILMIC, AND THE SKY BACK TO 1x. Linear tonemapping with a 2x sky
 			# multiplier clips the top of the range, which is where every far
 			# surface sits — so near and far land in the same filter step.
