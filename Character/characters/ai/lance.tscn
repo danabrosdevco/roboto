@@ -1,0 +1,509 @@
+[gd_scene load_steps=40 format=3]
+
+[ext_resource type="Script" path="res://Character/characters/ai/rover.gd" id="1_gx2qa"]
+[ext_resource type="PackedScene" path="res://Character/components/bark.tscn" id="2_dtwdn"]
+[ext_resource type="Script" path="res://Character/components/bark.gd" id="3_fndb4"]
+[ext_resource type="Resource" path="res://Character/components/bark_set_droid.tres" id="4_np44s"]
+[ext_resource type="AudioStream" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__2.wav" id="5_xofnq"]
+[ext_resource type="AudioStream" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__5.wav" id="6_otblx"]
+[ext_resource type="AudioStream" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__98.wav" id="7_7wsgy"]
+[ext_resource type="Material" path="res://Character/characters/ai/robot_metal.tres" id="8_crmtr"]
+[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_eye_psx.png" id="9_yisy5"]
+[ext_resource type="PackedScene" path="res://Character/components/spark_burst.tscn" id="10_5cknt"]
+[ext_resource type="Script" path="res://Character/components/particle_effect.gd" id="11_fe5wl"]
+[ext_resource type="PackedScene" path="res://Character/components/oil_spray.tscn" id="12_cmnx6"]
+[ext_resource type="Script" path="res://faction_livery.gd" id="13_ixn7j"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_cx22a"]
+radius = 0.52
+height = 2.3
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_fvkk1"]
+radius = 25.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_s101o"]
+size = Vector3(0.62, 0.44, 1.4)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_w3jxh"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 1.3
+radial_segments = 12
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_6q85q"]
+size = Vector3(0.09, 0.42, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_l8d2t"]
+size = Vector3(0.09, 0.42, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hdhdn"]
+size = Vector3(0.14, 0.14, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pb8wa"]
+size = Vector3(0.34, 0.3, 0.42)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ulmu8"]
+top_radius = 0.085
+bottom_radius = 0.085
+height = 1.0
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_sbf2u"]
+top_radius = 0.0
+bottom_radius = 0.12
+height = 0.2
+radial_segments = 10
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_tnm4q"]
+size = Vector3(0.18, 0.26, 0.46)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ve0rr"]
+top_radius = 0.03
+bottom_radius = 0.03
+height = 0.042
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_750cu"]
+top_radius = 0.03
+bottom_radius = 0.03
+height = 0.042
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_btukf"]
+top_radius = 0.03
+bottom_radius = 0.03
+height = 0.042
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_q8mo0"]
+top_radius = 0.045
+bottom_radius = 0.045
+height = 0.28
+radial_segments = 12
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_35qab"]
+albedo_texture = ExtResource("9_yisy5")
+
+[sub_resource type="SphereMesh" id="SphereMesh_i4dex"]
+radius = 0.1326
+height = 0.2175
+radial_segments = 14
+rings = 7
+
+[sub_resource type="BoxMesh" id="BoxMesh_0ecge"]
+size = Vector3(0.03, 0.9, 0.03)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xyqop"]
+albedo_color = Color(0.06, 0.06, 0.065, 1)
+roughness = 0.95
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_jntoa"]
+top_radius = 0.44
+bottom_radius = 0.44
+height = 0.26
+radial_segments = 12
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_w48vr"]
+albedo_color = Color(0.42, 0.43, 0.44, 1)
+metallic = 0.55
+roughness = 0.5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_c1vis"]
+top_radius = 0.18
+bottom_radius = 0.18
+height = 0.2808
+radial_segments = 5
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_8dojs"]
+top_radius = 0.44
+bottom_radius = 0.44
+height = 0.26
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_fv3ph"]
+top_radius = 0.18
+bottom_radius = 0.18
+height = 0.2808
+radial_segments = 5
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_sf2je"]
+top_radius = 0.26
+bottom_radius = 0.26
+height = 0.2
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_sa5ho"]
+top_radius = 0.11
+bottom_radius = 0.11
+height = 0.216
+radial_segments = 5
+rings = 1
+
+[node name="Lance" type="CharacterBody3D" node_paths=PackedStringArray("reverse_lamps", "rig", "turret", "gun_pivot", "wheels", "nav_agent", "weapon_mount", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+floor_constant_speed = true
+floor_max_angle = 0.872665
+floor_snap_length = 0.4
+script = ExtResource("1_gx2qa")
+wheelbase = 1.1
+max_steer_degrees = 32.0
+steer_rate_degrees = 140.0
+drive_accel = 4.5
+brake_decel = 9.0
+reverse_speed = 3.2
+reverse_within = 9.0
+cornering_speed = 0.35
+backoff_seconds = 1.4
+backoff_min_metres = 1.6
+pinned_after = 0.35
+no_progress_after = 2.5
+progress_margin = 0.6
+bumper_clearance = 0.6
+spacing_radius = 9.0
+spacing_steer = 0.8
+follow_gap = 6.0
+line_spacing = 8.0
+max_manoeuvres = 10
+reverse_lamps = []
+wreck_roll_degrees = 14.0
+wreck_nose_degrees = 6.0
+wreck_settle = 1.0
+wreck_wheel_sag = 0.12
+wreck_barrel_degrees = -30.0
+turret_traverse_degrees = 0.0
+gun_elevation_degrees = 60.0
+gun_min_pitch_degrees = -8.0
+gun_max_pitch_degrees = 30.0
+fire_cone_degrees = 6.0
+rig = NodePath("Rig")
+turret = NodePath("Rig/Turret")
+gun_pivot = NodePath("Rig/GunMount/GunPivot")
+wheels = [NodePath("Rig/WheelL"), NodePath("Rig/WheelR"), NodePath("Rig/WheelT")]
+wheel_steer = Array[float]([1.0, 1.0, 0.4])
+wheel_radius = 0.44
+suspension_travel = 0.16
+belly_drop = 0.24
+aggressive = false
+formation_trail = 0.0
+cover_arrival_threshold = 1.2
+cover_search_radius = 25.0
+suppress_duration = 3.0
+suppressed_duration = 2.5
+suppressed_accuracy_penalty = 0.4
+nav_agent = NodePath("NavigationAgent3D")
+weapon_mount = NodePath("Rig/GunMount/GunPivot/WeaponMount")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("Rig")]
+patrol_activation_distance = 260
+activation_distance = 75
+health = 110
+max_health = 110
+faction = 1
+move_speed = 9.45
+acceleration = 8.0
+rotation_speed = 7.0
+arrival_radius = 2.0
+reposition_distance = 2.0
+advance_distance = 3.0
+engage_standoff = 0.8
+bound_when_outranged = true
+leap_min_distance = 5.0
+leap_max_distance = 16.0
+leap_cooldown = 2.4
+leap_max_apex = 1.3
+bound_detour_limit = 1.8
+fallback_distance = 1.25
+bits = 10
+equipment_slots = []
+combat_recon_time = 1.65
+soldier_name = "Lance"
+accuracy_skill = 0.75
+aim_settle_time = 1.2
+aim_floor = 0.35
+moving_accuracy_penalty = 3.0
+burst_min = 2
+burst_max = 5
+repeat_penalty = 0.45
+recon_jitter = 0.25
+enable_idle_wander = false
+idle_scan_interval = 4.5
+idle_scan_arc_degrees = 55.0
+idle_scan_distance = 8.0
+sidestep_when_blocked = true
+sidestep_distance = 2.2
+sidestep_cooldown = 1.8
+sidestep_max_attempts = 2
+investigate_gunshot_within = 20.0
+investigate_cooldown = 3.0
+search_duration = 9.0
+search_look_interval = 1.6
+always_active = false
+self_revive_seconds = 0.0
+wake_on_damage_seconds = 20.0
+close_threat_range = 6.0
+target_priority = 1.0
+close_threat_advantage = 8.0
+close_threat_requires_los = true
+detection_radius = 20.0
+use_vision_cone = true
+sensor_range = 60.0
+fov_degrees = 130.0
+peripheral_range = 8.0
+acquire_time = 0.35
+acquire_far_penalty = 4.0
+vision_interval = 0.15
+vision_los_checks = 3
+lod_near_distance = 35.0
+lod_far_distance = 80.0
+lod_far_multiplier = 4.0
+DefaultAIState = 0
+AllowedMovementOptions = []
+AllowedCombatOptions = []
+fell_out_speed = 50.0
+adrift_distance = 4.0
+adrift_seconds = 4.0
+adrift_return_limit = 25.0
+drown_depth = 2.5
+can_be_downed = true
+revive_at_fraction = 0.5
+downed_health = 1
+collapse_pitch_degrees = 84.0
+collapse_drop = 0.5
+flatten_collider_when_downed = false
+settle_after = 1.2
+settle_duration = 1.0
+settle_depth = 0.45
+settle_depth_hostile = 0.7
+step_height = 0.45
+step_forward = 0.35
+max_hold_time = 30.0
+nav_think_interval = 0.15
+nav_queries_per_frame = 8
+nav_query_budget_ms = 6.0
+snap_queries_per_frame = 6
+snap_query_budget_ms = 3.0
+signal_integrity = 1.0
+signal_recovery_rate = 0.04
+signal_resistance = 1.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+shape = SubResource("CapsuleShape3D_cx22a")
+
+[node name="Bark" type="Node3D" parent="." instance=ExtResource("2_dtwdn")]
+script = ExtResource("3_fndb4")
+bark_set = ExtResource("4_np44s")
+bark_clips = Array[AudioStream]([ExtResource("5_xofnq"), ExtResource("6_otblx"), ExtResource("7_7wsgy")])
+pitch_min = 1.04
+pitch_max = 1.16
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 2.0
+target_desired_distance = 2.0
+height = 1.8
+radius = 0.8
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
+shape = SubResource("SphereShape3D_fvkk1")
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Hull" type="CSGMesh3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, 0)
+mesh = SubResource("BoxMesh_s101o")
+material = ExtResource("8_crmtr")
+
+[node name="Glacis" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, -0.3168, -0.868)
+operation = 2
+size = Vector3(0.868, 0.528, 1.12)
+
+[node name="Tail" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, -0.2992, 0.896)
+operation = 2
+size = Vector3(0.868, 0.528, 0.84)
+
+[node name="BevelL" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(0.866025, 0.5, 0, -0.5, 0.866025, 0, 0, 0, 1, -0.4216, 0.2904, 0)
+operation = 2
+size = Vector3(0.434, 0.352, 1.96)
+
+[node name="BevelR" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(0.866025, -0.5, 0, 0.5, 0.866025, 0, 0, 0, 1, 0.4216, 0.2904, 0)
+operation = 2
+size = Vector3(0.434, 0.352, 1.96)
+
+[node name="Axle" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, -0.08, -0.55)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("CylinderMesh_w3jxh")
+
+[node name="DropLinkL" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.898794, 0.438371, 0, -0.438371, 0.898794, 0, 0, 0, 1, -0.4, 0.06, -0.55)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("BoxMesh_6q85q")
+
+[node name="DropLinkR" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(0.898794, -0.438371, 0, 0.438371, 0.898794, 0, 0, 0, 1, 0.4, 0.06, -0.55)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("BoxMesh_l8d2t")
+
+[node name="SwingArm" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 0.970296, -0.241922, 0, 0.241922, 0.970296, 0, -0.02, 0.58)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("BoxMesh_hdhdn")
+
+[node name="Turret" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, 0)
+
+[node name="GunMount" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28, -0.47)
+
+[node name="Cradle" type="CSGMesh3D" parent="Rig/GunMount"]
+mesh = SubResource("BoxMesh_pb8wa")
+material = ExtResource("8_crmtr")
+
+[node name="ChamferL" type="CSGBox3D" parent="Rig/GunMount/Cradle"]
+transform = Transform3D(0.866025, 0.5, 0, -0.5, 0.866025, 0, 0, 0, 1, -0.2312, 0.198, 0)
+operation = 2
+size = Vector3(0.238, 0.24, 0.588)
+
+[node name="ChamferR" type="CSGBox3D" parent="Rig/GunMount/Cradle"]
+transform = Transform3D(0.866025, -0.5, 0, 0.5, 0.866025, 0, 0, 0, 1, 0.2312, 0.198, 0)
+operation = 2
+size = Vector3(0.238, 0.24, 0.588)
+
+[node name="GunPivot" type="Node3D" parent="Rig/GunMount"]
+
+[node name="Barrel" type="MeshInstance3D" parent="Rig/GunMount/GunPivot"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, -0.58)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("CylinderMesh_ulmu8")
+
+[node name="MuzzleBrake" type="MeshInstance3D" parent="Rig/GunMount/GunPivot"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, -1.09)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("CylinderMesh_sbf2u")
+
+[node name="WeaponMount" type="Node3D" parent="Rig/GunMount/GunPivot"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, -0.22)
+
+[node name="AmmoRack" type="CSGMesh3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.28, 0.18)
+mesh = SubResource("BoxMesh_tnm4q")
+material = ExtResource("8_crmtr")
+
+[node name="Chamfer" type="CSGBox3D" parent="Rig/AmmoRack"]
+transform = Transform3D(0.866025, -0.5, 0, 0.5, 0.866025, 0, 0, 0, 1, 0.1224, 0.1716, 0)
+operation = 2
+size = Vector3(0.126, 0.208, 0.644)
+
+[node name="RackStud0" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0.44, 0.28, -0.02)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("CylinderMesh_ve0rr")
+
+[node name="RackStud1" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0.44, 0.28, 0.18)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("CylinderMesh_750cu")
+
+[node name="RackStud2" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0.44, 0.28, 0.38)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("CylinderMesh_btukf")
+
+[node name="Head" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.26, 0.4, -0.26)
+
+[node name="Stalk" type="MeshInstance3D" parent="Rig/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14, 0)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("CylinderMesh_q8mo0")
+
+[node name="Eye" type="MeshInstance3D" parent="Rig/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.34, -0.04)
+material_override = SubResource("StandardMaterial3D_35qab")
+mesh = SubResource("SphereMesh_i4dex")
+
+[node name="Antenna" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.26, 0.78, 0.56)
+material_override = ExtResource("8_crmtr")
+mesh = SubResource("BoxMesh_0ecge")
+
+[node name="WheelL" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.66, -0.08, -0.55)
+
+[node name="Spin" type="Node3D" parent="Rig/WheelL"]
+
+[node name="Tyre" type="MeshInstance3D" parent="Rig/WheelL/Spin"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_xyqop")
+mesh = SubResource("CylinderMesh_jntoa")
+
+[node name="Hub" type="MeshInstance3D" parent="Rig/WheelL/Spin"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_w48vr")
+mesh = SubResource("CylinderMesh_c1vis")
+
+[node name="WheelR" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.66, -0.08, -0.55)
+
+[node name="Spin" type="Node3D" parent="Rig/WheelR"]
+
+[node name="Tyre" type="MeshInstance3D" parent="Rig/WheelR/Spin"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_xyqop")
+mesh = SubResource("CylinderMesh_8dojs")
+
+[node name="Hub" type="MeshInstance3D" parent="Rig/WheelR/Spin"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_w48vr")
+mesh = SubResource("CylinderMesh_fv3ph")
+
+[node name="WheelT" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.26, 0.88)
+
+[node name="Spin" type="Node3D" parent="Rig/WheelT"]
+
+[node name="Tyre" type="MeshInstance3D" parent="Rig/WheelT/Spin"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_xyqop")
+mesh = SubResource("CylinderMesh_sf2je")
+
+[node name="Hub" type="MeshInstance3D" parent="Rig/WheelT/Spin"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_w48vr")
+mesh = SubResource("CylinderMesh_sa5ho")
+
+[node name="SparkBurst" type="Node3D" parent="." node_paths=PackedStringArray("particles") instance=ExtResource("10_5cknt")]
+script = ExtResource("11_fe5wl")
+particles = NodePath("CPUParticles3D")
+
+[node name="OilSpray" type="Node3D" parent="." node_paths=PackedStringArray("particles") instance=ExtResource("12_cmnx6")]
+script = ExtResource("11_fe5wl")
+particles = NodePath("CPUParticles3D")
+
+[node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("13_ixn7j")
+base_material = ExtResource("8_crmtr")
+pieces = [NodePath("../Rig/Hull"), NodePath("../Rig/Axle"), NodePath("../Rig/DropLinkL"), NodePath("../Rig/DropLinkR"), NodePath("../Rig/SwingArm"), NodePath("../Rig/GunMount/Cradle"), NodePath("../Rig/GunMount/GunPivot/Barrel"), NodePath("../Rig/GunMount/GunPivot/MuzzleBrake"), NodePath("../Rig/AmmoRack"), NodePath("../Rig/Antenna"), NodePath("../Rig/Head/Stalk")]
+paint_blend = 1.0
+marker_energy = 2.2
+editor_preview_faction = 1

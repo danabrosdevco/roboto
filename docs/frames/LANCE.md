@@ -157,7 +157,8 @@ applies here too — a new frame earns its behaviour in its own subclass.
 
 ## 7. Tests
 
-`tools/test_lance.gd`:
+`tools/test_lance_frame.gd` — **not** `test_lance.gd`, which already exists and
+is the suite for the melee lance *weapon*:
 
 - chassis registered and in the catalogue; supply 1; `turret = false`;
   `drives = true`

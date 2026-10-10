@@ -76,13 +76,19 @@ locomotion, then wire every node-path export that script declares:
 | locomotion | script | node paths you must wire |
 |---|---|---|
 | legged | `walker.gd` | `rig`, `hip_left/right`, `knee_left/right`, `foot_left/right`, `turret`, `gun_pivot` |
-| wheeled | `rover.gd` | `rig`, `turret`, `gun_pivot`, `wheels` (Array[Node3D]) |
+| wheeled | `rover.gd` | `rig`, `turret`, `gun_pivot`, `wheels`, `reverse_lamps` (both Array[Node3D]) |
 | infantry | `soldier.gd` | none of its own |
-| flying | `spotter_drone.gd` | none of its own |
+| flying | `spotter_drone.gd` | `rotor_loop` (AudioStreamPlayer3D) |
 
 All four inherit `enemy.gd`, so **all four also need** `nav_agent`,
-`weapon_mount`, `detection` and `visible_pieces`.
+`weapon_mount`, `detection`, `visible_pieces`, `particle_effects_die`,
+`particle_effects_hit`, and `coax_mount` if the frame has a second mount.
 
+**Do not take this table on trust — `grep '^@export var' <script>` and check.**
+It was wrong on first writing: it claimed `spotter_drone.gd` declared no node
+paths, and the Kite agent found `rotor_loop`, which the script stops and
+restarts on park, crash, downed and revive. A flyer without that node is
+silent through all four, and nothing says so.
 If your frame has no turret (the Lance), the script still declares one: give it
 a body-fixed `Node3D` named `Turret` that never rotates, and say in the header
 that it is a stub satisfying the export rather than a traverse. **Do not edit
@@ -113,6 +119,47 @@ Every one of these shipped on the Bulwark's first build. None raises an error.
 5. **A `NodePath` assigned into a typed `Node3D` export does nothing.** Set the
    property to the node *object*: `root_body.set("rig", rig)`.
 
+
+**Trap 2 is in the worked example, and it bit.** `build_bulwark.gd` set
+`bark_clips` from a plain array. `bark_clips` is `Array[AudioStream]`, so the
+assignment was dropped in silence and `bulwark.tscn` shipped with
+`bark.tscn`'s three default voice clips instead of the two the generator
+names — verified by reading the ExtResource paths out of both files. The
+Bulwark has had the wrong voice since it was built and it still barks, which
+is why nobody noticed. The generator is fixed; **the scene is not**, because
+changing a shipped robot's voice is a game-feel call for the human.
+
+Read that as the real shape of this trap: it is not about the four arrays
+listed above, it is about **every typed export on every node you touch**,
+including ones on components you merely instantiate.
+
+### Two load errors you are expected to see
+
+Every generated frame scene prints this twice on load:
+
+```
+ERROR: Cannot assign contents of "Array[Object]" to "Array[int]".
+```
+
+`Enemy` declares `AllowedMovementOptions` and `AllowedCombatOptions` as arrays
+of enums — `Array[int]` — but the `.tscn` writer emits them typed against the
+element script of the `equipment_slots` array above them. Both values are
+empty defaults, so nothing is lost. `bulwark.tscn` has the identical pair and
+has printed them since the day it was generated. **Do not chase this and do
+not work around it** — report it and leave it; it is one shared fix for the
+whole family and it belongs to the coordinator.
+
+### One known fault in `concept_kit.gd`
+
+`head()` places its mount ring at `at` and the turret body at
+`at + 0.19 * scale`, with the body taller than the gap — so the ring is
+**inside the body at every scale** and has never been visible on any concept
+sheet. Harmless in a concept, six wasted faces in a model. Move it or drop it,
+and say which.
+
+Its antenna is fine on a turret standing on a hull, which is every frame that
+uses it that way. On the Kite, hanging the head *under* a hull put the whip
+inside the fuselage. Check where yours ends up rather than assuming either.
 A sixth, for anything that cants a barrel upward: a rotation about **+X** maps
 −Z to `(0, sin, −cos)`, so a **negative** angle aims the muzzle at the floor.
 Three of Picket's five first-round concepts had this sign wrong.

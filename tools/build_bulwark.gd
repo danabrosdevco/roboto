@@ -152,7 +152,15 @@ func _build() -> CharacterBody3D:
 
 	var bark := (load(BARK) as PackedScene).instantiate()
 	bark.name = "Bark"
-	bark.set("bark_clips", [load(V1), load(V2)])
+	# TYPED, or the assignment is silently dropped. bark_clips is
+	# Array[AudioStream]; a plain Array fails with no error and the scene keeps
+	# bark.tscn's three default clips. This line was untyped for the Bulwark's
+	# whole life and bulwark.tscn shipped with WAV_RDV__2/5/98 — the defaults —
+	# instead of the 17/23 named above. Nobody noticed because it still barks.
+	var clips: Array[AudioStream] = []
+	clips.append(load(V1))
+	clips.append(load(V2))
+	bark.set("bark_clips", clips)
 	bark.set("pitch_min", 0.64)
 	bark.set("pitch_max", 0.72)
 	root_body.add_child(bark)
