@@ -81,7 +81,21 @@ logistical.
 
 An articulated arm that refills a squadmate's magazines. It occupies the weapon
 slot and does no damage, exactly as the repair tool and the repair lance
-already do — `item_repair_lance.tres` is `kind = 0` and heals.
+already do.
+
+**CORRECTION, 2026-10-10.** This document, `WARDEN.md` and
+`docs/briefs/NEW_FRAMES.md` all cited `item_repair_lance.tres` as the
+precedent for "`kind = 0` and it heals". **It is not a precedent at all**: it
+is `usable_by_ai = false` with no `ai_scene`, so `fits_ai()` is false and no
+robot can ever carry one. It is a player viewmodel.
+
+The real precedent is the **Reclaimer**, and it is a better one because it is
+the frame this one is modelled on: `weapon_slots = 1`,
+`starting_weapon_id = &""`, `built_in = "WELDER"`,
+`weapon_replaces_built_in = true`, and `reclaimer.gd:863` is the only place in
+the game that **builds its own weapon mount inside `equip_weapon_scene`**.
+That is the pattern a `supply_boom` should follow. See
+`docs/briefs/FRAME_ANATOMY.md` section 3.3.
 
 | field | value |
 |---|---|
