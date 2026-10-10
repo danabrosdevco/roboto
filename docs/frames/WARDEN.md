@@ -8,9 +8,25 @@ Supply 2 · ground · **emitter platform** · **status: concept selected, not bu
 
 **Selected: A — THE MAST.** 1.97 W x 6.68 H x 2.24 L.
 
-A telescoping column rising off a Walker-sized hull, crowned with a bulb, four
-down-swept radials and a loose ring of unattached nodes floating around the
-head.
+A telescoping column rising off a Walker-sized hull, crowned with a bulb, six
+down-swept radials, and a ring of free-floating nodes round the head.
+
+**Two corrections from building it, both found by measuring rather than by
+looking.** The prose above said *four* radials; `ConceptsB.warden_a()` builds
+**six**, and six is what was rendered and what was chosen — the prose was
+wrong, not the code.
+
+And **the floating ring was a bug that turned out to be worth keeping.** Each
+rib's terminal bead is drawn at the rod's outer tip, but the rod carried a
+`+125°` tilt where it needed `−125°`: in Godot a rotation about +X sends local
++Y to `(0, cos θ, sin θ)`, so +125° gives `(0, −0.574, +0.819)` — down and
+*inboard*, not down and outward, and the concept's own comment asserts the
+opposite sign. The rods therefore swept the wrong way and every bead hung
+0.57 m clear of the rod it belonged to. That is what "a loose ring of
+unattached nodes" was describing. It reads well enough that the model keeps
+it **deliberately**: the rods are built at −125° so they attach, and the halo
+is six separate spheres interleaved between them. Section 1 now lists two
+features because there genuinely are two.
 
 **It is the only one of the four that radiates rather than aims.** The field is
 a radius, and a silhouette that promises a direction is a silhouette that lies

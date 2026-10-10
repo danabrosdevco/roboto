@@ -1,0 +1,735 @@
+[gd_scene load_steps=61 format=3]
+
+[ext_resource type="Script" path="res://Character/characters/ai/walker.gd" id="1_bn7vs"]
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="2_r4go1"]
+[ext_resource type="PackedScene" path="res://Character/components/bark.tscn" id="3_bbino"]
+[ext_resource type="Script" path="res://Character/components/bark.gd" id="4_1wi6n"]
+[ext_resource type="Resource" path="res://Character/components/bark_set_droid.tres" id="5_kwb5h"]
+[ext_resource type="AudioStream" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__17.wav" id="6_0otia"]
+[ext_resource type="AudioStream" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__63.wav" id="7_um1t3"]
+[ext_resource type="Material" path="res://Character/characters/ai/robot_metal.tres" id="8_a75pm"]
+[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_eye_psx.png" id="9_g1dqq"]
+[ext_resource type="PackedScene" path="res://Character/components/spark_burst.tscn" id="10_six7s"]
+[ext_resource type="Script" path="res://Character/components/particle_effect.gd" id="11_ttb8f"]
+[ext_resource type="PackedScene" path="res://Character/components/oil_spray.tscn" id="12_0fg40"]
+[ext_resource type="Script" path="res://faction_livery.gd" id="13_ko61a"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_qwr66"]
+radius = 0.88
+height = 2.55
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_unde3"]
+radius = 25.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_pem6x"]
+size = Vector3(1.52, 0.86, 1.78)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_e3etr"]
+top_radius = 0.324
+bottom_radius = 0.324
+height = 0.072
+radial_segments = 14
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_hjsdc"]
+size = Vector3(0.708, 0.36, 0.78)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h13qn"]
+albedo_texture = ExtResource("9_g1dqq")
+
+[sub_resource type="SphereMesh" id="SphereMesh_ebv6s"]
+radius = 0.13
+height = 0.21
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxMesh" id="BoxMesh_m7mgq"]
+size = Vector3(0.03, 0.51, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_0p66q"]
+size = Vector3(0.26, 0.17, 0.12)
+
+[sub_resource type="TorusMesh" id="TorusMesh_oky4u"]
+inner_radius = 0.19
+outer_radius = 0.35
+rings = 16
+ring_segments = 6
+
+[sub_resource type="TorusMesh" id="TorusMesh_wj7mv"]
+inner_radius = 0.19
+outer_radius = 0.35
+rings = 16
+ring_segments = 6
+
+[sub_resource type="TorusMesh" id="TorusMesh_hl7e0"]
+inner_radius = 0.19
+outer_radius = 0.35
+rings = 16
+ring_segments = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_l0h7w"]
+radius = 0.15
+height = 0.3
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_vixor"]
+top_radius = 0.165
+bottom_radius = 0.165
+height = 0.92
+radial_segments = 10
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_y1a5e"]
+top_radius = 0.125
+bottom_radius = 0.125
+height = 0.8
+radial_segments = 10
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_jo05q"]
+top_radius = 0.092
+bottom_radius = 0.092
+height = 0.66
+radial_segments = 10
+rings = 1
+
+[sub_resource type="TorusMesh" id="TorusMesh_katxo"]
+inner_radius = 0.28
+outer_radius = 0.55
+rings = 16
+ring_segments = 6
+
+[sub_resource type="TorusMesh" id="TorusMesh_tee4m"]
+inner_radius = 0.2
+outer_radius = 0.38
+rings = 16
+ring_segments = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_um3rj"]
+radius = 0.17
+height = 0.34
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ynasq"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 1.0
+radial_segments = 8
+rings = 1
+
+[sub_resource type="SphereMesh" id="SphereMesh_0ec2w"]
+radius = 0.09
+height = 0.18
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3cg1i"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 1.0
+radial_segments = 8
+rings = 1
+
+[sub_resource type="SphereMesh" id="SphereMesh_mr1jc"]
+radius = 0.09
+height = 0.18
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_uj21j"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 1.0
+radial_segments = 8
+rings = 1
+
+[sub_resource type="SphereMesh" id="SphereMesh_cx563"]
+radius = 0.09
+height = 0.18
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_apyve"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 1.0
+radial_segments = 8
+rings = 1
+
+[sub_resource type="SphereMesh" id="SphereMesh_ik1vb"]
+radius = 0.09
+height = 0.18
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_gf8wh"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 1.0
+radial_segments = 8
+rings = 1
+
+[sub_resource type="SphereMesh" id="SphereMesh_5cygp"]
+radius = 0.09
+height = 0.18
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_q55fa"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 1.0
+radial_segments = 8
+rings = 1
+
+[sub_resource type="SphereMesh" id="SphereMesh_p0icm"]
+radius = 0.09
+height = 0.18
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_l1su6"]
+radius = 0.065
+height = 0.13
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_utdvo"]
+radius = 0.065
+height = 0.13
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_j4hkw"]
+radius = 0.065
+height = 0.13
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_hsef2"]
+radius = 0.065
+height = 0.13
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_ctc6h"]
+radius = 0.065
+height = 0.13
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_11esu"]
+radius = 0.065
+height = 0.13
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_gsw0c"]
+radius = 0.185
+height = 0.37
+radial_segments = 12
+rings = 6
+
+[sub_resource type="BoxMesh" id="BoxMesh_iw2f4"]
+size = Vector3(0.34, 0.56, 0.4)
+
+[sub_resource type="SphereMesh" id="SphereMesh_86lrd"]
+radius = 0.145
+height = 0.29
+radial_segments = 12
+rings = 6
+
+[sub_resource type="BoxMesh" id="BoxMesh_atr7e"]
+size = Vector3(0.26, 0.65, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_xfkto"]
+size = Vector3(0.42, 0.15, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_xx8oa"]
+radius = 0.185
+height = 0.37
+radial_segments = 12
+rings = 6
+
+[sub_resource type="BoxMesh" id="BoxMesh_r72lo"]
+size = Vector3(0.34, 0.56, 0.4)
+
+[sub_resource type="SphereMesh" id="SphereMesh_sieei"]
+radius = 0.145
+height = 0.29
+radial_segments = 12
+rings = 6
+
+[sub_resource type="BoxMesh" id="BoxMesh_npksx"]
+size = Vector3(0.26, 0.65, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rkqaa"]
+size = Vector3(0.42, 0.15, 0.8)
+
+[node name="Warden" type="CharacterBody3D" node_paths=PackedStringArray("rig", "hip_left", "knee_left", "hip_right", "knee_right", "foot_left", "foot_right", "turret", "gun_pivot", "nav_agent", "weapon_mount", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+script = ExtResource("1_bn7vs")
+rig = NodePath("Rig")
+hip_left = NodePath("Rig/HipL")
+knee_left = NodePath("Rig/HipL/KneeL")
+hip_right = NodePath("Rig/HipR")
+knee_right = NodePath("Rig/HipR/KneeR")
+foot_left = NodePath("Rig/HipL/KneeL/FootL")
+foot_right = NodePath("Rig/HipR/KneeR/FootR")
+stride_length = 3.4
+hip_swing_degrees = 26.0
+side_swing_degrees = 15.0
+knee_bend_degrees = 30.0
+body_bob = 0.07
+settle_seconds = 0.35
+turret = NodePath("Rig/Turret")
+gun_pivot = NodePath("Rig/Turret/GunPivot")
+turret_traverse_degrees = 0.0
+gun_elevation_degrees = 40.0
+gun_min_pitch_degrees = -12.0
+gun_max_pitch_degrees = 35.0
+fire_cone_degrees = 7.0
+aggressive = false
+formation_trail = 0.0
+cover_arrival_threshold = 1.2
+cover_search_radius = 25.0
+suppress_duration = 3.0
+suppressed_duration = 2.5
+suppressed_accuracy_penalty = 0.4
+nav_agent = NodePath("NavigationAgent3D")
+weapon_mount = NodePath("Rig/Turret/GunPivot/WeaponMount")
+bark = NodePath("Bark")
+detection = NodePath("Detection")
+particle_effects_die = [NodePath("SparkBurst"), NodePath("OilSpray")]
+particle_effects_hit = [NodePath("SparkBurst")]
+visible_pieces = [NodePath("Rig/Hull"), NodePath("Rig/Head"), NodePath("Rig/MastBase")]
+patrol_activation_distance = 260
+activation_distance = 200
+health = 160
+max_health = 160
+faction = 1
+move_speed = 4.5
+acceleration = 8.0
+rotation_speed = 7.0
+arrival_radius = 2.0
+reposition_distance = 2.0
+advance_distance = 3.0
+engage_standoff = 0.8
+bound_when_outranged = true
+leap_min_distance = 5.0
+leap_max_distance = 16.0
+leap_cooldown = 2.4
+leap_max_apex = 1.3
+bound_detour_limit = 1.8
+fallback_distance = 1.25
+bits = 10
+equipment_slots = Array[ExtResource("2_r4go1")]([])
+combat_recon_time = 1.65
+soldier_name = "Warden"
+accuracy_skill = 0.75
+aim_settle_time = 1.2
+aim_floor = 0.35
+moving_accuracy_penalty = 3.0
+burst_min = 2
+burst_max = 5
+repeat_penalty = 0.45
+recon_jitter = 0.25
+enable_idle_wander = false
+idle_scan_interval = 4.5
+idle_scan_arc_degrees = 55.0
+idle_scan_distance = 8.0
+sidestep_when_blocked = true
+sidestep_distance = 2.2
+sidestep_cooldown = 1.8
+sidestep_max_attempts = 2
+investigate_gunshot_within = 20.0
+investigate_cooldown = 3.0
+search_duration = 9.0
+search_look_interval = 1.6
+always_active = false
+self_revive_seconds = 0.0
+wake_on_damage_seconds = 20.0
+close_threat_range = 6.0
+target_priority = 1.0
+close_threat_advantage = 8.0
+close_threat_requires_los = true
+detection_radius = 20.0
+use_vision_cone = true
+sensor_range = 45.0
+fov_degrees = 130.0
+peripheral_range = 8.0
+acquire_time = 0.35
+acquire_far_penalty = 4.0
+vision_interval = 0.15
+vision_los_checks = 3
+lod_near_distance = 35.0
+lod_far_distance = 80.0
+lod_far_multiplier = 4.0
+DefaultAIState = 0
+AllowedMovementOptions = Array[ExtResource("2_r4go1")]([])
+AllowedCombatOptions = Array[ExtResource("2_r4go1")]([])
+fell_out_speed = 50.0
+adrift_distance = 4.0
+adrift_seconds = 4.0
+adrift_return_limit = 25.0
+drown_depth = 2.5
+can_be_downed = true
+revive_at_fraction = 0.5
+downed_health = 1
+collapse_pitch_degrees = 84.0
+collapse_drop = 0.5
+flatten_collider_when_downed = false
+settle_after = 1.2
+settle_duration = 1.0
+settle_depth = 0.45
+settle_depth_hostile = 0.7
+step_height = 0.45
+step_forward = 0.35
+max_hold_time = 30.0
+nav_think_interval = 0.15
+nav_queries_per_frame = 8
+nav_query_budget_ms = 6.0
+snap_queries_per_frame = 6
+snap_query_budget_ms = 3.0
+signal_integrity = 1.0
+signal_recovery_rate = 0.04
+signal_resistance = 1.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08, 0)
+shape = SubResource("CapsuleShape3D_qwr66")
+
+[node name="Bark" type="Node3D" parent="." instance=ExtResource("3_bbino")]
+script = ExtResource("4_1wi6n")
+bark_set = ExtResource("5_kwb5h")
+bark_clips = Array[AudioStream]([ExtResource("6_0otia"), ExtResource("7_um1t3")])
+pitch_min = 0.92
+pitch_max = 1.0
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+
+[node name="Detection" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detection"]
+shape = SubResource("SphereShape3D_unde3")
+
+[node name="Rig" type="Node3D" parent="."]
+
+[node name="Hull" type="CSGMesh3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, 0)
+mesh = SubResource("BoxMesh_pem6x")
+material = ExtResource("8_a75pm")
+
+[node name="Glacis" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, -0.62, -1.1)
+operation = 2
+size = Vector3(2.13, 1.03, 1.42)
+
+[node name="Tail" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, -0.58, 1.14)
+operation = 2
+size = Vector3(2.13, 1.03, 1.07)
+
+[node name="BevelL" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(0.866025, 0.5, 0, -0.5, 0.866025, 0, 0, 0, 1, -1.03, 0.57, 0)
+operation = 2
+size = Vector3(1.06, 0.69, 2.49)
+
+[node name="BevelR" type="CSGBox3D" parent="Rig/Hull"]
+transform = Transform3D(0.866025, -0.5, 0, 0.5, 0.866025, 0, 0, 0, 1, 1.03, 0.57, 0)
+operation = 2
+size = Vector3(1.06, 0.69, 2.49)
+
+[node name="NeckRing" type="MeshInstance3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, -0.22)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("CylinderMesh_e3etr")
+
+[node name="Head" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.84, -0.22)
+
+[node name="HeadBody" type="CSGMesh3D" parent="Rig/Head"]
+mesh = SubResource("BoxMesh_hjsdc")
+material = ExtResource("8_a75pm")
+
+[node name="Cheek" type="CSGBox3D" parent="Rig/Head/HeadBody"]
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, -0.264, -0.516)
+operation = 2
+size = Vector3(0.9204, 0.42, 0.42)
+
+[node name="Brow" type="CSGBox3D" parent="Rig/Head/HeadBody"]
+transform = Transform3D(1, 0, 0, 0, 0.906308, -0.422618, 0, 0.422618, 0.906308, 0, 0.3, -0.468)
+operation = 2
+size = Vector3(0.9204, 0.42, 0.42)
+
+[node name="Eye" type="MeshInstance3D" parent="Rig/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.08, -0.4)
+material_override = SubResource("StandardMaterial3D_h13qn")
+mesh = SubResource("SphereMesh_ebv6s")
+
+[node name="Antenna" type="MeshInstance3D" parent="Rig/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.41, 0.29)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("BoxMesh_m7mgq")
+
+[node name="SensorCowl" type="MeshInstance3D" parent="Rig/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.13, 0, -0.44)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("BoxMesh_0p66q")
+
+[node name="Turret" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.7, -0.05)
+
+[node name="GunPivot" type="Node3D" parent="Rig/Turret"]
+
+[node name="WeaponMount" type="Node3D" parent="Rig/Turret/GunPivot"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, -0.34)
+
+[node name="MastBase" type="Node3D" parent="Rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0.3)
+
+[node name="Coil0" type="MeshInstance3D" parent="Rig/MastBase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("TorusMesh_oky4u")
+
+[node name="Coil1" type="MeshInstance3D" parent="Rig/MastBase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28, 0)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("TorusMesh_wj7mv")
+
+[node name="Coil2" type="MeshInstance3D" parent="Rig/MastBase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.46, 0)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("TorusMesh_hl7e0")
+
+[node name="Junction" type="MeshInstance3D" parent="Rig/MastBase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.28, 0.22, 0)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_l0h7w")
+
+[node name="MastRaise" type="Node3D" parent="Rig/MastBase"]
+
+[node name="Stage1" type="Node3D" parent="Rig/MastBase/MastRaise"]
+
+[node name="Tube1" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.46, 0)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("CylinderMesh_vixor")
+
+[node name="Stage2" type="Node3D" parent="Rig/MastBase/MastRaise/Stage1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.74, 0)
+
+[node name="Tube2" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("CylinderMesh_y1a5e")
+
+[node name="Stage3" type="Node3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.64, 0)
+
+[node name="Tube3" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.33, 0)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("CylinderMesh_jo05q")
+
+[node name="MastHead" type="Node3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, 0)
+
+[node name="CrownRingA" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("TorusMesh_katxo")
+
+[node name="CrownRingB" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.19, 0)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("TorusMesh_tee4m")
+
+[node name="Bulb" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.36, 0)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_um3rj")
+
+[node name="Radial0" type="Node3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+
+[node name="Rib0" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial0"]
+transform = Transform3D(1, 0, 0, 0, -0.573576, 0.819152, 0, -0.819152, -0.573576, 0, -0.29, -0.59)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("CylinderMesh_ynasq")
+
+[node name="Tip0" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, -1)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_0ec2w")
+
+[node name="Radial1" type="Node3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, 0.5, 0, 0, 0)
+
+[node name="Rib1" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial1"]
+transform = Transform3D(1, 0, 0, 0, -0.573576, 0.819152, 0, -0.819152, -0.573576, 0, -0.29, -0.59)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("CylinderMesh_3cg1i")
+
+[node name="Tip1" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, -1)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_mr1jc")
+
+[node name="Radial2" type="Node3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(-0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, -0.5, 0, 0, 0)
+
+[node name="Rib2" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial2"]
+transform = Transform3D(1, 0, 0, 0, -0.573576, 0.819152, 0, -0.819152, -0.573576, 0, -0.29, -0.59)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("CylinderMesh_uj21j")
+
+[node name="Tip2" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, -1)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_cx563")
+
+[node name="Radial3" type="Node3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 0)
+
+[node name="Rib3" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial3"]
+transform = Transform3D(1, 0, 0, 0, -0.573576, 0.819152, 0, -0.819152, -0.573576, 0, -0.29, -0.59)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("CylinderMesh_apyve")
+
+[node name="Tip3" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, -1)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_ik1vb")
+
+[node name="Radial4" type="Node3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(-0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, -0.5, 0, 0, 0)
+
+[node name="Rib4" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial4"]
+transform = Transform3D(1, 0, 0, 0, -0.573576, 0.819152, 0, -0.819152, -0.573576, 0, -0.29, -0.59)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("CylinderMesh_gf8wh")
+
+[node name="Tip4" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, -1)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_5cygp")
+
+[node name="Radial5" type="Node3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, 0, 0, 0)
+
+[node name="Rib5" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial5"]
+transform = Transform3D(1, 0, 0, 0, -0.573576, 0.819152, 0, -0.819152, -0.573576, 0, -0.29, -0.59)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("CylinderMesh_q55fa")
+
+[node name="Tip5" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial5"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, -1)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_p0icm")
+
+[node name="Halo0" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.31, 0.3, -0.536936)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_l1su6")
+
+[node name="Halo1" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.62, 0.44, -3.79628e-17)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_utdvo")
+
+[node name="Halo2" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.31, 0.3, 0.536936)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_j4hkw")
+
+[node name="Halo3" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.31, 0.44, 0.536936)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_hsef2")
+
+[node name="Halo4" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.62, 0.3, 1.13888e-16)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_ctc6h")
+
+[node name="Halo5" type="MeshInstance3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.31, 0.44, -0.536936)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_11esu")
+
+[node name="MastMount" type="Node3D" parent="Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead"]
+
+[node name="HipL" type="Node3D" parent="Rig"]
+transform = Transform3D(0.996195, 0.0871557, 0, -0.0871557, 0.996195, 0, 0, 0, 1, -0.66, -0.2, 0)
+
+[node name="HipCapL" type="MeshInstance3D" parent="Rig/HipL"]
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_gsw0c")
+
+[node name="ThighL" type="MeshInstance3D" parent="Rig/HipL"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, -0.24, 0.11)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("BoxMesh_iw2f4")
+
+[node name="KneeL" type="Node3D" parent="Rig/HipL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47, 0.21)
+
+[node name="KneeCapL" type="MeshInstance3D" parent="Rig/HipL/KneeL"]
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_86lrd")
+
+[node name="ShinL" type="MeshInstance3D" parent="Rig/HipL/KneeL"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, -0.29, -0.12)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("BoxMesh_atr7e")
+
+[node name="FootL" type="MeshInstance3D" parent="Rig/HipL/KneeL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.59, -0.35)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("BoxMesh_xfkto")
+
+[node name="HipR" type="Node3D" parent="Rig"]
+transform = Transform3D(0.996195, -0.0871557, 0, 0.0871557, 0.996195, 0, 0, 0, 1, 0.66, -0.2, 0)
+
+[node name="HipCapR" type="MeshInstance3D" parent="Rig/HipR"]
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_xx8oa")
+
+[node name="ThighR" type="MeshInstance3D" parent="Rig/HipR"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, -0.24, 0.11)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("BoxMesh_r72lo")
+
+[node name="KneeR" type="Node3D" parent="Rig/HipR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47, 0.21)
+
+[node name="KneeCapR" type="MeshInstance3D" parent="Rig/HipR/KneeR"]
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("SphereMesh_sieei")
+
+[node name="ShinR" type="MeshInstance3D" parent="Rig/HipR/KneeR"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, -0.29, -0.12)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("BoxMesh_npksx")
+
+[node name="FootR" type="MeshInstance3D" parent="Rig/HipR/KneeR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.59, -0.35)
+material_override = ExtResource("8_a75pm")
+mesh = SubResource("BoxMesh_rkqaa")
+
+[node name="SparkBurst" type="Node3D" parent="." node_paths=PackedStringArray("particles") instance=ExtResource("10_six7s")]
+script = ExtResource("11_ttb8f")
+particles = NodePath("CPUParticles3D")
+
+[node name="OilSpray" type="Node3D" parent="." node_paths=PackedStringArray("particles") instance=ExtResource("12_0fg40")]
+script = ExtResource("11_ttb8f")
+particles = NodePath("CPUParticles3D")
+
+[node name="FactionLivery" type="Node" parent="." node_paths=PackedStringArray("pieces")]
+script = ExtResource("13_ko61a")
+base_material = ExtResource("8_a75pm")
+pieces = [NodePath("../Rig/Hull"), NodePath("../Rig/NeckRing"), NodePath("../Rig/Head/HeadBody"), NodePath("../Rig/Head/Antenna"), NodePath("../Rig/Head/SensorCowl"), NodePath("../Rig/MastBase/Coil0"), NodePath("../Rig/MastBase/Coil1"), NodePath("../Rig/MastBase/Coil2"), NodePath("../Rig/MastBase/Junction"), NodePath("../Rig/MastBase/MastRaise/Stage1/Tube1"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Tube2"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/Tube3"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/CrownRingA"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/CrownRingB"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Bulb"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial0/Rib0"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial0/Tip0"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial1/Rib1"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial1/Tip1"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial2/Rib2"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial2/Tip2"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial3/Rib3"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial3/Tip3"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial4/Rib4"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial4/Tip4"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial5/Rib5"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Radial5/Tip5"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Halo0"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Halo1"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Halo2"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Halo3"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Halo4"), NodePath("../Rig/MastBase/MastRaise/Stage1/Stage2/Stage3/MastHead/Halo5"), NodePath("../Rig/HipL/HipCapL"), NodePath("../Rig/HipL/ThighL"), NodePath("../Rig/HipL/KneeL/KneeCapL"), NodePath("../Rig/HipL/KneeL/ShinL"), NodePath("../Rig/HipL/KneeL/FootL"), NodePath("../Rig/HipR/HipCapR"), NodePath("../Rig/HipR/ThighR"), NodePath("../Rig/HipR/KneeR/KneeCapR"), NodePath("../Rig/HipR/KneeR/ShinR"), NodePath("../Rig/HipR/KneeR/FootR")]
+paint_blend = 1.0
+marker_energy = 2.2
+editor_preview_faction = 1

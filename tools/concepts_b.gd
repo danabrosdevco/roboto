@@ -158,12 +158,20 @@ static func warden_a(root_node: Node3D) -> void:
 	# SIX RIBS, DOWN AND OUT. Each rib lives in its own yawed node so only one
 	# rotation is ever composed by hand; hanging a rod off a rotated parent's
 	# local axis is the mistake this project makes most often. Inside the yawed
-	# node, local -Z is outward, and a +125 degree tilt about X takes the
-	# cylinder's +Y axis to (0, -0.57, -0.82): down and outward together.
+	# node, local -Z is outward.
+	#
+	# MINUS 125, AND THE COMMENT HERE USED TO SAY PLUS. A rotation about +X
+	# sends local +Y to (0, cos, sin), so +125 gives (0, -0.574, +0.819) —
+	# down and INBOARD — and the old comment claimed (0, -0.57, -0.82). The
+	# rods swept the wrong way and every bead hung 0.57 m clear of the rod it
+	# belonged to, which is what the rendered sheet shows and what WARDEN.md
+	# section 1 was describing when it said "a loose ring of unattached nodes".
+	# The detached ring was liked, so the model keeps it as a deliberate
+	# feature AND fixes the rods. Same sign family as the Picket's muzzles.
 	for i in 6:
 		var a := TAU * float(i) / 6.0
 		var rib := K.node_at(root_node, Vector3(0, 4.25, 0.3), Vector3(0, -a, 0))
-		_Parts.cyl(rib, 0.05, 1.0, Vector3(0, -0.29, -0.59), Vector3(125.0 * K.DEG, 0, 0))
+		_Parts.cyl(rib, 0.05, 1.0, Vector3(0, -0.29, -0.59), Vector3(-125.0 * K.DEG, 0, 0))
 		_Parts.sphere(rib, 0.09, Vector3(0, -0.57, -1.0))
 
 

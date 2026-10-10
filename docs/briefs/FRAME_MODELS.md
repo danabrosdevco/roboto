@@ -149,6 +149,20 @@ has printed them since the day it was generated. **Do not chase this and do
 not work around it** — report it and leave it; it is one shared fix for the
 whole family and it belongs to the coordinator.
 
+
+### Two more, both found by build agents
+
+**`FactionLivery._gather()` RECURSES.** Listing a container in `pieces` paints
+every mesh under it, so `pieces = [Rig]` is the same bug as an empty list
+arriving by a different door — it will paint the eye. List leaves, not
+parents. The Broodcarrier's list is 55 leaf meshes for exactly this reason.
+
+**`enemy.gd` also declares `weapon` and `coax` as typed `AIWeapon`**, next to
+`weapon_mount` and `coax_mount`. Nothing in this pass fits a weapon, so they
+stay null — but the table above reads as exhaustive and is not. Note too that
+`spotter_drone.gd` extends `Soldier`, not `Enemy` directly; the inheritance is
+`SpotterDrone -> Soldier -> Enemy -> AI`, which matters for which seams you
+can override.
 ### One known fault in `concept_kit.gd`
 
 `head()` places its mount ring at `at` and the turret body at
