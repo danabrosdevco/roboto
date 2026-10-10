@@ -29,6 +29,17 @@ extends "res://tools/probe_nav_reach.gd"
 #                   THE ONE THAT DECIDES WHETHER A ROUTE IS USABLE: 20% exposure
 #                   spread as a metre every five is cover with gaps in it, and
 #                   the same 20% in one 40 m stretch is a crossing under fire.
+#   in cut          the share of the walk that is genuinely below grade. THE
+#                   CONTROL ON THE OTHER THREE, added after the first run of
+#                   this probe reported route C as 100% exposed for a Walker
+#                   and a Bulwark and left it looking like a trench too shallow
+#                   for them. It is not: they read 5.2% and 2.2% in cut against
+#                   the player's 98.1% on the same route, which means the floor
+#                   does not carry them at their bake radius and the path they
+#                   are given runs along the TOP of the trench. A trench that
+#                   does not cover you and a trench you are walking on the lip
+#                   of are different defects and want different fixes, and
+#                   exposure alone cannot tell them apart.
 #   eyes            how many of them see you at the median exposed sample, which
 #                   is the difference between a risk and a killing ground
 #
@@ -114,10 +125,14 @@ func _initialize() -> void:
 		map = region.get_navigation_map()
 		print("")
 		print("── %s   head at %.2f m" % [who.to_upper(), LIB.head_of(who)])
-		print("   %-6s %7s %9s %9s  %s" % ["route", "walk", "exposed", "worst", "eyes on you"])
+		print("   %-6s %7s %9s %9s %8s  %s" % [
+				"route", "walk", "exposed", "worst", "in cut", "eyes on you"])
 		for r: Array in routes:
-			var from := _snap(r[1] as Vector3)
-			var to := _snap(r[2] as Vector3)
+			# ON THE GROUND BEFORE IT IS SNAPPED. The route anchors are written
+			# at y = 0 and a trench floor is 1.4 to 2.5 m under that, so a 3D
+			# snap from the anchor lands on the parapet — see at_floor().
+			var from := _snap(LIB.at_floor(_space, r[1] as Vector3))
+			var to := _snap(LIB.at_floor(_space, r[2] as Vector3))
 			var m := _walk_exposed(from, to, step, who)
 			if float(m.len) <= 0.0:
 				print("   %-6s  no path at this bake — this body cannot use this route" % r[0])
@@ -130,8 +145,24 @@ func _initialize() -> void:
 			# road is meant to have a blown span in the middle of it.
 			if share > 33.0:
 				note = "  <- more exposed than covered in thirds"
-			print("   %-6s %6.0fm %8.1f%% %8.0fm  median %.1f, worst %d%s" % [
-					r[0], float(m.len), share, float(m.worst),
+			# IN CUT IS THE CONTROL ON THE OTHER THREE NUMBERS. A route whose
+			# exposure is 100% might be a trench too shallow for this body — or
+			# it might be this body walking along the TOP of the trench wall,
+			# because the floor did not bake at its radius and the parapet
+			# strip did. Those are opposite problems and the exposure figure
+			# cannot tell them apart. If a route reads 100% exposed and ~0% in
+			# cut, the body is not in the trench at all.
+			var in_cut := 100.0 * float(m.cut) / float(m.len)
+			# Deliberately worded as the observation and not the diagnosis. A
+			# route that is a chain of shell holes reads low for EVERY body
+			# because there is no cut to be in; a route that is a trench reads
+			# high for the narrow bodies and low for the wide ones, and that
+			# is the one that means "walking on the parapet". The per-chassis
+			# tables side by side say which, and one line cannot.
+			if in_cut < 25.0 and share > 90.0:
+				note += "  <- and NOT BELOW GRADE: nothing between it and them"
+			print("   %-6s %6.0fm %8.1f%% %8.0fm %7.1f%%  median %.1f, worst %d%s" % [
+					r[0], float(m.len), share, float(m.worst), in_cut,
 					float(m.median_eyes), int(m.max_eyes), note])
 	print("COVER CONTINUITY %s" % ["PASS" if fails == 0 else "FAIL — %d problem(s)" % fails])
 	quit(1 if fails > 0 else 0)
@@ -149,6 +180,7 @@ func _walk_exposed(from: Vector3, to: Vector3, step: float, who: String) -> Dict
 	var run := 0.0
 	var worst := 0.0
 	var max_eyes := 0
+	var cut := 0.0
 	var counts: Array[int] = []
 	for i in samples.size():
 		var p: Vector3 = samples[i]
@@ -168,6 +200,9 @@ func _walk_exposed(from: Vector3, to: Vector3, step: float, who: String) -> Dict
 			# its own, and it is counted as neither exposed nor covered.
 			push_warning("probe_cover_continuity: no collision under a path sample at (%.0f, %.0f) — not classified" % [p.x, p.z])
 			continue
+		var d: float = LIB.cut_depth(_space, p.x, p.z)
+		if not is_nan(d) and d >= 1.0:
+			cut += span
 		var n: int = LIB.seen_by(_space, _eyes, Vector3(p.x, g + head, p.z))
 		if n > 0:
 			seen += span
@@ -179,7 +214,7 @@ func _walk_exposed(from: Vector3, to: Vector3, step: float, who: String) -> Dict
 			run = 0.0
 	counts.sort()
 	return {
-		"len": total, "seen": seen, "worst": worst,
+		"len": total, "seen": seen, "worst": worst, "cut": cut,
 		"median_eyes": float(counts[counts.size() / 2]) if counts.size() > 0 else 0.0,
 		"max_eyes": max_eyes,
 	}

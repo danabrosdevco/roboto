@@ -162,6 +162,32 @@ static func ground(space: PhysicsDirectSpaceState3D, x: float, z: float) -> floa
 	return (hit["position"] as Vector3).y
 
 
+## AN ANCHOR, LOWERED ONTO THE COLLISION UNDER IT, before anything snaps it to
+## the navmesh.
+##
+## WHY THIS EXISTS, and it is the most expensive small thing in this pass.
+## NavigationServer3D.map_get_closest_point is a THREE-DIMENSIONAL query: it
+## returns the polygon nearest in space, not the one you are standing over. The
+## builder writes every Trenchworks anchor at y = 0 — the anchors are plan
+## positions, the route's own marks — and a trench floor is 1.4 to 2.5 m BELOW
+## that, while the parapet top is 0.6 m above it. So an anchor over a trench
+## snaps to the PARAPET, which bakes as walkable, is two walls wide, and is an
+## island: every path from it then goes nowhere, identically, for every target
+## on the map.
+##
+## That is the same defect that made probe_nav_reach's coverage sweep query
+## from 70 m in the air and count 284 of 2112 samples, and it is worth stating
+## in one place rather than being rediscovered a third time: ON THIS PROJECT, A
+## POSITION IS NOT A PLACE TO STAND UNTIL IT HAS BEEN PUT ON THE GROUND.
+static func at_floor(space: PhysicsDirectSpaceState3D, p: Vector3,
+		lift: float = 0.5) -> Vector3:
+	var g := ground(space, p.x, p.z)
+	if is_nan(g):
+		push_warning("probe_trench_lib: nothing under (%.0f, %.0f) — anchor left at its own height, and a 3D snap from there can land on a parapet" % [p.x, p.z])
+		return p
+	return Vector3(p.x, g + lift, p.z)
+
+
 ## HOW DEEP THE CUT IS AT A POINT, which is the measurement this whole pass
 ## turns on. The floor under x,z against the MEDIAN of a ring of samples RING
 ## metres out: median and not mean, because one ring sample down a neighbouring

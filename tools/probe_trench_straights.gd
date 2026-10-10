@@ -38,16 +38,28 @@ extends SceneTree
 # the jog is not big enough to put earth in the way — which is the failure mode
 # a centreline-only measurement would call a pass.
 #
-# AND ON SALIENT THAT IS EXACTLY WHAT IT FOUND, first run, which is the reason
-# the sightline half exists at all. The communication trench's centreline never
-# runs straight for more than 18.5 m, and a ray down its floor at 1.0 m goes
-# 80 m. The arithmetic says why, off the kit's own constants: trench_traverse
-# steps the centreline by (T_HALF * 2 + T_WALL * 2) / 2 = 2.3 m, and the floor
-# is T_HALF * 2 = 3.0 m wide. 3.0 - 2.3 = 0.7 m of the two bays still overlap,
-# so a line threaded down the middle passes straight through the traverse. The
-# traverse breaks an OFF-CENTRE sightline and not a centred one, and that is a
-# measurement of the kit rather than of this map — every trench built from it
-# has the same property.
+# AND ON SALIENT THAT DISAGREEMENT IS EXACTLY WHAT IT FOUND, which is the
+# reason the sightline half exists at all: the communication trench's
+# centreline never runs straight for more than 18.5 m, and a ray down its floor
+# at 1.0 m goes 80 m.
+#
+# A CORRECTION, LEFT IN BECAUSE IT WAS PUBLISHED WRONG ONCE. The first version
+# of this comment blamed the kit: it worked out that trench_traverse steps the
+# centreline by (T_HALF * 2 + T_WALL * 2) / 2 = 2.3 m against a 3.0 m floor,
+# called the 0.7 m difference an overlap, and concluded that a centred ray
+# threads every traverse in the project. VERBOSE=1 says otherwise, and the
+# geometry agrees with VERBOSE: the entry bay spans y -3.8 to -0.8 and the exit
+# bay +0.8 to +3.8, so they do not overlap at all, and every traverse piece on
+# Salient measures 3.0 m of total sightline — 1.5 m each way, which is the jog
+# and nothing more. THE KIT'S TRAVERSE WORKS.
+#
+# The 80 m is a PLACEMENT fault instead: route C's recipe lays its four
+# traverses as two adjacent pairs (traverse then traverse_r, which jogs left
+# then back right and returns the line to its own centre), at x -101/-89 and
+# -12/0 — leaving 77 m of dead straight trench between the pairs with nothing
+# in it. Same number, opposite fix: spread the traverses through the run rather
+# than pairing them. Which is why the per-station list exists at all; a summary
+# line cannot tell a kit fault from a recipe fault.
 # ─────────────────────────────────────────────
 
 const LIB := preload("res://tools/probe_trench_lib.gd")
@@ -66,6 +78,15 @@ const BAY := 30.0
 ## Beyond this a sightline is not a trench, it is a view. The ray is given a
 ## finite length so "no hit" is a number and not an infinity.
 const RAY := 400.0
+
+## NOT A LENGTH OF ROUTE. A wire belt is laid as part of a route — it is the
+## fence the route runs at, or the gate through it — but it is a fence standing
+## in the open, and a sightline measured from on top of one is a view across
+## no-man's-land. Left in, the four belts at the end of the crater chain
+## reported it as a 456 m shooting gallery while the shell holes that ARE the
+## route read 18.8 m. Measuring the obstacle instead of the trench is the
+## single most misleading thing this probe did.
+const NOT_A_RUN := ["wire_belt"]
 
 
 func _initialize() -> void:
@@ -137,8 +158,16 @@ func _initialize() -> void:
 			var total := 0.0
 			var n := 0
 			var open_ended := 0
+			var skipped_fence := 0
 			for i in pieces.size():
 				var at: Vector3 = (pieces[i] as Array)[1]
+				var fence := false
+				for p: String in NOT_A_RUN:
+					if str((pieces[i] as Array)[0]).contains(p):
+						fence = true
+				if fence:
+					skipped_fence += 1
+					continue
 				var dir := _heading(pieces, i)
 				if dir == Vector3.ZERO:
 					continue
@@ -147,6 +176,7 @@ func _initialize() -> void:
 					push_warning("probe_trench_straights: no collision under %s — no sightline from it" % (pieces[i] as Array)[0])
 					continue
 				var from := Vector3(at.x, g + eye, at.z)
+				var verbose := OS.get_environment("VERBOSE") != ""
 				var fwd := _clear(space, from, dir)
 				var back := _clear(space, from, -dir)
 				var d: float = float(fwd[0]) + float(back[0])
@@ -156,13 +186,25 @@ func _initialize() -> void:
 				# the "trench" is a shallow scrape whose lip is below the eye.
 				if not bool(fwd[1]) or not bool(back[1]):
 					open_ended += 1
+				# VERBOSE=1 prints every station. WHICH piece a long sightline
+				# is measured from is the whole diagnosis: a long run between
+				# two traverses is a placement fault in the route's recipe, and
+				# a long run THROUGH a traverse would be a fault in the kit.
+				# Those want opposite fixes and the summary cannot tell them
+				# apart.
+				if verbose:
+					print("      %-28s %6.1f m fwd + %6.1f m back = %6.1f m" % [
+							(pieces[i] as Array)[0], float(fwd[0]), float(back[0]), d])
 				best = maxf(best, d)
 				if is_equal_approx(best, d):
 					best_at = at
 				total += d
 				n += 1
+			if skipped_fence > 0:
+				print("   %-14s %d wire-belt piece(s) left out: a fence across the route" % [
+						key, skipped_fence])
 			if n == 0:
-				print("   %-14s nothing measurable" % key)
+				print("   %-14s nothing measurable — every piece of it is a fence" % key)
 				continue
 			rows.append([key, best, total / float(n), best_at, open_ended, n])
 		for r: Array in rows:

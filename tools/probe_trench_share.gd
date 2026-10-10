@@ -165,7 +165,8 @@ func _initialize() -> void:
 			var nm := str(o.name)
 			if only != "" and not nm.contains(only):
 				continue
-			var to := _snap((o as Node3D).global_position)
+			# On the ground before it is snapped — see probe_trench_lib.at_floor().
+			var to := _snap(LIB.at_floor(_space, (o as Node3D).global_position))
 			# THE OBJECTIVE YOU ARE STANDING ON IS NOT UNREACHABLE. The advance
 			# starts at the jump-off trench, which is itself an objective anchor,
 			# and map_get_path returns fewer than two points for a zero-length
@@ -299,14 +300,14 @@ func _near_works(p: Vector3) -> bool:
 func _start(node_name: String) -> Vector3:
 	var at: Vector3 = LIB.objective(_level, node_name)
 	if not is_nan(at.x):
-		return _snap(at)
+		return _snap(LIB.at_floor(_space, at))
 	var spawn: Node3D = _level.get_node_or_null("SpawnPoint")
 	if spawn == null:
 		return Vector3(NAN, NAN, NAN)
 	print("   NOTE  no %s anchor; starting from SpawnPoint instead, which is" % node_name)
 	print("         the level entry and not the jump-off — the first few hundred")
 	print("         metres of every walk below are rear-area approach march.")
-	return _snap(spawn.global_position)
+	return _snap(LIB.at_floor(_space, spawn.global_position))
 
 
 ## The objective anchors, from wherever this level keeps them.
