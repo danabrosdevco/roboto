@@ -30,20 +30,65 @@ extends SceneTree
 # the mounts, the livery list, and the material on every piece.
 #
 # ─────────────────────────────────────────────
+# THE TUBES ARE A WEAPON, NOT A CHASSIS (revision, 2026-10-10)
+#
+# The six canted launcher tubes used to be geometry in this rig. They are gone.
+# The human's ruling, said of the Lance's cast cannon and then of this frame:
+# "likewise the tubes should be a weapon not part of the chassis." Every other
+# gun-carrying frame in the family already obeys it — walker.tscn, bulwark.tscn
+# and vehicle_rover.tscn each carry a mantlet, a WeaponMount and NO BARREL,
+# because the gun is the fitted weapon scene. A chassis that ships with its
+# armament welded on cannot be refitted, cannot be shown empty in the armoury,
+# and double-draws the moment a weapon IS fitted to it.
+#
+# WHAT THAT COSTS HERE, AND WHAT IS LEFT BEHIND. More than on any other frame:
+# the selected concept is literally called "launcher-led" and PICKET.md section
+# 1 says the tubes are what makes this read as an answer to being BOMBED rather
+# than as a gun that happens to elevate. Deleted naively, the Picket is an
+# anonymous legged box with a dish on it.
+#
+# So the launcher is removed and its MOUNTING IS NOT. What stays is everything
+# that is chassis in the first place — the hardware a launch vehicle keeps when
+# its pack is lifted off:
+#
+#   TrunnionL/R   bearing bosses on the yoke flanks, on the elevation axis
+#   TrunnionPin   the axis itself, through them
+#   Mantlet       the canted breech plate the pack bolted to, still 1.0 x 0.67
+#                 — six tubes wide and two high, so the hole states its size
+#   RailL/R       the cradle's side rails, open-topped and EMPTY. This is the
+#                 piece doing the work: two long plates with a gap between them
+#                 is a frame missing its load, where a bare plate is just a box.
+#   CradleYoke    the cross brace closing the rails at the muzzle end
+#   RamBodyL/R    the elevation actuators, on the yoke
+#   RamRodL/R     their rods, on the cradle — see the telescope note below
+#
+# The sensor dish was a shoulder fitting demoted out of the way of the tubes.
+# With the tubes gone it is the loudest thing on the frame, and it is now doing
+# most of the identifying: a dish says AIRCRAFT before anything else has parsed.
+#
+# IF YOU ARE THE ONE BUILDING THE WEAPON: the tubes were CSGMesh3D cylinders,
+# axis +Y, turned +90 about X so the bore lay along Z, each with a
+# CSGCylinder3D subtraction offset toward local -Y (the muzzle) and stopping
+# short of the far end so the breech stayed closed. A solid cylinder reads as a
+# rod and six rods read as a gun — the visible bore is what makes the frame say
+# "launcher" at forty pixels, and it cost one subtraction per tube. Six tubes,
+# three across and two high, radius 0.14, length 1.375, spaced 0.322.
+#
+# ─────────────────────────────────────────────
 # THE TURRET QUESTION: WHAT YAWS AND WHAT PITCHES
 #
 # walker.gd wants two nodes (walker.gd:200-227): `turret`, whose rotation.y it
 # drives toward the target bearing, and `gun_pivot`, whose rotation.x it drives
-# toward the target elevation. The Picket's whole premise is a launcher block
-# that points up, so the mapping has to be decided rather than assumed.
+# toward the target elevation. The Picket's whole premise is a launcher that
+# points up, so the mapping has to be decided rather than assumed.
 #
 #   Turret    the whole upper assembly — the yoke, the head and eye, the
-#             antenna, the sensor dish and the launcher. One bearing for the
-#             frame, so the dish looks where the tubes look. (PICKET.md section
-#             8 leaves a dish that traverses on its own as an open question;
-#             this is the "not modelled now" answer.)
-#   GunPivot  the trunnion at the top of the yoke, at the launcher block's own
-#             origin (0, 1.22, 0). It carries the launcher and nothing else.
+#             antenna, the sensor dish and the cradle. One bearing for the
+#             frame, so the dish looks where the launcher looks. (PICKET.md
+#             section 8 leaves a dish that traverses on its own as an open
+#             question; this is the "not modelled now" answer.)
+#   GunPivot  the trunnion at the top of the yoke, at the launcher's own origin
+#             (0, 1.22, 0). It carries the cradle and nothing else.
 #
 # GunPivot's OWN ROTATION IS ZERO, and the 54-degree cant lives on a child,
 # `PodCant`. This is not tidiness. walker.gd:224 ASSIGNS rotation.x every
@@ -63,25 +108,41 @@ extends SceneTree
 # negative: a cone's axis is +Y, and +X by a negative angle tilts +Y up and
 # forward. See the long note in tools/concepts_p.gd.
 #
-# THE WEAPON MOUNT RIDES THE CANT. It hangs under PodCant at the muzzle plane,
-# so a fitted weapon's barrel lies along the tubes instead of pointing level
-# out of the middle of a launcher. Its own yaw is +PI/2 — not -PI/2 — which is
-# what turns a weapon's +X muzzle onto the assembly's -Z; read off the Walker's
-# matrix it looks like a quarter turn either way, it is not, and the Bulwark
-# fired backwards for it.
+# THE WEAPON MOUNT RIDES THE CANT, and it has MOVED TO THE BREECH PLANE.
+# It used to hang at the muzzle end, which was right while the tubes were
+# chassis: a fitted weapon then started where they stopped. Now the tubes ARE
+# the fitted weapon, so the mount goes where their breeches were — cant-local
+# z +0.0625, the face of the mantlet — and a fitted launcher grows forward out
+# of the cradle and fills it, instead of hanging 1.4 m off the nose.
+#
+# Its own yaw is +PI/2 — not -PI/2 — which is what turns a weapon's +X muzzle
+# onto the assembly's -Z; read off the Walker's matrix it looks like a quarter
+# turn either way, it is not, and the Bulwark fired backwards for it.
+#
+# THE ELEVATION RAMS TELESCOPE, DELIBERATELY. A strut between a static node and
+# one walker.gd re-aims every frame cannot be rigid: the body is on the yoke and
+# the rod is on the cradle, so elevation slides one along the other. They are
+# built with ~0.1 m of overlap at rest so the pair reads as one actuator
+# through the whole of gun_min/max_pitch_degrees instead of pulling apart. A
+# single rigid strut on either node would visibly detach from the other.
 #
 # ─────────────────────────────────────────────
 # TWO THINGS THAT DISAGREE WITH docs/frames/PICKET.md, ON PURPOSE
 #
-# 1. THE SIZE IN SECTION 1 IS WRONG. The doc says C2 is 2.24 W x 3.27 H x
-#    1.76 L. Width and length are exact; the HEIGHT IS NOT. Rendering the
-#    refine sheet (tools/mockup_frames.gd) measures the selected concept at
-#    2.24 x 4.15 x 1.76 — so C2 is TALLER than the 4.07 m original whose height
-#    was one of the three faults C2 was drawn to fix. 3.27 appears nowhere in
-#    the code. Nothing here is scaled to chase it: the brief says the concept
-#    is the authority on proportions and that a disagreement gets reported, not
-#    papered over. Bringing it down is a proportions decision (shorter tubes, a
-#    shallower cant) and belongs to whoever owns the concept.
+# 1. THE HEIGHT. PICKET.md section 1 records 4.15 m measured off the built
+#    frame, taller than the Walker's 3.81 and taller than the 4.07 the chosen
+#    concept was drawn specifically to cut down — an open decision, and not
+#    this generator's to make.
+#
+#    REMOVING THE TUBES CHANGED IT, because the tubes were the tallest thing on
+#    the frame: canted 54 degrees and 1.375 long, their muzzles alone reached
+#    y 2.46. With the cradle in their place the frame measures 3.74 m, and the
+#    tallest piece is now the antenna. NOTHING HERE WAS SCALED TO HIT THAT
+#    NUMBER — it is what the concept's own proportions come to once the pack is
+#    a weapon, and the cradle's length is set by the trunnion frame a 1.375 m
+#    pack would need (0.78, a little over half), not by a height target. Note
+#    that a fitted launcher puts the silhouette back near 4.15 in the field;
+#    what has changed is what the CHASSIS measures.
 #
 # 2. THE CAPSULE IS SIZED TO THE ART, not to the doc's r 0.8 / h 2.4. Radius
 #    0.8 is right — the hull is 1.55 across and the feet reach x 0.975. Height
@@ -92,6 +153,12 @@ extends SceneTree
 #    0.175 above the sole — the Walker's own relationship — and the top just
 #    over the yoke, exactly where the Walker's capsule stops below its barrel
 #    and antenna.
+#
+#    KEPT AT 3.0 THROUGH THE TUBE REMOVAL. It is deliberately a hull capsule,
+#    not a silhouette capsule: the Walker's stops below its gun too, and a
+#    fitted launcher puts volume straight back where the tubes were. Shrinking
+#    it to the bare chassis would make the frame harder to hit once it is armed
+#    than it was while it was unarmed.
 # ─────────────────────────────────────────────
 
 const OUT := "res://Character/characters/ai/picket.tscn"
@@ -121,9 +188,21 @@ const HULL_Y := 0.45
 ## Launcher block origin, in body space. The trunnion goes here.
 const PODS_AT := Vector3(0.0, 1.22, 0.0)
 const PODS_CANT := 54.0
+## THE PACK THAT IS NO LONGER HERE. These are kept because the cradle is sized
+## by them and by nothing else: the mantlet is as wide as three tubes and as
+## tall as two, the breech plane is where their rear faces were, and the rail
+## length is a fraction of their length. A cradle measured in its own round
+## numbers would stop fitting the weapon the moment either moved.
 const TUBE_R := 0.14
 const TUBE_LEN_F := 1.25
 const TUBE_LEN := 1.1 * TUBE_LEN_F
+const TUBE_COLS := 3
+const TUBE_ROWS := 2
+## Cant-local z of the pack's breech faces. The WeaponMount goes here.
+const BREECH_Z := -0.5 * TUBE_LEN_F + TUBE_LEN * 0.5
+## The cradle's side rails, a little over half the pack's length — a trunnion
+## frame carries the load at its root, it does not sleeve the whole of it.
+const RAIL_LEN := 0.78
 ## Dish head, in body space.
 const DISH_AT := Vector3(-0.86, 1.22, 0.42)
 const DISH_R := 0.4
@@ -227,44 +306,39 @@ func _hull(parent: Node, nm: String, size: Vector3, at: Vector3,
 	return h
 
 
-## ONE LAUNCHER TUBE, BORED OUT.
+## A CYLINDER LAID BETWEEN TWO POINTS in the parent's own space — the trunnion
+## pin, the bosses and the elevation ram.
 ##
-## A solid cylinder reads as a rod, and six rods read as a gun — the exact
-## failure that killed three of the five first-round concepts. A visible bore
-## is what makes the frame say "launcher" at forty pixels, and it costs one
-## subtraction per tube: cheaper than the muzzle rings and separate backplate
-## the alternative needed, and baked once at boot either way.
+## The rotation is COMPUTED, not hand-written, and that is the point of having
+## this at all: the ram's two halves live on nodes 54 degrees apart, and the
+## Euler angles for "the same strut, expressed on the cant" are precisely the
+## kind of sign error the cant note in the header is about. Give it two points
+## and let it do the trigonometry.
 ##
-## The mesh's axis is +Y and the node is turned +90 about X, which puts the
-## bore along the assembly's Z. Local -Y is therefore the MUZZLE, so the cut is
-## offset that way and stops short of the far end, leaving a closed breech.
-func _tube(parent: Node, nm: String, r: float, length: float, at: Vector3) -> CSGMesh3D:
-	var c := CSGMesh3D.new()
-	c.name = nm
+## A CylinderMesh's axis is +Y, so the piece takes the shortest arc from +Y onto
+## the strut direction.
+func _strut(parent: Node, nm: String, from: Vector3, to: Vector3, r: float,
+		facets: int = 10) -> MeshInstance3D:
+	var axis := to - from
+	var length := axis.length()
 	var cm := CylinderMesh.new()
 	cm.top_radius = r
 	cm.bottom_radius = r
 	cm.height = length
-	cm.radial_segments = 12
+	cm.radial_segments = facets
 	cm.rings = 0
-	c.mesh = cm
-	c.position = at
-	c.rotation = Vector3(PI * 0.5, 0, 0)
-	c.material = _metal
-	parent.add_child(c)
-	c.owner = _root
-	var bore := CSGCylinder3D.new()
-	bore.name = "%sBore" % nm
-	bore.radius = r - 0.045
-	bore.height = length
-	# Same facet count as the outer wall, or the bore reads as a different part
-	# of the machine from the tube it is inside.
-	bore.sides = 12
-	bore.position = Vector3(0, -0.1 * length, 0)
-	bore.operation = CSGShape3D.OPERATION_SUBTRACTION
-	c.add_child(bore)
-	bore.owner = _root
-	return c
+	var m := _mesh(parent, nm, cm, (from + to) * 0.5)
+	var dir := axis / length
+	var dot := dir.dot(Vector3.UP)
+	if dot < 0.99999:
+		# Antiparallel has no unique arc and cross() degenerates to zero, which
+		# would normalize() to (0,0,0) and silently leave the piece upright.
+		# Nothing here is antiparallel today; a half-turn is the right answer if
+		# something ever is.
+		var ax := Vector3.UP.cross(dir)
+		ax = Vector3.FORWARD if ax.length() < 0.0001 else ax.normalized()
+		m.transform.basis = Basis(ax, Vector3.UP.angle_to(dir))
+	return m
 
 
 # ─────────────────────────────────────────────
@@ -371,7 +445,7 @@ func _build() -> CharacterBody3D:
 	# of them visible.
 	_mesh(turret, "Antenna", _boxm(Vector3(0.03, 0.85, 0.03)), Vector3(0.42, 0.56, 0.44))
 	_dish(turret)
-	_launcher(turret)
+	_cradle(turret)
 	_legs(rig)
 
 	# ── effects, livery ──
@@ -409,9 +483,20 @@ func _build() -> CharacterBody3D:
 	paint.append(turret.get_node("DishBracket"))
 	paint.append(turret.get_node("DishMast"))
 	paint.append(turret.get_node("Dish"))
-	paint.append(turret.get_node("GunPivot/PodCant/PodPlate"))
-	for i in 6:
-		paint.append(turret.get_node("GunPivot/PodCant/Tube%d" % i))
+	# THE CRADLE, NOT THE LAUNCHER. These replaced PodPlate and Tube0..5 when
+	# the tubes became a fitted weapon, and the list was NOT updated with them:
+	# get_node returned null for every old path, the seven new pieces joined no
+	# list, and the first render came back with a bare metal cradle bolted to a
+	# faction-blue frame. Nothing errored that check_frame.gd could see.
+	paint.append(turret.get_node("TrunnionL"))
+	paint.append(turret.get_node("TrunnionR"))
+	paint.append(turret.get_node("RamBody"))
+	paint.append(turret.get_node("GunPivot/TrunnionPin"))
+	paint.append(turret.get_node("GunPivot/PodCant/Mantlet"))
+	paint.append(turret.get_node("GunPivot/PodCant/RailL"))
+	paint.append(turret.get_node("GunPivot/PodCant/RailR"))
+	paint.append(turret.get_node("GunPivot/PodCant/CradleYoke"))
+	paint.append(turret.get_node("GunPivot/PodCant/RamRod"))
 	paint.append(rig.get_node("HipL"))
 	paint.append(rig.get_node("HipR"))
 	livery.set("pieces", paint)
@@ -456,7 +541,10 @@ func _build() -> CharacterBody3D:
 	var vis: Array[Node3D] = []
 	vis.append(hull)
 	vis.append(yoke)
-	vis.append(turret.get_node("GunPivot/PodCant/PodPlate"))
+	# The mantlet, not the launcher plate it replaced — visible_pieces drives
+	# hide_body and the death collapse, and a stale path put a null in a typed
+	# array here too.
+	vis.append(turret.get_node("GunPivot/PodCant/Mantlet"))
 	root_body.set("particle_effects_die", dies)
 	root_body.set("particle_effects_hit", hits)
 	root_body.set("visible_pieces", vis)
@@ -539,40 +627,86 @@ func _dish(turret: Node3D) -> void:
 	_mesh(d, "DishFeed", _sphere_mesh(0.1), Vector3(0, DISH_R * 0.82, 0))
 
 
-## THE LAUNCHER. Six tubes, three across and two high, canted up hard.
+## THE CRADLE — the launcher's mounting, with the launcher gone. See the header:
+## the six tubes are a fitted weapon now, and what a launch vehicle keeps when
+## its pack is lifted off is the trunnion, the rails it sat in, the breech
+## mantlet and the elevation hardware. All of that is here and nothing else is.
 ##
-## GunPivot sits at the block's origin and DOES NOT ROTATE — see the header for
+## The piece carrying the read is RailL/RailR: two long plates with an OPEN,
+## EMPTY trough between them. A bare mantlet is a box on a yoke; a visibly
+## empty cradle is a machine with its load missing, which is the difference
+## between "frame awaiting a launcher" and "frame that never had one".
+##
+## GunPivot sits at the pack's origin and DOES NOT ROTATE — see the header for
 ## why a cant built into it would be clamped flat by walker.gd:224 on the first
-## frame of combat. PodCant below it holds the 54 degrees.
-func _launcher(turret: Node3D) -> void:
-	var pivot := _node(turret, "GunPivot", PODS_AT - Vector3(0, TURRET_Y, 0))
+## frame of combat. PodCant below it holds the 54 degrees, and the name is kept
+## because it is what the saved scene's node paths already say.
+func _cradle(turret: Node3D) -> void:
+	var pivot_at := PODS_AT - Vector3(0, TURRET_Y, 0)
+	var pivot := _node(turret, "GunPivot", pivot_at)
 	# POSITIVE X. A rotation about +X maps -Z to (0, sin, -cos), so a NEGATIVE
-	# angle sends the muzzles DOWN and forward. Three of five first-round
+	# angle sends the cradle's mouth DOWN and forward. Three of five first-round
 	# concepts had this sign wrong on the one frame whose premise is shooting
 	# up; it is the single easiest thing to get backwards here.
 	var cant := _node(pivot, "PodCant", Vector3.ZERO, Vector3(PODS_CANT * DEG, 0, 0))
 
-	var cols := 3
-	var rows := 2
-	var step := TUBE_R * 2.3
-	# The backplate the tubes are seated in, immediately behind their breeches.
-	var plate := _hull(cant, "PodPlate",
-			Vector3(float(cols) * TUBE_R * 2.4, float(rows) * TUBE_R * 2.4, 0.16),
+	# THE TRUNNION. Bearing bosses on the yoke flanks — which do NOT elevate, so
+	# they hang off the Turret — and the pin between them, which does, so it
+	# hangs off the pivot. A cylinder turning about its own axis shows nothing,
+	# which is the only reason the pin can be on the moving half at all.
+	for s: float in [-1.0, 1.0]:
+		var bx := s * 0.56
+		_strut(turret, "Trunnion%s" % ("L" if s < 0.0 else "R"),
+				Vector3(bx - s * 0.06, pivot_at.y, 0.0),
+				Vector3(bx + s * 0.06, pivot_at.y, 0.0), 0.15, 12)
+	_strut(pivot, "TrunnionPin", Vector3(-0.59, 0, 0), Vector3(0.59, 0, 0), 0.055, 10)
+
+	# THE MANTLET — the canted plate the pack bolts to, kept at the pack's own
+	# footprint: three tubes across, two high. That is deliberate. The hole in
+	# the middle of this frame has to state the size of what belongs in it, and
+	# a plate trimmed to look tidy would understate it.
+	var mantlet := _hull(cant, "Mantlet",
+			Vector3(float(TUBE_COLS) * TUBE_R * 2.4, float(TUBE_ROWS) * TUBE_R * 2.4, 0.16),
 			Vector3(0, 0, 0.145))
 	for s in [-1.0, 1.0]:
-		_cut(plate, "PlateCorner%s" % ("L" if s < 0.0 else "R"),
+		_cut(mantlet, "PlateCorner%s" % ("L" if s < 0.0 else "R"),
 				Vector3(0.22, 0.22, 0.4), Vector3(s * 0.5, 0.336, 0),
 				Vector3(0, 0, 45.0 * DEG))
 
-	for c in cols:
-		for w in rows:
-			var x := (float(c) - float(cols - 1) * 0.5) * step
-			var y := (float(w) - float(rows - 1) * 0.5) * step
-			_tube(cant, "Tube%d" % (c * rows + w), TUBE_R, TUBE_LEN,
-					Vector3(x, y, -0.5 * TUBE_LEN_F))
+	# THE RAILS. Flush with the mantlet's flanks, running forward to just over
+	# half the pack's length, open at the top and at the muzzle end.
+	for s in [-1.0, 1.0]:
+		_mesh(cant, "Rail%s" % ("L" if s < 0.0 else "R"),
+				_boxm(Vector3(0.07, 0.42, RAIL_LEN)),
+				Vector3(s * 0.5, -0.13, -RAIL_LEN * 0.5))
+	# The cross brace closing the rails, kept LOW so the trough still reads as
+	# open from in front. Across the bottom it is a cradle; across the top it
+	# would be a box with a slot in it.
+	_mesh(cant, "CradleYoke", _boxm(Vector3(1.07, 0.1, 0.13)),
+			Vector3(0, -0.29, -RAIL_LEN + 0.065))
 
-	# AT THE MUZZLE PLANE AND ON THE CANT, so a fitted weapon lies along the
-	# tubes rather than poking level out of the middle of the block.
+	# THE ELEVATION RAM. One, not two, and offset LEFT of centre: the head sits
+	# on the right shoulder at x 0.04..0.64 and a symmetric pair put the
+	# starboard ram straight through it. Asymmetry is already this frame's
+	# language — dish left, antenna and head right, eye offset.
+	#
+	# TELESCOPING ON PURPOSE. The body is on the yoke and the rod is on the
+	# cradle, so elevation slides one along the other; they overlap ~0.1 m at
+	# rest so the pair still reads as one actuator across the whole travel. A
+	# rigid strut on either node would visibly tear away from the other, which
+	# is the shape of the rest-pose trap one level down: anything that spans a
+	# joint walker.gd writes every frame cannot be one piece.
+	var foot := Vector3(-0.10, 0.17, -0.42)
+	var head_end := cant.transform * Vector3(-0.10, -0.37, -0.62)
+	var reach := head_end - foot
+	_strut(turret, "RamBody", foot, foot + reach * 0.80, 0.075, 10)
+	var to_cant := cant.transform.affine_inverse()
+	_strut(cant, "RamRod", to_cant * (foot + reach * 0.34), to_cant * head_end, 0.04, 8)
+
+	# AT THE BREECH PLANE AND ON THE CANT, so a fitted launcher grows forward
+	# out of the cradle and fills it. It used to sit at the muzzle plane, which
+	# was correct while the tubes were chassis and is 1.4 m too far forward now
+	# that they are the weapon.
 	#
 	# +90 DEGREES, NOT -90. A weapon's muzzle runs down its own +X and the
 	# mount has to turn that onto the assembly's -Z. Read off the Walker's
@@ -580,8 +714,7 @@ func _launcher(turret: Node3D) -> void:
 	# Bulwark's first build fitted, elevated, tracked targets and fired directly
 	# behind itself. Nothing warns: a mount pointing the wrong way is a
 	# perfectly valid transform.
-	_node(cant, "WeaponMount", Vector3(0, 0, -0.5 * TUBE_LEN_F - TUBE_LEN * 0.5),
-			Vector3(0, PI * 0.5, 0))
+	_node(cant, "WeaponMount", Vector3(0, 0, BREECH_Z), Vector3(0, PI * 0.5, 0))
 
 
 ## THE LEGS, straight out of the concept: hip ball, thigh broken forward, shin

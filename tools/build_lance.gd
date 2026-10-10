@@ -29,6 +29,21 @@ extends SceneTree
 # every y is written as GROUND + <the concept's own y>, so the two files can be
 # read side by side.
 #
+# ── REVISED 2026-10-10 AFTER REVIEW IN GAME, and the concept now differs ──
+# The human looked at frame_lance.png and gave three notes. Each is documented
+# at the code it changed, and together they are the first places this file
+# departs from ConceptsA.lance_a() — read the concept as the origin, not as the
+# current truth:
+#
+#   1. SMALLER WHEELS. DRIVE_WHEEL_R 0.44 -> 0.32, CASTOR_R 0.26 -> 0.19, with
+#      the hub radii and the axle and swing-arm heights following them. The
+#      measured width is untouched: it is the track plus the hub standing proud,
+#      not the tyre's radius.
+#   2. THE EYE IS ON THE TURRET, not on a stalk off the hull. Head is the only
+#      child of Turret, so its y is turret-relative rather than GROUND + y.
+#   3. NO CAST BARREL. The gun is a fitted weapon; the cradle and a new breech
+#      collar stay behind as the mounting.
+#
 # Two kit helpers had to be rebuilt rather than called. ConceptKit's shapes are
 # raw CSG with no material and no scene ownership, which is fine for a concept
 # render and wrong for a shipping scene — so everything here goes through _mesh
@@ -54,11 +69,12 @@ extends SceneTree
 #      with traverse zero that call returns the angle it was given, so the node
 #      never moves. Leaving the Rover's 95 would have given the Lance a working
 #      turret, which is the one thing this frame must not have.
-#   2. NOTHING HANGS OFF IT. The gun is parented to GunMount in the nose, not to
-#      Turret, so even rover.gd's death flourish (_wreck slews turret.rotation.y
-#      by 50-125 degrees) cannot move a single visible piece. A stub with the
-#      barrel underneath would have spun the Lance's bolted-on nose gun off to
-#      one side the moment it died.
+#   2. THE GUN'S MOUNTING IS NOT UNDER IT. The cradle and breech are parented to
+#      GunMount in the nose, not to Turret, so rover.gd's death flourish (_wreck
+#      slews turret.rotation.y by 50-125 degrees) cannot swing them. A stub with
+#      the gun underneath would have spun the Lance's bolted-on nose mounting
+#      off to one side the moment it died. The ONLY thing under Turret is the
+#      head — see the next section, which is the 2026-10-10 change.
 #   3. It sits on the spine centreline with zero rotation, so _turret_forward()
 #      — which rover.gd uses for _weapon_on_target and for the sight — returns
 #      the HULL's forward. That is exactly the behaviour LANCE.md section 6
@@ -76,15 +92,47 @@ extends SceneTree
 # aims only by driving. That is a decision for whoever writes lance.gd and the
 # chassis .tres, and it is recorded here so it is not discovered as a bug.
 #
-# ── THE GUN IS GEOMETRY, NOT KIT ─────────────
-# The barrel and muzzle brake are built into the rig under GunPivot rather than
-# left to a fitted weapon scene, because "the gun is the nose" IS the selected
-# concept — a Lance without them is an empty frame on three wheels and reads as
-# scenery. WeaponMount therefore sits at the cradle's front face, where the
-# Rover puts its own mount: at the breech, 0.12 m ahead of its GunPivot.
-# A fitted weapon will overlay the cast barrel until the light_cannon pass
-# decides which of the two owns it; that is noted in the report, not papered
-# over here.
+# ── THE EYE IS ON THE TURRET, AND THEREFORE NEVER MOVES ──
+#
+# Head (stalk + eye) hangs off `Turret`, not off the rig, because that is the
+# family's grammar: concept_kit.head() builds the single offset eye onto the
+# turret and walker.tscn and bulwark.tscn both carry it there. Reviewed in game
+# on 2026-10-10 the Lance's hull-mounted stalk read as the odd one out, and it
+# was moved.
+#
+# DO NOT READ THAT AS A TRACKING EYE. Because Turret is the zero-traverse stub
+# described above, an eye parented to it is as body-fixed as one bolted to the
+# hull — rover.gd cannot rotate the node, so the eye stares straight down the
+# frame's own nose forever. For a frame that aims by pointing its whole body
+# that is correct and is the point: where the Lance looks is where the Lance is
+# driving. It is parented to Turret for the family resemblance and for the day
+# somebody decides the stub should traverse, not because it does today.
+#
+# The one live consequence of the move: rover.gd's _wreck slews
+# turret.rotation.y by 50-125 degrees on death, so the eye and stalk now whip
+# round when the frame dies. Nothing else is under Turret, so nothing else is
+# affected, and a dead scout's head lolling to one side is a better read than
+# the old stub's "nothing visible moves at all".
+#
+# ── THE GUN IS A WEAPON, NOT GEOMETRY ────────
+# The first build cast a barrel and muzzle brake into the rig under GunPivot,
+# arguing that "the gun is the nose" IS the selected concept. THE HUMAN HAS
+# RULED AGAINST THAT, 2026-10-10, and it is a family decision rather than a
+# Lance quirk: walker.tscn, bulwark.tscn and vehicle_rover.tscn all carry a
+# mantlet, a WeaponMount and NO BARREL, because the gun is whatever weapon is
+# fitted. A cast barrel would have been overlaid by the fitted light_cannon the
+# moment the frame had kit, which the first build already flagged as an
+# unresolved collision; it is resolved by deleting the cast one.
+#
+# WHAT IS LEFT IS THE MOUNTING, AND THAT IS DELIBERATE. The cradle still sits
+# on the spine's front face and a breech collar still sits in it, so the frame
+# reads as built around a gun it is not currently holding — the Walker's
+# mantlet, in a trike's nose. Do not "finish" this by putting the barrel back.
+#
+# WeaponMount is unchanged: at the breech, 0.22 m ahead of GunPivot, yaw +PI/2.
+# The collision capsule is also unchanged at 2.3 m even though the bare chassis
+# is now only ~1.8 m long, for the reason the Rover's is generous too: the
+# fitted gun sticks out ahead of the nose and is deliberately not a collider.
 # ─────────────────────────────────────────────
 
 const OUT := "res://Character/characters/ai/lance.tscn"
@@ -120,10 +168,26 @@ const GROUND := -CAPSULE_RADIUS
 ## The driven wheels. rover.gd has ONE wheel_radius for the whole frame and uses
 ## it for the spin rate and for the suspension rays, so a trike with two sizes
 ## has to pick one: the big driven pair, because the castor behind only drags.
-const DRIVE_WHEEL_R := 0.44
+##
+## SMALLER THAN THE CONCEPT, 2026-10-10. The concept's 0.44 m radius put the
+## tyre tops at 0.88 against a hull top of 0.96, so in the in-game shot the
+## wheels were the biggest thing on the frame and the human flagged it. 0.32
+## drops the tyre tops to 0.64 — still 0.12 above the hull's sill, so the pair
+## brackets the nose the way a buggy's do, but the hull is now plainly the
+## largest mass.
+##
+## WIDTH IS NOT TOUCHED BY THIS. The measured box's 1.60 m is set by the track
+## (x +-0.66) plus the hub standing 20 mm proud of the tyre (_wheel builds the
+## hub at w * 1.08), NOT by the radius — so the frame cannot grow sideways here
+## however the radii move, and the design doc's 1.58 stays the figure to beat.
+## The hub RADII come down with the tyres, though: 0.18 inside a 0.32 tyre is
+## over half the wheel and reads as a solid disc rather than a hub.
+const DRIVE_WHEEL_R := 0.32
 const DRIVE_WHEEL_W := 0.26
-const CASTOR_R := 0.26
+const DRIVE_HUB_R := 0.14
+const CASTOR_R := 0.19
 const CASTOR_W := 0.20
+const CASTOR_HUB_R := 0.085
 
 var _metal: Material
 var _root: CharacterBody3D
@@ -244,18 +308,25 @@ func _build() -> CharacterBody3D:
 	#
 	# LOW AND SHORT, as the design doc asks. Laid along Z like the Rover's, so
 	# the capsule is the vehicle's length and its radius is the half-width that
-	# sets how it bumps and how far off a wall it parks. 0.52 covers the spine
-	# and both driven wheels vertically and leaves the tyres standing 0.27
-	# proud of it either side — the same proportion the Rover has, whose wheels
-	# stand 0.20 outside its own capsule. A collider out to the full 1.58 m
-	# track would make the cheapest, nimblest frame in the game the widest
-	# thing in a doorway.
+	# sets how it bumps and how far off a wall it parks. 0.52 clears the spine
+	# and, since the wheels came down to 0.32, now covers both driven tyres
+	# vertically with room over them; they still stand 0.27 proud of it either
+	# side, which is the proportion the Rover has — its wheels stand 0.20
+	# outside its own capsule. A collider out to the full 1.58 m track would
+	# make the cheapest, nimblest frame in the game the widest thing in a
+	# doorway.
 	var col := CollisionShape3D.new()
 	col.name = "CollisionShape3D"
 	var cap := CapsuleShape3D.new()
 	cap.radius = CAPSULE_RADIUS
-	# Nose of the cradle to the back of the castor's tyre; the barrel ahead of
-	# that is deliberately NOT a collider, the way the Rover's is not either.
+	# UNCHANGED BY THE 2026-10-10 PASS, and that is on purpose. The bare chassis
+	# is now about 1.8 m long end to end — the cast barrel that used to reach
+	# ahead of the cradle is gone, and the castor behind came in with its own
+	# radius — so 2.3 is deliberately longer than the art. It is the length of
+	# the frame WITH A GUN IN IT, which is the only state it fights in, and the
+	# fitted barrel is itself not a collider the way the Rover's is not either.
+	# Shrinking it to the bare art would make an armed Lance's muzzle pass
+	# through walls.
 	cap.height = 2.3
 	col.shape = cap
 	# Rotated onto Z: a capsule stands along its own Y, and this one lies down.
@@ -323,15 +394,21 @@ func _build() -> CharacterBody3D:
 	_front_axle(rig)
 	_tail(rig)
 
-	# THE STUB. See the header: body-fixed, nothing parented to it, and
-	# turret_traverse_degrees is zero so rover.gd cannot move it. It sits on the
+	# THE STUB. See the header: body-fixed, and turret_traverse_degrees is zero
+	# so rover.gd cannot move it. The head hangs off it for the family's
+	# grammar, which means the eye is body-fixed too — that is the design, not
+	# an oversight, and the header says so at length. It sits on the
 	# spine centreline at the height a turret ring would be, which is what makes
 	# _turret_forward() read the hull's own bearing.
 	var turret := _node(rig, "Turret", Vector3(0, GROUND + 0.74, 0))
 
 	var gun_pivot := _gun(rig)
 	_ammo_rack(rig)
-	var head := _head(rig)
+	# ON THE TURRET, NOT ON THE RIG — the family's grammar, and see the header
+	# for why that does NOT make it a tracking eye. Turret sits at
+	# GROUND + 0.74, so the head's old rig-space y of 0.92 is 0.18 here and the
+	# eye has not moved a millimetre in the frame's own space.
+	var head := _head(turret)
 	# The whip, off the starboard quarter. With no turret ring, the eye and the
 	# aerial are the whole family resemblance — see the note at the top of
 	# concepts_a.gd.
@@ -375,8 +452,7 @@ func _build() -> CharacterBody3D:
 	paint.append(rig.get_node("DropLinkR"))
 	paint.append(rig.get_node("SwingArm"))
 	paint.append(rig.get_node("GunMount/Cradle"))
-	paint.append(gun_pivot.get_node("Barrel"))
-	paint.append(gun_pivot.get_node("MuzzleBrake"))
+	paint.append(gun_pivot.get_node("Breech"))
 	paint.append(rig.get_node("AmmoRack"))
 	paint.append(rig.get_node("Antenna"))
 	paint.append(head.get_node("Stalk"))
@@ -509,28 +585,45 @@ func _bevel(hull: CSGMesh3D, size: Vector3, s: float, nm: String) -> void:
 ## and the thing that breaks the outline at the front — a bare beam straight
 ## across the nose with the drop links canted off it. Hide this behind a fender
 ## and the frame is a Rover again.
+##
+## ITS HEIGHT IS DERIVED FROM THE WHEEL, not written down. The concept's 0.44
+## was the wheel radius spelled a second time, so shrinking the tyres to 0.32
+## with a literal here would have left the beam floating above the hubs it is
+## supposed to run through. Same for the drop links, which hang 0.14 above the
+## axle line so their tops stay buried in the spine's flank.
 func _front_axle(rig: Node3D) -> void:
 	_mesh(rig, "Axle", _cyl_mesh(0.055, 1.30),
-			Vector3(0, GROUND + 0.44, -0.55), Vector3(0, 0, PI * 0.5))
+			Vector3(0, GROUND + DRIVE_WHEEL_R, -0.55), Vector3(0, 0, PI * 0.5))
 	for s in [-1.0, 1.0]:
 		# Canted, so it reads as suspension rather than as a post.
 		_mesh(rig, "DropLink%s" % ("L" if s < 0.0 else "R"),
 				_boxm(Vector3(0.09, 0.42, 0.12)),
-				Vector3(s * 0.40, GROUND + 0.58, -0.55),
+				Vector3(s * 0.40, GROUND + DRIVE_WHEEL_R + 0.14, -0.55),
 				Vector3(0, 0, s * 26.0 * DEG))
 
 
 ## THE SWING ARM. A positive X angle drops the +Z end, which is what puts the
 ## castor on the ground behind rather than in the air — the sign the concept
 ## file warns about twice.
+##
+## LOWERED WITH THE CASTOR, 0.50 -> 0.44. The arm only reads as an arm if both
+## ends are buried in something: at 0.50 its trailing end cleared the shrunken
+## castor's tyre by 25 mm of overlap, which is a wheel balanced on a stick. At
+## 0.44 the tyre swallows 90 mm of it and the leading end is still inside the
+## spine's flank.
 func _tail(rig: Node3D) -> void:
 	_mesh(rig, "SwingArm", _boxm(Vector3(0.14, 0.14, 0.80)),
-			Vector3(0, GROUND + 0.50, 0.58), Vector3(14.0 * DEG, 0, 0))
+			Vector3(0, GROUND + 0.44, 0.58), Vector3(14.0 * DEG, 0, 0))
 
 
-## THE GUN IS THE NOSE, which is the turretless constraint made visible: bolted
-## into a cradle on the spine's front face, on the centreline, where every other
-## frame in the game has a ring.
+## THE GUN'S MOUNTING IS THE NOSE, which is the turretless constraint made
+## visible: the gun is bolted into a cradle on the spine's front face, on the
+## centreline, where every other frame in the game has a ring.
+##
+## NO BARREL IS BUILT HERE. See the header — the first build cast one and the
+## human ruled it out, because in this family the barrel belongs to the fitted
+## weapon and the chassis provides the mantlet. What is here is the cradle and a
+## breech collar for a gun that is not in it.
 ##
 ##   GunMount   fixed. Where the gun is bolted. Never moves.
 ##   GunPivot   elevates, and nothing else. rover.gd pitches this between
@@ -549,18 +642,18 @@ func _gun(rig: Node3D) -> Node3D:
 	_bevel(cradle, cradle_size, -1.0, "ChamferL")
 	_bevel(cradle, cradle_size, 1.0, "ChamferR")
 	var pivot := _node(mount, "GunPivot", Vector3.ZERO)
-	# A cylinder stands along its own Y; +90 degrees about X lays it along Z, so
-	# the barrel runs forward down -Z like every other muzzle in the game.
-	_mesh(pivot, "Barrel", _cyl_mesh(0.085, 1.00), Vector3(0, 0, -0.58),
+	# THE BREECH COLLAR, and it is the whole gun now. A ring 0.15 in radius and
+	# 0.12 deep, laid along Z by the usual quarter turn about X, seated at the
+	# cradle's front face so 60 mm of it stands forward of the chamfered block
+	# and the WeaponMount sits inside its bore. That is what makes the empty
+	# cradle read as a mounting rather than as a lopped-off barrel: a fitted gun
+	# emerges from the collar, and an unarmed frame still shows the socket.
+	#
+	# ON THE PIVOT, not the cradle, so it elevates with the gun it holds —
+	# exactly where the Rover and the Walker put their mantlets, and the reason
+	# the Rover's mantlet is 0.06 ahead of its own GunPivot.
+	_mesh(pivot, "Breech", _cyl_mesh(0.15, 0.12), Vector3(0, 0, -0.21),
 			Vector3(PI * 0.5, 0, 0))
-	# THE MUZZLE BRAKE IS A CONE AND ITS APEX IS ITS +Y, so -90 degrees about X
-	# is what puts the point FORWARD instead of back at the frame. The concept
-	# file flags this one explicitly and it is worth repeating: built the other
-	# way it is a funnel.
-	var brake := _cyl_mesh(0.12, 0.20, 10)
-	brake.top_radius = 0.0
-	_mesh(pivot, "MuzzleBrake", brake, Vector3(0, 0, -1.09),
-			Vector3(-PI * 0.5, 0, 0))
 	# +90 DEGREES, NOT -90. A weapon's muzzle runs down its own +X and the mount
 	# has to turn that onto the body's -Z. Read off a matrix the two look like
 	# the same quarter turn; they are not, and the Bulwark's first build had it
@@ -607,8 +700,12 @@ func _ammo_rack(rig: Node3D) -> void:
 ##
 ## Offset to PORT, because one eye off the centreline is this factory's single
 ## most recognisable feature and the cheapest thing to carry over.
-func _head(rig: Node3D) -> Node3D:
-	var head := _node(rig, "Head", Vector3(-0.26, GROUND + 0.92, -0.26))
+##
+## PARENTED TO Turret, whose own y is GROUND + 0.74 — so the 0.18 below is the
+## concept's GROUND + 0.92 expressed in turret space, and the eye is in the same
+## place it was before the move.
+func _head(turret: Node3D) -> Node3D:
+	var head := _node(turret, "Head", Vector3(-0.26, 0.18, -0.26))
 	_mesh(head, "Stalk", _cyl_mesh(0.045, 0.28), Vector3(0, 0.14, 0))
 	# ConceptKit.W_EYE_R scaled to 0.78, the concept's own figure: this frame's
 	# eye is smaller than the Walker's because everything about it is.
@@ -641,9 +738,9 @@ func _wheels(rig: Node3D) -> Array:
 	for s in [-1.0, 1.0]:
 		out.append(_wheel(rig, "Wheel%s" % ("L" if s < 0.0 else "R"),
 				Vector3(s * 0.66, GROUND + DRIVE_WHEEL_R, -0.55),
-				DRIVE_WHEEL_R, DRIVE_WHEEL_W, 0.18))
+				DRIVE_WHEEL_R, DRIVE_WHEEL_W, DRIVE_HUB_R))
 	out.append(_wheel(rig, "WheelT", Vector3(0, GROUND + CASTOR_R, 0.88),
-			CASTOR_R, CASTOR_W, 0.11))
+			CASTOR_R, CASTOR_W, CASTOR_HUB_R))
 	return out
 
 
