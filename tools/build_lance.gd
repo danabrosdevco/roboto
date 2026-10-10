@@ -397,6 +397,22 @@ func _build() -> CharacterBody3D:
 	root_body.set("nav_agent", nav)
 	root_body.set("bark", bark)
 	root_body.set("detection", det)
+	# DETECTION SIGNALS, WIRED — because vehicle_rover.tscn wires them and
+	# this frame runs rover.gd. enemy.gd connects them nowhere in code and the
+	# only other way into _on_detection_body_entered is force_check_detection(),
+	# which NOTHING in the project calls, so an unconnected Detection area is a
+	# dead proximity sense and the frame falls back to its vision cone alone.
+	#
+	# CONNECT_PERSIST, OR THE CONNECTION IS NOT SAVED. PackedScene.pack() only
+	# writes out connections carrying that flag, so a plain connect() produces
+	# a scene with no [connection] lines at all — correct in the generator's
+	# own process, gone the moment it is saved. Same shape as add_to_group's
+	# second argument. Found by the Sapper agent; the wheeled frames were the
+	# three that disagreed with their own base scene.
+	det.body_entered.connect(Callable(root_body, "_on_detection_body_entered"),
+			Object.CONNECT_PERSIST)
+	det.body_exited.connect(Callable(root_body, "_on_detection_body_exited"),
+			Object.CONNECT_PERSIST)
 	# TYPED, OR IT SAVES AS []. rover.gd declares `wheels` as Array[Node3D] and
 	# `wheel_steer` as Array[float]; a plain Array assigned to either fails with
 	# no error at all and the robot ships with no wheels to turn, no suspension

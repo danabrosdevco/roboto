@@ -110,6 +110,27 @@ func _check(path: String) -> void:
 
 	# MOUNT YAW. +PI/2, not -PI/2. Both shipping frames agree and a mount built
 	# the other way points the barrel backwards with nothing complaining.
+	# DETECTION SIGNALS. enemy.gd declares _on_detection_body_entered and
+	# _on_detection_body_exited and connects neither in code; the only other
+	# way in is force_check_detection(), which NOTHING in the project calls.
+	# So an Area3D with no connection in the .tscn is a dead proximity sense,
+	# and the frame falls back to its vision cone alone.
+	#
+	# REPORTED, NOT ASSERTED, because the shipped frames disagree with each
+	# other: soldier_chassis, enemy_chaser and vehicle_rover connect both;
+	# walker.tscn and enemy_watcher.tscn connect neither. Which is correct is
+	# a gameplay question, not a wiring one. Note that connect() alone is not
+	# enough either way — PackedScene.pack() only serialises a connection
+	# carrying CONNECT_PERSIST, so a generator that connects without the flag
+	# writes a scene with no connections at all. Same family as
+	# add_to_group(.., true).
+	var det = n.get("detection")
+	var wired := 0
+	if det != null:
+		for sig in ["body_entered", "body_exited"]:
+			if (det as Area3D).get_signal_connection_list(sig).size() > 0:
+				wired += 1
+	print("        detection signals  %d of 2 connected" % wired)
 	var mount = n.get("weapon_mount")
 	if mount != null:
 		var yaw: float = (mount as Node3D).rotation.y

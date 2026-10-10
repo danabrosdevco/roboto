@@ -234,6 +234,13 @@ Three lanes, one branch, other agents mid-edit.
 - **Do not create or switch branches.** Do not `git stash`, `git checkout` or
   `git reset`.
 - **Do not commit.** Report back; the coordinator commits.
+- **Do not run anything through Godot while `tools/test.sh` is in flight.**
+  Its own header says why: the suites are deliberately not parallelised
+  because every one of them points Settings and SaveSlots at the same
+  `user://` probe paths. A generator, a render or `check_frame.gd` running
+  alongside races the suite on those files and produces a failure that looks
+  real and does not reproduce. One agent in this batch lost a run to it and
+  re-ran clean.
 - **Only ever create your own two new files.** If you believe a shared file
   needs changing, say so in your report instead of changing it.
 
