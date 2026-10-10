@@ -144,6 +144,9 @@ func _initialize() -> void:
 	print("      %s  %.0f x %.0f m at %.2f m cells, %d piece(s)" % [ART.get_file(),
 			_data.width(), _data.depth(), r.cell_size, _placed.size()])
 	print("      kit: %d piece(s) on three routes, %d guard clash(es) at placement" % [_laid.size(), _clashes])
+	for l: Dictionary in _lanes:
+		print("      break in line %s: %.1f m of open ground at (%.0f, %.0f), %.1f m of mesh at bake radius 1.0" % [
+				l.route, float(l.g), (l.at as Vector2).x, (l.at as Vector2).y, float(l.g) - 2.0])
 	if not ResourceLoader.exists(DATA):
 		print("      terrain data written but not yet importable — RUN THIS AGAIN")
 	print("BUILD SALIENT DONE")
@@ -876,6 +879,39 @@ const BELT_BEHIND := 44.0
 const CHAIN_SHORT := 12.0
 ## How far past the end of the sunken road its gapped belt stands.
 const ROAD_MOUTH := 10.0
+
+## A BREAK IN THE LINE. Metres of open ground between a ramp end that comes UP
+## to grade and one that goes back DOWN, laid as one step of a route: the trench
+## stops, the ground is level and unwalled for LANE_GAP metres, and the trench
+## starts again. A break is 5 + LANE_GAP + 5 metres of route.
+##
+## WHY THEY EXIST, and it is not historical dressing. probe_cover_continuity
+## measured route C as 98.1% in cut for the player and 5.2% (Walker) and 2.2%
+## (Bulwark) for the big frames, both 100% exposed with 13-15 eyes on them. They
+## are not in a trench too shallow for them — THEY ARE WALKING ALONG THE TOP OF
+## IT, because Godot decides clearance once at bake time and a 3.0 m floor
+## eroded by the agent radius leaves them nothing: 1.0 m at the shipped 1.0,
+## 0.5 m at the Bulwark's 1.13 ceiled to 1.25. A trench 3.0 m wide is a route
+## for the player and a parapet for everything bigger, and the only two ways out
+## of our own deep works were 104 m apart. So the line is deliberately BROKEN in
+## two places, and a break is a crossing a wide chassis can use.
+##
+## SIZED FROM THE ERODED WIDTH, NOT THE BUILT ONE. Recast takes agent_radius off
+## every side, so a 6.0 m gap bakes 4.0 m of mesh at the shipped radius 1.0 and
+## 3.5 m at the Bulwark's 1.25 — against a Bulwark 2.26 m across the shield
+## (the widest body) and a Rover 1.70 m wide. A chassis crossing the line goes
+## straight through, so the 3.40 m Rover never has to turn inside one; the
+## eroded 3.5 m would carry it even if it did.
+##
+## NOTHING NEW STANDS IN THE 0.25-0.5 BAND. A break places no brush at all: it
+## is two pieces the kit already has, with nothing between them. The ramp's own
+## parapet runs on at 0.6 above ground to the ramp's end — above agent_max_climb
+## 0.5 on purpose, which is what still makes the LINE a line.
+const LANE_GAP := 6.0
+## Half the width of ground a break keeps clear of dressing, across the route. A
+## wire row or a tank trap scattered into a break closes it, and the deck's rows
+## know nothing about the routes — see _drop_on_routes.
+const LANE_HALF := 7.0
 ## Ground is levelled this far past every piece (and blended over FLAT_FALL
 ## more), so the squad never meets a piece across a bank. Salient's own ground is
 ## rough, with craters down to -7 m and hills up to +2, so this is real work.
@@ -903,6 +939,10 @@ var _laid: Array = []
 var _flat: Array = []
 var _dig: Array = []
 var _marks: Dictionary = {}
+## One entry per break in a line: {route, at, a, g}. Not pieces — a break is the
+## absence of one — so they are kept apart from _laid and only the dressing
+## guard reads them.
+var _lanes: Array = []
 var _heading: Dictionary = {}
 var _clashes := 0
 var _dropped := 0
@@ -1004,6 +1044,7 @@ func _lay_routes() -> bool:
 	_flat = []
 	_dig = []
 	_marks = {}
+	_lanes = []
 	var jump := _objective("Salient_Jumpoff")
 	var enemy := _objective("Salient_FrontLine")
 	var crater := _objective("Salient_Crater")
@@ -1050,10 +1091,51 @@ func _lay_routes() -> bool:
 	var c_start := Vector2(jump.x + FRONT_CLEAR, c_z)
 	var c_goal := Vector2(enemy.x - ENEMY_CLEAR, c_z)
 	var fire := [["trench_run_32", _length("trench_run_32")], ["trench_run_16", _length("trench_run_16")]]
-	_lay("C", ["trench_ramp_end:down", "trench_run_32", "trench_traverse", "trench_traverse_r",
-			"trench_firebay", {"piece": "trench_junction_t", "branch": ["trench_sap_head"]},
-			"trench_run_32", "trench_dugout", "trench_traverse_r", "trench_traverse", "trench_collapsed",
-			{"fill": fire, "share": 1.0}, "trench_ramp_end:up"], c_start, c_goal)
+	# THE FOUR TRAVERSES ARE SPREAD, NOT PAIRED. They used to be laid as two
+	# adjacent pairs — traverse then traverse_r, which jogs left and immediately
+	# back right and returns the line to its own centre — leaving 77 m of dead
+	# straight trench between the pairs with nothing in it, and
+	# probe_trench_straights cast a ray 80 m down it. A traverse exists so that
+	# no sightline is longer than a bay. So one feature now sits between each
+	# traverse and its opposite number: firebay, junction, dugout, collapsed.
+	# Same four pieces and the same two of each handedness, so the net offset
+	# across the route is still zero and the line still ends on its own
+	# centreline.
+	#
+	# AND THE TWO run_32 ARE TRADED FOR TWO run_16 AND TWO BREAKS (see LANE_GAP).
+	# THE LENGTH IS THE CONSTRAINT, NOT A CONSEQUENCE: route C still measures
+	# exactly 166 m to its last ramp, which is what keeps C.exit where it is —
+	# four of the fourteen landmarks hang off that mark, one of them a 46 m
+	# chimney threaded through a 7 m lane in the wire with nothing wider anywhere
+	# near it. Adding or dropping a piece here moves that chimney into the
+	# dragon teeth and the builder then refuses to place it at all. 5 + 16 + 12 +
+	# 16 + 8 + 12 + 9 + 16 + 12 + 16 + 16 + 12 + 16 = 166; the two breaks are the
+	# two 16s with no piece names.
+	#
+	# THE HEAD RUN IS 16 m AND NOT 32. With a run_32 at the head, the 80 m
+	# sightline simply moved to the entry: a ray from the entry ramp went 42 m
+	# east down 37 m of straight trench and into the first traverse's bay, and
+	# probe_trench_straights reported 50.5 m for the route. Measured, not
+	# reasoned: it took the rebuild to find it, because the pairing fault and the
+	# head fault are the same number from two different causes.
+	var brk: Array = ["trench_ramp_end:up", {"gap": LANE_GAP}, "trench_ramp_end:down"]
+	#
+	# EACH BREAK SITS JUST PAST A TRAVERSE, never in the open head of the run.
+	# A break puts two ramp ends in line with the pieces either side of it, and
+	# probe_trench_straights measures a centreline by piece origins: a break laid
+	# into the head of this route reads as a 48 m straight, where the same break
+	# one piece later reads as 17 m. The two breaks then come out 73 m apart along
+	# the line, against the 104 m that separated the only two crossings of our
+	# deep works this map had.
+	var c_steps: Array = ["trench_ramp_end:down", "trench_run_16", "trench_traverse"]
+	c_steps.append_array(brk)
+	c_steps.append_array(["trench_firebay", "trench_traverse_r",
+			{"piece": "trench_junction_t", "branch": ["trench_sap_head"]},
+			"trench_run_16", "trench_traverse", "trench_dugout"])
+	c_steps.append_array(brk)
+	c_steps.append_array(["trench_traverse_r", "trench_collapsed",
+			{"fill": fire, "share": 1.0}, "trench_ramp_end:up"])
+	_lay("C", c_steps, c_start, c_goal)
 	return true
 
 
@@ -1136,6 +1218,16 @@ func _walk(route: String, steps: Array, pos0: Vector2, a0: float, counts: Array,
 					var r := _step(route, str(unit[0]), pos, a, record)
 					pos = r.pos
 					a = r.a
+			continue
+		if step is Dictionary and (step as Dictionary).has("gap"):
+			# A BREAK CARRIES THE ROUTE AND PLACES NOTHING. The two ramp ends
+			# either side of it are ordinary steps; this is the open ground
+			# between them, and the only thing it records is that the dressing
+			# has to keep out of it. See LANE_GAP and _drop_on_routes.
+			var g := float((step as Dictionary).gap)
+			if record:
+				_lane(route, pos + _dirv(a) * (g * 0.5), a, g)
+			pos += _dirv(a) * g
 			continue
 		var piece := ""
 		var branch: Array = []
@@ -1250,6 +1342,20 @@ func _belt(route: String, at: Vector2, a: float, piece: String = "wire_belt_run"
 		var off := (k - (count - 1) * 0.5) * run
 		_put(route, piece, at + _dirv(across) * off, across)
 	_marks[route + ".wire"] = at
+
+
+## A break in a line, recorded at the middle of its open ground. It is NOT a
+## piece and must never reach _laid: _laid drives the scene's prefab instances,
+## the guard and the terrain stamps, and the whole point of a break is that
+## there is nothing there. It is marked so later passes can hang something off
+## it the way the landmarks hang off C.dugout.
+func _lane(route: String, at: Vector2, a: float, g: float) -> void:
+	var n := 1
+	for l: Dictionary in _lanes:
+		if str(l.route) == route:
+			n += 1
+	_lanes.append({"route": route, "at": at, "a": a, "g": g})
+	_marks["%s.lane%d" % [route, n]] = at
 
 
 # ── The ground ───────────────────────────────────────────────────────────────
@@ -1369,6 +1475,12 @@ func _footprints(margin: float) -> Array:
 		var span: Array = (_kit[p.piece] as Dictionary).span
 		out.append([p.origin, p.a, float(span[0]) - margin, float(span[1]) - margin,
 				float(span[2]) + margin, float(span[3]) + margin])
+	# AND THE BREAKS, which have no piece and would otherwise be the one part of
+	# a route the dressing is free to stand in. A wire row or a tank trap
+	# scattered into a 6 m break closes the only crossing a wide chassis has.
+	for l: Dictionary in _lanes:
+		var half: float = float(l.g) * 0.5 + margin
+		out.append([l.at, l.a, -half, -LANE_HALF - margin, half, LANE_HALF + margin])
 	return out
 
 
@@ -1742,7 +1854,17 @@ const LANDMARKS: Array = [
 	# look east from here, so this is where proximity pays.
 	["C.entry", 34.0, -34.0, "industrial/industrial_water_tower", 0.0],
 	["B.entry", 11.0, 35.0, "features/feature_power_pylon", 0.0],
-	["C.dugout", -4.0, -68.0, "industrial/industrial_smokestack", 25.0],
+	# THE ONE LANDMARK THAT HAD TO BE RE-AIMED. C.dugout is the only route mark
+	# that moved when route C's traverses were spread and its two breaks went in:
+	# (-26, -18.3) to (-30, -22.9), measured off the Anchors in both art scenes.
+	# The offsets below are the ones that put this chimney back on (-30, 49.7),
+	# where the landmark pass photographed it. Worth 1.08 points on its own: it
+	# stands 30 m in front of the S4 crater-lip camera, the chimney is 7.4 m
+	# across, and at 26 m its near face falls inside the 0-25 m band that
+	# "standing at range" excludes — so four metres closer cost S4 5.64% -> 4.56%
+	# while the piece was still placed and the build still said 14 of 14.
+	# A LANDMARK DOES NOT HAVE TO BE DROPPED TO STOP WORKING.
+	["C.dugout", 0.0, -72.6, "industrial/industrial_smokestack", 25.0],
 	["A.blown", 14.0, -39.5, "industrial/industrial_smokestack", 0.0],
 	# IN THE ONE GAP IN THE BELTS. No-man's-land here is wire at x 12 and 26,
 	# dragon teeth at 40 and a berm row at 44, which leaves a seven-metre lane
