@@ -393,8 +393,32 @@ static func maps() -> Array:
 			# SOMETHING ON THE SKYLINE. A flat map reads as flat because its
 			# horizon is a ruled line; poles and masts are what break it, and
 			# they cost nothing to path around.
-			+ [["row", "props/prop_power_pole", -520.0, 160.0, 500.0, 160.0, 46.0],
-				["row", "props/prop_power_pole", -520.0, -160.0, 500.0, -160.0, 52.0],
+			#
+			# FIVE LINES AT ONE SPACING — THE RULER. The two outer rows were
+			# already here and already running the right way, along the axis
+			# everybody advances down. What was wrong with them is that they sat
+			# at z +-160, which from the jump-off puts the nearest pole 161 m
+			# away at 83 degrees off the look direction — out at the rim of a
+			# 101-degree frame, where a receding line cannot be read as
+			# receding. The three new ones fill the 320 m gap down the middle.
+			#
+			# AND ONE SPACING ON ALL FIVE. They were 46 m and 52 m, which is a
+			# ruler whose lines disagree about how long a step is. prop_power_pole
+			# is 9.50 m, so at 648p/70 degrees it is 124 px at 40 m, 50 at 100,
+			# 25 at 200 and 12 at 400 — a clean halving that stays resolvable
+			# past the far objectives, drawn as a thin dark vertical against a
+			# luma-0.83 sky, which is the one discontinuity the signal filter's
+			# edge pass reliably outlines.
+			#
+			# z -88, -8, +84 rather than round numbers: every objective anchor on
+			# this map sits at z 0, 10, 34, +-70, +-95, -142 or -195, and this
+			# clears all of them by 8 m or more. A pole through an objective is a
+			# pole _drop_on_routes throws away.
+			+ [["row", "props/prop_power_pole", -520.0, 160.0, 500.0, 160.0, 40.0],
+				["row", "props/prop_power_pole", -520.0, -160.0, 500.0, -160.0, 40.0],
+				["row", "props/prop_power_pole", -400.0, -88.0, 400.0, -88.0, 40.0],
+				["row", "props/prop_power_pole", -400.0, -8.0, 400.0, -8.0, 40.0],
+				["row", "props/prop_power_pole", -400.0, 84.0, 400.0, 84.0, 40.0],
 				["at", "fortifications/fort_floodlight_mast", -440.0, 40.0, 0.0],
 				["at", "fortifications/fort_floodlight_mast", 400.0, -40.0, 0.0],
 				["at", "industrial/industrial_water_tower", 470.0, 120.0, 0.0]]
@@ -1767,8 +1791,8 @@ static func maps() -> Array:
 	})
 
 	# ═══ MACHINE WORLD ═══════════════════════════════════════════════════════
-	# The fiction this game is actually about: a rogue drone in the places
-	# machines built for themselves.
+	# The fiction this game is actually about: an error sub-agent of StratCom,
+	# in the places machines built for themselves.
 
 	out.append({
 		"id": "server_farm", "name": "Server Farm",

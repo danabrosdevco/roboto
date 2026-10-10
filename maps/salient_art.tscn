@@ -1,4 +1,4 @@
-[gd_scene load_steps=99 format=3]
+[gd_scene load_steps=103 format=3]
 
 [ext_resource type="Script" path="res://Env/terrain/generated_terrain.gd" id="5_terrain"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="6_recipe"]
@@ -56,6 +56,10 @@
 [ext_resource type="PackedScene" path="res://maps/blocks/landmarks/landmark_clock_tower.tscn" id="p_landmark_clock_tower"]
 [ext_resource type="PackedScene" path="res://maps/blocks/estates/estate_slab_broken.tscn" id="p_estate_slab_broken"]
 [ext_resource type="PackedScene" path="res://maps/blocks/estates/estate_u_block.tscn" id="p_estate_u_block"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_smokestack.tscn" id="p_industrial_smokestack"]
+[ext_resource type="PackedScene" path="res://maps/blocks/industrial/industrial_silos.tscn" id="p_industrial_silos"]
+[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_power_pylon.tscn" id="p_feature_power_pylon"]
+[ext_resource type="PackedScene" path="res://maps/blocks/trench/op_tower_ruin.tscn" id="p_op_tower_ruin"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_stamp.gd" id="17_stamp"]
 [ext_resource type="PackedScene" path="res://maps/blocks/trench/sunken_road_ramp.tscn" id="t_sunken_road_ramp"]
 [ext_resource type="PackedScene" path="res://maps/blocks/trench/sunken_road_run.tscn" id="t_sunken_road_run"]
@@ -4762,181 +4766,421 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 430, 0.4247, 60)
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -520, -0.3166, 160)
 
 [node name="W1221_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -471.4286, -0.4989, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -477.5000, -0.3573, 160)
 
 [node name="W1222_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -422.8571, -0.5174, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -435, -0.9123, 160)
 
 [node name="W1223_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -374.2857, 0.2233, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -392.5000, 0.2765, 160)
 
 [node name="W1224_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -325.7143, -0.0712, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -350, -0.0006, 160)
 
 [node name="W1225_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -277.1429, -0.3213, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -307.5000, -0.0474, 160)
 
 [node name="W1226_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -228.5714, -1.0928, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -265, -0.5846, 160)
 
 [node name="W1227_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -180, -0.5309, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -222.5000, -1.0707, 160)
 
 [node name="W1228_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -131.4286, 0.0439, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -180, -0.5309, 160)
 
 [node name="W1229_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -82.8571, -5.2772, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -137.5000, -0.4342, 160)
 
 [node name="W1230_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -34.2857, -0.4192, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -95, 0.1003, 160)
 
 [node name="W1231_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 62.8572, -0.8001, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -52.5000, 1.0765, 160)
 
 [node name="W1232_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 111.4286, 0.8551, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -10, -0.9890, 160)
 
 [node name="W1233_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 160, -2.9300, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 32.5000, -0.5205, 160)
 
 [node name="W1234_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 208.5715, -0.8583, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 75, 0.7115, 160)
 
 [node name="W1235_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 257.1429, -0.2729, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 117.5000, -0.0111, 160)
 
 [node name="W1236_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 305.7143, -0.9340, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 160, -2.9300, 160)
 
 [node name="W1237_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 354.2857, -0.3952, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 202.5000, -1.5747, 160)
 
 [node name="W1238_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 402.8572, -0.2757, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 245, -0.5700, 160)
 
 [node name="W1239_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 451.4286, -0.6382, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 287.5000, -0.0491, 160)
 
 [node name="W1240_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 500, 0.5515, 160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 330, -0.8210, 160)
 
 [node name="W1241_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -520, 0.2606, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 372.5000, -0.2513, 160)
 
 [node name="W1242_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -463.3333, 0.5022, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 415, 0.2902, 160)
 
 [node name="W1243_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -406.6667, -1.0007, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 457.5000, -0.7549, 160)
 
 [node name="W1244_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -350, -0.1612, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 500, 0.5515, 160)
 
 [node name="W1245_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -293.3333, -1.2206, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -520, 0.2606, -160)
 
 [node name="W1246_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -236.6667, 0.2280, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -477.5000, 0.2629, -160)
 
 [node name="W1247_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -180, -3.4374, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -435, 0.8270, -160)
 
 [node name="W1248_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -123.3333, -0.6737, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -392.5000, -1.0565, -160)
 
 [node name="W1249_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -66.6667, 0.7714, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -350, -0.1612, -160)
 
 [node name="W1250_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -10, -0.5383, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -307.5000, -1.0212, -160)
 
 [node name="W1251_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 46.6667, -4.3043, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -265, 0.0623, -160)
 
 [node name="W1252_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 103.3333, 1.3310, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -222.5000, -2.9217, -160)
 
 [node name="W1253_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 160, 0.2893, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -180, -3.4374, -160)
 
 [node name="W1254_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 216.6666, -0.3813, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -137.5000, -0.2087, -160)
 
 [node name="W1255_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 273.3334, 0.0801, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -95, -0.5639, -160)
 
 [node name="W1256_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 330, 0.0559, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -52.5000, 0.4427, -160)
 
 [node name="W1257_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 386.6667, -0.9527, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -10, -0.5383, -160)
 
 [node name="W1258_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 443.3333, 0.0191, -160)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 32.5000, 0.4505, -160)
 
 [node name="W1259_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 75, 0.6823, -160)
+
+[node name="W1260_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 117.5000, 0.8010, -160)
+
+[node name="W1261_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 160, 0.2893, -160)
+
+[node name="W1262_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 202.5000, 1.1591, -160)
+
+[node name="W1263_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 245, 0.0766, -160)
+
+[node name="W1264_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 287.5000, -0.2187, -160)
+
+[node name="W1265_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 330, 0.0559, -160)
+
+[node name="W1266_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 372.5000, -0.1261, -160)
+
+[node name="W1267_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 415, -0.5776, -160)
+
+[node name="W1268_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 457.5000, -0.1791, -160)
+
+[node name="W1269_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 500, -0.3275, -160)
 
-[node name="W1260_fort_floodlight_mast" parent="Works" instance=ExtResource("p_fort_floodlight_mast")]
+[node name="W1270_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -400, 0.1587, -88)
+
+[node name="W1271_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -355.5555, 0.0848, -88)
+
+[node name="W1272_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -311.1111, -0.3345, -88)
+
+[node name="W1273_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -266.6667, 0.6042, -88)
+
+[node name="W1274_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -222.2222, 0.9499, -88)
+
+[node name="W1275_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -177.7778, -2.7778, -88)
+
+[node name="W1276_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -133.3333, -3.5000, -88)
+
+[node name="W1277_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -88.8889, -3.4564, -88)
+
+[node name="W1278_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -44.4444, -0.4340, -88)
+
+[node name="W1279_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, -1.0013, -88)
+
+[node name="W1280_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 44.4445, 0.3046, -88)
+
+[node name="W1281_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 88.8889, 0.0307, -88)
+
+[node name="W1282_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 133.3334, -1.8873, -88)
+
+[node name="W1283_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 177.7778, -0.2766, -88)
+
+[node name="W1284_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 222.2222, -0.6163, -88)
+
+[node name="W1285_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 266.6666, -0.7436, -88)
+
+[node name="W1286_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 311.1111, -0.9340, -88)
+
+[node name="W1287_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 355.5555, -0.0452, -88)
+
+[node name="W1288_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 400, -0.1410, -88)
+
+[node name="W1289_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -400, -0.0385, -8)
+
+[node name="W1290_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -355.5555, 0.3010, -8)
+
+[node name="W1291_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -311.1111, -0.4101, -8)
+
+[node name="W1292_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -266.6667, 0.1179, -8)
+
+[node name="W1293_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -222.2222, 0.7896, -8)
+
+[node name="W1294_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -177.7778, -1.5193, -8)
+
+[node name="W1295_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -133.3333, 0, -8)
+
+[node name="W1296_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -88.8889, 0, -8)
+
+[node name="W1297_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -44.4444, 0, -8)
+
+[node name="W1298_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 44.4445, -0.2063, -8)
+
+[node name="W1299_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 88.8889, -2.4903, -8)
+
+[node name="W1300_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 133.3334, 0.6874, -8)
+
+[node name="W1301_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 177.7778, -0.3049, -8)
+
+[node name="W1302_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 222.2222, -0.4538, -8)
+
+[node name="W1303_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 266.6666, -0.6914, -8)
+
+[node name="W1304_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 311.1111, -0.7910, -8)
+
+[node name="W1305_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 355.5555, -0.3560, -8)
+
+[node name="W1306_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 400, -0.1462, -8)
+
+[node name="W1307_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -400, -0.7449, 84)
+
+[node name="W1308_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -355.5555, 0.2061, 84)
+
+[node name="W1309_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -311.1111, -0.0234, 84)
+
+[node name="W1310_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -266.6667, -0.4446, 84)
+
+[node name="W1311_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -222.2222, -5.7560, 84)
+
+[node name="W1312_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -177.7778, -0.2401, 84)
+
+[node name="W1313_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -133.3333, -0.2704, 84)
+
+[node name="W1314_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -88.8889, 0.7622, 84)
+
+[node name="W1315_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -44.4444, -3.5000, 84)
+
+[node name="W1316_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, -2.1750, 84)
+
+[node name="W1317_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 44.4445, -0.3454, 84)
+
+[node name="W1318_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 88.8889, -3.2049, 84)
+
+[node name="W1319_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 133.3334, 1.0973, 84)
+
+[node name="W1320_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 177.7778, 0.2275, 84)
+
+[node name="W1321_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 222.2222, -0.2626, 84)
+
+[node name="W1322_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 266.6666, -1.1398, 84)
+
+[node name="W1323_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 311.1111, -0.3953, 84)
+
+[node name="W1324_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 355.5555, -0.1192, 84)
+
+[node name="W1325_prop_power_pole" parent="Works" instance=ExtResource("p_prop_power_pole")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 400, 0.2863, 84)
+
+[node name="W1326_fort_floodlight_mast" parent="Works" instance=ExtResource("p_fort_floodlight_mast")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -440, -0.1511, 40)
 
-[node name="W1261_fort_floodlight_mast" parent="Works" instance=ExtResource("p_fort_floodlight_mast")]
+[node name="W1327_fort_floodlight_mast" parent="Works" instance=ExtResource("p_fort_floodlight_mast")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 400, -0.1877, -40)
 
-[node name="W1262_industrial_water_tower" parent="Works" instance=ExtResource("p_industrial_water_tower")]
+[node name="W1328_industrial_water_tower" parent="Works" instance=ExtResource("p_industrial_water_tower")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 470, -0.3979, 120)
 
-[node name="W1263_landmark_clock_tower" parent="Works" instance=ExtResource("p_landmark_clock_tower")]
+[node name="W1329_landmark_clock_tower" parent="Works" instance=ExtResource("p_landmark_clock_tower")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 420, -0.1877, -20)
 
-[node name="W1264_estate_collapsed_corner" parent="Works" instance=ExtResource("p_estate_collapsed_corner")]
+[node name="W1330_estate_collapsed_corner" parent="Works" instance=ExtResource("p_estate_collapsed_corner")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 360, 0.0780, -142.5000)
 
-[node name="W1265_estate_frame_shell" parent="Works" instance=ExtResource("p_estate_frame_shell")]
+[node name="W1331_estate_frame_shell" parent="Works" instance=ExtResource("p_estate_frame_shell")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 396.2500, -0.2733, -142.5000)
 
-[node name="W1266_estate_slab_broken" parent="Works" instance=ExtResource("p_estate_slab_broken")]
+[node name="W1332_estate_slab_broken" parent="Works" instance=ExtResource("p_estate_slab_broken")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 432.5000, -0.2603, -142.5000)
 
-[node name="W1267_estate_u_block" parent="Works" instance=ExtResource("p_estate_u_block")]
+[node name="W1333_estate_u_block" parent="Works" instance=ExtResource("p_estate_u_block")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 468.7500, -0.2417, -142.5000)
 
-[node name="W1268_estate_collapsed_corner" parent="Works" instance=ExtResource("p_estate_collapsed_corner")]
+[node name="W1334_estate_collapsed_corner" parent="Works" instance=ExtResource("p_estate_collapsed_corner")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 386, -0.1786, -47.5000)
 
-[node name="W1269_estate_frame_shell" parent="Works" instance=ExtResource("p_estate_frame_shell")]
+[node name="W1335_estate_frame_shell" parent="Works" instance=ExtResource("p_estate_frame_shell")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 422.2500, -0.2408, -47.5000)
 
-[node name="W1270_estate_slab_broken" parent="Works" instance=ExtResource("p_estate_slab_broken")]
+[node name="W1336_estate_slab_broken" parent="Works" instance=ExtResource("p_estate_slab_broken")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 458.5000, -0.1142, -47.5000)
 
-[node name="W1271_estate_u_block" parent="Works" instance=ExtResource("p_estate_u_block")]
+[node name="W1337_estate_u_block" parent="Works" instance=ExtResource("p_estate_u_block")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 494.7500, -0.1432, -47.5000)
 
-[node name="W1272_estate_collapsed_corner" parent="Works" instance=ExtResource("p_estate_collapsed_corner")]
+[node name="W1338_estate_collapsed_corner" parent="Works" instance=ExtResource("p_estate_collapsed_corner")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 360, -0.0617, 47.5000)
 
-[node name="W1273_estate_frame_shell" parent="Works" instance=ExtResource("p_estate_frame_shell")]
+[node name="W1339_estate_frame_shell" parent="Works" instance=ExtResource("p_estate_frame_shell")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 396.2500, 0.3527, 47.5000)
 
-[node name="W1274_estate_slab_broken" parent="Works" instance=ExtResource("p_estate_slab_broken")]
+[node name="W1340_estate_slab_broken" parent="Works" instance=ExtResource("p_estate_slab_broken")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 432.5000, 0.3223, 47.5000)
 
-[node name="W1275_estate_u_block" parent="Works" instance=ExtResource("p_estate_u_block")]
+[node name="W1341_estate_u_block" parent="Works" instance=ExtResource("p_estate_u_block")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 468.7500, 0.3223, 47.5000)
 
-[node name="W1276_estate_collapsed_corner" parent="Works" instance=ExtResource("p_estate_collapsed_corner")]
+[node name="W1342_estate_collapsed_corner" parent="Works" instance=ExtResource("p_estate_collapsed_corner")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 386, -0.2003, 142.5000)
 
-[node name="W1277_estate_frame_shell" parent="Works" instance=ExtResource("p_estate_frame_shell")]
+[node name="W1343_estate_frame_shell" parent="Works" instance=ExtResource("p_estate_frame_shell")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 422.2500, 0.0218, 142.5000)
 
-[node name="W1278_estate_slab_broken" parent="Works" instance=ExtResource("p_estate_slab_broken")]
+[node name="W1344_estate_slab_broken" parent="Works" instance=ExtResource("p_estate_slab_broken")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 458.5000, -0.0442, 142.5000)
 
-[node name="W1279_estate_u_block" parent="Works" instance=ExtResource("p_estate_u_block")]
+[node name="W1345_estate_u_block" parent="Works" instance=ExtResource("p_estate_u_block")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 494.7500, -0.1224, 142.5000)
+
+[node name="W1346_industrial_smokestack" parent="Works" instance=ExtResource("p_industrial_smokestack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -270, -0.1823, 40)
+
+[node name="W1347_industrial_silos" parent="Works" instance=ExtResource("p_industrial_silos")]
+transform = Transform3D(0.9659, 0, -0.2588, 0, 1, 0, 0.2588, 0, 0.9659, -279.8458, 0.0159, -109.7040)
+
+[node name="W1348_feature_power_pylon" parent="Works" instance=ExtResource("p_feature_power_pylon")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -220, -0.4786, -50)
+
+[node name="W1349_op_tower_ruin" parent="Works" instance=ExtResource("p_op_tower_ruin")]
+transform = Transform3D(0.3420, 0, -0.9397, 0, 1, 0, 0.9397, 0, 0.3420, -190, 0.4336, 40)
+
+[node name="W1350_industrial_water_tower" parent="Works" instance=ExtResource("p_industrial_water_tower")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -110, 0.6417, 20)
+
+[node name="W1351_feature_power_pylon" parent="Works" instance=ExtResource("p_feature_power_pylon")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -133, -0.2226, 95)
+
+[node name="W1352_industrial_smokestack" parent="Works" instance=ExtResource("p_industrial_smokestack")]
+transform = Transform3D(0.9063, 0, -0.4226, 0, 1, 0, 0.4226, 0, 0.9063, -30, -1.0844, 49.7000)
+
+[node name="W1353_industrial_smokestack" parent="Works" instance=ExtResource("p_industrial_smokestack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.1689, -0.7365, -60.0927)
+
+[node name="W1354_industrial_smokestack" parent="Works" instance=ExtResource("p_industrial_smokestack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33, 0.7972, 52)
+
+[node name="W1355_industrial_water_tower" parent="Works" instance=ExtResource("p_industrial_water_tower")]
+transform = Transform3D(0.8660, 0, -0.5000, 0, 1, 0, 0.5000, 0, 0.8660, 100, 1.0026, -20)
+
+[node name="W1356_feature_power_pylon" parent="Works" instance=ExtResource("p_feature_power_pylon")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 110, 0.2203, 70)
+
+[node name="W1357_feature_power_pylon" parent="Works" instance=ExtResource("p_feature_power_pylon")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 160.0718, 0.4277, -40.4307)
+
+[node name="W1358_industrial_water_tower" parent="Works" instance=ExtResource("p_industrial_water_tower")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 170, -1.7205, 50)
+
+[node name="W1359_industrial_silos" parent="Works" instance=ExtResource("p_industrial_silos")]
+transform = Transform3D(0.7660, 0, -0.6428, 0, 1, 0, 0.6428, 0, 0.7660, 91.6000, 0.2249, 120)
 
 [node name="Trenchworks" type="Node3D" parent="."]
 

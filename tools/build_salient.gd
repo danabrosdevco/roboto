@@ -277,6 +277,17 @@ func _art_scene(r: Recipe) -> String:
 	for op: Array in _dress_ops(lined):
 		for row: Array in _placements(_data, op):
 			placed.append([op[1], row[0], row[1]])
+	# THE LANDMARKS GO DOWN LAST, AND ARE CHECKED AGAINST WHAT IS ALREADY
+	# THERE. They are the only dressing on this map placed from the ROUTES
+	# rather than from the deck, so they are the only dressing that can land on
+	# the deck's own rows without anyone having typed the two numbers next to
+	# each other. Twelve of them did exactly that on the first pass — a silo
+	# through a parked semi, a water tower through a washout, three razor-wire
+	# runs through a silo base — and nothing said so until probe_level_faults
+	# was read. See _landmark_ops.
+	for op: Array in _landmark_ops(placed):
+		for row: Array in _placements(_data, op):
+			placed.append([op[1], row[0], row[1]])
 	# BED BEFORE DROPPING. _drop_on_routes measures the volume a deck piece
 	# shares with a kit piece, and that volume depends on where the deck piece
 	# actually ends up — so the heights have to be final before it is asked.
@@ -1683,6 +1694,189 @@ func _landmarks() -> void:
 	_put("L", "op_tower_ruin", tower, a)
 	_marks["L.tank"] = tank
 	_marks["L.tower"] = tower
+
+
+## THE MID-GROUND MASSES — anchor mark, metres along the route's heading,
+## metres to the route's left, deck piece, yaw.
+##
+## WHY THESE EXIST AT ALL. docs/briefs/SALIENT_LEGIBILITY.md measured what the
+## human's "you see at the same time too much and too little" actually is:
+## ground running away from a 1.65 m eye puts the WHOLE of 25 m to 200 m into a
+## 31-pixel strip under the horizon, so the only way a frame can carry range at
+## all is if something is STANDING UP out there. Salient had 0.04-0.72% of frame
+## standing at 25-200 m across its seven probe views; Hillfort has 5.79% and
+## Georgetown 2.55-4.32%, and those are the two maps in this project the human
+## says read well. That ten-to-fiftyfold gap IS the complaint, as a number.
+##
+## WHY THEY ARE HUNG ON THE ROUTES AND NOT ON A GRID. Also measured: four pieces
+## placed close to the cameras beat sixteen on an even 110 m stagger AND beat
+## sixty-three poles, because screen area at range is dominated by PROXIMITY and
+## not by count. A 27 m tower subtends 15 degrees at 100 m and 5 at 300, so a
+## landmark 200 m off the line of advance costs a piece and buys almost nothing.
+## Measured, every one of these stands between 16 and 68 m from a line the squad
+## actually walks, and none of them stands IN one — which is why each is written
+## as an offset from a route MARK rather than as a world coordinate: a typed
+## pair of numbers would be forty metres off the road the first time the road
+## moved, and the road is laid by _lay_routes from the kit's own port lengths.
+##
+## WHY MIXED PIECES AND MIXED HEIGHTS. The pole rows in the deck are the ruler —
+## one asset, one spacing, so the halving reads as distance. These are the
+## LANDMARKS, whose job is to say which sector you are looking at, and that only
+## works if they are not all the same thing: 46 m smokestack, 35 m silos, 27 m
+## water tower, 22 m pylon, 16 m tower ruin. Two of a kind in a row is allowed
+## only where they are far enough apart never to be in one frame together.
+##
+## THEY ARE SOLID OBSTACLES IN OPEN GROUND. Rebake the navmesh and re-run
+## probe_nav_reach after touching this list — all eleven objectives have to stay
+## reachable by walker, bulwark, rover AND reclaimer, and this is the map where
+## a 6 cm change closed four bridges.
+const LANDMARKS: Array = [
+	# ── OUR OWN REAR, between the spawn and the three route entries. 320 m of
+	# ground with nothing in it, which is the S7 "long axis" view: a supply
+	# area, so silos and a chimney are what would be standing in it.
+	["C.entry", -126.0, -54.0, "industrial/industrial_smokestack", 0.0],
+	["A.entry", -121.0, -65.0, "industrial/industrial_silos", 15.0],
+	["C.entry", -76.0, 36.0, "features/feature_power_pylon", 0.0],
+	["C.entry", -46.0, -54.0, "trench/op_tower_ruin", 70.0],
+	# ── BEHIND THE PARAPET AND OUT IN FRONT OF IT. The jump-off views S1-S4 all
+	# look east from here, so this is where proximity pays.
+	["C.entry", 34.0, -34.0, "industrial/industrial_water_tower", 0.0],
+	["B.entry", 11.0, 35.0, "features/feature_power_pylon", 0.0],
+	["C.dugout", -4.0, -68.0, "industrial/industrial_smokestack", 25.0],
+	["A.blown", 14.0, -39.5, "industrial/industrial_smokestack", 0.0],
+	# IN THE ONE GAP IN THE BELTS. No-man's-land here is wire at x 12 and 26,
+	# dragon teeth at 40 and a berm row at 44, which leaves a seven-metre lane
+	# at x 33 and nothing wider anywhere between them. A silo (15 x 25 m) was
+	# tried first and came out standing in the berm row; the chimney is 7.4 m
+	# across and fits, and being 46 m tall it carries the view anyway.
+	["C.exit", 11.0, -66.0, "industrial/industrial_smokestack", 0.0],
+	# ── THEIR SIDE, short of the village. The front-line view S5 looks down the
+	# axis from x 60 and had nothing between it and the village 370 m away.
+	["C.exit", 78.0, 6.0, "industrial/industrial_water_tower", 30.0],
+	["C.exit", 88.0, -84.0, "features/feature_power_pylon", 0.0],
+	["A.wire", 130.0, 11.0, "features/feature_power_pylon", 0.0],
+	["C.exit", 148.0, -64.0, "industrial/industrial_water_tower", 0.0],
+	["B.wire", 82.0, 10.0, "industrial/industrial_silos", 40.0],
+]
+
+## Nothing may stand closer than this to another landmark's centre. Two masses
+## inside a chassis-width of each other are one mass with a seam in it.
+const LANDMARK_APART := 40.0
+
+## And nothing may stand this close to an objective anchor. THIS IS NOT
+## COSMETIC. The first run of the list above put a 46 m chimney at (-100, -70),
+## which is Salient_SapNorth to the metre, and the Bulwark — the widest chassis,
+## 1.13 m bake radius — came back UNREACHABLE there while the other three still
+## walked in. One objective, one chassis, and nothing in the build output said
+## so: only probe_nav_reach did. 30 m clears the widest piece in the list
+## (industrial_silos, 15 x 25 m) with room for a body to stand on the anchor.
+const LANDMARK_CLEAR_OBJ := 30.0
+
+
+## The heading of a route, measured end to end off its own marks rather than off
+## the first piece: a route that turns has no single angle and the one that
+## matters for hanging something beside it is the overall run.
+func _route_heading(route: String) -> float:
+	if not _marks.has(route + ".entry"):
+		return 0.0
+	var from: Vector2 = _marks[route + ".entry"]
+	for tail: String in ["exit", "wire", "last_crater", "dugout"]:
+		if _marks.has(route + "." + tail):
+			var to: Vector2 = _marks[route + "." + tail]
+			if from.distance_to(to) > 1.0:
+				return rad_to_deg(atan2(to.y - from.y, to.x - from.x))
+	push_warning("build_salient: route %s has an entry but no end mark — landmarks on it fall back to due east" % route)
+	return 0.0
+
+
+## A piece's footprint in the ground plane, as a Rect2 at `pos`. The yaw is
+## read, not ignored: a 15 x 25 m silo turned 40 degrees covers ground a square
+## box round its unrotated extent says it does not, and the extent of the
+## ROTATED box is what the fault probe will later measure it by.
+func _plan_box(piece: String, pos: Vector2, yaw: float) -> Rect2:
+	var box := _size_of(piece)
+	if box.size == Vector3.ZERO:
+		return Rect2(pos, Vector2.ZERO)
+	var c := absf(cos(deg_to_rad(yaw)))
+	var s := absf(sin(deg_to_rad(yaw)))
+	var ext := Vector2(box.size.x * c + box.size.z * s, box.size.x * s + box.size.z * c) * 0.5
+	return Rect2(pos - ext, ext * 2.0)
+
+
+## Footprint overlap, in square metres, at which a landmark is standing in
+## something. probe_level_faults calls a pair faulty at 12 m3 of shared AABB,
+## and the deck's rows here are 3 to 4 m tall, so 4 m2 in plan is the same
+## line drawn in two dimensions instead of three.
+const LANDMARK_OVERLAP := 4.0
+
+
+## LANDMARKS as deck dress ops, resolved against the routes as laid, and
+## checked against `down` — everything the deck has already put on the ground.
+## They are then appended to it, so they are bedded, dropped where a route runs
+## and guard-checked exactly like everything else standing on this map.
+##
+## A LANDMARK THAT CLASHES IS NOT PLACED, AND SAYS WHAT IT HIT. It is not
+## nudged: the table above is the authored position and a builder that quietly
+## moves a piece two metres is a builder whose output nobody can predict. The
+## warning names the piece and the metres, which is exactly what you need to
+## edit the one line in LANDMARKS that is wrong.
+func _landmark_ops(down: Array) -> Array:
+	var out: Array = []
+	var at: Array[Vector2] = []
+	var skipped := 0
+	for row: Array in LANDMARKS:
+		var mark := str(row[0])
+		if not _marks.has(mark):
+			# EVERY EARLY RETURN WARNS. A landmark that silently does not exist
+			# is a view that silently goes back to reading as a flat plate.
+			push_warning("build_salient: no mark '%s' to hang %s on — that landmark is not placed" % [mark, row[3]])
+			skipped += 1
+			continue
+		var a := _route_heading(mark.substr(0, 1))
+		var pos: Vector2 = (_marks[mark] as Vector2) + _dirv(a) * float(row[1]) + _leftv(a) * float(row[2])
+		var clash := ""
+		for other: Vector2 in at:
+			if pos.distance_to(other) < LANDMARK_APART:
+				clash = "another landmark %.0f m away" % pos.distance_to(other)
+		var on_kit := _kit_piece_at(pos)
+		if on_kit != "":
+			clash = "the route's own %s" % on_kit
+		for o: Array in OBJECTIVES:
+			var oat := Vector2(float(o[3]), float(o[4]))
+			if pos.distance_to(oat) < LANDMARK_CLEAR_OBJ:
+				clash = "objective %s, %.0f m away" % [o[0], pos.distance_to(oat)]
+		var mine := _plan_box(str(row[3]), pos, float(row[4]))
+		var worst := 0.0
+		var worst_name := ""
+		for other: Array in down:
+			# ground/* IS THE GROUND. A swell, a washout, a track and an apron
+			# are flat slabs laid on the terrain to be walked over, so a
+			# landmark standing on one is a landmark standing on the floor, and
+			# rejecting that rejects most of the open ground on the map. Only
+			# the things that STAND UP are an obstruction to stand in.
+			if str(other[0]).begins_with("ground/"):
+				continue
+			var theirs := _plan_box(str(other[0]),
+					Vector2((other[1] as Vector3).x, (other[1] as Vector3).z), float(other[2]))
+			if not mine.intersects(theirs):
+				continue
+			var share := mine.intersection(theirs)
+			var area := share.size.x * share.size.y
+			if area > worst:
+				worst = area
+				worst_name = str(other[0]).get_file()
+		# Under the threshold is a clipped corner, which every piece on a map
+		# this dense has and which the fault probe does not report either.
+		if worst > LANDMARK_OVERLAP:
+			clash = "the deck's %s, %.0f m2 of footprint" % [worst_name, worst]
+		if clash != "":
+			push_warning("build_salient: %s off %s lands on %s — not placed" % [row[3], mark, clash])
+			skipped += 1
+			continue
+		at.append(pos)
+		out.append(["at", str(row[3]), pos.x, pos.y, float(row[4])])
+	print("      %d mid-ground landmark(s) hung on the routes, %d skipped" % [out.size(), skipped])
+	return out
 
 
 ## WHERE THE ROUTES' FEATURES ARE, as markers a mission can read. An objective

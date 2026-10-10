@@ -292,8 +292,41 @@ func _coverage(nav: NavigationMesh, from: Vector3) -> int:
 	while x <= hi.x:
 		var z := lo.z
 		while z <= hi.z:
-			var want := Vector3(x, (lo.y + hi.y) * 0.5, z)
-			var p := _snap(want)
+			# ASK AT THREE HEIGHTS AND KEEP THE ONE THAT LANDS NEAREST IN PLAN.
+			#
+			# map_get_closest_point is a 3D query and this sweep is a 2D
+			# question — "is (x, z) a place on the walkable map?" — so one
+			# query height silently decides the answer with geometry that has
+			# nothing to do with the ground under the sample.
+			#
+			# It was asking at the MIDDLE of the navmesh's own bounding box,
+			# and on Salient the valley walls put that box's top at 148 m, so
+			# the question was being put from 70 m in the air. From up there
+			# the nearest navmesh to a point over the valley floor is whatever
+			# ELEVATED surface is closest in 3D — a valley wall, a roof —
+			# rather than the floor directly below, and a sample whose snap
+			# lands 40 m sideways is then thrown out as "off the mesh". The
+			# sweep was counting 284 of 2112 grid points on a map that is
+			# walkable nearly everywhere, and the share it reported was a share
+			# of that 13%.
+			#
+			# What made it visible: putting fourteen tall buildings on Salient
+			# baked fourteen roofs at y 27-46, each one close enough to the
+			# 70 m query plane to steal the snap from a 60 m circle of ground
+			# around it. Coverage "fell" 74.8% -> 68.7% and tripped the FAIL,
+			# while the ground itself had not changed at all — measured with
+			# this fix, 89.8% -> 89.6%. A probe that reports a map coming apart
+			# because someone put a building on it is worse than no probe.
+			#
+			# Bottom, middle and top covers it: the bottom finds the floor
+			# under a roof, the top finds a summit, the middle is what it
+			# always did. Three closest-point queries per sample is nothing
+			# next to the path walk each one then costs.
+			var p := _snap(Vector3(x, (lo.y + hi.y) * 0.5, z))
+			for y: float in [lo.y, hi.y]:
+				var q := _snap(Vector3(x, y, z))
+				if Vector2(q.x - x, q.z - z).length() < Vector2(p.x - x, p.z - z).length():
+					p = q
 			# Only count a sample that is really standing on the mesh: the
 			# closest point to somewhere off the edge is the edge itself, and
 			# counting those would call the map 100% reachable every time.
