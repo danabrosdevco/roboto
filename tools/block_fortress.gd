@@ -273,13 +273,37 @@ func _causeway_ramp() -> void:
 	# supposed to continue. APEX puts it exactly in the ramp's plane: every
 	# point below satisfies z = (x + run) / run * CWAY_H, so the fan and the
 	# ramp are one unbroken surface with no join to catch on.
-	var apex: float = CWAY_H * (run - 1.0) / run
+	#
+	# IN THE RAMP'S PLANE IS NOT ENOUGH ON ITS OWN — IT HAS TO SURVIVE THE
+	# SNAP, and at x = -1 it did not. solid() rounds every point to a whole
+	# 1/32 m unit, and x = -1 is not a place where this ramp's surface is a
+	# whole unit high: CWAY_H * 23/24 is 122.67 units, which snapped to 123.
+	# So the apex stood 1/96 m proud after all and the flare's top face was a
+	# plane 1/96 m steeper than the ramp's own — near-coplanar rather than
+	# coplanar, along the whole 23 m seam between them. Measured, that one did
+	# NOT break the bake on its own: the merge failure below survived fixing
+	# it. It is wrong anyway, and a 1 cm lip is exactly the kind the baker
+	# neither walks nor stops at, so it is fixed here rather than left for
+	# whatever it would have cost later.
+	#
+	# The apex therefore stands at the nearest whole unit of RISE short of the
+	# abutment face, not at a round metre: apex_run metres of run per unit of
+	# rise, and the first multiple of it that clears x = -1. Here that is 6
+	# units of run for 1 of rise, so the apex is at -1.125 m and 122 units —
+	# both whole, and exactly on the ramp's plane.
+	var apex_run: float = run / (CWAY_H * UPM)
+	if not is_equal_approx(apex_run * UPM, roundf(apex_run * UPM)):
+		push_warning(("block_fortress: a 1 in %.3f causeway ramp does not rise a whole 1/32 m unit per whole "
+				+ "unit of run, so no apex can sit on both the grid and the ramp plane — the flare will bake "
+				+ "slivers along its seam with the deck") % (run / CWAY_H))
+	var apex_x: float = -ceilf(1.0 / apex_run) * apex_run
+	var apex: float = CWAY_H * (run + apex_x) / run
 	var flare_out: float = w * 0.5 + 1.0 + CWAY_FLARE
 	for s: float in [-1.0, 1.0]:
 		solid([
 			Vector3(-run, s * w * 0.5, -1.0), Vector3(-run, s * flare_out, -1.0),
 			Vector3(-run, s * w * 0.5, 0.0), Vector3(-run, s * flare_out, 0.0),
-			Vector3(-1.0, s * w * 0.5, -1.0), Vector3(-1.0, s * w * 0.5, apex),
+			Vector3(apex_x, s * w * 0.5, -1.0), Vector3(apex_x, s * w * 0.5, apex),
 		], ROAD)
 	# A parapet along the OUTER edge of the fan, replacing those side walls.
 	#
@@ -292,14 +316,47 @@ func _causeway_ramp() -> void:
 	# 0.9 m, as on the fort ramp: over the 0.45 m step-over, and clear of the
 	# 0.25-0.5 m band where the baker will not climb it but a body steps
 	# straight over, which is how the canal coping put squads in the water.
+	#
+	# IT ENDS AT THE FLARE'S APEX, NOT AT A ROUND x = -1. Its inner face IS
+	# the flare's outer face, and a plane is only the same plane if it runs
+	# between the same two lines — end the parapet an eighth of a metre short
+	# of where the fan ends and the two faces cross instead of touching.
 	for s: float in [-1.0, 1.0]:
 		solid([
 			Vector3(-run, s * flare_out, -1.0), Vector3(-run, s * (flare_out + 0.5), -1.0),
 			Vector3(-run, s * flare_out, 0.9), Vector3(-run, s * (flare_out + 0.5), 0.9),
-			Vector3(-1.0, s * w * 0.5, -1.0), Vector3(-1.0, s * (w * 0.5 + 0.5), -1.0),
-			Vector3(-1.0, s * w * 0.5, apex + 0.9),
-			Vector3(-1.0, s * (w * 0.5 + 0.5), apex + 0.9),
+			Vector3(apex_x, s * w * 0.5, -1.0), Vector3(apex_x, s * (w * 0.5 + 0.5), -1.0),
+			Vector3(apex_x, s * w * 0.5, apex + 0.9),
+			Vector3(apex_x, s * (w * 0.5 + 0.5), apex + 0.9),
 		], ROAD)
+	# AND THEN IT HAS TO REACH THE SPAN'S OWN PARAPET. The taper above has to
+	# stop at the apex, and the apex is just short of the end of the piece, so
+	# on its own it leaves a wall that ends a metre from where the deck edge
+	# carries on — AND A WALL END BESIDE A DECK EDGE IS WHAT BROKE THE WHOLE
+	# CAUSEWAY. Proved by dropping the tapered parapet above out of the .map
+	# and changing nothing else: the bake went clean and the squad walked bank
+	# to bank. Which is not a fix — that is the rail the human asked for — so
+	# the rail stays and its END goes.
+	#
+	# Baked, the parapet's end threw a 0.6 m bulge into the deck's own contour
+	# and Recast put two boundary vertices 0.19 m apart in it, at
+	# (-7.06, 4.5, 1.59) and (-7.24, 4.5, 1.65). nav_map keys a point into
+	# cells of 0.25 m, so both are the SAME point to it: the edges leaving
+	# them got the same key, the third one hit an edge already merged twice,
+	# and the sync gave up — "Attempted to merge a navigation mesh polygon
+	# edge with another already-merged edge". What it gave up on was one
+	# degenerate polygon running from z 1.6 to z 109.25, and that polygon was
+	# the deck. The squad stopped at (0, 4.5, 109.25), 109 m from the ramp,
+	# which is why this read as a mid-span fault and not a ramp one.
+	#
+	# So the rail runs unbroken to the end of the piece, on the SPAN'S
+	# footprint — w/2 to w/2 + 1 and up to CWAY_H + 1, which is what _deck
+	# builds — so a span butted against this piece continues it with nothing
+	# to step over and no end to bulge the contour. It stands on the abutment,
+	# which is why it starts at its top at -1.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(apex_x, minf(s * w * 0.5, s * (w * 0.5 + 1.0)), -1.0),
+				Vector3(0.0, maxf(s * w * 0.5, s * (w * 0.5 + 1.0)), CWAY_H + 1.0), ROAD)
 	# The abutment is the FOOTING under the ramp, stopping at its underside.
 	# Taken up to CWAY_H it is buried inside the ramp and both side walls — the
 	# last 3 of the 7 overlapping pairs this piece shipped with.
