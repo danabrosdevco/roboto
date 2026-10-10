@@ -51,6 +51,19 @@ const FRAMES := {
 	"mechanic": "res://Character/characters/ai/mechanic_chassis.tscn",
 	"walker": "res://Character/characters/ai/walker.tscn",
 	"reclaimer": "res://Character/characters/ai/vehicle_reclaimer.tscn",
+	"bulwark": "res://Character/characters/ai/bulwark.tscn",
+	# The ten new frames. Models only — none of these has a ChassisDefinition
+	# yet, which is why bake_icons.gd cannot see them: it reads the catalogue.
+	"lance": "res://Character/characters/ai/lance.tscn",
+	"sapper": "res://Character/characters/ai/sapper.tscn",
+	"picket": "res://Character/characters/ai/picket.tscn",
+	"warden": "res://Character/characters/ai/warden.tscn",
+	"drayman": "res://Character/characters/ai/drayman.tscn",
+	"kite": "res://Character/characters/ai/kite.tscn",
+	"vessel": "res://Character/characters/ai/vessel.tscn",
+	"brood": "res://Character/characters/ai/brood.tscn",
+	"bastion": "res://Character/characters/ai/bastion.tscn",
+	"see_engine": "res://Character/characters/ai/see_engine.tscn",
 }
 
 # ─────────────────────────────────────────────
@@ -89,7 +102,7 @@ const SHOTS := [
 		# plays. Its two named crossings (Mutaha_CrossWest, Mutaha_CorePlaza)
 		# exist only in the WIP, so this anchors on Mutaha_Compute, which is in
 		# both — and which the brief wanted in frame anyway.
-		"level": "res://maps/mutaha_level.tscn",
+		"level": "res://maps/appendix/mutaha_level.tscn",
 		"anchor": "Mutaha_Compute", "toward": "Mutaha_Compute",
 		"cam": Vector3(7.0, 1.7, 13.0), "aim": Vector3(0, 2.0, 0),
 		"cast": [
@@ -166,6 +179,8 @@ func _run() -> void:
 		await _vehicle_rank_shots(out_dir)
 	elif what == "trials":
 		await _vehicle_trial_shots(out_dir)
+	elif what == "frames" or FRAMES.has(what):
+		await _frame_shots(out_dir, what)
 	elif what == "vhat":
 		await _vehicle_rank_shots(out_dir, _Parts.vehicle_hat_list(), "vhat")
 	else:
@@ -388,6 +403,101 @@ func _vehicle_single(kind: String, kitted: Callable, file: String) -> void:
 		bot.free()
 
 
+
+
+## ONE FRAME, ALONE, IN THE GAME. `frames` for all of them, or name any id in
+## FRAMES — `... -- <out dir> frames` / `... -- <out dir> bastion`.
+##
+## bake_icons.gd already draws every frame in the game and cannot draw these:
+## it reads the catalogue, and a model built before its ChassisDefinition
+## exists is invisible to it. This takes the FRAMES id instead, which is the
+## whole difference.
+##
+## THE CAMERA IS FITTED, NOT FIXED. _vehicle_single's (-3.5, 1.5, -4.6) is
+## framed for a Rover; the frames here run from a 2.1 m Sapper to a 4.5 m
+## Bastion, and one distance either crops the big ones or loses the small ones
+## in the middle of the shot. So the subject is measured once it is staged and
+## the camera is pushed back along the same bearing in proportion.
+const NEW_FRAMES := ["lance", "sapper", "picket", "warden", "drayman",
+		"kite", "vessel", "brood", "bastion", "see_engine"]
+## The three that belong to an enemy faction, so they are photographed in the
+## livery they will actually wear rather than in the player's blue.
+const ENEMY_FRAMES := ["brood", "bastion", "see_engine"]
+
+
+func _frame_shots(out_dir: String, which: String) -> void:
+	# A REAL LEVEL FIRST, for its WorldEnvironment and its sun — without one
+	# the frames are lit by nothing and every shot is a black rectangle. Same
+	# staging as _kit_shots; the first run of this pass skipped it and every
+	# shot died on a null camera.
+	var level: Node = load(LEVEL).instantiate()
+	root.add_child(level)
+	_cam = Camera3D.new()
+	_cam.fov = 42.0
+	root.add_child(_cam)
+	_cam.current = true
+	for _i in 30:
+		await process_frame
+	var wanted: Array = NEW_FRAMES if which == "frames" else [which]
+	for id: String in wanted:
+		if not FRAMES.has(id):
+			push_warning("mockup_shots: no frame called '%s'." % id)
+			continue
+		await _frame_portrait(out_dir, id)
+
+
+func _frame_portrait(out_dir: String, id: String) -> void:
+	var bot := _vehicle(id, func(_b): pass, STAGE)
+	if bot == null:
+		return
+	if id in ENEMY_FRAMES:
+		# Set BEFORE _ready would have run is impossible here — _vehicle has
+		# already added it — so repaint through the livery node directly.
+		var liv := bot.get_node_or_null("FactionLivery")
+		if liv != null and liv.has_method("apply"):
+			liv.call("apply", Enums.Factions.ENEMY)
+	await process_frame
+	await process_frame
+	var bb := _aabb(bot, bot)
+	var size: float = maxf(bb.size.x, maxf(bb.size.y, bb.size.z))
+	var centre := STAGE + bb.position + bb.size * 0.5
+	# The Rover framing's own bearing, kept so these sit beside the existing
+	# shots, with the distance scaled off the subject instead of assumed.
+	var dir := Vector3(-3.5, 1.5, -4.6).normalized()
+	_cam.global_position = centre + dir * (size * 1.45 + 1.1)
+	_cam.look_at(centre, Vector3.UP)
+	# TURNED TO FACE THE CAMERA, not set to a constant. _vehicle_single's fixed
+	# 206 degrees is the Rover's good side; on a varied cast it photographed the
+	# Sapper from behind, which hides the tool and the hands that are the whole
+	# reason that concept won. Face the camera's GROUND position — look_at to a
+	# camera above the subject pitches the subject forward to meet it and the
+	# photograph comes back of a robot falling over — then add a three-quarter
+	# yaw so it is not a flat front elevation.
+	var flat := Vector3(_cam.global_position.x, bot.global_position.y, _cam.global_position.z)
+	bot.look_at(flat, Vector3.UP)
+	bot.rotate_y(deg_to_rad(34.0))
+	await _shoot("%s/frame_%s.png" % [out_dir, id])
+	bot.free()
+
+
+## Subtraction shapes do not count — a glacis cut is deliberately oversized and
+## including them framed the Walker as if it were twice its width.
+func _aabb(n: Node, body: Node3D) -> AABB:
+	if n is CSGShape3D and (n as CSGShape3D).operation == CSGShape3D.OPERATION_SUBTRACTION:
+		return AABB()
+	var out := AABB()
+	var started := false
+	for c in n.get_children():
+		var sub := _aabb(c, body)
+		if sub.size != Vector3.ZERO:
+			out = sub if not started else out.merge(sub)
+			started = true
+	if n is VisualInstance3D:
+		var vi := n as VisualInstance3D
+		var local := body.global_transform.affine_inverse() * vi.global_transform
+		var a := local * vi.get_aabb()
+		out = a if not started else out.merge(a)
+	return out
 ## Same contract as _soldier: in the tree, then bolt things on, then paint only
 ## what was added. A vehicle brings no weapon mount worth filling here — the
 ## kit is the subject, not the gun.
