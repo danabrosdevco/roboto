@@ -121,10 +121,18 @@ const MOCKUP_SETS: Dictionary = {
 		["props/prop_power_pole", -400.0, -8.0, 400.0, -8.0, 40.0, 90.0],
 		["props/prop_power_pole", -400.0, 84.0, 400.0, 84.0, 40.0, 90.0],
 	],
-	# THE CONVERGING LINE. ground_track is ALREADY on this map in four rows,
-	# and all four of them are in the rear areas: x -520..-190 behind our line
-	# and x 210..500 behind theirs. They stop exactly where the player is
-	# looking. These three join the two halves up across no-man's-land.
+	# THE CONVERGING LINE. ground_track USED to be on this map in four rows, all
+	# four in the rear areas — x -520..-190 behind our line and x 210..500
+	# behind theirs — stopping exactly where the player is looking. These three
+	# joined the two halves up across no-man's-land.
+	#
+	# 2026-10-10: THOSE FOUR ROWS ARE GONE and this mock-up is now a proposal
+	# with nothing behind it. They were cut on the human's instruction for
+	# reading as a step-and-repeat, which they were: the `row` op in mapdeck.gd
+	# steps by the piece's short dimension while laying it along its long one,
+	# so a 7 x 30 m track at a 4 m gap came out every 8.53 m — a continuous
+	# ribbon, 150 slabs of it. Shoot this set only with that bug understood, or
+	# it measures the ribbon and not the converging line.
 	"track": [
 		["ground/ground_track", -190.0, 120.0, 210.0, 100.0, 4.0, 90.0],
 		["ground/ground_track", -190.0, -100.0, 210.0, -120.0, 4.0, 90.0],

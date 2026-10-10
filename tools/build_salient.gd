@@ -471,18 +471,65 @@ const BED_ROUGH := 3.0
 ## churns the scene.
 const BED_SNUG := 0.15
 
+## PIECES WHOSE WAY IN IS A RAMP, and where that ramp's foot is in the piece's
+## own local frame: [x, z, the height of its walking surface].
+##
+## WHY A TABLE AND NOT A RULE. The median below is the right height for a
+## flat-bottomed slab and the wrong height for a piece you have to walk INTO.
+## fort_command_bunker is 12 x 16 m of concrete with a 5.75 m ramp running 12 m
+## out of its back; the median is taken over all of that, so the body lands at a
+## sensible height and the far end of the ramp is left in the air. The human
+## found exactly that in the editor at (200, -40): "the base of the ramp is above
+## the ground and can't be accessed." Measured, the ramp foot there was 0.69 m
+## up — over enemy.gd's 0.45 m step_height and over the baker's climb, so the
+## ramp and the roof above it were a navmesh island.
+##
+## The reason the median was wrong there is worth keeping: the bunker straddles
+## the edge of a trench earthworks pad. Fifteen of its twenty-five bed samples
+## land on flat pad at -0.41 and the natural ground 12 m behind it is at -1.10,
+## so the median is right about the body and 0.7 m out about the ramp.
+##
+## LOWER ONLY, NEVER RAISE. Clamping the piece DOWN to its ramp foot's ground
+## can only bury the body deeper, and every piece in this table is designed to
+## sit in the ground — the bunker's slab starts 0.5 m down, the pillbox's
+## cylinder 0.6 m, the sangar's baskets 0.1 m. Raising a piece to meet a ramp
+## foot that is already buried would lift a body that is meant to be dug in
+## clean out of the ground, which is the failure the bedding pass below already
+## records from its first attempt. Three of the five bunkers on this map have
+## their foot buried, and this leaves all three where they are.
+##
+## NOT IN HERE: feature_watchtower. Its stair is a flight on posts and its body
+## stands 6 m up on splayed legs, so there is nothing about it that is meant to
+## be in the ground; sinking the tower a metre to land the bottom step would
+## bury the legs and take a metre off the one piece on this map whose job is to
+## be tall. If its stair foot ever needs landing, the answer is to lengthen the
+## flight, not to bed the tower by it.
+const RAMP_FOOT := {
+	# ramp(6.25, -5.5, 12.0, -2.5, 0.0, 0.0, 3.0, "-x") in block_industrial.gd:
+	# Quake (x 12, y -4, z 0) through FuncGodot's (x, y, z) -> (y, z, x).
+	"fort_command_bunker": Vector3(-4.0, 0.0, 12.0),
+	# ramp(-1.3, -7.75, 1.3, -2.25, 0.0, 0.0, 2.9, "+y")
+	"fort_hesco_sangar": Vector3(-7.75, 0.0, 0.0),
+	# ramp(-1.0, -9.7, 1.0, -3.9, -0.2, -0.2, 2.6, "+y", EARTH)
+	"feature_pillbox": Vector3(-9.7, -0.2, 0.0),
+}
+
 
 ## PUT EVERY PIECE ON THE GROUND UNDER ITS OWN FOOTPRINT, not on the ground
 ## under its origin.
 ##
 ## mapdeck takes ONE height sample, at the piece's centre. That is right for a
-## sandbag and wrong for everything big, and this map's dressing is big:
-## ground_swell is 22 x 30 m, ground_berm 10 x 32, ground_washout 14 x 26,
-## ground_track 7 x 30, a razor wire run 10 m long. Salient's ground has 260
-## craters in it and 1.3 m of detail relief on a 28 m wavelength, so a 32 m slab
-## pinned by its middle has both ends in the air or both ends buried. A berm laid
-## across the toe of the painted mountain at z 220 came out 3.6 m off the ground
-## at one end and nothing said so.
+## sandbag and wrong for everything big, and this map's dressing is big: a
+## command bunker is 16 x 18 m, a feature_berm 10 x 32, an estate_u_block
+## 26 x 24, a razor wire run 10 m long. Salient's ground has 260 craters in it
+## and 1.3 m of detail relief on a 28 m wavelength, so a 32 m slab pinned by its
+## middle has both ends in the air or both ends buried. A berm laid across the
+## toe of the painted mountain at z 220 came out 3.6 m off the ground at one end
+## and nothing said so.
+##
+## The worked examples here used to be ground_swell, ground_berm, ground_washout
+## and ground_track — 243 slabs that were cut from the deck on 2026-10-10 for
+## reading as a step-and-repeat. The pass still matters: 156 pieces move.
 ##
 ## THE MEDIAN AND NOT THE MINIMUM. The minimum drops a piece into the deepest
 ## crater its footprint happens to touch and buries it — the same fault upside
@@ -496,6 +543,7 @@ const BED_SNUG := 0.15
 func _bed_dressing(placed: Array, lined: Dictionary) -> void:
 	var moved := 0
 	var rough: Array = []
+	var footed: Array = []
 	var blind := 0
 	for row: Array in placed:
 		var piece: String = row[0]
@@ -550,11 +598,47 @@ func _bed_dressing(placed: Array, lined: Dictionary) -> void:
 			blind += 1
 			continue
 		var want: float = pos.y + (med - at_centre)
+		# A PIECE YOU WALK INTO IS BEDDED BY ITS DOOR. See RAMP_FOOT: the median
+		# is right about the body and can be most of a metre out about the far
+		# end of a ramp, and a ramp foot over the step height is an island.
+		# NOT ON GROUND THAT IS ALREADY HOPELESS. If the ground under the piece
+		# varies by more than BED_ROUGH there is no height that works and the
+		# median is already an admitted guess, so landing the ramp foot on top of
+		# that only digs the piece in further for nothing. The pillbox on the
+		# mountain toe at (-60, -228) has 7.1 m of variation under it and was
+		# already 4.2 m under the ground; another 1.4 m buries it outright. Those
+		# are in the `rough` list below, which is where the fix belongs.
+		if RAMP_FOOT.has(piece.get_file()) and spread <= BED_ROUGH:
+			var foot: Vector3 = RAMP_FOOT[piece.get_file()]
+			# THE OTHER SIGN. _yawed writes Basis(UP, -yaw) — its x column is
+			# (cos, 0, sin) — and the footprint box above is sampled with
+			# Basis(UP, +yaw), which is the mirror of it. For the box that is
+			# harmless at 0 and 90 degrees and nobody has argued it out for the
+			# rest; for a single named point it is the difference between the
+			# ramp and the wall opposite, so this one uses the basis the scene
+			# will actually be written with.
+			var laid := Basis(Vector3.UP, -deg_to_rad(float(row[2])))
+			var fw: Vector3 = laid * Vector3(foot.x, 0.0, foot.z)
+			var fh := _data.height_at_local(pos.x + fw.x, pos.z + fw.z)
+			if is_nan(fh):
+				push_warning("build_salient: no heightfield under %s's ramp foot at (%.0f, %.0f) — bedded on the median alone" % [
+						piece.get_file(), pos.x + fw.x, pos.z + fw.z])
+			elif fh - foot.y < want:
+				footed.append([want - (fh - foot.y), piece.get_file(), pos])
+				want = fh - foot.y
 		if absf(want - pos.y) > BED_SNUG:
 			row[1] = Vector3(pos.x, want, pos.z)
 			moved += 1
 	rough.sort_custom(func(a, b): return float(a[0]) > float(b[0]))
 	print("      %d piece(s) re-bedded on the ground under their own footprint" % moved)
+	if not footed.is_empty():
+		footed.sort_custom(func(a, b): return float(a[0]) > float(b[0]))
+		print("      %d of those dropped further so a walkable ramp foot meets" % footed.size())
+		print("      the ground — the median had left the way in off the floor:")
+		for f: Array in footed:
+			var p: Vector3 = f[2]
+			print("         %-26s dropped a further %.2f m at (%.0f, %.0f)" % [
+					f[1], float(f[0]), p.x, p.z])
 	if blind > 0:
 		print("      %d piece(s) had no heightfield under them and were LEFT WHERE THEY WERE" % blind)
 	if not rough.is_empty():

@@ -362,32 +362,37 @@ static func maps() -> Array:
 			# the navmesh survives it and the squad walks over rather than
 			# round. A swell you cannot see over the far side of is cover, a
 			# horizon and dead ground all at once.
-			+ [["row", "ground/ground_swell", -500.0, -170.0, -220.0, -170.0, 22.0],
-				["row", "ground/ground_swell", -500.0, 150.0, -220.0, 150.0, 22.0],
-				["row", "ground/ground_swell", 250.0, -150.0, 500.0, -150.0, 22.0],
-				["row", "ground/ground_swell", 250.0, 170.0, 500.0, 170.0, 22.0],
-				["row", "ground/ground_swell", -300.0, -40.0, -190.0, -40.0, 20.0],
-				["row", "ground/ground_swell", 90.0, 40.0, 210.0, 40.0, 20.0],
-				["row", "ground/ground_berm", -460.0, 60.0, -200.0, 60.0, 30.0],
-				["row", "ground/ground_berm", 230.0, -60.0, 470.0, -60.0, 30.0],
-				["row", "ground/ground_berm", -130.0, -220.0, 30.0, -220.0, 26.0],
-				["row", "ground/ground_berm", -130.0, 220.0, 30.0, 220.0, 26.0],
-				["at", "ground/ground_berm_ring", -60.0, 10.0, 0.0],
+			#
+			# AND IT WAS LAID AS A STEP-AND-REPEAT, WHICH IS WORSE THAN A FLAT
+			# FLOOR. 2026-10-10, cut on the human's instruction after looking at
+			# the map in the editor: "W1195_ground_track and W1002_ground_swell
+			# and W1017_ground_berm just step and repeat dozens of times for no
+			# rhyme or reason. those need gone."
+			#
+			# Twenty `row` ops put 243 slabs down — 150 of them ground_track
+			# alone, every one at the same yaw, evenly spaced, in dead-straight
+			# lines hundreds of metres long. The reason they marched is a bug in
+			# the `row` op itself, NOT in these numbers: mapdeck.gd measures the
+			# step with _span(box, yaw) and then places the piece at yaw + 90, so
+			# a row steps by the piece's SHORT dimension while laying it along
+			# its LONG one. ground_track is 7 x 30 m, so a 4 m gap came out as a
+			# slab every 8.53 m along a 30 m piece — a continuous ribbon, not a
+			# rut. See mapdeck.gd `row`; fixing it there moves rows on every
+			# other deck, so it has not been touched.
+			#
+			# THE DESIGN NOTE ABOVE STILL STANDS and the answer is still built
+			# relief — but authored, as `at` ops in the places that want it, not
+			# ruled off by a row. Whoever puts it back: one `at` per swell.
+			+ [["at", "ground/ground_berm_ring", -60.0, 10.0, 0.0],
 				["at", "ground/ground_berm_ring", -20.0, -110.0, 0.0],
 				["at", "ground/ground_berm_ring", -110.0, 140.0, 0.0],
 				["at", "ground/ground_berm_ring", 10.0, 170.0, 0.0],
-				["row", "ground/ground_washout", -140.0, -60.0, 30.0, -60.0, 24.0],
-				["row", "ground/ground_washout", -140.0, 90.0, 30.0, 90.0, 24.0],
-				["row", "ground/ground_spoil", -120.0, -180.0, 20.0, -180.0, 26.0],
-				["row", "ground/ground_spoil", -120.0, 40.0, 20.0, 40.0, 26.0],
-				["row", "ground/ground_spoil", -400.0, -120.0, -240.0, -120.0, 30.0],
-				["row", "ground/ground_spoil", 260.0, 110.0, 420.0, 110.0, 30.0],
-				# Ruts along the routes that feed the line, which is the one
-				# piece here you would miss if it were gone.
-				["row", "ground/ground_track", -520.0, 120.0, -190.0, 120.0, 4.0],
-				["row", "ground/ground_track", -520.0, -100.0, -190.0, -100.0, 4.0],
-				["row", "ground/ground_track", 210.0, -120.0, 500.0, -120.0, 4.0],
-				["row", "ground/ground_track", 210.0, 100.0, 500.0, 100.0, 4.0],
+				# THE APRONS STAY. Four slabs a row at 40 m centres, laid as the
+				# hardstanding under the ammunition dumps at x -480 and the gun
+				# line at x +290: 20 m of concrete then 20 m of clear ground, so
+				# they read as four separate pads and not as a repeat. They are
+				# the one ground/* op on this map that is doing a job a single
+				# placement would do.
 				["row", "ground/ground_apron", -480.0, -60.0, -340.0, -60.0, 26.0],
 				["row", "ground/ground_apron", 290.0, 60.0, 430.0, 60.0, 26.0]]
 			# SOMETHING ON THE SKYLINE. A flat map reads as flat because its
