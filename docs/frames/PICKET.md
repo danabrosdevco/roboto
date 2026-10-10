@@ -6,7 +6,7 @@ Supply 2 · ground · anti-air · **status: concept selected, not built**
 
 ## 1. Concept
 
-**Selected: C2 — LAUNCHER-LED.** 2.24 W x 3.27 H x 1.76 L.
+**Selected: C2 — LAUNCHER-LED.** 2.24 W x 4.15 H x 1.76 L.
 
 Six tubes canted up and unmistakable, a sensor dish demoted to a shoulder
 fitting, Walker legs underneath. Two rounds rather than one: C2 is a revision
@@ -21,6 +21,19 @@ answer to being bombed.** The dish was the only shape in the roster that says
 *aircraft* before you have parsed anything else, so C won; C2 then fixed its
 three faults (dish too big and reading as the whole unit, launcher invisible
 beside it, and 4.07 m — taller than a Walker, wrong for a 2-supply frame).
+
+**Correction, from building it: C2 did not fix the third fault.** It measures
+**4.15 m**, which is taller than the 4.07 it was drawn to cut down and 0.34 m
+over the Walker's 3.81. The earlier figure of 3.27 in this section was wrong
+and appears nowhere in the code; the model reproduces `ConceptsP.picket_c2()`
+to the centimetre and the concept itself re-measures at 4.15.
+
+That is not reachable by scaling — at the concept's cant and tube length the
+muzzles alone reach y 2.46, so getting under a Walker needs shorter tubes
+*and* a shallower cant, which is a new proportions pass and a judgement about
+whether a launcher that reads at icon size is worth being the tallest 2-supply
+frame in the game. **Unresolved, and the human's call.** The model is built at
+4.15 so the question is asked by something you can look at.
 
 It also puts a legged frame at supply 2, which is a new point on the grid:
 everything legged today is supply 3.
@@ -118,7 +131,7 @@ Picket (CharacterBody3D, groups=["enemies"])     ← add_to_group("enemies", TRU
 ├─ CollisionShape3D     capsule r 0.8 h 2.4
 ├─ Bark / NavigationAgent3D / Detection
 ├─ Rig
-│  ├─ Hull (CSGMesh3D)  1.45 × 0.9 × 1.55, glacis + tail + shoulder cuts
+│  ├─ Hull (CSGMesh3D)  1.55 × 0.9 × 1.5, glacis + tail + shoulder cuts
 │  ├─ TurretRing
 │  ├─ Turret (Node3D)                           ← MUST be named/exported `turret`
 │  │  ├─ TurretBody (CSG)

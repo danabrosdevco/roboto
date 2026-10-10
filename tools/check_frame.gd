@@ -26,13 +26,17 @@ var _checks := 0
 
 
 func _initialize() -> void:
+	_run.call_deferred()
+
+
+func _run() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.is_empty():
 		printerr("check_frame: <scene.tscn> [...]")
 		quit(1)
 		return
 	for path in args:
-		_check(path)
+		await _check(path)
 	print("")
 	if _fails > 0:
 		print("FAIL  %d of %d checks failed" % [_fails, _checks])
@@ -40,7 +44,6 @@ func _initialize() -> void:
 		return
 	print("PASS  %d checks" % _checks)
 	quit(0)
-
 
 func _ok(cond: bool, label: String, detail: String = "") -> void:
 	_checks += 1
@@ -116,8 +119,17 @@ func _check(path: String) -> void:
 	_ok(bare.is_empty(), "every mesh has a material",
 			"bare: " + ", ".join(bare) if not bare.is_empty() else "")
 
+	# IN THE TREE, and only for the measurement. A CSGShape3D outside the tree
+	# has never generated a mesh, so get_aabb() returns nothing and every
+	# CSG-heavy frame measures short — the Walker came out 3.73 against a real
+	# 3.81, and the Picket lost its entire launcher. Found by the Picket agent,
+	# which measured in-tree by hand and got a different answer.
+	root.add_child(n)
+	await process_frame
+	await process_frame
 	var bb := _bounds(n, n)
 	print("        measured  W %.2f  H %.2f  L %.2f" % [bb.size.x, bb.size.y, bb.size.z])
+	root.remove_child(n)
 	n.free()
 
 
@@ -158,7 +170,7 @@ func _bounds(n: Node, body: Node3D) -> AABB:
 			started = true
 	if n is VisualInstance3D:
 		var vi := n as VisualInstance3D
-		var local := body.transform.affine_inverse() * _rel(vi, body)
+		var local := body.global_transform.affine_inverse() * vi.global_transform
 		var a := local * vi.get_aabb()
 		out = a if not started else out.merge(a)
 	return out
