@@ -329,6 +329,13 @@ static func drayman_a(root_node: Node3D) -> void:
 		_Parts.studs(root_node, 4, Vector3(sx * 0.86, 1.2, -0.5), Vector3(0, 0, 0.6), 0.032)
 	_crates(root_node, Vector3(0, 1.18, 0.5), 2, 2, 3)
 	# Slew ring on the front quarter, and the boom that stands on it.
+	# THE SLEW RING SITS INSIDE THE LOAD. A 0.6 m disc centred (0.3, 1.2, 0.3)
+	# is wholly within the crate block's footprint, so the boom stands on top
+	# of the thing it is meant to be lifting. A concept render does not notice
+	# — the crates hide it — and a model cannot have it: build_drayman.gd moved
+	# the load aft and the ring forward into the gap, which is most of why the
+	# built frame is 0.28 wider and 0.20 longer than this one measures.
+	# Left as drawn, because this is the sheet that was selected from.
 	_Parts.cyl(root_node, 0.3, 0.14, Vector3(0.3, 1.2, 0.3), Vector3.ZERO, false, 12)
 	var slew := K.node_at(root_node, Vector3(0.3, 1.3, 0.3), Vector3(0, -45.0 * K.DEG, 0))
 	var tip := K.boom(slew, Vector3.ZERO, 1.4, 1.1, 36.0, -70.0)

@@ -265,7 +265,13 @@ func _build() -> CharacterBody3D:
 
 	var bark := (load(BARK) as PackedScene).instantiate()
 	bark.name = "Bark"
-	bark.set("bark_clips", [load(V1), load(V2)])
+	# TYPED, or the assignment is silently dropped and the scene keeps
+	# bark.tscn's three defaults. This frame shipped with them: the trap was
+	# still live in build_bulwark.gd when this generator was copied from it.
+	var clips: Array[AudioStream] = []
+	clips.append(load(V1))
+	clips.append(load(V2))
+	bark.set("bark_clips", clips)
 	# HIGHER THAN ANYTHING ELSE ON THE ROSTER. The Bulwark is 0.64-0.72 and the
 	# Rover 0.80-0.88; this is the smallest frame in the game and it should
 	# sound like it.

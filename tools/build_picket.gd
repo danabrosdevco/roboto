@@ -301,7 +301,13 @@ func _build() -> CharacterBody3D:
 	# Higher than the Walker's 0.72-0.80 and well clear of the Bulwark's
 	# 0.64-0.72: this is the lightest frame in the family that still has legs,
 	# and the three have to be tellable apart with the screen turned off.
-	bark.set("bark_clips", [load(V1), load(V2)])
+	# TYPED, or the assignment is silently dropped and the scene keeps
+	# bark.tscn's three defaults. This frame shipped with them: the trap was
+	# still live in build_bulwark.gd when this generator was copied from it.
+	var clips: Array[AudioStream] = []
+	clips.append(load(V1))
+	clips.append(load(V2))
+	bark.set("bark_clips", clips)
 	bark.set("pitch_min", 0.82)
 	bark.set("pitch_max", 0.92)
 	root_body.add_child(bark)
