@@ -38,6 +38,98 @@ most wants and least often gets:
 
 
 
+## 2026-10-10 — Salient: traversable, legible, and something like a trench
+
+**Landed.** Four passes on Salient plus one regression of my own.
+
+*Navigation* (`5a301a82`). The navmesh was a claim about a body nobody is —
+`agent_height 1.8`, `agent_radius` unset so Godot's 0.5. Re-baked honest at
+radius 1.0 / height 3.0 / `cell_size` 0.25 explicit. **Trenches were NOT
+widened**: route A is already an 8.0 m sunken road for vehicles, route C the
+3.0 m infantry trench, and the 3.0 m floor still carries the walk at a 1.0 m
+bake. All 11 objectives now reachable by Walker, Bulwark, Rover and Reclaimer —
+the probe previously tested **zero** objectives because it looked in
+`NavigationRegion3D/Objectives` while this level keeps them in `EnemySquadObjs`,
+and printed PASS without asking.
+
+*Dressing* (same commit). Floating pieces 216 → 40. About 136 of the original
+count was the probe lying: it took the median of every column over a footprint,
+so all 37 power poles reported "7.6 m off the ground" because 14 of 16 columns
+contain only crossarm. Two real causes fixed — 76 revetments lifted up to 3.3 m
+by a hardcoded reach that assumed a narrower cut, and large pieces placed from
+one centre sample, now bedded on the median of 25 over their rotated footprint.
+
+*Legibility* (`835ab759`, `f8eade3f`, `6c606a7d`). Salient had 10–50x less
+standing above eye level at ranging distance than the maps that read well
+(0.04–0.71% of frame vs Hillfort 5.79%). **Fog was not the lever** — +175%
+density moves near/far luma by −0.005 because the signal filter quantises luma
+to 10 steps. Fourteen mid-ground masses placed off the route marks, plus the
+telegraph ladder finished (40 → 106 poles, uniform 40 m). Per-view now
+**S1 2.28 · S2 4.57 · S3 1.96 · S4 5.64 · S5 4.73 · S6 1.65 · S7 0.39 %**.
+
+*Trench experience* (`c3cabccd`, `aafcfc0f`, `8ae97caa`). Five new probes, none
+of which existed. They found the big frames were **walking along the top of the
+trench** — route C read 98.1% in cut for the player and 2.2% for a Bulwark on
+the same geometry. The human's call was breaks in the line rather than a second
+trench: two 6 m lanes at (−103, −19) and (−14, −19), 89 m apart, which bake
+4.0 m of mesh at radius 1.0 against a 2.26 m shield. Walker in-cut **5.2% →
+60.5%**, Bulwark **2.2% → 64.4%**. Route C's traverses spread, longest sightline
+80.0 → 47.0 m. **Navigation cost was explicitly declined by the human** — so the
+breaks change what happens when the squad is *ordered* down route C, not what
+it picks on its own.
+
+*My regression* (`b1dc5b28`). `test_causeway` was failing and was reported to me
+as another lane's. It was mine, from `4179f2dc` / `933766d2`. The flare's
+parapet END left a free wall end beside the deck's walkable boundary; Recast
+emitted two boundary vertices 0.19 m apart, `nav_map` keys into 0.25 m cells so
+they were one point, the merge collapsed and the entire deck became **one
+degenerate polygon from z 1.6 to z 109.25**. Fixed by running the rail onto the
+adjoining span's footprint. The flare survives (mouth 29.3 m vs 15.0 pre-flare)
+and `test_causeway.gd` gained `_ramp_mount()` to guard it, which nothing did.
+
+**Gates.** `check.sh --changed` PASS on every commit. `smoke.sh` PASS.
+`test.sh` ALL SUITES PASS (2 parked as always). `probe_footing` 40 standing off
+/ 34 bedded deep, unchanged. `probe_level_faults` 197 pairs, unchanged.
+
+**Needs the human.**
+- **How the two breaks feel to walk past**, at (−103, −19) and (−14, −19) —
+  whether 6 m reads as a deliberate crossing or as a hole someone forgot to
+  finish. Not measurable.
+- **The landmark frames**: S7 for whether depth now reads, S2 for whether the
+  ~40 m water tower is too large in frame. Shots in `roboto_shots/legibility/`.
+- The player pays **+6.2 points of exposure** on route C for the breaks, though
+  the longest unbroken exposed stretch falls 36 m → 22 m. That trade is a feel
+  call.
+- The continuous ramp rail on the causeway has a small step in its outside face
+  at the join (1 m profile meeting a 0.5 m taper). Flush on the inside face.
+
+**Blocked / next.**
+- **A Bulwark still cannot reach `C.exit`** — it is the trench floor at the foot
+  of a 3.0 m ramp, and 3.0 eroded by 1.25 per side is 0.5 m, a ~5 m island. No
+  placement from this kit fixes it; it needs a wider ramp piece, i.e. new
+  authored geometry in `block_trench.gd`. The breaks themselves deliver it fine
+  (`C.lane1`/`C.lane2` reach every objective).
+- **A family sweep found this defect class repeats.** Top hit is
+  `block_fortress.gd:474` `_citadel_podium` — the fort approach ramp's parapet
+  stops 0.31 m short of the piece end, leaving a 0.8 m wall end on walkable
+  ground 0.3 m from the gate threshold, plus a 0.0625 m slot to the lit jamb.
+  **This is the ramp the human reported bots sticking on.** Also
+  `_bridge_highway`'s median noses and `_fort_keep`'s pit walls. Second class:
+  `SIDE_RUN = 0.8` puts embankment toe offsets off the 1/32 m grid in 11 shipped
+  bridge prefabs; `SIDE_RUN = 0.75` closes it.
+- `maps/causeway_level_nav.tres` carries **131 over-merged edge keys** out in the
+  terrain and throws the same sync error on load. Needs a rebake, which needs
+  `causeway_art.tscn`, which another lane has uncommitted.
+- `maps/gameplay/salient_ops.tscn` is **untracked** while
+  `maps/salient_level.tscn` references it in the working tree. Every commit this
+  session deliberately omitted those two lines. **Someone needs to commit the
+  ops scene together with them.**
+- `probe_nav_reach`'s coverage sweep was querying from the middle of the navmesh
+  AABB — ~70 m in the air — counting 284 of 2112 points. Fixed; real coverage is
+  **89.6%**, not the ~75% earlier runs reported.
+
+---
+
 ## 2026-10-05 — Polaris stands on ground that is derived, not described
 
 **Landed.** Polaris's ground was a slab per material with the lot, the roads
