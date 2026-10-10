@@ -443,6 +443,16 @@ static func bastion_b(root_node: Node3D) -> void:
 	# gaps between the legs rather than fouling them.
 	_spade(root_node, Vector3(0, 1.72, -1.0), 0.0, 40.0, 1.5)
 	_spade(root_node, Vector3(0, 1.72, 1.0), 180.0, 40.0, 1.5)
+	# THE SIDE PAIR LEAN INWARD, UNDER THE HULL. _spade's own docstring two
+	# definitions up warns about exactly this: yawing -90/+90 lands the ram's
+	# local -Z on the body's +X/-X, so the port and starboard outriggers brace
+	# toward the centre instead of away from it. bastion_a's four corner spades
+	# have the same slip. build_bastion.gd flips the signs and moves the roots
+	# inboard to x +/-0.541 so all four lean along their own radius and the
+	# frame still measures 3.44 wide.
+	#
+	# Left as drawn, because this is the sheet that was selected from. If the
+	# sheet is ever re-rendered, these two lines are wrong in the picture.
 	_spade(root_node, Vector3(-1.1, 1.72, 0), -90.0, 40.0, 1.5)
 	_spade(root_node, Vector3(1.1, 1.72, 0), 90.0, 40.0, 1.5)
 	# THE MAST AND THE CANOPY. A 2.6 m hoop flat overhead with three stays, and
@@ -605,6 +615,16 @@ static func argus_a(root_node: Node3D) -> void:
 		_radial_leg(root_node, float(a_deg), 1.8, 0.4, 1.0, 1.0, 30.0, 0.55)
 	# Two small eyes on the column looking BACKWARD and DOWN, at its own units.
 	# One enormous eye is the proposal; these say what the eye is for.
+	# BOTH COLUMN PODS ARE BURIED IN THE REAR LEGS. At bearings 305.5 and 48.2
+	# they sit 4.5 and 8.2 degrees off the legs at 310 and 40, which puts each
+	# 0.20 m lens centre about 0.08 m from a thigh axis inside a limb 0.234 x
+	# 0.275 in section — more than half of each lens is swallowed. A concept
+	# render shows a smudge; a model shows six wasted faces and an invisible
+	# sensor. build_see_engine.gd moved them to 355 and 85, the mid-points of
+	# the rear quadrants, and re-aimed their yaws so each still looks outward,
+	# backward and down. Same fault family as concept_kit.head()'s buried ring.
+	#
+	# Left as drawn, because this is the sheet that was selected from.
 	_eye_pod(root_node, Vector3(-0.42, 1.5, 0.3), 0.2, 160.0, -24.0)
 	_eye_pod(root_node, Vector3(0.38, 1.16, 0.34), 0.17, 205.0, -38.0)
 

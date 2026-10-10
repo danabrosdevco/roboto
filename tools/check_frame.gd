@@ -80,7 +80,11 @@ func _check(path: String) -> void:
 		elif sh is BoxShape3D:
 			print("        box      %.2f x %.2f x %.2f" % [sh.size.x, sh.size.y, sh.size.z])
 
-	for prop in ["nav_agent", "detection"]:
+	# bark is an @export on enemy.gd like any other, and a frame that misses it
+	# is SILENT with nothing to say so — the same shape as the spotter's
+	# rotor_loop. Found by the Bastion agent reading the script rather than the
+	# brief's table, which had left it out.
+	for prop in ["nav_agent", "detection", "bark"]:
 		_ok(n.get(prop) != null, "%s wired" % prop)
 
 	# TYPED ARRAYS OR THEY SAVE EMPTY. Assigning a plain Array to an

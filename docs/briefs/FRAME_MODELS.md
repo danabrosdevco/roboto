@@ -150,7 +150,7 @@ not work around it** — report it and leave it; it is one shared fix for the
 whole family and it belongs to the coordinator.
 
 
-### Two more, both found by build agents
+### Three more, all found by build agents
 
 **`FactionLivery._gather()` RECURSES.** Listing a container in `pieces` paints
 every mesh under it, so `pieces = [Rig]` is the same bug as an empty list
@@ -174,7 +174,25 @@ and say which.
 Its antenna is fine on a turret standing on a hull, which is every frame that
 uses it that way. On the Kite, hanging the head *under* a hull put the whip
 inside the fuselage. Check where yours ends up rather than assuming either.
-A sixth, for anything that cants a barrel upward: a rotation about **+X** maps
+
+6. **A legged frame's rest pose cannot live on the hip.** `walker.gd`'s
+   `_pose_leg` **assigns** `hip.rotation.x`, `hip.rotation.z`,
+   `knee.rotation.x` and both foot rotations every physics frame, including
+   zeroes at a dead stop. Anything baked onto a hip or knee is therefore wiped
+   on the first tick — and if only some legs are wired, only those collapse,
+   so the frame stands with two limbs splayed and two plumb and nothing warns.
+   Pre-apply the rotation to the child node's *position* and put it on the
+   meshes, leaving hips and knees at identity. `walker.tscn` already does this
+   (HipL is at identity; the tilt is on `ThighL`) without saying it is a
+   workaround.
+
+   Found independently by the Bastion and See-Engine agents, which is why it
+   is here: two frames hit it in the same hour.
+
+   `bark` belongs in the list above too — it is an `@export var bark: Bark` on
+   `enemy.gd:93`, and a frame that misses it is silent with nothing to say so,
+   the same shape as `rotor_loop`. `check_frame.gd` now asserts it.
+A seventh, for anything that cants a barrel upward: a rotation about **+X** maps
 −Z to `(0, sin, −cos)`, so a **negative** angle aims the muzzle at the floor.
 Three of Picket's five first-round concepts had this sign wrong.
 
