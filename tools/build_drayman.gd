@@ -53,6 +53,74 @@ extends SceneTree
 # rounds: B's six rounds were modelled as a cascade spilling out of a hopper,
 # and this frame is handing over a BELT, which has to look joined.
 #
+# ── REVISION, 2026-10-10: THE ARM IS THE RECLAIMER'S ──
+#
+# THE HUMAN'S NOTE WAS "add the articulated arm like the reclaimer has", said
+# of an in-game render, next to "i'm just not sure what the drayman or warden
+# are supposed to actually DO". The two halves are the same observation.
+#
+# WHAT WAS WRONG. The first build's boom was jointed on paper — slew, base,
+# elbow, tip — but it was built out of 0.22 and 0.18 m square sections cast
+# straight out of the rig, posed shoulder +36 / elbow -56 so the whole thing
+# reached OUTWARD and DOWNWARD and never came back. Measured, it put the frame
+# at W 3.51 against a hull 1.75 wide: the arm stood 2.4 m off the centreline,
+# at roughly deck height, for its entire length. A chunky beam of constant
+# section, held out horizontally at waist height, over the top of a truck, is
+# the silhouette of a ROOF FRAME. Nothing about it said a joint could move,
+# because nothing about it was shaped by the joints: no pins proud of the
+# sections, no taper from boom to stick, no rams, and no fold.
+#
+# WHAT IT IS NOW. vehicle_reclaimer.tscn's arm, part for part, scaled up about
+# 1.25x for the bigger truck and re-posed to clear this frame's own load:
+#
+#   Reclaimer                     Drayman
+#   ArmBase / Turntable r0.24     ArmBase / Turntable r0.30
+#   Mast     0.26 x 0.30 x 0.30   Mast     0.32 x 0.38 x 0.38
+#   Shoulder +15 deg              Shoulder +18 deg
+#   Pin      r0.09 x 0.30         Pin      r0.11 x 0.38
+#   Boom     0.14 x 0.16 x 1.05   Boom     0.16 x 0.19 x 1.30
+#   Ram      r0.035 x 0.62        Ram      r0.045 x 0.78
+#   Elbow    +163 deg             Elbow    +158 deg
+#   Pin      r0.075 x 0.22        Pin      r0.09 x 0.28
+#   Stick    0.10 x 0.12 x 1.00   Stick    0.12 x 0.15 x 0.95
+#   Wrist    +92 deg              Wrist    +124 deg
+#   Head + Torch + WeldTip        ChuteMouth + belt + WeaponMount
+#
+# THE FOLD IS THE WHOLE POINT, and it is why the sign flipped. The old elbow
+# was NEGATIVE, which continues the boom's arc outward; the Reclaimer's is
+# +163, which is past straight — the stick comes back ON TOP OF the boom and
+# the wrist ends up almost over the turntable it started from. That is what
+# "stowed" looks like on a real excavator and it is what makes an arm read as
+# an arm: two segments at an acute angle to each other, with the joint plainly
+# the thing that set the angle. 158 rather than 163 because this stick is
+# shorter relative to its boom, and the five degrees put the wrist 0.29 m
+# forward of the base instead of 0.04 m behind it, which is what keeps the feed
+# head out in open air instead of buried between the mast and the deck rail.
+#
+# THE SECTIONS TAPER NOW: 0.19 at the boom, 0.15 at the stick, with the pins
+# (0.11 and 0.09 radius) standing proud of both. The Reclaimer's proportions
+# are not arbitrary — a thinner stick than boom is the single cue that says the
+# outer segment is carried BY the inner one.
+#
+# THE RAM IS NOT DECORATION. A hydraulic cylinder slung under the boom is the
+# one part that says "this angle is driven", and the Reclaimer has one for
+# exactly that reason. Six faces for the difference between a tool and a truss.
+#
+# THE ARM IS HAZARD YELLOW AND IS NOT ON THE LIVERY LIST. This is the other
+# half of the resemblance and it is a deliberate art call beyond the note:
+# vehicle_reclaimer.tscn paints its Mast, Boom and Stick 0.86/0.66/0.14, its
+# pins and wrist head 0.11, its ram 0.42, and its FactionLivery `pieces` is
+# [Rig/Hull] ALONE — the arm is plant equipment, not bodywork, and no faction
+# owns it. Copying the shapes and not the palette would have produced a frame
+# with the Reclaimer's skeleton in somebody else's paint, which is the weaker
+# half of a lineage. So the arm carries the Reclaimer's own four materials and
+# the hull, deck, rails, crates and cab stay faction-painted.
+#
+# THE BELT SURVIVED AND IT IS HIGHER. See _feed_head: the chute mouth and its
+# five brass rounds are the same part, moved onto the wrist, and the fold lifts
+# the last round from 0.69 m off the ground to 1.33 m. The old one hung at the
+# height of the front tyres and would have swept terrain on any slope.
+#
 # ── HOW THE BOOM MAPS ONTO turret / gun_pivot ─
 #
 # THE DOC GIVES THIS FRAME turret = false, AND rover.gd DECLARES BOTH EXPORTS
@@ -100,6 +168,9 @@ extends SceneTree
 # hangs off BoomTip at yaw +PI/2 like every other frame's, and the Drayman does
 # NOT inherit the Reclaimer's "mount appears only once a tool is equipped"
 # contract: anything that guards on weapon_mount != null is correct for it.
+# After the 2026-10-10 revision it hangs off `Wrist`, which is where the
+# Reclaimer builds its own at runtime, so the two frames bolt their tool to the
+# same joint by the same name.
 # ─────────────────────────────────────────────
 
 const OUT := "res://Character/characters/ai/drayman.tscn"
@@ -160,14 +231,31 @@ var _hub_metal: StandardMaterial3D
 ## the tyres are.
 var _brass: StandardMaterial3D
 var _lamp_lens: StandardMaterial3D
+## THE RECLAIMER'S OWN ARM PALETTE, read off vehicle_reclaimer.tscn's
+## StandardMaterial3D_pj2di and _ow5lt. Hazard yellow on the mast, boom and
+## stick; near-black on the turntable, the pins and the wrist head. Both are
+## deliberately OFF the livery list, exactly as the Reclaimer's arm is: see the
+## revision note in the header. `_hub_metal` doubles as its ram steel, which is
+## the same colour to two decimal places.
+var _hazard: StandardMaterial3D
+var _arm_dark: StandardMaterial3D
 
 
 func _init() -> void:
 	_metal = load(METAL)
 	_rubber = _plain(Color(0.06, 0.06, 0.065), 0.0, 0.95)
 	_hub_metal = _plain(Color(0.42, 0.43, 0.44), 0.55, 0.5)
-	_brass = _plain(Color(0.72, 0.56, 0.24), 0.8, 0.35)
+	# DARKENED AND REDDENED 2026-10-10, from 0.72/0.56/0.24. That brass sat
+	# against a faction-blue boom and read instantly; against the Reclaimer's
+	# hazard yellow (0.86/0.66/0.14), which the arm now wears, it was within a
+	# shade of its own background and the belt stopped being a separate object
+	# in the render. Copper rather than brass: darker than the yellow by half
+	# again and distinctly red of it, which is the contrast the belt needs
+	# wherever it hangs.
+	_brass = _plain(Color(0.60, 0.34, 0.13), 0.9, 0.3)
 	_lamp_lens = _plain(Color(0.94, 0.90, 0.78), 0.0, 0.2)
+	_hazard = _plain(Color(0.86, 0.66, 0.14), 0.35, 0.55)
+	_arm_dark = _plain(Color(0.11, 0.115, 0.12), 0.45, 0.6)
 	var body := _build()
 	var packed := PackedScene.new()
 	var err := packed.pack(body)
@@ -333,7 +421,8 @@ func _build() -> CharacterBody3D:
 
 	var nav := NavigationAgent3D.new()
 	nav.name = "NavigationAgent3D"
-	# Sized to the art: 2.18 m across the tyres, 2.5 m to the top of the boom.
+	# Sized to the art: 2.18 m across the tyres, 2.55 m to the top of the folded
+	# arm's stick, which is the frame's highest point.
 	# The bake is the only clearance the engine really enforces and radius and
 	# climb quantise to cell units behind your back (see the family note in
 	# CLAUDE.md), so these are honesty about the frame rather than a promise
@@ -434,11 +523,23 @@ func _build() -> CharacterBody3D:
 	paint.append(head.get_node("SensorCowl"))
 	paint.append(head.get_node("Antenna"))
 	paint.append(rig.get_node("SlewRing"))
-	paint.append(boom.get_node("BoomBase/BasePin"))
-	paint.append(boom.get_node("BoomBase/BoomArm"))
-	paint.append(boom.get_node("BoomBase/BoomElbow/ElbowPin"))
-	paint.append(boom.get_node("BoomBase/BoomElbow/BoomStick"))
-	paint.append(boom.get_node("BoomBase/BoomElbow/BoomTip/ChuteMouth"))
+	# THE ARM IS NOT ON THIS LIST, AND THAT IS NOT THE PICKET BUG. The failure
+	# that brief warns about is geometry replaced while the list still names the
+	# old nodes: get_node returns null, the new parts join nothing, and the frame
+	# renders bare metal bolted to a painted body. Here every arm piece is given
+	# one of the Reclaimer's four authored arm materials at its own call site in
+	# _boom and _feed_head — hazard yellow, pin black, ram steel, belt brass —
+	# so nothing is unpainted and check_frame's "every mesh has a material" is
+	# not being satisfied by accident. The reason is in the header's revision
+	# note: vehicle_reclaimer.tscn's own `pieces` is [Rig/Hull] alone, because
+	# plant equipment is not bodywork and no faction owns it.
+	#
+	# The one exception is SlewRing above, which is what the turntable turns ON
+	# rather than part of the arm, so it stays deck furniture and stays painted.
+	#
+	# If the arm is ever brought back into the livery, the five paths are
+	# ArmBase/Mast, ArmBase/Shoulder/Boom, ArmBase/Shoulder/Elbow/Stick and the
+	# two Pins — NOT BoomBase/BoomArm/BoomStick, which no longer exist.
 	livery.set("pieces", paint)
 
 	# ── the body's own exports ──
@@ -452,7 +553,7 @@ func _build() -> CharacterBody3D:
 	root_body.set("rig", rig)
 	root_body.set("turret", turret)
 	root_body.set("gun_pivot", gun_pivot)
-	root_body.set("weapon_mount", boom.get_node("BoomBase/BoomElbow/BoomTip/WeaponMount"))
+	root_body.set("weapon_mount", boom.get_node("Shoulder/Elbow/Wrist/WeaponMount"))
 	root_body.set("nav_agent", nav)
 	root_body.set("bark", bark)
 	root_body.set("detection", det)
@@ -681,9 +782,11 @@ func _head(rig: Node3D) -> Node3D:
 	# deliberately absent from the livery list, and so is `Head`, because
 	# FactionLivery recurses into whatever it is handed.
 	#
-	# NOTHING CROSSES IT. The eye is at x -0.19 and the boom slews out to the
-	# front RIGHT quarter; that is the concept's own rule — slewed over the nose
-	# the arm and its load pass straight across the eye, which may never happen.
+	# NOTHING CROSSES IT. That is the concept's own rule, and it is about the
+	# NOSE: slewed over the centreline the arm and its load pass straight across
+	# the eye, which may never happen. Since 2026-10-10 the arm slews to the
+	# PORT quarter, the eye's own side — see the clearances worked through in
+	# _boom. Beside the cab is fine; over it is not.
 	var eye_mesh := SphereMesh.new()
 	eye_mesh.radius = 0.17 * sf
 	eye_mesh.height = 0.17 * sf * 2.0 * 0.82   # the family's squash
@@ -713,50 +816,100 @@ func _head(rig: Node3D) -> Node3D:
 
 
 ## THE REACH — the second of the frame's two facts, and the one the crates
-## cannot carry.
+## cannot carry. REBUILT 2026-10-10 as the Reclaimer's arm; the header's
+## revision note has the part-for-part table and the reasoning.
 ##
-##   SlewRing    on the deck, where the ring is visible as a ring
-##   BoomSlew    yawed out to the front quarter. Fixed: see the header on why
+##   SlewRing    on the deck, body-fixed and faction-painted. The one piece of
+##               the arm assembly that is bodywork: it is what the turntable
+##               turns ON, so it does not turn with it.
+##   ArmBase     yawed out to the front quarter. Fixed: see the header on why
 ##               nothing here is wired to rover.gd's aiming.
-##   BoomBase    lifted 36 degrees, the concept's own
-##   BoomElbow   bent -56, which folds the stick back DOWN
-##   BoomTip     pitched +20, which is the SUM OF THE TWO ABOVE UNDONE, so the
-##               feed head hangs level whatever the arm is posed to
+##    Turntable  the dark bearing plate, on top of the painted ring
+##    Mast       the stub the shoulder pin lives in
+##    Shoulder   +18 deg, the Reclaimer's +15 on a slightly taller mast
+##     Boom      1.30 m, 0.19 deep, with a ram slung under it
+##     Elbow     +158 deg — PAST STRAIGHT, which folds the stick back over the
+##               boom instead of continuing its arc outward. This sign is the
+##               entire difference between an arm and a roof frame.
+##      Stick    0.95 m, 0.15 deep. Shorter AND thinner than the boom.
+##      Wrist    +124 deg, which hangs the feed head down and OUTBOARD
 ##
-## THE LEVELLING IS NOT OPTIONAL AND THE CONCEPT SAYS SO. The tip inherits lift
-## plus bend, so anything parented straight to it comes out tilted by their sum —
-## the same error that once had the Bulwark's tower shield lying flat like a
-## dropped door. Undoing it at BoomTip keeps the mouth and the belt upright, and
-## the two numbers have to be changed TOGETHER: 36 - 56 + 20 = 0.
+## NO LEVELLING NODE ANY MORE, and that is a simplification worth naming. The
+## old build carried a third joint whose only job was to subtract the other two
+## (36 - 56 + 20 = 0) so the feed head hung level. A folded arm does not want a
+## level head: the Reclaimer's wrist points its torch at the ground and this one
+## points its chute down the way a chute pays out, so the wrist angle is a pose
+## rather than a correction and there is no pair of numbers to keep in step.
 ##
-## -56 AT THE ELBOW, NOT THE CONCEPT'S -70. At -70 the feed head hung level with
-## the tops of the front tyres and tangled with them in the icon view, which puts
-## the one part that says AMMUNITION in the busiest place on the frame. At -56 the
-## mouth sits about 1.5 m off the ground — chest height on a Walker, which is also
-## the right height to hand a belt to one — and the arm still reads as folded
-## down rather than held out.
+## 45 DEGREES OF SLEW, THE CONCEPT'S OWN MAGNITUDE, which the first build could
+## not afford. It used 55 because at 45 a 2.5 m arm held straight out reached
+## 0.35 m past the hull's nose. Folded, the furthest-forward point of the arm is
+## the ELBOW at z -1.20, comfortably inside the hull's own -1.65, so the
+## concept's angle is affordable again — and at 45 the elbow sits over the front
+## wheel rather than a third of a metre outboard of it, which is what brought
+## the measured width down from 3.51 to 2.44.
 ##
-## -55 DEGREES OF SLEW, NOT THE CONCEPT'S -45. The slew ring had to move 0.63 m
-## forward to get out of the crate block (see _deck), and at -45 from there the
-## boom reached 0.35 m past the hull's own nose — a supply truck with its arm
-## stuck out in front of it, longer than the doc's 3.35 and in the way of its own
-## driving. Fifteen more degrees of slew spends that reach out to the FLANK
-## instead, which is where the concept wanted it anyway: the fiction is handing a
-## crate to a squad walking beside the vehicle.
+## AND IT SLEWS TO THE PORT QUARTER NOW, NOT STARBOARD. Mirrored after the
+## in-game render: with the arm on the off side it was photographed THROUGH the
+## crate stack, which is 0.95 m of solid silhouette directly between the camera
+## and the only part of this frame that moves. A folded arm is compact by
+## design, so unlike the old outstretched truss it cannot be read over the load
+## — it has to be on the side you are looking at.
+##
+## THE RULE IT HAD TO CLEAR IS THE EYE, and it does. The old header's "nothing
+## crosses it" is about the arm slewing over the NOSE, where the boom and its
+## load pass straight across the cab's single eye at (-0.19, 0.77, -1.52). At 45
+## degrees the arm works BESIDE the cab, not over it: the nearest piece is the
+## belt's last round at (-0.87, 0.53, -0.90), which is 0.62 m aft of the eye and
+## therefore behind it from every forward viewpoint, and everything else on the
+## arm is above y 1.07. Checked rather than assumed — the whip antenna is the
+## other thing on this side, at x -0.28, and the boom passes it 0.57 m outboard.
+##
+## There is a positive argument too, not just an absence of collision: the eye
+## is where a viewer looks first, and putting the working arm on the same flank
+## groups the two things that say PURPOSE into one read instead of splitting
+## them across both sides of the truck.
 func _boom(rig: Node3D) -> Node3D:
-	_mesh(rig, "SlewRing", _cyl_mesh(0.28, 0.14), Vector3(0.30, _y(1.27), -0.33))
-	var slew := _node(rig, "BoomSlew", Vector3(0.30, _y(1.34), -0.33),
-			Vector3(0, -55.0 * DEG, 0))
-	var base := _node(slew, "BoomBase", Vector3.ZERO, Vector3(36.0 * DEG, 0, 0))
-	# A cylinder stands along its own Y; a quarter turn about X lays the axis
-	# along Z, which is the pin the boom swings on.
-	_mesh(base, "BasePin", _cyl_mesh(0.16, 0.22), Vector3.ZERO, Vector3(PI * 0.5, 0, 0))
-	_mesh(base, "BoomArm", _boxm(Vector3(0.22, 0.22, 1.4)), Vector3(0, 0, -0.7))
-	var elbow := _node(base, "BoomElbow", Vector3(0, 0, -1.4), Vector3(-56.0 * DEG, 0, 0))
-	_mesh(elbow, "ElbowPin", _sphere_mesh(0.14), Vector3.ZERO)
-	_mesh(elbow, "BoomStick", _boxm(Vector3(0.18, 0.18, 1.1)), Vector3(0, 0, -0.55))
-	var tip := _node(elbow, "BoomTip", Vector3(0, 0, -1.1), Vector3(20.0 * DEG, 0, 0))
-	_feed_head(tip)
+	_mesh(rig, "SlewRing", _cyl_mesh(0.28, 0.14), Vector3(-0.30, _y(1.27), -0.33))
+	var base := _node(rig, "ArmBase", Vector3(-0.30, _y(1.34), -0.33),
+			Vector3(0, 45.0 * DEG, 0))
+	var table := _mesh(base, "Turntable", _cyl_mesh(0.30, 0.10, 16), Vector3(0, 0.03, 0))
+	table.material_override = _arm_dark
+	var mast := _mesh(base, "Mast", _boxm(Vector3(0.32, 0.38, 0.38)), Vector3(0, 0.27, 0.02))
+	mast.material_override = _hazard
+
+	var shoulder := _node(base, "Shoulder", Vector3(0, 0.46, 0), Vector3(18.0 * DEG, 0, 0))
+	# A cylinder stands along its own Y; a quarter turn about Z lays the axis
+	# along X, which is the pin the boom swings on. PROUD OF THE SECTION — r0.11
+	# against a 0.19-deep boom — because a pin flush with the beam it joins is
+	# not visible as a joint, which is most of why the old truss read as cast.
+	var pin := _mesh(shoulder, "Pin", _cyl_mesh(0.11, 0.38, 10), Vector3.ZERO,
+			Vector3(0, 0, PI * 0.5))
+	pin.material_override = _arm_dark
+	var boom := _mesh(shoulder, "Boom", _boxm(Vector3(0.16, 0.19, 1.30)),
+			Vector3(0, 0, -0.65))
+	boom.material_override = _hazard
+	# THE RAM, and it is the Reclaimer's own trick. A thin cylinder slung under
+	# the boom at a shallow angle to it is the one part that says THIS ANGLE IS
+	# DRIVEN; without it two beams at an angle are a bracket. 96 degrees about X
+	# lays the cylinder's own Y very nearly along Z, tilted down at the far end.
+	var ram := _mesh(shoulder, "Ram", _cyl_mesh(0.045, 0.78, 8),
+			Vector3(0, -0.17, -0.46), Vector3(96.0 * DEG, 0, 0))
+	ram.material_override = _hub_metal
+
+	var elbow := _node(shoulder, "Elbow", Vector3(0, 0, -1.30), Vector3(158.0 * DEG, 0, 0))
+	var epin := _mesh(elbow, "Pin", _cyl_mesh(0.09, 0.28, 10), Vector3.ZERO,
+			Vector3(0, 0, PI * 0.5))
+	epin.material_override = _arm_dark
+	# A CYLINDER, NOT THE OLD SPHERE. A ball at the elbow reads as a shoulder
+	# joint on a limb; a pin with its ends showing reads as a hinge on a machine,
+	# and the Reclaimer uses a pin at both joints.
+	var stick := _mesh(elbow, "Stick", _boxm(Vector3(0.12, 0.15, 0.95)),
+			Vector3(0, 0, -0.475))
+	stick.material_override = _hazard
+
+	var wrist := _node(elbow, "Wrist", Vector3(0, 0, -0.95), Vector3(124.0 * DEG, 0, 0))
+	_feed_head(wrist)
 	# +90 DEGREES, NOT -90. A weapon's muzzle runs down its own +X and the mount
 	# has to turn that onto the parent's -Z. Read off a matrix the two look like
 	# the same quarter turn; they are not, and the Bulwark's first build had it
@@ -764,11 +917,12 @@ func _boom(rig: Node3D) -> Node3D:
 	# frame, with nothing complaining, because a mount pointing the wrong way is
 	# a perfectly valid transform.
 	#
-	# UNDER THE LEVELLED TIP, so -Z here is the boom's own horizontal reach and a
-	# fitted supply_boom hands its load outward past the feed head rather than
-	# into the ground at the arm's droop angle.
-	_node(tip, "WeaponMount", Vector3(0, -0.35, -0.30), Vector3(0, PI * 0.5, 0))
-	return slew
+	# ON THE WRIST, past the chute mouth, which is the joint the Reclaimer builds
+	# its own mount on at runtime. -Z here is the direction the belt pays out, so
+	# a fitted supply_boom hands its load out along the belt rather than back
+	# into the arm.
+	_node(wrist, "WeaponMount", Vector3(0, 0, -0.44), Vector3(0, PI * 0.5, 0))
+	return base
 
 
 ## THE FEED HEAD — a chute mouth with a belt of linked rounds paying out of it.
@@ -793,26 +947,65 @@ func _boom(rig: Node3D) -> Node3D:
 ##
 ## BRASS, NOT LIVERY. See _brass: the belt is the only thing on the frame that is
 ## not painted steel, and that contrast is the whole reason it reads at distance.
-func _feed_head(tip: Node3D) -> void:
-	# B's chute mouth is a chamfered plate 0.5 x 0.44 extruded 0.3 downward;
-	# rebuilt here as a box with its top corners taken off, because it is on the
-	# outline and a square slab there reads as a placeholder.
-	var mouth_size := Vector3(0.50, 0.30, 0.44)
-	var mouth := _hull(tip, "ChuteMouth", mouth_size, Vector3(0, -0.35, 0))
+## MOVED ONTO THE WRIST, 2026-10-10, AND OTHERWISE THE SAME PART. The brief for
+## this revision is explicit that the belt is one of three things that must
+## survive it, so the mouth is the same chamfered box and the belt is still five
+## 0.10 brass rounds with a link plate between each pair. What changed is the
+## frame it hangs in: everything now runs along the WRIST'S -Z rather than
+## straight down a levelled tip, because the wrist is what points it.
+##
+## AND IT NO LONGER SWEEPS THE GROUND. On the old outstretched boom the last
+## round sat 0.69 m up, level with the tops of the front tyres and inside their
+## footprint, so a nose-down slope put the one part that says AMMUNITION through
+## the terrain. Folded, the wrist is 1.62 m up and cants the head down-and-
+## outboard, which leaves the last round at 1.33 m — above the tyres, clear of
+## the deck rail, and hanging in open air forward of the front-right wheel where
+## nothing on the frame occludes it from the three-quarter icon view.
+##
+## ROUNDS ACROSS THE RUN, NOT ALONG IT. The old belt pointed each cartridge
+## down the direction the belt travelled, which is not how a linked belt is
+## built and read as a chain of blocks. These lie crosswise — 0.19 across, 0.10
+## through — which is both correct and, with the arm slewed 45 degrees, broadside
+## to the camera.
+##
+## BRASS, NOT LIVERY. See _brass: the belt is the only warm thing on the frame
+## and that contrast is the whole reason it reads at distance. The mouth takes
+## the Reclaimer's dark wrist-head colour instead.
+func _feed_head(wrist: Node3D) -> void:
+	# B's chute mouth is a chamfered plate 0.50 x 0.44 extruded 0.30 downward.
+	# Rebuilt as a box with its corners taken off, because it is on the outline
+	# and a square slab there reads as a placeholder — and TURNED AND SHRUNK,
+	# twice, off the in-game renders of this revision. Broadside to the camera a
+	# wide shallow slab on the end of an arm reads as a SIGNBOARD; and in a dark
+	# colour, at B's size, it also punched a hole in the middle of a yellow arm.
+	# The long axis now runs the way the belt travels and the whole part is
+	# closer to the Reclaimer's wrist head in proportion: small enough to be the
+	# nozzle the belt comes out of rather than the thing on the end of the arm.
+	var mouth_size := Vector3(0.26, 0.23, 0.36)
+	var mouth := _hull(wrist, "ChuteMouth", mouth_size, Vector3(0, 0, -0.26))
+	# HAZARD YELLOW, NOT THE RECLAIMER'S DARK WRIST HEAD, and that is the third
+	# correction this part took from the renders. The Reclaimer's head gets away
+	# with being near-black because it is 0.14 x 0.13 x 0.10 — a fitting. A feed
+	# chute cannot be that small and still read as a chute, and at this one's
+	# size a dark box in the fold of the arm punched a hole through the middle
+	# of the yellow and drew the eye away from the belt. The chute is structure;
+	# it goes with the structure. THE BELT IS THE ONLY CONTRASTING THING ON THE
+	# ARM, which is the whole point of the belt.
+	mouth.material = _hazard
 	_bevel(mouth, mouth_size, -1.0, "ChamferL")
 	_bevel(mouth, mouth_size, 1.0, "ChamferR")
 	for i in 5:
-		var at := Vector3(0.0, -0.50 - 0.18 * float(i), -0.05 - 0.06 * float(i))
-		var round_mesh := _mesh(tip, "Round%d" % i, _boxm(Vector3(0.10, 0.16, 0.10)),
-				at, Vector3(float(i) * 7.0 * DEG, 0, 0))
+		var at := Vector3(0.0, -0.03 * float(i), -0.46 - 0.18 * float(i))
+		var round_mesh := _mesh(wrist, "Round%d" % i, _boxm(Vector3(0.19, 0.10, 0.10)),
+				at, Vector3(float(i) * -7.0 * DEG, 0, 0))
 		round_mesh.material_override = _brass
 		if i == 0:
 			continue
 		# The link between this round and the one above it: a flat plate across
 		# the gap, which is what makes five rounds a BELT instead of five rounds.
-		var prev := Vector3(0.0, -0.50 - 0.18 * float(i - 1), -0.05 - 0.06 * float(i - 1))
-		var link := _mesh(tip, "Link%d" % i, _boxm(Vector3(0.13, 0.06, 0.05)),
-				(at + prev) * 0.5, Vector3(float(i) * 7.0 * DEG, 0, 0))
+		var prev := Vector3(0.0, -0.03 * float(i - 1), -0.46 - 0.18 * float(i - 1))
+		var link := _mesh(wrist, "Link%d" % i, _boxm(Vector3(0.12, 0.05, 0.08)),
+				(at + prev) * 0.5, Vector3(float(i) * -7.0 * DEG, 0, 0))
 		link.material_override = _brass
 
 
@@ -890,13 +1083,9 @@ func _cyl_mesh(r: float, h: float, sides: int = 12) -> CylinderMesh:
 	return c
 
 
-func _sphere_mesh(r: float) -> SphereMesh:
-	var s := SphereMesh.new()
-	s.radius = r
-	s.height = r * 2.0
-	s.radial_segments = 12
-	s.rings = 6
-	return s
+## _sphere_mesh is gone with the 2026-10-10 revision: its only caller was the
+## old boom's ball elbow, and the Reclaimer-style arm uses a pin at both joints.
+## The eye builds its own SphereMesh inline.
 
 
 ## The eye's own material. Built fresh per call rather than shared, because a
