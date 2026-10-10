@@ -30,8 +30,41 @@ extends SceneTree
 #      terraces rather than round to a stair, which means a wall somewhere is
 #      climbable and was not meant to be.
 #
-# It changes nothing. Bake first with:
+# It changes nothing on disk. Bake first with:
 #   BAKE_ONLY=1 LEVEL=... godot --path . --script res://tools/probe_nav_hillfort.gd
+#
+# ── WHO IS IT ASKING ABOUT ───────────────────────────────────────────────────
+#
+# IT USED TO ASK ABOUT NOBODY, and that is the hole this closes. It read
+# whatever mesh was baked into the scene, and a mesh baked at Godot's default
+# agent_radius of 0.5 describes a cylinder 1.0 m across and 1.8 m tall. Nothing
+# in the squad is that size: the Walker is 3.00 m tall, the Bulwark 2.26 m wide
+# across its shield, the Rover 3.40 m long. So the probe reported Salient PASS
+# at 75.2% coverage for a body half the width of everything that would walk it.
+#
+# A PATH QUERY TAKES NO RADIUS. Godot has no per-agent clearance — map_get_path
+# routes a 2.26 m Bulwark through a gap sized for 0.5 m and never complains. The
+# radius is decided once, at BAKE time, and is the only clearance the engine
+# will ever enforce. Which means a reach probe that cannot be told a radius
+# cannot answer the only question worth asking.
+#
+# So: name a chassis and it re-bakes the region in memory at that frame's real
+# numbers before it sweeps. Nothing is written back; the scene on disk is
+# untouched.
+#
+#   CHASSIS=walker   LEVEL=... godot --path . --script res://tools/probe_nav_reach.gd
+#   CHASSIS=bulwark  ...
+#   RADIUS=0.85 HEIGHT=3.0 CLIMB=0.45 ...      # or set them by hand
+#   CHASSIS=walker COVERAGE=0 ...              # objectives only, and quick
+#
+# The frames come from tools/probe_chassis_size.gd, which measures them off the
+# collision shapes. Do not type them in from memory — they have been wrong in
+# the brief twice (the Bulwark's shield and the Rover's height).
+#
+# COVERAGE=0 SKIPS THE GRID SWEEP. map_get_closest_point walks every polygon in
+# the map, and Salient has 59,000 of them, so a full sweep is minutes. The
+# objective walk is eleven queries. When the question is "can this chassis reach
+# the mission", that is the whole question, and it runs in seconds.
 # ─────────────────────────────────────────────
 
 ## How far a path end may be from the point asked for and still count as
@@ -44,7 +77,35 @@ const STEP := 16.0
 ## off the edge of it, and is not counted either way.
 const ON_MESH := 3.0
 
+## Measured off the collision shapes by tools/probe_chassis_size.gd:
+## radius, height, climb. The radius is HALF THE NARROW AXIS of the body's own
+## collision — for the Bulwark that includes the shield, which is the half of
+## it that actually jams in a trench.
+##
+## "squad" is the envelope: the widest, tallest and least-climbing of everything
+## that walks, which is the one honest setting for a map with a single navmesh.
+const FRAMES := {
+	"squad": [1.13, 3.00, 0.45],
+	"walker": [0.85, 3.00, 0.45],
+	"bulwark": [1.13, 2.82, 0.45],
+	"rover": [0.85, 1.70, 0.75],
+	"reclaimer": [0.75, 0.80, 0.45],
+	"soldier": [0.50, 2.00, 0.45],
+	"drone": [0.25, 1.70, 0.45],
+}
+
+## Where a level keeps its objective anchors. THERE IS NO ONE PLACE, which is
+## why this is a list and not a path: the hillfort and Mutaha put them under the
+## navigation region, Salient puts them in EnemySquadObjs beside it. Salient's
+## baseline run printed "(no Objectives group — skipping)" and so never asked
+## the question the whole probe is for — eleven objectives, none of them tested.
+const OBJ_HOLDERS := [
+	"NavigationRegion3D/Objectives", "Objectives", "EnemySquadObjs",
+	"NavigationRegion3D/EnemySquadObjs", "SquadObjectives",
+]
+
 var map: RID
+var _who := ""
 
 
 func _initialize() -> void:
@@ -71,6 +132,10 @@ func _initialize() -> void:
 	var nav := region.navigation_mesh
 	print("   %s — %d vertices, %d polygons" % [level_path.get_file(),
 			nav.get_vertices().size(), nav.get_polygon_count()])
+	nav = await _refit(region, nav)
+	if nav == null:
+		quit(1)
+		return
 	if nav.get_polygon_count() == 0:
 		print("FAIL  the navmesh in the scene is empty — bake it first")
 		quit(1)
@@ -85,10 +150,103 @@ func _initialize() -> void:
 	print("   spawn at %s" % _s(from))
 
 	var fails := 0
-	fails += _coverage(nav, from)
+	if OS.get_environment("COVERAGE") == "0":
+		print("   (COVERAGE=0 — grid sweep skipped, objectives only)")
+	else:
+		fails += _coverage(nav, from)
 	fails += _objectives(level, from)
-	print("REACH %s" % ("PASS" if fails == 0 else "FAIL — %d problem(s)" % fails))
+	fails += _routes(level)
+	print("REACH %s%s" % ["PASS" if fails == 0 else "FAIL — %d problem(s)" % fails,
+			"  [%s]" % _who if _who != "" else ""])
 	quit(1 if fails > 0 else 0)
+
+
+## RE-BAKE IN MEMORY AT A REAL BODY'S NUMBERS, if asked. Returns the mesh the
+## sweep should use, or null if the bake collapsed.
+##
+## Nothing is saved. The region's own NavigationMesh is swapped for a duplicate
+## so the PackedScene's sub-resource is never touched — this probe has to be
+## safe to run against a level another lane is editing.
+func _refit(region: NavigationRegion3D, nav: NavigationMesh) -> NavigationMesh:
+	var frame := OS.get_environment("CHASSIS").to_lower()
+	var want := [-1.0, -1.0, -1.0]
+	if frame != "":
+		if not FRAMES.has(frame):
+			print("FAIL  no chassis called %s — try one of %s" % [frame, ", ".join(FRAMES.keys())])
+			return null
+		want = (FRAMES[frame] as Array).duplicate()
+		_who = frame
+	for i in 3:
+		var e := OS.get_environment(["RADIUS", "HEIGHT", "CLIMB"][i])
+		if e != "":
+			want[i] = float(e)
+			_who = "custom" if _who == "" else _who + "+custom"
+	var cell_e := OS.get_environment("CELL")
+	var cellh_e := OS.get_environment("CELL_H")
+	if want[0] < 0.0 and want[1] < 0.0 and want[2] < 0.0 and cell_e == "" and cellh_e == "":
+		# NOT AN ERROR, but it must say so. The mesh on disk was baked for
+		# whatever its author put in it, and on most maps that is Godot's 0.5 m
+		# default — which is the trap this option exists to make visible.
+		print("   asking about the mesh AS BAKED: radius %.2f, height %.2f, climb %.2f" % [
+				nav.agent_radius, nav.agent_height, nav.agent_max_climb])
+		print("   (no CHASSIS= given, so this is a claim about a %.2f m wide body)" % (nav.agent_radius * 2.0))
+		return nav
+	var baked: NavigationMesh = nav.duplicate(true)
+	if cell_e != "":
+		baked.cell_size = float(cell_e)
+	if cellh_e != "":
+		baked.cell_height = float(cellh_e)
+	# THE VERTICAL NUMBERS ARE QUANTISED AND THE BAKER SAYS SO IN A WARNING
+	# NOBODY READS. agent_height is CEILED to whole cell_height voxels and
+	# agent_max_climb is FLOORED to them. At the default cell_height of 0.25 a
+	# climb of 0.45 floors to 0.25 — it does not get 0.45, it gets the bottom of
+	# the band the squad walks over, and the mesh comes apart at every 0.3 m lip
+	# for no reason anyone can see. Say so rather than let it happen quietly.
+	if want[2] >= 0.0:
+		var eff_climb: float = floorf(want[2] / baked.cell_height) * baked.cell_height
+		if absf(eff_climb - want[2]) > 0.001:
+			print("   NOTE  climb %.2f floors to %.2f at cell_height %.2f." % [
+					want[2], eff_climb, baked.cell_height])
+			print("         Set CELL_H to a divisor of the climb to get the climb asked for.")
+	if want[0] >= 0.0:
+		# agent_radius finer than the grid the mesh is rasterised on cannot be
+		# represented, and asking for it erodes the surface away instead.
+		baked.agent_radius = maxf(want[0], baked.cell_size)
+	if want[1] >= 0.0:
+		baked.agent_height = want[1]
+	if want[2] >= 0.0:
+		baked.agent_max_climb = want[2]
+	print("   re-baking for %s: radius %.2f, height %.2f, climb %.2f, cell %.2f x %.2f" % [
+			_who, baked.agent_radius, baked.agent_height, baked.agent_max_climb,
+			baked.cell_size, baked.cell_height])
+	region.navigation_mesh = baked
+	# The navigation MAP has a cell_size of its own and the two must agree, or
+	# the server refuses to merge the edges that meet across a cell boundary and
+	# every seam becomes something agents catch on. trench_broom_level.gd does
+	# this in _enter_tree off the mesh as shipped; changing the mesh after that
+	# means doing it again.
+	#
+	# AND cell_height, which is the one that caught this out. The server checks
+	# BOTH against the map and trench_broom_level.gd only syncs cell_size, so a
+	# mesh shipped with a non-default cell_height errors on every load with
+	# "Attempted to update a navigation region with a navigation mesh that uses
+	# a cell_height of X while assigned to a navigation map set to 0.25".
+	var m := region.get_navigation_map()
+	if m.is_valid():
+		NavigationServer3D.map_set_cell_size(m, baked.cell_size)
+		NavigationServer3D.map_set_cell_height(m, baked.cell_height)
+	region.bake_navigation_mesh(false)
+	for _i in 120:
+		await physics_frame
+	print("   re-baked: %d vertices, %d polygons" % [
+			baked.get_vertices().size(), baked.get_polygon_count()])
+	if baked.get_polygon_count() == 0:
+		print("FAIL  the bake came back EMPTY at radius %.2f / height %.2f." % [
+				baked.agent_radius, baked.agent_height])
+		print("      That is the honest answer for this body: there is nowhere on")
+		print("      this map it fits. It is not a probe failure.")
+		return null
+	return baked
 
 
 func _snap(p: Vector3) -> Vector3:
@@ -168,14 +326,78 @@ func _coverage(nav: NavigationMesh, from: Vector3) -> int:
 	return 0
 
 
+## DOES THE ROUTE MEAN ANYTHING. For every pair of anchors named X_entry and
+## X_exit, walk one to the other and compare it with the straight line.
+##
+## WHY THIS AND NOT REACHABILITY. Both ends of a route are reachable whether the
+## route works or not — there is open ground round everything on this map — so
+## "can it get there" cannot tell a working trench from a blocked one. Only the
+## COST can. A route that carries the walk comes back near x1.0; a route that is
+## severed, or eroded to nothing at this radius, sends the walk out round the
+## end of it and the ratio jumps.
+##
+## That is the same shape of test as the dropped bridge on the Mutaha copy and
+## the switchbacks on the hillfort, and it is the one that found both.
+func _routes(level: Node3D) -> int:
+	var holder := level.get_node_or_null("NavigationRegion3D/SalientArt/Trenchworks/Anchors")
+	if holder == null:
+		for n: Node in level.find_children("Anchors", "Node3D", true, false):
+			holder = n
+			break
+	if holder == null:
+		return 0                       # not every level lays routes; not a fault
+	var ends := {}
+	for a in holder.get_children():
+		var nm := str(a.name)
+		for suffix: String in ["_entry", "_exit"]:
+			if nm.ends_with(suffix):
+				var key := nm.substr(0, nm.length() - suffix.length())
+				if not ends.has(key):
+					ends[key] = {}
+				ends[key][suffix] = (a as Node3D).global_position
+	var keys: Array = ends.keys()
+	keys.sort()
+	var bad := 0
+	for k: String in keys:
+		var pair: Dictionary = ends[k]
+		if not (pair.has("_entry") and pair.has("_exit")):
+			continue
+		var from := _snap(pair["_entry"])
+		var to := _snap(pair["_exit"])
+		var r := _walk(from, to)
+		var direct := from.distance_to(to)
+		var ratio: float = r.len / direct if direct > 0.5 else 1.0
+		var note := ""
+		if not r.ok:
+			note = "  SEVERED — the walk never arrives"
+			bad += 1
+		elif ratio > 1.6:
+			# 1.6 is generous for a route that is meant to BE the way through.
+			# A trench traverses, so even a working one reads a little over 1.0.
+			note = "  the walk goes ROUND, not along — too narrow at this radius?"
+			bad += 1
+		print("   route %-4s %6.0f m along / %5.0f m direct  x%.2f%s" % [
+				k, r.len, direct, ratio, note])
+	return bad
+
+
 ## Every objective anchor, and what the walk to it cost.
 func _objectives(level: Node3D, from: Vector3) -> int:
-	var holder := level.get_node_or_null("NavigationRegion3D/Objectives")
+	var holder: Node = null
+	for p: String in OBJ_HOLDERS:
+		holder = level.get_node_or_null(p)
+		if holder != null:
+			break
 	if holder == null:
-		print("   (no Objectives group — skipping)")
+		print("   WARN  no objective group found under any of %s" % ", ".join(OBJ_HOLDERS))
+		print("         Reachability to the things the squad is SENT to was not tested,")
+		print("         which is the only part of this probe a mission depends on.")
 		return 0
+	print("   objectives under %s" % holder.name)
 	var bad := 0
 	for o in holder.get_children():
+		if not (o is Node3D):
+			continue
 		var want: Vector3 = (o as Node3D).global_position
 		var p := _snap(want)
 		var off := want.distance_to(p)

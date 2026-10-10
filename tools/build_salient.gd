@@ -273,9 +273,14 @@ func _art_scene(r: Recipe) -> String:
 	# one that nothing uses: check.sh fails a scene that declares an id it does
 	# not reference.
 	var placed: Array = []
-	for op: Array in _map.get("dress", []):
+	var lined := {}
+	for op: Array in _dress_ops(lined):
 		for row: Array in _placements(_data, op):
 			placed.append([op[1], row[0], row[1]])
+	# BED BEFORE DROPPING. _drop_on_routes measures the volume a deck piece
+	# shares with a kit piece, and that volume depends on where the deck piece
+	# actually ends up — so the heights have to be final before it is asked.
+	_bed_dressing(placed, lined)
 	# THE DECK'S DRESSING KNOWS NOTHING OF THE ROUTES. Whatever stands where one
 	# runs comes out, before the ext_resources are listed: a piece whose every
 	# row was dropped must not be declared and then never used.
@@ -381,6 +386,173 @@ func _art_scene(r: Recipe) -> String:
 	return "\n".join(out) + "\n"
 
 
+## THE LIP A TRENCH LINING SITS ON HAS TO BE THE LIP OF ITS OWN CUT.
+##
+## feature_trench_revetment is laid by an "along" op carrying an `aside`, and
+## mapdeck reads the ground that far out to EACH side and takes the HIGHER of
+## the two. That is deliberate and it is right: a revetment measures -2.19 to
+## +0.59, it lines the TOP of a cut, and reading the height under its own centre
+## drops it onto the cut floor, buries the planks and leaves a sandbag kerb
+## lying in a ditch.
+##
+## THE DECK ASKS FOR 6.0 AND 6.0 IS TOO FAR. It was the right number for the
+## 2.19 m cut the piece was drawn for. The cut on this map is `width` 4.0 with a
+## `falloff` of 1.5, so the ground is back to its natural height 3.5 m out from
+## the centreline — and 6.0 m out is 2.5 m PAST the earthwork, on the most
+## heavily shelled ground in the level: 260 craters, up to 13 m across and
+## 3.6 m deep, with rims to match. The higher of two samples out there does not
+## find the trench lip, it finds the nearest crater rim, and the lining goes up
+## with it.
+##
+## Measured: 76 of this map's 130 floating pieces were revetments, up to 3.3 m
+## in the air, on the feature the player looks at for the whole mission. So ask
+## about ground the cut actually made — the outer edge of its own falloff, taken
+## from the deck's own numbers rather than typed in here, because a constant
+## typed twice is the first one to drift.
+func _lining_reach() -> float:
+	var out := 0.0
+	for p: Array in _map.get("paths", []):
+		if str(p[0]) != "trench":
+			continue
+		out = maxf(out, float(p[1]) * 0.5 + float(p[3]))
+	if out <= 0.0:
+		push_warning("build_salient: no trench cut in the deck to size the lining reach from")
+		return 0.0
+	return out
+
+
+## The deck's dress ops with every lining's reach pulled in to its own cut, and
+## `lined` filled with the pieces that are placed from a lip. Those are left out
+## of the bedding pass below: their height is deliberately NOT the ground under
+## them. See _lining_reach.
+func _dress_ops(lined: Dictionary) -> Array:
+	var reach := _lining_reach()
+	var out: Array = []
+	var pulled := 0
+	for op: Array in _map.get("dress", []):
+		if str(op[0]) != "along" or op.size() <= 4 or float(op[4]) <= 0.0:
+			out.append(op)
+			continue
+		lined[str(op[1])] = true
+		if reach > 0.0 and float(op[4]) > reach:
+			var fixed: Array = op.duplicate()
+			fixed[4] = reach
+			out.append(fixed)
+			pulled += 1
+		else:
+			out.append(op)
+	print("      %d lining op(s) pulled in to read the lip at %.1f m" % [pulled, reach])
+	return out
+
+
+## How many columns each way a piece is bedded on.
+const BED_GRID := 5
+## Ground that varies by more than this across a piece's own footprint cannot be
+## MET by a flat bottom at any height — half the piece is always wrong. Those
+## are still bedded on the median, because the median beats the single centre
+## sample they had, but they are listed too: the real answer is for the deck to
+## stop putting a rigid slab there, and only a human can make that call.
+const BED_ROUGH := 3.0
+## Below this a piece is already sitting where it should and moving it only
+## churns the scene.
+const BED_SNUG := 0.15
+
+
+## PUT EVERY PIECE ON THE GROUND UNDER ITS OWN FOOTPRINT, not on the ground
+## under its origin.
+##
+## mapdeck takes ONE height sample, at the piece's centre. That is right for a
+## sandbag and wrong for everything big, and this map's dressing is big:
+## ground_swell is 22 x 30 m, ground_berm 10 x 32, ground_washout 14 x 26,
+## ground_track 7 x 30, a razor wire run 10 m long. Salient's ground has 260
+## craters in it and 1.3 m of detail relief on a 28 m wavelength, so a 32 m slab
+## pinned by its middle has both ends in the air or both ends buried. A berm laid
+## across the toe of the painted mountain at z 220 came out 3.6 m off the ground
+## at one end and nothing said so.
+##
+## THE MEDIAN AND NOT THE MINIMUM. The minimum drops a piece into the deepest
+## crater its footprint happens to touch and buries it — the same fault upside
+## down, and the one that made probe_footing report thirty-odd correctly bedded
+## pieces as drowned.
+##
+## WHAT IT WILL NOT DO. If the ground under a piece varies by more than
+## BED_ROUGH there is no height that works and moving it just chooses which end
+## is wrong. Those are printed and left alone, because the answer is to stop the
+## deck putting a rigid 32 m slab across a hillside.
+func _bed_dressing(placed: Array, lined: Dictionary) -> void:
+	var moved := 0
+	var rough: Array = []
+	var blind := 0
+	for row: Array in placed:
+		var piece: String = row[0]
+		if lined.has(piece):
+			continue
+		var box := _size_of(piece)
+		if box.size == Vector3.ZERO:
+			blind += 1
+			continue
+		var pos: Vector3 = row[1]
+		# The same basis _yawed writes, so the footprint is sampled where the
+		# piece will actually stand and not where its unrotated box would.
+		var basis := Basis(Vector3.UP, deg_to_rad(float(row[2])))
+		var hs: Array = []
+		for ix in BED_GRID:
+			for iz in BED_GRID:
+				var local := Vector3(
+						box.position.x + box.size.x * (ix + 0.5) / BED_GRID, 0.0,
+						box.position.z + box.size.z * (iz + 0.5) / BED_GRID)
+				var w: Vector3 = basis * local
+				var h := _data.height_at_local(pos.x + w.x, pos.z + w.z)
+				if not is_nan(h):
+					hs.append(h)
+		if hs.is_empty():
+			# Off the heightfield altogether. Several ops start at x -520 while
+			# the terrain's own rect stops short of that, so this is reachable
+			# and must say so rather than silently leave the piece hanging.
+			blind += 1
+			continue
+		hs.sort()
+		var med: float = hs[hs.size() / 2]
+		var spread: float = float(hs[hs.size() - 1]) - float(hs[0])
+		if spread > BED_ROUGH:
+			rough.append([spread, piece, pos])
+		# BED IT ANYWAY, even when the ground under it is hopeless. The median of
+		# twenty-five samples is a better estimate than the one centre sample it
+		# had, whatever the spread — refusing to move it only means keeping an
+		# arbitrary height instead of the best available one.
+		#
+		# CORRECT THE SAMPLE, NOT THE DATUM. The shift is the difference between
+		# the median over the footprint and the one sample mapdeck took at the
+		# centre, so whatever designed offset the piece had — a foot pressed in,
+		# a heap half-buried, a kerb standing proud — is carried over untouched.
+		#
+		# Sitting the piece's own lowest geometry on the ground instead was the
+		# first attempt and it was worse: the lowest point of a tapered piece is
+		# a tip, not a footing, so it lifted every pine, snag, spoil heap, dirt
+		# mound and rubble pile on the map 2.7 m into the air while correctly
+		# bedding the flat-bottomed slabs. 143 floating instead of 130.
+		var at_centre := _data.height_at_local(pos.x, pos.z)
+		if is_nan(at_centre):
+			blind += 1
+			continue
+		var want: float = pos.y + (med - at_centre)
+		if absf(want - pos.y) > BED_SNUG:
+			row[1] = Vector3(pos.x, want, pos.z)
+			moved += 1
+	rough.sort_custom(func(a, b): return float(a[0]) > float(b[0]))
+	print("      %d piece(s) re-bedded on the ground under their own footprint" % moved)
+	if blind > 0:
+		print("      %d piece(s) had no heightfield under them and were LEFT WHERE THEY WERE" % blind)
+	if not rough.is_empty():
+		print("      %d piece(s) bedded but still cannot sit flush: a rigid flat" % rough.size())
+		print("      bottom on ground that varies more than %.1f m under it." % BED_ROUGH)
+		print("      The deck has to move these, not the builder:")
+		for r: Array in rough.slice(0, 8):
+			var p: Vector3 = r[2]
+			print("         %-34s ground varies %.1f m under it at (%.0f, %.0f)" % [
+					r[1], float(r[0]), p.x, p.z])
+
+
 ## THE LEVEL. The spawn, the exit, the objective anchors, the environment and
 ## the navigation region — and one instance of the art. WRITTEN ONCE: after
 ## that it belongs to whoever is putting missions in it, and this tool does not
@@ -407,7 +579,39 @@ func _level_scene() -> String:
 		"vertices = PackedVector3Array()",
 		"polygons = []",
 		"geometry_parsed_geometry_type = 1",
-		"agent_height = 1.8",
+		# THE BAKE HAS TO BE ABOUT THE BODIES THAT WILL WALK IT.
+		#
+		# This said agent_height 1.8 and no agent_radius at all, so it took
+		# Godot's default of 0.5 — a mesh describing a cylinder 1.0 m across and
+		# 1.8 m tall. Nothing in the squad is that size. Measured off the
+		# collision shapes (tools/probe_chassis_size.gd): the Walker is 3.00 m
+		# TALL, the Bulwark 1.90 m wide in the hull and 2.26 m across its
+		# shield, the Rover 3.40 m long. A PATH QUERY TAKES NO RADIUS — Godot
+		# has no per-agent clearance, so the bake is the only clearance the
+		# engine will ever enforce, and at 0.5 it was routing a Walker under
+		# 1.8 m overheads and through 1.0 m gaps for free.
+		#
+		# BOTH NUMBERS ARE QUANTISED, which is why they are these and not the
+		# measured ones. agent_radius is CEILED to whole cell_size units, so at
+		# cell 0.25 anything in (0.75, 1.00] bakes as 1.00 — the widest hull is
+		# 1.90 m, wanting 0.95, and it gets 1.00. agent_height is CEILED to
+		# cell_height units: 3.0 is 12 of them exactly.
+		#
+		# agent_max_climb STAYS AT 0.5 even though every legged chassis steps
+		# 0.45, because climb is FLOORED to cell_height units and 0.45 at the
+		# default 0.25 floors to 0.25 — which would turn every 0.3 m lip on the
+		# map into a wall to buy back 5 cm of honesty. cell_height cannot be
+		# lowered to fix that either: the navigation map has a cell_height of
+		# its own and trench_broom_level.gd only syncs cell_size, so a mesh
+		# shipped with a different one errors on every load. The 0.05 m
+		# discrepancy is the smallest wrong number available here.
+		#
+		# Measured after the change: coverage 74.0% against 75.2% before, every
+		# objective still reachable by Walker, Bulwark, Rover and Reclaimer, and
+		# both routes still carrying the walk. The map does not come apart.
+		"cell_size = 0.25",
+		"agent_height = 3.0",
+		"agent_radius = 1.0",
 		"agent_max_climb = 0.5",
 		"region_min_size = 6.0",
 		"edge_max_error = 2.0",
