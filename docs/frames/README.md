@@ -1,10 +1,16 @@
-# Ten frames — index
+# Nine frames — index
 
-Ten new chassis, designed to the point where someone could build them and no
+Nine new chassis, designed to the point where someone could build them and no
 further. **Nothing here is built.** Each doc carries the gap it fills, a stat
 table, the new weapons it needs, a node plan with this project's silent build
 traps called out by name, the tests that would prove it, and what is still
 open.
+
+**Ten were designed; the Sapper was cut on 2026-10-10 after review.** Its doc
+is kept as [SAPPER](SAPPER.md), marked CUT, because the gap it was aimed at —
+nothing in the roster is built around placing mines — is still open. "Nothing
+here is built" is also out of date: all nine have models now, and nothing has
+a ChassisDefinition.
 
 The reasoning that produced the set — the gap analysis, the supply spread, the
 new weapon classes, and the three research sweeps behind them — is in
@@ -19,12 +25,11 @@ no default arm, so a robot carrying a new value is simultaneously invisible and
 near-invulnerable across thirty-five call sites, **not one of which errors**.
 Rewrite it as a table first.
 
-## The player's seven
+## The player's six
 
 | frame | supply | cost | role | concept |
 |---|---|---|---|---|
 | [LANCE](LANCE.md) | 1 | 90 | wheeled scout / harass | A — Trike |
-| [SAPPER](SAPPER.md) | 1 | 75 | infantry engineer | B — Planter |
 | [PICKET](PICKET.md) | 2 | 210 | ground anti-air | C2 — Launcher-led |
 | [WARDEN](WARDEN.md) | 2 | 230 | emitter platform | A — The Mast |
 | [DRAYMAN](DRAYMAN.md) | 2 | 170 | wheeled logistics | A — The Flatbed |

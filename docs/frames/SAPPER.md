@@ -1,4 +1,17 @@
-# SAPPER — design document
+# SAPPER — CUT
+
+**Killed 2026-10-10, after the model was built and photographed.** The frame
+is gone: `sapper.tscn` and `tools/build_sapper.gd` are deleted and it is out
+of the roster, the winners sheet and the shot rig.
+
+The document is kept because the reasoning in it is still true and still
+unclaimed — mines exist as items in this game and nothing is built around
+placing them, so "pre-committing to where a fight happens" is a verb the
+roster still does not have. If it comes back it should come back as a
+different shape, not as this one.
+
+---
+
 
 Supply 1 · infantry · engineer · **status: concept selected, not built**
 

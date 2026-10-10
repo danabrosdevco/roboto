@@ -41,7 +41,6 @@ func _winners() -> Array:
 	return [
 		["WALKER", "SUPPLY 3 - SHIPPING TODAY, FOR SCALE", _walker_reference],
 		["LANCE", "SUPPLY 1 - CHEAP WHEELS, NO TURRET", _A.lance_a],
-		["SAPPER", "SUPPLY 1 - MINES THE GROUND FIRST", _A.sapper_b],
 		["PICKET", "SUPPLY 2 - ANTI-AIR, TUBES CANTED UP", _P.picket_c2],
 		["WARDEN", "SUPPLY 2 - A JAMMING FIELD, NO GUN", _B.warden_a],
 		["DRAYMAN", "SUPPLY 2 - REFILLS MAGAZINES", _B.drayman_a],
