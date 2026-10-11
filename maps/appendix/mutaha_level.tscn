@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_level"]
 [ext_resource type="PackedScene" uid="uid://g7fmy28elpah" path="res://Env/world_objects/spawn_point.tscn" id="2_spawn"]
 [ext_resource type="Script" path="res://Campaign/squad_spawn_point.gd" id="3_squad"]
-[ext_resource type="PackedScene" path="res://maps/mutaha_art.tscn" id="4_fqe71"]
+[ext_resource type="PackedScene" path="res://maps/appendix/mutaha_art.tscn" id="4_fqe71"]
 [ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="9_exit"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="10_env"]
 [ext_resource type="PackedScene" uid="uid://c35vac7u5e3gs" path="res://Env/world_objects/dummy_terminal.tscn" id="10_ieck5"]

@@ -172,9 +172,9 @@ A flying hive. Spawns Hoppers continuously until killed, and keeps moving, so
 the Nest's counter — walk over and break it — does not apply. Swarm is swarm:
 this is the frame that makes that true rather than stated.
 
-**9. STRATCOM — BASTION (institutional green, supply 3, hull 300)**
+**9. HOME COMMAND — BASTION (institutional green, supply 3, hull 300)**
 Walks, then plants and becomes a hardpoint: immobile, heavily armoured, and
-projecting a protective field over nearby StratCom units. The institutional
+projecting a protective field over nearby Home Command units. The institutional
 army answer — doctrine, position, combined arms. It is also the mirror of the
 Warden, and the first enemy that rewards killing a *support* unit first.
 
@@ -243,7 +243,7 @@ value exists. No schema change, no new spawner.
 
 **THE BLOCKER: `are_hostile()` has no `_:` arm.** `Managers/enums.gd:29-38`
 matches on four values and falls out to `return false`. The instant SWARM,
-STRATCOM or ARGUS exists, a robot carrying one is both invisible and
+HOME COMMAND or ARGUS exists, a robot carrying one is both invisible and
 near-invulnerable, in every direction, silently:
 
 - nobody targets it (`ai_manager.gd:365`) and it targets nobody
@@ -270,7 +270,7 @@ cannot repeat this. That is now task zero of the enemy three.
 
 Two further notes from the same sweep. Inter-faction hostility cannot be
 expressed in `are_hostile` at all — it is pure and stateless, so "Swarm and
-StratCom fight each other in mission A but not B" has nowhere to live and
+Home Command fight each other in mission A but not B" has nowhere to live and
 would need the table to be mission-aware. And if the three ARE made mutually
 hostile, `hostiles_for()` and `activation_sources()` start listing enemies as
 each other's activation sources, so hostile forces keep each other awake and

@@ -593,7 +593,11 @@ func _notification(what: int) -> void:
 func _status(record: SoldierRecord) -> Array:
 	var state: CampaignState = ui.state
 	if record.status == SoldierRecord.Status.DESTROYED:
-		return ["DESTROYED", Kit.PROBLEM]
+		# NAMES THE ACTION, unlike the squad HUD's version of this state. In
+		# the field a destroyed frame is inert and is drawn that way — there is
+		# nothing to be done about it while you are out there. At base it is
+		# the one thing on the card you CAN act on, so it says so.
+		return ["DESTROYED · SCRAP IT", Kit.PROBLEM]
 	if not _armed(record):
 		return ["NO WEAPON", Kit.PROBLEM]
 	if state.is_player_record(record):
@@ -774,19 +778,42 @@ func _build_detail() -> void:
 	_detail.add_child(head)
 
 	if destroyed:
+		# A DESTROYED FRAME IS NOT A REPAIR JOB. The only decision left is what
+		# you get for the metal, so SCRAP is the button — REBUILD only appears
+		# when the campaign has been told to allow it (CampaignState.
+		# allow_rebuild), because offering both makes the distinction the squad
+		# HUD now draws between DOWNED and DESTROYED meaningless.
 		var row := Kit.hbox(10)
-		row.add_child(Kit.label("DESTROYED", Kit.PROBLEM, Kit.HEADING, true))
+		row.add_child(Kit.label("DESTROYED", Kit.DIM, Kit.HEADING, true))
 		row.add_child(Kit.fill())
-		var cost := state.repair_cost(r)
-		var rebuild_btn := Kit.button("REBUILD", Kit.BRIGHT if state.can_afford(cost) else Kit.PROBLEM)
-		rebuild_btn.disabled = not state.can_afford(cost)
-		rebuild_btn.tooltip_text = "Rebuild %s at full health." % r.display_name
-		rebuild_btn.mouse_entered.connect(ui.hover)
-		rebuild_btn.pressed.connect(func():
-			ui.play(&"fit" if state.repair_soldier(record) else &"denied"))
-		row.add_child(rebuild_btn)
-		row.add_child(Kit.label(str(cost), Kit.MONEY, Kit.HEADING, true))
+
+		var back := state.scrap_value(r)
+		var scrap_btn := Kit.button("SCRAP", Kit.BRIGHT)
+		scrap_btn.disabled = not state.can_scrap(r)
+		scrap_btn.tooltip_text = \
+			"Break %s for parts: a third of the frame and half of everything fitted to it, %d in all. The kit does not come back." \
+			% [r.display_name, back]
+		scrap_btn.mouse_entered.connect(ui.hover)
+		scrap_btn.pressed.connect(func():
+			# -1 is a refusal, 0 is a worthless wreck scrapped successfully.
+			ui.play(&"denied" if state.scrap_soldier(record) < 0 else &"fit"))
+		row.add_child(scrap_btn)
+		row.add_child(Kit.label("+%d" % back, Kit.MONEY, Kit.HEADING, true))
 		_detail.add_child(row)
+
+		if state.allow_rebuild:
+			var rebuild_row := Kit.hbox(10)
+			rebuild_row.add_child(Kit.fill())
+			var cost := state.repair_cost(r)
+			var rebuild_btn := Kit.button("REBUILD", Kit.BRIGHT if state.can_afford(cost) else Kit.PROBLEM)
+			rebuild_btn.disabled = not state.can_afford(cost)
+			rebuild_btn.tooltip_text = "Rebuild %s at full health." % r.display_name
+			rebuild_btn.mouse_entered.connect(ui.hover)
+			rebuild_btn.pressed.connect(func():
+				ui.play(&"fit" if state.repair_soldier(record) else &"denied"))
+			rebuild_row.add_child(rebuild_btn)
+			rebuild_row.add_child(Kit.label(str(cost), Kit.MONEY, Kit.HEADING, true))
+			_detail.add_child(rebuild_row)
 	elif not is_player:
 		var row := Kit.hbox(10)
 		row.add_child(_bench_button(r, false))
@@ -877,6 +904,15 @@ func _fixed_tile(item: ItemDefinition, text: String) -> Control:
 # its border is bright and the stores list below is for it.
 func _slot_tile(kind: int, index: int, item_id: StringName) -> Control:
 	var item: ItemDefinition = ui.item(item_id)
+	# A WRECK'S SLOTS ARE WELDED SHUT. Its kit was destroyed with it and pays
+	# out through SCRAP at half price — but only if the player cannot simply
+	# right-click every module off first and keep the lot. Left open, the
+	# scrap value was a tax on not knowing the trick.
+	#
+	# A fixed tile rather than a disabled one: same picture, no click target,
+	# no hover, nothing to wonder about.
+	if selected != null and selected.status == SoldierRecord.Status.DESTROYED:
+		return _fixed_tile(item, "EMPTY" if item == null else "")
 	var wide := kind == ItemDefinition.Kind.WEAPON
 	var is_sel := kind == slot_kind and index == slot_index
 	var missing := wide and item == null and not _armed(selected)

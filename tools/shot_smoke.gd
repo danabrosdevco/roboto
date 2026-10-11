@@ -59,7 +59,7 @@ func _init() -> void:
 		quit(1)
 		return
 	var level: Node = player.get_parent()
-	level.add_child(load("res://maps/valley_level.tscn").instantiate())
+	level.add_child(load("res://maps/appendix/valley_level.tscn").instantiate())
 	for _i in 30:
 		await physics_frame
 

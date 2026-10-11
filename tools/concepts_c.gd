@@ -8,12 +8,12 @@ class_name ConceptsC
 # builders that hang CSG off a root, and another process stages and shoots them.
 #
 #   BROODCARRIER  Swarm,    supply 2, hull 200, AERIAL — a flying hive
-#   BASTION       StratCom, supply 3, hull 300        — walks, then plants
+#   BASTION       Home Command, supply 3, hull 300        — walks, then plants
 #   SEE-ENGINE    Argus,    supply 3, hull 240        — watches and coordinates
 #
 # THE FACTION IS THE BRIEF. The chamfered hull, the turret ring, the single
 # offset eye and the whip antenna in concept_kit.gd are the PLAYER's language —
-# and the player's parent is StratCom, so Bastion is built out of that kit and
+# and the player's parent is Home Command, so Bastion is built out of that kit and
 # should look issued from the same factory: same vocabulary, more of it, better
 # finished. The other two reject it on purpose, from raw primitives, without
 # leaving this game's world of boxes and cylinders:
@@ -76,7 +76,7 @@ static func _pod(to: Node, at: Vector3, r: float, open: bool) -> void:
 	_hatchling(to, at + Vector3(0, -r * 1.1, -r * 0.42), r * 0.46)
 
 
-## A STRATCOM GROUND SPADE: ram, jack and a blade that bites. This is what makes
+## A HOME COMMAND GROUND SPADE: ram, jack and a blade that bites. This is what makes
 ## the planted state legible — a frame sitting on its belly reads as broken,
 ## and a frame nailed down by four of these reads as deployed.
 ##
@@ -356,10 +356,10 @@ static func brood_d(root_node: Node3D) -> void:
 
 
 # ─────────────────────────────────────────────
-# BASTION — STRATCOM, supply 3, hull 300
+# BASTION — HOME COMMAND, supply 3, hull 300
 #
 # Walks, then PLANTS: immobile, armoured, projecting a protective field over
-# nearby StratCom units. The mirror of the player's Warden, and it is the one
+# nearby Home Command units. The mirror of the player's Warden, and it is the one
 # frame here that should look like it came out of the player's own factory —
 # so it is built from concept_kit's hull, head and legs, with more plate, more
 # studs and better finish on top.
@@ -517,7 +517,7 @@ static func bastion_c(root_node: Node3D) -> void:
 	_emitter(root_node, Vector3(-0.86, 3.2, 0.7), 0.34)
 	_emitter(root_node, Vector3(0.86, 3.2, 0.7), 0.34)
 	# Appliqué on the flanks and the glacis, bolted. More of it than the player
-	# gets, and better finished — that is the whole StratCom tell.
+	# gets, and better finished — that is the whole Home Command tell.
 	for sx in [-1.0, 1.0]:
 		_Parts.plate(root_node, 2.4, 0.62, 0.11, 0.13, Vector3(sx * 1.32, 2.46, 0),
 				Vector3(0, PI * 0.5, 0))
@@ -578,7 +578,7 @@ static func bastion_d(root_node: Node3D) -> void:
 # watching and coordinating.
 #
 # NO FACE, in the Walker's sense. The kit's head — turret ring, cut cheeks, one
-# offset eye, whip antenna — is the player's and StratCom's, and putting it on
+# offset eye, whip antenna — is the player's and Home Command's, and putting it on
 # Argus would make the overlord a cousin. None of these four has a head. They
 # have optics, and the optics do not agree about where to look.
 #

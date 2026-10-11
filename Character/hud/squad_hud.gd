@@ -113,6 +113,7 @@ const COL_BRIGHT  := HUDPalette.BRIGHT
 const COL_WARN    := HUDPalette.WARN
 const COL_CRIT    := HUDPalette.CRIT
 const COL_SIGNAL  := HUDPalette.SIGNAL
+const COL_GONE    := HUDPalette.GONE
 
 # The three states a player can act on. Everything the AI does maps onto one of
 # them; the distinctions it drops were never actionable.
@@ -130,6 +131,7 @@ const _Kit := preload("res://Character/hud/squad/ui_kit.gd")
 # By path, not by class name: a brand-new class_name is not in the global
 # script cache until the editor rescans, and the level loads before that.
 const _Segment := preload("res://Character/hud/segment_bar.gd")
+const _Noise := preload("res://Character/hud/signal_noise.gd")
 
 # WHAT A ROW SAYS NOTHING ABOUT.
 #
@@ -381,6 +383,14 @@ func _refresh_roster() -> void:
 	_clear(_roster)
 	if commander == null:
 		return
+	# THE WHOLE PANEL IS DOWNSTREAM OF YOUR OWN LINK. At the floor there is no
+	# squad layer at all — not an empty roster, not a greyed one, nothing. The
+	# player discovers in that moment that this was never a shooter.
+	var veil: int = _Noise.veil_of(player)
+	if veil >= _Noise.Veil.BLIND:
+		_squad_header.text = _Noise.lost_line()
+		_squad_header.add_theme_color_override("font_color", COL_CRIT)
+		return
 	var shown := _shown_squads()
 	if shown.is_empty():
 		_squad_header.text = "NO SQUAD IN COMMAND"
@@ -407,13 +417,16 @@ func _refresh_roster() -> void:
 		if quiet:
 			continue
 		var seen := {}
+		var slot := 0
 		for m in squad.squad_members:
 			if m == null or not is_instance_valid(m):
 				continue
 			if seen.has(m.get_instance_id()):
 				continue
 			seen[m.get_instance_id()] = true
-			_roster.add_child(_make_member_row(m))
+			# `slot` numbers the contacts when the link cannot carry callsigns.
+			_roster.add_child(_make_member_row_veiled(m, veil, slot))
+			slot += 1
 
 
 func _fill_header(header: Label, squad: Squad, quiet: bool) -> void:
@@ -478,7 +491,24 @@ func _shown_squads() -> Array:
 	return [selected] if selected != null else []
 
 
+# ─────────────────────────────────────────────
+# THE ROSTER IS A FEED, NOT A VIEW.
+#
+# Every readout below is gated on YOUR signal, not theirs — see signal_noise.gd
+# for the ladder. The squad is still out there doing all of it; you simply stop
+# being told. Health goes first, then state, then the callsign, then the whole
+# panel.
+#
+# Removed readouts leave a dead placeholder rather than collapsing the row, for
+# the reason the signal bar already holds its slot open: a column that reflows
+# reads as a layout bug, where a row of dashes reads as a loss. One of those is
+# the feature.
+# ─────────────────────────────────────────────
 func _make_member_row(m: Soldier) -> Control:
+	return _make_member_row_veiled(m, _Noise.Veil.ALL, 0)
+
+
+func _make_member_row_veiled(m: Soldier, veil: int, index: int) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -487,26 +517,99 @@ func _make_member_row(m: Soldier) -> Control:
 	# the factory and the armoury show, not initials. A callsign says neither,
 	# and the teams are arranged by hand, so without these a Reclaimer parked
 	# under SUPPORT and a Soldier under ARMOR both read as filing mistakes.
-	var tint := COL_CRIT if not m.alive else COL_DIM
+	# ─────────────────────────────────────────────
+	# DOWN IS NOT DEAD, AND THE ROW HAS TO SAY SO BEFORE YOU READ IT.
+	#
+	# Both states used to paint the whole row critical red and differ only in
+	# the word at the end, which gets the emphasis exactly backwards. Red means
+	# ACT. There is nothing you can do about a destroyed frame — it is a line
+	# item, it is finished, and shouting it buries the one robot on the roster
+	# you could still walk over and pick up.
+	#
+	# So: downed is AMBER, because it is a job. Destroyed goes colourless,
+	# because it is a fact. At a glance the roster reads as "three up, one to
+	# fetch, one gone" without anybody having to parse two words that both
+	# begin with D.
+	#
+	# TWO STATES ON SCREEN, NOT THREE. A robot on the deck whose field revive
+	# is already spent (Enemy.can_revive) cannot be picked up, so from where
+	# the player is standing it is not a job — it is a loss, and it is shown
+	# as DESTROYED. An earlier cut gave it "DOWNED · NO LIFT", which is more
+	# accurate and worse: it is a third thing to learn, in a third colour, for
+	# a case the player can do nothing about either way. The roster's job is
+	# "who can I still get back", and that question has two answers.
+	var is_down: bool = _liftable(m)
+	var is_wreck: bool = not m.alive and not is_down
+
+	# NO ALPHA TRICK, AND NOT COL_DIM EITHER. Both attempts at making a wreck's
+	# row quiet made it INVISIBLE instead. Half alpha erased it; COL_DIM is a
+	# desaturated green and Mutaha is a green field, so the row was camouflaged
+	# against the ground. Photographed, the roster had a blank band where the
+	# fourth robot should have been — a HUD that says you have three
+	# squadmates when you have four.
+	#
+	# COL_GONE is off the green axis for exactly this reason: see
+	# HUDPalette.GONE. The separation is HUE, not transparency — amber and
+	# loud for the one you can fetch, colourless and quiet for the one you
+	# cannot — and hue cannot accidentally reach zero.
+	var tint := COL_DIM
+	if is_down:
+		tint = COL_WARN
+	elif is_wreck:
+		tint = COL_GONE
 	row.add_child(_Kit.icon(_Glyphs.frame_icon(m), tint, Vector2(22, 22), true))
 	row.add_child(_Kit.icon(_Glyphs.weapon_icon(m), tint, Vector2(34, 14), true))
 
-	var name_col := COL_CRIT if not m.alive else COL_BRIGHT
-	row.add_child(_make_label("%-10s" % m.soldier_name.left(10), name_col))
+	var name_col := COL_BRIGHT
+	if is_down:
+		name_col = COL_WARN
+	elif is_wreck:
+		name_col = COL_GONE
+	# WHO, until the link cannot carry who. A contact number rather than a
+	# blank: something is still out there and you can still count them.
+	var who: String = m.soldier_name.left(10)
+	if veil >= _Noise.Veil.CONTACT_ONLY:
+		# NOT BLED. The substitution is already the degradation, and the number
+		# is the only identity left — it is how the player counts them and
+		# tells them apart. Corrupting it produced "CONTACT 09" for the first
+		# of three, which is not atmosphere, it is a readout that lies about
+		# how many robots are out there.
+		who = _Noise.contact_name(index)
+		# AMBER, NOT DIM. Photographed at signal 0.18 the dim version was
+		# invisible: the HUD's own damage shader is at its worst exactly when
+		# this text appears, so a quiet colour means the last identity you have
+		# is the one thing you cannot read. It is a warning state, so it gets
+		# the warning colour and fights through the noise.
+		name_col = COL_WARN
+	else:
+		who = _Noise.bleed(who, veil)
+	row.add_child(_make_label("%-10s" % who, name_col))
 
 	if not m.alive:
 		# A wreck you can bring back reads very differently from one you can't,
-		# and it's the difference between walking over there and not.
-		var is_down: bool = "downed" in m and m.downed
+		# and it is the difference between walking over there and not.
+		#
+		# NOT RED, either way. Red means ACT, and the colour is already doing
+		# the work: amber for the one you can fetch, COL_GONE for the one you
+		# cannot. A body on the deck with its revive spent lands here too —
+		# see the note on is_down above.
 		row.add_child(_make_label("DOWNED" if is_down else "DESTROYED",
-			COL_WARN if is_down else COL_CRIT))
+			COL_WARN if is_down else COL_GONE))
 		return row
 
 	# Blocks, not a fraction: the length says how tough the frame is and the
 	# fill says what is left of it. See SegmentBar.
-	var strip = _Segment.new()
-	strip.setup(float(m.health), float(m.max_health), _health_color(m))
-	row.add_child(strip)
+	#
+	# FIRST THING THE LINK DROPS. Telemetry is the finest-grained thing on the
+	# row, so it is the first to stop arriving — you can see where they are
+	# long before you can see how they are.
+	if veil >= _Noise.Veil.NO_HEALTH:
+		row.add_child(_make_label(_Noise.DEAD, COL_DIM))
+		row.add_child(_make_spacer(Vector2(bar_size.x - 28.0, bar_size.y)))
+	else:
+		var strip = _Segment.new()
+		strip.setup(float(m.health), float(m.max_health), _health_color(m))
+		row.add_child(strip)
 	# THE SIGNAL BAR ONLY WHEN THERE IS SOMETHING TO SAY. It sits at full on
 	# every robot for the whole of most missions, so as a permanent second bar
 	# it was seventeen full blue bars hiding the one that was not. The slot is
@@ -515,6 +618,10 @@ func _make_member_row(m: Soldier) -> Control:
 		row.add_child(_make_bar(m.signal_integrity, COL_SIGNAL))
 	else:
 		row.add_child(_make_spacer(bar_size))
+	# What they are DOING needs the most link of anything on the row — it is a
+	# continuous report rather than a position fix — so it is the second to go.
+	if veil >= _Noise.Veil.NO_STATE:
+		return row
 	var state := _state_text(m)
 	if not QUIET_STATES.has(state):
 		# PINNED is the only state that's a request rather than a report, so
@@ -695,11 +802,17 @@ func _draw_squad(squad: Squad, camera: Camera3D, drawn: Dictionary, quiet: bool)
 	var origin := global_position
 	var view_rect := Rect2(Vector2.ZERO, get_viewport_rect().size)
 
-	# Living members PLUS anyone downed — a wreck you can revive is exactly the
-	# thing you most need to be able to find across a map.
+	# Living members PLUS anyone you can still go and get — a wreck you can
+	# revive is exactly the thing you most need to be able to find across a map.
+	#
+	# LIFTABLE, not merely downed, and the same test the roster uses. A body
+	# whose field revive is already spent is shown as DESTROYED on the roster,
+	# so putting a pulsing chevron on it out in the world would send the player
+	# across open ground to reach something the roster has already told them is
+	# gone. The two readouts have to answer the question the same way.
 	var markable: Array = squad.get_living_members()
 	for m in squad.squad_members:
-		if m != null and is_instance_valid(m) and "downed" in m and m.downed:
+		if m != null and is_instance_valid(m) and _liftable(m):
 			if not markable.has(m):
 				markable.append(m)
 
@@ -730,7 +843,7 @@ func _draw_squad(squad: Squad, camera: Camera3D, drawn: Dictionary, quiet: bool)
 		# Same helper the roster bars use, so the chevron and the bar can never
 		# disagree about whether someone is in trouble.
 		var hp: float = float(m.health) / float(maxi(1, m.max_health))
-		var is_downed: bool = "downed" in m and m.downed
+		var is_downed: bool = _liftable(m)
 		var col: Color = HUDPalette.health_color(hp)
 		var critical: bool = is_downed or hp <= marker_critical_at
 		var hurt: bool = hp <= marker_hurt_at
@@ -888,3 +1001,17 @@ func _show_toast(text: String, col: Color) -> void:
 	_toast.add_theme_color_override("font_color", col)
 	_toast.visible = true
 	_toast_time = 2.2
+
+
+## On the deck AND still able to be picked up.
+##
+## Shared by the roster row and the world marker so the two can never disagree
+## about whether a body is worth walking to. A robot whose field revive is
+## spent (Enemy.can_revive) is on the deck but beyond help, and both readouts
+## treat it as destroyed.
+func _liftable(m) -> bool:
+	if m == null or not is_instance_valid(m):
+		return false
+	if not ("downed" in m and m.downed):
+		return false
+	return not m.has_method("can_revive") or m.can_revive()

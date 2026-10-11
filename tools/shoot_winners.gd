@@ -46,7 +46,7 @@ func _winners() -> Array:
 		["KITE", "SUPPLY 2 - FIRST ARMED FLYER YOU OWN", _A.kite_d],
 		["VESSEL", "SUPPLY 3 - DROPS TWO HATCHLINGS", _B.vessel_a],
 		["BROODCARRIER", "SWARM - A NEST THAT KEEPS MOVING", _C.brood_a],
-		["BASTION", "STRATCOM - PLANTS, HARDENS ITS SQUAD", _C.bastion_b],
+		["BASTION", "HOME COMMAND - PLANTS, HARDENS ITS SQUAD", _C.bastion_b],
 		["SEE-ENGINE", "ARGUS - SEES ALL, SHOOTS NOTHING", _C.argus_a],
 	]
 

@@ -19,7 +19,7 @@ new weapon classes, and the three research sweeps behind them — is in
 ## Read first if you are building an enemy
 
 **`ENEMY_FACTIONS.md`.** It is the blocker for the three enemy frames and the
-most dangerous thing in the batch. Appending SWARM, STRATCOM and ARGUS to
+most dangerous thing in the batch. Appending SWARM, HOME COMMAND and ARGUS to
 `Enums.Factions` is free; the function next to it is not. `are_hostile()` has
 no default arm, so a robot carrying a new value is simultaneously invisible and
 near-invulnerable across thirty-five call sites, **not one of which errors**.
@@ -43,7 +43,7 @@ gated on `ENEMY_FACTIONS.md`.
 | frame | faction | supply | role | concept |
 |---|---|---|---|---|
 | [BROODCARRIER](BROODCARRIER.md) | Swarm | 2 | **aerial** spawner | A — The Bunch |
-| [BASTION](BASTION.md) | StratCom | 3 | deployable hardpoint | B — The Pylon |
+| [BASTION](BASTION.md) | Home Command | 3 | deployable hardpoint | B — The Pylon |
 | [SEE-ENGINE](SEE_ENGINE.md) | Argus | 3 | command node | A — The Oculus |
 
 ## Concepts

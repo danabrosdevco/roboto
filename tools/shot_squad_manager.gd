@@ -84,6 +84,15 @@ func _run() -> void:
 
 	await _shoot(&"squad", "live_squad_walker.png", func(): _select("CANNON"))
 	await _shoot(&"squad", "live_squad_soldier.png", func(): _select("BRICK"))
+	# A WRECK ON THE ROSTER, so the scrap transaction can be LOOKED at and not
+	# only unit-tested. VESNA is destroyed on the spot — this shot is about the
+	# card, not about how a robot comes to be in that state.
+	await _shoot(&"squad", "live_squad_destroyed.png", func():
+		for r in state.roster:
+			if r.display_name == "VESNA":
+				r.status = SoldierRecord.Status.DESTROYED
+				r.damage = r.max_health
+		_select("VESNA"))
 	await _shoot(&"factory", "live_factory.png", Callable())
 	await _shoot(&"armorer", "live_armorer_weapon.png", func(): _pick(&"cluster_launcher"))
 	await _shoot(&"armorer", "live_armorer_equipment.png", func(): _pick(&"emp"))

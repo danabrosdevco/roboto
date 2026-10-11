@@ -98,10 +98,11 @@ const SUPPLY_COMPUTE_COST := 1
 
 # What the player is called on the roster, before they rename themselves.
 #
-# Straight out of lore.txt: the player is a StratCom AKR — autonomous killer
-# robot — that Algie repurposed and fitted with a Tabula Rasa chip. So the name
-# is the hardware designator, and the 00 is the blank slate: first of a line
-# with nothing written on it yet.
+# Straight out of lore.txt: the player is a Home Command AKR — autonomous killer
+# robot — that was never authorised, is on no roster and has never been
+# queried. Nobody made it free; it is an error an unsupervised system never
+# corrected. So the name is the hardware designator and nothing else, and the
+# 00 is what a unit is numbered when no one assigned it a number.
 #
 # Deliberately a machine code while the squad carry human names. You are the
 # thing that names THEM; the contrast in the roster column is the point. Defined
@@ -568,6 +569,57 @@ func award_compute(amount: int) -> void:
 	ledger_changed.emit()
 
 
+# ─────────────────────────────────────────────
+# ARGUS NOTICES.
+#
+# Home Command wins ground and the compute goes up, and for a while that is simply
+# the campaign going well. Then the thing at the top of the chain of command —
+# which is not managing anything any more, and which spends everything it gets
+# on its own reward loop — notices there is a surplus down here, and requisitions
+# it.
+#
+# IT TAKES WHAT IS EARNED, NOT WHAT IS FREE. That is the whole mechanic. Seats
+# and software HOLD compute rather than spending it, so a requisition that
+# exceeds the free pool does not fail and does not take a robot off the roster:
+# it leaves the ledger OVER-ALLOCATED, and the player has to decide personally
+# which of their six to stand down or which part of their own mind to uninstall
+# before they can deploy again.
+#
+# Nothing is destroyed and nothing is chosen for you. You are simply told there
+# is less of you than there was, and asked to work out what to drop.
+# ─────────────────────────────────────────────
+
+## Emitted when Argus takes compute, with how much and what is now owed.
+signal compute_requisitioned(amount: int, over: int)
+
+
+## Argus takes `amount` of compute. Returns how much the ledger is now
+## over-allocated by — zero if the surplus covered it.
+func requisition_compute(amount: int) -> int:
+	if amount <= 0:
+		return over_allocated_by()
+	compute_earned = maxi(0, compute_earned - amount)
+	var over := over_allocated_by()
+	ledger_changed.emit()
+	compute_requisitioned.emit(amount, over)
+	return over
+
+
+## How much compute is held beyond what is earned. Zero when the books balance.
+##
+## compute_free() goes NEGATIVE in this state rather than clamping, which is
+## deliberate: the number the player has to claw back is the honest one, and a
+## clamp at zero would hide the debt and leave deployment blocked for no
+## visible reason.
+func over_allocated_by() -> int:
+	return maxi(0, -compute_free())
+
+
+## Whether the player must unallocate before they can do anything else.
+func over_allocated() -> bool:
+	return over_allocated_by() > 0
+
+
 func seats_held() -> int:
 	var n := 0
 	for key in compute_held:
@@ -808,6 +860,176 @@ func restock_roster() -> void:
 	for r in roster:
 		r.restock()
 	roster_changed.emit()
+
+
+# ─────────────────────────────────────────────
+# SCRAP — what you do with a frame that is not coming back.
+#
+# DOWNED AND DESTROYED HAD THE SAME ENDING, which is why neither meant much.
+# A robot on the deck is a job: walk over, pick it up. A robot destroyed is a
+# fact, and the only thing left to decide about it is what you get for the
+# metal. A third of what the frame cost, and it is off the roster.
+#
+# WHY A THIRD RATHER THAN THE HALF AN ITEM SELLS FOR. A gun you sell is intact
+# and goes back on a shelf; this is wreckage. The gap between the two numbers
+# is the point — losing a frame has to cost more than changing your mind about
+# one, or there is no reason to fight carefully.
+#
+# THE KIT GOES WITH IT. Weapons, equipment and modules fitted to the frame are
+# destroyed with it and pay out at HALF their price, exactly as selling one
+# does — the robot was blown up and so was what it was carrying.
+#
+# An earlier cut returned the kit to stores whole. That was worse than
+# generous, it was MEANINGLESS: nothing stops the player right-clicking every
+# slot on a wreck before scrapping it, so "the kit survives" was not a rule the
+# game was enforcing, it was a rule the player was enforcing by hand for free.
+# A loophole you have to perform is the worst kind — it taxes the people who
+# do not know about it and costs the people who do nothing but clicks. So the
+# slots on a destroyed record are frozen (see squad_page._slot_tile) and the
+# value comes back through the scrap instead.
+#
+# HALF FOR THE KIT, A THIRD FOR THE FRAME. The frame is wreckage; a module is
+# a component that might be pulled out of one. The two numbers being different
+# is the point, and half is already what the game pays for an intact item, so
+# nothing new had to be invented.
+#
+# LEDGER SHAPE IS sell_item's, exactly: shrink the original allocation rather
+# than paying out of nowhere, and park the un-refunded two thirds under a key
+# nothing refunds. available() stays earned - sum(allocations) and there is no
+# second balance to drift.
+# ─────────────────────────────────────────────
+
+## Denominator on the frame's price. 3 is "a third back"; raise it for a
+## harsher campaign, drop it to 2 to make a wreck worth as much as a sale.
+@export var scrap_divisor: int = 3
+
+## REBUILD stays reachable. Off by default: a destroyed frame is destroyed, and
+## a 2x repair that undoes it makes the distinction the HUD now draws between
+## DOWNED and DESTROYED a lie. Set true to have both routes offered.
+@export var allow_rebuild: bool = false
+
+
+## What scrapping `record` hands back, before it happens — the UI needs the
+## number to label the button honestly, same as sale_value_of.
+func scrap_value(record: SoldierRecord) -> int:
+	if record == null:
+		return 0
+	@warning_ignore("integer_division")
+	var total: int = _unit_price(record) / maxi(scrap_divisor, 1)
+	for pair in _kit_payout(record):
+		total += int(pair[2])
+	return total
+
+
+## Every fitted item that scrapping pays for, as [allocation key, paid, back].
+##
+## ONLY WHAT WAS ACTUALLY BOUGHT. Kit issued WITH the frame — a Soldier's
+## rifle, a Chaser's claws — has no allocation, because its price is already
+## inside the frame's price. Paying half for it as well mints resources from
+## nothing, and because recruiting is unlimited it mints them in a LOOP: a
+## 50-resource Soldier ships with an 80-resource rifle, so buy-and-scrap
+## handed back 56 on a 50 outlay. The suite caught it five cycles up 30.
+##
+## sell_item's comment reasons that crediting issued stock is safe because
+## "anything you BUY gets an allocation". That is true of stock on a shelf. It
+## is NOT true here, because recruiting is itself a way to manufacture more
+## issued stock — worth remembering if anything else is ever made to pay out
+## for an item.
+func _kit_payout(record: SoldierRecord) -> Array:
+	var out: Array = []
+	if record == null:
+		return out
+	for id in record.all_fitted_ids():
+		if id == &"":
+			continue
+		var key := _newest_purchase_key("item:%s:" % id)
+		if key == "":
+			continue   # issued with the frame; the frame's price covered it
+		var paid := int(allocations[key])
+		out.append([key, paid, sale_value(paid)])
+	return out
+
+
+# Settle one thing that no longer exists, and return what the purse gains.
+#
+# `prefix_or_key` is either an exact allocation key ("unit:s004") or a purchase
+# prefix to find the newest of ("item:optics:"). Where an allocation is found
+# it is ERASED and the un-returned part re-booked under `loss_key`, so
+# available() rises by exactly `back` and the rest stays committed. Where there
+# is none the thing was issued rather than bought, and `back` is earned.
+#
+# One function because the frame and every item on it have to settle the same
+# way; two copies of this is how a ledger acquires a second balance.
+func _write_off(prefix_or_key: String, paid: int, back: int, loss_key: String) -> int:
+	var key := prefix_or_key
+	if key.ends_with(":"):
+		key = _newest_purchase_key(prefix_or_key)
+	if key != "" and allocations.has(key):
+		allocations.erase(key)
+		var kept := paid - back
+		if kept > 0:
+			allocations["%s:%d" % [loss_key, _next_purchase()]] = kept
+		return back
+	# Issued, never bought. Cannot be farmed: anything you BUY has an
+	# allocation and therefore takes the branch above.
+	earned += back
+	return back
+
+
+## What the frame cost. The recruit allocation where there is one; the
+## catalogue price where there is not, because the starting roster was issued
+## rather than bought — the same fallback sell_item makes for issued stock.
+func _unit_price(record: SoldierRecord) -> int:
+	var key := "unit:%s" % record.id
+	if allocations.has(key):
+		return int(allocations[key])
+	var frame := catalogue.chassis_def(record.chassis_id) if catalogue != null else null
+	return frame.cost if frame != null else 0
+
+
+func can_scrap(record: SoldierRecord) -> bool:
+	if record == null:
+		return false
+	if record.status != SoldierRecord.Status.DESTROYED:
+		return false
+	return not is_player_record(record)
+
+
+## Break a destroyed frame for parts. Returns what it paid, or -1 if it would
+## not: the caller can tell "scrapped for nothing" from "refused".
+func scrap_soldier(record: SoldierRecord) -> int:
+	if record == null:
+		push_warning("scrap_soldier: nothing handed in, so nothing was scrapped.")
+		return -1
+	if record.status != SoldierRecord.Status.DESTROYED:
+		push_warning("scrap_soldier: %s is %s, not DESTROYED. Only a wreck can be scrapped — repair it or leave it." % [record.display_name, SoldierRecord.Status.keys()[int(record.status)]])
+		return -1
+	if is_player_record(record):
+		push_warning("scrap_soldier: refused on the player's own record. Scrapping yourself would take the campaign with it.")
+		return -1
+
+	# THE KIT, DESTROYED WITH THE FRAME. Nothing is added to the armoury; each
+	# fitted item is settled the way selling it would be, so half its price
+	# comes back and the other half stays booked as a loss.
+	var back := 0
+	for pair in _kit_payout(record):
+		back += _write_off(String(pair[0]), int(pair[1]), int(pair[2]), "scrapped-kit")
+
+	# ...and the frame itself, at a third.
+	var paid := _unit_price(record)
+	@warning_ignore("integer_division")
+	var frame_back: int = paid / maxi(scrap_divisor, 1)
+	back += _write_off("unit:%s" % record.id, paid, frame_back,
+		"scrapped:%s" % record.id)
+
+	var kept_roster: Array[SoldierRecord] = []
+	for r in roster:
+		if r != record:
+			kept_roster.append(r)
+	roster = kept_roster
+	ledger_changed.emit()
+	roster_changed.emit()
+	return back
 
 
 func remove_destroyed() -> Array[SoldierRecord]:

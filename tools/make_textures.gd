@@ -1427,7 +1427,7 @@ func _roach_fur() -> void:
 			_img.set_pixel(x, y, Color(tint.r * lum, tint.g * lum, tint.b * lum))
 
 
-# ── StratCom ─────────────────────────────────────────────────────────────────
+# ── Home Command ─────────────────────────────────────────────────────────────────
 # Thirteen institutional surfaces. The voice, from the faction brief: everything
 # here is correct, maintained and pointless. So NO rust, NO grime, NO stains, NO
 # wear. Where the rest of this file calls _grime(), these do not; the only

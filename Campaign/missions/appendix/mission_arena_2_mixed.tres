@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
-[ext_resource type="PackedScene" uid="uid://rnm8xsxcwbsx" path="res://maps/arena_level.tscn" id="3_arena"]
+[ext_resource type="PackedScene" uid="uid://rnm8xsxcwbsx" path="res://maps/appendix/arena_level.tscn" id="3_arena"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
 [ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="5_chaser"]
 [ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="6_shot"]

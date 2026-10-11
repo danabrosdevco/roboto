@@ -152,6 +152,19 @@ func _inspect(body: Soldier, world: World3D) -> Array:
 			out.append("BURIED in %s" % other.name)
 			break
 
+	# ── AIRBORNE? ─────────────────────────────
+	# An air arrival is SUPPOSED to have nothing under it and to be off the
+	# navmesh: spawn_offset.y is what makes it an air arrival, and the spawner
+	# skips ground-snapping entirely for those (see the spawn_offset.y <= 0.0
+	# gate). Flagging them produced 49 NO FLOOR and 48 ADRIFT rows that were all
+	# helicopters doing exactly the right thing, which buried the 75 rows that
+	# were real. The body does not carry its spec, so height above the nearest
+	# walkable ground is the test.
+	var mesh_pt := NavigationServer3D.map_get_closest_point(world.navigation_map, at)
+	var airborne: bool = mesh_pt != Vector3.ZERO and at.y - mesh_pt.y > 6.0
+	if airborne:
+		return out   # the burial test above still applies; these two do not
+
 	# ── NO FLOOR ──────────────────────────────
 	# Straight down from just inside the body. Other bodies are looked
 	# through, the same way GroundSnap._surface does it.

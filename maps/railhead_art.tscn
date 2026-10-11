@@ -1,8 +1,6 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=10 format=3 uid="uid://7gu1l6g3rxax"]
 
 [ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_trackbed.tscn" id="1_q3log"]
-[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_6hfwp"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_b805l"]
 [ext_resource type="PackedScene" path="res://maps/railhead_station.tscn" id="4_p1lc3"]
 [ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_hull_motive.tscn" id="5_kic5x"]
 [ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_ops.tscn" id="6_2086q"]
@@ -16,88 +14,32 @@
 
 [node name="Ground" type="Node3D" parent="."]
 
-[node name="Trackbed" type="Node3D" parent="Ground" instance=ExtResource("1_q3log")]
-script = ExtResource("2_6hfwp")
-local_map_file = "res://maps/blocks/railhead/railhead_trackbed.map"
-global_map_file = ""
-map_settings = ExtResource("3_b805l")
-print_profiling_data = false
-block_until_complete = false
-set_owner_batch_size = 1000
+[node name="Trackbed" parent="Ground" instance=ExtResource("1_q3log")]
 
-[node name="Station" type="Node3D" parent="Ground" instance=ExtResource("4_p1lc3")]
+[node name="Station" parent="Ground" instance=ExtResource("4_p1lc3")]
 
 [node name="Rake" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, 0)
 
-[node name="Car1_Motive" type="Node3D" parent="Rake" instance=ExtResource("5_kic5x")]
+[node name="Car1_Motive" parent="Rake" instance=ExtResource("5_kic5x")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 96)
-script = ExtResource("2_6hfwp")
-local_map_file = "res://maps/blocks/railhead/railhead_hull_motive.map"
-global_map_file = ""
-map_settings = ExtResource("3_b805l")
-print_profiling_data = false
-block_until_complete = false
-set_owner_batch_size = 1000
 
-[node name="Car2_Operations" type="Node3D" parent="Rake" instance=ExtResource("6_2086q")]
+[node name="Car2_Operations" parent="Rake" instance=ExtResource("6_2086q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 64)
-script = ExtResource("2_6hfwp")
-local_map_file = "res://maps/blocks/railhead/railhead_car_ops.map"
-global_map_file = ""
-map_settings = ExtResource("3_b805l")
-print_profiling_data = false
-block_until_complete = false
-set_owner_batch_size = 1000
 
-[node name="Car3_Repair" type="Node3D" parent="Rake" instance=ExtResource("7_e6kt3")]
+[node name="Car3_Repair" parent="Rake" instance=ExtResource("7_e6kt3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 32)
-script = ExtResource("2_6hfwp")
-local_map_file = "res://maps/blocks/railhead/railhead_car_repair.map"
-global_map_file = ""
-map_settings = ExtResource("3_b805l")
-print_profiling_data = false
-block_until_complete = false
-set_owner_batch_size = 1000
 
-[node name="Car4_Armoury" type="Node3D" parent="Rake" instance=ExtResource("8_bya02")]
-script = ExtResource("2_6hfwp")
-local_map_file = "res://maps/blocks/railhead/railhead_car_armoury.map"
-global_map_file = ""
-map_settings = ExtResource("3_b805l")
-print_profiling_data = false
-block_until_complete = false
-set_owner_batch_size = 1000
+[node name="Car4_Armoury" parent="Rake" instance=ExtResource("8_bya02")]
 
-[node name="Car5_Fabrication" type="Node3D" parent="Rake" instance=ExtResource("9_mcje0")]
+[node name="Car5_Fabrication" parent="Rake" instance=ExtResource("9_mcje0")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -32)
-script = ExtResource("2_6hfwp")
-local_map_file = "res://maps/blocks/railhead/railhead_car_fab.map"
-global_map_file = ""
-map_settings = ExtResource("3_b805l")
-print_profiling_data = false
-block_until_complete = false
-set_owner_batch_size = 1000
 
-[node name="Car6_Barracks" type="Node3D" parent="Rake" instance=ExtResource("10_tv31b")]
+[node name="Car6_Barracks" parent="Rake" instance=ExtResource("10_tv31b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -64)
-script = ExtResource("2_6hfwp")
-local_map_file = "res://maps/blocks/railhead/railhead_car_barracks.map"
-global_map_file = ""
-map_settings = ExtResource("3_b805l")
-print_profiling_data = false
-block_until_complete = false
-set_owner_batch_size = 1000
 
-[node name="Car7_Platform" type="Node3D" parent="Rake" instance=ExtResource("11_dnslj")]
+[node name="Car7_Platform" parent="Rake" instance=ExtResource("11_dnslj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -96)
-script = ExtResource("2_6hfwp")
-local_map_file = "res://maps/blocks/railhead/railhead_car_platform.map"
-global_map_file = ""
-map_settings = ExtResource("3_b805l")
-print_profiling_data = false
-block_until_complete = false
-set_owner_batch_size = 1000
 
 [node name="Markers" type="Node3D" parent="."]
 

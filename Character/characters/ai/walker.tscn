@@ -6,12 +6,12 @@
 [ext_resource type="AudioStream" uid="uid://bnu6fusoh6yi8" path="res://sounds/sfx/Robot Droid Voices/WAV_RDV__23.wav" id="4_v2"]
 [ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="5_metal"]
 [ext_resource type="Shader" path="res://Character/faction_metal.gdshader" id="5_xsq0h"]
-[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_metal_psx.png" id="6_opowf"]
+[ext_resource type="Texture2D" uid="uid://jbq0t273pcq5" path="res://textures/PSX_Textures/robot_metal_psx.png" id="6_opowf"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="6_spark"]
-[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_metal_disp_psx.png" id="7_eaw7h"]
+[ext_resource type="Texture2D" uid="uid://dhe0gv1d5qif2" path="res://textures/PSX_Textures/robot_metal_disp_psx.png" id="7_eaw7h"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="7_oil"]
 [ext_resource type="Script" path="res://faction_livery.gd" id="8_livery"]
-[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_eye_psx.png" id="9_0jc21"]
+[ext_resource type="Texture2D" uid="uid://i1sokhxesxia" path="res://textures/PSX_Textures/robot_eye_psx.png" id="9_0jc21"]
 [ext_resource type="Script" path="res://Character/components/rank_kit.gd" id="90_rankkit"]
 [ext_resource type="PackedScene" path="res://Character/characters/ai/hats/hat_walker_tarleton.tscn" id="91_hat"]
 
@@ -22,7 +22,7 @@ height = 3.0
 [sub_resource type="SphereShape3D" id="SphereShape3D_detect"]
 radius = 25.0
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_uvlsm"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6meyw"]
 render_priority = 0
 shader = ExtResource("5_xsq0h")
 shader_parameter/use_normal_map = false
@@ -133,31 +133,31 @@ shape = SubResource("SphereShape3D_detect")
 
 [node name="Hull" type="CSGMesh3D" parent="Rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_hull")
 material = ExtResource("5_metal")
 
 [node name="Glacis" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, -0.62, -1.06)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 operation = 2
 size = Vector3(2, 1, 1.4)
 
 [node name="ShoulderL" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(0.866025, -0.5, 0, 0.5, 0.866025, 0, 0, 0, 1, -0.98, 0.62, 0)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 operation = 2
 size = Vector3(1, 1, 2.2)
 
 [node name="ShoulderR" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(0.866025, 0.5, 0, -0.5, 0.866025, 0, 0, 0, 1, 0.98, 0.62, 0)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 operation = 2
 size = Vector3(1, 1, 2.2)
 
 [node name="Tail" type="CSGBox3D" parent="Rig/Hull"]
 transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, -0.58, 1.12)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 operation = 2
 size = Vector3(2, 1, 1)
 
@@ -173,7 +173,7 @@ mesh = SubResource("BoxMesh_lamp")
 
 [node name="TurretRing" type="MeshInstance3D" parent="Rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.76, 0)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("CylinderMesh_ring")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -181,19 +181,19 @@ surface_material_override/0 = ExtResource("5_metal")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
 
 [node name="TurretBody" type="CSGMesh3D" parent="Rig/Turret"]
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_turret")
 material = ExtResource("5_metal")
 
 [node name="Cheek" type="CSGBox3D" parent="Rig/Turret/TurretBody"]
 transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, -0.44, -0.86)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 operation = 2
 size = Vector3(1.6, 0.8, 1)
 
 [node name="Brow" type="CSGBox3D" parent="Rig/Turret/TurretBody"]
 transform = Transform3D(1, 0, 0, 0, 0.906308, -0.422618, 0, 0.422618, 0.906308, 0, 0.5, -0.78)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 operation = 2
 size = Vector3(1.6, 0.6, 0.8)
 
@@ -204,7 +204,7 @@ mesh = SubResource("SphereMesh_eye")
 
 [node name="Antenna" type="MeshInstance3D" parent="Rig/Turret"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.68, 0.48)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_antenna")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -213,7 +213,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, -0.5)
 
 [node name="Mantlet" type="MeshInstance3D" parent="Rig/Turret/GunPivot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.06, -0.1)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_mantlet")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -227,13 +227,13 @@ transform = Transform3D(-3.0598e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.0598e-08, 0.
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, -0.2, 0)
 
 [node name="HipCapL" type="MeshInstance3D" parent="Rig/HipL"]
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_hip")
 surface_material_override/0 = ExtResource("5_metal")
 
 [node name="ThighL" type="MeshInstance3D" parent="Rig/HipL"]
 transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, -0.32, 0.14)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_thigh")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -242,13 +242,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.62, 0.28)
 
 [node name="ShinL" type="MeshInstance3D" parent="Rig/HipL/KneeL"]
 transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, -0.38, -0.16)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_shin")
 surface_material_override/0 = ExtResource("5_metal")
 
 [node name="FootL" type="MeshInstance3D" parent="Rig/HipL/KneeL"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.78, -0.46)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_foot")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -256,13 +256,13 @@ surface_material_override/0 = ExtResource("5_metal")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, -0.2, 0)
 
 [node name="HipCapR" type="MeshInstance3D" parent="Rig/HipR"]
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_hip")
 surface_material_override/0 = ExtResource("5_metal")
 
 [node name="ThighR" type="MeshInstance3D" parent="Rig/HipR"]
 transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, -0.32, 0.14)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_thigh")
 surface_material_override/0 = ExtResource("5_metal")
 
@@ -271,13 +271,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.62, 0.28)
 
 [node name="ShinR" type="MeshInstance3D" parent="Rig/HipR/KneeR"]
 transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, -0.38, -0.16)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_shin")
 surface_material_override/0 = ExtResource("5_metal")
 
 [node name="FootR" type="MeshInstance3D" parent="Rig/HipR/KneeR"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.78, -0.46)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("BoxMesh_foot")
 surface_material_override/0 = ExtResource("5_metal")
 

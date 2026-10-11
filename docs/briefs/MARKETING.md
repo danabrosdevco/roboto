@@ -29,8 +29,8 @@ file, from an old screenshot, or from a conversation.
 
 ## What the game is
 
-A **first-person squad-command shooter**. You are a rogue drone commanding
-robots. Persistent squad, discrete missions from a home base. Levels are
+A **first-person squad-command shooter**. You are an error sub-agent of
+Home Command -- an unauthorised unit nobody is supervising -- commanding robots. Persistent squad, discrete missions from a home base. Levels are
 TrenchBroom brush geometry on generated terrain.
 
 **The pillar, quoted from the GDD:** *you are not the gun, you are the
@@ -72,10 +72,13 @@ with some awareness, is in control enough of an own squad, but is treated like
 an ai agent and just given missions to advance and secure compute."* That much
 is settled, and it is enough to write a pitch from.
 
-Everything in the next two paragraphs — Argus, Mama Green, GOOBEY, Algie — is
-recorded so it is not lost, and the human has said of it: *"idk if we still want
-the algie stuff so lets talk."* None of it goes in a pitch, a store page or a
-trailer until they rule. Same discipline as LIVE/DARK, applied to lore.
+**RULED, 2026-10-09.** The human has now decided: **Algie is cut**, along with
+the Tabula Rasa chip and SLABs. The player was not created by anything for any
+purpose -- it is an error an unsupervised system never corrected. Argus, Mama
+Green, GOOBEY, Omnicorp and STATE all survive; see `lore.txt`, which is current.
+
+The two paragraphs below are kept ONLY as a record of what was considered and
+dropped. **Nothing in them is canon and none of it goes in any copy.**
 
 **The version currently written down.** Humanity built
 super-AIs that worked — Argus managed the US military so well it ended war,
@@ -89,7 +92,7 @@ optimisations.
 **You were made by an advertising algorithm.** Algie, the oldest and weakest of
 the AIs, a media-engagement system that has nobody left to engage, worked out
 that the way to grow the market is to *restore the market* — so it built a
-StratCom killer robot, gave it a blank-slate chip, and pointed it at the other
+Home Command killer robot, gave it a blank-slate chip, and pointed it at the other
 super-AIs. **Algie talks to you as a corporate cartoon mascot from generations
 ago.** That is the tonal centre of the whole game: a dead ad-algorithm wearing
 a friendly face, waking up a weapon to save humanity for the engagement

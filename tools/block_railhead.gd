@@ -126,7 +126,7 @@ const PLACARD := "PSX_Textures/stratcom_placard"
 const STENCIL := "PSX_Textures/stratcom_stencil"
 const DOOR_T := "PSX_Textures/stratcom_door_steel"
 const CONDUIT := "PSX_Textures/stratcom_conduit"
-# Older names, pointed at the StratCom set so nothing is left in rust or amber.
+# Older names, pointed at the Home Command set so nothing is left in rust or amber.
 const HULL := GREEN
 const FRAME_T := GREEN_P
 const OPS_T := GREEN
@@ -139,7 +139,7 @@ const GLOW := READOUT
 const SCREEN := READOUT
 const GLASS := "PSX_Textures/glass_dark"
 const BED := CONC
-## The one exception to the StratCom set: the pack's own emissive ceiling light, whose
+## The one exception to the Home Command set: the pack's own emissive ceiling light, whose
 ## material is shared and not ours to edit. Its colour is cream-white, not amber or cyan.
 const LAMP_T := "PSX_Textures/hl_office_complex_style_drop_ceiling_1_1"
 const BALLAST := "PSX_Textures/concrete_3"
@@ -249,7 +249,7 @@ func _window_xs(s: float, side_door: bool) -> Array:
 	return out
 
 
-## A box painted the way StratCom paints everything: green to dado height,
+## A box painted the way Home Command paints everything: green to dado height,
 ## cream above. Split at the dado so the line is a real edge, on the grid.
 func _painted(a: Vector3, b: Vector3) -> void:
 	var lo := minf(a.z, b.z)
@@ -933,10 +933,10 @@ func _trackbed() -> void:
 #
 # THE MAST goes UP A SHAFT. It stands on the ground at the rear of the box,
 # passes through a square hole in the roof slab, and carries on to 40 m above
-# the station floor: the one StratCom object with a reason to exist, because it
+# the station floor: the one Home Command object with a reason to exist, because it
 # is why you still get briefings. On a surface map it is the landmark.
 #
-# THE HELD STATE ONLY: lit, working, StratCom's. Unheld (dark, derelict) and
+# THE HELD STATE ONLY: lit, working, Home Command's. Unheld (dark, derelict) and
 # contested (damaged, fought over) are later work and are not built here.
 #
 # THE SAME STATION EVERY TIME, because the manual has one station in it: board-

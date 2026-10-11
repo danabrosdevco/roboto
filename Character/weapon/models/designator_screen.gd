@@ -181,6 +181,25 @@ func _build() -> void:
 	add_child(_bar)
 
 
+# ─────────────────────────────────────────────
+# THE TOOL IS ON THE SAME LINK AS EVERYTHING ELSE.
+#
+# This screen is not a display, it is a terminal at the end of a radio. When
+# the drone's own signal degrades the readout degrades with it: characters drop
+# out, then the mode name stops being trustworthy, and at the floor the thing
+# gives up and reports its own failure in the only register it has.
+#
+# The same ladder the roster uses — see Character/hud/signal_noise.gd — so a
+# player who has learned to read one can read the other.
+#
+# WHY THE NOISE HAS TO MOVE. A frozen corrupt string reads as a broken screen,
+# which is a bug. A crawling one reads as a live bad connection, which is the
+# weather. So the phase goes into the signature and the cheap no-redraw path is
+# kept for a clean link, where nothing is moving anyway.
+# ─────────────────────────────────────────────
+const _Noise := preload("res://Character/hud/signal_noise.gd")
+
+
 func _process(_delta: float) -> void:
 	if tool_node == null or not is_instance_valid(tool_node):
 		return
@@ -191,17 +210,38 @@ func _process(_delta: float) -> void:
 	var charge: float = float(tool_node.charge)
 	_bar.size.x = _bar_track.size.x * clampf(charge, 0.0, 1.0)
 
+	var veil: int = _Noise.veil_of(tool_node.get("player"))
+	# Phase only advances when there is corruption to crawl, so a clean screen
+	# still redraws only when its content actually changes.
+	var phase: int = 0 if veil <= _Noise.Veil.ALL else int(Time.get_ticks_msec() / 110)
+
 	var label: String = tool_node.mode_label()
 	var status: String = tool_node.mode_status()
-	var signature := "%s|%s|%d|%d" % [label, status, tool_node.mode_index(),
-		tool_node.mode_count()]
+	var signature := "%s|%s|%d|%d|%d|%d" % [label, status, tool_node.mode_index(),
+		tool_node.mode_count(), veil, phase]
 	if signature == _last_signature:
 		return
 	_last_signature = signature
-	_redraw(label, status)
+	if veil >= _Noise.Veil.BLIND:
+		_redraw_lost()
+		return
+	_redraw(_Noise.bleed(label, veil, phase), _Noise.bleed(status, veil, phase), veil, phase)
 
 
-func _redraw(label: String, status: String) -> void:
+## Nothing left to say, said procedurally. No red cross, no "ERROR": the
+## machine reports a failed uplink the same way it reports everything else,
+## which is what makes it cold rather than dramatic.
+func _redraw_lost() -> void:
+	_label.text = _Noise.lost_line()
+	_label.add_theme_color_override("font_color", COL_WARN)
+	_status.text = _Noise.corrupt("SQUAD UNREACHABLE", 0.5,
+		int(Time.get_ticks_msec() / 90))
+	_status.add_theme_color_override("font_color", COL_DIM)
+	_page.text = _Noise.corrupt("--/--", 0.6, int(Time.get_ticks_msec() / 130))
+	_set_icon(null)
+
+
+func _redraw(label: String, status: String, veil: int = 0, phase: int = 0) -> void:
 	var empty: bool = not tool_node.has_modes()
 	_label.text = label
 	_label.add_theme_color_override("font_color", COL_DIM if empty else COL_BRIGHT)
@@ -222,7 +262,10 @@ func _redraw(label: String, status: String) -> void:
 	if empty:
 		_page.text = ""
 	else:
-		_page.text = "%d/%d" % [tool_node.mode_index() + 1, tool_node.mode_count()]
+		# The dial position corrupts too. Not knowing WHICH order you are about
+		# to give is worse than not knowing what it is called.
+		_page.text = _Noise.bleed("%d/%d" % [tool_node.mode_index() + 1,
+			tool_node.mode_count()], veil, phase)
 	_set_icon(null if empty else _icon_for(tool_node.current_mode_id()))
 
 

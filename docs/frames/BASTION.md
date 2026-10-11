@@ -1,6 +1,6 @@
 # BASTION — design document
 
-STRATCOM · supply 3 · ground · deployable hardpoint · enemy only
+HOME COMMAND · supply 3 · ground · deployable hardpoint · enemy only
 **status: concept selected, not built**
 
 **Prerequisite: `docs/frames/ENEMY_FACTIONS.md`. Do not build this before
@@ -31,12 +31,12 @@ from *hardening*. **C ON THE MARCH** is the only walking option and is the one
 to reuse for the unplanted state rather than as the primary read.
 
 **It uses the player's own vocabulary deliberately** — `K.hull`, `K.head`,
-`K.leg`, the turret ring, the single offset eye. StratCom is the player's
+`K.leg`, the turret ring, the single offset eye. Home Command is the player's
 parent organisation, so this frame should look like it came off the same line,
 with more plate and better finish. That is the faction statement.
 state is the thing to recognise.*
 
-Art brief: StratCom is the player's own parent organisation, so **this frame
+Art brief: Home Command is the player's own parent organisation, so **this frame
 should look RIGHT** — the same chamfered hull, turret ring, single offset eye
 and boxy digitigrade limbs as the Walker, but more of it and better finished.
 Institutional green. It is the only one of the enemy three that should use the
@@ -48,7 +48,7 @@ own side belongs to.
 Two jobs at once, and the second is the interesting one.
 
 **It walks, then plants.** Immobile, heavily armoured, and projecting a
-protective field that raises nearby StratCom units' `signal_resistance`. It is
+protective field that raises nearby Home Command units' `signal_resistance`. It is
 the mirror of the player's Warden: one degrades, one hardens.
 
 **It is the first enemy that rewards killing a support unit first.** Everything
@@ -57,8 +57,8 @@ makes the squad around it measurably harder to suppress, so the correct play is
 to deal with the thing that is not shooting at you — which is a decision the
 game cannot currently ask.
 
-It also gives StratCom a doctrine on screen. Swarm is numbers, Argus is
-intelligence, StratCom is **position**: a frame whose whole statement is "this
+It also gives Home Command a doctrine on screen. Swarm is numbers, Argus is
+intelligence, Home Command is **position**: a frame whose whole statement is "this
 ground is now expensive".
 
 ## 3. Stats
@@ -66,7 +66,7 @@ ground is now expensive".
 | field | value | why |
 |---|---|---|
 | `id` | `&"bastion"` | **permanent once a kill is saved** |
-| faction | STRATCOM | |
+| faction | HOME COMMAND | |
 | `supply` | 3 | |
 | `cost` | 0 | `purchasable = false` |
 | `base_health` | 300 | under the Bulwark's 400; it is not a duel |
@@ -161,7 +161,7 @@ rule in `hull_spoils_aim`.
    behaviour and the simplest honest version is "plant on first contact,
    unplant if the fight moves out of range".
 
-3. **Faction.** STRATCOM, and the projector must only help STRATCOM. Given the
+3. **Faction.** HOME COMMAND, and the projector must only help HOME COMMAND. Given the
    recommendation in the shared prerequisite that the three enemy factions are
    **not** hostile to each other, "ally" here must mean *same faction*, not
    *not-hostile* — otherwise a Bastion would harden Swarm and Argus units too.
@@ -171,10 +171,10 @@ rule in `hull_spoils_aim`.
 
 `tools/test_bastion.gd`:
 
-- registered, supply 3, `purchasable = false`, faction STRATCOM
-- **`are_hostile(PLAYER, STRATCOM)` true both ways** — proves task zero
+- registered, supply 3, `purchasable = false`, faction HOME COMMAND
+- **`are_hostile(PLAYER, HOME COMMAND)` true both ways** — proves task zero
 - planted: speed is zero and the projector is active; walking: the inverse
-- a STRATCOM unit inside the radius has raised `signal_resistance`; one outside
+- a HOME COMMAND unit inside the radius has raised `signal_resistance`; one outside
   does not; **a SWARM unit inside does NOT** (section 6.3)
 - **the bonus is removed cleanly** when the Bastion dies, tested by killing it
   and re-reading the neighbour — the fragile case

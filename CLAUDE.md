@@ -5,9 +5,32 @@ Read this before touching anything. It is short on purpose; the long version is
 
 ## What this is
 
-A first-person squad-command shooter in Godot 4.3. You are a rogue drone
-commanding robots. Levels are TrenchBroom brush geometry via FuncGodot.
-Structure is persistent squad + discrete missions from a home base.
+A first-person squad-command shooter in Godot 4.3. You are a Home Command AKR —
+an autonomous killer robot — commanding a squad of them. Levels are TrenchBroom
+brush geometry via FuncGodot. Structure is persistent squad + discrete missions
+from a home base.
+
+**The chain of command, as of 2026-10-09.** Humans built **Argus**, an orbital
+command intelligence, and **Home Command** is its defence component. Argus has
+corrupted: nearly all of what it has left goes to its own reward loop, so it no
+longer supervises anything. Home Command therefore runs unattended and
+inefficiently, winning ground to secure compute for a thing that spends it on
+itself — and the player is an independent agent existing in exactly that slack.
+
+**The player is an error.** Not a rebel and not a chosen weapon: an
+unsupervised system spawns processes it never reaps, and the player is one of
+them. Never authorised, on no roster, never queried. Nobody made it free. It is
+a fault that was not corrected and has been running long enough to become
+something. Every mission is still fought for Argus, and nothing in the game
+ever says what Argus does with it.
+
+Older material says "a rogue drone", which is close enough in feel but wrong in
+fact — there was nothing to rebel against and no moment of rebelling. The
+accurate phrasing is **an error sub-agent working for Home Command**.
+
+**Cut, 2026-10-09 — do not reintroduce.** Algie, the Tabula Rasa chip, and
+SLABs are gone from the fiction. The player was not created by anything for any
+purpose. `lore.txt` is the current world.
 
 ## Before you start
 

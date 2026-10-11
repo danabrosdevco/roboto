@@ -22,7 +22,7 @@ assembled for seeing rather than for fighting, and the off-centre pupil is the
 detail that makes it uncomfortable to look at.
 
 No `K.head` anywhere in any of the four, and none of them has a face. The
-Walker's single offset eye is StratCom's grammar and the player's own factory;
+Walker's single offset eye is Home Command's grammar and the player's own factory;
 Argus should be recognisable at a glance as **not from the same production
 line**.
 
@@ -40,7 +40,7 @@ spends nearly everything on its own reward loop. Tyrian purple. It should look
 like it was designed by something that **does not think in terms of soldiers**
 — unsettling proportions, too many sensors, no obvious face. Many eyes, or one
 enormous one. Explicitly *not* the Walker's single offset eye, which is
-StratCom's grammar.
+Home Command's grammar.
 
 ## 2. What it is for
 
@@ -111,7 +111,7 @@ See-Engine (CharacterBody3D, groups=["enemies"])   <- add_to_group(.., TRUE)
 ```
 
 **No single offset eye.** That silhouette is the player's own factory and
-belongs to StratCom. Argus should be recognisable at icon size as *not from the
+belongs to Home Command. Argus should be recognisable at icon size as *not from the
 same production line*, and the eye is the cheapest place to say so.
 
 Plus the five silent traps: typed node-path exports, `add_to_group(.., true)`,
@@ -162,7 +162,7 @@ worse. That is acceptable and arguably correct, but it means the legibility in
 - an ARGUS unit that cannot personally see that target still benefits —
   measured through `_contact_assisted()` or the explicit bonus, whichever
   section 6.2 settles on
-- **a SWARM or STRATCOM unit does NOT benefit** — same trap as the Bastion,
+- **a SWARM or HOME COMMAND unit does NOT benefit** — same trap as the Bastion,
   and it follows from the three enemy factions not being hostile to each other
 - killing it stops the contact feed, asserted by checking freshness decays
 - in `"enemies"` and `AI.SIGNAL_GROUP`; typed arrays populated

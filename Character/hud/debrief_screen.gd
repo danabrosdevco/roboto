@@ -50,12 +50,68 @@ func _ready() -> void:
 func _on_extracted(mission: MissionDefinition, result: Dictionary) -> void:
 	_mission = mission
 	_pending = result
+	_cover()
+
+
+# ─────────────────────────────────────────────
+# THE DEPOT FLASH.
+#
+# The debrief waits for returned_to_base, for a good reason: the level behind
+# it should be home, with nothing left running in the one you just left. What
+# it did NOT account for is the gap. World._change_level adds the base,
+# places the player, and then awaits a process frame AND a physics frame
+# before calling on_returned_to_base — both load-bearing, the physics one
+# because the navigation server only commits its regions on a physics step
+# and the enemy spawner queries it.
+#
+# So for at least two frames the depot is on screen, lit, with no debrief over
+# it. You extract and you see home before you are told what happened.
+#
+# The awaits cannot go. So the screen is covered at EXTRACT instead, the
+# moment the result exists, and stays covered across the swap until the real
+# debrief is built on top of it. Nothing about the load sequence changes.
+#
+# NO PAUSE HOLD on the cover. show_result takes one; taking one here would
+# pause the tree during the level load, which is exactly where that sequence
+# is doing careful work with the navigation server.
+var _blackout: ColorRect = null
+
+
+func _cover() -> void:
+	if _blackout != null and is_instance_valid(_blackout):
+		return
+	_blackout = ColorRect.new()
+	# The debrief's own backdrop colour, so the cover and the screen that
+	# replaces it are the same black and the handover is invisible.
+	_blackout.color = Color(0.025, 0.04, 0.035, 1.0)
+	_blackout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_blackout.mouse_filter = Control.MOUSE_FILTER_STOP
+	_blackout.process_mode = Node.PROCESS_MODE_ALWAYS
+	_blackout.z_index = 109   # under the debrief itself, over everything else
+	var host: Node = get_parent()
+	if host == null:
+		push_warning("DebriefScreen: no parent to hang the extraction cover on, so the depot will flash.")
+		_blackout = null
+		return
+	host.add_child(_blackout)
+
+
+func _uncover() -> void:
+	if _blackout == null or not is_instance_valid(_blackout):
+		return
+	# remove_child first: queue_free is deferred, and a cover that lingers one
+	# frame on top of the debrief is the same bug pointing the other way.
+	_blackout.get_parent().remove_child(_blackout)
+	_blackout.queue_free()
+	_blackout = null
 
 
 # Shown at base, not at the extraction point: the level behind it is home, and
-# nothing is left running in the one you just left.
+# nothing is left running in the one you just left. The cover above holds the
+# screen in the meantime.
 func _on_home() -> void:
 	if _pending.is_empty():
+		_uncover()   # arrived home without a result to show: let the base through
 		return
 	show_result(_mission, _pending)
 	_pending = {}
@@ -112,6 +168,9 @@ func show_result(mission: MissionDefinition, result: Dictionary) -> void:
 	_result_now = result
 	_build(mission, result)
 	visible = true
+	# AFTER visible, never before: dropping the cover first would show one
+	# frame of depot between the two, which is the bug this exists to stop.
+	_uncover()
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	PauseHold.take(&"debrief")
 	_counting = 0.0
@@ -119,6 +178,7 @@ func show_result(mission: MissionDefinition, result: Dictionary) -> void:
 
 
 func close() -> void:
+	_uncover()   # belt and braces: never leave the screen black
 	if not visible:
 		return
 	visible = false

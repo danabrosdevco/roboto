@@ -3,19 +3,20 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://chilpl56ci0tr"
-path="res://.godot/imported/grate_perf.png-ae12bc18a524db193d170e1bc45960d5.ctex"
+path.s3tc="res://.godot/imported/grate_perf.png-ae12bc18a524db193d170e1bc45960d5.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://textures/PSX_Textures/grate_perf.png"
-dest_files=["res://.godot/imported/grate_perf.png-ae12bc18a524db193d170e1bc45960d5.ctex"]
+dest_files=["res://.godot/imported/grate_perf.png-ae12bc18a524db193d170e1bc45960d5.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
@@ -31,4 +32,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

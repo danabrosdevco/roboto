@@ -27,7 +27,7 @@ extends SceneTree
 # low.
 #
 # NO SINGLE OFFSET EYE AND NO FACE. The Walker's one offset eye plus chamfered
-# turret is StratCom's grammar and the player's own factory; Argus has to be
+# turret is Home Command's grammar and the player's own factory; Argus has to be
 # recognisable at icon size as not from the same production line. So
 # concept_kit.gd's head() is deliberately NOT used — nor is its equivalent
 # rebuilt here — and NOTHING ON THIS FRAME IS NAMED "Eye". The one enormous
@@ -116,7 +116,7 @@ const SPARK := "res://Character/components/spark_burst.tscn"
 const OIL := "res://Character/components/oil_spray.tscn"
 const LIVERY := "res://faction_livery.gd"
 const BODY_SCRIPT := "res://Character/characters/ai/walker.gd"
-## NOT the 17/19/23 set every StratCom frame in the game shares. Argus is a
+## NOT the 17/19/23 set every Home Command frame in the game shares. Argus is a
 ## different production line and should not answer in the same voice.
 const V1 := "res://sounds/sfx/Robot Droid Voices/WAV_RDV__61.wav"
 const V2 := "res://sounds/sfx/Robot Droid Voices/WAV_RDV__74.wav"
@@ -715,7 +715,7 @@ func _gimbal(rig: Node3D) -> Node3D:
 	# 0.890 m; the column stops a metre below.
 	#
 	# NOTE THE NAME. There is no node called "Eye" anywhere on this frame, on
-	# purpose — the Walker's single offset eye is StratCom's grammar and the
+	# purpose — the Walker's single offset eye is Home Command's grammar and the
 	# player's own factory, and Argus must read at icon size as not from the
 	# same production line. check_frame.gd's eye-exclusion assertion therefore
 	# has nothing to find here; the exclusion is still enforced by this piece

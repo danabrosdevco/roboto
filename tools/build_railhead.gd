@@ -269,7 +269,7 @@ func _record_markers() -> void:
 # range that stops short of the neighbouring car's mesh: this project renders in
 # GL compatibility, which lights at most eight lights per mesh.
 
-## StratCom lights warm and even, the light of a building that expects people to
+## Home Command lights warm and even, the light of a building that expects people to
 ## read in it: tungsten, every lamp, no flicker, no exceptions. No amber, no cyan.
 const TUNGSTEN := Color("F2D9A8")
 const KEY := {"Operations": "ops", "Repair": "repair", "Armoury": "armoury", "Fabrication": "fab",

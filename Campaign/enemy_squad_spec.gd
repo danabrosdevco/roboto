@@ -51,6 +51,34 @@ enum Posture {
 # Null falls back to the spawner's default_chassis.
 @export var chassis: PackedScene
 
+## ── UPGRADED KIT ──────────────────────────────
+## The chance each body in this squad rolls its frame's loadout table
+## (EnemyLoadouts.TABLES) instead of deploying with the frame's issued gun and
+## nothing else. 0.0 is a plain squad, 1.0 is an upgraded one, and anything
+## between seeds a few better-equipped bodies into an ordinary garrison.
+##
+## ZERO BY DEFAULT, DELIBERATELY. Every squad already authored in the game
+## stays exactly as it was balanced; upgraded hostiles are a thing a later
+## mission opts into, squad by squad, rather than something that happens to
+## the whole campaign at once. The first contact in the tutorial and the last
+## stand on the Coast Road should not be drawing from the same pool.
+@export_range(0.0, 1.0, 0.05) var kit_variance: float = 0.0
+
+## Kit every body in this squad carries, whatever the roll says.
+##
+## kit_variance draws from a pool, which is right for "a garrison with some
+## armour in it" and useless for "the lobber rovers all have a Sensor Relay" —
+## a set-piece the author means, not a distribution. These are fitted first and
+## count against the frame's slots; the roll then fills whatever is left.
+##
+## Still checked against the catalogue, so a module the frame cannot take is
+## refused and warned about rather than silently fitted.
+@export var forced_modules: Array[StringName] = []
+@export var forced_equipment: Array[StringName] = []
+## Replaces the frame's issued gun on every body. Empty keeps what it comes
+## with. Index 0 is the main mount, 1 the coax.
+@export var forced_weapons: Array[StringName] = []
+
 @export var posture: Posture = Posture.PATROL
 ## Which PatrolPath to walk. Used when posture is PATROL.
 @export var route_tag: StringName = &""

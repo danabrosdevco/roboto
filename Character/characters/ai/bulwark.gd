@@ -178,9 +178,22 @@ func takes_cover() -> bool:
 ## breaking.
 @export var arm_yaw: Node3D
 
-## How far off the torso's facing the arm can bear on its own.
+## How far off the torso's facing the arm can bear on its own, AWAY from the
+## shield — the frame's right, the open side.
 @export var arm_yaw_cone_degrees: float = 40.0
+## ...and how far it can bear ACROSS the shield, which is much less.
+##
+## THIS IS A MEASURED LIMIT, NOT A FEEL ONE. The plate is carried inboard so
+## it covers the centreline, and the muzzle crosses that same line when the
+## arm swings left: at 40 degrees across, the gun's own raycast stops on its
+## own shield 0.23 m out. Swept with the physics server warmed, 30 is clear
+## and 40 is not, so this sits at 28 with margin.
+##
+## It is also just true of a thing holding a tower shield, and it gives the
+## frame a real asymmetry — the shield side is the slow side, and flanking it
+## there means waiting for the whole body to come round.
 ## How fast the arm swings. Much quicker than a turret ring: it is an arm.
+@export var arm_yaw_across_degrees: float = 28.0
 @export var arm_traverse_degrees: float = 150.0
 ## How far the gun arm swings with the stride when it is NOT aiming, and how
 ## fast it blends between marching and aiming.
@@ -232,12 +245,15 @@ func _update_facing(delta: float) -> void:
 		have_bearing = true
 
 	if have_bearing:
-		var cone := deg_to_rad(arm_yaw_cone_degrees)
+		# ASYMMETRIC. Positive yaw swings the gun toward the shield, which it
+		# can only do so far before the muzzle is behind its own plate.
+		var open_side := deg_to_rad(arm_yaw_cone_degrees)
+		var across := deg_to_rad(arm_yaw_across_degrees)
 		# Out of combat the arm does not hold a bearing at all — it marches.
-		_arm_yaw_aim = clampf(bearing, -cone, cone) if engaging else 0.0
+		_arm_yaw_aim = clampf(bearing, -open_side, across) if engaging else 0.0
 		# THE TORSO ONLY MAKES UP THE DIFFERENCE. Inside the cone it does not
 		# move at all, which is what keeps the shield where it was put.
-		var overshoot: float = bearing - clampf(bearing, -cone, cone)
+		var overshoot: float = bearing - clampf(bearing, -open_side, across)
 		if absf(overshoot) > 0.001:
 			turret.rotation.y = rotate_toward(turret.rotation.y,
 					turret.rotation.y + overshoot,

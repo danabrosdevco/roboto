@@ -37,7 +37,7 @@ func _init() -> void:
 		await physics_frame
 	var player: Node3D = _find(root, "Player")
 	var level: Node = player.get_parent()
-	level.add_child(load("res://maps/valley_level.tscn").instantiate())
+	level.add_child(load("res://maps/appendix/valley_level.tscn").instantiate())
 	for _i in 180:
 		await physics_frame
 	var mgr: Node = _find(root, "AIManager")

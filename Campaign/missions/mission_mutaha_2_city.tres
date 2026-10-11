@@ -23,6 +23,10 @@ script = ExtResource("2_espec")
 callsign = "BERKUT"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_hopper"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_cross_west"
@@ -32,12 +36,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_crosse"]
 script = ExtResource("2_espec")
 callsign = "QILIN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_hopper"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_cross_east"
@@ -47,12 +56,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_stage"]
 script = ExtResource("2_espec")
 callsign = "SOKOL"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_stage_south"
@@ -62,12 +76,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="A_picket"]
 script = ExtResource("2_espec")
 callsign = "PIXIU"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("7_hopper")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_br05"
@@ -77,12 +96,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="A_gate"]
 script = ExtResource("2_espec")
 callsign = "KORSHUN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("14_marks"), ExtResource("9_rover")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_gate"
@@ -92,12 +116,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="A_patrol"]
 script = ExtResource("2_espec")
 callsign = "KUNLUN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_mutaha_east"
 post_tag = &""
@@ -107,12 +136,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="P_west"]
 script = ExtResource("2_espec")
 callsign = "ORLAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_mutaha_west"
 post_tag = &""
@@ -122,12 +156,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="P_spine"]
 script = ExtResource("2_espec")
 callsign = "TAISHAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_mutaha_spine"
 post_tag = &""
@@ -137,12 +176,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="P_sw"]
 script = ExtResource("2_espec")
 callsign = "STRIZH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("8_chaser"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_mutaha_sw"
 post_tag = &""
@@ -152,12 +196,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="P_fork"]
 script = ExtResource("2_espec")
 callsign = "HUASHAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("8_chaser"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_mutaha_fork"
 post_tag = &""
@@ -167,12 +216,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="P_north"]
 script = ExtResource("2_espec")
 callsign = "VYMPEL"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_mutaha_north"
 post_tag = &""
@@ -182,12 +236,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="SW_plain"]
 script = ExtResource("2_espec")
 callsign = "EMEI"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_w_plain"
@@ -197,12 +256,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="SW_stage"]
 script = ExtResource("2_espec")
 callsign = "GRANIT"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_stage_sw"
@@ -212,12 +276,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="SW_south"]
 script = ExtResource("2_espec")
 callsign = "WUYI"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_sw_south"
@@ -227,12 +296,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="SW_est"]
 script = ExtResource("2_espec")
 callsign = "TAYFUN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_sw_estates"
@@ -242,12 +316,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="SW_north"]
 script = ExtResource("2_espec")
 callsign = "LUSHAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("9_rover")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_sw_north"
@@ -257,12 +336,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="SW_quay"]
 script = ExtResource("2_espec")
 callsign = "BURAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("16_mortar")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_quay"
@@ -272,12 +356,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_gate"]
 script = ExtResource("2_espec")
 callsign = "JINSHA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_w_south"
@@ -287,12 +376,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_bridge"]
 script = ExtResource("2_espec")
 callsign = "VIKHR"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_w_bridgehead"
@@ -302,12 +396,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_roofs"]
 script = ExtResource("2_espec")
 callsign = "HEISHUI"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_marks"), ExtResource("14_marks"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_w_mid"
@@ -317,12 +416,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_alley"]
 script = ExtResource("2_espec")
 callsign = "GROZA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser"), ExtResource("7_hopper")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_w_mid"
@@ -332,12 +436,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"jinsha_engaged"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_guns"]
 script = ExtResource("2_espec")
 callsign = "BAIYUN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("16_mortar"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_clock"
@@ -347,12 +456,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_clock"]
 script = ExtResource("2_espec")
 callsign = "ZARYA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks"), ExtResource("90_spotter")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_clock"
@@ -362,12 +476,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_streets"]
 script = ExtResource("2_espec")
 callsign = "ZIYAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("10_mech")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_clock"
@@ -377,12 +496,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_hive"]
 script = ExtResource("2_espec")
 callsign = "ISKRA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_clock"
@@ -392,12 +516,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="W_north"]
 script = ExtResource("2_espec")
 callsign = "LANHAI"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_w_north"
@@ -407,12 +536,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="X_west"]
 script = ExtResource("2_espec")
 callsign = "MOLNIYA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &"obj_mutaha_w_mid"
@@ -422,12 +556,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"mutaha_relay_clock"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="B_br04"]
 script = ExtResource("2_espec")
 callsign = "TIEBI"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_br04"
@@ -437,12 +576,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="B_br03"]
 script = ExtResource("2_espec")
 callsign = "PLAMYA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_br03"
@@ -452,12 +596,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="B_br02"]
 script = ExtResource("2_espec")
 callsign = "LONGYA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("14_marks"), ExtResource("7_hopper")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_br02"
@@ -467,12 +616,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_south"]
 script = ExtResource("2_espec")
 callsign = "KREMEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_isle_south"
@@ -482,12 +636,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_docks"]
 script = ExtResource("2_espec")
 callsign = "HUYAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_core_docks"
@@ -497,12 +656,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_solar"]
 script = ExtResource("2_espec")
 callsign = "RUBIN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_solar"
@@ -512,12 +676,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_plaza"]
 script = ExtResource("2_espec")
 callsign = "FEIYAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_core_plaza"
@@ -527,12 +696,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_server"]
 script = ExtResource("2_espec")
 callsign = "YANTAR"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("15_lobber")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_server"
@@ -542,12 +716,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_sroofs"]
 script = ExtResource("2_espec")
 callsign = "CANGLANG"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_marks"), ExtResource("14_marks"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_server"
@@ -557,12 +736,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_compute"]
 script = ExtResource("2_espec")
 callsign = "NEFRIT"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("10_mech"), ExtResource("90_spotter")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_compute"
@@ -572,12 +756,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_roofs"]
 script = ExtResource("2_espec")
 callsign = "HANBING"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_marks"), ExtResource("14_marks"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_compute"
@@ -587,12 +776,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_cstreet"]
 script = ExtResource("2_espec")
 callsign = "KORUND"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_compute"
@@ -602,12 +796,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_hive"]
 script = ExtResource("2_espec")
 callsign = "JINGLEI"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_compute"
@@ -617,12 +816,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_power"]
 script = ExtResource("2_espec")
 callsign = "KASKAD"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("16_mortar")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_core_power"
@@ -632,12 +836,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_avenue"]
 script = ExtResource("2_espec")
 callsign = "LIEHUO"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("16_mortar"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_avenue"
@@ -647,12 +856,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_listen"]
 script = ExtResource("2_espec")
 callsign = "LAVINA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_marks"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_listen"
@@ -662,12 +876,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_stagen"]
 script = ExtResource("2_espec")
 callsign = "QINGYUN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_stage_isle_n"
@@ -677,12 +896,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="I_north"]
 script = ExtResource("2_espec")
 callsign = "PRIBOY"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_isle_north"
@@ -692,12 +916,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="X_isle"]
 script = ExtResource("2_espec")
 callsign = "QINGSHI"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("15_lobber")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &"obj_mutaha_compute"
@@ -707,12 +936,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"mutaha_relay_compute"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="X_isle2"]
 script = ExtResource("2_espec")
 callsign = "TUMAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &"obj_mutaha_server"
@@ -722,12 +956,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"mutaha_relay_compute"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="X_bomber"]
 script = ExtResource("2_espec")
 callsign = "TIESHA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &"obj_mutaha_compute"
@@ -737,12 +976,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"nefrit_engaged"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="X_bombw"]
 script = ExtResource("2_espec")
 callsign = "SOPKA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &"obj_mutaha_clock"
@@ -752,12 +996,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"mutaha_relay_clock"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="X_bombe"]
 script = ExtResource("2_espec")
 callsign = "HUOYAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &"obj_mutaha_fair"
@@ -767,12 +1016,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"shilin_engaged"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_bridge"]
 script = ExtResource("2_espec")
 callsign = "INEY"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_e_bridge"
@@ -782,12 +1036,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_yard"]
 script = ExtResource("2_espec")
 callsign = "SHILIN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_e_south"
@@ -797,12 +1056,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_stage"]
 script = ExtResource("2_espec")
 callsign = "METEL"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_stage_east"
@@ -812,12 +1076,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_lanes"]
 script = ExtResource("2_espec")
 callsign = "YUSHAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("15_lobber")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_e_mid"
@@ -827,12 +1096,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_roofs"]
 script = ExtResource("2_espec")
 callsign = "PURGA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_marks"), ExtResource("14_marks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_e_mid"
@@ -842,12 +1116,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_guns"]
 script = ExtResource("2_espec")
 callsign = "FENGHUANG"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("16_mortar"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_e_mid"
@@ -857,12 +1136,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_ambush"]
 script = ExtResource("2_espec")
 callsign = "UTYOS"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser"), ExtResource("7_hopper")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_e_mid"
@@ -872,12 +1156,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"shilin_engaged"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_fair"]
 script = ExtResource("2_espec")
 callsign = "JIAOLONG"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_fair"
@@ -887,12 +1176,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_apron"]
 script = ExtResource("2_espec")
 callsign = "SKALA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("10_mech")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_fair"
@@ -902,12 +1196,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_hive"]
 script = ExtResource("2_espec")
 callsign = "TENGLONG"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_fair"
@@ -917,12 +1216,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_north"]
 script = ExtResource("2_espec")
 callsign = "VALUN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("9_rover")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_e_north"
@@ -932,12 +1236,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="X_east"]
 script = ExtResource("2_espec")
 callsign = "BIXI"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &"obj_mutaha_e_mid"
@@ -947,12 +1256,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"shilin_engaged"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="N_stagew"]
 script = ExtResource("2_espec")
 callsign = "SHMEL"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_stage_west"
@@ -962,12 +1276,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="N_road"]
 script = ExtResource("2_espec")
 callsign = "TAOTIE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks"), ExtResource("90_spotter")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_road"
@@ -977,12 +1296,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="N_bridge"]
 script = ExtResource("2_espec")
 callsign = "STRELA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("14_marks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_mutaha_br01"
@@ -992,12 +1316,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="X_late"]
 script = ExtResource("2_espec")
 callsign = "MULAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &"obj_mutaha_road"
@@ -1007,6 +1336,7 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [resource]
 script = ExtResource("1_missdef")

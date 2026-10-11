@@ -273,6 +273,13 @@ func mode_deliberate() -> bool:
 ## that used to live here was read once, on the first draw, and was noise on
 ## every one after — this line changes with the state, so it earns its place.
 func mode_status() -> String:
+	# BEFORE EVERYTHING ELSE. With the link at the floor the squad is not
+	# refusing this order, it is not hearing it — so the tool says that rather
+	# than naming an order it cannot send. SquadCommander.link_down() owns the
+	# rule; this only reports it.
+	if _commander != null and is_instance_valid(_commander) \
+			and _commander.has_method("link_down") and _commander.link_down():
+		return _commander._link_refusal() if _commander.has_method("_link_refusal") else "LINK LOST"
 	if not has_modes():
 		return "NOBODY IN COMMAND"
 	if is_queued():

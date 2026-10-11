@@ -35,12 +35,12 @@ const _TutorialLabel := preload("res://Env/world_objects/tutorial_label.gd")
 const _TutorialToast := preload("res://Character/hud/tutorial_toast.gd")
 
 var _levels := [
-	"res://maps/valley_level.tscn",
+	"res://maps/appendix/valley_level.tscn",
 	"res://maps/valley_basin_level.tscn",
-	"res://maps/arena_level.tscn",
-	"res://maps/homebase_level.tscn",
+	"res://maps/appendix/arena_level.tscn",
+	"res://maps/appendix/homebase_level.tscn",
 	"res://maps/coastal-road_level.tscn",
-	"res://maps/mutaha_level.tscn",
+	"res://maps/appendix/mutaha_level.tscn",
 	"res://maps/mutaha_wip_level.tscn",
 	"res://maps/hillfort_level.tscn",
 	"res://maps/pittsburgh_level.tscn",

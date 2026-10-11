@@ -95,6 +95,26 @@ for suite in tools/test_*.gd; do
 	FOUND=$((FOUND + 1))
 	echo "── $(basename "$suite") ──"
 	# The engine banner is on stdout and says nothing useful here.
+	# NO `-- --no-save` HERE, and it is worth knowing why not, because it looks
+	# like an omission next to smoke.sh.
+	#
+	# smoke.sh needs that flag because it boots the game WITHOUT --script, so
+	# SaveSlots hands it the player's real campaigns. A suite does not: every
+	# tool run has --script, and SaveSlots._is_tool_run points DIR at
+	# user://saves_probe for exactly this reason — see the note on DIR. The
+	# sandbox is already there.
+	#
+	# The flag was added here once, on the strength of a before/after mtime
+	# check that appeared to catch test_mechanic and test_teams writing the
+	# player's save. It did not catch that: an mtime check around a 90-second
+	# suite cannot tell "this suite wrote the file" from "something else wrote
+	# it while this suite ran", and the player was in the game at the time.
+	# Four clean runs of both suites afterwards, no writes.
+	#
+	# And the flag is not free. --no-save disables saving globally, which is
+	# the exact behaviour test_profiles and test_profile_menu exist to prove:
+	# it cost 22 assertions across those two suites, all of them reading as
+	# real failures.
 	"$GODOT" --headless --path . --script "res://$suite" 2>&1 \
 		| grep -vE "^Godot Engine|^$|godotengine\.org"
 	status=${PIPESTATUS[0]}

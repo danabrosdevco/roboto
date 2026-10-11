@@ -48,7 +48,7 @@ extends SceneTree
 #    the only promise made here.
 #
 # 3. NO EYE, AND NOTHING NAMED "Eye". The Walker's single offset optic is
-#    StratCom's grammar and the player's own factory, and this frame must not
+#    Home Command's grammar and the player's own factory, and this frame must not
 #    borrow it. The sensor is instead a ragged patch of five unequal OCELLI on
 #    the core's forward-lower flank — too many eyes, none of them centred, no
 #    two spacings alike. They are the ONLY pieces on the frame that keep their
@@ -725,7 +725,7 @@ func _hatchling(parent: Node3D, nm: String, at: Vector3, r: float) -> Node3D:
 var _ocelli_count := 0
 
 ## NO EYE IN THE PLAYER'S SENSE. One offset optic in a chamfered head is how a
-## frame in this game is recognised at forty pixels, and it is StratCom's
+## frame in this game is recognised at forty pixels, and it is Home Command's
 ## grammar — the player's own factory. Swarm must not carry it. So: five eyes,
 ## not one; unequal, not matched; scattered over the hull's forward-lower flank,
 ## not set in a face. Too many eyes is the oldest "not a machine, and not yours"

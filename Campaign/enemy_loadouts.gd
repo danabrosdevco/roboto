@@ -52,14 +52,14 @@ const TABLES := {
 		"modules": {&"armor_plating": 5, &"overclock_servos": 2},
 		"module_draws": [0, 2],
 		"caps": {&"overclock_servos": 1},
-		"equipment": {&"frag": 5, &"smoke": 2, &"repair_kit": 2, &"drone_pack": 1},
+		"equipment": {&"frag": 5, &"smoke": 2, &"repair_kit": 2, &"emp": 2, &"drone_pack": 1, &"hatchling": 1},
 		"equipment_draws": [0, 2],
 	},
 	&"soldier": {
 		"modules": {&"armor_plating": 5, &"overclock_servos": 2},
 		"module_draws": [0, 2],
 		"caps": {&"overclock_servos": 1},
-		"equipment": {&"frag": 5, &"smoke": 2, &"repair_kit": 2, &"drone_pack": 1},
+		"equipment": {&"frag": 5, &"smoke": 2, &"repair_kit": 2, &"emp": 2, &"drone_pack": 1, &"hatchling": 1},
 		"equipment_draws": [0, 2],
 	},
 	# Already the armoured variant of a rifleman, so it does not also roll
@@ -68,7 +68,7 @@ const TABLES := {
 	&"rifleman_armoured": {
 		"modules": {&"overclock_servos": 2, &"hardened_uplink": 2},
 		"module_draws": [0, 1],
-		"equipment": {&"frag": 4, &"smoke": 2},
+		"equipment": {&"frag": 4, &"smoke": 2, &"emp": 2, &"hatchling": 1},
 		"equipment_draws": [0, 2],
 	},
 	&"shotgunner": {
@@ -76,13 +76,13 @@ const TABLES := {
 		"modules": {&"armor_plating": 4, &"overclock_servos": 4},
 		"module_draws": [0, 2],
 		"caps": {&"overclock_servos": 1},
-		"equipment": {&"frag": 4, &"smoke": 3},
+		"equipment": {&"frag": 4, &"smoke": 3, &"emp": 2, &"hatchling": 1},
 		"equipment_draws": [0, 2],
 	},
 	&"marksman": {
 		"modules": {&"optics": 5, &"armor_plating": 2},
 		"module_draws": [0, 2],
-		"equipment": {&"smoke": 3, &"frag": 1},
+		"equipment": {&"smoke": 3, &"frag": 1, &"drone_pack": 1},
 		"equipment_draws": [0, 1],
 	},
 	# No weapon slot, 1 equipment, 2 modules. A plated mechanic is the reason a
@@ -91,13 +91,39 @@ const TABLES := {
 		"modules": {&"armor_plating": 5, &"overclock_servos": 2},
 		"module_draws": [0, 2],
 		"caps": {&"overclock_servos": 1},
-		"equipment": {&"repair_kit": 4, &"smoke": 2},
+		"equipment": {&"repair_kit": 4, &"smoke": 2, &"drone_pack": 2, &"hatchling": 1},
 		"equipment_draws": [0, 1],
 	},
 	# One module slot and no equipment. Either it is faster or it is tougher.
 	&"chaser": {
 		"modules": {&"overclock_servos": 3, &"armor_plating": 3},
 		"module_draws": [0, 1],
+	},
+	# Two slots and no gun: it closes and it hits. Same choice as the chaser,
+	# twice over.
+	&"leaper": {
+		"modules": {&"overclock_servos": 4, &"armor_plating": 3},
+		"module_draws": [0, 2],
+		"caps": {&"overclock_servos": 1},
+	},
+	# 400 hp behind a Heavy MG. NO WEAPON POOL: heavy_mg's whitelist is walker
+	# and rover, and the Bulwark only carries one because starting_weapon_id
+	# is issued with the frame rather than fitted through the catalogue. Giving
+	# it a weapons pool here would ask the legality check for something it is
+	# right to refuse.
+	&"bulwark": {
+		"modules": {&"armor_plating": 5, &"hardened_uplink": 3, &"optics": 2},
+		"module_draws": [0, 2],
+		"caps": {&"armor_plating": 2},
+	},
+	# Flying. Plating is the only thing that changes how long it survives the
+	# small-arms fire it spends its life in.
+	&"gunship": {
+		"modules": {&"armor_plating": 4, &"hardened_uplink": 3},
+		"module_draws": [0, 2],
+		"caps": {&"armor_plating": 2},
+		# NO EQUIPMENT. It has a slot and nothing it could sensibly throw out of
+		# it while flying; what changes a gunship fight is how long it stays up.
 	},
 
 	# ── EYES ──────────────────────────────────
@@ -229,19 +255,39 @@ static func _draw_many(rng: RandomNumberGenerator, table: Dictionary,
 	var caps: Dictionary = table.get("caps", {})
 	var taken: Dictionary = {}
 	for _i in rng.randi_range(lo, hi):
-		var pick: StringName = _draw(rng, table[pool_key])
+		# A DRAW THAT HITS SOMETHING ALREADY AT ITS CEILING IS RE-ROLLED, not
+		# thrown away.
+		#
+		# It used to `continue`, which quietly turned "two draws" into one item
+		# whenever the second landed on a Sensor Relay (one_per_robot) or a
+		# second Overclock Servos. The pools then read far richer than the
+		# robots that came out of them: a frame whose table says it draws twice
+		# from a pool of three mostly arrived carrying one thing.
+		#
+		# Eight attempts, then give up — with a pool of two where both are
+		# full, there is genuinely nothing left to hand out and spinning
+		# forever is worse than a lighter body.
+		var pick: StringName = &""
+		for _try in 8:
+			var cand: StringName = _draw(rng, table[pool_key])
+			if cand == &"":
+				break
+			var item := catalogue.item(cand)
+			if item == null or not _legal(catalogue, cand, frame, kind):
+				continue
+			var ceiling: int = int(caps.get(cand, slots))
+			# one_per_robot is the catalogue's word and overrides the table's:
+			# two Sensor Relays stack their range, which no frame is balanced
+			# for, so the ceiling is 1 wherever it is set.
+			if item.one_per_robot:
+				ceiling = 1
+			if int(taken.get(cand, 0)) >= ceiling:
+				continue   # already carrying its fill of this one
+			pick = cand
+			break
 		if pick == &"":
 			continue
-		var item := catalogue.item(pick)
-		if item == null or not _legal(catalogue, pick, frame, kind):
-			continue
-		var have: int = int(taken.get(pick, 0))
-		var ceiling: int = int(caps.get(pick, slots))
-		if item.one_per_robot:
-			ceiling = 1
-		if have >= ceiling:
-			continue   # rolled something it is already carrying its fill of
-		taken[pick] = have + 1
+		taken[pick] = int(taken.get(pick, 0)) + 1
 		out.append(pick)
 	return out
 
@@ -308,11 +354,41 @@ static func _legal(catalogue: ItemCatalogue, id_value: StringName,
 # field for field.
 # ─────────────────────────────────────────────
 static func apply(soldier: Node, frame: ChassisDefinition,
-		catalogue: ItemCatalogue, seed_text: String) -> Dictionary:
+		catalogue: ItemCatalogue, seed_text: String, forced: Dictionary = {}) -> Dictionary:
 	var kit: Dictionary = {}
 	if soldier == null or frame == null or catalogue == null:
 		return kit
 	kit = roll_for(frame, catalogue, seed_text)
+
+	# AUTHORED KIT GOES ON FIRST and takes the slots it needs; the roll fills
+	# what is left. A set-piece the mission names beats a distribution.
+	for pool_key in ["weapons", "modules", "equipment"]:
+		var want: Array = forced.get(pool_key, [])
+		if want.is_empty():
+			continue
+		var kept: Array = []
+		for id_value in want:
+			var kind := ItemDefinition.Kind.MODULE
+			if pool_key == "weapons":
+				kind = ItemDefinition.Kind.WEAPON
+			elif pool_key == "equipment":
+				kind = ItemDefinition.Kind.EQUIPMENT
+			if _legal(catalogue, id_value, frame, kind):
+				kept.append(id_value)
+		# The rolled ones follow, trimmed to whatever slots the authored kit
+		# left free — otherwise a forced Relay plus two rolled plates is three
+		# modules in a two-slot frame.
+		var room: int = frame.weapon_slots
+		if pool_key == "modules":
+			room = frame.module_slots
+		elif pool_key == "equipment":
+			room = frame.equipment_slots
+		for id_value in kit.get(pool_key, []):
+			if kept.size() >= room:
+				break
+			if not kept.has(id_value):
+				kept.append(id_value)
+		kit[pool_key] = kept.slice(0, maxi(room, 0))
 
 	# ── guns ──────────────────────────────────
 	# Slot 0 replaces whatever the frame was issued; slot 1 is the coax.

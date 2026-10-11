@@ -11,16 +11,16 @@
 [ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
 [ext_resource type="PackedScene" uid="uid://g7mab0c0l6au" path="res://Character/weapon/ai-wep_marksman.tscn" id="8_utu75"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
-[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_metal_psx.png" id="9_qbqh2"]
-[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_metal_disp_psx.png" id="10_tx84r"]
+[ext_resource type="Texture2D" uid="uid://jbq0t273pcq5" path="res://textures/PSX_Textures/robot_metal_psx.png" id="9_qbqh2"]
+[ext_resource type="Texture2D" uid="uid://dhe0gv1d5qif2" path="res://textures/PSX_Textures/robot_metal_disp_psx.png" id="10_tx84r"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
-[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_eye_psx.png" id="11_n4p1p"]
+[ext_resource type="Texture2D" uid="uid://i1sokhxesxia" path="res://textures/PSX_Textures/robot_eye_psx.png" id="11_n4p1p"]
 [ext_resource type="Script" path="res://faction_livery.gd" id="14_agla4"]
 [ext_resource type="Script" path="res://Character/components/rank_kit.gd" id="90_rankkit"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_uvlsm"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6meyw"]
 render_priority = 0
 shader = ExtResource("8_27chb")
 shader_parameter/use_normal_map = false
@@ -86,7 +86,7 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
 
@@ -105,7 +105,7 @@ material = SubResource("StandardMaterial3D_6qgus")
 
 [node name="Hat" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.86, 0)
-material_override = SubResource("ShaderMaterial_uvlsm")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("CylinderMesh_hat")
 
 [node name="SparkBurst" parent="." instance=ExtResource("9_pm84i")]

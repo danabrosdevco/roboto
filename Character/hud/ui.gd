@@ -18,6 +18,9 @@ extends Control
 
 # Segmented health, Far Cry style. Each segment covers this much health.
 @export var health_per_segment: int = 20
+## Most segments the strip will ever draw. Past this a segment covers more
+## health instead of another bar being added -- see update_status.
+@export var max_segments: int = 24
 # Colour each segment by the WHOLE bar's health rather than its own fill, so the
 # strip turns amber together instead of the last segment going red on its own.
 @export var color_segments_by_total: bool = true
@@ -27,6 +30,30 @@ var tween : Tween
 
 func _ready() -> void:
 	_apply_palette()
+	_free_the_signal_bar()
+
+
+# ─────────────────────────────────────────────
+# THE SIGNAL BAR IS NOT PART OF THE HEALTH STRIP.
+#
+# Both live in `Corner`, a VBoxContainer, and a VBox stretches its children to
+# the widest one. The health strip is built from one ProgressBar per
+# health_per_segment, so a chassis with a lot of health widens the VBox — and
+# the signal bar, which has no business caring, grows with it.
+#
+# Photographed at 9999 health: five hundred health segments ran off the screen
+# and the signal bar stretched the full width with them, so a 0-to-1 gauge was
+# being drawn at whatever size the hull happened to be. custom_minimum_size in
+# the scene is a MINIMUM and does not stop it.
+#
+# SHRINK_BEGIN rather than a width: the bar keeps the 215px the scene asks for,
+# stays left-aligned with everything above it, and stops inheriting the strip's
+# problems. Done in code so the scene stays the terrain lane's to edit.
+# ─────────────────────────────────────────────
+func _free_the_signal_bar() -> void:
+	if signal_bar == null:
+		return
+	signal_bar.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 
 
 # ─────────────────────────────────────────────
@@ -153,7 +180,14 @@ func update_status(health: int, max_health: int, magazine_capacity: int, magazin
 	ammo_label.text = "%d / %d" % [magazine_capacity, magazine_size]
 
 	# --- Health Segments ---
-	var required_segments := int(ceil(max_health / float(health_per_segment)))
+	# BOUNDED. One bar per health_per_segment is the Far Cry look and it is
+	# right up to a few hundred health, but nothing capped it: at 9999 it built
+	# five hundred ProgressBars, ran the strip off the screen and dragged the
+	# whole corner panel wide with it. Past the cap a segment simply covers
+	# more health, so the strip keeps its shape for any chassis.
+	var per: int = maxi(health_per_segment,
+		int(ceil(max_health / float(maxi(1, max_segments)))))
+	var required_segments := int(ceil(max_health / float(per)))
 
 	# Auto-create or remove progress bars to match max_health
 	while progress_bars.size() < required_segments:
@@ -170,10 +204,14 @@ func update_status(health: int, max_health: int, magazine_capacity: int, magazin
 	var remaining := health
 	for i in range(progress_bars.size()):
 		var bar := progress_bars[i]
+		# The bar's own ceiling moves with the segment size, or a segment that
+		# covers 50 health still reads full at 20 and the colour band below
+		# divides by the wrong number.
+		bar.max_value = per
 		if remaining > 0:
-			bar.value = clampi(remaining, 0, health_per_segment)
+			bar.value = clampi(remaining, 0, per)
 		else:
 			bar.value = 0
-		remaining -= health_per_segment
+		remaining -= per
 
 	_color_health_bars(health, max_health)

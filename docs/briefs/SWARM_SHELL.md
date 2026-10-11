@@ -100,7 +100,7 @@ and the Broodcarrier's brief (`BROODCARRIER.md` §1, `NEW_FRAMES.md` §8) is
 "accreted, asymmetric, amber, nothing precision-made, and visibly *not* the
 player's factory". The generator went to real trouble to honour that in the
 shape — fans that count badly, struts at angles that match nothing, pods at
-eight sizes, no eye — and then dressed all of it in StratCom steel. The shape
+eight sizes, no eye — and then dressed all of it in Home Command steel. The shape
 argues one thing and the surface argues the other.
 
 **2. In amber it already reads as pottery.** This is the finding from the

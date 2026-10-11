@@ -88,7 +88,7 @@ func _init() -> void:
 	# ON OPEN GROUND. 150m out from homebase is off the edge of its floor, so a
 	# robot there simply FALLS — which reads as movement and made the culled
 	# control look awake. The valley is where this range actually happens.
-	var valley = load("res://maps/valley_level.tscn").instantiate()
+	var valley = load("res://maps/appendix/valley_level.tscn").instantiate()
 	level.add_child(valley)
 	for _i in 20:
 		await physics_frame

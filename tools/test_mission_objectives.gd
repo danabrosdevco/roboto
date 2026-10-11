@@ -104,17 +104,29 @@ func _init() -> void:
 			print("      NOTE  %s names %s, which %s does not author. Harmless "
 				% [m.id, str(dead), level] + "while the rest match, but it is a lie in the data.")
 
-		# RESERVES. A reinforcement_tag is woken from four places, not one, so
+		# RESERVES. A reinforcement_tag is woken from FIVE places, not one, so
 		# checking it against objective ids alone reports most of the game as
 		# broken. The full set is: an objective id, the nest-down convention,
 		# "<callsign>_down" when a squad is wiped, "<callsign>_engaged" on its
-		# first contact, and a spec that wakes itself on a kill count.
+		# first contact, and a spec that wakes itself on a kill count or a clock.
 		var wakeable := _wake_tags(m, found)
 		for spec in m.enemy_force:
 			if spec == null or spec.reinforcement_tag == &"":
 				continue
 			if spec.wake_after_kills > 0:
 				continue   # wakes itself on the body count; needs no other source
+			if spec.wake_after_seconds > 0.0:
+				# ...and so does a wave on a CLOCK. This case was missing, and
+				# the list above says "four places" while naming five, which is
+				# the tell: wake_after_seconds was added to EnemySquadSpec and
+				# implemented in the spawner (_time_waves, ticked in
+				# _physics_process) without this check learning about it.
+				#
+				# It reported Salient's five quadcopter flights as broken when
+				# they are the one kind of wave that cannot have a source
+				# anywhere else — the whole point of a timed wave is that it
+				# does not care what the player has done.
+				continue
 			_check("...%s's %s reserves have something that wakes them" % [m.id, spec.callsign],
 				wakeable.has(spec.reinforcement_tag),
 				"reinforcement_tag %s is not an objective in %s, not a callsign in this force, and not %s"

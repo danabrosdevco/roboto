@@ -1,0 +1,110 @@
+[gd_scene load_steps=31 format=3 uid="uid://bnygpdpgt07ir"]
+
+[ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
+[ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
+[ext_resource type="PackedScene" uid="uid://ib6m72545n75" path="res://Character/hud/hud.tscn" id="2_ox1ok"]
+[ext_resource type="Script" path="res://Managers/game_manager.gd" id="3_7kch0"]
+[ext_resource type="Script" path="res://Managers/stimulus_manager.gd" id="3_tjuyl"]
+[ext_resource type="PackedScene" uid="uid://bgj56y7q1pyxr" path="res://Character/characters/player/test_character.tscn" id="4_m38gd"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="5_5i2ew"]
+[ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="6_ckjgx"]
+[ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="7_ura3n"]
+[ext_resource type="Script" path="res://Campaign/squad_spawner.gd" id="11_0cp1s"]
+[ext_resource type="PackedScene" uid="uid://xcfbkp3wkupp" path="res://Character/characters/ai/soldier_chassis.tscn" id="11_6rcry"]
+[ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="12_0vb83"]
+[ext_resource type="Script" path="res://Campaign/objective_tracker.gd" id="12_1xc4a"]
+[ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="12_nadmy"]
+[ext_resource type="Script" path="res://Campaign/campaign.gd" id="15_3b3cm"]
+[ext_resource type="PackedScene" uid="uid://di44xwffknyvf" path="res://maps/depot_level.tscn" id="16_oio3q"]
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="16_oqoj0"]
+[ext_resource type="Resource" uid="uid://ciftj4gygiyem" path="res://Campaign/items & catalogue/test_item_catalogue.tres" id="18_kolru"]
+[ext_resource type="Script" path="res://Campaign/enemy_force_spawner.gd" id="18_r3yq3"]
+[ext_resource type="Resource" uid="uid://3jioym1uw0m6" path="res://Campaign/missions/mission_arena_1_contact.tres" id="95_a1"]
+[ext_resource type="Resource" uid="uid://bkty15qc166vb" path="res://Campaign/missions/mission_arena_3_firing_line.tres" id="97_a3"]
+[ext_resource type="Resource" uid="uid://xmjjinhqkvrq" path="res://Campaign/missions/mission_coast_1_road.tres" id="98_c1"]
+[ext_resource type="Resource" uid="uid://4qxk4fpf5rou" path="res://Campaign/missions/mission_arena_5_proving.tres" id="99_a5"]
+[ext_resource type="Resource" uid="uid://oem8mh562jhf" path="res://Campaign/missions/mission_basin_1_anchor.tres" id="100_b1"]
+[ext_resource type="Resource" uid="uid://4ctfgm8cxpe7" path="res://Campaign/missions/mission_pitt_1_rivers.tres" id="101_p1"]
+[ext_resource type="Resource" uid="uid://cry1dne04yl1u" path="res://Campaign/missions/mission_mutaha_2_city.tres" id="103_m2"]
+[ext_resource type="Resource" uid="uid://ca167sd6w3m08" path="res://Campaign/missions/mission_hillfort_1_relay.tres" id="104_hf"]
+[ext_resource type="Resource" uid="uid://dj8rl1sqyxtts" path="res://Campaign/missions/mission_georgetown_1_ascent.tres" id="105_gt"]
+[ext_resource type="Resource" uid="uid://dnuyyo4868s2o" path="res://Campaign/missions/mission_polaris_1_siege.tres" id="106_pol"]
+[ext_resource type="Resource" uid="uid://bu5n0k87wqkyd" path="res://Campaign/missions/mission_causeway_1_tower.tres" id="107_cw"]
+
+[node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "squad_spawner", "objective_tracker", "Campaign", "enemy_spawner")]
+script = ExtResource("1_2t272")
+player = NodePath("test_character")
+current_level = NodePath("Homebase")
+ai_manager = NodePath("AIManager")
+game_manager = NodePath("GameManager")
+squad_spawner = NodePath("SquadSpawner")
+objective_tracker = NodePath("ObjectiveTracker")
+Campaign = NodePath("CampaignManager")
+enemy_spawner = NodePath("EnemyForceSpawner")
+
+[node name="AIManager" parent="." node_paths=PackedStringArray("world", "player", "stimulus_manager") instance=ExtResource("2_d77gp")]
+world = NodePath("..")
+player = NodePath("../test_character")
+stimulus_manager = NodePath("StimulusManager")
+
+[node name="StimulusManager" type="Node" parent="AIManager"]
+script = ExtResource("3_tjuyl")
+
+[node name="GameManager" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("3_7kch0")
+player = NodePath("../test_character")
+
+[node name="test_character" parent="." node_paths=PackedStringArray("world", "hud") instance=ExtResource("4_m38gd")]
+transform = Transform3D(-0.145306, 0, -0.989387, 0, 1, 0, 0.989387, 0, -0.145306, 66.6153, 1.91338, -5.55146)
+world = NodePath("..")
+hud = NodePath("../HUD")
+
+[node name="HUD" parent="." node_paths=PackedStringArray("player", "campaign") instance=ExtResource("2_ox1ok")]
+player = NodePath("../test_character")
+campaign = NodePath("../CampaignManager")
+metadata/_edit_use_anchors_ = true
+
+[node name="MuzzleFlash" parent="." instance=ExtResource("5_5i2ew")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -76.0039, 0)
+
+[node name="Explosion" parent="." instance=ExtResource("6_ckjgx")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -81.3558, 0)
+damage_value = 0
+
+[node name="Tracer" parent="." instance=ExtResource("7_ura3n")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -81.0613, 0)
+direction = Vector3(0, -1, 0)
+
+[node name="SquadSpawner" type="Node" parent="." node_paths=PackedStringArray("world", "ai_manager", "player")]
+script = ExtResource("11_0cp1s")
+world = NodePath("..")
+ai_manager = NodePath("../AIManager")
+default_chassis = ExtResource("11_6rcry")
+squad_scene = ExtResource("12_nadmy")
+player = NodePath("../test_character")
+
+[node name="ObjectiveTracker" type="Node" parent="."]
+script = ExtResource("12_1xc4a")
+
+[node name="CampaignManager" type="Node" parent="." groups=["campaign"]]
+script = ExtResource("15_3b3cm")
+base_level = ExtResource("16_oio3q")
+missions = Array[ExtResource("16_oqoj0")]([ExtResource("95_a1"), ExtResource("97_a3"), ExtResource("99_a5"), ExtResource("104_hf"), ExtResource("100_b1"), ExtResource("98_c1"), ExtResource("101_p1"), ExtResource("103_m2"), ExtResource("105_gt"), ExtResource("106_pol"), ExtResource("107_cw")])
+catalogue = ExtResource("18_kolru")
+starting_chassis = ExtResource("11_6rcry")
+starting_resources = 500
+starting_stock = Array[StringName]([&"m4", &"m4", &"m4", &"m4", &"frag", &"frag", &"frag", &"repair_kit"])
+
+[node name="EnemyForceSpawner" type="Node" parent="." node_paths=PackedStringArray("world", "ai_manager")]
+script = ExtResource("18_r3yq3")
+world = NodePath("..")
+ai_manager = NodePath("../AIManager")
+default_chassis = ExtResource("12_0vb83")
+squad_scene = ExtResource("12_nadmy")
+
+[node name="Homebase" parent="." instance=ExtResource("16_oio3q")]
+
+[connection signal="activate_interactible_ui" from="test_character" to="HUD" method="activate_interactible"]
+[connection signal="activate_scanner_ui" from="test_character" to="HUD" method="activate_scan_effect"]
+[connection signal="died" from="test_character" to="." method="_on_player_died"]
+[connection signal="highlight_enemy" from="test_character" to="HUD" method="activate_enemy_marker"]

@@ -35,9 +35,18 @@ const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
 @export var max_spawn_snap: float = 45.0
 
 # ── VARIED KIT ────────────────────────────────
-## Roll each hostile's modules, equipment and gun from EnemyLoadouts.TABLES
-## rather than giving every body of a frame the same thing. Off restores the
-## old behaviour exactly: the chassis' issued weapon and nothing else.
+# OPT IN PER SQUAD, NOT ON EVERYWHERE.
+#
+# This started as a master switch defaulting to ON, which made every hostile
+# in the game — including the three riflemen of the first tutorial contact —
+# roll for armour and a bigger gun. That is a wholesale rebalance of the
+# campaign disguised as a feature, and it takes the choice away from the thing
+# that is supposed to own difficulty: "Composition per mission is your entire
+# difficulty curve" (EnemySquadSpec). An upgraded garrison should be something
+# a LATER mission asks for, on the squads it wants it on.
+#
+# So the real dial is EnemySquadSpec.kit_variance, authored per squad and 0 by
+# default. This stays only as a kill switch for the whole system.
 @export var randomise_loadouts: bool = true
 ## Mixed into every body's seed, so the whole force can be rerolled without
 ## touching the mission. Change it and every hostile in the game is carrying
@@ -264,7 +273,7 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		# garrison reads RELAY-1..RELAY-6 instead of RELAY-L-1 / RELAY-M-1.
 		soldier.soldier_name = "%s-%d" % [spec.callsign, i + 1]
 		_apply_frame(soldier, frame)
-		_apply_loadout(soldier, frame, "%s/%s/%d" % [_mission_seed, spec.callsign, i])
+		_apply_loadout(soldier, frame, "%s/%s/%d" % [_mission_seed, spec.callsign, i], spec)
 		# For the playtest log: "Chaser", not "enemy_chaser". Legacy count-form
 		# frames are built on the fly and have no name worth reporting.
 		if frame.resource_path != "":
@@ -305,6 +314,7 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 				# Re-seat on the surface it was pushed onto, WITHOUT the snap
 				# that pulled it back into the pile.
 				at = _Ground.stand(spread, soldier, level, false)
+			at = _settle_clear(at, soldier, level, reach)
 			taken.append([at, reach])
 		soldier.position = level.to_local(at)
 		level.add_child(soldier)
@@ -688,7 +698,7 @@ const RING_GAP := 0.5
 ## many turns it tries at each step.
 const SEAT_STEP := 1.6
 const SEAT_TURNS := 8
-const SEAT_STEPS := 4
+const SEAT_STEPS := 8
 
 
 # WHERE A BODY WILL ACTUALLY FIT.
@@ -747,6 +757,24 @@ func _seat_for(at: Vector3, soldier: Soldier, level: Node, anchor: Vector3, take
 			if step == 0:
 				break
 
+	# THIRD: ROOM, EVEN WITHOUT A NAVMESH TO STAND ON.
+	#
+	# _seat_is_clear needs walkable ground within 2m as well as space, and
+	# inside a structure there is often no navmesh at all — an interior the bake
+	# never reached refuses every candidate however much room is actually there.
+	# That is 62 of the 75 bodies found buried across the brush maps: not short
+	# of space, short of MESH. Somewhere with room and no mesh is a worse seat
+	# than one with both, and a far better one than standing in a wall.
+	for step in SEAT_STEPS:
+		var out := float(step) * SEAT_STEP
+		for turn in SEAT_TURNS:
+			var angle := TAU * float(turn) / float(SEAT_TURNS)
+			var candidate: Vector3 = at if step == 0 else at + Vector3(cos(angle), 0.0, sin(angle)) * out
+			if _seat_has_room(candidate, reach, space):
+				return candidate
+			if step == 0:
+				break
+
 	# NOBODY STACKS, EVER. A post wedged between buildings can fail both tests
 	# at every candidate — and falling back to one spot for all of them put
 	# three bodies inside each other at Mutaha's north island, which is
@@ -761,6 +789,13 @@ func _seat_for(at: Vector3, soldier: Soldier, level: Node, anchor: Vector3, take
 				return candidate
 			if step == 0:
 				break
+	# EVERY ONE OF THESE IS A BODY IN A WALL. Three searches found nowhere with
+	# room within range of the post, so the drawn seat is all that is left and
+	# it is very likely inside the level. Silent, this is invisible until a
+	# player walks into it; named, it points straight at the post that needs
+	# moving. tools/spawn_geometry_audit.gd lists them all at once.
+	push_warning("EnemyForceSpawner: no clear seat within %.0fm of (%.0f, %.0f, %.0f) for %s — placing it on its ring offset, which may be inside the level." % [
+		float(SEAT_STEPS) * SEAT_STEP, anchor.x, anchor.y, anchor.z, soldier.soldier_name])
 	return at   # the ring drew this seat: at least it is spread like the others
 
 
@@ -775,6 +810,23 @@ func _seat_is_free(at: Vector3, reach: float, taken: Array) -> bool:
 		if Vector2(other.x - at.x, other.z - at.z).length() < room:
 			return false
 	return true
+
+
+## Room for a body here, measured against the REAL SURFACE rather than the
+## navmesh. The same sphere _seat_is_clear uses, seated on whatever a ray finds
+## underfoot — so it works inside a structure the navmesh bake never entered.
+func _seat_has_room(at: Vector3, reach: float, space: PhysicsDirectSpaceState3D) -> bool:
+	var down := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 2.0, at + Vector3.DOWN * 4.0)
+	var hit := space.intersect_ray(down)
+	if hit.is_empty():
+		return false   # nothing to stand on at all
+	var ball := SphereShape3D.new()
+	ball.radius = reach
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = ball
+	q.transform = Transform3D(Basis(), Vector3(at.x, (hit.position as Vector3).y + reach + 0.1, at.z))
+	q.collide_with_areas = false
+	return space.intersect_shape(q, 1).is_empty()
 
 
 func _seat_is_clear(at: Vector3, reach: float, space: PhysicsDirectSpaceState3D, level: Node3D) -> bool:
@@ -929,7 +981,139 @@ func clear() -> void:
 
 ## Rolled kit for one body. The arithmetic lives in EnemyLoadouts so that the
 ## nest, which hatches bodies on a path of its own, cannot drift from this one.
-func _apply_loadout(soldier: Soldier, frame: ChassisDefinition, seed_text: String) -> void:
-	if not randomise_loadouts:
+##
+## `variance` is the squad's kit_variance: the chance THIS body is an upgraded
+## one. Rolled off the same seed as the kit itself, so which bodies in a squad
+## are upgraded is as repeatable as what they are carrying.
+func _apply_loadout(soldier: Soldier, frame: ChassisDefinition, seed_text: String,
+		spec: EnemySquadSpec) -> void:
+	var forced := {
+		"modules": spec.forced_modules,
+		"equipment": spec.forced_equipment,
+		"weapons": spec.forced_weapons,
+	}
+	var authored: bool = not (spec.forced_modules.is_empty()
+			and spec.forced_equipment.is_empty() and spec.forced_weapons.is_empty())
+	var variance: float = spec.kit_variance
+	# AUTHORED KIT IS NOT OPTIONAL. A squad that names what it carries gets it
+	# whatever its variance says — the dial is for the random half.
+	if not randomise_loadouts or (variance <= 0.0 and not authored):
 		return
-	_Loadouts.apply(soldier, frame, _catalogue(), seed_text)
+	if variance < 1.0 and not authored:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash(seed_text + "/upgraded")
+		if rng.randf() >= variance:
+			return   # an ordinary body in a partly upgraded squad
+	_Loadouts.apply(soldier, frame, _catalogue(), seed_text, forced)
+
+
+# ─────────────────────────────────────────────
+# THE LAST CHECK, MADE WHERE THE BODY ACTUALLY ENDS UP.
+#
+# _seat_is_clear tests a sphere seated on the NAVMESH point near a candidate.
+# GroundSnap.stand then puts the body on the REAL SURFACE it finds by raycast,
+# which is not always the same height — a navmesh at ground level under a
+# walkway, a ledge the surface probe finds first, a ramp whose deck is above
+# the mesh. The clearance was measured at one height and the body was put at
+# another, so a seat that passed every test still arrived inside the level.
+#
+# That is 62 of the 75 bodies the audit found buried across the brush maps:
+# not a search that gave up — a search that succeeded and was then overruled
+# by the ground. None of them warned, because as far as _seat_for was
+# concerned it had found somewhere good.
+#
+# So this re-tests at the finished position and nudges outward until the body
+# is genuinely in the clear, re-standing at each step because moving sideways
+# changes what is underfoot.
+# ─────────────────────────────────────────────
+func _settle_clear(at: Vector3, soldier: Soldier, level: Node, reach: float) -> Vector3:
+	if not (level is Node3D) or not level.is_inside_tree():
+		return at
+	var space := (level as Node3D).get_world_3d().direct_space_state
+	if space == null or _body_fits(at, reach, space, soldier):
+		return at
+	for step in SEAT_STEPS:
+		var out := float(step + 1) * SEAT_STEP
+		for turn in SEAT_TURNS:
+			var angle := TAU * float(turn) / float(SEAT_TURNS)
+			var candidate: Vector3 = at + Vector3(cos(angle), 0.0, sin(angle)) * out
+			# Re-stood WITHOUT the navmesh pull: the pull is what would drag it
+			# back towards the spot it is trying to get out of.
+			var stood := _Ground.stand(candidate, soldier, level, false)
+			# AND IT HAS TO HAVE A FLOOR. GroundSnap.stand returns the spot
+			# lifted clear when it finds no surface at all — "trust the navmesh".
+			# Accepting that here moved eleven bodies out of a wall and into the
+			# air, which is not an improvement on either count.
+			if not _has_floor(stood, space):
+				continue
+			if _body_fits(stood, reach, space, soldier):
+				return stood
+	push_warning("EnemyForceSpawner: %s is inside the level at (%.0f, %.1f, %.0f) and nowhere within %.0fm is clear — the post it spawns on needs moving." % [
+		soldier.soldier_name, at.x, at.y, at.z, float(SEAT_STEPS) * SEAT_STEP])
+	return at
+
+
+## Is there room for this body AT this exact spot? Other bodies are ignored —
+## spacing is _spread_from's job and two robots touching is not a bug worth
+## moving someone into a wall over.
+##
+## THE BODY'S OWN SHAPE, SHRUNK — not a sphere of its half-width. A sphere
+## that size centred on the origin reaches below the feet of anything wide and
+## low, so a Rover reported itself stuck in the floor it was standing on,
+## nothing ever fitted, and the search lifted 97 bodies into the air looking
+## for somewhere that did. Shrunk because a garrison belongs up against cover
+## and a full-size test calls that a collision.
+func _body_fits(at: Vector3, reach: float, space: PhysicsDirectSpaceState3D, soldier: Soldier) -> bool:
+	var shape := _shrunk_shape(soldier)
+	if shape == null:
+		return true   # nothing to test with: do not move it on a guess
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = shape
+	q.transform = Transform3D(Basis(), at)
+	q.collide_with_areas = false
+	for hit in space.intersect_shape(q, 8):
+		var other = hit.collider
+		if other == soldier or other is CharacterBody3D or other is RigidBody3D:
+			continue
+		return false
+	return true
+
+
+## The body's collision shape at 60% of its size, for the fit test above.
+func _shrunk_shape(body: Node3D) -> Shape3D:
+	for c in body.get_children():
+		if not (c is CollisionShape3D) or c.shape == null:
+			continue
+		var s: Shape3D = c.shape
+		if s is CapsuleShape3D:
+			var cap := CapsuleShape3D.new()
+			cap.radius = maxf((s as CapsuleShape3D).radius * 0.6, 0.1)
+			cap.height = maxf((s as CapsuleShape3D).height * 0.6, 0.3)
+			return cap
+		if s is BoxShape3D:
+			var box := BoxShape3D.new()
+			box.size = (s as BoxShape3D).size * 0.6
+			return box
+		if s is CylinderShape3D:
+			var cyl := CylinderShape3D.new()
+			cyl.radius = maxf((s as CylinderShape3D).radius * 0.6, 0.1)
+			cyl.height = maxf((s as CylinderShape3D).height * 0.6, 0.3)
+			return cyl
+	return null
+
+
+## Something solid within a couple of metres under `at`. Other bodies are
+## looked through, the same way GroundSnap._surface does it.
+func _has_floor(at: Vector3, space: PhysicsDirectSpaceState3D) -> bool:
+	var q := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 0.2, at + Vector3.DOWN * 2.5)
+	var skip: Array[RID] = []
+	for _i in 4:
+		q.exclude = skip
+		var hit := space.intersect_ray(q)
+		if hit.is_empty():
+			return false
+		if hit.collider is CharacterBody3D or hit.collider is RigidBody3D:
+			skip.append(hit.rid)
+			continue
+		return true
+	return false

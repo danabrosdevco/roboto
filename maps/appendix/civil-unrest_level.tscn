@@ -1,4 +1,4 @@
-[gd_scene load_steps=361 format=4 uid="uid://fgdjjw1lgv8e"]
+[gd_scene load_steps=360 format=4 uid="uid://fgdjjw1lgv8e"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_kgieb"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_mbgf5"]
@@ -24,9 +24,8 @@
 [ext_resource type="Material" uid="uid://djujtutnl2vug" path="res://textures/Set4All/Bricks/Bricks/Bricks_04_Red_Moss_2.tres" id="17_hdi1f"]
 [ext_resource type="PackedScene" uid="uid://qec53sx1mmk2" path="res://3d_assets/Low Poly Furniture/Lights/Ceiling Light.fbx" id="18_4v03s"]
 [ext_resource type="Material" uid="uid://daw6dyv7mkber" path="res://textures/Set4All/Debris/Debris_Trash_Cans_2.tres" id="18_ea1kj"]
-[ext_resource type="PackedScene" uid="uid://c7yxcpgs2ry2p" path="res://Env/world_objects/components/bonfire.tscn" id="18_rk63d"]
 [ext_resource type="PackedScene" uid="uid://bq2p5mjiw62cy" path="res://Character/characters/ai/enemy_template.tscn" id="19_ky2xj"]
-[ext_resource type="PackedScene" uid="uid://bg6q500jq5ifk" path="res://maps/oyster-bay_level.tscn" id="19_w1lir"]
+[ext_resource type="PackedScene" uid="uid://bg6q500jq5ifk" path="res://maps/appendix/oyster-bay_level.tscn" id="19_w1lir"]
 [ext_resource type="PackedScene" uid="uid://bjnmbvul1677q" path="res://Character/characters/ai/enemy_chaser.tscn" id="21_4n2ml"]
 [ext_resource type="PackedScene" uid="uid://vckeok0ct116" path="res://Character/characters/ai/boss_guardian.tscn" id="22_qh43v"]
 [ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="22_vcigg"]
@@ -2332,9 +2331,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.4348, 1.27176, 84.6941)
 [node name="Enm_Chaser2" parent="Squad2" instance=ExtResource("21_4n2ml")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53.3744, 1.27176, 84.6941)
 
-[node name="Bonfire2" parent="." instance=ExtResource("18_rk63d")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -92.3023, 0.886101, 68.123)
-
 [node name="LevelExit" parent="." instance=ExtResource("4_gnl0g")]
 transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, -91.3356, -9.81879, 71.6309)
 next_level = ExtResource("19_w1lir")
@@ -2342,9 +2338,6 @@ next_level = ExtResource("19_w1lir")
 [node name="CSGBox3D" parent="LevelExit" index="1"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.269104, -0.354246, -0.00473022)
 size = Vector3(0.461792, 2.24231, 1.23578)
-
-[node name="Bonfire3" parent="." instance=ExtResource("18_rk63d")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65.077, 0, -5.44541)
 
 [node name="SpawnPoint" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 67.261, 1.81122, -3.45235)
@@ -2387,9 +2380,6 @@ light_energy = 6.0
 
 [node name="Interactible" parent="." instance=ExtResource("13_bhe8f")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90.2135, 1.19982, 71.6694)
-
-[node name="Bonfire" parent="." instance=ExtResource("18_rk63d")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0137725, -0.05018, 18.3407)
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.35676, 3.37723, 51.3033)

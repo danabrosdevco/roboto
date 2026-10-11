@@ -301,13 +301,30 @@ func _test_a_failing_link_slows_the_player() -> void:
 	_ok("a clean link costs no speed", is_equal_approx(clean, 1.0),
 			"%.2f" % clean)
 
+	# SAMPLED FROM THE CONSTANTS, NOT FROM FOUR NUMBERS I TYPED.
+	#
+	# This read [0.6, 0.4, 0.2, 0.0] and asserted the first was FUZZED. The
+	# thresholds were then retuned — FUZZED 0.75 -> 0.85, DEGRADED 0.50 ->
+	# 0.62 — and 0.60 moved into the band below, so the test failed over a
+	# change that was entirely correct. The same mistake the recovery-rate
+	# check above avoids by reading signal_recovery_rate off the body.
+	#
+	# A point in the middle of each band, derived, so retuning the ladder
+	# cannot break this and a band that is accidentally made EMPTY will.
+	var mid := func(hi: float, lo: float) -> float: return (hi + lo) * 0.5
+	var samples := [
+		mid.call(AI.SIGNAL_FUZZED, AI.SIGNAL_DEGRADED),
+		mid.call(AI.SIGNAL_DEGRADED, AI.SIGNAL_CRITICAL),
+		mid.call(AI.SIGNAL_CRITICAL, AI.SIGNAL_EKILL),
+		0.0,
+	]
 	var seen: Array = []
-	for level: float in [0.6, 0.4, 0.2, 0.0]:
+	for level: float in samples:
 		p.signal_integrity = level
 		p._update_ekill_latch()
 		seen.append(p._signal_move_scale())
 	_ok("...FUZZED is still full speed", is_equal_approx(float(seen[0]), 1.0),
-			"%.2f at 0.60" % float(seen[0]))
+			"%.2f at integrity %.2f" % [float(seen[0]), float(samples[0])])
 	# Monotonic: each band must be slower than the one above it, or the squeeze
 	# does not build and a player cannot read it coming.
 	var falling := true

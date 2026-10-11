@@ -1,6 +1,6 @@
 # The enemy three — shared prerequisite
 
-Broodcarrier (Swarm) · Bastion (StratCom) · See-Engine (Argus)
+Broodcarrier (Swarm) · Bastion (Home Command) · See-Engine (Argus)
 
 **Read this before any of the three. It is the same blocker for all of them
 and it is the single most dangerous thing in this whole batch.**
@@ -10,7 +10,7 @@ and it is the single most dangerous thing in this whole batch.**
 ## The append is free. The function next to it is not.
 
 A read-only sweep of every faction reference in the project found the cost of
-adding SWARM, STRATCOM and ARGUS to `Enums.Factions` to be **MEDIUM**, and
+adding SWARM, HOME COMMAND and ARGUS to `Enums.Factions` to be **MEDIUM**, and
 almost all of that is one function.
 
 ### What is genuinely free
@@ -64,7 +64,7 @@ yet, so the next append cannot repeat this.
 Two constraints found in the same sweep:
 
 - **Inter-faction hostility cannot live in `are_hostile`.** It is pure and
-  stateless, so "Swarm and StratCom fight each other in mission A but not B"
+  stateless, so "Swarm and Home Command fight each other in mission A but not B"
   has nowhere to go without making the table mission-aware.
 - **If the three ARE mutually hostile**, `hostiles_for()` and
   `activation_sources()` start listing enemies as each other's activation
@@ -87,7 +87,7 @@ game yet asks to see two enemy factions fight.
 - one hardcoded `[ALLIED, ENEMY]` list in the debug contact overlay
 - three `FRAMES` entries in `kill_kinds.gd`
 
-The colours are already written and waiting: `FAC_SWARM` amber, `FAC_STRATCOM`
+The colours are already written and waiting: `FAC_SWARM` amber, `FAC_HOME`
 institutional green, `FAC_ARGUS` tyrian, at `hud_palette.gd:62-65`, with a
 comment saying adding the factions would be an append.
 

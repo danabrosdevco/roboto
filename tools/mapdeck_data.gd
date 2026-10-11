@@ -1796,7 +1796,7 @@ static func maps() -> Array:
 	})
 
 	# ═══ MACHINE WORLD ═══════════════════════════════════════════════════════
-	# The fiction this game is actually about: an error sub-agent of StratCom,
+	# The fiction this game is actually about: an error sub-agent of Home Command,
 	# in the places machines built for themselves.
 
 	out.append({

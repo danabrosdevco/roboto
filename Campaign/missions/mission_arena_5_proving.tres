@@ -14,6 +14,10 @@ script = ExtResource("2_espec")
 callsign = "LINE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("8_rifle"), ExtResource("8_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &""
@@ -23,12 +27,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_pack"]
 script = ExtResource("2_espec")
 callsign = "PACK"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_hopper"), ExtResource("5_hopper"), ExtResource("6_chaser"), ExtResource("6_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &""
@@ -38,12 +47,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_ward"]
 script = ExtResource("2_espec")
 callsign = "WARD"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("8_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &""
@@ -53,6 +67,7 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [resource]
 script = ExtResource("1_missdef")

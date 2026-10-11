@@ -15,14 +15,14 @@ extends SceneTree
 #
 # ── WHAT THIS IS ─────────────────────────────
 #
-# BASTION — StratCom, supply 3, ground, deployable hardpoint, enemy only. It
+# BASTION — Home Command, supply 3, ground, deployable hardpoint, enemy only. It
 # walks, then plants: immobile, heavily armoured, and projecting a field that
-# hardens nearby StratCom units against suppression. Concept B, THE PYLON
+# hardens nearby Home Command units against suppression. Concept B, THE PYLON
 # (planted), out of ConceptsC.bastion_b() — legs locked straight, four long
 # outriggers hammered down, the field held overhead as a canopy hoop on a mast.
 #
 # THIS FRAME IS SUPPOSED TO LOOK RIGHT, and that is the faction statement.
-# StratCom is the player's own parent organisation, so the Bastion is built out
+# Home Command is the player's own parent organisation, so the Bastion is built out
 # of the PLAYER's vocabulary on purpose — the Walker's chamfered hull with its
 # sloped glacis and cut tail, the turret ring, the box turret with its cheek and
 # brow sliced off, ONE eye offset to port, the whip antenna, boxy limbs — with
@@ -358,7 +358,7 @@ func _eye_material() -> StandardMaterial3D:
 ## THE PROJECTOR'S LIT FACES. The same trick walker.tscn's LampL/LampR use — an
 ## emissive StandardMaterial3D, outside the livery — because the planted state
 ## has to be readable and "projector lit" is a third of that read. Institutional
-## green rather than the lamps' warm white: this is StratCom's own field, and the
+## green rather than the lamps' warm white: this is Home Command's own field, and the
 ## colour is the one already written and waiting at hud_palette.gd:63.
 func _projector_material() -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -596,7 +596,7 @@ func _build() -> CharacterBody3D:
 
 
 # ─────────────────────────────────────────────
-# THE STRATCOM TELL
+# THE HOME COMMAND TELL
 # ─────────────────────────────────────────────
 ## APPLIQUÉ ON THE HULL FLANKS, BOLTED. More plate than the player's own frames
 ## carry and better finished — that is the entire faction statement, and it is

@@ -22,6 +22,7 @@ const CATALOGUE := "res://Campaign/items & catalogue/test_item_catalogue.tres"
 
 var _fails: int = 0
 var _cat: ItemCatalogue = null
+var _by_id: Dictionary = {}
 
 
 ## ENEMY FRAMES ARE NOT IN THE CATALOGUE. The catalogue is the player's shop —
@@ -34,10 +35,19 @@ func _frame(frame_id: StringName) -> ChassisDefinition:
 	var from_cat := _cat.chassis_def(frame_id)
 	if from_cat != null:
 		return from_cat
-	var path := "res://Campaign/chassis/chassis_%s.tres" % frame_id
-	if not ResourceLoader.exists(path):
-		return null
-	return load(path) as ChassisDefinition
+	# INDEXED BY ID, NOT BY FILENAME. chassis_<id>.tres holds for most of them
+	# and not for all — the Leaper and the Quadcopter Bomber are in files named
+	# something else, and guessing the path reported them as missing frames
+	# when they were only missing a naming convention.
+	if _by_id.is_empty():
+		var d := DirAccess.open("res://Campaign/chassis")
+		for fn in d.get_files():
+			if not fn.ends_with(".tres"):
+				continue
+			var c: ChassisDefinition = load("res://Campaign/chassis/" + fn)
+			if c != null:
+				_by_id[c.id] = c
+	return _by_id.get(frame_id)
 
 
 func _init() -> void:
@@ -55,6 +65,10 @@ func _init() -> void:
 	_test_an_unlisted_frame_rolls_nothing()
 	_test_the_rover_never_gets_servos()
 	_test_a_coax_implies_a_main_gun()
+
+	_test_one_relay_ever()
+	_test_plating_never_exceeds_two()
+	_test_draws_are_not_wasted()
 
 	print("")
 	if _fails == 0:
@@ -274,3 +288,65 @@ func _test_a_coax_implies_a_main_gun() -> void:
 			"%d of %d coax rolls had an empty main mount" % [bad, with_coax])
 	_ok("...and walkers do sometimes roll one", with_coax > 0,
 			"0 of 200 — the coax pool is unreachable")
+
+
+# ─────────────────────────────────────────────
+func _test_one_relay_ever() -> void:
+	# Two Sensor Relays add their range together and no frame is balanced for
+	# it. Asserted across EVERY frame with a table rather than the one or two
+	# that happen to list it, because the next table entry is the one that
+	# forgets.
+	var worst := 0
+	var where := ""
+	for frame_id in _Loadouts.TABLES:
+		var frame := _frame(frame_id)
+		if frame == null:
+			continue
+		for n in 300:
+			var kit: Dictionary = _Loadouts.roll_for(frame, _cat, "relay/%s/%d" % [frame_id, n])
+			var count := 0
+			for id_value in kit["modules"]:
+				if id_value == &"optics":
+					count += 1
+			if count > worst:
+				worst = count
+				where = String(frame_id)
+	_ok("no frame ever rolls two Sensor Relays", worst <= 1,
+			"%s rolled %d" % [where, worst])
+
+
+func _test_plating_never_exceeds_two() -> void:
+	var worst := 0
+	var where := ""
+	for frame_id in _Loadouts.TABLES:
+		var frame := _frame(frame_id)
+		if frame == null:
+			continue
+		for n in 300:
+			var kit: Dictionary = _Loadouts.roll_for(frame, _cat, "plate/%s/%d" % [frame_id, n])
+			var count := 0
+			for id_value in kit["modules"]:
+				if id_value == &"armor_plating":
+					count += 1
+			if count > worst:
+				worst = count
+				where = String(frame_id)
+	_ok("no frame ever rolls more than two plates", worst <= 2,
+			"%s rolled %d" % [where, worst])
+
+
+func _test_draws_are_not_wasted() -> void:
+	# A draw that lands on something already at its ceiling is re-rolled, so a
+	# frame that draws twice from a pool with room should usually end up with
+	# two things. Measured as an average rather than a guarantee: drawing 0 is
+	# a legitimate outcome of [0, 2] and the point is that the MIDDLE of the
+	# distribution has not collapsed to one.
+	var frame := _frame(&"rifleman")
+	var total := 0
+	for n in 400:
+		var kit: Dictionary = _Loadouts.roll_for(frame, _cat, "waste/R/%d" % n)
+		total += kit["modules"].size()
+	var mean: float = float(total) / 400.0
+	# [0, 2] draws, uniform, is a mean of 1.0 if nothing is ever wasted.
+	_ok("a two-draw pool averages close to one module, not well under",
+			mean > 0.85, "mean %.2f over 400 rolls" % mean)

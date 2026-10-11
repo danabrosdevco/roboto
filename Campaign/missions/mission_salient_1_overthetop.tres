@@ -1,0 +1,619 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=46 format=3]
+
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="1_343be"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="2_clim6"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rifleman.tres" id="3_stwy5"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_shotgunner.tres" id="4_syjgu"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_marksman.tres" id="5_lqsvf"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="6_1bdoy"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_chaser.tres" id="7_bmg7k"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="8_a8eba"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_bulwark.tres" id="9_hme47"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_walker.tres" id="10_i8sjp"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mortar_track.tres" id="11_vwp38"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover.tres" id="12_emqi0"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_hopper.tres" id="13_q7uw1"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_helicopter.tres" id="14_4qji0"]
+[ext_resource type="PackedScene" path="res://maps/salient_level.tscn" id="15_quphb"]
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="16_2daps"]
+
+[sub_resource type="Resource" id="Resource_y1gxg"]
+script = ExtResource("1_343be")
+callsign = "ZASEKA"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("5_lqsvf"), ExtResource("6_1bdoy")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_sap_north"
+spawn_tag = &"obj_salient_sap_north"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_e2phv"]
+script = ExtResource("1_343be")
+callsign = "KOLCHUGA"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("5_lqsvf"), ExtResource("6_1bdoy")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_sap_south"
+spawn_tag = &"obj_salient_sap_south"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_qub8j"]
+script = ExtResource("1_343be")
+callsign = "SHCHIT"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k")])
+count = 0
+kit_variance = 0.8
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_crater"
+spawn_tag = &"obj_salient_crater"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_yh47q"]
+script = ExtResource("1_343be")
+callsign = "OPLOT"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("5_lqsvf"), ExtResource("5_lqsvf"), ExtResource("6_1bdoy"), ExtResource("6_1bdoy"), ExtResource("8_a8eba"), ExtResource("8_a8eba")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([&"optics"])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_front"
+spawn_tag = &"obj_salient_front"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_eu662"]
+script = ExtResource("1_343be")
+callsign = "TIELI"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("6_1bdoy"), ExtResource("6_1bdoy"), ExtResource("9_hme47"), ExtResource("9_hme47"), ExtResource("10_i8sjp"), ExtResource("11_vwp38"), ExtResource("11_vwp38")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_support"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_mbayb"]
+script = ExtResource("1_343be")
+callsign = "JINGANG"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("5_lqsvf"), ExtResource("5_lqsvf"), ExtResource("5_lqsvf"), ExtResource("9_hme47"), ExtResource("12_emqi0")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_redoubt"
+spawn_tag = &"obj_salient_redoubt"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_5vs4a"]
+script = ExtResource("1_343be")
+callsign = "LEIYU"
+roster = Array[ExtResource("2_clim6")]([ExtResource("11_vwp38"), ExtResource("11_vwp38"), ExtResource("11_vwp38"), ExtResource("11_vwp38"), ExtResource("11_vwp38"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("9_hme47"), ExtResource("6_1bdoy"), ExtResource("6_1bdoy")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([&"optics"])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_guns"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_56c8l"]
+script = ExtResource("1_343be")
+callsign = "SHUANGYAN"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("8_a8eba"), ExtResource("8_a8eba"), ExtResource("6_1bdoy")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_railhead"
+spawn_tag = &"obj_salient_railhead"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_oi6l8"]
+script = ExtResource("1_343be")
+callsign = "BAITA"
+roster = Array[ExtResource("2_clim6")]([ExtResource("5_lqsvf"), ExtResource("5_lqsvf"), ExtResource("5_lqsvf"), ExtResource("5_lqsvf"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("9_hme47")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_church"
+spawn_tag = &"obj_salient_church"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_l52ae"]
+script = ExtResource("1_343be")
+callsign = "HEILONG"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("10_i8sjp"), ExtResource("12_emqi0")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_village"
+spawn_tag = &"obj_salient_village"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_6qn84"]
+script = ExtResource("1_343be")
+callsign = "DOZOR"
+roster = Array[ExtResource("2_clim6")]([ExtResource("5_lqsvf"), ExtResource("5_lqsvf"), ExtResource("5_lqsvf"), ExtResource("3_stwy5")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([&"optics"])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_salient_op_tower"
+spawn_tag = &"obj_salient_op_tower"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_hvbxk"]
+script = ExtResource("1_343be")
+callsign = "NABEG"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu")])
+count = 0
+kit_variance = 0.75
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_front"
+spawn_tag = &"obj_salient_front"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"nabeg_wave"
+wake_after_kills = 18
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_y0e1x"]
+script = ExtResource("1_343be")
+callsign = "PRILIV"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k")])
+count = 0
+kit_variance = 0.75
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_support"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"priliv_wave"
+wake_after_kills = 34
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_827uc"]
+script = ExtResource("1_343be")
+callsign = "SHKVAL"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("5_lqsvf"), ExtResource("5_lqsvf")])
+count = 0
+kit_variance = 0.75
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_front"
+spawn_tag = &"obj_salient_front"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"shkval_wave"
+wake_after_kills = 52
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_wq8cf"]
+script = ExtResource("1_343be")
+callsign = "TARAN"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("13_q7uw1"), ExtResource("13_q7uw1"), ExtResource("13_q7uw1")])
+count = 0
+kit_variance = 0.75
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_support"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"taran_wave"
+wake_after_kills = 70
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_t73j1"]
+script = ExtResource("1_343be")
+callsign = "OBVAL"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("6_1bdoy"), ExtResource("6_1bdoy")])
+count = 0
+kit_variance = 0.75
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_guns"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"obval_wave"
+wake_after_kills = 90
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_jp4ra"]
+script = ExtResource("1_343be")
+callsign = "POTOK"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu")])
+count = 0
+kit_variance = 0.75
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_support"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"potok_wave"
+wake_after_kills = 110
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_sdv71"]
+script = ExtResource("1_343be")
+callsign = "KLIN"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k")])
+count = 0
+kit_variance = 0.75
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_guns"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"klin_wave"
+wake_after_kills = 132
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_p5obb"]
+script = ExtResource("1_343be")
+callsign = "SHTURM"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("4_syjgu"), ExtResource("5_lqsvf"), ExtResource("5_lqsvf")])
+count = 0
+kit_variance = 0.75
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_village"
+spawn_tag = &"obj_salient_village"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"shturm_wave"
+wake_after_kills = 155
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_7icoc"]
+script = ExtResource("1_343be")
+callsign = "HEICHAO"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("6_1bdoy"), ExtResource("6_1bdoy")])
+count = 0
+kit_variance = 0.75
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_guns"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"heichao_wave"
+wake_after_kills = 180
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_bs3rm"]
+script = ExtResource("1_343be")
+callsign = "JULANG"
+roster = Array[ExtResource("2_clim6")]([ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("7_bmg7k"), ExtResource("13_q7uw1"), ExtResource("13_q7uw1"), ExtResource("13_q7uw1"), ExtResource("13_q7uw1")])
+count = 0
+kit_variance = 0.75
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_village"
+spawn_tag = &"obj_salient_village"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"julang_wave"
+wake_after_kills = 210
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_ugnsv"]
+script = ExtResource("1_343be")
+callsign = "TIELIU"
+roster = Array[ExtResource("2_clim6")]([ExtResource("10_i8sjp"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_support"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"tieliu_wave"
+wake_after_kills = 60
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_gvhxv"]
+script = ExtResource("1_343be")
+callsign = "XUEBENG"
+roster = Array[ExtResource("2_clim6")]([ExtResource("9_hme47"), ExtResource("10_i8sjp"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5"), ExtResource("3_stwy5")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_guns"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"xuebeng_wave"
+wake_after_kills = 120
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_67sxi"]
+script = ExtResource("1_343be")
+callsign = "LONGJUAN"
+roster = Array[ExtResource("2_clim6")]([ExtResource("10_i8sjp"), ExtResource("10_i8sjp"), ExtResource("9_hme47"), ExtResource("6_1bdoy"), ExtResource("6_1bdoy")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_village"
+spawn_tag = &"obj_salient_village"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"longjuan_wave"
+wake_after_kills = 190
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="Resource_r5n7y"]
+script = ExtResource("1_343be")
+callsign = "KOBCHIK"
+roster = Array[ExtResource("2_clim6")]([ExtResource("14_4qji0"), ExtResource("14_4qji0"), ExtResource("14_4qji0")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_front"
+spawn_tag = &"obj_salient_front"
+spawn_offset = Vector3(-60, 45, -80)
+always_active = true
+faction = 1
+reinforcement_tag = &"kobchik_wave"
+wake_after_kills = 0
+wake_after_seconds = 150.0
+
+[sub_resource type="Resource" id="Resource_joq3u"]
+script = ExtResource("1_343be")
+callsign = "SAPSAN"
+roster = Array[ExtResource("2_clim6")]([ExtResource("14_4qji0"), ExtResource("14_4qji0"), ExtResource("14_4qji0")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_support"
+spawn_offset = Vector3(-40, 45, 90)
+always_active = true
+faction = 1
+reinforcement_tag = &"sapsan_wave"
+wake_after_kills = 0
+wake_after_seconds = 270.0
+
+[sub_resource type="Resource" id="Resource_8jatt"]
+script = ExtResource("1_343be")
+callsign = "STREKOZA"
+roster = Array[ExtResource("2_clim6")]([ExtResource("14_4qji0"), ExtResource("14_4qji0"), ExtResource("14_4qji0")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_guns"
+spawn_offset = Vector3(60, 50, -70)
+always_active = true
+faction = 1
+reinforcement_tag = &"strekoza_wave"
+wake_after_kills = 0
+wake_after_seconds = 400.0
+
+[sub_resource type="Resource" id="Resource_irv4x"]
+script = ExtResource("1_343be")
+callsign = "TIEYI"
+roster = Array[ExtResource("2_clim6")]([ExtResource("14_4qji0"), ExtResource("14_4qji0"), ExtResource("14_4qji0")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_support"
+spawn_offset = Vector3(0, 50, 100)
+always_active = true
+faction = 1
+reinforcement_tag = &"tieyi_wave"
+wake_after_kills = 0
+wake_after_seconds = 530.0
+
+[sub_resource type="Resource" id="Resource_u84ld"]
+script = ExtResource("1_343be")
+callsign = "JIUTIAN"
+roster = Array[ExtResource("2_clim6")]([ExtResource("14_4qji0"), ExtResource("14_4qji0"), ExtResource("14_4qji0")])
+count = 0
+kit_variance = 1.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_salient_village"
+spawn_tag = &"obj_salient_village"
+spawn_offset = Vector3(40, 55, -60)
+always_active = true
+faction = 1
+reinforcement_tag = &"jiutian_wave"
+wake_after_kills = 0
+wake_after_seconds = 660.0
+
+[resource]
+script = ExtResource("16_2daps")
+id = &"salient_1_overthetop"
+display_name = "Over The Top"
+briefing = "The salient has been held for nine weeks and shelled for six. Four lines, dug in depth, with the tubes that have been ranging on us sat behind the last of them.
+
+There is no flank. The ground is nine hundred metres wide and every metre of it is observed. You will go up the middle, you will take the lines in order, and you will do it with whatever you still have when you get there.
+
+Bring everything."
+level_scene = ExtResource("15_quphb")
+map_position = Vector2(0.62, 0.38)
+enemy_force = Array[ExtResource("1_343be")]([SubResource("Resource_y1gxg"), SubResource("Resource_e2phv"), SubResource("Resource_qub8j"), SubResource("Resource_yh47q"), SubResource("Resource_eu662"), SubResource("Resource_mbayb"), SubResource("Resource_5vs4a"), SubResource("Resource_56c8l"), SubResource("Resource_oi6l8"), SubResource("Resource_l52ae"), SubResource("Resource_6qn84"), SubResource("Resource_hvbxk"), SubResource("Resource_y0e1x"), SubResource("Resource_827uc"), SubResource("Resource_wq8cf"), SubResource("Resource_t73j1"), SubResource("Resource_jp4ra"), SubResource("Resource_sdv71"), SubResource("Resource_p5obb"), SubResource("Resource_7icoc"), SubResource("Resource_bs3rm"), SubResource("Resource_ugnsv"), SubResource("Resource_gvhxv"), SubResource("Resource_67sxi"), SubResource("Resource_r5n7y"), SubResource("Resource_joq3u"), SubResource("Resource_8jatt"), SubResource("Resource_irv4x"), SubResource("Resource_u84ld")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"sal_first_line", &"sal_support", &"sal_guns", &"sal_back", &"sal_extract"])
+reward_resources = 900
+compute_reward = 4
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = true
+requires = Array[StringName]([])

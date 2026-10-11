@@ -23,6 +23,10 @@ script = ExtResource("2_espec")
 callsign = "TOLLBOOTH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_bank"
@@ -32,12 +36,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="B_ware"]
 script = ExtResource("2_espec")
 callsign = "REVETMENT"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_warehouse"
@@ -47,12 +56,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="B_ruin"]
 script = ExtResource("2_espec")
 callsign = "KERBSTONE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_ruin_south"
@@ -62,12 +76,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="B_terr"]
 script = ExtResource("2_espec")
 callsign = "GANTRY"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_terrace"
@@ -77,12 +96,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="B_stage"]
 script = ExtResource("2_espec")
 callsign = "HARDSTAND"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_staging"
@@ -92,12 +116,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="B_patrol"]
 script = ExtResource("2_espec")
 callsign = "VERGE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_cway_bank"
 post_tag = &""
@@ -107,12 +136,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="B_ramp"]
 script = ExtResource("2_espec")
 callsign = "ABUTMENT"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_ramp_west"
@@ -122,12 +156,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="D_west"]
 script = ExtResource("2_espec")
 callsign = "CULVERT"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &"obj_cway_ramp_west"
@@ -137,12 +176,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="D_a"]
 script = ExtResource("2_espec")
 callsign = "SOFFIT"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &"obj_cway_deck_west"
@@ -152,12 +196,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="D_breakw"]
 script = ExtResource("2_espec")
 callsign = "SPALL"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_breach_west"
@@ -167,12 +216,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="D_b"]
 script = ExtResource("2_espec")
 callsign = "REBAR"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("10_hop")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_deck_b"
@@ -182,12 +236,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="D_mid"]
 script = ExtResource("2_espec")
 callsign = "EXPANSION"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_deck_mid"
@@ -197,12 +256,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="D_c"]
 script = ExtResource("2_espec")
 callsign = "SCUPPER"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_deck_c"
@@ -212,12 +276,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="D_breake"]
 script = ExtResource("2_espec")
 callsign = "CRIBWORK"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_breach_east"
@@ -227,12 +296,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="D_d"]
 script = ExtResource("2_espec")
 callsign = "CORBEL"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_deck_d"
@@ -242,12 +316,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="D_patrol"]
 script = ExtResource("2_espec")
 callsign = "PARAPETRUN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_cway_deck"
 post_tag = &""
@@ -257,12 +336,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="D_rampe"]
 script = ExtResource("2_espec")
 callsign = "BEARING"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_ramp_east"
@@ -272,12 +356,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_wire"]
 script = ExtResource("2_espec")
 callsign = "WIREMAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_wire"
@@ -287,12 +376,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_check"]
 script = ExtResource("2_espec")
 callsign = "TOLLHOUSE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_checkpoint"
@@ -302,12 +396,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_teeth"]
 script = ExtResource("2_espec")
 callsign = "TEETH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_teeth"
@@ -317,12 +416,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_sangn"]
 script = ExtResource("2_espec")
 callsign = "SANGARNORTH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("8_mks"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_sangar_n"
@@ -332,12 +436,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_sangs"]
 script = ExtResource("2_espec")
 callsign = "SANGARSOUTH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("8_mks"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_sangar_s"
@@ -347,12 +456,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_hesco"]
 script = ExtResource("2_espec")
 callsign = "GABION"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_hesco"
@@ -362,12 +476,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_gunn"]
 script = ExtResource("2_espec")
 callsign = "BOMBARD"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_gun_n"
@@ -377,12 +496,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_guns"]
 script = ExtResource("2_espec")
 callsign = "BALLISTA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_gun_s"
@@ -392,12 +516,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_patrol"]
 script = ExtResource("2_espec")
 callsign = "GLACISRUN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_cway_glacis"
 post_tag = &""
@@ -407,12 +536,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="E_gate"]
 script = ExtResource("2_espec")
 callsign = "PORTCULLIS"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("8_mks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_gate"
@@ -422,12 +556,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_yardw"]
 script = ExtResource("2_espec")
 callsign = "GARRISON"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("16_mec")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_yard_west"
@@ -437,12 +576,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_yardnw"]
 script = ExtResource("2_espec")
 callsign = "YARDNORTH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_yard_nw"
@@ -452,12 +596,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_yardsw"]
 script = ExtResource("2_espec")
 callsign = "YARDSOUTH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_yard_sw"
@@ -467,12 +616,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_yardn"]
 script = ExtResource("2_espec")
 callsign = "CENTREYARD"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_yard_n"
@@ -482,12 +636,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_yarde"]
 script = ExtResource("2_espec")
 callsign = "EASTYARD"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_lob"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_yard_east"
@@ -497,12 +656,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_walkn"]
 script = ExtResource("2_espec")
 callsign = "PARAPET"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_walk_n"
@@ -512,12 +676,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_walks"]
 script = ExtResource("2_espec")
 callsign = "MERLON"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("8_mks"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_walk_s"
@@ -527,12 +696,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_basnw"]
 script = ExtResource("2_espec")
 callsign = "BASTIONNW"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_bastion_nw"
@@ -542,12 +716,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_bassw"]
 script = ExtResource("2_espec")
 callsign = "BASTIONSW"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_bastion_sw"
@@ -557,12 +736,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_basne"]
 script = ExtResource("2_espec")
 callsign = "BASTIONNE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_bastion_ne"
@@ -572,12 +756,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_basse"]
 script = ExtResource("2_espec")
 callsign = "BASTIONSE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_mks"), ExtResource("5_rif"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_bastion_se"
@@ -587,12 +776,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_wallnp"]
 script = ExtResource("2_espec")
 callsign = "WALLRUNNORTH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_cway_walls_n"
 post_tag = &""
@@ -602,12 +796,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_wallsp"]
 script = ExtResource("2_espec")
 callsign = "WALLRUNSOUTH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("8_mks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_cway_walls_s"
 post_tag = &""
@@ -617,12 +816,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_yardp"]
 script = ExtResource("2_espec")
 callsign = "YARDRUN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_cway_yard"
 post_tag = &""
@@ -632,12 +836,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="F_pit"]
 script = ExtResource("2_espec")
 callsign = "PITHEAD"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_pit_head"
@@ -647,12 +856,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="O_mortn"]
 script = ExtResource("2_espec")
 callsign = "HOWITZER"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_mor"), ExtResource("5_rif"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_mortar_n"
@@ -662,12 +876,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="O_morts"]
 script = ExtResource("2_espec")
 callsign = "CULVERIN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_mor"), ExtResource("5_rif"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_mortar_s"
@@ -677,12 +896,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="O_bunker"]
 script = ExtResource("2_espec")
 callsign = "SIGNUM"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("18_spo")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_bunker"
@@ -692,12 +916,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="O_ammo"]
 script = ExtResource("2_espec")
 callsign = "MAGAZINE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_ammo"
@@ -707,12 +936,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="O_flood"]
 script = ExtResource("2_espec")
 callsign = "LANTERN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("5_rif")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_flood_east"
@@ -722,12 +956,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="O_rear"]
 script = ExtResource("2_espec")
 callsign = "REARGUARD"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_sangar_east"
@@ -737,12 +976,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_00"]
 script = ExtResource("2_espec")
 callsign = "THRESHOLD"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_hall_00"
@@ -752,12 +996,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_01"]
 script = ExtResource("2_espec")
 callsign = "RACKONE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_hall_01"
@@ -767,12 +1016,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_02"]
 script = ExtResource("2_espec")
 callsign = "RACKTWO"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_hall_02"
@@ -782,12 +1036,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_03"]
 script = ExtResource("2_espec")
 callsign = "RACKTHREE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_hall_03"
@@ -797,12 +1056,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_04"]
 script = ExtResource("2_espec")
 callsign = "RACKFOUR"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("10_hop")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_hall_04"
@@ -812,12 +1076,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_05"]
 script = ExtResource("2_espec")
 callsign = "RACKFIVE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_hall_05"
@@ -827,12 +1096,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_06"]
 script = ExtResource("2_espec")
 callsign = "RACKSIX"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_hall_06"
@@ -842,12 +1116,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_07"]
 script = ExtResource("2_espec")
 callsign = "RACKSEVEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_cway_hall_07"
@@ -857,12 +1136,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_08"]
 script = ExtResource("2_espec")
 callsign = "RACKEIGHT"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_07"
@@ -872,12 +1156,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_basement"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_09"]
 script = ExtResource("2_espec")
 callsign = "RACKNINE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_08"
@@ -887,12 +1176,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_basement"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_10"]
 script = ExtResource("2_espec")
 callsign = "RACKTEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_09"
@@ -902,12 +1196,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_basement"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_11"]
 script = ExtResource("2_espec")
 callsign = "RACKELEVEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_10"
@@ -917,12 +1216,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_basement"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="T_12"]
 script = ExtResource("2_espec")
 callsign = "SETBACK"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("8_mks"), ExtResource("16_mec")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_11"
@@ -932,12 +1236,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_basement"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_13"]
 script = ExtResource("2_espec")
 callsign = "RACKTHIRTEEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_12"
@@ -947,12 +1256,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_14"]
 script = ExtResource("2_espec")
 callsign = "RACKFOURTEEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_13"
@@ -962,12 +1276,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_15"]
 script = ExtResource("2_espec")
 callsign = "RACKFIFTEEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_14"
@@ -977,12 +1296,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_16"]
 script = ExtResource("2_espec")
 callsign = "RACKSIXTEEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_15"
@@ -992,12 +1316,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_17"]
 script = ExtResource("2_espec")
 callsign = "RACKSEVENTEEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_16"
@@ -1007,12 +1336,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_18"]
 script = ExtResource("2_espec")
 callsign = "RACKEIGHTEEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_17"
@@ -1022,12 +1356,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_19"]
 script = ExtResource("2_espec")
 callsign = "RACKNINETEEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_18"
@@ -1037,12 +1376,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_20"]
 script = ExtResource("2_espec")
 callsign = "RACKTWENTY"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_19"
@@ -1052,12 +1396,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_21"]
 script = ExtResource("2_espec")
 callsign = "RACKTWENTYONE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_20"
@@ -1067,12 +1416,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_22"]
 script = ExtResource("2_espec")
 callsign = "RACKTWENTYTWO"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("8_mks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_21"
@@ -1082,12 +1436,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="U_23"]
 script = ExtResource("2_espec")
 callsign = "CROWNGUARD"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("7_shg"), ExtResource("16_mec")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_22"
@@ -1097,12 +1456,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_twelfth"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_stage"]
 script = ExtResource("2_espec")
 callsign = "FLOTSAM"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_breach_west"
@@ -1112,12 +1476,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_staging"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_crossa"]
 script = ExtResource("2_espec")
 callsign = "JETSAM"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("10_hop"), ExtResource("10_hop")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_deck_mid"
@@ -1127,12 +1496,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_crossing"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_crossb"]
 script = ExtResource("2_espec")
 callsign = "LAGAN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_breach_east"
@@ -1142,12 +1516,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_crossing"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_checka"]
 script = ExtResource("2_espec")
 callsign = "BULWARK"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("8_mks"), ExtResource("7_shg")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_toe"
@@ -1157,12 +1536,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_checkpoint"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_checkb"]
 script = ExtResource("2_espec")
 callsign = "SORTIE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_lob"), ExtResource("5_rif"), ExtResource("5_rif"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_wire"
@@ -1172,12 +1556,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_checkpoint"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_bomber"]
 script = ExtResource("2_espec")
 callsign = "STOOP"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("15_bom")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_checkpoint"
@@ -1187,12 +1576,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_checkpoint"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_yarda"]
 script = ExtResource("2_espec")
 callsign = "COUNTERMARCH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks"), ExtResource("16_mec")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_yard_west"
@@ -1202,12 +1596,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_yard"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_yardb"]
 script = ExtResource("2_espec")
 callsign = "RELIEF"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_wal"), ExtResource("6_hvy"), ExtResource("6_hvy")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_gate"
@@ -1217,12 +1616,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_yard"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="R_base"]
 script = ExtResource("2_espec")
 callsign = "DESCENT"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_hvy"), ExtResource("7_shg"), ExtResource("7_shg"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_00"
@@ -1232,12 +1636,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_relay_basement"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="K_ninety"]
 script = ExtResource("2_espec")
 callsign = "GRAPNEL"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rif"), ExtResource("7_shg"), ExtResource("9_cha"), ExtResource("9_cha")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_deck_mid"
@@ -1247,12 +1656,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_losses_90"
 wake_after_kills = 90
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="K_onesev"]
 script = ExtResource("2_espec")
 callsign = "SIEGEWORK"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_rov"), ExtResource("6_hvy"), ExtResource("5_rif"), ExtResource("8_mks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_gate"
@@ -1262,12 +1676,17 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_losses_170"
 wake_after_kills = 170
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="K_twofif"]
 script = ExtResource("2_espec")
 callsign = "LASTDITCH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_wal"), ExtResource("6_hvy"), ExtResource("6_hvy"), ExtResource("8_mks")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_cway_hall_12"
@@ -1277,6 +1696,7 @@ always_active = false
 faction = 1
 reinforcement_tag = &"cway_losses_250"
 wake_after_kills = 250
+wake_after_seconds = 0.0
 
 [resource]
 script = ExtResource("1_missdef")

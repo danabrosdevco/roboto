@@ -84,6 +84,6 @@ a fresh contact does not let you shoot at range.
 **Is a doctrine a choice you make once, or one you make per operation?** Per
 operation makes it a tactical read of the briefing and rewards knowing the
 enemy; once-per-campaign makes it an identity and rewards committing. The second
-is a stronger fantasy for a rogue drone building a squad from salvage; the first
+is a stronger fantasy for an unsupervised agent building a squad from salvage; the first
 is better game. Worth deciding before any of it is built, because it changes
 where the state lives.

@@ -37,8 +37,10 @@ extends SceneTree
 ## The pack's signature, measured over all 212 files.
 const PACK_MEAN := 0.175
 ## Nothing generated for this pack goes brighter. A photograph will, unless
-## told not to.
-const CEIL := 0.46
+## told not to — but a BRIGHT FEATURE is not a pack surface. The robots' eye
+## is white tile with dark grout and is meant to read as lit; held to 0.46 it
+## came out near black. Override with CEIL= for those.
+const CEIL_DEFAULT := 0.46
 ## Levels per channel in the final quantise.
 ## Nothing goes to black: a pure-black pixel reads as a hole rather than a
 ## shadow, which is half of why pauldron_plate photographs as plastic.
@@ -57,6 +59,9 @@ const BAYER: Array = [
 ]
 const LUM := Vector3(0.2126, 0.7152, 0.0722)
 
+## The working ceiling for this run, set from CEIL or CEIL_DEFAULT.
+static var CEIL := 0.46
+
 
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
@@ -69,6 +74,7 @@ func _initialize() -> void:
 	var force := args.has("--force")
 	var size := int(OS.get_environment("SIZE")) if OS.get_environment("SIZE") != "" else 256
 	var want_mean := float(OS.get_environment("MEAN")) if OS.get_environment("MEAN") != "" else PACK_MEAN
+	CEIL = float(OS.get_environment("CEIL")) if OS.get_environment("CEIL") != "" else CEIL_DEFAULT
 
 	var abs_src := ProjectSettings.globalize_path(src_path if src_path.begins_with("res://") else "res://" + src_path)
 	var img := Image.load_from_file(abs_src)
@@ -98,6 +104,15 @@ func _initialize() -> void:
 	var gain := float(OS.get_environment("CONTRAST")) if OS.get_environment("CONTRAST") != "" else 1.0
 	if gain != 1.0:
 		_contrast(img, gain, want_mean)
+	# SAT: pull the whole texture toward neutral grey.
+	#
+	# The faction paint is a MULTIPLY, and a multiply can only ever subtract.
+	# A rust hull at saturation 0.27 times cyan is still orange, because there
+	# is no blue in the albedo for the cyan to bring out — which is why the
+	# robots do not read as their faction. A near-neutral hull takes any colour
+	# the livery asks for; a saturated one takes none.
+	if OS.get_environment("SAT") != "":
+		_desaturate(img, float(OS.get_environment("SAT")))
 	_finish(img)
 
 	_save(img, out_name, force, src_path, before, size, was)
@@ -270,11 +285,40 @@ func _shrink_keep_dark(src: Image, size: int, dark: float) -> Image:
 ## The clamps are the pack's: nothing above CEIL, nothing below FLOOR_MIN. A
 ## line that would go blacker than the floor stops there rather than becoming
 ## a hole, for the same reason pauldron_plate's 0.000 minimum reads as plastic.
+## IT WORKS ON LUMINANCE, NOT ON EACH CHANNEL.
+##
+## Expanding r, g and b independently about one pivot pushes the channels
+## apart as well as the lights and darks, so it raises SATURATION — on the
+## robots' rust hull that took it from 0.273 to 0.443, and a texture that
+## orange cannot be repainted cyan, because the faction paint is a multiply.
+## The livery went muddy and the cause was here, not in the shader.
+##
+## Scaling all three channels by the same factor moves the luminance and
+## leaves the hue and the saturation exactly where they were.
 func _contrast(img: Image, gain: float, pivot: float) -> void:
 	for y in img.get_height():
 		for x in img.get_width():
 			var c := img.get_pixel(x, y)
+			var l := Vector3(c.r, c.g, c.b).dot(LUM)
+			if l <= 0.0001:
+				img.set_pixel(x, y, Color(FLOOR_MIN, FLOOR_MIN, FLOOR_MIN))
+				continue
+			var k: float = clampf(pivot + (l - pivot) * gain, FLOOR_MIN, CEIL) / l
 			img.set_pixel(x, y, Color(
-					clampf(pivot + (c.r - pivot) * gain, FLOOR_MIN, CEIL),
-					clampf(pivot + (c.g - pivot) * gain, FLOOR_MIN, CEIL),
-					clampf(pivot + (c.b - pivot) * gain, FLOOR_MIN, CEIL)))
+					minf(c.r * k, 1.0), minf(c.g * k, 1.0), minf(c.b * k, 1.0)))
+
+
+## Mix every pixel toward its own luminance until the image reaches `want`
+## saturation. Luminance is preserved exactly, so this changes what colour the
+## hull is without changing how bright it is.
+func _desaturate(img: Image, want: float) -> void:
+	var now: float = float(_stats(img).sat)
+	if now <= 0.0001:
+		return
+	var k: float = clampf(1.0 - want / now, 0.0, 1.0)
+	for y in img.get_height():
+		for x in img.get_width():
+			var c := img.get_pixel(x, y)
+			var l := Vector3(c.r, c.g, c.b).dot(LUM)
+			img.set_pixel(x, y, Color(
+					lerpf(c.r, l, k), lerpf(c.g, l, k), lerpf(c.b, l, k)))

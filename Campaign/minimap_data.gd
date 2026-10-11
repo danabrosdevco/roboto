@@ -83,7 +83,7 @@ func texture() -> Texture2D:
 
 ## The baked map for a mission's level, or null if it has not been baked.
 ##
-## res://maps/valley_level.tscn -> res://maps/minimaps/valley_level.tres.
+## res://maps/appendix/valley_level.tscn -> res://maps/minimaps/valley_level.tres.
 ## Convention rather than a field on MissionDefinition: every mission already
 ## names its level, and a second reference would be one more thing to forget to
 ## set when adding a mission.

@@ -59,7 +59,7 @@ func _init() -> void:
 		await physics_frame
 	_player = _find(root, "Player")
 	_level = _player.get_parent()
-	_level.add_child(load("res://maps/valley_level.tscn").instantiate())
+	_level.add_child(load("res://maps/appendix/valley_level.tscn").instantiate())
 	for _i in 30:
 		await physics_frame
 
