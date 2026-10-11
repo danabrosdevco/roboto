@@ -87,6 +87,32 @@ degenerate polygon from z 1.6 to z 109.25**. Fixed by running the rail onto the
 adjoining span's footprint. The flare survives (mouth 29.3 m vs 15.0 pre-flare)
 and `test_causeway.gd` gained `_ramp_mount()` to guard it, which nothing did.
 
+*Ground slabs and the bunker* (`0496ce7a`, `0154a85f`). The human spotted
+`ground_track` / `ground_swell` / `ground_berm` stepping and repeating. Cause
+is shared: `mapdeck.gd:280` measures row spacing with `_span(box, yaw)` and
+line 283 places at `yaw + 90`, so a row steps by the piece's SHORT dimension
+while laying it along its LONG one. `ground_track` is 7 x 30 m and was laid
+every 8.53 m — not a rut, a continuous 30 m-wide ribbon paving x −520…−190.
+243 of 252 ground pieces removed; 8 aprons and a berm ring kept. That exposed
+8 real floaters the ribbon had been propping up (7 revetments + a semi at
+z 120-130). Separately `W0644_fort_command_bunker` straddles an earthworks lip,
+so the median-of-25 bedding sat the body right and left **the ramp foot 0.691 m
+up**; a lower-only `RAMP_FOOT` opt-in fixes it, PATH FAIL → PATH OK.
+`0154a85f` exists because `0496ce7a` committed the art without the level, so
+HEAD briefly had new geometry under a navmesh baked against the old.
+
+*Block collision* (`6fa1d74b`, `a1192bc9`, `ee016e49`). Acting on GAMEPLAY's
+`docs/briefs/BLOCK_COLLISION.md`. **`worldspawn.tres` is now CONCAVE** — it was
+CONVEX, which emits one collision shape per BRUSH, and worldspawn is where
+brushes go by default. `tools/test_block_collision.gd` guards it because it is
+a vendored addon file an upgrade reverts silently. **The backfill was piloted
+and rejected**: 45,881 → 1,411 shapes changed query time by nothing, the melee
+sphere sweep was 4.5% SLOWER and found 6.6% fewer contacts, because a convex
+hull is a solid and a trimesh is a shell. The count was never a proxy for time
+— a tree is logarithmic, and the triangles move into the trimesh's own tree
+rather than vanishing. What it does buy is 83 MB and instantiate 293 → 162 ms,
+which is a different decision. Blocks left uncollapsed; `--write` never run.
+
 **Gates.** `check.sh --changed` PASS on every commit. `smoke.sh` PASS.
 `test.sh` ALL SUITES PASS (2 parked as always). `probe_footing` 40 standing off
 / 34 bedded deep, unchanged. `probe_level_faults` 197 pairs, unchanged.
@@ -102,6 +128,14 @@ and `test_causeway.gd` gained `_ramp_mount()` to guard it, which nothing did.
   call.
 - The continuous ramp rail on the causeway has a small step in its outside face
   at the join (1 m profile meeting a 0.5 m taper). Flush on the inside face.
+- **The two breaks at (−103, −19) and (−14, −19)** — whether 6 m reads as a
+  deliberate crossing or a hole someone forgot to finish. Shots in
+  `roboto_shots/salient_breaks/`.
+- **`W0387_feature_trench_revetment` at (−198, 130)**, now the ground ribbon is
+  not propping it up. Shots in `roboto_shots/slabs_after/`.
+- **Salient now has almost no micro-terrain** — 9 ground pieces on the whole
+  map. The deck records how to put relief back as individual `at` ops. Whether
+  it now reads too bare to walk is a judgement only the human can make.
 
 **Blocked / next.**
 - **A Bulwark still cannot reach `C.exit`** — it is the trench floor at the foot
@@ -127,6 +161,20 @@ and `test_causeway.gd` gained `_ramp_mount()` to guard it, which nothing did.
 - `probe_nav_reach`'s coverage sweep was querying from the middle of the navmesh
   AABB — ~70 m in the air — counting 284 of 2112 points. Fixed; real coverage is
   **89.6%**, not the ~75% earlier runs reported.
+- **`mapdeck.gd:280` is wrong for every deck**, not just Salient — row spacing
+  is measured at `yaw` and the piece placed at `yaw + 90`. Only
+  `build_salient.gd` and `dress_pittsburgh.gd` extend mapdeck (coastal road and
+  Mutaha have their own builders), but that is still 48 + 55 row ops, every one
+  re-spacing. The case FOR fixing it: Salient's five power-pole rows are a
+  deliberate 40 m ranging ruler and currently step by the pole's 0.3 m short
+  dimension. Do it as its own pass with the re-measure budgeted, and pin the
+  pole rows to explicit `at` ops first so the ruler cannot drift.
+- **The 8 floaters the ground ribbon was hiding** are `lined` pieces, excluded
+  from bedding by design, so this is a deck question not a bedding one.
+- **Block collision fix 3** (detail into `func_detail_illusionary` + a few
+  `special/clip` brushes) is still the right end state and is unaffected by the
+  backfill being rejected. Note a block done that way is permanently ineligible
+  for the collapse tool, which now skips all six clip-built blocks.
 
 ---
 
