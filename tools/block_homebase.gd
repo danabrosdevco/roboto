@@ -92,13 +92,19 @@ const CEILING := "PSX_Textures/hl_office_complex_style_drop_ceiling_1_1"
 const LAMP := "PSX_Textures/hl_office_complex_style_drop_ceiling_1_1@0.25"
 ## Plain dark steel for the trim lines. They were glitch_tx_1 and at this size
 ## it reads as magenta confetti rather than as a lit strip.
-const TRIM := "PSX_Textures/metal_wall_5"
+## RENAMED from TRIM. block_fortress.gd, which this extends, gained its own
+## `const TRIM` on 2026-10-01 (f617453b) with a different value
+## ("concrete_tx_5"), and a child const cannot shadow a parent one in GDScript
+## — this whole script stopped parsing for ten days and nothing ran it, so
+## nothing said so. The home base wants metal, the fort wants concrete; both
+## are right, so the child gets its own name.
+const HOME_TRIM := "PSX_Textures/metal_wall_5"
 const FLOOR_TEX := {"top": "PSX_Textures/concrete_tx_4", "side": CONCRETE, "bottom": CONCRETE}
 ## Plated steel for the muster deck and the bay stands, so a machine standing
 ## on one is standing on something built for it rather than on more floor.
-const DECK_TEX := {"top": "PSX_Textures/metal_floor_1@0.5", "side": TRIM, "bottom": CONCRETE}
+const DECK_TEX := {"top": "PSX_Textures/metal_floor_1@0.5", "side": HOME_TRIM, "bottom": CONCRETE}
 ## Pale concrete for painted lines. Read against the steel deck and the floor;
-## TRIM is too dark and too rusty to be a marking.
+## HOME_TRIM is too dark and too rusty to be a marking.
 const MARK := "PSX_Textures/concrete_tx_4"
 
 
@@ -350,7 +356,7 @@ func _bay(cx: float) -> void:
 	# edge, so the bay reads as a display even while it is empty.
 	box(Vector3(cx - 4.0, 27.0, 0.0), Vector3(cx + 4.0, 35.0, 0.12), DECK_TEX)
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(cx + s * 4.0 - 0.25, 27.0, 0.12), Vector3(cx + s * 4.0 + 0.05, 35.0, 0.18), TRIM)
+		box(Vector3(cx + s * 4.0 - 0.25, 27.0, 0.12), Vector3(cx + s * 4.0 + 0.05, 35.0, 0.18), HOME_TRIM)
 	# Lit back wall, ribs up the sides, and service gantries across the top.
 	box(Vector3(cx - 5.0, BAY_BACK - 0.25, 2.4), Vector3(cx + 5.0, BAY_BACK, 6.0), LAMP)
 	for s: float in [-1.0, 1.0]:
@@ -360,8 +366,8 @@ func _bay(cx: float) -> void:
 		box(Vector3(cx - w, d, BAY_HEAD - 0.9), Vector3(cx + w, d + 0.8, BAY_HEAD), METAL)
 	# The frame round the opening, on the hall side of the jambs.
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(cx + s * w - 0.4, HALL_Y - 0.3, 0.0), Vector3(cx + s * w + 0.4, HALL_Y, BAY_HEAD), TRIM)
-	box(Vector3(cx - w, HALL_Y - 0.3, BAY_HEAD - 0.6), Vector3(cx + w, HALL_Y, BAY_HEAD), TRIM)
+		box(Vector3(cx + s * w - 0.4, HALL_Y - 0.3, 0.0), Vector3(cx + s * w + 0.4, HALL_Y, BAY_HEAD), HOME_TRIM)
+	box(Vector3(cx - w, HALL_Y - 0.3, BAY_HEAD - 0.6), Vector3(cx + w, HALL_Y, BAY_HEAD), HOME_TRIM)
 
 
 ## THE RANGE, in a room of its own through the south wall. It is off the hall
@@ -391,7 +397,7 @@ func _annexe() -> void:
 	var mid := (ANNEX_X0 + ANNEX_X1) * 0.5
 	for s: float in [-1.0, 1.0]:
 		box(Vector3(mid + s * 2.5, -31.0, 0.0), Vector3(mid + s * 9.0, -30.0, 1.1), CONCRETE)
-		box(Vector3(mid + s * 2.5, -31.0, 1.1), Vector3(mid + s * 9.0, -30.0, 1.2), TRIM)
+		box(Vector3(mid + s * 2.5, -31.0, 1.1), Vector3(mid + s * 9.0, -30.0, 1.2), HOME_TRIM)
 	# A lit band down each long wall, so the room reads as its own place.
 	for x: float in [ANNEX_X0, ANNEX_X1 - 0.25]:
 		box(Vector3(x, ANNEX_BACK + 2.0, 5.4), Vector3(x + 0.25, ANNEX_FACE - 1.0, 6.6), LAMP)
@@ -399,7 +405,7 @@ func _annexe() -> void:
 	# see from the head of the ramp on the first walk down.
 	box(Vector3(PORTAL_X0, -HALL_Y, PORTAL_Z), Vector3(PORTAL_X1, -HALL_Y + 0.3, PORTAL_Z + 1.6), LAMP)
 	for x: float in [PORTAL_X0 - 0.5, PORTAL_X1]:
-		box(Vector3(x, -HALL_Y, 0.0), Vector3(x + 0.5, -HALL_Y + 0.3, PORTAL_Z + 1.6), TRIM)
+		box(Vector3(x, -HALL_Y, 0.0), Vector3(x + 0.5, -HALL_Y + 0.3, PORTAL_Z + 1.6), HOME_TRIM)
 
 
 ## Pipes, cable runs and light fittings. None of it is solid: this is a room
