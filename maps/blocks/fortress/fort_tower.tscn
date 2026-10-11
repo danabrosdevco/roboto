@@ -1,4 +1,4 @@
-[gd_scene load_steps=64 format=4]
+[gd_scene load_steps=64 format=4 uid="uid://cy33281nenanq"]
 
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_s2nc5"]
 [ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_i5dgv"]
