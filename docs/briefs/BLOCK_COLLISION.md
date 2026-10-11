@@ -272,3 +272,59 @@ of the table as those blocks are next touched anyway.
 with a 1.70 m Walker in it is exactly that case. Never tested. If the memory and
 load wins are ever taken, the Salient trench line has to be walked before and
 after — and the 6.6% contact loss above says that concern is not theoretical.
+
+---
+
+## Addendum — 2026-10-10, after the pilot reported
+
+### Two claims in this brief are factually wrong and should not be re-used
+
+**1. Near-miss suppression makes no physics query at all.** Line 50 above, and
+the headers of `probe_level_cost.gd` and `collapse_block_collision.gd`, all name
+it as a per-shot broadphase query and use it to argue the cost is paid "per
+query, forever". `AIWeapon.suppress_along` (`Character/weapon/ai_weapon.gd:503`)
+walks `AI.SIGNAL_GROUP` with a dot product each. **The sphere query built at
+`ai_weapon.gd:135-141` is dead code — it is never passed to `intersect_shape`.**
+The real per-shot cost is 4 friendly-fire rays plus one 250 m ray per pellet.
+
+**2. The navmesh dependency is missing** and was not derivable from this brief.
+All nine levels bake with `PARSED_GEOMETRY_STATIC_COLLIDERS`. It was piloted and
+**came back safe** — individual objective walks moved under 1% and nothing
+closed — but it had to be checked, not assumed.
+
+### The pilot's own correction
+
+Its report says the "82.0% in cut" cover baseline could not be reproduced from
+any chassis and looks stale. **It is reproducible and it is not stale** — the
+frame is `drone`, and `CHASSIS=drone` reads route C at exactly **82.0% in cut**.
+The confusion came from an earlier brief calling that frame "player", which is
+not a chassis name. Use `drone`.
+
+### The cost the collapse carries, beyond the melee regression
+
+Measured on Salient, and it lands on work this lane had just finished:
+
+- **Bulwark route C is 9 m longer** (184 → 193 m, x1.11 → x1.16).
+- **Bulwark and squad route-C in-cut 64.4% → 61.0%**, −3.4 points. The walker is
+  unchanged at 60.5%.
+- `probe_level_faults` 153 → 155. A threshold artefact — the probe does an AABB
+  intersection against a 12 m³ cut-off and two marginal pairs tipped over as
+  bounds shifted — but technically worse.
+
+### The better lead, and why it is NOT a one-liner
+
+`ai_weapon.gd:47-49` sets `character_mask = 1|2|4|8` with a comment saying this
+"stops every shot from testing terrain geometry". **It does not.** Layer 1 is
+`GameWorld`, and every block's `StaticBody3D` sits there — no block in the
+project sets `collision_layer`, so they all default to 1.
+
+Dropping GameWorld from the melee mask, measured on the **uncollapsed** level:
+**2.388 → 1.090 µs hot, 2.159 → 1.075 µs broad — a 2.0-2.2x speedup**, against
+the collapse's zero, with no re-bake of anything.
+
+**But it cannot be done today.** Character bodies do not set `collision_layer`
+either (`bulwark.tscn:417` is the only one in the project that sets one at all),
+so they are on layer 1 too, and masking out layer 1 would make melee stop
+hitting robots. The real finding is **a collision-layer hygiene problem — world
+and characters share a layer, so no mask can separate them.** Fixing that is
+worth its own brief and is a bigger prize than anything in this one.

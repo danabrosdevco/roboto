@@ -69,7 +69,7 @@ telegraph ladder finished (40 → 106 poles, uniform 40 m). Per-view now
 
 *Trench experience* (`c3cabccd`, `aafcfc0f`, `8ae97caa`). Five new probes, none
 of which existed. They found the big frames were **walking along the top of the
-trench** — route C read 98.1% in cut for the player and 2.2% for a Bulwark on
+trench** — route C read 98.1% in cut for the drone frame (the player) and 2.2% for a Bulwark on
 the same geometry. The human's call was breaks in the line rather than a second
 trench: two 6 m lanes at (−103, −19) and (−14, −19), 89 m apart, which bake
 4.0 m of mesh at radius 1.0 against a 2.26 m shield. Walker in-cut **5.2% →
