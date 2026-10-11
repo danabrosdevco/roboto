@@ -393,8 +393,14 @@ instrument that works** — it reads the groups the spawner reads and covered al
   sealed off. New: `industrial_blast_furnace` (five decks), `mark_stack`,
   `park_overgrown_bed`, `estate_slab_five`, `industrial_plant_office`,
   `wire_belt_run`; and risers on `estate_frame_shell` and `ground_berm_ring`.
-  No objective on any map became unreachable, but **stray roof navmesh is
-  somewhere a bot can be pathed**, so this is the thing to watch in play.
+  **Read the direction of that number carefully.** `test_block_reach` counts
+  decks the squad CANNOT reach, so the six new ones are navmesh ISLANDS, and
+  `map_get_path` will not route onto an island — it returns the nearest
+  reachable point instead. So this does not let a bot walk up a blast furnace.
+  What it does do is give `EnemyForceSpawner` and the cover-point spawner more
+  surfaces to SEAT something on, and a garrison seated on a roof island stands
+  there for the whole operation. That is the thing to watch, and the symptom to
+  watch for is a spawner warning, not a bot climbing a wall.
 - **Depot's upper gantries at y=10 and y=17 were already navmesh islands** —
   57.1% coverage before, 42.9% after, two more upstairs samples of fourteen.
   All 36 `SquadMuster` stands are on the ground floor and all 36 reach.
