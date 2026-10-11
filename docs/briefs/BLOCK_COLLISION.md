@@ -3,8 +3,15 @@
 Written 2026-10-10 by GAMEPLAY, off a census of every TrenchBroom block in the
 project and a runtime count of what Salient actually loads.
 
-Owner: **TERRAIN** (blocks and their use). Status: **not started — nothing has
-been written.**
+Owner: **TERRAIN** (blocks and their use).
+Status: **fix 1 done. Fix 2 piloted and REJECTED on its stated grounds — see
+"Measured outcome" at the foot of this file before acting on anything below.**
+
+> **Read the outcome section first.** The performance premise of fix 2 — that
+> collapsing per-brush hulls buys query time — was measured on Salient and is
+> **false**. The blocks are deliberately left uncollapsed. Everything between
+> here and that section is the original analysis, kept because its diagnosis
+> and its numbers are right; only its conclusion is not.
 
 **Salient loads 45,881 collision shapes. Two blocks account for 75% of them.**
 Not because the map is big — because of one setting in the FGD that nobody has
@@ -188,3 +195,80 @@ poles). Three `MultiMeshInstance3D` would replace 680 draw calls with 3.
 The tradeoff is real though: MultiMesh loses per-instance frustum culling, and
 Salient has 940 m sightlines. Worth measuring both ways rather than assuming,
 and worth its own brief.
+
+---
+
+## Measured outcome — 2026-10-10, TERRAIN
+
+### Fix 1: done
+
+`addons/func_godot/fgd/worldspawn.tres` is **CONCAVE** (`6fa1d74b`). New blocks
+are born with one shape per entity instead of one per brush. No `.map` changed,
+nothing visual changed.
+
+Because it is a vendored addon file an upgrade reverts it silently, so
+`tools/test_block_collision.gd` now asserts it. That test is the only reason it
+would ever be noticed.
+
+### Fix 2: piloted, and REJECTED on its stated grounds
+
+**The performance premise is false.** "45,881 → 1,300 shapes, 97% saved" is a
+**count**, and the brief treats it as a proxy for query time. The broadphase is
+a tree, so cost is logarithmic in shape count: a 32x reduction is ~1.5x fewer
+levels to descend. And the triangles do not vanish — they move from the
+broadphase into the trimesh's own internal tree.
+
+`tools/bench_block_collision.gd` (new, keep it) measures the four query
+families that actually run, replicated from their call sites, CPU-timed around
+the calls only, paced at `Engine.max_fps = 60`. Piloted on Salient,
+**45,881 → 1,411 shapes**:
+
+- **Query time changed by nothing.** Six of eight view/family pairs came back
+  flat or slower.
+- **The melee sphere sweep was 4.5% SLOWER** in both views — the only true
+  shape query, and where trimesh narrowphase is dearest.
+- **It found 6.6% fewer contacts** near the changed geometry. That is not
+  noise, it is physics: **a convex hull is a solid volume and a trimesh is a
+  shell.** Ray hit rates were unchanged, which is the control.
+
+**What the collapse does buy, and it is real but different:** static memory
+**−83 MB**, instantiate **293 → 162 ms**, nodes **52,312 → 7,842**. Load and
+memory, not frame time. If those are wanted they are their own decision, and
+they are not free — see the melee regression above.
+
+**The blocks are left uncollapsed.** `--write` has never been run.
+
+### The thing this brief missed, and anyone repeating it must not
+
+**All nine levels set `geometry_parsed_geometry_type = 1`
+(`PARSED_GEOMETRY_STATIC_COLLIDERS`). The navmesh is baked FROM the collision
+shapes.** Changing collision shape type is therefore a navigation change on
+every map, not a physics change. Any future attempt at fix 2 must re-bake and
+re-prove all nine, not count shapes.
+
+### Fix 3 and fix 2 are in tension — the guard that now exists
+
+Blocks built with `special/clip` have collision their **mesh does not
+describe**: clip brushes are solid and do not render. Rebuilding collision from
+the mesh throws them away. `collapse_block_collision.gd` now **skips all six**
+(`bridge_damaged`, `fort_checkpoint`, `ground_spoil`, `prop_dirt_mound`,
+`prop_jersey_barrier`, `prop_rubble_pile`).
+
+`prop_jersey_barrier` is why it matters: its visible barrier is illusionary and
+its **one** collision shape *is* the clip box, so collapsing would have swapped
+a deliberate 1-shape volume for a detailed trimesh of the barrier — more
+triangles, different shape, hand-authoring undone. **Fix 3 done properly makes
+a block permanently ineligible for fix 2.**
+
+### Fix 3: still the right end state
+
+Unaffected by any of the above, and it is the only one of the three that makes
+a block genuinely cheap rather than differently shaped. Worth doing on the top
+of the table as those blocks are next touched anyway.
+
+### Outstanding, and only the human can settle it
+
+**A trimesh snags `move_and_slide` more than convexes do**, and a 3.0 m trench
+with a 1.70 m Walker in it is exactly that case. Never tested. If the memory and
+load wins are ever taken, the Salient trench line has to be walked before and
+after — and the 6.6% contact loss above says that concern is not theoretical.
