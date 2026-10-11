@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=4]
+[gd_scene load_steps=12 format=4]
 
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_kg0hp"]
 [ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_hojcv"]
@@ -63,14 +63,8 @@ _surfaces = [{
 vertices = PackedVector3Array(-2, -5, -24, -2, -5, 24, 0, -5, 24, 0, -5, -24, -12, -5, -24, -12, -5, 24, -2, -5, 24, -2, -5, -24, -2, 0, -24, 0, 0, -24, 0, 0, 24, -2, 0, 24, -0.5, 0, -24, -0.5, 0, 24, 0, 0, 24, 0, 0, -24, -0.5, 0.40625, -24, 0, 0.40625, -24, 0, 0.40625, 24, -0.5, 0.40625, 24, -0.5, 0, -24, -0.5, 0.40625, -24, -0.5, 0.40625, 24, -0.5, 0, 24, -0.5, 0, 24, -0.5, 0.40625, 24, 0, 0.40625, 24, 0, 0, 24, 0, 0, 24, 0, 0.40625, 24, 0, 0.40625, -24, 0, 0, -24, 0, 0, -24, 0, 0.40625, -24, -0.5, 0.40625, -24, -0.5, 0, -24, -2, -5, 24, -2, -5, -24, -2, 0, -24, -2, 0, 24, -2, -5, 24, -2, 0, 24, 0, 0, 24, 0, -5, 24, 0, -5, -24, 0, -5, 24, 0, 0, 24, 0, 0, -24, 0, -5, -24, 0, 0, -24, -2, 0, -24, -2, -5, -24, -12, -5, 24, -12, -5, -24, -12, 0, -24, -12, 0, 24, -12, -5, 24, -12, 0, 24, -2, 0, 24, -2, -5, 24, -2, -5, -24, -2, -5, 24, -2, 0, 24, -2, 0, -24, -2, -5, -24, -2, 0, -24, -12, 0, -24, -12, -5, -24, -12, 0, -24, -2, 0, -24, -2, 0, 24, -12, 0, 24)
 indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23, 24, 25, 26, 24, 26, 27, 28, 29, 30, 28, 30, 31, 32, 33, 34, 32, 34, 35, 36, 37, 38, 36, 38, 39, 40, 41, 42, 40, 42, 43, 44, 45, 46, 44, 46, 47, 48, 49, 50, 48, 50, 51, 52, 53, 54, 52, 54, 55, 56, 57, 58, 56, 58, 59, 60, 61, 62, 60, 62, 63, 64, 65, 66, 64, 66, 67, 68, 69, 70, 68, 70, 71)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_68tmo"]
-points = PackedVector3Array(-2, -5, -24, -2, -5, 24, 0, -5, 24, 0, -5, -24, -2, 0, -24, 0, 0, -24, 0, 0, 24, -2, 0, 24)
-
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_8dxnv"]
-points = PackedVector3Array(-12, -5, -24, -12, -5, 24, -2, -5, 24, -2, -5, -24, -12, 0, -24, -2, 0, -24, -2, 0, 24, -12, 0, 24)
-
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_4tqdj"]
-points = PackedVector3Array(-0.5, 0, -24, -0.5, 0, 24, 0, 0, 24, 0, 0, -24, -0.5, 0.40625, -24, 0, 0.40625, -24, 0, 0.40625, 24, -0.5, 0.40625, 24)
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_xv7tj"]
+data = PackedVector3Array(-2, -5, -24, -2, -5, 24, 0, -5, 24, -2, -5, -24, 0, -5, 24, 0, -5, -24, -12, -5, -24, -12, -5, 24, -2, -5, 24, -12, -5, -24, -2, -5, 24, -2, -5, -24, -2, 0, -24, 0, 0, -24, 0, 0, 24, -2, 0, -24, 0, 0, 24, -2, 0, 24, -0.5, 0, -24, -0.5, 0, 24, 0, 0, 24, -0.5, 0, -24, 0, 0, 24, 0, 0, -24, -0.5, 0.4063, -24, 0, 0.4063, -24, 0, 0.4063, 24, -0.5, 0.4063, -24, 0, 0.4063, 24, -0.5, 0.4063, 24, -0.5, 0, -24, -0.5, 0.4063, -24, -0.5, 0.4063, 24, -0.5, 0, -24, -0.5, 0.4063, 24, -0.5, 0, 24, -0.5, 0, 24, -0.5, 0.4063, 24, 0, 0.4063, 24, -0.5, 0, 24, 0, 0.4063, 24, 0, 0, 24, 0, 0, 24, 0, 0.4063, 24, 0, 0.4063, -24, 0, 0, 24, 0, 0.4063, -24, 0, 0, -24, 0, 0, -24, 0, 0.4063, -24, -0.5, 0.4063, -24, 0, 0, -24, -0.5, 0.4063, -24, -0.5, 0, -24, -2, -5, 24, -2, -5, -24, -2, 0, -24, -2, -5, 24, -2, 0, -24, -2, 0, 24, -2, -5, 24, -2, 0, 24, 0, 0, 24, -2, -5, 24, 0, 0, 24, 0, -5, 24, 0, -5, -24, 0, -5, 24, 0, 0, 24, 0, -5, -24, 0, 0, 24, 0, 0, -24, 0, -5, -24, 0, 0, -24, -2, 0, -24, 0, -5, -24, -2, 0, -24, -2, -5, -24, -12, -5, 24, -12, -5, -24, -12, 0, -24, -12, -5, 24, -12, 0, -24, -12, 0, 24, -12, -5, 24, -12, 0, 24, -2, 0, 24, -12, -5, 24, -2, 0, 24, -2, -5, 24, -2, -5, -24, -2, -5, 24, -2, 0, 24, -2, -5, -24, -2, 0, 24, -2, 0, -24, -2, -5, -24, -2, 0, -24, -12, 0, -24, -2, -5, -24, -12, 0, -24, -12, -5, -24, -12, 0, -24, -2, 0, -24, -2, 0, 24, -12, 0, -24, -2, 0, 24, -12, 0, 24)
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_y1s8w"]
 _surfaces = [{
@@ -90,7 +84,11 @@ _surfaces = [{
 [node name="WharfEsplanade" type="Node3D"]
 script = ExtResource("1_kg0hp")
 local_map_file = "res://maps/blocks/canal/wharf_esplanade.map"
+global_map_file = ""
 map_settings = ExtResource("2_hojcv")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
 collision_mask = 0
@@ -101,14 +99,8 @@ mesh = SubResource("ArrayMesh_fk5r4")
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
 occluder = SubResource("ArrayOccluder3D_phmxw")
 
-[node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_68tmo")
-
-[node name="entity_0_brush_1_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_8dxnv")
-
-[node name="entity_0_brush_2_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_4tqdj")
+[node name="collision_merged" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConcavePolygonShape3D_xv7tj")
 
 [node name="entity_1_func_detail_illusionary" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0.953125, 0)

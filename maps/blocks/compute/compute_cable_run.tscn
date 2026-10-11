@@ -1,9 +1,9 @@
-[gd_scene load_steps=12 format=4 uid="uid://dnw7ptd8b8xg6"]
+[gd_scene load_steps=11 format=4]
 
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_u32y0"]
-[ext_resource type="Resource" uid="uid://bkhxcqsquw1yg" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_j0ilp"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_j0ilp"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/metal_wall_tx_1.tres" id="3_mfr8b"]
-[ext_resource type="Material" uid="uid://bsyq31dqvwrem" path="res://textures/PSX_Textures/glitch_tx_1.tres" id="4_alqnk"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/glitch_tx_1.tres" id="4_alqnk"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/rubber_tsk_1.tres" id="5_2ja56"]
 [ext_resource type="Material" path="res://textures/PSX_Textures/metal_wall_2.tres" id="6_q8bop"]
 
@@ -38,11 +38,8 @@ _surfaces = [{
 vertices = PackedVector3Array(1.1875, -0.09375, -0.09375, 1.1875, -0.09375, 1.09375, 2, -0.09375, 1.09375, 2, -0.09375, -0.09375, 1.1875, 0.90625, -0.09375, 2, 0.90625, -0.09375, 2, 0.90625, 1.09375, 1.1875, 0.90625, 1.09375, 1.1875, -0.09375, -0.09375, 1.1875, 0.90625, -0.09375, 1.1875, 0.90625, 1.09375, 1.1875, -0.09375, 1.09375, 2, -0.09375, 1.09375, 1.1875, -0.09375, 1.09375, 1.1875, 0.90625, 1.09375, 2, 0.90625, 1.09375, 2, -0.09375, 1.09375, 2, 0.90625, 1.09375, 2, 0.90625, -0.09375, 2, -0.09375, -0.09375, 1.1875, -0.09375, -0.09375, 2, -0.09375, -0.09375, 2, 0.90625, -0.09375, 1.1875, 0.90625, -0.09375, 1.15625, 0.59375, 0.1875, 1.15625, 0.59375, 0.8125, 1.1875, 0.59375, 0.8125, 1.1875, 0.59375, 0.1875, 1.15625, 0.6875, 0.1875, 1.1875, 0.6875, 0.1875, 1.1875, 0.6875, 0.8125, 1.15625, 0.6875, 0.8125, 1.15625, 0.59375, 0.1875, 1.15625, 0.6875, 0.1875, 1.15625, 0.6875, 0.8125, 1.15625, 0.59375, 0.8125, 1.1875, 0.59375, 0.8125, 1.15625, 0.59375, 0.8125, 1.15625, 0.6875, 0.8125, 1.1875, 0.6875, 0.8125, 1.1875, 0.59375, 0.8125, 1.1875, 0.6875, 0.8125, 1.1875, 0.6875, 0.1875, 1.1875, 0.59375, 0.1875, 1.15625, 0.59375, 0.1875, 1.1875, 0.59375, 0.1875, 1.1875, 0.6875, 0.1875, 1.15625, 0.6875, 0.1875)
 indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23, 24, 25, 26, 24, 26, 27, 28, 29, 30, 28, 30, 31, 32, 33, 34, 32, 34, 35, 36, 37, 38, 36, 38, 39, 40, 41, 42, 40, 42, 43, 44, 45, 46, 44, 46, 47)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_6ubee"]
-points = PackedVector3Array(1.1875, -0.09375, -0.09375, 1.1875, -0.09375, 1.09375, 2, -0.09375, 1.09375, 2, -0.09375, -0.09375, 1.1875, 0.90625, -0.09375, 2, 0.90625, -0.09375, 2, 0.90625, 1.09375, 1.1875, 0.90625, 1.09375)
-
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_t5u5d"]
-points = PackedVector3Array(1.15625, 0.59375, 0.1875, 1.15625, 0.59375, 0.8125, 1.1875, 0.59375, 0.8125, 1.1875, 0.59375, 0.1875, 1.15625, 0.6875, 0.1875, 1.1875, 0.6875, 0.1875, 1.1875, 0.6875, 0.8125, 1.15625, 0.6875, 0.8125)
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_givwx"]
+data = PackedVector3Array(1.1875, -0.0938, -0.0938, 1.1875, -0.0938, 1.0938, 2, -0.0938, 1.0938, 1.1875, -0.0938, -0.0938, 2, -0.0938, 1.0938, 2, -0.0938, -0.0938, 1.1875, 0.9063, -0.0938, 2, 0.9063, -0.0938, 2, 0.9063, 1.0938, 1.1875, 0.9063, -0.0938, 2, 0.9063, 1.0938, 1.1875, 0.9063, 1.0938, 1.1875, -0.0938, -0.0938, 1.1875, 0.9063, -0.0938, 1.1875, 0.9063, 1.0938, 1.1875, -0.0938, -0.0938, 1.1875, 0.9063, 1.0938, 1.1875, -0.0938, 1.0938, 2, -0.0938, 1.0938, 1.1875, -0.0938, 1.0938, 1.1875, 0.9063, 1.0938, 2, -0.0938, 1.0938, 1.1875, 0.9063, 1.0938, 2, 0.9063, 1.0938, 2, -0.0938, 1.0938, 2, 0.9063, 1.0938, 2, 0.9063, -0.0938, 2, -0.0938, 1.0938, 2, 0.9063, -0.0938, 2, -0.0938, -0.0938, 1.1875, -0.0938, -0.0938, 2, -0.0938, -0.0938, 2, 0.9063, -0.0938, 1.1875, -0.0938, -0.0938, 2, 0.9063, -0.0938, 1.1875, 0.9063, -0.0938, 1.1563, 0.5938, 0.1875, 1.1563, 0.5938, 0.8125, 1.1875, 0.5938, 0.8125, 1.1563, 0.5938, 0.1875, 1.1875, 0.5938, 0.8125, 1.1875, 0.5938, 0.1875, 1.1563, 0.6875, 0.1875, 1.1875, 0.6875, 0.1875, 1.1875, 0.6875, 0.8125, 1.1563, 0.6875, 0.1875, 1.1875, 0.6875, 0.8125, 1.1563, 0.6875, 0.8125, 1.1563, 0.5938, 0.1875, 1.1563, 0.6875, 0.1875, 1.1563, 0.6875, 0.8125, 1.1563, 0.5938, 0.1875, 1.1563, 0.6875, 0.8125, 1.1563, 0.5938, 0.8125, 1.1875, 0.5938, 0.8125, 1.1563, 0.5938, 0.8125, 1.1563, 0.6875, 0.8125, 1.1875, 0.5938, 0.8125, 1.1563, 0.6875, 0.8125, 1.1875, 0.6875, 0.8125, 1.1875, 0.5938, 0.8125, 1.1875, 0.6875, 0.8125, 1.1875, 0.6875, 0.1875, 1.1875, 0.5938, 0.8125, 1.1875, 0.6875, 0.1875, 1.1875, 0.5938, 0.1875, 1.1563, 0.5938, 0.1875, 1.1875, 0.5938, 0.1875, 1.1875, 0.6875, 0.1875, 1.1563, 0.5938, 0.1875, 1.1875, 0.6875, 0.1875, 1.1563, 0.6875, 0.1875)
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_kgebw"]
 _surfaces = [{
@@ -74,7 +71,11 @@ _surfaces = [{
 [node name="ComputeCableRun" type="Node3D"]
 script = ExtResource("1_u32y0")
 local_map_file = "res://maps/blocks/compute/compute_cable_run.map"
+global_map_file = ""
 map_settings = ExtResource("2_j0ilp")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
 collision_mask = 0
@@ -85,11 +86,8 @@ mesh = SubResource("ArrayMesh_wpp6y")
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
 occluder = SubResource("ArrayOccluder3D_dp2q1")
 
-[node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_6ubee")
-
-[node name="entity_0_brush_1_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_t5u5d")
+[node name="collision_merged" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConcavePolygonShape3D_givwx")
 
 [node name="entity_1_func_detail_illusionary" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0937499, 0.078125, 0.25)
