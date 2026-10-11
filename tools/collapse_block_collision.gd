@@ -47,21 +47,41 @@ var _skipped: Array[String] = []
 
 func _init() -> void:
 	var args := OS.get_cmdline_user_args()
-	var target := "res://maps/blocks"
+	# SEVERAL targets, not one. A pilot wants exactly the blocks ONE level
+	# instances — 62 of them for Salient — so that a bad result is reverted with
+	# one checkout instead of being spread across all 423. Taking only the last
+	# path silently benched a different set than the one named.
+	var targets: Array[String] = []
 	for a in args:
 		if a == "--write":
 			_write = true
+		elif a.begins_with("--list="):
+			var lf := FileAccess.open(a.trim_prefix("--list="), FileAccess.READ)
+			if lf == null:
+				printerr("could not read list %s" % a.trim_prefix("--list="))
+				quit(1)
+				return
+			while not lf.eof_reached():
+				var line := lf.get_line().strip_edges()
+				if line != "":
+					targets.append(line)
+			lf.close()
 		elif a.strip_edges() != "":
-			target = a
+			targets.append(a)
+	if targets.is_empty():
+		targets.append("res://maps/blocks")
 
 	var files: Array[String] = []
-	if target.ends_with(".tscn"):
-		files.append(target)
-	else:
-		_gather(target, files)
+	for target in targets:
+		if target.ends_with(".tscn"):
+			if not files.has(target):
+				files.append(target)
+		else:
+			_gather(target, files)
 	files.sort()
 
-	print("── %s %d block(s) under %s ──" % ["REWRITING" if _write else "DRY RUN on", files.size(), target])
+	var what := targets[0] if targets.size() == 1 else "%d target(s)" % targets.size()
+	print("── %s %d block(s) under %s ──" % ["REWRITING" if _write else "DRY RUN on", files.size(), what])
 	for f in files:
 		_do(f)
 
