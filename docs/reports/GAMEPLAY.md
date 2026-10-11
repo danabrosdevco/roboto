@@ -36,6 +36,376 @@ most wants and least often gets:
 
 ---
 
+## 2026-10-05 (later) — the cores get the size they deserve, and every played map gets cover
+
+**Landed.** Three jobs off the back of the entry above.
+
+**1. Capture cores are no longer all the same size.** Every capture objective in
+the project — thirty-four of them across eight maps — was
+`compute_core_point_small`. The medium and large prefabs existed and were used
+nowhere, so the console the whole campaign is about looked exactly like a bonus
+relay in a car park.
+
+Sizing one is not a taste question, because a core goes in AFTER the navmesh is
+baked: the baker knows nothing about it, the squad paths straight at it, and a
+core wider than the lane it stands in is a doorway full of robots. A core taller
+than the room comes up through the ceiling. So `tools/probe_mission_anchors.gd`
+now MEASURES it — one ray up for the ceiling, eight out at chest height for
+clearance, shortest wins — and prints the biggest core that fits at every
+objective on a map. Measured footprints, which are not the heights
+`docs/BLOCKS.md` quotes (those include the uncollided crown):
+
+| | footprint | height |
+|---|---|---|
+| small | 1.88 sq | 4.19 m |
+| medium | 3.38 sq | 6.97 m |
+| large | 5.19 sq | 12.38 m |
+
+What it decided:
+
+- **Georgetown** — park small, stack medium, lock medium (nudged 3 m off the
+  gates so the dry crossing stays open), **Water Street large**, mill small. The
+  street core moved off the carriageway to z −108, between the road and the
+  north pavement: 5.19 m on a two-lane road would have walled the final fight in.
+- **Polaris** — **the breach uplink is large**, 12.4 m in the open in front of
+  the mall doors with four hundred metres of car park in front of it. The
+  biggest core in the project and the right place for it.
+- **Causeway** — checkpoint medium, **fort yard large**, everything else small.
+  **The crown uplink — the last objective in the campaign — gets the smallest
+  core on the map, because the room says so.** Tower floors are 6 m apart on
+  0.75 m plates, so a data hall has about 5.25 m clear and a medium core is
+  6.97. The probe reads 4.7 m at the basement and 3.5 m of clearance at the top
+  hall. I would have placed a large one there on instinct and it would have come
+  up through the ceiling.
+- **Hillfort** — **medium**, and that is a correction. The probe says large
+  fits, but only just: it measures 5.3 m to the nearest obstacle and a large
+  core is 5.19 m wide, so the threshold passes by twenty centimetres. A number
+  that close is not a yes. Medium clears it by over a metre and is still three
+  times the core that map had.
+- **Coast Road** — bridge and craters medium, **town large**. Open map, 24 m of
+  clearance everywhere, and the sizes now climb along the road the way the
+  mission does.
+- **Left alone, and why:** Qamareen is mid-rework by TERRAIN and its flagship
+  (the Compute Hall, 15 s channel) measures 4.0 m of clearance, so it could not
+  grow anyway — upgrading one of the others would have made the wrong objective
+  the biggest. Three Rivers has no clear flagship and mixed clearance.
+  Valley Basin's anchor measures 2.1 m. Nothing was added where something was
+  already there; the sizes were swapped, never stacked, which is what
+  `test_objective_terminals` exists to catch.
+
+**The probe caught three placements I had already made by eye, and all three
+were wrong.** This is the argument for the tool rather than for my judgement:
+
+- **The Polaris uplink was under a canopy.** I put a 12.4 m core at the entry
+  court at z 44; the ceiling there measures **3.6 m**. It would have come up
+  through the mall entry's own roof. Moved to z 56 — open sky, 18.1 m of
+  clearance, and still in front of the doors.
+- **The Causeway's ammunition dump core was inside the dump**, under a 2.1 m
+  roof with 0.3 m of clearance. Moved 9 m into the open beside it.
+- **Georgetown's mill core measured 2.0 m of clearance** at the position it had
+  been sitting at since it was authored — a small core with about a metre to
+  spare, hard against the mill front. Moved 6 m onto the berm; 8.0 m now.
+
+Two of those were my own placements from earlier today and the third was
+inherited. None of them is visible in a top-down render, which is the only way
+anyone had been looking at this.
+
+**Every core is also YAWED to face its approach.** `docs/BLOCKS.md` says the
+service alcove — the prefab's −X, and the one spot a body can stand while it
+channels — should be turned toward the approach "the way the relay dish is
+yawed", and not one map in the project had done it. All of them now are. The
+Causeway's rotate with the floor: the basement opens EAST because the portal is
+in the tower's +x face, the top hall opens NORTH because its stairwell comes up
+on the −z side.
+
+**2. Every level a mission plays now has cover.** Hillfort had **zero** cover
+points — the only played map besides the three new ones — which is the same
+complaint as the playtest note on it ("overall except for the top of the hill
+there's nothing") read from the AI's side. `tools/mission_ops.sh` places the
+spawner and `tools/probe_cover_mutaha.gd` bakes it:
+
+| | before | after |
+|---|---|---|
+| Hillfort | 0 | **2,611** |
+| Georgetown | 0 | 1,036 |
+| Polaris | 0 | 1,008 |
+| Causeway | 0 | 2,067 |
+| Coast Road | 1,921 | 1,924 (re-baked round the resized cores) |
+
+**3. A second pass on the three missions.** Four changes with a reason each:
+
+- **The Causeway's opening fight comes to you.** CULVERT and SOFFIT, the two
+  sections nearest the west ramp, were GARRISON — which meant 300 m of walking
+  before contact on the one stretch of this map that has no cover. They ADVANCE
+  now, so the crossing opens as a meeting engagement in the first hundred metres
+  with the west bank still behind you. This is the direct answer to the thing I
+  flagged as the mission's biggest risk.
+- **The gun crews never stand down.** BOMBARD and BALLISTA are `always_active`.
+  The briefing claimed they shelled the spans you crossed; at a marksman's 120 m
+  activation distance that was not true, so the data was changed to make the
+  claim nearly true and the claim was softened to what they actually do — watch
+  the east ramp before you reach it, and sit behind you once you are past the
+  wire. **Both halves, not just the wording.**
+- **Both extractions are contested now.** Neither was. Georgetown's upper road
+  had one squad on it and Polaris's service dock had three; a five-wave hold
+  that ends in an unopposed walk out is an anticlimax. KESTREL (two heavies, a
+  marksman and a shotgun) wakes on the Water Street relay and takes the upper
+  road; COLDSNAP (five, heavy) wakes on the fifth wave and takes the dock.
+- **Polaris was claiming elevation the map does not have.** The multiplex and
+  the parking deck are the mission's two flanking strongpoints, and the text
+  said "marksmen on the deck's upper floor" and "it has a ramp, which the
+  multiplex does not". Probed: every point on the deck's upper level and the
+  cinema roof comes back UNREACHABLE and snaps to y 0. Both are sealed. The
+  descriptions now say what is true — hard cover at ground level with ninety to
+  a hundred metres of open asphalt in front of it, and the fight is at their
+  feet. Same discipline as the gun crews, opposite outcome: there the data was
+  changed to fit the claim, here the claim had to come down to the data.
+- Two Georgetown descriptions were corrected to match where their cores actually
+  moved to. A briefing that describes the wrong spot is a lie in the data.
+
+The ladder's enemy supply, which is the one number that says "harder": 247
+(Qamareen) → **264 → 266 → 351**. Bodies 215 → 221 → 227 → 297.
+
+**Gates.** `check.sh --changed`: PASS. `spawn_check`: PASS, all 27 missions.
+`probe_mission_anchors`: PASS on all three, nothing unreachable, nothing off the
+mesh after the cores moved. `test_mission_objectives`, `test_mission_tags`,
+`test_objective_terminals`, `test_minimap_objectives`, `test_compute_cores`:
+all PASS. Three briefing maps re-baked. `smoke.sh`: PASS, booted clean.
+**Full `test.sh` against the finished state: `ALL SUITES PASS`** (2 not run,
+both parked).
+
+**Needs the human.** The decor list in the entry below still stands and is the
+most valuable thing on it. Two new ones:
+
+- **Look at the large cores in game.** 12.4 m is tall. The Polaris one in
+  particular is meant to be the thing you steer by from the frontage, and
+  whether it reads as a landmark or as a thing in the way is a judgement from
+  eye level that I cannot make.
+- **Hillfort's 2,611 cover points are untested in play.** That map had none at
+  all, so this is the first time its AI has had anything to use. It may change
+  how that mission plays more than anything else here.
+- **`tools/hillfort_objectives.sh` has drifted and would undo part of this on a
+  rebuild.** It still pastes back the OLD hand-built relay — a PersonalComputer
+  FBX and a template_interactible — while the level has carried a
+  `compute_core_point` instance for a while now. It is a no-op today because it
+  exits early when it finds a `RelayObjective`, so nothing is broken; but
+  regenerate the Hillfort and it will put the wrong thing back. I did not
+  rewrite it: it is a patch script for a map I was only passing through, and
+  changing it blind is how a repair script becomes the thing that needs
+  repairing. Worth half an hour from whoever owns that map.
+- **One decor ask, for TERRAIN: Polaris's parking deck wants a ramp.** The map's
+  design has two strongpoints looking into the entry court from either flank,
+  and neither is climbable — the deck has no reachable upper level and the
+  multiplex has no roof access. A parking deck you cannot go up is a parking
+  deck doing half its job, and it is the one place on that map that would give
+  the fight a second storey. Not a blocker; the mission plays at ground level
+  and says so now.
+
+---
+
+## 2026-10-05 — three operations, and a gameplay layer the terrain tools cannot eat
+
+**Landed.** Georgetown, Polaris and Causeway have missions. All three are
+harder than anything in the game, and on the numbers rather than by assertion —
+`audit_economy` prices the ladder's enemy force at the player's own supply
+rates and it now reads 247 (Qamareen) → 258 → 259 → 351, with body counts
+215 → 217 → 222 → 297. The first pass had Georgetown and Polaris at 239 and
+240, *under* Qamareen; the gap was closed with armour (two heavy squads, a
+walker and a lobber apiece) rather than more bodies, so the perf profile did
+not move. Unlike Qamareen, most of that force arrives in answer to something
+the player did rather than standing on the map at load.
+
+- **Georgetown — "Georgetown", an ascent.** You come ashore at the west end of
+  the derelict waterfront park and fight UP four terraces: park, lower yards,
+  canal, upper town. One relay per bench with the channel lengthening as you
+  climb — 6 s at the bandstand, 14 s in the middle of Water Street — then out
+  the east end of the upper road, which is the far corner of the map from the
+  landing, so the operation crosses the whole thing diagonally. Four optional
+  targets, all off the climb. 59 squads, 11 reserve waves including two walkers,
+  a mortar track, a bomber and three that come in on a body count.
+- **Polaris — "Polaris", a wave defence.** The only map in the project shaped
+  for one, and the reason is the closed ring road: four arterial approaches and
+  no corner a vehicle cannot reach. Fight 300 m up the restaurant row and
+  across the car park, start the drain in the entry court, then hold it through
+  five waves — south, east, west, north, then all four at once with a walker up
+  the middle and a bomber over it. Out the back by the service dock.
+  Built with nothing new: each wave is an `EliminateObjective` on its own
+  callsigns, and a reserve's `reinforcement_tag` IS an objective id, so wave N
+  completing is what spawns wave N+1. Each wave objective carries
+  `starts_active = false` with the previous wave as prerequisite, so it
+  activates on the frame its squads are built — otherwise the HUD shows all
+  five from the first minute and `EliminateObjective` warns about having no
+  targets. `required_kills` sits 2–5 below each wave's body count on purpose:
+  the classic wave-defence stall is one chaser hiding behind the garden centre.
+- **Causeway — "The Causeway", the finale.** Three fights of different shapes in
+  a row. A kilometre of open deck; a fortress with one door; then twenty-four
+  data halls. 2,042 m of path from the west bank to the top hall, and the whole
+  thing is one connected navmesh — I walked it. Seven captures and five optional
+  targets. **This is now the campaign's last operation, so clearing it is what
+  sets `campaign_won`** — it used to be Qamareen.
+
+**Where the gameplay lives, and why.** Not in the level files. Georgetown and
+Polaris are written from a template by `tools/build_georgetown.gd` and
+`tools/build_polaris.gd`, so anything hand-added to one dies on the next
+`--force` rebuild — which is exactly how the Hillfort lost its relay and
+shipped with a blank objective HUD. Each map's posts, routes, objectives, exit
+and squad spawn are in `maps/gameplay/<name>_ops.tscn`, a file the terrain
+tools do not know about, and `tools/mission_ops.sh` instances it into the level
+in two lines. Re-run that after any rebuild and nothing is re-authored.
+
+It also had to put `trench_broom_level.gd` on the Georgetown and Polaris roots:
+they were plain `Node3D`, and `World.load_next_level` does
+`instantiate() as TrenchBroomLevel`, which casts a plain root to null. **Neither
+map could have been deployed into at all before this.**
+
+**Every position was walked, not eyeballed.** New tool,
+`tools/probe_mission_anchors.gd`: snaps every post, patrol point and objective
+to the baked navmesh and paths to it from the spawn, and takes `POINTS=` so a
+coordinate can be checked BEFORE it is written into a level. Four things it
+settled that changed the design:
+
+- Georgetown's town bench is tiled back to z −264 but the navmesh's
+  `filter_baking_aabb` starts at −140, so the modern office block and the north
+  third of the bench have no walkable ground on them. Nothing is posted there.
+- The causeway's old carriageway piers at z +30 bake as isolated stubs — three
+  separate samples came back UNREACHABLE. They are a silhouette, not a flank.
+- The tower crown is not walkable: everything above y 138 snaps back to the top
+  hall. The uplink and the pad are both on that floor, at opposite ends of it.
+- The fort's east curtain has a 16 m gap at z 0 where the pit head comes
+  through, same as the west curtain has for the gate, so the wall walk is two
+  Ls and not a circuit. The patrol is authored as two routes.
+
+**None of the three had a single cover point.** `audit_levels` prints "no cover"
+for a level with no `CoverPointSpawner`, and all three read it — against 1,012
+to 3,289 on every other played map. The AI's whole cover system had nothing to
+use on them. `mission_ops.sh` places the spawner now (`sample_radius = 0`, the
+whole level, because the default 80 m covers a circle you cross in fifteen
+seconds and the smallest of these is 554 m across), and
+`tools/probe_cover_mutaha.gd` baked them: **Georgetown 1,035, Polaris 1,007,
+Causeway 2,067.**
+
+The spawner goes in the LEVEL and not the ops scene, deliberately and against
+the rule above: cover points are a function of GEOMETRY, so they *should* die
+with a rebuild and be re-baked rather than survive it as lies. The bake is a
+separate non-headless run — the spawner raycasts against real collision — and
+the patch script seeds one `CoverPoint_0` because that tool splices between the
+first and last existing point and bails on a scene with none.
+
+**Six bugs found and fixed, all one family.** Code that reads a scene from its
+PACKED form and walks `SceneState` without following `get_node_instance()` is
+blind to anything inside an instanced sub-scene. Harmless while every level
+declared its own objectives; three now do not. A `family-sweep` over every
+`get_state()` / `SceneState` call site in the project found the rest.
+
+- `tools/test_mission_objectives.gd` — reported 60 failures, correctly, and its
+  own header had predicted this exact failure.
+- `Campaign/minimap_data.gd:nest_ids()` — the briefing drew hives as capture
+  points, which is the bug that filter exists to prevent. Caught by
+  `test_minimap_objectives`.
+- `tools/test_objective_terminals.gd` — **this one is a gate and it was passing
+  falsely.** All three levels dropped out of its report entirely and it printed
+  PASS. Its own header says "a test that passes by looking in the wrong place is
+  worse than no test"; it was in that state again. It now checks the ops scenes
+  and finds 5, 1 and 8 capture points in them.
+- `tools/audit_levels.gd` — reported all three as `objectives 0  exits 0
+  squad spawns 0`, NO WAY OFF THE MAP, PLAYED BUT HAS NO OBJECTIVES, and then
+  every mission on them as naming objectives the level does not have. The two
+  copies of that loop in the file are now one walker with two callers; they had
+  already drifted once over whether an instanced objective counts.
+- `tools/audit_economy.gd` — objective payout read exactly zero for all three.
+- `tools/audit_capture_points.gd` — the three levels vanished from the report
+  with no line printed, via a `rows.is_empty(): continue`.
+
+Two more the sweep raised that I did **not** touch, because they are
+pre-existing and in other people's files: `tools/audit_audio.gd` misses the
+`AudioStreamPlayer3D` in any INHERITED weapon scene (`explosion_mortar.tscn`,
+`smoke_canister.tscn`, `smoke_hud_weapon.tscn` all report no sound at all), and
+`Character/hud/tutorial_library.gd:collect()` is the same shape but not yet
+triggered — the first lesson sign authored as an instance of
+`tutorial_label.tscn` disappears from the pause-menu library silently.
+
+**New gate.** `tools/test_mission_tags.gd` — the half nothing checked. Every
+`post_tag`, `spawn_tag` and `route_tag` on every `EnemySquadSpec` must resolve
+to something the level offers. A dangling one never crashes: a garrison holds
+the wrong ground, an advance walks at the player's spawn, a patrol stands
+still. The proving ground lost a whole operation to this. Verified negatively —
+breaking one tag deliberately makes the suite fail and name it.
+
+**Gates.** `check.sh --changed`: PASS. `smoke.sh`: PASS, booted clean.
+`spawn_check`: PASS, all 27 missions spawn exactly as authored.
+`probe_mission_anchors`: PASS on all three levels, every post, route point and
+objective reachable.
+
+`test.sh` full, first run, found three things. Two were real and are fixed: the
+minimap nest filter above, and `georgetown_1_ascent` unlocking `scanner`, which
+is in the catalogue with `in_shop = false` so the armoury will not sell it —
+`test_ledger` 163 checks and `test_minimap_objectives` both re-run green. The
+third was `test_wake`'s garrisoned-hopper check, and it was **not mine**: that
+file is uncommitted work by another lane (+34 lines, and it failed to parse
+mid-session), and it passes on its own now.
+
+**Final full re-run against the finished state: `ALL SUITES PASS`** (2 not run,
+both parked: `test_terrain`, `test_tutorial`).
+
+**Needs the human.**
+
+1. **Play them, and tell me which of the three is wrong.** I cannot judge any of
+   this. The specific worry is the Causeway deck: 620 m of 16 m carriageway with
+   a 1 m parapet and nothing else, which is the shape `docs/MAP_DECK.md` ranked
+   Tidal Causeway 28th for. I have built around it — the defence is concentrated
+   in the two shelled spans where the lane pinches to 7 m, and there is not one
+   marksman on the deck — but the decor ask below is the real fix.
+2. **Decor, where you offered it.** Measured, not guessed:
+   - *Georgetown, Water Street (z −96, x −208..208).* The hardest capture on the
+     map is a 14 s channel in the middle of a 416 m straight street whose only
+     furniture is five cobra lights and three stop signs. It wants parked and
+     wrecked vehicles, planters, a small market or square, skips — anything
+     waist-to-head at roughly 30 m intervals.
+   - *Georgetown, lower yards (z 46..106, x −100..100).* Warehouses at z 85.5
+     and mills at z 68 with open bench between them and the terrace wall. The
+     stack relay sits in it. Wants crates, container rows, a siding, a crane.
+   - *Georgetown, the towpaths.* A market at one end, the works compound at the
+     other, 300 m of bare paving between. Wants barriers, spoil heaps, a
+     lock-keeper's hut, moored barges.
+   - *Causeway, the deck.* Ten to fifteen pieces of wreckage, concentrated at
+     x −132, +12 and +108 — jack-knifed trucks, concrete barrier runs, a
+     toppled gantry, a container. This is the one that decides whether the
+     crossing is a fight or a march.
+   - *Causeway, the fort yard.* 200 m square and completely empty, with a 14 s
+     capture in the middle of it and a wall walk on all four sides. Wants
+     revetments, stacked hesco, a hangar, fuel bladders.
+   - *Polaris, the north lot (z −58..−98) and the lot's east and west ends.*
+     Three sparse aisles each. Wave 4 arrives through the north lot and the
+     extraction is behind it; waves 2 and 3 cross the ends.
+3. **Georgetown's office block is unreachable content.** It stands at z −180,
+   forty metres outside the baking box. Either widen `filter_baking_aabb` or
+   move it south — TERRAIN's call.
+4. **The three new missions have almost nothing left to unlock.** `repair_kit`,
+   `heavy_mg` and `autocannon` are the only sellable catalogue items no mission
+   already unlocks, and `scanner` has `in_shop = false` so nobody can ever buy
+   it. The obvious rewards for these three are the four dark frames — Quadcopter
+   Bomber, Marksman, Mortar Track, Lobber Rover — which is the board's own open
+   item and needs your call on cost before they can go in the catalogue.
+5. **Reload the level scenes if you have them open.** `maps/georgetown_level.tscn`,
+   `maps/polaris_level.tscn` and `maps/causeway_level.tscn` all changed on disk,
+   and `maps/gameplay/` is a new folder.
+6. The three minimaps are freshly baked. Causeway's has a light bloom in the
+   lower middle that the bake has always produced; cosmetic.
+7. **The purse outgrows the shop.** `audit_economy` says these three leave
+   2,745 / 4,035 / 5,785 resources idle — more than a full squad of baselines
+   could ever cost. The rewards are probably too generous, or there is not
+   enough to buy, and the second reading is the interesting one. Related to
+   item 4.
+
+**Blocked / next.** Nothing blocking. The honest next step is a playtest, then
+tuning — `always_active` is false on every garrison in all three missions
+(Qamareen sets it true on all 66 of its squads, which is a perf cost nobody has
+measured), and the Causeway's body count peaks when the player enters the
+basement and wakes floors 0–7 at once. Both of those are numbers a run will
+settle and a reading cannot.
+
+---
+
 ## 2026-09-29 (later) — playtest fixes, and a level that will not stay fixed
 
 **Landed.** The six things off the playtest, plus two bugs the work turned up.

@@ -15,6 +15,7 @@
 
 [node name="Pistol" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "reload_sounds", "click_stream_player")]
 script = ExtResource("1_mcwkk")
+suppression_per_shot = 1.5
 tracer_origin = NodePath("Pistol_52/Pistol_5/Muzzle")
 muzzle_flash = NodePath("Pistol_52/Pistol_5/MuzzleFlash")
 weapon_model = NodePath("Pistol_52/Pistol_5")

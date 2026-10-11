@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://db4kdnfsk4qyv"
+path="res://.godot/imported/trench_run_32.map-1f95b3c28087e0e8b48a7f01bb3c4788.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/trench_run_32.map"
+dest_files=["res://.godot/imported/trench_run_32.map-1f95b3c28087e0e8b48a7f01bb3c4788.tres"]
+
+[params]
+

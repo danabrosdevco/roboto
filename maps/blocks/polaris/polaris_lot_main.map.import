@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://v6qm4wpip671"
+path="res://.godot/imported/polaris_lot_main.map-b865c52b5da1276a41257403e1d368b9.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_lot_main.map"
+dest_files=["res://.godot/imported/polaris_lot_main.map-b865c52b5da1276a41257403e1d368b9.tres"]
+
+[params]
+

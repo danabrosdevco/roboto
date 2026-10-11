@@ -37,7 +37,16 @@ class_name EquipmentLoadout
 
 # Input actions, in slot order. "4", "5" and "6" are NOT in the project's input
 # map yet — add them before the equipment slots will respond.
+## 1-3 are PRIMARY/SIDEARM/MELEE and 4-6 the three equipment positions the
+## player can buy into — EXCEPT where an item reserves one outright through
+## `fixed_slot_action`, which the designator does with key 2. See that export,
+## and item_for_slot below.
 @export var slot_actions: Array[StringName] = [&"1", &"2", &"3", &"4", &"5", &"6"]
+## How many of `slot_actions` the positional equipment row may use. Three,
+## because a Utility Harness is the most slots any frame reaches and
+## tools/test_equipment.gd pins all three landing on 4, 5 and 6. Anything past
+## this is a reserved key.
+const EQUIPMENT_KEYS: int = 3
 @export var fire_action: StringName = &"fire"
 @export var alt_fire_action: StringName = &"aim"
 @export var reload_action: StringName = &"reload"
@@ -64,6 +73,9 @@ class_name EquipmentLoadout
 @export var permanent_items: Array[PlayerEquipment] = []
 
 var _record_built: Array[PlayerEquipment] = []
+## Items that reserve their own key, by the action they reserve. Kept apart
+## from `equipment` because that array is POSITIONAL and these are not.
+var _fixed: Dictionary = {}
 
 signal equipped(item: PlayerEquipment)
 signal denied(reason: String)
@@ -99,6 +111,9 @@ func _slot_index_for_item(item: PlayerEquipment) -> int:
 		return 1
 	if item == melee:
 		return 2
+	for action in _fixed.keys():
+		if _fixed[action] == item:
+			return slot_actions.find(action)
 	var equipment_index := equipment.find(item)
 	if equipment_index >= 0:
 		return equipment_index + 3
@@ -151,14 +166,63 @@ func _collect() -> void:
 			_:
 				loose.append(item)
 
+	# ITEMS WITH A RESERVED KEY COME OUT OF THE ROW. They are bound to their own
+	# action instead, so a built-in tool keeps the same key whatever the player
+	# has bought and costs no bought item its position. See fixed_slot_action.
+	_fixed.clear()
+	var positional: Array[PlayerEquipment] = []
+	for item in loose:
+		if item.fixed_slot_action != &"":
+			_fixed[item.fixed_slot_action] = item
+		else:
+			positional.append(item)
+
 	if equipment.is_empty():
-		loose.sort_custom(func(a, b): return a.equipment_order < b.equipment_order)
-		equipment = loose
+		positional.sort_custom(func(a, b): return a.equipment_order < b.equipment_order)
+		equipment = positional
+
+	# AN ITEM PAST THE LAST KEY IS UNREACHABLE, and used to be unreachable
+	# SILENTLY: it sits in _all, it ticks, and nothing can ever select it. Say
+	# so rather than letting it read as the key being broken.
+	if equipment.size() > EQUIPMENT_KEYS:
+		for i in range(EQUIPMENT_KEYS, equipment.size()):
+			if equipment[i] != null:
+				push_warning("EquipmentLoadout: '%s' is equipment #%d and there are only %d equipment keys, so nothing can select it." % [equipment[i].display_name, i + 1, EQUIPMENT_KEYS])
+	for action in _fixed.keys():
+		if not slot_actions.has(action):
+			push_warning("EquipmentLoadout: '%s' reserves action '%s', which slot_actions does not list, so nothing can select it." % [_fixed[action].display_name, action])
+			continue
+		# AND IT MUST NOT BE HIDING ANYTHING. Key 2 is free today because every
+		# frame has one weapon slot; a two-weapon frame would put a sidearm under
+		# the designator and the player would simply never be able to draw it.
+		# That has to say so rather than arriving as a bug report.
+		var at := slot_actions.find(action)
+		var under: PlayerEquipment = null
+		match at:
+			0: under = primary
+			1: under = sidearm
+			2: under = melee
+			_:
+				var k := at - 3
+				if k >= 0 and k < equipment.size():
+					under = equipment[k]
+		if under != null and _is_live(under):
+			push_warning("EquipmentLoadout: '%s' reserves key '%s', which is where '%s' would have been — that item is now unreachable." % [_fixed[action].display_name, action, under.display_name])
 
 	for item in [primary, sidearm, melee]:
 		if item != null and not _all.has(item):
 			_all.append(item)
 	for item in equipment:
+		if item != null and not _all.has(item):
+			_all.append(item)
+	# AND THE RESERVED-KEY ITEMS, which are not in `equipment` precisely because
+	# they have no position in it. Missing this made the designator a node that
+	# existed, drew, and had never had initialize() called on it: no player, no
+	# camera, no screen wiring, and tick/tick_stowed never running. _all is what
+	# the lifecycle is driven from, so anything holdable has to be in it
+	# whatever key it answers to.
+	for action in _fixed.keys():
+		var item = _fixed[action]
 		if item != null and not _all.has(item):
 			_all.append(item)
 
@@ -178,13 +242,23 @@ func _gather(node: Node, out: Array[PlayerEquipment]) -> void:
 # SELECTION
 # ─────────────────────────────────────────────
 func item_for_slot(index: int) -> PlayerEquipment:
+	# A RESERVED KEY WINS, wherever it sits — ahead of the positional slots and
+	# not only inside the equipment row. The designator reserves key 2, which is
+	# the SIDEARM position: empty on every frame in the game (all of them have
+	# weapon_slots = 1), so the bar drew a blank chip there and it is the natural
+	# home for a tool the player commands with. _collect warns if a reservation
+	# ever does shadow something real.
+	if index >= 0 and index < slot_actions.size():
+		var claimed = _fixed.get(slot_actions[index])
+		if claimed != null and _is_live(claimed):
+			return claimed
 	match index:
 		0: return primary
 		1: return sidearm
 		2: return melee
 		_:
 			var i := index - 3
-			if i >= 0 and i < equipment.size():
+			if i >= 0 and i < mini(equipment.size(), EQUIPMENT_KEYS):
 				return equipment[i]
 	return null
 
@@ -371,7 +445,7 @@ func apply_record(record, catalogue) -> void:
 	# WHATEVER YOU JUST FITTED GOES IN YOUR HANDS.
 	#
 	# Buying your first rifle and walking away still holding the repair tool is
-	# the wrong answer to "I just bought a rifle" â and there is no other way to
+	# the wrong answer to "I just bought a rifle" — and there is no other way to
 	# find out you own it until you happen to press the key. The record is
 	# diffed against the one before it, so this needs nothing from the caller:
 	# anything in the new record that was not in the old one is what you just
@@ -519,8 +593,14 @@ func _scale_thrown_capacity() -> void:
 			continue
 		carriers[t] = int(carriers.get(t, 0)) + 1
 	for stock in ammo.starting_ammo:
-		if stock != null and stock.ammo_type != &"":
-			ammo.set_carriers(stock.ammo_type, int(carriers.get(stock.ammo_type, 1)))
+		if stock == null or stock.ammo_type == &"":
+			continue
+		# THE DEFAULT IS THE WHOLE RULE. A gun calibre falls back to one carrier —
+		# the reserve exists whether or not that gun is in your hands. A thrown
+		# item falls back to NONE: carry no frags and you have no frags, rather
+		# than a full pouch of something you cannot throw.
+		var floor_carriers: int = 0 if stock.requires_carrier else 1
+		ammo.set_carriers(stock.ammo_type, int(carriers.get(stock.ammo_type, floor_carriers)))
 
 
 func _build_item(catalogue, item_id: StringName) -> PlayerEquipment:

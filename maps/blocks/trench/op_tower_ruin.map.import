@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bcyt0sn5mhh5m"
+path="res://.godot/imported/op_tower_ruin.map-b0ac358b50545b5109e16efebbaa3760.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/op_tower_ruin.map"
+dest_files=["res://.godot/imported/op_tower_ruin.map-b0ac358b50545b5109e16efebbaa3760.tres"]
+
+[params]
+

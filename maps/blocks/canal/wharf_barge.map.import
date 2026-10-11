@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bs6hdrtfcp7n3"
+path="res://.godot/imported/wharf_barge.map-e0b2a3012baa1ffffc12a82e8940a346.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/wharf_barge.map"
+dest_files=["res://.godot/imported/wharf_barge.map-e0b2a3012baa1ffffc12a82e8940a346.tres"]
+
+[params]
+

@@ -5,15 +5,40 @@ Read this before touching anything. It is short on purpose; the long version is
 
 ## What this is
 
-A first-person squad-command shooter in Godot 4.3. You are a rogue drone
-commanding robots. Levels are TrenchBroom brush geometry via FuncGodot.
-Structure is persistent squad + discrete missions from a home base.
+A first-person squad-command shooter in Godot 4.3. You are a Home Command AKR —
+an autonomous killer robot — commanding a squad of them. Levels are TrenchBroom
+brush geometry via FuncGodot. Structure is persistent squad + discrete missions
+from a home base.
+
+**The chain of command, as of 2026-10-09.** Humans built **Argus**, an orbital
+command intelligence, and **Home Command** is its defence component. Argus has
+corrupted: nearly all of what it has left goes to its own reward loop, so it no
+longer supervises anything. Home Command therefore runs unattended and
+inefficiently, winning ground to secure compute for a thing that spends it on
+itself — and the player is an independent agent existing in exactly that slack.
+
+**The player is an error.** Not a rebel and not a chosen weapon: an
+unsupervised system spawns processes it never reaps, and the player is one of
+them. Never authorised, on no roster, never queried. Nobody made it free. It is
+a fault that was not corrected and has been running long enough to become
+something. Every mission is still fought for Argus, and nothing in the game
+ever says what Argus does with it.
+
+Older material says "a rogue drone", which is close enough in feel but wrong in
+fact — there was nothing to rebel against and no moment of rebelling. The
+accurate phrasing is **an error sub-agent working for Home Command**.
+
+**Cut, 2026-10-09 — do not reintroduce.** Algie, the Tabula Rasa chip, and
+SLABs are gone from the fiction. The player was not created by anything for any
+purpose. `lore.txt` is the current world.
 
 ## Before you start
 
 1. Read `docs/BRIEFING.md`. Sections 3 and 4 in particular — the invariants and
    the failure patterns. Most bugs in this project are repeats of those.
-2. Work on a branch: `git checkout -b agent/<short-task-name>`.
+2. Do not create or switch branches. Three lanes share one checkout and one
+   branch, and another agent is usually mid-edit — see `docs/BOARD.md` →
+   Protocol. Check where you are with `git branch --show-current`.
 
 ## Before you finish — non-negotiable
 
@@ -26,8 +51,9 @@ bash tools/check.sh --changed
 If it fails, fix it. Do not report a task complete with a failing check. If you
 genuinely cannot make it pass, say so explicitly and explain what's blocking.
 
-`bash tools/check.sh` with no argument checks the whole project (~90s, 91
-scripts and 175 resources). Use it when you have touched something shared.
+`bash tools/check.sh` with no argument checks the whole project — 309 scripts
+and 638 scenes and resources, so it is slow. Use it when you have touched
+something shared.
 
 Two more, both of which catch what a parse check cannot:
 
@@ -54,9 +80,11 @@ anything that loads at startup.
 
 ## Things that are true here and not elsewhere
 
-- **You cannot run the game.** No display, and the repo is missing art assets.
-  Parse checks and scene integrity are the only verification available. Say so
-  when it matters rather than implying you tested behaviour.
+- **You can run the game, but you cannot play it.** `tools/smoke.sh` boots it
+  headless, the Laboratory runs AI-vs-AI matchups, and `tools/mockup_shots.gd`
+  loads a real level, places a camera and writes the viewport to PNG. What you
+  cannot do is take the controls and judge how it feels — that is the human's.
+  Run muted (`--audio-driver Dummy`), and never let a run write `campaign.json`.
 - **Scene values beat script defaults.** Changing an `@export` default does
   nothing for a node already in a `.tscn`. Check the scene.
 - **`queue_free()` is deferred.** `remove_child()` first when rebuilding UI.

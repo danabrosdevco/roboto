@@ -8,7 +8,7 @@
 script = ExtResource("1_itemdef")
 id = &"squad_auto"
 display_name = "Squad Automatic"
-short_name = "Squad"
+short_name = "Squad Auto"
 description = "Factory-printed, belt-fed, a hundred rounds to a box. Worst grouping in the armoury and a seven-second reload: it holds a lane, it does not win a duel."
 kind = 0
 cost = 185
@@ -33,7 +33,7 @@ sensor_bonus = 0.0
 signal_resistance_bonus = 0.0
 self_revive_seconds = 0.0
 equipment_slot_bonus = 0
-suppressive_fire = true
+suppressive_fire = false
 required_rank = 0
 requires_chassis = Array[StringName]([])
 chassis_whitelist = Array[StringName]([])

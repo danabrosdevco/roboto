@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://wa8emr2o54br"
+path="res://.godot/imported/polaris_restaurant_casual.map-77749661265e4a0d6923649f084e34ee.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_restaurant_casual.map"
+dest_files=["res://.godot/imported/polaris_restaurant_casual.map-77749661265e4a0d6923649f084e34ee.tres"]
+
+[params]
+

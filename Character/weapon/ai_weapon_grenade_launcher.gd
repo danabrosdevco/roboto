@@ -119,6 +119,45 @@ func drop_bomb() -> void:
 	play_shot_audio()
 
 
+## Read off the round itself, because a launcher's damage is never on the
+## launcher. The round's own blast_damage, plus whatever it splits into — a
+## cluster shell throws `submunitions` bomblets at `submunition_damage` each.
+## The overrides this launcher applies on release are applied here too, so the
+## number reported is the number the round will actually arrive with.
+##
+## Cached. The one way to ask a PackedScene what its root's properties are is to
+## build one, and the shop asks per redraw: a shell instanced per card per frame
+## would be absurd. Built once, read, freed, kept.
+var _shot_damage: Dictionary = {}
+
+
+func shot_damage() -> Dictionary:
+	if not _shot_damage.is_empty():
+		return _shot_damage
+	if grenade_scene == null:
+		# Already warned about at setup; say it again here rather than hand back
+		# base_damage as if it meant something on a launcher that fires nothing.
+		push_warning("AIWeaponGrenadeLauncher on '%s' has no grenade_scene, so its reported damage is the weapon's base_damage, which a launcher does not use." % name)
+		return super.shot_damage()
+	var round_node := grenade_scene.instantiate()
+	var impact: int = base_damage
+	if blast_override > 0:
+		impact = blast_override
+	elif "blast_damage" in round_node:
+		impact = int(round_node.get("blast_damage"))
+	var count: int = 0
+	var each: int = 0
+	if "submunitions" in round_node and "submunition_damage" in round_node:
+		count = maxi(int(round_node.get("submunitions")), 0)
+		each = int(round_node.get("submunition_damage"))
+	round_node.free()
+	_shot_damage = {
+		"impact": impact, "submunitions": count, "each": each,
+		"total": impact + count * each,
+	}
+	return _shot_damage
+
+
 # Builds one charge at `origin`, owned by the carrier and unable to collide with
 # it. Shared by the aimed throw and the bombing drop so neither can drift from
 # the other on attribution or on the self-collision fix.

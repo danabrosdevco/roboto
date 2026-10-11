@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bw8ssea34m71e"
+path="res://.godot/imported/works_site_compound.map-1048659074af231ee2866bf8e7225367.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/works_site_compound.map"
+dest_files=["res://.godot/imported/works_site_compound.map-1048659074af231ee2866bf8e7225367.tres"]
+
+[params]
+

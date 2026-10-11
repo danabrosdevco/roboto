@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://x20ee5xriice"
+path="res://.godot/imported/canal_bench_grass_1.map-dd7c07d185064e641b260570e994f10a.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_bench_grass_1.map"
+dest_files=["res://.godot/imported/canal_bench_grass_1.map-dd7c07d185064e641b260570e994f10a.tres"]
+
+[params]
+

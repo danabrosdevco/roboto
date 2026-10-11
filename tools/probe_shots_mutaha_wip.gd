@@ -1,7 +1,7 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# SHOTS OF THE MUTAHA WIP COPY. Eye height where a robot would stand, plus two
+# SHOTS OF THE QAMAREEN COPY. Eye height where a robot would stand, plus two
 # obliques for the layout.
 #
 #   RENDER_OUT=<dir> godot --path . --script res://tools/probe_shots_mutaha_wip.gd

@@ -81,8 +81,16 @@ while IFS= read -r f; do
 	[ -n "$f" ] || continue
 	[ -f "$f" ] || continue
 	CHECKED=$((CHECKED + 1))
+	# "contains invalid unicode" is in the pattern because a script Godot refuses
+	# to READ never reaches the parser, so it reports none of the three error
+	# strings above and this check used to print PASS on it. That happened: an
+	# in-place rewrite of enemy.gd flattened two characters out of UTF-8, Godot
+	# would not load the file at all, every robot in the game lost its script,
+	# and the gate said the project was fine. A vacuous pass is worse than a
+	# failure.
 	out=$("$GODOT" --headless --path . --check-only --script "res://${f#./}" 2>&1 \
-	      | grep -E "Parse Error|Compile Error|SCRIPT ERROR" | grep -Ev "$NOISE" | head -5)
+	      | grep -E "Parse Error|Compile Error|SCRIPT ERROR|contains invalid unicode" \
+	      | grep -Ev "$NOISE" | head -5)
 	if [ -n "$out" ]; then
 		echo "FAIL  $f"
 		echo "$out" | sed 's/^/        /'
@@ -180,6 +188,56 @@ END {
 '
 [ $? -ne 0 ] && FAIL=1
 
+
+# ── Overlapping brushes ──────────────────────────────────────────────────────
+#
+# NO TWO BRUSHES IN A .map MAY SHARE ANY VOLUME. Touching is correct — two
+# coincident faces back to back are each only visible from their own side and
+# never fight. Interpenetration of any depth is a defect: both faces render at
+# the same place, the depth buffer cannot choose between them, and the surface
+# flickers as the camera moves.
+#
+# This is a gate rather than a report because ~3,900 overlapping pairs
+# accumulated across the kit without anyone noticing. Every one of them came
+# from a detail box written to start INSIDE the mass it sits on rather than at
+# its face — one line of code, multiplied by the loop around it.
+#
+# Set OVERLAP=0 to skip it when you are mid-edit and expect failures.
+if [ "${OVERLAP:-1}" != "0" ]; then
+	echo
+	echo "── Overlapping brushes ──"
+	if [ "${1:-}" = "--changed" ]; then
+		MAPS=$( { git diff --name-only HEAD -- '*.map'
+		          git diff --cached --name-only HEAD -- '*.map'
+		          git ls-files --others --exclude-standard -- '*.map'; } 2>/dev/null | sort -u )
+	else
+		MAPS=$(find maps -name '*.map' -not -path './.claude/*' 2>/dev/null)
+	fi
+	MAPS=$(echo "$MAPS" | grep -v '^$' || true)
+	if [ -z "$MAPS" ]; then
+		echo "      no maps to check"
+	else
+		NMAPS=0
+		BADMAPS=0
+		for m in $MAPS; do
+			[ -f "$m" ] || continue
+			NMAPS=$((NMAPS + 1))
+			PAIRS=$(MAP="res://$m" "$GODOT" --headless --path . \
+				--script res://tools/probe_map_overlap.gd 2>/dev/null \
+				| grep -oE '[0-9]+ overlapping pair' | grep -oE '^[0-9]+' | head -1)
+			PAIRS=${PAIRS:-0}
+			if [ "$PAIRS" != "0" ]; then
+				echo "FAIL  $m — $PAIRS overlapping pair(s)"
+				echo "        MAP=\"res://$m\" \"\$GODOT\" --headless --path . --script res://tools/probe_map_overlap.gd"
+				BADMAPS=$((BADMAPS + 1))
+				FAIL=1
+			fi
+		done
+		if [ "$BADMAPS" = "0" ]; then
+			echo "      all $NMAPS map(s) free of overlapping brushes"
+		fi
+	fi
+fi
 echo
 if [ "$FAIL" = "0" ]; then
 	echo "PASS"

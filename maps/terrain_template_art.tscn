@@ -1,0 +1,153 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://Env/terrain/generated_terrain.gd" id="1_o7sf0"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="2_fp65d"]
+[ext_resource type="Resource" path="res://maps/terrain_data/terrain_template_level_terrain.res" id="3_sf65a"]
+[ext_resource type="Material" path="res://Env/terrain/terrain_material.tres" id="4_2rolo"]
+[ext_resource type="Material" path="res://Env/terrain/water_material.tres" id="5_f02cl"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_stamp.gd" id="6_o75sb"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_path.gd" id="7_vc00r"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter.gd" id="8_hr4rq"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter_layer.gd" id="9_n0brd"]
+
+[sub_resource type="Resource" id="Resource_recipe"]
+script = ExtResource("2_fp65d")
+size_x = 1408.0
+size_z = 512.0
+cell_size = 2.0
+random_seed = 7
+layout = 0
+floor_at_zero = true
+floor_width = 220.0
+floor_shoulder = 50.0
+floor_depth = 6.0
+floor_roughness = 0.25
+floor_edge_noise = 0.4
+meander = 30.0
+meander_scale = 600.0
+border_sides = 15
+border_height = 36.0
+border_width = 110.0
+border_noise = 45.0
+border_ruggedness = 0.6
+hills_height = 7.0
+hills_scale = 220.0
+hills_octaves = 5
+hills_warp = 50.0
+ridge_height = 8.0
+ridge_scale = 320.0
+ridge_on_floor = 0.05
+detail_height = 0.9
+detail_scale = 14.0
+terrace_step = 0.0
+terrace_strength = 0.75
+crater_count = 40
+crater_radius_min = 2.5
+crater_radius_max = 10.0
+crater_depth = 0.3
+crater_rim = 0.1
+craters_on_floor = true
+thermal_passes = 4
+talus_angle = 40.0
+hydraulic_strength = 0.6
+smooth_passes = 1
+sketch_metres_per_pixel = 0.0
+sketch_blend = 20.0
+sketch_edge_noise = 16.0
+sketch_mountain_height = 38.0
+water_level = -1.5
+water_depth = 5.0
+water_bank = 30.0
+urban_block = Vector2(40, 32)
+urban_street = 8.0
+urban_angle = 0.0
+urban_ruin = 0.25
+shelling_per_hectare = 30.0
+rough_height = 8.0
+road_width = 5.0
+road_falloff = 5.0
+road_smoothing = 40.0
+bridge_clearance = 2.0
+
+[sub_resource type="Curve3D" id="Curve3D_road"]
+bake_interval = 1.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -520, -0.05, 18, -39.6, 0, 5.28, 39.6, 0, -5.28, -440, -0.1, 12, -46.2, 0, 3.52, 46.2, 0, -3.52, -340, 0.8, -6, -48.4, 0, -3.96, 48.4, 0, 3.96, -230, -0.2, -4, -48.4, 0, -4.84, 48.4, 0, 4.84, -120, 0.3, 12, -48.4, 0, 0.88, 48.4, 0, -0.88, -10, 0, 18, -48.4, 0, 7.04, 48.4, 0, -7.04, 100, 0.2, 8, -50.6, 0, 3.08, 50.6, 0, -3.08, 210, -0.4, -14, -48.4, 0, -5.72, 48.4, 0, 5.72, 330, 0, -6, -38.5, 0, -5.72, 38.5, 0, 5.72, 430, 0.2, 12, 0, 0, 0, 0, 0, 0, 505, -0.3, 20),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+}
+point_count = 11
+
+[sub_resource type="Curve3D" id="Curve3D_trench_n"]
+bake_interval = 1.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 60, 1.5, -110, -0.88, 0, -12.76, 0.88, 0, 12.76, 52, 0.8, -80, -0.88, 0, -12.32, 0.88, 0, 12.32, 64, 0.9, -52, 0, 0, 0, 0, 0, 0, 56, 0.25, -24),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_trench_s"]
+bake_interval = 1.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 58, 0.7, 38, 0.88, 0, -11.88, -0.88, 0, 11.88, 66, 0.35, 64, 0.88, 0, -11.88, -0.88, 0, 11.88, 54, 0.2, 92, 0, 0, 0, 0, 0, 0, 62, 1.05, 118),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[node name="TerrainTemplateArt" type="Node3D"]
+
+[node name="Terrain" type="Node3D" parent="."]
+script = ExtResource("1_o7sf0")
+recipe = SubResource("Resource_recipe")
+data = ExtResource("3_sf65a")
+
+[node name="Stamps" type="Node3D" parent="Terrain"]
+
+[node name="OutpostPad" type="Node3D" parent="Terrain/Stamps"]
+transform = Transform3D(0.990268, 0, 0.139173, 0, 1, 0, -0.139173, 0, 0.990268, -190, -0.15, -44)
+script = ExtResource("6_o75sb")
+footprint = 1
+size = Vector2(48, 32)
+falloff = 10.0
+
+[node name="CompoundPad" type="Node3D" parent="Terrain/Stamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 250, -1.2, 62)
+script = ExtResource("6_o75sb")
+radius = 26.0
+falloff = 12.0
+
+[node name="ExtractionPad" type="Node3D" parent="Terrain/Stamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 505, -0.8, 20)
+script = ExtResource("6_o75sb")
+radius = 16.0
+
+[node name="ImpactCrater" type="Node3D" parent="Terrain/Stamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, -0.15, -70)
+script = ExtResource("6_o75sb")
+shape = 3
+radius = 18.0
+amount = 6.0
+paint = 3
+
+[node name="Road" type="Path3D" parent="Terrain"]
+curve = SubResource("Curve3D_road")
+script = ExtResource("7_vc00r")
+width = 7.0
+
+[node name="TrenchNorth" type="Path3D" parent="Terrain"]
+curve = SubResource("Curve3D_trench_n")
+script = ExtResource("7_vc00r")
+mode = 1
+width = 4.0
+falloff = 1.5
+smoothing = 10.0
+
+[node name="TrenchSouth" type="Path3D" parent="Terrain"]
+curve = SubResource("Curve3D_trench_s")
+script = ExtResource("7_vc00r")
+mode = 1
+width = 4.0
+falloff = 1.5
+smoothing = 10.0
+
+[node name="Scatter" type="Node3D" parent="Terrain"]
+script = ExtResource("8_hr4rq")

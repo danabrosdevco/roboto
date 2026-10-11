@@ -1,0 +1,30 @@
+[gd_scene load_steps=3 format=3]
+
+; THE HEAVY MINE, AS THE SQUAD USES IT.
+;
+; One charge, placed, and it does not expire (mine_heavy.tscn sets
+; mine_lifetime 0). That permanence changes the decision: there is no hurry and
+; no waste in laying it early, so the only thing that matters is laying it on
+; ground something will actually cross.
+;
+; Laid closer in than the cluster mine (7 m, and it will accept contact at 10)
+; because it is a point charge on a single approach rather than a scattered
+; field — 160 damage in 4.5 m kills a Rover outright, and that wants to be on
+; the line they walk, not spread near it.
+;
+; The long cooldown is the quantity: there are not many of these, and a robot
+; that spends them in the first thirty seconds has none for the position it is
+; actually asked to hold.
+
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_mine.gd" id="1_mine"]
+[ext_resource type="PackedScene" path="res://Character/weapon/mines/mine_heavy.tscn" id="2_mine"]
+
+[node name="AI_Mine_Heavy" type="Node3D"]
+script = ExtResource("1_mine")
+equipment_name = "Heavy Mine"
+cooldown = 30.0
+mine_scene = ExtResource("2_mine")
+place_metres = 7.0
+min_contact_metres = 10.0
+watch_radius = 60.0
+squad_spacing_seconds = 14.0

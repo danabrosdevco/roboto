@@ -1,0 +1,69 @@
+[gd_scene load_steps=10 format=4]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_tv1nc"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_yt2es"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/dirt_4.tres" id="3_g2avx"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/stone_3.tres" id="4_wbl6h"]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_mu52j"]
+_surfaces = [{
+"aabb": AABB(-4.8125, -3.5, -16, 9.625, 4.09375, 32),
+"attribute_data": PackedByteArray("AAAAQAAAGj8AAADAAAAaPwAAAMAAAAA/AAAAQAAAAD8AAADAAAAaPwAAAMAAAAA/AAAAQAAAAD8AAABAAAAaPwAAAEAAAAA/AAAAwAAAAD8AAADAAAAAvwAAAEAAAAC/AAAAwAAAAD8AAADAAAAAvwAAAEAAAAC/AAAAQAAAAD8AAADAAADgPgAAAMAAAKA+AAAAQAAAoD4AAABAAADgPgAAAL8AAOA+AAAAvwAAoD4AAAA/AACgPgAAAD8AAOA+AAAAwAAA4D4AAADAAACgPgAAAEAAAKA+AAAAQAAA4D4AAAC/AADgPgAAAL8AAKA+AAAAPwAAoD4AAAA/AADgPgAAAEAAAAC/AAAAwAAAAL8AAADAAAAavwAAAEAAABq/AAAAwAAAAL8AAADAAAAavwAAAEAAABq/AAAAQAAAAL8="),
+"format": 34359742487,
+"index_count": 60,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8AIAAhACIAIAAiACMAJAAlACYAJAAmACcA"),
+"material": ExtResource("3_g2avx"),
+"name": "PSX_Textures/dirt_4",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 40,
+"vertex_data": PackedByteArray("AACawAAAYMAAAIDBAACawAAAYMAAAIBBAACAwAAAYMAAAIBBAACAwAAAYMAAAIDBAACawAAAGD8AAIDBAACAwAAAGD8AAIDBAACAwAAAGD8AAIBBAACawAAAGD8AAIBBAACAwAAAYMAAAIDBAACAwAAAYMAAAIBBAACAQAAAYMAAAIBBAACAQAAAYMAAAIDBAACAwAAAIMAAAIDBAACAQAAAIMAAAIDBAACAQAAAIMAAAIBBAACAwAAAIMAAAIBBAACAwAAAYMAAAIDBAACAwAAAIMAAAIDBAACAwAAAIMAAAIBBAACAwAAAYMAAAIBBAACAwAAAYMAAAIBBAACAwAAAIMAAAIBBAACAQAAAIMAAAIBBAACAQAAAYMAAAIBBAACAQAAAYMAAAIBBAACAQAAAIMAAAIBBAACAQAAAIMAAAIDBAACAQAAAYMAAAIDBAACAQAAAYMAAAIDBAACAQAAAIMAAAIDBAACAwAAAIMAAAIDBAACAwAAAYMAAAIDBAACAQAAAYMAAAIDBAACAQAAAYMAAAIBBAACaQAAAYMAAAIBBAACaQAAAYMAAAIDBAACAQAAAGD8AAIDBAACaQAAAGD8AAIDBAACaQAAAGD8AAIBBAACAQAAAGD8AAIBB/38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//v/9/AAD//////38AAP//////fwAA//////9/AAD//////3////9//7//f////3//v/9/////f/+//3////9//78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//v/9//3////+//3//f////7//f/9/////v/9//3////+/////f/////////9//////////3//////////f///////////AAD/v/////8AAP+//////wAA/7//////AAD/v/9/AAD//////38AAP//////fwAA//////9/AAD//////3////9//7//f////3//v/9/////f/+//3////9//78=")
+}, {
+"aabb": AABB(-4.8125, -3.5, -16, 9.625, 4.09375, 32),
+"attribute_data": PackedByteArray("AAAAwAAA4D4AAADAAACYvQAAAEAAAJi9AAAAQAAA4D4AAAC/AADgPgAAGr8AAOA+AAAavwAAmL0AAAC/AACYvQAAAMAAAOA+AAAAwAAAmL0AAABAAACYvQAAAEAAAOA+AAAaPwAA4D4AAAA/AADgPgAAAD8AAJi9AAAaPwAAmL0AAADAAADgPgAAAMAAAJi9AAAAQAAAmL0AAABAAADgPgAAGj8AAOA+AAAAPwAA4D4AAAA/AACYvQAAGj8AAJi9AAAAwAAA4D4AAADAAACYvQAAAEAAAJi9AAAAQAAA4D4AAAC/AADgPgAAGr8AAOA+AAAavwAAmL0AAAC/AACYvQ=="),
+"format": 34359742487,
+"index_count": 48,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8A"),
+"material": ExtResource("4_wbl6h"),
+"name": "PSX_Textures/stone_3",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 32,
+"vertex_data": PackedByteArray("AACawAAAYMAAAIDBAACawAAAGD8AAIDBAACawAAAGD8AAIBBAACawAAAYMAAAIBBAACAwAAAYMAAAIBBAACawAAAYMAAAIBBAACawAAAGD8AAIBBAACAwAAAGD8AAIBBAACAwAAAYMAAAIBBAACAwAAAGD8AAIBBAACAwAAAGD8AAIDBAACAwAAAYMAAAIDBAACawAAAYMAAAIDBAACAwAAAYMAAAIDBAACAwAAAGD8AAIDBAACawAAAGD8AAIDBAACAQAAAYMAAAIDBAACAQAAAGD8AAIDBAACAQAAAGD8AAIBBAACAQAAAYMAAAIBBAACaQAAAYMAAAIBBAACAQAAAYMAAAIBBAACAQAAAGD8AAIBBAACaQAAAGD8AAIBBAACaQAAAYMAAAIBBAACaQAAAGD8AAIBBAACaQAAAGD8AAIDBAACaQAAAYMAAAIDBAACAQAAAYMAAAIDBAACaQAAAYMAAAIDBAACaQAAAGD8AAIDBAACAQAAAGD8AAIDBAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//7//f/9/////v/9//3////+//3//f////7//f/9/////v////3//////////f/////////9//////////3///////////wAA/7//////AAD/v/////8AAP+//////wAA/78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//v/9//3////+//3//f////7//f/9/////v/9//3////+/////f/////////9//////////3//////////f///////////AAD/v/////8AAP+//////wAA/7//////AAD/vw==")
+}]
+
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_2giry"]
+vertices = PackedVector3Array(-4.8125, -3.5, -16, -4.8125, -3.5, 16, -4, -3.5, 16, -4, -3.5, -16, -4.8125, 0.59375, -16, -4, 0.59375, -16, -4, 0.59375, 16, -4.8125, 0.59375, 16, -4, -3.5, -16, -4, -3.5, 16, 4, -3.5, 16, 4, -3.5, -16, -4, -2.5, -16, 4, -2.5, -16, 4, -2.5, 16, -4, -2.5, 16, -4, -3.5, -16, -4, -2.5, -16, -4, -2.5, 16, -4, -3.5, 16, -4, -3.5, 16, -4, -2.5, 16, 4, -2.5, 16, 4, -3.5, 16, 4, -3.5, 16, 4, -2.5, 16, 4, -2.5, -16, 4, -3.5, -16, 4, -3.5, -16, 4, -2.5, -16, -4, -2.5, -16, -4, -3.5, -16, 4, -3.5, -16, 4, -3.5, 16, 4.8125, -3.5, 16, 4.8125, -3.5, -16, 4, 0.59375, -16, 4.8125, 0.59375, -16, 4.8125, 0.59375, 16, 4, 0.59375, 16, -4.8125, -3.5, -16, -4.8125, 0.59375, -16, -4.8125, 0.59375, 16, -4.8125, -3.5, 16, -4, -3.5, 16, -4.8125, -3.5, 16, -4.8125, 0.59375, 16, -4, 0.59375, 16, -4, -3.5, 16, -4, 0.59375, 16, -4, 0.59375, -16, -4, -3.5, -16, -4.8125, -3.5, -16, -4, -3.5, -16, -4, 0.59375, -16, -4.8125, 0.59375, -16, 4, -3.5, -16, 4, 0.59375, -16, 4, 0.59375, 16, 4, -3.5, 16, 4.8125, -3.5, 16, 4, -3.5, 16, 4, 0.59375, 16, 4.8125, 0.59375, 16, 4.8125, -3.5, 16, 4.8125, 0.59375, 16, 4.8125, 0.59375, -16, 4.8125, -3.5, -16, 4, -3.5, -16, 4.8125, -3.5, -16, 4.8125, 0.59375, -16, 4, 0.59375, -16)
+indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23, 24, 25, 26, 24, 26, 27, 28, 29, 30, 28, 30, 31, 32, 33, 34, 32, 34, 35, 36, 37, 38, 36, 38, 39, 40, 41, 42, 40, 42, 43, 44, 45, 46, 44, 46, 47, 48, 49, 50, 48, 50, 51, 52, 53, 54, 52, 54, 55, 56, 57, 58, 56, 58, 59, 60, 61, 62, 60, 62, 63, 64, 65, 66, 64, 66, 67, 68, 69, 70, 68, 70, 71)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_y3y81"]
+points = PackedVector3Array(-4.8125, -3.5, -16, -4.8125, -3.5, 16, -4, -3.5, 16, -4, -3.5, -16, -4.8125, 0.59375, -16, -4, 0.59375, -16, -4, 0.59375, 16, -4.8125, 0.59375, 16)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_au5qa"]
+points = PackedVector3Array(-4, -3.5, -16, -4, -3.5, 16, 4, -3.5, 16, 4, -3.5, -16, -4, -2.5, -16, 4, -2.5, -16, 4, -2.5, 16, -4, -2.5, 16)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_1mqo5"]
+points = PackedVector3Array(4, -3.5, -16, 4, -3.5, 16, 4.8125, -3.5, 16, 4.8125, -3.5, -16, 4, 0.59375, -16, 4.8125, 0.59375, -16, 4.8125, 0.59375, 16, 4, 0.59375, 16)
+
+[node name="SunkenRoadRun" type="Node3D"]
+script = ExtResource("1_tv1nc")
+local_map_file = "res://maps/blocks/trench/sunken_road_run.map"
+map_settings = ExtResource("2_yt2es")
+
+[node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
+collision_mask = 0
+
+[node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
+mesh = SubResource("ArrayMesh_mu52j")
+
+[node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
+occluder = SubResource("ArrayOccluder3D_2giry")
+
+[node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConvexPolygonShape3D_y3y81")
+
+[node name="entity_0_brush_1_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConvexPolygonShape3D_au5qa")
+
+[node name="entity_0_brush_2_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConvexPolygonShape3D_1mqo5")

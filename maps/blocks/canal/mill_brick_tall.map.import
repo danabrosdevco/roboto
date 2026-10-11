@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://biije4jexc110"
+path="res://.godot/imported/mill_brick_tall.map-9e78f02b038e69caa5b8853b517bc7a4.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/mill_brick_tall.map"
+dest_files=["res://.godot/imported/mill_brick_tall.map-9e78f02b038e69caa5b8853b517bc7a4.tres"]
+
+[params]
+

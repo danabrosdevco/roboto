@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/lance.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"lance"
+display_name = "Lance"
+description = "Two driven wheels, a castor and a gun bolted in the nose. No turret ring: it aims by pointing itself, so it shoots what it is driving at and nothing else. The cheapest thing you can field that is not on foot."
+scene = ExtResource("2_scene")
+cost = 90
+purchasable = true
+supply = 1
+starting_weapon_id = &"light_cannon"
+coax_weapon_id = &""
+base_health = 110
+base_speed = 1.0
+base_accuracy = 1.0
+base_sensor_range = 60.0
+weapon_slots = 1
+built_in = "CLAWS"
+weapon_replaces_built_in = false
+turret = false
+vehicle = true
+drives = true
+equipment_slots = 1
+module_slots = 1
+musters_at_base = true
+required_rank = 0

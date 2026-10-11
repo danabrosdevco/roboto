@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bqo4rig5rsrwh"
+path="res://.godot/imported/prop_truss_edges.map-289e81bb64baa4bb4922789457e6d10c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/proposals/prop_truss_edges.map"
+dest_files=["res://.godot/imported/prop_truss_edges.map-289e81bb64baa4bb4922789457e6d10c.tres"]
+
+[params]
+

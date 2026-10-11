@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=38 format=3 uid="uid://xmjjinhqkvrq"]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=39 format=3 uid="uid://xmjjinhqkvrq"]
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
@@ -14,12 +14,17 @@
 [ext_resource type="Resource" uid="uid://c543tvfyia5hs" path="res://Campaign/chassis/chassis_reclaimer.tres" id="11_recl"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="12_nest"]
 [ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="13_bomber"]
+[ext_resource type="Resource" uid="uid://dnn5fqbfxwsln" path="res://Campaign/chassis/chassis_spotter.tres" id="90_spotter"]
 
 [sub_resource type="Resource" id="S_drift"]
 script = ExtResource("2_espec")
-callsign = "DRIFT"
+callsign = "KASATKA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_coast_west"
 post_tag = &""
@@ -29,12 +34,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_surf"]
 script = ExtResource("2_espec")
-callsign = "SURF"
+callsign = "GONGGONG"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_coast_beach"
 post_tag = &""
@@ -44,12 +54,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_ridge"]
 script = ExtResource("2_espec")
-callsign = "RIDGE"
+callsign = "OMUT"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 0
 route_tag = &"patrol_coast_north"
 post_tag = &""
@@ -59,12 +74,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_ford"]
 script = ExtResource("2_espec")
-callsign = "FORD"
+callsign = "SHUANGHUA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_ford"
@@ -74,12 +94,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_bridge"]
 script = ExtResource("2_espec")
-callsign = "BRIDGE"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("10_mech")])
+callsign = "PUCHINA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("10_mech"), ExtResource("90_spotter")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_bridge"
@@ -89,12 +114,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_hive_bridge"]
 script = ExtResource("2_espec")
-callsign = "HIVE-BRIDGE"
+callsign = "ZHULONG"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_bridge"
@@ -104,12 +134,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_crater"]
 script = ExtResource("2_espec")
-callsign = "CRATER"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser"), ExtResource("11_recl")])
+callsign = "SMERCH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser"), ExtResource("11_recl"), ExtResource("90_spotter")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_craters"
@@ -119,12 +154,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_hive_crater"]
 script = ExtResource("2_espec")
-callsign = "HIVE-CRATER"
+callsign = "JIAOREN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_craters"
@@ -134,12 +174,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_centre"]
 script = ExtResource("2_espec")
-callsign = "CENTRE"
+callsign = "BELUGA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_centre"
@@ -149,12 +194,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_hill"]
 script = ExtResource("2_espec")
-callsign = "HILL"
+callsign = "HEIYUN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("7_hopper")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_hill"
@@ -164,12 +214,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_hive_hill"]
 script = ExtResource("2_espec")
-callsign = "HIVE-HILL"
+callsign = "CHANGE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_hill"
@@ -179,12 +234,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_town_w"]
 script = ExtResource("2_espec")
-callsign = "TOWN-WEST"
+callsign = "NERPA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_town_w"
@@ -194,12 +254,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_town"]
 script = ExtResource("2_espec")
-callsign = "TOWN"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser"), ExtResource("10_mech")])
+callsign = "LEIGONG"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("8_chaser"), ExtResource("10_mech"), ExtResource("90_spotter")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_town"
@@ -209,12 +274,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_hive_town"]
 script = ExtResource("2_espec")
-callsign = "HIVE-TOWN"
+callsign = "MORZH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_town"
@@ -224,12 +294,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_town_e"]
 script = ExtResource("2_espec")
-callsign = "TOWN-EAST"
+callsign = "FENGBO"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("7_hopper"), ExtResource("8_chaser"), ExtResource("11_recl")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_town_e"
@@ -239,12 +314,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_gate"]
 script = ExtResource("2_espec")
-callsign = "GATE"
+callsign = "CHAIKA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 1
 route_tag = &""
 post_tag = &"obj_coast_gate"
@@ -254,12 +334,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_kites"]
 script = ExtResource("2_espec")
-callsign = "KITES"
+callsign = "YUSHI"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_coast_bridge"
@@ -269,12 +354,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"coast_relay_bridge"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_counter"]
 script = ExtResource("2_espec")
-callsign = "COUNTER"
+callsign = "STERKH"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("11_recl")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_coast_craters"
@@ -284,12 +374,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"coast_relay_craters"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_flood"]
 script = ExtResource("2_espec")
-callsign = "FLOOD"
+callsign = "LIVEN"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_coast_bridge"
@@ -299,12 +394,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"coast_flood"
 wake_after_kills = 20
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_surge"]
 script = ExtResource("2_espec")
-callsign = "SURGE"
+callsign = "BINGHE"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("7_hopper"), ExtResource("7_hopper"), ExtResource("6h_rifleheavy")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_coast_centre"
@@ -314,12 +414,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"coast_surge"
 wake_after_kills = 45
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_swarm"]
 script = ExtResource("2_espec")
-callsign = "SWARM"
+callsign = "VOLNA"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("7_hopper"), ExtResource("7_hopper"), ExtResource("6_rifle")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_coast_bridge"
@@ -329,12 +434,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"nest_down"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_vultures"]
 script = ExtResource("2_espec")
-callsign = "VULTURES"
+callsign = "JINWU"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber"), ExtResource("13_bomber")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_coast_town"
@@ -344,12 +454,17 @@ always_active = true
 faction = 1
 reinforcement_tag = &"coast_relay_town"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [sub_resource type="Resource" id="S_last"]
 script = ExtResource("2_espec")
-callsign = "LAST-STAND"
-roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("10_mech")])
+callsign = "XUELANG"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("10_mech"), ExtResource("90_spotter")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 3
 route_tag = &""
 post_tag = &"obj_coast_gate"
@@ -359,6 +474,7 @@ always_active = true
 faction = 1
 reinforcement_tag = &"coast_relay_town"
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [resource]
 script = ExtResource("1_missdef")
@@ -369,8 +485,8 @@ level_scene = ExtResource("3_coast")
 map_position = Vector2(360, 30)
 enemy_force = Array[ExtResource("2_espec")]([SubResource("S_drift"), SubResource("S_surf"), SubResource("S_ridge"), SubResource("S_ford"), SubResource("S_bridge"), SubResource("S_hive_bridge"), SubResource("S_crater"), SubResource("S_hive_crater"), SubResource("S_centre"), SubResource("S_hill"), SubResource("S_hive_hill"), SubResource("S_town_w"), SubResource("S_town"), SubResource("S_hive_town"), SubResource("S_town_e"), SubResource("S_gate"), SubResource("S_kites"), SubResource("S_counter"), SubResource("S_flood"), SubResource("S_surge"), SubResource("S_swarm"), SubResource("S_vultures"), SubResource("S_last")])
 replace_level_enemies = true
-active_objectives = Array[StringName]([&"coast_relay_bridge", &"coast_relay_craters", &"coast_relay_town", &"coast_hive_bridge", &"coast_hive_craters", &"coast_hive_hill", &"coast_hive_town", &"coast_extract"])
-reward_resources = 500
+active_objectives = Array[StringName]([&"coast_relay_bridge", &"coast_relay_craters", &"coast_relay_town", &"coast_extract"])
+reward_resources = 700
 compute_reward = 3
 unlocks = Array[StringName]([&"optics", &"mortar", &"grenade_launcher", &"spotter", &"smoke"])
 squad_size = -1

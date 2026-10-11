@@ -38,6 +38,378 @@ most wants and least often gets:
 
 
 
+## 2026-10-10 — Salient: traversable, legible, and something like a trench
+
+**Landed.** Four passes on Salient plus one regression of my own.
+
+*Navigation* (`5a301a82`). The navmesh was a claim about a body nobody is —
+`agent_height 1.8`, `agent_radius` unset so Godot's 0.5. Re-baked honest at
+radius 1.0 / height 3.0 / `cell_size` 0.25 explicit. **Trenches were NOT
+widened**: route A is already an 8.0 m sunken road for vehicles, route C the
+3.0 m infantry trench, and the 3.0 m floor still carries the walk at a 1.0 m
+bake. All 11 objectives now reachable by Walker, Bulwark, Rover and Reclaimer —
+the probe previously tested **zero** objectives because it looked in
+`NavigationRegion3D/Objectives` while this level keeps them in `EnemySquadObjs`,
+and printed PASS without asking.
+
+*Dressing* (same commit). Floating pieces 216 → 40. About 136 of the original
+count was the probe lying: it took the median of every column over a footprint,
+so all 37 power poles reported "7.6 m off the ground" because 14 of 16 columns
+contain only crossarm. Two real causes fixed — 76 revetments lifted up to 3.3 m
+by a hardcoded reach that assumed a narrower cut, and large pieces placed from
+one centre sample, now bedded on the median of 25 over their rotated footprint.
+
+*Legibility* (`835ab759`, `f8eade3f`, `6c606a7d`). Salient had 10–50x less
+standing above eye level at ranging distance than the maps that read well
+(0.04–0.71% of frame vs Hillfort 5.79%). **Fog was not the lever** — +175%
+density moves near/far luma by −0.005 because the signal filter quantises luma
+to 10 steps. Fourteen mid-ground masses placed off the route marks, plus the
+telegraph ladder finished (40 → 106 poles, uniform 40 m). Per-view now
+**S1 2.28 · S2 4.57 · S3 1.96 · S4 5.64 · S5 4.73 · S6 1.65 · S7 0.39 %**.
+
+*Trench experience* (`c3cabccd`, `aafcfc0f`, `8ae97caa`). Five new probes, none
+of which existed. They found the big frames were **walking along the top of the
+trench** — route C read 98.1% in cut for the player and 2.2% for a Bulwark on
+the same geometry. The human's call was breaks in the line rather than a second
+trench: two 6 m lanes at (−103, −19) and (−14, −19), 89 m apart, which bake
+4.0 m of mesh at radius 1.0 against a 2.26 m shield. Walker in-cut **5.2% →
+60.5%**, Bulwark **2.2% → 64.4%**. Route C's traverses spread, longest sightline
+80.0 → 47.0 m. **Navigation cost was explicitly declined by the human** — so the
+breaks change what happens when the squad is *ordered* down route C, not what
+it picks on its own.
+
+*My regression* (`b1dc5b28`). `test_causeway` was failing and was reported to me
+as another lane's. It was mine, from `4179f2dc` / `933766d2`. The flare's
+parapet END left a free wall end beside the deck's walkable boundary; Recast
+emitted two boundary vertices 0.19 m apart, `nav_map` keys into 0.25 m cells so
+they were one point, the merge collapsed and the entire deck became **one
+degenerate polygon from z 1.6 to z 109.25**. Fixed by running the rail onto the
+adjoining span's footprint. The flare survives (mouth 29.3 m vs 15.0 pre-flare)
+and `test_causeway.gd` gained `_ramp_mount()` to guard it, which nothing did.
+
+**Gates.** `check.sh --changed` PASS on every commit. `smoke.sh` PASS.
+`test.sh` ALL SUITES PASS (2 parked as always). `probe_footing` 40 standing off
+/ 34 bedded deep, unchanged. `probe_level_faults` 197 pairs, unchanged.
+
+**Needs the human.**
+- **How the two breaks feel to walk past**, at (−103, −19) and (−14, −19) —
+  whether 6 m reads as a deliberate crossing or as a hole someone forgot to
+  finish. Not measurable.
+- **The landmark frames**: S7 for whether depth now reads, S2 for whether the
+  ~40 m water tower is too large in frame. Shots in `roboto_shots/legibility/`.
+- The player pays **+6.2 points of exposure** on route C for the breaks, though
+  the longest unbroken exposed stretch falls 36 m → 22 m. That trade is a feel
+  call.
+- The continuous ramp rail on the causeway has a small step in its outside face
+  at the join (1 m profile meeting a 0.5 m taper). Flush on the inside face.
+
+**Blocked / next.**
+- **A Bulwark still cannot reach `C.exit`** — it is the trench floor at the foot
+  of a 3.0 m ramp, and 3.0 eroded by 1.25 per side is 0.5 m, a ~5 m island. No
+  placement from this kit fixes it; it needs a wider ramp piece, i.e. new
+  authored geometry in `block_trench.gd`. The breaks themselves deliver it fine
+  (`C.lane1`/`C.lane2` reach every objective).
+- **A family sweep found this defect class repeats.** Top hit is
+  `block_fortress.gd:474` `_citadel_podium` — the fort approach ramp's parapet
+  stops 0.31 m short of the piece end, leaving a 0.8 m wall end on walkable
+  ground 0.3 m from the gate threshold, plus a 0.0625 m slot to the lit jamb.
+  **This is the ramp the human reported bots sticking on.** Also
+  `_bridge_highway`'s median noses and `_fort_keep`'s pit walls. Second class:
+  `SIDE_RUN = 0.8` puts embankment toe offsets off the 1/32 m grid in 11 shipped
+  bridge prefabs; `SIDE_RUN = 0.75` closes it.
+- `maps/causeway_level_nav.tres` carries **131 over-merged edge keys** out in the
+  terrain and throws the same sync error on load. Needs a rebake, which needs
+  `causeway_art.tscn`, which another lane has uncommitted.
+- `maps/gameplay/salient_ops.tscn` is **untracked** while
+  `maps/salient_level.tscn` references it in the working tree. Every commit this
+  session deliberately omitted those two lines. **Someone needs to commit the
+  ops scene together with them.**
+- `probe_nav_reach`'s coverage sweep was querying from the middle of the navmesh
+  AABB — ~70 m in the air — counting 284 of 2112 points. Fixed; real coverage is
+  **89.6%**, not the ~75% earlier runs reported.
+
+---
+
+## 2026-10-05 — Polaris stands on ground that is derived, not described
+
+**Landed.** Polaris's ground was a slab per material with the lot, the roads
+and every pad laid on top at the same height — 1,231 of 8,119 columns with two
+horizontal faces at one height, which is 15% of the map crawling. It is now
+0 holes in 9,200 columns and 2 coplanar ones, both at a retention basin rim.
+
+The mechanism is the point. Three attempts failed the same way because the
+ground was described by hand in one place and the things standing on it in
+another: holes cut for the roads left 451 empty columns, and tile-aligned
+asphalt corridors typed out by hand left 3,528 — `_corridor()` takes a centre
+and I passed it a left edge, so the frontage corridor ran from x -768 to 0,
+three hundred metres of asphalt off the west side of the map with bare dirt
+under the eastern half of its own road. Nothing said so, because nothing
+compared the two. So `_ground()` now runs LAST and is built from a record:
+`_put()` measures anything whose prefab brings its own walking surface, and
+every 32 m cell of the site gets exactly one tile — asphalt where a surface
+lands on it, dirt otherwise. One tile per cell makes an empty cell and a
+doubled cell both impossible, and a warning fires if a road leaves the site.
+
+Four bugs found on the way, all fixed: ground tiles now sit 0.06 m below zero,
+because half the kit carries its own surface at exactly 0 and the clearance
+has to be made in the ground (lifting the aprons instead drove them up into
+the shutters and walls standing on them — 32 overlapping pairs in the storage
+yard alone); the power centre's four aisles ran ALONG_Z while being spaced
+40 m apart on that same axis, so each 64 m aisle lay 24 m inside its
+neighbour; the lot entry throat's nose wedges pointed inwards, 2.4 m inside
+the island each one ends; and `probe_level_faults` did not know the new tiles
+were ground, so its arrangement list was 347 pairs of buildings correctly
+founded in their own slab.
+
+Files: `tools/build_polaris.gd` (the ground section rewritten),
+`tools/block_ground.gd`, `tools/block_suburbs.gd`, `tools/block_streets.gd`,
+`tools/probe_level_faults.gd`. Commit 728cb4db, which also carries the
+uncommitted overlap-clearing pass from earlier in the session — 136 maps
+regenerated from the current tools, 0 overlapping brush pairs.
+
+**Gates.** `check.sh --changed`: PASS (44 scripts, 172 scenes and resources,
+136 maps free of overlapping brushes). `test.sh` and `smoke.sh` not run — this
+session touched no runtime script, only block generators, level builders and
+probes. `probe_level_faults` on Polaris: 0 holes, 0 floating pieces, 2
+coplanar columns, 99 arrangement pairs still open (see below).
+
+**Needs the human.** Look at Polaris in the editor and in-game. The ground is
+204 tiles instead of three plates, so the thing to check is whether it READS
+as one surface or as tiling — the aisle slabs now sit 0.06 m proud, which in
+the renders looks like a car park's slab joints but is a judgement I cannot
+make from a still. The navmesh has NOT been rebaked and must be: the ground
+geometry under the whole site changed height by 6 cm and the power centre's
+aisles moved.
+
+**Blocked / next.** 99 pairs of pieces are inside each other on Polaris — not
+ground, arrangement. The two large ones are Sancus Boulevard laid straight
+through the ring road's west straight (15 pairs with RingZ_W and the corners),
+and the two retention basins fouling the ring corners, the cinema, the snow
+heaps and the ring lights (8 pairs). The basins are also the one thing one
+tile per cell cannot express: they are excavations, so the tiles now fill them
+in — 4,455 m3 in one case. That needs a cell-sized basin piece and a void list
+in `_ground()`, which is a layout change to the car park, not a flooring fix.
+Plan for this is with the human; it is the obvious subagent brief.
+
+**Update, same day — both maps now measure clean.** Two subagents worked the
+two maps in parallel off written briefs, and I verified every number below
+myself rather than taking the reports:
+
+| | Polaris | Georgetown |
+|---|---|---|
+| holes in the ground | 0 of 9200 | 0 of 3248 |
+| two floors in one place | 0 (from 1231) | 0 (from 399) |
+| pieces inside each other | 44, all car rows on their own aisle | 0 |
+| navmesh | NOT re-baked | re-baked, 89.0% reach, REACH PASS |
+
+Polaris gained a build-time placement guard, which found 43 clashes the fault
+probe cannot see — it compares colliders, the probe compares envelopes. The two
+retention basins became `suburb_retention_basin_64`, a piece sized to exactly
+one 2x2 block of ground cells, with a `VOIDS` list driving both the missing
+tiles and the basin placement from one constant. I then closed the last thing
+left standing: `RING_X` was 150, which is 9.375 pieces of 32 m, so the kerb
+broke by 1.3 m sixteen times round the ring; it is 144 now, and the guard named
+each of the three things the smaller ring landed on.
+
+Georgetown's benches now top out at -0.06 like the Polaris tiles, which alone
+took 399 to 8. The rest: bridge decks sit on the prism rather than the benches
+so they got their own sunk top, the canal became a cell-aligned void driven
+from `CANAL_HALF` read out of `block_canal.gd`, and 1 m and 2 m bench pieces
+were added because 9 m is not a multiple of 4. The lock was the actual cause of
+the 5 holes — its piece stopped at 5.3 m where the open prism's towpaths run to
+9 m.
+
+One regression worth recording because it will recur: sinking the bridge decks
+dropped reachability from 90.9% to 49.3% and closed all four bridges. The
+prism's coping runs as a 0.3 m lip across every bridge mouth and the baker
+climbs 0.25 m — it only ever got over because the deck and the coping rounded
+to neighbouring voxels. `canal_prism_open_bridge` leaves the coping off the
+mouth. **A 6 cm change to a surface can close a route, and only a bake says so.**
+
+Corrections to the entry above: I wrote that Georgetown had no floating pieces.
+It has two, `LockGear` and `Bridge_9`, both present at HEAD and both intended —
+my grep hid them. Polaris's navmesh still needs baking.
+
+
+Georgetown has the same disease and has not been touched: its benches are the
+ground, and the canal kit has at least eight pieces whose own surface tops out
+at exactly 0.
+
+## 2026-10-01 — a .map editor that is not the generator, and the core column
+
+**Landed — `tools/map_retexture.gd`, the tool that should have existed first.**
+It changes a texture on whole brushes inside a box, in the `.map` text, in
+place. Dry run unless `--apply`. It exists because I ran `block_fortress.gd
+--force` on `maps/blocks/fortress/fort_tower.map` to change ONE texture and
+destroyed 136 faces of the human's clipping fixes. They came back off
+`936639bb` — luck, not a safety net, because another lane happened to have
+committed them. **The file on disk is the source; the generator that first
+wrote it is not.** `tools/block_fortress.gd` now carries a header saying
+fort_tower holds hand edits. Other maps probably do too and say nothing.
+
+**Landed — three fixes to blocks already in levels.** `industrial_lock_dam`'s
+railing ran across the dam instead of along it, so it read as a gate blocking
+the crossing; it is now five runs of rail along the deck with gaps. The
+causeway's curtain walls stopped glowing — the emissive brushes are gone from
+`maps/causeway_art.tscn`. `fort_tower` got its concrete trim back on the
+bastion bands and gate jambs, this time with `map_retexture.gd`: exactly 60
+glitch faces became concrete and no other face moved, proved by diffing the
+sorted face lines before and after.
+
+**Landed — the core column, `compute_core_large` / `compute_core` /
+`compute_core_small`** (12.4, 7.0 and 4.2 m), in `maps/blocks/compute/`, built
+by `core_column()` in `tools/block_industrial.gd`. An alternative to
+`compute_monolith` as a capture objective, after the human said the current
+terminal was not doing it. A stack of compute cassettes in an open steel cage,
+lit through the recessed spines BETWEEN the cassettes rather than along its
+edges, standing clear of its own plinth, head cut off at 29° with a lit plate
+inset in the cut, and a service alcove at the foot.
+- **Every lit face is `glitch_tx_1` and nothing else uses it.** One surface
+  carries all of it, so going dark on capture is a single material swap. That
+  is the whole reason the piece is built this way, and it is the hook GAMEPLAY
+  needs — the interact objective keeps the piece in the world after use.
+- **The alcove is the other half of it.** Channelling pins a body inside 3 m
+  for several seconds and a sealed slab answers "where do I stand" with
+  nothing. Alcove and lit cut both face the prefab's **-X in Godot**.
+- Plinth is a 0.22 m pad and a 0.62–1.1 m collar with **nothing in between**:
+  under the 0.45 m a body steps over, or over the 0.5 m the baker climbs, never
+  the band where the bake says walkable and `move_and_slide` refuses.
+- First cut had a fixed 0.8 m collar and a concrete cage. At 3.3 m the small
+  one read as a monument plinth with a box on it, and the cage looked like
+  mossy scaffold. Collar now scales with the column, cage is steel, small is
+  3.8 m with three cassettes instead of two.
+
+**Landed — `tools/probe_shots_block.gd` shoots all four sides.** Its header
+claimed four and it shot two, which is how a piece with an alcove on one face
+and cable runs on the opposite one got photographed without either being
+visible.
+
+**Landed — `tools/probe_shots_filtered.gd`, survey shots through the game's own
+signal filter.** 15 of them, in `D:/Godot Games/roboto_shots/environments`,
+across Pittsburgh, Hillfort, the Salient and Mutaha WIP. Every other shot tool
+here photographs the editor's view of a level, which is not what anybody plays.
+- **The material is read out of `Character/hud/hud.tscn`'s SceneState**, not
+  copied into the tool. A second set of numbers would drift from the real rect
+  the first time anyone tuned it, and the pictures would then be of a filter
+  that ships nowhere. SceneState rather than instantiating, because `hud.gd`
+  wants a player and a campaign.
+- **Shot at 1152x648 because that is what the game renders at.**
+  `window/stretch/mode="viewport"` with the default viewport size means the
+  filter never sees a 1080p image. I had it at 1920x1080 first, which made the
+  signal grid 3 screen pixels instead of 1 — a chunkier picture than anybody
+  plays. Also moved it from a SubViewport to the root viewport: a shader that
+  READS THE SCREEN is the one kind that can tell one render target from
+  another. Both paths turned out to agree, which is how I know the look is the
+  filter and not my rig.
+- **The filter is a shot-selection constraint, not just a coating.** It has ten
+  luma steps, so a slope whose near face is in shadow renders as one flat
+  black. Three Pittsburgh ground-level cameras had to be thrown out for that —
+  the Strip, the river approach to the Works, the dam — and two more were
+  raised 10-16 m to see over the near slope. The Salient and Mutaha needed no
+  changes at all. **The difference is the terrain**, which is the Pittsburgh
+  recipe problem under a new light rather than a new problem.
+
+**Gates.** `check.sh --changed`: **PASS** (43 scripts, 28 scenes/resources on the last run).
+`test.sh` and `smoke.sh` not run — nothing here touches the ledger, the armoury
+or anything that loads at startup; these are blocks and a text tool.
+
+**Needs the human.**
+- **The 15 filtered shots are in `D:/Godot Games/roboto_shots/environments`,**
+  not in the repo. Another lane is writing `*_hud.png` pairs into the parent
+  folder; these are in a subfolder of their own so the two sets do not mix.
+- **Pick a size, or say all three.** Renders are of each piece alone on a flat
+  floor with a 1.5 m figure. I cannot run the game, so what I have not seen is
+  how the glow reads at 150 m across a level, or whether the green is too loud
+  beside the monolith's.
+- **The captured state is not built.** The column going dark is a GAMEPLAY job:
+  swap the `glitch_tx_1` material on the instance. I have made that one swap
+  instead of twelve; I have not wired it.
+- Nothing is placed in a level yet. These are blocks and prefabs only.
+
+**Blocked / next.** Unchanged and still open: Pittsburgh's terrain recipe makes
+jagged spikes and that is the level's dominant visual defect; the Salient's
+1330 placed pieces want consolidating into one generated `.map`; and the other
+hand-edited `maps/blocks/*.map` files are still unmarked, so the next agent can
+repeat the fort_tower mistake on any of them.
+
+---
+
+
+## 2026-09-30 (4) — nine levels split, and a Works pass on Pittsburgh
+
+**Landed — the split, applied.** All nine generated-terrain levels are now a
+pair: `<name>_art.tscn` and `<name>_level.tscn`. The tool works the list out
+itself — every art group under the navigation region, minus the exit and
+anything carrying a Campaign script at any depth — so no list was typed nine
+times and no group was left out.
+
+**The first pass quietly broke prefab instancing, and the tell was in plain
+sight: the levels stayed enormous afterwards.** A packed scene writes every
+node its root OWNS, and I set the owner of every descendant — so the INSIDES of
+each instanced prefab were written out as declared nodes with their own
+`type=`. Hillfort's 96 prefabs became **2353 node entries**. The bloat was the
+least of it: those internals were then declared in the scene, so editing a
+block in `maps/blocks` would no longer reach the level that instances it, and
+**the whole prefab workflow would have stopped propagating without saying so.**
+The human caught it before I did.
+
+**The rule now:** an instance ROOT is owned, because that is what writes the
+`instance=` line, and nothing inside one is — *except* a node the prefab does
+not have, which somebody added and must stay. **Patrol points are children of
+instanced objective anchors**, and clearing those would have deleted the patrol
+routes this whole exercise exists to protect. So it compares against a pristine
+copy of the prefab rather than guessing. `tools/reinstance.gd` repairs a scene
+already flattened: `hillfort_art` went 3.57 MB / 2354 nodes to **32 KB / 138**.
+
+Verified rather than assumed: every art scene declares zero prefab internals
+(causeway 26 and mutaha 33 are genuine additions, kept); hillfort keeps all 11
+patrol points; pittsburgh keeps its 3023 cover points; and pittsburgh,
+hillfort, mutaha_wip and coastal-road all report **0 anchors cut off** at the
+same walk distances as before.
+
+**Landed — Pittsburgh, Works theme.** 170 pieces into `pittsburgh_art.tscn`:
+two blast furnaces and a stack on the high side of the Ohio Works, gas holders
+and pipe runs behind them, hot metal on rail, scrap and coal at the feed end;
+coke batteries and a second furnace on the south bank; cranes and a container
+yard at the port; rail and warehousing through the Strip. Plus
+`scatter_works.tres` — ground litter at **55 a hectare** against the 3 the
+debris layer was giving.
+
+**Nothing moved and nothing was removed.** Bridges, districts and the 176
+pieces already there are exactly where they were. Everything added sits under
+`Dressing/Works_*` so the pass lifts out in one go, and the tool clears its own
+previous run before placing, so the table can be tuned and re-run.
+
+**The lanes come from the map, not from me.** The terrain paints its road
+network into the control map, so anything within 7 m of road paint is refused
+outright — which keeps every route the level already had without my needing to
+know where they go. On top: a 9 m corridor along four vehicle routes between
+objectives, a 20 m clear circle round each of the eight objectives, nothing in
+a river, nothing overlapping what is there. **241 of 411 candidates refused on
+those rules.** Reach afterwards is unchanged.
+
+**Gates.** `check.sh --changed`: **PASS**. Navmesh rebaked on Pittsburgh
+(27942 vertices). Reach: **26 anchors, 0 cut off, 1217 m** against 1219 before.
+
+**Needs the human.**
+
+1. **Check a few of the split levels**, as asked — open one, confirm the art
+   instance is there and nothing of yours moved. `maps/*_art.tscn` are mine to
+   regenerate; `maps/*_level.tscn` are yours and no tool of mine writes them.
+2. **PITTSBURGH'S LAND IS NOT SHORT OF TEXTURE — IT IS FULL OF IT.** A sea of
+   high-frequency lumps, and near the Ohio Works black jagged spikes tall
+   enough to swallow a camera. A rover could not drive most of it. This is the
+   same defect named on 2026-09-22, and adding statics on top does not touch
+   it. I left the terrain alone because the brief was to keep the areas as they
+   are — **but the recipe behind it is where the next pass has to go**, and
+   until it does, the statics sit in a landscape that swallows them.
+3. The level renders very dark. That is its authored environment, not this
+   pass, and worth a look if it is not deliberate.
+
+**Blocked / next.** Nothing blocking. In order: Pittsburgh's terrain recipe;
+then the Salient's 1330 pieces into one generated `.map`.
+
+---
 
 ## 2026-09-30 (3) — regenerating art without eating anyone's work, and three Pittsburgh themes
 

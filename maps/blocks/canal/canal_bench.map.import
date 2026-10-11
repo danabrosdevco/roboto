@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://chky4x2wln71b"
+path="res://.godot/imported/canal_bench.map-edb717d29f5c38ad43e22c1e345dab12.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_bench.map"
+dest_files=["res://.godot/imported/canal_bench.map-edb717d29f5c38ad43e22c1e345dab12.tres"]
+
+[params]
+

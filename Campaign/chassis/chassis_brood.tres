@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/brood.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"brood"
+display_name = "Broodcarrier"
+description = "A flying bay with nine pods in it, and nothing to shoot you with. It drops what is in them and goes somewhere else, so the pods emptying is the only clock in the fight."
+scene = ExtResource("2_scene")
+cost = 0
+purchasable = false
+supply = 2
+starting_weapon_id = &""
+coax_weapon_id = &""
+base_health = 200
+base_speed = 0.7
+base_accuracy = 0.0
+base_sensor_range = 70.0
+weapon_slots = 0
+built_in = ""
+weapon_replaces_built_in = false
+turret = false
+vehicle = true
+drives = false
+equipment_slots = 0
+module_slots = 0
+musters_at_base = false
+required_rank = 0

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bvvqa2hd04gxa"
+path="res://.godot/imported/railhead_car_armoury.map-7d34e99aac64bf851a33769b8c06c8ba.tres"
+
+[deps]
+
+source_file="res://maps/blocks/railhead/railhead_car_armoury.map"
+dest_files=["res://.godot/imported/railhead_car_armoury.map-7d34e99aac64bf851a33769b8c06c8ba.tres"]
+
+[params]
+

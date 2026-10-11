@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ds4qj1ybib7ui"
+path="res://.godot/imported/wire_belt_gap.map-e21894e10e73a31175b425745ebcb3b8.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/wire_belt_gap.map"
+dest_files=["res://.godot/imported/wire_belt_gap.map-e21894e10e73a31175b425745ebcb3b8.tres"]
+
+[params]
+

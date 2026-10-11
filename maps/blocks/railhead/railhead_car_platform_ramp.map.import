@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://chbfv26crfngv"
+path="res://.godot/imported/railhead_car_platform_ramp.map-d91e95c062b2ef993f6371901d47b196.tres"
+
+[deps]
+
+source_file="res://maps/blocks/railhead/railhead_car_platform_ramp.map"
+dest_files=["res://.godot/imported/railhead_car_platform_ramp.map-d91e95c062b2ef993f6371901d47b196.tres"]
+
+[params]
+

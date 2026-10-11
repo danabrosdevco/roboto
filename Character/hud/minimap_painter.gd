@@ -30,8 +30,24 @@ static func to_px(r: Rect2, uv: Vector2) -> Vector2:
 	return r.position + Vector2(uv.x * r.size.x, uv.y * r.size.y)
 
 
+## How far across a finished objective's mark is, against a live one's 16. A
+## fifth, so a taken position still reads as a position without competing with
+## the ones you have yet to take.
+const DONE_RADIUS := 5.0
+
+
 ## One objective: red rings for a goal, amber rings and a cross for the
-## extraction, grey with a tick once it is done.
+## extraction. A finished one shrinks to a small dim tick with no name.
+##
+## IT USED TO KEEP ITS WHOLE FOOTPRINT when done — both rings, full size, and its
+## label — and only change colour. On a map with two or three objectives that is
+## fine. On a concentrated one where you hold a dozen points it is objective
+## overload: by the back half of a defence most of the map is marks for places
+## nothing is going to happen at any more, drawn the same size as the one place
+## something is, with their names stacked on top of each other.
+##
+## So a finished objective stops being a destination and becomes a note that it
+## was one: a fifth of the size, half the brightness, and silent.
 static func draw_objective(ci: CanvasItem, font: Font, r: Rect2, data: MinimapData,
 		i: int, text: String, done: bool = false, s: float = 1.0) -> void:
 	var uv := data.to_uv(data.objective_positions[i])
@@ -39,12 +55,9 @@ static func draw_objective(ci: CanvasItem, font: Font, r: Rect2, data: MinimapDa
 	var extract: bool = data.objective_kinds[i] == &"extract"
 	var col: Color = COL_WARN if extract else COL_CRIT
 	var w := 2.0 * s
-	# A finished objective goes grey and gets a tick. Leaving it red would make
-	# the map say "go here" about somewhere you have already taken.
 	if done:
-		col = Color(COL_DIM.r, COL_DIM.g, COL_DIM.b, 0.75)
-		ci.draw_line(p + Vector2(-7, 0) * s, p + Vector2(-2, 6) * s, col, w)
-		ci.draw_line(p + Vector2(-2, 6) * s, p + Vector2(8, -7) * s, col, w)
+		draw_objective_done(ci, p, s)
+		return
 
 	ci.draw_arc(p, 16.0 * s, 0.0, TAU, 32, col, w)
 	ci.draw_arc(p, 7.0 * s, 0.0, TAU, 20, col, w)
@@ -55,6 +68,20 @@ static func draw_objective(ci: CanvasItem, font: Font, r: Rect2, data: MinimapDa
 		ci.draw_line(p + Vector2(0, -11) * s, p + Vector2(0, 11) * s, col, w)
 
 	draw_marker_label(ci, font, r, p, uv, text, col, s)
+
+
+## The mark for a position already taken: a small ring with a tick in it, dim.
+##
+## A ring rather than a bare tick, because a tick on its own at this size reads
+## as a scratch on the screen rather than as a place — and NO LABEL, because the
+## name of somewhere you have finished with is the single biggest contributor to
+## a crowded map. It is still numbered in the briefing's list if you want it.
+static func draw_objective_done(ci: CanvasItem, p: Vector2, s: float = 1.0) -> void:
+	var col := Color(COL_DIM.r, COL_DIM.g, COL_DIM.b, 0.5)
+	var w := 1.5 * s
+	ci.draw_arc(p, DONE_RADIUS * s, 0.0, TAU, 14, col, w)
+	ci.draw_line(p + Vector2(-2.6, 0.2) * s, p + Vector2(-0.8, 2.2) * s, col, w)
+	ci.draw_line(p + Vector2(-0.8, 2.2) * s, p + Vector2(2.8, -2.4) * s, col, w)
 
 
 # Label below a marker in the top half, above one in the bottom half.

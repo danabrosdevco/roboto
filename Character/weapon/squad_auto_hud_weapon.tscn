@@ -1,6 +1,6 @@
 [gd_scene load_steps=9 format=3 uid="uid://d1halv6ax74u3"]
 
-[ext_resource type="Script" path="res://Character/weapon/hud_weapon_template.gd" id="1_hudwep"]
+[ext_resource type="Script" path="res://Character/weapon/player_squad_automatic.gd" id="1_hudwep"]
 [ext_resource type="PackedScene" uid="uid://iupiouf41mdu" path="res://Character/weapon/appx/bullet.tscn" id="2_bullet"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="3_tracer"]
 [ext_resource type="PackedScene" path="res://Character/weapon/models/squad_automatic_model.tscn" id="4_model"]
@@ -11,6 +11,8 @@
 
 [node name="SquadAutomatic" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "click_stream_player", "viewmodel")]
 script = ExtResource("1_hudwep")
+suppression_per_shot = 4.0
+near_miss_radius = 3.2
 tracer_origin = NodePath("Holder/SquadAutomaticModel/Muzzle")
 muzzle_flash = NodePath("Holder/SquadAutomaticModel/MuzzleFlash")
 weapon_model = NodePath("Holder/SquadAutomaticModel")
@@ -34,7 +36,7 @@ FIRE_RATE = 0.11
 ads_position = Vector3(-2.3454, -0.099923, -0.4)
 ads_rotation = Vector3(0, 0, 0)
 reload_position = Vector3(-1.717, -0.881, 0.415)
-reload_rotation = Vector3(0.55, 0, -0.12)
+reload_rotation = Vector3(31.51, 0, -6.88)
 click_stream_player = NodePath("Click")
 display_name = "Squad Auto"
 viewmodel = NodePath("Holder/SquadAutomaticModel")

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://d4mld32h84y7"
+path="res://.godot/imported/suburban_mall_entry.map-61a76b65255d12a648c9c6a857d8210f.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_mall_entry.map"
+dest_files=["res://.godot/imported/suburban_mall_entry.map-61a76b65255d12a648c9c6a857d8210f.tres"]
+
+[params]
+

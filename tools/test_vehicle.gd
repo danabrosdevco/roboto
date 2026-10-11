@@ -128,7 +128,7 @@ func _init() -> void:
 	var level: Node = player.get_parent()
 	var cm: CampaignManager = world_scene.get_node("CampaignManager")
 	_mgr = _find(root, "AIManager")
-	var valley = load("res://maps/valley_level.tscn").instantiate()
+	var valley = load("res://maps/appendix/valley_level.tscn").instantiate()
 	level.add_child(valley)
 	for _i in 20:
 		await physics_frame

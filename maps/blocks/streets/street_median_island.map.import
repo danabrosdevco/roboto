@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bmid81cnwhi7p"
+path="res://.godot/imported/street_median_island.map-cae0de8483526e9ee2a5974304249221.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_median_island.map"
+dest_files=["res://.godot/imported/street_median_island.map-cae0de8483526e9ee2a5974304249221.tres"]
+
+[params]
+

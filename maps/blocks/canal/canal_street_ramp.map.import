@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cqa4rf4yj1fjp"
+path="res://.godot/imported/canal_street_ramp.map-1502d09c48b1ccc931fe832e0b31dff0.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_street_ramp.map"
+dest_files=["res://.godot/imported/canal_street_ramp.map-1502d09c48b1ccc931fe832e0b31dff0.tres"]
+
+[params]
+

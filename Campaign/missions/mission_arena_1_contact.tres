@@ -11,6 +11,10 @@ script = ExtResource("2_espec")
 callsign = "PICKET"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_shot"), ExtResource("5_shot")])
 count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
 posture = 2
 route_tag = &""
 post_tag = &""
@@ -20,6 +24,7 @@ always_active = true
 faction = 1
 reinforcement_tag = &""
 wake_after_kills = 0
+wake_after_seconds = 0.0
 
 [resource]
 script = ExtResource("1_missdef")

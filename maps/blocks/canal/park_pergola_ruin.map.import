@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cryru4u4dpur8"
+path="res://.godot/imported/park_pergola_ruin.map-dcad88dbd3d956a14cc5b471532a2fc0.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/park_pergola_ruin.map"
+dest_files=["res://.godot/imported/park_pergola_ruin.map-dcad88dbd3d956a14cc5b471532a2fc0.tres"]
+
+[params]
+

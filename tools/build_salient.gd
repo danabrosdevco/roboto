@@ -19,6 +19,14 @@ extends "res://tools/mapdeck.gd"
 # check.sh hunts for — so pass one writes the scene without it, saves the data,
 # and pass two picks it up. Nothing else changes between them.
 #
+# THE TRENCH SYSTEM — three routes across no-man's-land, laid from the kit in
+# tools/block_trench.gd — is at the bottom of this file. It reads the kit's
+# manifest and its prefabs, so run, in this order:
+#
+#   godot --headless --path . --script res://tools/block_trench.gd -- maps/blocks --force
+#   godot --path . --script res://tools/block_prefabs.gd -- maps/blocks/trench --force
+#   godot --headless --path . --script res://tools/build_salient.gd -- --force
+#
 # AFTERWARDS: bake the navmesh, which nothing here does.
 #
 #   BAKE_ONLY=1 LEVEL=res://maps/salient_level.tscn godot --path . \
@@ -83,13 +91,17 @@ func _initialize() -> void:
 		print("FAIL  no deck entry called %s" % ID)
 		quit(1)
 		return
+	if not _load_kit() or not _lay_routes():
+		quit(1)
+		return
+	_landmarks()
 	var force := OS.get_cmdline_user_args().has("--force")
 	if FileAccess.file_exists(ProjectSettings.globalize_path(LEVEL)) and not force \
 			and not ResourceLoader.exists(DATA):
 		pass                                  # first pass of a fresh build
 	_sketch()
 	var r := _recipe()
-	_data = Generator.generate(r, _paths())
+	_data = Generator.generate(r, _paths() + _earth_modifiers())
 	if _data == null:
 		print("FAIL  the terrain would not generate")
 		quit(1)
@@ -131,6 +143,10 @@ func _initialize() -> void:
 			return
 	print("      %s  %.0f x %.0f m at %.2f m cells, %d piece(s)" % [ART.get_file(),
 			_data.width(), _data.depth(), r.cell_size, _placed.size()])
+	print("      kit: %d piece(s) on three routes, %d guard clash(es) at placement" % [_laid.size(), _clashes])
+	for l: Dictionary in _lanes:
+		print("      break in line %s: %.1f m of open ground at (%.0f, %.0f), %.1f m of mesh at bake radius 1.0" % [
+				l.route, float(l.g), (l.at as Vector2).x, (l.at as Vector2).y, float(l.g) - 2.0])
 	if not ResourceLoader.exists(DATA):
 		print("      terrain data written but not yet importable — RUN THIS AGAIN")
 	print("BUILD SALIENT DONE")
@@ -260,17 +276,51 @@ func _art_scene(r: Recipe) -> String:
 	# one that nothing uses: check.sh fails a scene that declares an id it does
 	# not reference.
 	var placed: Array = []
-	var pieces: Array = []
-	for op: Array in _map.get("dress", []):
-		var rows := _placements(_data, op)
-		if rows.is_empty():
-			continue
-		if not pieces.has(op[1]):
-			pieces.append(op[1])
-			ext.append(["PackedScene", "res://maps/blocks/%s.tscn" % op[1],
-					"p_" + str(op[1]).get_file()])
-		for row: Array in rows:
+	var lined := {}
+	for op: Array in _dress_ops(lined):
+		for row: Array in _placements(_data, op):
 			placed.append([op[1], row[0], row[1]])
+	# THE LANDMARKS GO DOWN LAST, AND ARE CHECKED AGAINST WHAT IS ALREADY
+	# THERE. They are the only dressing on this map placed from the ROUTES
+	# rather than from the deck, so they are the only dressing that can land on
+	# the deck's own rows without anyone having typed the two numbers next to
+	# each other. Twelve of them did exactly that on the first pass — a silo
+	# through a parked semi, a water tower through a washout, three razor-wire
+	# runs through a silo base — and nothing said so until probe_level_faults
+	# was read. See _landmark_ops.
+	for op: Array in _landmark_ops(placed):
+		for row: Array in _placements(_data, op):
+			placed.append([op[1], row[0], row[1]])
+	# BED BEFORE DROPPING. _drop_on_routes measures the volume a deck piece
+	# shares with a kit piece, and that volume depends on where the deck piece
+	# actually ends up — so the heights have to be final before it is asked.
+	_bed_dressing(placed, lined)
+	# THE DECK'S DRESSING KNOWS NOTHING OF THE ROUTES. Whatever stands where one
+	# runs comes out, before the ext_resources are listed: a piece whose every
+	# row was dropped must not be declared and then never used.
+	placed = _drop_on_routes(placed)
+	print("      %d piece(s) of dressing dropped where a route runs" % _dropped)
+	var pieces: Array = []
+	for row: Array in placed:
+		if not pieces.has(row[0]):
+			pieces.append(row[0])
+			ext.append(["PackedScene", "res://maps/blocks/%s.tscn" % row[0],
+					"p_" + str(row[0]).get_file()])
+	ext.append(["Script", STAMP_SCRIPT, "17_stamp"])
+	var kit_pieces: Array = []
+	for p: Dictionary in _laid:
+		if not kit_pieces.has(p.piece):
+			kit_pieces.append(p.piece)
+			ext.append(["PackedScene", KIT_SCENES % p.piece, "t_" + str(p.piece)])
+	# Everything the guard is to be checked against, registered before a kit
+	# piece goes down. The dressing is not checked against itself.
+	_registry = []
+	var n_reg := 0
+	for row: Array in placed:
+		var pos: Vector3 = row[1]
+		var xf := Transform3D(Basis(Vector3.UP, -deg_to_rad(float(row[2]))), pos)
+		_register("%s@(%.0f,%.0f)" % [str(row[0]).get_file(), pos.x, pos.z], "res://maps/blocks/%s.tscn" % row[0], xf)
+		n_reg += 1
 
 	var subs := PackedStringArray()
 	subs.append_array(_recipe_sub(r))
@@ -278,6 +328,11 @@ func _art_scene(r: Recipe) -> String:
 	for i in (_map.get("paths", []) as Array).size():
 		curves.append("Curve3D_t%02d" % i)
 		subs.append_array(_curve_sub(curves[i], _map.paths[i][4]))
+	var ramp_ids: Array = []
+	for rec: Dictionary in _flat + _dig:
+		if str(rec.k) == "ramp":
+			ramp_ids.append("Curve3D_e%03d" % ramp_ids.size())
+	subs.append_array(_ramp_curves(ramp_ids))
 	out.append("[gd_scene load_steps=%d format=3]" % (ext.size() + _count_subs(subs) + 1))
 	out.append("")
 	for e: Array in ext:
@@ -321,6 +376,11 @@ func _art_scene(r: Recipe) -> String:
 		out.append("falloff = %s" % _n(float(p[3])))
 		out.append("smoothing = %s" % _n(float(p[5]) if p.size() > 5 else 8.0))
 		out.append("")
+	# THE GROUND THE ROUTES NEED, as the stamps and ramps that dug it. Applied
+	# above, in this order; written here so the editor makes the same ground.
+	out.append("[node name=\"Earthworks\" type=\"Node3D\" parent=\"Terrain\"]")
+	out.append("")
+	out.append_array(_earth_nodes(ramp_ids))
 	out.append("[node name=\"Works\" type=\"Node3D\" parent=\".\"]")
 	out.append("")
 	var n := 1
@@ -332,7 +392,263 @@ func _art_scene(r: Recipe) -> String:
 		out.append(_yawed(pos, float(row[2])))
 		out.append("")
 		n += 1
+	# THE KIT. Each piece is checked against everything before it as it goes down.
+	out.append("[node name=\"Trenchworks\" type=\"Node3D\" parent=\".\"]")
+	out.append("")
+	_trench_nodes(out)
+	out.append_array(_anchor_nodes())
 	return "\n".join(out) + "\n"
+
+
+## THE LIP A TRENCH LINING SITS ON HAS TO BE THE LIP OF ITS OWN CUT.
+##
+## feature_trench_revetment is laid by an "along" op carrying an `aside`, and
+## mapdeck reads the ground that far out to EACH side and takes the HIGHER of
+## the two. That is deliberate and it is right: a revetment measures -2.19 to
+## +0.59, it lines the TOP of a cut, and reading the height under its own centre
+## drops it onto the cut floor, buries the planks and leaves a sandbag kerb
+## lying in a ditch.
+##
+## THE DECK ASKS FOR 6.0 AND 6.0 IS TOO FAR. It was the right number for the
+## 2.19 m cut the piece was drawn for. The cut on this map is `width` 4.0 with a
+## `falloff` of 1.5, so the ground is back to its natural height 3.5 m out from
+## the centreline — and 6.0 m out is 2.5 m PAST the earthwork, on the most
+## heavily shelled ground in the level: 260 craters, up to 13 m across and
+## 3.6 m deep, with rims to match. The higher of two samples out there does not
+## find the trench lip, it finds the nearest crater rim, and the lining goes up
+## with it.
+##
+## Measured: 76 of this map's 130 floating pieces were revetments, up to 3.3 m
+## in the air, on the feature the player looks at for the whole mission. So ask
+## about ground the cut actually made — the outer edge of its own falloff, taken
+## from the deck's own numbers rather than typed in here, because a constant
+## typed twice is the first one to drift.
+func _lining_reach() -> float:
+	var out := 0.0
+	for p: Array in _map.get("paths", []):
+		if str(p[0]) != "trench":
+			continue
+		out = maxf(out, float(p[1]) * 0.5 + float(p[3]))
+	if out <= 0.0:
+		push_warning("build_salient: no trench cut in the deck to size the lining reach from")
+		return 0.0
+	return out
+
+
+## The deck's dress ops with every lining's reach pulled in to its own cut, and
+## `lined` filled with the pieces that are placed from a lip. Those are left out
+## of the bedding pass below: their height is deliberately NOT the ground under
+## them. See _lining_reach.
+func _dress_ops(lined: Dictionary) -> Array:
+	var reach := _lining_reach()
+	var out: Array = []
+	var pulled := 0
+	for op: Array in _map.get("dress", []):
+		if str(op[0]) != "along" or op.size() <= 4 or float(op[4]) <= 0.0:
+			out.append(op)
+			continue
+		lined[str(op[1])] = true
+		if reach > 0.0 and float(op[4]) > reach:
+			var fixed: Array = op.duplicate()
+			fixed[4] = reach
+			out.append(fixed)
+			pulled += 1
+		else:
+			out.append(op)
+	print("      %d lining op(s) pulled in to read the lip at %.1f m" % [pulled, reach])
+	return out
+
+
+## How many columns each way a piece is bedded on.
+const BED_GRID := 5
+## Ground that varies by more than this across a piece's own footprint cannot be
+## MET by a flat bottom at any height — half the piece is always wrong. Those
+## are still bedded on the median, because the median beats the single centre
+## sample they had, but they are listed too: the real answer is for the deck to
+## stop putting a rigid slab there, and only a human can make that call.
+const BED_ROUGH := 3.0
+## Below this a piece is already sitting where it should and moving it only
+## churns the scene.
+const BED_SNUG := 0.15
+
+## PIECES WHOSE WAY IN IS A RAMP, and where that ramp's foot is in the piece's
+## own local frame: [x, z, the height of its walking surface].
+##
+## WHY A TABLE AND NOT A RULE. The median below is the right height for a
+## flat-bottomed slab and the wrong height for a piece you have to walk INTO.
+## fort_command_bunker is 12 x 16 m of concrete with a 5.75 m ramp running 12 m
+## out of its back; the median is taken over all of that, so the body lands at a
+## sensible height and the far end of the ramp is left in the air. The human
+## found exactly that in the editor at (200, -40): "the base of the ramp is above
+## the ground and can't be accessed." Measured, the ramp foot there was 0.69 m
+## up — over enemy.gd's 0.45 m step_height and over the baker's climb, so the
+## ramp and the roof above it were a navmesh island.
+##
+## The reason the median was wrong there is worth keeping: the bunker straddles
+## the edge of a trench earthworks pad. Fifteen of its twenty-five bed samples
+## land on flat pad at -0.41 and the natural ground 12 m behind it is at -1.10,
+## so the median is right about the body and 0.7 m out about the ramp.
+##
+## LOWER ONLY, NEVER RAISE. Clamping the piece DOWN to its ramp foot's ground
+## can only bury the body deeper, and every piece in this table is designed to
+## sit in the ground — the bunker's slab starts 0.5 m down, the pillbox's
+## cylinder 0.6 m, the sangar's baskets 0.1 m. Raising a piece to meet a ramp
+## foot that is already buried would lift a body that is meant to be dug in
+## clean out of the ground, which is the failure the bedding pass below already
+## records from its first attempt. Three of the five bunkers on this map have
+## their foot buried, and this leaves all three where they are.
+##
+## NOT IN HERE: feature_watchtower. Its stair is a flight on posts and its body
+## stands 6 m up on splayed legs, so there is nothing about it that is meant to
+## be in the ground; sinking the tower a metre to land the bottom step would
+## bury the legs and take a metre off the one piece on this map whose job is to
+## be tall. If its stair foot ever needs landing, the answer is to lengthen the
+## flight, not to bed the tower by it.
+const RAMP_FOOT := {
+	# ramp(6.25, -5.5, 12.0, -2.5, 0.0, 0.0, 3.0, "-x") in block_industrial.gd:
+	# Quake (x 12, y -4, z 0) through FuncGodot's (x, y, z) -> (y, z, x).
+	"fort_command_bunker": Vector3(-4.0, 0.0, 12.0),
+	# ramp(-1.3, -7.75, 1.3, -2.25, 0.0, 0.0, 2.9, "+y")
+	"fort_hesco_sangar": Vector3(-7.75, 0.0, 0.0),
+	# ramp(-1.0, -9.7, 1.0, -3.9, -0.2, -0.2, 2.6, "+y", EARTH)
+	"feature_pillbox": Vector3(-9.7, -0.2, 0.0),
+}
+
+
+## PUT EVERY PIECE ON THE GROUND UNDER ITS OWN FOOTPRINT, not on the ground
+## under its origin.
+##
+## mapdeck takes ONE height sample, at the piece's centre. That is right for a
+## sandbag and wrong for everything big, and this map's dressing is big: a
+## command bunker is 16 x 18 m, a feature_berm 10 x 32, an estate_u_block
+## 26 x 24, a razor wire run 10 m long. Salient's ground has 260 craters in it
+## and 1.3 m of detail relief on a 28 m wavelength, so a 32 m slab pinned by its
+## middle has both ends in the air or both ends buried. A berm laid across the
+## toe of the painted mountain at z 220 came out 3.6 m off the ground at one end
+## and nothing said so.
+##
+## The worked examples here used to be ground_swell, ground_berm, ground_washout
+## and ground_track — 243 slabs that were cut from the deck on 2026-10-10 for
+## reading as a step-and-repeat. The pass still matters: 156 pieces move.
+##
+## THE MEDIAN AND NOT THE MINIMUM. The minimum drops a piece into the deepest
+## crater its footprint happens to touch and buries it — the same fault upside
+## down, and the one that made probe_footing report thirty-odd correctly bedded
+## pieces as drowned.
+##
+## WHAT IT WILL NOT DO. If the ground under a piece varies by more than
+## BED_ROUGH there is no height that works and moving it just chooses which end
+## is wrong. Those are printed and left alone, because the answer is to stop the
+## deck putting a rigid 32 m slab across a hillside.
+func _bed_dressing(placed: Array, lined: Dictionary) -> void:
+	var moved := 0
+	var rough: Array = []
+	var footed: Array = []
+	var blind := 0
+	for row: Array in placed:
+		var piece: String = row[0]
+		if lined.has(piece):
+			continue
+		var box := _size_of(piece)
+		if box.size == Vector3.ZERO:
+			blind += 1
+			continue
+		var pos: Vector3 = row[1]
+		# The same basis _yawed writes, so the footprint is sampled where the
+		# piece will actually stand and not where its unrotated box would.
+		var basis := Basis(Vector3.UP, deg_to_rad(float(row[2])))
+		var hs: Array = []
+		for ix in BED_GRID:
+			for iz in BED_GRID:
+				var local := Vector3(
+						box.position.x + box.size.x * (ix + 0.5) / BED_GRID, 0.0,
+						box.position.z + box.size.z * (iz + 0.5) / BED_GRID)
+				var w: Vector3 = basis * local
+				var h := _data.height_at_local(pos.x + w.x, pos.z + w.z)
+				if not is_nan(h):
+					hs.append(h)
+		if hs.is_empty():
+			# Off the heightfield altogether. Several ops start at x -520 while
+			# the terrain's own rect stops short of that, so this is reachable
+			# and must say so rather than silently leave the piece hanging.
+			blind += 1
+			continue
+		hs.sort()
+		var med: float = hs[hs.size() / 2]
+		var spread: float = float(hs[hs.size() - 1]) - float(hs[0])
+		if spread > BED_ROUGH:
+			rough.append([spread, piece, pos])
+		# BED IT ANYWAY, even when the ground under it is hopeless. The median of
+		# twenty-five samples is a better estimate than the one centre sample it
+		# had, whatever the spread — refusing to move it only means keeping an
+		# arbitrary height instead of the best available one.
+		#
+		# CORRECT THE SAMPLE, NOT THE DATUM. The shift is the difference between
+		# the median over the footprint and the one sample mapdeck took at the
+		# centre, so whatever designed offset the piece had — a foot pressed in,
+		# a heap half-buried, a kerb standing proud — is carried over untouched.
+		#
+		# Sitting the piece's own lowest geometry on the ground instead was the
+		# first attempt and it was worse: the lowest point of a tapered piece is
+		# a tip, not a footing, so it lifted every pine, snag, spoil heap, dirt
+		# mound and rubble pile on the map 2.7 m into the air while correctly
+		# bedding the flat-bottomed slabs. 143 floating instead of 130.
+		var at_centre := _data.height_at_local(pos.x, pos.z)
+		if is_nan(at_centre):
+			blind += 1
+			continue
+		var want: float = pos.y + (med - at_centre)
+		# A PIECE YOU WALK INTO IS BEDDED BY ITS DOOR. See RAMP_FOOT: the median
+		# is right about the body and can be most of a metre out about the far
+		# end of a ramp, and a ramp foot over the step height is an island.
+		# NOT ON GROUND THAT IS ALREADY HOPELESS. If the ground under the piece
+		# varies by more than BED_ROUGH there is no height that works and the
+		# median is already an admitted guess, so landing the ramp foot on top of
+		# that only digs the piece in further for nothing. The pillbox on the
+		# mountain toe at (-60, -228) has 7.1 m of variation under it and was
+		# already 4.2 m under the ground; another 1.4 m buries it outright. Those
+		# are in the `rough` list below, which is where the fix belongs.
+		if RAMP_FOOT.has(piece.get_file()) and spread <= BED_ROUGH:
+			var foot: Vector3 = RAMP_FOOT[piece.get_file()]
+			# THE OTHER SIGN. _yawed writes Basis(UP, -yaw) — its x column is
+			# (cos, 0, sin) — and the footprint box above is sampled with
+			# Basis(UP, +yaw), which is the mirror of it. For the box that is
+			# harmless at 0 and 90 degrees and nobody has argued it out for the
+			# rest; for a single named point it is the difference between the
+			# ramp and the wall opposite, so this one uses the basis the scene
+			# will actually be written with.
+			var laid := Basis(Vector3.UP, -deg_to_rad(float(row[2])))
+			var fw: Vector3 = laid * Vector3(foot.x, 0.0, foot.z)
+			var fh := _data.height_at_local(pos.x + fw.x, pos.z + fw.z)
+			if is_nan(fh):
+				push_warning("build_salient: no heightfield under %s's ramp foot at (%.0f, %.0f) — bedded on the median alone" % [
+						piece.get_file(), pos.x + fw.x, pos.z + fw.z])
+			elif fh - foot.y < want:
+				footed.append([want - (fh - foot.y), piece.get_file(), pos])
+				want = fh - foot.y
+		if absf(want - pos.y) > BED_SNUG:
+			row[1] = Vector3(pos.x, want, pos.z)
+			moved += 1
+	rough.sort_custom(func(a, b): return float(a[0]) > float(b[0]))
+	print("      %d piece(s) re-bedded on the ground under their own footprint" % moved)
+	if not footed.is_empty():
+		footed.sort_custom(func(a, b): return float(a[0]) > float(b[0]))
+		print("      %d of those dropped further so a walkable ramp foot meets" % footed.size())
+		print("      the ground — the median had left the way in off the floor:")
+		for f: Array in footed:
+			var p: Vector3 = f[2]
+			print("         %-26s dropped a further %.2f m at (%.0f, %.0f)" % [
+					f[1], float(f[0]), p.x, p.z])
+	if blind > 0:
+		print("      %d piece(s) had no heightfield under them and were LEFT WHERE THEY WERE" % blind)
+	if not rough.is_empty():
+		print("      %d piece(s) bedded but still cannot sit flush: a rigid flat" % rough.size())
+		print("      bottom on ground that varies more than %.1f m under it." % BED_ROUGH)
+		print("      The deck has to move these, not the builder:")
+		for r: Array in rough.slice(0, 8):
+			var p: Vector3 = r[2]
+			print("         %-34s ground varies %.1f m under it at (%.0f, %.0f)" % [
+					r[1], float(r[0]), p.x, p.z])
 
 
 ## THE LEVEL. The spawn, the exit, the objective anchors, the environment and
@@ -361,7 +677,39 @@ func _level_scene() -> String:
 		"vertices = PackedVector3Array()",
 		"polygons = []",
 		"geometry_parsed_geometry_type = 1",
-		"agent_height = 1.8",
+		# THE BAKE HAS TO BE ABOUT THE BODIES THAT WILL WALK IT.
+		#
+		# This said agent_height 1.8 and no agent_radius at all, so it took
+		# Godot's default of 0.5 — a mesh describing a cylinder 1.0 m across and
+		# 1.8 m tall. Nothing in the squad is that size. Measured off the
+		# collision shapes (tools/probe_chassis_size.gd): the Walker is 3.00 m
+		# TALL, the Bulwark 1.90 m wide in the hull and 2.26 m across its
+		# shield, the Rover 3.40 m long. A PATH QUERY TAKES NO RADIUS — Godot
+		# has no per-agent clearance, so the bake is the only clearance the
+		# engine will ever enforce, and at 0.5 it was routing a Walker under
+		# 1.8 m overheads and through 1.0 m gaps for free.
+		#
+		# BOTH NUMBERS ARE QUANTISED, which is why they are these and not the
+		# measured ones. agent_radius is CEILED to whole cell_size units, so at
+		# cell 0.25 anything in (0.75, 1.00] bakes as 1.00 — the widest hull is
+		# 1.90 m, wanting 0.95, and it gets 1.00. agent_height is CEILED to
+		# cell_height units: 3.0 is 12 of them exactly.
+		#
+		# agent_max_climb STAYS AT 0.5 even though every legged chassis steps
+		# 0.45, because climb is FLOORED to cell_height units and 0.45 at the
+		# default 0.25 floors to 0.25 — which would turn every 0.3 m lip on the
+		# map into a wall to buy back 5 cm of honesty. cell_height cannot be
+		# lowered to fix that either: the navigation map has a cell_height of
+		# its own and trench_broom_level.gd only syncs cell_size, so a mesh
+		# shipped with a different one errors on every load. The 0.05 m
+		# discrepancy is the smallest wrong number available here.
+		#
+		# Measured after the change: coverage 74.0% against 75.2% before, every
+		# objective still reachable by Walker, Bulwark, Rover and Reclaimer, and
+		# both routes still carrying the walk. The map does not come apart.
+		"cell_size = 0.25",
+		"agent_height = 3.0",
+		"agent_radius = 1.0",
 		"agent_max_climb = 0.5",
 		"region_min_size = 6.0",
 		"edge_max_error = 2.0",
@@ -456,16 +804,19 @@ func _recipe_sub(r: Recipe) -> PackedStringArray:
 
 
 func _curve_sub(id: String, pts: Array) -> PackedStringArray:
+	var tilts := PackedStringArray()
 	var nums := PackedStringArray()
 	for v: Vector2 in pts:
 		# in, out, position — three Vector3s a point, which is how Curve3D
 		# stores itself.
 		nums.append_array(PackedStringArray(["0", "0", "0", "0", "0", "0",
 				_n(v.x), "0", _n(v.y)]))
+		tilts.append("0")
 	return PackedStringArray(["[sub_resource type=\"Curve3D\" id=\"%s\"]" % id,
 			"bake_interval = 2.0",
 			"_data = {",
 			"\"points\": PackedVector3Array(%s)," % ", ".join(nums),
+			"\"tilts\": PackedFloat32Array(%s)" % ", ".join(tilts),
 			"}",
 			"point_count = %d" % pts.size(),
 			""])
@@ -532,6 +883,13 @@ func _check_anchors() -> void:
 				anchor = Vector2(float(o[3]), float(o[4]))
 		for i in range(1, p.size()):
 			bad += _clear(anchor + (p[i] as Vector2), "%s/Patrol%d" % [p[0], i], boxes)
+	# AND INSIDE THE KIT. An objective in a trench wall is as cut off as one in a
+	# building, and the routes were laid after the objectives were typed.
+	for o: Array in OBJECTIVES:
+		var hit := _kit_piece_at(Vector2(float(o[3]), float(o[4])))
+		if hit != "":
+			print("      %-28s is inside kit piece %s" % [o[0], hit])
+			bad += 1
 	if bad > 0:
 		print("      %d anchor(s) stand inside a placed piece — move them" % bad)
 
@@ -558,3 +916,1197 @@ func _ground_material() -> void:
 	for k: String in _map.material:
 		mat.set_shader_parameter(k, _map.material[k])
 	ResourceSaver.save(mat, GROUND)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# THE TRENCH SYSTEM — three ways across no-man's-land.
+#
+# The middle of this map was bare cracked mud, so crossing it was a walk into
+# fire with nothing to use. It now has three routes, each with a different cost,
+# built from the kit in tools/block_trench.gd:
+#
+#   A  THE SUNKEN ROAD    a cut running diagonally across. Fast and covered, but
+#                         a blown span leaves you exposed for 40 m in the middle.
+#   B  THE CRATER CHAIN   linked shell holes with scrapes between them. Slow and
+#                         safe from fire, and it dead-ends at an uncut wire belt
+#                         you have to flank.
+#   C  THE COMMUNICATION  a proper zigzag. Completely safe, and it funnels into
+#      TRENCH             one pillbox's arc at the far end.
+#
+# DESCRIBE ONCE, DERIVE THE REST. Nothing here says where anything else is.
+# The front lines come from the objective table, the communication trenches
+# the routes leave from and the pillboxes they run at come from the deck entry
+# the rest of the map is built from, and everything a piece needs to know about
+# itself (how long it is, where it joins the next, how much ground it takes) is
+# read from the manifest block_trench.gd wrote. Move a pillbox and a route
+# follows it; change the length of a run and the route refits.
+#
+# THE GROUND IS DERIVED TOO. A brush cannot dig a heightfield, so each piece's
+# dig list becomes terrain stamps, written to the scene as TerrainStamp nodes
+# and applied to the terrain here, off one record: the saved terrain and what
+# the editor regenerates cannot disagree.
+# ═════════════════════════════════════════════════════════════════════════════
+
+const KIT := "res://maps/blocks/trench/trench_kit.json"
+const KIT_SCENES := "res://maps/blocks/trench/%s.tscn"
+const STAMP_SCRIPT := "res://Env/terrain/terrain_stamp.gd"
+
+## Metres of ground, from a front-line trench, before a route's first ramp: past
+## the berm and the revetment, so the route does not start inside either.
+const FRONT_CLEAR := 26.0
+## The same at the enemy end, from the enemy front trench to a route's last ramp.
+const ENEMY_CLEAR := 24.0
+## How far the middle route keeps from the mine crater: its rim, and room.
+const CRATER_CLEAR := 24.0
+## The crater chain's wire belt, and where the chain stops short of it.
+const BELT_BEHIND := 44.0
+const CHAIN_SHORT := 12.0
+## How far past the end of the sunken road its gapped belt stands.
+const ROAD_MOUTH := 10.0
+
+## A BREAK IN THE LINE. Metres of open ground between a ramp end that comes UP
+## to grade and one that goes back DOWN, laid as one step of a route: the trench
+## stops, the ground is level and unwalled for LANE_GAP metres, and the trench
+## starts again. A break is 5 + LANE_GAP + 5 metres of route.
+##
+## WHY THEY EXIST, and it is not historical dressing. probe_cover_continuity
+## measured route C as 98.1% in cut for the player and 5.2% (Walker) and 2.2%
+## (Bulwark) for the big frames, both 100% exposed with 13-15 eyes on them. They
+## are not in a trench too shallow for them — THEY ARE WALKING ALONG THE TOP OF
+## IT, because Godot decides clearance once at bake time and a 3.0 m floor
+## eroded by the agent radius leaves them nothing: 1.0 m at the shipped 1.0,
+## 0.5 m at the Bulwark's 1.13 ceiled to 1.25. A trench 3.0 m wide is a route
+## for the player and a parapet for everything bigger, and the only two ways out
+## of our own deep works were 104 m apart. So the line is deliberately BROKEN in
+## two places, and a break is a crossing a wide chassis can use.
+##
+## SIZED FROM THE ERODED WIDTH, NOT THE BUILT ONE. Recast takes agent_radius off
+## every side, so a 6.0 m gap bakes 4.0 m of mesh at the shipped radius 1.0 and
+## 3.5 m at the Bulwark's 1.25 — against a Bulwark 2.26 m across the shield
+## (the widest body) and a Rover 1.70 m wide. A chassis crossing the line goes
+## straight through, so the 3.40 m Rover never has to turn inside one; the
+## eroded 3.5 m would carry it even if it did.
+##
+## NOTHING NEW STANDS IN THE 0.25-0.5 BAND. A break places no brush at all: it
+## is two pieces the kit already has, with nothing between them. The ramp's own
+## parapet runs on at 0.6 above ground to the ramp's end — above agent_max_climb
+## 0.5 on purpose, which is what still makes the LINE a line.
+const LANE_GAP := 6.0
+## Half the width of ground a break keeps clear of dressing, across the route. A
+## wire row or a tank trap scattered into a break closes it, and the deck's rows
+## know nothing about the routes — see _drop_on_routes.
+const LANE_HALF := 7.0
+## Ground is levelled this far past every piece (and blended over FLAT_FALL
+## more), so the squad never meets a piece across a bank. Salient's own ground is
+## rough, with craters down to -7 m and hills up to +2, so this is real work.
+const FLAT_MARGIN := 5.0
+const FLAT_FALL := 7.0
+## A deck piece closer to a kit piece than this is dropped. Salient's dressing
+## is scattered by rows and does not know the routes exist.
+const DROP_MARGIN := 2.5
+## The probe's own measure of "inside each other" is 12 m3; this is the point at
+## which a deck piece is dropped for tripping it against a kit piece.
+const DROP_M3 := 2.0
+## Volume two colliders must share before the guard calls it a clash. The
+## colliders are shrunk by GUARD_SHRINK first, so faces that merely touch count
+## for nothing.
+const GUARD_M3 := 0.25
+const GUARD_SHRINK := 0.015
+
+var _kit: Dictionary = {}
+var _kit_section: Dictionary = {}
+## One entry per kit piece put down: {name, piece, origin, a, route, y}. `a` is
+## the heading in degrees from east toward south, which is the way the route
+## walks, and is NOT the scene's yaw -- see _theta.
+var _laid: Array = []
+## Terrain edits, as records. Levelling first and digging after, always.
+var _flat: Array = []
+var _dig: Array = []
+var _marks: Dictionary = {}
+## One entry per break in a line: {route, at, a, g}. Not pieces — a break is the
+## absence of one — so they are kept apart from _laid and only the dressing
+## guard reads them.
+var _lanes: Array = []
+var _heading: Dictionary = {}
+var _clashes := 0
+var _dropped := 0
+var _shape_cache: Dictionary = {}
+var _registry: Array = []
+
+
+func _load_kit() -> bool:
+	if not FileAccess.file_exists(KIT):
+		print("FAIL  %s is missing — run tools/block_trench.gd, then block_prefabs.gd, first" % KIT)
+		return false
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(KIT))
+	if not (parsed is Dictionary) or not (parsed as Dictionary).has("pieces"):
+		print("FAIL  %s is not a kit manifest" % KIT)
+		return false
+	_kit = (parsed as Dictionary).pieces
+	_kit_section = (parsed as Dictionary).get("section", {})
+	return true
+
+
+# ── Frames. FuncGodot's axes, written once. ─────────────────────────────────
+#
+# A piece is built with +X along it and +Y to the left of its run, and FuncGodot
+# maps Quake (x, y, z) to Godot (y, z, x): its +X lies along Godot +Z and its +Y
+# along Godot +X. A route heading is therefore kept as `a`, degrees from +X
+# (east) toward +Z (south), and the scene's yaw falls out of it:
+#
+#   forward   (cos a, sin a)       in (x, z)
+#   left      (sin a, -cos a)      facing east, left is north (-z)
+#   yaw       90 - a               so a piece laid facing east is yawed 90
+
+func _dirv(a: float) -> Vector2:
+	return Vector2(cos(deg_to_rad(a)), sin(deg_to_rad(a)))
+
+
+func _leftv(a: float) -> Vector2:
+	return Vector2(sin(deg_to_rad(a)), -cos(deg_to_rad(a)))
+
+
+## A vector in a piece's own frame, turned into the world's.
+func _rot(a: float, local: Vector2) -> Vector2:
+	return _dirv(a) * local.x + _leftv(a) * local.y
+
+
+func _rel(origin: Vector2, a: float, local: Vector2) -> Vector2:
+	return origin + _rot(a, local)
+
+
+func _theta(a: float) -> float:
+	return deg_to_rad(90.0 - a)
+
+
+func _pp(piece: String, port: String) -> Vector2:
+	var ports: Dictionary = (_kit[piece] as Dictionary).ports
+	if not ports.has(port):
+		push_warning("build_salient: %s has no port '%s' — using its origin" % [piece, port])
+		return Vector2.ZERO
+	return Vector2(float(ports[port].x), float(ports[port].y))
+
+
+func _objective(node: String) -> Vector2:
+	for o: Array in OBJECTIVES:
+		if str(o[0]) == node:
+			return Vector2(float(o[3]), float(o[4]))
+	push_warning("build_salient: no objective called %s — routes cannot anchor to it" % node)
+	return Vector2.ZERO
+
+
+## The z of every communication trench that ends at the friendly front line,
+## from the deck entry's own trench cuts.
+func _comm_trenches(front_x: float) -> Array:
+	var out: Array = []
+	for p: Array in _map.get("paths", []):
+		var pts: Array = p[4]
+		if str(p[0]) != "trench" or pts.size() != 2:
+			continue
+		if absf((pts[0] as Vector2).y - (pts[1] as Vector2).y) > 0.01:
+			continue
+		if absf(maxf((pts[0] as Vector2).x, (pts[1] as Vector2).x) - front_x) < 0.01:
+			out.append((pts[0] as Vector2).y)
+	out.sort()
+	return out
+
+
+## The z of every pillbox on the enemy's front line.
+func _enemy_pillboxes(front_x: float) -> Array:
+	var out: Array = []
+	for op: Array in _map.get("dress", []):
+		if str(op[0]) == "at" and str(op[1]) == "features/feature_pillbox" and float(op[2]) > front_x:
+			out.append(float(op[3]))
+	out.sort()
+	return out
+
+
+# ── Laying a route ───────────────────────────────────────────────────────────
+
+func _lay_routes() -> bool:
+	_laid = []
+	_flat = []
+	_dig = []
+	_marks = {}
+	_lanes = []
+	var jump := _objective("Salient_Jumpoff")
+	var enemy := _objective("Salient_FrontLine")
+	var crater := _objective("Salient_Crater")
+	var comm := _comm_trenches(jump.x)
+	var pills := _enemy_pillboxes(enemy.x)
+	if comm.size() < 3 or pills.size() < 3:
+		print("FAIL  the deck entry has %d friendly communication trench(es) and %d enemy pillbox(es); the routes need three of each" % [comm.size(), pills.size()])
+		return false
+
+	# A — the sunken road. It leaves from the northern communication trench and
+	# crosses on the diagonal: east, a bend, SOUTH down the middle of the map, a
+	# bend, east again to the enemy line. The south leg is where the span is
+	# blown, so the enemy, to the east, sees the whole 40 m of it side on.
+	#
+	# A STAIRCASE, NOT A STRAIGHT DIAGONAL, because every piece in the kit is laid
+	# square to the map. A straight diagonal of 32 m pieces is a chain of rotated
+	# boxes, and the level probe measures a piece by the axis-aligned box round its
+	# collision: two rotated walls that merely touch score as 128 m3 inside each
+	# other, six times over. Squared-off, they score nothing.
+	var a_start := Vector2(jump.x + FRONT_CLEAR, comm[0])
+	var a_goal := Vector2(enemy.x - ENEMY_CLEAR, a_start.y)
+	var road_run := [["sunken_road_run", _length("sunken_road_run")]]
+	var road := _lay("A", ["sunken_road_ramp:down", {"fill": road_run, "share": 0.5}, "sunken_road_corner_r",
+			"sunken_road_blown", "sunken_road_corner", {"fill": road_run, "share": 0.5},
+			"sunken_road_ramp:up"], a_start, a_goal)
+	# A GAP IN THE WIRE across the road's mouth: the way out is a funnel, and a
+	# funnel is a killing ground. The belt stands where the road actually ends, with
+	# its gap on the road's own line.
+	_belt("A", (road.pos as Vector2) + _dirv(float(road.a)) * ROAD_MOUTH, float(road.a), "wire_belt_gap")
+
+	# B — the crater chain, down the southern communication trench's line, and the
+	# belt of wire it dead-ends at.
+	var belt_x := enemy.x - BELT_BEHIND
+	var b_start := Vector2(jump.x + FRONT_CLEAR, comm[2])
+	var b_goal := Vector2(belt_x - CHAIN_SHORT, comm[2])
+	var chain := _lay("B", [{"fill": [["crater_linked", _length("crater_linked")]], "share": 1.0}, "crater_single_deep"], b_start, b_goal)
+	# The belt goes where the chain ACTUALLY ends, not where it was meant to: the
+	# chain is a whole number of pieces and rarely comes out to the metre.
+	_belt("B", (chain.pos as Vector2) + _dirv(float(chain.a)) * CHAIN_SHORT, float(chain.a))
+
+	# C — the communication trench, between the mine crater and the middle
+	# pillbox, running at it.
+	var c_z := crater.y - CRATER_CLEAR
+	var c_start := Vector2(jump.x + FRONT_CLEAR, c_z)
+	var c_goal := Vector2(enemy.x - ENEMY_CLEAR, c_z)
+	var fire := [["trench_run_32", _length("trench_run_32")], ["trench_run_16", _length("trench_run_16")]]
+	# THE FOUR TRAVERSES ARE SPREAD, NOT PAIRED. They used to be laid as two
+	# adjacent pairs — traverse then traverse_r, which jogs left and immediately
+	# back right and returns the line to its own centre — leaving 77 m of dead
+	# straight trench between the pairs with nothing in it, and
+	# probe_trench_straights cast a ray 80 m down it. A traverse exists so that
+	# no sightline is longer than a bay. So one feature now sits between each
+	# traverse and its opposite number: firebay, junction, dugout, collapsed.
+	# Same four pieces and the same two of each handedness, so the net offset
+	# across the route is still zero and the line still ends on its own
+	# centreline.
+	#
+	# AND THE TWO run_32 ARE TRADED FOR TWO run_16 AND TWO BREAKS (see LANE_GAP).
+	# THE LENGTH IS THE CONSTRAINT, NOT A CONSEQUENCE: route C still measures
+	# exactly 166 m to its last ramp, which is what keeps C.exit where it is —
+	# four of the fourteen landmarks hang off that mark, one of them a 46 m
+	# chimney threaded through a 7 m lane in the wire with nothing wider anywhere
+	# near it. Adding or dropping a piece here moves that chimney into the
+	# dragon teeth and the builder then refuses to place it at all. 5 + 16 + 12 +
+	# 16 + 8 + 12 + 9 + 16 + 12 + 16 + 16 + 12 + 16 = 166; the two breaks are the
+	# two 16s with no piece names.
+	#
+	# THE HEAD RUN IS 16 m AND NOT 32. With a run_32 at the head, the 80 m
+	# sightline simply moved to the entry: a ray from the entry ramp went 42 m
+	# east down 37 m of straight trench and into the first traverse's bay, and
+	# probe_trench_straights reported 50.5 m for the route. Measured, not
+	# reasoned: it took the rebuild to find it, because the pairing fault and the
+	# head fault are the same number from two different causes.
+	var brk: Array = ["trench_ramp_end:up", {"gap": LANE_GAP}, "trench_ramp_end:down"]
+	#
+	# EACH BREAK SITS JUST PAST A TRAVERSE, never in the open head of the run.
+	# A break puts two ramp ends in line with the pieces either side of it, and
+	# probe_trench_straights measures a centreline by piece origins: a break laid
+	# into the head of this route reads as a 48 m straight, where the same break
+	# one piece later reads as 17 m. The two breaks then come out 73 m apart along
+	# the line, against the 104 m that separated the only two crossings of our
+	# deep works this map had.
+	var c_steps: Array = ["trench_ramp_end:down", "trench_run_16", "trench_traverse"]
+	c_steps.append_array(brk)
+	c_steps.append_array(["trench_firebay", "trench_traverse_r",
+			{"piece": "trench_junction_t", "branch": ["trench_sap_head"]},
+			"trench_run_16", "trench_traverse", "trench_dugout"])
+	c_steps.append_array(brk)
+	c_steps.append_array(["trench_traverse_r", "trench_collapsed",
+			{"fill": fire, "share": 1.0}, "trench_ramp_end:up"])
+	_lay("C", c_steps, c_start, c_goal)
+	return true
+
+
+## How far a piece carries a route along its heading.
+func _length(piece: String) -> float:
+	if not _kit.has(piece):
+		push_warning("build_salient: the kit has no piece called %s" % piece)
+		return 1.0
+	var ports: Dictionary = (_kit[piece] as Dictionary).ports
+	return float(ports.out.x) - float(ports["in"].x)
+
+
+## Lays `steps` from `start` toward `goal`, fitting the fillers to the distance.
+## The first walk records nothing and only measures where the fixed pieces leave
+## the route; the second lays it, with the filler counts that make up the rest.
+func _lay(route: String, steps: Array, start: Vector2, goal: Vector2) -> Dictionary:
+	var a := rad_to_deg(atan2(goal.y - start.y, goal.x - start.x))
+	_heading[route] = a
+	var dry := _walk(route, steps, start, a, [], false)
+	var rem: float = (goal - (dry.pos as Vector2)).dot(_dirv(a))
+	var counts := _fill_counts(steps, rem)
+	var wet := _walk(route, steps, start, a, counts, true)
+	# Every route has an entry. The two that begin on a ramp have marked it; the
+	# crater chain simply begins, so its entry is where it starts.
+	if not _marks.has(route + ".entry"):
+		_marks[route + ".entry"] = start
+	var mine := 0
+	for p: Dictionary in _laid:
+		if str(p.route).begins_with(route) and not p.decor:
+			mine += 1
+	print("      route %s: heading %.1f, %d piece(s), %.1f m short of its goal" % [route, a, mine,
+			(goal - (wet.pos as Vector2)).dot(_dirv(a))])
+	return wet
+
+
+## How many of each filler go in each fill step. The biggest unit first. Never
+## rounded UP: a route that stops short of its goal is a few metres of open
+## ground, and one that runs past it is inside the enemy's trench.
+func _fill_counts(steps: Array, rem: float) -> Array:
+	var fills: Array = []
+	for s: Variant in steps:
+		if s is Dictionary and (s as Dictionary).has("fill"):
+			fills.append(s)
+	var out: Array = []
+	if fills.is_empty():
+		return out
+	var units: Array = (fills[0] as Dictionary).fill
+	var big: Array = units[0]
+	var n_big := 0
+	var n_small := 0
+	if units.size() == 1:
+		n_big = maxi(floori(rem / float(big[1])), 0)
+	else:
+		n_big = maxi(floori(rem / float(big[1])), 0)
+		var left: float = rem - n_big * float(big[1])
+		n_small = maxi(floori(left / float((units[1] as Array)[1])), 0)
+	var share_done := 0.0
+	var given := 0
+	for i in fills.size():
+		share_done += float((fills[i] as Dictionary).get("share", 1.0))
+		var upto := roundi(share_done * n_big)
+		var c := {big[0]: upto - given}
+		given = upto
+		if i == 0 and units.size() > 1:
+			c[(units[1] as Array)[0]] = n_small
+		out.append(c)
+	return out
+
+
+func _walk(route: String, steps: Array, pos0: Vector2, a0: float, counts: Array, record: bool) -> Dictionary:
+	var pos := pos0
+	var a := a0
+	var fill_i := 0
+	for step: Variant in steps:
+		if step is Dictionary and (step as Dictionary).has("fill"):
+			var c: Dictionary = counts[fill_i] if fill_i < counts.size() else {}
+			fill_i += 1
+			for unit: Array in (step as Dictionary).fill:
+				for k in int(c.get(unit[0], 0)):
+					var r := _step(route, str(unit[0]), pos, a, record)
+					pos = r.pos
+					a = r.a
+			continue
+		if step is Dictionary and (step as Dictionary).has("gap"):
+			# A BREAK CARRIES THE ROUTE AND PLACES NOTHING. The two ramp ends
+			# either side of it are ordinary steps; this is the open ground
+			# between them, and the only thing it records is that the dressing
+			# has to keep out of it. See LANE_GAP and _drop_on_routes.
+			var g := float((step as Dictionary).gap)
+			if record:
+				_lane(route, pos + _dirv(a) * (g * 0.5), a, g)
+			pos += _dirv(a) * g
+			continue
+		var piece := ""
+		var branch: Array = []
+		if step is Dictionary:
+			piece = str((step as Dictionary).piece)
+			branch = (step as Dictionary).get("branch", [])
+		else:
+			piece = str(step)
+		var res := _step(route, piece, pos, a, record)
+		if record and not branch.is_empty():
+			var base := piece.split(":")[0]
+			var bp := _pp(base, "branch")
+			var turn := float(((_kit[base] as Dictionary).ports.branch as Dictionary).turn)
+			_walk(route + "s", branch, _rel(res.origin, res.a_piece, bp), float(res.a_piece) - turn, [], true)
+		pos = res.pos
+		a = res.a
+	return {"pos": pos, "a": a}
+
+
+## One piece, laid so its entry meets `pos` heading `a`. "name:down" is a ramp
+## entered from the ground, "name:up" one left onto it.
+func _step(route: String, token: String, pos: Vector2, a: float, record: bool) -> Dictionary:
+	var parts := token.split(":")
+	var piece := parts[0]
+	var mode := parts[1] if parts.size() > 1 else ""
+	if not _kit.has(piece):
+		push_warning("build_salient: the kit has no piece called %s — route %s stops short" % [piece, route])
+		return {"pos": pos, "a": a, "origin": pos, "a_piece": a}
+	var ports: Dictionary = (_kit[piece] as Dictionary).ports
+	var a_piece := a
+	var origin: Vector2
+	var out_pos: Vector2
+	var out_a := a
+	if mode == "down":
+		a_piece = a + 180.0
+		origin = pos - _rot(a_piece, _pp(piece, "ground"))
+		out_pos = _rel(origin, a_piece, _pp(piece, "trench"))
+	elif mode == "up":
+		origin = pos - _rot(a, _pp(piece, "trench"))
+		out_pos = _rel(origin, a, _pp(piece, "ground"))
+	else:
+		origin = pos - _rot(a, _pp(piece, "in"))
+		if ports.has("out"):
+			out_pos = _rel(origin, a, _pp(piece, "out"))
+			out_a = a - float(ports.out.turn)
+		else:
+			# A dead end (the sap head): the route stops where it began.
+			out_pos = pos
+	if record:
+		_put(route, piece, origin, a_piece)
+		# The little things that go on top of the pieces, and the marks other
+		# systems derive their objectives from.
+		if route == "C" and piece == "trench_run_32":
+			_put(route, "duckboard_run", _rel(origin, a_piece, Vector2(-8.0, 0.0)), a_piece, true)
+			_put(route, "duckboard_run", _rel(origin, a_piece, Vector2(8.0, 0.0)), a_piece, true)
+		elif route == "C" and piece == "trench_run_16":
+			_put(route, "duckboard_run", origin, a_piece, true)
+		var marked := {"sunken_road_blown": ["A.blown", ""], "trench_sap_head": ["C.listening_post", "post"],
+				"trench_dugout": ["C.dugout", "chamber"], "crater_single_deep": ["B.last_crater", "hole_in"]}
+		if marked.has(piece):
+			var m: Array = marked[piece]
+			_marks[m[0]] = origin if m[1] == "" else _rel(origin, a_piece, _pp(piece, m[1]))
+		if mode == "down" and not _marks.has(route + ".entry"):
+			_marks[route + ".entry"] = pos
+		if mode == "up":
+			_marks[route + ".exit"] = pos
+	return {"pos": out_pos, "a": out_a, "origin": origin, "a_piece": a_piece}
+
+
+## Records a placed piece and the ground it takes and digs.
+func _put(route: String, piece: String, origin: Vector2, a: float, decor: bool = false) -> void:
+	var n := _laid.size()
+	var name := "%s%02d_%s" % [route, n, piece]
+	_laid.append({"name": name, "piece": piece, "origin": origin, "a": a, "route": route, "y": 0.0, "decor": decor})
+	if decor:
+		return
+	var info: Dictionary = _kit[piece]
+	var span: Array = info.span
+	_flat.append(_rect_record(name, origin, a, float(span[0]) - FLAT_MARGIN, float(span[1]) - FLAT_MARGIN,
+			float(span[2]) + FLAT_MARGIN, float(span[3]) + FLAT_MARGIN, 0.0, FLAT_FALL))
+	for d: Dictionary in info.get("dig", []):
+		match str(d.k):
+			"rect":
+				_dig.append(_rect_record(name, origin, a, float(d.x0), float(d.y0), float(d.x1), float(d.y1), float(d.y), float(d.f)))
+			"disc":
+				var c := _rel(origin, a, Vector2(float(d.x), float(d.y0)))
+				_dig.append({"k": "disc", "src": name, "c": Vector3(c.x, float(d.y), c.y), "r": float(d.r), "f": float(d.f)})
+			"ramp":
+				var p0 := _rel(origin, a, Vector2(float(d.x0), 0.0))
+				var p1 := _rel(origin, a, Vector2(float(d.x1), 0.0))
+				_dig.append({"k": "ramp", "src": name, "pts": [Vector3(p0.x, float(d.ya), p0.y), Vector3(p1.x, float(d.yb), p1.y)],
+						"half": float(d.half), "f": float(_kit_section.get("ramp_falloff", 0.6))})
+
+
+## A rectangle of a piece's plan as a stamp: its centre, the yaw that turns the
+## stamp's own axes onto the piece's, and the size along each. A stamp's X is
+## the piece's left and its Z the piece's forward.
+func _rect_record(src: String, origin: Vector2, a: float, x0: float, y0: float, x1: float, y1: float, y: float, f: float) -> Dictionary:
+	var c := _rel(origin, a, Vector2((x0 + x1) * 0.5, (y0 + y1) * 0.5))
+	return {"k": "rect", "src": src, "c": Vector3(c.x, y, c.y), "theta": _theta(a), "size": Vector2(y1 - y0, x1 - x0), "f": f}
+
+
+## A belt of wire across a route's line: four runs side by side, long way across
+## it, so the route runs into the middle of it and has to go round the ends.
+func _belt(route: String, at: Vector2, a: float, piece: String = "wire_belt_run") -> void:
+	var across := a + 90.0
+	var run := _length(piece)
+	# A gapped belt is one piece with its gap in the middle; a solid belt is four
+	# runs side by side.
+	var count := 1 if piece == "wire_belt_gap" else 4
+	for k in count:
+		var off := (k - (count - 1) * 0.5) * run
+		_put(route, piece, at + _dirv(across) * off, across)
+	_marks[route + ".wire"] = at
+
+
+## A break in a line, recorded at the middle of its open ground. It is NOT a
+## piece and must never reach _laid: _laid drives the scene's prefab instances,
+## the guard and the terrain stamps, and the whole point of a break is that
+## there is nothing there. It is marked so later passes can hang something off
+## it the way the landmarks hang off C.dugout.
+func _lane(route: String, at: Vector2, a: float, g: float) -> void:
+	var n := 1
+	for l: Dictionary in _lanes:
+		if str(l.route) == route:
+			n += 1
+	_lanes.append({"route": route, "at": at, "a": a, "g": g})
+	_marks["%s.lane%d" % [route, n]] = at
+
+
+# ── The ground ───────────────────────────────────────────────────────────────
+
+## The records as the modifiers TerrainGenerator applies. Levelling first, so
+## every dig lands on level ground and none of them is levelled away.
+func _earth_modifiers() -> Array:
+	var out: Array = []
+	for rec: Dictionary in _flat:
+		out.append(_modifier(rec))
+	for rec: Dictionary in _dig:
+		out.append(_modifier(rec))
+	return out
+
+
+func _modifier(rec: Dictionary) -> Dictionary:
+	var c: Vector3 = rec.c if rec.has("c") else (rec.pts[0] as Vector3)
+	match str(rec.k):
+		"ramp":
+			var pts := PackedVector3Array()
+			for p: Vector3 in rec.pts:
+				pts.append(p)
+			return {"type": "path", "source": str(rec.src), "mode": Generator.PATH_ROAD, "points": pts,
+					"width": float(rec.half) * 2.0, "falloff": float(rec.f), "depth": 0.0,
+					"follow_terrain": false, "smoothing": 0.0, "paint": false}
+		"disc":
+			return {"type": "stamp", "source": str(rec.src), "shape": Generator.STAMP_FLATTEN,
+					"footprint": Generator.FOOTPRINT_CIRCLE, "centre": Vector2(c.x, c.z), "y": c.y,
+					"radius": float(rec.r), "half_size": Vector2(1.0, 1.0), "axis_x": Vector2(1, 0),
+					"axis_z": Vector2(0, 1), "falloff": float(rec.f), "amount": 0.0, "strength": 1.0,
+					"paint": Generator.PAINT_NONE}
+		_:
+			var th: float = rec.theta
+			var size: Vector2 = rec.size
+			return {"type": "stamp", "source": str(rec.src), "shape": Generator.STAMP_FLATTEN,
+					"footprint": Generator.FOOTPRINT_RECT, "centre": Vector2(c.x, c.z), "y": c.y,
+					"radius": 10.0, "half_size": size * 0.5, "axis_x": Vector2(cos(th), -sin(th)),
+					"axis_z": Vector2(sin(th), cos(th)), "falloff": float(rec.f), "amount": 0.0,
+					"strength": 1.0, "paint": Generator.PAINT_NONE}
+
+
+## The same records as scene nodes, so the editor's Generate button makes the
+## ground this tool did. Stamps are Node3Ds with the stamp script; ramps are
+## Path3Ds with curves of their own heights.
+func _earth_nodes(subs_ids: Array) -> PackedStringArray:
+	var out := PackedStringArray()
+	var n := 0
+	var ramp_i := 0
+	for rec: Dictionary in _flat + _dig:
+		var nm := "E%04d" % n
+		n += 1
+		match str(rec.k):
+			"ramp":
+				out.append("[node name=\"%s\" type=\"Path3D\" parent=\"Terrain/Earthworks\"]" % nm)
+				out.append("curve = SubResource(\"%s\")" % subs_ids[ramp_i])
+				ramp_i += 1
+				out.append("script = ExtResource(\"8_path\")")
+				out.append("mode = 0")
+				out.append("width = %s" % _n(float(rec.half) * 2.0))
+				out.append("falloff = %s" % _n(float(rec.f)))
+				out.append("depth = 0.0")
+				out.append("follow_terrain = false")
+				out.append("smoothing = 0.0")
+				out.append("paint = false")
+			"disc":
+				var c: Vector3 = rec.c
+				out.append("[node name=\"%s\" type=\"Node3D\" parent=\"Terrain/Earthworks\"]" % nm)
+				out.append("transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, %s, %s, %s)" % [_n(c.x), _n(c.y), _n(c.z)])
+				out.append("script = ExtResource(\"17_stamp\")")
+				out.append("radius = %s" % _n(float(rec.r)))
+				out.append("falloff = %s" % _n(float(rec.f)))
+				out.append("paint = 0")
+			_:
+				var c: Vector3 = rec.c
+				var size: Vector2 = rec.size
+				out.append("[node name=\"%s\" type=\"Node3D\" parent=\"Terrain/Earthworks\"]" % nm)
+				out.append("transform = %s" % var_to_str(Transform3D(Basis(Vector3.UP, float(rec.theta)), c)))
+				out.append("script = ExtResource(\"17_stamp\")")
+				out.append("footprint = 1")
+				out.append("size = Vector2(%s, %s)" % [_n(size.x), _n(size.y)])
+				out.append("falloff = %s" % _n(float(rec.f)))
+				out.append("paint = 0")
+		out.append("")
+	return out
+
+
+## Curve3D sub-resources for every ramp, in the order _earth_nodes uses them.
+func _ramp_curves(ids: Array) -> PackedStringArray:
+	var out := PackedStringArray()
+	var i := 0
+	for rec: Dictionary in _flat + _dig:
+		if str(rec.k) != "ramp":
+			continue
+		var nums := PackedStringArray()
+		var tilts := PackedStringArray()
+		for p: Vector3 in rec.pts:
+			nums.append_array(PackedStringArray(["0", "0", "0", "0", "0", "0", _n(p.x), _n(p.y), _n(p.z)]))
+			tilts.append("0")
+		out.append_array(PackedStringArray(["[sub_resource type=\"Curve3D\" id=\"%s\"]" % ids[i],
+				"bake_interval = 2.0",
+				"_data = {",
+				"\"points\": PackedVector3Array(%s)," % ", ".join(nums),
+				"\"tilts\": PackedFloat32Array(%s)" % ", ".join(tilts),
+				"}",
+				"point_count = %d" % (rec.pts as Array).size(),
+				""]))
+		i += 1
+	return out
+
+
+# ── Keeping the dressing off the routes ─────────────────────────────────────
+
+## Plan rectangles of every kit piece, grown by `margin`, as [origin, a, x0, y0, x1, y1].
+func _footprints(margin: float) -> Array:
+	var out: Array = []
+	for p: Dictionary in _laid:
+		var span: Array = (_kit[p.piece] as Dictionary).span
+		out.append([p.origin, p.a, float(span[0]) - margin, float(span[1]) - margin,
+				float(span[2]) + margin, float(span[3]) + margin])
+	# AND THE BREAKS, which have no piece and would otherwise be the one part of
+	# a route the dressing is free to stand in. A wire row or a tank trap
+	# scattered into a 6 m break closes the only crossing a wide chassis has.
+	for l: Dictionary in _lanes:
+		var half: float = float(l.g) * 0.5 + margin
+		out.append([l.at, l.a, -half, -LANE_HALF - margin, half, LANE_HALF + margin])
+	return out
+
+
+## Whether a world point lies inside any of those rectangles.
+func _in_footprint(pt: Vector2, rects: Array) -> bool:
+	for r: Array in rects:
+		var d := pt - (r[0] as Vector2)
+		var lx := d.dot(_dirv(float(r[1])))
+		var ly := d.dot(_leftv(float(r[1])))
+		if lx >= float(r[2]) and lx <= float(r[4]) and ly >= float(r[3]) and ly <= float(r[5]):
+			return true
+	return false
+
+
+## The deck's rows with those that stand on a route taken out. The dressing is
+## scattered by rows and knows nothing about the routes: a tank trap in a trench
+## is not a placement to fix, it is a placement that must not be there.
+##
+## TWO TESTS, because there are two things wrong with a piece near a route. One
+## is standing ON it, which the footprint says (grown by DROP_MARGIN, so nothing
+## is left hard against a wall). The other is being counted as inside it, which
+## is how the level probe measures: by the axis-aligned box round a piece's
+## collision, and 12 m3 is a fault. A piece can clear the footprint and still
+## trip that, so the second test is the probe's own measure, taken at 2 m3.
+func _drop_on_routes(placed: Array) -> Array:
+	var rects := _footprints(DROP_MARGIN)
+	var mine: Array = []
+	for p: Dictionary in _laid:
+		if p.decor:
+			continue
+		var shapes := _world_shapes(KIT_SCENES % p.piece, _kit_xf(p))
+		if shapes.is_empty():
+			continue
+		var box: AABB = (shapes[0] as Dictionary).box
+		for s: Dictionary in shapes:
+			box = box.merge(s.box)
+		mine.append(box)
+	var kept: Array = []
+	for row: Array in placed:
+		var path := "res://maps/blocks/%s.tscn" % row[0]
+		var pos: Vector3 = row[1]
+		# Scene yaw of a deck row is the NEGATIVE of its number (see _yawed).
+		var xf := Transform3D(Basis(Vector3.UP, -deg_to_rad(float(row[2]))), pos)
+		var hit := false
+		var box := _size_of(str(row[0]))
+		for sx: float in [0.0, 0.5, 1.0]:
+			for sz: float in [0.0, 0.5, 1.0]:
+				var w := xf * Vector3(box.position.x + box.size.x * sx, 0.0, box.position.z + box.size.z * sz)
+				if _in_footprint(Vector2(w.x, w.z), rects):
+					hit = true
+		if not hit:
+			var shapes := _world_shapes(path, xf)
+			if not shapes.is_empty():
+				var theirs: AABB = (shapes[0] as Dictionary).box
+				for s: Dictionary in shapes:
+					theirs = theirs.merge(s.box)
+				for m: AABB in mine:
+					if not m.intersects(theirs):
+						continue
+					var i := m.intersection(theirs)
+					if i.size.x * i.size.y * i.size.z > DROP_M3:
+						hit = true
+						break
+		if hit:
+			_dropped += 1
+		else:
+			kept.append(row)
+	return kept
+
+
+## A kit piece's transform in the world.
+func _kit_xf(p: Dictionary) -> Transform3D:
+	return Transform3D(Basis(Vector3.UP, _theta(float(p.a))), Vector3(p.origin.x, float(p.y), p.origin.y))
+
+
+# ── The placement guard ──────────────────────────────────────────────────────
+#
+# EVERY PLACEMENT IS CHECKED AGAINST EVERY PREVIOUS ONE, AT THE MOMENT IT GOES
+# DOWN, and the warning names both and the volume they share. The alternative --
+# put pieces down, probe, move one, probe again -- is whack-a-mole: each piece
+# moved lands on something else, and Georgetown took four passes to get from 70
+# clashes to 50 that way. (Copied from build_polaris.gd's _guard, with one
+# change: kit pieces are turned to any heading, and the axis-aligned box round
+# a rotated 32 m wall is 28 x 15 m, so two walls that merely touch would report
+# a clash. Here a collider is its own convex shape, and two are compared as
+# shapes, shrunk by 1.5 cm so a shared face is nothing.)
+#
+# THE STANDING RULE: pieces may touch, they may not overlap.
+#
+# Salient's own dressing is registered first and is NOT checked against itself:
+# that is the 195 pairs the level probe already counts and this pass was not
+# asked to fix. It is only here to be hit.
+
+## The collision shapes of a prefab in its own space: [{pts, box}].
+func _shapes_of(path: String) -> Array:
+	if _shape_cache.has(path):
+		return _shape_cache[path]
+	var out: Array = []
+	var packed := load(path) as PackedScene
+	if packed == null:
+		push_warning("build_salient: guard cannot load %s — nothing placed from it is checked" % path)
+		_shape_cache[path] = out
+		return out
+	var inst := packed.instantiate() as Node3D
+	for cs: CollisionShape3D in inst.find_children("*", "CollisionShape3D", true, false):
+		if cs.shape == null:
+			continue
+		var xf := Transform3D.IDENTITY
+		var at: Node = cs
+		while at != null and at != inst:
+			if at is Node3D:
+				xf = (at as Node3D).transform * xf
+			at = at.get_parent()
+		var pts := PackedVector3Array()
+		var box := AABB()
+		if cs.shape is ConvexPolygonShape3D:
+			for p: Vector3 in (cs.shape as ConvexPolygonShape3D).points:
+				pts.append(xf * p)
+			if pts.size() > 0:
+				box = AABB(pts[0], Vector3.ZERO)
+				for p: Vector3 in pts:
+					box = box.expand(p)
+		if pts.size() == 0:
+			var dbg := cs.shape.get_debug_mesh()
+			if dbg == null:
+				continue
+			box = xf * dbg.get_aabb()
+		out.append({"pts": pts, "box": box})
+	inst.free()
+	_shape_cache[path] = out
+	return out
+
+
+## A placed piece's shapes in the world.
+func _world_shapes(path: String, xf: Transform3D) -> Array:
+	var out: Array = []
+	for s: Dictionary in _shapes_of(path):
+		var pts := PackedVector3Array()
+		for p: Vector3 in s.pts:
+			pts.append(xf * p)
+		var box: AABB = xf * (s.box as AABB)
+		if pts.size() > 0:
+			box = AABB(pts[0], Vector3.ZERO)
+			for p: Vector3 in pts:
+				box = box.expand(p)
+		out.append({"pts": pts, "box": box})
+	return out
+
+
+## Registers a piece with no check, for the dressing that is only there to be hit.
+func _register(name: String, path: String, xf: Transform3D) -> Dictionary:
+	var shapes := _world_shapes(path, xf)
+	var entry := {"name": name, "shapes": shapes, "box": AABB()}
+	if not shapes.is_empty():
+		var box: AABB = (shapes[0] as Dictionary).box
+		for s: Dictionary in shapes:
+			box = box.merge(s.box)
+		entry.box = box
+	_registry.append(entry)
+	return entry
+
+
+func _guard(name: String, path: String, xf: Transform3D) -> void:
+	var entry := _register(name, path, xf)
+	if (entry.shapes as Array).is_empty():
+		return
+	for oi in _registry.size() - 1:
+		var other: Dictionary = _registry[oi]
+		if (other.shapes as Array).is_empty():
+			continue
+		if not (entry.box as AABB).intersects(other.box):
+			continue
+		var shared := 0.0
+		var where := AABB()
+		var first := true
+		for a: Dictionary in entry.shapes:
+			for b: Dictionary in other.shapes:
+				if not (a.box as AABB).intersects(b.box):
+					continue
+				var v := _shared_volume(a, b)
+				if v <= 0.0:
+					continue
+				shared += v
+				var s := (a.box as AABB).intersection(b.box)
+				where = s if first else where.merge(s)
+				first = false
+		if shared > GUARD_M3:
+			_clashes += 1
+			var c := where.get_center()
+			push_warning("build_salient: %s overlaps %s by %.1f m3 around (%.0f, %.1f, %.0f) — move one of them" % [
+					name, other.name, shared, c.x, c.y, c.z])
+
+
+## The planes of a convex point set, facing out: every plane through three
+## points that has every other point on one side of it.
+func _hull_planes(pts: PackedVector3Array) -> Array:
+	var planes: Array = []
+	var n := pts.size()
+	for i in n:
+		for j in range(i + 1, n):
+			for k in range(j + 1, n):
+				var nrm := (pts[j] - pts[i]).cross(pts[k] - pts[i])
+				if nrm.length_squared() < 1e-10:
+					continue
+				nrm = nrm.normalized()
+				var d := nrm.dot(pts[i])
+				var above := false
+				var below := false
+				for m in n:
+					var s := nrm.dot(pts[m]) - d
+					if s > 1e-4:
+						above = true
+					elif s < -1e-4:
+						below = true
+					if above and below:
+						break
+				if above and below:
+					continue
+				if above:
+					nrm = -nrm
+					d = -d
+				var dup := false
+				for p: Plane in planes:
+					if p.normal.dot(nrm) > 0.9999 and absf(p.d - d) < 1e-3:
+						dup = true
+						break
+				if not dup:
+					planes.append(Plane(nrm, d))
+	return planes
+
+
+func _box_planes(b: AABB) -> Array:
+	return [Plane(Vector3.RIGHT, b.end.x), Plane(Vector3.LEFT, -b.position.x),
+			Plane(Vector3.UP, b.end.y), Plane(Vector3.DOWN, -b.position.y),
+			Plane(Vector3.BACK, b.end.z), Plane(Vector3.FORWARD, -b.position.z)]
+
+
+func _planes_of(s: Dictionary) -> Array:
+	if not s.has("planes"):
+		s["planes"] = _hull_planes(s.pts) if (s.pts as PackedVector3Array).size() >= 4 else _box_planes(s.box)
+	return s.planes
+
+
+## The volume two convex shapes share, from the polytope their planes enclose
+## once each has been pulled in by GUARD_SHRINK.
+func _shared_volume(a: Dictionary, b: Dictionary) -> float:
+	var both: Array[Plane] = []
+	for p: Plane in _planes_of(a):
+		both.append(Plane(p.normal, p.d - GUARD_SHRINK))
+	for p: Plane in _planes_of(b):
+		both.append(Plane(p.normal, p.d - GUARD_SHRINK))
+	var pts := Geometry3D.compute_convex_mesh_points(both)
+	if pts.size() < 4:
+		return 0.0
+	var c := Vector3.ZERO
+	for p: Vector3 in pts:
+		c += p
+	c /= pts.size()
+	var vol := 0.0
+	for pl: Plane in both:
+		var on: Array = []
+		for p: Vector3 in pts:
+			if absf(pl.normal.dot(p) - pl.d) < 1e-3:
+				on.append(p)
+		if on.size() < 3:
+			continue
+		var fc := Vector3.ZERO
+		for p: Vector3 in on:
+			fc += p
+		fc /= on.size()
+		var u := (on[0] as Vector3 - fc).normalized()
+		var v := pl.normal.cross(u)
+		var ring: Array = on.duplicate()
+		ring.sort_custom(func(p: Vector3, q: Vector3) -> bool:
+				return atan2((p - fc).dot(v), (p - fc).dot(u)) < atan2((q - fc).dot(v), (q - fc).dot(u)))
+		var area := 0.0
+		for i in ring.size():
+			area += ((ring[i] as Vector3) - fc).cross((ring[(i + 1) % ring.size()] as Vector3 - fc)).dot(pl.normal)
+		vol += absf(area) * 0.5 * absf(pl.d - pl.normal.dot(c)) / 3.0
+	return vol
+
+
+## Every kit piece, as nodes, each checked on its way in. Heights are the
+## ground's, which routes have levelled to 0.
+func _trench_nodes(nodes_out: PackedStringArray) -> void:
+	var routes := {"A": "SunkenRoad", "B": "CraterChain", "C": "CommTrench"}
+	var made := {}
+	for p: Dictionary in _laid:
+		var key := str(p.route).substr(0, 1)
+		var group: String = routes.get(key, "Landmarks")
+		if not made.has(group):
+			made[group] = true
+			nodes_out.append("[node name=\"%s\" type=\"Node3D\" parent=\"Trenchworks\"]" % group)
+			nodes_out.append("")
+		var xf := _kit_xf(p)
+		nodes_out.append("[node name=\"%s\" parent=\"Trenchworks/%s\" instance=ExtResource(\"t_%s\")]" % [p.name, group, p.piece])
+		nodes_out.append("transform = %s" % var_to_str(xf))
+		nodes_out.append("")
+		_guard(str(p.name), KIT_SCENES % p.piece, xf)
+
+
+## The two landmarks: a tank nose-down in a shell hole beside the blown span, and
+## a ruined observation post north of it. Both are placed from the route's own
+## marks, so they follow the road if it moves.
+func _landmarks() -> void:
+	if not _marks.has("A.blown"):
+		push_warning("build_salient: the sunken road has no blown span to hang landmarks on — no tank, no tower")
+		return
+	var blown: Vector2 = _marks["A.blown"]
+	# The road runs south through its blown span, so "beside it" is measured off
+	# the span's own heading, not the route's first one.
+	var a := 0.0
+	for p: Dictionary in _laid:
+		if str(p.piece) == "sunken_road_blown":
+			a = float(p.a)
+	# On the enemy side of the road, nose toward it: something to give directions
+	# by. (Not the friendly side: that is the pond, and a tank in a pond is a
+	# wreck nobody can reach.)
+	var tank := blown + _leftv(a) * 26.0
+	_put("L", "tank_ditched", tank, a + 90.0)
+	# Further out and up the road, against the skyline.
+	var tower := blown + _leftv(a) * 46.0 - _dirv(a) * 20.0
+	_put("L", "op_tower_ruin", tower, a)
+	_marks["L.tank"] = tank
+	_marks["L.tower"] = tower
+
+
+## THE MID-GROUND MASSES — anchor mark, metres along the route's heading,
+## metres to the route's left, deck piece, yaw.
+##
+## WHY THESE EXIST AT ALL. docs/briefs/SALIENT_LEGIBILITY.md measured what the
+## human's "you see at the same time too much and too little" actually is:
+## ground running away from a 1.65 m eye puts the WHOLE of 25 m to 200 m into a
+## 31-pixel strip under the horizon, so the only way a frame can carry range at
+## all is if something is STANDING UP out there. Salient had 0.04-0.72% of frame
+## standing at 25-200 m across its seven probe views; Hillfort has 5.79% and
+## Georgetown 2.55-4.32%, and those are the two maps in this project the human
+## says read well. That ten-to-fiftyfold gap IS the complaint, as a number.
+##
+## WHY THEY ARE HUNG ON THE ROUTES AND NOT ON A GRID. Also measured: four pieces
+## placed close to the cameras beat sixteen on an even 110 m stagger AND beat
+## sixty-three poles, because screen area at range is dominated by PROXIMITY and
+## not by count. A 27 m tower subtends 15 degrees at 100 m and 5 at 300, so a
+## landmark 200 m off the line of advance costs a piece and buys almost nothing.
+## Measured, every one of these stands between 16 and 68 m from a line the squad
+## actually walks, and none of them stands IN one — which is why each is written
+## as an offset from a route MARK rather than as a world coordinate: a typed
+## pair of numbers would be forty metres off the road the first time the road
+## moved, and the road is laid by _lay_routes from the kit's own port lengths.
+##
+## WHY MIXED PIECES AND MIXED HEIGHTS. The pole rows in the deck are the ruler —
+## one asset, one spacing, so the halving reads as distance. These are the
+## LANDMARKS, whose job is to say which sector you are looking at, and that only
+## works if they are not all the same thing: 46 m smokestack, 35 m silos, 27 m
+## water tower, 22 m pylon, 16 m tower ruin. Two of a kind in a row is allowed
+## only where they are far enough apart never to be in one frame together.
+##
+## THEY ARE SOLID OBSTACLES IN OPEN GROUND. Rebake the navmesh and re-run
+## probe_nav_reach after touching this list — all eleven objectives have to stay
+## reachable by walker, bulwark, rover AND reclaimer, and this is the map where
+## a 6 cm change closed four bridges.
+const LANDMARKS: Array = [
+	# ── OUR OWN REAR, between the spawn and the three route entries. 320 m of
+	# ground with nothing in it, which is the S7 "long axis" view: a supply
+	# area, so silos and a chimney are what would be standing in it.
+	["C.entry", -126.0, -54.0, "industrial/industrial_smokestack", 0.0],
+	["A.entry", -121.0, -65.0, "industrial/industrial_silos", 15.0],
+	["C.entry", -76.0, 36.0, "features/feature_power_pylon", 0.0],
+	["C.entry", -46.0, -54.0, "trench/op_tower_ruin", 70.0],
+	# ── BEHIND THE PARAPET AND OUT IN FRONT OF IT. The jump-off views S1-S4 all
+	# look east from here, so this is where proximity pays.
+	["C.entry", 34.0, -34.0, "industrial/industrial_water_tower", 0.0],
+	["B.entry", 11.0, 35.0, "features/feature_power_pylon", 0.0],
+	# THE ONE LANDMARK THAT HAD TO BE RE-AIMED. C.dugout is the only route mark
+	# that moved when route C's traverses were spread and its two breaks went in:
+	# (-26, -18.3) to (-30, -22.9), measured off the Anchors in both art scenes.
+	# The offsets below are the ones that put this chimney back on (-30, 49.7),
+	# where the landmark pass photographed it. Worth 1.08 points on its own: it
+	# stands 30 m in front of the S4 crater-lip camera, the chimney is 7.4 m
+	# across, and at 26 m its near face falls inside the 0-25 m band that
+	# "standing at range" excludes — so four metres closer cost S4 5.64% -> 4.56%
+	# while the piece was still placed and the build still said 14 of 14.
+	# A LANDMARK DOES NOT HAVE TO BE DROPPED TO STOP WORKING.
+	["C.dugout", 0.0, -72.6, "industrial/industrial_smokestack", 25.0],
+	["A.blown", 14.0, -39.5, "industrial/industrial_smokestack", 0.0],
+	# IN THE ONE GAP IN THE BELTS. No-man's-land here is wire at x 12 and 26,
+	# dragon teeth at 40 and a berm row at 44, which leaves a seven-metre lane
+	# at x 33 and nothing wider anywhere between them. A silo (15 x 25 m) was
+	# tried first and came out standing in the berm row; the chimney is 7.4 m
+	# across and fits, and being 46 m tall it carries the view anyway.
+	["C.exit", 11.0, -66.0, "industrial/industrial_smokestack", 0.0],
+	# ── THEIR SIDE, short of the village. The front-line view S5 looks down the
+	# axis from x 60 and had nothing between it and the village 370 m away.
+	["C.exit", 78.0, 6.0, "industrial/industrial_water_tower", 30.0],
+	["C.exit", 88.0, -84.0, "features/feature_power_pylon", 0.0],
+	["A.wire", 130.0, 11.0, "features/feature_power_pylon", 0.0],
+	["C.exit", 148.0, -64.0, "industrial/industrial_water_tower", 0.0],
+	["B.wire", 82.0, 10.0, "industrial/industrial_silos", 40.0],
+]
+
+## Nothing may stand closer than this to another landmark's centre. Two masses
+## inside a chassis-width of each other are one mass with a seam in it.
+const LANDMARK_APART := 40.0
+
+## And nothing may stand this close to an objective anchor. THIS IS NOT
+## COSMETIC. The first run of the list above put a 46 m chimney at (-100, -70),
+## which is Salient_SapNorth to the metre, and the Bulwark — the widest chassis,
+## 1.13 m bake radius — came back UNREACHABLE there while the other three still
+## walked in. One objective, one chassis, and nothing in the build output said
+## so: only probe_nav_reach did. 30 m clears the widest piece in the list
+## (industrial_silos, 15 x 25 m) with room for a body to stand on the anchor.
+const LANDMARK_CLEAR_OBJ := 30.0
+
+
+## The heading of a route, measured end to end off its own marks rather than off
+## the first piece: a route that turns has no single angle and the one that
+## matters for hanging something beside it is the overall run.
+func _route_heading(route: String) -> float:
+	if not _marks.has(route + ".entry"):
+		return 0.0
+	var from: Vector2 = _marks[route + ".entry"]
+	for tail: String in ["exit", "wire", "last_crater", "dugout"]:
+		if _marks.has(route + "." + tail):
+			var to: Vector2 = _marks[route + "." + tail]
+			if from.distance_to(to) > 1.0:
+				return rad_to_deg(atan2(to.y - from.y, to.x - from.x))
+	push_warning("build_salient: route %s has an entry but no end mark — landmarks on it fall back to due east" % route)
+	return 0.0
+
+
+## A piece's footprint in the ground plane, as a Rect2 at `pos`. The yaw is
+## read, not ignored: a 15 x 25 m silo turned 40 degrees covers ground a square
+## box round its unrotated extent says it does not, and the extent of the
+## ROTATED box is what the fault probe will later measure it by.
+func _plan_box(piece: String, pos: Vector2, yaw: float) -> Rect2:
+	var box := _size_of(piece)
+	if box.size == Vector3.ZERO:
+		return Rect2(pos, Vector2.ZERO)
+	var c := absf(cos(deg_to_rad(yaw)))
+	var s := absf(sin(deg_to_rad(yaw)))
+	var ext := Vector2(box.size.x * c + box.size.z * s, box.size.x * s + box.size.z * c) * 0.5
+	return Rect2(pos - ext, ext * 2.0)
+
+
+## Footprint overlap, in square metres, at which a landmark is standing in
+## something. probe_level_faults calls a pair faulty at 12 m3 of shared AABB,
+## and the deck's rows here are 3 to 4 m tall, so 4 m2 in plan is the same
+## line drawn in two dimensions instead of three.
+const LANDMARK_OVERLAP := 4.0
+
+
+## LANDMARKS as deck dress ops, resolved against the routes as laid, and
+## checked against `down` — everything the deck has already put on the ground.
+## They are then appended to it, so they are bedded, dropped where a route runs
+## and guard-checked exactly like everything else standing on this map.
+##
+## A LANDMARK THAT CLASHES IS NOT PLACED, AND SAYS WHAT IT HIT. It is not
+## nudged: the table above is the authored position and a builder that quietly
+## moves a piece two metres is a builder whose output nobody can predict. The
+## warning names the piece and the metres, which is exactly what you need to
+## edit the one line in LANDMARKS that is wrong.
+func _landmark_ops(down: Array) -> Array:
+	var out: Array = []
+	var at: Array[Vector2] = []
+	var skipped := 0
+	for row: Array in LANDMARKS:
+		var mark := str(row[0])
+		if not _marks.has(mark):
+			# EVERY EARLY RETURN WARNS. A landmark that silently does not exist
+			# is a view that silently goes back to reading as a flat plate.
+			push_warning("build_salient: no mark '%s' to hang %s on — that landmark is not placed" % [mark, row[3]])
+			skipped += 1
+			continue
+		var a := _route_heading(mark.substr(0, 1))
+		var pos: Vector2 = (_marks[mark] as Vector2) + _dirv(a) * float(row[1]) + _leftv(a) * float(row[2])
+		var clash := ""
+		for other: Vector2 in at:
+			if pos.distance_to(other) < LANDMARK_APART:
+				clash = "another landmark %.0f m away" % pos.distance_to(other)
+		var on_kit := _kit_piece_at(pos)
+		if on_kit != "":
+			clash = "the route's own %s" % on_kit
+		for o: Array in OBJECTIVES:
+			var oat := Vector2(float(o[3]), float(o[4]))
+			if pos.distance_to(oat) < LANDMARK_CLEAR_OBJ:
+				clash = "objective %s, %.0f m away" % [o[0], pos.distance_to(oat)]
+		var mine := _plan_box(str(row[3]), pos, float(row[4]))
+		var worst := 0.0
+		var worst_name := ""
+		for other: Array in down:
+			# ground/* IS THE GROUND. A swell, a washout, a track and an apron
+			# are flat slabs laid on the terrain to be walked over, so a
+			# landmark standing on one is a landmark standing on the floor, and
+			# rejecting that rejects most of the open ground on the map. Only
+			# the things that STAND UP are an obstruction to stand in.
+			if str(other[0]).begins_with("ground/"):
+				continue
+			var theirs := _plan_box(str(other[0]),
+					Vector2((other[1] as Vector3).x, (other[1] as Vector3).z), float(other[2]))
+			if not mine.intersects(theirs):
+				continue
+			var share := mine.intersection(theirs)
+			var area := share.size.x * share.size.y
+			if area > worst:
+				worst = area
+				worst_name = str(other[0]).get_file()
+		# Under the threshold is a clipped corner, which every piece on a map
+		# this dense has and which the fault probe does not report either.
+		if worst > LANDMARK_OVERLAP:
+			clash = "the deck's %s, %.0f m2 of footprint" % [worst_name, worst]
+		if clash != "":
+			push_warning("build_salient: %s off %s lands on %s — not placed" % [row[3], mark, clash])
+			skipped += 1
+			continue
+		at.append(pos)
+		out.append(["at", str(row[3]), pos.x, pos.y, float(row[4])])
+	print("      %d mid-ground landmark(s) hung on the routes, %d skipped" % [out.size(), skipped])
+	return out
+
+
+## WHERE THE ROUTES' FEATURES ARE, as markers a mission can read. An objective
+## typed from these numbers would drift the first time a route moved; a marker
+## written from the route cannot. Nothing in the level scene is changed: whoever
+## puts an objective on the blown span reads it from here (Trenchworks/Anchors).
+func _anchor_nodes() -> PackedStringArray:
+	var out := PackedStringArray()
+	out.append("[node name=\"Anchors\" type=\"Node3D\" parent=\"Trenchworks\"]")
+	out.append("")
+	var keys: Array = _marks.keys()
+	keys.sort()
+	for k: String in keys:
+		var at: Vector2 = _marks[k]
+		out.append("[node name=\"%s\" type=\"Node3D\" parent=\"Trenchworks/Anchors\"]" % k.replace(".", "_"))
+		out.append("transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, %s, 0, %s)" % [_n(at.x), _n(at.y)])
+		out.append("")
+	return out
+
+
+## The name of the kit piece a world point lies in, or "".
+func _kit_piece_at(pt: Vector2) -> String:
+	for p: Dictionary in _laid:
+		var span: Array = (_kit[p.piece] as Dictionary).span
+		if _in_footprint(pt, [[p.origin, p.a, float(span[0]), float(span[1]), float(span[2]), float(span[3])]]):
+			return str(p.name)
+	return ""

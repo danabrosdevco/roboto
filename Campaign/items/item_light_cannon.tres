@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_light_cannon.tscn" id="2_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"light_cannon"
+display_name = "Light Cannon"
+short_name = "L.CAN"
+description = "One round at a time out of a nose mount. It hits harder than anything else this cheap and it cycles slowly enough that you feel every miss. No turret under it: the frame points itself, so the gun is only ever on what the hull is on."
+kind = 0
+cost = 70
+ai_scene = ExtResource("2_ai")
+player_mount_offset = Vector3(0, 0, 0)
+player_mount_rotation_degrees = Vector3(0, 0, 0)
+ammo_type = &"20mm"
+weapon_damage = 0
+usable_by_player = false
+usable_by_ai = true
+fits_vehicles = true
+one_per_robot = false
+in_shop = true
+quantity = 1
+health_bonus = 0
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+sensor_bonus = 0.0
+signal_resistance_bonus = 0.0
+self_revive_seconds = 0.0
+equipment_slot_bonus = 0
+suppressive_fire = false
+required_rank = 0
+requires_chassis = Array[StringName]([&"lance"])
+chassis_whitelist = Array[StringName]([&"lance"])

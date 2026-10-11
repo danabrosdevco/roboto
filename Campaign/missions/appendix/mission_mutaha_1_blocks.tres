@@ -1,0 +1,551 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=51 format=3 uid="uid://dvcpn14lofaxu"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://c1urmvfwgk5fh" path="res://maps/appendix/mutaha_level.tscn" id="3_mutaha"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="6h_rifleheavy"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="7_hopper"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="8_chaser"]
+[ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="9_rover"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="10_mech"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="12_nest"]
+[ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="13_bomber"]
+[ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="14_marks"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="15_lobber"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mortar_track.tres" id="16_mortar"]
+
+[sub_resource type="Resource" id="S_south_bridge"]
+script = ExtResource("2_espec")
+callsign = "SOUTH-BRIDGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("7_hopper")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_br05"
+spawn_tag = &"obj_mutaha_br05"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_east_ford"]
+script = ExtResource("2_espec")
+callsign = "EAST-FORD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_br04"
+spawn_tag = &"obj_mutaha_br04"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_gatehouse"]
+script = ExtResource("2_espec")
+callsign = "GATEHOUSE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("14_marks"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_gate"
+spawn_tag = &"obj_mutaha_gate"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_solar"]
+script = ExtResource("2_espec")
+callsign = "SOLAR-FARM"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("14_marks"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_solar"
+spawn_tag = &"obj_mutaha_solar"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_server"]
+script = ExtResource("2_espec")
+callsign = "SERVER-GARDEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_marks"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("14_marks"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_server"
+spawn_tag = &"obj_mutaha_server"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_compute"]
+script = ExtResource("2_espec")
+callsign = "COMPUTE-HALL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("15_lobber"), ExtResource("9_rover"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("14_marks"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_compute"
+spawn_tag = &"obj_mutaha_compute"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hive_campus"]
+script = ExtResource("2_espec")
+callsign = "HIVE-CAMPUS"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_compute"
+spawn_tag = &"obj_mutaha_compute"
+spawn_offset = Vector3(10, 0, 8)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_avenue"]
+script = ExtResource("2_espec")
+callsign = "AVENUE-GUNS"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("16_mortar"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("14_marks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_avenue"
+spawn_tag = &"obj_mutaha_avenue"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_listen"]
+script = ExtResource("2_espec")
+callsign = "LISTENING-POST"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("14_marks"), ExtResource("14_marks"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_listen"
+spawn_tag = &"obj_mutaha_listen"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_north_bridge"]
+script = ExtResource("2_espec")
+callsign = "NORTH-BRIDGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("14_marks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_br02"
+spawn_tag = &"obj_mutaha_br02"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_isle_north"]
+script = ExtResource("2_espec")
+callsign = "ISLE-NORTH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_isle_north"
+spawn_tag = &"obj_mutaha_isle_north"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_north_road"]
+script = ExtResource("2_espec")
+callsign = "NORTH-ROAD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("14_marks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_road"
+spawn_tag = &"obj_mutaha_road"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_west_bridge"]
+script = ExtResource("2_espec")
+callsign = "WEST-BRIDGE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("14_marks"), ExtResource("7_hopper")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_br03"
+spawn_tag = &"obj_mutaha_br03"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_fair"]
+script = ExtResource("2_espec")
+callsign = "FAIRGROUND"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_fair"
+spawn_tag = &"obj_mutaha_fair"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hive_fair"]
+script = ExtResource("2_espec")
+callsign = "HIVE-FAIR"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_fair"
+spawn_tag = &"obj_mutaha_fair"
+spawn_offset = Vector3(12, 0, -10)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_east_market"]
+script = ExtResource("2_espec")
+callsign = "EAST-MARKET"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("14_marks"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_e_mid"
+spawn_tag = &"obj_mutaha_e_mid"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_east_quarter"]
+script = ExtResource("2_espec")
+callsign = "EAST-QUARTER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("7_hopper"), ExtResource("14_marks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_e_north"
+spawn_tag = &"obj_mutaha_e_north"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_clock"]
+script = ExtResource("2_espec")
+callsign = "CLOCK-SQUARE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("15_lobber"), ExtResource("9_rover"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("14_marks"), ExtResource("10_mech")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_clock"
+spawn_tag = &"obj_mutaha_clock"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hive_clock"]
+script = ExtResource("2_espec")
+callsign = "HIVE-CLOCK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("12_nest")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_clock"
+spawn_tag = &"obj_mutaha_clock"
+spawn_offset = Vector3(-10, 0, 12)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_west_market"]
+script = ExtResource("2_espec")
+callsign = "WEST-MARKET"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("16_mortar"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("14_marks")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_w_mid"
+spawn_tag = &"obj_mutaha_w_mid"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_west_quarter"]
+script = ExtResource("2_espec")
+callsign = "WEST-QUARTER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("7_hopper")])
+count = 0
+posture = 1
+route_tag = &""
+post_tag = &"obj_mutaha_w_north"
+spawn_tag = &"obj_mutaha_w_north"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_street_east"]
+script = ExtResource("2_espec")
+callsign = "STREET-EAST"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser")])
+count = 0
+posture = 0
+route_tag = &"patrol_mutaha_east"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_street_west"]
+script = ExtResource("2_espec")
+callsign = "STREET-WEST"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("7_hopper")])
+count = 0
+posture = 0
+route_tag = &"patrol_mutaha_west"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_spine_watch"]
+script = ExtResource("2_espec")
+callsign = "SPINE-WATCH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("14_marks"), ExtResource("8_chaser")])
+count = 0
+posture = 0
+route_tag = &"patrol_mutaha_spine"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_sweep_south"]
+script = ExtResource("2_espec")
+callsign = "SOUTH-SWEEP"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("7_hopper")])
+count = 0
+posture = 2
+route_tag = &""
+post_tag = &"obj_mutaha_gate"
+spawn_tag = &"obj_mutaha_in_south"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_gate_counter"]
+script = ExtResource("2_espec")
+callsign = "GATE-COUNTER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("7_hopper")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_mutaha_gate"
+spawn_tag = &"obj_mutaha_stage_south"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"mutaha_relay_gate"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_campus_counter"]
+script = ExtResource("2_espec")
+callsign = "CAMPUS-COUNTER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("10_mech")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_mutaha_server"
+spawn_tag = &"obj_mutaha_stage_isle_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"mutaha_relay_server"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_hall_counter"]
+script = ExtResource("2_espec")
+callsign = "HALL-COUNTER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("15_lobber"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("14_marks"), ExtResource("10_mech")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_mutaha_compute"
+spawn_tag = &"obj_mutaha_stage_west"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"mutaha_relay_compute"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_clock_counter"]
+script = ExtResource("2_espec")
+callsign = "CLOCK-COUNTER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("6h_rifleheavy"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("8_chaser"), ExtResource("7_hopper")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_mutaha_clock"
+spawn_tag = &"obj_mutaha_in_west"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"mutaha_relay_clock"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_swarm"]
+script = ExtResource("2_espec")
+callsign = "SWARM"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("8_chaser"), ExtResource("7_hopper"), ExtResource("7_hopper"), ExtResource("7_hopper")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_mutaha_compute"
+spawn_tag = &"obj_mutaha_stage_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"mutaha_swarm"
+wake_after_kills = 45
+
+[sub_resource type="Resource" id="S_column"]
+script = ExtResource("2_espec")
+callsign = "COLUMN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("9_rover"), ExtResource("9_rover"), ExtResource("6_rifle"), ExtResource("6_rifle"), ExtResource("5_shot"), ExtResource("5_shot"), ExtResource("10_mech")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_mutaha_road"
+spawn_tag = &"obj_mutaha_in_north"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &"mutaha_column"
+wake_after_kills = 110
+
+[sub_resource type="Resource" id="S_air_hall"]
+script = ExtResource("2_espec")
+callsign = "KESTREL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_mutaha_compute"
+spawn_tag = &"obj_mutaha_compute"
+spawn_offset = Vector3(-70, 40, 150)
+always_active = true
+faction = 1
+reinforcement_tag = &"compute-hall_engaged"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_air_clock"]
+script = ExtResource("2_espec")
+callsign = "HARRIER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_mutaha_clock"
+spawn_tag = &"obj_mutaha_clock"
+spawn_offset = Vector3(-60, 40, 170)
+always_active = true
+faction = 1
+reinforcement_tag = &"clock-square_engaged"
+wake_after_kills = 0
+
+[sub_resource type="Resource" id="S_air_fair"]
+script = ExtResource("2_espec")
+callsign = "OSPREY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("13_bomber"), ExtResource("13_bomber")])
+count = 0
+posture = 3
+route_tag = &""
+post_tag = &"obj_mutaha_fair"
+spawn_tag = &"obj_mutaha_fair"
+spawn_offset = Vector3(80, 40, 140)
+always_active = true
+faction = 1
+reinforcement_tag = &"fairground_engaged"
+wake_after_kills = 0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"mutaha_1_blocks"
+display_name = "Mutaha"
+briefing = "A city on a fork in the river, and everything worth taking is on the island in the middle of it. You come in from the south, 300 metres of open ground, and then it is streets: 7 metres wide, block after block, with the two districts either side of the water and six bridges between them. The riverbed is not wadeable. Those six crossings are the whole map.
+
+The island is the spine and the campus is the prize — the gatehouse at the south end, the server garden in the middle, and the data hall itself, which is fifteen seconds at a console with both banks free to come back over the bridges at you. Clock Square across the west bridge is held in strength and the fairground in the east feeds chasers into the streets from a hive under the wheel.
+
+New in this city: marksmen on the long streets — one shot, slowly, from further out than anything else they field, and they will not fire inside twelve metres. Rovers with grenade launchers that do not need to see you to put three rounds where you are. And a mortar track parked two streets back, shelling whatever its infantry can see. Their listening post on the north island is what feeds the long guns; take it down and they shoot on their own eyes.
+
+Take the gatehouse, the server garden, the data hall and Clock Square, then get the squad out north on the river road."
+level_scene = ExtResource("3_mutaha")
+map_position = Vector2(500, -60)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("S_south_bridge"), SubResource("S_east_ford"), SubResource("S_gatehouse"), SubResource("S_solar"), SubResource("S_server"), SubResource("S_compute"), SubResource("S_hive_campus"), SubResource("S_avenue"), SubResource("S_listen"), SubResource("S_north_bridge"), SubResource("S_isle_north"), SubResource("S_north_road"), SubResource("S_west_bridge"), SubResource("S_fair"), SubResource("S_hive_fair"), SubResource("S_east_market"), SubResource("S_east_quarter"), SubResource("S_clock"), SubResource("S_hive_clock"), SubResource("S_west_market"), SubResource("S_west_quarter"), SubResource("S_street_east"), SubResource("S_street_west"), SubResource("S_spine_watch"), SubResource("S_sweep_south"), SubResource("S_gate_counter"), SubResource("S_campus_counter"), SubResource("S_hall_counter"), SubResource("S_clock_counter"), SubResource("S_swarm"), SubResource("S_column"), SubResource("S_air_hall"), SubResource("S_air_clock"), SubResource("S_air_fair")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"mutaha_relay_gate", &"mutaha_relay_server", &"mutaha_relay_compute", &"mutaha_relay_clock", &"mutaha_listening", &"mutaha_extract"])
+reward_resources = 950
+compute_reward = 2
+unlocks = Array[StringName]([&"spotter"])
+squad_size = -1
+repeatable = false
+requires = Array[StringName]([&"pitt_1_rivers"])

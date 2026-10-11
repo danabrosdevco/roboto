@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cjm1hnrqa67sf"
+path="res://.godot/imported/street_sign_gantry.map-345644b57e23d5efa92fab06c4ecfa83.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_sign_gantry.map"
+dest_files=["res://.godot/imported/street_sign_gantry.map-345644b57e23d5efa92fab06c4ecfa83.tres"]
+
+[params]
+

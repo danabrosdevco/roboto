@@ -87,6 +87,22 @@ const SPEC := {
 	# NEITHER DOES ANYTHING OUTSIDE THE EDITOR. See debug_tools_enabled().
 	"debug.unlock_all_missions":  {"default": false},
 	"debug.unlock_all_gear":      {"default": false},
+	# CONTACT AND TARGETING. These default to the SHIPPING configuration, not
+	# to off: playing with none of them touched is playing the intended game.
+	# They exist so each term can be judged on its own in a running fight
+	# rather than by rebuilding, which is what replaced staging this work.
+	"debug.contact_distribution":        {"default": true},
+	"debug.contact_enemy_distribution":  {"default": true},
+	"debug.contact_mortar_needs_eyes":   {"default": true},
+	"debug.contact_accuracy":            {"default": true},
+	# OFF by default: this is the one that could make sensor range stop
+	# mattering, so it is opt-in until it has been felt.
+	"debug.contact_engage_unseen":       {"default": false},
+	"debug.contact_overlay":             {"default": false},
+	# The numeric signal readout under the blue strip. Off by default: the bar
+	# and its colour are the shipping readout, and the figures exist so the
+	# degradation can be judged AT a known value rather than by eye.
+	"debug.signal_readout":              {"default": false},
 }
 
 

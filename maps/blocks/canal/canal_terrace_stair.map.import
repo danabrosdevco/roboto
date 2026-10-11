@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dtipoaf554tgr"
+path="res://.godot/imported/canal_terrace_stair.map-e8ac5985a9f5dbd3a7e724c71e2b99ba.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_terrace_stair.map"
+dest_files=["res://.godot/imported/canal_terrace_stair.map-e8ac5985a9f5dbd3a7e724c71e2b99ba.tres"]
+
+[params]
+

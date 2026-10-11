@@ -83,7 +83,7 @@ func texture() -> Texture2D:
 
 ## The baked map for a mission's level, or null if it has not been baked.
 ##
-## res://maps/valley_level.tscn -> res://maps/minimaps/valley_level.tres.
+## res://maps/appendix/valley_level.tscn -> res://maps/minimaps/valley_level.tres.
 ## Convention rather than a field on MissionDefinition: every mission already
 ## names its level, and a second reference would be one more thing to forget to
 ## set when adding a mission.
@@ -114,8 +114,12 @@ static func for_mission(mission: MissionDefinition) -> MinimapData:
 func objective_order(active: Array[StringName] = []) -> Array[int]:
 	var goals: Array[int] = []
 	var exits: Array[int] = []
+	var nests := nest_ids()
 	for i in objective_ids.size():
 		if not active.is_empty() and not active.has(objective_ids[i]):
+			continue
+		# Hives are objectives but not destinations. See nest_ids().
+		if nests.has(objective_ids[i]):
 			continue
 		if objective_kinds[i] == &"extract":
 			exits.append(i)
@@ -155,3 +159,122 @@ func display_name_of(i: int) -> String:
 	if objective_kinds[i] == &"extract" and (text == "" or text == "OBJECTIVE"):
 		return "EXTRACTION"
 	return text
+
+
+# ─────────────────────────────────────────────
+# WHAT IS A DESTINATION, AND WHAT IS JUST A THING TO KILL
+# ─────────────────────────────────────────────
+
+## Objective ids the map must not mark: hives, and the Listening Post, which is
+## one in all but name.
+##
+## They are real objectives and have to stay in a mission's active_objectives —
+## Campaign._prune_inactive_objectives() deletes every level objective the
+## mission does not name, so dropping them there would stop the hives hatching
+## altogether. But they are not PLACES YOU GO. You blow a hive up when the squad
+## defending it brings you to it. Numbering them as destinations told Coast
+## Road's three-relay operation it was a seven-objective map, four of whose
+## numbers the player cannot plan a route around.
+##
+## AN OPTIONAL EliminateObjective is the test, rather than the id spelling.
+## "_hive_" is a convention the Listening Post does not follow. Both halves of
+## the test earn their place: Pittsburgh's optional Port Relay is a capture
+## point and belongs on the map, and the arena levels' "clear the floor"
+## objectives are EliminateObjectives that ARE the mission — filtering those out
+## left the proving ground briefing with nothing to do but extract.
+##
+## Resolved from the level rather than baked into objective_kinds, because the
+## bake predates the distinction and every map in the game would have to be
+## re-baked before the filter did anything. The level PackedScene is already
+## loaded — the mission that named this map references it — so reading its state
+## costs nothing.
+const NEST_SCRIPT := "eliminate_objective.gd"
+
+var _nest_ids: Dictionary = {}
+var _nests_resolved: bool = false
+
+
+func nest_ids() -> Dictionary:
+	if _nests_resolved:
+		return _nest_ids
+	_nests_resolved = true
+	if level_scene_path == "" or not ResourceLoader.exists(level_scene_path):
+		# Not fatal, but it has to say so: the map quietly goes back to drawing
+		# hives as objectives, which is the whole bug this exists to fix.
+		push_warning("%s has no usable level_scene_path (%s), so hives cannot be told from capture points and will be drawn as objectives. Re-run tools/minimap.sh for this map." % [resource_path, level_scene_path])
+		return _nest_ids
+	var packed := load(level_scene_path) as PackedScene
+	if packed == null:
+		push_warning("%s names level %s, which did not load; hives will be drawn as objectives." % [resource_path, level_scene_path])
+		return _nest_ids
+	_collect_nests(packed, 0, {}, _nest_ids)
+	return _nest_ids
+
+
+## How deep to follow instanced scenes. See _collect_nests().
+const MAX_INSTANCE_DEPTH := 3
+
+
+## IT HAS TO FOLLOW INSTANCED SCENES, which it did not. Reading only the
+## level's own SceneState was right while every objective was declared in the
+## level file; Georgetown, Polaris and Causeway keep their whole gameplay layer
+## in maps/gameplay/<name>_ops.tscn and instance it, because the first two have
+## their level .tscn rewritten from a template by the terrain builders and
+## anything added to one dies on the next rebuild.
+##
+## An instanced scene's nodes are not in the parent's state at all, so every
+## hive on those three maps came back unrecognised and the briefing drew it as
+## a capture point — the exact bug this filter exists to prevent, reappearing
+## for a different reason. Caught by tools/test_minimap_objectives.gd.
+##
+## Depth-limited and cycle-safe by path: a scene that instanced itself would
+## otherwise recurse forever.
+func _collect_nests(packed: PackedScene, depth: int, seen: Dictionary, out: Dictionary) -> void:
+	if packed == null:
+		return
+	var key := str(packed.resource_path)
+	if key != "" and seen.has(key):
+		return
+	seen[key] = true
+	var st := packed.get_state()
+	for i in st.get_node_count():
+		var instanced: PackedScene = st.get_node_instance(i)
+		if instanced != null and depth < MAX_INSTANCE_DEPTH:
+			_collect_nests(instanced, depth + 1, seen, out)
+		var id: StringName = &""
+		var eliminates := false
+		var optional := false
+		for j in st.get_node_property_count(i):
+			var prop := String(st.get_node_property_name(i, j))
+			var v: Variant = st.get_node_property_value(i, j)
+			if prop == "id":
+				id = StringName(str(v))
+			elif prop == "optional":
+				optional = bool(v)
+			elif prop == "script" and v != null:
+				eliminates = str(v.resource_path).get_file() == NEST_SCRIPT
+		if id == &"" or not optional:
+			continue
+		# AN INSTANCED OBJECTIVE HAS NO `script` PROPERTY OF ITS OWN. The script
+		# sits on the instanced scene's root and the level overrides only `id`.
+		# Checking for a script override alone misses every one of them.
+		if not eliminates:
+			eliminates = _instance_is_nest(instanced)
+		if eliminates:
+			out[id] = true
+
+
+## True when `packed`'s own root carries the nest script — where an instanced
+## objective keeps it. See nest_ids().
+static func _instance_is_nest(packed: PackedScene) -> bool:
+	if packed == null:
+		return false
+	var st := packed.get_state()
+	if st.get_node_count() == 0:
+		return false
+	for j in st.get_node_property_count(0):
+		if String(st.get_node_property_name(0, j)) != "script":
+			continue
+		var v: Variant = st.get_node_property_value(0, j)
+		return v != null and str(v.resource_path).get_file() == NEST_SCRIPT
+	return false

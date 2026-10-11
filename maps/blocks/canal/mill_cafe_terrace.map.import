@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bo40y3pwdonky"
+path="res://.godot/imported/mill_cafe_terrace.map-b7640d6661605e91495bffff5c1285fa.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/mill_cafe_terrace.map"
+dest_files=["res://.godot/imported/mill_cafe_terrace.map-b7640d6661605e91495bffff5c1285fa.tres"]
+
+[params]
+

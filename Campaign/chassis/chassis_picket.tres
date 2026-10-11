@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/picket.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"picket"
+display_name = "Picket"
+description = "Six tubes on a trunnion and a sensor dish, on legs. Built to be positioned, not driven: it sees further than anything that is not a drone and it reaches past anything that is not a cannon. The launcher only elevates, so everything it fires arcs. On legs, so it takes the kit a Rover cannot. Thin, and worth its seat only when there is ground you need hit from a long way off."
+scene = ExtResource("2_scene")
+cost = 210
+purchasable = true
+supply = 2
+starting_weapon_id = &"rocket_pods"
+coax_weapon_id = &""
+base_health = 140
+base_speed = 0.9
+base_accuracy = 1.0
+base_sensor_range = 75.0
+weapon_slots = 1
+built_in = "CLAWS"
+weapon_replaces_built_in = false
+turret = true
+vehicle = true
+drives = false
+equipment_slots = 0
+module_slots = 2
+musters_at_base = true
+required_rank = 0

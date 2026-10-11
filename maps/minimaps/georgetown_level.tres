@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_tkwrh"]
+
+[resource]
+script = ExtResource("1_tkwrh")
+level_scene_path = "res://maps/georgetown_level.tscn"
+image_path = "res://maps/minimaps/georgetown_level.png"
+world_min = Vector2(-275.425, -266.925)
+world_max = Vector2(278.425, 286.925)
+objective_ids = Array[StringName]([&"gt_relay_park", &"gt_relay_stack", &"gt_relay_lock", &"gt_relay_street", &"gt_relay_mill", &"gt_hive_yards", &"gt_hive_town", &"gt_listening", &"gt_extract"])
+objective_names = Array[String](["The Bandstand", "The Stack", "The Lock", "Water Street", "The Long Mill", "The Yard Hive", "The Terrace Hive", "The East Viaduct", "Out On The Upper Road"])
+objective_positions = Array[Vector3]([Vector3(-34, -8, 132), Vector3(86, -4, 112), Vector3(48, 0, -9), Vector3(-40, 4, -108), Vector3(-212, 0, -6), Vector3(0, -4, 86), Vector3(-100, 4, -128), Vector3(206, -4, 72), Vector3(200, 4, -96)])
+objective_kinds = Array[StringName]([&"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"capture", &"extract"])
+insertion_positions = Array[Vector3]([Vector3(-200, -8, 152)])

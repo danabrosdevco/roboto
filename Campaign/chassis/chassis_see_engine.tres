@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/see_engine.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"see_engine"
+display_name = "See-Engine"
+description = "One enormous eye on four legs. It carries no weapon and never fires; everything of Argus's within reach of what it can see shoots straighter for it. Kill the escort, then kill the eye."
+scene = ExtResource("2_scene")
+cost = 0
+purchasable = false
+supply = 3
+starting_weapon_id = &""
+coax_weapon_id = &""
+base_health = 240
+base_speed = 0.75
+base_accuracy = 0.0
+base_sensor_range = 110.0
+weapon_slots = 0
+built_in = "DESIGNATOR"
+weapon_replaces_built_in = false
+turret = false
+vehicle = true
+drives = false
+equipment_slots = 0
+module_slots = 0
+musters_at_base = false
+required_rank = 0

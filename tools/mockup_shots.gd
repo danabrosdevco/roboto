@@ -1,20 +1,38 @@
 extends SceneTree
 
 # ─────────────────────────────────────────────
-# KIT SCREENSHOTS — the same fittings as mockup_kit.gd, but photographed IN THE
-# GAME rather than drawn as line art.
+# THE CAMERA RIG. Photographs the game, in the game, headful.
 #
-# Why both exist: the icon sheet answers "does this read as a silhouette at
-# 40 pixels", which is a UI question. This answers "does it look like part of
-# the machine when it is lit, painted in faction blue and standing in a level",
-# which is the question you actually care about. A shape can pass one and fail
-# the other — a flat slab reads fine in outline and looks like cardboard the
-# moment a light hits it.
+# TWO SHOT LISTS, ONE RIG. It started as kit mock-ups only — the same fittings
+# as mockup_kit.gd, but photographed IN THE GAME rather than drawn as line art.
+# Why both of those exist: the icon sheet answers "does this read as a
+# silhouette at 40 pixels", which is a UI question. This answers "does it look
+# like part of the machine when it is lit, painted in faction blue and standing
+# in a level", which is the question you actually care about. A shape can pass
+# one and fail the other — a flat slab reads fine in outline and looks like
+# cardboard the moment a light hits it.
 #
-# Loads a real level for its environment and lighting, lines the soldiers up,
-# parks a camera in front of them and writes the viewport out.
+# docs/marketing/SHOT_BRIEF.md then wanted store stills out of the same rig, and
+# asked for it generalised rather than copied, because a copy drifts. So the
+# level, the camera, the resolution, the HUD and the cast are parameters now,
+# and the kit list is just the first caller. Everything either list needs goes
+# through _stage() and _shoot().
 #
-#   godot --audio-driver Dummy --path . --script res://tools/mockup_shots.gd -- <out dir>
+#   godot --audio-driver Dummy --path . --script res://tools/mockup_shots.gd -- <out dir> [what]
+#
+# `what` is `kit` (the default, unchanged), `marketing` for all five store
+# shots, or one shot id — `01_coast_squad`, `03_basin_mechanic`, and so on.
+#
+# ON RESOLUTION. The frame is whatever the window is, because the window is the
+# viewport this grabs. It is NOT resized here: this machine runs borderless
+# fullscreen, so native is both the largest and the only size that looks right,
+# and SHOT_BRIEF accepts 1920x1080. Pass `--size 2560x1440` if you want the
+# brief's first choice and can spare the window.
+#
+# ON THE HUD. Both passes come off ONE staging — stage, grab, hide the HUD
+# layer, grab again. The brief is explicit that re-staging to get the second
+# pass is what makes capture expensive, so it is deliberately not possible to
+# get the two out of step here.
 # ─────────────────────────────────────────────
 
 const _Parts := preload("res://tools/mockup_parts.gd")
@@ -25,7 +43,115 @@ const LEVEL := "res://maps/depot_level.tscn"
 const STAGE := Vector3(0.0, 1.2, 0.0)
 const SPACING := 2.0
 
+## The cast, by the name SHOT_BRIEF uses for each frame.
+const FRAMES := {
+	"soldier": "res://Character/characters/ai/soldier_rifle.tscn",
+	"rover": "res://Character/characters/ai/vehicle_rover.tscn",
+	"spotter": "res://Character/characters/ai/spotter_drone.tscn",
+	"mechanic": "res://Character/characters/ai/mechanic_chassis.tscn",
+	"walker": "res://Character/characters/ai/walker.tscn",
+	"reclaimer": "res://Character/characters/ai/vehicle_reclaimer.tscn",
+	"bulwark": "res://Character/characters/ai/bulwark.tscn",
+	# The ten new frames. Models only — none of these has a ChassisDefinition
+	# yet, which is why bake_icons.gd cannot see them: it reads the catalogue.
+	"lance": "res://Character/characters/ai/lance.tscn",
+	"picket": "res://Character/characters/ai/picket.tscn",
+	"drayman": "res://Character/characters/ai/drayman.tscn",
+	"kite": "res://Character/characters/ai/kite.tscn",
+	"vessel": "res://Character/characters/ai/vessel.tscn",
+	"brood": "res://Character/characters/ai/brood.tscn",
+	"bastion": "res://Character/characters/ai/bastion.tscn",
+	"see_engine": "res://Character/characters/ai/see_engine.tscn",
+}
+
+# ─────────────────────────────────────────────
+# THE FIVE STORE SHOTS, as data. docs/marketing/SHOT_BRIEF.md is the brief; this
+# is that brief in the form the rig takes.
+#
+# `anchor` and `toward` are REAL NODE NAMES in the level, looked up at capture
+# time rather than written out as coordinates. The brief gives landmarks for
+# exactly this reason: TERRAIN owns these maps and moves things in them, and a
+# hard-coded camera position silently photographs the wrong hillside the first
+# time a level is rebuilt. A missing landmark says so and skips the shot.
+#
+# `cam` and `aim` are offsets in metres from those landmarks. `cast` is placed
+# relative to the anchor, each entry [frame, offset, facing-degrees].
+# ─────────────────────────────────────────────
+const SHOTS := [
+	{
+		"id": "01_coast_squad",
+		"level": "res://maps/coastal-road_level.tscn",
+		# Four frames, separated, with the road running away from camera and
+		# the bridge in the far third. This is the cover image: its whole job
+		# is "these are capsules, and there are four of them".
+		"anchor": "Coast_Hill", "toward": "Coast_Bridge",
+		"cam": Vector3(0, 1.7, 10.0), "aim": Vector3(0, 1.0, 0),
+		"cast": [
+			["soldier", Vector3(-3.2, 0, -1.0), 0.0],
+			["soldier", Vector3(2.9, 0, -2.4), 0.0],
+			["rover", Vector3(-0.4, 0, -6.2), 0.0],
+			["spotter", Vector3(4.4, 5.5, -8.0), 0.0],
+		],
+	},
+	{
+		"id": "02_mutaha_order",
+		# THE LIVE LEVEL, NOT THE WIP. The brief asks which Mutaha and says to
+		# shoot whichever is current; mutaha_level is the one the campaign
+		# plays. Its two named crossings (Mutaha_CrossWest, Mutaha_CorePlaza)
+		# exist only in the WIP, so this anchors on Mutaha_Compute, which is in
+		# both — and which the brief wanted in frame anyway.
+		"level": "res://maps/appendix/mutaha_level.tscn",
+		"anchor": "Mutaha_Compute", "toward": "Mutaha_Compute",
+		"cam": Vector3(7.0, 1.7, 13.0), "aim": Vector3(0, 2.0, 0),
+		"cast": [
+			["soldier", Vector3(2.0, 0, 3.0), 200.0],
+			["soldier", Vector3(-1.4, 0, 1.6), 200.0],
+			["rover", Vector3(4.6, 0, 5.0), 200.0],
+		],
+	},
+	{
+		"id": "03_basin_mechanic",
+		"level": "res://maps/valley_basin_level.tscn",
+		# Side-on, both robots in frame, close enough to read the welder. The
+		# two figures ARE the composition, so nothing else is staged.
+		"anchor": "Basin_Anchor", "toward": "Basin_Anchor",
+		"cam": Vector3(6.5, 1.5, 0.0), "aim": Vector3(0, 0.8, 0),
+		"cast": [
+			["mechanic", Vector3(0, 0, -0.9), 180.0],
+			["soldier", Vector3(0, 0, 0.9), 0.0],
+		],
+	},
+	{
+		"id": "04_pitt_walker",
+		"level": "res://maps/pittsburgh_level.tscn",
+		# Wide enough that the Walker's turret facing and the flanking frame
+		# are both visible at once — the whole point is that its guns are
+		# pointing the wrong way, which is a composition problem, not a pose.
+		"anchor": "Pitt_Bridgehead", "toward": "Pitt_Point",
+		"cam": Vector3(9.0, 4.0, 11.0), "aim": Vector3(0, 1.2, 0),
+		"cast": [
+			["walker", Vector3(-2.0, 0, -4.0), 250.0],
+			["soldier", Vector3(5.0, 0, 1.5), 300.0],
+			["soldier", Vector3(6.4, 0, 3.2), 300.0],
+		],
+	},
+	{
+		"id": "05_depot_manager",
+		"level": "res://maps/depot_level.tscn",
+		# FULL-SCREEN UI, NO WORLD. The one shot the rig cannot finish on its
+		# own: it wants the squad manager open on a roster with ranks on it,
+		# and ranks come from a played campaign. Staged and framed here; see
+		# the note this prints when it runs.
+		"anchor": "ChassisBays", "toward": "ChassisBays",
+		"cam": Vector3(0, 2.0, 7.0), "aim": Vector3(0, 1.2, 0),
+		"cast": [],
+		"ui_only": true,
+	},
+]
+
 var _cam: Camera3D
+var _hud: CanvasItem = null
+var _host: Node = null
 
 
 func _initialize() -> void:
@@ -40,7 +166,70 @@ func _run() -> void:
 	var args := OS.get_cmdline_user_args()
 	var out_dir: String = args[0] if args.size() > 0 and args[0].strip_edges() != "" else "user://mockups"
 	DirAccess.make_dir_recursive_absolute(out_dir)
+	var what: String = args[1].strip_edges().to_lower() if args.size() > 1 else "kit"
+	_apply_size(args)
 
+	if what == "kit":
+		await _kit_shots(out_dir)
+	elif what == "rank":
+		await _rank_shots(out_dir)
+	elif what == "vrank":
+		await _vehicle_rank_shots(out_dir)
+	elif what == "trials":
+		await _vehicle_trial_shots(out_dir)
+	elif what == "frames" or FRAMES.has(what):
+		await _frame_shots(out_dir, what)
+	elif what == "vhat":
+		await _vehicle_rank_shots(out_dir, _Parts.vehicle_hat_list(), "vhat")
+	else:
+		await _store_shots(out_dir, what)
+	print("mockup_shots: written to %s" % ProjectSettings.globalize_path(out_dir))
+	quit(0)
+
+
+## `--size 2560x1440`, and ONLY if asked for. This machine runs borderless
+## fullscreen and a resized window lands small in the bottom-left corner, so the
+## default is to photograph whatever the window already is.
+##
+## THE WINDOW IS NOT THE FRAME, THOUGH. project.godot sets
+## display/window/stretch/mode="viewport", which is what gives the game its
+## look: it renders at a fixed internal resolution and upscales to the window.
+## So every grab off this rig comes out at that internal size — measured 1152x648
+## — no matter how big the window is, and SHOT_BRIEF wants 2560x1440 or 1920x1080.
+## Raising it means raising window/size/viewport_width and _height in
+## project.godot, which is a shared file and changes how the game looks for
+## everyone, so it is not something this tool does on its own.
+func _apply_size(args: Array) -> void:
+	var asked := ""
+	for i in args.size():
+		var s := str(args[i])
+		if not s.begins_with("--size"):
+			continue
+		# Both spellings: --size=1920x1080, and --size 1920x1080 as two args,
+		# which is how anyone actually types it.
+		var val := s.replace("--size", "").replace("=", "").strip_edges()
+		if val == "" and i + 1 < args.size():
+			val = str(args[i + 1]).strip_edges()
+		var wh := val.split("x")
+		if wh.size() == 2 and wh[0].is_valid_int() and wh[1].is_valid_int():
+			DisplayServer.window_set_size(Vector2i(int(wh[0]), int(wh[1])))
+			asked = val
+		else:
+			push_warning("mockup_shots: could not read '%s'; wanted --size 2560x1440." % s)
+	var frame := Vector2i(
+		int(ProjectSettings.get_setting("display/window/size/viewport_width", 0)),
+		int(ProjectSettings.get_setting("display/window/size/viewport_height", 0)))
+	if asked != "" and str(ProjectSettings.get_setting("display/window/stretch/mode", "")) == "viewport":
+		push_warning(("mockup_shots: window set to %s, but stretch/mode is \"viewport\" so the "
+			+ "frame is still the internal %dx%d. Raise display/window/size/viewport_width "
+			+ "and _height in project.godot to change it — that is a shared setting.") % [
+			asked, frame.x, frame.y])
+	print("mockup_shots: frames will be %dx%d" % [frame.x, frame.y])
+
+# ─────────────────────────────────────────────
+# THE KIT LIST — the original caller, unchanged.
+# ─────────────────────────────────────────────
+func _kit_shots(out_dir: String) -> void:
 	# A real level, for its WorldEnvironment and its sun. Without one the robots
 	# are lit by nothing and every screenshot is a black rectangle.
 	var level: Node = load(LEVEL).instantiate()
@@ -61,8 +250,507 @@ func _run() -> void:
 	for entry in _Parts.hat_list():
 		if str(entry[0]) == "PEAKED CAP":
 			await _portrait(entry[1], out_dir + "/ingame_nco_peaked_cap.png")
-	print("mockup_shots: written to %s" % out_dir)
-	quit(0)
+
+
+# ─────────────────────────────────────────────
+# THE PROMOTION LADDER
+# ─────────────────────────────────────────────
+# `godot --audio-driver Dummy --path . --script res://tools/mockup_shots.gd -- <dir> rank`
+#
+# Three forms, photographed from the three angles that decide whether this
+# works. A rank mark is not a design question, it is a RECOGNITION question, so
+# the test is whether you can name the form from each view:
+#
+#   PROFILE   where a cap reads and pads do not
+#   HEAD-ON   where pads read and a cap does not
+#   LINE-UP   all three together at squad distance, which is the only view that
+#             answers "can I tell Bravo-1 from Bravo-2 in a fight"
+#
+# The line-up is the one to look at first. The other two explain it.
+func _rank_shots(out_dir: String) -> void:
+	var level: Node = load(LEVEL).instantiate()
+	root.add_child(level)
+	_cam = Camera3D.new()
+	_cam.fov = 42.0
+	root.add_child(_cam)
+	_cam.current = true
+	for _i in 30:
+		await process_frame
+
+	var forms: Array = _Parts.rank_list()
+	await _group(forms, out_dir + "/rank_lineup.png")
+	await _rank_front(forms, out_dir + "/rank_headon.png")
+	await _rank_side(forms, out_dir + "/rank_profile.png")
+	for entry in forms:
+		await _portrait(entry[1], "%s/rank_%s.png" % [out_dir, _slug(entry[0])])
+
+
+## All three head-on, which is the view the shoulder pads exist for. Same row
+## as _group, the robots simply turned to face the camera instead of away.
+func _rank_front(forms: Array, file: String) -> void:
+	await _rank_row(forms, file, 180.0)
+
+
+## All three in profile, which is the view the cap exists for.
+func _rank_side(forms: Array, file: String) -> void:
+	await _rank_row(forms, file, 90.0)
+
+
+## A row of forms at one yaw. Pulled back further than _group because a turned
+## robot is wider than a robot seen from behind, and the far one was clipping
+## the frame edge at the kit line-up's distance.
+func _rank_row(forms: Array, file: String, yaw_deg: float) -> void:
+	var made: Array[Node3D] = []
+	var span := float(forms.size() - 1) * SPACING
+	for i in forms.size():
+		var at := STAGE + Vector3(-span * 0.5 + float(i) * SPACING, 0, 0)
+		var bot := _soldier((forms[i] as Array)[1], at)
+		bot.rotation.y = deg_to_rad(yaw_deg)
+		made.append(bot)
+	_cam.global_position = STAGE + Vector3(0, 1.25, -span * 0.62 - 6.8)
+	_cam.look_at(STAGE + Vector3(0, 0.05, 0), Vector3.UP)
+	await _shoot(file)
+	for n in made:
+		n.free()
+
+
+# ─────────────────────────────────────────────
+# VETERAN KIT ON THE VEHICLE FRAMES
+# ─────────────────────────────────────────────
+# `godot --audio-driver Dummy --path . --script res://tools/mockup_shots.gd -- <dir> vrank`
+#
+# Each frame photographed bare and kitted, as a PAIR in one frame rather than
+# as two files. A vehicle gains less proportionally than a soldier does — a
+# rover is already three metres of hardware — so the only honest way to judge
+# whether the kit reads is to put the two side by side and see if the eye
+# picks the difference out without being told where to look.
+func _vehicle_rank_shots(out_dir: String, forms: Array = [], prefix: String = "vrank") -> void:
+	var level: Node = load(LEVEL).instantiate()
+	root.add_child(level)
+	_cam = Camera3D.new()
+	_cam.fov = 42.0
+	root.add_child(_cam)
+	_cam.current = true
+	for _i in 30:
+		await process_frame
+
+	if forms.is_empty():
+		forms = _Parts.vehicle_rank_list()
+	# Two at a time: [base, veteran] of the same frame.
+	for i in range(0, forms.size(), 2):
+		var kind: String = str((forms[i] as Array)[0])
+		await _vehicle_pair(kind, (forms[i] as Array)[2], (forms[i + 1] as Array)[2],
+				"%s/%s_%s.png" % [out_dir, prefix, kind])
+		await _vehicle_single(kind, (forms[i + 1] as Array)[2],
+				"%s/%s_%s_close.png" % [out_dir, prefix, kind])
+
+
+## Every hat on every frame, one close each, so seven options compare directly.
+func _vehicle_trial_shots(out_dir: String) -> void:
+	var level: Node = load(LEVEL).instantiate()
+	root.add_child(level)
+	_cam = Camera3D.new()
+	_cam.fov = 42.0
+	root.add_child(_cam)
+	_cam.current = true
+	for _i in 30:
+		await process_frame
+	for row: Array in _Parts.vehicle_hat_trials():
+		var bot := _vehicle(str(row[0]), row[2], STAGE)
+		# PULLED BACK AND RAISED from _vehicle_single. That framing is cut for a
+		# vehicle with no hat on it, and a bearskin adds 1.12 m — the first run
+		# ran the crown straight out of the top of the frame.
+		_cam.global_position = STAGE + Vector3(-5.0, 2.3, -6.4)
+		_cam.look_at(STAGE + Vector3(0, 0.7, 0), Vector3.UP)
+		if bot != null:
+			# FACING THE CAMERA, unlike the other vehicle shots. Every hat here
+			# carries its character at the FRONT — peak, brim, badge, plume —
+			# and the 206 degrees those use showed the back of all seven.
+			bot.rotation.y = deg_to_rad(28.0)
+		await _shoot("%s/trial_%s.png" % [out_dir, str(row[1])])
+		if bot != null:
+			bot.free()
+
+
+## Bare on the left, kitted on the right, both three-quarter on.
+func _vehicle_pair(kind: String, bare: Callable, kitted: Callable, file: String) -> void:
+	# Wider than the soldier spacing: these are 3 m long and would overlap.
+	var gap := 4.6
+	var a := _vehicle(kind, bare, STAGE + Vector3(-gap * 0.5, 0, 0))
+	var b := _vehicle(kind, kitted, STAGE + Vector3(gap * 0.5, 0, 0))
+	for n in [a, b]:
+		if n != null:
+			n.rotation.y = deg_to_rad(214.0)
+	_cam.global_position = STAGE + Vector3(0, 2.6, -9.4)
+	_cam.look_at(STAGE + Vector3(0, -0.2, 0), Vector3.UP)
+	await _shoot(file)
+	for n in [a, b]:
+		if n != null:
+			n.free()
+
+
+## The kitted one on its own, close, from the side the kit is on.
+func _vehicle_single(kind: String, kitted: Callable, file: String) -> void:
+	var bot := _vehicle(kind, kitted, STAGE)
+	_cam.global_position = STAGE + Vector3(-3.5, 1.5, -4.6)
+	_cam.look_at(STAGE + Vector3(0, -0.1, 0), Vector3.UP)
+	if bot != null:
+		bot.rotation.y = deg_to_rad(206.0)
+	await _shoot(file)
+	if bot != null:
+		bot.free()
+
+
+
+
+## ONE FRAME, ALONE, IN THE GAME. `frames` for all of them, or name any id in
+## FRAMES — `... -- <out dir> frames` / `... -- <out dir> bastion`.
+##
+## bake_icons.gd already draws every frame in the game and cannot draw these:
+## it reads the catalogue, and a model built before its ChassisDefinition
+## exists is invisible to it. This takes the FRAMES id instead, which is the
+## whole difference.
+##
+## THE CAMERA IS FITTED, NOT FIXED. _vehicle_single's (-3.5, 1.5, -4.6) is
+## framed for a Rover; the frames here run from a 2.1 m Sapper to a 4.5 m
+## Bastion, and one distance either crops the big ones or loses the small ones
+## in the middle of the shot. So the subject is measured once it is staged and
+## the camera is pushed back along the same bearing in proportion.
+const NEW_FRAMES := ["lance", "picket", "drayman",
+		"kite", "vessel", "brood", "bastion", "see_engine"]
+## The three that belong to an enemy faction, so they are photographed in the
+## livery they will actually wear rather than in the player's blue.
+const ENEMY_FRAMES := ["brood", "bastion", "see_engine"]
+
+
+func _frame_shots(out_dir: String, which: String) -> void:
+	# A REAL LEVEL FIRST, for its WorldEnvironment and its sun — without one
+	# the frames are lit by nothing and every shot is a black rectangle. Same
+	# staging as _kit_shots; the first run of this pass skipped it and every
+	# shot died on a null camera.
+	var level: Node = load(LEVEL).instantiate()
+	root.add_child(level)
+	_cam = Camera3D.new()
+	_cam.fov = 42.0
+	root.add_child(_cam)
+	_cam.current = true
+	for _i in 30:
+		await process_frame
+	var wanted: Array = NEW_FRAMES if which == "frames" else [which]
+	for id: String in wanted:
+		if not FRAMES.has(id):
+			push_warning("mockup_shots: no frame called '%s'." % id)
+			continue
+		await _frame_portrait(out_dir, id)
+
+
+func _frame_portrait(out_dir: String, id: String) -> void:
+	var bot := _vehicle(id, func(_b): pass, STAGE)
+	if bot == null:
+		return
+	if id in ENEMY_FRAMES:
+		# Set BEFORE _ready would have run is impossible here — _vehicle has
+		# already added it — so repaint through the livery node directly.
+		var liv := bot.get_node_or_null("FactionLivery")
+		if liv != null and liv.has_method("apply"):
+			liv.call("apply", Enums.Factions.ENEMY)
+	await process_frame
+	await process_frame
+	var bb := _aabb(bot, bot)
+	var size: float = maxf(bb.size.x, maxf(bb.size.y, bb.size.z))
+	var centre := STAGE + bb.position + bb.size * 0.5
+	# The Rover framing's own bearing, kept so these sit beside the existing
+	# shots, with the distance scaled off the subject instead of assumed.
+	var dir := Vector3(-3.5, 1.5, -4.6).normalized()
+	_cam.global_position = centre + dir * (size * 1.45 + 1.1)
+	_cam.look_at(centre, Vector3.UP)
+	# TURNED TO FACE THE CAMERA, not set to a constant. _vehicle_single's fixed
+	# 206 degrees is the Rover's good side; on a varied cast it photographed the
+	# Sapper from behind, which hides the tool and the hands that are the whole
+	# reason that concept won. Face the camera's GROUND position — look_at to a
+	# camera above the subject pitches the subject forward to meet it and the
+	# photograph comes back of a robot falling over — then add a three-quarter
+	# yaw so it is not a flat front elevation.
+	var flat := Vector3(_cam.global_position.x, bot.global_position.y, _cam.global_position.z)
+	bot.look_at(flat, Vector3.UP)
+	bot.rotate_y(deg_to_rad(34.0))
+	await _shoot("%s/frame_%s.png" % [out_dir, id])
+	bot.free()
+
+
+## Subtraction shapes do not count — a glacis cut is deliberately oversized and
+## including them framed the Walker as if it were twice its width.
+func _aabb(n: Node, body: Node3D) -> AABB:
+	if n is CSGShape3D and (n as CSGShape3D).operation == CSGShape3D.OPERATION_SUBTRACTION:
+		return AABB()
+	var out := AABB()
+	var started := false
+	for c in n.get_children():
+		var sub := _aabb(c, body)
+		if sub.size != Vector3.ZERO:
+			out = sub if not started else out.merge(sub)
+			started = true
+	if n is VisualInstance3D:
+		var vi := n as VisualInstance3D
+		var local := body.global_transform.affine_inverse() * vi.global_transform
+		var a := local * vi.get_aabb()
+		out = a if not started else out.merge(a)
+	return out
+## Same contract as _soldier: in the tree, then bolt things on, then paint only
+## what was added. A vehicle brings no weapon mount worth filling here — the
+## kit is the subject, not the gun.
+func _vehicle(kind: String, build: Callable, at: Vector3) -> Node3D:
+	if not FRAMES.has(kind):
+		push_warning("mockup_shots: no frame called '%s'." % kind)
+		return null
+	var bot: Node3D = load(FRAMES[kind]).instantiate()
+	bot.faction = Enums.Factions.PLAYER
+	# THE SCENE'S OWN HAT OFF, BEFORE IT ENTERS THE TREE. RankKit reads this meta
+	# in _ready and an empty one means "chose none", so the frame arrives bare and
+	# the only hat in the shot is the one the builder puts on. Without it the
+	# three vehicles wore their default underneath whatever was being trialled.
+	bot.set_meta("cosmetic_id", &"")
+	root.add_child(bot)
+	var before := bot.get_child_count()
+	build.call(bot)
+	_paint(bot, before)
+	# A WALKER'S KNEE ARMOUR IS NOT A CHILD OF THE ROOT. It is parented to the
+	# leg node so it rides the walk, which means _paint's range over the root's
+	# own children cannot see it. Paint those by hand.
+	_paint_deep(bot)
+	bot.set_physics_process(false)
+	bot.set_process(false)
+	bot.global_position = at
+	return bot
+
+
+## Anything added below the root — leg armour, mostly — identified by having no
+## material of its own yet. CSG nodes in the shipped scenes all carry one.
+func _paint_deep(bot: Node3D) -> void:
+	var armor := _Parts.armor_material()
+	var cloth := _Parts.fabric_material()
+	var steel := _Parts.plate_material()
+	var lame := _Parts.lame_material()
+	var hivis := _Parts.hivis_material()
+	var wool := _Parts.wool_material()
+	var fur := _Parts.fur_material()
+	for n in bot.find_children("*", "CSGShape3D", true, false):
+		var shape := n as CSGShape3D
+		# A CSGCombiner3D HAS NO `material` — reading it is an error, not null,
+		# and the pauldrons are built from combiners, so this threw mid-loop and
+		# left the rest of the kit unpainted. It takes material_override.
+		var combiner := shape as CSGCombiner3D
+		if combiner != null:
+			if combiner.material_override != null:
+				continue
+		elif shape.material != null:
+			continue
+		var mat: Material = armor
+		if shape.has_meta("fabric"):
+			mat = cloth
+		elif shape.has_meta("plate"):
+			mat = steel
+		elif shape.has_meta("lame"):
+			mat = lame
+		elif shape.has_meta("hivis"):
+			mat = hivis
+		elif shape.has_meta("wool"):
+			mat = wool
+		elif shape.has_meta("fur"):
+			mat = fur
+		if combiner != null:
+			combiner.material_override = mat
+		else:
+			shape.material = mat
+
+
+# ─────────────────────────────────────────────
+# THE STORE SHOTS
+# ─────────────────────────────────────────────
+func _store_shots(out_dir: String, which: String) -> void:
+	var todo: Array = []
+	for s in SHOTS:
+		if which == "marketing" or which == str(s["id"]):
+			todo.append(s)
+	if todo.is_empty():
+		var ids: Array = []
+		for s in SHOTS:
+			ids.append(str(s["id"]))
+		printerr("mockup_shots: no shot called '%s'. Have: marketing, %s" % [
+			which, ", ".join(ids)])
+		return
+
+	# THE WORLD, FOR THE HUD. The kit shots load a bare level because they only
+	# need its lighting; the brief wants every store shot in two passes, HUD on
+	# and HUD off, and the HUD is not in a level — it is in world.tscn, with the
+	# player and the campaign. So the world comes up once and the five levels
+	# are added into it in turn.
+	#
+	# AUTOSAVE OFF BEFORE IT CAN TICK. A campaign that boots with autosave on
+	# writes the player's real campaign.json, and photographing the game is not
+	# a reason to touch a save. This has gone wrong once already.
+	var world: Node = load("res://Env/world.tscn").instantiate()
+	var cm := world.get_node_or_null("CampaignManager")
+	if cm != null:
+		cm.autosave = false
+	root.add_child(world)
+	for _i in 120:
+		await process_frame
+
+	# AND TAKE THE DEPOT BACK DOWN — BUT KEEP ITS SUN. world.tscn ships with
+	# Homebase already in it, because that is where the game starts, so adding
+	# a shot level beside it puts two levels at the same origin: the first pass
+	# came back as a photograph of the inside of a depot wall.
+	#
+	# NONE OF THE FIVE SHOT LEVELS HAS A LIGHT IN IT. Checked: coastal-road,
+	# mutaha, valley_basin, pittsburgh and depot all carry zero
+	# WorldEnvironment and zero DirectionalLight3D — homebase_level is the only
+	# map in the repo that does, and it lights the whole world from there. So
+	# deleting Homebase outright turned every store shot into a dark rectangle.
+	# Its WorldEnvironment is lifted out first and kept for the rest of the run,
+	# which is also what gives SHOT_BRIEF the one time of day held across all
+	# five: there is only one sun, and every level is photographed under it.
+	var homebase := world.get_node_or_null("Homebase")
+	if homebase != null:
+		var sun := homebase.get_node_or_null("WorldEnvironment")
+		if sun != null:
+			homebase.remove_child(sun)
+			world.add_child(sun)
+		else:
+			push_warning("mockup_shots: no WorldEnvironment under Homebase, so the shots will be unlit.")
+		world.remove_child(homebase)   # remove_child first: queue_free is deferred
+		homebase.queue_free()
+	await process_frame
+	_host = _find_player_parent()
+	if _host == null:
+		push_warning("mockup_shots: no Player in world.tscn, so levels go under the root and there will be no HUD.")
+		_host = root
+
+	for s in todo:
+		await _store_shot(out_dir, s)
+
+
+func _store_shot(out_dir: String, spec: Dictionary) -> void:
+	var id := str(spec["id"])
+	# ONE LEVEL PER PROCESS WOULD BE CLEANER, but five processes is five of
+	# everything; the level is torn down and the next one built in its place.
+	var level: Node = load(str(spec["level"])).instantiate()
+	_host.add_child(level)
+	if _cam == null:
+		_cam = Camera3D.new()
+		_cam.fov = 55.0        # wider than the kit portraits: these are places
+		root.add_child(_cam)
+	_cam.current = true
+	# Terrain and CSG both build on entering the tree, and the navmesh behind
+	# them settles a frame or two later. A grab before that photographs a level
+	# with holes in it.
+	for _i in 90:
+		await process_frame
+
+	var anchor := _landmark(level, str(spec["anchor"]))
+	var toward := _landmark(level, str(spec["toward"]))
+	if anchor == Vector3.INF or toward == Vector3.INF:
+		# SAYS WHY, AND KEEPS GOING. The landmarks are node names in a level
+		# another lane owns; one of them being renamed should cost this shot,
+		# not the other four.
+		push_warning("%s: landmark '%s' or '%s' is not in %s any more, so it was skipped." % [
+			id, spec["anchor"], spec["toward"], str(spec["level"]).get_file()])
+		level.queue_free()
+		await process_frame
+		return
+
+	var cast_made: Array[Node3D] = []
+	for entry in spec.get("cast", []):
+		var made := _frame(str(entry[0]), anchor + (entry[1] as Vector3), float(entry[2]), level)
+		if made != null:
+			cast_made.append(made)
+
+	_cam.global_position = anchor + (spec["cam"] as Vector3)
+	_cam.look_at(toward + (spec["aim"] as Vector3), Vector3.UP)
+
+	if bool(spec.get("ui_only", false)):
+		print("")
+		print("  %s NEEDS A HUMAN. The brief wants the squad manager open on a" % id)
+		print("  roster with ranks on it, and ranks come from a campaign that has")
+		print("  been played. This rig will not open a profile to get them: writing")
+		print("  to campaign.json is how a real save got overwritten once already.")
+		print("  Open the depot on your own campaign, press the manager key, and")
+		print("  grab it. The frame below is the backdrop, for reference.")
+
+	await _pass(out_dir, id)
+	for n in cast_made:
+		n.free()
+	level.queue_free()
+	await process_frame
+
+
+## Both passes off one staging, which is the whole point of doing it here.
+func _pass(out_dir: String, id: String) -> void:
+	_find_hud()
+	if _hud != null:
+		_hud.visible = true
+		await _shoot("%s/%s_hud.png" % [out_dir, id])
+		_hud.visible = false
+		await _shoot("%s/%s_nohud.png" % [out_dir, id])
+		_hud.visible = true
+	else:
+		# NOT SILENT. A bare level has no HUD in it — the HUD lives in
+		# world.tscn — so a run that forgot world comes back with half the set
+		# and no explanation unless this says so.
+		push_warning("%s: no HUD layer in the tree, so only the clean pass was taken." % id)
+		await _shoot("%s/%s_nohud.png" % [out_dir, id])
+
+
+func _find_hud() -> void:
+	if _hud != null and is_instance_valid(_hud):
+		return
+	_hud = null
+	# BY NAME, AND IT IS A Control. The first version scanned for a CanvasLayer
+	# because that is what a HUD usually is; hud.tscn's root is a Control, so
+	# the scan found nothing and every store shot came back clean-pass only.
+	for n in root.find_children("HUD", "", true, false):
+		if n is CanvasItem:
+			_hud = n as CanvasItem
+			return
+
+
+## Where a level has to go to be lit and seen by the HUD: the node the player
+## lives under, which is what Campaign.on_level_loaded parents levels to.
+##
+## BY SCRIPT CLASS, NOT BY NODE NAME. The player node in world.tscn is called
+## `test_character`, so looking for one called "Player" found nothing and the
+## levels went under the root instead.
+func _find_player_parent() -> Node:
+	for n in root.find_children("*", "CharacterBody3D", true, false):
+		var s: Script = n.get_script() as Script
+		if s != null and s.get_global_name() == &"Player":
+			return n.get_parent()
+	return null
+
+
+func _landmark(level: Node, wanted: String) -> Vector3:
+	var hits := level.find_children(wanted, "", true, false)
+	if hits.is_empty() or not (hits[0] is Node3D):
+		return Vector3.INF
+	return (hits[0] as Node3D).global_position
+
+
+## One member of the cast, parked and switched off. Same reasoning as _soldier:
+## a robot left thinking walks out of shot looking for something to shoot.
+func _frame(kind: String, at: Vector3, facing_deg: float, level: Node) -> Node3D:
+	if not FRAMES.has(kind):
+		push_warning("mockup_shots: no frame called '%s'." % kind)
+		return null
+	var bot: Node3D = load(FRAMES[kind]).instantiate()
+	# Blue. FactionLivery reads this off its parent in _ready, so it has to be
+	# set BEFORE the node enters the tree or the robot comes out enemy amber.
+	bot.faction = Enums.Factions.ALLIED
+	level.add_child(bot)
+	bot.global_position = at
+	bot.rotation.y = deg_to_rad(facing_deg)
+	bot.set_physics_process(false)
+	bot.set_process(false)
+	return bot
 
 
 func _slug(s: String) -> String:
@@ -136,14 +824,41 @@ func _soldier(build: Callable, at: Vector3) -> Node3D:
 # the body. It is also RUSTED rather than flat matte: the hull it bolts to is
 # a rusted texture was tried and read as varnished wood at this scale, and as
 # tweed once the noise was fine enough not to.
+#
+# CLOTH IS NOT METAL. A piece that calls _Parts.as_fabric() carries a "fabric"
+# meta and takes the camo instead — a cap crown painted rusted steel reads as a
+# helmet, which is a different rank entirely.
 func _paint(bot: Node3D, from: int) -> void:
 	var armor := _Parts.armor_material()
+	var cloth := _Parts.fabric_material()
+	var steel := _Parts.plate_material()
+	var lame := _Parts.lame_material()
+	var hivis := _Parts.hivis_material()
+	var wool := _Parts.wool_material()
+	var fur := _Parts.fur_material()
 	for i in range(from, bot.get_child_count()):
 		var child := bot.get_child(i)
+		# Three materials now: flat armour for bought hardware, camo for cloth,
+		# and TERRAIN's pauldron_plate for the rank pads. Rivets and studs are
+		# deliberately left on flat armour — the brief holds them out of the
+		# paint band so they read as bare metal against the painted field.
+		var mat: Material = armor
+		if child.has_meta("fabric"):
+			mat = cloth
+		elif child.has_meta("plate"):
+			mat = steel
+		elif child.has_meta("lame"):
+			mat = lame
+		elif child.has_meta("hivis"):
+			mat = hivis
+		elif child.has_meta("wool"):
+			mat = wool
+		elif child.has_meta("fur"):
+			mat = fur
 		if child is CSGCombiner3D:
-			(child as CSGCombiner3D).material_override = armor
+			(child as CSGCombiner3D).material_override = mat
 		elif child is CSGShape3D:
-			(child as CSGShape3D).material = armor
+			(child as CSGShape3D).material = mat
 
 
 func _shoot(file: String) -> void:

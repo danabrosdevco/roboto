@@ -67,7 +67,7 @@ func _init() -> void:
 	var player: Node3D = _find(root, "Player")
 	_level = player.get_parent()
 	_mgr = _find(root, "AIManager")
-	_level.add_child(load("res://maps/valley_level.tscn").instantiate())
+	_level.add_child(load("res://maps/appendix/valley_level.tscn").instantiate())
 	for _i in 20:
 		await physics_frame
 
@@ -179,20 +179,51 @@ func _test_expiry() -> void:
 	# Shortened from 30s so the suite does not spend half a minute proving a
 	# timer. It is the mechanism being checked, not the tuned number.
 	diver.lifetime = 2.0
-	var blasts_before := _level.get_child_count()
-	var spent := false
+	var ditched := false
 	for _i in 240:
 		await physics_frame
-		if not is_instance_valid(diver) or diver.phase == 3:
-			spent = true
+		# 4 is DITCH, 3 is SPENT. Either means the clock did its job; which one
+		# it is caught in depends on how far it had to fall.
+		if not is_instance_valid(diver) or diver.phase == 4 or diver.phase == 3:
+			ditched = true
 			break
-	_check("with nothing in reach it expires", spent, "still flying after 4s")
-	for _i in 5:
+	_check("with nothing in reach its time runs out", ditched, "still flying after 4s")
+
+	# SAMPLED EVERY FRAME, not read at the end. An explosion clears itself up
+	# within a second, so a child count taken after the dust settles finds the
+	# level exactly as it was and reports that nothing ever happened.
+	# BY IDENTITY, not by counting. The drone frees itself on the same frame the
+	# blast is added, so the level's child COUNT is unchanged either way — one node
+	# out, one node in — and a count test reports that nothing happened at all.
+	var known: Dictionary = {}
+	for c in _level.get_children():
+		known[c] = true
+	var saw_blast := false
+	for _i in 300:
 		await physics_frame
+		for c in _level.get_children():
+			if not known.has(c) and c != diver:
+				saw_blast = true
 	# IT LEAVES NOTHING. Enemy.destroy() only hides the body, and the rotor loop
 	# is an autoplaying AudioStreamPlayer3D on it — a spent Diver used to buzz
 	# from where it died for the rest of the mission.
 	_check("...and the drone is gone, not just hidden", not is_instance_valid(diver))
-	_check("...and it dropped rather than detonating",
-		_level.get_child_count() <= blasts_before,
-		"%d children before, %d after" % [blasts_before, _level.get_child_count()])
+	# IT GOES OFF ON THE DIRT, rather than evaporating in mid-air. It used to
+	# simply drop, on the reasoning that a charge detonating on a timer wherever
+	# it happens to be is a mine nobody placed — which is true, and is why it
+	# flies DOWN first. What it must not do is disappear: a drone the player
+	# paid for has to be accounted for, seen and heard.
+	_check("...and it went off on the ground rather than being dropped", saw_blast)
+
+	# ── SHOT DOWN LEAVES NOTHING EITHER ──────────
+	# Every other way a Diver ends goes through Enemy.destroy(), which hides the
+	# body and disables the colliders and then LEAVES THE NODE in the level for
+	# the rest of the mission. Invisible, inert and permanent, one per drone.
+	var second: Node = _spawn(DIVER, origin + Vector3.UP * 1.5, Enums.Factions.PLAYER)
+	for _i in 4:
+		await physics_frame
+	second.destroy()
+	for _i in 5:
+		await physics_frame
+	_check("a Diver that is destroyed rather than detonating also leaves nothing",
+		not is_instance_valid(second))

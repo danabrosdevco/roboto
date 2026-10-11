@@ -23,6 +23,16 @@ const DIM := HUDPalette.DIM
 const MONEY := HUDPalette.WARN
 const COMPUTE := HUDPalette.SIGNAL
 const PROBLEM := HUDPalette.CRIT
+## WHAT A MODULE ADDED, and nothing else ever.
+##
+## The five colours above each had one job and there was no sixth, which is why
+## a stat bar could show what a robot is worth and not which part of that was
+## bought. White is the sixth: the base of a bar is BRIGHT and the part a module
+## put there continues it in this. It is deliberately NOT used for anything that
+## merely "stands out" — the moment it means two things it means neither, which
+## is exactly what went wrong when a cluster round's bomblets were drawn the
+## same way as an armour plate's hull.
+const UPGRADE := Color(1, 1, 1)
 ## Card and panel fill, border at rest, and the border of an empty slot.
 const PANEL := Color(0.055, 0.085, 0.075, 0.96)
 const LINE := Color(0.20, 0.33, 0.25)
@@ -132,21 +142,100 @@ static func button(text: String, color: Color = BRIGHT, size: int = BODY, bold: 
 
 
 ## Seats: one square per point of supply, filled while taken.
+## One square per seat. IT WRAPS, and that is the whole reason this is not a
+## one-liner.
+##
+## A seat is 14px, so a fifty-seat hangar laid in one row is 700px wide — and the
+## HANGAR strip puts the seat count and both buttons AFTER it, so past about
+## forty-five seats they were shoved off the right-hand edge of the screen. The
+## strip is deliberately pinned above the scrolling card list (so the buttons
+## never scroll away), which meant there was nothing to scroll to reach them
+## either: the controls were simply gone.
+##
+## Rows of SEATS_PER_ROW grow the block DOWNWARD instead. Vertical space is what
+## that strip has going spare; horizontal space is what it has none of.
+const SEAT_PX := 14.0
+const SEAT_BOX := 10.0
+## Chosen so a full row stays well inside the strip at the narrowest window the
+## rest of the UI supports, rather than at the width it happens to break at.
+const SEATS_PER_ROW := 30
+
+
 static func seats(used: int, cap: int) -> Control:
 	var c := Control.new()
 	var n := maxi(cap, used)
-	c.custom_minimum_size = Vector2(n * 14, 14)
+	var cols: int = mini(maxi(n, 1), SEATS_PER_ROW)
+	var rows: int = maxi(1, int(ceil(float(n) / float(SEATS_PER_ROW))))
+	c.custom_minimum_size = Vector2(cols * SEAT_PX, rows * SEAT_PX)
 	c.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	c.draw.connect(func():
-		var top := (c.size.y - 10.0) * 0.5
+		# The whole block centred, not each row: with one row this is exactly
+		# what it did before.
+		var top: float = (c.size.y - rows * SEAT_PX) * 0.5 + (SEAT_PX - SEAT_BOX) * 0.5
 		for i in n:
-			var r := Rect2(i * 14 + 1, top, 10, 10)
+			var col: int = i % SEATS_PER_ROW
+			var line: int = i / SEATS_PER_ROW
+			var r := Rect2(col * SEAT_PX + 1.0, top + line * SEAT_PX, SEAT_BOX, SEAT_BOX)
 			if i < used:
 				c.draw_rect(r, PROBLEM if i >= cap else BRIGHT)
 			else:
 				c.draw_rect(r.grow(-0.5), DIM, false, 1.0))
 	return c
+
+
+## ONE STAT, AS A BAR: its name, a track, and the figure.
+##
+## `base` is what the frame or the gun is worth on its own and `total` is what it
+## is worth now; the difference is drawn in UPGRADE, so a bar answers "how much
+## of this did I buy" without a second line of text saying so. Pass them equal
+## for anything that cannot be modified and it draws as one solid bar.
+##
+## `scale` is the top of the bar and is FIXED PER STAT by the caller, never per
+## row — a bar that rescales to its own value cannot be compared with the one
+## beside it, which is the entire point of drawing bars instead of printing
+## numbers.
+##
+## The fills are anchored rather than sized: a row's width is not known until the
+## container lays out, and a fraction survives that where a pixel count does not.
+static func stat_bar(text: String, base: float, total: float, scale: float,
+		reading: String, label_width: float = 64.0, value_width: float = 72.0) -> Control:
+	var row := hbox(6)
+	var key := label(text, DIM, SMALL)
+	key.custom_minimum_size.x = label_width
+	row.add_child(key)
+
+	var track := Panel.new()
+	track.custom_minimum_size = Vector2(0, 9)
+	track.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	track.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	track.add_theme_stylebox_override("panel", box(FAINT, Color(0, 0, 0, 0), 1, 0.0))
+	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var safe: float = maxf(scale, 0.001)
+	var filled := ColorRect.new()
+	filled.color = BRIGHT
+	filled.set_anchors_preset(Control.PRESET_FULL_RECT, true)
+	filled.anchor_right = clampf(base / safe, 0.0, 1.0)
+	filled.offset_right = 0.0
+	filled.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	track.add_child(filled)
+	if total > base:
+		var added := ColorRect.new()
+		added.color = UPGRADE
+		added.set_anchors_preset(Control.PRESET_FULL_RECT, true)
+		added.anchor_left = clampf(base / safe, 0.0, 1.0)
+		added.anchor_right = clampf(total / safe, 0.0, 1.0)
+		added.offset_left = 0.0
+		added.offset_right = 0.0
+		added.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		track.add_child(added)
+	row.add_child(track)
+
+	var val := label(reading, UPGRADE if total > base else BRIGHT, SMALL, true)
+	val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	val.custom_minimum_size.x = value_width
+	row.add_child(val)
+	return row
 
 
 ## A section's open/shut mark: a small triangle, pointing down while it is open
@@ -237,30 +326,96 @@ static func effect_text(item: ItemDefinition) -> String:
 	return s.to_upper()
 
 
-## Who can carry an item, in words.
+## Who can carry an item, in words — and ONLY when that is a restriction.
+##
+## It used to append the frame list ("· ROVER/WALKER FRAMES"), which the mount
+## class now says better: see mount_class(). And "YOU AND SQUADMATES" is the
+## ordinary case, so printing it spends a line of the card saying that nothing
+## is unusual. Empty means no restriction worth a word.
 static func carriers(item: ItemDefinition) -> String:
-	var who := ""
 	if item.fits_player() and item.fits_ai():
-		who = "YOU AND SQUADMATES"
-	elif item.fits_player():
-		who = "YOU ONLY"
-	elif item.fits_ai():
-		who = "SQUADMATES ONLY"
-	else:
-		who = "NOBODY YET"
-	if not item.chassis_whitelist.is_empty():
-		var frames := PackedStringArray()
-		for id in item.chassis_whitelist:
-			frames.append(String(id).to_upper())
-		# A turret gun: "SQUADMATES ONLY · ROVER FRAMES" says the same thing twice.
-		if not item.fits_player():
-			return "%s FRAMES ONLY" % "/".join(frames)
-		who += " · %s FRAMES" % "/".join(frames)
-	return who
+		return ""
+	if item.fits_player():
+		return "YOU ONLY"
+	if item.fits_ai():
+		return "SQUADMATES ONLY"
+	return "NOBODY YET"
 
 
 const KIND_NAMES := {
 	ItemDefinition.Kind.WEAPON: "WEAPON",
-	ItemDefinition.Kind.EQUIPMENT: "GEAR",
+	ItemDefinition.Kind.EQUIPMENT: "EQUIPMENT",
 	ItemDefinition.Kind.MODULE: "MODULE",
 }
+
+
+## WEAPON, or WEAPON · TURRET.
+##
+## "Turret" is the word for a gun that is mounted and aims on its own rather
+## than being carried — the Autocannon, the Heavy MG, the Rover's launcher. It
+## was going unsaid, and the card instead described the consequence ("ROVER
+## FRAMES ONLY"), which tells you where it fits but not what kind of thing it
+## is. Those are different questions and the player asks the second one first.
+##
+## Read off the FRAMES, not off a flag on the item: ChassisDefinition.turret is
+## already the one place that knows, and squad_page's fit rules go through it
+## too. A weapon counts as a turret gun when every frame it is made for is a
+## turret frame — a gun a soldier could also hold is not one.
+static func kind_text(item: ItemDefinition) -> String:
+	var base: String = KIND_NAMES.get(item.kind, "")
+	if item.kind != ItemDefinition.Kind.WEAPON:
+		return base
+	var mount := mount_class(item)
+	return "%s · %s" % [base, mount] if mount != "" else base
+
+
+## WHAT KIND OF MOUNT A WEAPON IS FOR: TURRET, INFANTRY, or ARTICULATED ARM.
+##
+## The card used to list the FRAMES instead — "ROVER/WALKER FRAMES ONLY" — which
+## answers the wrong question. Where a gun fits is a consequence; what KIND of
+## weapon it is, is the fact. And the frame list stops being true the moment a
+## new frame is added: a big walker with an arm and two turrets would want the
+## Heavy MG on its turrets and the mortar on its arm, and no list of today's
+## frame names describes that. The mount class does, and does not change.
+##
+## Read off the frames rather than a new flag on the item, because
+## ChassisDefinition already knows: `turret` is the one place that decides a
+## turret takes only what was made for it, and `weapon_replaces_built_in` is the
+## Reclaimer's boom. A weapon with no whitelist goes in a pair of hands.
+static func mount_class(item: ItemDefinition) -> String:
+	if item.kind != ItemDefinition.Kind.WEAPON:
+		return ""
+	if item.chassis_whitelist.is_empty():
+		return "INFANTRY"
+	var cat := _catalogue()
+	if cat == null:
+		return ""
+	var all_turret := true
+	var all_arm := true
+	for frame_id in item.chassis_whitelist:
+		var frame := cat.chassis_def(frame_id)
+		if frame == null:
+			return ""
+		if not frame.turret:
+			all_turret = false
+		if not frame.weapon_replaces_built_in:
+			all_arm = false
+	if all_turret:
+		return "TURRET"
+	if all_arm:
+		return "ARTICULATED ARM"
+	# Made for particular frames that are not all of one kind. Saying nothing is
+	# better than naming them: the fit rules still refuse it, with a reason.
+	return ""
+
+
+## The catalogue, found the way the rest of the HUD finds it. Null outside a
+## campaign, which is why kind_text falls back rather than failing.
+static func _catalogue() -> ItemCatalogue:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return null
+	var campaign := tree.get_first_node_in_group("campaign")
+	if campaign == null or not ("catalogue" in campaign):
+		return null
+	return campaign.catalogue as ItemCatalogue

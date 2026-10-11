@@ -10,19 +10,27 @@
 ;
 ; The other two keep a flat sight line so the bore stays on the crosshair. A
 ; launcher wants the bore ABOVE the line of sight, because the shell falls the
-; whole way. So the model's rear ladder sits high (the 50m mark at y 0.704764
-; against the front post's 0.573) and the pose pitches the gun nose-up by
-; ads_rotation.z = +0.0424788 rad = 2.433 degrees, which levels that sight line
-; AND elevates the bore by exactly that much. 2.433 degrees at 76 m/s lands a
-; shell at 50m, so the crosshair means 50m and the other four marks on the
-; ladder mean what cluster_launcher_model.tscn's table says they mean.
+; whole way. So the rear reticle sits high and the pose pitches the gun nose-up
+; by ads_rotation.z = 4.661 degrees, which levels the 50m mark's sight line AND
+; elevates the bore by exactly that much:
 ;
-; ads_position then lands that levelled line on the optical axis:
-;   y = 0.123 / 0.26 - 0.759334 = -0.286257   (0.759334 is the mark's height
-;       AFTER the pitch, not before it — the rotation moves it)
-;   x puts the 50m mark 0.278m from the eye; z = -0.4 centres it.
-; tools/preview_viewmodel.gd prints both sights' camera-local position and the
-; line's tilt; all three read zero.
+;   range = v^2 sin(2 theta) / g = 55^2 * sin(9.322 deg) / 9.8 = 50.0 m
+;
+; So the crosshair means 50m, and the other three marks mean what the table in
+; cluster_launcher_model.tscn says they mean.
+;
+; DEGREES, NOT RADIANS. This field read 0.0813502, which IS 4.661 degrees — in
+; radians. The right angle in the wrong unit. Every pose in PlayerEquipment is
+; degrees and update_view() writes rotation_degrees, so the game pitched the
+; launcher by 0.08 of a degree and the crosshair meant about 1.7m instead of 50.
+; preview_viewmodel.gd and preview_gl_ranges.gd both posed in radians as well,
+; which is why the range pictures looked right while the game did not: the tools
+; agreed with each other and with nothing the player ever saw. Both pose in
+; degrees now, and tools/test_viewmodel_poses.gd holds the whole stack to it.
+;
+; ads_position is metres and needed no conversion — it was solved against the
+; model pitched by this same 4.661 degrees, which is what the pose stack now
+; actually applies. x puts the 50m mark 0.278m from the eye; z = -0.4 centres it.
 ;
 ; THE SHELL MUST LEAVE ALONG THE BORE, not the camera. See _fire_shot() in
 ; player_cluster_launcher.gd — firing down the view axis would throw it flat
@@ -41,6 +49,8 @@
 
 [node name="ClusterLauncher" type="Node3D" node_paths=PackedStringArray("tracer_origin", "muzzle_flash", "weapon_model", "rifle_stream_player", "click_stream_player", "viewmodel")]
 script = ExtResource("1_cluster")
+suppression_per_shot = 22.0
+near_miss_radius = 6.0
 tracer_origin = NodePath("Holder/ClusterLauncherModel/Muzzle")
 muzzle_flash = NodePath("Holder/ClusterLauncherModel/MuzzleFlash")
 weapon_model = NodePath("Holder/ClusterLauncherModel")
@@ -61,10 +71,10 @@ click_stream_player = NodePath("Click")
 display_name = "Cluster Launcher"
 base_position = Vector3(-2.355, -0.731, 0.365)
 reload_position = Vector3(-2.355, -0.911, 0.415)
-reload_rotation = Vector3(0.55, 0, -0.12)
+reload_rotation = Vector3(31.51, 0, -6.88)
 base_rotation = Vector3(0, 0, 0)
 ads_position = Vector3(-2.256308, -0.681824, -0.4)
-ads_rotation = Vector3(0, 0, 0.0813502)
+ads_rotation = Vector3(0, 0, 4.661)
 viewmodel = NodePath("Holder/ClusterLauncherModel")
 shell_scene = ExtResource("2_shell")
 launch_speed = 55.0

@@ -12,7 +12,13 @@ extends SceneTree
 # The complaint is spikes, not throughput: a mean of 12ms with an 83ms spike
 # feels far worse than a flat 20ms, and averaging hides exactly that.
 #
-#   godot --headless --path . --script res://tools/bench_ai.gd -- [count] [frames]
+#   godot --headless --path . --script res://tools/bench_ai.gd -- [count] [frames] [mode] [map]
+#
+# THE MAP MATTERS, and for a long time this could only measure the valley. Three
+# Rivers is 1.3 km across and its navigation map has the polygon count to match,
+# so a query that costs 0.1 ms in the valley costs 1.0 ms out there. A change
+# benched only on the valley can look free and still cost 50 ms a frame on the
+# map the complaint came from.
 # ─────────────────────────────────────────────
 
 const RIFLE := "res://Character/characters/ai/soldier_rifle.tscn"
@@ -39,6 +45,9 @@ func _init() -> void:
 	var args := OS.get_cmdline_user_args()
 	var count: int = int(args[0]) if args.size() > 0 else 80
 	var frames: int = int(args[1]) if args.size() > 1 else 400
+	var flat: bool = args.size() > 2 and String(args[2]) == "flat"
+	var immortal: bool = args.size() > 2 and String(args[2]) == "immortal"
+	var map: String = String(args[3]) if args.size() > 3 else "valley"
 
 	var world: Node = load("res://Env/world.tscn").instantiate()
 	world.get_node("CampaignManager").autosave = false
@@ -48,7 +57,7 @@ func _init() -> void:
 	_player = _find(root, "Player")
 	_level = _player.get_parent()
 	_mgr = _find(root, "AIManager")
-	_level.add_child(load("res://maps/valley_level.tscn").instantiate())
+	_level.add_child(load("res://maps/%s_level.tscn" % map).instantiate())
 	for _i in 20:
 		await physics_frame
 
@@ -58,7 +67,11 @@ func _init() -> void:
 		q.exclude = [_player.get_rid()]
 		var hit := space.intersect_ray(q)
 		return hit.position if hit else Vector3(x, -9.0, z)
-	_player.global_position = (ground.call(300.0, 200.0) as Vector3) + Vector3.UP
+	# ON THE NAVMESH, so this works on any map rather than at coordinates that
+	# only mean something in the valley.
+	var nmap: RID = _player.get_world_3d().navigation_map
+	var centre: Vector3 = NavigationServer3D.map_get_closest_point(nmap, Vector3(300, 0, 250))
+	_player.global_position = centre + Vector3.UP
 	for _i in 20:
 		await physics_frame
 
@@ -71,8 +84,13 @@ func _init() -> void:
 		var fac: int = Enums.Factions.ENEMY if enemy_side else Enums.Factions.PLAYER
 		# Two lines facing each other, close enough that everyone acquires —
 		# which is the expensive state and the one being complained about.
-		var x: float = 300.0 + randf_range(-30.0, 30.0)
-		var z: float = (170.0 if enemy_side else 230.0) + randf_range(-14.0, 14.0)
+		# SPREAD ACROSS THE MAP, not piled on the player. A tight scrum puts
+		# everything inside the near band, where nothing strides and the LOD is
+		# never exercised — the first version of this bench measured a change
+		# that could not possibly have fired. Three Rivers is a fight strung out
+		# over a couple of hundred metres, so this is too.
+		var x: float = centre.x + randf_range(-60.0, 60.0)
+		var z: float = centre.z + (randf_range(-130.0, -55.0) if enemy_side else randf_range(-45.0, 70.0))
 		var body: Node = load(RIFLE).instantiate()
 		body.faction = fac
 		body.always_active = true
@@ -80,32 +98,180 @@ func _init() -> void:
 		(body as Node3D).global_position = (ground.call(x, z) as Vector3) + Vector3.UP
 		if _mgr != null and _mgr.has_method("register_enemy"):
 			_mgr.register_enemy(body)
+		if immortal:
+			# Nothing dies. If the spike survives this it is not the death path,
+			# whatever the downed counter happens to be doing on that frame.
+			body.health = 100000000
+			body.max_health = 100000000
+		if flat:
+			# A/B control: no distance scaling at all, so every robot thinks at
+			# full rate however far away it is. This is what the code did before
+			# the stride existed, and it is the ceiling on what AI logic can cost.
+			#
+			# It used to set far_think_every/distant_think_every, which the LOD
+			# rework deleted — so this mode threw "Invalid assignment of property
+			# 'far_think_every'" and printed NOTHING, for every run, unnoticed.
+			# lod_scale() lerps 1.0 -> lod_far_multiplier with distance, so
+			# pinning the multiplier at 1.0 is the same control.
+			body.lod_far_multiplier = 1.0
 
 	for _i in WARMUP:
 		await physics_frame
+	# Zeroed AFTER the warmup, or the spawn-in burst is charged to the fight.
+	AIWeapon._shot_spent_us = 0
+	AIWeapon._shot_rays = 0
+	Enemy._sight_spent_us = 0
+	Enemy._sight_rays = 0
 
 	# ── MEASURE ──────────────────────────────────
+	# A RESERVE WAVE, MID-MEASUREMENT.
+	#
+	# The complaint is specifically "when new reserve squads spawn in and are
+	# advancing". Standing the whole population up before the clock starts and
+	# warming for ninety frames measures a settled fight and never that — which is
+	# how a spike that only happens on reinforcement stays invisible to a bench
+	# that reports a flat median. Pass a fifth argument to drop a wave in at the
+	# quarter mark and watch what it costs.
+	var wave: int = int(args[4]) if args.size() > 4 else 0
+	var wave_at: int = frames / 4
+
 	var samples: PackedFloat64Array = PackedFloat64Array()
-	for _i in frames:
+	## CPU actually spent in the physics frame, which is the only one of the two
+	## that measures work. See the note above the print block.
+	var cpu: PackedFloat64Array = PackedFloat64Array()
+	# Nav spend alongside the frame time. Enemy keeps a static microsecond
+	# tally per physics frame for its own query budget; sampling it here says
+	# whether a spike is pathfinding or something else, which is the difference
+	# between two completely different fixes.
+	var nav: PackedFloat64Array = PackedFloat64Array()
+	# AND HOW MUCH OF THE FRAME WAS THINKING. Enemy keeps a microsecond tally of
+	# its own decision slices per physics frame, the same way it does for nav, and
+	# it is the only honest answer to "would thinking less help here" — a frame
+	# time alone cannot tell a brain-bound population from a body-bound one, and
+	# optimising the wrong half of the tick is the whole hazard this file exists
+	# to avoid.
+	var think: PackedFloat64Array = PackedFloat64Array()
+	var states: PackedStringArray = PackedStringArray()
+	for _f in frames:
+		if wave > 0 and _f == wave_at:
+			# Everything a real reinforcement does at once: spawn, register, and be
+			# given somewhere to go.
+			for i in wave:
+				var body: Node = load(RIFLE).instantiate()
+				body.faction = Enums.Factions.ENEMY
+				body.always_active = true
+				_level.add_child(body)
+				var wx: float = centre.x + randf_range(-40.0, 40.0)
+				var wz: float = centre.z - 240.0 + randf_range(-30.0, 30.0)
+				(body as Node3D).global_position = (ground.call(wx, wz) as Vector3) + Vector3.UP
+				if _mgr != null and _mgr.has_method("register_enemy"):
+					_mgr.register_enemy(body)
+				body.move_to(centre)
 		var t0 := Time.get_ticks_usec()
 		await physics_frame
+		# TWO CLOCKS, AND THEY MEASURE DIFFERENT THINGS. Read the note above the
+		# print block before quoting either of them.
 		samples.append(float(Time.get_ticks_usec() - t0) / 1000.0)
+		cpu.append(float(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0)
+		nav.append(float(Enemy._nav_spent_us) / 1000.0)
+		think.append(float(Enemy._think_spent_us) / 1000.0)
+		# A cheap per-frame signature of what the population is doing. If the
+		# spike frame is also the frame a hundred robots change state, the spike
+		# is that transition and not the steady-state cost of anything.
+		var in_combat := 0
+		var downed := 0
+		for a in _mgr.all_ai:
+			if a == null or not is_instance_valid(a):
+				continue
+			if a.get("combat_target") != null:
+				in_combat += 1
+			if a.get("downed"):
+				downed += 1
+		states.append("%d/%d" % [in_combat, downed])
 
 	var total := 0.0
 	var worst := 0.0
-	for s in samples:
-		total += s
-		worst = maxf(worst, s)
+	var worst_i := 0
+	var nav_total := 0.0
+	for i in samples.size():
+		total += samples[i]
+		nav_total += nav[i]
+		if samples[i] > worst:
+			worst = samples[i]
+			worst_i = i
 	var sorted := Array(samples)
 	sorted.sort()
 	var p95: float = sorted[int(sorted.size() * 0.95)]
 	var p50: float = sorted[int(sorted.size() * 0.5)]
 
+	# ─────────────────────────────────────────────
+	# WHICH NUMBER TO QUOTE. Headless Godot still paces physics to 60 Hz, so the
+	# wall clock around `await physics_frame` reads the 16.67 ms TICK PERIOD
+	# whenever the work fits inside it. For two days this bench's median and mean
+	# were quoted as the cost of the AI: they came out 14.4-14.5 and 16.6 ms on
+	# every run — 20 robots and 160, a bare proving ground and a 1.3 km city —
+	# because they were measuring the clock. A number that will not move whatever
+	# you change is not a measurement, and it is a confident-looking wrong answer.
+	#
+	# So: CPU is the cost. The wall clock is still printed because it is the only
+	# thing that catches a frame that OVERRAN its tick, which is what the worst
+	# frame and the spike list below are for — but it cannot be the headline.
+	# bench_qamareen.gd has carried this warning since it was written.
+	# ─────────────────────────────────────────────
+	var cpu_total := 0.0
+	for i in cpu.size():
+		cpu_total += cpu[i]
+
 	print("")
-	print("AI BENCH — %d robots, %d frames" % [count, frames])
+	print("AI BENCH — %d robots on %s, %d frames%s" % [count, map, frames, "  [FLAT: no LOD stride]" if flat else "  [distance-scaled thinking]"])
+	print("  CPU    %7.2f ms mean in the physics frame   <- THE COST" % (cpu_total / maxf(float(cpu.size()), 1.0)))
+	var fr := maxf(float(cpu.size()), 1.0)
+	print("  shoot  %7.2f ms mean  (%.0f rays/frame)  <- weapon raycasts, NOT ai logic" % [
+		float(AIWeapon._shot_spent_us) / 1000.0 / fr, float(AIWeapon._shot_rays) / fr])
+	print("  sight  %7.2f ms mean  (%.0f rays/frame)  <- is_path_clear" % [
+		float(Enemy._sight_spent_us) / 1000.0 / fr, float(Enemy._sight_rays) / fr])
+	print("  -- below: wall clock between ticks, pinned at ~16.67 ms unless a frame overran --")
 	print("  median %7.2f ms" % p50)
 	print("  mean   %7.2f ms" % (total / float(samples.size())))
 	print("  p95    %7.2f ms" % p95)
-	print("  WORST  %7.2f ms" % worst)
+	print("  WORST  %7.2f ms   (nav %.2f ms of it)" % [worst, nav[worst_i]])
+	print("  nav    %7.2f ms mean" % (nav_total / float(nav.size())))
+	# AND WHETHER THE THINK BACKSTOP IS BITING. Enemy rations decisions by a
+	# per-frame microsecond budget that tunes itself off measured frame time
+	# (see "HOW OFTEN A ROBOT DECIDES ANYTHING"), and the one thing you cannot
+	# tell from a frame time is whether a cheap number was bought by starving the
+	# AI. A budget pinned at its floor with a large refusal count says the tiers
+	# are not doing the work and the backstop is — which is a different, worse
+	# answer to the same question. Printed after the measurement loop, so it
+	# cannot affect what was measured.
+	var think_total := 0.0
+	var think_worst := 0.0
+	for v in think:
+		think_total += v
+		think_worst = maxf(think_worst, v)
+	print("  think  %7.2f ms mean, %.2f ms worst   (budget %d us at the end, %d refused)" % [
+		think_total / float(think.size()), think_worst,
+		Enemy._think_budget_us, Enemy._think_refused])
+	# WHICH frames were bad, not just how bad. One outlier is an event; a run of
+	# them every N frames is a timer or a cache expiring.
+	var idx: Array = []
+	for i in samples.size():
+		idx.append(i)
+	idx.sort_custom(func(a, b): return samples[a] > samples[b])
+	var worst_list := PackedStringArray()
+	for i in mini(8, idx.size()):
+		worst_list.append("f%d=%.0fms" % [idx[i], samples[idx[i]]])
+	print("  worst frames: %s" % " ".join(worst_list))
+	var lo: int = maxi(0, worst_i - 3)
+	var hi: int = mini(states.size() - 1, worst_i + 3)
+	var around := PackedStringArray()
+	for i in range(lo, hi + 1):
+		around.append("f%d %s %.0fms" % [i, states[i], samples[i]])
+	print("  in_combat/downed around the spike: %s" % "  |  ".join(around))
+	if wave > 0:
+		var at_wave := PackedStringArray()
+		for i in range(maxi(0, wave_at - 2), mini(samples.size() - 1, wave_at + 10)):
+			at_wave.append("f%d=%.0f" % [i, samples[i]])
+		print("  WAVE of %d at frame %d: %s" % [wave, wave_at, " ".join(at_wave)])
 	print("  registered with the manager: %d" % (_mgr.all_ai.size() if _mgr != null else -1))
 	quit(0)

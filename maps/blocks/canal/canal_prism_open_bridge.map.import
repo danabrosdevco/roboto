@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://pxokrsorvwyu"
+path="res://.godot/imported/canal_prism_open_bridge.map-a920b60b153957e66b00462d75e23250.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_prism_open_bridge.map"
+dest_files=["res://.godot/imported/canal_prism_open_bridge.map-a920b60b153957e66b00462d75e23250.tres"]
+
+[params]
+

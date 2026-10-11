@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_shield_projector.tscn" id="2_ai"]
+
+; THE PRECEDENT IS THE RECLAIMER, NOT THE REPAIR LANCE. item_repair_lance.tres
+; is kind = 0 and it heals, but usable_by_ai = false and NO ai_scene, so
+; fits_ai() returns false and no robot can ever carry it — it is a player
+; viewmodel. item_mortar.tres is the real AI shape: kind = 0, an ai_scene, and
+; a chassis_whitelist of exactly one frame.
+;
+; NOT IN THE SHOP and not in the player catalogue: the Bastion is hostile and
+; purchasable = false, so a shop entry would offer a gun for a frame nobody can
+; own. in_shop = false and no entry in test_item_catalogue.tres.
+;
+; THE HARDENING IS NOT IN HERE. kind = 0 is a SLOT TYPE, not a damage promise
+; (FRAME_ANATOMY.md §3.3) — this item's job is to occupy the mount. The field
+; itself is bastion.gd's _tick_field writing AI.add_hardening stamps, because
+; the effect is on everybody else and an AIWeapon only knows its own target.
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"shield_projector"
+display_name = "Shield Projector"
+short_name = "Projector"
+description = "A canopy emitter. Nothing it hits takes damage; everything of its own side underneath it is hard to suppress. Bastion only."
+kind = 0
+cost = 0
+ai_scene = ExtResource("2_ai")
+player_mount_offset = Vector3(0, 0, 0)
+player_mount_rotation_degrees = Vector3(0, 0, 0)
+ammo_type = &""
+weapon_damage = 0
+usable_by_player = false
+usable_by_ai = true
+fits_vehicles = true
+one_per_robot = true
+in_shop = false
+quantity = 1
+health_bonus = 0
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+sensor_bonus = 0.0
+signal_resistance_bonus = 0.0
+self_revive_seconds = 0.0
+equipment_slot_bonus = 0
+suppressive_fire = false
+required_rank = 0
+requires_chassis = Array[StringName]([])
+chassis_whitelist = Array[StringName]([&"bastion"])

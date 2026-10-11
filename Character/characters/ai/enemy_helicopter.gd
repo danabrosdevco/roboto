@@ -105,6 +105,9 @@ var _loiter_centre: Vector3 = Vector3.ZERO
 var _loiter_angle: float = 0.0
 var _home: Vector3 = Vector3.ZERO
 var _ground_ray: RayCast3D
+## Looks AHEAD, which the down-ray above cannot. See air_clearance.gd.
+const _AirClearance := preload("res://Character/characters/ai/air_clearance.gd")
+var _clearance := _AirClearance.new()
 var _lifted: bool = false
 # Per-drone offset to every approach angle, so two drones in one squad start
 # their runs on different lines rather than the same one.
@@ -427,6 +430,8 @@ func _steer(target: Vector3, speed: float, height: float, delta: float, pitch: f
 	# purely for looks.
 	_fly_dir = _turn_toward(_fly_dir, wish, turn_speed * delta)
 
+	# Refresh what is ahead before the altitude is solved from it below.
+	_clearance.tick(delta, self, _fly_dir, Vector2(velocity.x, velocity.z).length())
 	var planar := _fly_dir * speed
 	var k := clampf(acceleration * delta, 0.0, 1.0)
 	velocity.x = lerpf(velocity.x, planar.x, k)
@@ -465,10 +470,11 @@ func _altitude_velocity(height: float, delta: float) -> float:
 		clampf(altitude_smoothness * delta, 0.0, 1.0))
 
 
+# Whatever is UNDER it, or anything higher it is about to fly into. A down-ray
+# alone only notices an obstacle once it is already beneath. See air_clearance.gd.
 func _ground_height() -> float:
-	if _ground_ray != null and _ground_ray.is_colliding():
-		return _ground_ray.get_collision_point().y
-	return _home.y
+	var under: float = _ground_ray.get_collision_point().y if (_ground_ray != null and _ground_ray.is_colliding()) else _home.y
+	return maxf(under, _clearance.ground_ahead())
 
 
 # The direction it is FLYING, which is what "lined up" has to mean — the body
@@ -537,3 +543,10 @@ func _on_crash_landed() -> void:
 func _on_revived() -> void:
 	if rotor_loop != null and not rotor_loop.playing:
 		rotor_loop.play()
+
+
+## Airborne: see Enemy.off_navmesh_is_normal. Being off the navmesh is the
+## whole point of this chassis, and the adrift recovery used to teleport it to
+## the ground every four seconds.
+func off_navmesh_is_normal() -> bool:
+	return true

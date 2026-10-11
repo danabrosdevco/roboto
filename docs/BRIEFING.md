@@ -10,8 +10,8 @@ geometry via FuncGodot.
 
 ## 1. What the game is
 
-A first-person shooter where you are a rogue agentic drone commanding a small
-squad of robots, structured as **persistent squad + discrete handcrafted
+A first-person shooter where you are an error sub-agent of Home Command -- an
+unauthorised AKR nobody is supervising -- commanding a small squad of robots, structured as **persistent squad + discrete handcrafted
 missions** — XCOM's shape, not Helldivers' and not an open world.
 
 The level pipeline decided that. TrenchBroom brush geometry is excellent for

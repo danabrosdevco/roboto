@@ -1,10 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=6 format=3 uid="uid://crj7i5fc44gvr"]
 
 [ext_resource type="Script" path="res://Character/weapon/ai_weapon.gd" id="1_aiwep"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_tracer"]
-[ext_resource type="PackedScene" path="res://Character/weapon/models/machine_gun_model.tscn" id="3_model"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/autocannon_model.tscn" id="3_model"]
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="4_flash"]
-[ext_resource type="AudioStream" uid="uid://bk8kw2165y7rv" path="res://sounds/sfx/weapons/ar15/rifle_fire_1 (3).wav" id="5_shot"]
+[ext_resource type="AudioStream" uid="uid://bwnuxb8mil3uc" path="res://sounds/sfx/autocannon/universfield-powerful-cannon-shot-02-487887.mp3" id="5_shot"]
 
 [node name="ai_weapon_autocannon" type="Node3D" node_paths=PackedStringArray("muzzle_flash", "muzzle_origin", "shot_audio")]
 script = ExtResource("1_aiwep")
@@ -13,7 +13,7 @@ fire_cooldown = 0.5
 base_damage = 60
 min_damage = 45
 damage_falloff_start = 60.0
-max_effective_range = 110.0
+max_effective_range = 120.0
 ai_spread_mrad = 5.0
 suppression_per_shot = 7.0
 near_miss_radius = 3.5
@@ -40,6 +40,6 @@ visible = false
 [node name="Shot" type="AudioStreamPlayer3D" parent="."]
 stream = ExtResource("5_shot")
 volume_db = -8.0
-pitch_scale = 0.72
 unit_size = 24.0
-attenuation_filter_cutoff_hz = 3000.0
+pitch_scale = 0.85
+max_polyphony = 3

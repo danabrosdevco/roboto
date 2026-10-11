@@ -21,8 +21,8 @@ extends "res://tools/block_ai_infra.gd"
 #       hold no weapon: the weapons are not part of the blocks.
 #   maps/blocks/landmarks/landmark_*.map — a clock tower and a big wheel, a
 #       landmark for each side of a town.
-#   maps/blocks/compute/compute_monolith.map — the machines' monolith, beside
-#       the AI-infra tool's compute pieces.
+#   maps/blocks/compute/compute_*.map — the machines' monolith and the core
+#       column in three sizes, beside the AI-infra tool's compute pieces.
 #
 #   godot --headless --path . --script res://tools/block_industrial.gd -- maps/blocks
 #   godot --headless --path . --script res://tools/block_industrial.gd -- maps/blocks --force [piece names]
@@ -48,6 +48,13 @@ const LOT := {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE}
 const HESCO := {"top": DIRT, "side": SANDBAG, "bottom": SANDBAG}
 const MACHINE := {"top": METAL, "side": GREEN, "bottom": METAL}
 const ROOFED := {"top": RUST_PANEL, "side": METAL, "bottom": METAL}
+
+# The core column. Dark glass on the sides, metal top and bottom; the head
+# takes GLOW on its slanted cut, which _pick calls a top at anything shallower
+# than 45 degrees.
+const CASSETTE := {"top": METAL, "side": GLASS, "bottom": METAL}
+const COLLAR := {"top": DECK, "side": CONCRETE, "bottom": CONCRETE}
+const HEAD := {"top": GLASS, "side": GLASS, "bottom": METAL}
 
 # Each piece's map name and the function that draws it.
 const INDUSTRIAL := {
@@ -115,6 +122,9 @@ const LANDMARKS := {
 }
 const COMPUTE := {
 	"compute_monolith": "_monolith",
+	"compute_core_large": "_core_large",
+	"compute_core": "_core",
+	"compute_core_small": "_core_small",
 }
 
 
@@ -1091,8 +1101,17 @@ func _lock_dam() -> void:
 		box(Vector3(-0.3, float(b[0]), -9.0), Vector3(0.3, float(b[1]), -3.3), RUST)
 		box(Vector3(-0.45, float(b[0]), -3.5), Vector3(0.45, float(b[1]), -3.1), METAL)
 	# Cover on the upstream edge; a rail on the downstream edge between houses.
+	#
+	# THE RAIL RUNS ALONG THE DECK, WHICH IS THE Y AXIS HERE. `axis` names the
+	# axis `line` is measured ON, not the one the rail runs down — so "y" put
+	# forty-four metres of railing ACROSS a nine-metre dam and hung seventeen
+	# metres of it off each side, which read in game as a fence across the
+	# crossing and was the first thing anyone said about this piece.
+	# And BETWEEN the houses, in five runs, because a single run at this line
+	# puts a post through each of the four gate houses.
 	box(Vector3(-3.0, -22.0, 0.0), Vector3(-2.7, 22.0, 1.1), FRAME)
-	rail("y", 2.875, -22.0, 22.0, 0.0, 0.0)
+	for gap: Array in [[-22.0, -13.4], [-10.6, -5.4], [-2.6, 2.6], [5.4, 10.6], [13.4, 22.0]]:
+		rail("x", 3.9, float(gap[0]), float(gap[1]), 0.0, 0.0)
 	# The control tower, beside the deck on the +Y abutment.
 	box(Vector3(-4.5, 16.5, -7.0), Vector3(-9.0, 23.5, 0.0), {"top": DECK, "side": CONCRETE, "bottom": CONCRETE})
 	box(Vector3(-8.7, 17.0, 0.0), Vector3(-4.8, 22.0, 6.5), CLAD)
@@ -1832,6 +1851,143 @@ func _monolith() -> void:
 	for s: float in [-1.0, 1.0]:
 		beam(Vector3(s * 0.52, 0.0, 0.6), Vector3(s * 0.43, 0.0, 6.6), 0.14, GLOW)
 	box(Vector3(-0.4, -1.3, 7.0), Vector3(0.4, 1.3, 7.15), GLOW)
+
+
+## THE CORE COLUMN — the stand-in for the monolith as a capture objective, in
+## three sizes. A stack of compute cassettes in an open steel cage, lit through
+## the recessed gaps between them rather than along its edges, stood off its own
+## plinth so light shows underneath it, the head sheared off at a slant, and a
+## service alcove at the foot with a lit panel in it.
+##
+## It shares the family's job — a tall lit thing on a plinth you can find from
+## across a district — and almost none of its shape. The monolith and the
+## obelisk are both smooth sealed monuments, light along their edges and a cap
+## or a point on top. This one is banded, open-framed and cut off at an angle,
+## so the two read apart in the same frame at any distance. The alcove is the
+## other half of the point: a sealed slab gives a body nowhere to stand, and
+## channelling a capture pins one inside 3 m of the thing for several seconds.
+##
+## EVERYTHING LIT IS GLOW AND NOTHING ELSE IS. One material on the prefab
+## carries every lit face, so the captured state is a single surface swap: kill
+## that material and the whole column goes dark. That is the piece's whole
+## trick, so do not reach for a second glowing texture here.
+##
+## `top` is the high side of the sheared head; the low side sits `cw * 1.1`
+## under it, which holds the cut near 29° at every size — shallow enough that
+## _pick still calls that face a top, which is what textures it.
+func core_column(pw: float, cw: float, top: float, cassettes: int) -> void:
+	# The pad is 0.22 m, under the 0.45 m a body steps over. The collar is
+	# 0.62 m at its shortest, over the 0.5 m the navmesh baker will climb.
+	# NOTHING IS IN BETWEEN, deliberately: a step in that band is one the
+	# bake calls walkable and move_and_slide then refuses, and a robot
+	# stands there shuffling at it.
+	#
+	# The collar grows with the column rather than staying fixed, or the
+	# short one ends up a monument plinth with a box standing on it.
+	const PAD_H := 0.22
+	var collar_h: float = clampf(top * 0.1, 0.62, 1.1)
+	if cassettes < 2:
+		push_warning("core_column: %d cassette(s) — the stack needs a foot and a sheared head, so nothing was drawn" % cassettes)
+		return
+	var gap: float = clampf(cw * 0.26, 0.22, 0.45)
+	var ch: float = ((top - collar_h) - gap * cassettes) / float(cassettes)
+	if ch < 0.5:
+		push_warning("core_column: %.2f m cassettes under a %.1f m top — too thin to read as a stack, so nothing was drawn" % [ch, top])
+		return
+
+	box(Vector3(-pw, -pw, -0.3), Vector3(pw, pw, PAD_H), PAD)
+	var cpw: float = pw * 0.74
+	box(Vector3(-cpw, -cpw, PAD_H), Vector3(cpw, cpw, collar_h), COLLAR)
+
+	var sw: float = cw * 0.68           # the spine, set back so its light sits in shadow
+	var drop: float = cw * 1.1          # how far the head falls from its back edge to its front
+	var ad: float = minf(cw * 0.4, 0.35)    # how deep the service alcove cuts in
+	var aw: float = minf(cw * 0.62, 0.55)   # and how wide
+	var z := collar_h
+	for i in cassettes:
+		# A gap under the bottom cassette as well as between them: the stack
+		# stands off its plinth with light under it instead of growing out of
+		# the concrete.
+		box(Vector3(-sw, -sw, z), Vector3(sw, sw, z + gap), GLOW)
+		z += gap
+		if i == cassettes - 1:
+			_core_head(cw, z, z + ch, drop)
+		elif i == 0:
+			_core_foot(cw, z, z + ch, ad, aw)
+		else:
+			box(Vector3(-cw, -cw, z), Vector3(cw, cw, z + ch), CASSETTE)
+		z += ch
+
+	# The cage. Set a third of its width outside the cassettes so the posts
+	# stand proud of the dark faces rather than sinking into them, and battered
+	# in at the top so the column has a little lean without the family's taper.
+	var post: float = clampf(cw * 0.17, 0.1, 0.3)
+	var pc: float = cw + post * 0.35
+	var lean: float = cw * 0.1
+	for sx: float in [-1.0, 1.0]:
+		for sy: float in [-1.0, 1.0]:
+			var zt: float = (top if sy > 0.0 else top - drop) + 0.06
+			slant_post(Vector3(sx * pc, sy * pc, PAD_H), Vector3(sx * (pc - lean), sy * (pc - lean), zt), post, METAL)
+
+	# Two cable risers and their tie up the back, so the blank side is not
+	# blank. On the back face on purpose: the front is where a body works.
+	var r: float = clampf(cw * 0.09, 0.06, 0.16)
+	var ry: float = cw + r * 0.7
+	var rz: float = collar_h + (top - collar_h) * 0.62
+	for sx: float in [-1.0, 1.0]:
+		pipe(Vector3(sx * cw * 0.45, ry, PAD_H), Vector3(sx * cw * 0.45, ry, rz), r, METAL)
+	beam(Vector3(-cw * 0.45, ry, rz), Vector3(cw * 0.45, ry, rz), r * 1.4, METAL)
+
+
+## The sheared head: a dark body cut off at a slant, with a lit plate inset in
+## the cut so there is a dark border round the light. The plate is sunk 0.05 m
+## into the body rather than laid on it, because two faces on one plane fight
+## over which of them you see.
+func _core_head(cw: float, z0: float, z1: float, drop: float) -> void:
+	solid([Vector3(-cw, -cw, z0), Vector3(cw, -cw, z0), Vector3(cw, cw, z0), Vector3(-cw, cw, z0),
+			Vector3(-cw, -cw, z1 - drop), Vector3(cw, -cw, z1 - drop),
+			Vector3(cw, cw, z1), Vector3(-cw, cw, z1)], HEAD)
+	var ins: float = cw * 0.22
+	var e: float = cw - ins
+	var zf: float = z1 - drop * (1.0 - ins / (2.0 * cw))   # the cut's height at y = -e
+	var zb: float = z1 - drop * (ins / (2.0 * cw))         # and at y = +e
+	solid([Vector3(-e, -e, zf - 0.05), Vector3(e, -e, zf - 0.05), Vector3(e, e, zb - 0.05), Vector3(-e, e, zb - 0.05),
+			Vector3(-e, -e, zf + 0.07), Vector3(e, -e, zf + 0.07),
+			Vector3(e, e, zb + 0.07), Vector3(-e, e, zb + 0.07)], GLOW)
+
+
+## The bottom cassette, with the service alcove cut into its front (-Y) face.
+## Six brushes rather than one: a recess is a concave outline, and brush() will
+## build a concave brush smaller than it was drawn.
+func _core_foot(cw: float, z0: float, z1: float, ad: float, aw: float) -> void:
+	var az0: float = z0 + 0.12
+	var az1: float = minf(z1 - 0.25, z0 + 1.5)
+	var back: float = -cw + ad
+	box(Vector3(-cw, -cw, z0), Vector3(-aw, cw, z1), CASSETTE)       # left jamb
+	box(Vector3(aw, -cw, z0), Vector3(cw, cw, z1), CASSETTE)         # right jamb
+	box(Vector3(-aw, back, z0), Vector3(aw, cw, z1), CASSETTE)       # the alcove's back
+	box(Vector3(-aw, -cw, z0), Vector3(aw, back, az0), CASSETTE)     # its sill
+	box(Vector3(-aw, -cw, az1), Vector3(aw, back, z1), CASSETTE)     # its lintel
+	box(Vector3(-aw + 0.07, back - 0.06, az0 + 0.08), Vector3(aw - 0.07, back, az1 - 0.08), GLOW)
+
+
+## The district's core: 12 m, meant to be the thing you steer by.
+func _core_large() -> void:
+	core_column(2.6, 1.5, 12.0, 5)
+
+
+## The default core. 3.38 m square and 7.0 m against the monolith's 4.38 x 2.81
+## and 7.5 — near enough in bulk to stand where one stands, but it is 0.57 m
+## WIDER across the monolith's narrow axis, so check a tight slot before you
+## swap one for the other.
+func _core() -> void:
+	core_column(1.7, 0.95, 6.6, 3)
+
+
+## A core for inside a building or down a trench: head height and no more, and
+## still over the 1.2 m a cover point needs, so it is something to fight round.
+func _core_small() -> void:
+	core_column(0.95, 0.62, 3.8, 3)
 
 
 ## A YARD SLAB WITH ITS EDGES RAMPED TO THE GROUND. A 0.09 m lip round a

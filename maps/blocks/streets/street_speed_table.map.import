@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dfaenemgdg620"
+path="res://.godot/imported/street_speed_table.map-8bdd452e35cd752d0f4f50b42679228f.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_speed_table.map"
+dest_files=["res://.godot/imported/street_speed_table.map-8bdd452e35cd752d0f4f50b42679228f.tres"]
+
+[params]
+

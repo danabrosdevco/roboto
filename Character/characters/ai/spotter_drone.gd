@@ -90,6 +90,11 @@ var _station_set: bool = false
 var _orbit_angle: float = 0.0
 var _lifted: bool = false
 var _ground_ray: RayCast3D = null
+## Looks AHEAD, which the down-ray above cannot. See air_clearance.gd.
+## Preloaded by path rather than by class_name: a new global symbol is not
+## resolvable headless until the editor rescans.
+const _AirClearance := preload("res://Character/characters/ai/air_clearance.gd")
+var _clearance := _AirClearance.new()
 # Its own arc of the circle, so wingmen are never on the same side of it.
 var _arc: float = 0.0
 # The direction it is FLYING, held separately from the body's facing. Deriving
@@ -164,15 +169,34 @@ func move_to(pos: Vector3, _think_delay: float = 0.0) -> void:
 	_station_set = true
 
 
-# No weapon, ever. The inherited loop would look for one every frame and the
-# combat roll would try to manoeuvre it into a firing position it can never
-# use. See failure 2 in the header.
-func handle_weapon_logic(_delta: float) -> void:
-	pass
+# No weapon — on THIS frame, and on any subclass that does not say otherwise.
+# The inherited loop would look for one every frame and the combat roll would
+# try to manoeuvre it into a firing position it can never use. See failure 2 in
+# the header.
+#
+# WHY THIS IS A PREDICATE AND NOT `pass`. These two used to be bare `pass`
+# bodies commented "No weapon, ever." — which was true of the Spotter and false
+# of this script, because the Kite is an armed gunship built on the same flight
+# model. GDScript has no `super.super()`, so a subclass could not reach
+# `Enemy.handle_weapon_logic` past a stub here: the documented workaround —
+# a Callable built off the base script object — does not exist in 4.3
+# (`Callable(load("enemy.gd"), "handle_weapon_logic").is_valid()` is **false**,
+# measured). Opting out through a virtual predicate costs the Spotter and the
+# Broodcarrier nothing — both inherit `false` and behave exactly as before —
+# and it is what stops the next armed flyer forking a hundred lines of the
+# most-edited state machine in the project.
+func _carries_a_weapon() -> bool:
+	return false
+
+
+func handle_weapon_logic(delta: float) -> void:
+	if _carries_a_weapon():
+		super(delta)
 
 
 func roll_combat_action() -> void:
-	pass
+	if _carries_a_weapon():
+		super()
 
 
 # Facing is flight attitude, set by _orient from the heading.
@@ -275,6 +299,8 @@ func _steer(target: Vector3, speed: float, height: float, delta: float) -> void:
 	# it from the body facing is what stopped the bomber turning at all.
 	_fly_dir = _turn_toward(_fly_dir, wish, turn_speed * delta)
 
+	# Refresh what is ahead before the altitude is solved from it below.
+	_clearance.tick(delta, self, _fly_dir, Vector2(velocity.x, velocity.z).length())
 	var planar := _fly_dir * speed
 	var k := clampf(acceleration * delta, 0.0, 1.0)
 	velocity.x = lerpf(velocity.x, planar.x, k)
@@ -314,10 +340,13 @@ func _altitude_velocity(height: float, delta: float) -> float:
 		clampf(altitude_smoothness * delta, 0.0, 1.0))
 
 
+# The height to hold above: whatever is UNDER it, or anything higher it is about
+# to fly into. Terrain-following off the down-ray alone only reacts once the
+# obstacle is already beneath, which for a block at hover height is after the
+# collision. See air_clearance.gd.
 func _ground_height() -> float:
-	if _ground_ray != null and _ground_ray.is_colliding():
-		return _ground_ray.get_collision_point().y
-	return _station.y
+	var under: float = _ground_ray.get_collision_point().y if (_ground_ray != null and _ground_ray.is_colliding()) else _station.y
+	return maxf(under, _clearance.ground_ahead())
 
 
 func _flat_body_forward() -> Vector3:
@@ -374,3 +403,10 @@ func _on_crash_landed() -> void:
 func _on_revived() -> void:
 	if rotor_loop != null and not rotor_loop.playing:
 		rotor_loop.play()
+
+
+## Airborne: see Enemy.off_navmesh_is_normal. Being off the navmesh is the
+## whole point of this chassis, and the adrift recovery used to teleport it to
+## the ground every four seconds.
+func off_navmesh_is_normal() -> bool:
+	return true

@@ -1,6 +1,14 @@
 extends Node
 class_name SquadSpawner
 
+## Robots are built through CsgBake.make() rather than scene.instantiate(): a
+## CSGShape3D rebuilds its geometry the first time it enters the tree, which cost
+## 8.6 ms per robot and made a 40-strong reserve wave a 336 ms frame. make()
+## hands back the same node with the CSG already replaced by the mesh baked once
+## at startup. It has to happen BEFORE the node is added to the tree — see
+## csg_bake.gd for why neither _enter_tree nor _ready will do.
+const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
+
 # ─────────────────────────────────────────────
 # SQUAD SPAWNER — records in, Soldiers out, and back again.
 #
@@ -262,7 +270,7 @@ func _build_soldier(record: SoldierRecord) -> Soldier:
 	if scene == null:
 		push_error("SquadSpawner: no chassis for %s and no default_chassis set." % record.display_name)
 		return null
-	var soldier := scene.instantiate() as Soldier
+	var soldier := _CsgBake.make(scene) as Soldier
 	if soldier == null:
 		push_error("SquadSpawner: %s is not a Soldier scene." % scene.resource_path)
 		return null
@@ -314,6 +322,12 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 		var slot := AIEquipmentSlot.new()
 		slot.equipment_scene = kit.ai_scene
 		slot.quantity = kit.quantity
+		# WHAT IT IS, not just what to instantiate. Both of these were left
+		# unset, and both are read downstream: the squad HUD printed the word
+		# "EQUIPMENT" for every spend because Enemy falls back to that on an
+		# empty label, and the designator needs the id to find the icon.
+		slot.label = kit.short_label()
+		slot.item_id = kit.id
 		slots.append(slot)
 	if not slots.is_empty():
 		soldier.equipment_slots = slots
@@ -472,7 +486,10 @@ func sync_record(record: SoldierRecord) -> Soldier:
 		existing.health = record.current_health()
 		existing.signal_integrity = record.signal_integrity
 		if "downed" in existing and existing.downed and record.is_deployable():
-			existing.revive()
+			# spends = false: this is the repair shop between operations, not a
+			# field revive. Burning the allowance here would send a robot into
+			# the next mission with its one charge already gone.
+			existing.revive(false)
 		return existing
 
 	# Not in the world. If they're deployable now, they should be — unless they
@@ -643,9 +660,31 @@ func write_back() -> Dictionary:
 # Drops references without touching the records. The level unload frees the
 # nodes themselves.
 func clear() -> void:
+	# THE BODIES TOO, NOT JUST THE SQUAD NODE. Robots are parented to the LEVEL
+	# (level.add_child(soldier) in deploy_into), so freeing the Squad left every
+	# robot it commanded standing where it was. It never showed while deploy_into
+	# ran once per level load, because the level took them with it when it went.
+	# Opening a campaign redeploys into a level that is already up, and the depot
+	# came up with two of everybody.
+	for body in _spawned.keys():
+		if body == null or not is_instance_valid(body):
+			continue
+		var body_parent := (body as Node).get_parent()
+		if body_parent != null:
+			body_parent.remove_child(body)
+		(body as Node).queue_free()
 	_spawned.clear()
 	for squad in squads:
-		if squad != null and is_instance_valid(squad):
-			squad.queue_free()
+		if squad == null or not is_instance_valid(squad):
+			continue
+		# DETACHED BEFORE IT IS FREED. queue_free is deferred — the squad stays a
+		# child until the end of the frame — and deploy_into() calls this and then
+		# immediately stands the new squad up. For that frame BOTH are in the
+		# level, so anything counting bodies sees double and the new squad forms
+		# up among robots that are on their way out.
+		var parent := squad.get_parent()
+		if parent != null:
+			parent.remove_child(squad)
+		squad.queue_free()
 	squads.clear()
 	active_squad = null

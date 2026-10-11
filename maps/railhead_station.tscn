@@ -1,0 +1,100 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_station.tscn" id="1_0i6w0"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_oxs3b"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_fsp5g"]
+
+[node name="RailheadStation" type="Node3D"]
+
+[node name="Station" type="Node3D" parent="." instance=ExtResource("1_0i6w0")]
+script = ExtResource("2_oxs3b")
+local_map_file = "res://maps/blocks/railhead/railhead_station.map"
+global_map_file = ""
+map_settings = ExtResource("3_fsp5g")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Markers" type="Node3D" parent="."]
+
+[node name="Station_RampFoot" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 0, 132.5)
+
+[node name="Station_RampTop" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 1.1875, 125)
+
+[node name="Station_HeadHouseDoor" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 1.1875, -127)
+
+[node name="Station_HeadHouse" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 1.1875, -134)
+
+[node name="Station_PlatformCentre" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.375, 1.1875, 0)
+
+[node name="Station_BerthRear" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 1.1875, -112)
+
+[node name="Station_BerthFront" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 1.1875, 112)
+
+[node name="Station_Mast" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.75, 0, -146)
+
+[node name="Station_MastTop" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.75, 40, -146)
+
+[node name="Station_TrackCut_Rear" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -150)
+
+[node name="Station_TrackCut_Front" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 150)
+
+[node name="Lights" type="Node3D" parent="."]
+
+[node name="Canopy_0" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 6.8, -96)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 1.1
+omni_range = 8.0
+
+[node name="Canopy_1" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 6.8, -64)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 1.1
+omni_range = 8.0
+
+[node name="Canopy_2" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 6.8, -32)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 1.1
+omni_range = 8.0
+
+[node name="Canopy_3" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 6.8, 0)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 1.1
+omni_range = 8.0
+
+[node name="Canopy_4" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 6.8, 32)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 1.1
+omni_range = 8.0
+
+[node name="Canopy_5" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 6.8, 64)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 1.1
+omni_range = 8.0
+
+[node name="Canopy_6" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 6.8, 96)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 1.1
+omni_range = 8.0
+
+[node name="HeadHouse" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 4.1875, -134)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 8.0

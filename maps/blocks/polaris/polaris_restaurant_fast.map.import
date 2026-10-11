@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bgy2v8na78wwi"
+path="res://.godot/imported/polaris_restaurant_fast.map-9b4b06384e8663c86208de6209a1b13a.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_restaurant_fast.map"
+dest_files=["res://.godot/imported/polaris_restaurant_fast.map-9b4b06384e8663c86208de6209a1b13a.tres"]
+
+[params]
+

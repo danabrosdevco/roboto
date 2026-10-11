@@ -1,0 +1,80 @@
+[gd_scene load_steps=5 format=3]
+
+; THE DESIGNATOR, AS THE PLAYER HOLDS IT.
+;
+; THE COMMAND TOOL, and a BUILT-IN like the repair tool on key 3: never bought,
+; never fitted, always there. ADVANCE and FOLLOW are on its dial beside the
+; squad's equipment, so commanding is one vocabulary on one screen instead of a
+; key and a held object that each did half of it.
+;
+; consumes_charge and reverts_when_empty are off and equippable_when_empty
+; is on, because it is not ordnance — and because a designator the player cannot
+; draw while the squad is carrying nothing would hide the one screen that tells
+; them the shop sells smoke.
+;
+; IT RESERVES KEY 2 rather than taking a position in the equipment row. The row
+; is positional — apply_record numbers bought equipment 0, 1, 2 and those become
+; keys 4, 5 and 6 — so a built-in in the row either moves with your shopping or
+; pushes a bought item off the end. It did both: at order -1 it took key 4 and a
+; Utility Harness's third throwable fell off 6 with nothing to select it, which
+; tools/test_equipment.gd caught. fixed_slot_action binds it to one action and
+; leaves the row alone. equipment_order is high as a belt-and-braces: if it ever
+; does land in the row it sorts last rather than displacing a grenade.
+;
+; WHY 2. It sat on 7, which is a reach for a tool the player now commands with.
+; Key 2 is the SIDEARM position, and every frame in the game has weapon_slots = 1
+; so it has always been empty — the weapon bar drew a blank chip there. Taking it
+; also puts the bar back to six chips, which is what fits on screen.
+;
+; lowers_when_obstructed is OFF. The obstruction ray fires when anything is
+; close in front of the camera, and designating at a wall two metres away — a
+; doorway you want smoked — is a completely normal thing to do. Swinging the
+; slab out of view at that moment hides the screen exactly when it is being read.
+
+[ext_resource type="Script" path="res://Character/equipment/player_designator.gd" id="1_tool"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/designator_model.tscn" id="2_model"]
+[ext_resource type="Script" path="res://Character/weapon/models/designator_screen.gd" id="3_screen"]
+[ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="4_click"]
+
+[node name="Designator" type="Node3D" node_paths=PackedStringArray("viewmodel", "screen", "commit_sound")]
+script = ExtResource("1_tool")
+display_name = "Designator"
+slot = 3
+fixed_slot_action = &"2"
+equipment_order = 99
+consumes_charge = false
+reverts_when_empty = false
+equippable_when_empty = true
+lowers_when_obstructed = false
+use_default_position = false
+equip_time = 0.3
+designate_seconds = 1.2
+repeat_delay = 1.0
+viewmodel = NodePath("DesignatorModel")
+screen = NodePath("DesignatorModel/Screen")
+commit_sound = NodePath("CommitSound")
+
+; THE POSE, AUTHORED HERE, which is what every other held item does — the
+; recoilless and the cluster launcher both carry theirs on the viewmodel node and
+; set use_default_position = false, and PlayerEquipment.initialize() then reads
+; this transform as the rest pose.
+;
+; It had neither, so it fell back to the class default of z = -0.015: a 34cm slab
+; sitting ON the camera's near plane, clipped away entirely. The tool worked, the
+; chip lit up, and the player's hands were empty.
+;
+; TURNED 180 ABOUT Y. The model is built muzzle-forward along +Z (Emitter at
+; z = 0.225, Lens at 0.29) with the screen and grip at the BACK, and the camera
+; looks down -Z — so unturned it points its lens at the player and its screen at
+; the wall. The half turn puts the emitter downrange and the raked screen back
+; toward the eye, which is the whole reason the screen is raked.
+[node name="DesignatorModel" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(-0.85, 0, 0, 0, 0.696, 0.488, 0, 0.488, -0.696, 0.34, -0.17, -0.64)
+
+[node name="Readout" type="SubViewport" parent="DesignatorModel"]
+script = ExtResource("3_screen")
+
+[node name="CommitSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("4_click")
+pitch_scale = 1.35
+volume_db = -6.0

@@ -13,6 +13,12 @@
 ; ClusterShell sets explode_on_bounce = false on everything it scatters, which
 ; a mine needs anyway, and Mine._ready() asserts it a second time rather than
 ; trusting the caller.
+;
+; submunition_fuse is 99999 to match the submine's own. ClusterShell writes this
+; into each bomblet's fuse_time, and a Mine replaces _physics_process outright so
+; it never reads one — but leaving 45 there described a timer that had stopped
+; existing, which is how the next person to read this file learns something
+; false.
 
 [ext_resource type="Script" path="res://Character/weapon/cluster_shell.gd" id="1_shell"]
 [ext_resource type="PackedScene" uid="uid://cvgqcttmucw6e" path="res://Character/weapon/explosion.tscn" id="2_blast"]
@@ -35,8 +41,8 @@ submunition_scene = ExtResource("3_submine")
 submunitions = 5
 scatter_speed = 3.6
 scatter_lift = 2.4
-submunition_fuse_min = 45.0
-submunition_fuse_max = 45.0
+submunition_fuse_min = 99999.0
+submunition_fuse_max = 99999.0
 submunition_damage = 45
 submunition_radius = 2.0
 

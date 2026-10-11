@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bbf5td8hklnmo"
+path="res://.godot/imported/polaris_restaurant_upscale.map-5c5cb827e7c46fe5041648e33d73d678.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_restaurant_upscale.map"
+dest_files=["res://.godot/imported/polaris_restaurant_upscale.map-5c5cb827e7c46fe5041648e33d73d678.tres"]
+
+[params]
+

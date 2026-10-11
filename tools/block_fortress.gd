@@ -16,6 +16,13 @@ extends "res://tools/block_bridges.gd"
 #   godot --headless --path . --script res://tools/block_fortress.gd -- maps/blocks
 #   godot --headless --path . --script res://tools/block_fortress.gd -- maps/blocks --force [piece names]
 #
+# fort_tower.map CARRIES HAND EDITS. It was opened in TrenchBroom and had its
+# clipping fixed — 136 faces that exist in the file and not in this source. DO
+# NOT PASS --force FOR IT. Running it once destroyed all of them, and they only
+# came back because they happened to be committed. To change a texture on it,
+# use tools/map_retexture.gd on the .map; to change its SHAPE, change it here
+# and then merge by hand, knowing what you are throwing away.
+#
 # TWO RULES RUN THROUGH ALL OF IT, both learnt the hard way:
 #
 # WALKABLE GROUND IS FLAT GROUND. The navmesh agent climbs 0.25 m and is 0.6 m
@@ -73,6 +80,9 @@ const CWAY_W := 16.0
 const CWAY_H := 4.0
 ## Machine work: the fort is new, and reads new — clean faces, lit seams.
 const SEAM := "PSX_Textures/glitch_tx_1@0.25"
+## The same band with no light in it, for the curtain walls. A different
+## concrete from TECH_WALL so the trim still reads, just unlit.
+const TRIM := "PSX_Textures/concrete_tx_5"
 
 
 func _initialize() -> void:
@@ -207,23 +217,157 @@ func _causeway_span_broken() -> void:
 
 ## The way on: 24 m of embankment climbing 4 m at 1 in 6, 16 m wide, square at
 ## the top so a span butts it. Gentle enough for anything on wheels.
+## WARNING: fort_tower.map IS HAND-EDITED. DO NOT REGENERATE IT.
+##
+## Running this generator over maps/blocks/fortress/fort_tower.map rewrites
+## 136 planes around the wall-top and bastion ramps that are NOT what this
+## code produces — they are the human's own clipping fixes, and regenerating
+## silently undoes them and adds 24 overlapping brush pairs. It has happened
+## before on this very file.
+##
+## The ramp parapet below was added by splicing its two brushes into the
+## committed .map by hand, not by regenerating. The code is here so the intent
+## is recorded and so a future full rebuild keeps it; it is not the route by
+## which the shipped .map got it. For small changes to an edited map, see
+## tools/map_retexture.gd.
+
+
+## HALF THE WIDTH OF THE FLARE AT THE MOUTH, EACH SIDE. The ramp used to be one
+## 16 m strip for its whole 24 m, so the only way on to the causeway was a 16 m
+## gate at the far end: a body approaching from anywhere else met the ramp's
+## flank, which is a 1.6 m step up at mid-ramp, and had to walk back out and
+## funnel. Measured on the baked mesh, the walkable surface was 17 m of a 31 m
+## footprint and the rest was wall.
+##
+## The deck still narrows to CWAY_W where it lands, because that is what the
+## spans are. It is the approach that opens out.
+const CWAY_FLARE := 7.0
+
+
 func _causeway_ramp() -> void:
 	var w := CWAY_W
 	var run := 24.0
 	ramp(-run, -w * 0.5, 0.0, w * 0.5, -1.0, 0.0, CWAY_H, "+x", ROAD)
-	# Side walls along the climb, and the abutment the deck lands on.
+	# A wedge each side, wide at the mouth and closing to the deck line at the
+	# top, so the whole fan is one continuous walking surface. Built as a hull
+	# rather than a ramp() because ramp() is rectangular and this tapers; it
+	# meets the main ramp exactly on y = +-w/2, touching and not overlapping.
+	#
+	# It starts OUTSIDE the side wall, at w/2 + 1, and its apex stops at the
+	# abutment face at x = -1. Run to w/2 and to x = 0 instead and it lies
+	# inside both of them — 22 overlapping brush pairs on top of the 7 this
+	# piece already had. The wall between the two surfaces is no barrier where
+	# it matters: it rises from nothing at the mouth and is level with the ramp
+	# for the first half, by which point a body is already on the deck line.
+	# THE FLARE STARTS AT THE RAMP'S OWN EDGE, AND IN THE RAMP'S OWN PLANE.
+	#
+	# It used to start at w/2 + 1, outside the old side walls, which left those
+	# walls standing between the two walking surfaces: a one-metre ridge, low at
+	# the mouth and rising to head height at the top. That ridge is the "mini
+	# ramp between the two ramps" the squad gets stuck in — at the mouth end it
+	# is a few centimetres, right in the range where a body neither walks over
+	# it cleanly nor is stopped by it.
+	#
+	# The apex was also at CWAY_H while the ramp's own surface at x = -1 is
+	# CWAY_H * 23/24, so the flare stood 0.17 m proud of the thing it was
+	# supposed to continue. APEX puts it exactly in the ramp's plane: every
+	# point below satisfies z = (x + run) / run * CWAY_H, so the fan and the
+	# ramp are one unbroken surface with no join to catch on.
+	#
+	# IN THE RAMP'S PLANE IS NOT ENOUGH ON ITS OWN — IT HAS TO SURVIVE THE
+	# SNAP, and at x = -1 it did not. solid() rounds every point to a whole
+	# 1/32 m unit, and x = -1 is not a place where this ramp's surface is a
+	# whole unit high: CWAY_H * 23/24 is 122.67 units, which snapped to 123.
+	# So the apex stood 1/96 m proud after all and the flare's top face was a
+	# plane 1/96 m steeper than the ramp's own — near-coplanar rather than
+	# coplanar, along the whole 23 m seam between them. Measured, that one did
+	# NOT break the bake on its own: the merge failure below survived fixing
+	# it. It is wrong anyway, and a 1 cm lip is exactly the kind the baker
+	# neither walks nor stops at, so it is fixed here rather than left for
+	# whatever it would have cost later.
+	#
+	# The apex therefore stands at the nearest whole unit of RISE short of the
+	# abutment face, not at a round metre: apex_run metres of run per unit of
+	# rise, and the first multiple of it that clears x = -1. Here that is 6
+	# units of run for 1 of rise, so the apex is at -1.125 m and 122 units —
+	# both whole, and exactly on the ramp's plane.
+	var apex_run: float = run / (CWAY_H * UPM)
+	if not is_equal_approx(apex_run * UPM, roundf(apex_run * UPM)):
+		push_warning(("block_fortress: a 1 in %.3f causeway ramp does not rise a whole 1/32 m unit per whole "
+				+ "unit of run, so no apex can sit on both the grid and the ramp plane — the flare will bake "
+				+ "slivers along its seam with the deck") % (run / CWAY_H))
+	var apex_x: float = -ceilf(1.0 / apex_run) * apex_run
+	var apex: float = CWAY_H * (run + apex_x) / run
+	var flare_out: float = w * 0.5 + 1.0 + CWAY_FLARE
 	for s: float in [-1.0, 1.0]:
-		var y0: float = s * w * 0.5
-		var y1: float = s * (w * 0.5 + 1.0)
-		var pts: Array = []
-		for pair: Array in [[-run, -1.0], [0.0, CWAY_H + 1.0]]:
-			for y: float in [y0, y1]:
-				pts.append(Vector3(pair[0], y, -1.0))
-				pts.append(Vector3(pair[0], y, pair[1]))
-		solid(pts, ROAD)
-	box(Vector3(-1.0, -w * 0.5 - 1.0, -6.0), Vector3(0.0, w * 0.5 + 1.0, CWAY_H), CONCRETE)
-	# The earth the ramp is banked into.
-	_embankment(0.0, -1.0, w, CWAY_H)
+		solid([
+			Vector3(-run, s * w * 0.5, -1.0), Vector3(-run, s * flare_out, -1.0),
+			Vector3(-run, s * w * 0.5, 0.0), Vector3(-run, s * flare_out, 0.0),
+			Vector3(apex_x, s * w * 0.5, -1.0), Vector3(apex_x, s * w * 0.5, apex),
+		], ROAD)
+	# A parapet along the OUTER edge of the fan, replacing those side walls.
+	#
+	# The walls were doing two jobs badly: dividing the surface, and stopping a
+	# body going over the side. Only the second is wanted, and it belongs at the
+	# outside edge, not through the middle. It follows the taper, so it is a
+	# hull like the fan rather than anything axis-aligned, and its inner face
+	# lies on the fan's outer face — touching, not overlapping.
+	#
+	# 0.9 m, as on the fort ramp: over the 0.45 m step-over, and clear of the
+	# 0.25-0.5 m band where the baker will not climb it but a body steps
+	# straight over, which is how the canal coping put squads in the water.
+	#
+	# IT ENDS AT THE FLARE'S APEX, NOT AT A ROUND x = -1. Its inner face IS
+	# the flare's outer face, and a plane is only the same plane if it runs
+	# between the same two lines — end the parapet an eighth of a metre short
+	# of where the fan ends and the two faces cross instead of touching.
+	for s: float in [-1.0, 1.0]:
+		solid([
+			Vector3(-run, s * flare_out, -1.0), Vector3(-run, s * (flare_out + 0.5), -1.0),
+			Vector3(-run, s * flare_out, 0.9), Vector3(-run, s * (flare_out + 0.5), 0.9),
+			Vector3(apex_x, s * w * 0.5, -1.0), Vector3(apex_x, s * (w * 0.5 + 0.5), -1.0),
+			Vector3(apex_x, s * w * 0.5, apex + 0.9),
+			Vector3(apex_x, s * (w * 0.5 + 0.5), apex + 0.9),
+		], ROAD)
+	# AND THEN IT HAS TO REACH THE SPAN'S OWN PARAPET. The taper above has to
+	# stop at the apex, and the apex is just short of the end of the piece, so
+	# on its own it leaves a wall that ends a metre from where the deck edge
+	# carries on — AND A WALL END BESIDE A DECK EDGE IS WHAT BROKE THE WHOLE
+	# CAUSEWAY. Proved by dropping the tapered parapet above out of the .map
+	# and changing nothing else: the bake went clean and the squad walked bank
+	# to bank. Which is not a fix — that is the rail the human asked for — so
+	# the rail stays and its END goes.
+	#
+	# Baked, the parapet's end threw a 0.6 m bulge into the deck's own contour
+	# and Recast put two boundary vertices 0.19 m apart in it, at
+	# (-7.06, 4.5, 1.59) and (-7.24, 4.5, 1.65). nav_map keys a point into
+	# cells of 0.25 m, so both are the SAME point to it: the edges leaving
+	# them got the same key, the third one hit an edge already merged twice,
+	# and the sync gave up — "Attempted to merge a navigation mesh polygon
+	# edge with another already-merged edge". What it gave up on was one
+	# degenerate polygon running from z 1.6 to z 109.25, and that polygon was
+	# the deck. The squad stopped at (0, 4.5, 109.25), 109 m from the ramp,
+	# which is why this read as a mid-span fault and not a ramp one.
+	#
+	# So the rail runs unbroken to the end of the piece, on the SPAN'S
+	# footprint — w/2 to w/2 + 1 and up to CWAY_H + 1, which is what _deck
+	# builds — so a span butted against this piece continues it with nothing
+	# to step over and no end to bulge the contour. It stands on the abutment,
+	# which is why it starts at its top at -1.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(apex_x, minf(s * w * 0.5, s * (w * 0.5 + 1.0)), -1.0),
+				Vector3(0.0, maxf(s * w * 0.5, s * (w * 0.5 + 1.0)), CWAY_H + 1.0), ROAD)
+	# The abutment is the FOOTING under the ramp, stopping at its underside.
+	# Taken up to CWAY_H it is buried inside the ramp and both side walls — the
+	# last 3 of the 7 overlapping pairs this piece shipped with.
+	box(Vector3(-1.0, -w * 0.5 - 1.0, -6.0), Vector3(0.0, w * 0.5 + 1.0, -1.0), CONCRETE)
+	# NO _embankment HERE ANY MORE. It banks earth from the deck line outwards
+	# over the same ground the flare now occupies, which is 14 more overlapping
+	# brush pairs, and its job — getting from the field up to the deck — is what
+	# the flare does, walkably, which the embankment never did: its sides fall
+	# 1 in SIDE_RUN, deliberately steeper than the baker will walk, so that on a
+	# BRIDGE the squad cannot climb the bank and fall in the river. On a causeway
+	# abutment that same slope was the wall they kept meeting.
 
 
 ## Where a span is missing: one pier standing in the water with a stub of deck
@@ -303,6 +447,43 @@ func _citadel_podium() -> void:
 	box(Vector3(-FORT_HALF, -GATE_HALF, -1.0), Vector3(-i, GATE_HALF, FORT_YARD), PAD)
 	# The way in: 60 m of ramp outside the west wall, 16 m wide, at 1 in 6.
 	ramp(-FORT_HALF - 60.0, -GATE_HALF, -FORT_HALF, GATE_HALF, -1.0, 0.0, FORT_YARD, "+x", PAD)
+	# A PARAPET DOWN BOTH SIDES OF IT, which it has never had.
+	#
+	# The ramp is a free-standing wedge with vertical flanks, ten metres high at
+	# the top and open to the air down both sides. Walked on the baked mesh, the
+	# ground beside it joins the ramp only at the very foot: from about five
+	# metres up it is a separate island, so a body halfway along has walkable
+	# mesh right next to it in plan and no way onto it. The path solver sends
+	# them back to the foot while crowd steering shoves them at the straight
+	# line, and they grind along the flank — which is what "the AI get stuck on
+	# the edges" is. On the mesh itself there is only the agent radius, 0.6 m,
+	# between a body and a ten metre drop.
+	#
+	# block_bridges already fixed this exact thing for the bridge ramps, and its
+	# comment says why: it "left every ramp in this file open down both sides,
+	# over the water, at exactly the place a squad is funnelling and shoving".
+	# This is the same wall on the same kind of edge.
+	#
+	# 0.9 m, NOT 0.3: anything from 0.25 to 0.5 is the band where the baker will
+	# not climb it but a body steps straight over it, which is how the canal
+	# coping put squads in the water. Above the 0.45 m step-over it stops them
+	# dead. It sits OUTSIDE the gate line, so the 16 m of roadway is untouched.
+	# One convex wedge a side, not upstand(): upstand builds its slope as a
+	# stack of brushes that overlap each other, which put 26 new overlapping
+	# pairs into a piece that already carries 461. This is one brush — top
+	# following the ramp, bottom flat on the ramp's own base — and it meets the
+	# ramp's flank at exactly y = +-GATE_HALF, touching and not overlapping.
+	var foot := -FORT_HALF - 60.0
+	for s: float in [-1.0, 1.0]:
+		var inner: float = s * GATE_HALF
+		var outer: float = inner + s * 0.5
+		solid([
+			Vector3(foot, inner, -1.0), Vector3(foot, outer, -1.0),
+			Vector3(foot, inner, 0.9), Vector3(foot, outer, 0.9),
+			Vector3(-FORT_HALF - 0.3, inner, -1.0), Vector3(-FORT_HALF - 0.3, outer, -1.0),
+			Vector3(-FORT_HALF - 0.3, inner, FORT_YARD + 0.75),
+			Vector3(-FORT_HALF - 0.3, outer, FORT_YARD + 0.75),
+		], TECH_WALL)
 
 
 ## The wall: 8 m thick to a walk 4 m above the yard, with a parapet outside it,
@@ -327,8 +508,13 @@ func _citadel_rim() -> void:
 	# The gateway: 16 m wide and 8 m high, with its head carried across.
 	box(Vector3(-f, -GATE_HALF, FORT_YARD + 8.0), Vector3(-inner, GATE_HALF, FORT_PARAPET + 2.0), TECH_WALL)
 	box(Vector3(-f - 0.5, -GATE_HALF - 2.0, FORT_PARAPET + 2.0), Vector3(-inner, GATE_HALF + 2.0, FORT_PARAPET + 3.0), CLAD)
+	# UNLIT. These jambs and the bastion bands below were SEAM, which puts an
+	# emissive strip down both sides of the gate and along the top of all four
+	# bastion parapets — a glowing outline round the whole curtain wall, and
+	# the thing anyone looking at the causeway sees first. The tower keeps its
+	# lit seams; the walls it stands behind do not.
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-f - 0.25, s * GATE_HALF, FORT_YARD), Vector3(-inner, s * (GATE_HALF + 0.5), FORT_PARAPET + 2.0), SEAM)
+		box(Vector3(-f - 0.25, s * GATE_HALF, FORT_YARD), Vector3(-inner, s * (GATE_HALF + 0.5), FORT_PARAPET + 2.0), TRIM)
 	_citadel_ramps()
 	_citadel_bastions()
 
@@ -371,8 +557,11 @@ func _citadel_bastions() -> void:
 			# Parapet on the two outer sides only; the inner two are the way on.
 			box(Vector3(cx + sx * 8.0, cy - 12.0, top), Vector3(cx + sx * 12.0, cy + 12.0, top + 7.0), TECH_WALL)
 			box(Vector3(cx - 12.0, cy + sy * 8.0, top), Vector3(cx + 12.0, cy + sy * 12.0, top + 7.0), TECH_WALL)
-			box(Vector3(cx + sx * 8.0, cy - 12.0, top + 6.6), Vector3(cx + sx * 12.0, cy + 12.0, top + 7.0), SEAM)
-			box(Vector3(cx - 12.0, cy + sy * 8.0, top + 6.6), Vector3(cx + 12.0, cy + sy * 12.0, top + 7.0), SEAM)
+			# The band along the top of it. TRIM, not SEAM: lit, this put a
+			# glowing line round all four bastions and the gate, which read as
+			# an outline round the whole fort from down the causeway.
+			box(Vector3(cx + sx * 8.0, cy - 12.0, top + 6.6), Vector3(cx + sx * 12.0, cy + 12.0, top + 7.0), TRIM)
+			box(Vector3(cx - 12.0, cy + sy * 8.0, top + 6.6), Vector3(cx + 12.0, cy + sy * 12.0, top + 7.0), TRIM)
 			# The walk climbs the last 24 m to it along both adjoining walls.
 			var wall_lo: float = minf(sy * inner, sy * f)
 			var wall_hi: float = maxf(sy * inner, sy * f)

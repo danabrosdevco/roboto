@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c1yuwbcnrbscj"
+path="res://.godot/imported/suburb_office_lowrise.map-7b2efd95e3116129d034a20a66a2a89f.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_office_lowrise.map"
+dest_files=["res://.godot/imported/suburb_office_lowrise.map-7b2efd95e3116129d034a20a66a2a89f.tres"]
+
+[params]
+

@@ -220,19 +220,54 @@ func _run() -> void:
 	_check("with no seat free, the bench refuses", b4.benched)
 	_check("a wreck on the bench has no deploy switch", _button_in(_card("HOPPER-1"), "") == null)
 
+	# ── A WRECK IS SCRAPPED, NOT REPAIRED ───────
+	# This used to assert REBUILD, which is now off by default: a DESTROYED
+	# frame is destroyed, and a 2x repair that quietly undoes that makes the
+	# distinction the squad HUD draws between DOWNED and DESTROYED a lie. The
+	# rebuild path still exists and is still covered — see below — it just is
+	# not what the card offers unless the campaign opts in.
 	var before := state.available()
+	var wreck_id := wreck.id
+	var expect_back := state.scrap_value(wreck)
 	_click(_card("HOPPER-1"))
-	_press(squad._detail, "REBUILD")
-	_check("REBUILD brings a wreck back", wreck.status == SoldierRecord.Status.ACTIVE and wreck.damage == 0)
-	_check("...for its price", state.available() < before)
+	_check("a wreck offers SCRAP", _button_in(squad._detail, "SCRAP") != null)
+	_check("...and does NOT offer REBUILD by default",
+		_button_in(squad._detail, "REBUILD") == null)
+	_press(squad._detail, "SCRAP")
+	var still_there := false
+	for r in state.roster:
+		if r.id == wreck_id:
+			still_there = true
+	_check("SCRAP takes the wreck off the roster", not still_there)
+	_check("...and pays a third of the frame back",
+		state.available() == before + expect_back,
+		"%d -> %d, expected +%d" % [before, state.available(), expect_back])
+
+	# The opt-in path, so turning allow_rebuild back on is covered too.
+	var wreck2 := state.recruit(state.catalogue.chassis_def(&"soldier"))
+	if wreck2 != null:
+		wreck2.status = SoldierRecord.Status.DESTROYED
+		wreck2.damage = wreck2.max_health
+		state.allow_rebuild = true
+		squad.rebuild()
+		_click(_card(wreck2.display_name.to_upper()))
+		var cost_before := state.available()
+		_press(squad._detail, "REBUILD")
+		_check("with allow_rebuild on, REBUILD is offered and brings a wreck back",
+			wreck2.status == SoldierRecord.Status.ACTIVE and wreck2.damage == 0)
+		_check("...for its price", state.available() < cost_before)
+		state.allow_rebuild = false
 
 	# THE RECLAIMER'S SLOT IS ITS BOOM. Empty, the welder is on it — so an empty
 	# slot there is not an unarmed robot, and the slot says what is in it.
 	_check("a Reclaimer on its welder is not an unarmed robot", _card("RECLAIMER-1") != null
 		and not _says(_card("RECLAIMER-1"), "NO WEAPON"))
 	_click(_card("RECLAIMER-1"))
+	# ARTICULATED ARM, not "TOOL". The slot is named for what it IS — a mount a
+	# later frame could also have — rather than for the welder that happens to be
+	# on it, and it matches the mount class the armorer card prints.
 	_check("...its empty slot shows the welder, and is a slot to fill",
-		_says(squad._detail, "WELDER") and _says(squad._detail, "TOOL"))
+		_says(squad._detail, "WELDER") and _says(squad._detail, "ARTICULATED ARM"))
 	_click(_card("MECHANIC-1"))
 	_check("a mechanic has no weapon slot to pick, so it shows its built-in welder",
 		_says(squad._detail, "WELDER"))

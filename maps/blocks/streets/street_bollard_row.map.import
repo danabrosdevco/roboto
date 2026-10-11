@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://xdl6vo5rdxg0"
+path="res://.godot/imported/street_bollard_row.map-e207502d9d821624639f897b154179ea.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_bollard_row.map"
+dest_files=["res://.godot/imported/street_bollard_row.map-e207502d9d821624639f897b154179ea.tres"]
+
+[params]
+

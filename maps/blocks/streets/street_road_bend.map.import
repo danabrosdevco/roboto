@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c85q1erfuyt4d"
+path="res://.godot/imported/street_road_bend.map-c6d3555a45b59bb289eca976f4f510a3.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_road_bend.map"
+dest_files=["res://.godot/imported/street_road_bend.map-c6d3555a45b59bb289eca976f4f510a3.tres"]
+
+[params]
+

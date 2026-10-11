@@ -1,0 +1,729 @@
+[gd_scene load_steps=13 format=3]
+
+; ─────────────────────────────────────────────
+; GEORGETOWN — THE GAMEPLAY LAYER, AS ITS OWN SCENE.
+;
+; WHY THIS IS NOT IN maps/georgetown_level.tscn. That file is WRITTEN BY
+; tools/build_georgetown.gd. Its _write_level() emits the whole thing as text
+; from a template, so every hand-added node in it is destroyed by the next
+; --force rebuild — which is how the Hillfort's relay and extraction went
+; missing and shipped a mission with a blank objective HUD.
+;
+; So the level holds exactly ONE line of gameplay: an instance of this scene.
+; Re-applying it after a rebuild is tools/mission_ops.sh, which is two lines
+; of insertion and nothing else. Everything a mission names lives here, in a
+; file the terrain tools do not know about and cannot overwrite.
+;
+; EVERY POSITION IN HERE HAS BEEN WALKED, not eyeballed:
+;   LEVEL=res://maps/georgetown_level.tscn godot --headless --audio-driver Dummy \
+;       --path . --script res://tools/probe_mission_anchors.gd
+; snaps each one to the baked navmesh and paths to it from the spawn. A post on
+; an island is a garrison that stands still for the whole operation and nothing
+; says so, which is the single most expensive authoring mistake on this map.
+;
+; TWO THINGS THE BAKE DECIDES AND THIS SCENE HAS TO RESPECT:
+;
+;   1. THE TOWN STOPS AT z = -140. The town bench is tiled back to z = -264,
+;      but the navmesh's filter_baking_aabb starts at -140, so the modern
+;      office block (z = -180) and the whole north third of the bench have no
+;      walkable ground on them. Nothing up there can be a post, an objective or
+;      an extraction.
+;   2. THE RIVER EDGE STOPS AT z = +160. The piers and the boathouse run out to
+;      z = 186 and are off the mesh — which is why TERRAIN's own GT_Pier pin
+;      reads 6.5 m off it. The esplanade at 162 is the last walkable line.
+;
+; THE SHAPE OF THE OPERATION. Four flat benches, 14 m of fall between the top
+; and the river, and the only ways between them are stairs, two ramped streets
+; and the canal crossings. So the mission is a climb, and each bench is a
+; stage with its own relay:
+;
+;   WHARF   z +116..+226, y -8   the derelict park. You come ashore here.
+;   YARDS   z  +46..+106, y -4   the industrial level. The stack is on it.
+;   CANAL   z    0,       y  0   the cut. Five crossings, one of them a lock.
+;   TOWN    z -140..-48,  y +4   rowhouses either side of one street.
+;
+; Up through all four, and out the east end of the upper street — so the
+; operation crosses the map diagonally rather than straight up it, and uses
+; every bench's full length instead of one stair on each.
+; ─────────────────────────────────────────────
+
+[ext_resource type="PackedScene" uid="uid://g7fmy28elpah" path="res://Env/world_objects/spawn_point.tscn" id="1_spawn"]
+[ext_resource type="Script" path="res://Campaign/squad_spawn_point.gd" id="2_squad"]
+[ext_resource type="PackedScene" uid="uid://62y43tyd5sx6" path="res://Env/world_objects/squad_objective_point.tscn" id="3_post"]
+[ext_resource type="PackedScene" uid="uid://v7tw1nq0fdn0" path="res://Managers/AI/patrol_path.tscn" id="4_route"]
+[ext_resource type="PackedScene" uid="uid://b7uq15mvhy6vq" path="res://Managers/AI/patrol_point.tscn" id="5_point"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point_small.tscn" id="6_capture"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point.tscn" id="10_capture_mid"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point_large.tscn" id="11_capture_big"]
+[ext_resource type="Script" path="res://Campaign/eliminate_objective.gd" id="7_eliminate"]
+[ext_resource type="Script" path="res://Campaign/reach_objective.gd" id="8_reach"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="9_exit"]
+
+[sub_resource type="SphereShape3D" id="Sphere_gt_extract"]
+radius = 11.0
+
+[node name="GeorgetownOps" type="Node3D"]
+
+; WHERE YOU COME IN. The west end of the park, on the lowest bench, facing
+; east down the two path spines — so the first thing on screen is the length
+; of the waterfront and the stack standing over the far end of it.
+;
+; NOT the SpawnPoint build_georgetown.gd writes, which stands in the UPPER
+; TOWN: that is the top of the climb and the end of this operation. Theirs is
+; left alone for pressing F5 on the map; the level's `spawn_point` export is
+; pointed at this one by tools/mission_ops.sh.
+[node name="MissionStart" parent="." instance=ExtResource("1_spawn")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -200, -8, 152)
+
+; No cap. Every hand-built level in this project writes 999 over the export's
+; own default, and the one that did not deployed four robots out of a
+; seven-seat squad with nothing to say about it.
+[node name="SquadSpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -196, -8, 144)
+script = ExtResource("2_squad")
+max_slots = 999
+
+; ── THE POSTS ────────────────────────────────
+; What a mission's post_tag, spawn_tag and route_tag resolve to, through
+; EnemyForceSpawner._find_point and the "squad_objective_points" group. Named
+; after what is actually standing there, because a callsign holding "The
+; Scaffold" tells a reader where the fight is and "Point 14" does not.
+[node name="Posts" type="Node" parent="."]
+
+; ── WHARF, y = -8. The park, and the esplanade along the water. ──
+[node name="GT_Landing" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200, -8, 152)
+objective_name = "The Landing"
+tag = &"obj_gt_landing"
+show_debug_label = false
+
+[node name="GT_Aqueduct" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -176, -8, 150)
+objective_name = "Aqueduct Piers"
+tag = &"obj_gt_aqueduct"
+show_debug_label = false
+
+[node name="GT_ParkWest" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -180, -8, 118)
+objective_name = "West Park Walk"
+tag = &"obj_gt_park_west"
+show_debug_label = false
+
+[node name="GT_Tennis" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -148, -8, 132)
+objective_name = "The Tennis Court"
+tag = &"obj_gt_tennis"
+show_debug_label = false
+
+[node name="GT_EsplanadeW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -120, -8, 160)
+objective_name = "West Esplanade"
+tag = &"obj_gt_esplanade_w"
+show_debug_label = false
+
+[node name="GT_Pergola" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -94, -8, 132)
+objective_name = "The Pergola"
+tag = &"obj_gt_pergola"
+show_debug_label = false
+
+[node name="GT_StairWFoot" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -74, -8, 118)
+objective_name = "West Wharf Stair"
+tag = &"obj_gt_stair_w_foot"
+show_debug_label = false
+
+[node name="GT_Bandstand" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, -8, 132)
+objective_name = "The Bandstand"
+tag = &"obj_gt_bandstand"
+show_debug_label = false
+
+[node name="GT_WharfMarket" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, -8, 160)
+objective_name = "The Wharf Market"
+tag = &"obj_gt_wharf_market"
+show_debug_label = false
+
+[node name="GT_Fountain" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, -8, 132)
+objective_name = "The Dry Fountain"
+tag = &"obj_gt_fountain"
+show_debug_label = false
+
+[node name="GT_Esplanade" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -8, 162)
+objective_name = "The Esplanade"
+tag = &"obj_gt_esplanade"
+show_debug_label = false
+
+[node name="GT_Quay" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, -8, 160)
+objective_name = "The Quay"
+tag = &"obj_gt_quay"
+show_debug_label = false
+
+[node name="GT_Playground" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 124, -8, 132)
+objective_name = "The Playground"
+tag = &"obj_gt_playground"
+show_debug_label = false
+
+[node name="GT_StairEFoot" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, -8, 118)
+objective_name = "East Wharf Stair"
+tag = &"obj_gt_stair_e_foot"
+show_debug_label = false
+
+[node name="GT_EsplanadeE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 190, -8, 152)
+objective_name = "East Esplanade"
+tag = &"obj_gt_esplanade_e"
+show_debug_label = false
+
+; ── YARDS, y = -4. The old industrial level, under the stack. ──
+; The two wharf stairs land here at x -74 and x +150 and they are the only
+; ways up off the park, so both heads are worth holding and both are posted.
+[node name="GT_StairWHead" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -74, -4, 112)
+objective_name = "West Stair Head"
+tag = &"obj_gt_stair_w_head"
+show_debug_label = false
+
+[node name="GT_StairEHead" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, -4, 112)
+objective_name = "East Stair Head"
+tag = &"obj_gt_stair_e_head"
+show_debug_label = false
+
+[node name="GT_Stack" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 86, -4, 112)
+objective_name = "The Stack"
+tag = &"obj_gt_stack"
+show_debug_label = false
+
+[node name="GT_Compound" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, 86)
+objective_name = "The Works Compound"
+tag = &"obj_gt_compound"
+show_debug_label = false
+
+[node name="GT_Yards" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62, -4, 70)
+objective_name = "The Lower Yards"
+tag = &"obj_gt_yards"
+show_debug_label = false
+
+; In FRONT of the stone warehouse, not in it. At z 80 this was inside the
+; building and the probe called it unreachable; the warehouses sit at z 85.5
+; and run 11 m back.
+[node name="GT_Warehouse" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -170, -4, 74)
+objective_name = "The Stone Warehouse"
+tag = &"obj_gt_warehouse"
+show_debug_label = false
+
+[node name="GT_YardMill" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, -4, 80)
+objective_name = "The Yard Mill"
+tag = &"obj_gt_yard_mill"
+show_debug_label = false
+
+; The viaducts are the only roofed ground on the bench and the only thing on
+; it with a view down the whole yard — which is what makes the east one worth
+; naming as an objective rather than just posting a squad on.
+[node name="GT_ViaductW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -206, -4, 72)
+objective_name = "West Viaduct"
+tag = &"obj_gt_viaduct_w"
+show_debug_label = false
+
+[node name="GT_ViaductE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 206, -4, 72)
+objective_name = "East Viaduct"
+tag = &"obj_gt_viaduct_e"
+show_debug_label = false
+
+[node name="GT_YardStairW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -176, -4, 58)
+objective_name = "West Yard Stair"
+tag = &"obj_gt_yard_stair_w"
+show_debug_label = false
+
+[node name="GT_YardStairE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, -4, 58)
+objective_name = "East Yard Stair"
+tag = &"obj_gt_yard_stair_e"
+show_debug_label = false
+
+[node name="GT_YardRamp" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, -4, 52)
+objective_name = "The Yard Ramp"
+tag = &"obj_gt_yard_ramp"
+show_debug_label = false
+
+; ── CANAL, y = 0. The cut, its towpaths, and the five ways over it. ──
+; Bays 2, 6, 9 and 11 carry bridges and bay 8 is the lock; the lock's coping
+; is a dry crossing over the gates. Five crossings over 450 m means the canal
+; is a decision rather than a wall, and every one of them is posted so holding
+; it costs the garrison something.
+[node name="GT_Mill" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -212, 0, -12)
+objective_name = "The Long Mill"
+tag = &"obj_gt_mill"
+show_debug_label = false
+
+[node name="GT_MillRow" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -180, 0, -12)
+objective_name = "The Mill Row"
+tag = &"obj_gt_mill_row"
+show_debug_label = false
+
+[node name="GT_TrussWest" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -144, 0, 0)
+objective_name = "West Footbridge"
+tag = &"obj_gt_truss_west"
+show_debug_label = false
+
+[node name="GT_Scaffold" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -144, 0, -13)
+objective_name = "The Scaffold"
+tag = &"obj_gt_scaffold"
+show_debug_label = false
+
+; On the BED beside the sandbags, not on top of them. The cofferdam is a
+; stepped climb whose top is its own little island — an anchor up there snaps
+; to the one surface in the prism nothing can walk onto.
+[node name="GT_Cofferdam" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -112, -3, -2)
+objective_name = "The Cofferdam"
+tag = &"obj_gt_cofferdam"
+show_debug_label = false
+
+[node name="GT_TowpathW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 0, -12)
+objective_name = "West Towpath"
+tag = &"obj_gt_towpath_w"
+show_debug_label = false
+
+[node name="GT_Berm" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 0, -12)
+objective_name = "The Berm"
+tag = &"obj_gt_berm"
+show_debug_label = false
+
+[node name="GT_RoadBridge" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, 0)
+objective_name = "The Street Bridge"
+tag = &"obj_gt_road_bridge"
+show_debug_label = false
+
+[node name="GT_LockYard" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -12)
+objective_name = "The Lock Yard"
+tag = &"obj_gt_lock_yard"
+show_debug_label = false
+
+; THE COPING, NOT THE CHAMBER FLOOR. The lock sills are 0.55 m and the baker
+; climbs 0.25, so the chamber is its own island and an anchor down there is
+; one nothing can walk to.
+[node name="GT_Lock" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, -6)
+objective_name = "The Lock"
+tag = &"obj_gt_lock"
+show_debug_label = false
+
+[node name="GT_Plank" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 0, 0)
+objective_name = "The Plank Bridge"
+tag = &"obj_gt_plank"
+show_debug_label = false
+
+[node name="GT_TowpathE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120, 0, -12)
+objective_name = "East Towpath"
+tag = &"obj_gt_towpath_e"
+show_debug_label = false
+
+[node name="GT_TrussEast" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 144, 0, 0)
+objective_name = "East Footbridge"
+tag = &"obj_gt_truss_east"
+show_debug_label = false
+
+[node name="GT_CanalMarket" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0, -14)
+objective_name = "Towpath Market"
+tag = &"obj_gt_canal_market"
+show_debug_label = false
+
+[node name="GT_CanalWorks" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 164, 0, -20)
+objective_name = "The Canal Works"
+tag = &"obj_gt_canal_works"
+show_debug_label = false
+
+[node name="GT_TownStairW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -112, 0, -30)
+objective_name = "West Town Stair"
+tag = &"obj_gt_town_stair_w"
+show_debug_label = false
+
+[node name="GT_TownRamp" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 0, -42)
+objective_name = "The Ramped Street"
+tag = &"obj_gt_town_ramp"
+show_debug_label = false
+
+[node name="GT_TownStairE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 144, 0, -30)
+objective_name = "East Town Stair"
+tag = &"obj_gt_town_stair_e"
+show_debug_label = false
+
+; ── TOWN, y = +4. Federal rowhouses either side of one street. ──
+; The tightest ground on the map and the last stage. Everything open is below
+; it, which is the whole point of putting the end of the climb up here.
+[node name="GT_TownWest" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200, 4, -96)
+objective_name = "The West End"
+tag = &"obj_gt_town_west"
+show_debug_label = false
+
+[node name="GT_TownNW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -180, 4, -130)
+objective_name = "North-West Corner"
+tag = &"obj_gt_town_nw"
+show_debug_label = false
+
+[node name="GT_StreetW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -164, 4, -96)
+objective_name = "Water Street, West"
+tag = &"obj_gt_street_w"
+show_debug_label = false
+
+[node name="GT_TownStairWHead" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -112, 4, -44)
+objective_name = "West Stair, Top"
+tag = &"obj_gt_town_stair_w_head"
+show_debug_label = false
+
+[node name="GT_RowNW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 4, -128)
+objective_name = "North Terrace, West"
+tag = &"obj_gt_row_nw"
+show_debug_label = false
+
+[node name="GT_RowS" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 4, -66)
+objective_name = "South Terrace"
+tag = &"obj_gt_row_s"
+show_debug_label = false
+
+[node name="GT_TownRampHead" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 4, -60)
+objective_name = "Ramp Head"
+tag = &"obj_gt_town_ramp_head"
+show_debug_label = false
+
+[node name="GT_Street" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 4, -96)
+objective_name = "Water Street"
+tag = &"obj_gt_street"
+show_debug_label = false
+
+[node name="GT_RowN" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 4, -128)
+objective_name = "North Terrace"
+tag = &"obj_gt_row_n"
+show_debug_label = false
+
+; The back lane behind the north terrace. The last 4 m of walkable bench
+; before the baking box ends at z = -140 — anything further north is off the
+; mesh, which is why nothing is posted beyond this line.
+[node name="GT_BackLane" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 4, -136)
+objective_name = "The Back Lane"
+tag = &"obj_gt_back_lane"
+show_debug_label = false
+
+[node name="GT_RowSE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 4, -66)
+objective_name = "South Terrace, East"
+tag = &"obj_gt_row_se"
+show_debug_label = false
+
+[node name="GT_Ramp" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 132, 2, -50)
+objective_name = "East Ramped Street"
+tag = &"obj_gt_ramp"
+show_debug_label = false
+
+[node name="GT_StreetE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 164, 4, -96)
+objective_name = "Water Street, East"
+tag = &"obj_gt_street_e"
+show_debug_label = false
+
+[node name="GT_TownNE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 180, 4, -130)
+objective_name = "North-East Corner"
+tag = &"obj_gt_town_ne"
+show_debug_label = false
+
+[node name="GT_StreetOut" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 4, -96)
+objective_name = "The Upper Road"
+tag = &"obj_gt_street_out"
+show_debug_label = false
+
+[node name="GT_TownMill" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 224, 4, -112)
+objective_name = "The Town Mill"
+tag = &"obj_gt_town_mill"
+show_debug_label = false
+
+; ── THE ROUTES ───────────────────────────────
+; One per bench, each walked end to end. ping_pong on every one: these are
+; benches, not circuits, and a route that teleports its index back to the
+; start sends a squad walking through the terrace wall it just came along.
+[node name="Routes" type="Node" parent="."]
+
+[node name="PatrolEsplanade" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_gt_esplanade"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolEsplanade" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -180, -8, 118)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolEsplanade" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, -8, 132)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolEsplanade" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, -8, 132)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolEsplanade" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 190, -8, 152)
+display_index = 3
+
+[node name="PatrolYards" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_gt_yards"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4"), NodePath("P5")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolYards" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -176, -4, 58)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolYards" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62, -4, 70)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolYards" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, 86)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolYards" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, -4, 80)
+display_index = 3
+
+[node name="P5" parent="Routes/PatrolYards" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 206, -4, 72)
+display_index = 4
+
+[node name="PatrolTowpath" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_gt_towpath"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4"), NodePath("P5")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolTowpath" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -180, 0, -12)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolTowpath" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 0, -12)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolTowpath" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -12)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolTowpath" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120, 0, -12)
+display_index = 3
+
+[node name="P5" parent="Routes/PatrolTowpath" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 164, 0, -20)
+display_index = 4
+
+[node name="PatrolTown" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_gt_town"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolTown" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200, 4, -96)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolTown" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 4, -96)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolTown" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 164, 4, -96)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolTown" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 4, -96)
+display_index = 3
+
+; ── THE OBJECTIVES ───────────────────────────
+; ONE RELAY PER BENCH, in the order the climb takes them, and the channel gets
+; longer as you go up: 6 seconds in the park, 14 on the street. A long channel
+; is the mission asking for ground to be HELD rather than reached, and holding
+; the top of a terraced town is a harder promise than holding a corner of a
+; derelict park — so the number says which.
+;
+; Every one of these is also a reserve trigger: a mission's reinforcement_tag
+; IS an objective id, so finishing a relay is what calls the next column in.
+;
+; ── TWO THINGS ABOUT THE CORES THEMSELVES ────
+;
+; 1. THE SIZE SAYS WHAT THE OBJECTIVE IS WORTH, and it is chosen against the
+;    ground rather than the importance. Measured collision footprints:
+;      small   1.88 x 1.88,  4.19 m tall
+;      medium  3.38 x 3.38,  6.97 m tall
+;      large   5.19 x 5.19, 12.38 m tall
+;    These go in AFTER the navmesh is baked, so the baker knows nothing about
+;    them and the squad paths straight at one. On open ground that is a body
+;    sliding round a post; in a lane barely wider than the core it is a squad
+;    stuck in a doorway. So: large only where there is twenty metres of open
+;    ground round it, medium at twelve, small otherwise.
+;
+; 2. THE ALCOVE FACES THE PREFAB'S -X, and it is the one spot a body can stand
+;    while it channels — docs/BLOCKS.md asks for these to be yawed to face the
+;    approach "the way the relay dish is yawed", and no map in the project had
+;    done it. Every core below is turned to face the direction the squad
+;    arrives from. yaw 0 opens west, 90 opens south, 180 east, -90 north.
+
+[node name="RelayPark" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, -8, 132)
+channel_duration = 6.0
+id = &"gt_relay_park"
+display_name = "The Bandstand"
+description = "Under the bandstand roof in the middle of the derelict park, with the beds and the hedges round it and nothing above it but the terrace wall. Six seconds. It is the easiest of the four and it is the one that tells them you are here."
+reward_resources = 50
+linked_squad_point = NodePath("../Posts/GT_Bandstand")
+
+[node name="RelayStack" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("10_capture_mid")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 86, -4, 112)
+channel_duration = 9.0
+id = &"gt_relay_stack"
+display_name = "The Stack"
+description = "At the foot of the forty-four metre chimney on the yards bench — the one thing on this map you can see from every level of it, which cuts both ways. Nine seconds in the open, with the stair heads either side of you and a viaduct at each end of the bench looking down the length of it."
+reward_resources = 80
+linked_squad_point = NodePath("../Posts/GT_Stack")
+
+[node name="RelayLock" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("10_capture_mid")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, -9)
+channel_duration = 12.0
+id = &"gt_relay_lock"
+display_name = "The Lock"
+description = "On the lock coping beside the gates, which are the only dry crossing of the canal that is not a bridge somebody is holding. Twelve seconds standing over a nine-metre slot with towpaths both sides and a mechanic in the lock yard standing their armour back up as fast as you knock it down."
+reward_resources = 110
+linked_squad_point = NodePath("../Posts/GT_Lock")
+
+[node name="RelayStreet" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("11_capture_big")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -40, 4, -108)
+channel_duration = 14.0
+id = &"gt_relay_street"
+display_name = "Water Street"
+description = "Top bench, in the open between the carriageway and the north pavement, with a brick terrace twenty metres away on both sides and marksmen behind the north one. Fourteen seconds — long enough for everything still alive below you to come up the ramp, and long enough for the column on the upper road to arrive. Do not start it until you own a doorway."
+reward_resources = 160
+compute_reward = 1
+linked_squad_point = NodePath("../Posts/GT_Street")
+
+; ── OPTIONAL ─────────────────────────────────
+; All four of these sit OFF the climb, which is what makes them a choice: each
+; one costs a detour along a bench you would otherwise cross, and each one
+; takes something away from the fight above it.
+
+[node name="RelayMill" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -212, 0, -6)
+channel_duration = 8.0
+id = &"gt_relay_mill"
+display_name = "The Long Mill"
+description = "The far west end of the mill row, two hundred metres off the line of the climb. Nobody makes you go. Eight seconds at it, and the pay is the best on the map for a relay this size."
+optional = true
+reward_resources = 120
+linked_squad_point = NodePath("../Posts/GT_Mill")
+
+; A nest is a squad of one, so the callsign IS the target set. No zone: a
+; volume round the works compound would also count everything the nest is busy
+; hatching and would have to be drawn to fit a garrison it knows nothing about.
+[node name="HiveYards" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, 86)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"GLUTTON"])
+id = &"gt_hive_yards"
+display_name = "The Yard Hive"
+description = "Inside the works compound in the middle of the yards. Leave it and it feeds chasers up the stairs behind you for as long as the operation lasts."
+optional = true
+reward_resources = 70
+linked_squad_point = NodePath("../Posts/GT_Compound")
+
+[node name="HiveTown" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 4, -128)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"NIGHTJAR"])
+id = &"gt_hive_town"
+display_name = "The Terrace Hive"
+description = "In the back lane behind the north terrace, four metres from the edge of the walkable bench. It is the reason the last fight keeps refilling."
+optional = true
+reward_resources = 90
+linked_squad_point = NodePath("../Posts/GT_RowNW")
+
+[node name="Listening" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 206, -4, 72)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"SABLE"])
+id = &"gt_listening"
+display_name = "The East Viaduct"
+description = "Two marksmen and a spotter under the arches at the east end of the yards, which is the only roofed thing on the bench with a view down all of it. Take it and the long guns above you are shooting at what they can see themselves."
+optional = true
+reward_resources = 60
+linked_squad_point = NodePath("../Posts/GT_ViaductE")
+
+; ── THE WAY OUT ──────────────────────────────
+; The east end of the upper street, which is the far corner of the map from
+; the landing. requires_objectives_complete on the exit as well as the
+; prerequisites on the objective: the pad is not a way home until the climb is
+; finished, and a player standing on an inert pad with no reason given is a
+; player who thinks the mission is broken.
+[node name="LevelExit" parent="." instance=ExtResource("9_exit")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 200, 4, -96)
+requires_objectives_complete = true
+
+[node name="GTExtract" type="Node3D" parent="LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
+script = ExtResource("8_reach")
+area = NodePath("Area3D")
+squad_radius = 30.0
+id = &"gt_extract"
+display_name = "Out On The Upper Road"
+description = "East end of Water Street, where the town road leaves the map. Four benches above where you came ashore and the whole width of it away."
+prerequisites = [NodePath("../../RelayPark"), NodePath("../../RelayStack"), NodePath("../../RelayLock"), NodePath("../../RelayStreet")]
+is_extraction = true
+
+[node name="Area3D" type="Area3D" parent="LevelExit/GTExtract"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LevelExit/GTExtract/Area3D"]
+shape = SubResource("Sphere_gt_extract")

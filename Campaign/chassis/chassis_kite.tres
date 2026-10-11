@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/kite.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"kite"
+display_name = "Kite"
+description = "Coaxial rotors and a gun in a pod. Carries a turret gun to altitude and fires down from it, which puts rounds on a position before anything on legs has found a route there. Ninety hull, it never stops moving, and it never shoots straight because of it. An EMP drops it out of the sky."
+scene = ExtResource("2_scene")
+cost = 240
+purchasable = true
+supply = 2
+starting_weapon_id = &"machine_gun"
+coax_weapon_id = &""
+base_health = 90
+base_speed = 1.0
+base_accuracy = 1.0
+base_sensor_range = 70.0
+weapon_slots = 1
+built_in = ""
+weapon_replaces_built_in = false
+turret = true
+vehicle = true
+drives = false
+equipment_slots = 0
+module_slots = 2
+musters_at_base = false
+required_rank = 1

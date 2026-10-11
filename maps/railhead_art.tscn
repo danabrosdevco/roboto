@@ -1,0 +1,289 @@
+[gd_scene load_steps=10 format=3 uid="uid://7gu1l6g3rxax"]
+
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_trackbed.tscn" id="1_q3log"]
+[ext_resource type="PackedScene" path="res://maps/railhead_station.tscn" id="4_p1lc3"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_hull_motive.tscn" id="5_kic5x"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_ops.tscn" id="6_2086q"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_repair.tscn" id="7_e6kt3"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_armoury.tscn" id="8_bya02"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_fab.tscn" id="9_mcje0"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_barracks.tscn" id="10_tv31b"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_platform.tscn" id="11_dnslj"]
+
+[node name="RailheadArt" type="Node3D"]
+
+[node name="Ground" type="Node3D" parent="."]
+
+[node name="Trackbed" parent="Ground" instance=ExtResource("1_q3log")]
+
+[node name="Station" parent="Ground" instance=ExtResource("4_p1lc3")]
+
+[node name="Rake" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, 0)
+
+[node name="Car1_Motive" parent="Rake" instance=ExtResource("5_kic5x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 96)
+
+[node name="Car2_Operations" parent="Rake" instance=ExtResource("6_2086q")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 64)
+
+[node name="Car3_Repair" parent="Rake" instance=ExtResource("7_e6kt3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 32)
+
+[node name="Car4_Armoury" parent="Rake" instance=ExtResource("8_bya02")]
+
+[node name="Car5_Fabrication" parent="Rake" instance=ExtResource("9_mcje0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -32)
+
+[node name="Car6_Barracks" parent="Rake" instance=ExtResource("10_tv31b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -64)
+
+[node name="Car7_Platform" parent="Rake" instance=ExtResource("11_dnslj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -96)
+
+[node name="Markers" type="Node3D" parent="."]
+
+[node name="HoloTable" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4875, 64)
+
+[node name="HoloTable_ViewA" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 1.1875, 64)
+
+[node name="HoloTable_ViewB" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 1.1875, 64)
+
+[node name="BriefingBoard" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3875, 79.65)
+
+[node name="Seating_Aisle" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, 76)
+
+[node name="RepairBay_1" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.1875, 24)
+
+[node name="RepairBay_2" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.1875, 24)
+
+[node name="RepairBay_3" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.1875, 40)
+
+[node name="RepairBay_4" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.1875, 40)
+
+[node name="Armoury" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, 0)
+
+[node name="Fabrication" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -32)
+
+[node name="FabricationMount_1_Fitted" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7, 1.1875, -40)
+
+[node name="FabricationMount_1_Empty" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 1.1875, -40)
+
+[node name="FabricationMount_2_Fitted" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7, 1.1875, -32)
+
+[node name="FabricationMount_2_Empty" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 1.1875, -32)
+
+[node name="FabricationMount_3_Fitted" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7, 1.1875, -24)
+
+[node name="FabricationMount_3_Empty" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 1.1875, -24)
+
+[node name="BarracksRack_01" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -78.4375)
+
+[node name="BarracksRack_02" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -75.8125)
+
+[node name="BarracksRack_03" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -73.1875)
+
+[node name="BarracksRack_04" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -70.5625)
+
+[node name="BarracksRack_05" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -67.9375)
+
+[node name="BarracksRack_06" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -65.3125)
+
+[node name="BarracksRack_07" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -62.6875)
+
+[node name="BarracksRack_08" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -60.0625)
+
+[node name="BarracksRack_09" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -57.4375)
+
+[node name="BarracksRack_10" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -54.8125)
+
+[node name="BarracksRack_11" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -52.1875)
+
+[node name="BarracksRack_12" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -49.5625)
+
+[node name="PlayerArrival" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1875, -104)
+
+[node name="SquadMuster" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -92)
+
+[node name="SquadMuster_Slot1" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -95)
+
+[node name="SquadMuster_Slot2" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -92.5)
+
+[node name="SquadMuster_Slot3" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -90)
+
+[node name="SquadMuster_Slot4" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -87.5)
+
+[node name="PlatformDoor" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 1.1875, -96)
+
+[node name="PlatformDoor_Outside" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.25, 1.1875, -96)
+
+[node name="PlatformDoor_LeafClosed" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.45, 2.8875, -96)
+
+[node name="PlatformDoor_LeafOpen" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.45, 2.8875, -92.75)
+
+[node name="PlatformDoor_Zone" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.1875, -96)
+
+[node name="Backdrop_Left" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 4.6875, 0)
+
+[node name="Backdrop_Right" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 4.6875, 0)
+
+[node name="Lights" type="Node3D" parent="."]
+
+[node name="Lamp_Operations_0" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 56)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 0.7
+omni_range = 5.5
+
+[node name="Lamp_Operations_1" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 72)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 0.7
+omni_range = 5.5
+
+[node name="Lamp_Repair_0" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 20)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Repair_1" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 28)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Repair_2" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 36)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Repair_3" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 44)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Armoury_0" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -12)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Armoury_1" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -4)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Armoury_2" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 4)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Armoury_3" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 12)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Fabrication_0" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -44)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Fabrication_1" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -36)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Fabrication_2" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -28)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Fabrication_3" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -20)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Barracks_0" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 4.1875, -76)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Barracks_1" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 4.1875, -68)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Barracks_2" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 4.1875, -60)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Barracks_3" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 4.1875, -52)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Platform_0" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -108)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Platform_1" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -100)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Platform_2" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -92)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Platform_3" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -84)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_HoloTable" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0875, 64)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 1.6

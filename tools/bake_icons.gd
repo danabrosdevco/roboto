@@ -96,9 +96,17 @@ func _run() -> void:
 		if tool_model == null:
 			skipped.append("%s (no model at %s)" % [built_in_id, _Art.BUILT_INS[built_in_id]])
 			continue
+		# Framed like an item of the same name can be. A welder is a tube and reads
+		# side-on; the designator is a slab with a screen and reads as a bar from
+		# the side, so it says so in FRAMINGS rather than every built-in being
+		# assumed to be a tube.
+		var tool_framing: int = _Studio.Framing.SIDE
+		match str(_Art.FRAMINGS.get(built_in_id, "")):
+			"upright": tool_framing = _Studio.Framing.UPRIGHT
+			"three_quarter": tool_framing = _Studio.Framing.THREE_QUARTER
 		for size_name in _Art.SIZES["wide"]:
 			var size: Vector2i = _Art.SIZES["wide"][size_name]
-			var img: Image = await studio.render_model(tool_model, size, _Studio.Framing.SIDE,
+			var img: Image = await studio.render_model(tool_model, size, tool_framing,
 				false, false, 1.0 if size_name == "s" else 0.0)
 			if img == null:
 				skipped.append("%s (%s)" % [built_in_id, size_name])
@@ -122,29 +130,41 @@ func _run() -> void:
 	for frame: ChassisDefinition in frames:
 		if frame == null or frame.scene == null or (not only.is_empty() and not only.has(frame.id)):
 			continue
-		for size_name in _Art.SIZES["frame"]:
-			var size: Vector2i = _Art.SIZES["frame"][size_name]
-			# Frames are drawn as outlines at every size, small ones included.
-			# Filled, the 40px cut is a green blob — a row of them on the squad
-			# cards and the debrief says nothing about what each robot IS, and
-			# a rover and a soldier read as the same smudge. Items keep the
-			# fill: at 16px their lines really do run together.
-			# ARMED, IF ITS SCENE DOES NOT ALREADY CARRY A GUN. A Rover's turret
-			# takes whatever is fitted and is empty in the scene, so the Rover
-			# and the Lobber Rover — same hull, different issue — drew the same
-			# picture. Only frames that come up empty are fitted here; anything
-			# that models its own weapon (the marksman and its rifle) is left
-			# exactly as it was.
-			var img: Image = await studio.render_body(_armed_body(frame, catalogue), size,
-				_Studio.Framing.THREE_QUARTER, false, false, 0.0)
-			if img == null:
-				skipped.append("%s (%s)" % [frame.id, size_name])
-				continue
-			var file := "%s/chassis/%s_%s.png" % [out_dir, frame.id, size_name]
-			if _save(img, file):
-				made.append(file)
-				if size_name == "l":
-					sheet_parts.append([String(frame.id), img])
+		# ONE ICON PER HAT THE FRAME CAN WEAR, plus the bare one.
+		#
+		# Cosmetics.for_frame always leads with NONE, so the first pass round
+		# this loop writes exactly the file that was written before hats existed
+		# and nothing that reads icons has to change to keep working. The rest
+		# land beside it as <id>__<hat>_<size>.png.
+		#
+		# The hat arrives through the SAME route it does in a mission: a
+		# cosmetic_id meta on the body, read by RankKit when it enters the tree.
+		# Rendering it any other way would let the card and the battlefield
+		# disagree, which is the one thing an icon must never do.
+		for cosmetic: StringName in Cosmetics.for_frame(frame.id):
+			for size_name in _Art.SIZES["frame"]:
+				var size: Vector2i = _Art.SIZES["frame"][size_name]
+				# Frames are drawn as outlines at every size, small ones included.
+				# Filled, the 40px cut is a green blob — a row of them on the squad
+				# cards and the debrief says nothing about what each robot IS, and
+				# a rover and a soldier read as the same smudge. Items keep the
+				# fill: at 16px their lines really do run together.
+				# ARMED, IF ITS SCENE DOES NOT ALREADY CARRY A GUN. A Rover's turret
+				# takes whatever is fitted and is empty in the scene, so the Rover
+				# and the Lobber Rover — same hull, different issue — drew the same
+				# picture. Only frames that come up empty are fitted here; anything
+				# that models its own weapon (the marksman and its rifle) is left
+				# exactly as it was.
+				var img: Image = await studio.render_body(_hatted_body(frame, catalogue, cosmetic), size,
+					_Studio.Framing.THREE_QUARTER, false, false, 0.0)
+				if img == null:
+					skipped.append("%s (%s)" % [frame.id, size_name])
+					continue
+				var file := "%s/chassis/%s%s_%s.png" % [out_dir, frame.id, Cosmetics.icon_suffix(cosmetic), size_name]
+				if _save(img, file):
+					made.append(file)
+					if size_name == "l" and cosmetic == Cosmetics.NONE:
+						sheet_parts.append([String(frame.id), img])
 
 	print("bake_icons: %d icons written to %s" % [made.size(), out_dir])
 	if not skipped.is_empty():
@@ -206,3 +226,36 @@ func _sheet(parts: Array) -> Image:
 			(i / cols) * cell.y + (cell.y - img.get_height()) / 2)
 		sheet.blend_rect_mask(ink, img, Rect2i(Vector2i.ZERO, img.get_size()), at)
 	return sheet
+
+
+# The armed body, wearing a hat.
+#
+# THROUGH THE META, NOT BY ADDING THE SCENE HERE. RankKit reads `cosmetic_id`
+# off the body when it enters the tree and mounts the hat itself, offsetting it
+# out of rig space on the way. Reproducing that here would be a second
+# implementation of the placement, and the day the two disagreed the card would
+# show a hat sitting somewhere the battlefield never puts it.
+func _hatted_body(frame: ChassisDefinition, catalogue: ItemCatalogue, cosmetic: StringName) -> Node:
+	var body := _armed_body(frame, catalogue)
+	body.set_meta("cosmetic_id", cosmetic)
+	if cosmetic == Cosmetics.NONE:
+		return body
+
+	# FITTED HERE, NOT LEFT TO RankKit.
+	#
+	# The first pass set the meta and trusted the component to do the rest, the
+	# way a mission does. It baked 72 variants byte-identical to the bare icon,
+	# because icon_studio._strip() calls set_script(null) on every node of the
+	# body BEFORE it enters the tree — so RankKit is dead by the time its _ready
+	# would have run, and nothing ever put a hat on.
+	#
+	# It still goes through RankKit.mount_hat, which is static and works on
+	# local transforms for exactly this reason. The placement has one
+	# implementation; only the trigger differs.
+	var kit := body.get_node_or_null("RankKit")
+	if kit == null:
+		return body
+	var mount := kit.get("mount") as Node3D
+	var authored_in := kit.get("authored_in") as Node3D
+	RankKit.mount_hat(Cosmetics.scene(cosmetic), mount, authored_in)
+	return body

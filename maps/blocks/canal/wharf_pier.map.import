@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b61hv4vq7xqqo"
+path="res://.godot/imported/wharf_pier.map-ba904a6267e11138be9250871e11be64.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/wharf_pier.map"
+dest_files=["res://.godot/imported/wharf_pier.map-ba904a6267e11138be9250871e11be64.tres"]
+
+[params]
+

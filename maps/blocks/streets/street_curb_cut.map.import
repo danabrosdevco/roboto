@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b7itpec2tl0e7"
+path="res://.godot/imported/street_curb_cut.map-1d29d55f8dd5c810d5c5c3ac456afed3.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_curb_cut.map"
+dest_files=["res://.godot/imported/street_curb_cut.map-1d29d55f8dd5c810d5c5c3ac456afed3.tres"]
+
+[params]
+

@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_bulwark.tres" id="4_bulwark"]
+[ext_resource type="Resource" uid="uid://vw46h82csp7a" path="res://Campaign/chassis/chassis_soldier.tres" id="5_soldier"]
+[ext_resource type="Resource" uid="uid://daikhvrvnhg7g" path="res://Campaign/chassis/chassis_walker.tres" id="6_walker"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "5 rifles vs 2 Bulwarks"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_bulwark"), ExtResource("4_bulwark")])
+hostile_order = 1
+distance = 45.0
+repeats = 3
+time_limit = 150.0
+swap_sides = false
+hostiles_on_post = false
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "5 rifles vs 2 Walkers — the control"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_walker"), ExtResource("6_walker")])
+hostile_order = 1
+distance = 45.0
+repeats = 3
+time_limit = 150.0
+swap_sides = false
+hostiles_on_post = false
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M3"]
+script = ExtResource("2_match")
+label = "10 rifles vs 2 Bulwarks at 20 m — a fight you can watch"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier"), ExtResource("5_soldier")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_bulwark"), ExtResource("4_bulwark")])
+hostile_order = 1
+distance = 20.0
+repeats = 3
+time_limit = 150.0
+swap_sides = false
+hostiles_on_post = false
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[resource]
+script = ExtResource("1_plan")
+title = "Bulwark screen"
+question = "Five riflemen advancing onto two Bulwarks in open ground at 45 m, and the same five onto two Walkers as a control. Watch rather than count: the numbers from a six-fight sample will not settle a balance question and are not meant to.
+
+WHAT TO WATCH, in order.
+
+THE ARM. A Bulwark can bear up to 40 degrees off its torso without turning, and past that the whole body has to come round slowly. Against five targets spread across a frontage that should be visible as the gun flicking between men while the shield stays pointed where it was. If instead the whole mech slews every time it changes target, the split yaw is not doing anything and the shield is decorative.
+
+THE SHIELD, AND WHETHER IT IS POINTED AT ANYTHING. The arm is independent of the TORSO, not of the BODY — a planted Bulwark still turns its whole body to face a target, and the shield goes with it. Advancing is when the split is supposed to pay off, which is why both sides advance here. If the shield never ends up between the frame and the rifles, the feature is live and useless and the thing to change is _desired_facing.
+
+SUPPRESSION, BOTH WAYS. Fire is measured along a round's flight path now, so five rifles putting rounds past two advancing frames should be pinning them hard — and signal_resistance 2.4 is what the Bulwark pays to survive that. Watch whether the Bulwarks spend the fight in DEGRADED or worse, which would mean the resistance is too low, or whether they stroll through it, which would mean it is too high. The second Bulwark standing behind the first should be visibly better off; if it is not, standing in the lane is not actually buying anything.
+
+THE WALK. The gun arm swings with the stride out of combat and settles onto the target as contact starts. The transition is the thing to look at — a snap between marching and aiming is the failure, and 13 degrees of pitch swing may be a flail rather than a march at speed.
+
+THE CONTROL MATCHUP answers the only question that matters for whether this chassis should exist: is a fight against two Bulwarks a different fight from one against two Walkers? Same supply either way — six against the squad's five. If the two play the same, the Bulwark is a reskinned Walker with better numbers."
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2"), SubResource("M3")])
+repeats_override = 0
+speed = 1.0

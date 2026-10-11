@@ -721,7 +721,7 @@ func test_old_saves_are_paid_for_past_clears() -> void:
 
 func test_utility_harness_adds_a_slot() -> void:
 	var cat := real_catalogue()
-	var state := make_state(1000)
+	var state := make_state(4000)
 	state.catalogue = cat
 	var s := state.recruit(cat.chassis_def(&"soldier"))
 	for id in [&"utility_harness", &"emp", &"frag", &"hatchling"]:
@@ -750,6 +750,16 @@ func test_utility_harness_adds_a_slot() -> void:
 	var b := state.recruit(cat.chassis_def(&"soldier"))
 	for id in [&"optics", &"optics", &"optics", &"cyclic_feed", &"cyclic_feed"]:
 		state.buy_item(cat.item(id))
+	# THE PURSE HAS TO COVER THE SHOPPING, OR THIS TESTS NOTHING. Raising the
+	# Sensor Relay from 70 to 125 took the three of them past what the fixture
+	# was funded with; buy_item quietly failed, fit_item had nothing to fit, and
+	# the run died on a null a few lines down — while still printing PASS,
+	# because a suite that aborts has simply run fewer checks. Assert the stock
+	# landed, so the next price change fails loudly instead of shrinking the run.
+	check("(setup) the fixture could afford the shopping",
+		state.armoury.spare(&"optics") == 3 and state.armoury.spare(&"cyclic_feed") == 2,
+		"optics=%d feeds=%d purse=%d" % [state.armoury.spare(&"optics"),
+			state.armoury.spare(&"cyclic_feed"), state.available()])
 	check("a Sensor Relay fits", state.fit_item(a, relay, 0))
 	check("...but not a second on the same robot", not state.fit_item(a, relay, 1) and a.module_ids[1] == &"",
 		str(a.module_ids))

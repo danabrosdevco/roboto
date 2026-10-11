@@ -405,9 +405,8 @@ func _draw_live(r: Rect2) -> void:
 	var uv := _data.to_uv(player.global_position)
 	var p := Vector2(uv.x * r.size.x, uv.y * r.size.y)
 	# An arrow, not a dot: which way you are FACING is half of orienting
-	# yourself on a map, and a dot cannot say it.
-	var yaw: float = -player.global_transform.basis.z.signed_angle_to(Vector3.FORWARD, Vector3.UP)
-	var fwd := Vector2(sin(yaw), -cos(yaw))
+	# yourself on a map, and a dot cannot say it. See map_arrow below.
+	var fwd := map_arrow(-player.global_transform.basis.z)
 	var side := Vector2(-fwd.y, fwd.x)
 	var pts := PackedVector2Array([
 		p + fwd * 11.0, p - fwd * 6.0 + side * 7.0, p - fwd * 6.0 - side * 7.0])
@@ -424,6 +423,33 @@ func _find_player(node: Node) -> Node3D:
 		if f != null:
 			return f
 	return null
+
+
+## A world facing turned into a direction on the minimap.
+##
+## TAKEN STRAIGHT OFF THE AXES to_uv USES, not routed through an angle. This
+## used to go via signed_angle_to(FORWARD) and rebuild a vector as (sin, -cos),
+## and that pair negates the VERTICAL component only: the arrow came out correct
+## facing east or west and exactly backwards facing north or south. A mirror,
+## not a rotation — which is why it survived, because half the headings look
+## right. Reported as "reversed 180 degrees" on Qamareen, whose run is north to
+## south, but it was never that map: every minimap had it.
+##
+## MinimapData.to_uv maps world X to u and world Z to v, so a world direction
+## already IS a screen direction in the same two components, with no
+## trigonometry at all. Pass Godot's forward, which is -basis.z.
+##
+## Out here as a function rather than inline in _draw_overlay so the suite can
+## check all four headings against to_uv's axes. Inline, it was untestable, and
+## untestable is how it shipped backwards.
+static func map_arrow(forward: Vector3) -> Vector2:
+	var flat := Vector2(forward.x, forward.z)
+	if flat.length_squared() < 0.0001:
+		# Facing straight up or down. The body does not pitch, so this should
+		# not happen — but a zero vector draws a degenerate arrow, which is
+		# harder to spot than one pointing north.
+		return Vector2(0.0, -1.0)
+	return flat.normalized()
 
 
 # ─────────────────────────────────────────────

@@ -196,6 +196,13 @@ var _base_cache := {}
 
 func _ready() -> void:
 	_ready_done = true
+	# FINDABLE AT RUNTIME. Anything that needs to ask "is this spot under water"
+	# has to locate the terrain first, and a class-name search down the tree is
+	# not something a robot can afford once a second. The group is the cheap
+	# answer — and it is joined HERE rather than in the scene so a map that
+	# forgets the group still works. See submersion_at() below, and the note in
+	# AIManager._ready about the "ai_manager" group that nothing ever joined.
+	add_to_group(&"terrain")
 	# The water instances live outside the node tree, so they have to be told
 	# when the terrain moves.
 	set_notify_transform(true)
@@ -203,6 +210,50 @@ func _ready() -> void:
 		recipe.changed.connect(_on_recipe_changed)
 	rebuild()
 	_unpave_the_river()
+
+
+# ─────────────────────────────────────────────
+# HOW DEEP IS THE WATER HERE?
+#
+# Asked by anything that drowns. It deliberately uses the SAME test
+# water_navmesh.strip() uses to decide which polygons to cut — below
+# water_level + FREEBOARD, and inside the painted water mask — so "there is no
+# navmesh here" and "this would drown you" can never disagree. If they drifted
+# apart you would get water you can stand in but not path through, or ground
+# that kills you for walking on it.
+#
+# The mask matters as much as the height: water_level is a single plane across
+# the whole map, so a height test alone would drown anything standing in a
+# quarry or a cellar that happens to sit low. water_at_local() is painted, per
+# sample, and only true where a surface is actually drawn.
+#
+# Returns metres BELOW the surface, and 0.0 for anywhere that is not water —
+# so a caller compares against its own tolerance rather than testing two things.
+# ─────────────────────────────────────────────
+func submersion_at(world: Vector3) -> float:
+	if data == null or not data.has_water():
+		return 0.0
+	var surface: float = data.water_level
+	if world.y >= surface + WaterNavmesh.FREEBOARD:
+		return 0.0   # above the deck line: a bridge, a bank, anything dry
+	var local: Vector3 = to_local(world)
+	if not data.water_at_local(local.x, local.z):
+		return 0.0   # low ground, but no water painted over it
+	return maxf(surface - world.y, 0.0)
+
+
+## Metres below the surface at `world`, or 0.0 when there is no terrain with
+## water in the level. Static so a caller does not have to hold a reference to
+## the terrain, and group-based so it costs one lookup rather than a tree walk.
+static func submersion_in(tree: SceneTree, world: Vector3) -> float:
+	if tree == null:
+		return 0.0
+	for t in tree.get_nodes_in_group(&"terrain"):
+		if t is GeneratedTerrain:
+			var d: float = (t as GeneratedTerrain).submersion_at(world)
+			if d > 0.0:
+				return d
+	return 0.0
 
 
 ## Rivers are not navigable. The bake cannot tell a river bed from any other
@@ -214,11 +265,38 @@ func _unpave_the_river() -> void:
 		return
 	if _data == null or not _data.has_water():
 		return   # dry level — the whole question does not arise
-	var region := get_parent() as NavigationRegion3D
+	var region := _navigation_region()
 	if region == null:
-		push_warning("%s has water but does not sit under a NavigationRegion3D, so its river bed stays walkable" % name)
+		push_warning("%s has water but no NavigationRegion3D anywhere above it, so its river bed stays walkable" % name)
 		return
 	WaterNavmesh.strip(region, self)
+
+
+## The NavigationRegion3D whose mesh this terrain's water should be cut out of.
+##
+## THIS USED TO BE get_parent(), FULL STOP. Then the maps were split into an art
+## scene and a level scene and the terrain moved into the art half — where its
+## parent is the art root and the region is a sibling of that whole instance, a
+## level further up. get_parent() stopped being a NavigationRegion3D for every
+## map in the game, so every river became wadeable and the only sign was one
+## warning line at load. Three Rivers reached all eight hardpoints and the exit
+## with sixteen of its seventeen bridges taken out.
+##
+## So it climbs: this node, then each ancestor, and at every step the children of
+## that ancestor — which is where the region sits when the terrain is inside an
+## instanced art scene. The old layout still resolves on the first step up.
+func _navigation_region() -> NavigationRegion3D:
+	var node: Node = self
+	while node != null:
+		if node is NavigationRegion3D:
+			return node as NavigationRegion3D
+		var parent := node.get_parent()
+		if parent != null:
+			for sibling in parent.get_children():
+				if sibling is NavigationRegion3D:
+					return sibling as NavigationRegion3D
+		node = parent
+	return null
 
 
 func _notification(what: int) -> void:

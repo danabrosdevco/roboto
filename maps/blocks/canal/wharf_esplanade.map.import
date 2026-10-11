@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c53pkfvhjy34f"
+path="res://.godot/imported/wharf_esplanade.map-851097963a4480bfbe662d1fa1f0ae83.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/wharf_esplanade.map"
+dest_files=["res://.godot/imported/wharf_esplanade.map-851097963a4480bfbe662d1fa1f0ae83.tres"]
+
+[params]
+

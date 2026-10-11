@@ -269,18 +269,149 @@ func _ready() -> void:
 # ─────────────────────────────────────────────
 # PROCESS — context monitoring
 # ─────────────────────────────────────────────
+# A SQUAD IS ALL THINKING AND NO ACTING, so unlike Enemy's tick there is no half
+# of this that has to run every frame — a squad has no legs, no facing and no
+# trigger. It decides where its members ought to be and hands them orders; the
+# members do the acting, every frame, on their own.
+#
+# So the whole tick answers the same cost model the robots do (see "HOW OFTEN A
+# ROBOT DECIDES ANYTHING" in enemy.gd): distance sets the floor, state modifies
+# it, and a firefight is the CHEAP tier. Measured on Qamareen with the full
+# garrison: 67 squads ticking this cost 1.20 ms of a 5.05 ms _process frame, the
+# largest identified item in it after the weapons.
+#
+# WHAT THIS DOES NOT DO is take a slice of Enemy's per-frame microsecond budget.
+# That budget exists because robot thinking scales with the number of ROBOTS; a
+# squad tick scales with the number of SQUADS, which is an order of magnitude
+# smaller and bounded by the mission file rather than by the battle. And a
+# refused squad tick is a different kind of damage from a refused robot think —
+# a squad that misses its turn leaves its members standing on a stale order,
+# which outlives the frame it was refused on. Tiering it is enough; starving it
+# is not worth the behaviour risk.
+
+## Seconds between squad ticks, by how far the squad is from the player's eye.
+## Coarser across the board than a robot's: a squad issues orders, and orders are
+## already rationed by _may_recall (1.6 s) and the nudge timer (3.0 s), so there
+## was never any point asking sixty times a second.
+const SQUAD_THINK_NEAR: float = 2.0 / 60.0
+const SQUAD_THINK_MID: float = 6.0 / 60.0
+const SQUAD_THINK_FAR: float = 20.0 / 60.0
+
+var _think_owed: float = 0.0
+## Spread from the start, like every other periodic timer in the AI: 67 squads
+## created in one spawner loop would otherwise tick in lockstep forever, which is
+## the spike the tiering is meant to remove rather than relocate. Seeded in the
+## declaration because a Squad can be built either by the level or by a spawner
+## and only _ready() is common to both.
+var _think_wait: float = randf() * SQUAD_THINK_FAR
+
+
+## 0 near, 1 mid, 2 far — the robots' bands, asked about the squad.
+##
+## PROBED FROM ONE MEMBER, not from get_center(): the centre builds an Array
+## through a lambda to average positions it is about to throw away, and this runs
+## on every tick of every squad. A squad is a few metres across and the nearest
+## band boundary is 35 m away, so one member's position answers the same question
+## for a transform read.
+func _think_tier() -> int:
+	if player_commandable:
+		return 0   # the player's own squad is never far from the player's eye
+	var probe: Soldier = null
+	for ai in squad_members:
+		if ai != null and is_instance_valid(ai) and ai.alive:
+			probe = ai
+			break
+	if probe == null:
+		return 2   # nobody left standing: nothing to look at and nobody to order
+	var eye: Player = probe.player
+	if eye == null or not is_instance_valid(eye):
+		return 0   # no player to be far from (a test rig, the lab): full fidelity
+	var d_sq: float = probe.global_position.distance_squared_to(eye.get_focus_position())
+	if d_sq <= probe.lod_near_distance * probe.lod_near_distance:
+		return 0
+	if d_sq <= probe.lod_far_distance * probe.lod_far_distance:
+		return 1
+	return 2
+
+
+## Seconds this squad may go without a tick.
+func think_wait_seconds() -> float:
+	# THE SQUAD YOU ARE COMMANDING IS NEVER SLICED, and a FOLLOW order is by
+	# definition the squad walking at your shoulder. _hold_follow_formation is
+	# authoritative EVERY frame on purpose — it re-asserts the slot rather than
+	# issuing an order and hoping, because there are at least five paths in Enemy
+	# that can start a movement (see the note on _tick_follow). Slice that and the
+	# formation comes apart exactly the way it did before it was made
+	# authoritative.
+	if objective == SquadObjective.FOLLOW or player_commandable:
+		return 0.0
+	var tier: int = _think_tier()
+	var floor_s: float = SQUAD_THINK_NEAR if tier == 0 else \
+		(SQUAD_THINK_MID if tier == 1 else SQUAD_THINK_FAR)
+	# A FIREFIGHT IS THE CHEAP TIER, the same counter-intuitive rule the robots
+	# follow. While a squad is ENGAGED its members are fighting for themselves and
+	# every branch of this tick is deliberately hands-off: _tick_defend and
+	# _tick_follow fall through to _enforce_leash, which does nothing at all to
+	# anyone inside its radius, and _tick_assault skips anyone already shooting at
+	# something it can hit. There is very little here for a chaotic frame to do.
+	if context == SquadContext.ENGAGED:
+		return minf(floor_s * Enemy.THINK_COMBAT_SCALE, Enemy.THINK_CEILING)
+	return floor_s
+
+
+# ─────────────────────────────────────────────
+# WHAT THE SQUAD LAYER COSTS, COUNTED.
+#
+# This tick runs in _process, not _physics_process — so it lands in the IDLE
+# frame, and every performance measurement taken on this project reads
+# TIME_PHYSICS_PROCESS. The squad layer has been invisible to all of them. It
+# cannot be measured through TIME_PROCESS either: in headless the idle frame
+# includes the main loop's pacing sleep, which is why idle time goes DOWN as
+# physics goes up and why an empty map reads ~6-9 ms of "idle work".
+#
+# An explicit timer does not care about any of that. Cumulative, read by
+# tools/bench_qamareen.gd; same pattern as Enemy._nav_spent_us.
+static var _squad_spent_us: int = 0
+static var _squad_ticks: int = 0
+
+
 func _process(delta: float) -> void:
-	_tick_follow(delta)
-	_tick_patrol(delta)
+	var _at := Time.get_ticks_usec()
+	_tick_body(delta)
+	_squad_spent_us += Time.get_ticks_usec() - _at
+
+
+func _tick_body(delta: float) -> void:
+	_squad_ticks += 1
+	_think_owed += delta
+	_think_wait -= delta
+	if _think_wait > 0.0:
+		return
+	# OWED, NOT THIS FRAME'S. Every timer below counts in seconds —
+	# AGGRESSIVE_PULL_INTERVAL, CONTACT_GRACE, DISENGAGE_CHECK_INTERVAL,
+	# OBJECTIVE_NUDGE_INTERVAL, patrol_dwell — so charging them the delta since
+	# the last tick leaves all of their periods exactly as authored. Only the
+	# granularity coarsens, and by at most think_wait_seconds().
+	var owed: float = _think_owed
+	_think_owed = 0.0
+	_tick_follow(owed)
+	_tick_patrol(owed)
 	_tick_defend()
 	_tick_assault()
-	_tick_contact(delta)
-	_tick_aggressive_pull(delta)
+	_tick_contact(owed)
+	_tick_aggressive_pull(owed)
 	match context:
 		SquadContext.ENGAGED:
-			_tick_engaged(delta)
+			_tick_engaged(owed)
 		SquadContext.UNENGAGED:
-			_tick_unengaged(delta)
+			_tick_unengaged(owed)
+	# AFTERWARDS, from the context this tick has just settled on. _tick_contact
+	# promotes into ENGAGED and _tick_engaged stands back down out of it, so read
+	# before the ticks this would hand a squad that just lost contact a
+	# firefight's wait on its way out of the firefight, and a squad that just
+	# found one an idle wait on its way in. Same reasoning as the matching line in
+	# Enemy's tick.
+	_think_wait = think_wait_seconds()
 
 
 # ─────────────────────────────────────────────
@@ -327,7 +458,11 @@ func _current_contact() -> AI:
 		# target is an AI (Player extends it too), and a cast that fails yields
 		# null, which the caller already handles.
 		return squad_combat_target as AI
-	for ai in get_living_members():
+	# Iterated rather than filtered, for the reason spelled out above
+	# has_live_contact(): this is the other per-tick O(members) scan.
+	for ai in squad_members:
+		if ai == null or not is_instance_valid(ai) or not ai.alive:
+			continue
 		var t = ai.combat_target
 		if t != null and is_instance_valid(t) and t.alive:
 			return t as AI
@@ -621,6 +756,22 @@ func _hold_follow_formation() -> void:
 func _on_ground(slot: Vector3, robot: Node) -> Vector3:
 	if not (robot is Enemy) or (robot as Enemy).nav_agent == null:
 		return slot
+	# STRAIGHT AT THE SERVER, NOT THROUGH THE SNAP BUDGET.
+	#
+	# It went through Enemy.snap_on_map for one pass and that was a mistake. The
+	# budget is six queries a frame across every robot in the level, sized for
+	# advance targets — and roughly two hundred robots want a formation slot.
+	# Nearly all of them were refused, snap_on_map hands back the raw point when
+	# it refuses, and _slot_for CACHES the difference: so the correction cached
+	# as ZERO and stayed zero until the slot drifted.
+	#
+	# What that looked like: slots sitting wherever the formation maths put them,
+	# including out over the water beside a bridge, and robots jammed against the
+	# parapet walking at a slot that was not on the deck.
+	#
+	# _slot_for IS the throttle. It only asks when a slot has drifted
+	# follow_snap_refresh, which is already far less than once a frame. Putting a
+	# cache behind a budget bought nothing and broke the thing it was measuring.
 	var p := NavigationServer3D.map_get_closest_point((robot as Enemy).nav_agent.get_navigation_map(), slot)
 	return slot if p == Vector3.ZERO else p
 
@@ -784,8 +935,16 @@ func _issue_patrol_orders(force: bool = false) -> void:
 # just lost sight of a target and is moving to their last known position is
 # still in contact by any sane reading, and excluding it was most of the reason
 # the HUD flickered back to CLEAR.
+## ITERATED, NOT FILTERED. This is asked on every tick of every squad, and
+## get_living_members() answers it by building a whole new Array through a lambda
+## — an allocation and a call per member, for a question whose answer is usually
+## "no" and is almost always decided by the first member. Same test, same order,
+## no garbage. is_instance_valid is new and is strictly safer: get_living_members
+## never checked it, so a roster holding a freed body errored on `.alive`.
 func has_live_contact() -> bool:
-	for ai in get_living_members():
+	for ai in squad_members:
+		if ai == null or not is_instance_valid(ai) or not ai.alive:
+			continue
 		if not ai is Enemy:
 			continue
 		var robot := ai as Enemy
@@ -985,6 +1144,23 @@ func set_objective(
 
 	objective = new_objective
 	objective_position = position
+	# A FRESH ORDER IS A WATCHED MOMENT, for the squad and for its members.
+	#
+	# For the squad: without this one, a squad sitting on a 0.33 s far-band cadence
+	# would wait up to a third of a second before acting on the objective it was
+	# just given — and the one that matters most is FOLLOW, which wants every
+	# frame from the frame it arrives.
+	#
+	# For the members: THIS IS THE ONLY PLACE THAT KNOWS AN ORDER CAME FROM
+	# OUTSIDE. Enemy.move_to cannot tell a squad order from a robot's own repath
+	# (see the note there), and a robot that marks its own decisions watched never
+	# leaves full rate. An objective change is unambiguous and it is rare — a
+	# player order, a designer objective, a patrol leg, a disengage — so the cost
+	# of the window is paid once per order rather than once per repath.
+	_think_wait = 0.0
+	for ai in squad_members:
+		if ai != null and is_instance_valid(ai):
+			ai.mark_watched()
 	_latch_axis()
 	objective_changed.emit(self)
 
@@ -997,6 +1173,18 @@ func set_objective(
 	_issue_objective_orders(force)
 
 func _issue_objective_orders(force: bool = false) -> void:
+	# WHO IS ON A ROUTE, FOR THE CULL. A hostile beyond activation_distance is
+	# frozen, which is right for a garrison and wrong for a patrol: measured,
+	# three of Qamareen's four patrol squads walked 0.0 m in two minutes and
+	# none advanced a leg, because they sat culled on point 0 until the player
+	# came within 75 m. Every patrol in the game was therefore found parked at
+	# the start of its route. Set here rather than in _issue_patrol_orders so
+	# that it is also CLEARED by every other objective, and the exemption never
+	# outlives the patrol that earned it.
+	var patrolling: bool = objective == SquadObjective.PATROL
+	for ai in get_orderable_members():
+		if "on_patrol" in ai:
+			ai.on_patrol = patrolling
 	match objective:
 		SquadObjective.ADVANCE:
 			var members: Array = get_orderable_members()
@@ -1218,6 +1406,125 @@ func receive_player_order(
 		return
 
 	set_objective(order, position, true)
+
+
+# ─────────────────────────────────────────────
+# ORDERED EQUIPMENT — "smoke there", and how many actually answer
+# ─────────────────────────────────────────────
+
+## How wide a single placement is reckoned to cover, in metres. Smoke's cloud is
+## seven across and a cluster mine scatters over six, so one answer per six
+## metres of frontage is close enough for both and nobody has to tune it per
+## item.
+const EQUIPMENT_COVER_METRES: float = 6.0
+## Spacing between the points when more than one robot answers. Slightly tighter
+## than the cover width so the pattern OVERLAPS — two clouds with a four metre
+## hole between them is not a screen, it is a doorway.
+const EQUIPMENT_SPREAD_METRES: float = 5.0
+
+
+## Who in this squad can answer an order for `item_id`, nearest the mark first.
+## Public so the designator can count holders for its readout without spending
+## anything to find out.
+func equipment_holders(item_id: StringName, at: Vector3) -> Array:
+	var out: Array = []
+	for m in get_orderable_members():
+		if m == null or not is_instance_valid(m):
+			continue
+		if not m.has_method("can_answer_equipment_order"):
+			continue
+		if m.can_answer_equipment_order(item_id):
+			out.append(m)
+	out.sort_custom(func(a, b):
+		return a.global_position.distance_squared_to(at) \
+			< b.global_position.distance_squared_to(at))
+	return out
+
+
+## THE SQUAD DECIDES HOW MANY, NOT "EVERYONE WHO HAS ONE".
+##
+## Smoke is two canisters per robot per mission. Four robots answering one order
+## spends four of them on a seven metre gap and leaves nothing for the disengage
+## that actually needs it — and four clouds on one point is one cloud. So the
+## frontage asked for decides the count, and that many holders answer, nearest
+## the mark first.
+##
+## `frontage` is 0 for a single point, which is what the designator sends: one
+## answer. It exists because the same primitive has to serve a line of mines
+## later, and a line is the only thing that needs more than one.
+##
+## Returns {spent, asked, reason} — `reason` is the FIRST refusal from a robot
+## that was asked and could not, so the HUD can say why nothing happened rather
+## than leaving a key that looks broken.
+func receive_player_equipment_order(item_id: StringName, at: Vector3,
+		use_point: bool = true, frontage: float = 0.0) -> Dictionary:
+	var result := {"spent": 0, "asked": 0, "reason": ""}
+	var holders := equipment_holders(item_id, at)
+	result["asked"] = holders.size()
+	if holders.is_empty():
+		# THREE DIFFERENT ANSWERS, and the player does a different thing about
+		# each. `equipment_holders` filters on readiness, so everyone being on
+		# cooldown looks exactly like nobody carrying one — and being told you
+		# have no smoke while a robot stands there with a canister left is worse
+		# than no message at all.
+		result["reason"] = _why_nobody_answered(item_id)
+		return result
+
+	var wanted: int = 1
+	if use_point and frontage > EQUIPMENT_COVER_METRES:
+		wanted = int(ceil(frontage / EQUIPMENT_COVER_METRES))
+	wanted = mini(wanted, holders.size())
+
+	# Across the threat, not along it. A screen laid in a line pointing AT the
+	# enemy covers a strip nobody is shooting down; perpendicular to the bearing
+	# it covers the frontage. With one answer this is a no-op.
+	var axis := _spread_axis(at)
+	for i in wanted:
+		var who = holders[i]
+		var offset: float = (float(i) - float(wanted - 1) * 0.5) * EQUIPMENT_SPREAD_METRES
+		var mark: Vector3 = at + axis * offset if wanted > 1 else at
+		var refusal: String = who.order_use_equipment(item_id, mark, use_point)
+		if refusal == "":
+			result["spent"] = int(result["spent"]) + 1
+		elif result["reason"] == "":
+			result["reason"] = refusal
+
+	if int(result["spent"]) > 0:
+		_acknowledge_order()
+	return result
+
+
+## Why an order found nobody, told apart: not carried at all, carried but spent,
+## or carried and still cooling down. Go buy some / you are out for this mission
+## / wait a moment are three different instructions.
+func _why_nobody_answered(item_id: StringName) -> String:
+	var carried := 0
+	var with_uses := 0
+	for m in get_orderable_members():
+		if m == null or not is_instance_valid(m) or not m.has_method("equipment_slot_for"):
+			continue
+		var index: int = m.equipment_slot_for(item_id)
+		if index < 0:
+			continue
+		carried += 1
+		var slots = m.get("equipment_slots")
+		if slots != null and index < slots.size() and slots[index].has_uses():
+			with_uses += 1
+	if carried == 0:
+		return "nobody carrying"
+	return "reloading" if with_uses > 0 else "none left"
+
+
+## The line a spread is laid along: perpendicular to the squad's view of the
+## mark, flattened. Taken from the squad CENTRE rather than from each thrower,
+## so two robots standing either side of the mark do not lay their halves of
+## the pattern across each other.
+func _spread_axis(at: Vector3) -> Vector3:
+	var from := get_center()
+	var toward := Vector3(at.x - from.x, 0.0, at.z - from.z)
+	if toward.length_squared() < 0.0001:
+		return Vector3.RIGHT
+	return toward.normalized().cross(Vector3.UP).normalized()
 
 
 func _issue_defend_orders() -> void:

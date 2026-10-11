@@ -199,7 +199,13 @@ func _bake() -> bool:
 	var verts := mesh.get_vertices()
 	print("   baked %d vertices, %d polygons in %.1f s" % [
 			verts.size(), mesh.get_polygon_count(), (Time.get_ticks_msec() - t0) / 1000.0])
-	if verts.size() < 500:
+	# 500 is a guard against baking headless with no display, where the whole
+	# mesh comes back empty or nearly so. It assumes an outdoor level. A small
+	# interior legitimately bakes a few hundred — the railhead train is 303
+	# polygons and entirely real — so the floor is overridable rather than a
+	# reason to go and lower it in the file.
+	var floor_verts := int(OS.get_environment("MIN_VERTS")) if OS.get_environment("MIN_VERTS") != "" else 500
+	if verts.size() < floor_verts:
 		print("FAIL  that is far too few — is this running with a display?")
 		return false
 	var ok := _write_back(verts, mesh)
@@ -209,6 +215,21 @@ func _bake() -> bool:
 
 
 func _write_back(verts: PackedVector3Array, mesh: NavigationMesh) -> bool:
+	# A LEVEL MAY KEEP ITS NAVMESH IN ITS OWN .tres INSTEAD OF A SUB-RESOURCE.
+	# causeway does: maps/causeway_level_nav.tres. Rewriting the scene text then
+	# finds no NavigationMesh block in it and the bake is thrown away — which is
+	# how causeway came to be measured against a navmesh nobody had rebaked.
+	#
+	# The path has to come from the SCENE TEXT, not from mesh.resource_path: an
+	# instantiated scene hands back a local copy whose resource_path is empty.
+	var ext := _external_navmesh()
+	if ext != "":
+		var err := ResourceSaver.save(mesh, ext)
+		if err != OK:
+			print("FAIL  could not save %s (%s)" % [ext, error_string(err)])
+			return false
+		print("   wrote the navmesh to %s" % ext.get_file())
+		return true
 	var polys: Array = []
 	for i in mesh.get_polygon_count():
 		polys.append(mesh.get_polygon(i))
@@ -247,3 +268,24 @@ func _write_back(verts: PackedVector3Array, mesh: NavigationMesh) -> bool:
 	w.close()
 	print("   wrote the navmesh back into %s" % level_path.get_file())
 	return true
+
+
+## The path of an external NavigationMesh the level points at, or "" if it
+## keeps one inline. Read out of the scene text because an instantiated node
+## hands back a local copy with no resource_path.
+func _external_navmesh() -> String:
+	var text := FileAccess.get_file_as_string(level_path)
+	if text == "":
+		push_warning("probe_nav_hillfort: could not read %s to look for an external navmesh" % level_path)
+		return ""
+	for line in text.split("\n"):
+		if not line.begins_with("[ext_resource"):
+			continue
+		if not line.contains("type=\"NavigationMesh\""):
+			continue
+		var at := line.find("path=\"")
+		if at < 0:
+			continue
+		var rest := line.substr(at + 6)
+		return rest.substr(0, rest.find("\""))
+	return ""

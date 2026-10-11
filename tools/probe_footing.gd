@@ -36,6 +36,26 @@ const ABSURD := 40.0
 const DROWNED := 2.5
 ## How many columns across the footprint the piece is measured in.
 const GRID := 16
+## HOW THICK "THE FOOTING" IS. Only the columns whose geometry comes within this
+## of the piece's own lowest point are measured; the rest are canopy.
+##
+## THIS IS THE FIX FOR 136 FALSE POSITIVES. The median used to be taken over
+## EVERY covered column, and for anything that is narrow at the bottom and wide
+## at the top that median is not the footing at all:
+##
+##   prop_power_pole     a 0.31 m pole under a 2.19 m crossarm. 14 of 16 columns
+##                       contain only crossarm and brace, so the median column
+##                       was the brace at +7.47 m and all 37 poles on the map
+##                       reported "7.6 m off the ground". Every one was planted.
+##   industrial_water_tower  footprint 13.2 x 11.6 set by the tank, four thin
+##                       legs. Reported -5.96; the legs are on the deck.
+##   alpine_pine_skeleton    footprint set by the branches. Reported -0.33; the
+##                       root flares are 0.6 m INTO the ground.
+##
+## The piece's lowest band is the only part of it that can be said to stand on
+## anything, so it is the only part worth sampling. A flat-bottomed slab has
+## every column in its band and is measured exactly as before.
+const FOOT_BAND := 0.5
 
 
 func _initialize() -> void:
@@ -68,8 +88,16 @@ func _initialize() -> void:
 		for c: CollisionObject3D in p.find_children("*", "CollisionObject3D", true, false):
 			skip.append(c.get_rid())
 		var floor_y := _columns(p, box)
-		var gaps: Array = []
+		# The piece's own lowest point, and then only the columns that reach it.
+		var lowest := INF
 		for key: Vector2i in floor_y:
+			lowest = minf(lowest, float(floor_y[key]))
+		var footing: Array = []
+		for key: Vector2i in floor_y:
+			if float(floor_y[key]) <= lowest + FOOT_BAND:
+				footing.append(key)
+		var gaps: Array = []
+		for key: Vector2i in footing:
 			var x: float = box.position.x + (key.x + 0.5) * box.size.x / GRID
 			var z: float = box.position.z + (key.y + 0.5) * box.size.z / GRID
 			var q := PhysicsRayQueryParameters3D.create(
@@ -83,13 +111,19 @@ func _initialize() -> void:
 			blind += 1
 			print("   %-38s nothing under it at all — off the terrain?" % p.name)
 			continue
-		# THE MIDDLE COLUMN IS THE HONEST ONE, and the worst is not.
+		# THE MIDDLE COLUMN OF THE FOOTING IS THE HONEST ONE, and neither the
+		# worst column nor the middle of ALL of them is.
 		#
 		# A dish 40 m across on a pedestal has most of its area hanging over
 		# open ground, so its worst column is 40 m off the deck and it is not
 		# floating at all. A hall hovering a metre up has EVERY column a metre
 		# off. The median tells those apart and the minimum cannot, which is
 		# why this reads a piece column by column rather than as one box.
+		#
+		# But the median over every column is wrong the other way: it measures
+		# whatever the piece has MOST of, and for a pole, a mast, a water tower
+		# or a tree that is the top. Restricting it to FOOT_BAND first is what
+		# makes it a question about the footing. See FOOT_BAND.
 		gaps.sort()
 		var mid: float = gaps[gaps.size() / 2]
 		var worst: float = gaps[0]

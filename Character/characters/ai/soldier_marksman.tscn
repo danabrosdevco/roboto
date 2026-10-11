@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://cyl50hvmpyiuq"]
+[gd_scene load_steps=25 format=3 uid="uid://cyl50hvmpyiuq"]
 
 [ext_resource type="Script" path="res://Character/characters/ai/soldier.gd" id="1_nty0a"]
 [ext_resource type="PackedScene" uid="uid://cafl1duafidy" path="res://Character/components/bark.tscn" id="2_7mr33"]
@@ -11,15 +11,16 @@
 [ext_resource type="Material" uid="uid://dh7m3vk42lpke" path="res://Character/characters/ai/robot_metal.tres" id="8_pr6gp"]
 [ext_resource type="PackedScene" uid="uid://g7mab0c0l6au" path="res://Character/weapon/ai-wep_marksman.tscn" id="8_utu75"]
 [ext_resource type="PackedScene" uid="uid://b8axqwdv8lhep" path="res://Character/components/spark_burst.tscn" id="9_pm84i"]
-[ext_resource type="Texture2D" uid="uid://bvk26224sihon" path="res://2d_assets/metal textures poly.com/metal_plate_02_diff_4k.jpg" id="9_qbqh2"]
-[ext_resource type="Texture2D" uid="uid://o8ik6rntdl2v" path="res://2d_assets/metal textures poly.com/metal_plate_02_disp_4k.png" id="10_tx84r"]
+[ext_resource type="Texture2D" uid="uid://jbq0t273pcq5" path="res://textures/PSX_Textures/robot_metal_psx.png" id="9_qbqh2"]
+[ext_resource type="Texture2D" uid="uid://dhe0gv1d5qif2" path="res://textures/PSX_Textures/robot_metal_disp_psx.png" id="10_tx84r"]
 [ext_resource type="PackedScene" uid="uid://ds43cg4ier0x6" path="res://Character/components/oil_spray.tscn" id="10_ukmfb"]
-[ext_resource type="Texture2D" uid="uid://bdxavr3hi47rh" path="res://2d_assets/metal textures poly.com/long_white_tiles_ao_4k.jpg" id="11_n4p1p"]
+[ext_resource type="Texture2D" uid="uid://i1sokhxesxia" path="res://textures/PSX_Textures/robot_eye_psx.png" id="11_n4p1p"]
 [ext_resource type="Script" path="res://faction_livery.gd" id="14_agla4"]
+[ext_resource type="Script" path="res://Character/components/rank_kit.gd" id="90_rankkit"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_7nk3q"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6meyw"]
 render_priority = 0
 shader = ExtResource("8_27chb")
 shader_parameter/use_normal_map = false
@@ -85,7 +86,7 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
 
@@ -104,7 +105,7 @@ material = SubResource("StandardMaterial3D_6qgus")
 
 [node name="Hat" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.86, 0)
-material_override = SubResource("ShaderMaterial_7nk3q")
+material_override = SubResource("ShaderMaterial_6meyw")
 mesh = SubResource("CylinderMesh_hat")
 
 [node name="SparkBurst" parent="." instance=ExtResource("9_pm84i")]
@@ -117,6 +118,12 @@ base_material = ExtResource("8_pr6gp")
 pieces = [NodePath("../CSGMesh3D"), NodePath("../Hat")]
 paint_blend = 1.0
 marker_energy = 6.0
+
+[node name="RankKit" type="Node" parent="." node_paths=PackedStringArray("mount", "authored_in", "livery")]
+script = ExtResource("90_rankkit")
+mount = NodePath("..")
+authored_in = NodePath("..")
+livery = NodePath("../FactionLivery")
 
 [connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
 [connection signal="body_exited" from="Detection" to="." method="_on_detection_body_exited"]

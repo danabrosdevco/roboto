@@ -19,12 +19,28 @@ const Icons := preload("res://Character/hud/icons/icons.gd")
 const DETAIL_WIDTH := 400.0
 const ROWS := [
 	[ItemDefinition.Kind.WEAPON, "WEAPONS"],
-	[ItemDefinition.Kind.EQUIPMENT, "GEAR"],
+	[ItemDefinition.Kind.EQUIPMENT, "EQUIPMENT"],
 	[ItemDefinition.Kind.MODULE, "MODULES"],
 ]
+## Gear figures, read off the gear's own scenes. By path: a brand-new class_name
+## is not resolvable until the editor rescans.
+const _Facts := preload("res://Campaign/item_facts.gd")
+## Tops of the weapon bars. FIXED, and the same on every card, so two guns can be
+## compared by eye — a bar scaled to its own row is a bar that cannot be read
+## against the one above it. Damage is one impact, not a cluster round's whole
+## 220: the bomblets are in the reading, because white on a bar means "a module
+## added this" everywhere else on these screens and must not mean two things.
+const DAMAGE_TOP := 80.0
+const FIREPOWER_TOP := 200.0
+const RANGE_TOP := 130.0
+const MAGAZINE_TOP := 120.0
 
 var ui
 var selected_id: StringName = &""
+## Which shelves are rolled up, by item kind. Same idea as the Squad page's
+## teams: shopping for a module should not mean scrolling past every gun.
+## DEFAULTS TO OPEN — a shop that greets you shut is a shop that looks empty.
+var _folded: Dictionary = {}
 
 var _left: VBoxContainer
 var _detail: VBoxContainer
@@ -73,19 +89,44 @@ func rebuild() -> void:
 	Kit.clear(_left)
 	for entry in ROWS:
 		var kind: int = entry[0]
-		var row := HFlowContainer.new()
-		row.add_theme_constant_override("h_separation", 8)
-		row.add_theme_constant_override("v_separation", 8)
+		var stock: Array = []
 		for item in items:
 			if item.kind == kind:
-				row.add_child(_card(item))
-		if row.get_child_count() == 0:
-			row.queue_free()
+				stock.append(item)
+		if stock.is_empty():
 			continue
-		_left.add_child(Kit.heading(entry[1]))
-		_left.add_child(row)
+		var open: bool = not _folded.get(kind, false)
+		_left.add_child(_shelf_head(kind, str(entry[1]), stock.size(), open))
+		if open:
+			var row := HFlowContainer.new()
+			row.add_theme_constant_override("h_separation", 8)
+			row.add_theme_constant_override("v_separation", 8)
+			for item in stock:
+				row.add_child(_card(item))
+			_left.add_child(row)
 		_left.add_child(Kit.spacer(0, 4))
 	_rebuild_detail()
+
+
+## The clickable bar over a shelf. The COUNT stays when it is folded: a closed
+## row showing only its name hides how much is behind it, which is what stops
+## anybody opening it again.
+func _shelf_head(kind: int, title: String, count: int, open: bool) -> Control:
+	var head := Kit.hbox(8)
+	head.mouse_filter = Control.MOUSE_FILTER_STOP
+	head.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	head.tooltip_text = "Fold these away" if open else "Show these"
+	head.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			head.accept_event()
+			_folded[kind] = open
+			ui.play(&"select")
+			rebuild())
+	head.add_child(Kit.caret(open))
+	head.add_child(Kit.heading(title))
+	head.add_child(Kit.fill())
+	head.add_child(Kit.label("%d IN THE SHOP" % count, Kit.DIM, Kit.SMALL))
+	return head
 
 
 func _rebuild_detail() -> void:
@@ -135,10 +176,29 @@ func _build_detail(item: ItemDefinition) -> void:
 	art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_detail.add_child(art)
 	_detail.add_child(Kit.label(item.display_name.to_upper(), Kit.BRIGHT, 24, true))
-	_detail.add_child(Kit.label("%s · %s" % [Kit.KIND_NAMES.get(item.kind, ""), Kit.carriers(item)], Kit.DIM, Kit.SMALL))
-	var effect := Kit.effect_text(item)
-	if effect != "":
-		_detail.add_child(Kit.label(effect, Kit.BRIGHT, Kit.HEADING, true))
+	# Joined rather than formatted, because carriers() is empty for anything both
+	# sides can use — which is most things — and a trailing separator on a card is
+	# the kind of thing nobody files but everybody sees.
+	var line := PackedStringArray([Kit.kind_text(item)])
+	var who := Kit.carriers(item)
+	if who != "":
+		line.append(who)
+	_detail.add_child(Kit.label(" · ".join(line), Kit.DIM, Kit.SMALL))
+	# THREE SHAPES, ONE PANEL. Bars rank things on one scale, and two guns share
+	# that scale — more damage is more damage. A smoke canister's fourteen
+	# seconds and a frag's hundred points of blast do not, so gear gets a fact
+	# list instead; a bar across those two would be decoration pretending to be
+	# information. And a module is a single number, so it gets a single line: a
+	# bar over one value is a bar with one entry.
+	match item.kind:
+		ItemDefinition.Kind.WEAPON:
+			_weapon_bars(item)
+		ItemDefinition.Kind.EQUIPMENT:
+			_fact_list(item)
+		_:
+			var effect := Kit.effect_text(item)
+			if effect != "":
+				_detail.add_child(Kit.label(effect, Kit.BRIGHT, Kit.HEADING, true))
 	if item.description != "":
 		_detail.add_child(Kit.text_block(item.description, Kit.DIM, Kit.BODY))
 	if item.required_rank > 0:
@@ -188,3 +248,82 @@ func _build_detail(item: ItemDefinition) -> void:
 		sell_row.add_child(sell)
 		sell_row.add_child(Kit.label("+%d" % state.sale_value_of(item), Kit.MONEY, Kit.HEADING, true))
 		_detail.add_child(sell_row)
+
+
+## WHAT A GUN DOES, in the four numbers that decide a fight.
+##
+## Damage is one round landing; firepower is damage times rate — what it takes
+## off a hull per second while it is firing. A card showing only one of them
+## lies: the Heavy MG does a third of the Autocannon's damage per round and half
+## again its firepower.
+##
+## The figures come off the WEAPON SCENE, not the item. ItemDefinition's
+## weapon_damage is 0 on all fourteen guns, and a launcher's damage was never on
+## the launcher anyway — it is on the round, and a cluster round carries six more
+## bomblets inside that. AIWeapon.shot_damage() is what knows.
+func _weapon_bars(item: ItemDefinition) -> void:
+	# NO MESSAGE WHEN THERE ARE NO FIGURES. It used to say "NO FIGURES: THIS ONE
+	# HAS NO AI WEAPON SCENE", which is a sentence about the project's internals
+	# printed at the player: ai_scene is not a thing they have, can get, or should
+	# ever hear about. The Repair Lance is the one that hits this, and its own
+	# description already says what it does — reach, damage, mends, recharge — so
+	# the bars would have added nothing anyway.
+	if item.ai_scene == null:
+		return
+	var node = item.ai_scene.instantiate()
+	if not (node is AIWeapon):
+		node.free()
+		return
+	var weapon := node as AIWeapon
+	var shot: Dictionary = weapon.shot_damage()
+	var impact := int(shot.get("impact", 0))
+	var bomblets := int(shot.get("submunitions", 0))
+	var total := int(shot.get("total", impact))
+	var reading := str(impact)
+	if bomblets > 0:
+		reading = "%d+%dX%d" % [impact, bomblets, int(shot.get("each", 0))]
+	var cooldown: float = weapon.fire_cooldown
+	var firepower: float = (float(total) / cooldown) if cooldown > 0.0 else 0.0
+
+	_detail.add_child(Kit.stat_bar("DAMAGE", impact, impact, DAMAGE_TOP, reading))
+	_detail.add_child(Kit.stat_bar("FIREPOWER", firepower, firepower, FIREPOWER_TOP,
+		"%d/S" % int(round(firepower))))
+	_detail.add_child(Kit.stat_bar("RANGE", weapon.max_effective_range, weapon.max_effective_range,
+		RANGE_TOP, "%d M" % int(round(weapon.max_effective_range))))
+	_detail.add_child(Kit.stat_bar("MAGAZINE", weapon.magazine_size, weapon.magazine_size,
+		MAGAZINE_TOP, str(weapon.magazine_size)))
+
+	var tail: Array = []
+	if weapon.reload_time > 0.0:
+		tail.append("RELOAD %.1f S" % weapon.reload_time)
+	if bomblets > 0:
+		# The ceiling, said as a ceiling. All 220 only lands if every bomblet
+		# finds something, and a card that prints it flat would be promising a
+		# figure the gun rarely delivers.
+		tail.append("%d A ROUND IF EVERY BOMBLET LANDS" % total)
+	if not tail.is_empty():
+		_detail.add_child(Kit.label(" · ".join(tail), Kit.DIM, Kit.SMALL))
+	weapon.free()
+
+
+## Gear, as the two or three figures that matter, read off its own scenes. An
+## item whose scenes carry no numbers gets its effect line instead of a made-up
+## one — see ItemFacts.
+func _fact_list(item: ItemDefinition) -> void:
+	var rows: Array = _Facts.of(item)
+	if rows.is_empty():
+		var effect := Kit.effect_text(item)
+		if effect != "":
+			_detail.add_child(Kit.label(effect, Kit.BRIGHT, Kit.HEADING, true))
+		return
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.add_theme_constant_override("v_separation", 2)
+	for pair in rows:
+		grid.add_child(Kit.label(str(pair[0]), Kit.DIM, Kit.SMALL))
+		var value := Kit.label(str(pair[1]), Kit.BRIGHT, Kit.SMALL, true)
+		value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		grid.add_child(value)
+	_detail.add_child(grid)

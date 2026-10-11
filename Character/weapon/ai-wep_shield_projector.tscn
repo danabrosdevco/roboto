@@ -1,0 +1,47 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Character/weapon/ai_weapon.gd" id="1_aiwep"]
+
+; SHIELD PROJECTOR — the Bastion's hardening emitter, as a fittable weapon.
+;
+; A PLAIN ai_weapon.gd AND NOTHING ELSE. FRAME_ANATOMY.md §3.4's rule is "you
+; need a subclass if and only if the round is not a hitscan ray", and this
+; fires no round at all: the hardening is bastion.gd's _tick_field writing
+; AI.add_hardening stamps, which is where it has to live because the effect is
+; on everybody ELSE and an AIWeapon only knows about its own target.
+;
+; So every number here is set to make the mount HOLD something inert:
+; no damage, no suppression, no tracer, no muzzle flash, no audio. It exists so
+; ItemDefinition.fits_ai() is true — item_repair_lance.tres is the shipped
+; example of the opposite, kind = 0 with no ai_scene, which means no robot can
+; ever carry it.
+;
+; THE MUZZLE NODE IS NOT OPTIONAL. ai_weapon.gd:398 reads
+; muzzle_origin.global_position with no null check (the guard at 326 is on a
+; different path), so a scene without one crashes the first time the frame
+; takes a shot it was never going to take.
+;
+; max_effective_range IS THE FIELD RADIUS, deliberately. Enemy._max_range
+; (enemy.gd:3022) reads it as "my reach" and the whole combat scoring is built
+; on it, so a projector-only Bastion engages out to the edge of the thing it is
+; actually projecting and no further. The visible emitter is on the frame —
+; Rig/Mast/Canopy/Emitters and Lenses — not on this mount, which is why there
+; is no model here.
+
+[node name="ai_weapon_shield_projector" type="Node3D" node_paths=PackedStringArray("muzzle_origin")]
+script = ExtResource("1_aiwep")
+weapon_type = 1
+fire_cooldown = 3.0
+base_damage = 0
+min_damage = 0
+damage_falloff_start = 14.0
+max_effective_range = 14.0
+ai_spread_mrad = 0.0
+suppression_per_shot = 0.0
+near_miss_radius = 0.0
+friendly_fire = false
+infinite_ammo = true
+muzzle_origin = NodePath("Muzzle")
+
+[node name="Muzzle" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0, 0)

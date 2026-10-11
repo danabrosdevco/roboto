@@ -1,74 +1,68 @@
-extends "res://tools/block_fortress.gd"
+extends "res://tools/block_suburban.gd"
 
 # ─────────────────────────────────────────────
-# BLOCK GROUND — micro-terrain: relief you build rather than paint.
+# BLOCK GROUND — square ground tiles in four sizes, so a site can be floored
+# to an exact shape with holes in it.
 #
-#   maps/blocks/ground/
+#   maps/blocks/ground/tile_*.map
 #
 #   godot --headless --path . --script res://tools/block_ground.gd -- maps/blocks
-#   godot --headless --path . --script res://tools/block_ground.gd -- maps/blocks --force
 #
-# WHY THESE EXIST. Flattish ground is what the squad can fight on and painted
-# hills are what it cannot, so every level ends up with a floor that is
-# correct and dead. The heliostat field is the worst of them: a thousand
-# identical mirrors standing on a billiard table.
+# WHY TILES AND NOT ONE PLATE. A level used to be floored with one enormous
+# slab per material, and then every road, car park aisle and building pad was
+# laid ON TOP of it with its own surface at the same height. Two horizontal
+# faces at the same height in the same place is the one defect none of the
+# other checks can see — the brush probe only compares brushes inside a single
+# .map, and the piece-pair test sees almost no shared volume because a road
+# bed is 0.3 m deep on a slab that is already there. The depth buffer cannot
+# choose between them, so the ground crawls and flickers as the camera moves.
+# On Polaris that was 15% of the whole map.
 #
-# These are the middle ground. Every piece is low, every slope is gentle, and
-# every one of them is something you WALK OVER rather than round — so the
-# ground gets a shape without the navmesh losing one.
+# The fix is that the ground must have HOLES where something else brings its
+# own surface. Holes need tiles, tiles need sizes, and four sizes — 32, 16, 8
+# and 4 m — let a filler subdivide down to a 4 m fit along any edge while
+# still laying 32 m plates across open ground. Anything finer is not worth the
+# instance count; anything coarser leaves a visible gap at a kerb.
 #
-# THE RULES EVERY PIECE HERE KEEPS.
+# EVERY TILE IS 4 M THICK AND ITS TOP IS AT z = -0.06, so tiles butt on their
+# sides without a step and a building founded below ground still has slab to
+# be founded in.
 #
-#   * Slopes are 20 degrees or less. The baker walks up to 45, but a body
-#     that has to steer while climbing wants far less than its limit, and a
-#     rover is not a goat.
-#   * No step over 0.2 m anywhere. The navmesh climbs 0.25 m and anything
-#     near that is a lip the squad catches on.
-#   * Nothing over 1.2 m tall. Past that it is cover, and cover belongs in
-#     the props kit where it will be built with vertical sides.
-#   * Every edge meets the ground flush. A slab dropped on a field with a
-#     square edge is a 0.2 m kerb all the way round it.
-#
-# tools/test_prop_nav.gd checks the first two. A piece here should come out
-# with a WALK of about 16.1 m against 16.0 m straight — the squad goes over
-# it, not round — and area on top rather than an island.
+# WHY -0.06 AND NOT 0. Half the kit carries its own surface at exactly 0 — a
+# driveway apron, a storage yard, a loading pad — and flush with the ground is
+# two horizontal faces at one height, which is this whole file's reason for
+# existing. The clearance has to be made HERE and not in those pieces: lifting
+# the aprons instead pushed them up into the shutters, kerbs and walls standing
+# on them, 32 overlapping pairs in the self-storage yard alone. 6 cm is twice
+# what the coplanar check calls the same plane and a twentieth of what anything
+# in the game calls a step.
 # ─────────────────────────────────────────────
 
-const DUST := "PSX_Textures/dirt_2"
-const GRIT := "PSX_Textures/concrete_3@0.5"
-const HEAPED := "PSX_Textures/dirt_6"
-const SLABS := {"top": "PSX_Textures/concrete_tx_4", "side": CONCRETE, "bottom": CONCRETE}
-const DUSTED := {"top": DUST, "side": DUST, "bottom": DUST}
-const GRITTED := {"top": GRIT, "side": CONCRETE, "bottom": CONCRETE}
+# 64 m at the top so open ground costs few instances: the first cut topped
+# out at 32 and Polaris came back with 1,036 tiles for ground that is mostly
+# empty. Down to 4 at the bottom so an edge still lands close to a kerb.
+const TILE_SIZES: Array = [64.0, 32.0, 16.0, 8.0, 4.0]
+const GROUND_TEX := {
+	"asphalt": {"top": ASPHALT, "side": CONCRETE, "bottom": CONCRETE},
+	"dirt": {"top": DIRT, "side": SPOIL, "bottom": SPOIL},
+	"grass": {"top": "PSX_Textures/grass_4", "side": SPOIL, "bottom": SPOIL},
+}
 
 
 func _initialize() -> void:
 	var base := ""
 	var force := false
-	var only := ""
 	for a in OS.get_cmdline_user_args():
 		if a == "--force":
 			force = true
 		elif base == "":
 			base = a
-		elif only == "":
-			only = a
 	if base == "":
-		print("usage: godot --headless --path . --script res://tools/block_ground.gd -- maps/blocks [name] [--force]")
+		print("usage: godot --headless --path . --script res://tools/block_ground.gd -- maps/blocks [--force]")
 		quit(2)
 		return
 	if not base.begins_with("res://") and not base.is_absolute_path():
 		base = "res://" + base
-	var pieces := {
-		"ground_swell": _swell,
-		"ground_berm": _berm,
-		"ground_berm_ring": _berm_ring,
-		"ground_apron": _apron,
-		"ground_spoil": _spoil,
-		"ground_pad": _pad,
-		"ground_washout": _washout,
-		"ground_track": _track,
-	}
 	var dir := base.path_join("ground")
 	if not DirAccess.dir_exists_absolute(dir):
 		var err := DirAccess.make_dir_recursive_absolute(dir)
@@ -77,134 +71,26 @@ func _initialize() -> void:
 			quit(1)
 			return
 	var written := 0
-	for name: String in pieces:
-		if only != "" and not name.contains(only):
-			continue
-		var path := dir.path_join(name + ".map")
-		if FileAccess.file_exists(path) and not force:
-			print("SKIP  %s exists — pass --force to overwrite it." % path)
-			continue
-		# Every piece starts clean. A tool that forgets this builds the second
-		# piece with the first one's no-collision flag still set, which is how
-		# a whole folder of props silently lost its colliders once.
-		_brushes = []
-		_ghost_from = -1
-		_entities = []
-		pieces[name].call()
-		var f := FileAccess.open(path, FileAccess.WRITE)
-		if f == null:
-			print("FAIL  could not write %s (%s)" % [path, error_string(FileAccess.get_open_error())])
-			quit(1)
-			return
-		f.store_string(_map_text())
-		f.close()
-		written += 1
-		print("      %-24s %3d brushes  %s" % [name, _brushes.size(), _extent_text()])
+	for kind: String in GROUND_TEX:
+		for size: float in TILE_SIZES:
+			var name := "tile_%s_%d" % [kind, int(size)]
+			var path := dir.path_join(name + ".map")
+			if FileAccess.file_exists(path) and not force:
+				print("SKIP  %s exists — pass --force to overwrite it." % path)
+				continue
+			_brushes = []
+			_ghost_from = -1
+			_entities = []
+			var h := size * 0.5
+			box(Vector3(-h, -h, -4.0), Vector3(h, h, -0.06), GROUND_TEX[kind])
+			var f := FileAccess.open(path, FileAccess.WRITE)
+			if f == null:
+				print("FAIL  could not write %s (%s)" % [path, error_string(FileAccess.get_open_error())])
+				quit(1)
+				return
+			f.store_string(_map_text())
+			f.close()
+			written += 1
+			print("      %-20s %.0f x %.0f m" % [name, size, size])
 	print("BLOCK GROUND DONE: %d written" % written)
 	quit()
-
-
-## The plain one, and the one to use most: 30 x 22 m of ground that rises
-## 0.72 m in the middle, at 3 degrees. From inside it you cannot see the far
-## side of a field, which is the whole point of it.
-func _swell() -> void:
-	slope_slab(-15.0, -11.0, 15.0, 11.0, 0.72, 11.0, DUSTED)
-	slope_slab(-9.0, -6.5, 9.0, 6.5, 0.9, 6.5, DUSTED)
-
-
-## A graded bank 32 m long: 0.72 m up at 12 degrees, a 3 m crest, and back
-## down. Walk over it, or fight from behind it — from the low side it hides a
-## standing rover's wheels and nothing else, which is exactly the cover a
-## field like this wants.
-func _berm() -> void:
-	slope_slab(-16.0, -5.0, 16.0, 5.0, 0.72, 3.4, {"top": GRIT, "side": DUST, "bottom": DUST})
-
-
-## A ring of spoil 26 m across with a dished middle: what is left of a tank
-## base, or of a scrape nobody filled in. The middle sits at ground level, so
-## it is a place to stand that is out of sight from outside.
-func _berm_ring() -> void:
-	var n := 14
-	for i in n:
-		var a0 := TAU * i / n
-		var a1 := TAU * (i + 1) / n
-		for ring: Array in [[13.0, 11.6, 0.0, 0.28], [11.6, 10.2, 0.28, 0.56], [10.2, 8.8, 0.56, 0.7],
-				[8.8, 7.4, 0.7, 0.56], [7.4, 6.0, 0.56, 0.24], [6.0, 4.6, 0.24, 0.0]]:
-			var pts: Array = []
-			for a: float in [a0, a1]:
-				for r: float in [ring[0], ring[1]]:
-					pts.append(Vector3(cos(a) * r, sin(a) * r, 0.0))
-			for a: float in [a0, a1]:
-				pts.append(Vector3(cos(a) * float(ring[0]), sin(a) * float(ring[0]), ring[2]))
-				pts.append(Vector3(cos(a) * float(ring[1]), sin(a) * float(ring[1]), ring[3]))
-			solid(pts, DUSTED, 2)
-
-
-## A graded apron: 16 m of gentle climb onto a 10 x 11 m pad 0.72 m up.
-## Somewhere to stand a machine, or to put a building on ground that is not
-## quite level. One solid, so the pad's edge is a slope on all four sides and
-## there is no kerb anywhere to catch a wheel.
-func _apron() -> void:
-	solid([Vector3(-11.0, -6.0, 0.0), Vector3(6.2, -6.0, 0.0), Vector3(6.2, 6.0, 0.0), Vector3(-11.0, 6.0, 0.0),
-			Vector3(-5.0, -5.0, 0.72), Vector3(5.0, -5.0, 0.72),
-			Vector3(5.0, 5.0, 0.72), Vector3(-5.0, 5.0, 0.72)], GRITTED)
-
-
-## A heap of dug material, 1.1 m. Unlike everything else here this is NOT
-## something you walk over: it is loose spoil, it stands too steep, and its
-## collision is a clip_block with vertical sides so the navmesh carves round
-## it cleanly instead of climbing a slope nothing can hold.
-func _spoil() -> void:
-	clip_block(Vector3(0.0, 0.0, 0.0), Vector2(2.6, 2.0), 0.95)
-	no_collision()
-	mound(Vector3.ZERO, 3.0, 2.3, 1.1, 211, HEAPED)
-	for c: Array in [[-2.4, 1.4, 0.2], [2.7, -1.0, 0.15], [1.2, 2.5, 0.18]]:
-		mound(Vector3(float(c[0]), float(c[1]), 0.0), 1.2, 0.9, float(c[2]), 212, HEAPED)
-
-
-## A concrete pad that has settled. Four slabs, all at the SAME height with a
-## finger's width of crack between them — a settled pad wants its slabs at
-## four different heights and four different heights is three steps, so the
-## settling is in the cracks and the grit rather than in the levels.
-func _pad() -> void:
-	slope_slab(-6.2, -6.2, 6.2, 6.2, 0.1, 0.8, GRITTED)
-	for sx: float in [-1.0, 1.0]:
-		for sy: float in [-1.0, 1.0]:
-			var x0: float = minf(0.09, sx * 4.9)
-			var x1: float = maxf(0.09, sx * 4.9)
-			var y0: float = minf(0.09, sy * 4.9)
-			var y1: float = maxf(0.09, sy * 4.9)
-			solid([Vector3(x0, y0, 0.0), Vector3(x1, y0, 0.0), Vector3(x1, y1, 0.0), Vector3(x0, y1, 0.0),
-					Vector3(x0 + sx * 0.0 + (0.5 if sx < 0.0 else 0.0), y0 + (0.5 if sy < 0.0 else 0.0), 0.2),
-					Vector3(x1 - (0.5 if sx > 0.0 else 0.0), y0 + (0.5 if sy < 0.0 else 0.0), 0.2),
-					Vector3(x1 - (0.5 if sx > 0.0 else 0.0), y1 - (0.5 if sy > 0.0 else 0.0), 0.2),
-					Vector3(x0 + (0.5 if sx < 0.0 else 0.0), y1 - (0.5 if sy > 0.0 else 0.0), 0.2)], SLABS)
-
-
-## Where the runoff went: a bare channel 4 m wide between two low banks, 26 m
-## of it. Read from the side it is a line across the ground; walked along, it
-## is a shallow lane that hides your feet. Each bank is one sloped solid, so
-## you cross it by walking over rather than by climbing a staircase.
-func _washout() -> void:
-	for s: float in [-1.0, 1.0]:
-		solid([Vector3(-13.0, s * 2.0, 0.0), Vector3(13.0, s * 2.0, 0.0),
-				Vector3(13.0, s * 7.0, 0.0), Vector3(-13.0, s * 7.0, 0.0),
-				Vector3(-11.5, s * 3.4, 0.56), Vector3(11.5, s * 3.4, 0.56),
-				Vector3(11.5, s * 5.6, 0.56), Vector3(-11.5, s * 5.6, 0.56)], DUSTED)
-	# Stones washed out of the banks, left in the bed.
-	for c: Array in [[-8.5, 0.6], [-3.0, -0.8], [2.4, 0.9], [7.8, -0.5], [11.0, 0.3]]:
-		# Sunk almost flush: a stone standing 0.18 m proud is a step, and the
-		# bed is somewhere the squad walks along.
-		rock(Vector3(float(c[0]), float(c[1]), -0.24), Vector3(0.5, 0.4, 0.3), 220 + int(c[0]), ROCK, 8)
-
-
-## A worn vehicle track: a crown of dust between two grit shoulders, 30 m of
-## it and 0.14 m of relief. The smallest piece here, and the one that does the
-## most, because a field with a track across it has been USED.
-func _track() -> void:
-	slope_slab(-15.0, -3.5, 15.0, 3.5, 0.08, 1.1, GRITTED)
-	slope_slab(-15.0, -2.2, 15.0, 2.2, 0.14, 1.4, DUSTED)
-	# There were ridges of thrown-out dust along the shoulder. They are gone:
-	# wherever one crossed the crown's own slope the two made a face, and the
-	# step test kept finding it. A track reads from the change of surface, and
-	# nothing on a piece this low is worth a riser a body catches on.

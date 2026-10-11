@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dntgmjr64rirk"
+path="res://.godot/imported/park_pavilion.map-4cee669ada803732d37ee0825095031f.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/park_pavilion.map"
+dest_files=["res://.godot/imported/park_pavilion.map-4cee669ada803732d37ee0825095031f.tres"]
+
+[params]
+

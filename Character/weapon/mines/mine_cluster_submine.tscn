@@ -3,8 +3,14 @@
 ; CLUSTER SUBMINE — one of five thrown out by the canister.
 ;
 ; 45 damage in 2m: enough that walking into one hurts, not enough to be a
-; Heavy Mine you get five of. It clears itself after 45 seconds, because area
-; denial that never expires is just a map you cannot use any more.
+; Heavy Mine you get five of.
+;
+; mine_lifetime 0 means IT STAYS FOR THE MISSION. It used to clear itself after
+; 45 seconds, on the reasoning that area denial which never expires is a map you
+; cannot use any more — but that is only true of a mine you can walk into, and
+; Mine._candidates is faction-gated, so your own squad and the player never can.
+; What the timer actually did was make the item a 45-second window you had to
+; spend at exactly the right moment, which is not a thing you can aim.
 ;
 
 [ext_resource type="Script" path="res://Character/weapon/mine.gd" id="1_mine"]
@@ -31,7 +37,7 @@ fuse_time = 99999.0
 explode_on_bounce = false
 arm_seconds = 1.0
 trigger_radius = 1.6
-mine_lifetime = 45.0
+mine_lifetime = 0.0
 settle_speed = 0.7
 settle_after = 3.0
 physics_material_override = SubResource("grippy")

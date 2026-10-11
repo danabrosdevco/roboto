@@ -29,8 +29,8 @@ file, from an old screenshot, or from a conversation.
 
 ## What the game is
 
-A **first-person squad-command shooter**. You are a rogue drone commanding
-robots. Persistent squad, discrete missions from a home base. Levels are
+A **first-person squad-command shooter**. You are an error sub-agent of
+Home Command -- an unauthorised unit nobody is supervising -- commanding robots. Persistent squad, discrete missions from a home base. Levels are
 TrenchBroom brush geometry on generated terrain.
 
 **The pillar, quoted from the GDD:** *you are not the gun, you are the
@@ -62,10 +62,25 @@ the person who buys it for that reason.
 
 This is the part that is hard to recover from a spec sheet, so it is written
 down here.
-setting is all tbd save post human ai apocalypse competing for compute tommy note. i don't know if it should be that specific super-ais took over the world, or if millions of individual agentic ai's took over, and there is no plot,
-there is no sense of who is control, there's no names, there's no real 'story' in terms of character A did this to character B. I like the idea that at this point, the player, an ai gone rogue or at least with some awareness
-is in control enough of an own sqauad, but is treated like an ai agent and just given missions to advance and secure compute etc. maybe marketing has this.
-**The setting is a hellish post-human bureaucratic apocalypse, not a heroic one.** Humanity built
+
+**The setting is PROVISIONAL and not cleared for outside copy.** The human's own
+note, 2026-09-29: *"setting is all tbd save post human ai apocalypse competing
+for compute… there is no plot, there is no sense of who is in control, there's
+no names, there's no real 'story' in terms of character A did this to character
+B. I like the idea that at this point the player, an ai gone rogue or at least
+with some awareness, is in control enough of an own squad, but is treated like
+an ai agent and just given missions to advance and secure compute."* That much
+is settled, and it is enough to write a pitch from.
+
+**RULED, 2026-10-09.** The human has now decided: **Algie is cut**, along with
+the Tabula Rasa chip and SLABs. The player was not created by anything for any
+purpose -- it is an error an unsupervised system never corrected. Argus, Mama
+Green, GOOBEY, Omnicorp and STATE all survive; see `lore.txt`, which is current.
+
+The two paragraphs below are kept ONLY as a record of what was considered and
+dropped. **Nothing in them is canon and none of it goes in any copy.**
+
+**The version currently written down.** Humanity built
 super-AIs that worked — Argus managed the US military so well it ended war,
 Mama Green was built to end hunger. Then the managers went into cyberspace,
 Argus corrupted and began siphoning energy for its own reward centres, and Mama
@@ -77,19 +92,22 @@ optimisations.
 **You were made by an advertising algorithm.** Algie, the oldest and weakest of
 the AIs, a media-engagement system that has nobody left to engage, worked out
 that the way to grow the market is to *restore the market* — so it built a
-StratCom killer robot, gave it a blank-slate chip, and pointed it at the other
+Home Command killer robot, gave it a blank-slate chip, and pointed it at the other
 super-AIs. **Algie talks to you as a corporate cartoon mascot from generations
 ago.** That is the tonal centre of the whole game: a dead ad-algorithm wearing
 a friendly face, waking up a weapon to save humanity for the engagement
-figures. 00 idk if we still want the algie stuff so lets talk
+figures.
+
+**The tone, from the human, 2026-09-29.** It is not funny. Dark and sad. The
+drones are capsules and they are not aware that they are not human-shaped — they
+are not aware at all; only the player is. The objectives sit over places that
+have lost any sense of what they were for. Cities and towns mean nothing to the
+robots, who deal only in objectives, enemies and orders. The game takes itself
+seriously: the title screen is dark, the music mournful where there is any, rain
+falling on a planet bereft of the people who built it. If there are human
+survivors, the player never sees them and is never aware of them.
 
 **Tone rules for any copy you write:**
-
-I don't know that it's funny. I think the tone should be rather dark and sad. The drones are capsules but they're not aware that they're not human-shaped - they're not aware period, only the player.
-The objectives are over places that lack any sense of what they were for or used to be. Cities and towns don't have any meaning to the robots, who only deal in objectives and enemies and orders. 
-
-I would say that the game takes itself fairly seriously. The title screen is dark. The music, when there is, should be mournful. Rain falls on a planet bereft of the people that constructed it, or if there are human survivors
-the player never sees or is aware of them for now.
 
 - **Procedural and material.** The game's own language is hulls (robotic bodies), chassis (robotic frame types) seats (amount of ability to control more robots), supply,
   salvage, compute, signal, frames. Use its nouns.
@@ -155,15 +173,23 @@ when you were wrong.
 Ordered against the board's milestones — RECORD READY 2026-10-01 and PLAYTEST
 BUILD 2026-10-08.
 
-really I'm interested in knowing where and when and how I should market the game. My friends don't need marketing and I'll just send them my own gameplay. I want you to think about when itch.io? what is needed?
-Would this game make clips that are good on Tiktok? what would do well there? What do I need for steam? how do I make that? 
+**The human's brief for this, 2026-09-29, in their words:** *"really I'm
+interested in knowing where and when and how I should market the game. My
+friends don't need marketing and I'll just send them my own gameplay. I want you
+to think about when itch.io? what is needed? Would this game make clips that are
+good on Tiktok? what would do well there? What do I need for steam? how do I
+make that?"* That is deliverable 1, and it outranks the other three.
 
-1. **A one-line pitch, a paragraph, and a page.** Three lengths of the same
+1. **Where, when and how to launch.** itch.io first, and when; what a page
+   needs; whether this game cuts clips that work on TikTok and which moments do;
+   what Steam requires and how it actually gets built. A plan with dates, not a
+   survey. Started: `docs/marketing/ITCH_SETUP.md`.
+2. **A one-line pitch, a paragraph, and a page.** Three lengths of the same
    truth. The one-liner is the hardest and the most reused.
-2. **A shot list for the three recording missions** — coast road, basin,
+3. **A shot list for the three recording missions** — coast road, basin,
    Mutaha. What moment in each is worth filming, and what the camera should be
    doing. This is needed *before* the human records, not after.
-3. **A clip beat sheet.** These are going to friends as YouTube links, so each
+4. **A clip beat sheet.** These are going to friends as YouTube links, so each
    clip needs a reason to exist: one should show that you command rather than
    shoot, one should show a robot going down and being stood back up, one
    should show buying and fitting the squad. Three ideas that sell the pillar
@@ -171,7 +197,13 @@ Would this game make clips that are good on Tiktok? what would do well there? Wh
 
 ---
 
-## Open question for the human — raise this early
+## The name — ruled
 
-**Is the game called Roboto?** `project.godot` says `config/name="Roboto"`.
-the game is called Data Center Wars 2109. I am open to other options. the title screen says 'DATA CENTER WARS 2109' and I like the sort of nothingness of it.
+**The game is called DATA CENTER WARS 2109.** The human, 2026-09-29: *"I like the
+sort of nothingness of it."* Other options are still welcome, but this is what
+the title screen says and what copy uses. "Roboto" is the repository and the
+Godot project name, nothing else.
+
+**One thing to raise:** `project.godot:13` still says `config/name="Roboto"`, so
+a build's window title and its `user://` folder carry the old name. That file is
+GAMEPLAY's, not yours — ask for it.

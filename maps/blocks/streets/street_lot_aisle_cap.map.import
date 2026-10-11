@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dcjbtfuybg4pt"
+path="res://.godot/imported/street_lot_aisle_cap.map-84ba8d96673ff9640bafdc6291e6d44e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_lot_aisle_cap.map"
+dest_files=["res://.godot/imported/street_lot_aisle_cap.map-84ba8d96673ff9640bafdc6291e6d44e.tres"]
+
+[params]
+

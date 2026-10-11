@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bgxugfd7wmp85"
+path="res://.godot/imported/polaris_parking_garage.map-16bf2facc5e8dc32da832f5614a8a0f3.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_parking_garage.map"
+dest_files=["res://.godot/imported/polaris_parking_garage.map-16bf2facc5e8dc32da832f5614a8a0f3.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bvbhu4mlkshbh"
+path="res://.godot/imported/canal_cofferdam.map-e4924e80f0d125c641d8e185bdc82dc5.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_cofferdam.map"
+dest_files=["res://.godot/imported/canal_cofferdam.map-e4924e80f0d125c641d8e185bdc82dc5.tres"]
+
+[params]
+

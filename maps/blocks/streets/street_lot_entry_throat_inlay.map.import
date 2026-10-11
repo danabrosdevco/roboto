@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cbddofsmimb1v"
+path="res://.godot/imported/street_lot_entry_throat_inlay.map-64951fe386b14c743ff6eebcd080aa9b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_lot_entry_throat_inlay.map"
+dest_files=["res://.godot/imported/street_lot_entry_throat_inlay.map-64951fe386b14c743ff6eebcd080aa9b.tres"]
+
+[params]
+
