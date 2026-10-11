@@ -58,7 +58,11 @@ func _init() -> void:
 		print("ALL DRAYMAN CHECKS PASS")
 	else:
 		print("DRAYMAN FAILURES: %d" % _fails)
-	quit(0)
+	# EXIT CODE, NOT JUST A PRINTED COUNT. test.sh:120 keys the whole run on
+	# PIPESTATUS alone, so a suite that prints FAILURES and quits 0 is reported
+	# inside ALL SUITES PASS. test_ledger.gd and test_livery.gd get this right
+	# and test_signal.gd and test_bulwark.gd do not; this is the right half.
+	quit(1 if _fails > 0 else 0)
 
 
 func _ok(label: String, cond: bool, detail: String = "") -> void:
