@@ -4,8 +4,10 @@ Written 2026-10-10 by GAMEPLAY, off a census of every TrenchBroom block in the
 project and a runtime count of what Salient actually loads.
 
 Owner: **TERRAIN** (blocks and their use).
-Status: **fix 1 done. Fix 2 piloted and REJECTED on its stated grounds — see
-"Measured outcome" at the foot of this file before acting on anything below.**
+Status: **fix 1 done. Fix 2 piloted, rejected on its stated grounds, and then
+LANDED ANYWAY on the human's call — see "Rolled out" at the very foot of this
+file, and read "Measured outcome" below it for what the pilot found. The blocks
+on disk ARE collapsed as of 2026-10-10.**
 
 > **Read the outcome section first.** The performance premise of fix 2 — that
 > collapsing per-brush hulls buys query time — was measured on Salient and is
@@ -328,3 +330,81 @@ so they are on layer 1 too, and masking out layer 1 would make melee stop
 hitting robots. The real finding is **a collision-layer hygiene problem — world
 and characters share a layer, so no mask can separate them.** Fixing that is
 worth its own brief and is a bigger prize than anything in this one.
+
+---
+
+## Rolled out — 2026-10-10, after the addendum
+
+**Fix 2 is landed.** `--write` has been run; the 338 collapsible blocks on disk
+carry one `ConcavePolygonShape3D` each. The pilot's recommendation above was
+overridden deliberately, by the human, to play-test the one thing no bench can
+answer: whether a trimesh snags `move_and_slide` in a 3.0 m trench. **Every
+number the pilot measured is confirmed unchanged** — nothing grew.
+
+```
+45cadf7d  blocks: collapse per-brush collision      <- THE REVERT POINT
+bb9d17e6  blocks: put back four dropped scene uids
+e8bff34d  salient      a32a9397  depot        fae959c4  polaris
+a79cd9ca  georgetown   27a39ba3  hillfort     0b10197b  pittsburgh
+8d6fdaa4  valley_basin 4ca286f9  heliostat    599516a1  causeway
+2c604eb4  test_bridges: footprint from any shape, not only hulls
+```
+
+### What the addendum did not know, and the next person must
+
+**There are TWELVE active levels, not nine, and only TEN bake from collision.**
+`coastal-road` and `mutaha_wip` leave `geometry_parsed_geometry_type` unset, so
+it defaults to `PARSED_GEOMETRY_MESH_INSTANCES` and **their navmesh is baked
+from meshes, not colliders** — a collision change cannot move it, and neither
+was re-baked. A fresh bake of those two DOES differ from what is committed, but
+that is drift from somebody else's terrain work; do not land it under a
+collision commit. `causeway` is the tenth collision-baked level and its mesh is
+the external `maps/causeway_level_nav.tres`.
+
+**`proving_level.tscn` instances no blocks at all** — its geometry is its own
+FuncGodotMap. Its re-bake came back byte-identical, so it has no commit.
+
+**`probe_nav_reach.gd` cannot test causeway**: the level has no `SpawnPoint`, so
+the probe bails before walking anything. **`probe_mission_anchors.gd` is the
+instrument that works** — it reads the groups the spawner reads and covered all
+118 causeway anchors, plus depot, proving and heliostat, none of which keeps an
+`Objectives` group the reach probe can find. Use it, not reach alone.
+
+### What moved, and the cheap way to read it
+
+- **`probe_level_faults` rises on every map and it is a bounds artefact.**
+  It unions each `CollisionShape3D`'s own AABB per piece, and one trimesh gives
+  a looser box than a dozen tight per-brush hulls, so pairs cross its 12 m³
+  cut-off without anything moving. Salient 153 → 155, pittsburgh 39 → 50,
+  mutaha_wip 71 → 82, coastal-road 4 → 10 — **and the last two had no re-bake
+  at all**, which is the proof it is about bounds and not about navmesh. The
+  control is the probe's own "two floors in the same place" walk, which is a
+  sampled measure: bit-identical before and after on every map.
+- **`test_bridges.gd` failed 24 checks and the bridges were fine.** Its
+  `_footprint()` tested `is ConvexPolygonShape3D` and skipped everything else.
+  Fixed in `2c604eb4`. The same assumption still degrades
+  `build_salient.gd`, `build_railhead.gd` and `build_polaris.gd` placement
+  guards to bounding boxes, and makes `probe_brush_overlap.gd` report zero
+  overlaps forever — none of them is on a gate; all are logged as follow-ups.
+- **`test_block_reach` 99 → 105 and `test_block_steps` 96 → 98 pieces.** Real,
+  not an artefact, and the mechanism is the one `test_bridges.gd`'s own header
+  names: **the baker sees surfaces, not solids.** A trimesh is a shell, so the
+  navmesh now bakes on roofs and interior ledges that a solid convex hull
+  sealed off. New: `industrial_blast_furnace` (five decks), `mark_stack`,
+  `park_overgrown_bed`, `estate_slab_five`, `industrial_plant_office`,
+  `wire_belt_run`; and risers on `estate_frame_shell` and `ground_berm_ring`.
+  No objective on any map became unreachable, but **stray roof navmesh is
+  somewhere a bot can be pathed**, so this is the thing to watch in play.
+- **Depot's upper gantries at y=10 and y=17 were already navmesh islands** —
+  57.1% coverage before, 42.9% after, two more upstairs samples of fourteen.
+  All 36 `SquadMuster` stands are on the ground floor and all 36 reach.
+- **`causeway_level_nav.tres` still throws its sync error on load.** The
+  re-bake does NOT clear it. Salient throws the same error and always has.
+
+### Fix 3 is now the only thing left worth doing
+
+Unchanged by any of the above and still the only one of the three that makes a
+block genuinely cheap instead of differently shaped. The collapse has made the
+case for it stronger, not weaker: the six `special/clip` blocks are the only
+ones that came out of tonight both cheap AND solid, and the shell-not-solid
+consequences listed above are exactly what clip boxes do not have.
