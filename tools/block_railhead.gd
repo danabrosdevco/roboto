@@ -152,6 +152,16 @@ const LAMP_T := "PSX_Textures/hl_office_complex_style_drop_ceiling_1_1"
 const TABLE_DECK := 0.89     ## underside of the slab
 const TABLE_TOP := 0.95      ## the working surface — the anchor goes here
 const TABLE_LIP := 0.03      ## 30 mm, the brief's ceiling, perimeter only
+## Half-extents of the top surface: HX along the car, HY across it. Sized for a
+## campaign board that is meant to grow to dozens of sites, not the twelve it
+## draws today — see the note over _car_ops for what board this supports.
+const TABLE_HX := 3.5
+const TABLE_HY := 1.5
+## Rings of the standing well. Each is 0.5 m wide, so the table plus its well
+## occupies TABLE_HY + WELL_RINGS * 0.5 either side of the centreline, and the
+## car is only HW = 4.5. Three rings fitted the old small table and do not fit
+## this one — the builder's own lane check is what arbitrates.
+const WELL_RINGS := 2
 const BALLAST := "PSX_Textures/concrete_3"
 const DADO := 1.125
 
@@ -608,24 +618,26 @@ func _hull_motive() -> void:
 ## tell them rather than moving it quietly.
 func _car_ops() -> void:
 	_shell(false, true, HULL, false, TILE)
-	# THE OPERATIONS TABLE. Issued, bolted down, and old. Kick plate, plinth,
-	# slab, lip — in that order, each one a little smaller than the last so it
-	# reads as assembled from stock parts rather than moulded.
-	# Bolted-down kick plate, 60 mm proud: well under the 0.25 m the navmesh
-	# baker climbs, so it is never a step.
-	box(Vector3(-0.95, -0.7, 0.0), Vector3(0.95, 0.7, 0.06), CONC)
-	# The plinth. The projector lives in here, which is why it is a box and not
-	# legs, and why the cable runs below go into it.
-	box(Vector3(-0.8, -0.55, 0.06), Vector3(0.8, 0.55, TABLE_DECK), GREEN_P)
+	# THE OPERATIONS TABLE. Issued, bolted down, and old. Toe recess, plinth,
+	# slab, lip — each a little wider than the one below, so it reads as a top
+	# set on a cabinet base rather than one moulded lump.
+	var pl_x := TABLE_HX - 0.4
+	var pl_y := TABLE_HY - 0.25
+	# Toe recess. 120 mm, under the 0.25 m the navmesh baker climbs, so it is
+	# never a step — and it is what lets somebody stand ON the table edge.
+	box(Vector3(-pl_x + 0.2, -pl_y + 0.2, 0.0), Vector3(pl_x - 0.2, pl_y - 0.2, 0.12), CONC)
+	# The plinth. The projector lives in here, which is why it is a cabinet and
+	# not legs, and why the cable runs feed it.
+	box(Vector3(-pl_x, -pl_y, 0.12), Vector3(pl_x, pl_y, TABLE_DECK), GREEN_P)
 	# The slab. Its top IS the working surface; the anchor sits at its centre.
-	box(Vector3(-1.3, -0.9, TABLE_DECK), Vector3(1.3, 0.9, TABLE_TOP), {"top": PLATE, "side": GREEN_P, "bottom": GREEN_P})
+	box(Vector3(-TABLE_HX, -TABLE_HY, TABLE_DECK), Vector3(TABLE_HX, TABLE_HY, TABLE_TOP), {"top": PLATE, "side": GREEN_P, "bottom": GREEN_P})
 	# The lip: 30 mm exactly, the brief's ceiling, on the perimeter only. A train
 	# moves, and nothing on a moving table stays on it without one.
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-1.3, s * 0.9 - 0.04 if s > 0.0 else s * 0.9, TABLE_TOP),
-				Vector3(1.3, s * 0.9 if s > 0.0 else s * 0.9 + 0.04, TABLE_TOP + TABLE_LIP), BRASS)
-		box(Vector3(s * 1.3 - 0.04 if s > 0.0 else s * 1.3, -0.86, TABLE_TOP),
-				Vector3(s * 1.3 if s > 0.0 else s * 1.3 + 0.04, 0.86, TABLE_TOP + TABLE_LIP), BRASS)
+		box(Vector3(-TABLE_HX, s * TABLE_HY - 0.04 if s > 0.0 else s * TABLE_HY, TABLE_TOP),
+				Vector3(TABLE_HX, s * TABLE_HY if s > 0.0 else s * TABLE_HY + 0.04, TABLE_TOP + TABLE_LIP), BRASS)
+		box(Vector3(s * TABLE_HX - 0.04 if s > 0.0 else s * TABLE_HX, -TABLE_HY + 0.04, TABLE_TOP),
+				Vector3(s * TABLE_HX if s > 0.0 else s * TABLE_HX + 0.04, TABLE_HY - 0.04, TABLE_TOP + TABLE_LIP), BRASS)
 	# Cabinets on the rear piers, paired. The front half is the seating.
 	for s: float in [-1.0, 1.0]:
 		for p: float in [-12.0, -8.0]:
@@ -641,14 +653,14 @@ func _car_ops() -> void:
 	# The tiered well round the table: three rings 0.5 m wide, rising outward.
 	# Mesh-only, 0.125 / 0.25 / 0.375 m, so nothing here is a step to the baker.
 	# Sized off the slab, not typed, so it follows if the table is ever resized.
-	for k in range(1, 4):
+	for k in range(1, WELL_RINGS + 1):
 		var a := 0.5 * (k - 1)
 		var b := 0.5 * k
 		var top := 0.125 * k
-		box(Vector3(-1.3 - b, 0.9 + a, 0.0), Vector3(1.3 + b, 0.9 + b, top), TILE)
-		box(Vector3(-1.3 - b, -0.9 - b, 0.0), Vector3(1.3 + b, -0.9 - a, top), TILE)
+		box(Vector3(-TABLE_HX - b, TABLE_HY + a, 0.0), Vector3(TABLE_HX + b, TABLE_HY + b, top), TILE)
+		box(Vector3(-TABLE_HX - b, -TABLE_HY - b, 0.0), Vector3(TABLE_HX + b, -TABLE_HY - a, top), TILE)
 		for e: float in [-1.0, 1.0]:
-			box(Vector3(minf(e * (1.3 + a), e * (1.3 + b)), -0.9 - a, 0.0), Vector3(maxf(e * (1.3 + a), e * (1.3 + b)), 0.9 + a, top), TILE)
+			box(Vector3(minf(e * (TABLE_HX + a), e * (TABLE_HX + b)), -TABLE_HY - a, 0.0), Vector3(maxf(e * (TABLE_HX + a), e * (TABLE_HX + b)), TABLE_HY + a, top), TILE)
 	# Cable runs feeding the plinth, because the projector draws power from
 	# somewhere. Floor conduit, 90 mm proud — under the baker's climb and under
 	# step_height, so it is dressing and not an obstacle. Mesh-only regardless.
@@ -658,8 +670,9 @@ func _car_ops() -> void:
 	# interpenetrate all three terraces and the kick plate — 17 pairs, which the
 	# builder's own overlap guard refused to write. Disappearing under a dais is
 	# also what the real thing does.
+	var well_edge := TABLE_HY + WELL_RINGS * 0.5
 	for s: float in [-1.0, 1.0]:
-		box(Vector3(-0.18, minf(s * 2.4, s * HW), 0.0), Vector3(0.18, maxf(s * 2.4, s * HW), 0.09), GREEN_P)
+		box(Vector3(-0.18, minf(s * well_edge, s * HW), 0.0), Vector3(0.18, maxf(s * well_edge, s * HW), 0.09), GREEN_P)
 	# NO PROJECTOR RING, NO LAMP, NOTHING ABOVE THE SLAB. The projection is
 	# generated at runtime and drawn additively with no depth test, so anything
 	# hanging over it does not occlude it — it just reads as broken. The clear
@@ -678,11 +691,13 @@ func _car_ops() -> void:
 	# segments snap into each other and the numeral renders as one solid block.
 	# At 0.22 it photographed as a featureless square. 0.5 gives a 2-unit
 	# segment, which is the smallest that still reads as a digit.
-	box(Vector3(-0.6, -0.625, 0.78), Vector3(0.6, -0.5625, 0.86), STENCIL)
+	# Derived off the plinth, not typed, so the label follows if the table moves.
+	var lf := -(TABLE_HY - 0.25)          # the plinth's near face
+	box(Vector3(-2.6, lf - 0.0625, 0.74), Vector3(0.6, lf, 0.84), STENCIL)
 	# STENCIL, not BRASS: brass and the green panel sit within about 0.03 of each
 	# other in mean luminance, so a brass numeral on a green plinth photographed
 	# as nothing at all. The stencil sheet is the only bright thing in the set.
-	_number(4, 0.40, 0.20, 0.50, -0.625, -1.0, STENCIL, true)
+	_number(4, 2.0, 0.18, 0.60, lf - 0.0625, -1.0, STENCIL, true)
 	for s: float in [-1.0, 1.0]:
 		var face: float = s * 3.9
 		var y0: float = face - 0.0625 if s > 0.0 else face

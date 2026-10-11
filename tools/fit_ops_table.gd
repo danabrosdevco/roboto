@@ -41,8 +41,8 @@ const INTERACTIBLE := "res://Env/world_objects/components/template_interactible.
 
 ## Must agree with block_railhead.gd's TABLE_TOP and the slab box in _car_ops.
 const TABLE_TOP := 0.95
-const SLAB_HX := 1.3
-const SLAB_HY := 0.9
+const SLAB_HX := 3.5
+const SLAB_HY := 1.5
 ## The anchor's name is part of the contract with GAMEPLAY's ops_table.gd.
 const ANCHOR := "OpsTableAnchor"
 
@@ -145,7 +145,15 @@ func _fit_anchor(root_node: Node) -> void:
 	# so the car's long axis is GODOT Z and its width is GODOT X. Sizing this
 	# box (SLAB_HX*2, _, SLAB_HY*2) looks right and is transposed: it overhangs
 	# the table by 0.4 m across the car and falls 0.4 m short along it.
-	var size := Vector3(SLAB_HY * 2.0, 0.9, SLAB_HX * 2.0)
+	#
+	# THE HEIGHT IS NOT THE TABLE'S HEIGHT. Only the FOOTPRINT must match the
+	# slab; the vertical extent has to cover the heights an interact ray is
+	# actually cast at. Sized 0.9 and hung under the surface, the volume spans
+	# 0.05..0.95 — entirely below the top — and the player's ray, cast from a
+	# 1.50 m eye, sails over it unless they happen to be looking steeply down.
+	# 1.4 straddling the surface puts eye level inside it. The player still
+	# stands OUTSIDE the box horizontally, which is what the 2 m ray needs.
+	var size := Vector3(SLAB_HY * 2.0, 1.4, SLAB_HX * 2.0)
 	var box: BoxShape3D = cs.shape as BoxShape3D
 	if box == null:
 		box = BoxShape3D.new()
@@ -160,9 +168,9 @@ func _fit_anchor(root_node: Node) -> void:
 		print("  ~ Interactible box %v -> %v" % [box.size, size])
 		box.size = size
 		_changed = true
-	# Dropped half its height so the volume hangs under the surface, over the
-	# slab the player is looking at, rather than floating in the air above it.
-	var cs_want := Vector3(0.0, -size.y * 0.5, 0.0)
+	# Centred 0.05 above the anchor, so the volume runs 0.30..1.70 in the car:
+	# from under the slab to just over a standing player's eye.
+	var cs_want := Vector3(0.0, 0.05, 0.0)
 	if not cs.position.is_equal_approx(cs_want):
 		print("  ~ Interactible shape moved %v -> %v" % [cs.position, cs_want])
 		cs.position = cs_want
