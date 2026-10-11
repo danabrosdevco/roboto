@@ -142,6 +142,16 @@ const BED := CONC
 ## The one exception to the Home Command set: the pack's own emissive ceiling light, whose
 ## material is shared and not ours to edit. Its colour is cream-white, not amber or cyan.
 const LAMP_T := "PSX_Textures/hl_office_complex_style_drop_ceiling_1_1"
+
+## THE OPERATIONS TABLE'S VERTICALS, named because tools/fit_ops_table.gd has to
+## agree with them: it seats the OpsTableAnchor at TABLE_TOP and sizes the
+## Interactible to the slab. Change one of these and run that script again.
+## docs/briefs/OPS_TABLE_FURNITURE.md fixes TABLE_TOP at the standing-table
+## working height and caps the lip at 30 mm; both are quoted there as the
+## numbers the runtime projection was built against.
+const TABLE_DECK := 0.89     ## underside of the slab
+const TABLE_TOP := 0.95      ## the working surface — the anchor goes here
+const TABLE_LIP := 0.03      ## 30 mm, the brief's ceiling, perimeter only
 const BALLAST := "PSX_Textures/concrete_3"
 const DADO := 1.125
 
@@ -570,18 +580,52 @@ func _hull_motive() -> void:
 
 
 ## 2. OPERATIONS: THE MAP ROOM. Low, dark, and empty. The brightest thing is the
-## projection. The table is at chest height for a Walker's crew, so the player
-## looks DOWN on it, and it stands in a tiered well of standing positions. The
-## floor stays flat: the tiers are drawn, not built, because a real step
-## anywhere near the lane would close it. Behind the table, in the front half of
-## the car, is a RAKED, FIXED SEATING BAY facing a wall board, two blocks either
-## side of a 3.5 m aisle. The chairs were never for anyone.
+## projection. The table is a standing table — the player looks DOWN on it — and
+## it stands in a tiered well of standing positions. The floor stays flat: the
+## tiers are drawn, not built, because a real step anywhere near the lane would
+## close it. Behind the table, in the front half of the car, is a RAKED, FIXED
+## SEATING BAY facing a wall board, two blocks either side of a 3.5 m aisle. The
+## chairs were never for anyone.
 ## The ceiling is dropped to 3.6 m, though the car is 5.0 m.
+##
+## THE TABLE IS FURNITURE AND NOTHING ELSE. The holographic board is generated
+## at runtime by Env/world_objects/ops_table.gd and is not drawn here — an
+## earlier version of this car painted a fake projection onto the slab and hung
+## a projector ring over it, and both had to come out. See
+## docs/briefs/OPS_TABLE_FURNITURE.md, which sets the geometry this has to meet:
+##
+##   - top surface at TABLE_TOP (0.95 m), the working height for a standing
+##     table, at least 1.5 x 1.1 m. Ours is 2.6 x 1.8, which leaves 0.21 m of
+##     margin round the 1.38 m lit plate on the short axis.
+##   - 0.25 m of CLEAR AIR above it. Nothing may hang over the surface: no lamp,
+##     no hood, no gantry. The projection draws additively with no depth test
+##     against the room, so anything above it does not occlude it, it just looks
+##     wrong. The car's lamps are on the ceiling at 3.6 m and off to the sides.
+##   - no rim above 30 mm. The brass lip here is exactly 30 and sits on the
+##     perimeter, clear of the plate.
+##
+## Changing TABLE_TOP means retuning the zoomed camera, which is GAMEPLAY's --
+## tell them rather than moving it quietly.
 func _car_ops() -> void:
 	_shell(false, true, HULL, false, TILE)
-	# Pedestal, then the slab on it. Tops at 1.1 and 1.3 m.
-	box(Vector3(-0.8, -0.8, 0.0), Vector3(0.8, 0.8, 1.1), GREEN_P)
-	box(Vector3(-4.0, -1.25, 1.1), Vector3(4.0, 1.25, 1.3), {"top": READOUT, "side": GREEN_P, "bottom": GREEN_P})
+	# THE OPERATIONS TABLE. Issued, bolted down, and old. Kick plate, plinth,
+	# slab, lip — in that order, each one a little smaller than the last so it
+	# reads as assembled from stock parts rather than moulded.
+	# Bolted-down kick plate, 60 mm proud: well under the 0.25 m the navmesh
+	# baker climbs, so it is never a step.
+	box(Vector3(-0.95, -0.7, 0.0), Vector3(0.95, 0.7, 0.06), CONC)
+	# The plinth. The projector lives in here, which is why it is a box and not
+	# legs, and why the cable runs below go into it.
+	box(Vector3(-0.8, -0.55, 0.06), Vector3(0.8, 0.55, TABLE_DECK), GREEN_P)
+	# The slab. Its top IS the working surface; the anchor sits at its centre.
+	box(Vector3(-1.3, -0.9, TABLE_DECK), Vector3(1.3, 0.9, TABLE_TOP), {"top": PLATE, "side": GREEN_P, "bottom": GREEN_P})
+	# The lip: 30 mm exactly, the brief's ceiling, on the perimeter only. A train
+	# moves, and nothing on a moving table stays on it without one.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-1.3, s * 0.9 - 0.04 if s > 0.0 else s * 0.9, TABLE_TOP),
+				Vector3(1.3, s * 0.9 if s > 0.0 else s * 0.9 + 0.04, TABLE_TOP + TABLE_LIP), BRASS)
+		box(Vector3(s * 1.3 - 0.04 if s > 0.0 else s * 1.3, -0.86, TABLE_TOP),
+				Vector3(s * 1.3 if s > 0.0 else s * 1.3 + 0.04, 0.86, TABLE_TOP + TABLE_LIP), BRASS)
 	# Cabinets on the rear piers, paired. The front half is the seating.
 	for s: float in [-1.0, 1.0]:
 		for p: float in [-12.0, -8.0]:
@@ -596,21 +640,49 @@ func _car_ops() -> void:
 	box(Vector3(-END + 0.0625, -HW, 3.6), Vector3(END - 0.0625, HW, H), {"top": CONC, "side": CONC, "bottom": CEIL_T})
 	# The tiered well round the table: three rings 0.5 m wide, rising outward.
 	# Mesh-only, 0.125 / 0.25 / 0.375 m, so nothing here is a step to the baker.
+	# Sized off the slab, not typed, so it follows if the table is ever resized.
 	for k in range(1, 4):
 		var a := 0.5 * (k - 1)
 		var b := 0.5 * k
 		var top := 0.125 * k
-		box(Vector3(-4.0 - b, 1.25 + a, 0.0), Vector3(4.0 + b, 1.25 + b, top), TILE)
-		box(Vector3(-4.0 - b, -1.25 - b, 0.0), Vector3(4.0 + b, -1.25 - a, top), TILE)
+		box(Vector3(-1.3 - b, 0.9 + a, 0.0), Vector3(1.3 + b, 0.9 + b, top), TILE)
+		box(Vector3(-1.3 - b, -0.9 - b, 0.0), Vector3(1.3 + b, -0.9 - a, top), TILE)
 		for e: float in [-1.0, 1.0]:
-			box(Vector3(minf(e * (4.0 + a), e * (4.0 + b)), -1.25 - a, 0.0), Vector3(maxf(e * (4.0 + a), e * (4.0 + b)), 1.25 + a, top), TILE)
-	# The projection: a flat plan 0.15 m above the slab (1.45 m, under the
-	# player's 1.7), a relief on it, and the projector ring hanging above.
-	box(Vector3(-3.7, -1.05, 1.3), Vector3(3.7, 1.05, 1.34375), READOUT)
-	box(Vector3(-3.0, -0.6, 1.34375), Vector3(-2.0, 0.0, 1.5), READOUT)
-	box(Vector3(0.2, 0.1, 1.34375), Vector3(0.8, 0.7, 1.45), READOUT)
-	box(Vector3(2.0, -0.5, 1.34375), Vector3(3.0, 0.4, 1.4), READOUT)
-	box(Vector3(-2.0, -1.5, 3.4), Vector3(2.0, 1.5, 3.6), LAMP_T)
+			box(Vector3(minf(e * (1.3 + a), e * (1.3 + b)), -0.9 - a, 0.0), Vector3(maxf(e * (1.3 + a), e * (1.3 + b)), 0.9 + a, top), TILE)
+	# Cable runs feeding the plinth, because the projector draws power from
+	# somewhere. Floor conduit, 90 mm proud — under the baker's climb and under
+	# step_height, so it is dressing and not an obstacle. Mesh-only regardless.
+	#
+	# They stop at the OUTER EDGE OF THE WELL (0.9 + 3 x 0.5) and go under the
+	# dais rather than crossing it. Run to the plinth instead and they
+	# interpenetrate all three terraces and the kick plate — 17 pairs, which the
+	# builder's own overlap guard refused to write. Disappearing under a dais is
+	# also what the real thing does.
+	for s: float in [-1.0, 1.0]:
+		box(Vector3(-0.18, minf(s * 2.4, s * HW), 0.0), Vector3(0.18, maxf(s * 2.4, s * HW), 0.09), GREEN_P)
+	# NO PROJECTOR RING, NO LAMP, NOTHING ABOVE THE SLAB. The projection is
+	# generated at runtime and drawn additively with no depth test, so anything
+	# hanging over it does not occlude it — it just reads as broken. The clear
+	# air above TABLE_TOP is the one part of this car's geometry that another
+	# lane's code depends on.
+	# Home Command labels everything, including its own furniture. A stencilled
+	# designation plate on the plinth's near face and an issue number beside it:
+	# the table was requisitioned, not chosen.
+	# Both sit PROUD of the plinth's -Y face, which snaps to -0.5625. _digit
+	# spans [face, face + 0.0625] when s < 0, so face is -0.625 and not the face
+	# itself — pass -0.5625 and every digit is buried inside the plinth, which
+	# the overlap guard catches as 9 pairs rather than letting it ship.
+	#
+	# AND THE NUMBER HAS A MINIMUM SIZE. _digit builds each segment h/8 thick,
+	# and solid() snaps every coordinate to 1/32 m — so below h = 0.5 the
+	# segments snap into each other and the numeral renders as one solid block.
+	# At 0.22 it photographed as a featureless square. 0.5 gives a 2-unit
+	# segment, which is the smallest that still reads as a digit.
+	box(Vector3(-0.6, -0.625, 0.78), Vector3(0.6, -0.5625, 0.86), STENCIL)
+	# STENCIL, not BRASS: brass and the green panel sit within about 0.03 of each
+	# other in mean luminance, so a brass numeral on a green plinth photographed
+	# as nothing at all. The stencil sheet is the only bright thing in the set.
+	_number(4, 0.40, 0.20, 0.50, -0.625, -1.0, STENCIL, true)
 	for s: float in [-1.0, 1.0]:
 		var face: float = s * 3.9
 		var y0: float = face - 0.0625 if s > 0.0 else face
