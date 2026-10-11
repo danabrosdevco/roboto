@@ -90,9 +90,33 @@ func _gather(dir_path: String, out: Array[String]) -> void:
 			out.append(dir_path.path_join(f))
 
 
+## A block whose .map uses "special/clip" has collision its MESH DOES NOT
+## DESCRIBE: clip brushes are solid and do not render, so rebuilding collision
+## from the mesh silently throws them away. prop_jersey_barrier is the case
+## that proves it — its visible barrier is illusionary and its ONE collision
+## shape IS the clip box, so collapsing would replace a deliberate 1-shape
+## volume with a detailed trimesh of the barrier: more triangles, different
+## shape, and the hand-authoring undone. These blocks are already doing the
+## right thing and are left alone.
+func _uses_clip(tscn_path: String) -> bool:
+	var map_path := tscn_path.get_basename() + ".map"
+	var f := FileAccess.open(map_path, FileAccess.READ)
+	if f == null:
+		# No .map beside the .tscn is normal for hand-built blocks. Say nothing
+		# and let the mesh path handle it; an unreadable map would be caught by
+		# tools/test_block_collision.gd.
+		return false
+	var text := f.get_as_text()
+	f.close()
+	return text.contains("special/clip")
+
+
 func _do(path: String) -> void:
 	var packed: PackedScene = load(path)
 	if packed == null:
+		return
+	if _uses_clip(path):
+		_skipped.append("%s — built with special/clip; its collision is hand-authored and has no mesh" % path.get_file())
 		return
 	var root_node: Node = packed.instantiate()
 	var before := 0
