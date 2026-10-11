@@ -338,6 +338,7 @@ func get_nearby_squads(radius: float = 120.0) -> Array:
 # ─────────────────────────────────────────────
 
 func _process(delta: float) -> void:
+	_tick_link(delta)
 	if player == null or not player.alive:
 		return
 
@@ -414,6 +415,10 @@ func _issue_contextual_order() -> void:
 
 
 func _issue_order(verb: int, position = null, target: Node = null) -> void:
+	# Silent here: the dial and equipment paths announce the refusal, and this
+	# is also reached by the contextual key, which would spam it.
+	if link_down():
+		return
 	var squad := get_selected_squad()
 	if squad == null:
 		return
@@ -426,6 +431,14 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 		pos = player.global_position if hit.is_empty() else hit.position
 	else:
 		pos = position
+
+	# EVERY VERB PAYS. Before the match, so CONTACT and FOLLOW — both of which
+	# return early below — are charged exactly like ADVANCE. A callout is a
+	# transmission; so is telling the squad to come with you.
+	#
+	# AFTER the position is resolved, though, because an ADVANCE is a DIRECTED
+	# transmission and the direction is the point it is ordered at.
+	_transmit(verb, pos)
 
 	match verb:
 		Verb.CONTACT:
@@ -482,8 +495,25 @@ func _call_contact(position: Vector3, target: Node) -> void:
 		mgr.designate(Enums.Factions.ALLIED, target, CONTACT_MARKER_SECONDS)
 
 	# Reuse the scanner's existing world-space marker for the visual.
-	if hud != null and target is Node3D and hud.has_method("activate_enemy_marker"):
-		hud.activate_enemy_marker(target, CONTACT_MARKER_SECONDS)
+	#
+	# TWO KINDS, AND THE SECOND ONE IS MOST OF THEM. A contact with a live body
+	# behind it gets the scanner's tracking mark. A contact called at a PLACE —
+	# which is the common case, and which produced nothing visible at all until
+	# now — gets the same mark pinned to the ground with the age of the report
+	# counting up beside it.
+	#
+	# Both go through the HUD, which refuses either when the uplink is too poor
+	# to carry a report. See Hud.mark_contact.
+	if hud != null:
+		if target is Node3D and hud.has_method("activate_enemy_marker"):
+			hud.activate_enemy_marker(target, CONTACT_MARKER_SECONDS)
+		elif hud.has_method("mark_contact"):
+			# Faction from the reported body when there is one; a report called at
+			# bare ground has no identity and falls back to hostile.
+			var fac = Enums.Factions.ENEMY
+			if target != null and "faction" in target:
+				fac = target.faction
+			hud.mark_contact(position, CONTACT_MARKER_SECONDS, player, fac)
 
 	contact_called.emit(position, target)
 
@@ -609,6 +639,172 @@ func _refresh_registry_quietly() -> void:
 # ─────────────────────────────────────────────
 # MARKERS — one per squad, moved rather than respawned
 # ─────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# TRANSMITTING MAKES YOU LOUD
+#
+# The player's one irreplaceable verb is "tell the squad what to do", and
+# until now it was free. Free in a game about a sensor war is the wrong price:
+# the whole fiction is that you are a signal in a world of things listening
+# for signals, and you were the only thing on the map that could broadcast
+# without consequence.
+#
+# THREE THINGS HAPPEN WHEN YOU KEY THE RADIO.
+#
+#   1. A wavefront leaves you and runs out across the ground, visible, at a
+#      speed you can read. See TransmitPing.
+#   2. It costs you integrity. You are emitting instead of listening, and the
+#      cost is small enough to ignore once and expensive enough to notice when
+#      you micromanage — which is exactly the behaviour it is there to price.
+#   3. Everything hostile the front reaches is told where you are, AS IT
+#      ARRIVES. Not instantly: the thing on the far ridge finds out last.
+#
+# NO NEW STIMULUS TYPE. StimulusType is an enum and enums here are append-only;
+# more to the point, ENEMY_SPOTTED already means exactly this — "a hostile is
+# at this position" — and what the receivers do with it is already tuned. A
+# TRANSMISSION_HEARD that behaved identically would be a second name for a
+# thing we have.
+# ─────────────────────────────────────────────
+
+@export_group("Transmission")
+## Metres a routine order carries. Anything hostile with a live receiver
+## inside this learns your bearing as the front reaches it.
+@export var tx_radius: float = 45.0
+## Seconds for the front to run out to tx_radius.
+@export var tx_travel: float = 0.9
+## What keying the radio costs your own integrity. 0.06 is about a second and
+## a half of passive recovery (0.04/s): one order is nothing, a dozen inside a
+## firefight walks you down a band.
+@export var tx_signal_cost: float = 0.06
+## The carrier's colour. Player signal cyan — see HUDPalette.SIGNAL.
+const TX_COLOUR := Color(0.40, 0.78, 0.95)
+## By path, not by class_name: see the note on TransmitPing.fire.
+const _PING := preload("res://Character/components/transmit_ping.gd")
+
+## Emitted for every order, with how many hostile receivers were in reach.
+## Nothing listens yet; it is here so a readout, a bark or a threat meter can
+## be hung off the transmission without reaching back into this function.
+signal transmitted(origin: Vector3, reach: float, receivers: int)
+
+
+# ─────────────────────────────────────────────
+# TWO SHAPES OF TRANSMISSION, because they are two different messages.
+#
+# FOLLOW and CONTACT have no bearing in them. "Come with me" and "there is
+# something there" are addressed to the squad wherever it is, so they go out
+# as a circle: everything in reach, in every direction.
+#
+# ADVANCE HAS A BEARING. "Go to that spot" is aimed, so the set is aimed with
+# it — a lobe of a wave running out along the line you pointed down, rather
+# than a ring that happens to pass over it.
+#
+# AND THE SET BEING AIMED IS NOT FREE. What is inside the lobe hears you and
+# what is behind you does not, which makes WHERE YOU ARE FACING part of the
+# cost of giving an order. Pointing your squad at a hill tells that hill. The
+# alternative — drawing a lobe while every robot in the valley is quietly told
+# anyway — is a readout that lies, and this HUD has enough of those behind it.
+#
+# 120 DEGREES, not a pencil beam. This is an antenna with a lobe, not a laser,
+# and a narrow cone would turn every order into a precision aiming exercise.
+# ─────────────────────────────────────────────
+
+## How wide an ADVANCE's lobe is, total. Set 360 to make ADVANCE behave like
+## the other verbs again.
+##
+## 50, DOWN FROM 120. At 120 the thing on screen was still most of a circle:
+## wide enough that the curvature read before the direction did, so it looked
+## like an omnidirectional wave with a bite out of it rather than like an
+## order pointed somewhere.
+@export var tx_cone_degrees: float = 50.0
+
+
+## Key the radio. Called once per order from _issue_order, after the position
+## is resolved — `at` is where the order points, which is what aims an ADVANCE.
+func _transmit(verb: int, at: Vector3) -> void:
+	if player == null or not is_instance_valid(player):
+		return   # no body to transmit from; the order itself is still fine
+	var origin: Vector3 = player.global_position
+
+	# The bearing, flattened: a transmission aimed up a hill is still aimed
+	# along the ground as far as who-can-hear-it is concerned.
+	var heading := Vector3.ZERO
+	if verb == Verb.ADVANCE or verb == Verb.ATTACK:
+		heading = at - origin
+		heading.y = 0.0
+		if heading.length() < 0.5:
+			# Ordered at your own feet. There is no bearing in that, so it goes
+			# out as a circle rather than as a lobe pointing at random.
+			heading = Vector3.ZERO
+		else:
+			heading = heading.normalized()
+	var aimed: bool = heading != Vector3.ZERO
+	var cone_cos: float = cos(deg_to_rad(clampf(tx_cone_degrees, 1.0, 360.0) * 0.5))
+
+	# The cost. Before the ring, so a transmission that drops you through a
+	# threshold shows the consequence on the same frame as the cause.
+	if tx_signal_cost > 0.0 and player.has_method("receive_signal_damage"):
+		player.receive_signal_damage(tx_signal_cost)
+
+	# Who is in reach. Gathered here rather than left to emit_stimulus so the
+	# count can be reported and so the alert can be DELAYED to the moment the
+	# front arrives — the bus has no concept of a wave that travels.
+	var heard: Array = []
+	var sm := _get_stimulus_manager()
+	if sm != null:
+		for ai in sm.registered_ai:
+			if ai == null or not is_instance_valid(ai) or not ai.alive:
+				continue
+			# NOT `faction != ENEMY`. There are four hostile factions now
+			# (SWARM, HOME, ARGUS were appended 2026-10-10) and a hardcoded
+			# comparison meant none of them ever heard the player's transmit.
+			if not (ai is Enemy) or not Enums.are_hostile(Enums.Factions.PLAYER, (ai as Enemy).faction):
+				continue
+			# A jammed receiver hears nothing. The one case where being at the
+			# bottom of the signal ladder works in somebody's favour, and it
+			# cuts both ways: EMP the hill and you can talk in front of it.
+			if ai.has_method("get_signal_state") \
+					and int(ai.get_signal_state()) == int(AI.SignalState.EKILL):
+				continue
+			var to_them: Vector3 = ai.global_position - origin
+			if to_them.length() > tx_radius:
+				continue
+			if aimed:
+				var flat := Vector3(to_them.x, 0.0, to_them.z)
+				# Standing on top of you: inside every lobe, no bearing to test.
+				if flat.length() > 0.01 and flat.normalized().dot(heading) < cone_cos:
+					continue
+			heard.append(ai)
+
+	# The wavefront, parented to the LEVEL rather than to the player: a ring
+	# hung off a body that then walks away drags its own transmission with it.
+	var host: Node = player.get_parent()
+	var ping: Node3D = _PING.new().fire(host, origin, tx_radius, TX_COLOUR, tx_travel)
+	if ping != null:
+		if aimed:
+			ping.aim(heading, tx_cone_degrees)
+		# A lambda, not _front_reached.bind(origin). Chained binds come off in
+		# the opposite order to the one you write them in, so the ping's own
+		# .bind(receiver) landed in front of the origin and every callback
+		# arrived with its arguments swapped.
+		ping.notify_as_front_arrives(heard, func(n): _front_reached(origin, n))
+	else:
+		# No ground to draw on, but the transmission still happened — tell them
+		# now rather than silently letting the player off.
+		for n in heard:
+			_front_reached(origin, n)
+
+	transmitted.emit(origin, tx_radius, heard.size())
+
+
+## The front has reached this receiver: it now knows roughly where you are.
+func _front_reached(origin: Vector3, receiver: Node) -> void:
+	if receiver == null or not is_instance_valid(receiver) or not receiver.alive:
+		return   # died between keying the mic and the wave getting there
+	if not receiver.has_method("receive_stimulus"):
+		return
+	receiver.receive_stimulus(StimulusManager.StimulusType.ENEMY_SPOTTED,
+		origin, player, origin.distance_to(receiver.global_position))
+
+
 func _get_stimulus_manager() -> StimulusManager:
 	if world != null and world is World and (world as World).ai_manager != null:
 		return (world as World).ai_manager.stimulus_manager
@@ -678,8 +874,91 @@ func command_modes() -> Array:
 ## squad; the two movement verbs are the same call T makes, so there is exactly
 ## one implementation of "advance" in the game and the tool is a second way to
 ## reach it rather than a second copy of it.
+# ─────────────────────────────────────────────
+# NO LINK, NO ORDERS.
+#
+# An e-killed drone keeps its gun and loses its command. That is the whole
+# premise arriving at once: strip the squad layer and the player finds out they
+# were a coordinator, not a shooter.
+#
+# AND IT DOES NOT COME BACK THE INSTANT THE BAR DOES. A link that flickers
+# above the floor for one frame should not hand the squad back mid-firefight,
+# so recovery is followed by a resync window — the bar is up, the squad is not
+# answering yet, and the designator says so. Without it, jamming reads as a
+# stutter rather than as something being taken away.
+# ─────────────────────────────────────────────
+
+## How long after the link comes back before the squad answers again.
+@export var resync_seconds: float = 3.0
+## Counts down once the link is above the floor. Above zero: no orders.
+var _resync_t: float = 0.0
+## Whether the link was down last tick, so the window is armed on the edge.
+var _was_cut: bool = false
+
+
+## True when the player cannot command: link at the floor, or still resyncing.
+func link_down() -> bool:
+	if player == null or not is_instance_valid(player):
+		return false   # no player to ask: never refuse an order over it
+	if player.has_method("get_signal_state") \
+			and int(player.get_signal_state()) == int(AI.SignalState.EKILL):
+		return true
+	return _resync_t > 0.0
+
+
+## Seconds left before the squad answers again, for the readout.
+func resync_left() -> float:
+	return maxf(_resync_t, 0.0)
+
+
+## Runs the resync window and leans on the squad while the link is out. Called
+## from _process.
+func _tick_link(delta: float) -> void:
+	if player == null or not is_instance_valid(player) \
+			or not player.has_method("get_signal_state"):
+		return
+	var cut: bool = int(player.get_signal_state()) == int(AI.SignalState.EKILL)
+	if cut:
+		_resync_t = resync_seconds   # held full while it is down
+		_lean_on_squad(delta)
+	elif _was_cut:
+		_resync_t = resync_seconds   # the edge: start counting from here
+	else:
+		_resync_t = maxf(0.0, _resync_t - delta)
+	_was_cut = cut
+
+
+## THE SQUAD IS ON YOUR UPLINK, SO IT GOES WITH YOU.
+##
+## Rather than inventing a second "badly commanded" state, this pushes their
+## own signal down — which routes into every penalty the game already has and
+## has already tuned: accuracy, sensor range, order compliance, the lot. One
+## cause, all the existing effects.
+##
+## FLOORED AT CRITICAL. They get worse, they do not get e-killed: a jammed
+## drone should cost the player a coordinated squad, not delete it.
+func _lean_on_squad(delta: float) -> void:
+	var squad := get_selected_squad()
+	if squad == null:
+		return
+	for m in squad.squad_members:
+		if m == null or not is_instance_valid(m) or not m.alive:
+			continue
+		if m.signal_integrity <= AI.SIGNAL_CRITICAL:
+			continue
+		if m.has_method("receive_signal_damage"):
+			m.receive_signal_damage(uplink_drag * delta, player)
+
+
+## Per second, how hard a dead uplink drags the squad's own link down.
+@export var uplink_drag: float = 0.35
+
+
 func issue_dial_order(mode: Dictionary, pos: Vector3) -> bool:
 	if mode.is_empty():
+		return false
+	if link_down():
+		equipment_refused.emit(_link_refusal())
 		return false
 	var id_value: StringName = mode.get("item_id", &"")
 	if id_value == MODE_ADVANCE or id_value == MODE_FOLLOW:
@@ -785,6 +1064,11 @@ func _known_for(squad: Squad) -> Dictionary:
 ## the signals rather than through this.
 func issue_equipment_order(item_id: StringName, label: String, pos: Vector3,
 		use_point: bool) -> bool:
+	# Gated here as well as in issue_dial_order: equipment can be ordered from
+	# the dial OR directly, and a gate on one entrance is not a gate.
+	if link_down():
+		equipment_refused.emit(_link_refusal())
+		return false
 	var squad := get_selected_squad()
 	if squad == null:
 		equipment_refused.emit("NO SQUAD IN COMMAND")
@@ -976,3 +1260,12 @@ func _get_ai_manager():
 	if world != null and "ai_manager" in world:
 		return world.ai_manager
 	return null
+
+
+## What the readout says when the link will not carry an order.
+func _link_refusal() -> String:
+	var left := resync_left()
+	if player != null and is_instance_valid(player) and player.has_method("get_signal_state") \
+			and int(player.get_signal_state()) == int(AI.SignalState.EKILL):
+		return "LINK LOST"
+	return "RESYNC %.0fs" % ceil(left)

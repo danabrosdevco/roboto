@@ -92,6 +92,18 @@ const FRAMES := {
 	"reclaimer": [0.75, 0.80, 0.45],
 	"soldier": [0.50, 2.00, 0.45],
 	"drone": [0.25, 1.70, 0.45],
+	# The 2026-10-10 frames, measured with probe_chassis_size.gd off the
+	# colliders, not taken from a design doc. The Kite and the Broodcarrier fly
+	# and get no row; the Drayman's capsule is identical to the Rover's.
+	#
+	# THE SEE-ENGINE IS 4.40 M TALL — the tallest body in the armoury, against
+	# the 3.00 the "squad" envelope has carried until now. An honest bake that
+	# includes it needs agent_height raised to match, on every level it walks.
+	"lance": [0.52, 1.04, 0.45],
+	"picket": [0.80, 3.00, 0.45],
+	"vessel": [1.00, 4.00, 0.45],
+	"bastion": [1.05, 3.90, 0.45],
+	"see_engine": [0.95, 4.40, 0.45],
 }
 
 ## Where a level keeps its objective anchors. THERE IS NO ONE PLACE, which is

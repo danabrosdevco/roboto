@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/vessel.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"vessel"
+display_name = "Vessel"
+description = "Six-wheeled carrier. Its mount holds a hatchling launcher instead of a gun: two canisters in the bay, four hoppers on the ground, then a long recharge. It carries bodies, not firepower."
+scene = ExtResource("2_scene")
+cost = 340
+purchasable = true
+supply = 3
+starting_weapon_id = &"hatchling_launcher"
+coax_weapon_id = &""
+base_health = 260
+base_speed = 1.0
+base_accuracy = 1.0
+base_sensor_range = 45.0
+weapon_slots = 1
+built_in = ""
+weapon_replaces_built_in = false
+turret = true
+vehicle = true
+drives = true
+equipment_slots = 1
+module_slots = 2
+musters_at_base = true
+required_rank = 0

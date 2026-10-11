@@ -1,6 +1,6 @@
 [gd_scene load_steps=102 format=3]
 
-[ext_resource type="Script" path="res://Character/characters/ai/rover.gd" id="1_3a38k"]
+[ext_resource type="Script" path="res://Character/characters/ai/drayman.gd" id="1_3a38k"]
 [ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="2_kwpm7"]
 [ext_resource type="PackedScene" path="res://Character/components/bark.tscn" id="3_sa4jm"]
 [ext_resource type="Script" path="res://Character/components/bark.gd" id="4_724im"]
@@ -440,7 +440,7 @@ wheel_radius = 0.42
 suspension_travel = 0.16
 belly_drop = 0.24
 aggressive = false
-formation_trail = 0.0
+formation_trail = 7.0
 cover_arrival_threshold = 1.2
 cover_search_radius = 25.0
 suppress_duration = 3.0
@@ -516,8 +516,8 @@ lod_near_distance = 35.0
 lod_far_distance = 80.0
 lod_far_multiplier = 4.0
 DefaultAIState = 0
-AllowedMovementOptions = Array[ExtResource("2_kwpm7")]([])
-AllowedCombatOptions = Array[ExtResource("2_kwpm7")]([])
+AllowedMovementOptions = Array[int]([0, 2])
+AllowedCombatOptions = Array[int]([0])
 fell_out_speed = 50.0
 adrift_distance = 4.0
 adrift_seconds = 4.0

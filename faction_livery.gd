@@ -25,6 +25,16 @@ const COLORS := {
 	Enums.Factions.ALLIED:  Color(0.20, 0.65, 0.80),  # teal
 	Enums.Factions.ENEMY:   Color(0.70, 0.35, 0.02),  # amber
 	Enums.Factions.NEUTRAL: Color(0.62, 0.60, 0.55),  # bare grey
+	# The three hostile factions appended 2026-10-10. A MISSING KEY RENDERS
+	# GREY, it does not crash (see _material_for's COLORS.get fallback), which
+	# is why these had to be written in the same change as the enum: before
+	# they existed a correctly-factioned Swarm body looked broken and a
+	# wrongly-factioned ENEMY one looked right. Hues are hud_palette.gd's
+	# FAC_SWARM / FAC_HOME / FAC_ARGUS, dropped in value because these are
+	# paint under scene light rather than a HUD bracket over terrain.
+	Enums.Factions.SWARM:   Color(0.70, 0.35, 0.02),  # the Swarm's amber
+	Enums.Factions.HOME:    Color(0.35, 0.42, 0.22),  # Home Command olive
+	Enums.Factions.ARGUS:   Color(0.40, 0.10, 0.27),  # Argus tyrian
 }
 
 # Shared cache, keyed by "<base material id>:<faction>".

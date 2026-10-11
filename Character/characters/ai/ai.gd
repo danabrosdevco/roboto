@@ -66,6 +66,52 @@ const SIGNAL_EKILL_RECOVER: float = 0.50
 @export var signal_recovery_rate: float = 0.04
 @export var signal_resistance: float = 1.0       # damage multiplier. >1 = more resistant
 
+## A hardening field somebody else is holding over this robot, as a STAMP
+## rather than a mutation: whoever projects it writes it every tick with an
+## expiry, and nothing ever has to take it off. The Bastion is the first
+## projector (bastion.gd).
+##
+## WHY NOT MUTATE signal_resistance. It is a plain export with no stack and no
+## timer, so multiply-on-entry / divide-on-exit means: two overlapping
+## projectors double it and only one divides back; a projector that dies
+## mid-effect never divides back at all; and a projector frozen by the distance
+## cull has its _physics_process switched off (ai_manager.gd:576-593), so it
+## cannot run an exit path even in principle. Every one of those leaves a robot
+## PERMANENTLY hardened, in silence, which is the expensive kind of bug.
+##
+## WHY NOT "RECOMPUTE FROM SCRATCH EACH TICK" EITHER, which is where
+## docs/frames/BASTION.md §6.1 stops: the recompute would have to run on the
+## RECEIVER, and a culled receiver's tick is off too, so it would keep whatever
+## it was last given forever. An expiry is the only version that is correct
+## when EITHER end is frozen.
+var _hardening_bonus: float = 0.0
+var _hardening_until: float = 0.0
+
+
+## MAX, NOT SUM: two Bastions are not twice as good as one. The ceiling
+## argument in docs/frames/BASTION.md §4 — "anything near 3.0 would make a
+## Bastion squad effectively immune to suppression, which is not a fight, it is
+## a wall" — is unenforceable under a sum.
+func add_hardening(bonus: float, seconds: float) -> void:
+	var now: float = float(Time.get_ticks_msec()) * 0.001
+	if now > _hardening_until:
+		_hardening_bonus = 0.0        # the old stamp had already lapsed
+	_hardening_bonus = maxf(_hardening_bonus, bonus)
+	_hardening_until = maxf(_hardening_until, now + seconds)
+
+
+## What the two signal paths below divide by. ADDITIVE, not multiplicative:
+## the three other things that touch signal_resistance — enemy_loadouts.gd:431,
+## squad_spawner.gd:355 and squad_page.gd's readout — all ADD module bonuses
+## into it at spawn, so a multiplier here would compose wrongly with them.
+##
+## Everything else in the project keeps reading signal_resistance directly,
+## which is still the robot's own permanent figure.
+func effective_signal_resistance() -> float:
+	if float(Time.get_ticks_msec()) * 0.001 > _hardening_until:
+		return signal_resistance
+	return signal_resistance + _hardening_bonus
+
 # Seconds of blocked signal recovery left. See lock_signal().
 var _signal_locked_t: float = 0.0
 # Set on the way down through SIGNAL_EKILL, cleared only on the way back up
@@ -114,7 +160,9 @@ func get_signal_state() -> SignalState:
 ## Enemy credits it so an e-kill can be attributed; the player has nobody to
 ## report to and ignores it.
 func receive_signal_damage(amount: float, source: Node = null) -> void:
-	var actual: float = amount / maxf(signal_resistance, 0.01)
+	# effective_, not the raw export: a Bastion's canopy is a stamp with an
+	# expiry on top of the robot's own figure. See effective_signal_resistance.
+	var actual: float = amount / maxf(effective_signal_resistance(), 0.01)
 	var before: float = signal_integrity
 	signal_integrity = maxf(0.0, signal_integrity - actual)
 	_on_signal_damaged(before, signal_integrity, source)
@@ -135,7 +183,9 @@ func receive_signal_damage(amount: float, source: Node = null) -> void:
 ## Divided by signal_resistance, the same as the damage itself: a Hardened
 ## Uplink shortens the lock as well as softening the hit.
 func lock_signal(seconds: float) -> void:
-	_signal_locked_t = maxf(_signal_locked_t, seconds / maxf(signal_resistance, 0.01))
+	# effective_, as above: standing in a Bastion's canopy shortens the lock as
+	# well as softening the hit.
+	_signal_locked_t = maxf(_signal_locked_t, seconds / maxf(effective_signal_resistance(), 0.01))
 
 
 # In at SIGNAL_EKILL, out only at SIGNAL_EKILL_RECOVER. Updated where signal

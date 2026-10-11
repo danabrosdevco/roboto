@@ -169,15 +169,34 @@ func move_to(pos: Vector3, _think_delay: float = 0.0) -> void:
 	_station_set = true
 
 
-# No weapon, ever. The inherited loop would look for one every frame and the
-# combat roll would try to manoeuvre it into a firing position it can never
-# use. See failure 2 in the header.
-func handle_weapon_logic(_delta: float) -> void:
-	pass
+# No weapon — on THIS frame, and on any subclass that does not say otherwise.
+# The inherited loop would look for one every frame and the combat roll would
+# try to manoeuvre it into a firing position it can never use. See failure 2 in
+# the header.
+#
+# WHY THIS IS A PREDICATE AND NOT `pass`. These two used to be bare `pass`
+# bodies commented "No weapon, ever." — which was true of the Spotter and false
+# of this script, because the Kite is an armed gunship built on the same flight
+# model. GDScript has no `super.super()`, so a subclass could not reach
+# `Enemy.handle_weapon_logic` past a stub here: the documented workaround —
+# a Callable built off the base script object — does not exist in 4.3
+# (`Callable(load("enemy.gd"), "handle_weapon_logic").is_valid()` is **false**,
+# measured). Opting out through a virtual predicate costs the Spotter and the
+# Broodcarrier nothing — both inherit `false` and behave exactly as before —
+# and it is what stops the next armed flyer forking a hundred lines of the
+# most-edited state machine in the project.
+func _carries_a_weapon() -> bool:
+	return false
+
+
+func handle_weapon_logic(delta: float) -> void:
+	if _carries_a_weapon():
+		super(delta)
 
 
 func roll_combat_action() -> void:
-	pass
+	if _carries_a_weapon():
+		super()
 
 
 # Facing is flight attitude, set by _orient from the heading.

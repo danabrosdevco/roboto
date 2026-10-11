@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/drayman.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"drayman"
+display_name = "Drayman"
+description = "Six-wheeled logistics truck. Its boom hands equipment charges back to squadmates who have spent theirs, and it carries a deep load of its own."
+scene = ExtResource("2_scene")
+cost = 170
+purchasable = true
+supply = 2
+starting_weapon_id = &""
+coax_weapon_id = &""
+base_health = 170
+base_speed = 1.0
+base_accuracy = 0.0
+base_sensor_range = 40.0
+weapon_slots = 1
+built_in = "ARM"
+weapon_replaces_built_in = true
+turret = false
+vehicle = false
+drives = true
+equipment_slots = 4
+module_slots = 2
+musters_at_base = true
+required_rank = 0

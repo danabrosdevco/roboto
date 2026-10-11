@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
+[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_rocket_pods.tscn" id="2_ai"]
+
+[resource]
+script = ExtResource("1_itemdef")
+id = &"rocket_pods"
+display_name = "Rocket Pods"
+short_name = "ROCKETS"
+description = "Six tubes on a trunnion, rippled three to six at a time, and every round arcs. It reaches ninety-five metres and the rounds are six seconds getting there, so it is fired at ground that will still be worth hitting. Picket only."
+kind = 0
+cost = 180
+ai_scene = ExtResource("2_ai")
+player_mount_offset = Vector3(0, 0, 0)
+player_mount_rotation_degrees = Vector3(0, 0, 0)
+ammo_type = &""
+weapon_damage = 0
+usable_by_player = false
+usable_by_ai = true
+fits_vehicles = true
+one_per_robot = false
+in_shop = true
+quantity = 1
+health_bonus = 0
+accuracy_bonus = 0.0
+damage_bonus = 0
+speed_multiplier = 1.0
+signal_bonus = 0.0
+sensor_bonus = 0.0
+signal_resistance_bonus = 0.0
+self_revive_seconds = 0.0
+equipment_slot_bonus = 0
+suppressive_fire = false
+required_rank = 0
+requires_chassis = Array[StringName]([&"picket"])
+chassis_whitelist = Array[StringName]([&"picket"])

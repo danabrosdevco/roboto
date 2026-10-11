@@ -22,6 +22,10 @@ const SIZES := {
 ## reuses the frag's model when thrown, and two identical grenades in a list say
 ## nothing, so it borrows the flashbang from the same pack.
 const MODEL_OVERRIDES := {
+	# The Picket's launcher is a hand-built .tscn, and model_in() only follows
+	# imported blend/glb/gltf/fbx/dae — so without this line model_for() cannot
+	# see it and the item bakes as a blank white rectangle.
+	&"rocket_pods": "res://Character/weapon/models/rocket_pods_model.tscn",
 	&"emp": "res://3d_assets/Flat Grenades_FBX/Flashbang_West.fbx",
 	# Built from primitives, so there is no model file in their scenes for
 	# model_in() to find.
@@ -76,6 +80,11 @@ const MODEL_EXTENSIONS := ["blend", "glb", "gltf", "fbx", "dae"]
 
 ## Drawings for things with no model: SVG path data in a 32x32 box.
 const DRAWINGS := {
+	# LIGHT CANNON. Shares autocannon_model.tscn in the world, so it is drawn
+	# here or it bakes a second picture indistinguishable from the AC20's —
+	# see the note above about two guns on one model. Read it by the single
+	# big bore and the six-round clip: one round at a time, and countable.
+	&"light_cannon": "M2 3.9H5.2V8.3H2Z M3.6 5.1V7.1 M5.2 5.0H20V7.2H5.2Z M20 3.9H26.2V8.3H20Z M11 7.2V11.4H16.4V7.2 M12.8 7.2V11.4 M14.6 7.2V11.4 M26.2 5.4H29 M22 3.9V2.1H23.8V3.9",
 	&"repair_kit": "M5 11H27V26H5Z M12 11V8H20V11 M16 14V23 M11.5 18.5H20.5",
 	&"scanner": "M6 16a10 10 0 1 0 20 0a10 10 0 1 0 -20 0 M11 16a5 5 0 1 0 10 0a5 5 0 1 0 -10 0 M16 16L24 8",
 	&"armor_plating": "M8 6H24L27 11L24 27H8L5 11Z M5 11H27 M11 16H21 M12 21H20",

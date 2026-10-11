@@ -238,12 +238,32 @@ func _row(faction, body: Node) -> Dictionary:
 
 ## A confirmed sighting, from a robot's own eyes or from a squadmate's callout.
 ## O(1), and the only thing that makes a contact fresh.
+## Emitted on every confirmed sighting, with the side that saw it.
+##
+## THIS IS WHERE THE PLAYER'S CONTACT MARKS COME FROM. The pinned marks were
+## written against SquadCommander._call_contact, which is reached only by
+## Verb.CONTACT — and nothing issues that verb. The player's vocabulary was cut
+## to ADVANCE and FOLLOW at some point and CONTACT lost its input with it, so
+## the whole report layer was unreachable and no mark ever appeared in a
+## mission.
+##
+## Hanging it here instead is also the better design: a contact mark is a
+## REPORT FROM YOUR SQUAD, not something you place by hand. note_seen is
+## already the single funnel every confirmed sighting passes through, so there
+## is exactly one place for it to come from and nothing in enemy.gd has to
+## learn that a HUD exists.
+signal contact_seen(faction, body: Node)
+
+
+## A confirmed sighting, from a robot's own eyes or from a squadmate's callout.
+## O(1), and the only thing that makes a contact fresh.
 func note_seen(faction, body: Node) -> void:
 	if body == null or not is_instance_valid(body) or not (body is Node3D):
 		return
 	var row: Dictionary = _row(faction, body)
 	row["pos"] = (body as Node3D).global_position
 	row["seen_at"] = _now()
+	contact_seen.emit(faction, body)
 
 
 ## The player pointed at something. Holds for `seconds` — the same window the
@@ -474,7 +494,10 @@ func distribution_enabled(requesting_ai: AI) -> bool:
 		return true
 	if not bool(Settings.get_value("debug.contact_distribution")):
 		return false
-	if requesting_ai != null and requesting_ai.faction == Enums.Factions.ENEMY \
+	# NOT `faction == ENEMY`. "Theirs" is every hostile faction, and since
+	# SWARM/HOME/ARGUS were appended (2026-10-10) a hardcoded comparison left
+	# the debug switch silently inert for three of the four.
+	if requesting_ai != null and Enums.are_hostile(Enums.Factions.PLAYER, requesting_ai.faction) \
 			and not bool(Settings.get_value("debug.contact_enemy_distribution")):
 		return false
 	return true

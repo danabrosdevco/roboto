@@ -1,0 +1,145 @@
+[gd_scene load_steps=8 format=3]
+
+; ROCKET PODS — the Picket's launcher, as a model only.
+;
+; THE CHASSIS WAS SIZED TO THIS PACK AND THEN THE PACK WAS REMOVED.
+; tools/build_picket.gd:196-205 keeps TUBE_R, TUBE_LEN, TUBE_COLS, TUBE_ROWS as
+; constants precisely because the cradle is measured in them and nothing else:
+; the mantlet is as wide as three tubes and as tall as two, the breech plane is
+; where their rear faces were, and RAIL_LEN is a fraction of their length. So
+; these numbers are not a style choice — they are the geometry the frame has a
+; hole for. Six tubes, three across and two high, radius 0.14, length 1.375,
+; spaced 0.322 (build_picket.gd:70-76).
+;
+; THE BORE RUNS ALONG +X. Every AI weapon in this project points down its own
+; +X (ai_weapon_grenade_launcher.gd:246 says so in as many words) and
+; picket.tscn:461 yaws the WeaponMount +PI/2 to turn that onto the assembly's
+; -Z. A pack built along -Z here would fire sideways out of the cradle with
+; nothing complaining.
+;
+; THE BORES ARE FAKED, NOT CUT. build_picket.gd's note describes CSGMesh3D
+; tubes with a CSGCylinder3D subtraction each — correct for a one-off chassis
+; bake, wrong for a weapon: a fitted weapon is instanced per robot per mission
+; and six live CSG subtractions would be paid for every one of them. A dark
+; inset disc at each muzzle face reads as an open tube at icon size and at
+; gameplay distance, and costs one more MeshInstance3D.
+;
+; The pack starts at the origin and runs forward, so bolted to the WeaponMount
+; at the breech plane it grows out of the cradle and overhangs the 0.78 m rails
+; — which is the read build_picket.gd:242-246 intended. A pack that floats or
+; that the rails pass through means the mount is wrong, not this.
+
+[sub_resource type="StandardMaterial3D" id="TubeMat"]
+albedo_color = Color(0.22, 0.24, 0.2, 1)
+metallic = 0.45
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="DarkMat"]
+albedo_color = Color(0.07, 0.07, 0.08, 1)
+metallic = 0.5
+roughness = 0.5
+
+[sub_resource type="CylinderMesh" id="TubeMesh"]
+top_radius = 0.14
+bottom_radius = 0.14
+height = 1.375
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="BoreMesh"]
+top_radius = 0.113
+bottom_radius = 0.113
+height = 0.04
+radial_segments = 12
+rings = 1
+
+[sub_resource type="BoxMesh" id="BreechMesh"]
+size = Vector3(0.16, 0.66, 1.0)
+
+[sub_resource type="BoxMesh" id="BandMesh"]
+size = Vector3(0.1, 0.63, 0.97)
+
+[sub_resource type="BoxMesh" id="LugMesh"]
+size = Vector3(0.3, 0.1, 0.44)
+
+[node name="RocketPodsModel" type="Node3D"]
+
+[node name="Breech" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.07, 0, 0)
+material_override = SubResource("DarkMat")
+mesh = SubResource("BreechMesh")
+
+[node name="Lug" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.18, -0.35, 0)
+material_override = SubResource("DarkMat")
+mesh = SubResource("LugMesh")
+
+[node name="TubeTL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.6875, 0.161, -0.322)
+material_override = SubResource("TubeMat")
+mesh = SubResource("TubeMesh")
+
+[node name="TubeTC" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.6875, 0.161, 0)
+material_override = SubResource("TubeMat")
+mesh = SubResource("TubeMesh")
+
+[node name="TubeTR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.6875, 0.161, 0.322)
+material_override = SubResource("TubeMat")
+mesh = SubResource("TubeMesh")
+
+[node name="TubeBL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.6875, -0.161, -0.322)
+material_override = SubResource("TubeMat")
+mesh = SubResource("TubeMesh")
+
+[node name="TubeBC" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.6875, -0.161, 0)
+material_override = SubResource("TubeMat")
+mesh = SubResource("TubeMesh")
+
+[node name="TubeBR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.6875, -0.161, 0.322)
+material_override = SubResource("TubeMat")
+mesh = SubResource("TubeMesh")
+
+[node name="BoreTL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 1.36, 0.161, -0.322)
+material_override = SubResource("DarkMat")
+mesh = SubResource("BoreMesh")
+
+[node name="BoreTC" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 1.36, 0.161, 0)
+material_override = SubResource("DarkMat")
+mesh = SubResource("BoreMesh")
+
+[node name="BoreTR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 1.36, 0.161, 0.322)
+material_override = SubResource("DarkMat")
+mesh = SubResource("BoreMesh")
+
+[node name="BoreBL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 1.36, -0.161, -0.322)
+material_override = SubResource("DarkMat")
+mesh = SubResource("BoreMesh")
+
+[node name="BoreBC" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 1.36, -0.161, 0)
+material_override = SubResource("DarkMat")
+mesh = SubResource("BoreMesh")
+
+[node name="BoreBR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 1.36, -0.161, 0.322)
+material_override = SubResource("DarkMat")
+mesh = SubResource("BoreMesh")
+
+[node name="BandRear" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0, 0)
+material_override = SubResource("DarkMat")
+mesh = SubResource("BandMesh")
+
+[node name="BandFore" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.09, 0, 0)
+material_override = SubResource("DarkMat")
+mesh = SubResource("BandMesh")

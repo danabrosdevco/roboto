@@ -1,0 +1,92 @@
+[gd_scene load_steps=5 format=3]
+
+; HATCHLING LAUNCHER — the Vessel's mount, and the whole reason the frame exists.
+;
+; IT IS A WEAPON, NOT EQUIPMENT. The human's call on 2026-10-10: "vessel - can
+; have a recharging weapon that releases hoppers." So this occupies the Vessel's
+; one weapon slot, the AI drives it through the ordinary
+; Enemy.handle_weapon_logic IDLE -> AIM -> FIRE machine, and the player gives it
+; no order beyond a target. No new script: AIWeaponGrenadeLauncher already lobs a
+; round on a solved arc, and the round already bursts into Soldiers.
+;
+; THE RELOAD IS THE RECHARGE, and there is no new timer or new state anywhere.
+; AIWeapon._finish_reload() refills the magazine from nothing — everywhere else
+; in this project that is the bug that makes squad ammunition infinite, and here
+; it is exactly the mechanic wanted. magazine_size = 2 and reload_time = 30
+; therefore IS a recharging launcher that holds two canisters.
+;
+; WHY TWO AND NOT ONE. One round would have been the smaller change, but the bay
+; is built with TWO cargo meshes (Rig/Bay/CargoA and CargoB) and vessel.gd
+; derives their visibility straight from magazine_current. Two rounds means the
+; bay's three states — loaded, half spent, empty and recharging — are the
+; launcher's three states, with nothing counted twice. Each round is four
+; seconds of fire_cooldown behind the last, so a commit reads as two releases
+; rather than one double.
+;
+; burst_min/burst_max are pinned at 1. Left at 0 the robot's own burst_min..max
+; (2..5 on the Vessel's scene) would commit a burst of up to five and empty the
+; bay in two frames.
+;
+; min_effective_range 6 is not flavour: a canister dropped at the frame's own
+; feet bursts inside its own hull, and the hoppers that climb out are what the
+; frame has instead of close defence.
+
+[ext_resource type="Script" path="res://Character/weapon/ai_weapon_grenade_launcher.gd" id="1_aigl"]
+[ext_resource type="PackedScene" path="res://Character/weapon/hatchling/vessel_brood_canister.tscn" id="2_canister"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/mortar_model.tscn" id="3_model"]
+[ext_resource type="AudioStream" path="res://sounds/sfx/grenade launcher/freesound_community-grenade-launcher-106342.mp3" id="4_thump"]
+
+[node name="ai_weapon_hatchling_launcher" type="Node3D" node_paths=PackedStringArray("muzzle_origin", "shot_audio")]
+script = ExtResource("1_aigl")
+grenade_scene = ExtResource("2_canister")
+launch_speed = 6.0
+inherit_carrier_velocity = 0.0
+salvo = 1
+salvo_spacing = 0.0
+salvo_scatter = 0.0
+analytics_label = "Hatchling Launcher"
+high_arc = false
+blast_radius_override = 0.0
+blast_override = 0
+lob_speed = 26.0
+impact_fused = true
+weapon_type = 2
+targeting = 0
+projectile_speed = 26.0
+fire_cooldown = 4.0
+base_damage = 12
+min_damage = 12
+damage_falloff_start = 999.0
+min_effective_range = 6.0
+max_effective_range = 45.0
+ai_spread_mrad = 0.0
+suppression_per_shot = 0.0
+near_miss_radius = 2.5
+burst_min = 1
+burst_max = 1
+magazine_size = 2
+reload_time = 30.0
+muzzle_origin = NodePath("Tube/Muzzle")
+shot_audio = NodePath("Thump")
+
+; Yawed -90 so the model's own -Z tube runs down the WEAPON's +X, which is the
+; axis the Vessel's WeaponMount turns onto the body's -Z. Built without this the
+; tube points out of the frame's left-hand side and nothing complains.
+;
+; NOTE THE STORAGE ORDER. A .tscn's nine basis floats are ROWS, not columns, so
+; the yaw that reads as "+90 by column" is this one. Written the other way round
+; the muzzle measured at -0.84 on the weapon's own X — the tube firing backwards
+; — and the only thing that caught it was tools/test_vessel.gd measuring it.
+[node name="Tube" type="Node3D" parent="."]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 0)
+
+[node name="MortarModel" parent="Tube" instance=ExtResource("3_model")]
+
+[node name="Muzzle" type="Node3D" parent="Tube"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.84)
+
+[node name="Thump" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("4_thump")
+pitch_scale = 0.62
+volume_db = -5.0
+unit_size = 32.0

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/bastion.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"bastion"
+display_name = "Bastion"
+description = "Walks to a position, drives four outriggers into it and raises a canopy. Everything of its own side standing inside that canopy is hard to suppress, and the gun is the least of it."
+scene = ExtResource("2_scene")
+cost = 0
+purchasable = false
+supply = 3
+starting_weapon_id = &"heavy_mg"
+coax_weapon_id = &""
+base_health = 300
+base_speed = 0.6
+base_accuracy = 0.9
+base_sensor_range = 60.0
+weapon_slots = 1
+built_in = "EMITTER"
+weapon_replaces_built_in = false
+turret = true
+vehicle = true
+drives = false
+equipment_slots = 0
+module_slots = 0
+musters_at_base = false
+required_rank = 0

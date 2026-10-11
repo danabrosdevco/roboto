@@ -60,7 +60,12 @@ func _gather() -> void:
 		return
 	# Both sides, because the interesting question is usually whether THEY are
 	# spreading fire, not whether you are.
-	for faction in [Enums.Factions.ALLIED, Enums.Factions.ENEMY]:
+	# All four hostile tables, not just ENEMY: SWARM/HOME/ARGUS were appended
+	# 2026-10-10 and each keeps its own contact table (AIManager._contacts is
+	# keyed by faction), so a missing row here is a frame whose sensor work is
+	# invisible to the only panel that reads it.
+	for faction in [Enums.Factions.ALLIED, Enums.Factions.ENEMY,
+			Enums.Factions.SWARM, Enums.Factions.HOME, Enums.Factions.ARGUS]:
 		var snapshot: Array = manager.contacts_snapshot(faction)
 		if snapshot.is_empty():
 			continue

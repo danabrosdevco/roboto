@@ -141,7 +141,12 @@ const BARK := "res://Character/components/bark.tscn"
 const SPARK := "res://Character/components/spark_burst.tscn"
 const OIL := "res://Character/components/oil_spray.tscn"
 const LIVERY := "res://faction_livery.gd"
-## rover.gd, unchanged. No new behaviour script in this pass — see the brief.
+## SUPERSEDED, 2026-10-10. The frame ships on lance.gd, which extends rover.gd
+## by path and adds the one override the stub turret made necessary — the
+## stationary hull slew described in the section above. This generator is
+## one-shot and must not be re-run, so the constant is left pointing where it
+## pointed on the day it ran; lance.tscn is the source of truth and carries
+## res://Character/characters/ai/lance.gd.
 const BODY_SCRIPT := "res://Character/characters/ai/rover.gd"
 ## The small, quick pair, and the pitch range to match: this is the lightest
 ## frame on the roster and the Rover's 0.80-0.88 is already the voice of

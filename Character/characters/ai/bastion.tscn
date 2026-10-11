@@ -1,6 +1,6 @@
 [gd_scene load_steps=121 format=3]
 
-[ext_resource type="Script" path="res://Character/characters/ai/walker.gd" id="1_i07e4"]
+[ext_resource type="Script" path="res://Character/characters/ai/bastion.gd" id="1_i07e4"]
 [ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="2_akk77"]
 [ext_resource type="PackedScene" path="res://Character/components/bark.tscn" id="3_yx5mm"]
 [ext_resource type="Script" path="res://Character/components/bark.gd" id="4_h206i"]
@@ -712,8 +712,8 @@ lod_near_distance = 35.0
 lod_far_distance = 80.0
 lod_far_multiplier = 4.0
 DefaultAIState = 0
-AllowedMovementOptions = Array[ExtResource("2_akk77")]([])
-AllowedCombatOptions = Array[ExtResource("2_akk77")]([])
+AllowedMovementOptions = Array[int]([])
+AllowedCombatOptions = Array[int]([1, 2])
 fell_out_speed = 50.0
 adrift_distance = 4.0
 adrift_seconds = 4.0

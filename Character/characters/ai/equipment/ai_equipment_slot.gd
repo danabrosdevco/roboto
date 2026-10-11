@@ -34,3 +34,21 @@ func consume() -> void:
 
 func remaining() -> int:
 	return _quantity_remaining
+
+
+## Hand a use BACK. The only way a spent slot ever gains anything inside a
+## mission: initialize() runs once at spawn and consume() only ever subtracts,
+## so until this existed the squad's smoke was gone for the rest of the
+## operation the moment it was thrown, and the only code that put one back was
+## a test reaching into _quantity_remaining.
+##
+## SLOT-FOR-SLOT, and deliberately not by item id. SoldierRecord.apply_to
+## duplicates these resources per robot precisely because _quantity_remaining is
+## that one robot's count, and `item_id` is empty on every slot authored by hand
+## in a .tres — so matching on an id would silently refuse exactly the garrison
+## kit it was handed. The caller holds the slot it means.
+##
+## Clamped to `quantity`: a slot holding more than it was built with reads as a
+## negative spend everywhere that draws remaining against quantity.
+func restore(n: int = 1) -> void:
+	_quantity_remaining = clampi(_quantity_remaining + maxi(0, n), 0, quantity)

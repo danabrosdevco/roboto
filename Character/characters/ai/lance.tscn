@@ -1,6 +1,6 @@
 [gd_scene load_steps=38 format=3]
 
-[ext_resource type="Script" path="res://Character/characters/ai/rover.gd" id="1_ob030"]
+[ext_resource type="Script" path="res://Character/characters/ai/lance.gd" id="1_ob030"]
 [ext_resource type="PackedScene" path="res://Character/components/bark.tscn" id="2_gm1rp"]
 [ext_resource type="Script" path="res://Character/components/bark.gd" id="3_l0xec"]
 [ext_resource type="Resource" path="res://Character/components/bark_set_droid.tres" id="4_xm48k"]
@@ -263,8 +263,8 @@ lod_near_distance = 35.0
 lod_far_distance = 80.0
 lod_far_multiplier = 4.0
 DefaultAIState = 0
-AllowedMovementOptions = []
-AllowedCombatOptions = []
+AllowedMovementOptions = Array[int]([0, 2, 4])
+AllowedCombatOptions = Array[int]([0, 1, 2])
 fell_out_speed = 50.0
 adrift_distance = 4.0
 adrift_seconds = 4.0

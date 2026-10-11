@@ -1,6 +1,6 @@
 [gd_scene load_steps=67 format=3]
 
-[ext_resource type="Script" path="res://Character/characters/ai/spotter_drone.gd" id="1_s2y6n"]
+[ext_resource type="Script" path="res://Character/characters/ai/brood_carrier.gd" id="1_s2y6n"]
 [ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="2_n02fu"]
 [ext_resource type="PackedScene" path="res://Character/components/bark.tscn" id="3_15yml"]
 [ext_resource type="Script" path="res://Character/components/bark.gd" id="4_mn5jn"]
@@ -392,8 +392,8 @@ lod_near_distance = 35.0
 lod_far_distance = 80.0
 lod_far_multiplier = 4.0
 DefaultAIState = 0
-AllowedMovementOptions = Array[ExtResource("2_n02fu")]([])
-AllowedCombatOptions = Array[ExtResource("2_n02fu")]([])
+AllowedMovementOptions = Array[int]([])
+AllowedCombatOptions = Array[int]([])
 fell_out_speed = 50.0
 adrift_distance = 4.0
 adrift_seconds = 4.0

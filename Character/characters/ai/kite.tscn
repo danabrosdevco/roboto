@@ -1,6 +1,6 @@
 [gd_scene load_steps=36 format=3]
 
-[ext_resource type="Script" path="res://Character/characters/ai/spotter_drone.gd" id="1_hj01i"]
+[ext_resource type="Script" path="res://Character/characters/ai/kite.gd" id="1_hj01i"]
 [ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_equipment_slot.gd" id="2_rn1vt"]
 [ext_resource type="PackedScene" path="res://Character/components/bark.tscn" id="3_b46jw"]
 [ext_resource type="Script" path="res://Character/components/bark.gd" id="4_wrk43"]
@@ -107,7 +107,7 @@ outer_radius = 0.19
 rings = 16
 ring_segments = 5
 
-[node name="Kite" type="CharacterBody3D" node_paths=PackedStringArray("rotor_loop", "nav_agent", "weapon_mount", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
+[node name="Kite" type="CharacterBody3D" node_paths=PackedStringArray("rotor_loop", "turret", "gun_pivot", "nav_agent", "weapon_mount", "bark", "detection", "particle_effects_die", "particle_effects_hit", "visible_pieces") groups=["enemies"]]
 script = ExtResource("1_hj01i")
 cruise_height = 22.0
 altitude_smoothness = 2.2
@@ -119,6 +119,13 @@ orbit_speed = 8.0
 separation_radius = 16.0
 transit_distance = 40.0
 rotor_loop = NodePath("RotorLoop")
+turret = NodePath("Rig/Turret")
+gun_pivot = NodePath("Rig/Turret/GunPivot")
+turret_traverse_degrees = 90.0
+gun_elevation_degrees = 60.0
+gun_min_pitch_degrees = -55.0
+gun_max_pitch_degrees = 10.0
+fire_cone_degrees = 9.0
 aggressive = false
 formation_trail = 0.0
 cover_arrival_threshold = 1.2
@@ -196,6 +203,8 @@ lod_near_distance = 35.0
 lod_far_distance = 80.0
 lod_far_multiplier = 4.0
 DefaultAIState = 0
+AllowedMovementOptions = Array[int]([2])
+AllowedCombatOptions = Array[int]([1, 2])
 fell_out_speed = 50.0
 adrift_distance = 4.0
 adrift_seconds = 4.0
