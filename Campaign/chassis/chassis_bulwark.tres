@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://1r4qf1a7xbwo"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
 [ext_resource type="PackedScene" path="res://Character/characters/ai/bulwark.tscn" id="2_scene"]
@@ -15,7 +15,7 @@ supply = 3
 starting_weapon_id = &"heavy_mg"
 coax_weapon_id = &""
 base_health = 400
-base_speed = 0.8
+base_speed = 1.0
 base_accuracy = 0.95
 base_sensor_range = 45.0
 weapon_slots = 1

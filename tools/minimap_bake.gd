@@ -54,6 +54,11 @@ var _levels := [
 	"res://maps/georgetown_level.tscn",
 	"res://maps/polaris_level.tscn",
 	"res://maps/depot_level.tscn",
+	# The train. The depot's replacement as the home base — it needs its own
+	# minimap for the same reason the depot has one: Campaign.minimap_data
+	# resolves res://maps/minimaps/<basename>.tres by convention, and a base
+	# without one is the only thing tools/audit_levels.gd flags about it.
+	"res://maps/railhead_level.tscn",
 	"res://maps/proving_level.tscn",
 	"res://maps/heliostat_level.tscn"
 ]

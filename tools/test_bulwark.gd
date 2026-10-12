@@ -80,8 +80,23 @@ func _test_the_chassis_is_registered() -> void:
 	_ok("...one weapon slot, not the Walker's two", int(def.weapon_slots) == 1,
 			"%d" % int(def.weapon_slots))
 	_ok("...and no coax", String(def.coax_weapon_id) == "", str(def.coax_weapon_id))
-	_ok("...slower than the Walker", float(def.base_speed) < 1.0,
-			"%.2f" % float(def.base_speed))
+	# FASTER THAN THE WALKER, by a little. Changed 2026-10-11 on the human's
+	# call; this asserted `base_speed < 1.0` when the frame was authored.
+	#
+	# The frame was carrying the penalty TWICE: bulwark.tscn authored
+	# move_speed 3.3 against the Walker's 4.16, AND the chassis multiplied it
+	# by base_speed 0.8 on the player path, so a player-owned Bulwark moved at
+	# 2.64 against a Walker's 4.16 — 63%% of it, for a frame costing 380 and
+	# three supply. The scene now says 4.4 and the multiplier is 1.0.
+	#
+	# Asserted against the WALKER rather than against a number, so retuning
+	# either frame cannot leave this quietly stating the opposite of the
+	# design.
+	var walker_def = load("res://Campaign/chassis/chassis_walker.tres")
+	_ok("...a touch faster than the Walker",
+			walker_def != null and float(def.base_speed) >= float(walker_def.base_speed),
+			"bulwark %.2f vs walker %.2f" % [float(def.base_speed),
+				0.0 if walker_def == null else float(walker_def.base_speed)])
 	# It is in the catalogue, which is what actually puts it in the shop.
 	var cat = load("res://Campaign/items & catalogue/test_item_catalogue.tres")
 	var ids: Array = []

@@ -23,6 +23,7 @@ extends Node3D
 const _Board := preload("res://Env/world_objects/holo_board.gd")
 const _Pal := preload("res://Character/hud/hud_palette.gd")
 const _Icons := preload("res://Env/world_objects/site_icons.gd")
+const _ZoomView := preload("res://Character/hud/ops_table_ui.gd")
 
 ## The Area3D you press F on. Found among the children if left unset.
 @export var interactible: Interactible
@@ -39,6 +40,8 @@ var Campaign: Node = null
 var facts: Dictionary = {}
 ## Hovered and queued, for the projection's own highlighting.
 var _hovered = null
+## The zoomed view, built on first use. See _zoom_view.
+var _zoom = null
 
 
 func _ready() -> void:
@@ -65,6 +68,21 @@ func _wire_interactible() -> void:
 	if interactible == null:
 		push_warning("OpsTable '%s' has no Interactible child, so it cannot be used. Add an instance of template_interactible.tscn under it." % name)
 		return
+	# ─────────────────────────────────────────────
+	# THE TEMPLATE'S DEFAULTS ARE ALL WRONG FOR A TABLE, and the third one is
+	# invisible until you stand in front of it in a real game.
+	#
+	# template_interactible.tscn sets NO collision_layer, so it is Godot's
+	# default 1. The player's InteractRaycast is mask 2. Layer 1 and mask 2
+	# never meet: the ray goes straight through the table and no prompt ever
+	# appears. The mission terminal works because its scene writes
+	# collision_layer = 3 — bits 1 AND 2 — and nothing says so anywhere.
+	#
+	# This was missed by a probe that called _on_interacted() directly: that
+	# proves the handler works, which was never the thing in doubt. The
+	# raycast is the thing in doubt, and only standing at the table tests it.
+	# ─────────────────────────────────────────────
+	interactible.collision_layer = 3
 	# A table you can only use once is not a table — the same reason the
 	# mission terminal clears these two.
 	interactible.destroy_on_use = false
@@ -85,10 +103,52 @@ func get_prompt() -> String:
 	return "Operations Table — %s queued" % m.display_name
 
 
+## F at the table takes you into the zoomed view.
+##
+## THE VIEW IS BUILT ON FIRST USE, not at _ready, and hung off the HUD rather
+## than off this node. It has to be a sibling of the other HUD controls for
+## two reasons: it hides them while it is open and puts them back after, and
+## a Control parented to a Node3D in the level is not on the HUD's canvas at
+## all. The debrief screen is created the same way, for the same reason.
 func _on_interacted(_source) -> void:
-	# The zoomed view is the next piece. Until it exists, pressing F refreshes
-	# the projection rather than doing nothing silently.
 	refresh()
+	var ui = _zoom_view()
+	if ui == null:
+		push_warning("OpsTable: no HUD to open the zoomed view in, so F does nothing but refresh the projection.")
+		return
+	ui.open(self)
+
+
+func _zoom_view():
+	if _zoom != null and is_instance_valid(_zoom):
+		return _zoom
+	var hud := _find_hud()
+	if hud == null:
+		return null
+	_zoom = _ZoomView.new()
+	_zoom.name = "OpsTableUI"
+	hud.add_child(_zoom)
+	return _zoom
+
+
+## The HUD is whatever node owns the rest of the screen furniture. Found the
+## same way the contact marks find it — by the methods it has rather than by
+## a path, because this node is instanced into a level and has no route to it.
+func _find_hud() -> Node:
+	for n in get_tree().get_nodes_in_group(&"hud"):
+		return n
+	var root := get_tree().get_root()
+	return _hud_under(root)
+
+
+func _hud_under(n: Node) -> Node:
+	if n.has_method("set_signal") and n.has_method("register_hit"):
+		return n
+	for c in n.get_children():
+		var f := _hud_under(c)
+		if f != null:
+			return f
+	return null
 
 
 # ─────────────────────────────────────────────
@@ -105,7 +165,7 @@ func _on_interacted(_source) -> void:
 # ─────────────────────────────────────────────
 
 ## Height above a site's icon that the readout floats.
-@export var readout_lift: float = 0.105
+@export var readout_lift: float = 0.22
 ## Label3D pixel size. 0.0032 was the first guess and the readout filled the
 ## screen; 0.00055 overcorrected into an unreadable smudge. 0.0013 is the
 ## size at which a six-line panel sits over one site without covering its
@@ -115,9 +175,46 @@ func _on_interacted(_source) -> void:
 ## the whole block reads as a smudge — which it did, twice, at 0.0008 and at
 ## 0.0011. Width is not the constraint here: the strip sits in the board's
 ## empty near margin and has room.
-@export var readout_size: float = 0.0022
+@export var readout_size: float = 0.0032
 
 var _readout: Label3D = null
+## One per gauge channel. See _show_figures.
+var _figures: Array = []
+## Matched to the readout strip. Smaller than this and the outline closes
+## the counters — the third time that has bitten on this board, so: a figure
+## on a dark ground wants about fourteen screen pixels and an outline of two.
+@export var figure_size: float = 0.0030
+
+## Compute, resources, resistance — the three bars, in the colours the HUD
+## already uses for those currencies everywhere else.
+const GAUGE_TINTS := [_Pal.SIGNAL, _Pal.WARN, _Pal.CRIT]
+
+
+## Light one site on the projection WITHOUT the world-space strip.
+##
+## What the zoomed view wants: in there the panel is ordinary screen-space
+## UI with room to breathe, so the strip and the little coloured figures are
+## the same facts said twice, in the harder-to-read place.
+func highlight(id) -> void:
+	if _hovered != null and _hovered != id and facts.has(_hovered) and board != null:
+		board.set_site(_hovered, _tint_for(facts[_hovered]), 1.0)
+	_hovered = id
+	if board == null:
+		return
+	if id == null or not facts.has(id):
+		board.light_gauges(null, [], GAUGE_TINTS)
+		return
+	var f: Dictionary = facts[id]
+	board.set_site(id, _Pal.HELD if f["cleared"] else _Pal.BRIGHT, 2.4)
+	board.light_gauges(id, f.get("gauges", []), GAUGE_TINTS)
+
+
+## Hide the world-space strip and its figures. Called when the zoomed view
+## takes over the job of saying what a site is worth.
+func hide_strip() -> void:
+	if _readout != null:
+		_readout.visible = false
+	_hide_figures()
 
 
 ## Show the detail for one site, or clear it with null.
@@ -151,6 +248,9 @@ func show_readout(id) -> void:
 	if id == null or not facts.has(id):
 		if _readout != null:
 			_readout.visible = false
+		_hide_figures()
+		if board != null:
+			board.light_gauges(null, [], GAUGE_TINTS)
 		_hovered = null
 		return
 	_hovered = id
@@ -174,10 +274,70 @@ func show_readout(id) -> void:
 	_readout.text = _readout_text(f)
 	_readout.visible = true
 	_readout.position = _strip_anchor()
-	# And the site itself answers, which is the half of this the player
-	# actually looks at.
+	# The site answers, and so do its three bars: they are always on the
+	# board at rest, and hovering lights them and puts figures beside them.
 	if board != null:
-		board.set_site(id, _Pal.BRIGHT, 2.4)
+		board.set_site(id, _Pal.HELD if f["cleared"] else _Pal.BRIGHT, 2.4)
+		board.light_gauges(id, f.get("gauges", []), GAUGE_TINTS)
+	_show_figures(id, f)
+
+
+## The three figures, in the strip, each in its channel's colour.
+##
+## NOT ONE PER BAR, which is what the mockup drew and what the geometry
+## refuses. The bars are 22 mm apart on the board; a figure legible from
+## standing height is about 77 mm tall. Three of them stacked at that spacing
+## sit on top of each other — measured, not guessed. Putting a readable
+## number against each bar would mean spreading the bars four times further
+## apart, and the gauge block would then be taller than the landmark it
+## belongs to.
+##
+## So the bars stay tight at the site, where their job is the at-a-glance
+## SHAPE, and the figures go in the strip where there is room to space them.
+## Colour is what ties the two together: the cyan number is the cyan bar.
+##
+## Three separate Label3Ds rather than one block, because one Label3D takes
+## one modulate and the whole point is that each line is its own colour.
+## Made once and moved — a hover is a mouse-over, and this would otherwise
+## allocate three nodes on every frame the cursor crosses a site.
+func _show_figures(_id, f: Dictionary) -> void:
+	var rows := [
+		# Compute is a flat figure, not a yield per turn — see the note in
+		# ops_table_ui._refresh_panel. Resources still are per turn.
+		["CPU ", int(f["compute"])],
+		["RES ", _per_turn(int(f["resources"]))],
+		["RSST", int(f["resistance"])],
+	]
+	var anchor := _strip_anchor()
+	for ch in 3:
+		if _figures.size() <= ch:
+			var l := Label3D.new()
+			l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			l.shaded = false
+			l.no_depth_test = true
+			l.pixel_size = figure_size
+			l.outline_size = 2
+			l.outline_modulate = Color(0.0, 0.05, 0.04, 0.85)
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+			l.modulate = GAUGE_TINTS[ch]
+			add_child(l)
+			_figures.append(l)
+		var lab: Label3D = _figures[ch]
+		lab.text = "%s %d" % [rows[ch][0], rows[ch][1]]
+		lab.visible = true
+		# Below the name and state, one line each, spaced by the label's own
+		# height rather than by the bars'.
+		# BESIDE THE STRIP, not under it. Under it overlapped the third line,
+		# and pushed far enough down to clear that, the figures ran off the
+		# near edge of the board altogether. The margin has depth for one
+		# block of text and width for two, so the figures take the width.
+		lab.position = anchor + Vector3(0.90, 0.0, float(ch) * 0.105)
+
+
+func _hide_figures() -> void:
+	for l in _figures:
+		if is_instance_valid(l):
+			l.visible = false
 
 
 ## Where the strip sits: ON the plate, in its near margin.
@@ -203,6 +363,18 @@ func _strip_anchor() -> Vector3:
 ## to be shaped for that now rather than rebuilt for it later — so the figures
 ## are labelled as the per-turn yields they are about to become, and derived
 ## from the one-off until the territory layer exists to supply the real thing.
+## WHAT IS LEFT AFTER THE GAUGES TOOK THE NUMBERS.
+##
+## Compute, resources and resistance are bars at the site now, so the strip
+## carries only what a bar cannot say: which site, whose it is, and the name
+## of the prerequisite you are missing. Three short lines.
+##
+## THE NAME STAYS ON THE STRIP rather than under the icon as the mockup drew
+## it. A name is the one long string in this readout, and a long string at a
+## site covers its neighbours — the problem the strip exists to solve. The
+## numbers were the part that genuinely wanted to be at the site, and those
+## are the bars.
+##
 ## NARROW BEATS SHORT. The first version was written as a table — label,
 ## spaces, value, unit, parenthetical — and the longest line was "RESERVE
 ## 30 MORE ON CALL" at twenty-four characters. On a board, WIDTH is the
@@ -221,12 +393,8 @@ func _readout_text(f: Dictionary) -> String:
 		lines.append("HELD x%d" % int(f["clears"]))
 	else:
 		lines.append("CONTESTED")
-	lines.append("COMPUTE %4d/T" % _per_turn(int(f["compute"])))
-	lines.append("RESRCE  %4d/T" % _per_turn(int(f["resources"])))
-	var resist := "RESIST  %4d" % int(f["resistance"])
 	if int(f["reserve"]) > 0:
-		resist += "+%d" % int(f["reserve"])
-	lines.append(resist)
+		lines.append("+%d RESERVE" % int(f["reserve"]))
 	return "\n".join(lines)
 
 
@@ -266,7 +434,39 @@ func refresh() -> void:
 		nodes.append({"id": m.id, "at": place[m.id], "tint": _tint_for(f),
 			"icon": ICONS.get(m.id, _Icons.Kind.MARKER),
 			"scale": _icon_scale(m.id)})
+
+	# ── gauge maxima ────────────────────────────
+	# WORKED OUT FROM THE BOARD, not hard-coded. A fixed ceiling per channel
+	# is a number that goes stale the first time somebody adds a mission, and
+	# silently: every bar just gets shorter and nobody notices the scale is
+	# wrong. Taking the largest site on the board as full means the longest
+	# bar is always the biggest thing there, which is the only claim these
+	# bars actually make.
+	var top := {"compute": 1, "resources": 1, "resistance": 1}
+	for id in facts:
+		for k in top:
+			top[k] = maxi(int(top[k]), int(facts[id][k]))
+	for n in nodes:
+		var f: Dictionary = facts[n["id"]]
+		n["gauges"] = [
+			float(f["compute"]) / float(top["compute"]),
+			float(f["resources"]) / float(top["resources"]),
+			float(f["resistance"]) / float(top["resistance"]),
+		]
+		facts[n["id"]]["gauges"] = n["gauges"]
+		# Cached beside the raw figures so the zoomed view and the table agree
+		# on the per-turn number rather than each applying _per_turn itself.
+		facts[n["id"]]["per_compute"] = _per_turn(int(facts[n["id"]]["compute"]))
+		facts[n["id"]]["per_resources"] = _per_turn(int(facts[n["id"]]["resources"]))
+	board.gauge_tints = GAUGE_TINTS
 	board.build(nodes, _edges(missions))
+	# AFTER build, not before. build() clears the board, which takes the ring
+	# with it — and at that point the site positions it rings do not exist
+	# yet either, so it silently drew nothing twice over. refresh() runs on
+	# mission_selected, so this is also what puts the ring up the moment you
+	# queue something.
+	var queued = Campaign.selected_mission()
+	board.set_queued(queued.id if queued != null else null)
 
 
 ## Everything the board and the readout need to know about one site.
@@ -333,14 +533,14 @@ func _force(m) -> Dictionary:
 ## and a contested one were the same marker.
 ##
 ## So the board borrows the HUD's own vocabulary instead, which the player has
-## already learnt everywhere else: BRIGHT green is yours and working, amber is
-## the enemy's, GONE grey is a thing you cannot act on. Three colours nobody
-## has to be taught, and no two of them adjacent.
+## already learnt everywhere else: amber is the enemy's and GONE grey is a
+## thing you cannot act on. Ground you HOLD is blue — see HUDPalette.HELD for
+## why it is a true blue and not the compute cyan.
 func _tint_for(f: Dictionary) -> Color:
 	if f["locked"]:
 		return _Pal.GONE
 	if f["cleared"]:
-		return _Pal.BRIGHT
+		return _Pal.HELD
 	return _Pal.FAC_SWARM
 
 

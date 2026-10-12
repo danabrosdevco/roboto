@@ -224,6 +224,10 @@ func activate_interactible(interactible: Interactible):
 			# The terminal knows which operation is queued. `value` is
 			# meaningless on a terminal, which is where "F | 0" came from.
 			interact_label.text = "F | %s" % _prompt_from(interactible.get_parent(), "Select Mission")
+		Enums.InteractTypes.DEPART:
+			# The lever knows whether the train has gone yet, and whether there
+			# is anywhere to go. Same parent-asks-the-node route as MISSION.
+			interact_label.text = "F | %s" % _prompt_from(interactible.get_parent(), "Depart")
 		Enums.InteractTypes.OBJECTIVE:
 			# The console doesn't own the objective — InteractObjective holds an
 			# array of them and tags each one on _ready, so ask the tag.

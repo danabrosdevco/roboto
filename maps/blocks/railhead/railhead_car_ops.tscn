@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=4]
+[gd_scene load_steps=25 format=4]
 
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_25782"]
 [ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_q2iuu"]
@@ -263,6 +263,9 @@ _surfaces = [{
 [sub_resource type="BoxShape3D" id="BoxShape3D_lxydc"]
 size = Vector3(3, 1.4, 7)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_ow6dd"]
+size = Vector3(1.2, 1.6, 0.86)
+
 [node name="RailheadCarOps" type="Node3D"]
 script = ExtResource("1_25782")
 local_map_file = "res://maps/blocks/railhead/railhead_car_ops.map"
@@ -307,3 +310,20 @@ disable_on_use = false
 [node name="CollisionShape3D" type="CollisionShape3D" parent="OpsTableAnchor/Interactible"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
 shape = SubResource("BoxShape3D_lxydc")
+
+[node name="OpsLeverAnchor" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, -3.7)
+
+[node name="Interactible" type="Area3D" parent="OpsLeverAnchor" node_paths=PackedStringArray("collision_body") groups=["interactibles"] instance=ExtResource("17_j1f4e")]
+script = ExtResource("18_ankvj")
+collision_body = NodePath("CollisionShape3D")
+type = 0
+value = 0
+used = false
+respawns_on_reset = true
+destroy_on_use = true
+disable_on_use = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="OpsLeverAnchor/Interactible"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, -0.69)
+shape = SubResource("BoxShape3D_ow6dd")

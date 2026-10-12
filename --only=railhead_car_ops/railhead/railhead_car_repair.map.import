@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dmacqci2glugs"
+path="res://.godot/imported/railhead_car_repair.map-1db1de22c27b7d329603ac3ef20be3e1.tres"
+
+[deps]
+
+source_file="res://--only=railhead_car_ops/railhead/railhead_car_repair.map"
+dest_files=["res://.godot/imported/railhead_car_repair.map-1db1de22c27b7d329603ac3ef20be3e1.tres"]
+
+[params]
+

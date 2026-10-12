@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3 uid="uid://c0q2gfp8t7fxb"]
 
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
 [ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_hatchling_launcher.tscn" id="2_ai"]

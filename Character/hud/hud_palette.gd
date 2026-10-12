@@ -40,6 +40,18 @@ const POSSESS  := Color(0.95, 0.85, 0.40)         # body under manual control
 # camouflage against terrain, sky or the filter, and that reads as switched
 # off precisely because nothing else in the palette is colourless.
 const GONE     := Color(0.66, 0.70, 0.73, 0.95)   # destroyed: inert, not urgent
+# ─────────────────────────────────────────────
+# HELD — ground the player owns.
+#
+# BLUE, AND DELIBERATELY NOT THE COMPUTE CYAN. The obvious choice was SIGNAL,
+# which is the player's colour everywhere else in this HUD — but SIGNAL is
+# also what a compute figure is printed in, and on the operations table a
+# site and a number sit inches apart. One of them has to move off the cyan or
+# "blue" stops meaning anything.
+#
+# So ownership takes a true blue and compute keeps the cyan. Side by side
+# they read as two things; alone, each still reads as "yours".
+const HELD     := Color(0.36, 0.60, 0.98)         # a site under your control
 
 # Backgrounds are the fill colour at low alpha, so an empty bar still reads as
 # belonging to the same channel rather than as a generic grey trough.

@@ -179,6 +179,24 @@ func close() -> void:
 	_hide_other_hud(false)
 	_clear_cursors()
 	_play(sfx_close)
+	_restore_mouse()
+
+
+## GIVE THE MOUSE BACK TO WHOEVER STILL WANTS IT.
+##
+## This used to capture unconditionally, which is right when the squad
+## manager is the only screen open and wrong the moment it is not. Open the
+## ops table, press TAB, close the squad manager again: you are still
+## standing at the table looking at the board, and the cursor you need to
+## use it has just been taken away with no way to get it back short of
+## closing and reopening.
+##
+## Any other screen holding the pause is a screen that wants a cursor, so
+## the capture only happens when this was the last one up.
+static func _restore_mouse() -> void:
+	for who in PauseHold.holders():
+		if who != &"squad_manager":
+			return
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 

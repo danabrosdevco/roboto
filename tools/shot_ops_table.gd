@@ -138,6 +138,49 @@ func _init() -> void:
 			print("    camera at %s  behind=%s  screen=%s" % [str(cam.global_position), str(cam.is_position_behind(ro.global_position)), str(cam.unproject_position(ro.global_position))])
 	await _grab("%s/ops_03_hover.png" % out_dir, "Valley Basin hovered — yields and resistance")
 
+	# ── a destination committed to ──────────────
+	# The whole point of the queued treatment is that it reads from across the
+	# car, so it is photographed from the standing view as well as up close.
+	# Through select_mission and refresh, not by poking the board, so what is
+	# pictured is what queueing an operation actually does.
+	var options: Array = campaign.available_missions()
+	if options.is_empty():
+		print("    no operation available to queue, so the queued treatment is not photographed")
+	else:
+		campaign.select_mission(options[0].id)
+		table.refresh()
+		for _i in 45:
+			await process_frame
+		await _grab("%s/ops_03b_queued.png" % out_dir,
+			"'%s' queued — the destination blown up and lit" % options[0].display_name)
+		_shot_cam.global_position = table.global_position + Vector3(0.0, 0.80, 1.15)
+		_shot_cam.look_at(table.global_position + Vector3(0.0, 0.10, 0.0), Vector3.UP)
+		for _i in 20:
+			await physics_frame
+		await _grab("%s/ops_03c_queued_wide.png" % out_dir, "and from standing back")
+		_shot_cam.global_position = table.global_position + Vector3(0.0, 0.40, 0.52)
+		_shot_cam.look_at(table.global_position + Vector3(0.0, 0.02, 0.02), Vector3.UP)
+		for _i in 20:
+			await physics_frame
+
+	# ── the zoomed view ─────────────────────────
+	# Through the real interact handler, so what is photographed is what
+	# pressing F does.
+	table._on_interacted(null)
+	for _i in 20:
+		await process_frame
+	await _grab("%s/ops_04_zoom.png" % out_dir, "F at the table — the zoomed view")
+
+	var zoom = table._zoom
+	if zoom != null:
+		zoom._select_hover(&"causeway_1_tower")
+		for _i in 10:
+			await process_frame
+		await _grab("%s/ops_05_zoomhover.png" % out_dir, "The Causeway hovered in the zoomed view")
+		print("    HUD hidden behind the view: %d control(s), wallet kept" % zoom._hidden.size())
+	else:
+		print("    the zoomed view did not open")
+
 	print("")
 	quit(0)
 

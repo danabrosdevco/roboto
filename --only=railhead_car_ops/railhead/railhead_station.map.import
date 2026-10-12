@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://crxnuxijn0eco"
+path="res://.godot/imported/railhead_station.map-135030efad3b324faafc5980ff75fab2.tres"
+
+[deps]
+
+source_file="res://--only=railhead_car_ops/railhead/railhead_station.map"
+dest_files=["res://.godot/imported/railhead_station.map-135030efad3b324faafc5980ff75fab2.tres"]
+
+[params]
+

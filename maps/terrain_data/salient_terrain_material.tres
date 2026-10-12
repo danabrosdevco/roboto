@@ -1,13 +1,13 @@
-[gd_resource type="ShaderMaterial" load_steps=11 format=3]
+[gd_resource type="ShaderMaterial" load_steps=11 format=3 uid="uid://xg00csuxyti"]
 
 [ext_resource type="Shader" path="res://Env/terrain/terrain.gdshader" id="1_vkamg"]
-[ext_resource type="Texture2D" path="res://textures/Set4All/Dirt/Dirt_Silt_01_Grey_1.png" id="2_mn5xo"]
-[ext_resource type="Texture2D" path="res://textures/Set4All/Grass/Grass_02_Green_1.png" id="3_nd037"]
-[ext_resource type="Texture2D" path="res://textures/Set4All/Concrete/Concrete_01_Grey_1.png" id="4_kxh6t"]
-[ext_resource type="Texture2D" path="res://textures/Set4All/Gravel/Gravel_01_Grey_1.png" id="5_rtva3"]
-[ext_resource type="Texture2D" path="res://textures/Set4All/Rockface/Rock_Grey_01.png" id="6_mvq1y"]
-[ext_resource type="Texture2D" path="res://textures/Set4All/Dirt/Dirt_Rocks_01_Grey_1.png" id="7_tut7p"]
-[ext_resource type="Texture2D" path="res://textures/Set4All/Dirt/Dirt_Cracked_01_Black_1.png" id="8_kepk1"]
+[ext_resource type="Texture2D" uid="uid://juhkwxffuy6r" path="res://textures/Set4All/Dirt/Dirt_Silt_01_Grey_1.png" id="2_mn5xo"]
+[ext_resource type="Texture2D" uid="uid://lw4dubeibxxj" path="res://textures/Set4All/Grass/Grass_02_Green_1.png" id="3_nd037"]
+[ext_resource type="Texture2D" uid="uid://d1o0shxck6o5h" path="res://textures/Set4All/Concrete/Concrete_01_Grey_1.png" id="4_kxh6t"]
+[ext_resource type="Texture2D" uid="uid://co6usgo0e4yji" path="res://textures/Set4All/Gravel/Gravel_01_Grey_1.png" id="5_rtva3"]
+[ext_resource type="Texture2D" uid="uid://bgqrs06b1fxxe" path="res://textures/Set4All/Rockface/Rock_Grey_01.png" id="6_mvq1y"]
+[ext_resource type="Texture2D" uid="uid://d1vudjfqvx2ij" path="res://textures/Set4All/Dirt/Dirt_Rocks_01_Grey_1.png" id="7_tut7p"]
+[ext_resource type="Texture2D" uid="uid://bxf1u775gjf5t" path="res://textures/Set4All/Dirt/Dirt_Cracked_01_Black_1.png" id="8_kepk1"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_vary"]
 frequency = 0.012

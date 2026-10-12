@@ -31,7 +31,12 @@ enum GuardianCombatOptions { SPINNING_ATTACK, RECOVERY }
 # WORLD OBJECT INF #
 enum WorldObjectTypes { CHAR_SPAWN, AI_SPAWN, LEVEL_EXIT, PICKUP, INTERACTIBLE, AI, STATIC_TARGET }
 enum PickUpTypes { HEALTH, SHARDS }
-enum InteractTypes { HEALTH, SHARDS, BONFIRE, BITS, OBJECTIVE, MISSION }
+## APPEND ONLY. These values are stored as ints in .tscn files, so inserting
+## anywhere but the end silently reassigns every interactible authored after it.
+## DEPART is the railhead's departure lever: it reads its prompt off its parent
+## the way MISSION does, but it is not a mission selector and the player must
+## not route it like one.
+enum InteractTypes { HEALTH, SHARDS, BONFIRE, BITS, OBJECTIVE, MISSION, DEPART }
  
 ## Who attacks whom, as data.
 ##

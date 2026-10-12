@@ -1,4 +1,4 @@
-[gd_resource type="Environment" load_steps=4 format=3]
+[gd_resource type="Environment" load_steps=4 format=3 uid="uid://b0oq5e1rbewde"]
 
 [ext_resource type="Shader" path="res://Env/new_sky_oct.16.gdshader" id="1_obkx8"]
 

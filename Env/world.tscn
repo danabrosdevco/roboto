@@ -15,7 +15,7 @@
 [ext_resource type="Script" path="res://Campaign/objective_tracker.gd" id="12_1xc4a"]
 [ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="12_nadmy"]
 [ext_resource type="Script" path="res://Campaign/campaign.gd" id="15_3b3cm"]
-[ext_resource type="PackedScene" uid="uid://di44xwffknyvf" path="res://maps/depot_level.tscn" id="16_oio3q"]
+[ext_resource type="PackedScene" uid="uid://wxpaule0klmg" path="res://maps/railhead_level.tscn" id="16_oio3q"]
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="16_oqoj0"]
 [ext_resource type="Resource" uid="uid://ciftj4gygiyem" path="res://Campaign/items & catalogue/test_item_catalogue.tres" id="18_kolru"]
 [ext_resource type="Script" path="res://Campaign/enemy_force_spawner.gd" id="18_r3yq3"]

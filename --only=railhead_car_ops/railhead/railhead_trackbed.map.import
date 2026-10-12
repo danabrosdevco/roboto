@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://u3fkgogblx6t"
+path="res://.godot/imported/railhead_trackbed.map-bb6f190031bb61e8128bb8ed1bf21a7b.tres"
+
+[deps]
+
+source_file="res://--only=railhead_car_ops/railhead/railhead_trackbed.map"
+dest_files=["res://.godot/imported/railhead_trackbed.map-bb6f190031bb61e8128bb8ed1bf21a7b.tres"]
+
+[params]
+

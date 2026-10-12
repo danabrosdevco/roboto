@@ -883,16 +883,26 @@ func _tiles(kind: int, ids: Array) -> Array:
 
 
 # Something that is part of the body, not a slot: shown, never swapped.
-func _fixed_tile(item: ItemDefinition, text: String) -> Control:
+# `wide` is the WEAPON width, and it has to match _slot_tile's: a wreck draws
+# fixed tiles in place of clickable ones, and a fixed tile that is always the
+# weapon width made every equipment and module slot on a destroyed robot more
+# than twice as wide as the same slot on a live one.
+#
+# Four slots at 120 instead of 56 took the kit row from 254px to 510, which is
+# over DETAIL_WIDTH (400) — and `side.custom_minimum_size` is a MINIMUM, so the
+# whole detail column grew to fit and pushed its right-hand content off the
+# screen. That is the "selecting a destroyed robot runs off the end" report:
+# nothing to do with the DESTROYED label, everything to do with this default.
+func _fixed_tile(item: ItemDefinition, text: String, wide: bool = true) -> Control:
 	var tile := PanelContainer.new()
 	tile.add_theme_stylebox_override("panel", Kit.box(Kit.FAINT, Color(0, 0, 0, 0.2), 1, 4.0))
-	tile.custom_minimum_size = Vector2(120, 44)
+	tile.custom_minimum_size = Vector2(120, 44) if wide else Vector2(56, 44)
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var col := Kit.vbox(2)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	tile.add_child(col)
 	if item != null:
-		col.add_child(Kit.icon(Icons.item(item, "m"), Kit.DIM, Vector2(80, 28)))
+		col.add_child(Kit.icon(Icons.item(item, "m"), Kit.DIM, Vector2(80, 28) if wide else Vector2(28, 28)))
 		text = item.short_label().to_upper()
 	var l := Kit.label(text, Kit.DIM, 11)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -912,7 +922,10 @@ func _slot_tile(kind: int, index: int, item_id: StringName) -> Control:
 	# A fixed tile rather than a disabled one: same picture, no click target,
 	# no hover, nothing to wonder about.
 	if selected != null and selected.status == SoldierRecord.Status.DESTROYED:
-		return _fixed_tile(item, "EMPTY" if item == null else "")
+		# Same width rule as the live tile below, or a wreck's panel is wider
+		# than a working robot's for no reason the player can see.
+		return _fixed_tile(item, "EMPTY" if item == null else "",
+				kind == ItemDefinition.Kind.WEAPON)
 	var wide := kind == ItemDefinition.Kind.WEAPON
 	var is_sel := kind == slot_kind and index == slot_index
 	var missing := wide and item == null and not _armed(selected)
