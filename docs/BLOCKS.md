@@ -198,7 +198,8 @@ Three habits that avoid nearly all of it:
 | `tools/block_bridges.gd` | `bridges/` maps (it extends the industrial tool) |
 | `tools/block_fortress.gd` | `causeway/` and `fortress/` maps (it extends the bridges tool) |
 | `tools/block_homebase.gd` | `maps/depot/depot_level.map` — a whole level, not a block (it extends the fortress tool) |
-| `tools/block_arena.gd` | `maps/proving/proving_level.map` — a whole level, the arena, rebuilt (it extends the fortress tool) |
+| `tools/build_proving.gd` | `maps/proving/proving_level.map` — a whole level, the proving ground: the arena, opened up, plus the bay behind the enemy blockhouse (it extends the fortress tool) |
+| `tools/block_arena.gd` | SUPERSEDED by `build_proving.gd`, 2026-10-13. Still builds the 2026-10 arena with `--legacy`, and refuses to write otherwise |
 | `tools/block_ground.gd` | `ground/` maps — micro-terrain (it extends the fortress tool) |
 | `tools/block_prefabs.gd` | A prefab for each map in a folder |
 
@@ -209,7 +210,7 @@ godot --headless --path . --script res://tools/block_industrial.gd -- maps/block
 godot --headless --path . --script res://tools/block_bridges.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_fortress.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_homebase.gd -- maps
-godot --headless --path . --script res://tools/block_arena.gd -- maps
+godot --headless --path . --script res://tools/build_proving.gd -- maps
 godot --headless --path . --script res://tools/block_ground.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_estates.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_prefabs.gd -- maps/blocks/features
@@ -1005,13 +1006,13 @@ read as mould.
 not as a lit strip. The trim is `metal_wall_5` and the markings are
 `concrete_tx_4` — pale paint on dark steel.
 
-
 ### The proving ground (`maps/proving/proving_level.map`)
 
-Not a block — a whole level, written by `tools/block_arena.gd`, and a
-replacement for the arena. Same footprint: 88 × 54 m of grass in a walled
-rectangle. Everything else is different, because three things made the arena
-hard to read and all three are fixable in the geometry:
+Not a block — a whole level, written by `tools/build_proving.gd`. As of 2026-10-13
+it is the arena (88 × 68 m of grass in a walled rectangle, widened from 54 and
+opened up) plus a 45 × 68 m bay behind the enemy blockhouse holding a clear
+30 × 30 m floor for the bunker. Three things made the original arena hard to
+read and all three are fixable in the geometry:
 
 - **Everything in it was 4 m tall.** Every cover wall and every pillar, so
   nothing could be seen over and there was no way to tell a thing you shoot
@@ -1051,7 +1052,7 @@ Three things that cost a rebuild each, worth not repeating:
   lanes, white treadplate and pale concrete all rendered as white paper under
   the shared sun. The whole palette is chosen from the dark end.
 
-The level scene (`build_proving.gd`, in the scratchpad) carries the arena's
+The level scene (`maps/proving_level.tscn`) carries the arena's
 mission scaffolding — hostile muster, an eliminate objective over the field,
 and an extraction that only opens once it is clear — plus cover points
 generated off the baked navmesh by `CoverPointSpawner`.

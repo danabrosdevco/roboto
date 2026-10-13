@@ -145,11 +145,24 @@ var _stages: Array = []  # [first brush index, what built it], to name a pair
 
 
 func _initialize() -> void:
+	# SUPERSEDED, 2026-10-13. tools/build_proving.gd writes this map now: the
+	# arena was opened up and a bay added behind the enemy blockhouse, and that
+	# tool keeps the arena's shape, its palette and this file's brush helpers.
+	# Two tools writing one file is how a day's work gets silently overwritten,
+	# so this one stops here unless you ask for the old arena on purpose.
+	#
+	# The code below still builds the 2026-10 arena exactly: it is kept as what
+	# the map was, which is the only way to diff the two.
+	if not OS.get_cmdline_user_args().has("--legacy"):
+		print("SKIP  tools/build_proving.gd writes maps/proving/proving_level.map now.")
+		print("      Pass --legacy to build the old 88 x 54 m arena from this file anyway.")
+		quit()
+		return
 	var base := ""
 	var force := false
 	for a in OS.get_cmdline_user_args():
-		if a == "--force":
-			force = true
+		if a == "--force" or a == "--legacy":
+			force = force or a == "--force"
 		elif base == "":
 			base = a
 	if base == "":

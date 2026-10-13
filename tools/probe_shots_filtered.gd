@@ -129,6 +129,18 @@ const SHOTS: Array = [
 	["mutaha_wip", "13_new_crossing_gate", Vector3(-150.0, 1.7, 312.0), Vector3(-80.0, 1.5, 318.0), 70.0, "abs"],
 	["mutaha_wip", "14_quarter_street", Vector3(-208.5, 1.7, 200.0), Vector3(-208.5, 1.4, 110.0), 70.0, "abs"],
 	["mutaha_wip", "15_island_tip_above", Vector3(-46.0, 96.0, 268.0), Vector3(-56.0, 0.0, 180.0), 64.0, "abs"],
+	# The proving ground, 2026-10-13: wider arena, and a bay behind the enemy
+	# blockhouse for the bunker. Godot Z is the long axis — the squad enters at
+	# z -28 facing +Z and the bay runs z 45..90. 1.50 m, which is where this
+	# game's eye actually is, rather than the 1.65 the rest of this table uses.
+	["proving", "R1_down_the_middle", Vector3(0.0, 1.5, -40.0), Vector3(0.0, 5.0, 40.0), 64.0, "abs"],
+	["proving", "R2_the_north_band", Vector3(29.0, 1.5, -40.0), Vector3(29.0, 3.0, 40.0), 64.0, "abs"],
+	["proving", "R3_the_blockhouse", Vector3(0.0, 1.5, 14.0), Vector3(0.0, 3.5, 44.0), 62.0, "abs"],
+	["proving", "R4_through_the_gateway", Vector3(0.0, 1.5, 38.0), Vector3(0.0, 3.0, 88.0), 64.0, "abs"],
+	["proving", "R5_the_bunker_floor", Vector3(-20.0, 1.5, 56.0), Vector3(14.0, 4.0, 86.0), 66.0, "abs"],
+	["proving", "R6_back_at_the_arena", Vector3(0.0, 1.5, 84.0), Vector3(0.0, 5.0, 40.0), 64.0, "abs"],
+	["proving", "R7_from_the_tower", Vector3(0.0, 6.4, 0.0), Vector3(0.0, 3.0, 90.0), 62.0, "abs"],
+	["proving", "R8_aerial", Vector3(0.0, 170.0, 150.0), Vector3(0.0, 0.0, 14.0), 56.0, "abs"],
 ]
 
 
