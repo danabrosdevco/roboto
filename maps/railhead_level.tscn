@@ -20,6 +20,7 @@ nav_region = NodePath("NavigationRegion3D")
 [node name="RailheadArt" parent="NavigationRegion3D" instance=ExtResource("2_rlart")]
 
 [node name="SpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -32)
 
 [node name="SquadMuster" type="Node3D" parent="."]
 script = ExtResource("3_rlsqs")

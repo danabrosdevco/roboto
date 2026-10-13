@@ -40,12 +40,21 @@ const STATION := "res://maps/railhead_station.tscn"
 const B := "res://maps/blocks/railhead/%s.tscn"
 
 ## Car order, front to back: the thing you do last to the thing you do first.
+## FRONT (+Z) TO REAR (-Z), AND THE ORDER IS THE PLAYER'S WALK.
+##
+## They wake in Operations and leave through the Platform car's side door, so
+## the three cars that matter are consecutive in that direction: OPERATIONS,
+## then BARRACKS, then PLATFORM. The industrial cars sit ahead of Operations,
+## toward the motive, where the player goes to refit rather than to leave.
+##
+## Reorder this list freely — the rake re-centres itself on Operations below,
+## so the spawn stays in the command car whatever you do here.
 const CARS: Array = [
 	["Motive", "railhead_hull_motive"],
-	["Operations", "railhead_car_ops"],
-	["Repair", "railhead_car_repair"],
-	["Armoury", "railhead_car_armoury"],
 	["Fabrication", "railhead_car_fab"],
+	["Armoury", "railhead_car_armoury"],
+	["Repair", "railhead_car_repair"],
+	["Operations", "railhead_car_ops"],
 	["Barracks", "railhead_car_barracks"],
 	["Platform", "railhead_car_platform"],
 ]
@@ -89,6 +98,13 @@ func _initialize() -> void:
 
 	var rake := _group(art, "Rake")
 	rake.position.y = R.DECK_RISE
+	# THE RAKE'S POSITION IS PINNED BY THE PLATFORM CAR, NOT BY THE SPAWN.
+	# The station's PlatformDoor, RampTop and HeadHouse markers sit at fixed
+	# places on a station laid at the origin, and the Platform car's side door
+	# has to line up with them. Re-centring the rake so Operations landed on the
+	# spawn at z = 0 moved the Platform car 32 m and put eleven markers inside
+	# colliders — the build said so and the reach test could not even start.
+	# So the formula stays, and the spawn moves to meet Operations instead.
 	for i in CARS.size():
 		var z := (3 - i) * PITCH
 		var car := _put(rake, B % CARS[i][1], 0.0, z, 0.0, "Car%d_%s" % [i + 1, CARS[i][0]])

@@ -1,98 +1,156 @@
-[gd_scene load_steps=10 format=3 uid="uid://7gu1l6g3rxax"]
+[gd_scene load_steps=12 format=3]
 
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_trackbed.tscn" id="1_q3log"]
-[ext_resource type="PackedScene" path="res://maps/railhead_station.tscn" id="4_p1lc3"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_hull_motive.tscn" id="5_kic5x"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_ops.tscn" id="6_2086q"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_repair.tscn" id="7_e6kt3"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_armoury.tscn" id="8_bya02"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_fab.tscn" id="9_mcje0"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_barracks.tscn" id="10_tv31b"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_platform.tscn" id="11_dnslj"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_trackbed.tscn" id="1_tbnbs"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_5oqdt"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_578r5"]
+[ext_resource type="PackedScene" path="res://maps/railhead_station.tscn" id="4_8eqmo"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_hull_motive.tscn" id="5_dw1rh"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_fab.tscn" id="6_vr805"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_armoury.tscn" id="7_l1tol"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_repair.tscn" id="8_mt08m"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_ops.tscn" id="9_tgjsb"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_barracks.tscn" id="10_rsvjc"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_platform.tscn" id="11_1ebbp"]
 
 [node name="RailheadArt" type="Node3D"]
 
 [node name="Ground" type="Node3D" parent="."]
 
-[node name="Trackbed" parent="Ground" instance=ExtResource("1_q3log")]
+[node name="Trackbed" type="Node3D" parent="Ground" instance=ExtResource("1_tbnbs")]
+script = ExtResource("2_5oqdt")
+local_map_file = "res://maps/blocks/railhead/railhead_trackbed.map"
+global_map_file = ""
+map_settings = ExtResource("3_578r5")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Station" parent="Ground" instance=ExtResource("4_p1lc3")]
+[node name="Station" type="Node3D" parent="Ground" instance=ExtResource("4_8eqmo")]
 
 [node name="Rake" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, 0)
 
-[node name="Car1_Motive" parent="Rake" instance=ExtResource("5_kic5x")]
+[node name="Car1_Motive" type="Node3D" parent="Rake" instance=ExtResource("5_dw1rh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 96)
+script = ExtResource("2_5oqdt")
+local_map_file = "res://maps/blocks/railhead/railhead_hull_motive.map"
+global_map_file = ""
+map_settings = ExtResource("3_578r5")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car2_Operations" parent="Rake" instance=ExtResource("6_2086q")]
+[node name="Car2_Fabrication" type="Node3D" parent="Rake" instance=ExtResource("6_vr805")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 64)
+script = ExtResource("2_5oqdt")
+local_map_file = "res://maps/blocks/railhead/railhead_car_fab.map"
+global_map_file = ""
+map_settings = ExtResource("3_578r5")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car3_Repair" parent="Rake" instance=ExtResource("7_e6kt3")]
+[node name="Car3_Armoury" type="Node3D" parent="Rake" instance=ExtResource("7_l1tol")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 32)
+script = ExtResource("2_5oqdt")
+local_map_file = "res://maps/blocks/railhead/railhead_car_armoury.map"
+global_map_file = ""
+map_settings = ExtResource("3_578r5")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car4_Armoury" parent="Rake" instance=ExtResource("8_bya02")]
+[node name="Car4_Repair" type="Node3D" parent="Rake" instance=ExtResource("8_mt08m")]
+script = ExtResource("2_5oqdt")
+local_map_file = "res://maps/blocks/railhead/railhead_car_repair.map"
+global_map_file = ""
+map_settings = ExtResource("3_578r5")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car5_Fabrication" parent="Rake" instance=ExtResource("9_mcje0")]
+[node name="Car5_Operations" type="Node3D" parent="Rake" instance=ExtResource("9_tgjsb")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -32)
+script = ExtResource("2_5oqdt")
+local_map_file = "res://maps/blocks/railhead/railhead_car_ops.map"
+global_map_file = ""
+map_settings = ExtResource("3_578r5")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car6_Barracks" parent="Rake" instance=ExtResource("10_tv31b")]
+[node name="Car6_Barracks" type="Node3D" parent="Rake" instance=ExtResource("10_rsvjc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -64)
+script = ExtResource("2_5oqdt")
+local_map_file = "res://maps/blocks/railhead/railhead_car_barracks.map"
+global_map_file = ""
+map_settings = ExtResource("3_578r5")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car7_Platform" parent="Rake" instance=ExtResource("11_dnslj")]
+[node name="Car7_Platform" type="Node3D" parent="Rake" instance=ExtResource("11_1ebbp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -96)
+script = ExtResource("2_5oqdt")
+local_map_file = "res://maps/blocks/railhead/railhead_car_platform.map"
+global_map_file = ""
+map_settings = ExtResource("3_578r5")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
 [node name="Markers" type="Node3D" parent="."]
 
 [node name="HoloTable" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4875, 64)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4875, -32)
 
 [node name="HoloTable_ViewA" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 1.1875, 64)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 1.1875, -32)
 
 [node name="HoloTable_ViewB" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 1.1875, 64)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 1.1875, -32)
 
 [node name="BriefingBoard" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3875, 79.65)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3875, -16.35)
 
 [node name="Seating_Aisle" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, 76)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -20)
 
 [node name="RepairBay_1" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.1875, 24)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.1875, -8)
 
 [node name="RepairBay_2" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.1875, 24)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.1875, -8)
 
 [node name="RepairBay_3" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.1875, 40)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.1875, 8)
 
 [node name="RepairBay_4" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.1875, 40)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.1875, 8)
 
 [node name="Armoury" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, 32)
 
 [node name="Fabrication" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -32)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, 64)
 
 [node name="FabricationMount_1_Fitted" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7, 1.1875, -40)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7, 1.1875, 56)
 
 [node name="FabricationMount_1_Empty" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 1.1875, -40)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 1.1875, 56)
 
 [node name="FabricationMount_2_Fitted" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7, 1.1875, -32)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7, 1.1875, 64)
 
 [node name="FabricationMount_2_Empty" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 1.1875, -32)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 1.1875, 64)
 
 [node name="FabricationMount_3_Fitted" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7, 1.1875, -24)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7, 1.1875, 72)
 
 [node name="FabricationMount_3_Empty" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 1.1875, -24)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 1.1875, 72)
 
 [node name="BarracksRack_01" type="Node3D" parent="Markers"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -78.4375)
@@ -164,82 +222,82 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.45, 2.8875, -92.75)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.1875, -96)
 
 [node name="Backdrop_Left" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 4.6875, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 4.6875, 32)
 
 [node name="Backdrop_Right" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 4.6875, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 4.6875, 32)
 
 [node name="Lights" type="Node3D" parent="."]
 
 [node name="Lamp_Operations_0" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 56)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -40)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 light_energy = 0.7
 omni_range = 5.5
 
 [node name="Lamp_Operations_1" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 72)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -24)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 light_energy = 0.7
 omni_range = 5.5
 
 [node name="Lamp_Repair_0" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 20)
-light_color = Color(0.94902, 0.85098, 0.658824, 1)
-omni_range = 5.5
-
-[node name="Lamp_Repair_1" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 28)
-light_color = Color(0.94902, 0.85098, 0.658824, 1)
-omni_range = 5.5
-
-[node name="Lamp_Repair_2" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 36)
-light_color = Color(0.94902, 0.85098, 0.658824, 1)
-omni_range = 5.5
-
-[node name="Lamp_Repair_3" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 44)
-light_color = Color(0.94902, 0.85098, 0.658824, 1)
-omni_range = 5.5
-
-[node name="Lamp_Armoury_0" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -12)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 omni_range = 5.5
 
-[node name="Lamp_Armoury_1" type="OmniLight3D" parent="Lights"]
+[node name="Lamp_Repair_1" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -4)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 omni_range = 5.5
 
-[node name="Lamp_Armoury_2" type="OmniLight3D" parent="Lights"]
+[node name="Lamp_Repair_2" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 4)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 omni_range = 5.5
 
-[node name="Lamp_Armoury_3" type="OmniLight3D" parent="Lights"]
+[node name="Lamp_Repair_3" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 12)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 omni_range = 5.5
 
+[node name="Lamp_Armoury_0" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 20)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Armoury_1" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 28)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Armoury_2" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 36)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
+[node name="Lamp_Armoury_3" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 44)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+omni_range = 5.5
+
 [node name="Lamp_Fabrication_0" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -44)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 52)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 omni_range = 5.5
 
 [node name="Lamp_Fabrication_1" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -36)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 60)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 omni_range = 5.5
 
 [node name="Lamp_Fabrication_2" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -28)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 68)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 omni_range = 5.5
 
 [node name="Lamp_Fabrication_3" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, -20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1875, 76)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 omni_range = 5.5
 
@@ -284,6 +342,6 @@ light_color = Color(0.94902, 0.85098, 0.658824, 1)
 omni_range = 5.5
 
 [node name="Lamp_HoloTable" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0875, 64)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0875, -32)
 light_color = Color(0.94902, 0.85098, 0.658824, 1)
 light_energy = 1.6
