@@ -58,6 +58,9 @@ extends SceneTree
 # mesh's material_override. Nothing structural is in that node, so it can never
 # repaint the plant-grey.
 #
+# THERE ARE TWO SUCH LISTS NOW — "Paint" and "Lit" — and the LIT NODE block
+# further down says why they are not one. Everything below is about Paint.
+#
 # Paint holds NINETEEN meshes, in three groups:
 #
 #   RaftLipXNeg / RaftLipXPos / RaftLipZNeg / RaftLipZPos        4   ground ring
@@ -84,7 +87,8 @@ extends SceneTree
 #
 # THIS IS ARCHITECTURE, NOT A ROBOT. check_frame.gd does not apply: no
 # FactionLivery, no "enemies" group, no Bark, no nav agent. It is a Node3D with
-# meshes and one StaticBody3D.
+# meshes, one StaticBody3D and — since 2026-10-14 — core_pulse.gd on its root,
+# which animates the Lit materials and does nothing else.
 #
 # ─────────────────────────────────────────────
 # NO CSG, ANYWHERE
@@ -155,10 +159,14 @@ const OUT_DIR := "res://maps/blocks/compute"
 const MAT_RACK := "res://textures/PSX_Textures/metal_floor_3.tres"
 ## Frame members — posts, courses, corbel. Ribbed metal, reads as extrusion.
 const MAT_FRAME := "res://textures/PSX_Textures/metal_wall_4.tres"
-## THE SCREEN. Already emission_enabled with a green at 0.9 energy in its own
-## .tres, so every face wearing it lights itself. This is the one the old core
-## carries on a quarter of its faces and F2 carried on none.
+## THE SCREEN. glitch_tx_1's own .tres is a GREEN emissive material — a flat
+## Color(0.45, 1, 0.6) at 0.9 energy — and that fixed green is exactly what the
+## 2026-10-14 review rejected. It is no longer used as a material here; only its
+## PNG is, under fresh per-core materials. Kept as the texture's address and as
+## the record of where the green came from.
 const MAT_SCREEN := "res://textures/PSX_Textures/glitch_tx_1.tres"
+## THE SCREEN TEXTURE, which is what the lit pieces actually wear now.
+const SCREEN_TEX := "res://textures/PSX_Textures/glitch_tx_1.png"
 ## Decking and the raft plate. Shared read-only — never mutated here.
 const MAT_METAL := "res://textures/PSX_Textures/metal_floor_1.tres"
 ## The four footings the raft stands on, and the only poured thing left.
@@ -189,7 +197,81 @@ const PAINT_TEX := "res://textures/PSX_Textures/metal_wall_3.png"
 ## looks right is therefore much lower than one tuned against a bloom.
 const PAINT_GLOW := 0.95
 
+# ─────────────────────────────────────────────
+# THE LIT NODE — the second owner-coloured list, and NOT the same thing as Paint
+#
+# Review, 2026-10-14: "the green glowing elements should be faction colored, and
+# it should have some pulsing / interesting effect to it."
+#
+# The lit strips — the reveal under every shelf course, the strip down each rack
+# bay, the line under the corbel, the line under the pad deck and the console
+# plate — used to wear glitch_tx_1.tres straight, which is a FIXED GREEN. They
+# are faction-coloured now, and they hang under a second child of the root named
+# **"Lit"**, parallel to "Paint" and deliberately not merged into it:
+#
+#   Paint  is painted bodywork that glows. Flat, structural, constant.
+#   Lit    is SCREENS. They carry glitch_tx_1's data noise and they MOVE.
+#
+# An owner-colour pass has to walk both and set `albedo_color` AND `emission` on
+# both — but it should expect to treat them differently in future (a damaged
+# core might kill the screens and keep the paint), which is the whole reason
+# they are two lists.
+#
+# TWO THINGS THAT WILL BITE AN OWNER-COLOUR PASS, and they are written here
+# because they are not guessable from the node names:
+#
+#   1. MATERIALS ARE SHARED WITHIN A SEGMENT. The eight rack strips at one
+#      height share one StandardMaterial3D, because they are one pulse unit.
+#      Setting albedo on every child therefore sets some materials eight times,
+#      which is harmless — but DO NOT assume child count equals material count.
+#   2. DO NOT WRITE emission_energy_multiplier. core_pulse.gd animates exactly
+#      that float, reads the generator's value as the rest level, and multiplies
+#      it by PEAK_GAIN. A pass that stamps an energy onto the Lit materials is
+#      fighting a tween and will lose intermittently.
+#
+# ─────────────────────────────────────────────
+# THE EMISSION, and the trap this file has already paid for once
+#
+# The previous pass put glitch_tx_1 across whole 5 m bays at 0.9 flat emission
+# and the lit shot came back as a green lamp with a machine inside it: the data
+# noise invisible, the panels reading as flat paint. Thinning the strips fixed
+# the area but not the mechanism — a FLAT emission colour is uniform across the
+# face by construction, so past some energy it is a solid rectangle no matter
+# how narrow it is.
+#
+# THE FIX IS emission_texture, NOT A LOWER NUMBER. With the glitch PNG wired to
+# emission as well as albedo, the light the surface makes VARIES PER TEXEL, so
+# the noise is in the glow itself and survives any energy. It is set to
+# EMISSION_OP_ADD, not MULTIPLY, and that choice is the one that keeps the
+# faction read:
+#
+#   EMISSION = (emission_colour + texture.rgb) * energy
+#
+# ADD puts the faction colour under the noise as a FLOOR. The texture is green
+# and magenta; on MULTIPLY it would recolour the glow — an amber core would emit
+# yellow-green and magenta speckle, and an Argus core would be unreadable. On
+# ADD the faction colour is always present at full strength and the texture only
+# adds variation on top of it. Hue is owned by the faction; the texture owns the
+# grain.
+#
+# 0.34 IS LOW AND THAT IS THE POINT. It is a REST level that core_pulse.gd
+# multiplies by 2.6 at the crest, so the number that has to survive clipping is
+# 0.88, not 0.34. FAC_ADVERSARY is Color(0.91, 0.63, 0.23) — red already at 0.91
+# — and because ADD puts the texture on top of that, the brightest texels sit at
+# about 1.36 before energy is applied. At 0.88 those just touch the ceiling,
+# which is a sparkle on the noisiest texels; at the 1.3 that instinct asks for,
+# every texel pins and the strip is a white bar with no grain in it, which is
+# the original fault with a different number in it.
+const LIT_GLOW := 0.40
+## THE CONSOLE PLATE ALONE, which does not pulse and is not at rest either. See
+## the note on ConsolePlate in _shaft_with_bay: it is the one lit face big enough
+## to be seen texel by texel, and at 0.40 the texture's own green beat the amber
+## under it. This is the energy at which the faction colour wins.
+const CONSOLE_GLOW := 0.85
+
 const _Palette := preload("res://Character/hud/hud_palette.gd")
+## The pulse. Attached to the root of all three scenes; see its own header.
+const PULSE_SCRIPT := "res://maps/blocks/compute/core_pulse.gd"
 
 const DEG := PI / 180.0
 
@@ -235,12 +317,14 @@ var _concrete: Material
 var _metal: Material
 var _rack: Material
 var _frame: Material
-var _screen: Material
 var _paint_tex: Texture2D
+var _screen_tex: Texture2D
 var _screen_faces: int      ## how much of the model wears glitch_tx_1
+var _pulse_script: Script
 var _root: Node3D
 var _structure: Node3D
 var _paint: Node3D
+var _lit_node: Node3D
 var _hulls: Array[Node3D]   ## pieces that also get a collision box
 
 
@@ -249,11 +333,12 @@ func _init() -> void:
 	_metal = load(MAT_METAL)
 	_rack = load(MAT_RACK)
 	_frame = load(MAT_FRAME)
-	_screen = load(MAT_SCREEN)
 	_paint_tex = load(PAINT_TEX)
+	_screen_tex = load(SCREEN_TEX)
+	_pulse_script = load(PULSE_SCRIPT)
 	if (_concrete == null or _metal == null or _rack == null or _frame == null
-			or _screen == null or _paint_tex == null):
-		printerr("build_core_f2: a material failed to load, so every piece would be bare")
+			or _screen_tex == null or _paint_tex == null or _pulse_script == null):
+		printerr("build_core_f2: a material, a texture or the pulse script failed to load, so every piece would be bare")
 		quit(1)
 		return
 	for spec: Array in SIZES:
@@ -278,11 +363,16 @@ func _init() -> void:
 		print("    measured  W %.2f  H %.2f  L %.2f   (origin at %.2f, %.2f, %.2f)"
 				% [bb.size.x, bb.size.y, bb.size.z, bb.position.x, bb.position.y, bb.position.z])
 		var meshes: int = _count_meshes(node)
-		print("    footprint %.2f square · paint pieces %d · meshes %d"
-				% [_raft_half(sw) * 2.0, _paint.get_child_count(), meshes])
+		print("    footprint %.2f square · paint %d · lit %d · meshes %d"
+				% [_raft_half(sw) * 2.0, _paint.get_child_count(),
+						_lit_node.get_child_count(), meshes])
 		# Every piece here is a box or a short cylinder, so "faces" is 6 a piece
 		# and the ratio is comparable with a .map brush count. The shipped
 		# compute_core.map carries glitch_tx_1 on 30 of its 134 faces: 22%.
+		# READ THIS AS A PIECE COUNT, NOT AN AREA, since the 2026-10-14 pass.
+		# Cutting each rack strip into one segment per bay tripled the lit piece
+		# count without adding a square centimetre of lit surface, so the large
+		# core's 42% is the same strips as before with joints in them.
 		print("    glitch_tx_1 on %d of %d pieces — %.0f%% of faces (old core 22%%)"
 				% [_screen_faces, meshes, 100.0 * float(_screen_faces) / float(meshes)])
 		node.free()
@@ -300,8 +390,6 @@ func _mesh(parent: Node, nm: String, mesh: Mesh, at: Vector3,
 		euler: Vector3 = Vector3.ZERO, mat: Material = null) -> MeshInstance3D:
 	if mat == null:
 		mat = _rack
-	if mat == _screen:
-		_screen_faces += 1
 	var m := MeshInstance3D.new()
 	m.name = nm
 	m.mesh = mesh
@@ -349,6 +437,54 @@ func _paint_material() -> StandardMaterial3D:
 	m.emission_energy_multiplier = PAINT_GLOW
 	m.metallic_specular = 0.0
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	# PER INSTANCE, NOT PER SCENE. A sub-resource in a .tscn is ONE object
+	# shared by every instantiation of that scene unless it says otherwise, so
+	# two cores in one level would have shared these materials and the second
+	# owner to capture a core would have repainted the first one's. Latent since
+	# the Paint list was written and never fired because no level holds two F2
+	# cores yet; fixed here because the Lit list cannot live with it at all —
+	# two cores would also have been fighting over one pulse.
+	m.resource_local_to_scene = true
+	return m
+
+
+## A LIT piece — a screen, not paint. See the LIT NODE block at the top for why
+## this is a separate list and why emission is textured rather than flat.
+##
+## `at_y` is the height the pulse reaches it at, written as metadata for
+## core_pulse.gd. Passing NAN means "this one does not pulse", which is the
+## console plate and only the console plate.
+##
+## `mat` lets several pieces at one height share a material, because a height is
+## one pulse unit; pass null for a piece that owns its own.
+func _lit(nm: String, mesh: Mesh, at: Vector3, euler: Vector3 = Vector3.ZERO,
+		at_y: float = NAN, mat: StandardMaterial3D = null) -> MeshInstance3D:
+	if mat == null:
+		mat = _lit_material()
+	var m := _mesh(_lit_node, nm, mesh, at, euler, mat)
+	_screen_faces += 1
+	if not is_nan(at_y):
+		m.set_meta(&"pulse_y", at_y)
+	return m
+
+
+## Faction-coloured screen. The texture is on BOTH albedo and emission; the
+## emission operator is ADD so the faction colour is a floor the noise sits on
+## rather than a tint the noise recolours. The long version is at the top.
+func _lit_material() -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = _screen_tex
+	m.albedo_color = _Palette.FAC_ADVERSARY
+	m.emission_enabled = true
+	m.emission = _Palette.FAC_ADVERSARY
+	m.emission_texture = _screen_tex
+	m.emission_operator = BaseMaterial3D.EMISSION_OP_ADD
+	m.emission_energy_multiplier = LIT_GLOW
+	m.metallic_specular = 0.0
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	# See _paint_material. Doubly required here: core_pulse.gd writes this
+	# material's energy every frame, so two cores sharing one would stutter.
+	m.resource_local_to_scene = true
 	return m
 
 
@@ -391,12 +527,19 @@ const GROUND := 0.52
 func _build(sw: float, target: float) -> Node3D:
 	var root := Node3D.new()
 	root.name = "ComputeCoreF2"
+	# THE PULSE RIDES ON THE MODEL, not on a wrapper. A core instanced on an
+	# empty stage with nothing else wired still animates, which is how it is
+	# photographed and how it will first be dropped into a level.
+	root.set_script(_pulse_script)
 	_root = root
 	_hulls = []
 	_structure = _node(root, "Structure")
 	# THE PAINTED NODE LIST. See the header. Declared before anything is built
 	# so no painted piece can end up anywhere else by accident.
 	_paint = _node(root, "Paint")
+	# THE LIT LIST, which is the other one and is not the same thing. See the
+	# LIT NODE block at the top.
+	_lit_node = _node(root, "Lit")
 
 	var rw := _raft_half(sw)
 	var neck: float = target - 1.26     # ConceptsCoreF._trunk
@@ -527,8 +670,8 @@ func _trunk(sw: float, target: float, neck: float) -> void:
 	# ITS TOP IS BURIED IN THE CORBEL ON PURPOSE. Left a centimetre clear it was
 	# a 3.5 m square emissive TABLE seen from the camera's height, not a reveal;
 	# an emissive box only reads as a line if every face but the edge is covered.
-	_part("CorbelLight", Vector3(cw - 0.16, 0.07, cw - 0.16),
-			Vector3(0, neck - 0.025, 0), Vector3.ZERO, _screen)
+	_lit("CorbelLight", _boxm(Vector3(cw - 0.16, 0.07, cw - 0.16)),
+			Vector3(0, neck - 0.025, 0), Vector3.ZERO, neck - 0.025)
 	_pad(target)
 
 
@@ -561,7 +704,7 @@ func _frame_posts(sw: float, neck: float) -> void:
 ## many members. 1.7 gives 2 / 2 / 5 at the three sizes.
 func _courses(sw: float, neck: float) -> void:
 	var h: float = neck - GROUND
-	var n: int = maxi(3, int(h / 1.7))
+	var n: int = _course_count(neck)
 	for i in range(1, n):
 		var y: float = GROUND + h * float(i) / float(n)
 		_part("Course%d" % i, Vector3(sw + 0.06, COURSE_H, sw + 0.06),
@@ -571,8 +714,17 @@ func _courses(sw: float, neck: float) -> void:
 		# height, not panels — and it is what makes a horizontal read as a
 		# running light rather than a ledge. It stops at the posts, which stand
 		# proud of it, so the line is broken at the corners the way a real one is.
-		_part("CourseLight%d" % i, Vector3(sw - 0.04, 0.07, sw - 0.04),
-				Vector3(0, y - COURSE_H * 0.5 - 0.035, 0), Vector3.ZERO, _screen)
+		var ly: float = y - COURSE_H * 0.5 - 0.035
+		_lit("CourseLight%d" % i, _boxm(Vector3(sw - 0.04, 0.07, sw - 0.04)),
+				Vector3(0, ly, 0), Vector3.ZERO, ly)
+
+
+## HOW MANY RACK SEGMENTS THE SHAFT IS DIVIDED INTO, and therefore how many
+## shelf courses it carries (one fewer — the top division is the corbel). Shared
+## with _rack_faces so the lit strips break EXACTLY where the shelves cross
+## them: a strip segmented on any other rhythm leaves a lit joint in mid-panel.
+func _course_count(neck: float) -> int:
+	return maxi(3, int((neck - GROUND) / 1.7))
 
 
 ## THE RACK FACES — glitch_tx_1 panels in the recess, two to a face.
@@ -600,7 +752,23 @@ func _rack_faces(sw: float, bw: float, neck: float) -> void:
 	if bay_w < 0.12:
 		push_warning("build_core_f2: %.2f m of bay beside the fin at sw %.2f, so the rack faces are a line and the core keeps no data texture at all" % [bay_w, sw])
 		return
-	var lit_w: float = minf(0.1, bay_w * 0.35)
+	var lit_w: float = minf(0.13, bay_w * 0.38)
+	# ── THE STRIPS ARE CUT AT THE SHELVES, which is what lets the pulse CLIMB.
+	# A single 10 m lit bar can only brighten as one object — it would breathe,
+	# and breathing is the dull version of this effect. Cut into one segment per
+	# rack bay, the eight strips become a ladder the travelling band can walk up,
+	# and the breaks land under the shelf courses where a rack's own joints are,
+	# so the segmentation is invisible when the pulse is not passing.
+	#
+	# ONE MATERIAL PER SEGMENT, SHARED BY ALL EIGHT STRIPS AT THAT HEIGHT. They
+	# are one pulse unit by definition, so eight materials would be eight
+	# tweeners doing identical arithmetic. core_pulse.gd de-duplicates what it is
+	# handed, and the LIT NODE block at the top warns the owner-colour pass.
+	var h: float = neck - GROUND
+	var n: int = _course_count(neck)
+	var seg_mats: Array[StandardMaterial3D] = []
+	for j in n:
+		seg_mats.append(_lit_material())
 	for face in [[1.0, 0.0, "E"], [-1.0, 0.0, "W"], [0.0, 1.0, "S"], [0.0, -1.0, "N"]]:
 		var nx: float = face[0]
 		var nz: float = face[1]
@@ -623,10 +791,31 @@ func _rack_faces(sw: float, bw: float, neck: float) -> void:
 					_boxm(Vector3(bay_w, y1 - y0, PANEL_T)),
 					out_n + tangent * (side * (bay_in + bay_w * 0.5)) + mid,
 					Vector3(0, yaw, 0), _rack)
-			_mesh(_structure, "RackLit%s%s" % [tag, sfx],
-					_boxm(Vector3(lit_w, y1 - y0, 0.04)),
-					lit_n + tangent * (side * (bay_in + lit_w * 0.5)) + mid,
-					Vector3(0, yaw, 0), _screen)
+			# AGAINST THE POST, NOT AGAINST THE FIN — moved 2026-10-14, and it
+			# is a consequence of the recolour rather than a preference. The
+			# strip used to run down the bay's INNER edge, 5 cm from a fin
+			# blade, which worked while it was green against amber paint. The
+			# moment the strips became faction-coloured too, a lit line 5 cm
+			# from a lit blade of the same hue stopped being a separate
+			# object: the first render of the amber version had eight strips
+			# in it that could not be found. At the bay's OUTER edge it is
+			# amber against the grey ribbed post, which is the contrast the
+			# green used to get for free.
+			var lit_at := lit_n + tangent * (side * (bay_out - lit_w * 0.5))
+			for j in n:
+				var sy0: float = maxf(y0, GROUND + h * float(j) / float(n))
+				var sy1: float = minf(y1, GROUND + h * float(j + 1) / float(n))
+				# The -Z face starts above the console bay, so its lower
+				# segments simply are not there. Silent on purpose and ONLY
+				# here: it is the bay, not a failure, and the north fin and the
+				# north panels already skip the same band for the same reason.
+				if sy1 - sy0 < 0.06:
+					continue
+				var sy: float = (sy0 + sy1) * 0.5
+				_lit("RackLit%s%s%d" % [tag, sfx, j],
+						_boxm(Vector3(lit_w, sy1 - sy0, 0.04)),
+						lit_at + Vector3(0, sy, 0),
+						Vector3(0, yaw, 0), sy, seg_mats[j])
 
 
 ## THE SHAFT, as five brushes around the console void.
@@ -676,8 +865,25 @@ func _shaft_with_bay(sw: float, neck: float, w: float) -> void:
 	# hole, which is a hatch, not an interface. The texture is emissive in its
 	# own .tres, so the thing the player has to walk up and press is the one lit
 	# object on the approach face.
-	_mesh(_structure, "ConsolePlate", _boxm(Vector3(w * 0.8, 0.62, 0.1)),
-			Vector3(0, 1.55, face + depth - 0.05), Vector3.ZERO, _screen)
+	# AND IT IS THE ONE LIT PIECE THAT DOES NOT PULSE. No pulse_y, so core_pulse
+	# leaves it at rest forever. The travelling band is decoration; this is the
+	# thing the player has to find and press, and an interface that goes dark for
+	# part of every cycle is a worse interface however good it looks. It also
+	# gives the pulse a second fixed reference, beside the painted fins, to be
+	# brighter and dimmer than.
+	#
+	# IT ALSO SITS BRIGHTER THAN THE REST LEVEL, AND THAT IS A COLOUR FIX AS MUCH
+	# AS A GAMEPLAY ONE. It is the biggest single lit face on the model and the
+	# only one photographed close enough to show individual texels, so at the
+	# 0.40 rest the other pieces use it came back reading OLIVE: glitch_tx_1 is
+	# green and magenta, and at a low energy the texture's own hue beats the
+	# faction colour underneath it. Driving its energy up pushes the faction
+	# floor past the texture and the plate reads amber with green grain in it,
+	# which is the right way round. The thin strips never had this problem —
+	# they are a few pixels wide and average out — so only this one is raised.
+	var console := _lit("ConsolePlate", _boxm(Vector3(w * 0.8, 0.62, 0.1)),
+			Vector3(0, 1.55, face + depth - 0.05))
+	(console.material_override as StandardMaterial3D).emission_energy_multiplier = CONSOLE_GLOW
 	_part("ConsoleKickRail", Vector3(w * 0.95, 0.09, 0.14),
 			Vector3(0, 1.02, face - 0.06), Vector3.ZERO, _frame)
 
@@ -703,8 +909,12 @@ func _pad(top: float) -> void:
 	# slot so the line is the only part of it that shows.
 	_part("PadSlot", Vector3(PAD * 1.78, 0.2, PAD * 1.78),
 			Vector3(0, deck_top - DECK_T - 0.1, 0), Vector3.ZERO, _metal)
-	_part("PadLight", Vector3(PAD * 1.8, 0.06, PAD * 1.8),
-			Vector3(0, deck_top - DECK_T - 0.03, 0), Vector3.ZERO, _screen)
+	# THE LAST RUNG. It is the highest lit piece on the model, so it is where the
+	# travelling pulse arrives and dies — the band visibly reaches the pad and
+	# stops, which is what makes the effect read as going somewhere.
+	_lit("PadLight", _boxm(Vector3(PAD * 1.8, 0.06, PAD * 1.8)),
+			Vector3(0, deck_top - DECK_T - 0.03, 0), Vector3.ZERO,
+			deck_top - DECK_T - 0.03)
 	_part("PadDeck", Vector3(PAD * 2.0, DECK_T, PAD * 2.0),
 			Vector3(0, deck_top - DECK_T * 0.5, 0), Vector3.ZERO, _metal, true)
 	var t := 0.14
