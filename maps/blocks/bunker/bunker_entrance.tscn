@@ -1,0 +1,90 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://maps/blocks/bunker/bunker_mouth.tscn" id="1_u13py"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_30ej1"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_khuty"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bunker/bunker_leaf_left.tscn" id="4_4lf2t"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bunker/bunker_leaf_right.tscn" id="5_c8vrt"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bunker/bunker_signal_strip.tscn" id="6_hujc5"]
+
+[node name="BunkerEntrance" type="Node3D"]
+
+[node name="Mouth" type="Node3D" parent="." instance=ExtResource("1_u13py")]
+script = ExtResource("2_30ej1")
+local_map_file = "res://maps/blocks/bunker/bunker_mouth.map"
+global_map_file = ""
+map_settings = ExtResource("3_khuty")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LeafLeft" type="Node3D" parent="." instance=ExtResource("4_4lf2t")]
+script = ExtResource("2_30ej1")
+local_map_file = "res://maps/blocks/bunker/bunker_leaf_left.map"
+global_map_file = ""
+map_settings = ExtResource("3_khuty")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="LeafRight" type="Node3D" parent="." instance=ExtResource("5_c8vrt")]
+script = ExtResource("2_30ej1")
+local_map_file = "res://maps/blocks/bunker/bunker_leaf_right.map"
+global_map_file = ""
+map_settings = ExtResource("3_khuty")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="SignalStrip" type="Node3D" parent="." instance=ExtResource("6_hujc5")]
+script = ExtResource("2_30ej1")
+local_map_file = "res://maps/blocks/bunker/bunker_signal_strip.map"
+global_map_file = ""
+map_settings = ExtResource("3_khuty")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
+
+[node name="Markers" type="Node3D" parent="."]
+
+[node name="DockPad" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+
+[node name="BeaconMount" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 5, 0.75)
+
+[node name="TerminalFace" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 1.3, 2.8125)
+
+[node name="TerminalStand" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 3.75)
+
+[node name="ExitVolume" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
+
+[node name="Threshold" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.5)
+
+[node name="TunnelBack" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -9)
+
+[node name="ArrivalSlot_1" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -7)
+
+[node name="ArrivalSlot_2" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -7)
+
+[node name="ArrivalSlot_3" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -7)
+
+[node name="ArrivalSlot_4" type="Node3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -7)
+
+[node name="Lights" type="Node3D" parent="."]
+
+[node name="Lamp_Reveal" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.8875, 0.5)
+light_color = Color(0.94902, 0.85098, 0.658824, 1)
+light_energy = 2.0
+shadow_enabled = true
+omni_range = 11.0

@@ -1,0 +1,80 @@
+// Game: Roboto
+// Format: Valve
+// entity 0
+{
+"mapversion" "220"
+"wad" ""
+"classname" "worldspawn"
+// brush 0
+{
+( 32 12 0 ) ( 48 0 0 ) ( 48 12 0 ) PSX_Textures/stratcom_brass [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 0 134 ) ( 48 12 134 ) ( 48 0 134 ) PSX_Textures/stratcom_brass [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 0 0 ) ( 48 0 134 ) ( 48 0 0 ) PSX_Textures/stratcom_brass [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 0 0 ) ( 48 12 134 ) ( 48 12 0 ) PSX_Textures/stratcom_brass [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 12 0 ) ( 32 12 134 ) ( 32 12 0 ) PSX_Textures/stratcom_brass [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 12 0 ) ( 32 0 134 ) ( 32 0 0 ) PSX_Textures/stratcom_brass [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 1
+{
+( 32 138 0 ) ( 48 12 0 ) ( 48 138 0 ) PSX_Textures/stratcom_door_steel [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 8 ) ( 48 138 8 ) ( 48 12 8 ) PSX_Textures/stratcom_door_steel [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 0 ) ( 48 12 8 ) ( 48 12 0 ) PSX_Textures/stratcom_door_steel [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 12 0 ) ( 48 138 8 ) ( 48 138 0 ) PSX_Textures/stratcom_door_steel [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 138 0 ) ( 32 138 8 ) ( 32 138 0 ) PSX_Textures/stratcom_door_steel [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 138 0 ) ( 32 12 8 ) ( 32 12 0 ) PSX_Textures/stratcom_door_steel [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 2
+{
+( 32 138 8 ) ( 48 12 8 ) ( 48 138 8 ) PSX_Textures/stratcom_brass [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 12 ) ( 48 138 12 ) ( 48 12 12 ) PSX_Textures/stratcom_brass [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 8 ) ( 48 12 12 ) ( 48 12 8 ) PSX_Textures/stratcom_brass [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 12 8 ) ( 48 138 12 ) ( 48 138 8 ) PSX_Textures/stratcom_brass [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 138 8 ) ( 32 138 12 ) ( 32 138 8 ) PSX_Textures/stratcom_brass [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 138 8 ) ( 32 12 12 ) ( 32 12 8 ) PSX_Textures/stratcom_brass [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 3
+{
+( 32 138 12 ) ( 48 12 12 ) ( 48 138 12 ) PSX_Textures/stratcom_cream [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 54 ) ( 48 138 54 ) ( 48 12 54 ) PSX_Textures/stratcom_cream [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 12 ) ( 48 12 54 ) ( 48 12 12 ) PSX_Textures/stratcom_cream [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 12 12 ) ( 48 138 54 ) ( 48 138 12 ) PSX_Textures/stratcom_cream [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 138 12 ) ( 32 138 54 ) ( 32 138 12 ) PSX_Textures/stratcom_cream [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 138 12 ) ( 32 12 54 ) ( 32 12 12 ) PSX_Textures/stratcom_cream [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 4
+{
+( 32 138 54 ) ( 48 12 54 ) ( 48 138 54 ) PSX_Textures/stratcom_brass [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 58 ) ( 48 138 58 ) ( 48 12 58 ) PSX_Textures/stratcom_brass [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 54 ) ( 48 12 58 ) ( 48 12 54 ) PSX_Textures/stratcom_brass [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 12 54 ) ( 48 138 58 ) ( 48 138 54 ) PSX_Textures/stratcom_brass [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 138 54 ) ( 32 138 58 ) ( 32 138 54 ) PSX_Textures/stratcom_brass [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 138 54 ) ( 32 12 58 ) ( 32 12 54 ) PSX_Textures/stratcom_brass [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 5
+{
+( 32 138 58 ) ( 48 12 58 ) ( 48 138 58 ) PSX_Textures/stratcom_cream [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 106 ) ( 48 138 106 ) ( 48 12 106 ) PSX_Textures/stratcom_cream [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 58 ) ( 48 12 106 ) ( 48 12 58 ) PSX_Textures/stratcom_cream [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 12 58 ) ( 48 138 106 ) ( 48 138 58 ) PSX_Textures/stratcom_cream [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 138 58 ) ( 32 138 106 ) ( 32 138 58 ) PSX_Textures/stratcom_cream [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 138 58 ) ( 32 12 106 ) ( 32 12 58 ) PSX_Textures/stratcom_cream [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 6
+{
+( 32 138 106 ) ( 48 12 106 ) ( 48 138 106 ) PSX_Textures/stratcom_brass [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 110 ) ( 48 138 110 ) ( 48 12 110 ) PSX_Textures/stratcom_brass [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 106 ) ( 48 12 110 ) ( 48 12 106 ) PSX_Textures/stratcom_brass [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 12 106 ) ( 48 138 110 ) ( 48 138 106 ) PSX_Textures/stratcom_brass [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 138 106 ) ( 32 138 110 ) ( 32 138 106 ) PSX_Textures/stratcom_brass [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 138 106 ) ( 32 12 110 ) ( 32 12 106 ) PSX_Textures/stratcom_brass [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 7
+{
+( 32 138 110 ) ( 48 12 110 ) ( 48 138 110 ) PSX_Textures/stratcom_cream [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 134 ) ( 48 138 134 ) ( 48 12 134 ) PSX_Textures/stratcom_cream [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 32 12 110 ) ( 48 12 134 ) ( 48 12 110 ) PSX_Textures/stratcom_cream [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 12 110 ) ( 48 138 134 ) ( 48 138 110 ) PSX_Textures/stratcom_cream [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 138 110 ) ( 32 138 134 ) ( 32 138 110 ) PSX_Textures/stratcom_cream [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 138 110 ) ( 32 12 134 ) ( 32 12 110 ) PSX_Textures/stratcom_cream [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+}
