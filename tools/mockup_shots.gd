@@ -62,6 +62,7 @@ const FRAMES := {
 	"brood": "res://Character/characters/ai/brood.tscn",
 	"bastion": "res://Character/characters/ai/bastion.tscn",
 	"see_engine": "res://Character/characters/ai/see_engine.tscn",
+	"tick": "res://Character/characters/ai/tick.tscn",
 }
 
 # ─────────────────────────────────────────────
@@ -177,6 +178,8 @@ func _run() -> void:
 		await _vehicle_rank_shots(out_dir)
 	elif what == "trials":
 		await _vehicle_trial_shots(out_dir)
+	elif what == "props" or PROPS.has(what):
+		await _prop_shots(out_dir, what)
 	elif what == "frames" or FRAMES.has(what):
 		await _frame_shots(out_dir, what)
 	elif what == "vhat":
@@ -420,8 +423,63 @@ const NEW_FRAMES := ["lance", "picket", "drayman",
 		"kite", "vessel", "brood", "bastion", "see_engine"]
 ## The three that belong to an enemy faction, so they are photographed in the
 ## livery they will actually wear rather than in the player's blue.
-const ENEMY_FRAMES := ["brood", "bastion", "see_engine"]
+const ENEMY_FRAMES := ["brood", "bastion", "see_engine", "tick"]
 
+
+
+## WORLD OBJECTS, which are not robots and must not go through _vehicle().
+##
+##   ... -- <out dir> props            # all of them
+##   ... -- <out dir> core_f2_large    # one
+##
+## _vehicle() sets `faction`, strips a cosmetic and runs FactionLivery, none of
+## which a compute core has — it would error on the first line. These are plain
+## PackedScenes dropped on the stage and photographed.
+const PROPS := {
+	"core_f2_small": "res://maps/blocks/compute/compute_core_f2_small.tscn",
+	"core_f2": "res://maps/blocks/compute/compute_core_f2.tscn",
+	"core_f2_large": "res://maps/blocks/compute/compute_core_f2_large.tscn",
+}
+
+
+func _prop_shots(out_dir: String, which: String) -> void:
+	# A REAL LEVEL FIRST, for its WorldEnvironment and its sun, exactly as
+	# _frame_shots does — without one every shot is a black rectangle.
+	var level: Node = load(LEVEL).instantiate()
+	root.add_child(level)
+	_cam = Camera3D.new()
+	_cam.fov = 42.0
+	root.add_child(_cam)
+	_cam.current = true
+	for _i in 30:
+		await process_frame
+	var wanted: Array = PROPS.keys() if which == "props" else [which]
+	for id: String in wanted:
+		if not PROPS.has(id):
+			push_warning("mockup_shots: no prop called '%s'." % id)
+			continue
+		await _prop_portrait(out_dir, id)
+
+
+func _prop_portrait(out_dir: String, id: String) -> void:
+	var prop: Node3D = (load(PROPS[id]) as PackedScene).instantiate()
+	root.add_child(prop)
+	prop.global_position = STAGE
+	await process_frame
+	await process_frame
+	var bb := _aabb(prop, prop)
+	var size: float = maxf(bb.size.x, maxf(bb.size.y, bb.size.z))
+	var centre := STAGE + bb.position + bb.size * 0.5
+	# The frames' own bearing, so these sit beside those shots. A core's
+	# approach face is -Z and does NOT turn to meet the camera the way a robot
+	# does, so the camera goes round to the face instead: the console is the
+	# thing worth photographing and a core shot from the back is a box.
+	var dir := Vector3(-3.5, 1.5, -4.6).normalized()
+	dir = Vector3(dir.x, dir.y, -absf(dir.z)).normalized()
+	_cam.global_position = centre + dir * (size * 1.25 + 1.4)
+	_cam.look_at(centre, Vector3.UP)
+	await _shoot("%s/prop_%s.png" % [out_dir, id])
+	prop.free()
 
 func _frame_shots(out_dir: String, which: String) -> void:
 	# A REAL LEVEL FIRST, for its WorldEnvironment and its sun — without one
