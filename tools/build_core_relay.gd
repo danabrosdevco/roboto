@@ -179,6 +179,7 @@ const SCREEN_TEX := "PSX_Textures/glitch_tx_neutral@0.04"
 ## 2.60 — 2.60 m is 83.2 units and a pad centred on its own axis needs an even
 ## count, so 42 and 41 are the candidates and 42 is nearer.
 const PAD_U := 42
+const PAD_GAP := 2
 const DECK_U := 11        # 0.34 m of shelf slab under the pad surface
 const KERB_U := 5
 const LUG_U := 8
@@ -299,6 +300,16 @@ func _initialize() -> void:
 				print("          brush %d x %d  shares %s" % [c[0], c[1], c[2]])
 			quit(1)
 			return
+		var over := _over_pad(OUT[nm])
+		if not over.is_empty():
+			# THE PAD CONTRACT, ASSERTED RATHER THAN CLAIMED. The TICK drone
+			# lands here and clamps four legs 0.37 m outside the edge, and a
+			# comment saying the geometry guarantees it is worth nothing the
+			# first time a variant adds a mast. One brush over the pad fails
+			# the build.
+			print("FAIL  %s: %d brush(es) stand over the drone pad — %s" % [nm, over.size(), str(over)])
+			quit(1)
+			return
 		var f := FileAccess.open(path, FileAccess.WRITE)
 		if f == null:
 			print("FAIL  could not write %s (%s)" % [path, error_string(FileAccess.get_open_error())])
@@ -330,6 +341,34 @@ func _report(nm: String, tag: String) -> void:
 
 func u(n: int) -> float:
 	return float(n) / UPM
+
+
+## Brush indices standing in the open column above the pad.
+##
+## The lugs and the two kerbs are the pad's own fittings and are the only
+## things allowed in it, so the test starts ABOVE them: anything higher than
+## the lug tops, inside the pad's plan, is something a later edit has flown
+## over a landing surface. `_brushes` holds face polygons in UNITS.
+func _over_pad(tag: String) -> Array:
+	var s: Dictionary = SPEC[tag]
+	var xb: int = s.p0 + s.b_in
+	var x0: int = xb - PAD_GAP - PAD_U * 2 - s.ext
+	var y0: int = -s.by
+	var floor_z: int = s.sh + DECK_U + LUG_U
+	var out: Array = []
+	for b in _brushes.size():
+		var hit := false
+		for face: Dictionary in _brushes[b]:
+			for p: Vector3 in face.poly:
+				if p.z > float(floor_z) + 0.5 and p.x > float(x0) + 0.5 and p.x < float(x0 + PAD_U * 2) - 0.5 \
+						and p.y > float(y0) + 0.5 and p.y < float(y0 + PAD_U * 2) - 0.5:
+					hit = true
+					break
+			if hit:
+				break
+		if hit:
+			out.append(b)
+	return out
 
 
 # ── the body ────────────────────────────────────────────────────────────────
@@ -597,7 +636,13 @@ func _terminations(s: Dictionary) -> void:
 func _shelf(s: Dictionary) -> void:
 	var sh: int = s.sh
 	var xb: int = s.p0 + s.b_in                  # the upper stage's -X face
-	var x0: int = xb - PAD_U * 2 - s.ext         # the slab's free end
+	# THE PAD STOPS PAD_GAP SHORT OF THE UPPER STAGE'S FACE, and that 0.06 m is
+	# not a margin, it is the proudness of the crown slot. _over_pad caught it:
+	# a lit plate standing two units off that face is two units OVER the pad,
+	# and "nothing above it" is a contract the TICK is built against rather
+	# than a figure of speech. Anything else ever hung on that face has to be
+	# thinner than this gap or the build fails, which is the point.
+	var x0: int = xb - PAD_GAP - PAD_U * 2 - s.ext   # the slab's free end
 	var ylo: int = -s.by + 8 + s.fd
 	var y0: int = -s.by                          # flush with the bund's -Y edge
 	var y1: int = y0 + PAD_U * 2
