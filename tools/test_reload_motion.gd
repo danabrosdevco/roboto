@@ -194,9 +194,16 @@ func _ancient_rifle_split() -> void:
 		return
 	var after: int = _tris(cut.weapon_model.mesh)
 	var took: int = _tris(mag.mesh)
-	# NOTHING IS LOST OR DUPLICATED. A triangle is sorted by its centroid into one
-	# mesh or the other, never both and never neither.
-	_check("...and every triangle went to exactly one of them", after + took, before)
+	# NOTHING IS LOST OR DUPLICATED. This used to count triangles, and it was
+	# right until the cut started splitting them: the magazine and the wall of
+	# the magwell are the same quads, so the plane cuts through sixteen of them
+	# and the count legitimately goes UP. Area is the invariant that survives
+	# that — the two meshes together still cover exactly the surface the artist
+	# shipped, whether or not a triangle was divided on the way.
+	_check("...and the two together cover the same surface",
+		snappedf(_area(cut.weapon_model.mesh) + _area(mag.mesh), 0.0001),
+		snappedf(_area(whole.weapon_model.mesh), 0.0001))
+	_check("...with the split only ever adding triangles", after + took >= before, true)
 
 	# IDENTIFIED BY SHAPE. A magazine is thin across the weapon and deep down it;
 	# the trigger guard this first caught by mistake is neither.
@@ -215,6 +222,19 @@ func _tris(m: Mesh) -> int:
 	for s in m.get_surface_count():
 		n += (m.surface_get_arrays(s)[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3
 	return n
+
+
+## Total area of the triangles a mesh actually uses. The conservation law a cut
+## has to obey: split a triangle and you get more of them, but not more surface.
+func _area(m: Mesh) -> float:
+	var total := 0.0
+	for s in m.get_surface_count():
+		var arrays: Array = m.surface_get_arrays(s)
+		var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+		for t in range(0, idx.size() - 2, 3):
+			total += (v[idx[t + 1]] - v[idx[t]]).cross(v[idx[t + 2]] - v[idx[t]]).length() * 0.5
+	return total
 
 
 ## Bounds of the triangles a mesh actually USES. Both meshes keep the whole

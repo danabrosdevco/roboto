@@ -433,37 +433,25 @@ func _handle_spectator(_delta: float) -> void:
 	move_and_slide()
 
 
-## What the crosshair is on, and therefore what the F prompt says.
-##
-## A PROMPT CAN OUTLIVE WHAT IT POINTS AT. The HUD lives under World and
-## survives a level load; the Interactible it was showing goes with the level
-## that is torn down. A freed Object is FALSY in GDScript, so `if
-## current_interactible` took the "nothing to clear" branch, the null was never
-## emitted, and "F | Select Mission" stayed on screen for the whole of the next
-## mission — reported from the sim arena, where the operations table you left
-## by is the thing that was freed.
-##
-## REWRITTEN AS ONE DECISION rather than a row of early returns. Each of those
-## returns left the previous prompt up: looking from the table at the wall
-## beside it kept "F | Select Mission" lit, because the ray was still colliding
-## and the function gave up before reaching the clearing branch. Working out
-## what is under the crosshair and then telling the HUD once makes the stale
-## cases impossible rather than handled.
 func check_interactible():
-	if current_interactible != null and not is_instance_valid(current_interactible):
-		current_interactible = null
-		activate_interactible_ui.emit(null)
-		return
-
-	var found: Interactible = null
-	if interact_raycast != null and interact_raycast.is_colliding():
+	if interact_raycast and interact_raycast.is_colliding():
 		var collider = interact_raycast.get_collider()
-		if collider is Interactible and not collider.used:
-			found = collider
-	if found == current_interactible:
+		if !collider:
+			return
+		if collider is not Interactible:
+			return
+		if collider.used == true:
+			return
+		if current_interactible == collider:
+			return
+		current_interactible = collider
+		activate_interactible_ui.emit(current_interactible)
 		return
-	current_interactible = found
-	activate_interactible_ui.emit(current_interactible)
+	else:
+		if current_interactible:
+			current_interactible = null
+			activate_interactible_ui.emit(current_interactible)
+
 
 func handle_gravity(delta: float) -> void:
 	if spectator_mode == true:
@@ -648,8 +636,6 @@ func interact(interactible: Interactible):
 			# Nothing to collect. The objective connected to this Interactible's
 			# `interacted` signal and handles itself.
 			pass
-		Enums.InteractTypes.RESUPPLY:
-			_take_resupply(interactible)
 		_:
 			pass
 	interactible.interacted_with()
@@ -657,51 +643,6 @@ func interact(interactible: Interactible):
 	update_status()
 	activate_interactible_ui.emit(current_interactible)
 	pass
-
-
-# ─────────────────────────────────────────────
-# A MOBILE RESUPPLY POINT
-# ─────────────────────────────────────────────
-# A Drayman's chute. EquipmentLoadout.refill() is the whole restock — reserve,
-# every magazine, every reservoir, cooldowns cancelled — and it is what respawn
-# and redeploy already call, so there is deliberately no second restock path
-# here. All this does is ask the frame for a charge and spend it.
-#
-# THE FRAME OWNS THE COUNT, NOT THE INTERACTIBLE. The chute is used repeatedly
-# (destroy_on_use and disable_on_use are both false on it) and gated by the
-# Drayman's own three-per-body charges, because two Draymen must mean six uses
-# and a component `used` flag could never express that.
-#
-# A REFUSAL HAS TO BE VISIBLE. A prompt that does nothing when pressed is the
-# silent no CLAUDE.md warns about, so a spent frame is said out loud here and
-# says so in its own prompt — check_interactible() re-acquires the chute on the
-# next frame and the HUD then reads "RESUPPLY SPENT" off it.
-func _take_resupply(interactible: Interactible) -> void:
-	var source := _resupply_source(interactible)
-	if source == null:
-		push_warning("Player: '%s' is a RESUPPLY interactible with nothing behind it that can answer offer_resupply(), so pressing it restocked nothing." % interactible.name)
-		return
-	if loadout == null:
-		push_warning("Player: no EquipmentLoadout, so a resupply had nothing to refill. The charge was NOT spent.")
-		return
-	# Asked BEFORE the refill, so a frame with nothing left never charges for a
-	# restock it did not give — and never gives one it did not charge for.
-	if not source.offer_resupply(self):
-		print("RESUPPLY REFUSED: %s has no charges left." % source.name)
-		return
-	loadout.refill()
-
-
-## Whoever owns the charges behind a RESUPPLY chute. Walked up the tree rather
-## than read off get_parent(): the chute rides a Drayman's articulated arm, so
-## its parent is the wrist and the frame is four nodes above it.
-func _resupply_source(interactible: Interactible) -> Node:
-	var node: Node = interactible
-	while node != null:
-		if node.has_method("offer_resupply"):
-			return node
-		node = node.get_parent()
-	return null
 
 
 # Passes the equipped item's readout rather than reaching into the weapon for

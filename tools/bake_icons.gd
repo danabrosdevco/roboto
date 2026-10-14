@@ -91,19 +91,11 @@ func _run() -> void:
 	for built_in_id in _Art.BUILT_INS:
 		if not only.is_empty() and not only.has(built_in_id):
 			continue
-		var tool_path: String = _Art.BUILT_INS[built_in_id]
-		var tool_model := load(tool_path) as PackedScene \
-			if ResourceLoader.exists(tool_path) else null
-		# A BUILT-IN WITH NO MODEL IS DRAWN. The Drayman's boom is geometry on
-		# the truck itself, so there is no tool scene to point at; an empty path
-		# in BUILT_INS says so and the SVG in DRAWINGS is rendered instead.
-		# Without this a drawn built-in could only ever be "skipped".
-		var tool_drawing: String = ""
+		var tool_model := load(_Art.BUILT_INS[built_in_id]) as PackedScene \
+			if ResourceLoader.exists(_Art.BUILT_INS[built_in_id]) else null
 		if tool_model == null:
-			tool_drawing = str(_Art.DRAWINGS.get(built_in_id, ""))
-			if tool_drawing == "":
-				skipped.append("%s (no model at '%s' and no drawing)" % [built_in_id, tool_path])
-				continue
+			skipped.append("%s (no model at %s)" % [built_in_id, _Art.BUILT_INS[built_in_id]])
+			continue
 		# Framed like an item of the same name can be. A welder is a tube and reads
 		# side-on; the designator is a slab with a screen and reads as a bar from
 		# the side, so it says so in FRAMINGS rather than every built-in being
@@ -114,14 +106,8 @@ func _run() -> void:
 			"three_quarter": tool_framing = _Studio.Framing.THREE_QUARTER
 		for size_name in _Art.SIZES["wide"]:
 			var size: Vector2i = _Art.SIZES["wide"][size_name]
-			var img: Image = null
-			if tool_model != null:
-				img = await studio.render_model(tool_model, size, tool_framing,
-					false, false, 1.0 if size_name == "s" else 0.0)
-			else:
-				# A wide slot gets the wide drawing box, or every round thing on
-				# the SVG comes out an ellipse.
-				img = studio.render_svg(tool_drawing, _Art.drawing_box("wide"), size)
+			var img: Image = await studio.render_model(tool_model, size, tool_framing,
+				false, false, 1.0 if size_name == "s" else 0.0)
 			if img == null:
 				skipped.append("%s (%s)" % [built_in_id, size_name])
 				continue

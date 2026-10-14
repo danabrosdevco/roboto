@@ -19,22 +19,6 @@ extends "res://Character/characters/ai/rover.gd"
 # frame's job, and AIEquipmentSlot.restore() is the single line of shared API it
 # needed.
 #
-# AND IT IS THE PLAYER'S RESUPPLY POINT, which is the half of the job the
-# player can actually see. Walk up to it and it PLANTS: it stops, the boom
-# swings down and presents the chute, and pressing F on the chute runs
-# EquipmentLoadout.refill() — reserve, every magazine, every reservoir,
-# cooldowns cancelled, the same call respawn and redeploy already make. THREE
-# TIMES PER BODY, so two Draymen mean six and that is a squad decision rather
-# than a convenience. The planting is not decoration: every other Interactible
-# in this game is a static world object, and aiming a 2 m raycast at a moving
-# truck would feel exactly as bad as it sounds.
-#
-# THE TWO JOBS ARE SEPARATE AND DELIBERATELY SO. The squadmate-equipment
-# restock below is an ungated passive paid for out of `loads`; the player's
-# restock is paid for out of `resupply_charges`. Neither spends the other's
-# count, because a player who topped themselves up three times should not have
-# cost the squad its smoke.
-#
 # IT CARRIES ITS OWN KIT TOO, four slots of it — more than anything else in the
 # game. restore() is slot-for-slot, not by item id, so the Drayman does NOT
 # have to be carrying smoke in order to refill somebody's smoke; its own slots
@@ -91,35 +75,6 @@ extends "res://Character/characters/ai/rover.gd"
 ## NodePaths in the scene for nothing.
 @export var deplete_crates: bool = true
 
-@export_group("Resupply point")
-## THE CHUTE THE PLAYER PRESSES F ON. An Interactible of type RESUPPLY, parented
-## under the Wrist so it rides the arm and is wherever the chute is. Left
-## unwired the frame still drives and still restocks squadmates; it simply is
-## not a resupply point, and it says so once.
-@export var supply_point: Interactible
-## HOW MANY FULL RESTOCKS THE PLAYER GETS OUT OF THIS BODY. Per body, not per
-## squad: two Draymen mean six. Reset by reset(), which is the new-mission path.
-@export var resupply_charges: int = 3
-## The player walks inside this and the frame plants for them.
-@export var plant_within: float = 9.0
-## And it gets up again past this. Hysteresis, or a player standing at the edge
-## would make the boom pump up and down.
-@export var unplant_beyond: float = 14.0
-## The boom swinging down, and back up. Both ways.
-@export var plant_seconds: float = 1.1
-
-@export_group("Planted pose")
-## WHERE THE ARM GOES TO PRESENT THE CHUTE, as absolute joint angles about X in
-## degrees. The scene's own pose is the travel pose — folded over the deck with
-## the chute head up at about 2.3 m, which is above the player's reach and
-## pointing nowhere useful — so this unfolds the elbow and brings the head down
-## and outboard to about 1.1 m, clear of the hull on the arm's own 45-degree
-## flank. Authored rather than solved: there is no IK on this frame, and three
-## numbers a human can retune beat a solver nobody can judge.
-@export var planted_shoulder_degrees: float = 5.0
-@export var planted_elbow_degrees: float = -65.0
-@export var planted_wrist_degrees: float = -10.0
-
 @export_group("Keeping back")
 ## Metres behind its squad, on the side away from whatever the squad is
 ## fighting. Further than the Mechanic's: it is bigger and has less reason to
@@ -148,13 +103,6 @@ extends "res://Character/characters/ai/rover.gd"
 
 ## Charges handed back this mission, for the lab and the playtest log.
 var restocked: int = 0
-## Full player restocks given out of this body, same purpose.
-var resupplied: int = 0
-
-## PLANTED is where the chute can be pressed; it is pressable in no other
-## stance, which is what keeps the player from aiming at a moving truck.
-enum Stance { STOWED, PLANTING, PLANTED, UNPLANTING }
-var stance: int = Stance.STOWED
 
 var _customer: Enemy = null
 var _slot_index: int = -1
@@ -182,25 +130,8 @@ var _held: Enemy = null
 var _back_spot := Vector3.INF
 var _back_t := 0.0
 var _loads_left := 0
-var _resupply_left := 0
 # Said once per mission, not once per think tick.
 var _warned_empty := false
-var _warned_no_chute := false
-
-# ── PLANTING ──────────────────────────────────
-# One driven float, 1.0 = presenting the chute, 0.0 = the pose the scene
-# shipped, so there is exactly one thing to interrupt and one thing to read.
-var _plant_amount := 0.0
-var _plant_tween: Tween = null
-var _shoulder: Node3D = null
-var _elbow: Node3D = null
-var _wrist: Node3D = null
-var _shoulder_rest := Vector3.ZERO
-var _elbow_rest := Vector3.ZERO
-var _wrist_rest := Vector3.ZERO
-# move_speed read off the SCENE (6.65) rather than the script default, because
-# scene values beat script defaults and planting has to put it back afterwards.
-var _drive_speed := 0.0
 # Crate tags in bed order, and the meshes each tag owns (the crate and its lid).
 var _crates: Array[String] = []
 var _crate_parts: Dictionary = {}
@@ -208,12 +139,9 @@ var _crate_parts: Dictionary = {}
 
 func _ready() -> void:
 	_loads_left = maxi(0, loads)
-	_resupply_left = maxi(0, resupply_charges)
 	super()
 	_collect_crates()
 	_show_load()
-	_collect_arm()
-	_wire_supply_point()
 
 
 ## What is left in the bed. Public because `loads` is an authored maximum and
@@ -226,59 +154,6 @@ func loads_left() -> int:
 ## same way Mechanic.is_repairing() reads.
 func is_restocking() -> bool:
 	return _handing
-
-
-## Full player restocks this body has left. Public for the same reason
-## loads_left() is: it is the only thing that answers "is this still worth
-## walking back to".
-func resupply_left() -> int:
-	return _resupply_left
-
-
-## Presenting the chute right now. Only then can it be pressed.
-func is_planted() -> bool:
-	return stance == Stance.PLANTED
-
-
-# ─────────────────────────────────────────────
-# THE PLAYER'S RESUPPLY
-# ─────────────────────────────────────────────
-# Pressed F on the chute. Returns whether a charge was actually given: the
-# PLAYER does the restocking (EquipmentLoadout.refill(), which is the single
-# existing path for "reserve, magazines, reservoirs, cooldowns"), and this
-# frame only decides whether it has one to give and spends it.
-#
-# NO SILENT NO. A refusal is said out loud here and is also readable on screen,
-# because get_prompt() below reports the frame spent and the HUD shows it.
-func offer_resupply(_who: Node = null) -> bool:
-	if not alive or get_signal_state() == SignalState.EKILL:
-		push_warning("%s cannot resupply anyone: it is %s." % [name,
-			"destroyed" if not alive else "e-killed"])
-		return false
-	if _resupply_left <= 0:
-		push_warning("%s has given out all %d of its resupplies: nothing left to hand the player this mission." % [name, resupply_charges])
-		_refresh_chute()
-		return false
-	_resupply_left -= 1
-	resupplied += 1
-	if hand_done != null:
-		hand_done.play()
-	if hand_sparks != null and hand_sparks.has_method("activate"):
-		hand_sparks.activate()
-	# Spent, so the chute goes dead and the frame drives on rather than standing
-	# there presenting a chute that can do nothing.
-	if _resupply_left <= 0:
-		_refresh_chute()
-		_begin_unplant()
-	return true
-
-
-## What the HUD prints next to the F. The Interactible rides the arm, so the
-## HUD walks UP from it to find this — the chute's own parent is the wrist.
-func get_prompt() -> String:
-	if _resupply_left <= 0:
-		return "Resupply spent"
-	return "Resupply  (%d left)" % _resupply_left
 
 
 # ─────────────────────────────────────────────
@@ -347,9 +222,7 @@ func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false,
 		think_delay: float = 0.0) -> void:
 	# Restocking ITSELF is no reason to stand still: it is always in its own
 	# reach, so it can carry the order out and work on the way.
-	# Planted counts as busy: the boom is down and the player is at the chute.
-	if (_customer != null and _customer != self) or _keeping_back() \
-			or stance != Stance.STOWED:
+	if (_customer != null and _customer != self) or _keeping_back():
 		_standing_order = pos
 		_standing_force = force
 		return
@@ -385,27 +258,10 @@ func _physics_process(delta: float) -> void:
 		_release_customer()
 		_customer = null
 		_slot_index = -1
-		# A wreck does not finish planting. Rover's wreck pose writes the rig
-		# transform directly, and a surviving tween would keep writing joint
-		# angles underneath it.
-		_kill_plant_tween()
-		if stance != Stance.STOWED:
-			stance = Stance.STOWED
-			move_speed = _drive_speed
-			_refresh_chute()
 		return
 	_clock += delta
 	_threat_t = maxf(0.0, _threat_t - delta)
 	_back_t = maxf(0.0, _back_t - delta)
-	_tick_plant()
-	if stance != Stance.STOWED:
-		# PLANTED FOR THE PLAYER, SO THE SQUAD JOB WAITS. It cannot drive to a
-		# customer with the boom down and the chute presented, and the player
-		# standing at that chute is the thing it stopped for. The wait is
-		# seconds long: the frame unplants as soon as they walk off.
-		if _customer != null:
-			_set_customer(null, -1)
-		return
 	_think_t -= delta
 	var thinking := _think_t <= 0.0
 	if thinking:
@@ -646,229 +502,6 @@ func _resume_orders() -> void:
 	var pos := _standing_order
 	_standing_order = Vector3.INF
 	super.order_move_to(pos, _standing_force, true)
-
-
-# ─────────────────────────────────────────────
-# PLANTING FOR THE PLAYER
-# ─────────────────────────────────────────────
-# The Bastion's arrangement, with a boom instead of outriggers: one driven float
-# between the pose the scene shipped and the pose that presents the chute, a
-# stance to read it off, and orders refused while it is anything but STOWED.
-#
-# WHY IT PLANTS AT ALL. Every other Interactible in this game is bolted to the
-# world. The player's InteractRaycast is 2 m long and masks the Interactible
-# layer alone, so a chute swinging past on a truck doing 6.65 m/s would be a
-# prompt that flickers and a press that misses. Stopping is also the only way
-# the restock is a visible act rather than a menu: the truck halts, the arm
-# comes down, and the thing that just restocked you is the thing you are looking
-# at.
-func _tick_plant() -> void:
-	var inbound := _player_inbound()
-	match stance:
-		Stance.STOWED:
-			if inbound:
-				_begin_plant()
-			elif supply_point != null and supply_point.monitorable:
-				# SELF-HEALING, and it is needed: GameManager resets every node
-				# in the "interactibles" group straight, and Interactible.reset()
-				# turns monitoring back on. Without this one bool read the chute
-				# would be pressable from across a stowed, moving truck for the
-				# rest of the mission.
-				_refresh_chute()
-		Stance.PLANTED:
-			if not inbound:
-				_begin_unplant()
-		_:
-			pass   # mid-swing: let the tween finish, then the above decides
-
-
-# A PLAYER WORTH STOPPING FOR: near, alive, and there is something left to give
-# them. Hysteresis on the range, or a player standing at the edge of it would
-# pump the boom up and down for as long as they stood there.
-func _player_inbound() -> bool:
-	if _resupply_left <= 0:
-		return false
-	if supply_point == null:
-		return false   # nothing to present: _wire_supply_point already said so
-	var p := _the_player()
-	if p == null or not p.alive:
-		return false
-	var gap := global_position.distance_to(p.global_position)
-	return gap <= (unplant_beyond if stance == Stance.PLANTED else plant_within)
-
-
-# Enemy.player is handed over by AIManager.register_enemy, and a frame spawned
-# outside a mission (a bench, a test, a mockup shot) never gets one. Resolved
-# lazily off the group the player joins in initialize(), and only while it is
-# still missing.
-func _the_player() -> Player:
-	if player != null and is_instance_valid(player):
-		return player
-	player = get_tree().get_first_node_in_group("player") as Player
-	return player
-
-
-func _begin_plant() -> void:
-	if stance == Stance.PLANTING or stance == Stance.PLANTED:
-		return
-	stance = Stance.PLANTING
-	# It stops before the boom goes out, and it stops HERE rather than relying
-	# on the refusal below: a drive already under way keeps its target.
-	move_speed = 0.0
-	halt()
-	_walk_goal = Vector3.INF
-	_refresh_chute()
-	_drive_plant(1.0, Stance.PLANTED)
-
-
-func _begin_unplant() -> void:
-	if stance == Stance.UNPLANTING or stance == Stance.STOWED:
-		return
-	stance = Stance.UNPLANTING
-	move_speed = 0.0            # still pinned until the boom is off the ground
-	_refresh_chute()             # the chute goes dead at the START of getting up
-	_drive_plant(0.0, Stance.STOWED)
-
-
-# A TWEEN CHAIN, NOT A COROUTINE. MEMORY.md: an await on process_frame at quit
-# segfaults in cleanup. One tween on one float, so there is exactly one thing to
-# kill when the frame dies.
-func _drive_plant(to: float, becomes: int) -> void:
-	_kill_plant_tween()
-	if _shoulder == null:
-		# Nothing to swing. Still change stance, or the frame would sit in
-		# PLANTING for ever and never drive again.
-		_set_plant_pose(to)
-		stance = becomes
-		move_speed = _drive_speed if becomes == Stance.STOWED else 0.0
-		_refresh_chute()
-		if becomes == Stance.STOWED:
-			_resume_orders()
-		return
-	_plant_tween = create_tween()
-	var span: float = plant_seconds * absf(to - _plant_amount)
-	_plant_tween.tween_method(_set_plant_pose, _plant_amount, to, maxf(span, 0.05)) \
-		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-	_plant_tween.tween_callback(func() -> void:
-		stance = becomes
-		move_speed = _drive_speed if becomes == Stance.STOWED else 0.0
-		_refresh_chute()
-		# Back on the road, so whatever the squad asked for while the boom was
-		# down happens now. Held rather than dropped: a Drayman that stopped
-		# following its squad because a player walked past it once would be a
-		# truck abandoned in a field.
-		if becomes == Stance.STOWED:
-			_resume_orders())
-
-
-func _kill_plant_tween() -> void:
-	if _plant_tween != null and _plant_tween.is_valid():
-		_plant_tween.kill()
-	_plant_tween = null
-
-
-## 0.0 = the pose the scene shipped, 1.0 = presenting the chute. Writes
-## ABSOLUTELY, the way bastion.gd and walker.gd's leg poser do, so an
-## interrupted swing resumes from where the arm actually is rather than from
-## where something thought it was.
-func _set_plant_pose(amount: float) -> void:
-	_plant_amount = amount
-	if _shoulder != null:
-		_shoulder.rotation.x = lerpf(_shoulder_rest.x, deg_to_rad(planted_shoulder_degrees), amount)
-	if _elbow != null:
-		_elbow.rotation.x = lerpf(_elbow_rest.x, deg_to_rad(planted_elbow_degrees), amount)
-	if _wrist != null:
-		_wrist.rotation.x = lerpf(_wrist_rest.x, deg_to_rad(planted_wrist_degrees), amount)
-
-
-# The three joints of the authored boom, and the pose they were built in. Read
-# off the nodes rather than hardcoded: build_drayman.gd owns those angles
-# (18 / 158 / 124 degrees today) and retuning the generator must not silently
-# move the planted pose with it.
-func _collect_arm() -> void:
-	_drive_speed = move_speed
-	_shoulder = get_node_or_null(^"Rig/ArmBase/Shoulder") as Node3D
-	_elbow = get_node_or_null(^"Rig/ArmBase/Shoulder/Elbow") as Node3D
-	_wrist = get_node_or_null(^"Rig/ArmBase/Shoulder/Elbow/Wrist") as Node3D
-	if _shoulder == null or _elbow == null or _wrist == null:
-		push_warning("%s: the boom's joints are not where they were built (Rig/ArmBase/Shoulder/Elbow/Wrist), so it will resupply without swinging the arm down." % name)
-		return
-	_shoulder_rest = _shoulder.rotation
-	_elbow_rest = _elbow.rotation
-	_wrist_rest = _wrist.rotation
-
-
-# THE CHUTE, AND WHEN IT CAN BE PRESSED.
-#
-# Repeatedly usable and gated by this frame's own charge count: destroy_on_use
-# and disable_on_use are both forced false here, because the component's `used`
-# flag is a single bit and this chute is worth three presses — and six across
-# two Draymen, which no flag on a component could ever say.
-func _wire_supply_point() -> void:
-	if supply_point == null:
-		if not _warned_no_chute:
-			_warned_no_chute = true
-			push_warning("%s has no supply_point Interactible wired, so it drives and restocks squadmates but the PLAYER can never resupply from it." % name)
-		return
-	supply_point.type = Enums.InteractTypes.RESUPPLY
-	supply_point.destroy_on_use = false
-	supply_point.disable_on_use = false
-	supply_point.respawns_on_reset = true
-	_refresh_chute()
-
-
-# Pressable only while the chute is actually being presented and there is
-# something behind it. Turning the area off is what keeps the player from
-# raycasting at a chute that is folded over the deck or going past at speed.
-func _refresh_chute() -> void:
-	if supply_point == null or not is_instance_valid(supply_point):
-		return
-	var live := stance == Stance.PLANTED and _resupply_left > 0 and alive
-	supply_point.monitorable = live
-	supply_point.monitoring = live
-	if supply_point.collision_body != null:
-		supply_point.collision_body.disabled = not live
-
-
-# ─────────────────────────────────────────────
-# A NEW MISSION IS A NEW ALLOWANCE
-# ─────────────────────────────────────────────
-# reset() is the fresh-start path — enemy.gd:4730 puts _revive_spent back here
-# for exactly this reason — so the three resupplies come back with it, and so
-# does the bed. Without this a body reused across missions would be a Drayman
-# that had quietly stopped being one, which is the most expensive bug shape in
-# this project.
-func reset() -> void:
-	super()
-	_resupply_left = maxi(0, resupply_charges)
-	_loads_left = maxi(0, loads)
-	resupplied = 0
-	restocked = 0
-	_warned_empty = false
-	_show_load()
-	_kill_plant_tween()
-	stance = Stance.STOWED
-	move_speed = _drive_speed
-	_set_plant_pose(0.0)
-	_refresh_chute()
-
-
-# ─────────────────────────────────────────────
-# ORDERS, REFUSED WHILE THE BOOM IS DOWN
-# ─────────────────────────────────────────────
-# Belt and braces with move_speed = 0.0, and both are wanted: a frame that
-# drove off mid-restock would take the chute out from under the player's
-# raycast, and perform_action(MOVE) reaches move_to directly without passing
-# through order_move_to.
-#
-# NO WARNING HERE, deliberately, against the usual rule: a squad re-issues a
-# follow order every few seconds for a whole mission, so warning would be
-# thousands of lines saying the frame is working. The reason lives here instead,
-# and the planted window is seconds long.
-func move_to(pos: Vector3, think_delay: float = 0.0):
-	if stance != Stance.STOWED:
-		return
-	return super(pos, think_delay)
 
 
 # ─────────────────────────────────────────────

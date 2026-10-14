@@ -629,7 +629,16 @@ func _pump_frame(_t: float) -> Array:
 ## alone cannot always separate a part from what it is bolted to — the Mark One's
 ## bolt shares its space with a wooden receiver panel, and the two are only told
 ## apart by what they are made of. Empty means take whatever falls in the box.
-func split_part(part_name: String, regions: Array[AABB], from: String = "", only_materials: Array[String] = []) -> bool:
+## `clip` cuts THROUGH triangles rather than sorting them whole, for the case a
+## box cannot do: the Ancient Rifle's magazine and the wall of its magwell are
+## literally the SAME TRIANGLES — one quad each side, running from the floor of
+## the magazine up past the receiver — so every box has to either leave a wedge
+## hanging on the gun or take half of each quad and leave a torn fringe. Both
+## were shipped before this existed. A triangle that straddles the plane AND
+## touches a region is split along it, the part behind the plane going with the
+## cut; everything else is sorted by centroid exactly as before. Leave it at the
+## default Plane() and nothing changes.
+func split_part(part_name: String, regions: Array[AABB], from: String = "", only_materials: Array[String] = [], clip: Plane = Plane()) -> bool:
 	if viewmodel == null:
 		# EVERY EARLY RETURN WARNS. A silent one here looks exactly like a region
 		# that caught nothing, and the two want completely different fixes.
@@ -654,6 +663,7 @@ func split_part(part_name: String, regions: Array[AABB], from: String = "", only
 	var body := ArrayMesh.new()
 	var cut := ArrayMesh.new()
 	var taken := 0
+	var clipping: bool = clip.normal != Vector3.ZERO
 	for s in src.get_surface_count():
 		var arrays: Array = src.surface_get_arrays(s)
 		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
@@ -674,10 +684,29 @@ func split_part(part_name: String, regions: Array[AABB], from: String = "", only
 		var wanted: bool = only_materials.is_empty() or (mat != null and only_materials.has(str(mat.resource_name)))
 		var keep := PackedInt32Array()
 		var drop := PackedInt32Array()
+		# A SURFACE WITH AN ARRAY WE CANNOT INTERPOLATE IS SORTED WHOLE. Splitting
+		# a triangle means inventing a vertex, and inventing one on a skinned or
+		# custom-attribute surface would leave that array shorter than the rest,
+		# which Godot rejects at add_surface_from_arrays with nothing on screen to
+		# say why. None of the viewmodels are skinned today; this is here so the
+		# first one that is degrades to the old behaviour instead of vanishing.
+		var can_clip: bool = clipping and _clippable(arrays)
+		if clipping and not can_clip:
+			push_warning("%s: surface %d of '%s' carries an attribute this cannot interpolate, so it was sorted whole and the clip plane was ignored on it." % [display_name, s, part_name])
+		var edge_cache := {}
 		for t in range(0, idx.size() - 2, 3):
 			if not wanted:
 				keep.append_array([idx[t], idx[t + 1], idx[t + 2]])
 				continue
+			if can_clip:
+				# Re-read: a split earlier in this surface appended to the array.
+				var now: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+				var tri: Array[int] = [idx[t], idx[t + 1], idx[t + 2]]
+				if _straddles(now, tri, clip) and _touches(now, tri, regions):
+					_fan(_clip_poly(arrays, tri, clip, false, edge_cache), drop)
+					_fan(_clip_poly(arrays, tri, clip, true, edge_cache), keep)
+					continue
+				verts = now
 			var mid: Vector3 = (verts[idx[t]] + verts[idx[t + 1]] + verts[idx[t + 2]]) / 3.0
 			var inside := false
 			for box in regions:
@@ -715,6 +744,134 @@ func split_part(part_name: String, regions: Array[AABB], from: String = "", only
 	# and is posed from there.
 	mi.add_child(node)
 	return true
+
+
+# ─────────────────────────────────────────────
+# CUTTING THROUGH A TRIANGLE.
+#
+# Only reached when split_part is given a clip plane. Everything here appends to
+# the surface's own arrays, so the body and the cut both end up holding the whole
+# extended vertex list and differ only in their indices — same bargain the rest
+# of split_part makes, and the reason the two halves still shade identically.
+# ─────────────────────────────────────────────
+
+## The vertex attributes a split knows how to interpolate.
+const _BLENDABLE: Array[int] = [Mesh.ARRAY_VERTEX, Mesh.ARRAY_NORMAL,
+		Mesh.ARRAY_TANGENT, Mesh.ARRAY_COLOR, Mesh.ARRAY_TEX_UV, Mesh.ARRAY_TEX_UV2]
+
+
+func _clippable(arrays: Array) -> bool:
+	for i in Mesh.ARRAY_MAX:
+		if i == Mesh.ARRAY_INDEX or arrays[i] == null:
+			continue
+		if not _BLENDABLE.has(i):
+			return false
+	return true
+
+
+## Does any part of the triangle lie on each side of the plane?
+func _straddles(verts: PackedVector3Array, tri: Array[int], plane: Plane) -> bool:
+	var over := false
+	var under := false
+	for i in tri:
+		var d := plane.distance_to(verts[i])
+		if d > 0.0001:
+			over = true
+		elif d < -0.0001:
+			under = true
+	return over and under
+
+
+## Does the triangle's own box overlap any region? Looser than the centroid test
+## the rest of split_part uses, deliberately: the triangles this has to catch are
+## the big ones whose middle is nowhere near the part being cut out.
+func _touches(verts: PackedVector3Array, tri: Array[int], regions: Array[AABB]) -> bool:
+	var box := AABB(verts[tri[0]], Vector3.ZERO)
+	box = box.expand(verts[tri[1]]).expand(verts[tri[2]])
+	for r in regions:
+		if r.intersects(box):
+			return true
+	return false
+
+
+## Sutherland–Hodgman against one plane, keeping the side asked for. Order is
+## preserved, so the winding of the piece matches the triangle it came from.
+func _clip_poly(arrays: Array, poly: Array[int], plane: Plane, keep_over: bool, cache: Dictionary) -> Array[int]:
+	var out: Array[int] = []
+	var n := poly.size()
+	# Distances up front, off ONE snapshot: _edge_point appends, and reading the
+	# array again mid-loop mixes measurements from before and after that.
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var dist: Array[float] = []
+	for i in poly:
+		dist.append(plane.distance_to(verts[i]) * (1.0 if keep_over else -1.0))
+	for i in n:
+		var j: int = (i + 1) % n
+		if dist[i] >= 0.0:
+			out.append(poly[i])
+		if (dist[i] > 0.0 and dist[j] < 0.0) or (dist[i] < 0.0 and dist[j] > 0.0):
+			out.append(_edge_point(arrays, poly[i], poly[j], plane, cache))
+	return out
+
+
+## The vertex where an edge crosses the plane. CACHED BY EDGE, both ways round,
+## so the two triangles sharing an edge get the SAME new vertex — compute it
+## twice and floating point hands you two points a hair apart, which opens a
+## crack along the cut that catches the light.
+func _edge_point(arrays: Array, ia: int, ib: int, plane: Plane, cache: Dictionary) -> int:
+	var lo: int = mini(ia, ib)
+	var hi: int = maxi(ia, ib)
+	var key := "%d_%d" % [lo, hi]
+	if cache.has(key):
+		return int(cache[key])
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var da := plane.distance_to(verts[lo])
+	var db := plane.distance_to(verts[hi])
+	var t: float = 0.5 if is_equal_approx(da, db) else da / (da - db)
+	var made := _blend_vertex(arrays, lo, hi, clampf(t, 0.0, 1.0))
+	cache[key] = made
+	return made
+
+
+## Append a vertex `t` of the way from `ia` to `ib` on every array the surface
+## has, and return its index.
+func _blend_vertex(arrays: Array, ia: int, ib: int, t: float) -> int:
+	var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	v.append(v[ia].lerp(v[ib], t))
+	arrays[Mesh.ARRAY_VERTEX] = v
+	if arrays[Mesh.ARRAY_NORMAL] != null:
+		var nrm: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		nrm.append(nrm[ia].lerp(nrm[ib], t).normalized())
+		arrays[Mesh.ARRAY_NORMAL] = nrm
+	if arrays[Mesh.ARRAY_TEX_UV] != null:
+		var uv: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+		uv.append(uv[ia].lerp(uv[ib], t))
+		arrays[Mesh.ARRAY_TEX_UV] = uv
+	if arrays[Mesh.ARRAY_TEX_UV2] != null:
+		var uv2: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV2]
+		uv2.append(uv2[ia].lerp(uv2[ib], t))
+		arrays[Mesh.ARRAY_TEX_UV2] = uv2
+	if arrays[Mesh.ARRAY_COLOR] != null:
+		var col: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+		col.append(col[ia].lerp(col[ib], t))
+		arrays[Mesh.ARRAY_COLOR] = col
+	if arrays[Mesh.ARRAY_TANGENT] != null:
+		# Four floats a vertex. The fourth is a HANDEDNESS SIGN, +1 or -1, and
+		# averaging it gives 0 and a tangent frame that flips the normal map
+		# inside out, so it is copied from one end rather than blended.
+		var tan: PackedFloat32Array = arrays[Mesh.ARRAY_TANGENT]
+		for k in 3:
+			tan.append(lerpf(tan[ia * 4 + k], tan[ib * 4 + k], t))
+		tan.append(tan[ia * 4 + 3])
+		arrays[Mesh.ARRAY_TANGENT] = tan
+	return v.size() - 1
+
+
+## Fan-triangulate a clipped polygon into `into`. Fewer than three corners means
+## the plane only grazed the triangle and there is nothing on this side.
+func _fan(poly: Array[int], into: PackedInt32Array) -> void:
+	for i in range(1, poly.size() - 1):
+		into.append_array([poly[0], poly[i], poly[i + 1]])
 
 
 func _surface(into: ArrayMesh, arrays: Array, indices: PackedInt32Array, mat: Material) -> void:
