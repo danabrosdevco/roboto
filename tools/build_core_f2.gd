@@ -501,30 +501,57 @@ func _pad(top: float) -> void:
 ## bay; and nothing in this variant is on the pad, so the drone occludes none
 ## of it.
 ##
-## BUILT IN A YAWED FRAME AND NOT BY EYE. The blade has to lie in the plane
-## containing the vertical and the OUTWARD diagonal or it is a plate stuck to a
-## corner at a random angle. A rotation of t about Y takes +X to
-## (cos t, 0, -sin t), so the yaw that points local +X outward along (sx, 0, sz)
-## is atan2(-sz, sx) — and getting that sign wrong lays all four fins ACROSS
-## their corners instead of through them.
+## ON THE FACES, NOT THE CORNERS — and this is a correction, not a preference.
+##
+## Built on the diagonals, as the concept drew them, the fins did not read as
+## fins at any size. A blade at 45 degrees on a corner shows its NARROW EDGE to
+## every orthogonal bearing, so the paint-only render came back as four bare
+## posts round an empty frame, and in geometry the small core went further
+## still: four chunky table legs with a 1.5 m shaft hidden behind them, reading
+## as a stool carrying the pad. CORE_F_VARIANTS.md section 7 named the fix and
+## this is it — on a face, the blade's WIDTH lies in the elevation, which is
+## the only place a painted zone can be seen from.
+##
+## YAWED SO LOCAL +Z POINTS OUT. A rotation of t about Y takes +Z to
+## (sin t, 0, cos t), so the yaw that points a blade's thickness along the
+## outward normal (nx, 0, nz) is atan2(nx, nz) — and that puts its width,
+## FIN_W, across the face where it shows. Getting this sign wrong lays every
+## blade flat against the shaft instead of standing it off.
+##
+## THE APPROACH FACE GETS A SHORT ONE. -Z carries the console bay at y 1.1-2.0,
+## and the jambs beside it are only (sw - min(sw*0.74, 1.5)) / 2 — 0.195 m on
+## the small core, far too narrow to flank a 0.62 m blade. So the north fin
+## starts ABOVE the bay and reads as a hood over the door. Four blades either
+## way, so the painted silhouette keeps its four-fold symmetry in plan, and the
+## front is still legibly the front.
 func _fins(sw: float, neck: float) -> void:
-	for sx: float in [-1.0, 1.0]:
-		for sz: float in [-1.0, 1.0]:
-			var tag := _corner(sx, sz)
-			var yaw: float = atan2(-sz, sx)
-			var at := Vector3(sx * (sw * 0.5 - 0.08), 0, sz * (sw * 0.5 - 0.08))
-			_painted("Fin%sBlade" % tag, _boxm(Vector3(FIN_W, neck - GROUND, FIN_T)),
-					at + Vector3(0, (GROUND + neck) * 0.5, 0), Vector3(0, yaw, 0))
-			# THE FOOT. A fin that meets a deck at a right angle reads as a
-			# sheet standing in a slot; a flare reads as something welded.
+	# normal x, normal z, tag
+	for face in [[1.0, 0.0, "E"], [-1.0, 0.0, "W"], [0.0, 1.0, "S"], [0.0, -1.0, "N"]]:
+		var nx: float = face[0]
+		var nz: float = face[1]
+		var tag: String = face[2]
+		var yaw: float = atan2(nx, nz)
+		# Half the thickness buried in the shaft: welded on, not floating beside.
+		var at := Vector3(nx * sw * 0.5, 0, nz * sw * 0.5)
+		var is_front: bool = tag == "N"
+		var y0: float = 2.05 if is_front else GROUND
+		var h: float = neck - y0
+		if h <= 0.4:
+			push_warning("build_core_f2: %.2f m of shaft above the console, so the north fin has nowhere to go" % h)
+			continue
+		_painted("Fin%sBlade" % tag, _boxm(Vector3(FIN_W, h, FIN_T)),
+				at + Vector3(0, (y0 + neck) * 0.5, 0), Vector3(0, yaw, 0))
+		# THE FOOT. A fin that meets a deck at a right angle reads as a sheet
+		# standing in a slot; a flare reads as something welded. The north fin
+		# starts in mid-air above a door and has no deck to meet.
+		if not is_front:
 			_painted("Fin%sFoot" % tag, _boxm(Vector3(FIN_W + 0.3, 0.34, FIN_T + 0.16)),
 					at + Vector3(0, GROUND + 0.17, 0), Vector3(0, yaw, 0))
-			# THE HEAD, under the corbel, and deliberately the heaviest section:
-			# at 12.4 m the shaft's own courses carry the middle and only the
-			# head is still a shape.
-			_painted("Fin%sHead" % tag, _boxm(Vector3(FIN_W + 0.22, 0.46, FIN_T + 0.1)),
-					at + Vector3(0, neck - 0.23, 0), Vector3(0, yaw, 0))
-
+		# THE HEAD, under the corbel, and deliberately the heaviest section: at
+		# 12.4 m the shaft's own courses carry the middle and only the head is
+		# still a shape.
+		_painted("Fin%sHead" % tag, _boxm(Vector3(FIN_W + 0.22, 0.46, FIN_T + 0.1)),
+				at + Vector3(0, neck - 0.23, 0), Vector3(0, yaw, 0))
 
 ## -Z is the approach face, so -Z is north.
 func _corner(sx: float, sz: float) -> String:
