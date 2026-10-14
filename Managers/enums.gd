@@ -36,7 +36,12 @@ enum PickUpTypes { HEALTH, SHARDS }
 ## DEPART is the railhead's departure lever: it reads its prompt off its parent
 ## the way MISSION does, but it is not a mission selector and the player must
 ## not route it like one.
-enum InteractTypes { HEALTH, SHARDS, BONFIRE, BITS, OBJECTIVE, MISSION, DEPART }
+## RESUPPLY is the Drayman's chute, and it is the first interactible in the game
+## that is NOT a static world object: it rides a robot's arm, so the thing that
+## owns its charges is an ANCESTOR of the Interactible rather than its parent,
+## and it is used repeatedly (destroy_on_use and disable_on_use both false) with
+## its own charge count doing the gating instead of the component's used flag.
+enum InteractTypes { HEALTH, SHARDS, BONFIRE, BITS, OBJECTIVE, MISSION, DEPART, RESUPPLY }
  
 ## Who attacks whom, as data.
 ##

@@ -1,5 +1,9 @@
 extends VBoxContainer
 
+## One price table — Campaign/pricing.gd. Preloaded rather than named,
+## because a new `class_name` is not visible until the editor rescans.
+const _Pricing := preload("res://Campaign/pricing.gd")
+
 # ─────────────────────────────────────────────
 # FACTORY — build new robots, and add seats to the squad.
 #
@@ -212,16 +216,19 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 		col.add_child(comes)
 
 	col.add_child(Kit.fill())
-	# A frame an operation unlocks waits for it: beat the mission where you
-	# first meet them, and the factory can build them.
-	var locked: MissionDefinition = ui.locked_by(frame.id)
-	if locked != null:
-		var lock := Kit.label("LOCKED · CLEAR %s" % locked.display_name.to_upper(), Kit.DIM, Kit.SMALL, true)
+	# BUILDING ONLY. Opening a frame's line is the TOOLING FABRICATOR's job,
+	# and SquadManagerUI.buildable_frames() already skips a shut one — so a
+	# locked card cannot normally reach here at all. The branch stays as a
+	# plain statement of where to go rather than a second place to pay.
+	if not ui.state.is_unlocked(frame.id):
+		var lock := Kit.label("OPEN THIS LINE IN TOOLING  %d" % _Pricing.chassis_unlock(frame),
+			Kit.DIM, Kit.SMALL, true)
 		lock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		col.add_child(lock)
 		card.modulate = Color(1, 1, 1, 0.6)
 		return card
-	var affordable := state.can_afford(frame.cost)
+	var price: int = _Pricing.chassis_buy(frame)
+	var affordable := state.can_afford(price)
 	var buy_row := Kit.hbox(10)
 	buy_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	var build := Kit.button("BUILD", Kit.BRIGHT if affordable else Kit.PROBLEM, 18)
@@ -229,7 +236,7 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 	build.mouse_entered.connect(ui.hover)
 	build.pressed.connect(func(): _build(frame))
 	buy_row.add_child(build)
-	buy_row.add_child(Kit.label(str(frame.cost), Kit.MONEY, 18, true))
+	buy_row.add_child(Kit.label(str(price), Kit.MONEY, 18, true))
 	# A frame has TWO prices and they are different currencies: resources, and
 	# the seats its supply holds — compute is what pays for seats. Amber and
 	# blue say which is which without a word of explanation, and it belongs here
@@ -242,7 +249,7 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 	var where := Kit.label("JOINS THE SQUAD" if seat else "%s: WAITS ON THE BENCH" % _seat_shortfall(frame.supply),
 		Kit.DIM, Kit.SMALL)
 	if not affordable:
-		where.text = "NEED %d MORE" % (frame.cost - state.available())
+		where.text = "NEED %d MORE" % (price - state.available())
 		where.add_theme_color_override("font_color", Kit.PROBLEM)
 	where.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(where)
@@ -321,6 +328,11 @@ func _badges(frame: ChassisDefinition) -> Control:
 	if not frame.vehicle and not frame.drives and not frame.turret:
 		words.append("INFANTRY")
 	if frame.built_in == "WELDER" and frame.weapon_replaces_built_in:
+		words.append("ARTICULATED ARM")
+	# THE DRAYMAN'S BOOM IS AN ARM AND NOT A WELDER, and the distinction is the
+	# whole reason it has a built-in word of its own: on "WELDER" the rule below
+	# would label a supply truck a MEDIC, because it starts with nothing fitted.
+	if frame.built_in == "BOOM":
 		words.append("ARTICULATED ARM")
 	# A welder it still HAS. The enemy mortar track carries one and starts with
 	# the mortar in its place, so it is not a medic.
