@@ -439,6 +439,24 @@ const PROPS := {
 	"core_f2_small": "res://maps/blocks/compute/compute_core_f2_small.tscn",
 	"core_f2": "res://maps/blocks/compute/compute_core_f2.tscn",
 	"core_f2_large": "res://maps/blocks/compute/compute_core_f2_large.tscn",
+	# LOOK 3 — tools/build_core_look3.gd, five variants at three sizes.
+	# Lit shots are the only judge on these: three rounds of line art hid every
+	# problem they had, and the faults were all found by photographing them lit.
+	"l3_trunk_small": "res://maps/blocks/compute/core_l3_trunk_small.tscn",
+	"l3_trunk_med": "res://maps/blocks/compute/core_l3_trunk_med.tscn",
+	"l3_trunk_large": "res://maps/blocks/compute/core_l3_trunk_large.tscn",
+	"l3_uplink_small": "res://maps/blocks/compute/core_l3_uplink_small.tscn",
+	"l3_uplink_med": "res://maps/blocks/compute/core_l3_uplink_med.tscn",
+	"l3_uplink_large": "res://maps/blocks/compute/core_l3_uplink_large.tscn",
+	"l3_patch_small": "res://maps/blocks/compute/core_l3_patch_small.tscn",
+	"l3_patch_med": "res://maps/blocks/compute/core_l3_patch_med.tscn",
+	"l3_patch_large": "res://maps/blocks/compute/core_l3_patch_large.tscn",
+	"l3_anchor_small": "res://maps/blocks/compute/core_l3_anchor_small.tscn",
+	"l3_anchor_med": "res://maps/blocks/compute/core_l3_anchor_med.tscn",
+	"l3_anchor_large": "res://maps/blocks/compute/core_l3_anchor_large.tscn",
+	"l3_relay_small": "res://maps/blocks/compute/core_l3_relay_small.tscn",
+	"l3_relay_med": "res://maps/blocks/compute/core_l3_relay_med.tscn",
+	"l3_relay_large": "res://maps/blocks/compute/core_l3_relay_large.tscn",
 }
 
 
