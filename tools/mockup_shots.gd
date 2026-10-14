@@ -436,6 +436,15 @@ const ENEMY_FRAMES := ["brood", "bastion", "see_engine", "tick"]
 ## which a compute core has — it would error on the first line. These are plain
 ## PackedScenes dropped on the stage and photographed.
 const PROPS := {
+	# THE SHIPPED CORES, which are the LOOK 3 skeleton as brush geometry —
+	# tools/build_core_skeleton.gd plus tools/core_skeleton_dress.gd. No head
+	# yet: the variant is the human's to choose off a lit render.
+	# tools/shoot_core_skeleton.gd takes these three from a standing eye and
+	# from 40 m, which is the framing the band-density question needs; this
+	# entry is the catalogue framing, for sitting them beside the study.
+	"skel_small": "res://maps/blocks/compute/compute_core_small.tscn",
+	"skel_med": "res://maps/blocks/compute/compute_core.tscn",
+	"skel_large": "res://maps/blocks/compute/compute_core_large.tscn",
 	"core_f2_small": "res://maps/blocks/compute/compute_core_f2_small.tscn",
 	"core_f2": "res://maps/blocks/compute/compute_core_f2.tscn",
 	"core_f2_large": "res://maps/blocks/compute/compute_core_f2_large.tscn",

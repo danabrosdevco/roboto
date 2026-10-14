@@ -5,12 +5,20 @@
 ; The core IS the objective: DummyTerminal is here for the interaction, with its
 ; own casing hidden (show_body) so the core is the thing you walk up to.
 ;
-; REACH IS THE CORE'S FOOTPRINT, 5.19 m square, AND NOT A METRE MORE. The
-; player's InteractRaycast is 2 m long, masks the Interactible layer only — so it
-; ignores the core's solid body entirely — and does not register a hit when it
-; STARTS inside the volume. Sized to the footprint, the core's own collision
-; stops the player half a metre short, which puts the camera outside the box
-; looking in. Grow it and the camera ends up inside and nothing can be pressed.
+; THE CORE IS 6.31 m SQUARE NOW, not 5.19. tools/build_core_skeleton.gd
+; replaced the shipped core_column() trio with the interlaced skeleton, whose
+; deck holds the study's footprint. ANY LEVEL THAT INSTANCES ONE OWES A NAVMESH
+; REBAKE: the deck is a 0.53 m sheer step and it grew by 1.12 m a side here.
+;
+; REACH IS THE FOOTPRINT MINUS 0.6 m, AND THE 0.6 IS ARITHMETIC RATHER THAN A
+; MARGIN. The player's InteractRaycast is 2 m long, masks the Interactible
+; layer only — so it ignores the core's solid body entirely — and does not
+; register a hit that STARTS inside the volume. The capsule radius is 0.25 so
+; the camera stops 0.25 m outside the deck edge, and test_character hangs the
+; ray 0.261 m FORWARD of the camera: a reach_size set exactly to the footprint
+; therefore puts the ray ORIGIN 11 mm INSIDE the box, on the wrong side of the
+; rule the previous version of this comment stated. Grow it back and nothing
+; can be pressed.
 ;
 ; channel_range is measured from the INTERACTIBLE, not from this node (see
 ; InteractObjective._process), so it has to clear the footprint plus room for the
@@ -37,7 +45,7 @@ channel_range = 5.5
 [node name="Terminal" parent="." instance=ExtResource("3_term")]
 label_text = ""
 show_body = false
-reach_size = Vector3(5.19, 3, 5.19)
+reach_size = Vector3(5.71, 3, 5.71)
 reach_height = 1.5
 indicator_height = 12.3
 
