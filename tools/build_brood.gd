@@ -488,7 +488,7 @@ func _build() -> CharacterBody3D:
 	root_body.set("cruise_speed", 6.0)
 	# Low enough that a squad can shoot it and that dropped brood lands in the
 	# fight rather than somewhere else.
-	root_body.set("cruise_height", 12.0)
+	root_body.set("cruise_height", 22.0)   # 12.0 until 2026-10-13: measured, riflemen hit it 73% of the time at that height and five of six died, while a Spotter at 22.0 in the identical fight was never shot at once. docs/briefs/NEW_CHASSIS_AUDIT.md section 1.
 	root_body.set("orbit_radius", 10.0)
 	root_body.set("orbit_speed", 3.5)
 	# A heavy thing turns slowly, and a slow turn is what lets a squad cut it

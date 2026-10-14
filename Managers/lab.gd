@@ -169,8 +169,8 @@ func _find_axis() -> void:
 # ─────────────────────────────────────────────
 func _fight(m, r: int, n: int) -> Dictionary:
 	var place := _starts(m, r)
-	var allies := _spawn_side(m.allies, Enums.Factions.ALLIED, place["ally"], place["hostile"], "ALLY", m.weapon_swaps)
-	var hostiles := _spawn_side(m.hostiles, Enums.Factions.ENEMY, place["hostile"], place["ally"], "HOSTILE", m.weapon_swaps)
+	var allies := _spawn_side(m.allies, Enums.Factions.ALLIED, place["ally"], place["hostile"], "ALLY", m.weapon_swaps, m.coax_swaps)
+	var hostiles := _spawn_side(m.hostiles, Enums.Factions.ENEMY, place["hostile"], place["ally"], "HOSTILE", m.weapon_swaps, m.coax_swaps)
 	var a_members: Array = allies.squad_members.duplicate() if allies != null else []
 	var h_members: Array = hostiles.squad_members.duplicate() if hostiles != null else []
 	await get_tree().physics_frame
@@ -242,7 +242,7 @@ func _starts(m, r: int) -> Dictionary:
 
 
 func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, callsign: String,
-		swaps: Dictionary = {}) -> Squad:
+		swaps: Dictionary = {}, coax_swaps: Dictionary = {}) -> Squad:
 	var members: Array[Soldier] = []
 	var n := roster.size()
 	# The ring turned to face the other side. Laid out in world space it put
@@ -283,8 +283,11 @@ func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, 
 		# HALF-ARMED — the coax mount is a purchase — but a bench measures the
 		# complete machine, or a frame built around two guns is scored on one.
 		# `coax_weapon_id` names the gun that mount is designed around.
-		if frame.coax_weapon_id != &"" and s.get("coax_mount") != null:
-			var second := _issued_weapon_id(frame.coax_weapon_id, frame)
+		var coax_id: StringName = frame.coax_weapon_id
+		if coax_swaps.has(frame.id):
+			coax_id = coax_swaps[frame.id]
+		if coax_id != &"" and s.get("coax_mount") != null:
+			var second := _issued_weapon_id(coax_id, frame)
 			if second != null:
 				s.equip_coax_scene(second)
 		if world.enemy_spawner != null:

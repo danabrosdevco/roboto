@@ -197,3 +197,95 @@ fielded in a firing line and this row should not be read as a verdict.**
 - All allies share one faction in the lab, so the Bastion's same-faction
   hardening and the See-Engine's same-faction contact feed are both being
   measured in the most favourable possible configuration.
+
+---
+
+# CORRECTION, 2026-10-13, after the recheck
+
+Two conclusions in section 1 were wrong. Both were wrong in the same way: a
+number was read as evidence about a frame when it was evidence about the
+instrument or about the control.
+
+## The Picket's 0% accuracy was a metric artefact
+
+`analytics.gd:440-447` counts a hit only when damage lands **in the same
+physics frame as the shot** — its own comment says so: *"Hitscan and melee
+land in the same physics frame as the shot, so one hit per shot."*
+
+A rocket with a 5.5 second flight time lands hundreds of frames later. **No
+projectile weapon in this game can ever register accuracy.** The mortar, both
+grenade launchers and the cluster would all read 0% on the same metric.
+
+So "not one registered hit" was a statement about hitscan bookkeeping, not
+about the Picket. The damage column was the real evidence all along, and it
+said the frame was weak rather than blind.
+
+**What leading actually bought**, same fight, same control, inside one run:
+
+| | before leading | after leading | Walker control, same run |
+|---|---|---|---|
+| damage per body | 37 | **55** | 50 |
+| kills | 2 | **3** | 3 |
+| deaths / fielded | 4 / 6 | **2 / 6** | 0 / 6 |
+
+Half again the damage per body, kills up, deaths halved, and it now matches a
+Walker holding the same line on both damage and kills. It still dies and the
+Walker does not. **Leading works and should stay.**
+
+## The Spotter was never a control — that fight never happened
+
+Raising `cruise_height` from 12.0 to 22.0 changed **nothing**: five of six
+still died, 1076 damage taken against 1059, enemy accuracy 69% against 73%.
+
+Giving it the Spotter's whole flight profile as well — cruise 18, orbit 8,
+turn 2.0 — made it **worse**: dead in 14 seconds instead of 51, with the
+riflemen taking no damage at all. Reverted.
+
+The Spotter's three matchups scored **zero damage in both directions**. It was
+not surviving a fight; **no fight ever started.** It has no weapon and
+`spotter_drone.gd` stubs its combat loop, so a squad of nothing but Spotters
+never engages and never gets engaged. Comparing a frame that draws fire to one
+that never provokes any was not a control, and the altitude conclusion drawn
+from it was unsupported.
+
+`cruise_height` is left at 22.0 because it was asked for and does no harm, but
+**the data does not justify it** and 12.0 was never shown to be wrong.
+
+## The finding that matters: the Broodcarrier never spawned, in any run
+
+Zero offspring across twelve fieldings, in all three plans.
+
+`brood_carrier.gd:120-134` gates `_hatch()` behind `_fighting()`, which needs
+`ai_state == COMBAT`, or a live `combat_target`, or
+`squad.has_live_contact()`. The frame runs on `spotter_drone.gd`, whose combat
+loop is gated off by `_carries_a_weapon()` returning false — so it never
+enters COMBAT and never takes a target. The first two can never fire.
+
+That leaves `squad.has_live_contact()`. **Fielded on its own the Broodcarrier
+cannot spawn at all**, because nothing in its squad ever makes contact. It
+drifts forward with a full bay and dies with a full bay.
+
+This is not an altitude problem and it was never going to be fixed by one. The
+frame needs either a contact source of its own, or to be fielded only
+alongside something that fights — and if it is the latter, that belongs in its
+documentation and in every mission that places one.
+
+## Bastion against a Walker with both mounts loaded
+
+Asked for directly, and `LabMatchup.coax_swaps` had to be added to express it:
+`weapon_swaps` only ever reached the primary mount.
+
+| | Bastion | Walker, 2x heavy MG |
+|---|---|---|
+| kills | **0** | 6 |
+| deaths / fielded | **6 / 6** | 0 / 6 |
+| damage per body | 149 | **301** |
+| accuracy | 81% | 32% |
+
+Every Bastion died, none killed anything, and the fight averaged eight
+seconds. The Bastion is the more accurate frame by a distance and it does not
+matter: two mounts against one is twice the damage, and a planted frame cannot
+leave.
+
+The first run had the Bastion looking like the better gun because it was
+measured against riflemen rather than against the frame it competes with.

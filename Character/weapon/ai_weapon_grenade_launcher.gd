@@ -58,6 +58,25 @@ class_name AIWeaponGrenadeLauncher
 ## round, not a hand grenade rolling about at the far end.
 @export var impact_fused: bool = false
 
+## LEAD A MOVING TARGET. Off by default, and that default is deliberate.
+##
+## Nothing else in this project leads: AIWeapon.flight_time() feeds
+## target_hold_seconds and a grenade fuse and nothing else, and
+## AIWeaponRecoilless._aim fires at the target's CURRENT position. Measured on
+## 2026-10-13, that is why the Picket scored 0% accuracy over six bodies and
+## three fights — a five-second arcing rocket lands where a rifleman was.
+##
+## Turning this on for every indirect weapon would change the mortar, both
+## grenade launchers and the cluster at once, which is a balance change to four
+## shipping guns. So it is an export, off, and only the gun that needs it sets
+## it. docs/briefs/NEW_CHASSIS_AUDIT.md section 1.
+@export var lead_target: bool = false
+
+## How many times to re-solve the arc against the moved aim point. One pass
+## already removes most of the error; two is enough for anything that walks.
+## Each pass is one more sqrt, on a shot that happens a few times a second.
+@export var lead_iterations: int = 2
+
 # Bombs from the current stick still in the air. See drop_bomb().
 var _recent_bombs: Array = []
 
@@ -236,10 +255,65 @@ func launch_velocity(origin: Vector3, target: Vector3) -> Vector3:
 	return _lob_velocity(origin, target)
 
 
+## What the thing we are shooting at is doing, if the shooter knows.
+##
+## Enemy.combat_target is the live CharacterBody3D (enemy.gd:1170), set beside
+## weapon_target in change_combat_target — so the body, and therefore its
+## velocity, is reachable by the same route shooter_velocity() already uses to
+## find the carrier. Zero whenever anything in that chain is missing, which
+## makes an unled shot the failure mode rather than a crash.
+func target_velocity() -> Vector3:
+	var shooter := _owner_body()
+	if shooter == null:
+		return Vector3.ZERO
+	if not ("combat_target" in shooter):
+		return Vector3.ZERO
+	var mark = shooter.get("combat_target")
+	if mark == null or not is_instance_valid(mark):
+		return Vector3.ZERO
+	if not ("velocity" in mark):
+		return Vector3.ZERO
+	return mark.velocity
+
+
+## Where to aim so the round and the target arrive together.
+##
+## Solve the arc at the target's current position, ask how long that round is in
+## the air, move the aim point along the target's velocity by that much, and
+## solve again. Two passes converges because the correction shrinks with the
+## change in flight time, not with the distance.
+##
+## ONLY HORIZONTAL VELOCITY IS USED. A body that is falling, climbing a step or
+## being shoved vertically is not travelling that way for the five seconds the
+## round is up, and leading on it threw shots into the ground in testing.
+func _led_target(origin: Vector3, weapon_target: Vector3) -> Vector3:
+	var drift := target_velocity()
+	drift.y = 0.0
+	if drift.length_squared() < 0.01:
+		return weapon_target
+	var aim := weapon_target
+	for _i in maxi(1, lead_iterations):
+		var v := _lob_velocity_at(origin, aim)
+		var t := _flight_time(origin, aim, v)
+		if t <= 0.0:
+			return weapon_target   # no arc reaches it; an unled shot is the honest one
+		aim = weapon_target + drift * t
+	return aim
+
+
+# The shot this weapon actually takes. Leads first when lead_target is on, then
+# solves the arc — so everything downstream (the round's velocity, _flight_time,
+# launch_velocity for a frame that wants to point its tubes where the shot is
+# really going) sees the led answer and not the raw one.
+func _lob_velocity(origin: Vector3, weapon_target: Vector3) -> Vector3:
+	var aim := _led_target(origin, weapon_target) if lead_target else weapon_target
+	return _lob_velocity_at(origin, aim)
+
+
 # The arc at lob_speed, from the muzzle onto the target: the low one, or the
 # high one if high_arc. Out of reach, it throws at 45 degrees — as far as it
 # can — and lands short.
-func _lob_velocity(origin: Vector3, weapon_target: Vector3) -> Vector3:
+func _lob_velocity_at(origin: Vector3, weapon_target: Vector3) -> Vector3:
 	var g: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 	var flat := Vector3(weapon_target.x - origin.x, 0.0, weapon_target.z - origin.z)
 	var d := flat.length()

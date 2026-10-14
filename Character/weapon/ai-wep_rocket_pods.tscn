@@ -62,6 +62,7 @@ high_arc = true
 blast_radius_override = 3.6
 blast_override = 55
 lob_speed = 32.0
+lead_target = true
 impact_fused = true
 weapon_type = 2
 targeting = 1

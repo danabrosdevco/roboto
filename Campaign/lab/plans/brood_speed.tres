@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_soldier.tres" id="4_sol"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_brood.tres" id="5_bro"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_spotter.tres" id="6_spt"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "BROOD fast  22 m, cruise 18, orbit 8 — the Spotter's flight profile"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_bro"), ExtResource("5_bro")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 60.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "SPOTTER reference  the same fight, unchanged"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_spt"), ExtResource("6_spt")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 60.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[resource]
+script = ExtResource("1_plan")
+title = "Is it the height or the speed?"
+question = "Raising the Broodcarrier from 12 m to 22 m changed nothing: five of six still died and it still took over a thousand damage. So the Spotter control in the first run was confounded - it differs from the Broodcarrier in more than altitude.
+
+Cruise speed 6.0 against 18.0. Orbit speed 3.5 against 8.0. Turn 1.2 against 2.0. The Spotter is three times faster in every term, and a slow flyer loiters inside rifle range at walking pace however high it is.
+
+This run gives the Broodcarrier the Spotter's whole flight profile and puts the Spotter beside it unchanged. If the Brood now survives, speed was the variable all along and the altitude change was treating a symptom.
+
+THE RESULT IS NOT THE RECOMMENDATION EITHER WAY. BROODCARRIER.md asks for this frame to be slow on purpose - 'slow, so that reaching it is possible' - because its whole argument is that a squad which is not slow should be able to kill it. If survival requires the Spotter's speed, then the frame cannot be both slow and survivable, and that is a design question rather than a tuning one."
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2")])
+repeats_override = 0
+speed = 4.0
