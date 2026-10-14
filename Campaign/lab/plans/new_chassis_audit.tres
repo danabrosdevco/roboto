@@ -1,0 +1,231 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=30 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_soldier.tres" id="4_sol"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover.tres" id="5_rov"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_walker.tres" id="6_wlk"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_spotter.tres" id="7_spt"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_lance.tres" id="8_lan"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_picket.tres" id="9_pik"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_kite.tres" id="10_kit"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_drayman.tres" id="11_dray"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_vessel.tres" id="12_ves"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_brood.tres" id="13_bro"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_bastion.tres" id="14_bas"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_see_engine.tres" id="15_see"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "LANCE  2 Lance advance onto 3 dug-in rifles, 55 m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("8_lan"), ExtResource("8_lan")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 55.0
+repeats = 3
+time_limit = 90.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "LANCE control  2 Rover, same fight"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_rov"), ExtResource("5_rov")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 55.0
+repeats = 3
+time_limit = 90.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M3"]
+script = ExtResource("2_match")
+label = "PICKET  2 Picket hold at 85 m, 4 rifles cross to them"
+allies = Array[ExtResource("3_chassis")]([ExtResource("9_pik"), ExtResource("9_pik")])
+ally_order = 0
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 1
+distance = 85.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M4"]
+script = ExtResource("2_match")
+label = "PICKET control  2 Walker hold, same fight"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_wlk"), ExtResource("6_wlk")])
+ally_order = 0
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 1
+distance = 85.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M5"]
+script = ExtResource("2_match")
+label = "KITE  2 Kite advance onto 4 dug-in rifles, 60 m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("10_kit"), ExtResource("10_kit")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 60.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M6"]
+script = ExtResource("2_match")
+label = "KITE control  2 Rover, same fight on the ground"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_rov"), ExtResource("5_rov")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 60.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M7"]
+script = ExtResource("2_match")
+label = "BROOD  2 Broodcarrier at 12 m cruise vs 4 dug-in rifles, 60 m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("13_bro"), ExtResource("13_bro")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 60.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M8"]
+script = ExtResource("2_match")
+label = "BROOD control  2 Spotter, same fight at 22 m cruise"
+allies = Array[ExtResource("3_chassis")]([ExtResource("7_spt"), ExtResource("7_spt")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 60.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M9"]
+script = ExtResource("2_match")
+label = "VESSEL  1 Vessel + 2 rifles vs 4 rifles, 50 m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("12_ves"), ExtResource("4_sol"), ExtResource("4_sol")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 50.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M10"]
+script = ExtResource("2_match")
+label = "BASTION  1 Bastion + 3 rifles hold vs 6 rifles, 60 m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("14_bas"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+ally_order = 0
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 1
+distance = 60.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M11"]
+script = ExtResource("2_match")
+label = "BASTION control  1 Walker + 3 rifles hold, same fight"
+allies = Array[ExtResource("3_chassis")]([ExtResource("6_wlk"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+ally_order = 0
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 1
+distance = 60.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M12"]
+script = ExtResource("2_match")
+label = "SEE-ENGINE  1 See-Engine + 4 rifles vs 4 rifles, 55 m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("15_see"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 55.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M13"]
+script = ExtResource("2_match")
+label = "SEE-ENGINE control  4 rifles alone vs 4 rifles"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 55.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M14"]
+script = ExtResource("2_match")
+label = "DRAYMAN  1 Drayman + 3 rifles vs 4 rifles, 50 m"
+allies = Array[ExtResource("3_chassis")]([ExtResource("11_dray"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 50.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[resource]
+script = ExtResource("1_plan")
+title = "The new chassis, audited"
+question = "Every frame added on 2026-10-10, put in the fight it was designed for, each paired with a control that isolates the question. Three repeats is a look, not a measurement.
+
+LANCE: does it shoot at all? It has no turret and aims by slewing its hull at 50 deg/s, and rover.gd only turns the body when turret is null - which it is not. The control is a Rover, the frame it is built on, in the identical fight.
+
+PICKET: does it do anything? 95 m of indirect rocket against four riflemen who have to cross 85 m of open ground. If the answer is no, damage dealt is zero. The control is a Walker holding the same line with a direct-fire autocannon.
+
+KITE: is it picked off? 90 hull at 22 m cruise against four dug-in rifles. The control is a Rover - same supply band, same fight, on the ground - so the question is whether altitude helps or kills.
+
+BROOD: does 12 m fly too low? Two Broodcarriers against four dug-in rifles, and the control is two SPOTTERS: also unarmed, also a flyer, also no threat, but cruising at 22 m instead of 12. If the Brood dies and the Spotter lives, the altitude is the whole answer.
+
+VESSEL, BASTION, SEE-ENGINE, DRAYMAN: each attached to a squad, because none of them is a line frame and fielding them alone would measure nothing. Bastion against a Walker on the same hold; See-Engine against the same four rifles with nobody feeding them contacts, which is the only way its spread bonus shows up as a number."
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2"), SubResource("M3"), SubResource("M4"), SubResource("M5"), SubResource("M6"), SubResource("M7"), SubResource("M8"), SubResource("M9"), SubResource("M10"), SubResource("M11"), SubResource("M12"), SubResource("M13"), SubResource("M14")])
+repeats_override = 0
+speed = 4.0
