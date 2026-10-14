@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LocationCatalogue" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://Campaign/location_catalogue.gd" id="1_cat"]
+[ext_resource type="Script" path="res://Campaign/location.gd" id="2_loc"]
+[ext_resource type="Resource" path="res://Campaign/locations/loc_hillfort.tres" id="3_hillfort"]
+[ext_resource type="Resource" path="res://Campaign/locations/loc_valley_basin.tres" id="4_valley_basin"]
+[ext_resource type="Resource" path="res://Campaign/locations/loc_coast_road.tres" id="5_coast_road"]
+[ext_resource type="Resource" path="res://Campaign/locations/loc_over_the_top.tres" id="6_over_the_top"]
+[ext_resource type="Resource" path="res://Campaign/locations/loc_three_rivers.tres" id="7_three_rivers"]
+[ext_resource type="Resource" path="res://Campaign/locations/loc_qamareen.tres" id="8_qamareen"]
+[ext_resource type="Resource" path="res://Campaign/locations/loc_lockside.tres" id="9_lockside"]
+[ext_resource type="Resource" path="res://Campaign/locations/loc_polaris.tres" id="10_polaris"]
+[ext_resource type="Resource" path="res://Campaign/locations/loc_causeway.tres" id="11_causeway"]
+
+[resource]
+script = ExtResource("1_cat")
+locations = Array[Resource]([ExtResource("3_hillfort"), ExtResource("4_valley_basin"), ExtResource("5_coast_road"), ExtResource("6_over_the_top"), ExtResource("7_three_rivers"), ExtResource("8_qamareen"), ExtResource("9_lockside"), ExtResource("10_polaris"), ExtResource("11_causeway")])

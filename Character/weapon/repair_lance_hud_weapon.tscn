@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 ; REPAIR LANCE, in the player's hands.
 ;
@@ -15,18 +15,47 @@
 ; The butt sits 6.6cm BEHIND the eye at rest and stays clipped through the full
 ; thrust, which is what keeps the lance anchored instead of floating mid-screen.
 ;
-; swing_time 1.1 and impact_at 0.62: a slow commit with the hit late in it, so
-; a thrust reads as a thrust and you are exposed for the whole of it.
+; swing_time 1.1 with impact_at 0.14: OUT IN 0.154s, then most of a
+; second of recovery. swing_time is untouched so the swing rate and the window you
+; are committed for are exactly as before — only the stroke moved. It read as slow
+; because 0.62 of 1.1s is a 0.68s extension AND it was routed through the pose
+; lerp, which chases at pose_speed and never arrives; player_repair_lance.gd now
+; drives it from _extra_position(), outside the lerp, where the timing is real.
+;
+; IT NEVER LOWERS. lowers_when_obstructed is false: a 3.4m polearm has something
+; within the obstruction probe's reach almost everywhere indoors, so it spent its
+; time dropping out of frame and coming back. obstructed_position below is still
+; load-bearing — equip() snaps to it, so it is the pose the lance is drawn FROM.
+
+;
+; THE HOLSTER POSE IS A PURE DROP. obstructed_rotation repeats the rest
+; orientation exactly — the 107.88 of yaw and 12.69 of roll that initialize()
+; reads off the Lance node below — and obstructed_position moves only in Y. So
+; drawing the lance, and lowering it into a wall, slide it down and up and never
+; turn it. The class default was (0.3, 270, 3) when this was authored, which
+; against a rest of 107.88 is 162 degrees of yaw whipped through in four tenths
+; of a second on a 3.4m polearm. That default has since been corrected to 90 — a
+; much smaller 18 — but it is still a TURN, and the point here is that the lance
+; does not turn at all. Authored rather than inherited for that reason, not just
+; because the old default was wrong.
+
+; IT MAKES A NOISE NOW. The scene shipped with no AudioStreamPlayer at all, so
+; swing_sound, hit_sound and click_sound were every one of them null: a thrust
+; that connected sounded exactly like a thrust that did not, and running out of
+; charges was silent. Two of the three stab samples, so a hit reads differently
+; from a whiff.
 
 [ext_resource type="Script" path="res://Character/equipment/player_repair_lance.gd" id="1_lance"]
 [ext_resource type="PackedScene" path="res://Character/weapon/concepts/repair_lance.tscn" id="2_model"]
+[ext_resource type="AudioStream" uid="uid://d16dnjacdej4f" path="res://sounds/sfx/weapons/melee/WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_01.wav" id="3_stab"]
+[ext_resource type="AudioStream" uid="uid://ch4u7kx6bg1tb" path="res://sounds/sfx/weapons/melee/WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_11.wav" id="4_land"]
 
-[node name="RepairLance" type="Node3D" node_paths=PackedStringArray("viewmodel")]
+[node name="RepairLance" type="Node3D" node_paths=PackedStringArray("swing_sound", "hit_sound", "viewmodel")]
 script = ExtResource("1_lance")
 damage = 60
 range = 3.4
 swing_time = 1.1
-impact_at = 0.62
+impact_at = 0.14
 swing_rotation = Vector3(-18, 6, 0)
 repair_amount = 30
 max_charges = 3
@@ -35,10 +64,24 @@ thrust_distance = 0.22
 thrust_rise = 0.05
 display_name = "Repair Lance"
 slot = 2
+swing_sound = NodePath("SwingSound")
+hit_sound = NodePath("HitSound")
 viewmodel = NodePath("Lance")
+lowers_when_obstructed = false
 use_default_position = false
+obstructed_position = Vector3(0.26, -1.1, -0.3)
+obstructed_rotation = Vector3(0, 107.88, 12.69)
 bob_speed = 0.6
 movement_bob_scale = 1.0
 
 [node name="Lance" parent="." instance=ExtResource("2_model")]
 transform = Transform3D(-0.11381, 0.025612, 0.361608, 0.083448, 0.37069, 0, -0.35283, 0.07942, -0.11666, 0.26, -0.3, -0.3)
+
+[node name="SwingSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("3_stab")
+unit_size = 6.0
+
+[node name="HitSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("4_land")
+volume_db = 2.0
+unit_size = 8.0

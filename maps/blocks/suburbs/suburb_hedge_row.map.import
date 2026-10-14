@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bviyiaraqsb4w"
+path="res://.godot/imported/suburb_hedge_row.map-a88c824ae11e08e0727762b268fb8ec0.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_hedge_row.map"
+dest_files=["res://.godot/imported/suburb_hedge_row.map-a88c824ae11e08e0727762b268fb8ec0.tres"]
+
+[params]
+

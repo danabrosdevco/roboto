@@ -2,6 +2,15 @@
 
 ; CLUSTER MINE, in the player's hands. Thrown properly — the point is to seed
 ; ground you are not standing on.
+;
+; HELD FURTHER OUT THAN A GRENADE, AND STRIPPED TO THE CANISTER. Both numbers
+; below were inherited from grenade_hud_weapon, which is sized for a frag that
+; fits in a fist. This is a 0.23m canister, and at the frag's depth it filled
+; the middle of the screen. The concept model also lays its four sub-mines out
+; BESIDE the canister (x +0.33 and +0.44, three canister-widths off to the
+; side) — that is a display arrangement for looking at the thing on a bench,
+; and in first person they float in mid-air across the view. Hidden here rather
+; than in the concept scene, which is still the model the armoury shows.
 
 [ext_resource type="PackedScene" path="res://Character/weapon/grenade_hud_weapon.tscn" id="1_base"]
 [ext_resource type="PackedScene" path="res://Character/weapon/mines/mine_cluster_canister.tscn" id="2_proj"]
@@ -18,4 +27,16 @@ viewmodel = NodePath("Mine")
 visible = false
 
 [node name="Mine" parent="." instance=ExtResource("3_model")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0237351, -0.473094)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0237351, -0.7)
+
+[node name="SubA" parent="Mine"]
+visible = false
+
+[node name="SubACap" parent="Mine"]
+visible = false
+
+[node name="SubB" parent="Mine"]
+visible = false
+
+[node name="SubBCap" parent="Mine"]
+visible = false

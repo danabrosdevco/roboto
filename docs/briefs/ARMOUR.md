@@ -12,15 +12,14 @@ sits in the queue.
 
 Three things the brief does not say, that change how it has to be run.
 
-**1. `_collapse_pieces()` cannot land on its own any more.** The brief asks for
-it first and separately, and that is the right instinct — but it is already
-entangled. `Character/characters/ai/enemy.gd` is uncommitted and carries the
-corpse fix *plus* the distance-culling work (`enter_passive_mode`, `move_to`'s
-culled guard, `squad_is_engaged`, `_on_revived`). Splitting those apart now is
-exactly the untangling the brief says is not worth doing. **Land the current
-`enemy.gd` work as one commit first, then start armour against a clean file.**
-That honours the intent — do not build armour on top of unlanded changes —
-without the surgery.
+**1. The `_collapse_pieces()` sequencing note is spent.** The brief asks for the
+corpse fix to land first and separately. It has: `_collapse_pieces`,
+`enter_passive_mode`, `squad_is_engaged` and `_on_revived` are all in HEAD.
+Nothing about armour is blocked on it and there is no commit owed.
+`Character/characters/ai/enemy.gd` *is* still modified in the working tree —
+about a hundred lines — but that is later, live work belonging to whoever is in
+it now. **Do not commit it to clear this note.** Read the live file, add the
+armour helper to `apply_damage`, and leave the rest of the diff alone.
 
 **2. Capture the Laboratory baseline BEFORE touching anything.** The brief asks
 for "lab it before and after". The *before* is perishable: once the helper is in

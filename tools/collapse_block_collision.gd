@@ -1,0 +1,200 @@
+extends SceneTree
+
+# ─────────────────────────────────────────────
+# COLLAPSE A TRENCHBROOM BLOCK'S PER-BRUSH COLLISION INTO ONE SHAPE.
+#
+#   godot --headless --audio-driver Dummy --path . \
+#       --script res://tools/collapse_block_collision.gd -- [--write] [path or dir]
+#
+# Dry run by default: it reports what it WOULD save and writes nothing.
+#
+# ── THE PROBLEM, MEASURED ────────────────────
+# FuncGodot builds one ConvexPolygonShape3D per BRUSH for any entity whose FGD
+# class is CONVEX, and `worldspawn` is CONVEX. 400 of the project's 423 .map
+# files put their bulk geometry in worldspawn, so a block authored from 66
+# brushes ships 66 collision shapes — and then a level instances it 456 times.
+#
+# Salient: 45,881 CollisionShape3D nodes, 30,096 of them from one block.
+# Every one sits in the physics broadphase for the life of the level, and
+# every ground snap, near-miss suppression query and melee sweep pays for the
+# size of that broadphase.
+#
+# ── WHAT THIS DOES ───────────────────────────
+# Replaces the per-brush convex shapes under a StaticBody3D with a single
+# ConcavePolygonShape3D built from the body's own mesh — which is exactly what
+# FuncGodot would have produced had the class been CONCAVE, as func_detail
+# already is. The visual is untouched.
+#
+# ── WHY A BACKFILL AND NOT JUST THE FGD ──────
+# Changing worldspawn to CONCAVE in the FGD fixes every FUTURE import and
+# nothing that already exists, because the committed .tscn blocks are the
+# artefact levels instance — they are not rebuilt unless someone re-imports
+# the .map. This fixes what is on disk today. Do both: the FGD so new blocks
+# are born cheap, this so the existing 423 are not left behind.
+#
+# ── WHAT IT WILL NOT DO ──────────────────────
+# A trimesh is STATIC-ONLY collision. If a block is ever used on a moving
+# body this is the wrong shape for it, so anything whose StaticBody3D is not
+# a direct child of the block root is left alone and reported.
+# ─────────────────────────────────────────────
+
+var _write: bool = false
+var _total_before: int = 0
+var _total_after: int = 0
+var _changed: int = 0
+var _skipped: Array[String] = []
+
+
+func _init() -> void:
+	var args := OS.get_cmdline_user_args()
+	# SEVERAL targets, not one. A pilot wants exactly the blocks ONE level
+	# instances — 62 of them for Salient — so that a bad result is reverted with
+	# one checkout instead of being spread across all 423. Taking only the last
+	# path silently benched a different set than the one named.
+	var targets: Array[String] = []
+	for a in args:
+		if a == "--write":
+			_write = true
+		elif a.begins_with("--list="):
+			var lf := FileAccess.open(a.trim_prefix("--list="), FileAccess.READ)
+			if lf == null:
+				printerr("could not read list %s" % a.trim_prefix("--list="))
+				quit(1)
+				return
+			while not lf.eof_reached():
+				var line := lf.get_line().strip_edges()
+				if line != "":
+					targets.append(line)
+			lf.close()
+		elif a.strip_edges() != "":
+			targets.append(a)
+	if targets.is_empty():
+		targets.append("res://maps/blocks")
+
+	var files: Array[String] = []
+	for target in targets:
+		if target.ends_with(".tscn"):
+			if not files.has(target):
+				files.append(target)
+		else:
+			_gather(target, files)
+	files.sort()
+
+	var what := targets[0] if targets.size() == 1 else "%d target(s)" % targets.size()
+	print("── %s %d block(s) under %s ──" % ["REWRITING" if _write else "DRY RUN on", files.size(), what])
+	for f in files:
+		_do(f)
+
+	print("")
+	print("  collision shapes: %d -> %d   (%d block(s) changed, %.0f%% saved)" % [
+		_total_before, _total_after, _changed,
+		0.0 if _total_before == 0 else float(_total_before - _total_after) / float(_total_before) * 100.0])
+	if not _skipped.is_empty():
+		print("  left alone (%d):" % _skipped.size())
+		for s in _skipped:
+			print("     %s" % s)
+	if not _write:
+		print("")
+		print("  nothing written. Re-run with --write to apply.")
+	quit(0)
+
+
+func _gather(dir_path: String, out: Array[String]) -> void:
+	var d := DirAccess.open(dir_path)
+	if d == null:
+		return
+	for sub in d.get_directories():
+		_gather(dir_path.path_join(sub), out)
+	for f in d.get_files():
+		if f.ends_with(".tscn"):
+			out.append(dir_path.path_join(f))
+
+
+## A block whose .map uses "special/clip" has collision its MESH DOES NOT
+## DESCRIBE: clip brushes are solid and do not render, so rebuilding collision
+## from the mesh silently throws them away. prop_jersey_barrier is the case
+## that proves it — its visible barrier is illusionary and its ONE collision
+## shape IS the clip box, so collapsing would replace a deliberate 1-shape
+## volume with a detailed trimesh of the barrier: more triangles, different
+## shape, and the hand-authoring undone. These blocks are already doing the
+## right thing and are left alone.
+func _uses_clip(tscn_path: String) -> bool:
+	var map_path := tscn_path.get_basename() + ".map"
+	var f := FileAccess.open(map_path, FileAccess.READ)
+	if f == null:
+		# No .map beside the .tscn is normal for hand-built blocks. Say nothing
+		# and let the mesh path handle it; an unreadable map would be caught by
+		# tools/test_block_collision.gd.
+		return false
+	var text := f.get_as_text()
+	f.close()
+	return text.contains("special/clip")
+
+
+func _do(path: String) -> void:
+	var packed: PackedScene = load(path)
+	if packed == null:
+		return
+	if _uses_clip(path):
+		_skipped.append("%s — built with special/clip; its collision is hand-authored and has no mesh" % path.get_file())
+		return
+	var root_node: Node = packed.instantiate()
+	var before := 0
+	var after := 0
+	var touched := false
+
+	for body in _static_bodies(root_node):
+		var shapes: Array = []
+		var mesh_node: MeshInstance3D = null
+		for c in body.get_children():
+			if c is CollisionShape3D:
+				shapes.append(c)
+			elif c is MeshInstance3D and mesh_node == null:
+				mesh_node = c
+		before += shapes.size()
+		# One shape already, or none: nothing to collapse.
+		if shapes.size() <= 1:
+			after += shapes.size()
+			continue
+		if mesh_node == null or mesh_node.mesh == null:
+			_skipped.append("%s/%s — shapes but no mesh to build a trimesh from" % [path.get_file(), body.name])
+			after += shapes.size()
+			continue
+		var tri: ConcavePolygonShape3D = mesh_node.mesh.create_trimesh_shape()
+		if tri == null or tri.get_faces().is_empty():
+			_skipped.append("%s/%s — trimesh came back empty" % [path.get_file(), body.name])
+			after += shapes.size()
+			continue
+		for s in shapes:
+			body.remove_child(s)
+			s.queue_free()
+		var merged := CollisionShape3D.new()
+		merged.name = "collision_merged"
+		merged.shape = tri
+		body.add_child(merged)
+		merged.owner = root_node
+		after += 1
+		touched = true
+
+	_total_before += before
+	_total_after += after
+	if before != after:
+		_changed += 1
+		print("  %-54s %5d -> %d" % [path.get_file(), before, after])
+
+	if touched and _write:
+		var out := PackedScene.new()
+		if out.pack(root_node) == OK:
+			var err := ResourceSaver.save(out, path)
+			if err != OK:
+				printerr("  could not write %s (%s)" % [path, error_string(err)])
+	root_node.free()
+
+
+func _static_bodies(n: Node) -> Array:
+	var out: Array = []
+	if n is StaticBody3D:
+		out.append(n)
+	for c in n.get_children():
+		out.append_array(_static_bodies(c))
+	return out

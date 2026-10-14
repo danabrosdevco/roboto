@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cvj084x34bsry"
+path="res://.godot/imported/mark_stack.map-5c5002ee4b67eecdc32274fcd77af999.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/mark_stack.map"
+dest_files=["res://.godot/imported/mark_stack.map-5c5002ee4b67eecdc32274fcd77af999.tres"]
+
+[params]
+

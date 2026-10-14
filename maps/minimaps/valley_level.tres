@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_hrwtp")
-level_scene_path = "res://maps/valley_level.tscn"
+level_scene_path = "res://maps/appendix/valley_level.tscn"
 image_path = "res://maps/minimaps/valley_level.png"
 world_min = Vector2(-99.8722, -105.686)
 world_max = Vector2(379.5, 373.686)

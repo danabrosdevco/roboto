@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://d34utocon7wiy"
+path="res://.godot/imported/trench_firebay.map-5cdc610fb40c322be2e4707ed05c2f6e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/trench_firebay.map"
+dest_files=["res://.godot/imported/trench_firebay.map-5cdc610fb40c322be2e4707ed05c2f6e.tres"]
+
+[params]
+

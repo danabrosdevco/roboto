@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://7fvicfvac2ko"
+path="res://.godot/imported/mark_statue.map-c008e2b859845182d79cf34a1bb12319.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/mark_statue.map"
+dest_files=["res://.godot/imported/mark_statue.map-c008e2b859845182d79cf34a1bb12319.tres"]
+
+[params]
+

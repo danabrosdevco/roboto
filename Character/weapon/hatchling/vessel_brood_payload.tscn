@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3]
+
+; VESSEL BROOD PAYLOAD — what comes out of a Vessel's canister.
+;
+; The SAME hatchling_payload.gd as the hand-thrown Hatchling Charge, with three
+; exported values changed. No new code, and deliberately a separate scene rather
+; than a retune of hatchling_payload.tscn: that one is the thrown charge's and is
+; balanced as a 75-compute grenade.
+;
+; WHY TWO AND NOT ONE. The Vessel costs 340 compute and three supply, and the
+; integration brief measured the frame as specified at "two single hoppers, each
+; alive for 25 seconds" — not a trade a player makes twice. The launcher holds
+; two canisters, so count = 2 makes a full bay four bodies released in two waves,
+; which is the supply-3 proposition.
+;
+; LIFETIME IS 45, NOT 0. 0.0 would read as "forever" and is a live bug in
+; hatchling_payload.gd: _expire_later does create_timer(lifetime, false) with no
+; zero guard, so a released unit would be destroyed on the next frame. 45 seconds
+; against the launcher's 30-second recharge is also what caps live offspring
+; without any of the enemy_nest.gd max_alive bookkeeping: the arithmetic holds
+; about four of them in the field and no more.
+
+[ext_resource type="Script" path="res://Character/weapon/hatchling/hatchling_payload.gd" id="1_payload"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/enemy_nest-chaser.tscn" id="2_hopper"]
+
+[node name="VesselBroodPayload" type="Node3D"]
+script = ExtResource("1_payload")
+unit_scene = ExtResource("2_hopper")
+count = 2
+unit_name = "HATCHLING"
+lifetime = 45.0
+seek_radius = 45.0

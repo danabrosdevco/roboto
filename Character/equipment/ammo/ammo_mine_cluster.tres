@@ -7,3 +7,4 @@ script = ExtResource("1_stock")
 ammo_type = &"mine_cluster"
 amount = 4
 capacity = 4
+requires_carrier = true

@@ -1,0 +1,70 @@
+[gd_scene load_steps=9 format=4]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_4wwwb"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_agavf"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="3_fipjy"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_3.tres" id="4_5bcgt"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/stone_3.tres" id="5_5ssx4"]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_7jg2q"]
+_surfaces = [{
+"aabb": AABB(-1, -4, -224, 2, 1e-05, 448),
+"attribute_data": PackedByteArray("AADgQQAAAD4AAODBAAAAPgAA4MEAAAC+AADgQQAAAL4="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAAACAAMA"),
+"material": ExtResource("3_fipjy"),
+"name": "PSX_Textures/concrete_tx_5",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AACAvwAAgMAAAGDDAACAvwAAgMAAAGBDAACAPwAAgMAAAGBDAACAPwAAgMAAAGDD/38AAP//////fwAA//////9/AAD//////38AAP////8=")
+}, {
+"aabb": AABB(-1, -0.0625, -224, 2, 1e-05, 448),
+"attribute_data": PackedByteArray("AADgwQAAAD4AAODBAAAAvgAA4EEAAAC+AADgQQAAAD4="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAAACAAMA"),
+"material": ExtResource("4_5bcgt"),
+"name": "PSX_Textures/concrete_3",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AACAvwAAgL0AAGDDAACAPwAAgL0AAGDDAACAPwAAgL0AAGBDAACAvwAAgL0AAGBD/3////9//7//f////3//v/9/////f/+//3////9//78=")
+}, {
+"aabb": AABB(-1, -4, -224, 2, 3.9375, 448),
+"attribute_data": PackedByteArray("AADgwQAAAD8AAODBAAAAPAAA4EEAAAA8AADgQQAAAD8AAAC+AAAAPwAAAL4AAAA8AAAAPgAAADwAAAA+AAAAPwAA4MEAAAA/AADgwQAAADwAAOBBAAAAPAAA4EEAAAA/AAAAvgAAAD8AAAC+AAAAPAAAAD4AAAA8AAAAPgAAAD8="),
+"format": 34359742487,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8A"),
+"material": ExtResource("5_5ssx4"),
+"name": "PSX_Textures/stone_3",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 16,
+"vertex_data": PackedByteArray("AACAvwAAgMAAAGDDAACAvwAAgL0AAGDDAACAvwAAgL0AAGBDAACAvwAAgMAAAGBDAACAvwAAgMAAAGBDAACAvwAAgL0AAGBDAACAPwAAgL0AAGBDAACAPwAAgMAAAGBDAACAPwAAgMAAAGBDAACAPwAAgL0AAGBDAACAPwAAgL0AAGDDAACAPwAAgMAAAGDDAACAPwAAgMAAAGDDAACAPwAAgL0AAGDDAACAvwAAgL0AAGDDAACAvwAAgMAAAGDDAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//7//f/9/////v/9//3////+//3//f////7//f/9/////v////3//////////f/////////9//////////3///////////wAA/7//////AAD/v/////8AAP+//////wAA/78=")
+}]
+
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_s1xqh"]
+vertices = PackedVector3Array(-1, -4, -224, -1, -4, 224, 1, -4, 224, 1, -4, -224, -1, -0.0625, -224, 1, -0.0625, -224, 1, -0.0625, 224, -1, -0.0625, 224, -1, -4, -224, -1, -0.0625, -224, -1, -0.0625, 224, -1, -4, 224, -1, -4, 224, -1, -0.0625, 224, 1, -0.0625, 224, 1, -4, 224, 1, -4, 224, 1, -0.0625, 224, 1, -0.0625, -224, 1, -4, -224, 1, -4, -224, 1, -0.0625, -224, -1, -0.0625, -224, -1, -4, -224)
+indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_t858i"]
+points = PackedVector3Array(-1, -4, -224, -1, -4, 224, 1, -4, 224, 1, -4, -224, -1, -0.0625, -224, 1, -0.0625, -224, 1, -0.0625, 224, -1, -0.0625, 224)
+
+[node name="CanalBench2" type="Node3D"]
+script = ExtResource("1_4wwwb")
+local_map_file = "res://maps/blocks/canal/canal_bench_2.map"
+map_settings = ExtResource("2_agavf")
+
+[node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
+collision_mask = 0
+
+[node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
+mesh = SubResource("ArrayMesh_7jg2q")
+
+[node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
+occluder = SubResource("ArrayOccluder3D_s1xqh")
+
+[node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConvexPolygonShape3D_t858i")

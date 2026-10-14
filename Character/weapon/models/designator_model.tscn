@@ -1,0 +1,143 @@
+[gd_scene load_steps=14 format=3]
+
+; THE DESIGNATOR — the tool that tells the squad to spend its own kit.
+;
+; IT IS NOT A GUN AND MUST NOT READ AS ONE. Every other thing in the player's
+; hands is a weapon, so this has to be legible as a different KIND of object in
+; the half-second it comes up: no magazine, no muzzle brake, no fins. A slab
+; with a screen on it and one lens at the front.
+;
+; THE SCREEN IS THE POINT, and it is angled back toward the camera rather than
+; sitting flat. In first person the viewmodel is seen from behind and slightly
+; above, so a flat panel is a sliver — this one is raked ~30 degrees so the
+; player can actually read what their squad is carrying.
+;
+; Phosphor on dark, the HUD's own colours, because it is a machine's readout.
+;
+; Scale matches the other viewmodels (autocannon body is 0.62 long, this is
+; 0.34) — it is a handheld unit, deliberately small beside a weapon.
+
+[sub_resource type="StandardMaterial3D" id="steel"]
+albedo_color = Color(0.2, 0.215, 0.22, 1)
+metallic = 0.6
+roughness = 0.45
+
+[sub_resource type="StandardMaterial3D" id="dark"]
+albedo_color = Color(0.07, 0.075, 0.08, 1)
+metallic = 0.45
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="grip"]
+albedo_color = Color(0.1, 0.11, 0.1, 1)
+metallic = 0.1
+roughness = 0.9
+
+; The readout. Emissive so it is lit from within — a screen the player reads in
+; a dark cockpit, not a painted panel.
+[sub_resource type="StandardMaterial3D" id="screen"]
+albedo_color = Color(0.055, 0.085, 0.075, 1)
+; The plane's UVs run the other way once it is raked back toward the player, so
+; the readout came out mirrored and upside down. Flipped here on the asset
+; rather than in whatever happens to be drawing it.
+uv1_scale = Vector3(-1, -1, 1)
+emission_enabled = true
+emission = Color(0.62, 0.95, 0.66, 1)
+emission_energy_multiplier = 0.9
+roughness = 1.0
+
+; The lens, brighter still: the one thing on it that is obviously ON.
+[sub_resource type="StandardMaterial3D" id="lens"]
+albedo_color = Color(0.62, 0.95, 0.66, 1)
+emission_enabled = true
+emission = Color(0.62, 0.95, 0.66, 1)
+emission_energy_multiplier = 2.2
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="m_body"]
+size = Vector3(0.225, 0.11, 0.34)
+
+[sub_resource type="BoxMesh" id="m_hood"]
+size = Vector3(0.212, 0.036, 0.168)
+
+; A PLANE, not a box. A BoxMesh gives every face its own slice of the UV
+; rectangle, so a texture put on it is cropped rather than mapped — the readout
+; lost its icon off the top and no amount of laying the content out differently
+; was ever going to fix that. A plane is one face with clean 0..1 UVs.
+[sub_resource type="PlaneMesh" id="m_screen"]
+size = Vector2(0.178, 0.131)
+
+[sub_resource type="BoxMesh" id="m_grip"]
+size = Vector3(0.075, 0.17, 0.095)
+
+[sub_resource type="CylinderMesh" id="m_barrel"]
+top_radius = 0.028
+bottom_radius = 0.034
+height = 0.13
+radial_segments = 10
+rings = 1
+
+[sub_resource type="CylinderMesh" id="m_lens"]
+top_radius = 0.021
+bottom_radius = 0.021
+height = 0.012
+radial_segments = 10
+rings = 1
+
+[sub_resource type="BoxMesh" id="m_rail"]
+size = Vector3(0.03, 0.022, 0.26)
+
+[sub_resource type="BoxMesh" id="m_button"]
+size = Vector3(0.026, 0.012, 0.03)
+
+[node name="DesignatorModel" type="Node3D"]
+
+[node name="Body" type="MeshInstance3D" parent="."]
+material_override = SubResource("steel")
+mesh = SubResource("m_body")
+
+; Raked back toward the camera so the readout is readable in first person.
+[node name="ScreenHood" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866, 0.5, 0, -0.5, 0.866, 0, 0.082, -0.06)
+material_override = SubResource("dark")
+mesh = SubResource("m_hood")
+
+[node name="Screen" type="MeshInstance3D" parent="."]
+; Seated on the HOOD's face, not guessed in world space: same basis as the hood,
+; pushed out along the hood's own up axis by half of each thickness plus a
+; sliver. Positioned by eye it sank inside the hood the moment the hood got
+; thicker and the readout vanished entirely.
+transform = Transform3D(1, 0, 0, 0, 0.866, 0.5, 0, -0.5, 0.866, 0, 0.1021, -0.0715)
+material_override = SubResource("screen")
+mesh = SubResource("m_screen")
+
+[node name="Grip" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.978, -0.208, 0, 0.208, 0.978, 0, -0.13, -0.075)
+material_override = SubResource("grip")
+mesh = SubResource("m_grip")
+
+[node name="Emitter" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.012, 0.225)
+material_override = SubResource("dark")
+mesh = SubResource("m_barrel")
+
+[node name="Lens" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.012, 0.29)
+material_override = SubResource("lens")
+mesh = SubResource("m_lens")
+
+[node name="RailL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.098, 0.025, 0.02)
+material_override = SubResource("dark")
+mesh = SubResource("m_rail")
+
+[node name="RailR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098, 0.025, 0.02)
+material_override = SubResource("dark")
+mesh = SubResource("m_rail")
+
+; The cycle button, under the thumb. Reload cycles the mode, and a button that
+; is visibly there is a button the player works out they can press.
+[node name="CycleButton" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.085, 0.062, 0.095)
+material_override = SubResource("lens")
+mesh = SubResource("m_button")

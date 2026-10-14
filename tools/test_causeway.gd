@@ -45,6 +45,7 @@ func _initialize() -> void:
 		quit(2))
 	await process_frame
 	await _causeway()
+	await _ramp_mount()
 	await _keep()
 	await _tower()
 	print("")
@@ -135,6 +136,82 @@ func _causeway() -> void:
 			widest += 0.5 if Vector2(near.x - q.x, near.z - q.z).length() < 0.5 else 0.0
 		_check("%s is wide enough for the rover" % kinds[i], widest >= ROVER_W,
 				"only %.1f m of walkable deck across it" % widest)
+	root.remove_child(region)
+	region.free()
+
+
+## GETTING ON TO THE RAMP, which is a different question from walking the deck
+## and nothing above asks it. The report was "the squad can't get onto the
+## first ramp": the approach was one 16 m strip with a wall down each side, so
+## a body coming at it from off to the side met the flank — a 1.6 m step up —
+## and had to walk back out and funnel in at the end. The mouth flares to fix
+## that, and the human asked for the flare specifically.
+##
+## Nothing guarded it, so a fix for something else nearly took it out: the
+## flare's own parapet ended a metre short of the span's, and that wall end
+## put two navmesh boundary vertices 0.19 m apart in the deck's contour. The
+## navigation map keys points into 0.25 m cells, so it read them as one point,
+## refused to merge the edge a third time and dropped the deck into a single
+## degenerate polygon. The walk above failed 109 m away, which pointed at
+## everything except the ramp.
+##
+## So: measure the approach, not just the crossing. Measured on the bake, the
+## pre-flare piece gives 15.0 m walkable at the mouth, 17.0 m at mid-climb and
+## a worst detour of x1.18; flared it gives 29.3 m, 21.8 m and x1.10. The
+## thresholds below sit between the two pairs, so losing the flare fails here
+## and breaking it fails above. If one of them starts flickering, read it as
+## the bake having moved and measure again before moving the number.
+func _ramp_mount() -> void:
+	var region := _stage()
+	# A bank wide enough to come at the ramp from well off to one side.
+	_ground(region, Vector3(0.0, 0.0, -54.0), Vector2(160.0, 60.0), 0.0)
+	_place(region, CAUSEWAY_DIR.path_join("causeway_ramp.tscn"), Vector3.ZERO)
+	_place(region, CAUSEWAY_DIR.path_join("causeway_span.tscn"), Vector3(0.0, 0.0, 24.0))
+	region.bake_navigation_mesh(false)
+	for _i in 3:
+		await physics_frame
+	var map := region.get_navigation_map()
+	# One unbroken surface, not two with a ridge between them, so the width
+	# that counts is the longest run without a gap rather than the total.
+	for pair: Array in [["the mouth", -23.0, 24.0], ["mid-climb", -12.0, 19.0]]:
+		var z: float = pair[1]
+		# The ramp's own surface at z, since a query from far above it can
+		# answer with the ground beside the ramp instead.
+		var y: float = 4.0 * (z + 24.0) / 24.0 + 0.1
+		var run := 0.0
+		var best := 0.0
+		for i in range(-72, 73):
+			var x: float = i * 0.25
+			var near := NavigationServer3D.map_get_closest_point(map, Vector3(x, y, z))
+			if Vector2(near.x - x, near.z - z).length() < 0.25:
+				run += 0.25
+				best = maxf(best, run)
+			else:
+				run = 0.0
+		_check("the ramp is continuously walkable across %s" % pair[0], best >= float(pair[2]),
+				"the widest unbroken stretch is %.1f m, under the %.0f m the flare gives" % [best, pair[2]])
+	# And a body off to the side walks on where it stands, instead of walking
+	# back out to the centre line first.
+	var deck := NavigationServer3D.map_get_closest_point(map, Vector3(0.0, 4.5, 20.0))
+	var worst := 0.0
+	var worst_at := 0.0
+	var stranded := 0
+	for dx: float in [-40.0, -24.0, -16.0, -8.0, 0.0, 8.0, 16.0, 24.0, 40.0]:
+		var from := NavigationServer3D.map_get_closest_point(map, Vector3(dx, 0.5, -34.0))
+		var route := NavigationServer3D.map_get_path(map, from, deck, true)
+		var walked := 0.0
+		for i in route.size() - 1:
+			walked += route[i].distance_to(route[i + 1])
+		if route.size() == 0 or (route[route.size() - 1] as Vector3).distance_to(deck) > 2.0:
+			stranded += 1
+			continue
+		var direct := from.distance_to(deck)
+		if direct > 0.0 and walked / direct > worst:
+			worst = walked / direct
+			worst_at = dx
+	_check("the squad gets onto the ramp from off to the side", stranded == 0 and worst < 1.15,
+			"%d of 9 approaches never arrive, and the worst walks x%.2f the direct distance (from x %+.0f)"
+			% [stranded, worst, worst_at])
 	root.remove_child(region)
 	region.free()
 

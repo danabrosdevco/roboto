@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c0niqhvbvo2nf"
+path="res://.godot/imported/street_sidewalk_run.map-4b182f28d834d0864a20b4e9d65afdbc.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_sidewalk_run.map"
+dest_files=["res://.godot/imported/street_sidewalk_run.map-4b182f28d834d0864a20b4e9d65afdbc.tres"]
+
+[params]
+

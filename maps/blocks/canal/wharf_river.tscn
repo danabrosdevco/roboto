@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=4]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_utse4"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_g5gtn"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/water_2.tres" id="3_sgkof"]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_hj6je"]
+_surfaces = [{
+"aabb": AABB(-160, -0.09375, -300, 320, 0.1875, 600),
+"attribute_data": PackedByteArray("AAAWQgAAIEIAABbCAAAgQgAAFsIAAAAAAAAWQgAAAAAAABbCAAAgQgAAFsIAAAAAAAAWQgAAAAAAABZCAAAgQgAAFsIAAKY+AAAWwgAAmj4AABZCAACaPgAAFkIAAKY+AAAgwgAApj4AACDCAACaPgAAAAAAAJo+AAAAAAAApj4AABbCAACmPgAAFsIAAJo+AAAWQgAAmj4AABZCAACmPgAAAAAAAKY+AAAAAAAAmj4AACBCAACaPgAAIEIAAKY+"),
+"format": 34359742487,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcA"),
+"material": ExtResource("3_sgkof"),
+"name": "PSX_Textures/water_2",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AAAgwwAAwL0AAJbDAAAgwwAAwL0AAJZDAAAgQwAAwL0AAJZDAAAgQwAAwL0AAJbDAAAgwwAAwD0AAJbDAAAgQwAAwD0AAJbDAAAgQwAAwD0AAJZDAAAgwwAAwD0AAJZDAAAgwwAAwL0AAJbDAAAgwwAAwD0AAJbDAAAgwwAAwD0AAJZDAAAgwwAAwL0AAJZDAAAgwwAAwL0AAJZDAAAgwwAAwD0AAJZDAAAgQwAAwD0AAJZDAAAgQwAAwL0AAJZDAAAgQwAAwL0AAJZDAAAgQwAAwD0AAJZDAAAgQwAAwD0AAJbDAAAgQwAAwL0AAJbDAAAgQwAAwL0AAJbDAAAgQwAAwD0AAJbDAAAgwwAAwD0AAJbDAAAgwwAAwL0AAJbD/38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+/")
+}]
+
+[node name="WharfRiver" type="Node3D"]
+script = ExtResource("1_utse4")
+local_map_file = "res://maps/blocks/canal/wharf_river.map"
+map_settings = ExtResource("2_g5gtn")
+
+[node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
+collision_mask = 0
+
+[node name="entity_1_func_detail_illusionary" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -160, -2.5, 0)
+metadata/func_godot_mesh_data = {}
+
+[node name="entity_1_mesh_instance" type="MeshInstance3D" parent="entity_1_func_detail_illusionary"]
+mesh = SubResource("ArrayMesh_hj6je")

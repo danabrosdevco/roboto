@@ -1,0 +1,973 @@
+[gd_scene load_steps=12 format=3]
+
+; ─────────────────────────────────────────────
+; CAUSEWAY — THE GAMEPLAY LAYER, AS ITS OWN SCENE.
+;
+; The largest map in the repo and the end of the ladder. It has had no mission
+; at all: before this, maps/causeway_level.tscn held an art instance, a nav
+; region, ninety-eight tower lamps and one Marker3D. Nothing else.
+;
+; Same split as Georgetown and Polaris — the gameplay lives here, and
+; tools/mission_ops.sh instances it — but for a different reason. This level is
+; HAND-BUILT and is not regenerated, so the file is safe; what is not safe is
+; putting two hundred nodes into a .tscn that also carries ninety-eight lights
+; and then having to find anything in it. The split is for the reader here.
+;
+; ── THE GROUND, MEASURED ─────────────────────
+; Everything below was walked with tools/probe_mission_anchors.gd against the
+; baked navmesh in maps/causeway_level_nav.tres. The whole thing is one
+; connected piece from the west bank to the top of the tower: 2,054 m of path.
+;
+;   WEST BANK      x -580..-320, y  1   ruins, a terrace row, a warehouse.
+;                                       The end of the old highway.
+;   THE CAUSEWAY   x -300..+324, y  5   thirteen 48 m spans, 16 m of deck with
+;                                       a 1 m parapet each side and NOTHING
+;                                       else on it. Two spans are shelled
+;                                       (x -132 and x +108): the north half of
+;                                       the deck is gone over 20 m and the lane
+;                                       pinches to 7 m. Three more have settled.
+;   THE GLACIS     x +324..+430, y  1   wire, teeth, T-walls, two sangars, two
+;                                       sentry turrets, a checkpoint and two gun
+;                                       emplacements, then 60 m of ramp up to
+;                                       the gate.
+;   THE FORT       x +430..+630, y 10   200 m square podium. Walls 8 m thick to
+;                                       a walk at 14 and bastions at 18. ONE
+;                                       opening: the 16 m gateway in the west
+;                                       wall. The outworks (mortar pits, command
+;                                       bunker, ammunition dump) are OUTSIDE it.
+;   THE PIT        x +618..+558        24 m wide, 1 in 6, down from the yard to
+;                                       the basement. On the far side of the
+;                                       yard from the gate on purpose.
+;   THE TOWER      y 0..138            TWENTY-FOUR data halls, 41 m square, 6 m
+;                                       floor to floor, one 7 m ramp per floor
+;                                       rotating round the four walls. Rack rows
+;                                       with 5 m aisles, and a clear lane 7 m in
+;                                       from every wall.
+;
+; TWO THINGS THE MEASUREMENT SETTLED that change the design:
+;
+;   1. THE OLD CARRIAGEWAY IS NOT A ROUTE. The seven piers at z = +30 bake as
+;      isolated stubs — (-276, 1, 30), (12, 1, 30) and (108, 1, 30) all come
+;      back UNREACHABLE. They are a silhouette beside the crossing, not a flank,
+;      so nothing is posted on them and no route uses them.
+;   2. THE CROWN IS NOT WALKABLE. Everything asked for above y = 138 snaps back
+;      to 138, so the top data hall is the top of the map. The uplink and the
+;      pad are both on it, at opposite ends of the hall — which is the last
+;      41 m of the operation and is meant to be crossed under fire.
+;
+; ── WHAT THE OPERATION IS ────────────────────
+; Three fights of completely different shapes, in a row, which is the reason
+; this map is the finale rather than another town:
+;
+;   1. A KILOMETRE OF OPEN DECK. There is no cover on the causeway worth the
+;      word, so this cannot be a long-range attrition fight or it is the thing
+;      the map deck already ruled is not fun. It is built as THREE CLOSE-RANGE
+;      POCKETS instead — the two shelled spans and the midpoint — held by
+;      shotguns, chasers and hoppers who are already in the 7 m pinch when you
+;      get there. Nothing on the deck is a marksman. The long guns are in the
+;      fort where they belong and only reach the last third.
+;   2. A FORTRESS WITH ONE DOOR. Dug-in armour on a glacis, then a gateway, then
+;      a 200 m yard overlooked from a wall walk on all four sides.
+;   3. AN INTERIOR, TWENTY-FOUR FLOORS OF IT. The one real interior in the
+;      project. Every floor is a 41 m room with one way in and one way on, and
+;      the upper halls are held back as reserves so the body count rises as you
+;      climb instead of all of it being awake from the basement.
+; ─────────────────────────────────────────────
+
+[ext_resource type="Script" path="res://Campaign/squad_spawn_point.gd" id="2_squad"]
+[ext_resource type="PackedScene" uid="uid://62y43tyd5sx6" path="res://Env/world_objects/squad_objective_point.tscn" id="3_post"]
+[ext_resource type="PackedScene" uid="uid://v7tw1nq0fdn0" path="res://Managers/AI/patrol_path.tscn" id="4_route"]
+[ext_resource type="PackedScene" uid="uid://b7uq15mvhy6vq" path="res://Managers/AI/patrol_point.tscn" id="5_point"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point_small.tscn" id="6_capture"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point.tscn" id="10_capture_mid"]
+[ext_resource type="PackedScene" path="res://Env/world_objects/compute_core_point_large.tscn" id="11_capture_big"]
+[ext_resource type="Script" path="res://Campaign/eliminate_objective.gd" id="7_eliminate"]
+[ext_resource type="Script" path="res://Campaign/reach_objective.gd" id="8_reach"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="9_exit"]
+
+[sub_resource type="SphereShape3D" id="Sphere_cway_extract"]
+radius = 10.0
+
+[node name="CausewayOps" type="Node3D"]
+
+; NO MissionStart IN HERE, unlike the other two ops layers. The causeway level
+; is hand-built and is not regenerated, so its own PlayerSpawn is safe and is
+; already in the right place — the west bank at (-500, 1.24, 30), the end of the
+; old highway. The root's `spawn_point` keeps pointing at it and
+; tools/mission_ops.sh does not touch this level's root at all.
+;
+; One thing about it DID have to change: it was authored at identity, which
+; faces -Z, and the causeway runs east. The first thing on screen was the empty
+; north shore rather than the crossing. It is yawed -90 in the level file now.
+[node name="SquadSpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -506, 1.24, 24)
+script = ExtResource("2_squad")
+max_slots = 999
+
+[node name="Posts" type="Node" parent="."]
+
+; ── THE WEST BANK. The end of the old highway. ──
+[node name="CW_Terrace" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -575, 1, 30)
+objective_name = "The Terrace Row"
+tag = &"obj_cway_terrace"
+show_debug_label = false
+
+[node name="CW_RuinWest" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -560, 1, -70)
+objective_name = "The West Ruin"
+tag = &"obj_cway_ruin_west"
+show_debug_label = false
+
+[node name="CW_RuinSouth" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -520, 1, 62)
+objective_name = "The South Ruin"
+tag = &"obj_cway_ruin_south"
+show_debug_label = false
+
+[node name="CW_Bank" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -500, 1, 0)
+objective_name = "The West Bank"
+tag = &"obj_cway_bank"
+show_debug_label = false
+
+[node name="CW_Warehouse" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -430, 1, -40)
+objective_name = "The Warehouse"
+tag = &"obj_cway_warehouse"
+show_debug_label = false
+
+[node name="CW_Approach" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -390, 1, 48)
+objective_name = "The Approach Road"
+tag = &"obj_cway_approach"
+show_debug_label = false
+
+[node name="CW_Staging" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -350, 1, 30)
+objective_name = "The Staging Yard"
+tag = &"obj_cway_staging"
+show_debug_label = false
+
+[node name="CW_RampWest" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -300, 3, 0)
+objective_name = "West Ramp"
+tag = &"obj_cway_ramp_west"
+show_debug_label = false
+
+; ── THE CAUSEWAY. Only the two shelled spans and the midpoint are fights. ──
+; The two breaches are where the deck pinches to a 7 m lane, so they are the
+; only places on 620 m of crossing where the ground does any work — which is
+; why the defence is concentrated there and the spans between them are thin.
+[node name="CW_DeckWest" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -250, 5, 0)
+objective_name = "The West Deck"
+tag = &"obj_cway_deck_west"
+show_debug_label = false
+
+[node name="CW_DeckA" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -180, 5, 0)
+objective_name = "The Fourth Span"
+tag = &"obj_cway_deck_a"
+show_debug_label = false
+
+[node name="CW_BreachWest" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -132, 5, 0)
+objective_name = "The West Breach"
+tag = &"obj_cway_breach_west"
+show_debug_label = false
+
+[node name="CW_DeckB" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -84, 5, 0)
+objective_name = "The Sixth Span"
+tag = &"obj_cway_deck_b"
+show_debug_label = false
+
+[node name="CW_DeckMid" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 5, 0)
+objective_name = "Mid Causeway"
+tag = &"obj_cway_deck_mid"
+show_debug_label = false
+
+[node name="CW_BreachEast" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 108, 5, 0)
+objective_name = "The East Breach"
+tag = &"obj_cway_breach_east"
+show_debug_label = false
+
+[node name="CW_DeckC" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 156, 5, 0)
+objective_name = "The Eleventh Span"
+tag = &"obj_cway_deck_c"
+show_debug_label = false
+
+[node name="CW_DeckD" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 204, 5, 0)
+objective_name = "The Twelfth Span"
+tag = &"obj_cway_deck_d"
+show_debug_label = false
+
+[node name="CW_DeckEast" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 252, 5, 0)
+objective_name = "The East Deck"
+tag = &"obj_cway_deck_east"
+show_debug_label = false
+
+[node name="CW_RampEast" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 300, 3, 0)
+objective_name = "East Ramp"
+tag = &"obj_cway_ramp_east"
+show_debug_label = false
+
+; ── THE GLACIS. A hundred metres of prepared ground. ──
+[node name="CW_Toe" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 330, 1, 0)
+objective_name = "The Toe Of The Ramp"
+tag = &"obj_cway_toe"
+show_debug_label = false
+
+[node name="CW_Wire" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 344, 1, 0)
+objective_name = "The Wire"
+tag = &"obj_cway_wire"
+show_debug_label = false
+
+[node name="CW_Checkpoint" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 352, 1, 58)
+objective_name = "The Checkpoint"
+tag = &"obj_cway_checkpoint"
+show_debug_label = false
+
+[node name="CW_Teeth" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 356, 1, 0)
+objective_name = "The Dragon's Teeth"
+tag = &"obj_cway_teeth"
+show_debug_label = false
+
+[node name="CW_SangarN" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 374, 1, -34)
+objective_name = "North Sangar"
+tag = &"obj_cway_sangar_n"
+show_debug_label = false
+
+[node name="CW_SangarS" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 374, 1, 34)
+objective_name = "South Sangar"
+tag = &"obj_cway_sangar_s"
+show_debug_label = false
+
+[node name="CW_Hesco" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 388, 1, -52)
+objective_name = "The Hesco Line"
+tag = &"obj_cway_hesco"
+show_debug_label = false
+
+[node name="CW_GunN" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 404, 1, -86)
+objective_name = "North Gun"
+tag = &"obj_cway_gun_n"
+show_debug_label = false
+
+[node name="CW_GunS" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 404, 1, 86)
+objective_name = "South Gun"
+tag = &"obj_cway_gun_s"
+show_debug_label = false
+
+; THE OUTSIDE RAMP, 60 m at 1 in 6, 16 m wide. The only way off the glacis and
+; onto the fort. An anchor at ground height anywhere along it is in the air —
+; at x 420 the deck is already 8.3 m up, and (420, 1, 0) comes back unreachable
+; because the nearest mesh is the gateway floor above it. These two are ON the
+; ramp surface.
+[node name="CW_GateRamp" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 410, 7, 0)
+objective_name = "The Gate Ramp"
+tag = &"obj_cway_gate_ramp"
+show_debug_label = false
+
+[node name="CW_Gate" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 434, 10, 0)
+objective_name = "The West Gate"
+tag = &"obj_cway_gate"
+show_debug_label = false
+
+; ── THE FORT. The yard, the walk, the four bastions and the pit. ──
+[node name="CW_YardWest" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 470, 10, 0)
+objective_name = "The West Yard"
+tag = &"obj_cway_yard_west"
+show_debug_label = false
+
+[node name="CW_YardNW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 470, 10, -60)
+objective_name = "Yard, North-West"
+tag = &"obj_cway_yard_nw"
+show_debug_label = false
+
+[node name="CW_YardSW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 470, 10, 60)
+objective_name = "Yard, South-West"
+tag = &"obj_cway_yard_sw"
+show_debug_label = false
+
+[node name="CW_YardN" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 10, -70)
+objective_name = "Yard, North"
+tag = &"obj_cway_yard_n"
+show_debug_label = false
+
+[node name="CW_YardS" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 10, 70)
+objective_name = "Yard, South"
+tag = &"obj_cway_yard_s"
+show_debug_label = false
+
+[node name="CW_YardEast" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 590, 10, 60)
+objective_name = "The East Yard"
+tag = &"obj_cway_yard_east"
+show_debug_label = false
+
+; The bastion platforms stand 4 m above the walk and the walk climbs to meet
+; them along both adjoining walls, so all four are walkable and all four look
+; down on the yard. They are the best marksman ground on the map.
+[node name="CW_BastionNW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 441, 18, -89)
+objective_name = "North-West Bastion"
+tag = &"obj_cway_bastion_nw"
+show_debug_label = false
+
+[node name="CW_BastionSW" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 441, 18, 89)
+objective_name = "South-West Bastion"
+tag = &"obj_cway_bastion_sw"
+show_debug_label = false
+
+[node name="CW_BastionNE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 619, 18, -89)
+objective_name = "North-East Bastion"
+tag = &"obj_cway_bastion_ne"
+show_debug_label = false
+
+[node name="CW_BastionSE" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 619, 18, 89)
+objective_name = "South-East Bastion"
+tag = &"obj_cway_bastion_se"
+show_debug_label = false
+
+[node name="CW_WalkN" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 14, -96)
+objective_name = "North Wall Walk"
+tag = &"obj_cway_walk_n"
+show_debug_label = false
+
+[node name="CW_WalkS" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 14, 96)
+objective_name = "South Wall Walk"
+tag = &"obj_cway_walk_s"
+show_debug_label = false
+
+; THE EAST WALL HAS A SIXTEEN-METRE GAP IN IT AT z 0, where the pit head comes
+; through — _citadel_rim builds the east curtain in two lengths either side of
+; it exactly as it does the west curtain either side of the gate. So the walk
+; is not a circuit: it is broken at the gatehouse AND here, into a northern L
+; and a southern one. (626, 14, 0) reads 5.9 m off the mesh and snaps down to
+; the pit head for precisely that reason, which is how the gap was found.
+[node name="CW_WalkEN" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 626, 14, -40)
+objective_name = "East Wall Walk, North"
+tag = &"obj_cway_walk_e"
+show_debug_label = false
+
+[node name="CW_WalkES" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 626, 14, 40)
+objective_name = "East Wall Walk, South"
+tag = &"obj_cway_walk_es"
+show_debug_label = false
+
+; The pit, from its head on the yard down to the portal in the tower's east
+; face. Only the two ends are posted: the slope between them is 1 in 6 and an
+; anchor part-way down it at a guessed height is in the air — (590, 3, 0) and
+; (570, 1, 0) both came back unreachable for exactly that reason.
+[node name="CW_PitHead" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 620, 10, 0)
+objective_name = "The Pit Head"
+tag = &"obj_cway_pit_head"
+show_debug_label = false
+
+[node name="CW_PitFloor" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 556, 0, 0)
+objective_name = "The Pit Floor"
+tag = &"obj_cway_pit_floor"
+show_debug_label = false
+
+[node name="CW_Portal" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 545, 0, 0)
+objective_name = "The Tower Portal"
+tag = &"obj_cway_portal"
+show_debug_label = false
+
+; ── THE OUTWORKS, outside the curtain wall. ──
+; These are the only things on this map that can hit the player without being
+; reachable from where the player is standing: the two guns range the last
+; third of the causeway and the two mortar pits range the yard. Both pairs get
+; an optional objective, because the point of an optional objective here is
+; "take away a thing that is shooting you from somewhere you are not".
+[node name="CW_MortarN" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 452, 1, -132)
+objective_name = "North Mortar Pit"
+tag = &"obj_cway_mortar_n"
+show_debug_label = false
+
+[node name="CW_MortarS" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 486, 1, 136)
+objective_name = "South Mortar Pit"
+tag = &"obj_cway_mortar_s"
+show_debug_label = false
+
+[node name="CW_Bunker" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 520, 1, -148)
+objective_name = "The Command Bunker"
+tag = &"obj_cway_bunker"
+show_debug_label = false
+
+[node name="CW_Ammo" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 556, 1, 142)
+objective_name = "The Ammunition Dump"
+tag = &"obj_cway_ammo"
+show_debug_label = false
+
+[node name="CW_OutsideN" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 1, -110)
+objective_name = "Outside The North Wall"
+tag = &"obj_cway_outside_n"
+show_debug_label = false
+
+[node name="CW_OutsideS" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 1, 110)
+objective_name = "Outside The South Wall"
+tag = &"obj_cway_outside_s"
+show_debug_label = false
+
+[node name="CW_FloodEast" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 648, 1, 0)
+objective_name = "The East Floodlight"
+tag = &"obj_cway_flood_east"
+show_debug_label = false
+
+[node name="CW_SangarEast" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 660, 1, -48)
+objective_name = "The East Sangar"
+tag = &"obj_cway_sangar_east"
+show_debug_label = false
+
+; ── THE TOWER. One post per floor, all twenty-four. ──
+;
+; WHICH SIDE OF THE HALL EACH ONE IS ON IS NOT ARBITRARY. The ramp up from
+; floor n sits against one of the four inside walls and rotates with n % 4, so
+; the hole you come UP through on floor n is above the ramp from n-1:
+;
+;   n % 4 == 1  you arrive on the +z side   ->  post on -x, at x 513
+;   n % 4 == 2  you arrive on the +x side   ->  post on -x, at x 513
+;   n % 4 == 3  you arrive on the -z side   ->  post on +z, at z 17
+;   n % 4 == 0  you arrive on the -x side   ->  post on +z, at z 17
+;
+; So the garrison is always across the room from the stairwell rather than
+; standing on top of it, and every floor is entered the same way: through a
+; hole, into a 41 m room, with the defence on the far side of it.
+;
+; x 513 and z 17 are both in the clear lane 7 m in from the wall. The rack rows
+; run x 516.5..543.5 on a 7 m pitch, so the hall centre is racks and aisles and
+; the perimeter is the only ground a squad can actually form up on.
+;
+; FLOOR 0 is the exception twice over: it is the hall you come in to through
+; the portal in the +x face, and block_fortress leaves it empty of racks on
+; purpose so the fight has room to start. Both of its posts are authored.
+[node name="CW_Hall00" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 0, 0)
+objective_name = "The Basement Hall"
+tag = &"obj_cway_hall_00"
+show_debug_label = false
+
+[node name="CW_Hall00Far" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 0, 17)
+objective_name = "Basement Hall, North"
+tag = &"obj_cway_hall_00n"
+show_debug_label = false
+
+[node name="CW_Hall01" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 6, 0)
+objective_name = "Hall One"
+tag = &"obj_cway_hall_01"
+show_debug_label = false
+
+[node name="CW_Hall02" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 12, 0)
+objective_name = "Hall Two"
+tag = &"obj_cway_hall_02"
+show_debug_label = false
+
+[node name="CW_Hall03" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 18, 17)
+objective_name = "Hall Three"
+tag = &"obj_cway_hall_03"
+show_debug_label = false
+
+[node name="CW_Hall04" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 24, 17)
+objective_name = "Hall Four"
+tag = &"obj_cway_hall_04"
+show_debug_label = false
+
+[node name="CW_Hall05" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 30, 0)
+objective_name = "Hall Five"
+tag = &"obj_cway_hall_05"
+show_debug_label = false
+
+[node name="CW_Hall06" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 36, 0)
+objective_name = "Hall Six"
+tag = &"obj_cway_hall_06"
+show_debug_label = false
+
+[node name="CW_Hall07" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 42, 17)
+objective_name = "Hall Seven"
+tag = &"obj_cway_hall_07"
+show_debug_label = false
+
+[node name="CW_Hall08" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 48, 17)
+objective_name = "Hall Eight"
+tag = &"obj_cway_hall_08"
+show_debug_label = false
+
+[node name="CW_Hall09" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 54, 0)
+objective_name = "Hall Nine"
+tag = &"obj_cway_hall_09"
+show_debug_label = false
+
+[node name="CW_Hall10" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 60, 0)
+objective_name = "Hall Ten"
+tag = &"obj_cway_hall_10"
+show_debug_label = false
+
+[node name="CW_Hall11" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 66, 17)
+objective_name = "Hall Eleven"
+tag = &"obj_cway_hall_11"
+show_debug_label = false
+
+; THE FIRST SET-BACK. The shaft steps in here, which makes this the halfway
+; mark of the climb and the one floor worth taking as an objective on the way
+; up. Both sides posted, same as the basement.
+[node name="CW_Hall12" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 72, 0)
+objective_name = "The Twelfth Hall"
+tag = &"obj_cway_hall_12"
+show_debug_label = false
+
+[node name="CW_Hall12Far" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 72, 17)
+objective_name = "Twelfth Hall, North"
+tag = &"obj_cway_hall_12n"
+show_debug_label = false
+
+[node name="CW_Hall13" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 78, 0)
+objective_name = "Hall Thirteen"
+tag = &"obj_cway_hall_13"
+show_debug_label = false
+
+[node name="CW_Hall14" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 84, 0)
+objective_name = "Hall Fourteen"
+tag = &"obj_cway_hall_14"
+show_debug_label = false
+
+[node name="CW_Hall15" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 90, 17)
+objective_name = "Hall Fifteen"
+tag = &"obj_cway_hall_15"
+show_debug_label = false
+
+[node name="CW_Hall16" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 96, 17)
+objective_name = "Hall Sixteen"
+tag = &"obj_cway_hall_16"
+show_debug_label = false
+
+[node name="CW_Hall17" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 102, 0)
+objective_name = "Hall Seventeen"
+tag = &"obj_cway_hall_17"
+show_debug_label = false
+
+[node name="CW_Hall18" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 108, 0)
+objective_name = "Hall Eighteen"
+tag = &"obj_cway_hall_18"
+show_debug_label = false
+
+[node name="CW_Hall19" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 114, 17)
+objective_name = "Hall Nineteen"
+tag = &"obj_cway_hall_19"
+show_debug_label = false
+
+[node name="CW_Hall20" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 120, 17)
+objective_name = "Hall Twenty"
+tag = &"obj_cway_hall_20"
+show_debug_label = false
+
+[node name="CW_Hall21" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 126, 0)
+objective_name = "Hall Twenty-One"
+tag = &"obj_cway_hall_21"
+show_debug_label = false
+
+[node name="CW_Hall22" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 132, 0)
+objective_name = "Hall Twenty-Two"
+tag = &"obj_cway_hall_22"
+show_debug_label = false
+
+; THE TOP HALL, 138 m up, and the top of the walkable map — everything above
+; it snaps back to this floor, so the crown between the horns is a silhouette
+; and not a place. The uplink is at x 513 and the pad is at z 17, which puts
+; the last 41 m of the operation between the two.
+[node name="CW_Hall23" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 513, 138, 0)
+objective_name = "The Top Hall"
+tag = &"obj_cway_hall_23"
+show_debug_label = false
+
+[node name="CW_Hall23Far" parent="Posts" instance=ExtResource("3_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 138, 17)
+objective_name = "Top Hall, North"
+tag = &"obj_cway_hall_23n"
+show_debug_label = false
+
+; ── THE ROUTES ───────────────────────────────
+[node name="Routes" type="Node" parent="."]
+
+[node name="PatrolBank" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_cway_bank"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolBank" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -560, 1, -70)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolBank" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -500, 1, 0)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolBank" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -430, 1, -40)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolBank" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -350, 1, 30)
+display_index = 3
+
+; UP AND DOWN THE DECK, which is the only shape a patrol can have out there:
+; 16 m wide with a parapet each side and no side turnings for 620 m.
+[node name="PatrolDeck" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_cway_deck"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolDeck" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -250, 5, 0)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolDeck" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -84, 5, 0)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolDeck" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 5, 0)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolDeck" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 204, 5, 0)
+display_index = 3
+
+[node name="PatrolGlacis" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_cway_glacis"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolGlacis" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 404, 1, -86)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolGlacis" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 374, 1, -34)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolGlacis" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 352, 1, 58)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolGlacis" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 404, 1, 86)
+display_index = 3
+
+[node name="PatrolYard" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_cway_yard"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolYard" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 470, 10, 0)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolYard" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 10, -70)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolYard" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 590, 10, 60)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolYard" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 10, 70)
+display_index = 3
+
+; THE WALL WALK IS TWO RUNS, NOT A CIRCUIT. It is cut at the gatehouse in the
+; west wall and again at the pit head in the east, so each half is an L from
+; one bastion along a wall to the next and then down the east side as far as
+; the gap. Authored as two routes rather than one loop: a single route spanning
+; both halves would have the squad path down a ramp, across two hundred metres
+; of yard and back up the far side on every lap, which is not a wall patrol.
+[node name="PatrolWallsNorth" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_cway_walls_n"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolWallsNorth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 441, 18, -89)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolWallsNorth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 14, -96)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolWallsNorth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 619, 18, -89)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolWallsNorth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 626, 14, -40)
+display_index = 3
+
+[node name="PatrolWallsSouth" parent="Routes" node_paths=PackedStringArray("points") instance=ExtResource("4_route")]
+tag = &"patrol_cway_walls_s"
+points = [NodePath("P1"), NodePath("P2"), NodePath("P3"), NodePath("P4")]
+ping_pong = true
+arrow_size = 2.0
+
+[node name="P1" parent="Routes/PatrolWallsSouth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 441, 18, 89)
+display_index = 0
+
+[node name="P2" parent="Routes/PatrolWallsSouth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 14, 96)
+display_index = 1
+
+[node name="P3" parent="Routes/PatrolWallsSouth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 619, 18, 89)
+display_index = 2
+
+[node name="P4" parent="Routes/PatrolWallsSouth" instance=ExtResource("5_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 626, 14, 40)
+display_index = 3
+
+; ── THE OBJECTIVES ───────────────────────────
+; Seven captures and a pad, in the order the ground takes them, and the channel
+; is the clock: six seconds on the west bank, twenty-four at the top of the
+; tower. Each one is also the trigger for what answers it — a reserve's
+; reinforcement_tag IS an objective id.
+;
+; ── CORE SIZES, AND WHY THE BIGGEST FIGHT HAS THE SMALLEST CORE ──
+; Measured collision, not the heights in docs/BLOCKS.md:
+;   small   1.88 x 1.88,  4.19 m tall
+;   medium  3.38 x 3.38,  6.97 m tall
+;   large   5.19 x 5.19, 12.38 m tall
+;
+; THE TOWER CANNOT TAKE ANYTHING BUT SMALL. Floors are 6 m apart and each plate
+; is 0.75 thick, so a data hall has about 5.25 m of clear height — a medium
+; core is 6.97 and would come up through the floor above it. That settles the
+; basement, the twelfth and the CROWN UPLINK, which is the last objective in
+; the campaign and gets the smallest core on the map because the room it stands
+; in says so. The fort yard is where the big one goes: 200 m square, open sky.
+;
+; Each core is also YAWED so its service alcove — the prefab's -X, and the one
+; spot a body can stand while it channels — faces the way the squad arrives.
+; docs/BLOCKS.md asks for this and no map in the project had done it. The
+; tower's arrival side rotates with the floor, which is why the basement opens
+; EAST (the portal is in the +x face) and the top hall opens NORTH (its
+; stairwell comes up on the -z side).
+
+[node name="RelayStaging" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -350, 1, 30)
+channel_duration = 6.0
+id = &"cway_relay_staging"
+display_name = "The Staging Yard"
+description = "The last hardstanding before the ramp, where the old highway ran out. Six seconds. Finish it and the picket on the deck knows somebody is coming across."
+reward_resources = 60
+linked_squad_point = NodePath("../Posts/CW_Staging")
+
+; MID-CAUSEWAY, AND THIS IS THE SIGNATURE MOMENT OF THE MAP. Ten seconds
+; standing still in the middle of six hundred metres of open deck, three
+; hundred from either bank, with the two shelled spans behind and ahead of you
+; and nothing within reach but a one-metre parapet.
+;
+; On a SOUND span, deliberately: the core is 4.2 m across and the breach lanes
+; are 7 m, so putting it on one of those would wall the crossing off entirely.
+[node name="RelayCrossing" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 5, 0)
+channel_duration = 10.0
+id = &"cway_relay_crossing"
+display_name = "Mid Causeway"
+description = "Halfway. Ten seconds in the open on a sixteen-metre deck with a one-metre parapet, three hundred metres from either bank, and the only cover is whichever side of the span you are not being shot from. Do not start it with a breach still held behind you."
+reward_resources = 110
+linked_squad_point = NodePath("../Posts/CW_DeckMid")
+
+[node name="RelayCheckpoint" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("10_capture_mid")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 352, 1, 58)
+channel_duration = 12.0
+id = &"cway_relay_checkpoint"
+display_name = "The Checkpoint"
+description = "Off the east ramp and into the wire. Twelve seconds at the checkpoint hut with the dragon's teeth on one side, two sangars and two sentry turrets on the other, and the fort's own wall looking down the whole glacis."
+reward_resources = 140
+linked_squad_point = NodePath("../Posts/CW_Checkpoint")
+
+[node name="RelayYard" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("11_capture_big")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 470, 10, 0)
+channel_duration = 14.0
+id = &"cway_relay_yard"
+display_name = "The West Yard"
+description = "Inside the gate, and the gate is the only way in — the curtain wall is eight metres thick from the ground to a walk four metres above the yard, and there is no other opening in it. Fourteen seconds standing in a two-hundred-metre square courtyard with a walk round all four sides of it and a bastion at every corner."
+reward_resources = 190
+linked_squad_point = NodePath("../Posts/CW_YardWest")
+
+[node name="RelayBasement" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 513, 0, 0)
+channel_duration = 10.0
+id = &"cway_relay_basement"
+display_name = "The Basement Hall"
+description = "Down the pit, sixty metres at one in six on the far side of the yard from the gate, and in through the portal. The hall is forty-one metres square and empty — no racks, no plant, nothing to stand behind. Ten seconds, and it is the quietest the tower ever gets."
+reward_resources = 160
+linked_squad_point = NodePath("../Posts/CW_Hall00Far")
+
+[node name="RelayTwelfth" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 72, 17)
+channel_duration = 16.0
+id = &"cway_relay_twelfth"
+display_name = "The Twelfth Hall"
+description = "Seventy-two metres up, at the first set-back, which is the halfway mark of the climb. Sixteen seconds between the rack rows. Finishing it is what wakes everything above you — the upper halls are held and they come down to meet you rather than waiting to be found."
+reward_resources = 240
+compute_reward = 1
+linked_squad_point = NodePath("../Posts/CW_Hall12")
+
+[node name="RelayUplink" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 513, 138, 0)
+channel_duration = 24.0
+id = &"cway_uplink"
+display_name = "The Crown Uplink"
+description = "The top hall, a hundred and thirty-eight metres up, twenty-four floors above the pit. Twenty-four seconds — the longest channel in the game — with everything still alive in the shaft below you climbing toward it and nowhere left to fall back to. The pad is at the other end of the room."
+reward_resources = 420
+compute_reward = 2
+linked_squad_point = NodePath("../Posts/CW_Hall23")
+
+; ── OPTIONAL ─────────────────────────────────
+[node name="Guns" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 404, 1, -86)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"BOMBARD", &"BALLISTA"])
+id = &"cway_guns"
+display_name = "The Gun Emplacements"
+description = "Two of them, dug in either side of the ramp with their arcs laid back down the crossing. Unlike everything else on this map their crews never stand down, so they are watching the east ramp before you reach it and they are still behind you once you are past the wire."
+optional = true
+reward_resources = 120
+linked_squad_point = NodePath("../Posts/CW_GunN")
+
+[node name="Mortars" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 452, 1, -132)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"HOWITZER", &"CULVERIN"])
+id = &"cway_mortars"
+display_name = "The Mortar Pits"
+description = "Outside the north and south walls. They cannot see the yard and they do not need to: anything that stops moving in it gets ranged. Reaching them means going back out of the gate and round the outside of the fort."
+optional = true
+reward_resources = 140
+linked_squad_point = NodePath("../Posts/CW_MortarN")
+
+[node name="Bunker" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 520, 1, -148)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"SIGNUM"])
+id = &"cway_bunker"
+display_name = "The Command Bunker"
+description = "A hundred and fifty metres outside the north wall, with the whole garrison's traffic going through it. Take it and the reserves in the tower come up one squad at a time instead of together."
+optional = true
+reward_resources = 130
+linked_squad_point = NodePath("../Posts/CW_Bunker")
+
+[node name="Parapet" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 530, 14, -96)
+script = ExtResource("7_eliminate")
+squad_callsigns = Array[StringName]([&"PARAPET", &"MERLON"])
+id = &"cway_walls"
+display_name = "The Wall Walk"
+description = "The marksmen on the walk and the bastions. They are eight metres above the yard on all four sides of it, the walk is the full width of the wall, and the ramps up to it are inside — so the yard is theirs until somebody goes up and takes it off them."
+optional = true
+reward_resources = 150
+linked_squad_point = NodePath("../Posts/CW_WalkN")
+
+[node name="Ammo" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 548, 1, 146)
+channel_duration = 8.0
+id = &"cway_ammo"
+display_name = "The Ammunition Dump"
+description = "Outside the south wall, behind the fort, and the best-paying eight seconds on the map. Nobody makes you go round there."
+optional = true
+reward_resources = 180
+linked_squad_point = NodePath("../Posts/CW_Ammo")
+
+; ── THE WAY OUT ──────────────────────────────
+; The far end of the top hall. Forty-one metres from the uplink, which is the
+; last thing the operation asks and is meant to be crossed with whatever came
+; up the shaft behind you still in the room.
+[node name="LevelExit" parent="." instance=ExtResource("9_exit")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 530, 138, 17)
+requires_objectives_complete = true
+
+[node name="CWExtract" type="Node3D" parent="LevelExit" node_paths=PackedStringArray("area", "prerequisites")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
+script = ExtResource("8_reach")
+area = NodePath("Area3D")
+squad_radius = 30.0
+id = &"cway_extract"
+display_name = "Off The Crown"
+description = "North end of the top hall. A hundred and thirty-eight metres up, with the whole causeway you walked in on underneath it."
+prerequisites = [NodePath("../../RelayUplink")]
+is_extraction = true
+
+[node name="Area3D" type="Area3D" parent="LevelExit/CWExtract"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LevelExit/CWExtract/Area3D"]
+shape = SubResource("Sphere_cway_extract")

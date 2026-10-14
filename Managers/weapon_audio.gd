@@ -50,6 +50,22 @@ const FAR_SLOPE_DB := 2.0
 ## Never let a distant shot climb above this, whatever the authored volume.
 const FAR_CEILING_DB := -8.0
 
+# A NOTE ON max_polyphony, WHICH THIS DELIBERATELY DOES NOT TOUCH.
+#
+# AudioStreamPlayer3D.max_polyphony defaults to ONE, so a gun firing faster than
+# its own sample is long cuts each report off to start the next. Measured:
+#
+#   Autocannon    1.07s sample at pitch 0.72 = 1.49s of audio, every 0.50s
+#   Heavy MG      1.99s sample, every 0.12s
+#   Machine Gun   1.99s sample, every 0.13s
+#
+# So the cannon was heard for a third of its length and the MGs for six per cent
+# of theirs. It is only a PROBLEM on the cannon: at the MGs' cadence the cut is
+# what makes a burst read as a burst, and letting seventeen two-second tails
+# stack would be mud. The machine guns are right as they are, so the fix is one
+# number on ai-wep_autocannon.tscn rather than a rule applied from here — a floor
+# in stage() would have quietly re-voiced every weapon in the game.
+
 
 ## Point a shot's player at the right bus and level for where the listener is
 ## standing. Call it immediately before play().

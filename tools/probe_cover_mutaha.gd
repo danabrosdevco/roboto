@@ -55,8 +55,15 @@ func _initialize() -> void:
 		await physics_frame
 	var kids := spawner.get_children()
 	print("   %s: %d cover point(s), was %d" % [level_path.get_file(), kids.size(), was])
-	if kids.size() < 200:
+	# 200 is a guard against running with no display, where the spawner's
+	# raycasts hit nothing and it writes an empty set over a good one. It
+	# assumes a city-sized map. THE PROVING GROUND LEGITIMATELY MAKES 167 —
+	# it is 135 x 70 m with eight pieces of cover on it — so the floor is
+	# overridable rather than a reason to lower it in the file for everyone.
+	var least := int(OS.get_environment("MIN_POINTS")) if OS.get_environment("MIN_POINTS") != "" else 200
+	if kids.size() < least:
 		print("FAIL  that is too few to believe — is this running with a display?")
+		print("      Set MIN_POINTS if this map really has that little cover.")
 		quit(1)
 		return
 

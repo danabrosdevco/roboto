@@ -128,7 +128,7 @@ func _init() -> void:
 	var level: Node = player.get_parent()
 	var cm: CampaignManager = world_scene.get_node("CampaignManager")
 	_mgr = _find(root, "AIManager")
-	var valley = load("res://maps/valley_level.tscn").instantiate()
+	var valley = load("res://maps/appendix/valley_level.tscn").instantiate()
 	level.add_child(valley)
 	for _i in 20:
 		await physics_frame
@@ -501,6 +501,9 @@ func _init() -> void:
 	state.armoury = Armoury.new()
 	state.catalogue = _catalogue
 	state.award(2000)
+	# OPEN THE LINE FIRST (Phase 3): recruit() refuses a chassis whose line is
+	# shut, and these setups predate that rule.
+	state.grant_unlock(frame.id)
 	var rec := state.recruit(frame)
 	_check("a new rover comes with the machine gun on its turret", rec != null and rec.weapon_ids[0] == &"machine_gun")
 	_check("...and takes two seats", rec != null and state.supply_of(rec) == 2 and not rec.benched)
@@ -508,6 +511,7 @@ func _init() -> void:
 		state.armoury.add(id)
 	_check("a rifle does not go on a turret", not state.can_fit(rec, _catalogue.item(&"m4")))
 	_check("...the grenade launcher does", state.can_fit(rec, _catalogue.item(&"grenade_launcher")))
+	state.grant_unlock(&"soldier")
 	var grunt := state.recruit(_catalogue.chassis_def(&"soldier"))
 	_check("turret weapons do not go on a soldier", not state.can_fit(grunt, _catalogue.item(&"machine_gun")))
 	_check("...nor on you", not state.can_fit(state.player_record, _catalogue.item(&"machine_gun")))

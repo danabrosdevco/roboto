@@ -1,0 +1,71 @@
+// Game: Roboto
+// Format: Valve
+// entity 0
+{
+"mapversion" "220"
+"wad" ""
+"classname" "worldspawn"
+// brush 0
+{
+( -286 7 -3 ) ( -232 -7 -3 ) ( -232 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -286 -7 4 ) ( -232 7 4 ) ( -232 -7 4 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -286 -7 -3 ) ( -232 -7 4 ) ( -232 -7 -3 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -232 -7 -3 ) ( -232 7 4 ) ( -232 7 -3 ) PSX_Textures/concrete_tx_5 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -232 7 -3 ) ( -286 7 4 ) ( -286 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -286 7 -3 ) ( -286 -7 4 ) ( -286 -7 -3 ) PSX_Textures/concrete_tx_5 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 1
+{
+( -200 7 -3 ) ( -146 -7 -3 ) ( -146 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -200 -7 4 ) ( -146 7 4 ) ( -146 -7 4 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -200 -7 -3 ) ( -146 -7 4 ) ( -146 -7 -3 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -146 -7 -3 ) ( -146 7 4 ) ( -146 7 -3 ) PSX_Textures/concrete_tx_5 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -146 7 -3 ) ( -200 7 4 ) ( -200 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -200 7 -3 ) ( -200 -7 4 ) ( -200 -7 -3 ) PSX_Textures/concrete_tx_5 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 2
+{
+( -114 7 -3 ) ( -59 -7 -3 ) ( -59 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -114 -7 4 ) ( -59 7 4 ) ( -59 -7 4 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -114 -7 -3 ) ( -59 -7 4 ) ( -59 -7 -3 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -59 -7 -3 ) ( -59 7 4 ) ( -59 7 -3 ) PSX_Textures/concrete_tx_5 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -59 7 -3 ) ( -114 7 4 ) ( -114 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -114 7 -3 ) ( -114 -7 4 ) ( -114 -7 -3 ) PSX_Textures/concrete_tx_5 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 3
+{
+( -27 7 -3 ) ( 27 -7 -3 ) ( 27 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -27 -7 4 ) ( 27 7 4 ) ( 27 -7 4 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -27 -7 -3 ) ( 27 -7 4 ) ( 27 -7 -3 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 27 -7 -3 ) ( 27 7 4 ) ( 27 7 -3 ) PSX_Textures/concrete_tx_5 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 27 7 -3 ) ( -27 7 4 ) ( -27 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -27 7 -3 ) ( -27 -7 4 ) ( -27 -7 -3 ) PSX_Textures/concrete_tx_5 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 4
+{
+( 59 7 -3 ) ( 114 -7 -3 ) ( 114 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 59 -7 4 ) ( 114 7 4 ) ( 114 -7 4 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 59 -7 -3 ) ( 114 -7 4 ) ( 114 -7 -3 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 114 -7 -3 ) ( 114 7 4 ) ( 114 7 -3 ) PSX_Textures/concrete_tx_5 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 114 7 -3 ) ( 59 7 4 ) ( 59 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 59 7 -3 ) ( 59 -7 4 ) ( 59 -7 -3 ) PSX_Textures/concrete_tx_5 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 5
+{
+( 146 7 -3 ) ( 200 -7 -3 ) ( 200 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 146 -7 4 ) ( 200 7 4 ) ( 200 -7 4 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 146 -7 -3 ) ( 200 -7 4 ) ( 200 -7 -3 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 200 -7 -3 ) ( 200 7 4 ) ( 200 7 -3 ) PSX_Textures/concrete_tx_5 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 200 7 -3 ) ( 146 7 4 ) ( 146 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 146 7 -3 ) ( 146 -7 4 ) ( 146 -7 -3 ) PSX_Textures/concrete_tx_5 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 6
+{
+( 232 7 -3 ) ( 286 -7 -3 ) ( 286 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 232 -7 4 ) ( 286 7 4 ) ( 286 -7 4 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 232 -7 -3 ) ( 286 -7 4 ) ( 286 -7 -3 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 286 -7 -3 ) ( 286 7 4 ) ( 286 7 -3 ) PSX_Textures/concrete_tx_5 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 286 7 -3 ) ( 232 7 4 ) ( 232 7 -3 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 232 7 -3 ) ( 232 -7 4 ) ( 232 -7 -3 ) PSX_Textures/concrete_tx_5 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+}

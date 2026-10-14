@@ -57,6 +57,9 @@ const SAVE_VERSION := 1
 ## Set when the last operation is cleared. Opens every mission at the terminal
 ## for good, and the win is only announced the once.
 @export var campaign_won: bool = false
+## RETIRED (Phase 3.1). The unlock set IS the allocation key set now — see
+## is_unlocked(). Kept only so a save written before the change can be read
+## and migrated in from_dict; nothing else should ever touch it.
 @export var unlocked: Array[StringName] = []
 @export var selected_mission_id: StringName = &""
 
@@ -98,10 +101,11 @@ const SUPPLY_COMPUTE_COST := 1
 
 # What the player is called on the roster, before they rename themselves.
 #
-# Straight out of lore.txt: the player is a StratCom AKR — autonomous killer
-# robot — that Algie repurposed and fitted with a Tabula Rasa chip. So the name
-# is the hardware designator, and the 00 is the blank slate: first of a line
-# with nothing written on it yet.
+# Straight out of lore.txt: the player is a Home Command AKR — autonomous killer
+# robot — that was never authorised, is on no roster and has never been
+# queried. Nobody made it free; it is an error an unsupervised system never
+# corrected. So the name is the hardware designator and nothing else, and the
+# 00 is what a unit is numbered when no one assigned it a number.
 #
 # Deliberately a machine code while the squad carry human names. You are the
 # thing that names THEM; the contrast in the roster column is the point. Defined
@@ -113,6 +117,18 @@ const PLAYER_DEFAULT_NAME := "PLAYER"
 # it any more: a save from before teams names its first team with it (see
 # _first_team_name), and it is still written so an older build can read the save.
 @export var squad_name: String = "NAMELESS"
+
+## WHICH CAMPAIGN THIS IS, in a game that can now hold several. Separate from
+## squad_name on purpose: the squad is a thing in the fiction and the player may
+## rename it mid-run, while the profile is what they pick off the menu.
+@export var profile_name: String = ""
+@export var created_utc: String = ""
+@export var last_played_utc: String = ""
+
+## WHERE THIS CAMPAIGN LIVES. Deliberately not exported — it is the name of the
+## file, not something inside it, and writing it into the save would mean a save
+## copied to another slot insisted on overwriting the one it came from.
+var save_path: String = SAVE_PATH
 
 # ── TEAMS ─────────────────────────────────────
 # The squad goes into the field as these teams, in this order, each one a squad
@@ -134,6 +150,11 @@ var teams: Array[Dictionary] = []
 @export var armoury: Armoury = Armoury.new()
 
 # Resolved at runtime by CampaignManager; not saved.
+## Preloaded, not referenced as `Pricing`: a new `class_name` is not visible
+## to another script until the editor rescans and this project cannot run
+## --import. Same trap as Location and CoreSignal.
+const _Pricing := preload("res://Campaign/pricing.gd")
+
 var catalogue: ItemCatalogue
 
 signal ledger_changed
@@ -146,6 +167,167 @@ signal teams_changed
 # push the new health onto the live body, or bring a rebuilt soldier into the
 # world if they were too wrecked to deploy when the level loaded.
 signal soldier_repaired(record: SoldierRecord)
+
+
+# ─────────────────────────────────────────────
+# TERRITORY — what turn it is and what you hold.
+#
+# docs/briefs/CAMPAIGN_REWORK.md Phases 1 and 2. The whole rework rests on
+# this: today the only way to get paid is to run an operation, so clearing the
+# board is worth more than owning it and "holding territory" means nothing.
+# A site pays EVERY TURN you hold it, whether or not you went near it.
+#
+# OWNERSHIP CANNOT BE DERIVED FROM completed_missions, and this file already
+# said so before any of this existed — "completed_missions only answers 'ever',
+# which is not enough". A site you took in Act 1 and lost in Act 2 is still in
+# that array forever. Do not try.
+# ─────────────────────────────────────────────
+
+## WHICH TURN IT IS. A turn IS an operation (§5), so this moves when one ends,
+## not on a clock.
+@export var turn: int = 0
+
+## WHO HOLDS WHAT: location id -> { "owner": int, "since_turn": int }.
+##
+## A DICTIONARY, NOT A SET OF HELD IDS. A set can only answer "mine or not",
+## and §3 needs four answers — yours, Home Command's, the Swarm's, nobody's —
+## because the thing you take a site from changes across the three acts.
+## `since_turn` is what closes §5's farming hole: it is how the campaign can
+## tell a site you have held for ten turns from one you retook this turn.
+##
+## `owner` is an Enums.Factions value. NOT an enum of its own: PLAYER, SWARM,
+## HOME and ARGUS already exist there and already mean exactly this.
+@export var sites: Dictionary = {}
+
+## WHICH SITE IS UNDER ATTACK RIGHT NOW, and waiting on an answer.
+##
+## Phase 6. When the other side's raid is too close to call, the site does NOT
+## change hands — the player is offered the defence instead. This is what the
+## operations table reads to mark it and put a DEFEND option on it.
+##
+## Empty means nothing is pending. It clears when the defence is played or
+## when it is settled on paper.
+@export var under_attack: StringName = &""
+
+## The turn the raid landed. A pending defence that is never answered settles
+## itself the next time the player does anything — see Campaign.extract — and
+## this is how that is noticed.
+@export var under_attack_turn: int = -1
+
+## Resolved at runtime by CampaignManager, like `catalogue`; not saved.
+## Typed Resource, not LocationCatalogue: a new `class_name` is not visible to
+## another script until the editor rescans and this project cannot run
+## --import, so naming the type fails the parse check. Same trap as Location.
+var locations: Resource
+
+## The turn moved. The board, the readouts and anything paying attention to
+## time hang off this.
+signal turn_advanced(turn: int)
+## Somebody took or lost ground.
+signal sites_changed
+
+
+# ─────────────────────────────────────────────
+# TERRITORY — reading it
+# ─────────────────────────────────────────────
+
+## Who holds a place. Falls back to the location's authored `start_owner`, so a
+## campaign that has never touched a site still knows whose it is — and a save
+## written before this existed reads correctly without a migration.
+func site_owner(id: StringName) -> int:
+	var row = sites.get(String(id))
+	if row != null:
+		return int(row.get("owner", Enums.Factions.SWARM))
+	var l = locations.of(id) if locations != null else null
+	return int(l.start_owner) if l != null else int(Enums.Factions.SWARM)
+
+
+func holds(id: StringName) -> bool:
+	return site_owner(id) == int(Enums.Factions.PLAYER)
+
+
+## Which turn the current owner took it. -1 for a place nobody has touched.
+func site_since(id: StringName) -> int:
+	var row = sites.get(String(id))
+	return int(row.get("since_turn", -1)) if row != null else -1
+
+
+## Every location id you hold. Walks the CATALOGUE, not `sites` — a place you
+## hold because it was authored yours has no row until something changes it.
+func held_sites() -> Array[StringName]:
+	var out: Array[StringName] = []
+	if locations == null:
+		push_warning("CampaignState: no LocationCatalogue, so the campaign cannot tell what you hold and income will be zero.")
+		return out
+	for l in locations.all():
+		if site_owner(l.id) == int(Enums.Factions.PLAYER):
+			out.append(l.id)
+	return out
+
+
+## What holding pays per turn. This is the economy (§2) — the board already
+## prints a figure and today it is `one_off × 0.1`, which is advertising income
+## the game does not pay.
+func income_per_turn() -> int:
+	var total := 0
+	if locations == null:
+		return total   # already warned by held_sites; a silent 0 here would be the bug
+	for id in held_sites():
+		var l = locations.of(id)
+		if l != null:
+			total += int(l.resources_per_turn)
+	return total
+
+
+## COMPUTE FROM GROUND, all or nothing.
+##
+## Not added to `compute_earned` on capture and subtracted on loss — derived,
+## so losing a site CANNOT leave a stale credit behind. That matters because
+## compute is the supply cap: a site lost while its compute is spent should put
+## you OVER your cap, and §2 says so deliberately. Add-and-subtract gets that
+## right only until one path forgets to subtract.
+func site_compute() -> int:
+	var total := 0
+	if locations == null:
+		return total   # already warned by held_sites
+	for id in held_sites():
+		var l = locations.of(id)
+		if l != null:
+			total += int(l.compute)
+	return total
+
+
+# ─────────────────────────────────────────────
+# TERRITORY — changing it
+# ─────────────────────────────────────────────
+
+## THE ONLY PLACE OWNERSHIP MOVES. Every capture, every loss, every act
+## handover goes through here so `since_turn` cannot drift out of step with
+## `owner` and so one signal covers all of it.
+func set_site_owner(id: StringName, owner: int) -> void:
+	if id == &"":
+		push_warning("CampaignState: asked to set the owner of a blank site id; ignored.")
+		return
+	if site_owner(id) == owner and sites.has(String(id)):
+		return   # already theirs and already recorded; nothing moved
+	sites[String(id)] = {"owner": int(owner), "since_turn": turn}
+	sites_changed.emit()
+	# Compute is derived from what you hold, so taking or losing ground changes
+	# the ledger even though nothing was spent.
+	ledger_changed.emit()
+
+
+## THE SINGLE MUTATION POINT FOR TIME (Phase 1.3).
+##
+## Pays every held site first, then moves the counter, then announces it — in
+## that order, because a listener that reads `turn` from the signal must see
+## the number the income was paid FOR, not the one after it.
+func advance_turn() -> void:
+	var paid := income_per_turn()
+	if paid > 0:
+		award(paid)
+	turn += 1
+	turn_advanced.emit(turn)
 
 
 # ─────────────────────────────────────────────
@@ -192,6 +374,149 @@ func _allocate_quiet(key: String, cost: int) -> bool:
 	allocations[key] = cost
 	return true
 
+
+
+
+# ─────────────────────────────────────────────
+# UNLOCKS — pay once to open a line, then pay per copy.
+#
+# Appendix A in full. The mechanism is one line, because the ledger was built
+# for exactly this: allocations are keyed by an ARBITRARY STRING, so
+#
+#   allocate("unlock:cluster_launcher", 200)
+#
+# IS the unlock, and "is it open?" is `allocations.has("unlock:...")`.
+#
+# NO NEW PERSISTED FIELD. No second balance to drift, no migration for the cost
+# side, and a price changed in a patch recomputes correctly on every existing
+# save — which is the property the ledger was built for.
+#
+# IT ALSO RETIRES `unlocked`. The flat array of granted ids is redundant: the
+# allocation key set IS the unlock set. Anything still asking the old question
+# should ask is_unlocked().
+#
+# AN UNLOCK IS CAPITAL, NOT SPENDING (A.2). It sits in `allocations` forever
+# and is never refunded, so it permanently lowers `available()` — which is the
+# honest reading: you converted resources into a capability you still have.
+# ─────────────────────────────────────────────
+
+## The ledger key for a line. One place, because a typo here is an unlock that
+## silently never registers.
+static func unlock_key(id: StringName) -> String:
+	return "unlock:%s" % id
+
+
+## Is this line open? Takes an id so it works for frames and kit alike.
+##
+## AN ISSUED LINE IS OPEN WITHOUT AN ALLOCATION. The Ancient Rifle costs 0 to
+## unlock, and a zero-cost allocation written at campaign start would be a
+## thing to remember to write — on every new campaign, every migration, every
+## test fixture. Deriving it from the band means it cannot be forgotten.
+func is_unlocked(id: StringName) -> bool:
+	if allocations.has(unlock_key(id)):
+		return true
+	if catalogue == null:
+		return false   # nothing to ask about the band; caller gets the strict answer
+	var item := catalogue.item(id)
+	if item != null:
+		return _Pricing.band_of(item) == _Pricing.ISSUED
+	return false
+
+
+## Open a line for free: the starting kit, a debug grant, and the migration of
+## a save written when `unlocked` was an array.
+##
+## A ZERO-COST ALLOCATION, not a special case. It is in the same dictionary as
+## a paid one and answers the same question, so nothing downstream needs to
+## know the difference — which is the point of keying the ledger by string.
+func grant_unlock(id: StringName) -> void:
+	if id == &"":
+		push_warning("CampaignState: asked to grant a blank unlock id; ignored.")
+		return
+	if allocations.has(unlock_key(id)):
+		return
+	allocations[unlock_key(id)] = 0
+	ledger_changed.emit()
+
+
+## Buy the line. Returns false if it is already open, unaffordable, or the
+## thing is not for sale at all.
+func unlock_item(item: ItemDefinition) -> bool:
+	if item == null:
+		return false
+	if not _Pricing.for_sale(item):
+		return false   # UNBUYABLE or cut; the catalogue should not have offered it
+	if is_unlocked(item.id):
+		return false   # already open; not an error, just nothing to do
+	if not unlock_requirements_met(item):
+		return false
+	return allocate(unlock_key(item.id), _Pricing.item_unlock(item))
+
+
+func unlock_chassis(frame: ChassisDefinition) -> bool:
+	if frame == null:
+		return false
+	if not _Pricing.chassis_for_sale(frame):
+		return false
+	if is_unlocked(frame.id):
+		return false
+	if not unlock_requirements_met(frame):
+		return false
+	return allocate(unlock_key(frame.id), _Pricing.chassis_unlock(frame))
+
+
+## THE MARK ONE → MARK TWO CHAINS. A line can name lines that must be open
+## before it can be. Everything with no prerequisites answers true, which is
+## almost everything.
+func unlock_requirements_met(def) -> bool:
+	if def == null or not ("unlock_requires" in def):
+		return true
+	for req in def.unlock_requires:
+		if not is_unlocked(req):
+			return false
+	return true
+
+
+## Which prerequisites are still missing, for the catalogue line that has to
+## say WHY it cannot be bought.
+func missing_unlock_requirements(def) -> Array[StringName]:
+	var out: Array[StringName] = []
+	if def == null or not ("unlock_requires" in def):
+		return out
+	for req in def.unlock_requires:
+		if not is_unlocked(req):
+			out.append(req)
+	return out
+
+
+## THE FOUR LINE STATES the fabrication car draws (Phase 3.5). One function so
+## the catalogue and anything else asking agree, rather than each re-deriving
+## it from three separate questions.
+enum Line {
+	OPEN,        ## already yours; buy copies at the normal price
+	AFFORDABLE,  ## can be opened right now
+	SHORT,       ## wants more resources than you have
+	BLOCKED,     ## a prerequisite line is not open yet
+}
+
+
+func line_state(def) -> Line:
+	if def == null:
+		return Line.BLOCKED
+	if is_unlocked(def.id):
+		return Line.OPEN
+	if not unlock_requirements_met(def):
+		return Line.BLOCKED
+	var price: int = _unlock_price(def)
+	return Line.AFFORDABLE if can_afford(price) else Line.SHORT
+
+
+## What opening this costs, frame or kit. The catalogue holds both in one list
+## and should not have to know which it is holding.
+func _unlock_price(def) -> int:
+	if def is ChassisDefinition:
+		return _Pricing.chassis_unlock(def)
+	return _Pricing.item_unlock(def)
 
 # The entire refund mechanic.
 func refund(key: String) -> void:
@@ -260,6 +585,40 @@ func set_benched(record: SoldierRecord, benched: bool) -> bool:
 	if not benched and supply_of(record) > supply_free():
 		return false
 	record.benched = benched
+	roster_changed.emit()
+	return true
+
+
+
+## Put a hat on a robot, or take it off.
+##
+## PURELY COSMETIC and deliberately unguarded by rank, supply or anything else:
+## nothing downstream reads cosmetic_id to make a gameplay decision, so the only
+## thing that can go wrong is a hat that does not fit the frame — which is what
+## Cosmetics.fits refuses. A refit onto a different chassis drops it the same
+## way, in SoldierRecord.write_to.
+## Pauldrons on or off. Earned at Captain and never taken away by rank, but you
+## may still take them off by hand — the tick is yours, the unlock is not.
+func set_pauldrons(record: SoldierRecord, on: bool) -> bool:
+	if record == null or not roster.has(record):
+		return false
+	if on and (record.rank < Cosmetics.PAULDRONS_RANK or not Cosmetics.pauldrons_fit(record.chassis_id)):
+		return false
+	if record.pauldrons == on:
+		return true
+	record.pauldrons = on
+	roster_changed.emit()
+	return true
+
+
+func set_cosmetic(record: SoldierRecord, id: StringName) -> bool:
+	if record == null or not roster.has(record):
+		return false
+	if not Cosmetics.fits(record.chassis_id, id):
+		return false
+	if record.cosmetic_id == id:
+		return true
+	record.cosmetic_id = id
 	roster_changed.emit()
 	return true
 
@@ -522,6 +881,57 @@ func award_compute(amount: int) -> void:
 	ledger_changed.emit()
 
 
+# ─────────────────────────────────────────────
+# ARGUS NOTICES.
+#
+# Home Command wins ground and the compute goes up, and for a while that is simply
+# the campaign going well. Then the thing at the top of the chain of command —
+# which is not managing anything any more, and which spends everything it gets
+# on its own reward loop — notices there is a surplus down here, and requisitions
+# it.
+#
+# IT TAKES WHAT IS EARNED, NOT WHAT IS FREE. That is the whole mechanic. Seats
+# and software HOLD compute rather than spending it, so a requisition that
+# exceeds the free pool does not fail and does not take a robot off the roster:
+# it leaves the ledger OVER-ALLOCATED, and the player has to decide personally
+# which of their six to stand down or which part of their own mind to uninstall
+# before they can deploy again.
+#
+# Nothing is destroyed and nothing is chosen for you. You are simply told there
+# is less of you than there was, and asked to work out what to drop.
+# ─────────────────────────────────────────────
+
+## Emitted when Argus takes compute, with how much and what is now owed.
+signal compute_requisitioned(amount: int, over: int)
+
+
+## Argus takes `amount` of compute. Returns how much the ledger is now
+## over-allocated by — zero if the surplus covered it.
+func requisition_compute(amount: int) -> int:
+	if amount <= 0:
+		return over_allocated_by()
+	compute_earned = maxi(0, compute_earned - amount)
+	var over := over_allocated_by()
+	ledger_changed.emit()
+	compute_requisitioned.emit(amount, over)
+	return over
+
+
+## How much compute is held beyond what is earned. Zero when the books balance.
+##
+## compute_free() goes NEGATIVE in this state rather than clamping, which is
+## deliberate: the number the player has to claw back is the honest one, and a
+## clamp at zero would hide the debt and leave deployment blocked for no
+## visible reason.
+func over_allocated_by() -> int:
+	return maxi(0, -compute_free())
+
+
+## Whether the player must unallocate before they can do anything else.
+func over_allocated() -> bool:
+	return over_allocated_by() > 0
+
+
 func seats_held() -> int:
 	var n := 0
 	for key in compute_held:
@@ -641,9 +1051,14 @@ func release_unknown_software(known: Array) -> Array[StringName]:
 func recruit(chassis: ChassisDefinition) -> SoldierRecord:
 	if chassis == null or not chassis.purchasable:
 		return null
+	# THE LINE HAS TO BE OPEN FIRST (Phase 3). The factory draws its BUILD
+	# button from line_state(), and a gate that exists only in the UI is not a
+	# gate — anything else calling recruit() would walk straight past it.
+	if not is_unlocked(chassis.id):
+		return null
 	var record := SoldierRecord.new()
 	record.id = mint_id()
-	if not _allocate_quiet("unit:%s" % record.id, chassis.cost):
+	if not _allocate_quiet("unit:%s" % record.id, _Pricing.chassis_buy(chassis)):
 		return null
 	record.display_name = _recruit_name(chassis)
 	record.set_chassis(chassis, catalogue)
@@ -764,6 +1179,179 @@ func restock_roster() -> void:
 	roster_changed.emit()
 
 
+# ─────────────────────────────────────────────
+# SCRAP — what you do with a frame that is not coming back.
+#
+# DOWNED AND DESTROYED HAD THE SAME ENDING, which is why neither meant much.
+# A robot on the deck is a job: walk over, pick it up. A robot destroyed is a
+# fact, and the only thing left to decide about it is what you get for the
+# metal. A third of what the frame cost, and it is off the roster.
+#
+# WHY A THIRD RATHER THAN THE HALF AN ITEM SELLS FOR. A gun you sell is intact
+# and goes back on a shelf; this is wreckage. The gap between the two numbers
+# is the point — losing a frame has to cost more than changing your mind about
+# one, or there is no reason to fight carefully.
+#
+# THE KIT GOES WITH IT. Weapons, equipment and modules fitted to the frame are
+# destroyed with it and pay out at HALF their price, exactly as selling one
+# does — the robot was blown up and so was what it was carrying.
+#
+# An earlier cut returned the kit to stores whole. That was worse than
+# generous, it was MEANINGLESS: nothing stops the player right-clicking every
+# slot on a wreck before scrapping it, so "the kit survives" was not a rule the
+# game was enforcing, it was a rule the player was enforcing by hand for free.
+# A loophole you have to perform is the worst kind — it taxes the people who
+# do not know about it and costs the people who do nothing but clicks. So the
+# slots on a destroyed record are frozen (see squad_page._slot_tile) and the
+# value comes back through the scrap instead.
+#
+# HALF FOR THE KIT, A THIRD FOR THE FRAME. The frame is wreckage; a module is
+# a component that might be pulled out of one. The two numbers being different
+# is the point, and half is already what the game pays for an intact item, so
+# nothing new had to be invented.
+#
+# LEDGER SHAPE IS sell_item's, exactly: shrink the original allocation rather
+# than paying out of nowhere, and park the un-refunded two thirds under a key
+# nothing refunds. available() stays earned - sum(allocations) and there is no
+# second balance to drift.
+# ─────────────────────────────────────────────
+
+## Denominator on the frame's price. 3 is "a third back"; raise it for a
+## harsher campaign, drop it to 2 to make a wreck worth as much as a sale.
+@export var scrap_divisor: int = 3
+
+## REBUILD stays reachable. Off by default: a destroyed frame is destroyed, and
+## a 2x repair that undoes it makes the distinction the HUD now draws between
+## DOWNED and DESTROYED a lie. Set true to have both routes offered.
+@export var allow_rebuild: bool = false
+
+
+## What scrapping `record` hands back, before it happens — the UI needs the
+## number to label the button honestly, same as sale_value_of.
+func scrap_value(record: SoldierRecord) -> int:
+	if record == null:
+		return 0
+	@warning_ignore("integer_division")
+	var total: int = _unit_price(record) / maxi(scrap_divisor, 1)
+	for pair in _kit_payout(record):
+		total += int(pair[2])
+	return total
+
+
+## Every fitted item that scrapping pays for, as [allocation key, paid, back].
+##
+## ONLY WHAT WAS ACTUALLY BOUGHT. Kit issued WITH the frame — a Soldier's
+## rifle, a Chaser's claws — has no allocation, because its price is already
+## inside the frame's price. Paying half for it as well mints resources from
+## nothing, and because recruiting is unlimited it mints them in a LOOP: a
+## 50-resource Soldier ships with an 80-resource rifle, so buy-and-scrap
+## handed back 56 on a 50 outlay. The suite caught it five cycles up 30.
+##
+## sell_item's comment reasons that crediting issued stock is safe because
+## "anything you BUY gets an allocation". That is true of stock on a shelf. It
+## is NOT true here, because recruiting is itself a way to manufacture more
+## issued stock — worth remembering if anything else is ever made to pay out
+## for an item.
+func _kit_payout(record: SoldierRecord) -> Array:
+	var out: Array = []
+	if record == null:
+		return out
+	for id in record.all_fitted_ids():
+		if id == &"":
+			continue
+		var key := _newest_purchase_key("item:%s:" % id)
+		if key == "":
+			continue   # issued with the frame; the frame's price covered it
+		var paid := int(allocations[key])
+		out.append([key, paid, sale_value(paid)])
+	return out
+
+
+# Settle one thing that no longer exists, and return what the purse gains.
+#
+# `prefix_or_key` is either an exact allocation key ("unit:s004") or a purchase
+# prefix to find the newest of ("item:optics:"). Where an allocation is found
+# it is ERASED and the un-returned part re-booked under `loss_key`, so
+# available() rises by exactly `back` and the rest stays committed. Where there
+# is none the thing was issued rather than bought, and `back` is earned.
+#
+# One function because the frame and every item on it have to settle the same
+# way; two copies of this is how a ledger acquires a second balance.
+func _write_off(prefix_or_key: String, paid: int, back: int, loss_key: String) -> int:
+	var key := prefix_or_key
+	if key.ends_with(":"):
+		key = _newest_purchase_key(prefix_or_key)
+	if key != "" and allocations.has(key):
+		allocations.erase(key)
+		var kept := paid - back
+		if kept > 0:
+			allocations["%s:%d" % [loss_key, _next_purchase()]] = kept
+		return back
+	# Issued, never bought. Cannot be farmed: anything you BUY has an
+	# allocation and therefore takes the branch above.
+	earned += back
+	return back
+
+
+## What the frame cost. The recruit allocation where there is one; the
+## catalogue price where there is not, because the starting roster was issued
+## rather than bought — the same fallback sell_item makes for issued stock.
+func _unit_price(record: SoldierRecord) -> int:
+	var key := "unit:%s" % record.id
+	if allocations.has(key):
+		return int(allocations[key])
+	var frame := catalogue.chassis_def(record.chassis_id) if catalogue != null else null
+	# PRICED NOW, not when it was built. A frame with no allocation was issued
+	# rather than bought (the starting roster), and what it is worth is what one
+	# costs today — which is the whole point of pricing from a table.
+	return _Pricing.chassis_buy(frame) if frame != null else 0
+
+
+func can_scrap(record: SoldierRecord) -> bool:
+	if record == null:
+		return false
+	if record.status != SoldierRecord.Status.DESTROYED:
+		return false
+	return not is_player_record(record)
+
+
+## Break a destroyed frame for parts. Returns what it paid, or -1 if it would
+## not: the caller can tell "scrapped for nothing" from "refused".
+func scrap_soldier(record: SoldierRecord) -> int:
+	if record == null:
+		push_warning("scrap_soldier: nothing handed in, so nothing was scrapped.")
+		return -1
+	if record.status != SoldierRecord.Status.DESTROYED:
+		push_warning("scrap_soldier: %s is %s, not DESTROYED. Only a wreck can be scrapped — repair it or leave it." % [record.display_name, SoldierRecord.Status.keys()[int(record.status)]])
+		return -1
+	if is_player_record(record):
+		push_warning("scrap_soldier: refused on the player's own record. Scrapping yourself would take the campaign with it.")
+		return -1
+
+	# THE KIT, DESTROYED WITH THE FRAME. Nothing is added to the armoury; each
+	# fitted item is settled the way selling it would be, so half its price
+	# comes back and the other half stays booked as a loss.
+	var back := 0
+	for pair in _kit_payout(record):
+		back += _write_off(String(pair[0]), int(pair[1]), int(pair[2]), "scrapped-kit")
+
+	# ...and the frame itself, at a third.
+	var paid := _unit_price(record)
+	@warning_ignore("integer_division")
+	var frame_back: int = paid / maxi(scrap_divisor, 1)
+	back += _write_off("unit:%s" % record.id, paid, frame_back,
+		"scrapped:%s" % record.id)
+
+	var kept_roster: Array[SoldierRecord] = []
+	for r in roster:
+		if r != record:
+			kept_roster.append(r)
+	roster = kept_roster
+	ledger_changed.emit()
+	roster_changed.emit()
+	return back
+
+
 func remove_destroyed() -> Array[SoldierRecord]:
 	var lost: Array[SoldierRecord] = []
 	var kept: Array[SoldierRecord] = []
@@ -814,9 +1402,10 @@ func can_fit(record: SoldierRecord, item: ItemDefinition) -> bool:
 		return false
 	if armoury.spare(item.id) <= 0:
 		return false
-	# Rank gates squadmates only. You have no rank — you are the one spending
-	# the resources and the compute, not a soldier working your way up.
-	if not is_player_record(record) and record.rank < item.required_rank:
+	# RANK NO LONGER GATES KIT (Phase 3.7). Rank gating and purchase gating
+	# were two answers to the same question — "can this robot have this yet" —
+	# and the catalogue is the one that stays. Rank still exists and still
+	# means something for stats; it just does not lock anything.
 		return false
 	# Which implementation is required depends on WHO is carrying it. The pump
 	# shotgun has no HUDWeapon, so it can arm a squadmate and not you.
@@ -894,8 +1483,6 @@ func recover_kit(record: SoldierRecord) -> void:
 func set_chassis(record: SoldierRecord, chassis: ChassisDefinition) -> bool:
 	if record == null or chassis == null:
 		return false
-	if record.rank < chassis.required_rank:
-		return false
 	for displaced in record.set_chassis(chassis, catalogue):
 		armoury.add(displaced)
 	roster_changed.emit()
@@ -945,11 +1532,19 @@ func _slots_for(record: SoldierRecord, kind: int) -> Array:
 # separate credit path. The key has to be unique per purchase, hence the counter.
 # ─────────────────────────────────────────────
 func buy_item(item: ItemDefinition) -> bool:
-	if item == null or not can_afford(item.cost):
+	if item == null:
+		return false
+	# THE LINE HAS TO BE OPEN FIRST. Pay once to make a thing available, then
+	# pay per copy — Appendix A. A catalogue that offered a locked item would
+	# be offering something this refuses, so the two must agree.
+	if not is_unlocked(item.id):
+		return false
+	var price: int = _Pricing.item_buy(item)
+	if not can_afford(price):
 		return false
 	var key := "item:%s:%d" % [item.id, _next_purchase()]
 	# Quiet, then stock, then announce — see _allocate_quiet.
-	if not _allocate_quiet(key, item.cost):
+	if not _allocate_quiet(key, price):
 		return false
 	armoury.add(item.id)
 	ledger_changed.emit()
@@ -957,11 +1552,16 @@ func buy_item(item: ItemDefinition) -> bool:
 
 
 func buy_chassis(chassis: ChassisDefinition) -> bool:
-	if chassis == null or not can_afford(chassis.cost):
+	if chassis == null:
+		return false
+	if not is_unlocked(chassis.id):
+		return false
+	var price: int = _Pricing.chassis_buy(chassis)
+	if not can_afford(price):
 		return false
 	var key := "chassis:%s:%d" % [chassis.id, _next_purchase()]
 	# Same ordering as buy_item: the chassis is in stores before anyone is told.
-	if not _allocate_quiet(key, chassis.cost):
+	if not _allocate_quiet(key, price):
 		return false
 	armoury.add_chassis(chassis.id)
 	ledger_changed.emit()
@@ -993,7 +1593,7 @@ func sell_item(item: ItemDefinition) -> bool:
 	if newest == "":
 		if not armoury.take(item.id):
 			return false
-		award(sale_value(item.cost))
+		award(sale_value(_Pricing.item_buy(item)))
 		return true
 
 	if not armoury.take(item.id):
@@ -1028,7 +1628,7 @@ func sale_value_of(item: ItemDefinition) -> int:
 		return 0
 	var newest := _newest_purchase_key("item:%s:" % item.id)
 	if newest == "":
-		return sale_value(item.cost)
+		return sale_value(_Pricing.item_buy(item))
 	return sale_value(int(allocations[newest]))
 
 
@@ -1093,6 +1693,15 @@ func to_dict() -> Dictionary:
 		"roster": records,
 		"completed_missions": missions,
 		"mission_clears": mission_clears.duplicate(),
+		# TERRITORY. No SAVE_VERSION bump and no migration: from_dict reads
+		# every field through data.get(key, default), so a save written before
+		# these existed loads with an empty board — and site_owner() falls back
+		# to each location's authored start_owner, which is the right answer.
+		# (Wipe-and-restart was taken anyway, 2026-10-12 — §16.1.)
+		"turn": turn,
+		"sites": sites.duplicate(true),
+		"under_attack": String(under_attack),
+		"under_attack_turn": under_attack_turn,
 		"completed_tutorial": completed_tutorial,
 		"lessons_seen": lessons_seen.map(func(l): return String(l)),
 		"campaign_won": campaign_won,
@@ -1104,6 +1713,9 @@ func to_dict() -> Dictionary:
 		"selected_mission_id": String(selected_mission_id),
 		"next_id": _next_id,
 		"squad_name": squad_name,
+		"profile_name": profile_name,
+		"created_utc": created_utc,
+		"last_played_utc": last_played_utc,
 		"teams": teams.map(func(t: Dictionary) -> Dictionary:
 			return {"id": String(t["id"]), "name": String(t["name"])}),
 		"purchase_counter": _purchase_counter,
@@ -1118,6 +1730,9 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	s.allocations = data.get("allocations", {})
 	s._next_id = int(data.get("next_id", 1))
 	s.squad_name = str(data.get("squad_name", "NAMELESS"))
+	s.profile_name = str(data.get("profile_name", ""))
+	s.created_utc = str(data.get("created_utc", ""))
+	s.last_played_utc = str(data.get("last_played_utc", ""))
 	# A save from before teams has none; ensure_teams builds them once the
 	# catalogue can tell a vehicle.
 	for entry in data.get("teams", []):
@@ -1150,6 +1765,13 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	for k in raw_clears:
 		clears[str(k)] = int(raw_clears[k])
 	s.mission_clears = clears
+	s.turn = int(data.get("turn", 0))
+	# duplicate(true), because a Dictionary read out of JSON is shared with
+	# whatever else holds that parse — and `sites` is mutated in place by
+	# set_site_owner.
+	s.sites = (data.get("sites", {}) as Dictionary).duplicate(true)
+	s.under_attack = StringName(str(data.get("under_attack", "")))
+	s.under_attack_turn = int(data.get("under_attack_turn", -1))
 	s.completed_tutorial = bool(data.get("completed_tutorial", false))
 	var lessons: Array[StringName] = []
 	for l in data.get("lessons_seen", []):
@@ -1186,8 +1808,19 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	s.compute_claimed = claimed
 
 	var unlocks: Array[StringName] = []
+	# MIGRATION (Phase 3.2): every id a save already had unlocked becomes a
+	# ZERO-COST allocation. They were earned under the old rules and must not
+	# suddenly cost resources — and once they are allocation keys, is_unlocked()
+	# answers for them exactly as it does for anything bought.
+	#
+	# Written even though saves are being wiped (§16.1), because a wipe is a
+	# decision about THIS machine and this is the only code that would ever
+	# know how to read the old shape.
 	for u in data.get("unlocked", []):
-		unlocks.append(_renamed(StringName(str(u))))
+		var id := _renamed(StringName(str(u)))
+		unlocks.append(id)
+		if not s.allocations.has(unlock_key(id)):
+			s.allocations[unlock_key(id)] = 0
 	s.unlocked = unlocks
 	return s
 
@@ -1235,6 +1868,12 @@ func restore_from(data: Dictionary) -> void:
 	unlocked = was.unlocked
 	selected_mission_id = was.selected_mission_id
 	squad_name = was.squad_name
+	# WHICH CAMPAIGN THIS IS. Not progress, but it travels with the save and a
+	# profile that forgot its own name on load would show up as "Campaign" in the
+	# menu the next time it was listed.
+	profile_name = was.profile_name
+	created_utc = was.created_utc
+	last_played_utc = was.last_played_utc
 	teams = was.teams
 	player_record = was.player_record
 	armoury = was.armoury
@@ -1244,7 +1883,30 @@ func restore_from(data: Dictionary) -> void:
 	roster_changed.emit()
 
 
-func save_to_disk(path: String = SAVE_PATH) -> bool:
+## Writes to `path`, or to wherever this campaign lives when none is given.
+##
+## The default used to be the one hardcoded SAVE_PATH, which is why there could
+## only ever be one campaign: every caller in the project omits the argument.
+## Routing the default through save_path means the slot is chosen ONCE, when the
+## campaign is opened, and every existing call site follows it.
+## A CAMPAIGN WITH NOWHERE TO LIVE IS NEVER WRITTEN.
+##
+## save_path is empty for the scratch campaign that stands behind the main menu
+## before the player has chosen one. It used to fall back to SAVE_PATH here —
+## and SAVE_PATH is user://campaign.json, the save the player may still be
+## relying on. One roster change behind the menu was enough to overwrite a
+## finished campaign with a brand new one. It did exactly that.
+##
+## Refusing is the only safe answer: there is no correct file to write a campaign
+## that is not a profile to.
+func save_to_disk(path: String = "") -> bool:
+	if path == "":
+		path = save_path
+	if path == "":
+		if not _no_path_said:
+			_no_path_said = true
+			push_warning("CampaignState: this campaign is not a profile and has nowhere to be saved, so it was not written. Start or load one from the menu.")
+		return false
 	# `-- --no-save` on the command line: a run that boots the real game to
 	# look for errors (tools/smoke.sh) must never write the player's save. The
 	# game saves on reaching base, so without this every smoke run did.
@@ -1264,10 +1926,32 @@ func save_to_disk(path: String = SAVE_PATH) -> bool:
 
 
 var _no_save_said: bool = false
+var _no_path_said: bool = false
 
 
 # Returns null when there's no save yet — the caller decides whether that means
 # "new campaign" or "something is wrong".
+## The save at `path` as a migrated dictionary, or empty when there is none.
+##
+## Split out of load_from_disk so a caller can restore_from() it INTO the state
+## the game is already holding. See the note on restore_from: handing out a new
+## object leaves every HUD and screen wired to one nobody updates.
+static func load_dict(path: String = SAVE_PATH) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		push_error("CampaignState: could not read %s" % path)
+		return {}
+	var body := f.get_as_text()
+	f.close()
+	var got = JSON.parse_string(body)
+	if typeof(got) != TYPE_DICTIONARY:
+		push_error("CampaignState: save at %s is not valid JSON" % path)
+		return {}
+	return migrate(got)
+
+
 static func load_from_disk(path: String = SAVE_PATH) -> CampaignState:
 	if not FileAccess.file_exists(path):
 		return null

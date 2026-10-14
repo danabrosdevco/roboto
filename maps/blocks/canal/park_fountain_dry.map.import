@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dxh6r3kcmpu8v"
+path="res://.godot/imported/park_fountain_dry.map-2f159bf8c7879e4e5b02be53abb11aee.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/park_fountain_dry.map"
+dest_files=["res://.godot/imported/park_fountain_dry.map-2f159bf8c7879e4e5b02be53abb11aee.tres"]
+
+[params]
+

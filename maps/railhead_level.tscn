@@ -1,0 +1,35 @@
+[gd_scene load_steps=6 format=3 uid="uid://wxpaule0klmg"]
+
+[ext_resource type="Script" path="res://maps/railhead_level.gd" id="1_rlvl"]
+[ext_resource type="PackedScene" uid="uid://7gu1l6g3rxax" path="res://maps/railhead_art.tscn" id="2_rlart"]
+[ext_resource type="Script" path="res://Campaign/squad_spawn_point.gd" id="3_rlsqs"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="4_rlexit"]
+[ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="5_rlenv"]
+
+[node name="RailheadLevel" type="Node3D" node_paths=PackedStringArray("art", "spawn_marker_target", "muster", "departure", "spawn_point", "nav_region")]
+script = ExtResource("1_rlvl")
+art = NodePath("NavigationRegion3D/RailheadArt")
+spawn_marker_target = NodePath("SpawnPoint")
+muster = NodePath("SquadMuster")
+departure = NodePath("DepartureExit")
+spawn_point = NodePath("SpawnPoint")
+nav_region = NodePath("NavigationRegion3D")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+
+[node name="RailheadArt" parent="NavigationRegion3D" instance=ExtResource("2_rlart")]
+
+[node name="SpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -32)
+
+[node name="SquadMuster" type="Node3D" parent="."]
+script = ExtResource("3_rlsqs")
+callsign = "BRAVO"
+max_slots = 999
+default_objective = 2
+
+[node name="DepartureExit" parent="." instance=ExtResource("4_rlexit")]
+transform = Transform3D(4, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0)
+is_departure = true
+
+[node name="WorldEnvironment" parent="." instance=ExtResource("5_rlenv")]

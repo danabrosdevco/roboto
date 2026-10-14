@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c1cr84m2k1tj2"
+path="res://.godot/imported/suburb_motel_strip.map-2715b2e14a99ef7a628d43180f387921.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_motel_strip.map"
+dest_files=["res://.godot/imported/suburb_motel_strip.map-2715b2e14a99ef7a628d43180f387921.tres"]
+
+[params]
+

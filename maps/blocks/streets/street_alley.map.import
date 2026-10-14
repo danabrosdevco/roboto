@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://rjwctbki66o2"
+path="res://.godot/imported/street_alley.map-82691ce53e3d3328b49598fa236d3afe.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_alley.map"
+dest_files=["res://.godot/imported/street_alley.map-82691ce53e3d3328b49598fa236d3afe.tres"]
+
+[params]
+

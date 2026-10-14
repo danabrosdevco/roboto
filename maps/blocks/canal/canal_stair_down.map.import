@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dtv6w45tet8td"
+path="res://.godot/imported/canal_stair_down.map-0446d9c04b0ca4cf63aaf96efedda168.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/canal_stair_down.map"
+dest_files=["res://.godot/imported/canal_stair_down.map-0446d9c04b0ca4cf63aaf96efedda168.tres"]
+
+[params]
+

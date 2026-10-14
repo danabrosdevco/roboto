@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://e05jd7osqjy1"
+path="res://.godot/imported/lot_garden_centre.map-d7cb22900659830fce26a49be8e1728a.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/lot_garden_centre.map"
+dest_files=["res://.godot/imported/lot_garden_centre.map-d7cb22900659830fce26a49be8e1728a.tres"]
+
+[params]
+

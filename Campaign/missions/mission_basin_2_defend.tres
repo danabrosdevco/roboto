@@ -1,0 +1,129 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3 uid="uid://trt8yf8ngk4k"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://7i5feul0x8qv" path="res://maps/valley_basin_level.tscn" id="3_basin"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rifle"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="6_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+
+[sub_resource type="Resource" id="A_pass"]
+script = ExtResource("2_espec")
+callsign = "TARAN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_basin_anchor"
+spawn_tag = &"obj_basin_exit_pass"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_north"]
+script = ExtResource("2_espec")
+callsign = "SHKVAL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("6_chaser"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_valley_garrison_4"
+spawn_tag = &"obj_basin_north"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_south"]
+script = ExtResource("2_espec")
+callsign = "OBVAL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("6_chaser"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_valley_garrison_1"
+spawn_tag = &"obj_basin_south"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_second"]
+script = ExtResource("2_espec")
+callsign = "NABEG"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_basin_anchor"
+spawn_tag = &"obj_basin_exit_pass"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 90.0
+
+[sub_resource type="Resource" id="A_flank"]
+script = ExtResource("2_espec")
+callsign = "ZASEKA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_chaser"), ExtResource("6_chaser"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_valley_garrison_2"
+spawn_tag = &"obj_valley_mid"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 150.0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"basin_2_defend"
+display_name = "Valley Basin — Hold"
+briefing = "They want the anchor back. Three columns are already moving on the basin: one up the west pass, two along the north and south rims. Your garrison is dug in at the trenches, the tower and the deck — it will not be enough on its own. Hold the anchor until they stop coming. There is no extraction and nothing to carry home: what you are fighting for is the ground you already own, and everything it pays you."
+level_scene = ExtResource("3_basin")
+map_position = Vector2(140, -10)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("A_pass"), SubResource("A_north"), SubResource("A_south"), SubResource("A_second"), SubResource("A_flank")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"basin_anchor", &"valley_garrison_cap_1", &"valley_garrison_cap_2", &"valley_garrison_cap_3"])
+reward_resources = 0
+compute_reward = 0
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = true
+defence = true
+sim = false
+garrison_posts = Array[StringName]([&"obj_basin_anchor", &"obj_valley_garrison_1", &"obj_valley_garrison_2", &"obj_valley_garrison_4"])
+requires = Array[StringName]([&"basin_1_anchor"])

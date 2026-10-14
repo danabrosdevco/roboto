@@ -1,0 +1,17 @@
+// Game: Roboto
+// Format: Valve
+// entity 0
+{
+"mapversion" "220"
+"wad" ""
+"classname" "worldspawn"
+// brush 0
+{
+( -7360 5760 -96 ) ( 7360 -5760 -96 ) ( 7360 5760 -96 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -7360 -5760 0 ) ( 7360 5760 0 ) ( 7360 -5760 0 ) PSX_Textures/concrete_3 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -7360 -5760 -96 ) ( 7360 -5760 0 ) ( 7360 -5760 -96 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 7360 -5760 -96 ) ( 7360 5760 0 ) ( 7360 5760 -96 ) PSX_Textures/concrete_tx_5 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 7360 5760 -96 ) ( -7360 5760 0 ) ( -7360 5760 -96 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -7360 5760 -96 ) ( -7360 -5760 0 ) ( -7360 -5760 -96 ) PSX_Textures/concrete_tx_5 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+}

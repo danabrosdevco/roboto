@@ -201,7 +201,12 @@ func _init() -> void:
 	_check("the last op pays compute for its first clear and the hidden objective",
 		int(result.get("compute", 0)) == paid and cm.state.compute == compute_before + paid,
 		"result=%s compute %d -> %d, expected +%d" % [result.get("compute"), compute_before, cm.state.compute, paid])
-	var all_missions := cm.missions.filter(func(m): return m != null).size()
+	# EVERY OPERATION ON THE LADDER — which is not every mission there is.
+	# A defence is filtered out of available_missions() before the won-campaign
+	# branch is even reached, deliberately: it answers a raid that is in doubt
+	# and exists only while one is waiting. Winning the campaign does not
+	# conjure an attack. Same stale count as test_debug_switches had.
+	var all_missions := cm.missions.filter(func(m): return m != null and not m.defence).size()
 	_check("clearing the last operation wins the campaign", bool(result.get("won", false)) and cm.state.campaign_won)
 	_check("...and opens every operation at the terminal", cm.available_missions().size() == all_missions,
 		"%d of %d" % [cm.available_missions().size(), all_missions])

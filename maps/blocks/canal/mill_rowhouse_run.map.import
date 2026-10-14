@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bdw6b1j8jiloh"
+path="res://.godot/imported/mill_rowhouse_run.map-601a57c99446a8eb2fc406fa8030eff7.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/mill_rowhouse_run.map"
+dest_files=["res://.godot/imported/mill_rowhouse_run.map-601a57c99446a8eb2fc406fa8030eff7.tres"]
+
+[params]
+

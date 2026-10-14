@@ -37,9 +37,21 @@ func can_use(context: AIEquipment.EquipmentContext) -> bool:
 
 	# Don't throw if we have direct LOS (just shoot them)
 	# Grenades are for targets behind cover
+	#
+	# THIS COULD NEVER ANSWER YES. It cast from `global_position` — the feet,
+	# inside the floor collider — at `target_position`, which is the target's own
+	# origin, so the ray terminated inside the target's own body. `los_clear` was
+	# false in an empty field, every time, and the rule below it has never once
+	# fired: grenades have always been thrown at targets standing in the open
+	# with nothing between.
+	#
+	# Both corrections are load-bearing and both are what every other sight test
+	# in the game already does (enemy.gd does it in nine places, _update_los
+	# included): start at eye height, and exclude the body you are looking AT.
 	var los_clear = context.owner_ai.is_path_clear(
-		context.owner_ai.global_position,
-		context.target_position
+		context.owner_ai.global_position + Vector3.UP * 0.8,
+		context.target_position,
+		context.combat_target
 	)
 	if los_clear:
 		# Exception: clustered targets are worth grenading even in the open
@@ -60,9 +72,11 @@ func execute(context: AIEquipment.EquipmentContext) -> void:
 		return
 
 	var grenade = grenade_scene.instantiate() as AIGrenadeProjectile
-	# The running scene, or the thrower's level when the tree was started by a
-	# script and has none (the tests, a lab run from the command line).
-	var host: Node = get_tree().current_scene if get_tree().current_scene != null else context.owner_ai.get_parent()
+	# THE LEVEL, not the current scene. See AIEquipment.spawn_host — the scene is
+	# Master, which outlives the mission and took the ordnance with it.
+	var host: Node = spawn_host(context.owner_ai)
+	if host == null:
+		return
 	host.add_child(grenade)
 
 	# Spawn at the AI's position, slightly above head height
@@ -71,46 +85,26 @@ func execute(context: AIEquipment.EquipmentContext) -> void:
 	grenade.setup(context.owner_ai)
 	_Analytics.throw(context.owner_ai, _Analytics.label_for_scene(grenade_scene.resource_path))
 
-	# Compute arc velocity toward target
+	# Compute arc velocity toward target — or toward the point the player
+	# designated, when this throw was ordered rather than chosen.
 	var throw_vel = _compute_throw_velocity(
 		spawn_pos,
-		context.target_position,
+		placement_or(context, context.target_position),
 		throw_speed
 	)
 	grenade.linear_velocity = throw_vel
 
-func _compute_throw_velocity(from: Vector3, to: Vector3, speed: float) -> Vector3:
-	# Split into horizontal and vertical components.
-	# Find the angle that gets us there at the given speed.
-	var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
-	var displacement = to - from
-	var horiz = Vector2(displacement.x, displacement.z)
-	var horiz_dist = horiz.length()
-	var dy = displacement.y
-
-	if horiz_dist < 0.01 or speed <= 0.0:
-		return Vector3.ZERO
-
-	# Time to travel horizontal distance
-	# We use a fixed 45-degree-ish arc: vy chosen to peak nicely
-	# Solve: horiz_dist = vx * t, dy = vy*t - 0.5*g*t^2
-	# We pick t such that the arc peaks at ~half the horizontal distance
-	# Simple: set arc height = max(2.0, dy + 2.0) above start
-	var arc_height = maxf(2.0, dy + 2.5)
-	# From arc height: vy = sqrt(2 * g * arc_height)
-	var vy = sqrt(2.0 * gravity * arc_height)
-	# Time to peak, then time to fall to target
-	var t_up = vy / gravity
-	var t_down = sqrt(2.0 * maxf(arc_height - dy, 0.01) / gravity)
-	var total_time = t_up + t_down
-
-	if total_time <= 0.0:
-		return Vector3.ZERO
-
-	var vx = displacement.x / total_time
-	var vz = displacement.z / total_time
-
-	return Vector3(vx, vy, vz)
+## The solve now lives on AIEquipment, because smoke and both mines throw at a
+## point too and three private copies of one ballistics solve is how a fix to
+## the arc silently stops applying to two thirds of the kit.
+##
+## `speed` was never read — the solve picks an arc height and lets the velocity
+## fall out of it — so throw_speed has always been decoration on this scene.
+## Kept in the signature rather than removed: ai_grenade.tscn, ai_emp_grenade.tscn
+## and ai_mortar_round.tscn all set throw_speed, and dropping an export the
+## scenes assign makes three scenes fail to load.
+func _compute_throw_velocity(from: Vector3, to: Vector3, _speed: float) -> Vector3:
+	return AIEquipment.throw_velocity(from, to)
 
 func _check_chokepoint(_pos: Vector3) -> bool:
 	# Cast two rays perpendicular to the owner→target direction at target position.

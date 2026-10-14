@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bwfv4a7s7yw47"
+path="res://.godot/imported/tile_asphalt_4.map-e4bad7dc30849eba78012dac3c64f660.tres"
+
+[deps]
+
+source_file="res://maps/blocks/ground/tile_asphalt_4.map"
+dest_files=["res://.godot/imported/tile_asphalt_4.map-e4bad7dc30849eba78012dac3c64f660.tres"]
+
+[params]
+

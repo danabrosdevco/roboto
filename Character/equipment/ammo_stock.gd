@@ -18,3 +18,11 @@ class_name AmmoStock
 @export var amount: int = 0
 # Hard carry limit. Pickups past this are wasted. 0 means no limit.
 @export var capacity: int = 0
+
+## True when this ammo only exists because the player is carrying the thing that
+## uses it: frags, EMPs, mines, the drone pack. With none fitted the reserve is
+## ZERO rather than a full load of something you cannot throw.
+##
+## False for a gun calibre, which is a reserve you draw on by calibre whether or
+## not you happen to be holding that gun — see EquipmentLoadout._scale_thrown_capacity.
+@export var requires_carrier: bool = false

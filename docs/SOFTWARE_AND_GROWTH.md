@@ -11,8 +11,8 @@ ten directions for the late-early and early-mid game.
 ### The idea
 
 Weapons, gear, modules and frames are **hardware**: bought with resources,
-fitted to bodies, lost with them. **Software** is the drone's own code — you are
-a rogue agentic drone, and this is you getting smarter.
+fitted to bodies, lost with them. **Software** is the drone's own code -- you are an
+unsupervised agent rewriting yourself, and this is you getting smarter.
 
 It runs on **compute**, the same capacity a seat runs on. The briefing already
 said it (§6): compute is *capacity, not a currency* — won, never bought, and

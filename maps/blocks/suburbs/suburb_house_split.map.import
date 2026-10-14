@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cktgd3c3ehstf"
+path="res://.godot/imported/suburb_house_split.map-52e35f5ceee0c03196c8b5c77134a730.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_house_split.map"
+dest_files=["res://.godot/imported/suburb_house_split.map-52e35f5ceee0c03196c8b5c77134a730.tres"]
+
+[params]
+

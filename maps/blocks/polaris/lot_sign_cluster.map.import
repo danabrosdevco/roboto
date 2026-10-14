@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://imat47qn1uuk"
+path="res://.godot/imported/lot_sign_cluster.map-09da75c1da33b943327711451471229b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/lot_sign_cluster.map"
+dest_files=["res://.godot/imported/lot_sign_cluster.map-09da75c1da33b943327711451471229b.tres"]
+
+[params]
+

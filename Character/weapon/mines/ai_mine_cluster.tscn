@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://bvf6txcy3wxxo"]
+
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_mine.gd" id="1_mine"]
+[ext_resource type="PackedScene" path="res://Character/weapon/mines/mine_cluster_canister.tscn" id="2_canister"]
+
+[node name="AI_Mine_Cluster" type="Node3D"]
+script = ExtResource("1_mine")
+mine_scene = ExtResource("2_canister")
+place_metres = 12.0
+min_contact_metres = 14.0
+squad_spacing_seconds = 8.0
+equipment_name = "Cluster Mine"
+cooldown = 14.0

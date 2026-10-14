@@ -64,13 +64,17 @@ func _detonate() -> void:
 
 # Direct distance checks rather than an Area3D. An area needs a physics frame to
 # populate its overlaps, and a one-shot blast that waited for one would either
-# miss the frame or need its own timer to catch it. Every robot is already in
-# the "enemies" group — the player's squad too — so this is exact and immediate.
+# miss the frame or need its own timer to catch it.
+#
+# AI.SIGNAL_GROUP, NOT "enemies". Every robot was in "enemies" and so was your
+# squad — but the PLAYER never was, so a blast at your own feet did nothing to
+# you at any range. AI joins the signal group in _ready, which is the one place
+# that cannot be forgotten by a subclass.
 func _pulse() -> void:
 	var hits := 0
 	# Credited to the EMP, not the thrower's gun: see Enemy._signal_cause.
 	_Analytics.set_cause("EMP")
-	for n in get_tree().get_nodes_in_group("enemies"):
+	for n in get_tree().get_nodes_in_group(AI.SIGNAL_GROUP):
 		if not (n is Node3D) or not is_instance_valid(n):
 			continue
 		if not n.has_method("receive_signal_damage"):

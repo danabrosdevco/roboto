@@ -1,18 +1,18 @@
 [gd_scene load_steps=8 format=4]
 
-[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_m8s5u"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_33piu"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="3_m772l"]
-[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_3.tres" id="4_lrxoj"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_u56a6"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_y1xkg"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_tx_5.tres" id="3_ne8x3"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/concrete_3.tres" id="4_ib1mx"]
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_krmeh"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_3yflf"]
 _surfaces = [{
 "aabb": AABB(-6, 0, -11, 12, 1e-05, 17.1875),
 "attribute_data": PackedByteArray("AABGvwAAQD8AAEa/AABAvwAAsD8AAEC/AACwPwAAQD8="),
 "format": 34359742487,
 "index_count": 6,
 "index_data": PackedByteArray("AAABAAIAAAACAAMA"),
-"material": ExtResource("3_m772l"),
+"material": ExtResource("3_ne8x3"),
 "name": "PSX_Textures/concrete_tx_5",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -24,7 +24,7 @@ _surfaces = [{
 "format": 34359742487,
 "index_count": 30,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMA"),
-"material": ExtResource("4_lrxoj"),
+"material": ExtResource("4_ib1mx"),
 "name": "PSX_Textures/concrete_3",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -32,26 +32,26 @@ _surfaces = [{
 "vertex_data": PackedByteArray("AADAwAAAAAAAAMZAAADAwAAAAAAAADDBAACgwAAAOD8AAKDAAACgwAAAOD8AAKBAAADAQAAAAAAAADDBAACgQAAAOD8AAKDAAACgwAAAOD8AAKDAAADAwAAAAAAAADDBAADAQAAAAAAAAMZAAADAwAAAAAAAAMZAAACgwAAAOD8AAKBAAACgQAAAOD8AAKBAAADAQAAAAAAAAMZAAACgQAAAOD8AAKBAAACgQAAAOD8AAKDAAADAQAAAAAAAADDBAACgwAAAOD8AAKBAAACgwAAAOD8AAKDAAACgQAAAOD8AAKDAAACgQAAAOD8AAKBAeEp4yv9//794SnjK/3//v3hKeMr/f/+/eEp4yv9//7+wjf//AAD/v7CN//8AAP+/sI3//wAA/7+wjf//AAD/v/9/vM////+//3+8z////7//f7zP////v/9/vM////+/hrV4yv////+GtXjK/////4a1eMr/////hrV4yv//////f////3//v/9/////f/+//3////9//7//f////3//vw==")
 }]
 
-[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_nvepu"]
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_7qpub"]
 vertices = PackedVector3Array(-6, 0, 6.1875, 6, 0, 6.1875, 6, 0, -11, -6, 0, -11, -6, 0, 6.1875, -6, 0, -11, -5, 0.71875, -5, -5, 0.71875, 5, 6, 0, -11, 5, 0.71875, -5, -5, 0.71875, -5, -6, 0, -11, 6, 0, 6.1875, -6, 0, 6.1875, -5, 0.71875, 5, 5, 0.71875, 5, 6, 0, 6.1875, 5, 0.71875, 5, 5, 0.71875, -5, 6, 0, -11, -5, 0.71875, 5, -5, 0.71875, -5, 5, 0.71875, -5, 5, 0.71875, 5)
 indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23)
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_f8b5o"]
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_2m3gh"]
 points = PackedVector3Array(-6, 0, 6.1875, 6, 0, 6.1875, 6, 0, -11, -6, 0, -11, -5, 0.71875, -5, -5, 0.71875, 5, 5, 0.71875, -5, 5, 0.71875, 5)
 
 [node name="GroundApron" type="Node3D"]
-script = ExtResource("1_m8s5u")
+script = ExtResource("1_u56a6")
 local_map_file = "res://maps/blocks/ground/ground_apron.map"
-map_settings = ExtResource("2_33piu")
+map_settings = ExtResource("2_y1xkg")
 
 [node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
 collision_mask = 0
 
 [node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
-mesh = SubResource("ArrayMesh_krmeh")
+mesh = SubResource("ArrayMesh_3yflf")
 
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
-occluder = SubResource("ArrayOccluder3D_nvepu")
+occluder = SubResource("ArrayOccluder3D_7qpub")
 
 [node name="entity_0_brush_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
-shape = SubResource("ConvexPolygonShape3D_f8b5o")
+shape = SubResource("ConvexPolygonShape3D_2m3gh")

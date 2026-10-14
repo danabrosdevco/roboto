@@ -147,7 +147,19 @@ func takes_cover() -> bool:
 
 
 func find_best_cover_point() -> CoverPoint:
-	var cover_points = get_tree().get_nodes_in_group("cover_points")
+	# THE CACHED LIST, AND THE CACHED POSITIONS. Cover does not move, so
+	# rebuilding the group array here — and reading global_position off every
+	# node in it — was paid once per soldier per search. See
+	# AIManager.cover_points(). The fallback keeps a soldier with no manager
+	# (the lab, a test) working rather than silently finding no cover.
+	var cover_points: Array
+	var cover_pos: PackedVector3Array
+	if ai_manager != null and ai_manager.has_method("cover_points"):
+		cover_points = ai_manager.cover_points()
+		cover_pos = ai_manager.cover_positions()
+	else:
+		cover_points = get_tree().get_nodes_in_group("cover_points")
+		cover_pos = PackedVector3Array()
 	var best: CoverPoint = null
 	var best_score: float = -INF
 	var target_pos = combat_target.global_position if combat_target else global_position
@@ -159,8 +171,16 @@ func find_best_cover_point() -> CoverPoint:
 	# what the profiler was showing. Squared distance also drops the sqrt.
 	var radius_sq := cover_search_radius * cover_search_radius
 	var here := global_position
-	for cp in cover_points:
-		if here.distance_squared_to(cp.global_position) > radius_sq:
+	var have_pos: bool = cover_pos.size() == cover_points.size()
+	for i in cover_points.size():
+		# Squared distance against the cached position first: this rejects
+		# almost every point, and doing it without touching the node is the
+		# whole saving.
+		if have_pos:
+			if here.distance_squared_to(cover_pos[i]) > radius_sq:
+				continue
+		var cp = cover_points[i]
+		if not have_pos and here.distance_squared_to(cp.global_position) > radius_sq:
 			continue
 		if not cp is CoverPoint or cp.is_occupied():
 			continue
@@ -374,6 +394,19 @@ func order_move_to(pos: Vector3, force: bool = false, keep_target: bool = false,
 	# Cover is released either way; you can't hold it and walk.
 	if force:
 		release_cover()
+		# AND THE NEW POSITION GETS A FULL HEARING. _no_los_timer is how long
+		# this robot has gone without sight of its target before it repositions
+		# itself. It does not tick while an order is in flight, but it carries
+		# whatever it had reached BEFORE the order — so a rover that was one
+		# tick short of its patience when you ordered it away would arrive and
+		# immediately decide to go back. Repositioning for a shot is wanted;
+		# doing it the moment you arrive somewhere you were sent is not.
+		_no_los_timer = 0.0
+		# AND IT LOOKS WHERE IT IS BEING SENT. A stale look_target is the other
+		# half of walking backwards: the facing rules fall through to it the
+		# moment the robot drops out of COMBAT, so a squad member that had been
+		# told to watch an old contact kept watching it on the march.
+		look_target = pos
 		if not keep_target:
 			combat_target = null
 
@@ -441,7 +474,7 @@ func find_flank_target() -> Vector3:
 	var right = to_target.cross(Vector3.UP).normalized()
 	var flank_dir = right if randf() > 0.5 else -right
 	var test_pos = combat_target.global_position + flank_dir * reposition_distance * 3.0
-	return NavigationServer3D.map_get_closest_point(nav_map, test_pos)
+	return _snap_to_nav(test_pos)
 
 
 # ─────────────────────────────────────────────

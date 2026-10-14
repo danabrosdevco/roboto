@@ -18,9 +18,21 @@ func play_shot_audio():
 func play_muzzle_flash():
 	muzzle_flash.play_flash()
 
+## Hostile by default. A world-placed emplacement shooting at you is the enemy;
+## nothing here has a faction to ask, and if a friendly one is ever wanted this
+## grows an export then rather than guessing now.
+##
+## BOTH PATHS IN THIS FILE ARE CURRENTLY UNREACHABLE — ai_drone_bomb_weapon.tscn
+## is referenced by nothing and does not set tracer_scene, and
+## appx/ai_world_weapon.tscn has no users either. Tinted anyway so that "every
+## tracer spawner colours its round" has no exceptions waiting to be rediscovered.
+const WORLD_WEAPON_FACTION := Enums.Factions.ENEMY
+
 func fire_tracer():
 	var new_tracer = tracer_scene.instantiate()
 	add_child(new_tracer)
+	if new_tracer.has_method("set_side"):
+		new_tracer.set_side(WORLD_WEAPON_FACTION)
 	# 1. Set starting position at tracer origin (on the weapon)
 	new_tracer.global_position = muzzle_origin.global_position
 	# 2. Get world-space forward direction from tracer_origin
@@ -34,6 +46,8 @@ func fire_tracer_spread(spread_count := 8, spread_angle_degrees := 10.0):
 	for i in spread_count:
 			var new_tracer = tracer_scene.instantiate()
 			add_child(new_tracer)
+			if new_tracer.has_method("set_side"):
+				new_tracer.set_side(WORLD_WEAPON_FACTION)
 			new_tracer.global_position = muzzle_origin.global_position
 			# Godot forward is -Z, but your muzzle uses +X
 			var base_dir = muzzle_origin.global_transform.basis.x.normalized()

@@ -13,7 +13,7 @@ extends SceneTree
 # never writes it.
 # ─────────────────────────────────────────────
 
-const MISSION := "res://Campaign/missions/mission_valley_6_foundry.tres"
+const MISSION := "res://Campaign/missions/appendix/mission_valley_6_foundry.tres"
 
 var _fails := 0
 
@@ -75,7 +75,7 @@ func _init() -> void:
 		await physics_frame
 	var player: Node3D = _find(root, "Player")
 	var level: Node = player.get_parent()
-	var valley = load("res://maps/valley_level.tscn").instantiate()
+	var valley = load("res://maps/appendix/valley_level.tscn").instantiate()
 	level.add_child(valley)
 	for _i in 30:
 		await physics_frame

@@ -49,8 +49,15 @@ func reset() -> void:
 		ammo_changed.emit(stock.ammo_type, stock.amount * n)
 
 
+## What is stored, honestly. This clamped to 1 as well as set_carriers did, so a
+## type scaled to ZERO carriers read back as ONE — and the next call that set it
+## to one saw no change, returned early, and left the capacity at zero. Fitting a
+## frag then gave you no frags.
+##
+## The default for a type never scaled at all is still 1: a gun calibre has its
+## reserve before anything is fitted.
 func _carriers_of(ammo_type: StringName) -> int:
-	return maxi(1, int(_carriers.get(ammo_type, 1)))
+	return maxi(0, int(_carriers.get(ammo_type, 1)))
 
 
 ## How many fitted items draw on `ammo_type`. Capacity scales with it, and a
@@ -58,8 +65,16 @@ func _carriers_of(ammo_type: StringName) -> int:
 ## grenades, it does not just raise the ceiling on the three you had. Removing
 ## one trims whatever no longer fits. Unlimited types (capacity 0) are left
 ## alone — there is no ceiling to scale.
+## How many of this ammo's items the player is carrying. Capacity is the stock's
+## own load times that.
+##
+## ZERO IS ALLOWED, and it means zero. This clamped to 1, so a reserve existed
+## whether or not anything could use it — thirty-six frags in your pocket with no
+## frag fitted. A gun calibre still floors at one (see _scale_thrown_capacity:
+## guns share a reserve by calibre on purpose); a thrown item only has what it
+## brought.
 func set_carriers(ammo_type: StringName, n: int) -> void:
-	n = maxi(1, n)
+	n = maxi(0, n)
 	var old := _carriers_of(ammo_type)
 	_carriers[ammo_type] = n
 	if n == old or not _base_capacities.has(ammo_type):
@@ -131,6 +146,17 @@ func refill_all() -> void:
 			starting[stock.ammo_type] = stock.amount
 	for ammo_type in _capacities.keys():
 		var cap := get_capacity(ammo_type)
-		var amount: int = cap if cap > 0 else int(starting.get(ammo_type, get_count(ammo_type)))
+		# ZERO CAPACITY MEANS TWO DIFFERENT THINGS and they need telling apart.
+		# A stock that declares no capacity falls back to its own amount, which is
+		# what this always did. A stock that HAS a capacity and has been scaled to
+		# zero carriers is something nobody is carrying — and refilling that to the
+		# stock amount handed the player a full pouch of frags with no frag fitted.
+		var amount: int
+		if cap > 0:
+			amount = cap
+		elif int(_base_capacities.get(ammo_type, 0)) > 0:
+			amount = 0
+		else:
+			amount = int(starting.get(ammo_type, get_count(ammo_type)))
 		_counts[ammo_type] = amount
 		ammo_changed.emit(ammo_type, amount)

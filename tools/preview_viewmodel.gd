@@ -35,7 +35,23 @@ func _init() -> void:
 		if not ResourceLoader.exists(path):
 			printerr("preview_viewmodel: no such scene %s" % path)
 			continue
-		for pose in ["hip", "ads", "reload", "thrust"]:
+		# RELOAD_STRIP=n renders n frames evenly across the reload instead of the
+		# four standing poses, which is how a reload animation gets looked at.
+		var poses: Array = ["hip", "ads", "reload", "thrust"]
+		# POSES="at@..;at@.." renders exactly those, for probing a pose by hand.
+		# PART_TINT=Name,Name paints those parts bright pink, which is the only quick
+		# way to answer "is the thing I am animating the thing I think it is". It
+		# caught a magazine cut that had actually taken the trigger guard, after two
+		# renders of grey-on-grey had been read as "not rendering at all".
+		var named := OS.get_environment("POSES")
+		if named != "":
+			poses = Array(named.split(";"))
+		var strip := int(OS.get_environment("RELOAD_STRIP"))
+		if strip > 1:
+			poses = []
+			for i in strip:
+				poses.append("reload@%.4f" % (float(i) / float(strip - 1)))
+		for pose in poses:
 			var img := await _shot(path, pose)
 			if img != null:
 				img.save_png("%s/%s_%s.png" % [
@@ -125,6 +141,23 @@ func _shot(path: String, pose: String) -> Image:
 		want = float(ads_fov)
 	cam.fov = want
 	var model := _viewmodel(gun)
+	_tint(model)
+	# A WEAPON THE PLAYER HOLDS IS LOADED. PlayerWeapon._on_initialize fills the
+	# magazine and this tool never calls initialize(), so without this the Cluster
+	# Launcher renders with six empty chambers and every still of its ammunition
+	# is a still of it having none.
+	if gun.get("magazine_size") != null and int(gun.get("loaded")) == 0:
+		gun.set("loaded", int(gun.get("magazine_size")))
+		if gun.has_method("_sync_full"):
+			gun._sync_full()
+			gun._settle()
+	# SHOTS=n spends n rounds before rendering, for a weapon that shows its
+	# ammunition on the outside — the Cluster Launcher's cylinder is the only one
+	# so far, and a still of a full drum says nothing about what firing does to it.
+	var shots := int(OS.get_environment("SHOTS"))
+	if shots > 0 and gun.has_method("_spend_chamber"):
+		for _s in shots:
+			gun._spend_chamber()
 	if model == null:
 		printerr("preview_viewmodel: %s names no `viewmodel`, so there is no pose to render." % path.get_file())
 		vp.queue_free()
@@ -135,11 +168,16 @@ func _shot(path: String, pose: String) -> Image:
 	# the lance's thrust — was drawn relative to a place the game never uses.
 	if gun.get("use_default_position") == false:
 		gun.base_position = model.position
-		gun.base_rotation = model.rotation
+		gun.base_rotation = model.rotation_degrees
 	model.position = _pose_pos(gun, pose)
-	# RADIANS, because player_equipment.gd lerps viewmodel.ROTATION, not
-	# rotation_degrees — posing this in degrees showed a pose the game never uses.
-	model.rotation = _pose_rot(gun, pose)
+	# DEGREES, matching PlayerEquipment.update_view(), which writes
+	# rotation_degrees. This said RADIANS before, on the grounds that the pose lerp
+	# ran on viewmodel.rotation — which it did, and that was the bug: the lerp read
+	# back 1/57.3 of what it had written and every pose settled at about 17% of the
+	# angle it named. So this preview agreed with the lerp's intermediate value and
+	# with nothing the player ever saw. Any sight solve taken from an older run of
+	# this tool was measured against a picture the game does not draw.
+	model.rotation_degrees = _pose_rot(gun, pose)
 	for _i in 6:
 		await process_frame
 	if pose == "ads":
@@ -293,7 +331,47 @@ func _mount_for(scene_path: String) -> Array:
 ## (0.31, -0.425, -0.015) that base_position used to, so every weapon that
 ## moved its hip pose left its reload pose behind at the old spot — the gun
 ## snapped across the screen the moment you pressed R.
+## A SCRIPTED RELOAD, SAMPLED. "reload@0.35" asks the weapon where it sits 35%
+## through its own reload rather than for the one static reload pose — and since
+## _reload_frame also poses the model's own moving parts, asking it here is what
+## puts the magazine, the drum or the feed cover in the render too. A strip of
+## these is the only way to look at an animation without playing the game.
+## A POSE NAMED OUTRIGHT: "at@x,y,z|rx,ry,rz". For finding a working pose without
+## editing a weapon script and re-rendering once per guess — six candidates in one
+## run, pick the one that frames the part that is supposed to be moving.
+func _literal_at(pose: String) -> Array:
+	if not pose.begins_with("at@"):
+		return []
+	var halves := pose.substr(3).split("|")
+	if halves.size() != 2:
+		return []
+	var p := halves[0].split(",")
+	var r := halves[1].split(",")
+	if p.size() != 3 or r.size() != 3:
+		return []
+	return [Vector3(float(p[0]), float(p[1]), float(p[2])),
+		Vector3(float(r[0]), float(r[1]), float(r[2]))]
+
+
+func _reload_at(gun: Node, pose: String) -> Array:
+	# "pump@t" samples the CYCLE instead — a manual-action rifle works its bolt
+	# after every shot, which the player sees far more often than a reload.
+	if pose.begins_with("pump@") and gun.has_method("_pump_frame"):
+		var cycle: Array = gun._pump_frame(float(pose.substr(5)))
+		return cycle if cycle.size() == 2 else []
+	if not pose.begins_with("reload@") or not gun.has_method("_reload_frame"):
+		return []
+	var frame: Array = gun._reload_frame(float(pose.substr(7)))
+	return frame if frame.size() == 2 else []
+
+
 func _pose_pos(gun: Node, pose: String) -> Vector3:
+	var literal := _literal_at(pose)
+	if not literal.is_empty():
+		return literal[0]
+	var scripted := _reload_at(gun, pose)
+	if not scripted.is_empty():
+		return scripted[0]
 	if pose == "thrust":
 		var th = _thrust_pose(gun)
 		return th[0] if th != null else _rest_pos(gun)
@@ -308,6 +386,12 @@ func _pose_pos(gun: Node, pose: String) -> Vector3:
 
 
 func _pose_rot(gun: Node, pose: String) -> Vector3:
+	var literal := _literal_at(pose)
+	if not literal.is_empty():
+		return literal[1]
+	var scripted := _reload_at(gun, pose)
+	if not scripted.is_empty():
+		return scripted[1]
 	if pose == "thrust":
 		var th = _thrust_pose(gun)
 		return th[1] if th != null else _rest_rot(gun)
@@ -336,7 +420,7 @@ func _rest_pos(gun: Node) -> Vector3:
 func _rest_rot(gun: Node) -> Vector3:
 	var vm := _viewmodel(gun)
 	if vm != null and gun.get("use_default_position") == false:
-		return vm.rotation
+		return vm.rotation_degrees
 	return gun.base_rotation
 
 
@@ -353,3 +437,38 @@ func _thrust_pose(gun: Node) -> Variant:
 	gun.set("_swinging", false)
 	gun.set("_swing_t", 0.0)
 	return pose
+
+
+## Paint the parts named in PART_TINT bright pink, wherever they are under the
+## weapon's model. Debug only, and off unless the variable is set.
+func _tint(model: Node) -> void:
+	var want := OS.get_environment("PART_TINT")
+	if want == "" or model == null:
+		return
+	var hot := StandardMaterial3D.new()
+	hot.albedo_color = Color(1.0, 0.2, 0.6)
+	for name in want.split(","):
+		var hit := _find_part(model, name.strip_edges())
+		if hit == null:
+			printerr("preview_viewmodel: no part '%s' under %s to tint." % [name, model.name])
+			continue
+		for n in _all(hit):
+			if n is GeometryInstance3D:
+				(n as GeometryInstance3D).material_override = hot
+
+
+func _find_part(n: Node, named: String) -> Node:
+	if n.name == named:
+		return n
+	for c in n.get_children():
+		var hit := _find_part(c, named)
+		if hit != null:
+			return hit
+	return null
+
+
+func _all(n: Node) -> Array:
+	var out: Array = [n]
+	for c in n.get_children():
+		out.append_array(_all(c))
+	return out

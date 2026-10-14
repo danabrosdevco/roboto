@@ -1,0 +1,100 @@
+[gd_scene load_steps=6 format=3]
+
+; ROCKET PODS — the Picket's launcher. Six tubes, rippled, indirect.
+;
+; NO NEW SCRIPT. This is the FIFTH set of exports on
+; ai_weapon_grenade_launcher.gd, after the mortar, the grenade launcher, the
+; turret grenade launcher and the cluster launcher. FRAME_ANATOMY.md section
+; 3.4's rule — "you need a subclass if and only if the round is not a hitscan
+; ray, and a .tres plus ai_weapon_grenade_launcher.gd is enough for anything
+; that lobs a charge" — answers this weapon for free: lob_speed solves the arc
+; from the ground onto the target, impact_fused bursts the round where it
+; lands, and nothing about a rocket pod needs a sixth behaviour.
+;
+; THE ROUND IS THE MORTAR'S. ai_mortar_round.tscn is a RigidBody3D with
+; blast_damage, fuse_time, explode_on_bounce and flight_time — every property
+; the launcher overrides on release — and it whistles down on the last second
+; of its arc, which is the one audible warning an arcing round can give the
+; thing it is about to land on. A second projectile scene would be the same
+; object with a different silhouette at 80 m in the air.
+;
+; HIGH ARC, DELIBERATELY. The pack is canted 54 degrees on PodCant
+; (picket.tscn:423) and walker.gd:224 adds elevation on top, so the launcher's
+; real band is 42 to 89 degrees and it CANNOT point at the ground. That is the
+; approved silhouette, so the ballistics have to agree with it: high_arc fires
+; the steep root of the same equation, and a round leaving a 70-degree tube on
+; a 17-degree trajectory would be the frame lying about itself.
+;
+; lob_speed 32 IS NEAR THE LIMIT, ON PURPOSE. Flat-ground reach at this speed
+; is v*v/g = 104 m, and max_effective_range is 95 — so the gun is working at
+; its own ballistic edge at full range, which is where a 95 m reach stops being
+; a number on a card. It also pins time of flight: on the high arc that is
+; roughly 2*lob_speed/g, i.e. 5.5 s at 95 m and 6.2 s at 60. A round that is
+; airborne for six seconds lands where its target WAS, which is why targeting
+; is PATIENT (pick something that will still be there) and why this weapon is
+; not an answer to a moving aircraft. See docs/integration/PICKET.md's
+; amendment: that is an open identity question, not a bug in this file.
+;
+; min_effective_range 18 IS A SAFETY NUMBER, not flavour, and it overrides the
+; brief's 0.0 — which was written for a hitscan burst. On the high arc a round
+; fired at something ten metres away goes almost straight up and comes almost
+; straight back down, and ai-wep_cluster.tscn already carries the comment
+; explaining what that does to the frame that fired it. The Picket's CLAWS
+; built-in is what it has below eighteen metres.
+
+[ext_resource type="Script" path="res://Character/weapon/ai_weapon_grenade_launcher.gd" id="1_aigl"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/equipment/ai_mortar_round.tscn" id="2_round"]
+[ext_resource type="PackedScene" path="res://Character/weapon/models/rocket_pods_model.tscn" id="3_model"]
+[ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="4_flash"]
+[ext_resource type="AudioStream" uid="uid://3ps2c3e6sglw" path="res://sounds/sfx/grenade launcher/freesound_community-grenade-launcher-106342.mp3" id="5_fire"]
+
+[node name="ai_weapon_rocket_pods" type="Node3D" node_paths=PackedStringArray("muzzle_flash", "muzzle_origin", "shot_audio")]
+script = ExtResource("1_aigl")
+grenade_scene = ExtResource("2_round")
+launch_speed = 6.0
+inherit_carrier_velocity = 0.0
+salvo = 1
+salvo_spacing = 0.0
+salvo_scatter = 0.0
+fuse_override = 30.0
+analytics_label = "Rocket Pods"
+high_arc = true
+blast_radius_override = 3.6
+blast_override = 55
+lob_speed = 32.0
+impact_fused = true
+weapon_type = 2
+targeting = 1
+projectile_speed = 32.0
+target_hold_seconds = 6.5
+fire_cooldown = 0.5
+base_damage = 55
+min_damage = 55
+damage_falloff_start = 999.0
+min_effective_range = 18.0
+max_effective_range = 95.0
+ai_spread_mrad = 16.0
+suppression_per_shot = 10.0
+near_miss_radius = 4.0
+burst_min = 3
+burst_max = 6
+magazine_size = 12
+reload_time = 6.0
+muzzle_flash = NodePath("RocketPodsModel/MuzzleFlash")
+muzzle_origin = NodePath("RocketPodsModel/Muzzle")
+shot_audio = NodePath("Shot")
+
+[node name="RocketPodsModel" parent="." instance=ExtResource("3_model")]
+
+[node name="Muzzle" type="Node3D" parent="RocketPodsModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+
+[node name="MuzzleFlash" parent="RocketPodsModel" instance=ExtResource("4_flash")]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 1.5, 0, 0)
+visible = false
+
+[node name="Shot" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("5_fire")
+volume_db = -7.0
+unit_size = 34.0
+pitch_scale = 1.15

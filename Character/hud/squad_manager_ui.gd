@@ -1,6 +1,11 @@
 extends Control
 class_name SquadManagerUI
 
+## Prices come from one table now — see Campaign/pricing.gd. Preloaded rather
+## than named, because a new `class_name` is not visible until the editor
+## rescans and this project cannot run --import.
+const _Pricing := preload("res://Campaign/pricing.gd")
+
 # ─────────────────────────────────────────────
 # SQUAD MANAGER — three pages behind one key, each with one job:
 #
@@ -61,8 +66,12 @@ const _SquadPage := preload("res://Character/hud/squad/squad_page.gd")
 const _ArmorerPage := preload("res://Character/hud/squad/armorer_page.gd")
 const _FactoryPage := preload("res://Character/hud/squad/factory_page.gd")
 const _SoftwarePage := preload("res://Character/hud/squad/software_page.gd")
-const TABS := [&"squad", &"armorer", &"factory", &"software"]
-const TAB_TITLES := {&"squad": "SQUAD", &"armorer": "ARMORER", &"factory": "FACTORY", &"software": "SOFTWARE"}
+## THE ONLY PLACE A LINE IS OPENED. The armourer and the factory show what is
+## already open; this shows what is not. See tooling_page.gd.
+const _ToolingPage := preload("res://Character/hud/squad/tooling_page.gd")
+const TABS := [&"squad", &"armorer", &"factory", &"tooling", &"software"]
+const TAB_TITLES := {&"squad": "SQUAD", &"armorer": "ARMORER", &"factory": "FACTORY",
+	&"tooling": "TOOLING", &"software": "SOFTWARE"}
 
 var campaign: Node
 var state: CampaignState
@@ -179,6 +188,24 @@ func close() -> void:
 	_hide_other_hud(false)
 	_clear_cursors()
 	_play(sfx_close)
+	_restore_mouse()
+
+
+## GIVE THE MOUSE BACK TO WHOEVER STILL WANTS IT.
+##
+## This used to capture unconditionally, which is right when the squad
+## manager is the only screen open and wrong the moment it is not. Open the
+## ops table, press TAB, close the squad manager again: you are still
+## standing at the table looking at the board, and the cursor you need to
+## use it has just been taken away with no way to get it back short of
+## closing and reopening.
+##
+## Any other screen holding the pause is a screen that wants a cursor, so
+## the capture only happens when this was the last one up.
+static func _restore_mouse() -> void:
+	for who in PauseHold.holders():
+		if who != &"squad_manager":
+			return
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 
@@ -301,6 +328,8 @@ func _build_ui() -> void:
 				page = _ArmorerPage.new()
 			&"factory":
 				page = _FactoryPage.new()
+			&"tooling":
+				page = _ToolingPage.new()
 			&"software":
 				page = _SoftwarePage.new()
 		page.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -413,7 +442,7 @@ func shop_items() -> Array:
 		if not held:
 			if not entry.in_shop:
 				continue
-			if locked_by(entry.id) != null:
+			if is_locked(entry.id):
 				continue
 			# A tier you have not bought into: the Walker's guns before there is
 			# a Walker. See ItemDefinition.requires_chassis.
@@ -423,18 +452,31 @@ func shop_items() -> Array:
 	out.sort_custom(func(a, b):
 		if a.kind != b.kind:
 			return a.kind < b.kind
-		if a.cost != b.cost:
-			return a.cost < b.cost
+		if _Pricing.item_buy(a) != _Pricing.item_buy(b):
+			return _Pricing.item_buy(a) < _Pricing.item_buy(b)
 		return a.display_name < b.display_name)
 	return out
 
 
-## The operation that unlocks `id` while it is still locked, else null
-## (Campaign.locked_by). A stand-in campaign with no unlocks locks nothing.
-func locked_by(id: StringName) -> MissionDefinition:
-	if campaign == null or not campaign.has_method("locked_by"):
-		return null
-	return campaign.locked_by(id)
+## Is this line still shut? (Campaign.is_locked), falling back to the ledger
+## when there is no campaign manager to ask.
+##
+## Replaces locked_by(), which named the OPERATION that would unlock a thing.
+## Operations no longer grant kit — you open a line in the fabrication car —
+## so there is no mission to name.
+func is_locked(id: StringName) -> bool:
+	if campaign != null and campaign.has_method("is_locked"):
+		return campaign.is_locked(id)
+	# NO CAMPAIGN MANAGER, BUT THE STATE STILL KNOWS.
+	#
+	# This used to return false outright, on the reasoning that a stand-in
+	# campaign locks nothing. That made every page list EVERYTHING the moment
+	# the manager was absent — the exact failure the gate exists to prevent,
+	# and silent, because a shop showing too much looks like a shop. The ledger
+	# is the authority; only the DEBUG switch lives on the manager.
+	if state != null:
+		return not state.is_unlocked(id)
+	return false
 
 
 func buildable_frames() -> Array:
@@ -442,8 +484,14 @@ func buildable_frames() -> Array:
 	if catalogue == null:
 		return out
 	for frame in catalogue.chassis:
-		if frame != null and frame.purchasable and locked_by(frame.id) == null:
+		if frame != null and frame.purchasable and not is_locked(frame.id):
 			out.append(frame)
+	# CHEAPEST FIRST, left to right. The row is a ladder and "what can I afford
+	# next" runs in one direction; read the other way the Walker led and the
+	# Soldier — the thing you actually buy early — was first off the end when
+	# the row overflowed its scroller.
+	out.sort_custom(func(a: ChassisDefinition, b: ChassisDefinition) -> bool:
+		return _Pricing.chassis_buy(a) < _Pricing.chassis_buy(b))
 	return out
 
 

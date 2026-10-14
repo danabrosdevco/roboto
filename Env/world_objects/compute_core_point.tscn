@@ -1,0 +1,60 @@
+[gd_scene load_steps=5 format=3]
+
+; CAPTURE POINT — a 7.0 m compute core.
+;
+; The core IS the objective: DummyTerminal is here for the interaction, with its
+; own casing hidden (show_body) so the core is the thing you walk up to.
+;
+; REACH IS THE CORE'S FOOTPRINT, 3.38 m square, AND NOT A METRE MORE. The
+; player's InteractRaycast is 2 m long, masks the Interactible layer only — so it
+; ignores the core's solid body entirely — and does not register a hit when it
+; STARTS inside the volume. Sized to the footprint, the core's own collision
+; stops the player half a metre short, which puts the camera outside the box
+; looking in. Grow it and the camera ends up inside and nothing can be pressed.
+;
+; channel_range is measured from the INTERACTIBLE, not from this node (see
+; InteractObjective._process), so it has to clear the footprint plus room for the
+; player to shuffle while the channel runs.
+
+[ext_resource type="Script" path="res://Campaign/interact_objective.gd" id="1_obj"]
+[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_core.tscn" id="2_core"]
+[ext_resource type="PackedScene" uid="uid://c35vac7u5e3gs" path="res://Env/world_objects/dummy_terminal.tscn" id="3_term"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_mote"]
+radius = 0.05
+height = 0.1
+radial_segments = 4
+rings = 4
+
+[node name="CapturePoint" type="Node3D" node_paths=PackedStringArray("interactibles")]
+script = ExtResource("1_obj")
+interactibles = [NodePath("Terminal/Interactible")]
+channel_duration = 3.0
+channel_range = 4.5
+
+[node name="Core" parent="." instance=ExtResource("2_core")]
+
+[node name="Terminal" parent="." instance=ExtResource("3_term")]
+label_text = ""
+show_body = false
+reach_size = Vector3(3.38, 3, 3.38)
+reach_height = 1.5
+indicator_height = 6.9
+
+[node name="Motes" type="CPUParticles3D" parent="."]
+amount = 8
+lifetime = 1.5
+randomness = 0.1
+lifetime_randomness = 0.1
+mesh = SubResource("SphereMesh_mote")
+emission_shape = 6
+emission_ring_axis = Vector3(0, 0, 1)
+emission_ring_height = 1.0
+emission_ring_radius = 2.0
+emission_ring_inner_radius = 0.0
+direction = Vector3(0, 1, 0)
+spread = 15.0
+flatness = 1.0
+gravity = Vector3(0, 0, 0)
+initial_velocity_min = 0.75
+initial_velocity_max = 1.5

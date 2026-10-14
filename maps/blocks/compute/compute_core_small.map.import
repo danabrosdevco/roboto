@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bx40v7nxm1iw0"
+path="res://.godot/imported/compute_core_small.map-808ce4c746a14d33778b808ffafff8f4.tres"
+
+[deps]
+
+source_file="res://maps/blocks/compute/compute_core_small.map"
+dest_files=["res://.godot/imported/compute_core_small.map-808ce4c746a14d33778b808ffafff8f4.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://df5742sl7e671"
+path="res://.godot/imported/suburb_pad_single.map-2eeddec455f00a13332d9eb21fa4a961.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_pad_single.map"
+dest_files=["res://.godot/imported/suburb_pad_single.map-2eeddec455f00a13332d9eb21fa4a961.tres"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cnss87pwgv2rq"
+path="res://.godot/imported/suburban_cart_corral.map-a4a823291d2545529f2d43fde9a3c670.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_cart_corral.map"
+dest_files=["res://.godot/imported/suburban_cart_corral.map-a4a823291d2545529f2d43fde9a3c670.tres"]
+
+[params]
+

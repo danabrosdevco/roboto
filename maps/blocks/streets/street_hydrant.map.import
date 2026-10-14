@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bpm2uixvj2jkn"
+path="res://.godot/imported/street_hydrant.map-c4d74b3242155211670cf76645a024a7.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_hydrant.map"
+dest_files=["res://.godot/imported/street_hydrant.map-c4d74b3242155211670cf76645a024a7.tres"]
+
+[params]
+

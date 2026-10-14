@@ -38,7 +38,7 @@ func _init() -> void:
 	# OPEN GROUND. Every earlier run of this was at homebase, whose walls caught
 	# the bombs mid-flight and made the drone look 20m inaccurate. Test where the
 	# drones actually fight.
-	var valley = load("res://maps/valley_level.tscn").instantiate()
+	var valley = load("res://maps/appendix/valley_level.tscn").instantiate()
 	level.add_child(valley)
 	for _i in 20:
 		await physics_frame

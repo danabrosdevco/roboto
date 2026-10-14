@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b6g4yw6sj8owr"
+path="res://.godot/imported/suburb_garden_apartment.map-763c79a5dcbec2c0384c61ffdfb96c7c.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_garden_apartment.map"
+dest_files=["res://.godot/imported/suburb_garden_apartment.map-763c79a5dcbec2c0384c61ffdfb96c7c.tres"]
+
+[params]
+

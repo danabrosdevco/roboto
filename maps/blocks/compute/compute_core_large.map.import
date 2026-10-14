@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bpu3u32tnfkcx"
+path="res://.godot/imported/compute_core_large.map-e40069a342d1d4e89ff8b7bf458a6d46.tres"
+
+[deps]
+
+source_file="res://maps/blocks/compute/compute_core_large.map"
+dest_files=["res://.godot/imported/compute_core_large.map-e40069a342d1d4e89ff8b7bf458a6d46.tres"]
+
+[params]
+

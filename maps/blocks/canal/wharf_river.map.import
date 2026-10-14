@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dow2veawfojrh"
+path="res://.godot/imported/wharf_river.map-2e7d3049dd264273e04b4b621cacc2ad.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/wharf_river.map"
+dest_files=["res://.godot/imported/wharf_river.map-2e7d3049dd264273e04b4b621cacc2ad.tres"]
+
+[params]
+

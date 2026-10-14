@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
 [ext_resource type="PackedScene" uid="uid://be2sgj1qwg7f2" path="res://Character/weapon/m4_hud_weapon.tscn" id="2_player"]
-[ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_m4.tscn" id="3_ai"]
+[ext_resource type="PackedScene" uid="uid://csylooihvypi1" path="res://Character/weapon/ai-wep_m4.tscn" id="3_ai"]
 
 [resource]
 script = ExtResource("1_itemdef")
@@ -21,6 +21,8 @@ weapon_damage = 39
 usable_by_player = true
 usable_by_ai = true
 fits_vehicles = false
+one_per_robot = false
+in_shop = true
 quantity = 1
 health_bonus = 0
 accuracy_bonus = 0.0
@@ -28,5 +30,10 @@ damage_bonus = 0
 speed_multiplier = 1.0
 signal_bonus = 0.0
 sensor_bonus = 0.0
-required_rank = 0
+signal_resistance_bonus = 0.0
+self_revive_seconds = 0.0
+equipment_slot_bonus = 0
+suppressive_fire = false
+unlock_requires = Array[StringName]([])
+requires_chassis = Array[StringName]([])
 chassis_whitelist = Array[StringName]([])

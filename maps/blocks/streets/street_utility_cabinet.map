@@ -1,0 +1,44 @@
+// Game: Roboto
+// Format: Valve
+// entity 0
+{
+"mapversion" "220"
+"wad" ""
+"classname" "worldspawn"
+// brush 0
+{
+( -35 16 -10 ) ( 35 -16 -10 ) ( 35 16 -10 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -35 -16 3 ) ( 35 16 3 ) ( 35 -16 3 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -35 -16 -10 ) ( 35 -16 3 ) ( 35 -16 -10 ) PSX_Textures/concrete_tx_5 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 35 -16 -10 ) ( 35 16 3 ) ( 35 16 -10 ) PSX_Textures/concrete_tx_5 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 35 16 -10 ) ( -35 16 3 ) ( -35 16 -10 ) PSX_Textures/concrete_tx_5 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -35 16 -10 ) ( -35 -16 3 ) ( -35 -16 -10 ) PSX_Textures/concrete_tx_5 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 1
+{
+( -30 12 3 ) ( 30 -12 3 ) ( 30 12 3 ) PSX_Textures/metal_floor_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -30 -12 40 ) ( 30 12 40 ) ( 30 -12 40 ) PSX_Textures/metal_floor_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -30 -12 3 ) ( 30 -12 40 ) ( 30 -12 3 ) PSX_Textures/metal_wall_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 30 -12 3 ) ( 30 12 40 ) ( 30 12 3 ) PSX_Textures/metal_wall_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 30 12 3 ) ( -30 12 40 ) ( -30 12 3 ) PSX_Textures/metal_wall_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -30 12 3 ) ( -30 -12 40 ) ( -30 -12 3 ) PSX_Textures/metal_wall_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 2
+{
+( -33 14 40 ) ( 33 -14 40 ) ( 33 14 40 ) PSX_Textures/metal_floor_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -33 -14 43 ) ( 33 14 43 ) ( 33 -14 43 ) PSX_Textures/metal_floor_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -33 -14 40 ) ( 33 -14 43 ) ( 33 -14 40 ) PSX_Textures/metal_floor_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 33 -14 40 ) ( 33 14 43 ) ( 33 14 40 ) PSX_Textures/metal_floor_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 33 14 40 ) ( -33 14 43 ) ( -33 14 40 ) PSX_Textures/metal_floor_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -33 14 40 ) ( -33 -14 43 ) ( -33 -14 40 ) PSX_Textures/metal_floor_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 3
+{
+( -16 -12 16 ) ( 16 -13 16 ) ( 16 -12 16 ) PSX_Textures/metal_floor_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -16 -13 32 ) ( 16 -12 32 ) ( 16 -13 32 ) PSX_Textures/metal_floor_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -16 -13 16 ) ( 16 -13 32 ) ( 16 -13 16 ) PSX_Textures/metal_floor_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 16 -13 16 ) ( 16 -12 32 ) ( 16 -12 16 ) PSX_Textures/metal_floor_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 16 -12 16 ) ( -16 -12 32 ) ( -16 -12 16 ) PSX_Textures/metal_floor_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 -12 16 ) ( -16 -13 32 ) ( -16 -13 16 ) PSX_Textures/metal_floor_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+}

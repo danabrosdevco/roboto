@@ -88,7 +88,7 @@ func _init() -> void:
 	# ON OPEN GROUND. 150m out from homebase is off the edge of its floor, so a
 	# robot there simply FALLS — which reads as movement and made the culled
 	# control look awake. The valley is where this range actually happens.
-	var valley = load("res://maps/valley_level.tscn").instantiate()
+	var valley = load("res://maps/appendix/valley_level.tscn").instantiate()
 	level.add_child(valley)
 	for _i in 20:
 		await physics_frame
@@ -158,6 +158,40 @@ func _init() -> void:
 	_check("an unshot robot at the same range stays culled", moved_ctrl < 0.5, "%.1fm" % moved_ctrl)
 	_check("...and closes on whoever shot it",
 		shot.global_position.distance_to(player.global_position) < p_shot.distance_to(player.global_position))
+
+	# ── THE TICK ITSELF, NOT JUST THE BRAIN ─────
+	# A culled robot now switches its own _physics_process OFF rather than
+	# early-returning out of it sixty times a second — 176 of Qamareen's 186
+	# hostiles, ~2 ms of a 26 ms physics frame, with Jolt reporting zero active
+	# bodies either way. See Enemy.cull_frozen.
+	#
+	# THAT IS ONLY SAFE WHILE SOMETHING OUTSIDE THE ROBOT CAN SWITCH IT BACK
+	# ON. A robot with no tick cannot notice that it ought to wake up, and one
+	# that never wakes is a level that quietly stops fighting back — the whole
+	# hazard of the change, and invisible in a frame-time number. So: the
+	# control has to really be off, the one that was shot has to really be back
+	# on, and closing the DISTANCE on a frozen robot has to bring it back.
+	_check("a culled robot's tick is switched off, not just idling",
+		control.cull_frozen and not control.is_physics_processing(),
+		"frozen=%s ticking=%s" % [control.cull_frozen, control.is_physics_processing()])
+	_check("...and the one that was shot got its tick back",
+		not shot.cull_frozen and shot.is_physics_processing(),
+		"frozen=%s ticking=%s" % [shot.cull_frozen, shot.is_physics_processing()])
+
+	# Nothing is signalled here. No damage, no stimulus, no squad contact — the
+	# player just walks up, which is the one wake reason that is nobody's event
+	# and so has to be POLLED (AIManager._poll_frozen). If that poll is ever
+	# removed or quietly throttled to nothing, this is the check that notices.
+	var p_ctrl2 := control.global_position
+	player.global_position = ground_at.call(p_ctrl2.x, p_ctrl2.z + 20.0)
+	for _i in 180:
+		await physics_frame
+	var moved_ctrl2: float = flat.call(control.global_position, p_ctrl2)
+	print("      frozen control, player walked to 20m: moved %.1fm" % moved_ctrl2)
+	_check("walking up to a frozen robot wakes it, with nothing to signal it",
+		not control.cull_frozen and control.is_physics_processing(),
+		"frozen=%s ticking=%s state=%s" % [control.cull_frozen, control.is_physics_processing(), control.ai_state])
+	_check("...and it comes for you", moved_ctrl2 > 5.0, "%.1fm" % moved_ctrl2)
 
 	# ── A GARRISONED HOPPER, SHOT UP CLOSE ──────
 	# The same scene the Hatchling canister throws, and those charged fine. On a

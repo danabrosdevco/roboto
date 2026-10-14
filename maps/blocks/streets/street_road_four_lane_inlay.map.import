@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dmhodcsfbrl0i"
+path="res://.godot/imported/street_road_four_lane_inlay.map-1512a16905223611aed30737ad927f0e.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_road_four_lane_inlay.map"
+dest_files=["res://.godot/imported/street_road_four_lane_inlay.map-1512a16905223611aed30737ad927f0e.tres"]
+
+[params]
+

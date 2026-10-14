@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://diwtls87c0obt"
+path="res://.godot/imported/trench_ramp_end.map-48d0cd524a6bc20b2b75471646ee1eee.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/trench_ramp_end.map"
+dest_files=["res://.godot/imported/trench_ramp_end.map-48d0cd524a6bc20b2b75471646ee1eee.tres"]
+
+[params]
+

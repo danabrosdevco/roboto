@@ -51,6 +51,34 @@ enum Posture {
 # Null falls back to the spawner's default_chassis.
 @export var chassis: PackedScene
 
+## ── UPGRADED KIT ──────────────────────────────
+## The chance each body in this squad rolls its frame's loadout table
+## (EnemyLoadouts.TABLES) instead of deploying with the frame's issued gun and
+## nothing else. 0.0 is a plain squad, 1.0 is an upgraded one, and anything
+## between seeds a few better-equipped bodies into an ordinary garrison.
+##
+## ZERO BY DEFAULT, DELIBERATELY. Every squad already authored in the game
+## stays exactly as it was balanced; upgraded hostiles are a thing a later
+## mission opts into, squad by squad, rather than something that happens to
+## the whole campaign at once. The first contact in the tutorial and the last
+## stand on the Coast Road should not be drawing from the same pool.
+@export_range(0.0, 1.0, 0.05) var kit_variance: float = 0.0
+
+## Kit every body in this squad carries, whatever the roll says.
+##
+## kit_variance draws from a pool, which is right for "a garrison with some
+## armour in it" and useless for "the lobber rovers all have a Sensor Relay" —
+## a set-piece the author means, not a distribution. These are fitted first and
+## count against the frame's slots; the roll then fills whatever is left.
+##
+## Still checked against the catalogue, so a module the frame cannot take is
+## refused and warned about rather than silently fitted.
+@export var forced_modules: Array[StringName] = []
+@export var forced_equipment: Array[StringName] = []
+## Replaces the frame's issued gun on every body. Empty keeps what it comes
+## with. Index 0 is the main mount, 1 the coax.
+@export var forced_weapons: Array[StringName] = []
+
 @export var posture: Posture = Posture.PATROL
 ## Which PatrolPath to walk. Used when posture is PATROL.
 @export var route_tag: StringName = &""
@@ -87,6 +115,19 @@ enum Posture {
 ## "after ten of ours are down" is one number rather than a table of triggers.
 ## The tag still has to be set: it is what the wave is called in the log.
 @export var wake_after_kills: int = 0
+## Wakes itself this many seconds into the mission, whatever else has happened.
+## 0 leaves it on the objective or the kill count alone.
+##
+## THE TRIGGER FOR "YOU ARE STILL HERE". A kill count asks how well the player
+## is doing and an objective asks how far they have got; neither can express
+## "three minutes have passed", which is the only question a scripted last stand
+## has — it does not matter whether they are winning, it matters that they have
+## not finished losing yet.
+##
+## Counted from the moment the force deploys, so it is mission time rather than
+## wall clock and a paused game does not spend it. The tag still has to be set:
+## it is what the wave is called in the log.
+@export var wake_after_seconds: float = 0.0
 
 
 ## How many bodies this spec describes, whichever form it was authored in.

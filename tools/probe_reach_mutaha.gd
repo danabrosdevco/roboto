@@ -6,7 +6,7 @@ extends SceneTree
 # get to.
 #
 #   godot --path . --script res://tools/probe_reach_mutaha.gd
-#   LEVEL=res://maps/mutaha_level.tscn godot --path . --script res://tools/probe_reach_mutaha.gd
+#   LEVEL=res://maps/appendix/mutaha_level.tscn godot --path . --script res://tools/probe_reach_mutaha.gd
 #
 # NOT headless: the terrain's collision and meshes have to exist.
 #

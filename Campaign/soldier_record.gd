@@ -90,6 +90,15 @@ enum Status { ACTIVE, WOUNDED, DESTROYED }
 # earns it. Deliberately coarse — the game should be about what they carry, not
 # about grinding a number.
 @export var rank: int = 0
+## The hat this robot wears. See Campaign/cosmetics.gd. Purely visual: nothing
+## reads it to make a gameplay decision, and it never affects kills or stats.
+@export var cosmetic_id: StringName = &""
+## Pauldrons, which are their OWN toggle rather than a hat.
+##
+## They are not headgear and they do not compete with one: a Captain wears both.
+## That is why FULL DRESS — a hat and pauldrons baked into one cosmetic — is
+## gone; it was a third entry saying what two independent things already say.
+@export var pauldrons: bool = false
 @export var xp: int = 0
 @export var xp_per_rank: int = 100
 @export var max_rank: int = 5
@@ -99,14 +108,39 @@ func add_xp(amount: int) -> void:
 	if amount <= 0 or rank >= max_rank:
 		return
 	xp += amount
+	var was := rank
 	while xp >= xp_per_rank and rank < max_rank:
 		xp -= xp_per_rank
 		rank += 1
+	if rank != was:
+		adopt_best_cosmetic()
+
+
+## Put on the best thing this frame has now earned.
+##
+## CALLED ON PROMOTION, which means a promotion OVERRIDES a hat picked by hand.
+## That is the asked-for behaviour and it is worth being plain about: the moment
+## a robot makes Lieutenant it changes into the Lieutenant kit whatever it was
+## wearing. Picking something else afterwards sticks until the next promotion.
+func adopt_best_cosmetic() -> void:
+	var best := Cosmetics.best_for(chassis_id, rank)
+	if best != cosmetic_id:
+		cosmetic_id = best
+	# Pauldrons come with the top rank and are never taken away again.
+	if rank >= Cosmetics.PAULDRONS_RANK and Cosmetics.pauldrons_fit(chassis_id):
+		pauldrons = true
+
+
+const TITLES := ["Recruit", "Regular", "Veteran", "Sergeant", "Lieutenant", "Captain"]
 
 
 func rank_title() -> String:
-	const TITLES := ["Recruit", "Regular", "Veteran", "Sergeant", "Lieutenant", "Captain"]
-	return TITLES[clampi(rank, 0, TITLES.size() - 1)]
+	return rank_title_at(rank)
+
+
+## The name of a rank nobody holds yet, for a UI saying what something costs.
+static func rank_title_at(r: int) -> String:
+	return TITLES[clampi(r, 0, TITLES.size() - 1)]
 
 
 # Slot arrays follow the chassis. Fitting a smaller frame drops the overflow,
@@ -115,6 +149,11 @@ func resize_slots(chassis: ChassisDefinition) -> void:
 	if chassis == null:
 		return
 	chassis_id = chassis.id
+	# A record being BUILT onto a frame has never been asked what to wear, so it
+	# takes that frame's default. An explicit NONE is only ever set from the
+	# squad screen, and nothing calls this again afterwards.
+	if cosmetic_id == Cosmetics.NONE:
+		cosmetic_id = Cosmetics.default_for(chassis_id, rank)
 	weapon_ids.resize(chassis.weapon_slots)
 	equipment_ids.resize(chassis.equipment_slots)
 	module_ids.resize(chassis.module_slots)
@@ -141,6 +180,8 @@ func all_fitted_ids() -> Array[StringName]:
 @export var revives: int = 0
 ## The same for the mission just finished. Not saved.
 var revives_this_mission: int = 0
+## Frame id -> count, this mission only, so XP can pay by what was saved.
+var revives_by_kind_this_mission: Dictionary = {}
 # Kills from the mission just finished. NOT saved — it exists only long enough
 # for the extraction to turn it into XP, because read_from() folds the body's
 # count into the career total and zeroes the body on the way past.
@@ -246,6 +287,12 @@ func set_chassis(chassis: ChassisDefinition, catalogue: ItemCatalogue) -> Array[
 			if slots[i] != &"":
 				displaced.append(slots[i])
 	chassis_id = chassis.id
+	# A beret has nowhere to sit on a walker, so a refit onto a frame the hat
+	# does not fit adopts the new frame's default rather than keeping a hat that
+	# would silently not render.
+	if not Cosmetics.fits(chassis_id, cosmetic_id):
+		cosmetic_id = Cosmetics.default_for(chassis_id, rank)
+	pauldrons = pauldrons and Cosmetics.pauldrons_fit(chassis_id)
 	weapon_ids.resize(chassis.weapon_slots)
 	module_ids.resize(chassis.module_slots)
 	# A module can only be kept by a frame it fits. The harness is Soldier-only,
@@ -327,6 +374,15 @@ func write_to(soldier: Soldier) -> void:
 	soldier.signal_integrity = signal_integrity
 	soldier.faction = Enums.Factions.ALLIED
 
+	# RANK AND HAT, AS META RATHER THAN PROPERTIES. RankKit reads these when the
+	# body enters the tree, which is after this runs. Meta instead of exports on
+	# Soldier because neither is gameplay state — the body never asks its own
+	# rank for anything, and a robot with no record (every enemy in the game)
+	# simply has no meta and wears whatever its scene was authored with.
+	soldier.set_meta("rank", rank)
+	soldier.set_meta("cosmetic_id", cosmetic_id if Cosmetics.fits(chassis_id, cosmetic_id) else Cosmetics.NONE)
+	soldier.set_meta("pauldrons", pauldrons and Cosmetics.pauldrons_fit(chassis_id))
+
 	# CRITICAL: duplicate the slot resources. AIEquipmentSlot holds
 	# _quantity_remaining as runtime state, so two soldiers sharing the same
 	# .tres would share a grenade count — one throws, both lose it.
@@ -359,6 +415,9 @@ func read_from(soldier: Soldier) -> void:
 		revives_this_mission = soldier.revives
 		revives += soldier.revives
 		soldier.revives = 0
+	if "revives_by_kind" in soldier:
+		revives_by_kind_this_mission = (soldier.revives_by_kind as Dictionary).duplicate()
+		soldier.revives_by_kind = {}
 	if not soldier.alive:
 		status = Status.DESTROYED
 		damage = max_health
@@ -429,6 +488,8 @@ func to_dict() -> Dictionary:
 		"equipment_ids": equipment_ids.map(func(v): return String(v)),
 		"module_ids": module_ids.map(func(v): return String(v)),
 		"rank": rank,
+		"cosmetic_id": String(cosmetic_id),
+		"pauldrons": pauldrons,
 		"xp": xp,
 	}
 
@@ -477,6 +538,15 @@ static func from_dict(data: Dictionary) -> SoldierRecord:
 	r.equipment_max = maxes
 	r.chassis_id = StringName(str(data.get("chassis_id", "")))
 	r.rank = int(data.get("rank", 0))
+	# Defaulted, so a save written before hats existed loads clean and bare.
+	# ABSENT means a save written before hats existed — never asked, so it takes
+	# the frame default. PRESENT AND EMPTY means someone chose NONE, which is
+	# respected. data.has is the only thing that can tell those apart.
+	if data.has("cosmetic_id"):
+		r.cosmetic_id = StringName(data.get("cosmetic_id", ""))
+	else:
+		r.cosmetic_id = Cosmetics.default_for(r.chassis_id, r.rank)
+	r.pauldrons = bool(data.get("pauldrons", r.rank >= Cosmetics.PAULDRONS_RANK))
 	r.xp = int(data.get("xp", 0))
 	for field in ["weapon_ids", "equipment_ids", "module_ids"]:
 		var ids: Array[StringName] = []

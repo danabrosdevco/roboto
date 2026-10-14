@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://hgncgc6goevl"
+path="res://.godot/imported/mill_brick_long.map-56beb081b2031913e8a2b8dfe13df679.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/mill_brick_long.map"
+dest_files=["res://.godot/imported/mill_brick_long.map-56beb081b2031913e8a2b8dfe13df679.tres"]
+
+[params]
+

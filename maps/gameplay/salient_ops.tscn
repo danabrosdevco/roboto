@@ -1,0 +1,149 @@
+[gd_scene load_steps=6 format=3]
+
+; ─────────────────────────────────────────────
+; SALIENT — THE GAMEPLAY LAYER, AS ITS OWN SCENE.
+;
+; Same split as Polaris and Georgetown and for the same reason: a level written
+; from a template by its builder loses anything hand-added on the next --force
+; rebuild. tools/build_salient.gd exists, so this layer lives apart from
+; maps/salient_level.tscn and is instanced into it.
+;
+; ── WHAT THIS MAP IS FOR ─────────────────────
+; A TRENCH ASSAULT, and it is the only map in the project shaped for one.
+;
+; Every other level is a place you fight over. This one is an AXIS you fight
+; ALONG: the spawn is at x -468 and the way out is at x +470, and the eleven
+; squad posts the level ships with are laid out as lines across that axis —
+; the jump-off at -170, the saps at -100, the crater in no-man's-land at -60,
+; the front line at +60, support at +190, the gun line at +330, and the
+; village, church and railhead behind it at +412 and beyond.
+;
+; That shape makes it the one map where "take the next line" is a real
+; objective rather than a zone drawn round a building, so the objectives below
+; are a CHAIN. Each needs the one before it. There is no flanking the sequence
+; because the sequence is the map.
+;
+; THE OBJECTIVES ARE ELIMINATES ON CALLSIGNS, not zones. A zone across a trench
+; counts every reinforcement that walks into it and never settles; a callsign
+; list is exactly the garrison holding that line. Same reasoning as Polaris's
+; waves, and the same trap avoided.
+;
+; Positions here are the squad posts the level already ships with, so none of
+; them needed snapping to the navmesh — they were snapped when the level was
+; built.
+; ─────────────────────────────────────────────
+
+[ext_resource type="Script" path="res://Campaign/eliminate_objective.gd" id="1_eliminate"]
+[ext_resource type="Script" path="res://Campaign/reach_objective.gd" id="2_reach"]
+[ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="3_exit"]
+[ext_resource type="PackedScene" uid="uid://62y43tyd5sx6" path="res://Env/world_objects/squad_objective_point.tscn" id="4_post"]
+
+[sub_resource type="SphereShape3D" id="Sphere_sal_extract"]
+radius = 30.0
+
+[node name="SalientOps" type="Node3D"]
+
+; ── THE FIRST LINE ───────────────────────────
+; The saps and the front trench. Three squads, and the saps flank the approach
+; rather than sit on it, so walking straight up the middle is punished by the
+; two positions you did not clear.
+[node name="FirstLine" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0, 34)
+script = ExtResource("1_eliminate")
+squad_callsigns = Array[StringName]([&"ZASEKA", &"KOLCHUGA", &"OPLOT", &"SHCHIT"])
+required_kills = 30
+id = &"sal_first_line"
+display_name = "Take The First Line"
+description = "Two saps and the forward trench. The crater in no-man's-land is held too — leave it and it is behind you."
+reward_resources = 120
+
+; ── THE SUPPORT LINE ─────────────────────────
+[node name="SupportLine" type="Node3D" parent="." node_paths=PackedStringArray("prerequisites")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 190, 0, 0)
+script = ExtResource("1_eliminate")
+squad_callsigns = Array[StringName]([&"TIELI", &"JINGANG"])
+required_kills = 22
+id = &"sal_support"
+display_name = "Through The Support Line"
+description = "Dug in deeper than the first and holding the redoubt on the north flank. This is where the heavy frames are."
+reward_resources = 160
+starts_active = false
+prerequisites = [NodePath("../FirstLine")]
+
+; ── THE GUNS ─────────────────────────────────
+; The reason the whole thing is being done. Mortar tracks on the gun line have
+; been dropping shells on you since the jump-off.
+[node name="GunLine" type="Node3D" parent="." node_paths=PackedStringArray("prerequisites")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 330, 0, 0)
+script = ExtResource("1_eliminate")
+squad_callsigns = Array[StringName]([&"LEIYU", &"SHUANGYAN"])
+required_kills = 18
+id = &"sal_guns"
+display_name = "Silence The Gun Line"
+description = "The tubes that have been ranging on you the whole way up, and the railhead feeding them."
+reward_resources = 220
+
+; ── OPTIONAL: THE BACK VILLAGES ──────────────
+; Not on the chain. Clearing them pays, and leaving them means the walk to the
+; exit is done with two garrisons still alive behind the gun line.
+[node name="BackArea" type="Node3D" parent="." node_paths=PackedStringArray("prerequisites")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 420, 0, 0)
+script = ExtResource("1_eliminate")
+squad_callsigns = Array[StringName]([&"BAITA", &"HEILONG"])
+required_kills = 16
+id = &"sal_back"
+display_name = "Clear The Back Positions"
+description = "Optional. The church and the village behind the guns. Leave them and they are between you and the way out."
+reward_resources = 180
+optional = true
+starts_active = false
+prerequisites = [NodePath("../SupportLine")]
+
+; ── OUT ──────────────────────────────────────
+; MOVED OFF THE EXIT ITSELF, TWICE.
+;
+; The level exit sits at (470, 1.1, 150) and probe_mission_anchors walks to
+; (467, 1, 139) and no further — the exit's own point is off the baked
+; navmesh, so an objective centred on it reported UNREACHABLE. (467, 1, 139)
+; fixed that and was worse in a way the first probe did not show: it reads
+; "ceiling 3.6 m, clearance 1.0 m", which is a squad extracting from inside
+; something.
+;
+; (455, 1, 165) was picked by probing seven candidates round the exit: 1080 m
+; walk, open ceiling, 5.8 m clearance — the only one of the seven that came
+; back "large". The trigger radius is 30 m, so it still covers the exit itself
+; 17 m away; what moved is somewhere the squad can stand to use it.
+[node name="LevelExitOps" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 455, 1.0, 165)
+
+[node name="SALExtract" type="Node3D" parent="LevelExitOps" node_paths=PackedStringArray("area", "prerequisites")]
+script = ExtResource("2_reach")
+area = NodePath("Area3D")
+squad_radius = 30.0
+id = &"sal_extract"
+display_name = "Off The Salient"
+description = "East of the village, past the last of it. Everything you still have, out."
+prerequisites = [NodePath("../../GunLine")]
+is_extraction = true
+
+[node name="Area3D" type="Area3D" parent="LevelExitOps/SALExtract"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LevelExitOps/SALExtract/Area3D"]
+shape = SubResource("Sphere_sal_extract")
+
+; ── A POST THE LEVEL DOES NOT SHIP ───────────
+; The art grew two op_tower_ruins, and the one at (-14, -122) stands alone in
+; no-man's-land between the two nest lines — the player's at x -160 and the
+; enemy's at x +70. That is the single best piece of ground on the map for
+; something that watches rather than holds, and there was no squad post within
+; 120 m of it, so nothing could ever be authored onto it.
+;
+; Added here rather than to salient_level.tscn for the usual reason: the level
+; is written from a template by tools/build_salient.gd and a post added there
+; dies on the next --force rebuild.
+[node name="Posts" type="Node" parent="."]
+
+[node name="Salient_OPTower" parent="Posts" instance=ExtResource("4_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -122)
+objective_name = "The Observation Tower"
+tag = &"obj_salient_op_tower"

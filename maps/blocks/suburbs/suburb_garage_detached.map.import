@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cd0a46lu68ku3"
+path="res://.godot/imported/suburb_garage_detached.map-4cab7cc73902b65262aac5374e2e9d86.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_garage_detached.map"
+dest_files=["res://.godot/imported/suburb_garage_detached.map-4cab7cc73902b65262aac5374e2e9d86.tres"]
+
+[params]
+

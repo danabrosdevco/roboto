@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dom1qxt7sil5c"
+path="res://.godot/imported/street_lot_cart_shelter.map-80bbe077077a7d51d50d9df3926c286a.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_lot_cart_shelter.map"
+dest_files=["res://.godot/imported/street_lot_cart_shelter.map-80bbe077077a7d51d50d9df3926c286a.tres"]
+
+[params]
+

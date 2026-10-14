@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://de1ita0bkio5k"
+path="res://.godot/imported/park_tennis_court.map-d06e40577318233aade56886e4302fd2.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/park_tennis_court.map"
+dest_files=["res://.godot/imported/park_tennis_court.map-d06e40577318233aade56886e4302fd2.tres"]
+
+[params]
+

@@ -250,7 +250,10 @@ func _needs_work(e: Enemy) -> bool:
 	if global_position.distance_to(e.global_position) > search_radius:
 		return false
 	if e.downed:
-		return true
+		# A body that has spent its one revive cannot be stood up again this
+		# mission (Enemy.revive), so welding it is time the squad's only medic
+		# does not have. It is not a patient; it is scenery until extraction.
+		return e.can_revive()
 	return _frac(e) < (patch_to if e == _patient else patch_below)
 
 
@@ -411,6 +414,8 @@ func _keep_back() -> void:
 	away.y = 0.0
 	if away.length_squared() < 0.01:
 		return   # standing on the threat: any way is as good as another
+	# Direct: _back_spot below is the throttle, and a refused snap would cache a
+	# wrong spot the same way the squad's formation slots did.
 	var want := NavigationServer3D.map_get_closest_point(nav_agent.get_navigation_map(),
 		centre + away.normalized() * hang_back)
 	# A new spot only when the old one is properly out of date.

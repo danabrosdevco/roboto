@@ -27,4 +27,3 @@ drives = false
 equipment_slots = 0
 module_slots = 0
 musters_at_base = false
-required_rank = 0

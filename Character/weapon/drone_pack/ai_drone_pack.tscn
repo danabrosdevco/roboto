@@ -1,0 +1,34 @@
+[gd_scene load_steps=3 format=3]
+
+; THE DRONE CARRIER PACK, AS THE SQUAD USES IT.
+;
+; AIDeploy, same as the Hatchling — release it and the Divers pick their own
+; target, so the only question is whether there is anything out there worth
+; finding. What differs is the bar, and the bar is the whole design:
+;
+;   min_target_health 120 is the gate. Two Divers cost 95 supply. Spent on a
+;   rifle trooper (60 hull) that is a worse trade than the rifle the robot is
+;   already holding; spent on a Rover (180) or a Walker (320) it is the best
+;   thing in the loadout. So the pack WAITS for armour rather than being spent
+;   on the first thing that walks past.
+;
+;   min_hostiles 2 and a 20-second squad spacing on top, because a pack is not
+;   cheap and two robots carrying one should not open both at the same Rover.
+;
+; release_radius matches the Divers' own seek range rather than a throw range —
+; they fly, so "can they reach it" is the question, not "can I throw that far".
+
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_deploy.gd" id="1_deploy"]
+[ext_resource type="PackedScene" path="res://Character/weapon/drone_pack/drone_pack_canister.tscn" id="2_canister"]
+
+[node name="AI_Drone_Pack" type="Node3D"]
+script = ExtResource("1_deploy")
+equipment_name = "Drone Carrier Pack"
+ordered_at_point = false
+cooldown = 22.0
+canister_scene = ExtResource("2_canister")
+release_radius = 45.0
+min_hostiles = 2
+min_target_health = 120.0
+squad_spacing_seconds = 20.0
+toss_speed = 7.0

@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3]
+
+; SMOKE, AS THE SQUAD USES IT.
+;
+; The item had no ai_scene at all, so usable_by_ai was false and a Smoke
+; Canister was a thing you could buy, carry and never see a squadmate throw.
+; It could not simply be pointed at ai_grenade.tscn either: a grenade wants a
+; target that is stationary, clustered and behind cover, and a robot in that
+; situation is winning. Smoke is for the robot that is not.
+;
+; The three reasons are in ai_smoke.gd. The numbers here are the player item's:
+; smoke_volume's cloud is about 7 m across, so screen_fraction 0.6 puts it
+; across the sightline rather than in the threat's lap, and max_screen_metres is
+; roughly how far a robot can actually put one.
+
+[ext_resource type="Script" path="res://Character/characters/ai/equipment/ai_smoke.gd" id="1_smoke"]
+[ext_resource type="PackedScene" path="res://Character/weapon/smoke_canister.tscn" id="2_canister"]
+
+[node name="AI_Smoke" type="Node3D"]
+script = ExtResource("1_smoke")
+equipment_name = "Smoke Canister"
+cooldown = 16.0
+canister_scene = ExtResource("2_canister")
+screen_fraction = 0.6
+min_screen_metres = 5.0
+max_screen_metres = 26.0
+recent_fire_seconds = 2.5
+rescue_radius = 12.0
+crossing_min_metres = 14.0
+losing_health_fraction = 0.6
+losing_hostile_count = 2
+squad_spacing_seconds = 10.0

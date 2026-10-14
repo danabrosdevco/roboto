@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://ckkqle6wpgh8w"
+path="res://.godot/imported/suburban_mall_anchor.map-45b9d447c16444dfc53d1eeb49bdd613.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburban/suburban_mall_anchor.map"
+dest_files=["res://.godot/imported/suburban_mall_anchor.map-45b9d447c16444dfc53d1eeb49bdd613.tres"]
+
+[params]
+

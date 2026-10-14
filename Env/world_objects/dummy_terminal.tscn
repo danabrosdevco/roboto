@@ -18,8 +18,9 @@ size = Vector3(0.7, 0.45, 0.08)
 [sub_resource type="BoxShape3D" id="BoxShape3D_use"]
 size = Vector3(1.6, 2, 1.6)
 
-[node name="DummyTerminal" type="Node3D" node_paths=PackedStringArray("interactible", "label", "indicator", "use_sound")]
+[node name="DummyTerminal" type="Node3D" node_paths=PackedStringArray("body_pieces", "interactible", "label", "indicator", "use_sound")]
 script = ExtResource("1_term")
+body_pieces = [NodePath("Body"), NodePath("Screen")]
 interactible = NodePath("Interactible")
 label = NodePath("Label3D")
 indicator = NodePath("Indicator")
