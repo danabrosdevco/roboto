@@ -1,5 +1,14 @@
 # COMPUTE CORE — THE SKELETON, BUILT. NO HEAD.
 
+> **SUPERSEDED, 2026-10-14. The human saw this lit and rejected the direction:
+> "i don't like the bands … more asymmetrical / more imposing / wider … it
+> doesn't need a terminal." `docs/concepts/CORE_RELAY.md` is what replaced it
+> and `tools/build_core_relay.gd` is what builds the shipped trio now. THIS
+> DOCUMENT IS KEPT AS EVIDENCE, not as a description of anything on disk: the
+> renders it cites (`core_skel_*.png`) are kept too, and
+> `tools/build_core_skeleton.gd` still builds this geometry if it is ever
+> wanted back. Everything below describes the rejected round.**
+
 Round one of `docs/briefs/COMPUTE_CORE_ART.md`, which governs. 2026-10-14 ·
 **status: built, shipped, photographed lit. The variant is still open and so is
 band density.**

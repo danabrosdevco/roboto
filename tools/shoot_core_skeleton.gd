@@ -10,6 +10,15 @@ extends SceneTree
 # come out at the project's internal viewport size whatever the window is,
 # because project.godot sets stretch mode "viewport".
 #
+# IT WRITES core_relay_*.png NOW, AND THAT IS THE SECOND ROUND. The human saw
+# round one's interlaced skeleton lit and rejected the band language outright;
+# tools/build_core_relay.gd replaced the geometry and this rig photographs
+# whatever compute_core{_small,,_large}.tscn currently is. ROUND ONE'S SHOTS
+# ARE KEPT, as docs/concepts/core_skel_*.png, because docs/concepts/
+# CORE_SKELETON.md is written about them and a rejected round is evidence. The
+# file name is the only thing that moved; the staging, the bearings and the
+# distances are the same rig, which is what makes the two sets comparable.
+#
 # ─────────────────────────────────────────────
 # WHY A SECOND SHOOTER AND NOT JUST mockup_shots.gd
 #
@@ -61,9 +70,9 @@ const LEVEL := "res://maps/proving_level.tscn"
 const STAGE := Vector3(-40.0, -1.5, -80.0)
 
 const CORES := {
-	"skel_small": "res://maps/blocks/compute/compute_core_small.tscn",
-	"skel_med": "res://maps/blocks/compute/compute_core.tscn",
-	"skel_large": "res://maps/blocks/compute/compute_core_large.tscn",
+	"relay_small": "res://maps/blocks/compute/compute_core_small.tscn",
+	"relay_med": "res://maps/blocks/compute/compute_core.tscn",
+	"relay_large": "res://maps/blocks/compute/compute_core_large.tscn",
 }
 
 ## Eye height of a standing player: a 1.7 m capsule with the camera 0.65 above
@@ -140,7 +149,7 @@ func _row(out: String) -> void:
 	var centre := STAGE + Vector3(-1.0, tallest * 0.45, 0)
 	_cam.global_position = STAGE + Vector3(-1.0, EYE + tallest * 0.25, -30.0)
 	_cam.look_at(centre, Vector3.UP)
-	await _shoot("%s/core_skel_row.png" % out)
+	await _shoot("%s/core_relay_row.png" % out)
 	for c: Node3D in made:
 		root.remove_child(c)
 		c.free()
@@ -152,8 +161,11 @@ func _shots(out: String, id: String) -> void:
 	if packed == null:
 		push_warning("shoot_core_skeleton: no scene for '%s'" % id)
 		return
-	for view: String in ["eye", "far", "pulse"]:
-		OS.set_environment("CORE_PHASE", PHASE if view == "pulse" else "")
+	for view: String in ["eye", "far", "pulse", "flank"]:
+		# The flank is frozen too: the lit staircase between the fins is the one
+		# place the travel is visible as a STAIRCASE rather than as a line, and
+		# at rest every panel is at the same energy and proves nothing.
+		OS.set_environment("CORE_PHASE", PHASE if view == "pulse" or view == "flank" else "")
 		var core: Node3D = packed.instantiate()
 		root.add_child(core)
 		core.global_position = STAGE
@@ -166,7 +178,21 @@ func _shots(out: String, id: String) -> void:
 		# mast is one flat elevation and the interlacing has no edge to turn.
 		# 28 degrees off -Z is enough to see two faces of every band.
 		var bearing := Vector3(-0.47, 0.0, -0.88).normalized()
-		var dist: float = FAR if view == "far" else maxf(5.0, h * (1.5 if view == "eye" else 2.2))
+		# THE FLANK SHOT, ADDED IN ROUND TWO, and it is not a flourish: the
+		# relay carries its fin bank, its lit staircase and its painted collar
+		# on the map -Y elevation (Godot -X), which the approach bearing above
+		# sees at a glancing 28 degrees — five of the large core's thirteen lit
+		# pieces are behind a fin from there. A machine with a front and a back
+		# needs a photograph of each or half of it is never judged.
+		if view == "flank":
+			bearing = Vector3(-0.90, 0.0, -0.44).normalized()
+		# FRAMED OFF THE BIGGER OF HEIGHT AND WIDTH, which round one did not have
+		# to do: its cores were 3.2 to 6.3 m square and always taller than they
+		# were wide, so height alone framed them. The relay is WIDER THAN IT IS
+		# TALL at the small size — 4.5 m across a 4.19 m object — and a distance
+		# set from height alone cropped the bund off both sides of the close shot.
+		var wide: float = maxf(bb.size.x, bb.size.z)
+		var dist: float = FAR if view == "far" else maxf(5.0, maxf(h, wide) * (1.7 if view == "eye" else 2.4))
 		var at := STAGE + bearing * dist + Vector3(0, EYE, 0)
 		_cam.global_position = at
 		# AIMED AT THE MIDDLE OF THE MAST RATHER THAN AT THE BOUNDING CENTRE on

@@ -5,10 +5,17 @@
 ; The core IS the objective: DummyTerminal is here for the interaction, with its
 ; own casing hidden (show_body) so the core is the thing you walk up to.
 ;
-; THE CORE IS 3.25 m SQUARE NOW, not 1.88. tools/build_core_skeleton.gd
-; replaced the shipped core_column() trio with the interlaced skeleton, whose
-; deck holds the study's footprint. ANY LEVEL THAT INSTANCES ONE OWES A NAVMESH
-; REBAKE: the deck is a 0.53 m sheer step and it grew by 1.37 m a side here.
+; THE CORE IS 4.50 x 3.50 m NOW, AND NO LONGER SQUARE. tools/build_core_relay.gd
+; replaced round one's interlaced skeleton with an asymmetric relay machine —
+; the human rejected the bands and asked for wider and more imposing — and its
+; bund is a RECTANGLE, deeper (map X, Godot Z) than it is wide. The shipped
+; core_column() it ultimately replaces was 1.88 m square. ANY LEVEL THAT
+; INSTANCES ONE OWES A NAVMESH REBAKE: the bund is a 0.53 m sheer step and it
+; grew by 1.31 m on Godot Z and 0.81 m on Godot X, a side.
+;
+; SO reach_size IS NO LONGER SQUARE EITHER, and the two axes are not
+; interchangeable: Godot Z is the long one. Swapping them puts the short reach
+; on the approach face, where the player actually stands.
 ;
 ; REACH IS THE FOOTPRINT MINUS 0.6 m, AND THE 0.6 IS ARITHMETIC RATHER THAN A
 ; MARGIN. The player's InteractRaycast is 2 m long, masks the Interactible
@@ -45,7 +52,7 @@ channel_range = 3.5
 [node name="Terminal" parent="." instance=ExtResource("3_term")]
 label_text = ""
 show_body = false
-reach_size = Vector3(2.65, 3, 2.65)
+reach_size = Vector3(2.9, 3, 3.9)
 reach_height = 1.5
 indicator_height = 4.1
 
