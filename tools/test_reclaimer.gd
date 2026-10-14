@@ -113,10 +113,29 @@ func _init() -> void:
 	root.add_child(world_scene)
 	for _i in 90:
 		await physics_frame
+	# ── HOW YOU GET ONE ──────────────────────────
+	#
+	# NOT FROM AN OPERATION ANY MORE. This asserted that exactly one mission
+	# listed `reclaimer` in `unlocks` and that it was arena_5_proving. Two
+	# things have happened since: operations stopped granting kit in Phase 3.6
+	# (campaign.gd._grant_owed_unlocks is now `pass`, and the note there says
+	# `unlocks` is kept only as a record of what the old progression intended),
+	# and the sim arenas were cut from three to two, so arena_5_proving is off
+	# the campaign's mission list entirely. The assertion was testing dead data
+	# about a retired mission.
+	#
+	# WHAT ACTUALLY GATES IT NOW is the fabrication car: a line is shut until it
+	# is paid for. So that is what this asks.
 	var cm: CampaignManager = world_scene.get_node("CampaignManager")
-	var unlocked_by := cm.missions.filter(func(m): return m != null and m.unlocks.has(&"reclaimer"))
-	_check("...unlocked by Proving Ground, in time for the basin", unlocked_by.size() == 1 and unlocked_by[0].id == &"arena_5_proving",
-		str(unlocked_by.map(func(m): return str(m.id))))
+	# ASKED OF THE STATE, NOT THE MANAGER. Campaign.is_locked() also honours the
+	# UNLOCK ALL HARDWARE debug switch, and every suite shares one
+	# user://settings_probe.json (see the note in tools/test.sh) -- so a suite that
+	# leaves that switch on makes this one read "already open" and fail for a
+	# reason that has nothing to do with the Reclaimer.
+	_check("a fresh campaign has NOT opened the Reclaimer line",
+		not cm.state.is_unlocked(&"reclaimer"))
+	_check("...and it is bought, not awarded — the price is on the frame",
+		frame != null and frame.purchasable)
 
 	var player: Node3D = _find(root, "Player")
 	_level = player.get_parent()

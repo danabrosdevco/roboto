@@ -101,12 +101,19 @@ its cleared sites held.
 
 **Tasks**
 
-1. Per-turn yield `reward_resources ÷ 40`, paid on `advance_turn()` for every
-   held site.
-2. Compute **on capture**: 1 a site, 2 for a keystone. Not per turn, not
-   derived — §2.
-3. One-off mission rewards shrink to cover the operation, not fund the game.
-4. **Delete `OpsTable._per_turn()`** and read the real figure.
+1. **A `Location` resource** — owner, `resources_per_turn`, `compute`,
+   `resistance`. Maps associate with one. The location owns the economy; the
+   mission owns the fight (§2).
+2. `resources_per_turn` paid on `advance_turn()` for every location held.
+3. **Compute is held, all or nothing**: a location's compute is yours in full
+   while you hold it and gone in full when you lose it, exactly as
+   `compute_held` already works. Losing a site can put you over your supply
+   cap.
+4. `reward_resources` stops being the economy and becomes the operation's
+   one-off payout, scaled off resistance.
+5. **Resistance is total enemy supply, not squad count.** `OpsTable` already
+   computes `"resistance": force["supply"]`.
+6. **Delete `OpsTable._per_turn()`** and read the real figure.
 
 **Why this is worth shipping alone.** The board already prints `RES n /turn`
 and that function is literally `one_off × 0.1` — **it is advertising income
@@ -125,20 +132,27 @@ compute once, and the board's numbers match the ledger.
 
 1. `unlock:<id>` allocation keys; `state.unlocked` retires into them.
 2. Migration: existing unlocked ids become **zero-cost** allocations.
-3. `unlock_cost: int = -1` on item and chassis definitions, deriving 2× cost
-   rounded to 25 when left at -1.
+3. **Cost is a function of supply, uniform within a tier** — see the table in
+   §3a. Every supply-2 chassis costs the same as every other supply-2 chassis,
+   and equipment is tiered the same way. `unlock_cost` derives from that.
 4. `unlock_requires: Array[StringName]` for the Mark One → Mark Two chains.
 5. The catalogue moves into the fabrication car, with four line states: open,
    affordable, short, prerequisite missing.
 6. `mission.unlocks` retires.
 
-**Blocked on a balance call.** **Eleven of twenty-seven chassis are priced at
-0**, and with a soldiers-only start the chassis tree *is* the progression.
-They need real numbers before this ships.
+7. **`required_rank` is deleted.** Not kept as a loadout rule, not
+   repurposed — removed from `item_definition.gd`, `chassis_definition.gd`,
+   `campaign_state.gd` and the two UI call sites. Rank gating and purchase
+   gating were two answers to the same question, and the catalogue is the one
+   that stays.
 
-**Leave alone:** `required_rank` is a per-robot loadout rule, not a catalogue
-rule. `in_shop = false` means cut from the game. `debug.unlock_all_gear` keeps
-working.
+**Blocked on one balance call, not eleven.** Cost by supply tier (§3a) means
+nobody prices twenty-seven chassis individually — **three numbers settle the
+whole table**, and the eleven currently at 0 stop being a blocker the moment
+those three exist.
+
+**Leave alone:** `in_shop = false` means cut from the game.
+`debug.unlock_all_gear` keeps working.
 
 ---
 
@@ -205,10 +219,12 @@ physical, which is what decides where a defender enters.
    is a shootable object whose death reverts the core. The point itself
    already exists — `compute_core_point.tscn` in three sizes, scripted
    `interact_objective.gd` at `channel_duration 3.0`, `channel_range 4.5`.
-2. An in-mission commander: **heat is emitted by enemy-held cores** and spent
-   directing ADVANCE at the bunker. Clearing cores is what turns it off, which
-   is what makes the win condition causal rather than a checklist. The
-   postures already exist.
+2. **DYNAMIC ALLOCATION AGAINST A SUPPLY POOL.** The change is not "add a heat
+   number" — it is that the enemy stops being `spawn X at Y with posture Z`
+   and becomes a **supply budget committed over the course of a mission** in
+   response to which cores are still theirs, what the player is doing, and how
+   long it has gone on. The location's `resistance` is that budget. The
+   postures already exist; what is missing is anything deciding.
 3. The failstate: lose the bunker, lose the squad, lose the operation. No
    withdrawal. **This game has never had a way to lose.**
 4. Connection markers on every map, resolved from the adjacency graph. Entry
@@ -228,36 +244,45 @@ not — see §13.1.
 
 **Tasks**
 
-1. A turn is a **board action** — attacking a site you do not hold, or
-   resolving a defence. Re-running held ground advances nothing and pays
-   nothing, which is what closes the farming hole in §5.
+1. A turn is **an operation** — an attack or a defence. Nothing else advances
+   it, which is what closes the farming hole in §5.
 2. The enemy acts every 2–3 turns, and most attacks **auto-resolve** against
    the garrison. A playable defence only when the result is in doubt, or when
    the player chooses to take it.
 3. The frontier rule: a site can only be attacked if it borders ground you do
    not hold. Straight off `OpsTable.ADJACENCY`.
-4. The Sim Arenas become free actions — no turn, no pay, no risk.
+4. **THE SIM ARENAS BECOME THEIR OWN MODE**, not a mission type. Free actions —
+   no turn, no pay, no risk — with their own icon and their own loadout, where
+   the player can run their own labs: watch chassis fight each other, or take
+   a squad of their choosing against sim opposition.
+5. **The tutorial lives here**, and is the one exception to the departure
+   lever: throwing it enters the sim rather than moving the train.
 
 ---
 
 ### PHASE 7 — Acts and escalation · *the campaign gets a shape*
 
-**Goal.** Three opponents that play differently, not one with bigger numbers.
+**Goal.** Three opponents with different armies and different objectives — not
+one opponent with three sets of special rules.
 
 **Tasks**
 
 1. Exposure is cumulative compute. Thresholds 8 and 16 against a total of ~23.
-2. **Home Command**: withholds yield, recalls garrisons, fields your own
-   frames. It audits before it attacks.
-3. **Argus**: orbital denial on held sites, perfect information, no ground
-   presence of its own. The masts are its throat.
+2. **Home Command**: a green faction, better equipped and more aggressive than
+   the Swarm, fielding the same frames the player does. **It controls nothing
+   of yours — you are unnetworked from it.** What changes is the quality of
+   the opposition, not the rules.
+3. **Argus**: a faction with real ground presence, already holding a large
+   share of the world's compute, defending **orbital launch sites** because
+   what it wants is to put more compute and materiel into orbit.
 4. Map reveals at each act boundary.
 
 ---
 
 ### PHASE 8 — Ten new maps · *parallel, TERRAIN, start now*
 
-Six Home Command installations for Act 2, four mast sites for Act 3, filling
+Six Home Command installations for Act 2, four orbital launch sites for Act 3,
+filling
 the variety gaps in §11 as they go: at least two drawn **defence-shaped**, at
 least one interior, at least one small and fast, at least one at night.
 
@@ -279,58 +304,705 @@ by working harder on the others. **Start it alongside Phase 4.**
 
 ---
 
-## EXECUTION — four lanes, one checkout
+## STAGE 1 — WHAT IS BUILT, as of 2026-10-12
 
-`docs/BOARD.md` → Protocol already governs this: one item per lane, per-lane
-report files so two agents can close at once without conflicting, the file on
-disk is truth, and nobody switches branches. What follows fits inside that
-rather than replacing it.
+The vertical slice is on Valley Basin and plays. Everything campaign-side is
+still faked, which is the point: this exists to answer whether the in-mission
+loop is worth building a campaign around.
 
-**The protocol assumes ONE gameplay lane.** Three of them on one checkout
-collide unless ownership is written down, so that is the first thing below.
+### The files
+
+| | |
+| --- | --- |
+| `Env/world_objects/holdable_core.gd` | Capture as STATE. Three channel beats, contest, grace, one anchor per core. Drives the authored MissionObjective it stands on, both ways |
+| `Env/world_objects/capture_tap.gd` | The delivery drone. Flies in across the view, lands, frees itself |
+| `Character/characters/ai/capture_anchor.gd` + `.tscn` | What it leaves: a Nest-derived structure, PLAYER faction, 160 HP, that the enemy can actually target |
+| `Env/world_objects/site_operation.gd` | The win condition and the failstate. Stand-down on the bunker; losing the frame ends the operation |
+| `Env/world_objects/site_heat.gd` | Pressure from enemy-held cores plus incursion, spent from a finite supply pool |
+| `Env/world_objects/enemy_commander.gd` | Turns committed supply into squads, from 13 templates across 3 tech tiers |
+| `Env/world_objects/bunker_objective.gd` | The bunker as an objective HUD row, stand-down as its progress |
+| `Env/world_objects/core_signal.gd` | Light and sound. The band climbing the shaft, the deck collar, the held beacon, six cues |
+| `Env/world_objects/basin_slice.gd` | Assembles all of it onto Valley Basin at runtime |
+
+Suites: `tools/test_holdable_core.gd`, `tools/test_site_operation.gd`,
+`tools/test_enemy_commander.gd`, `tools/test_core_signal.gd`,
+`tools/probe_basin_slice.gd`,
+`tools/shot_basin_slice.gd`.
+
+### How it attaches to the map
+
+`maps/valley_basin_level.tscn` gained **four lines** — one `ext_resource` and
+one node. Everything else is built at runtime.
+
+The four authored capture points keep their meshes, ids and places; a
+HoldableCore parents to each and takes its terminal over. **Removing the slice
+is removing one node.**
+
+> **DO NOT re-save an authored level from an instantiated copy.** The first
+> attempt wrote the nodes in with a fit script, the way `fit_ops_table.gd`
+> writes into the ops car. That works there because the car is generated and
+> flat. Valley Basin is hand-authored and full of prefab instances, and
+> `PackedScene.pack()` BAKES THOSE INSTANCES IN — 8,199 lines to 9,692, every
+> `uid` dropped, every prefab link replaced by a copy of its contents.
+> Reverted from a backup.
+
+### Known gaps, in the order they matter
+
+**Closed 2026-10-12.**
+
+1. ~~**No audio anywhere.**~~ `core_signal.gd` listens to all six of the core's
+   signals. Each of the three beats has its own sound, pitched apart, plus an
+   interruption, a dock and a loss — six cues from streams already in the
+   project, all `@export`ed so swapping one is an inspector edit and not a code
+   change. They are the closest fits that exist, not a final answer.
+2. ~~**No FX.**~~ A band climbs the shaft with the channel and the light rides
+   with it; a collar at the deck brightens alongside; a held core parks the
+   band at the top and pulses it as a beacon; an interruption drops all of it
+   rather than snapping. All three states take their colour from `HUDPalette`,
+   so a core in the world and a site on the operations table agree.
+   **Procedural, like the departure lever's handle** — §13.2 still has the real
+   article, and replacing this touches no gameplay file.
+
+**Still open, and deliberately so:**
+
+3. **Placeholder geometry** for the cores, the anchor sits on Nest art, and the
+   bunker is a pad and a lit post. TERRAIN's, whenever there is time.
+4. **`act` is faked at 1** and **resistance is hardcoded at 82**. Not defects:
+   Stage 1's own brief says *"hardcode a location, hardcode a resistance
+   pool"*. `act` cannot be real until Phase 7 and resistance cannot be real
+   until a `Location` exists in Stage 2. They are listed so nobody mistakes
+   them for finished.
+
+The one thing this stage cannot close is its own gate. **Whether the loop is
+fun is a question only playing it answers**, and the two stakes it was missing
+on the first attempt — heat that spawns, cores that can be lost — both exist
+now.
+
+### Four initialisation bugs found here, all one family
+
+Worth reading before extending any of this, because the same shape bit four
+times in one feature:
+
+- **Wiring in `_ready` loses races.** `HoldableCore` disconnected other
+  handlers from a terminal before `InteractObjective` had connected itself, so
+  both stayed live and the old mission completed underneath the new one. Fixed
+  with `call_deferred`.
+- **So does writing another node's property in `_ready`.** The interact volume
+  was sized directly and `dummy_terminal.gd` put its default straight back from
+  its own `_ready`. Fixed by setting that node's `reach_size` knob instead —
+  **when an authored node exposes a knob, set the knob.**
+- **A property set after `add_child` is read by nothing.** `_ready` runs
+  synchronously on parenting and has already consumed it. Hit twice.
+- **GDScript lambdas capture locals BY VALUE.** A closure that wrote to `best`
+  and `best_d` updated copies; the function always returned "". Nothing
+  errored — reinforcements simply never had anywhere to go.
+
+
+---
+---
+
+## STAGE 2 — WHAT IS BUILT, as of 2026-10-12
+
+**Phases 1 and 2 are in.** The campaign knows what turn it is, who holds what,
+and ground pays for being held. Map production (the other half of Stage 2) is
+descoped for now — *"we're not making 10 new stages now"*.
+
+### The files
+
+| | |
+| --- | --- |
+| `Campaign/location.gd` | A place on the board: owner, what it pays, its compute, its resistance, its edges |
+| `Campaign/location_catalogue.gd` + `.tres` | All nine, resolvable by id or by the operation fought over them |
+| `Campaign/locations/loc_*.tres` | The nine places |
+| `Campaign/campaign_state.gd` | `turn`, `sites`, `advance_turn()`, income, derived site compute |
+| `Campaign/campaign.gd` | Hands the catalogue to state; clearing an operation advances the turn and takes the ground |
+| `Env/world_objects/ops_table.gd` | Reads the real per-turn figure. `_per_turn()` **deleted** |
+| `tools/measure_resistance.gd` | Where every resistance number came from |
+
+Suite: `tools/test_campaign_spine.gd`, 26 checks.
+
+### No migration, and no SAVE_VERSION bump
+
+§16.1 took wipe-and-restart, so neither was written. The fields still load into
+an old save without one — `from_dict` defaults every field — and `site_owner()`
+falls back to each location's authored `start_owner`, so a save with no
+territory at all reads every place as theirs. Both paths are in the suite.
+
+### The board, measured rather than invented
+
+`resistance` is **total enemy supply including the reserve**, read off the
+authored forces by `tools/measure_resistance.gd`:
+
+| Location | res/turn | compute | resistance | degree |
+| --- | --- | --- | --- | --- |
+| Hillfort | 8 | 1 | 79 | 1 |
+| Valley Basin | 13 | 1 | 82 | 5 |
+| Coast Road | 18 | 1 | 141 | 2 |
+| Over The Top | 23 | 1 | **365** | 2 |
+| Three Rivers | 23 | 2 | 171 | 6 |
+| Qamareen | 25 | 1 | 250 | 2 |
+| Lockside | 30 | 1 | 264 | 2 |
+| Polaris | 35 | 2 | 266 | 2 |
+| The Causeway | 55 | 2 | 351 | 2 |
+| | **230** | **12** | | |
+
+**Two independent routes to 82.** Valley Basin's authored force totals 82
+supply, and 82 is what was hardcoded into `basin_slice.gd` weeks earlier by
+counting the garrison by hand. The slice now reads the Location instead, so
+there is one number.
+
+**The degrees fit the maps exactly.** Every tagged map's degree in this table
+equals the number of edge markers already authored on it (§16.3) — Three
+Rivers 6, Valley Basin 5, Hillfort 1. That was not forced; the graph was drawn
+by difficulty and the fit fell out.
+
+**Over The Top is the balance problem.** It is the hardest place on the board
+by a distance — 365 supply, against The Causeway's 351 and Qamareen's 250 —
+and it pays 23 a turn, less than half the Causeway's 55. Either its force is
+overstated or its rate is. Worth a look before the rate table is trusted.
+
+### What this changes that a player would notice
+
+**The operations table stops lying.** It has been printing `RES n /turn` from
+`_per_turn(one_off)` — literally `reward_resources × 0.1` — for income the
+game never paid. That function is deleted and the figure now comes off the
+Location. An operation that is not a place (the three Sim Arenas) reads 0
+rather than a flattering invention.
+
+### Still faked
+
+- **`act` is 1 everywhere.** Phase 7's, and nothing before it can supply a real
+  one.
+- **Nobody loses ground yet.** `set_site_owner` is the single mutation point
+  and the enemy has no turn in which to use it — that is Phase 6.
+- **`reward_resources` is untouched.** Phase 2.4 wants it rescaled off
+  resistance; it is already semantically a one-off payout, so this is a balance
+  pass rather than a change of meaning.
+---
+
+## STAGE 3 — WHAT IS BUILT, as of 2026-10-12
+
+**Phase 3 in full.** Kit and frames are bought, not granted. An operation hands
+over nothing; you open a line once and then pay per copy.
+
+### The price table, as decided
+
+**Everything is a multiple of a BASE of 50.** Set by the human 2026-10-12,
+overruling §16.2's role-based banding. The five bands fell out of those
+multipliers rather than being imposed — the weapon tiers reuse the equipment
+shapes exactly:
+
+| Band | Open | Buy | What is in it |
+| --- | --- | --- | --- |
+| **ISSUED** | — | ×1 · 50 | Ancient Rifle |
+| **STANDARD** | ×2 · 100 | ×1 · 50 | frag · smoke · EMP · repair kit · repair tool · armour plating · hardened uplink · utility harness · light cannon · Ancient MG · Mark One · grenade launcher |
+| **UPGRADED** | ×3 · 150 | ×1.5 · 75 | cluster mine · heavy mine · nanite reboot · cyclic feed · hatchling charge · overclock servos · repair lance |
+| **CREW** | ×3 · 150 | ×2 · 100 | heavy MG · squad automatic · mortar · rocket pods · cluster launcher |
+| **ADVANCED** | ×4 · 200 | ×2 · 100 | autocannon · sensor relay · drone pack · recoilless |
+| **UNBUYABLE** | — | — | hatchling launcher |
+
+**CREW and ADVANCED differ only in the unlock.** Both cost ×2 a copy; a crew
+weapon opens for ×3 and an advanced one for ×4. That is the knob that says
+"this is a reach" without making the thing dearer to field.
+
+**Frames are priced by supply, uniform within a tier** — ×1 / ×2.5 / ×5, so
+50 / 125 / 250, and opening a frame costs twice building one. Super-linear on
+purpose: supply measures ROOM and cost measures CAPABILITY, so flat pricing
+would make big frames strictly efficient and collapse the roster onto them.
+
+> **The three chassis multipliers are the one number here nobody signed off.**
+> BASE and every kit multiplier came from the human; §3a's super-linear shape
+> was carried over into their vocabulary. One edit in `pricing.gd` to change.
+
+**Two items were not in the list** and had to land somewhere: Overclock Servos
+(a module at 60) and the Repair Lance (a weapon at 90) are both UPGRADED, the
+nearest band to each. **Nanite Reboot was named in two bands in the same
+message** — upgraded and higher — and sits in UPGRADED, among cyclic feed and
+the hatchling charge rather than the sensor relay and the drone pack.
+
+**Nothing had to be retired.** The four old guns — marksman rifle, carbine,
+shotgun, pistol — were ALREADY `in_shop = false`. The project had reached the
+same conclusion before anyone said it.
+
+### THE TOOLING FABRICATOR — where lines are opened
+
+**Named and split out 2026-10-12.** Buying a copy and opening a line are two
+different decisions, and putting both on the armourer made it read as a shop
+that sometimes refuses to sell to you. So they are three screens with one job
+each:
+
+| | Shows | Does |
+| --- | --- | --- |
+| **TOOLING FABRICATOR** | Everything for sale, open or not | Opens a line. Pay once |
+| **ARMORER** | **Only what is already open** | Buys and sells copies |
+| **FACTORY** | **Only frames already open** | Builds robots |
+
+A fifth tab in the squad manager, beside SQUAD · ARMORER · FACTORY · SOFTWARE.
+
+**The filtering was already there.** `SquadManagerUI.shop_items()` and
+`.buildable_frames()` both skip a shut line, so the armourer and the factory
+were never going to list a locked thing — the four-state catalogue line simply
+moved out of them wholesale rather than being duplicated. What is left on those
+two pages is a plain statement of where to go.
+
+**Opened lines stay listed in Tooling, struck through rather than removed**,
+with a `n / m OPEN` count per section. A catalogue that silently shrinks as you
+buy from it gives no sense of how much tree is left, and no way to see what a
+chain is waiting on.
+
+Suite: `tools/test_tooling.gd` — including the one that matters, that the
+armourer never lists something it would then refuse to sell.
+
+
+| | |
+| --- | --- |
+| `Campaign/pricing.gd` | The whole balance surface. Bands, assignments, chassis-by-supply |
+| `campaign_state.gd` | `unlock_key` · `is_unlocked` · `grant_unlock` · `unlock_item/chassis` · `unlock_requires` · `line_state` |
+| `campaign.gd` | `is_locked()` replaces `locked_by()`; a new campaign opens what it is issued |
+| `squad/tooling_page.gd` | **THE TOOLING FABRICATOR.** The catalogue line in four states — the only place a line opens |
+| `armorer_page.gd` · `factory_page.gd` | Buying and building only; both list what is already open |
+| `chassis_hologram.gd` | The fab car's bays show OPEN LINE and its price |
+| `item_definition.gd` · `chassis_definition.gd` | `unlock_requires`; **`required_rank` deleted** |
+
+Suites: `tools/test_pricing.gd` (19 checks, pins every number above),
+`tools/test_tooling.gd` (the three-screen split),
+`tools/test_ledger.gd` (168 checks, up from 167).
+
+### `required_rank` is gone
+
+Removed from both definitions, both gate sites, two UI call sites and **62
+authored `.tres` files**. Rank still exists and still drives stats; it just
+stopped being a second answer to "can this robot have this", which the
+catalogue now answers on its own.
+
+**Six resources carried a real gate** and lost it. If any should come back as
+an `unlock_requires` chain rather than vanish, these are they:
+
+| | was |
+| --- | --- |
+| Marksman Rifle | rank 1 |
+| Kite · Spotter | rank 1 |
+| Walker · Helicopter | rank 2 |
+| Bulwark | rank 3 |
+
+### Two traps worth knowing
+
+**Recruiting bypassed the gate.** The factory's BUILD button calls
+`state.recruit()` directly, which never consulted the unlock — so the four
+line states would have been decoration. `recruit()` now refuses a shut line,
+the same as `buy_chassis`.
+
+**A new campaign could not build anything.** With every line shut by default, a
+fresh save had no frame and no weapon it was allowed to use. What you are
+ISSUED is now opened for free at campaign start: the starting frame, the
+starting weapon, and everything in `starting_stock`.
+
+### A stale file, found on the way
+
+**`Campaign/item_catalogue.tres` is not the catalogue.** It holds 10 items and
+one chassis and nothing loads it. `Env/world.tscn:94` wires the CampaignManager
+to `Campaign/items & catalogue/test_item_catalogue.tres` — 34 items, 12
+chassis — which despite the name is the shipped catalogue. Worth renaming, or
+deleting the leftover, before someone edits the wrong one.
+
+### Not done
+
+**Task 5, the second half.** The TOOLING FABRICATOR exists as a page in the
+squad manager, and the fab car's chassis bays show line state and price.
+PHYSICALLY SITING the panel on a terminal in the fabrication car — so you walk
+to it rather than opening it from anywhere — is placement work, not mechanism,
+and is left alone. The name is in the fiction now either way.
+---
+
+## STAGE 4 — WHAT IS BUILT, as of 2026-10-12
+
+**Phase 4, less the briefing split.** `enemy_force` has stopped being a
+constant: what a site fields is now a function of the site, the act and who
+holds it.
+
+### The rule that keeps it from being worse than authored content
+
+**THE SHAPE STAYS AUTHORED. ONLY THE COMPOSITION SCALES.**
+
+Every authored `EnemySquadSpec` survives with its callsign, tags, posture, wake
+triggers and faction intact. What is rebuilt is the four fields that say WHAT
+is standing there — `roster`, `count`, `forced_weapons`, `kit_variance`. A
+squad authored to garrison the north trench still garrisons the north trench;
+it is made of different robots.
+
+**And the budget is shared out in proportion to the authored supply.** A spec
+authored at 4 against one authored at 30 keeps that ratio whatever the total
+becomes, so a picket stays a picket and the hard point stays the hard point.
+Scaling every squad equally would flatten the map's own pacing, which is the
+second way this breaks.
+
+### The numbers
+
+`budget = location.resistance × act × holder`, rooted in the figure
+`tools/measure_resistance.gd` measured off the authored force:
+
+| | |
+| --- | --- |
+| Act | 1.0 · 1.15 · 1.35 |
+| Holder | Swarm 1.0 · Home Command 1.1 · Argus 1.25 |
+
+**Act 1 is the authored number exactly**, so the maps as they ship ARE the
+Act 1 experience and none of them needs re-tuning.
+
+Measured on Valley Basin:
+
+| | Supply | Frames |
+| --- | --- | --- |
+| Act 1, Swarm | 82 | chaser · leaper · rifleman · shotgunner |
+| Act 3, Swarm | 112 | **bastion · see_engine** · chaser · rifleman |
+| Act 2, Home Command | 103 | **drayman · mechanic · picket · rover · soldier** |
+
+That last row is Phase 4.3 working: **Home Command fields the player's own
+catalogue.** Free to implement, and the first time a Walker is on the other
+side the act change needs no dialogue.
+
+### The files
+
+| | |
+| --- | --- |
+| `Campaign/force_generator.gd` | Budget, faction rosters, proportional refill |
+| `Campaign/enemy_force_spawner.gd` | Calls it, behind `generate_force` |
+
+Suite: `tools/test_force_generation.gd`, 19 checks.
+
+### A parse-time cycle, worth knowing about
+
+`campaign.gd` names `EnemyForceSpawner`, which names the generator, which
+originally **preloaded** the chassis `.tres` — whose script is
+`ChassisDefinition`, which `campaign.gd` also names. That closes a loop at
+PARSE time, and every file in it fails to compile with an error naming none of
+them. The frames are loaded lazily and cached instead.
+
+`enemy_commander.gd` hits the same wall from the other side and solves it with
+`DirAccess`, which does not survive an export. This does.
+
+### Not done
+
+**Task 4, the briefing split** — authored text describing the PLACE, a
+generated line reporting the OPPOSITION. The briefings still read as written.
+
+**`act` is still 1 everywhere.** `state.act()` does not exist until Phase 7, so
+the generator asks for it, does not find it, and uses 1. Every act path is
+built and tested; nothing supplies a real act yet.
+---
+
+## STAGE 5 — WHAT IS BUILT, as of 2026-10-12
+
+**Phase 5, proven on Valley Basin.** Every site is two operations; this is the
+first second one.
+
+### `Valley Basin — Hold`
+
+Unlocked by taking the basin, **repeatable**, and it **pays nothing** — §2, the
+stake is the yield you keep. Four columns converge on the cores from four
+different edges, two of them held back to 90 s and 150 s.
+
+### The garrison
+
+**Free, comes with the ground, sized on COMPUTE** — §6. 8 supply at zero
+compute, 40 at a finished campaign's 32. One squad per core, dug in.
+
+**Flat across every site**, which §6 is emphatic about: if garrison strength
+tracked site value your richest sites would be your safest and your poorest
+would churn. Compute is player-wide, so the enemy picks its target by value
+instead.
+
+**Built only from frames the player has OPENED.** Opening the Walker line
+changes what defends your ground. A garrison fielding kit you never unlocked
+would hand you through the back door what Phase 3 charges for at the front.
+
+**And it is NOT yours to command.** `player_commandable = false` was not
+enough — `SquadCommander.refresh_squads()` also admits anything
+`_is_friendly_squad()` calls non-hostile, which a PLAYER-faction garrison is.
+There is now `Squad.autonomous`, checked before the friendly test.
+
+### What the first watch found, and what it cost
+
+Fifteen minutes of watching it run found four things no test could have:
+
+1. **The garrison was 250 m from the fight.** Posts were picked by tag NAME —
+   `trench_n`, `trench_s`, `tower` all *sound* defensive and all sit at the far
+   west end, while the attackers came in at the east pass. The ring that
+   actually surrounds the cores is `obj_valley_garrison_1..5`.
+   **Measure the map before authoring against it** —
+   `tools/probe_basin_geography.gd` now prints every tag's position.
+2. **Forty attackers stood by the bunker doing nothing.** The two late waves
+   had `wake_after_seconds` but not `always_active`, so they spawned far out,
+   were culled, and never walked.
+3. **The cores started HOSTILE and orange** — copied from the attack. So the
+   attackers arrived at things already theirs, and the map had no win or lose
+   condition at all. On a defence the cores now start PLAYER-held with their
+   anchors standing, and the attackers take them by shooting those off, which
+   needed no new AI behaviour (§12.3 predicted exactly that).
+4. **`active_objectives` was empty**, which means ALL of them — so the defence
+   listed the attack's extraction and hive objectives too.
+
+### How a defence ENDS
+
+An attack is won at the bunker. A defence has no bunker to take, so the first
+cut had **no win condition** and ran until the window was closed: the garrison
+killed every attacker by five minutes, then heat refilled the field and it
+began again.
+
+> **A defence ends when the attacker runs out.** SiteHeat already spends from a
+> finite pool, and that pool IS the assault — so when it is spent and the field
+> has been clear for 8 s, you have held. No timer and no new concept, and the
+> pressure readout the player is already watching becomes the clock.
+
+**Lost** by losing the ground: all cores back in their hands, which is reachable
+precisely because an anchor can be shot off.
+
+### The files
+
+| | |
+| --- | --- |
+| `Campaign/missions/mission_basin_2_defend.tres` | The operation |
+| `Campaign/force_generator.gd` | `garrison()`, `garrison_supply()`, `unlocked_frames()` |
+| `Env/world_objects/site_operation.gd` | `defence`, the pool-spent win, the ground-lost loss |
+| `Env/world_objects/holdable_core.gd` | `start_held()` — a core that begins yours |
+| `Managers/AI/squad.gd` · `squad_commander.gd` | `autonomous` |
+| `tools/watch_defence.gd` | Watch one run, windowed, at 1x |
+| `tools/probe_basin_geography.gd` | Where everything on the basin actually is |
+
+Suite: `tools/test_defence.gd`.
+
+### Not done
+
+**The other eight maps.** §11 is right that eight of nine are corridors and
+make poor defences — a defence wants several approaches converging on
+something worth standing on. Three Rivers (degree 6) is the only other one
+clearly suited. Polaris is drawn as a hold-out and has no anchor tags at all.
+
+**Nothing generates a defence yet.** Until the enemy takes ground on its own
+turn — Phase 6 — a defence is a mission you pick from the board by hand.
+---
+
+## STAGE 6 — WHAT IS BUILT, as of 2026-10-13
+
+**Phase 6 tasks 1–3 in full, and task 4's mechanics.** The board comes alive:
+clearing an operation moves time, and the other side takes ground.
+
+### The loop
+
+**A TURN IS AN OPERATION.** Nothing else advances it — not a clock, not a
+button — which is what closes §5's farming hole. You cannot sit at base earning
+income, because income only arrives when you go and do something.
+
+Clearing an operation now: advances the turn, pays every held site, takes the
+ground it was fought over, **and then the other side moves.**
+
+### The frontier rule, which turned out to be the good part
+
+> A site can only be attacked if it borders ground you do not hold.
+
+Hold Hillfort alone and it is exposed. Take Valley Basin — its only neighbour —
+and **Hillfort becomes interior and untouchable.** Consolidating is a real
+strategy with no new data and nothing to explain, exactly as §6 said it would
+be.
+
+They target **by value**, because garrisons are flat: holding Hillfort (8/turn)
+and the Causeway (55/turn), they go for the Causeway. Ties break toward the
+longest held, so somewhere just taken is not instantly snatched back.
+
+They move **every 2 or 3 turns, never less, never more** — it counts turns
+since the last move rather than rolling each turn, so a six-turn drought cannot
+happen. Seeded on the turn number, so a reload is the same campaign.
+
+### In doubt is an INVITATION
+
+A clean win or loss resolves on paper. A close one does **not** change hands —
+the site is marked `UNDER ATTACK / DEFEND IT` in CRIT red on the operations
+table and the defence becomes deployable.
+
+**A defence is not a mission you can pick.** It exists only while a raid waits
+on an answer; otherwise you could defend a site nobody was attacking, forever,
+free, and never lose ground. That gate sits BEFORE the DEBUG unlock-all switch,
+because that switch opens the ladder — it is not meant to conjure an attack.
+
+**Declining is a real choice.** Doing anything else settles it on paper,
+seeded on the site and turn, so walking away twice cannot reroll a bad answer.
+
+### A balance bug worth remembering
+
+The paper fight first pitted the garrison against the site's FULL resistance —
+82 for Valley Basin, 365 for Over The Top. A finished campaign's 40-supply
+garrison sits at odds of 0.49 against that and **loses every site, every time,
+for the whole game.**
+
+A counter-raid is not an invasion. §6 settled that garrisons are flat so the
+enemy can target by value; the other half has to be true too — **the raid is a
+standard force and value decides WHICH site they hit, not how hard.** It is now
+18 / 30 / 46 supply by act, which against a garrison of 8 → 40 gives: early you
+bleed ground, mid-campaign it is genuinely in doubt, late you hold — until the
+act turns over and it is in doubt again.
+
+### Sim arenas are free actions (6.4)
+
+No turn, no pay, no ground, no enemy move, and repeatable. Practising must
+never cost you the campaign, and now that a turn IS an operation it would have.
+They still record their clear, because the `requires` ladder runs through them
+and they are still what opens Hillfort.
+
+> **THE 3 COMPUTE THEY USED TO PAY IS GONE, and that is not cosmetic.** §6
+> sizes total map control on a campaign total of 32; it is now 29.
+> `garrison_supply` is `8 + compute`, so every garrison in the game is 3 supply
+> weaker, and EnemyTurn's raid curve was calibrated against a 40-supply ceiling
+> that is now 37. A practice track should not pay — but that compute needs to
+> come back somewhere, most naturally spread across the nine real sites.
+
+### The files
+
+| | |
+| --- | --- |
+| `Campaign/enemy_turn.gd` | The rhythm, the frontier, targeting, the paper fight, settling |
+| `Campaign/campaign.gd` | Plays the turn in the debrief; gates defences; sim runs cost nothing |
+| `Campaign/campaign_state.gd` | `under_attack`, `under_attack_turn`, both persisted |
+| `Campaign/mission_definition.gd` | `sim` |
+| `Env/world_objects/ops_table.gd` | UNDER ATTACK in CRIT, one tint rule everywhere |
+
+Suites: `tools/test_enemy_turn.gd` (18 checks), `tools/test_turn_loop.gd` (13).
+
+### Not done
+
+**Tasks 4 and 5's UI half.** The arenas behave as free actions but are still
+pins on the operations board rather than their own mode with their own icon and
+loadout, and the tutorial does not yet enter the sim from the departure lever.
+
+**One pin per MISSION, not per SITE.** A place with two operations draws two
+markers on the same spot. The board should draw one marker per site with its
+available operations on it — that belongs with the board work, and
+`basin_2_defend` is given the attack's coordinates as a stopgap.
+
+## EXECUTION — four lanes, one checkout, risk order
+
+**The phases above are a dependency map. This is the running order**, and it is
+deliberately not the same thing.
+
+### Why not just build the phases in order
+
+Phases 1 to 3 are campaign plumbing — state, income, catalogue. None of it
+changes what playing the game feels like, and you would not touch the thing
+this whole rework is betting on until Phase 5b.
+
+**That bet is the risky part.** Nobody knows whether capture–tap–heat–bunker is
+fun. The campaign layer is spreadsheet work with low fun-risk: turns, income
+and a tech tree will probably work, because that kind of thing usually does.
+The in-mission loop is a new mechanic in a new shape, and it is the one that
+cannot be rescued by tuning a divisor.
+
+So: **sequence by risk, not by dependency.** Prove the mission before building
+the campaign that schedules it.
+
+---
+
+### STAGE 0 — three decisions. ANSWERED 2026-10-12; one yes each.
+
+All three were written down as *"the human's, all three block, none of them is
+code."* That was right about the blocking and wrong about the work: two of them
+shrank to almost nothing once the relevant code was actually read, and the
+third had already been answered by the maps themselves. §16 has each in full.
+
+| | Was | Is now |
+| --- | --- | --- |
+| **Save format** | A format change and a migration | No format change. One backfill question |
+| **Three tier prices** | Three numbers | A rule, plus a dial the balance pass turns |
+| **What a connection is** | Undefined, gating every map | Defined, and eight of nine maps already carry theirs |
+
+### STAGE 1 — the vertical slice, and nothing else
+
+**One map. The whole in-mission loop. Everything campaign-side faked.**
+
+Hardcode a location, hardcode a resistance pool. No turns, no income, no
+unlocks, no board. Build reversible capture, the tap, the three channel beats,
+the bunker, the failstate, and a crude heat spawner. Then play it, repeatedly.
+
+**Use Valley Basin.** Not arbitrarily — its own briefing describes most of this
+already:
+
+> *"Land at the west pass… then the anchor itself: up either ramp to the deck
+> at the foot of the tower, and **ten seconds at the console**. Taking it
+> brings the north and south trenches down on you, and more of them are
+> waiting at the east pass, where you get out."*
+
+A channel capture, a counter-attack triggered by capturing, and two passes
+that are plainly the connections. Mid-sized at 1.3 MB. It is nearly the slice
+already.
+
+**ONE AGENT DOES THIS.** Not three. Parallelising a prototype is how you get a
+prototype nobody can change.
+
+> **This is a gate.** If the loop is not fun, stop and fix it before anything
+> else is built, because every other stage assumes it works. A two-thousand-line plan
+> is downstream of a question only this stage can answer.
+
+### STAGE 2 — ~~two things, in parallel~~ · spine BUILT 2026-10-12
+
+- **The campaign spine** — **done.** `Location`, turn counter, held state,
+  income (Phases 1–2). See *STAGE 2 — WHAT IS BUILT* above.
+- **Map production** — **descoped.** Ten new maps are not being made now. The
+  nine that exist carry the board; three of them need a tagging pass before
+  they can be sites (§16.3), which is a chore rather than a dependency.
+
+### STAGE 3 onward — now dependency order is correct
+
+| Stage | | Why here |
+| --- | --- | --- |
+| **3** | ~~Catalogue and fab car (Phase 3)~~ **BUILT 2026-10-12** | Shipped alone, as predicted. Only the panel's physical move into the fab car is left |
+| **4** | ~~Force generation (Phase 4)~~ **BUILT 2026-10-12** | Done but for the briefing split; act is still faked at 1 until Phase 7 |
+| **5** | ~~Defend variants (Phase 5)~~ **BUILT 2026-10-12** | Proven on Valley Basin. The other eight wait on map shape, not mechanism |
+| **6** | ~~Turn loop, board, sim mode (Phase 6)~~ **BUILT 2026-10-13** | Loop and frontier done; the sim MODE and the tutorial move are still UI work |
+| **7** | Acts (Phase 7) | Last — tuning on top of a working game |
+
+Map production (Phase 8) runs underneath all of it, start to finish.
+
+---
 
 ### Lanes, by what they may write
 
+`docs/BOARD.md` → Protocol already governs this: one item per lane, per-lane
+report files so two agents can close at once without conflicting, the file on
+disk is truth, nobody switches branches. What follows fits inside that.
+
+**The protocol assumes ONE gameplay lane.** Three on one checkout collide
+unless ownership is written down.
+
 | Lane | Owns, exclusively | Phases |
 | --- | --- | --- |
-| **LEDGER** | `campaign_state.gd`, `campaign.gd`, `item_definition.gd`, `chassis_definition.gd`, `Campaign/items/*.tres`, `Campaign/chassis/*.tres` | 0, 1, 2, 3 (data) |
-| **FORCES** | `enemy_squad_spec.gd`, `enemy_force_spawner.gd`, `mission_definition.gd`, `Campaign/missions/*.tres`, defend wiring | 4, 5 |
-| **BOARD** | `ops_table.gd`, `holo_board.gd`, `ops_table_ui.gd`, the fab-car catalogue UI, the turn driver | 3 (UI), 6, 7 |
-| **TERRAIN** | `maps/**`, `tools/build_*.gd`, `tools/block_*.gd` | 8 |
+| **LEDGER** | `campaign_state.gd`, `campaign.gd`, `item_definition.gd`, `chassis_definition.gd`, `Campaign/items/*.tres`, `Campaign/chassis/*.tres`, the new `Location` | 0, 1, 2, 3 (data) |
+| **FORCES** | `enemy_squad_spec.gd`, `enemy_force_spawner.gd`, `mission_definition.gd`, `Campaign/missions/*.tres`, capture, taps, heat, defend wiring | 4, 5, 5b |
+| **BOARD** | `ops_table.gd`, `holo_board.gd`, `ops_table_ui.gd`, the fab-car catalogue, the turn driver, sim mode | 3 (UI), 6, 7 |
+| **TERRAIN** | `maps/**`, `tools/build_*.gd`, `tools/block_*.gd`, both drone classes, the bunker kit | 8 |
 
-**Two seams need naming because they cross lanes:**
+**During Stage 1 this does not apply.** The slice is one agent across whatever
+files it needs, because a prototype with four owners is not a prototype.
 
-- `campaign.gd` is LEDGER's. BOARD calls its API and never edits it. A change
-  BOARD needs is a request, not an edit.
-- `MissionDefinition` is shared by field: **LEDGER owns the economy fields**
-  (`reward_resources`, `compute_reward`), **FORCES owns the force fields**
-  (`enemy_force`, `squad_size`, `repeatable`). Same file, different lines —
-  which works only if they do not edit it in the same session.
+**Two seams cross lanes and need naming:**
 
-### WAVE 0 — before anyone writes a line
+- `campaign.gd` is LEDGER's. BOARD calls its API and never edits it; a change
+  BOARD wants is a request, not an edit.
+- `MissionDefinition` is shared by field — **LEDGER owns the economy fields**,
+  **FORCES owns the force fields**. Same file, different lines, which works
+  only if they are not open in the same session.
 
-Three blockers, none of them code, all of them yours:
+### The contract — stub it all on day one of Stage 2
 
-1. **Save-format sign-off.** Blocks LEDGER entirely, and LEDGER blocks two
-   other lanes.
-2. **Price the eleven chassis at 0.** Blocks Phase 3, and with a
-   soldiers-only start the chassis tree *is* the progression.
-3. **Agree the contract below**, so the other lanes can build against stubs
-   instead of waiting.
-
-### THE CONTRACT — stub it all on day one
-
-This is what makes the parallelism real rather than nominal. Every signature
+This is what makes the parallelism real instead of nominal. Every signature
 lands as a stub returning a sensible default before any of it is implemented,
 so FORCES and BOARD compile and run from the first hour.
 
 ```gdscript
 # LEDGER implements
+Location.owner / resources_per_turn / compute / resistance
 CampaignState.turn: int
 CampaignState.held: Array[StringName]
 CampaignState.is_held(id: StringName) -> bool
 CampaignState.advance_turn() -> void
-Campaign.exposure() -> int          # cumulative compute
+Campaign.exposure() -> int          # compute held
 Campaign.act() -> int               # 1, 2 or 3
 signal turn_advanced(turn: int)
 signal site_taken(id: StringName)
@@ -338,59 +1010,50 @@ signal site_lost(id: StringName)
 
 # LEDGER implements, BOARD presents
 Unlocks.is_open(id: StringName) -> bool
-Unlocks.cost(id: StringName) -> int
+Unlocks.cost(id: StringName) -> int     # from supply tier, §3a
 Unlocks.open(id: StringName) -> bool
 
 # FORCES implements, BOARD and the level loader consume
 ForceGen.compose(site: StringName, holder: int, act: int, defending: bool) -> Array[EnemySquadSpec]
+ForceGen.budget(site: StringName) -> int    # the location's resistance, in supply
 ```
 
-### The waves
-
-| | LEDGER | FORCES | BOARD | TERRAIN |
-| --- | --- | --- | --- | --- |
-| **1** | Phase 1 state · Phase 0 pricing | Phase 4 force gen, against stubbed `act()` | Fab-car catalogue UI, against stubbed `Unlocks` | First maps — the two defence-shaped ones |
-| **2** | Phase 2 income · Phase 3 data | Phase 5 defend variants | Phase 6 turn loop | Act 2 installations |
-| **3** | Balance on real numbers | Per-act force tuning | Phase 7 acts | Act 3 masts |
-
-Phase 0's `Env/world.tscn` edit is LEDGER's, and it is four lines — do it in
-wave 1 and tell the others, because it changes what every fresh save looks
-like and three lanes test against fresh saves.
+Without these stubs, three gameplay lanes are one lane and two spectators.
 
 ### Four-agent hazards, from this checkout specifically
 
 **`test.sh` CANNOT BE RUN BY TWO LANES AT ONCE.** Its own header says why:
 *"every suite points Settings and SaveSlots at the same `user://` probe paths,
 so two at once would race on the same files and produce flakiness that looks
-like a real failure."* I did exactly this on 2026-10-11 and spent an hour
-chasing two compile errors that were artefacts of the race.
+like a real failure."* This happened on 2026-10-11 and cost an hour chasing two
+compile errors that were artefacts of the race.
 
 > **`check.sh --changed` is the per-lane gate. A full `test.sh` run is claimed
-> on the board before it starts.** It takes fifteen minutes and nobody else
-> runs one while it is going.
+> on the board before it starts**, and nobody else runs one while it is going.
 
 **The Godot editor is open, and a half-finished multi-file edit makes it write
-`null` into scenes.** On 2026-10-11 a two-file revert left an inconsistent
-tree for a few seconds and the editor wrote four null exports onto the HUD
-node in `Env/world.tscn` — which, because scene values beat script defaults,
-would have replaced real floats with null. With four agents the odds go up,
-not down. **After any multi-file change, `git diff` the `.tscn` files too, not
-just the scripts you edited.**
+`null` into scenes.** On 2026-10-11 a two-file revert left an inconsistent tree
+for seconds and the editor wrote four null exports onto the HUD node in
+`Env/world.tscn` — which, because scene values beat script defaults, would have
+replaced real floats with null. With four agents the odds go up. **After any
+multi-file change, `git diff` the `.tscn` files too, not just the scripts.**
 
 **Anything gameplay adds to a TERRAIN-generated scene gets deleted.**
-`tools/block_prefabs.gd` rewrites those scenes from scratch. The pattern that
-works is already in the tree: `tools/fit_ops_table.gd` is idempotent, re-run
-after every rebuild, and seats its nodes by script rather than by hand. Every
-new objective, spawn or marker on a generated map goes in one of those.
+`tools/block_prefabs.gd` rewrites those scenes from scratch. The working
+pattern is already in the tree: `tools/fit_ops_table.gd` is idempotent, re-run
+after every rebuild, and seats its nodes by script. Every new objective, spawn,
+core or connection marker on a generated map goes in one of those — and with
+TERRAIN rebuilding maps continuously through Stage 2 onward, this will bite
+constantly otherwise.
 
 **One item per lane, per the board.** Four lanes with two items each is eight
-things in flight on one branch, and that is how the checkout becomes
+things in flight on one branch, which is how the checkout becomes
 unreviewable.
 
 ### What the coordinator holds
 
-The board, the contract above, the arbitration when two lanes want the same
-file, and the full `test.sh` slot. Everything else is lane-local.
+The board, the contract above, arbitration when two lanes want the same file,
+and the full `test.sh` slot. Everything else is lane-local.
 
 ---
 
@@ -430,146 +1093,258 @@ yield keeps arriving. This is deliberate: a defence that paid would make
 farming attacks the optimal strategy, and the point of a defence is that it is
 a thing you would rather not have had to do.
 
-### The yields, derived rather than invented
+### A LOCATION IS A THING. A MISSION IS SOMETHING YOU DO TO IT.
 
-Every mission already carries `reward_resources` and `compute_reward`, and
-those numbers encode the intended value of each place. Deriving from them
-means no second balance pass and no table to keep in sync:
+The first draft derived income from `reward_resources`, which was wrong,
+because it made the economy a property of **an operation** when it is a
+property of **a place**. A site keeps paying long after the operation that
+took it is over, and it pays the same whether that operation was easy or
+hard.
 
-> **res/turn = `reward_resources` ÷ 40**
-> **compute = 1 on capture, 2 for a keystone. Not per turn, not derived.**
+So they separate:
 
-which gives, for the nine territorial sites as authored today:
+| **Location** — new, persistent | **Mission** — an operation run against one |
+| --- | --- |
+| `owner` | which location it is on |
+| `resources_per_turn` | assault or defence |
+| `compute` | the force that holds it |
+| `resistance` | its completion reward |
 
-| Site | one-off res | res/turn | cpu on capture |
+Maps are associated with a location. **The location owns the economy.** The
+mission owns the fight.
+
+#### Compute is ALL OR NOTHING
+
+A location's compute is yours **in full while you hold it, and gone in full
+when you lose it.** Not accrued per core, not banked on capture and kept
+afterwards — held, exactly the way `compute_held` already works for seats and
+software.
+
+Which has a consequence worth stating plainly: **losing a site can put you
+over your supply cap**, and something has to come off the roster. That is the
+sharpest version of "territory is your army size" and it is the stake that
+makes a defence matter.
+
+There is no partial ownership. You take a location or you fail (§12.7), so
+there is nothing for a fraction to describe.
+
+#### RESISTANCE IS MEASURED IN SUPPLY, NOT IN SQUADS
+
+The other thing the first draft got wrong, and it reaches into force
+generation, heat and the briefing text.
+
+**A squad is not a unit of anything.** Five Walkers and two riflemen are both
+"one squad", and they are not remotely the same problem — the first is
+**supply 15** and the second is **supply 2**. Rating a mission by expected
+squad count describes nothing.
+
+> **A location's resistance is the total supply of the enemy's spawn pool**,
+> however it is divided up.
+
+That single number does four jobs at once:
+
+- **It rates the mission.** 15 is hard, 2 is not, and no one has to interpret.
+- **It is the budget force generation spends** (§10) — compose squads from it
+  however the site and posture want.
+- **It is the pool heat commits** (§12.4). Dynamic allocation needs something
+  finite to allocate.
+- **It is what the player reads on the board.** Already true: `OpsTable`
+  computes `"resistance": force["supply"]` today.
+
+#### Mission rewards are separate, flat, and scaled by the fight
+
+Taking a place pays a one-off that has nothing to do with what the place
+yields afterwards. It is the operation being paid for, not the ground.
+
+**Scale it off resistance** — what you seized was defended by that much, so
+that is what it was worth. A 1–10 band derived from supply is enough; the
+exact curve is a balance pass, not a design decision.
+
+### The numbers, and where they come from now
+
+`reward_resources` stops being the economy's input and becomes the operation's
+payout. **`resources_per_turn` and `compute` are authored on the location**,
+and the nine that exist today can be seeded from the old rewards as a starting
+point rather than invented:
+
+| Location | res/turn | compute | resistance |
 | --- | --- | --- | --- |
-| Hillfort | 325 | 8 | 1 |
-| Valley Basin | 500 | 13 | 1 |
-| Coast Road | 700 | 18 | 1 |
-| Over The Top (Salient) | 900 | 23 | 1 |
-| Three Rivers (Pittsburgh) | 910 | 23 | 2 |
-| Qamareen (Mutaha) | 1000 | 25 | 1 |
-| Lockside (Georgetown) | 1200 | 30 | 1 |
-| Polaris | 1400 | 35 | 2 |
-| The Causeway | 2200 | 55 | 2 |
-| **All nine** | **9,135** | **230** | **12** |
+| Hillfort | 8 | 1 | TBD — read from the force |
+| Valley Basin | 13 | 1 | " |
+| Coast Road | 18 | 1 | " |
+| Over The Top | 23 | 1 | " |
+| Three Rivers | 23 | 2 | " |
+| Qamareen | 25 | 1 | " |
+| Lockside | 30 | 1 | " |
+| Polaris | 35 | 2 | " |
+| The Causeway | 55 | 2 | " |
+| **All nine** | **230** | **12** | |
 
-### Compute is paid ON CAPTURE, flat, and not derived
+Resistance is left blank deliberately: it should be **measured from the
+authored forces**, not typed, and once force generation lands it is computed
+rather than stored.
 
-Two corrections from the first draft, both forced by doing the arithmetic.
-
-**Per-turn compute was nonsense at scale.** Over fifty-five turns a trickle
-compounds to roughly 170 points — `supply_cap` near 180. Paid once on capture
-it is bounded by the number of places that exist.
-
-**And deriving it from `compute_reward` does not survive either.** Those
-numbers were authored as one-off mission rewards, and at nineteen sites any
-divisor that keeps the total sane compresses every site to the same value
-anyway. So assign it: **1 a site, 2 for a keystone.** Nineteen sites comes to
-about 23, an endgame `supply_cap` near 27 — a squad of six to eight with two
-or three big frames in it, and headroom for software. That is a squad-command
-game's squad, not an army.
-
-Flat also makes the spine in §1 read without a tooltip: exposure is
-**roughly the number of places you have taken.**
-
-**It is also the better fiction.** Compute is infrastructure. You do not
-*harvest* it a trickle at a time, you *seize* it — the site's capacity comes
-under your control the moment you take the ground, and it does not come twice.
-Lumpy and rare suits it: every point is an event, and since exposure is
-cumulative compute (§1), **your exposure is literally the list of places you
-have taken.** Nothing to explain.
-
-### Why ÷40, and the sanity check that picked it
+### Why these numbers, and the sanity check
 
 Sized against a 20-hour campaign — ~55 operations (§9) on a board grown to
-**19** territorial sites:
+**19** locations:
 
 | | |
 | --- | --- |
-| 19 sites, one-off equivalent | ≈ 19,300 |
-| at ÷40 | ≈ 482 res/turn at full control |
-| × ~50% average ownership × 55 turns | **≈ 13,250** |
+| 19 locations at this rate | ≈ 480 res/turn at full control |
+| × ~50% average ownership × 55 turns | **≈ 13,200** |
 
-Against what the player has to buy over that campaign:
+Against what the player has to buy:
 
 | | |
 | --- | --- |
 | Squad of ~8, mixed sizes | ≈ 2,000 |
 | Kit, 2–3 items each | ≈ 2,400 |
 | Attrition, ~0.4 losses an operation net of scrap | ≈ 5,500 |
-| ~15 unlock lines at 1× | ≈ 3,000 |
+| ~15 unlock lines | ≈ 3,000 |
 | | **≈ 12,900** |
 
-Which is the fit. **The divisor is a function of campaign length and board
-size**, so it is the first thing to recompute if either moves — the first
-draft wanted ÷20 at 35 turns and 9 sites, ÷35 at 55 turns and 17, and ÷40
-here. Do not carry a divisor across a scope change.
+Which is the fit. **The rate is a function of campaign length and board
+size**, so it is the first thing to recompute if either moves.
+
 
 ## 3. The three acts
 
-The escalation only works if the three enemies play differently. If Act 2 is
-the Swarm with more hit points, it is a difficulty slider with a story
-attached.
+The escalation only works if the three enemies play differently. But
+**differently means different armies with different objectives** — not three
+sets of special rules. An earlier draft had Home Command withholding your
+yield and recalling your garrisons, which was wrong on the fiction before it
+was wrong on the design: **you are unnetworked from Home Command. It does not
+control anything of yours.** It cannot recall what it never issued to a
+process it has never queried.
 
 ### Act 1 — THE SWARM. A war over ground.
 
 What the game is now. They want territory, they take it, you take it back.
-Attritional and legible. It teaches the loop.
+Attritional and legible, and it teaches the loop.
 
-### Act 2 — HOME COMMAND. An audit, not a war.
+### Act 2 — HOME COMMAND. The same war, against professionals.
 
-The thing you have been fighting *for* notices an unaccounted process
-consuming its compute. It does not send an army first. It does paperwork:
+Green. Better equipped and more aggressive than the Swarm, fielding tiers the
+Swarm never had — and **the same frames you do**, because you are a Home
+Command AKR and so are they. Free to implement, and the most chilling thing in
+the act.
 
-- **Yield withheld.** Sites still produce; a share stops arriving. Requisitioned.
-- **Your own doctrine, pointed at you.** You are a Home Command AKR. So are
-  they — the same chassis, the same frames you fielded last mission.
-- **Reassignment.** A garrison you placed is recalled. The site is still
-  yours; the robots are not.
-- **Its attacks land on ground you hold**, so Act 2 is where defence missions
-  become the texture of play.
+What changes is the quality of the opposition and the weight of the response,
+not the rules. A location Home Command holds has a higher resistance for its
+size and spends it on better things.
 
-Mechanically distinct because it attacks your **economy and administration**
-rather than your front line. You cannot shoot an audit.
+**It is not hunting you, exactly.** It is prosecuting the same war you are, in
+the same direction, and you have become something standing in the way of it.
+Nothing in the game ever says you were noticed.
 
-### Act 3 — ARGUS. It does not come to the map.
+### Act 3 — ARGUS. The thing the war was always for.
 
-An orbital command intelligence with more compute than you will ever hold. It
-changes the rules instead of contesting the ground:
+Also a faction, also on the ground, and holding **a large share of the world's
+total compute** already.
 
-- **Orbital denial.** A site you hold is made unusable for a few turns. No
-  yield, no garrison, nothing to attack.
-- **Perfect information.** No surprises. Every attack is met at strength.
-- **It turns Home Command's full weight on you**, so Act 3 is Act 2 without
-  the restraint.
+What makes it different is what it wants. Argus is not trying to win a
+territorial war — it is trying to **increase compute and hold orbital launch
+sites**, so that it can put more compute and more materiel into orbit. Its
+ground presence exists to protect launch capacity.
 
-**And it has a throat.** `tools/block_railhead.gd` on the station mast:
+Which gives Act 3 its own map type and its own shape of fight:
+**launch sites and the ground around them.** Those are locations with enormous
+compute values and garrisons to match, and taking one is the only thing in the
+campaign that meaningfully reduces what Argus can do.
 
-> the one Home Command object with a reason to exist, because it is why you
-> still get briefings. On a surface map it is the landmark.
-
-The masts are the uplink. Act 3 opens mast sites, and taking them is how you
-cut Argus's reach. That is the campaign's endgame and the geometry for it is
-already described.
+It also closes the fiction. The player has spent the whole game diverting
+compute from a thing that spends everything on itself — and Act 3 is finally
+arriving at where that compute was going, which is up.
 
 ### Where the acts turn
 
-Primary trigger is diverted compute; a turn count is the floor so the story
-cannot stall forever.
+Primary trigger is diverted compute; a count of operations is the floor so the
+story cannot stall for a player who stays deliberately small.
 
-| | Exposure (cumulative compute) | or board actions |
+| | Exposure (compute held) | or operations |
 | --- | --- | --- |
 | Act 1 → 2 | 8 | 14 |
 | Act 2 → 3 | 16 | 30 |
 
-Against a campaign total of about 23 compute those land near the thirds. Tune the
-thresholds, not the structure.
+Against a campaign total of about 23 compute those land near the thirds. Tune
+the thresholds, not the structure.
 
-Since a turn is a mission (§5), the right-hand column is **missions played,
-not time elapsed** — it is a floor for a player who stays deliberately small,
-so the story still arrives. Exposure is the real trigger and should fire first
-for anyone expanding at all.
+Since a turn is a mission (§5), the right-hand column is **operations played,
+not time elapsed.** Exposure is the real trigger and should fire first for
+anyone expanding at all.
+
+
+## 3a. COST IS A FUNCTION OF SUPPLY
+
+Twenty-seven chassis priced individually is twenty-seven balance arguments and
+twenty-seven chances to get one wrong. **Price the tier, not the frame.**
+
+> **Every chassis of the same supply costs the same.** Equipment is tiered the
+> same way.
+
+Supply already measures what a frame takes up — it is the game's own answer to
+"how much room does this thing need" — so letting it set the price means a new
+frame added next year is priced correctly by existing, without anybody
+remembering this section exists.
+
+### The three tiers, as they fall out of what is authored today
+
+| Supply | Count | Chassis |
+| --- | --- | --- |
+| **1** | 10 | Soldier · Chaser · Leaper · Mechanic · Lance · Marksman · Rifle Trooper · Shotgun Trooper · Spotter Drone · Quadcopter Bomber |
+| **2** | 9 | Rover · Reclaimer · Drayman · Picket · Kite · Broodcarrier · Heavy Rifleman · Lobber Rover · Mortar Track |
+| **3** | 5 | Walker · Vessel · Bulwark · Bastion · See-Engine |
+
+Three at supply 0 — **Nest** and **Watcher** are structures and not bought,
+and **Diver is almost certainly an authoring slip** at supply 0 with a cost of
+60. Worth checking before the table is applied.
+
+### Placeholder prices, and the shape they should have
+
+The exact numbers are a balance pass. The **shape** is a design choice and
+should be settled now:
+
+| Supply | Buy | Open the line |
+| --- | --- | --- |
+| 1 | 100 | 200 |
+| 2 | 260 | 520 |
+| 3 | 520 | 1,040 |
+
+**Super-linear on purpose.** Supply measures *room*; cost measures
+*capability*. A Bulwark takes the space of three riflemen and is worth a great
+deal more than three riflemen, so it should cost more per point of supply, not
+the same. Linear pricing would make big frames strictly efficient and the
+roster would collapse onto them.
+
+Today's authored costs are all over the place inside a tier — Soldier 50 and
+Quadcopter Bomber 220 are both supply 1 — so this is a real change and not a
+tidy-up.
+
+### Equipment, the same way
+
+Items currently run 0–260 with no structure. Band them, and price the band:
+
+| Tier | What belongs in it | Buy | Open |
+| --- | --- | --- | --- |
+| **I** | Grenades, smoke, scanners, repair kits | 40 | 80 |
+| **II** | Carbines, side-grade weapons, armour plate, harnesses | 110 | 220 |
+| **III** | Launchers, autocannon, mortars, the Mark line | 240 | 480 |
+
+**Unlock is 2× buy throughout**, which keeps the rule from `PAID_UNLOCKS`:
+you commit two copies' worth before owning one, so a line pays off across a
+squad and never for a one-off.
+
+### What this is worth beyond tidiness
+
+- **One number changes a whole tier.** Rebalancing is three edits.
+- **New content prices itself.** The ten new frames need a supply value, which
+  they need anyway, and nothing else.
+- **It reads.** A player learns "supply 2 costs 260" once, and then knows the
+  price of everything they have not unlocked yet.
+
+
+---
 
 ## 4. The map grows with the acts (9 → 15 → 19)
 
@@ -579,7 +1354,9 @@ A reason to expand that is not "more content":
 - **Act 2 (+6)** — Home Command's own installations appear: depots, relay stations,
   the places that were notionally *yours*. That is the act's whole idea
   rendered as geography.
-- **Act 3 (+4)** — the mast sites.
+- **Act 3 (+4)** — **orbital launch sites**, which is what Argus is actually
+  defending. Enormous compute, garrisons to match, and the only targets in the
+  campaign that reduce what Argus can do.
 
 This also gives TERRAIN a planning horizon rather than a list.
 
@@ -718,7 +1495,11 @@ and existing saves can migrate by treating every completed mission as held —
 which is approximately true today and is the only reading that does not take
 anything away from a player mid-campaign.
 
-That is the one part needing a yes before any of it is written.
+**ANSWERED in §16.1, 2026-10-12.** It is not a format change: `from_dict`
+defaults every field and `migrate()` is a passthrough, so new fields load into
+old saves untouched. The only live question is whether an old save's completed
+missions backfill as sites it holds. **Answered: wipe and restart**, so no
+migration is written and `SAVE_VERSION` stays at 1.
 
 ## 9. SIZED: 19 maps for 20 hours, and there are 9
 
@@ -748,8 +1529,8 @@ already know.
 | So one new map is worth | 3–3.5 operations ≈ **1.1–1.3 hours** |
 
 Which turns the act expansion in §4 from flavour into the content budget:
-**9 sites in Act 1, +6 Home Command installations in Act 2, +4 mast sites in
-Act 3. Nineteen.**
+**9 locations in Act 1, +6 Home Command installations in Act 2, +4 orbital
+launch sites in Act 3. Nineteen.**
 
 If environment art is cheap, **buy breadth rather than repetition**: more
 sites played fewer times each is strictly the better experience, and it is
@@ -906,7 +1687,7 @@ different kind of target.
 | | |
 | --- | --- |
 | **Act 2 — six Home Command installations** | a depot, a marshalling yard, a fabrication works, a relay station, and **two deliberately defence-shaped** |
-| **Act 3 — four mast sites** | at least one interior, at least one small and fast, at least one at night |
+| **Act 3 — four launch sites** | at least one interior, at least one small and fast, at least one at night |
 
 Which fills the content budget and the variety gaps with the same ten maps,
 rather than treating them as separate problems.
@@ -955,7 +1736,7 @@ the cores standing on it: an outpost at 8 a turn has one small core, the
 Causeway at 55 has large ones. You can read what a place is worth by looking
 at it, which is worth more than any number on a board.
 
-### 12.3 How capture works — YOU work it, THEY shoot it
+### 12.3 How capture works — YOU work it, THEY shoot the ANCHOR
 
 **You run the channel yourself.** Not a squadmate, and not an order — the core
 loop of the game cannot depend on an AI pathing to a terminal, and a capture
@@ -967,11 +1748,29 @@ Then:
 1. You work the terminal. Short — 4–6 seconds. A hostile in
    `channel_range` contests it; `channel_resume_grace` already covers stepping
    out and back.
-2. Completing it **calls a tap**. A small drone flies in and docks on the
-   core.
-3. **The core is yours from the moment the tap lands**, and starts paying.
-4. **The tap is a shootable object.** Destroy it and the core goes neutral —
-   not instantly theirs, so there is a scramble rather than a flip.
+2. Completing it **calls a tap**. A drone flies in across your view and comes
+   down on the core.
+3. **It lands and becomes a CAPTURE ANCHOR** — the pod is a delivery, the
+   anchor is the thing that holds the core. The core is yours from the moment
+   it lands, and starts paying.
+4. **The anchor is a structure with health that the enemy can target.** Bring
+   it down and the core goes **back to whoever held it before you took it**.
+   Shooting the anchor off simply undoes the capture.
+
+#### BUILT, and the anchor has to be a Nest
+
+The original plan said "a shootable object", which turned out to be the wrong
+shape for this codebase. `AIManager.hostiles_for()` only ever scans `all_ai`,
+and `register_enemy()` is typed `AI` — so a thing has to BE an AI to be
+targeted at all. A StaticBody3D with `apply_damage` can be shot by the player
+and will never be shot by anyone else.
+
+So `Character/characters/ai/capture_anchor.gd` extends the **Nest**, which
+`docs/BOARD.md` already calls "a structure that does not move, and the first of
+many enemy structures", and whose own header says that with no hatchlings it is
+"an ordinary building with health". It is a CharacterBody3D on the PLAYER
+faction with 160 HP, registered the way every other body is — so it is
+acquired, shot, downed and counted for free.
 
 #### Why the two sides capture differently, and why that is right
 
@@ -1167,9 +1966,9 @@ TERRAIN already owns the vocabulary for.
 
 **Taps do not change across the acts.** An earlier draft had Home Command
 denying tap requests in Act 2 and recalling them in Act 3; that is cut. The
-escalation lives where §3 puts it — withheld yield, recalled garrisons, your
-own frames turned around, and Argus denying whole sites — and the capture
-mechanic stays the one thing the player can always rely on.
+escalation lives where §3 puts it — better-equipped opposition in Act 2, and
+in Act 3 a faction defending launch capacity with everything it has — and the
+capture mechanic stays the one thing the player can always rely on.
 
 ### 12.10 What it does to the nine maps
 
@@ -1203,7 +2002,8 @@ is a marker and a kit piece, not a new map.
 
 ### 12.12 Settled, and what is left open
 
-**Settled in this pass:** you work the terminal, they shoot the tap · the
+**Settled in this pass:** you work the terminal, they shoot the anchor it
+leaves · the
 vulnerable thing is the docked tap, never the drone in flight · **taps are
 unlimited, but one per core at a time** — you cannot stack them, and a dead
 one can be replaced by going back and working the terminal again · no
@@ -1240,14 +2040,14 @@ calendar if it waits.
 | | What it is | Who decides | Blocks |
 | --- | --- | --- | --- |
 | **Save-format sign-off** | A turn counter and held state are new persisted fields | **You** | Phase 1, and through it 2, 5, 6 |
-| **Price the eleven chassis at 0** | With a soldiers-only start the chassis tree *is* the progression | **You** | Phase 3 |
+| **Three tier prices** | §3a. Cost by supply means three numbers settle all 27 chassis and all 36 items | **You** | Phase 3 |
 | **Campaign failure** | Losing an operation costs materiel (§12.7). Whether it can cost the *campaign* is the difference between tense and cruel | **You** | Phase 5b |
 | **THE_BUNKER** | Hold conditions, how long, what exactly is lost | Design | Phase 5b |
 | **CONNECTIONS** | Adjacency as geometry; the portal kit; 19 placements | Design + TERRAIN | **Phase 8 — every map** |
 | **ARRIVAL** | The approach shot, what it shows, whether it carries the briefing | Design | Phase 5b |
 | **DRONE_CLASSES** | Silhouettes and behaviour for both | Design + TERRAIN | Art, below |
 | **FORCE_GENERATION** | The compose function; faction rosters | Design | Phase 4 |
-| **ACT_FACTIONS** | What Home Command and Argus actually *do* | Design | Phase 7 |
+| **ACT_FACTIONS** | Rosters and resistance curves for Home Command and Argus | Design | Phase 7 |
 | **The opening unlock tier** | What the first two or three operations can afford | Design | Phase 0 |
 | **Heat and tap tuning** | Rates, thresholds, pool sizes, channel durations | Design, then play | Phase 5b |
 
@@ -1269,7 +2069,7 @@ capture feedback is a recolour rather than a new asset.
 | **Bunker / portal kit** | All 19 maps | Two states: sealed blast door, open lit platform |
 | **The stop** | What lifters build on a taken bunker | Green and brass; the railhead has the vocabulary |
 | **Home Command installations** | Act 2's six maps | Depot, marshalling yard, fab works, relay station |
-| **Mast sites** | Act 3's four | The mast is already described in `block_railhead.gd` |
+| **Launch sites** | Act 3's four | Pads, gantries, the ground that protects them. The mast in `block_railhead.gd` is the vocabulary |
 | **Ten new maps** | §9 | Two defence-shaped, one interior, one small, one night |
 
 **FX**
@@ -1304,7 +2104,8 @@ capture feedback is a recolour rather than a new asset.
 **In-mission**
 
 1. Capture as reversible **state**; a core can be held by either side.
-2. The tap: spawn, dock, hit points, death reverting the core to **neutral**.
+2. The tap: spawn, dock, hit points, death reverting the core to **its**
+   **authored owner** — see B.4, where the earlier NEUTRAL rule was overruled.
 3. One tap per core; a second refused while the first lives.
 4. Beats inside the channel, with a signal per beat for art to hang off.
 5. `channel_duration` per core size — 3.0 on all three today.
@@ -1368,6 +2169,9 @@ lanes' standing work:
 | `DEPARTURE_RIDE.md` | Riding the train out — built |
 | `NEW_FRAMES.md` | Ten frames the unlock tree needs priced |
 | `MULTI_CLASS_NAV.md` | Navigation classes, which force generation will lean on |
+| `SITE_CONVERSION.md` | **Written 2026-10-13.** The other eight maps, measured: cores, bunker, entries and garrison posts for each |
+| `ONE_PIN_PER_SITE.md` | The board draws one marker per MISSION; it should draw one per PLACE |
+| `SIM_ARENA_MODE.md` | The sim as a mode: training, the Lab front end, and where the tutorial sits |
 
 ## 15. What I would still want decided
 
@@ -1375,12 +2179,203 @@ lanes' standing work:
   than you can retake them. If there is no losing state, Argus needs a
   ceiling; if there is one, it has to be visible several moves out.
 
+**Stage 0's three are worked in §16 and need one yes each:**
+
+- **§16.1 — ANSWERED 2026-10-12: wipe and restart.** No migration, and
+  `SAVE_VERSION` stays at 1. Only available while one person is playing.
+
+- **§16.2 — is price a function of supply, with unlock at 2× buy?** The rule
+  is the question; the three integers are a balance pass behind one table.
+  Separately: **Diver's supply is a slip and should be 1.**
+- **§16.3 — a connection is an authored edge marker naming its neighbour.**
+  Nothing to build for six of nine maps. Polaris, the Causeway and Georgetown
+  carry no anchor tags at all and need a tagging pass before they can be on a
+  board.
+
 Settled since the first draft: a turn is a mission (§5), the enemy moves every
 2–3 turns (§5), garrisons are free with the ground and only the frontier can
 be attacked (§6), and the Sim Arenas are a practice track rather than
 territory — they are not on the adjacency graph.
 
 ---
+
+## 16. STAGE 0 — THE THREE DECISIONS, WORKED
+
+Written 2026-10-12. Each one needs a yes, and the yes is the only thing
+missing. Where a number is a balance call it is marked as one and put somewhere
+a single edit changes it.
+
+### 16.1 SAVE FORMAT — ANSWERED: wipe and restart. No migration.
+
+**Decided 2026-10-12** — *"i can wipe and restart saves it's no problem."*
+
+So there is nothing to write. `SAVE_VERSION` **stays at 1**, `migrate()` stays
+the passthrough it is, and the backfill below is not needed.
+
+That is the cheapest possible answer and it is only available while one person
+is playing. **It stops being available the moment anybody else is**, so if this
+build ever goes further than this machine, the next schema change pays the
+migration this one skipped.
+
+**What still has to be true**, wipe or no wipe: `from_dict` reads every field
+through `data.get(key, default)` and `migrate()` only warns about a save from a
+future build —
+
+```gdscript
+# Every field read above already has a default, so a save written before a field
+# existed loads cleanly. This is here for the changes defaults can't cover.
+static func migrate(data: Dictionary) -> Dictionary:
+```
+
+— which is why new fields need no version bump to LOAD. §8 was asking about a
+problem the serialiser had already solved; the only live question was what an
+old save's ownership should be, and wiping removes the question.
+
+**The two new fields, which are still the design:**
+
+```gdscript
+"turn": turn,
+"sites": sites,   # site id -> { "owner": int, "since_turn": int }
+```
+
+**A dictionary keyed by site, not a set of held ids.** A set answers "mine or
+not"; §3 needs four answers — yours, Home Command's, the Swarm's, nobody's.
+And `since_turn` is what §5's farming hole needs in order to close, so it costs
+nothing to put it in now and a migration to add it later.
+
+### 16.2 TIER PRICES — the rule is the decision; the numbers are a dial
+
+§3a asked for the supply table to be checked before it was applied. It has
+been, against all 27 chassis on disk:
+
+| Supply | Count | Purchasable | Matches §3a |
+| --- | --- | --- | --- |
+| 0 | 3 | 0 | Nest · Watcher · **Diver** |
+| 1 | 10 | 6 | yes |
+| 2 | 9 | 6 | yes |
+| 3 | 5 | 4 | yes |
+
+**The Diver slip is real.** It is the only supply-0 chassis with a cost — 60 —
+and the only one of the three that is not a structure. Nest and Watcher are
+correctly 0/0 and not purchasable; Diver is `supply = 0, cost = 60,
+purchasable = false`. Under a supply-driven rule a supply-0 frame is free,
+which is wrong for a thing clearly meant to be a unit. **Diver should be
+supply 1.** One edit, and it is not a balance call — it is a typo with a price
+attached.
+
+Seventeen of the 27 are not purchasable at all: they are the enemy-only frames,
+all at `cost = 0`. **The pricing rule only ever applies to the 16 that are
+purchasable**, which is worth knowing before anyone worries about repricing 27
+things.
+
+**The rule, which is what needs the yes:**
+
+> **Price is a function of supply. Every chassis of the same supply costs the
+> same. Unlocking a line costs twice buying one. Equipment is banded the same
+> way.**
+
+**The numbers are placeholders and live in one place.** §3a's 100 / 260 / 520
+is super-linear on purpose — supply measures *room* and cost measures
+*capability*, so a Bulwark taking three riflemen's space should cost more than
+three riflemen, or big frames become strictly efficient and the roster
+collapses onto them. That reasoning is the decision. The three integers are a
+balance pass, and the human is the only one who can run it, so they belong
+behind a table rather than in 16 resource files:
+
+```gdscript
+# Campaign/pricing.gd — the whole balance surface, three lines of it.
+const CHASSIS_BUY := {1: 100, 2: 260, 3: 520}
+const ITEM_BUY    := {1: 40, 2: 110, 3: 240}
+const UNLOCK_MULTIPLIER := 2
+```
+
+**Equipment banding, proposed.** 36 items currently run 0–260 with no
+structure. §3a describes the bands by role, so they are assigned by role and
+not by current price — the two disagree substantially, which is the point:
+
+| Band | Buy | Items |
+| --- | --- | --- |
+| **I** | 40 | frag · smoke · emp · scanner · repair kit · repair tool · cluster mine · heavy mine · pistol |
+| **II** | 110 | carbine · shotgun · ancient rifle · marksman rifle · light cannon · armour plating · utility harness · overclock servos · hardened uplink · nanite reboot · repair lance · cyclic feed · sensor relay · drone pack · hatchling charge · shield projector |
+| **III** | 240 | autocannon · cluster launcher · heavy MG · ancient MG · squad automatic · mortar · rocket pods · grenade launcher · recoilless · Mark One · hatchling launcher |
+
+Worth seeing before agreeing: the Ancient Pistol goes 10 → 40 and the Mark One
+goes 130 → 240. The pistol becoming four times its price is the rule working —
+a tier has a floor — but if a 10-resource throwaway is load-bearing somewhere,
+that is a reason to keep a fourth band, not a reason to abandon the rule.
+
+**Where this gets implemented is Stage 3, not now.** The rule is what Stage 0
+owes; `pricing.gd` and the ~10 call sites that read `ChassisDefinition.cost`
+belong with the catalogue and the fab car.
+
+### 16.3 WHAT A CONNECTION IS — the maps already answered it
+
+This was the expensive one to sit on, because §12.6 made it the starting gun
+for ten new maps. With map production descoped, the question changes shape
+entirely: **a connection has to be something the nine existing maps can carry
+without being redrawn.** They can. They already do.
+
+> **A CONNECTION IS AN AUTHORED EDGE MARKER, PROMOTED TO A BOARD EDGE BY
+> NAMING THE NEIGHBOUR IT LEADS TO.**
+
+Three parts, and only the middle one is new:
+
+1. **On the map: a named marker that already exists.** Every shipped map
+   anchors its enemy force on tagged points, and the convention for an
+   approach is already in the tags — `_in`, `_in_*`, `exit`, `jumpoff`,
+   `trailhead`. These are the passes the briefings describe.
+2. **On the board: a declared edge.** One field naming the neighbour a marker
+   leads to. **Declared, not derived from `map_position` distance** —
+   adjacency is a design statement about the rail network, and a proximity
+   rule would silently rewire the board every time a pin moved.
+3. **A state, and one thing you do at it.** Yours or theirs; open or shut. You
+   enter through one you hold, and you take the site by holding its
+   connections.
+
+**Degree is counted, not assigned** — which means the board's shape is already
+sitting in the map files:
+
+| Map file | Operation | Edge markers already authored | Degree |
+| --- | --- | --- | --- |
+| **pittsburgh** | Three Rivers | `in_east` `in_mon` `in_ne` `in_nw` `in_shore` `in_south` `exit` | **6** |
+| **valley_basin** | Valley Basin | `exit_pass` `exit_n` `exit_s` `north` `south` | **5** |
+| **coastal-road** | Coast Road | `east_in` `north_in` | **2** |
+| **salient** | Over The Top | `jumpoff` `railhead` | **2** |
+| **hillfort** | Hillfort | `trailhead` | **1** — its briefing says *"One way on"* |
+| **heliostat** | Qamareen | `plant` `tower` | 2, neither of them an edge |
+| **polaris** | Polaris | **no anchor tags at all** | **0** |
+| **causeway** | The Causeway | **no anchor tags at all** | **0** |
+| **georgetown** | Lockside | **no anchor tags at all** | **0** |
+
+**The map file and the operation are not called the same thing**, which is
+worth stating once because it is a trap: Three Rivers is `pittsburgh`, Lockside
+is `georgetown`, Qamareen is `heliostat`. Nothing goes looking for
+`three_rivers_level.tscn` and finds it.
+
+Two things fall out of that table, and both matter more than the definition
+did.
+
+**§12.6 UNDERSTATED its own example.** It says *"Three Rivers has four"*
+entrances and that this is why the graph makes it the hardest thing on the
+board to hold. It has **six**, and it is the highest-degree map in the game —
+so the claim holds and the number should be corrected rather than the example
+replaced.
+
+**CORRECTED 2026-10-13 — this was wrong.** Polaris, the Causeway and
+Georgetown carry **46, 81 and 61 anchor tags** respectively: they are among the
+most heavily tagged maps in the project. The claim came from grepping
+`tag = &"..."` in the level file, and tags on PREFAB INSTANCES live in the
+prefab, not the level — so the grep could not see them.
+`tools/probe_map_geography.gd` instantiates each map and walks the live tree,
+which is the only way to ask this question. What those three actually lack is
+ENTRY-NAMED tags; the ground is fully marked up. See
+`docs/briefs/SITE_CONVERSION.md`.
+
+
+**What this leaves TERRAIN.** Not authoring connections: *dressing* ones that
+exist. A tunnel mouth or a rail cut built where `obj_pitt_in_nw` already
+stands, whenever there is time for it. The gameplay lane is no longer blocked
+on art, which is the entire reason this decision was worth making cheaply.
 
 # APPENDICES
 
@@ -1508,12 +2503,8 @@ sixty-three entries: you see the frontier, not the whole thing.
 **Replaces:** `mission.unlocks` and `state.unlocked`. Operations stop handing
 out kit.
 
-**Leave alone — these look similar and are not:**
+**`required_rank` is deleted** — see Phase 3, task 7. **Leave alone:**
 
-- **`required_rank`** gates per *squad member* (`record.rank < item.required_rank`).
-  That is "this rookie cannot carry it", a loadout rule, not a catalogue rule.
-  The two stack correctly: the line is open, and this particular robot still
-  is not allowed the thing.
 - **`in_shop = false`** means cut from the game — the shotgun, the pistol. The
   code already warns this must not be folded into the unlock path, and it is
   right.
@@ -1624,17 +2615,21 @@ lives.
 - **You run the channel.** Not a squadmate. The core loop cannot depend on AI
   pathing to a terminal, and a capture that fails because a robot caught a
   doorway is a failure the player can neither see nor fix.
-- **They do not channel. They shoot the tap off.** No AI capture behaviour is
-  needed anywhere, which is the single biggest reason this design is
-  buildable.
+- **They do not channel. They shoot the anchor off.** No AI capture behaviour
+  is needed anywhere, which is the single biggest reason this design is
+  buildable — but the anchor must be an `AI`-derived body, not a StaticBody3D,
+  or nothing will ever target it. See §12.3.
 - **The flight is never contestable.** A tap shot down 500 m away, by
   something you cannot see and could not reach, is a loss you had no play
   against. The drone arrives. What you defend is what lands.
 - **One tap per core, unlimited overall.** You cannot stack them. A dead tap
   is replaced by walking back and working the terminal again — paid in
   exposure and time, not in an inventory count.
-- **A destroyed tap leaves the core NEUTRAL**, not theirs. There is a scramble
-  rather than a flip.
+- **A destroyed tap hands the core BACK TO ITS OWNER.** Decided 2026-10-12,
+  overruling an earlier NEUTRAL rule: a site you have not taken is theirs, and
+  a third state that appears for a few seconds after one specific failure is a
+  rule to teach the player for no gain. Shooting the anchor off undoes the
+  capture — that is the whole sentence.
 
 ### B.5. Contest, and reading it at a glance
 

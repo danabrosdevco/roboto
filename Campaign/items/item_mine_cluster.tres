@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
 [ext_resource type="PackedScene" path="res://Character/weapon/mines/mine_cluster_hud_weapon.tscn" id="2_player"]
-[ext_resource type="PackedScene" path="res://Character/weapon/mines/ai_mine_cluster.tscn" id="3_ai"]
+[ext_resource type="PackedScene" uid="uid://bvf6txcy3wxxo" path="res://Character/weapon/mines/ai_mine_cluster.tscn" id="3_ai"]
 
 [resource]
 script = ExtResource("1_itemdef")
@@ -34,6 +34,6 @@ signal_resistance_bonus = 0.0
 self_revive_seconds = 0.0
 equipment_slot_bonus = 0
 suppressive_fire = false
-required_rank = 0
+unlock_requires = Array[StringName]([])
 requires_chassis = Array[StringName]([])
 chassis_whitelist = Array[StringName]([])

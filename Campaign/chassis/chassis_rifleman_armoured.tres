@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://cchassisrifle02"]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://1rea71mf80nx"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
-[ext_resource type="PackedScene" uid="uid://crifle0000002" path="res://Character/characters/ai/soldier_rifle_armoured.tscn" id="2_scene"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/soldier_rifle_armoured.tscn" id="2_scene"]
 
 [resource]
 script = ExtResource("1_chassisdef")
@@ -10,12 +10,21 @@ display_name = "Heavy Rifleman"
 description = "The same century-old rifle on a plated frame. Twice the frame of a line trooper and slower with it — the thing a squad of Ancient Rifles has to concentrate on rather than trade with. Appears from the Coast Road on."
 scene = ExtResource("2_scene")
 cost = 0
+purchasable = false
 supply = 2
+starting_weapon_id = &""
+coax_weapon_id = &""
 base_health = 100
 base_speed = 0.87
 base_accuracy = 0.75
 base_sensor_range = 45.0
 weapon_slots = 1
+built_in = "CLAWS"
+weapon_replaces_built_in = false
+turret = false
+vehicle = false
+drives = false
 equipment_slots = 2
 module_slots = 2
-required_rank = 0
+musters_at_base = true
+unlock_requires = Array[StringName]([])

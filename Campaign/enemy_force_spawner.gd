@@ -1,6 +1,10 @@
 extends Node
 class_name EnemyForceSpawner
 
+## Preloaded rather than named: a new `class_name` is not visible until the
+## editor rescans and this project cannot run --import.
+const _Gen := preload("res://Campaign/force_generator.gd")
+
 ## Robots are built through CsgBake.make() rather than scene.instantiate(): a
 ## CSGShape3D rebuilds its geometry the first time it enters the tree, which cost
 ## 8.6 ms per robot and made a 40-strong reserve wave a 336 ms frame. make()
@@ -111,6 +115,12 @@ func losses() -> int:
 
 # Every early return here used to be silent, which meant "no enemies spawned"
 # and "no warnings" arrived together and told you nothing. They all talk now.
+## Generate the force from the site, the act and who holds it (Phase 4). Off
+## turns the whole thing back into the authored constant it used to be, which
+## is what the Laboratory and the shot scripts want.
+@export var generate_force: bool = true
+
+
 func deploy_force(level: Node, mission: MissionDefinition) -> void:
 	clear()
 	if level == null:
@@ -123,13 +133,73 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 	_mission_seed = "%s:%d" % [mission.id, loadout_seed]
 	if mission.replace_level_enemies:
 		_clear_level_hostiles(level)
-	if mission.enemy_force.is_empty():
+	# ── GENERATED, NOT CONSTANT (Phase 4) ───────────────────────────────
+	#
+	# What a site fields is a function of the site, the act and who holds it —
+	# §10. The AUTHORED specs are still the map's shape: every tag, posture and
+	# wake trigger comes through untouched and only the composition is rebuilt.
+	# See force_generator.gd for why that split is the whole mitigation.
+	#
+	# OFF BY DEFAULT UNTIL THE CAMPAIGN CAN ANSWER. With no Location for this
+	# operation — the three Sim Arenas, or a level launched directly — compose()
+	# hands the authored force straight back, so nothing that works today stops
+	# working.
+	var force: Array = mission.enemy_force
+	# THE GROUP, NOT THE AUTOLOAD. campaign.gd already names EnemyForceSpawner,
+	# so naming Campaign here is a parse-time cycle and every file that touches
+	# either one fails to compile. CampaignManager carries groups=["campaign"]
+	# in Env/world.tscn, so it is findable before any _ready has run.
+	var cm = get_tree().get_first_node_in_group("campaign")
+	var state = cm.state if cm != null and "state" in cm else null
+	if generate_force and state != null and state.locations != null:
+		var site = state.locations.for_mission(mission.id)
+		if site != null:
+			var act: int = state.act() if state.has_method("act") else 1
+			# WHOSE ARMY IS THIS. On an attack it is whoever HOLDS the place.
+			# On a defence the holder is the player, so it is whoever is coming
+			# to take it — see ForceGenerator.attacker_for_act.
+			var builder: int = _Gen.attacker_for_act(act) if mission.defence \
+				else state.site_owner(site.id)
+			force = _Gen.compose(mission.enemy_force, site, act,
+				builder, state.catalogue, _mission_seed)
+			print("[EnemyForce] composed for %s: act %d, %s %d, %d spec(s)" % [
+				site.id, act, "attacked by" if mission.defence else "held by",
+				builder, force.size()])
+
+	# ── THE PLAYER'S GARRISON, ON A DEFENCE (Phase 5) ───────────────────
+	#
+	# §6: take a site and it is defended. The garrison is free, comes with the
+	# ground, and is sized on COMPUTE — a player-wide number, so every site you
+	# hold is defended exactly as well as every other. §6 is emphatic that it
+	# must NOT track site value, or your richest sites become your safest.
+	#
+	# Built from frames the player has UNLOCKED. A garrison fielding kit you
+	# never opened would hand you through the back door what Phase 3 just made
+	# you pay for at the front.
+	#
+	# Spawned through this same spawner on the PLAYER faction: register_enemy()
+	# only means "an AI the manager knows about", and hostility is decided by
+	# faction — so a friendly squad travels the authored road exactly like a
+	# hostile one.
+	if mission.defence and not mission.garrison_posts.is_empty():
+		var g_state = cm.state if cm != null and "state" in cm else null
+		var g_cat = g_state.catalogue if g_state != null else null
+		var garrison: Array = _Gen.garrison(g_state, g_cat, mission.garrison_posts,
+			"%s/garrison" % mission.id)
+		if garrison.is_empty():
+			push_warning("EnemyForceSpawner: '%s' is a defence with garrison posts but nothing was built for them, so you are holding it alone." % mission.id)
+		else:
+			print("[EnemyForce] garrison: %d post(s), %d supply" % [
+				garrison.size(), _Gen.garrison_supply(g_state)])
+			force = force + garrison
+
+	if force.is_empty():
 		push_warning("EnemyForceSpawner: mission '%s' has an empty enemy_force." % mission.id)
 		return
-	print("[EnemyForce] deploying %d spec(s) for mission '%s'" % [mission.enemy_force.size(), mission.id])
+	print("[EnemyForce] deploying %d spec(s) for mission '%s'" % [force.size(), mission.id])
 
 	var hostiles := 0
-	for spec in mission.enemy_force:
+	for spec in force:
 		if spec == null:
 			continue
 		if spec.body_count() <= 0:
@@ -342,6 +412,10 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 	squad.name = "Hostile_%s" % spec.callsign
 	squad.callsign = spec.callsign
 	squad.player_commandable = false
+	# ANY NON-HOSTILE SQUAD THIS SPAWNER BUILDS IS A GARRISON, and garrisons are
+	# not commanded. The player's own squads come from squad_spawner.gd; nothing
+	# friendly that arrives through here should reach the order wheel.
+	squad.autonomous = not Enums.are_hostile(Enums.Factions.PLAYER, spec.faction)
 	# Membership before the node enters the tree — Squad._ready() connects every
 	# member's signals and would otherwise connect to an empty array.
 	squad.squad_members = members

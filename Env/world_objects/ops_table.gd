@@ -277,7 +277,7 @@ func show_readout(id) -> void:
 	# The site answers, and so do its three bars: they are always on the
 	# board at rest, and hovering lights them and puts figures beside them.
 	if board != null:
-		board.set_site(id, _Pal.HELD if f["cleared"] else _Pal.BRIGHT, 2.4)
+		board.set_site(id, _tint_for(f), 2.4)
 		board.light_gauges(id, f.get("gauges", []), GAUGE_TINTS)
 	_show_figures(id, f)
 
@@ -301,11 +301,16 @@ func show_readout(id) -> void:
 ## Made once and moved — a hover is a mouse-over, and this would otherwise
 ## allocate three nodes on every frame the cursor crosses a site.
 func _show_figures(_id, f: Dictionary) -> void:
+	# NOTHING TO GAUGE. The arena has no yield, no compute and no garrison, so
+	# three empty bars under it say only that somebody forgot to hide them.
+	if bool(f.get("sim_site", false)):
+		_hide_figures()
+		return
 	var rows := [
 		# Compute is a flat figure, not a yield per turn — see the note in
 		# ops_table_ui._refresh_panel. Resources still are per turn.
 		["CPU ", int(f["compute"])],
-		["RES ", _per_turn(int(f["resources"]))],
+		["RES ", int(f.get("per_resources", 0))],
 		["RSST", int(f["resistance"])],
 	]
 	var anchor := _strip_anchor()
@@ -386,26 +391,28 @@ func _strip_anchor() -> Vector3:
 ## the unmet prerequisite named and nothing else. This is a machine telling
 ## another machine, which is also what it is.
 func _readout_text(f: Dictionary) -> String:
+	# THE ARENA IS NOT A SIDE'S GROUND. Without this it fell through to the
+	# else below and read "ADVERSARY HELD" — the training facility, held by
+	# the enemy. See the same fix on the zoomed card in ops_table_ui.
+	if bool(f.get("sim_site", false)):
+		return "%s\n%s" % [String(f["name"]).to_upper(),
+			"START HERE" if bool(f.get("training_next", false)) else "TRAINING"]
 	var lines: Array = [String(f["name"]).to_upper()]
-	if f["locked"]:
-		lines.append("LOCKED %s" % String(f["unmet"][0]).to_upper().left(10))
-	elif f["cleared"]:
+	# THE MOST URGENT TRUE THING, in that order. A site waiting on an answer is
+	# the only line here with a clock on it.
+	if f.get("under_attack", false):
+		lines.append("UNDER ATTACK")
+		lines.append("DEFEND IT")
+	elif f.get("held", false):
 		lines.append("HELD x%d" % int(f["clears"]))
+	elif f["locked"]:
+		lines.append("LOCKED %s" % String(f["unmet"][0]).to_upper().left(10) if not f["unmet"].is_empty() else "LOCKED")
 	else:
-		lines.append("CONTESTED")
+		lines.append("ADVERSARY HELD")
 	if int(f["reserve"]) > 0:
 		lines.append("+%d RESERVE" % int(f["reserve"]))
 	return "\n".join(lines)
 
-
-## A site's standing yield, from what taking it pays once.
-##
-## A TENTH, FLOORED AT ONE. Entirely a placeholder, and deliberately a crude
-## one: a site worth 2200 up front should not read as 2200 a turn, and the
-## real number belongs to the territory layer that does not exist. Floored so
-## that holding anything is always worth something.
-func _per_turn(one_off: int) -> int:
-	return maxi(1, int(round(float(one_off) * 0.1)))
 
 
 # ─────────────────────────────────────────────
@@ -417,10 +424,8 @@ func refresh() -> void:
 	if Campaign == null or board == null:
 		return
 	facts.clear()
-	var missions: Array = []
-	for m in Campaign.missions:
-		if m != null:
-			missions.append(m)
+	# The board draws SITES, not free actions — see _board_missions.
+	var missions: Array = _board_missions()
 	if missions.is_empty():
 		push_warning("OpsTable: CampaignManager has no missions, so the board has no sites.")
 		board.build([], [])
@@ -433,9 +438,36 @@ func refresh() -> void:
 		facts[m.id] = f
 		nodes.append({"id": m.id, "at": place[m.id], "tint": _tint_for(f),
 			"icon": ICONS.get(m.id, _Icons.Kind.MARKER),
-			"scale": _icon_scale(m.id)})
+			"scale": _icon_scale(m.id) * (1.3 if _takeable(f) else 1.0)})
 
-	# ── gauge maxima ────────────────────────────
+
+	# ── THE SIM ARENA, AS ONE ENTRY ─────────────────────────────────────
+	#
+	# The two exercises live INSIDE the arena, not beside the war as two more
+	# sites. A free action must not look like a costly one, and "SIM ARENA" is
+	# a place you go rather than an operation you pick — selecting it opens the
+	# arena screen instead of queueing a destination.
+	#
+	# Synthetic: there is no Location and no mission behind this pin, which is
+	# why it carries its own minimal facts rather than going through
+	# _facts_for. Everything downstream reads facts by id and does not care.
+	if _has_training():
+		var waiting: bool = not _training_done()
+		facts[SIM_SITE] = {
+			"id": SIM_SITE, "name": "SIM ARENA", "clears": 0, "cleared": false,
+			"locked": false, "unmet": [], "deployable": false, "sim_site": true,
+			"compute": 0, "resources": 0, "resistance": 0, "held": false,
+			"under_attack": false, "per_resources": 0, "per_compute": 0,
+			"bodies": 0, "reserve": 0, "defend_id": &"", "needs_training": false,
+			# THE ONLY THING YOU CAN DO YET, and the board should say so without
+			# a word. _takeable already draws somewhere-you-could-go larger; a
+			# fresh campaign has nowhere else, so while the exercises are
+			# unfinished this is the one enlarged pin on the table.
+			"training_next": waiting,
+		}
+		nodes.append({"id": SIM_SITE, "at": SIM_PLACE, "tint": _Pal.SIGNAL,
+			"icon": _Icons.Kind.MARKER, "scale": 1.6 if waiting else 1.0})
+
 	# WORKED OUT FROM THE BOARD, not hard-coded. A fixed ceiling per channel
 	# is a number that goes stale the first time somebody adds a mission, and
 	# silently: every bar just gets shorter and nobody notices the scale is
@@ -454,10 +486,10 @@ func refresh() -> void:
 			float(f["resistance"]) / float(top["resistance"]),
 		]
 		facts[n["id"]]["gauges"] = n["gauges"]
-		# Cached beside the raw figures so the zoomed view and the table agree
-		# on the per-turn number rather than each applying _per_turn itself.
-		facts[n["id"]]["per_compute"] = _per_turn(int(facts[n["id"]]["compute"]))
-		facts[n["id"]]["per_resources"] = _per_turn(int(facts[n["id"]]["resources"]))
+		# per_resources and per_compute now come straight off the Location in
+		# _facts_for, so there is nothing to cache here any more.
+
+
 	board.gauge_tints = GAUGE_TINTS
 	board.build(nodes, _edges(missions))
 	# AFTER build, not before. build() clears the board, which takes the ring
@@ -466,7 +498,7 @@ func refresh() -> void:
 	# mission_selected, so this is also what puts the ring up the moment you
 	# queue something.
 	var queued = Campaign.selected_mission()
-	board.set_queued(queued.id if queued != null else null)
+	board.set_queued(_pin_for(queued.id) if queued != null else null)
 
 
 ## Everything the board and the readout need to know about one site.
@@ -479,17 +511,61 @@ func _facts_for(m) -> Dictionary:
 			var r = Campaign.get_mission(req)
 			unmet.append(r.display_name if r != null else String(req))
 	var force := _force(m)
+	# THE REAL PER-TURN FIGURE, off the Location (§2).
+	#
+	# This used to be _per_turn(one_off) — literally `reward_resources × 0.1`,
+	# a placeholder standing in for a territory layer that did not exist. The
+	# board has been printing "RES n /turn" for income the game never paid.
+	# Now the location says what it pays, and if there is no location the
+	# answer is 0 rather than a flattering invention.
+	var site = state.locations.for_mission(m.id) if state != null and state.locations != null else null
+	var per_res: int = int(site.resources_per_turn) if site != null else 0
+	var site_cpu: int = int(site.compute) if site != null else 0
+	# RESISTANCE OFF THE LOCATION WHERE THERE IS ONE. The measured figure
+	# includes the RESERVE, which _force() leaves out on purpose — but reserve
+	# is exactly what SiteHeat spends, so the total is the honest number for
+	# "how hard is this place". Falls back to the on-map supply.
+	var resist: int = int(site.resistance) if site != null else int(force["supply"])
 	return {
 		"id": m.id,
 		"name": m.display_name,
 		"clears": clears,
 		"cleared": clears > 0,
-		"locked": not unmet.is_empty(),
-		"unmet": unmet,
-		"deployable": Campaign.available_missions().has(m),
+		# LOCKED MEANS "YOU CANNOT GO THERE", not "its prerequisite is unrun".
+		#
+		# Those came apart the moment the DEBUG switch existed: UNLOCK ALL
+		# MISSIONS makes a mission deployable, but this used to read `requires`
+		# directly and never asked the switch — so the board drew a site grey
+		# and locked while cheerfully letting you deploy to it. `unmet` below
+		# still carries WHICH operation is missing, for the readout that
+		# explains it; this is only about whether the route is shut.
+		"locked": not Campaign.available_missions().has(m),
+		"deployable": Campaign.available_missions().has(m) and _training_done(),
 		"compute": m.compute_reward,
 		"resources": m.reward_resources,
-		"resistance": force["supply"],
+		"resistance": resist,
+		# DO YOU HOLD IT RIGHT NOW. Not "did you ever clear it" — see _tint_for.
+		# Falls back to `cleared` for an operation with no Location, which is the
+		# three Sim Arenas: they are a practice track and not on the board (§15).
+		"held": state.holds(site.id) if (state != null and site != null) else (clears > 0),
+		# UNDER ATTACK AND WAITING ON AN ANSWER (Phase 6.2). A raid too close to
+		# call does not take the site — it offers you the fight, and this is what
+		# marks it on the board until you answer or walk away.
+		"under_attack": state != null and site != null and state.under_attack == site.id,
+		# What HOLDING it pays, and the compute it carries — both the location's,
+		# both 0 for an operation that is not a place (the Sim Arenas).
+		"per_resources": per_res,
+		"per_compute": site_cpu,
+		# THE DEFENCE OF THIS PLACE, if one is waiting. The board draws one pin
+		# per site now, so the defence has no pin of its own and is offered
+		# from this one — see _board_missions and ONE_PIN_PER_SITE.md. Empty
+		# unless a raid is actually in doubt here, because a defence that could
+		# be picked at will would make losing ground impossible (§6.2).
+		"defend_id": _defence_waiting(site),
+		# THE WAR IS SHUT UNTIL THE TRAINING IS DONE. Not a route problem, so
+		# it does not set `locked` and does not change the colour of anything:
+		# it means "not yet", and the panel says so in those words.
+		"needs_training": not _training_done(),
 		"bodies": force["on_map"],
 		"reserve": force["reserve"],
 	}
@@ -525,24 +601,35 @@ func _force(m) -> Dictionary:
 
 ## Who holds it, in colour.
 ##
-## NOT FAC_HOME FOR "YOURS", despite that being Home Command's own colour.
-## FAC_HOME is an institutional olive — it is the paint on their crates, and
-## it is the right colour for a wall. As a marker on a dark board, additively
-## blended and two centimetres across, it comes out gold and sits a few
-## degrees of hue away from the Swarm's amber: photographed, a cleared site
-## and a contested one were the same marker.
+## OWNERSHIP FIRST, AND THAT ORDER IS THE FIX. This used to test `locked`
+## before anything else and return grey — so a site you had TAKEN still drew as
+## unreachable whenever its prerequisite operation had not been run. After a
+## save wipe that is every site you jump straight to: beat Valley Basin as many
+## times as you like and the marker stays grey, because Hillfort is what
+## unlocks it and Hillfort was never played. Reported from a playtest.
 ##
-## So the board borrows the HUD's own vocabulary instead, which the player has
-## already learnt everywhere else: amber is the enemy's and GONE grey is a
-## thing you cannot act on. Ground you HOLD is blue — see HUDPalette.HELD for
-## why it is a true blue and not the compute cyan.
+## AND IT TINTS FROM OWNERSHIP, NOT FROM "EVER CLEARED". Clearing is a thing
+## you did once; holding is a thing that is true now, and §2 is the whole
+## argument for why those are different. A site you took in Act 1 and lost in
+## Act 2 should go back to their amber, and `cleared` can never say that.
+##
+## NOT FAC_HOME FOR "YOURS", despite that being Home Command's own colour.
+## FAC_HOME is an institutional olive — right for paint on a crate, wrong as a
+## marker: additively blended and two centimetres across it comes out gold, a
+## few degrees of hue from the Swarm's amber. Photographed, a cleared site and
+## a contested one were the same marker. So the board borrows the HUD's own
+## vocabulary, which the player has already learnt everywhere else.
 func _tint_for(f: Dictionary) -> Color:
+	# UNDER ATTACK OUTRANKS EVERYTHING, including held. A site waiting on an
+	# answer is the only thing on the board with a clock on it, and a player
+	# who misses it loses ground — so it must not read as "yours, fine".
+	if f.get("under_attack", false):
+		return _Pal.CRIT
+	if f.get("held", false):
+		return _Pal.HELD
 	if f["locked"]:
 		return _Pal.GONE
-	if f["cleared"]:
-		return _Pal.HELD
-	return _Pal.FAC_SWARM
-
+	return _Pal.FAC_ADVERSARY
 
 ## The dotted routes: the authored borders, filtered to sites that are
 ## actually on this board.
@@ -595,6 +682,7 @@ const ICONS := {
 	&"arena_5_proving":      _Icons.Kind.DERRICK,
 	&"hillfort_1_relay":     _Icons.Kind.RELAY,
 	&"basin_1_anchor":       _Icons.Kind.ANCHOR,
+	&"basin_2_defend":       _Icons.Kind.ANCHOR,
 	&"coast_1_road":         _Icons.Kind.BRIDGE,
 	&"pitt_1_rivers":        _Icons.Kind.FURNACE,
 	&"mutaha_2_city":        _Icons.Kind.WHEEL,
@@ -658,6 +746,11 @@ const LAYOUT := {
 	# ── the theatre ─────────────────────────────
 	&"hillfort_1_relay":     Vector2(0.0, 0.0),
 	&"basin_1_anchor":       Vector2(175.0, -80.0),
+	# THE DEFENCE OF THE SAME GROUND sits where the attack does, because it IS
+	# the same place. Two pins on one spot is not right either — the board
+	# should draw one marker per SITE with its available operations on it, and
+	# that belongs with the Phase 6 board work rather than here.
+	&"basin_2_defend":       Vector2(175.0, -80.0),
 	&"salient_1_overthetop": Vector2(175.0, 85.0),
 	&"coast_1_road":         Vector2(340.0, -130.0),
 	&"pitt_1_rivers":        Vector2(345.0, 25.0),
@@ -811,3 +904,131 @@ func _find_interactible(node: Node):
 		if found != null:
 			return found
 	return null
+## EVERY MISSION THE OPERATIONS TABLE SHOULD DRAW.
+##
+## THE EXERCISES ARE NOT ON IT. They live INSIDE the sim arena, which is one
+## entry on this board rather than two more sites. A free action must not look
+## like a costly one, and "SIM ARENA" is a place you go rather than a war you
+## pick. The two exercises are listed when you get there — see SimArenaUI.
+
+##
+## The thing that is not on the board is the LAB: free-play matchups, which are
+## a mode rather than a destination. See SimArenaUI.
+## THE SITES, ONE ENTRY EACH — not one per operation.
+##
+## A site is a PLACE with two operations on it: take it, or hold it. LAYOUT is
+## keyed by mission id and `basin_2_defend` was given the attack's coordinates,
+## so the board drew two pins in exactly the same spot and the top one hid the
+## bottom one. Reported from a screenshot as "valley basin has a duplicate
+## location on top of it", which is what it looked like.
+##
+## The defence is not dropped — it is FOLDED ONTO the attack's pin, as
+## `defend_id` in _facts_for, and offered there when the site is under attack.
+## See docs/briefs/ONE_PIN_PER_SITE.md: what you can do somewhere is a property
+## of the place, not a reason to draw a second place.
+##
+## The sim arena is left out here too (`m.sim`) and added back by refresh() as
+## one synthetic pin, for the same reason: two exercises, one door.
+func _board_missions() -> Array:
+	var out: Array = []
+	for m in Campaign.missions:
+		if m == null or m.sim or m.defence:
+			continue
+		out.append(m)
+	return out
+
+
+## THE SIM ARENA'S PIN. Not a mission id — there is no mission behind it.
+const SIM_SITE := &"sim_arena"
+## Off to one side of the war, because it is not part of it.
+const SIM_PLACE := Vector2(-40.0, 150.0)
+
+
+## Is there anything to train on? If both exercises are cleared the arena is
+## still there — free play lives in it — so this asks whether it EXISTS, not
+## whether it is unfinished.
+func _has_training() -> bool:
+	for m in Campaign.missions:
+		if m != null and m.sim:
+			return true
+	return false
+
+
+## SOMEWHERE YOU COULD GO RIGHT NOW — a site you do not hold, that is not
+## already answering a raid, and that the ladder and the frontier both allow.
+##
+## Drawn slightly larger rather than in a colour of its own. The board already
+## spends every colour it has: amber is theirs, blue is yours, grey is out of
+## reach, red is under attack. A fifth tint would be a fifth thing to learn,
+## and the question this answers — "where can I actually go" — is better asked
+## by size, which reads before you have read anything.
+func _takeable(f: Dictionary) -> bool:
+	return bool(f.get("deployable", false)) \
+		and not bool(f.get("held", false)) \
+		and not bool(f.get("under_attack", false))
+
+
+## The defence waiting on this site, or nothing. Asked of available_missions()
+## rather than read off the Location, so the one rule about when a defence
+## exists lives in one place: it is offered only while that raid is in doubt.
+func _defence_waiting(site) -> StringName:
+	if site == null or Campaign == null:
+		return &""
+	var want: StringName = site.defend_mission_id if "defend_mission_id" in site else &""
+	if want == &"":
+		return &""
+	for m in Campaign.available_missions():
+		if m != null and m.id == want:
+			return want
+	return &""
+
+
+## HAS THE PLAYER FINISHED THE TWO EXERCISES? Until they have, the war is not
+## offered at all and the arena is the only pin you can act on.
+##
+## The ladder already gates the first site behind the arenas through `requires`,
+## but that is invisible until you point at something and read why it is shut,
+## and the DEBUG switch opens it. This is the explicit version: it reads the
+## clears, so it is the same answer however the mission list is arranged.
+##
+## ASKED OF THE SIM MISSIONS THEMSELVES, not a count. "The two exercises" is a
+## fact about which missions are flagged `sim`, and a third would otherwise
+## have to be remembered here as well as added.
+func _training_done() -> bool:
+	var state = Campaign.state if Campaign != null else null
+	if state == null:
+		# No state means no clears to read, and shutting the whole board on a
+		# missing state would make the game unplayable rather than fail loudly.
+		push_warning("OpsTable: no campaign state, so whether training is finished cannot be read. Treating it as finished.")
+		return true
+	for m in Campaign.missions:
+		if m != null and m.sim and state.clears_of(m.id) <= 0:
+			return false
+	return true
+
+
+## WHICH PIN STANDS FOR THIS OPERATION. Itself, for everything with a marker —
+## but a defence has no marker of its own any more (see _board_missions), and
+## HoloBoard.set_queued silently draws nothing for an id it has no point for.
+## So queueing a defence put the ring nowhere and the player got no confirmation
+## of what they had just chosen.
+##
+## THROUGH THE LOCATION, which is the whole reason the defence is reachable
+## from the attack's card in the first place: both operations resolve to one
+## place, and the place is what is drawn.
+func _pin_for(id: StringName) -> StringName:
+	if id == &"" or facts.has(id):
+		return id
+	var state = Campaign.state if Campaign != null else null
+	if state == null or state.locations == null:
+		push_warning("OpsTable: no location catalogue, so '%s' cannot be matched to a marker and the queued ring will not be drawn." % String(id))
+		return id
+	var site = state.locations.for_mission(id)
+	if site == null:
+		push_warning("OpsTable: '%s' belongs to no location, so there is no marker to put the queued ring on." % String(id))
+		return id
+	var owner: StringName = site.mission_id if "mission_id" in site else &""
+	if owner == &"" or not facts.has(owner):
+		push_warning("OpsTable: '%s' resolves to location '%s', which has no marker on this board." % [String(id), String(site.id)])
+		return id
+	return owner

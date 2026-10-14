@@ -1,15 +1,15 @@
 [gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_cwurd"]
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_pgqpf"]
 
 [resource]
-script = ExtResource("1_cwurd")
+script = ExtResource("1_pgqpf")
 level_scene_path = "res://maps/proving_level.tscn"
 image_path = "res://maps/minimaps/proving_level.png"
-world_min = Vector2(-89.835, -67.335)
-world_max = Vector2(89.835, 112.335)
-objective_ids = Array[StringName]([&"proving_clear", &"proving_extract", &"proving_capture", &"proving_bunker"])
-objective_names = Array[String](["The Proving Ground", "", "WORK THE CORE", "TAKE THE BUNKER"])
-objective_positions = Array[Vector3]([Vector3(0, 0, 0), Vector3(0, 0.5, 37), Vector3(0, 0.5, 65), Vector3(0, 0.5, 83)])
-objective_kinds = Array[StringName]([&"capture", &"extract", &"capture", &"capture"])
+world_min = Vector2(-90.63, -68.13)
+world_max = Vector2(90.63, 113.13)
+objective_ids = Array[StringName]([&"proving_clear", &"proving_extract", &"proving_capture", &"proving_bunker", &"proving_extract_bay"])
+objective_names = Array[String](["The Proving Ground", "", "WORK THE CORE", "TAKE THE BUNKER", ""])
+objective_positions = Array[Vector3]([Vector3(0, 0, 0), Vector3(0, 0.5, 37), Vector3(0, 0, 65), Vector3(0, 0, 80), Vector3(0, 0.5, 86)])
+objective_kinds = Array[StringName]([&"capture", &"extract", &"capture", &"capture", &"extract"])
 insertion_positions = Array[Vector3]([Vector3(0, 0.2, -28)])

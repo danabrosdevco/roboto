@@ -766,7 +766,7 @@ func _ocelli(rig: Node3D) -> void:
 ## handed to two frames is one object, and this project has already paid for
 ## that once — see the duplicate() rule in CLAUDE.md.
 ##
-## Amber is Swarm's colour (hud_palette.gd has FAC_SWARM waiting), but this is
+## Amber is Swarm's colour (hud_palette.gd has FAC_ADVERSARY waiting), but this is
 ## NOT a faction assignment and does not touch one: no faction is set on this
 ## frame, no enum is appended, and faction_livery.gd will render the painted
 ## pieces grey until Factions.SWARM exists. The glow is here because a sensor

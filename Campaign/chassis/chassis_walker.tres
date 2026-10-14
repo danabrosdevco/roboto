@@ -27,4 +27,4 @@ drives = false
 equipment_slots = 0
 module_slots = 3
 musters_at_base = true
-required_rank = 2
+unlock_requires = Array[StringName]([])

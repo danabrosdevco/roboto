@@ -72,7 +72,15 @@ const HELD     := Color(0.36, 0.60, 0.98)         # a site under your control
 # APPEND to that enum, which is safe (the rule is append-only, and these would
 # go on the end). The colours are written now so the day someone adds the
 # faction there is nothing to design.
-const FAC_SWARM    := Color(0.91, 0.63, 0.23)   # amber, lifted from #B35A05
+## THE ADVERSARY — what Home Command calls whoever holds ground it has not
+## taken. A classification, not a name: it files a war under a heading rather
+## than fighting an enemy, which is the whole register of the thing.
+##
+## `Enums.Factions.SWARM` is untouched on purpose. That is the faction's
+## identity in code, it is stored as an int in 44 scenes and resources, and
+## renaming it would churn three lanes to change a word the player never sees.
+## ADVERSARY is the vocabulary; SWARM is the plumbing.
+const FAC_ADVERSARY := Color(0.91, 0.63, 0.23)   # amber, lifted from #B35A05
 const FAC_HOME := Color(0.64, 0.73, 0.44)   # institutional green, lifted
 const FAC_ARGUS    := Color(0.69, 0.20, 0.47)   # tyrian, lifted from #66023C
 const FAC_UNKNOWN  := Color(0.70, 0.74, 0.76)   # a contact with no identity
@@ -88,7 +96,7 @@ static func faction_color(faction) -> Color:
 		Enums.Factions.NEUTRAL:
 			return FAC_UNKNOWN
 		Enums.Factions.SWARM:
-			return FAC_SWARM
+			return FAC_ADVERSARY
 		Enums.Factions.HOME:
 			return FAC_HOME
 		Enums.Factions.ARGUS:
@@ -97,7 +105,7 @@ static func faction_color(faction) -> Color:
 			# ENEMY and anything unforeseen. Kept as the fall-through rather
 			# than an arm of its own, because a contact report with nothing
 			# identified is overwhelmingly a hostile one.
-			return FAC_SWARM
+			return FAC_ADVERSARY
 
 
 const BG_ALPHA: float = 0.18

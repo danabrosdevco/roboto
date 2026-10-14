@@ -51,15 +51,31 @@ const M_TABLE := "OpsTableAnchor"
 ## there by tools/fit_ops_table.gd, and placed where it is so that throwing it
 ## leaves you facing the way out — docs/briefs/OPS_TABLE_LEVER.md.
 const M_LEVER := "OpsLeverAnchor"
-const M_MUSTER := "SquadMuster"
+## The squad forms up where you leave from — see M_EXIT below. SquadSpawnPoint
+## arcs them out BEHIND this point, so they stand on the platform rather than
+## on the departure pad itself.
+const M_MUSTER := "Station_PlatformCentre"
 ## Which way the board faces on the table. 90 puts its long axis down the
 ## car; -90 reverses which end of the campaign is toward the locomotive.
 @export var table_yaw_degrees: float = 90.0
 
-## The departure pad goes OUTSIDE the platform door. You leave the train to
-## deploy, which is both the shortest walk from the spawn and the only
-## reading of it that makes sense: the train is the thing you come back to.
-const M_EXIT := "PlatformDoor_Outside"
+## WHERE YOU LEAVE THE TRAIN, and where the squad forms up to go with you.
+##
+## BOTH ON THE STATION PLATFORM, which is beside Car4_Repair at z 0 — one car
+## from the operations car at z -32.
+##
+## They used to be the platform door and muster point on Car7_Platform at
+## z -92..-96. That was the shortest walk when the operations car was at the
+## far end; it is not any more. The rake now runs Motive +96, Fabrication +64,
+## Armoury +32, Repair 0, Operations -32, Barracks -64, Platform -96 — so
+## choosing an operation at the table and then leaving on it meant walking the
+## length of five cars, 65 m, past everything you had already done.
+##
+## THE ART WAS NOT TOUCHED TO FIX THIS. Both of these are marker names, and the
+## station the train pulls into already has the marker: the fix is which point
+## this level reads, not where any geometry sits. _audit_walk below is what
+## catches it the next time the rake is re-ordered.
+const M_EXIT := "Station_PlatformCentre"
 
 ## Set in the scene to the instanced art.
 @export var art: Node3D
@@ -85,6 +101,7 @@ func _ready() -> void:
 	_place(departure, M_EXIT, "the departure pad will sit at the origin")
 	_fit_ops_table()
 	_fit_ride(_fit_lever())
+	_audit_walk()
 
 
 ## PUT THE SQUAD AWAY.
@@ -387,3 +404,44 @@ func _interactible_under(n: Node):
 		if f != null:
 			return f
 	return null
+
+
+# ─────────────────────────────────────────────
+# HOW FAR THE PLAYER ACTUALLY HAS TO WALK
+# ─────────────────────────────────────────────
+
+## Anything further than this from the operations table is more than a car and
+## a half away. The rake is 32 m per car, so the station platform beside the
+## next car along reads as 34 m and is fine; the old arrangement read 60 and 65.
+## Previously 25, which fired on the correct new layout.
+## Anything further than this from the operations table is not "across the
+## room" any more. The depot is a train: 25 m is about two cars.
+const FAR := 40.0
+
+
+## CHECKED OUT LOUD, because this failure is completely silent.
+##
+## Every fitting in here is placed off a named marker in the art, so moving the
+## art moves the gameplay with it — and that works. What it does not catch is a
+## marker that STAYED BEHIND. The ops car can be rebuilt at one end of the
+## train while the muster and the platform door keep the coordinates they had,
+## and nothing is missing, nothing is in the air, nothing warns: the base just
+## quietly becomes a long walk, and the only way to find out is to play it.
+##
+## It happened. After one rebuild the table sat at z -32 with the muster at
+## -92 and the door at -96 — 60 and 65 metres, through five cars, between
+## choosing an operation and leaving on it.
+##
+## tools/probe_railhead.gd prints every leg with its distance and is the thing
+## to run when this fires.
+func _audit_walk() -> void:
+	var table := _marker(M_TABLE)
+	if table == null:
+		return   # _fit_ops_table has already said so, and loudly
+	for pair in [[muster, "the squad muster"], [departure, "the way out"]]:
+		var n = pair[0]
+		if n == null or not (n is Node3D):
+			continue
+		var d: float = table.global_position.distance_to((n as Node3D).global_position)
+		if d > FAR:
+			push_warning("RailheadLevel: %s is %.0f m from the operations table, which is most of the train. Everything here is placed off a marker in the art, so a distance like this means that marker stayed behind when the table moved. Run tools/probe_railhead.gd for every leg." % [pair[1], d])

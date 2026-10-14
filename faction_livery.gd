@@ -30,7 +30,7 @@ const COLORS := {
 	# is why these had to be written in the same change as the enum: before
 	# they existed a correctly-factioned Swarm body looked broken and a
 	# wrongly-factioned ENEMY one looked right. Hues are hud_palette.gd's
-	# FAC_SWARM / FAC_HOME / FAC_ARGUS, dropped in value because these are
+	# FAC_ADVERSARY / FAC_HOME / FAC_ARGUS, dropped in value because these are
 	# paint under scene light rather than a HUD bracket over terrain.
 	Enums.Factions.SWARM:   Color(0.70, 0.35, 0.02),  # the Swarm's amber
 	Enums.Factions.HOME:    Color(0.35, 0.42, 0.22),  # Home Command olive

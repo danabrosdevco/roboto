@@ -47,13 +47,14 @@ const ROVER := "res://Campaign/chassis/chassis_rover.tres"
 const WALKER := "res://Campaign/chassis/chassis_walker.tres"
 const HEAVY_MG := "res://Campaign/items/item_heavy_mg.tres"
 const NANITE := "res://Campaign/items/item_nanite_reboot.tres"
-## The mission that gates the frame. required_rank on a chassis is inert —
-## recruit() never reads it (campaign_state.gd:739-764) — so an `unlocks` entry
-## is the only real gate (campaign.gd:1068-1082).
+## RETIRED: the mission that used to gate the frame. Operations no longer grant
+## anything (Phase 3) — a line is opened by paying for it. Kept only so the
+## constant below still resolves for anything else reading it.
 ## By path, not by class_name: a class_name is not resolvable in a standalone
 ## --check-only parse until the editor rescans, and the rescan must not be run
 ## with the editor open. tools/test_lance_frame.gd:55 does the same.
 const _KillKinds := preload("res://Campaign/kill_kinds.gd")
+const _Pricing := preload("res://Campaign/pricing.gd")
 
 const UNLOCK_MISSION := "res://Campaign/missions/mission_coast_1_road.tres"
 
@@ -178,15 +179,29 @@ func _test_the_chassis_is_registered() -> void:
 			"without it the debrief prints a raw id and bakes no icon")
 	_ok("...and resolves it to a definition", _KillKinds.frame_of(&"picket") != null)
 
-	if ResourceLoader.exists(UNLOCK_MISSION):
-		var m = load(UNLOCK_MISSION)
-		var un: Array = []
-		for u in m.unlocks:
-			un.append(String(u))
-		_ok("the frame is gated behind a mission, since required_rank is inert",
-				un.has("picket"), "coast_1 unlocks %s" % str(un))
-		_ok("...and so is its launcher", un.has("rocket_pods"), str(un))
-
+	# GATED BY PRICE, NOT BY A MISSION (Phase 3).
+	#
+	# This used to assert that coast_1 named the Picket in its `unlocks`, which
+	# was the only real gate once required_rank turned out to be inert. Both
+	# are gone: operations grant nothing, and a line is opened by paying for it
+	# in the fabrication car. What matters now is that the frame and its
+	# launcher are PRICED — an unbanded weapon silently falls back to the
+	# cheapest band, which is how a crew-served launcher ends up costing 50.
+	var picket = load(CHASSIS)
+	if picket != null:
+		_ok("the frame is for sale at all", _Pricing.chassis_for_sale(picket),
+				"purchasable=%s supply=%d" % [str(picket.purchasable), picket.supply])
+		_ok("...and priced by its supply, like every other frame",
+				_Pricing.chassis_buy(picket) == int(round(float(_Pricing.CHASSIS_BUY[picket.supply]) * float(_Pricing.BASE))),
+				"%d" % _Pricing.chassis_buy(picket))
+		_ok("...and opening its line costs twice building one",
+				_Pricing.chassis_unlock(picket) == 2 * _Pricing.chassis_buy(picket))
+	var pods = load(ROCKETS)
+	if pods != null:
+		_ok("its launcher has a band of its own, not the fallback",
+				_Pricing.ITEM_BAND.has(pods.id), String(pods.id))
+		_ok("...and it is a crew weapon: 3x to open, 2x a copy",
+				_Pricing.band_of(pods) == _Pricing.CREW, _Pricing.band_of(pods))
 
 # ─────────────────────────────────────────────
 func _test_the_weapon_is_a_launcher() -> void:

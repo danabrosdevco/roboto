@@ -51,6 +51,11 @@ func _init() -> void:
 	s.catalogue = cat
 	s.earned = 10000
 
+	# OPEN THE LINE FIRST (Phase 3). recruit() refuses a chassis whose line is
+	# shut — "a gate that exists only in the UI is not a gate", as
+	# CampaignState.recruit puts it — and this setup predates that rule, so it
+	# was asking for a frame it had not paid to open and getting null.
+	s.grant_unlock(frame.id)
 	var rec := s.recruit(frame)
 	_check("(setup) recruited a %s for %d" % [frame.display_name, frame.cost], rec != null)
 	if rec == null:

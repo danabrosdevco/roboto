@@ -32,6 +32,6 @@ signal_resistance_bonus = 0.0
 self_revive_seconds = 0.0
 equipment_slot_bonus = 0
 suppressive_fire = false
-required_rank = 0
+unlock_requires = Array[StringName]([])
 requires_chassis = Array[StringName]([&"walker"])
 chassis_whitelist = Array[StringName]([&"walker", &"rover", &"bastion", &"bulwark"])

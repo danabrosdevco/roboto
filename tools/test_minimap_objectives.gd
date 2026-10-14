@@ -63,7 +63,14 @@ func _init() -> void:
 		for i in shown:
 			if data.objective_kinds[i] == &"extract":
 				has_exit = true
-		if not has_exit:
+		# UNLESS IT IS A SITE OPERATION, which is won at the bunker rather than
+		# at an extraction — site_operation.gd calls _succeed() itself. Valley
+		# Basin's attack and its defence both name four cores and no extraction
+		# and are finishable; the same exemption is in
+		# tools/test_mission_objectives.gd, with the reasoning written out.
+		if not has_exit and _wins_at_bunker(m.level_scene):
+			print("     (won at the bunker, so no extraction is marked)")
+		elif not has_exit:
 			_fail("%s marks no extraction" % str(m.id))
 
 	# Every hive the levels define has to be recognised as one, or the filter is
@@ -181,3 +188,22 @@ func _check_arrow() -> void:
 		_fail("a facing with no heading gave %s, which does not draw an arrow" % degenerate)
 	print("     %-11s arrow %-16s (must still be a unit vector)" % [
 		"straight down", "(%.2f, %.2f)" % [degenerate.x, degenerate.y]])
+
+
+## True when the level carries a site operation, which ends itself at the
+## bunker and so needs no extraction marked. Matched on the script's FILE NAME
+## for the reason tools/test_mission_objectives.gd gives at length: packed data
+## hands back a script resource, not a class, and `*_slice.gd` covers the eight
+## conversions in SITE_CONVERSION.md without a line each.
+func _wins_at_bunker(packed: PackedScene) -> bool:
+	if packed == null:
+		return false
+	var st := packed.get_state()
+	for i in st.get_node_count():
+		for p in st.get_node_property_count(i):
+			var v = st.get_node_property_value(i, p)
+			if v is Script:
+				var f := str(v.resource_path).get_file()
+				if f == "site_operation.gd" or f.ends_with("_slice.gd"):
+					return true
+	return false

@@ -36,6 +36,11 @@ extends SceneTree
 const OBJECTIVE_SCRIPTS := [
 	"mission_objective.gd", "reach_objective.gd",
 	"interact_objective.gd", "eliminate_objective.gd",
+	# Objective subclasses that BUILD their own props rather than being authored
+	# around them. training_core.gd is the sim arena's capture and its bunker:
+	# it extends MissionObjective and makes the pad, the post and the real
+	# HoldableCore in code, so there is nothing in the level but the one node.
+	"training_core.gd",
 ]
 
 var _fails := 0
@@ -97,8 +102,21 @@ func _init() -> void:
 
 		# THE WAY HOME. A mission whose surviving objectives are all capture
 		# points and no extraction can be completed and never left.
-		_check("...and one of them gets you off the map", _has_extract(m, found),
-			"none of %s is an extraction" % str(live))
+		#
+		# UNLESS THE LEVEL IS A SITE OPERATION, which wins somewhere else.
+		# site_operation.gd: "An attack is won at the bunker: take the ground,
+		# stand down, go home." SiteSlice builds that operation in code and it
+		# calls _succeed() itself, so Valley Basin deliberately names four
+		# cores and no extraction and is finishable — it was reported as two
+		# failures here the day after the slice landed. The Hillfort guard this
+		# check exists for is unchanged for every other mission.
+		var by_bunker: bool = _wins_at_bunker(load("res://maps/".path_join(level)))
+		if by_bunker:
+			print("      NOTE  %s deploys to a site operation, which is won at "
+				% m.id + "the bunker rather than at an extraction.")
+		else:
+			_check("...and one of them gets you off the map", _has_extract(m, found),
+				"none of %s is an extraction" % str(live))
 
 		if not dead.is_empty():
 			print("      NOTE  %s names %s, which %s does not author. Harmless "
@@ -262,4 +280,38 @@ func _instance_is_objective(packed: PackedScene) -> bool:
 		var v: Variant = st.get_node_property_value(0, j)
 		if v != null:
 			return OBJECTIVE_SCRIPTS.has(str(v.resource_path).get_file())
+	return false
+
+
+## True when the level carries a site operation, which ends itself at the
+## bunker and so needs no extraction objective.
+##
+## MATCHED ON THE FILE NAME, like OBJECTIVE_SCRIPTS above and for the same
+## reason: packed data gives a script resource, not a class, and an editor that
+## has not rescanned has no class list to ask. `*_slice.gd` rather than a list
+## of the slices, so the eight conversions in docs/briefs/SITE_CONVERSION.md
+## do not each need a line here.
+func _wins_at_bunker(packed: PackedScene) -> bool:
+	if packed == null:
+		return false
+	return _scan_for_operation(packed, 0, {})
+
+
+func _scan_for_operation(packed: PackedScene, depth: int, seen: Dictionary) -> bool:
+	if packed == null or depth > MAX_INSTANCE_DEPTH:
+		return false
+	var path := str(packed.resource_path)
+	if seen.has(path):
+		return false   # a scene that instances itself; see _collect_ids
+	seen[path] = true
+	var st := packed.get_state()
+	for i in st.get_node_count():
+		for p in st.get_node_property_count(i):
+			var v = st.get_node_property_value(i, p)
+			if v is Script:
+				var f := str(v.resource_path).get_file()
+				if f == "site_operation.gd" or f.ends_with("_slice.gd"):
+					return true
+			elif v is PackedScene and _scan_for_operation(v, depth + 1, seen):
+				return true
 	return false

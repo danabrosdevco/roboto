@@ -117,7 +117,11 @@ enum Kind {
 
 # Gating. A module can require a rank before it will fit — that's what makes
 # rank matter more than raw level.
-@export var required_rank: int = 0
+
+## LINES THAT MUST BE OPEN BEFORE THIS ONE CAN BE — the Mark One → Mark Two
+## chains (Phase 3.4). Ids of other items or chassis. Empty for almost
+## everything, which is the point: a chain is a deliberate statement.
+@export var unlock_requires: Array[StringName] = []
 # Empty means any chassis. Otherwise a list of ChassisDefinition ids.
 ## Hidden from the shop until the player OWNS one of these frames. Empty means
 ## always available, which is nearly everything.

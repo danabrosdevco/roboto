@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://bqros3oavew7"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
 [ext_resource type="PackedScene" path="res://Character/characters/ai/kite.tscn" id="2_scene"]
@@ -27,4 +27,4 @@ drives = false
 equipment_slots = 0
 module_slots = 2
 musters_at_base = false
-required_rank = 1
+unlock_requires = Array[StringName]([])

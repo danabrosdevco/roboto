@@ -1,5 +1,11 @@
 extends SceneTree
 
+## Prices come from the band table now (Campaign/pricing.gd), NOT from the
+## `cost` a fixture sets — make_item()'s cost argument is inert for anything
+## the player buys. Expectations below derive from here so a rebalance does
+## not rewrite the suite.
+const _Pricing := preload("res://Campaign/pricing.gd")
+
 # ─────────────────────────────────────────────
 # LEDGER TESTS
 #
@@ -60,8 +66,10 @@ func _initialize() -> void:
 	test_software_is_held_compute()
 	test_old_compute_saves_become_a_ledger()
 	test_kills_by_kind()
-	test_unlocks_wait_for_their_operation()
-	test_the_player_has_no_rank()
+	test_unlocks_are_bought_not_granted()
+	test_issued_lines_need_no_unlock()
+	test_old_unlocks_migrate_as_free()
+	test_rank_gates_nothing()
 
 	print("")
 	if _failures == 0:
@@ -90,11 +98,29 @@ func invariant(state: CampaignState, label: String) -> void:
 		"available=%d earned=%d allocated=%d" % [state.available(), state.earned, total])
 
 
+## THE LEDGER TESTS ARE ABOUT MONEY, NOT GATING.
+##
+## buy_item and buy_chassis now refuse anything whose line is shut (Phase 3),
+## so a fixture that wants to test arithmetic has to open the lines first.
+## Gating has its own tests — test_unlocks_are_bought_not_granted and friends —
+## and granting here keeps the two from testing each other by accident.
 func make_state(starting: int = 100) -> CampaignState:
 	var state := CampaignState.new()
 	state.armoury = Armoury.new()
 	state.award(starting)
 	return state
+
+
+## Open every line in a catalogue, free. For fixtures only.
+func open_everything(state: CampaignState, cat: ItemCatalogue) -> void:
+	if cat == null:
+		return
+	for i in cat.items:
+		if i != null:
+			state.grant_unlock(i.id)
+	for c in cat.chassis:
+		if c != null:
+			state.grant_unlock(c.id)
 
 
 func make_item(id: StringName, cost: int) -> ItemDefinition:
@@ -115,20 +141,28 @@ func test_invariant_on_fresh_state() -> void:
 func test_buy_deducts_and_stocks() -> void:
 	var state := make_state(100)
 	var rifle := make_item(&"rifle", 20)
+	state.grant_unlock(rifle.id)
+	var price: int = _Pricing.item_buy(rifle)
 	check("buy succeeds when affordable", state.buy_item(rifle))
-	check("available drops by cost", state.available() == 80, "got %d" % state.available())
+	check("available drops by the BAND price", state.available() == 100 - price,
+		"got %d, expected %d" % [state.available(), 100 - price])
 	check("item reaches stores", state.armoury.spare(&"rifle") == 1,
 		"got %d" % state.armoury.spare(&"rifle"))
+	check("a line that was never opened cannot be bought",
+		not state.buy_item(make_item(&"never_opened", 10)))
 	invariant(state, "after buy")
 
 
 func test_sell_bought_refunds_half() -> void:
 	var state := make_state(100)
 	var rifle := make_item(&"rifle", 20)
+	state.grant_unlock(rifle.id)
+	var price: int = _Pricing.item_buy(rifle)
 	state.buy_item(rifle)
 	check("sell succeeds", state.sell_item(rifle))
-	# Paid 20, half back = 10. 100 - 20 + 10 = 90.
-	check("half the price comes back", state.available() == 90, "got %d" % state.available())
+	# Half the BAND price comes back, not half the fixture's cost argument.
+	check("half the price comes back", state.available() == 100 - price + state.sale_value(price),
+		"got %d" % state.available())
 	check("stores are empty again", state.armoury.spare(&"rifle") == 0)
 	invariant(state, "after sell")
 
@@ -140,8 +174,9 @@ func test_sell_issued_stock() -> void:
 	var kit := make_item(&"repair_tool", 45)
 	state.armoury.add(&"repair_tool")
 	check("issued stock can be sold", state.sell_item(kit))
-	check("credits half the catalogue price", state.available() == 122,
-		"expected 122, got %d" % state.available())
+	check("credits half the catalogue price",
+		state.available() == 100 + state.sale_value(_Pricing.item_buy(kit)),
+		"expected %d, got %d" % [100 + state.sale_value(_Pricing.item_buy(kit)), state.available()])
 	check("issued item leaves stores", state.armoury.spare(&"repair_tool") == 0)
 	invariant(state, "after selling issued stock")
 
@@ -166,21 +201,29 @@ func test_selling_is_never_profitable() -> void:
 func test_newest_purchase_is_numeric() -> void:
 	# Keys are "item:<id>:<counter>". Compared as strings, "item:rifle:9" sorts
 	# above "item:rifle:10", so past nine purchases the wrong allocation was
-	# refunded. Detectable only when the price changed between purchases.
+	# refunded. Detectable only when the price CHANGED between purchases.
+	#
+	# Prices come from a band table now, so two buys of the same id always cost
+	# the same and the fixture can no longer create that gap by buying twice.
+	# The real scenario it guards is a save carrying purchases made BEFORE a
+	# rebalance, so the old ones are written straight into the ledger.
 	var state := make_state(10000)
-	var cheap := make_item(&"rifle", 10)
+	var rifle := make_item(&"rifle", 10)
+	state.grant_unlock(rifle.id)
 	for i in 10:
-		state.buy_item(cheap)
-	var pricey := make_item(&"rifle", 50)
-	state.buy_item(pricey)
+		state.allocations["item:rifle:%d" % state._next_purchase()] = 10
+		state.armoury.add(&"rifle")
+	state.buy_item(rifle)
+	var price: int = _Pricing.item_buy(rifle)
 
 	var before := state.available()
-	state.sell_item(pricey)
+	state.sell_item(rifle)
 	var refunded := state.available() - before
-	# The 11th purchase cost 50, so half of that is 25. Picking the wrong
-	# allocation would refund 5.
+	# Half of today's price. Picking the wrong allocation would refund half of
+	# the old 10 instead.
+	var want: int = state.sale_value(price)
 	check("refunds the newest purchase, not the lexicographically largest",
-		refunded == 25, "refunded %d, expected 25" % refunded)
+		refunded == want, "refunded %d, expected %d" % [refunded, want])
 	invariant(state, "after out-of-order sell")
 
 
@@ -285,6 +328,9 @@ func test_old_save_repair_tool_comes_off_the_player() -> void:
 	var cat: ItemCatalogue = load("res://Campaign/items & catalogue/test_item_catalogue.tres")
 	var state := make_state()
 	state.catalogue = cat
+	# Lines must be open before anything can be recruited or bought (Phase 3);
+	# gating has its own tests, so the fixtures simply open everything.
+	open_everything(state, cat)
 	var rec := state.player_record
 	rec.equipment_ids = [&"repair_tool", &"frag"] as Array[StringName]
 	var saves := [0]
@@ -333,7 +379,15 @@ func test_squad_size_caps_the_deploy() -> void:
 # The first one is alone; from then on the ally cap is off (-1) and benching is
 # how you choose who goes.
 func test_the_ally_ramp() -> void:
-	var files := ["arena_1_contact", "arena_3_firing_line", "arena_5_proving",
+	# THE CHAIN AS IT IS NOW: two exercises, then the war.
+	#
+	# `arena_5_proving` used to sit between the Firing Line and the Hillfort.
+	# The arenas were cut to two — the third is off the campaign's mission list
+	# in world.tscn and the Hillfort requires arena_3_firing_line directly — but
+	# its .tres is still on disk, so this list went on loading it and the chain
+	# broke at a link nothing walks any more. Retired rather than deleted,
+	# because deleting authored content is the human's call.
+	var files := ["arena_1_contact", "arena_3_firing_line",
 		"hillfort_1_relay",
 		"basin_1_anchor", "coast_1_road", "pitt_1_rivers"]
 	var by_id: Dictionary = {}
@@ -353,7 +407,9 @@ func test_the_ally_ramp() -> void:
 	# You go alone once, and from the second op the cap comes off entirely:
 	# after that it is your supply, bought with compute at the Factory, that
 	# decides how many go in with you — not the mission.
-	check("alone once, then everyone you can supply", sizes == [0, -1, -1, -1, -1, -1, -1], str(sizes))
+	# SIX, NOT SEVEN: arena_5_proving came out of the chain above when the sim
+	# arenas were cut to two.
+	check("alone once, then everyone you can supply", sizes == [0, -1, -1, -1, -1, -1], str(sizes))
 
 
 func names(records: Array) -> Array:
@@ -370,9 +426,17 @@ func names(records: Array) -> Array:
 # still the shapes these tests need: no weapon slot, no equipment slot, a
 # different supply cost each. Duplicating leaves the catalogue's own copy alone,
 # which matters because resources are shared.
-func buyable(frame: ChassisDefinition) -> ChassisDefinition:
+## A fixture frame the shop will take: purchasable, and its LINE OPEN.
+##
+## Opening it here rather than at each call site, because recruiting is gated on
+## the unlock now (Phase 3) and a fixture frame that is purchasable but shut
+## returns null from recruit() — which showed up as "Invalid access to property
+## 'benched' on Nil" three tests later rather than as a failed check.
+func buyable(state: CampaignState, frame: ChassisDefinition) -> ChassisDefinition:
 	var copy: ChassisDefinition = frame.duplicate()
 	copy.purchasable = true
+	if state != null:
+		state.grant_unlock(copy.id)
 	return copy
 
 
@@ -403,14 +467,23 @@ func test_recruiting() -> void:
 	var cat := real_catalogue()
 	var state := make_state(500)
 	state.catalogue = cat
+	# Lines must be open before anything can be recruited or bought (Phase 3);
+	# gating has its own tests, so the fixtures simply open everything.
+	open_everything(state, cat)
 	var soldier_frame := cat.chassis_def(&"soldier")
-	var chaser_frame := buyable(enemy_frame(CHASER))
-	var hopper_frame := buyable(enemy_frame(HOPPER))
+	var chaser_frame := buyable(state, enemy_frame(CHASER))
+	var hopper_frame := buyable(state, enemy_frame(HOPPER))
+	# Recruiting is gated on the line being open (Phase 3), and these tests are
+	# about the arithmetic. open_everything only covers the catalogue, so the
+	# two ad-hoc frames are granted by hand.
+	open_everything(state, cat)
+	var bill: int = _Pricing.chassis_buy(soldier_frame) \
+		+ _Pricing.chassis_buy(chaser_frame) + _Pricing.chassis_buy(hopper_frame)
 	var soldier := state.recruit(soldier_frame)
 	var chaser := state.recruit(chaser_frame)
 	var hopper := state.recruit(hopper_frame)
-	check("recruits are paid for", state.available() == 500 - soldier_frame.cost - chaser_frame.cost - hopper_frame.cost,
-		str(state.available()))
+	check("recruits are paid for", state.available() == 500 - bill,
+		"%d, expected %d" % [state.available(), 500 - bill])
 	invariant(state, "after recruiting")
 	check("recruits join the roster", state.roster.size() == 3)
 	check("recruits are named for their frame", names([soldier, chaser, hopper]) == ["Soldier-1", "Chaser-1", "Leaper-1"],
@@ -478,13 +551,16 @@ func test_supply_caps_the_active_squad() -> void:
 	var cat := real_catalogue()
 	var state := make_state(1000)
 	state.catalogue = cat
+	# Lines must be open before anything can be recruited or bought (Phase 3);
+	# gating has its own tests, so the fixtures simply open everything.
+	open_everything(state, cat)
 	state.supply_cap = 2
 	var a := state.recruit(cat.chassis_def(&"soldier"))
-	var b := state.recruit(buyable(enemy_frame(CHASER)))
+	var b := state.recruit(buyable(state, enemy_frame(CHASER)))
 	check("recruits join the squad while there is supply", not a.benched and not b.benched)
 	check("...each taking its frame's supply", state.supply_used() == 2 and state.supply_free() == 0,
 		"used=%d free=%d" % [state.supply_used(), state.supply_free()])
-	var c := state.recruit(buyable(enemy_frame(HOPPER)))
+	var c := state.recruit(buyable(state, enemy_frame(HOPPER)))
 	check("buying is never blocked by supply: the next joins the bench", c != null and c.benched)
 	check("...where it takes none", state.supply_used() == 2)
 	check("coming off the bench with no supply free is refused", not state.set_benched(c, false) and c.benched)
@@ -652,39 +728,72 @@ func test_kills_by_kind() -> void:
 	check("a kind reads as its frame, without the word chassis",
 		kinds.name_of(&"chaser") == "CHASER" and kinds.name_of(&"rifleman") == "RIFLE TROOPER", kinds.name_of(&"chaser"))
 
-
-func test_unlocks_wait_for_their_operation() -> void:
-	var state := make_state()
-	var campaign := CampaignManager.new()
-	campaign.state = state
-	var op := MissionDefinition.new()
-	op.id = &"op_pack"
-	op.unlocks = [&"leaper"] as Array[StringName]
-	campaign.missions = [op] as Array[MissionDefinition]
-	check("a frame an operation unlocks is locked until it is cleared", campaign.locked_by(&"leaper") == op)
-	check("anything no operation unlocks is never locked", campaign.locked_by(&"soldier") == null)
-	state.completed_missions.append(&"op_pack")
-	campaign._grant_owed_unlocks()
-	check("a save that already cleared it is handed the unlock on load",
-		campaign.locked_by(&"leaper") == null and state.unlocked.has(&"leaper"))
-	campaign.free()
-
-
-# You spend the resources and the compute; you don't earn rank.
-func test_the_player_has_no_rank() -> void:
+# A LINE IS OPENED BY PAYING FOR IT, not by clearing an operation (Phase 3).
+func test_unlocks_are_bought_not_granted() -> void:
 	var cat := real_catalogue()
 	var state := make_state()
 	state.catalogue = cat
-	var gated := make_item(&"veterans_only", 10)
-	gated.kind = ItemDefinition.Kind.MODULE
-	gated.required_rank = 2
-	state.armoury.add(&"veterans_only")
+	var campaign := CampaignManager.new()
+	campaign.state = state
+	# A PURCHASABLE frame. The leaper is enemy-only (purchasable = false), so
+	# Pricing.chassis_for_sale refuses it and no line can be opened at all.
+	var frame := cat.chassis_def(&"rover")
+	check("a frame nobody has opened is locked", campaign.is_locked(&"rover"))
+	check("...and cannot be bought while it is", not state.buy_chassis(frame))
+	state.earned = 100000
+	check("opening the line works", state.unlock_chassis(frame))
+	check("...and it is no longer locked", not campaign.is_locked(&"rover"))
+	check("...and now it can be bought", state.buy_chassis(frame))
+	check("...and opening it twice is refused, not charged twice",
+		not state.unlock_chassis(frame))
+	# An unlock is CAPITAL: it stays in allocations and is never refunded.
+	check("the unlock is still held against the ledger",
+		state.allocations.has(CampaignState.unlock_key(&"rover")))
+	campaign.free()
+
+
+# The Ancient Rifle is issued, not bought: open from the start with no
+# allocation written anywhere.
+func test_issued_lines_need_no_unlock() -> void:
+	var cat := real_catalogue()
+	var state := make_state()
+	state.catalogue = cat
+	check("the issued rifle is open from the start", state.is_unlocked(&"m4"))
+	check("...without an allocation to its name",
+		not state.allocations.has(CampaignState.unlock_key(&"m4")))
+	check("...while anything else is shut", not state.is_unlocked(&"autocannon"))
+
+
+# A save from before unlocks were ledger keys keeps everything it had earned.
+func test_old_unlocks_migrate_as_free() -> void:
+	var state := make_state()
+	state.catalogue = real_catalogue()
+	var raw := state.to_dict()
+	raw["unlocked"] = ["autocannon", "walker"]
+	var loaded := CampaignState.from_dict(raw)
+	loaded.catalogue = state.catalogue
+	check("what a save had unlocked is still unlocked", loaded.is_unlocked(&"autocannon")
+		and loaded.is_unlocked(&"walker"))
+	check("...and it cost them nothing", loaded.spent() == state.spent())
+
+# RANK NO LONGER GATES ANYTHING (Phase 3.7). It still exists and still drives
+# stats; it just stopped being a second answer to "can this robot have this",
+# which the catalogue now answers on its own.
+func test_rank_gates_nothing() -> void:
+	var cat := real_catalogue()
+	var state := make_state()
+	state.catalogue = cat
+	# Lines must be open before anything can be recruited or bought (Phase 3);
+	# gating has its own tests, so the fixtures simply open everything.
+	open_everything(state, cat)
+	var item := make_item(&"anything", 10)
+	item.kind = ItemDefinition.Kind.MODULE
+	state.armoury.add(&"anything")
 	state.player_record.set_chassis(cat.chassis_def(&"soldier"), cat)
 	var squaddie := make_soldier(state, "NEW")
 	squaddie.set_chassis(cat.chassis_def(&"soldier"), cat)
-	check("rank never gates you", state.can_fit(state.player_record, gated))
-	check("...it still gates a squadmate", not state.can_fit(squaddie, gated))
-
+	check("a rank-0 squadmate is refused nothing", state.can_fit(squaddie, item))
+	check("...and neither are you", state.can_fit(state.player_record, item))
 
 # Compute arrived after people had saves. An op cleared before it paid compute
 # pays it when the save loads — once, and without writing the save.
@@ -723,6 +832,9 @@ func test_utility_harness_adds_a_slot() -> void:
 	var cat := real_catalogue()
 	var state := make_state(4000)
 	state.catalogue = cat
+	# Lines must be open before anything can be recruited or bought (Phase 3);
+	# gating has its own tests, so the fixtures simply open everything.
+	open_everything(state, cat)
 	var s := state.recruit(cat.chassis_def(&"soldier"))
 	for id in [&"utility_harness", &"emp", &"frag", &"hatchling"]:
 		state.buy_item(cat.item(id))
@@ -738,7 +850,7 @@ func test_utility_harness_adds_a_slot() -> void:
 		and state.armoury.spare(&"utility_harness") == 1)
 	check("...while the other two stay fitted", s.equipment_ids[0] == &"frag" and s.equipment_ids[1] == &"hatchling")
 	invariant(state, "after the harness comes off")
-	var chaser := state.recruit(buyable(enemy_frame(CHASER)))
+	var chaser := state.recruit(buyable(state, enemy_frame(CHASER)))
 	check("a chaser cannot wear a harness", not state.fit_item(chaser, cat.item(&"utility_harness"), 0))
 
 	# ONE PER ROBOT. Two Sensor Relays added their range together; a second

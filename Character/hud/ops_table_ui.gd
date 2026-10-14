@@ -27,6 +27,11 @@ extends Control
 
 const Kit := preload("res://Character/hud/squad/ui_kit.gd")
 const _Pal := preload("res://Character/hud/hud_palette.gd")
+## The sim arena, which this board offers as one entry rather than two sites.
+const _SimArena := preload("res://Character/hud/sim_arena_ui.gd")
+const _Wipe := preload("res://Character/hud/cyberspace_wipe.gd")
+const _Lab := preload("res://Managers/lab.gd")
+const _Plan := preload("res://Campaign/lab/lab_plan.gd")
 
 ## Its own hold. Sharing one with the squad manager would mean closing either
 ## released both — a mistake already documented in master.gd.
@@ -463,12 +468,33 @@ func _select_hover(id) -> void:
 	_refresh_panel()
 
 
-## Queue the operation. Through the campaign's own call, never by writing
-## selected_mission_id — select_mission also pushes the destination into the
-## departure pad and announces it.
+## Act on the site that was clicked.
+##
+## Through the campaign's own call, never by writing selected_mission_id —
+## select_mission also pushes the destination into the departure pad and
+## announces it.
 func _queue(id) -> void:
 	var f: Dictionary = table.facts.get(id, {})
-	if f.is_empty() or not bool(f.get("deployable", false)):
+
+	# CLICKING THE ARENA OPENS THE ARENA. It is not deployable — it is a door,
+	# not an operation — so this used to fall straight through the guard below
+	# and do nothing at all, while swallowing the click on the way. The only
+	# way in was to hover it and find the button on the card, which is why it
+	# was reported as "you can't click back to the sim arena".
+	if bool(f.get("sim_site", false)):
+		_open_arena()
+		return
+
+	if f.is_empty():
+		push_warning("OpsTableUI: clicked '%s', which the board has no facts for, so there is nothing to queue." % str(id))
+		return
+	if not bool(f.get("deployable", false)):
+		# NOT SILENT. A site you cannot go to yet is the normal case and the
+		# card already says why — but a site that should be deployable and is
+		# not is invisible otherwise, and this is where that shows up.
+		print("[OpsTable] '%s' is not deployable: %s" % [str(id),
+			"training unfinished" if bool(f.get("needs_training", false))
+			else ("no route" if bool(f.get("locked", false)) else "already held or answering a raid")])
 		return
 	var campaign = table.get("Campaign")
 	if campaign != null and campaign.has_method("select_mission"):
@@ -485,13 +511,36 @@ func _refresh_panel() -> void:
 		return
 	var f: Dictionary = table.facts[_hovered]
 
+	# ── THE SIM ARENA IS A PLACE YOU GO, NOT AN OPERATION YOU QUEUE ─────
+	#
+	# FIRST, so none of the war furniture below is built for it. It has no
+	# Location, no yield and no garrison, so COMPUTE, RESOURCE and RESISTANCE
+	# were three rows of zero — and "ADVERSARY HELD" under the name, because
+	# the default state line assumes anything you do not hold is theirs. A
+	# training facility is not held by the adversary, the zeroes said nothing,
+	# and together they made the card twice as tall as it had any reason to be.
+	if bool(f.get("sim_site", false)):
+		var head: Color = _Pal.SIGNAL
+		_panel.add_child(Kit.label(String(f["name"]).to_upper(), head, Kit.HEADING, true))
+		_panel.add_child(Kit.label(
+			"START HERE" if bool(f.get("training_next", false)) else "OPEN",
+			head, Kit.SMALL))
+		_panel.add_child(Kit.spacer(0, 8))
+		var enter := Kit.button("ENTER THE ARENA", Kit.BRIGHT, Kit.BODY)
+		enter.pressed.connect(_open_arena)
+		_panel.add_child(enter)
+		return
+
 	# WHOSE IT IS, IN THE NAME. Worked out before the name is written so the
 	# two lines share one colour: the heading tells you who holds the place
 	# at the same instant it tells you which place it is, and it matches the
 	# colour of the marker you are pointing at on the board.
-	var state := "CONTESTED"
-	var state_col: Color = _Pal.FAC_SWARM
-	if f["locked"]:
+	var state := "ADVERSARY HELD"
+	var state_col: Color = _Pal.FAC_ADVERSARY
+	if bool(f.get("under_attack", false)):
+		state = "UNDER ATTACK"
+		state_col = _Pal.CRIT
+	elif f["locked"]:
 		state = "NO ROUTE — NEEDS %s" % String(f["unmet"][0]).to_upper()
 		state_col = _Pal.GONE
 	elif f["cleared"]:
@@ -511,6 +560,26 @@ func _refresh_panel() -> void:
 		resist += "   +%d in reserve" % int(f["reserve"])
 	_panel.add_child(_figure("RESISTANCE", resist, _Pal.CRIT))
 
+	# ── WHAT YOU CAN DO HERE ────────────────────────────────────────────
+	#
+	# ANSWERING A RAID COMES FIRST. The defence has no pin of its own — the
+	# board draws one per place — so this is the only way to reach it, and it
+	# is the thing that is about to cost you the site if you walk away.
+	var defend: StringName = f.get("defend_id", &"")
+	if defend != &"":
+		_panel.add_child(Kit.spacer(0, 8))
+		var d := Kit.button("DEFEND IT", _Pal.CRIT, Kit.BODY)
+		d.pressed.connect(func(): _queue(defend))
+		_panel.add_child(d)
+
+	# NOT YET, AND IT SAYS WHY. Until the two exercises are done the war is not
+	# offered at all; without this line the button is simply absent and the
+	# board looks broken rather than sequenced.
+	if bool(f.get("needs_training", false)):
+		_panel.add_child(Kit.spacer(0, 8))
+		_panel.add_child(Kit.label("FINISH TRAINING FIRST", _Pal.DIM, Kit.SMALL, true))
+		return
+
 	if bool(f.get("deployable", false)):
 		_panel.add_child(Kit.spacer(0, 8))
 		var queued = table.Campaign.selected_mission() if table.Campaign != null else null
@@ -529,3 +598,151 @@ func _figure(name_text: String, value: String, col: Color) -> Control:
 	row.add_child(l)
 	row.add_child(Kit.label(value, col, Kit.BODY, true))
 	return row
+
+
+## Open the sim arena over the board. The two exercises live in here, and so
+## does free play once they are done — see SimArenaUI.
+##
+## NO TRANSITION HERE. This is a menu opening over the board: you are still at
+## the table, still choosing. The wipe belongs on the step AFTER this one — the
+## moment you commit to an exercise or a fight and actually go in. Putting it on
+## the menu made choosing feel like arriving somewhere, and then arriving
+## somewhere had no transition left to spend.
+func _open_arena() -> void:
+	var cm = table.Campaign if table != null else null
+	if cm == null:
+		push_warning("OpsTableUI: no campaign, so the sim arena has nothing to list.")
+		return
+	var layer := CanvasLayer.new()
+	layer.layer = 60
+	add_child(layer)
+	_build_arena(layer, cm)
+
+
+## GOING INTO THE SIMULATION, which is the one thing in here that gets the wipe.
+##
+## `at_cover` runs at the midpoint, under full cover, so the load starts while
+## nothing can be seen and the wipe clears onto whatever it produced. One helper
+## for both doors — an exercise and a lab fight — so they cannot drift apart.
+##
+## ON THE SCENE ROOT, not on this control. The board closes and the level is
+## torn down and rebuilt inside `at_cover`; a wipe parented to the board would
+## be freed halfway through its own animation, which is exactly the moment it
+## exists to cover.
+func _wipe(caption: String, at_cover: Callable) -> void:
+	var wipe = _Wipe.new()
+	wipe.caption = caption
+	var wipe_layer := CanvasLayer.new()
+	# UNDER THE LOADING SCREEN, which Master builds at 128. The wipe is what
+	# you cross to get there; once the load puts its own overlay up, that is
+	# the thing to look at and the wipe belongs behind it. Sharing 128 made
+	# the order depend on which was added last, and the grid ran over the
+	# loading screen.
+	wipe_layer.layer = 100
+	# AND IT RUNS WHILE THE TREE IS PAUSED, which it always is here: the
+	# operations board takes a PauseHold the moment it opens, and a Tween on a
+	# pausable node simply does not advance. The wipe sat frozen at nothing and
+	# ENTER appeared to do nothing until you escaped the menu and released the
+	# hold. The board sets the same mode on itself, for the same reason.
+	wipe_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().root.add_child(wipe_layer)
+	wipe_layer.add_child(wipe)
+	wipe.midpoint.connect(at_cover)
+	wipe.finished.connect(func():
+		if is_instance_valid(wipe_layer):
+			wipe_layer.queue_free())
+	wipe.play()
+
+
+## The arena screen itself.
+func _build_arena(layer: CanvasLayer, cm) -> void:
+	if not is_instance_valid(layer) or cm == null:
+		push_warning("OpsTableUI: no layer or no campaign, so the arena was not built.")
+		return
+	var ui = _SimArena.new()
+	ui.campaign = cm
+	ui.catalogue = cm.catalogue
+	layer.add_child(ui)
+
+	# Closing the menu is not going anywhere, so it gets no transition either.
+	ui.closed.connect(func():
+		if is_instance_valid(layer):
+			layer.queue_free())
+
+	# ENTER ON AN EXERCISE: wipe, then the mission loads under it.
+	ui.training_chosen.connect(func(id: StringName):
+		_wipe("ENTERING SIM ARENA", func():
+			if is_instance_valid(layer):
+				layer.queue_free()
+			_deploy_sim(cm, id)))
+
+	# WATCH / LEAD: same door. This was never connected on this path at all —
+	# the arena emitted the signal and nothing listened, so both buttons built a
+	# matchup and dropped it.
+	ui.fight_requested.connect(func(matchup: Resource, lead: bool):
+		_wipe("LEAD" if lead else "SPECTATE", func():
+			if is_instance_valid(layer):
+				layer.queue_free()
+			_run_fight(matchup, lead)))
+
+
+## Deploy straight into an exercise.
+##
+## NOT select_mission ALONE, which only queues a destination into the departure
+## pad and leaves you standing at the table waiting to pull a lever. A sim run
+## is not a journey — there is no train to catch, because the arena runs on your
+## own hardware. World.load_next_level does the whole lifecycle: begin_deploy,
+## tear down the depot, build the level, put the squad in it.
+func _deploy_sim(cm, id: StringName) -> void:
+	var m = cm.get_mission(id) if cm.has_method("get_mission") else null
+	if m == null or m.level_scene == null:
+		push_warning("OpsTableUI: '%s' has no level to load, so the exercise cannot start." % String(id))
+		return
+	if cm.has_method("select_mission"):
+		cm.select_mission(id)
+	var world := get_tree().get_first_node_in_group("world")
+	if world == null:
+		world = _find_world(get_tree().root)
+	if world == null:
+		push_warning("OpsTableUI: no World, so '%s' has nowhere to load." % String(id))
+		return
+	close()
+	world.load_next_level(m.level_scene)
+
+
+## Hand a matchup the player built to the Laboratory, which already knows how to
+## seat two sides facing each other on the proving ground.
+func _run_fight(matchup: Resource, lead: bool) -> void:
+	if matchup == null:
+		push_warning("OpsTableUI: no matchup, so there is no fight to run.")
+		return
+	var world := get_tree().get_first_node_in_group("world")
+	if world == null:
+		world = _find_world(get_tree().root)
+	if world == null:
+		push_warning("OpsTableUI: no World, so the Laboratory has nowhere to put the fight.")
+		return
+	# The board goes away with it: you are in the arena now, not at the table.
+	close()
+	var plan = _Plan.new()
+	plan.title = "Sim Arena"
+	plan.matchups = [matchup] as Array[Resource]
+	var lab = _Lab.new()
+	lab.name = "SimFight"
+	lab.plan = plan
+	lab.world = world
+	# SPECTATE OR LEAD. A measurement run is always watched so the player cannot
+	# affect the numbers; this is not a measurement.
+	lab.spectate = not lead
+	get_tree().root.add_child(lab)
+	lab.run()
+
+
+func _find_world(n: Node) -> Node:
+	if n is World:
+		return n
+	for c in n.get_children():
+		var f := _find_world(c)
+		if f != null:
+			return f
+	return null

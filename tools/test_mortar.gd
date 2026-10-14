@@ -140,6 +140,10 @@ func _init() -> void:
 	state.armoury = Armoury.new()
 	state.catalogue = cat
 	state.award(99999)
+	# Recruiting is gated on the line being open (Phase 3); this suite is about
+	# the mortar, not the catalogue, so it opens what it needs.
+	state.grant_unlock(frame.id)
+	state.grant_unlock(&"soldier")
 	var tube_rec := state.recruit(frame)
 	tube_rec.benched = false
 	tube_rec.weapon_ids[0] = &"mortar"

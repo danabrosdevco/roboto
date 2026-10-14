@@ -1,6 +1,10 @@
 extends Soldier
 class_name Diver
 
+## One price table — Campaign/pricing.gd, preloaded because a new `class_name`
+## is not visible until the editor rescans.
+const _Pricing := preload("res://Campaign/pricing.gd")
+
 # ─────────────────────────────────────────────
 # DIVER — a single-use frame that trades itself for one kill.
 #
@@ -11,7 +15,7 @@ class_name Diver
 #
 # ON "COMPUTE": compute is a campaign ledger resource (seats and software) and
 # no robot carries it into a level, so the score used here is the target's
-# ChassisDefinition.cost — the game's own number for what a frame is worth,
+# Pricing.chassis_buy() — the game's own number for what a frame is worth,
 # available on both sides through KillKinds without touching CampaignState.
 #
 # BALANCE LIVES IN THREE EXPORTS:
@@ -279,7 +283,7 @@ func _candidates() -> Array:
 func _worth(body: Node) -> float:
 	var frame := _Kinds.frame_of(_Kinds.kind_of(body))
 	if frame != null:
-		return float(frame.cost)
+		return float(_Pricing.chassis_buy(frame))
 	var hp = body.get("max_health")
 	return float(hp) if hp != null else 1.0
 

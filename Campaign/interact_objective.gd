@@ -172,4 +172,7 @@ func _find_player() -> Node3D:
 # "Garrison" -> CAPTURE GARRISON. An interact objective is always something you
 # go and take, so the verb is constant.
 func verb() -> String:
-	return "Capture"
+	# "CAPTURE THE X", always. The place is named as a place — "West Garrison",
+	# "Tether Anchor" — and the verb supplies what to do with it. Without the
+	# article it read as a telegram: CAPTURE WEST GARRISON.
+	return "Capture the"

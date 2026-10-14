@@ -36,6 +36,399 @@ most wants and least often gets:
 
 ---
 
+## 2026-10-13 (sixth pass) — BACKLOT revised: maps by tag, and OBS does the encoding
+
+**Landed.** `docs/marketing/BRIEF_BACKLOT.md` revised twice in a day, both times
+because the human widened the ask and both times it got better.
+
+### Maps, addressed by tag rather than coordinate
+
+Marketing picks the map and the place on it. **The addressing already exists.**
+Every level is dressed with `SquadObjectivePoint` instances in the
+`squad_objective_points` group, each with a `tag` and a human-readable
+`objective_name`. Counted: **102 named locations across the live maps** — 49 on
+`mutaha_wip_level` alone, then 19 valley basin, 18 Pittsburgh, 16 coast road —
+with names like *Compute Hall*, *Server Garden*, *Monolith Avenue*, *Listening
+Post*, *East Ford*.
+
+**`lab.gd:144 _find_axis()` already resolves one by tag.** Generalising it is the
+whole implementation, so a spec can say `site_tag = &"obj_mutaha_compute"` and
+get Compute Hall.
+
+Argued tags over coordinates on a specific ground: **a tag survives a map rebuild
+and a coordinate does not.** Mutaha is mid-rework, TERRAIN moves things, and a
+spec library written in `Vector3` would rot inside a week. Flagged the real gap
+too — sites are authored for gameplay, so a tag marks an objective rather than a
+good camera position, and an offset plus heading is probably what is actually
+needed.
+
+### OBS, which reverses my own scope guard
+
+The human can let BACKLOT drive OBS. **I had written "no video encoding, PNG
+sequences only" into the scope guard; that is now wrong and the brief says so
+rather than quietly editing it.** OBS 28+ ships obs-websocket, Godot has
+`WebSocketPeer` built in, so no addon is needed either side.
+
+What it buys, with the numbers I actually measured: **my three-move test wrote
+270 frames at 545 MB.** The same as MP4 is a few megabytes. And **audio** —
+PNG sequences have none, the trailer is wordless by design, so the game's drone
+and gunfire are doing all the work and OBS is the only route to them.
+
+**The trade-off resolved rather than hidden.** OBS captures a window, so one
+window shows one camera, which is at odds with multi-angle `SubViewport` capture.
+But tiers 1–2 are *scripted and deterministic*, so **re-running the same spec
+with a different camera gives the same action from another angle** — multi-angle
+costs a re-run, not a take. Only tier 3 `ENGAGE` is unrepeatable, and that keeps
+the frame-sequence path. Hence `capture: OBS | FRAMES` in the spec, defaulting to
+OBS.
+
+**Two things flagged to bite:** the game window must *be* 1920×1080 for OBS to
+capture it at that size; and if OBS is closed or the websocket is off, **the shot
+runs perfectly and records nothing** — so confirm `GetRecordStatus` before the
+action fires and abort loudly. Cited CLAUDE.md's rule that a function silently
+doing nothing is the most expensive kind of bug here.
+
+**Hedged where I should be:** the obs-websocket request names are recalled, not
+verified, and the brief says to check them against its own docs before building.
+
+**Gates.** `check.sh --changed`: **PASS**. Markdown only.
+
+**Needs the human.** Send it. Two new open questions worth an answer before work
+starts: whether the window needs to be borderless to get clean 1920×1080 game
+pixels, and whether OBS should hold one scene or one per camera preset
+(marketing's assumption: BACKLOT owns all framing, OBS is a dumb recorder).
+
+**Blocked / next.** Unchanged: whether the `quarter_street_walk` move *feels*
+right at 30 fps remains the one judgement I cannot make, and it gates authoring
+camera moves for the other seven levels.
+
+## 2026-10-13 (fifth pass) — BACKLOT: the brief reframed as an asset generator
+
+**Landed.** `docs/marketing/BRIEF_BACKLOT.md`, replacing
+`BRIEF_FIGHT_CAPTURE.md` (deleted; git holds it). The human reframed the request
+and the reframe is better than what I wrote.
+
+**What changed.** My brief asked for a tool that records AI-vs-AI fights. The ask
+is now **a marketing asset generator**: marketing writes a shot spec, the tool
+stages it, films it and leaves the frames. *"Walker firing at a Rover,
+three-quarter view."* *"EMP goes off among three soldiers, low angle."* Fight
+recording becomes one action out of many rather than the whole product.
+
+**Named BACKLOT.** A backlot is where things are staged to be filmed —
+industrial rather than glamorous, unambiguous about purpose. Checked: `backlot`
+appears nowhere in the repo, so the name is free. `plate` and `gallery` both
+collide; `studio` is taken by `icon_studio.gd`.
+
+**Argued that it must not be a Laboratory mode**, and the reason is not
+cosmetic: the Laboratory answers *which side wins*, BACKLOT answers *what does
+this look like*. A marketing run forces outcomes, freezes units and stages things
+that would never happen, **all of which would poison lab data if they shared a
+mode**. Separate at the entry point, share everything underneath.
+
+**The finding that made equipment shots cheap.**
+`Character/characters/ai/equipment/ai_equipment.gd` exposes `can_use(context)`
+and `execute(context)`, so BACKLOT can simply call `execute()` and film the
+result. "EMP goes off", "smoke lands", "mine detonates", "repair kit used" are
+one code path with a different argument. `item_emp.tres` exists; so do
+`ai_grenade`, `ai_grenade_projectile`, `ai_mortar_round`, `ai_repair_kit`,
+`ai_smoke`, `ai_mine`, `ai_deploy`. I had assumed this would be the expensive
+part of the brief and it is the cheap part.
+
+**Designed the two abstractions the human's framing implies:**
+
+- **Eight camera presets, defined geometrically rather than as vibes** —
+  `side_on` (already written as `_frame_camera()`), `three_quarter`,
+  `over_shoulder`, `pov`, `overhead`, `low_hero`, `orbit`, `dolly`. Flagged
+  `low_hero` as the one that makes the robots read as **capsules**, which is the
+  game's most distinctive visual and absent from every shot taken so far; and
+  `overhead` as the only angle where the Walker's slow traverse is legible.
+- **A four-tier action vocabulary ordered so GAMEPLAY can stop anywhere and
+  still have shipped something useful.** Tier 1 is poses set at spawn and covers
+  every still a store page needs. Tier 2 is one call each and includes
+  `USE_EQUIPMENT`. Tier 3 is `ENGAGE`, the Laboratory's existing behaviour. Tier
+  4 is choreography and is explicitly out.
+
+**Five worked specs** written in the proposed format, to prove the design carries
+real requests — including `mechanic_revive_ots`, which is the single most wanted
+asset in the project, and `squad_advance_low`, the cover shot three attempts have
+now failed to get.
+
+Kept from the previous version: the `SubViewport` fix (the `root.get_texture()`
+window bug behind the whole 1152×648 library), the event index with frame numbers
+as well as timestamps, the acceptance criteria, the scope guard, and §12's record
+of how my own last brief failed.
+
+**Gates.** `check.sh --changed`: **PASS**. Markdown only.
+
+**Needs the human.** Send it. Question 3 is the one worth a decision before work
+starts: **should BACKLOT get its own arena dressed for photography** — flat
+ground, controllable light, no scenery — rather than using `proving_level`? That
+is as much a TERRAIN question as a GAMEPLAY one, and marketing's guess is yes for
+tiers 1–2 and no for `ENGAGE`.
+
+**Blocked / next.** Unchanged: whether the `quarter_street_walk` move *feels*
+right at 30 fps is still the judgement I cannot make, and it gates authoring
+moves for the other seven levels.
+
+## 2026-10-13 (fourth pass) — brief for a fight-recording tool
+
+**Landed.** `docs/marketing/BRIEF_FIGHT_CAPTURE.md` — a sendable brief for
+GAMEPLAY, who owns `Managers/**`. Grounded in the source: every symbol named in
+it was checked to exist before it went in.
+
+**The Laboratory is about 20% away from being a camera rig**, which I did not
+expect. Read `Managers/lab.gd` (721 lines), `Campaign/lab/lab_matchup.gd` and
+`Character/characters/ai/enemy.gd`. It already spawns both sides with rosters and
+weapon swaps, issues orders, runs each matchup `repeats` times, scores through
+the same analytics hooks the playtest uses, writes `lab_report.md`, signals
+`finished`, puts the player in an unkillable spectator, can move the fight to
+open ground via `plan.site` — and two things I would have asked for and did not
+have to:
+
+- **`_frame_camera()` already frames side-on and above the line between the two
+  starts, looking at the midpoint.** That is a cinematic framing, already written.
+- **`AWAKE_FOR = 1.0e6`** keeps robots awake regardless of camera distance, so
+  distance culling cannot dormant the fight being filmed. Exactly the problem a
+  naive capture tool would hit on day one.
+
+**So the brief is mostly "do not rebuild this" plus four small additions**:
+render to a fixed-size `SubViewport` (the same `root.get_texture()` window bug
+that gave the whole screenshot library 1152×648), write a numbered PNG sequence
+while the fight runs, capture only between first contact and outcome rather than
+through the spawn-standing and `BETWEEN_RUNS` dead time, and three or four
+simultaneous angles instead of one.
+
+**The centrepiece is an event index, and it is nearly free.** `Enemy` already
+carries `combat_triggered`, `went_down`, **`revived`**, `destroyed`,
+`ekilled(victim, by)` and `close_threat_engaged` — all verified by line number.
+Connecting those on spawn and writing `fight_events.txt` beside the frames, with
+**frame numbers as well as timestamps**, converts footage triage from scrubbing
+minutes of robots walking into cutting straight to frame 198. Said in the brief
+that if only one thing gets built, build this — because the Mechanic revive is
+the most wanted clip in the project and the index is what finds it.
+
+Also included: acceptance criteria, an explicit scope guard (no video encoding —
+ffmpeg is not on this machine; no editing; no realtime work; no touching scoring
+or the analytics hooks), and five open questions with marketing's answers offered
+to be overruled.
+
+**And a warning about myself, in the brief.** Section 8 records that the last
+brief this lane sent was followed exactly and still produced unusable images —
+resolution not stated as non-negotiable, lighting left as "as authored" and
+returned as bright midday, occlusion and whether the action was *happening* left
+to inference. So this brief states its non-negotiables flatly instead. Putting
+that in the document the implementer reads seemed more useful than keeping it in
+a report they will not.
+
+**Gates.** `check.sh --changed`: **PASS**. Markdown only this pass.
+
+**Needs the human.** Send it. Nothing in it is urgent, and question 5 — whether
+the capture camera should be independent of `world.player` rather than riding
+`_become_ghost()` — is the one where GAMEPLAY knows something marketing does not.
+
+**Blocked / next.** Still waiting on a judgement I cannot make myself: whether the
+`quarter_street_walk` camera move *feels* right at 30 fps. That gates authoring
+moves for the other seven levels.
+
+## 2026-10-13 (third pass) — camera moves at 1920x1080, built and run
+
+**Landed.** Asked how to use AI to pull footage with a day to spend. Investigated
+first, and the investigation changed the answer.
+
+- **`tools/probe_shots_motion.gd`** — new. Renders camera **moves** to a numbered
+  PNG sequence at an exact size.
+- **`docs/marketing/FOOTAGE_DAY.md`** — the day plan.
+- **Ran it.** 270 frames, three sequences, **1920×1080**, 545 MB, in
+  `D:\Godot Games\roboto_shots\motion`. Exit 0.
+
+**The finding that reframes the request.** `tools/probe_shots_*.gd` already holds
+**~107 hand-tuned camera positions** across eight levels — position, look-at and
+FOV, each one a composition somebody already judged worth keeping (37 on
+mutaha_wip alone, 22 on hillfort). **So the job is not "find interesting
+footage", it is "connect positions already catalogued and fix the line throwing
+away the resolution."** That fits in a day; a hunt would not.
+
+**The resolution bug, root-caused.** Every existing shot script ends with
+`root.get_texture().get_image().save_png(...)`. `root` is the game **window**, so
+output is whatever size the window happened to be — which is exactly why the
+whole set came back **1152×648**, below Steam's 1920×1080 floor. The new script
+renders into a `SubViewport` sized explicitly, and the frames came out 1920×1080,
+verified by reading a file's dimensions rather than trusting the setting.
+**Applying the same four lines to the existing scripts regenerates the entire
+still library at proper resolution** — probably the highest-value hour available.
+
+**Checked a frame.** `quarter_street_walk/0070.png` is footage-grade and
+noticeably **cleaner than the earlier `mutaha_wip_14_quarter_street.png`**, which
+carried heavy grain — that grain looks like an artefact of the low-res window
+capture rather than a deliberate post effect. Worth the human confirming, since
+if the grain *was* wanted it is now absent.
+
+**What AI is and is not good for here**, stated in the doc because it decides how
+the day gets spent. Useful: writing the tools, authoring moves at volume, and
+**visual triage** — rendering 200–400 candidates, tiling them into contact sheets
+and shortlisting, which is the one job where seeing images at throughput genuinely
+beats a human's afternoon. Not useful: I cannot watch video, cannot judge whether
+a move *feels* right or a fight is exciting, cannot edit or play. And rendering is
+wall-clock, not capacity — agent budget does not make the GPU faster.
+
+**Named the highest-value unexploited asset:** the Laboratory. `Managers/lab.gd`
+already runs AI-vs-AI squad fights and GDD §8 calls it "the most under-used thing
+in the repo". A camera parked in the arena gives real combat footage — robots
+advancing, engaging, going down — with nobody playing. That is the footage
+otherwise hardest to get and the machinery exists.
+
+**Gates.** `check.sh --changed`: **PASS** (86 scenes/resources, and the new script
+parses).
+
+**Outside my lane, flagged.** `tools/probe_shots_motion.gd` is the third file this
+lane has touched outside `docs/marketing/**`. It follows the established
+`probe_shots_*` convention, which the board's own backlog already lists as
+untracked scratch. If it proves useful it should be folded into a real tool rather
+than left as another probe.
+
+**Needs the human.**
+
+1. **Import `motion/quarter_street_walk` as an image sequence at 30fps** and say
+   whether the move *feels* right — speed, easing, length. I cannot judge motion
+   and that is the one thing blocking more of them.
+2. **Was the grain on the old shots wanted?** It is gone at 1920×1080.
+3. If the move reads well, say so and I will author moves for the other seven
+   levels from their catalogued positions in one pass.
+
+**Blocked / next.** The Laboratory capture script is the next thing worth
+building, and it is the only route to combat footage without playing. Still
+unchanged: the Mechanic revive remains the single most valuable capture and there
+is nothing to cut the gallery GIF from.
+
+## 2026-10-13 (second pass) — the video workflow, and the format contradiction
+
+**Landed.** `docs/marketing/VIDEO.md` — a production pipeline for someone who has
+never made video, wants YouTube Shorts, admires Ludeon's devlogs, and will write
+and narrate.
+
+**The contradiction is the whole answer.** Ludeon-style devlogs are long, calm and
+reasoning-led; Shorts are sixty seconds, hook-first, one idea. **Both were named
+and they are opposite formats.** Resolved by not blending them: the **written post
+is the artefact**, the **Short is the advert for it**, and an optional long
+narrated cut comes later if it turns out to be enjoyable. Blended, you get a post
+that reads like an advert and a video that drags.
+
+**Reversed my own earlier position, with the reason.** `RUNWAY.md` §3 argued
+against short-form for this game and that argument stands **for gameplay
+footage** — wide game, crops badly, over-supplied category. **Devlog Shorts are a
+different product**: a gameplay Short says "look how good this is" and loses to
+every shooter ever posted; a devlog Short says "here is a surprising thing that
+happened" and competes with almost nothing. The culling bug is interesting
+whether or not the game looks good, which is the entire reason this works.
+
+**The layout answer to the wide-game problem: do not crop, letterbox.** 16:9
+footage in a band across a 1080×1920 canvas on the game's near-black, title above,
+burned captions below. One capture serves both the Short and the long cut, the
+spatial relationships survive, and the title has somewhere to live for the
+majority who watch muted.
+
+**A caption insight worth keeping:** because the VO is *read from a script*,
+auto-captions come out near-perfect — speech recognition fails on improvised
+speech, not clear reading. So no subtitle typing; generate, fix four proper nouns
+(Mutaha, navmesh, Reclaimer, Godot), done.
+
+**Toolchain, all free:** OBS for capture, Audacity for voice cleanup, **CapCut**
+to start (vertical-native, best auto-captions, easiest) with Resolve as the step
+up. Flagged that CapCut's terms and data handling are worth reading before
+committing.
+
+**Scope of my own role stated plainly**, because it was asked as "a workflow with
+Claude": I can draft the post, convert it to a timed two-column shooting script,
+write the VO lines and on-screen text, produce an `.srt`, and write titles,
+descriptions, tags and the Reddit post. **I cannot capture, record, edit or
+generate footage.** I write, the human shoots and speaks, the editor assembles.
+
+**Delivered a full worked script** for the distance-culling post — nine VO lines,
+~60 s, four clips and two code captures, one session. Chose it over backlog #1
+because **I have real numbers for it** (141 → 22, 25.0 → 7.4 ms) and #1 still
+needs figures pulled out of `tools/bench_block_collision.gd`, which I have not
+opened.
+
+**Corrected an estimate I gave earlier.** I said a devlog was "~20 minutes". That
+was true of a *written* post and is not true of video: **4–5 hours for the first,
+~1.5 once practised.** Said plainly, with "the first one will be bad and take all
+day" as the expected outcome, because an underquoted effort is how a workflow gets
+abandoned after one attempt.
+
+**Also carried forward:** the capture-resolution problem blocks video as well as
+screenshots — 1152×648 letterboxed is a soft band. Same fix as the reshoot.
+
+**Gates.** `check.sh --changed`: **PASS**. Markdown only.
+
+**Unverified / hedged.** My characterisation of Ludeon's devlogs is from
+recollection and is written as *qualities to aim at* rather than claims about
+their archive; flagged in the doc as worth the human checking themselves.
+
+**Needs the human.** An offer left open: say the word and I write the full post
+plus shooting script for **"The Warden is cut"** — the easiest first subject,
+since it is short, visual, about taste rather than code, and needs nothing to be
+working. Everything else unchanged.
+
+## 2026-10-13 — devlogs: where to host, with no reach, and the VO offer
+
+**Landed.** `docs/marketing/DEVLOG.md`. Three questions arrived together — where
+to host, what is best with **no social reach**, and *"I like writing and could do
+VO over game clips"* — and the last two changed the answer.
+
+**The reframe, which is the whole thing.** With no following, hosting is storage,
+not a channel. Your own site, your own newsletter, a fresh YouTube channel are
+buckets with no tap. The question is not where to host but **whose audience you
+are borrowing**. So: host free and permanent (itch devlogs for writing, YouTube
+purely as a player), and spend all the effort on **Reddit, starting with
+`r/godot`** — which *is* the audience rather than a route to one, needs no
+following, and is the highest reach-per-hour available from zero.
+
+Ruled out, with reasons: own site (infrastructure for no arrivals), newsletter
+(email is the best channel there is once a list exists, and an empty room
+otherwise), Medium/dev.to (borrowed audience, wrong one), Discord (nobody to put
+in it). Noted that **Steam announcements** become the one real owned channel once
+the page exists, and come free with it.
+
+**The VO offer is the strongest card and it gets one rule.** Writing is the
+expensive part of a narrated devlog for most people and the cheap part for this
+human. The rule: **the developer may narrate, the game never does.** POSITIONING's
+"no human voice, anywhere, ever" is about the game's voice, not the author's —
+process copy has always been allowed to be first-person. So VO on devlog clips
+yes, VO on the trailer never. Written down because it erodes easily once a
+microphone is set up.
+
+Recommended shape: **one piece of thinking, two formats** — write the post,
+publish to itch + `r/godot`, then read it over footage for a 3–5 minute video,
+no face, minimal cuts. And **write three before narrating any**, so the one that
+gets narrated is one that already travelled.
+
+**This reopens a decision the human made deliberately, so it is flagged rather
+than assumed.** Go-dark was chosen on 2026-09-28 because a devlog looked
+expensive — "a website and YouTube and it's a lot". Neither cost is real, and
+they like the writing. Recommendation: **run the devlog, keep the trailer dark** —
+post about how it is made, never about what it will be. Named the honest tension
+rather than pretending there is none.
+
+**Twelve posts pulled out of `git log`**, which is the point — the material
+already exists. Best three to write first: the **measured optimisation that
+bought nothing** (`a1192bc9`/`ee016e49`, with the bench tool committed — almost
+nobody publishes the optimisation that failed), **the test suite that was failing
+silently** (`0d71d345`), and **"The Warden is cut"** (`c7178bf7`). All three are
+about something going wrong or being thrown away, none needs a feature finished,
+and none needs the game judged fun first.
+
+**Gates.** `check.sh --changed`: **PASS**. Markdown only.
+
+**Unverified.** Post #1 needs real numbers pulled out of
+`tools/bench_block_collision.gd` before it is written — I did not open the bench
+and the commit I checked only touched `tools/`, so the figures are not in hand.
+Post #9 (three of four squad orders losing) needs the fix landed first, or it is
+a bug report rather than a story.
+
+**Needs the human.** Confirm the go-dark change, since it is a reversal of their
+own call. Everything else is unchanged: the three page blanks, the reshoot at
+1920×1080, the revive video, rcedit, the WeaponMount mismatch.
+
 ## 2026-10-06 — paste-ready HTML for the itch profile and the project page
 
 **Landed.** Two fragments, both paste-ready, both verified rendering in a browser.

@@ -32,6 +32,19 @@ enum SquadObjective { NONE, ADVANCE, DEFEND, WITHDRAW, ATTACK, FOLLOW, PATROL }
 # True if this squad answers to the player's command layer.
 @export var player_commandable: bool = false
 
+## FRIENDLY, BUT NOT YOURS TO COMMAND (Phase 5).
+##
+## A garrison fights on your side and must never appear in the order UI: it is
+## the ground's own defence, not part of the squad you named, kitted and
+## carried here. §6 — garrisons are free and come with the ground, and the
+## moment they take orders they stop being free and become another screen.
+##
+## This exists because `player_commandable = false` was NOT enough on its own.
+## SquadCommander.refresh_squads() also admits anything _is_friendly_squad()
+## says is non-hostile, which is exactly what a PLAYER-faction garrison is — so
+## four dug-in squads would have turned up in the command wheel.
+@export var autonomous: bool = false
+
 # ── TEAMS ─────────────────────────────────────
 # The player's robots go into the field as one squad per team — the teams made
 # on the squad page (CampaignState.teams) — so each can be sent its own way.

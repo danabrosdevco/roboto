@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://bbq3kctehgcbq"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
 [ext_resource type="PackedScene" path="res://Character/characters/ai/lance.tscn" id="2_scene"]
@@ -27,4 +27,4 @@ drives = true
 equipment_slots = 1
 module_slots = 1
 musters_at_base = true
-required_rank = 0
+unlock_requires = Array[StringName]([])

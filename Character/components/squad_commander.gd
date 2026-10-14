@@ -216,6 +216,10 @@ func refresh_squads() -> void:
 		# stay commandable so its markers keep drawing.
 		if squad.is_lost():
 			continue
+		# AUTONOMOUS WINS OVER FRIENDLY. A garrison is on your side and still
+		# not yours to order — see Squad.autonomous.
+		if squad.autonomous:
+			continue
 		if squad.player_commandable or _is_friendly_squad(squad):
 			commandable_squads.append(squad)
 	selected_index = clampi(selected_index, 0, maxi(0, commandable_squads.size() - 1))
@@ -607,6 +611,10 @@ func _refresh_registry_quietly() -> void:
 		# is_lost(), not is_wiped(). This runs every 2s, so it was the one that
 		# actually dropped your squad mid-fight once the last member went down.
 		if squad.is_lost():
+			continue
+		# AUTONOMOUS WINS OVER FRIENDLY. A garrison is on your side and still
+		# not yours to order — see Squad.autonomous.
+		if squad.autonomous:
 			continue
 		if squad.player_commandable or _is_friendly_squad(squad):
 			commandable_squads.append(squad)

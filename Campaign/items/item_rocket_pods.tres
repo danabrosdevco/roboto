@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3 uid="uid://dixdyibxnhu4"]
 
 [ext_resource type="Script" path="res://Campaign/item_definition.gd" id="1_itemdef"]
 [ext_resource type="PackedScene" path="res://Character/weapon/ai-wep_rocket_pods.tscn" id="2_ai"]
@@ -32,6 +32,6 @@ signal_resistance_bonus = 0.0
 self_revive_seconds = 0.0
 equipment_slot_bonus = 0
 suppressive_fire = false
-required_rank = 0
+unlock_requires = Array[StringName]([])
 requires_chassis = Array[StringName]([&"picket"])
 chassis_whitelist = Array[StringName]([&"picket"])

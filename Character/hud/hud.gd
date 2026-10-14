@@ -228,6 +228,14 @@ func activate_interactible(interactible: Interactible):
 			# The lever knows whether the train has gone yet, and whether there
 			# is anywhere to go. Same parent-asks-the-node route as MISSION.
 			interact_label.text = "F | %s" % _prompt_from(interactible.get_parent(), "Depart")
+		Enums.InteractTypes.RESUPPLY:
+			# A Drayman's chute. The frame knows how many charges are left and
+			# whether it is spent, and it is an ANCESTOR of the Interactible
+			# rather than its parent — the chute rides the articulated arm, so
+			# its parent is the wrist. _prompt_from's direct-parent route, which
+			# MISSION and DEPART use, would ask a bare Node3D and always fall
+			# back.
+			interact_label.text = "F | %s" % _prompt_from(_prompt_owner(interactible), "Resupply")
 		Enums.InteractTypes.OBJECTIVE:
 			# The console doesn't own the objective — InteractObjective holds an
 			# array of them and tags each one on _ready, so ask the tag.
@@ -246,6 +254,19 @@ func activate_interactible(interactible: Interactible):
 		# its width and leaves a gap where an icon should be.
 		interact_texture.texture = null
 		interact_texture.visible = false
+
+
+# The nearest ANCESTOR that can describe itself, for an interactible that is
+# part of something bigger than itself. Returns the direct parent when nothing
+# up the tree answers, so _prompt_from then falls back exactly as it does for a
+# static world object.
+func _prompt_owner(node: Node) -> Node:
+	var up: Node = node.get_parent()
+	while up != null:
+		if up.has_method("get_prompt"):
+			return up
+		up = up.get_parent()
+	return node.get_parent()
 
 
 # Anything that can describe itself does; everything else falls back.

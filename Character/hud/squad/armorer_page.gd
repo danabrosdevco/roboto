@@ -1,5 +1,9 @@
 extends HBoxContainer
 
+## One price table — Campaign/pricing.gd. Preloaded rather than named,
+## because a new `class_name` is not visible until the editor rescans.
+const _Pricing := preload("res://Campaign/pricing.gd")
+
 # ─────────────────────────────────────────────
 # ARMORER — buy and sell gear. The only page with prices on it.
 #
@@ -155,12 +159,16 @@ func _card(item: ItemDefinition) -> Control:
 	title.clip_text = true
 	col.add_child(title)
 	var foot := Kit.hbox(4)
-	var locked: MissionDefinition = ui.locked_by(item.id)
-	if locked != null:
-		foot.add_child(Kit.label("LOCKED", Kit.DIM, Kit.SMALL, true))
+	# NO LOCKED STATE HERE ANY MORE. Lines are opened in the TOOLING
+	# FABRICATOR, and SquadManagerUI.purchasable_items() already skips a shut
+	# line — so the only way a locked thing reaches this card is if you own one
+	# already, which is worth saying plainly rather than offering a price for.
+	if not state.is_unlocked(item.id):
+		foot.add_child(Kit.label("NOT OPEN", Kit.DIM, Kit.SMALL, true))
 		card.modulate = Color(1, 1, 1, 0.55)
-	elif item.in_shop:
-		foot.add_child(Kit.label(str(item.cost), Kit.MONEY if state.can_afford(item.cost) else Kit.PROBLEM,
+	elif _Pricing.for_sale(item):
+		var p: int = _Pricing.item_buy(item)
+		foot.add_child(Kit.label(str(p), Kit.MONEY if state.can_afford(p) else Kit.PROBLEM,
 			Kit.BODY, true))
 	foot.add_child(Kit.fill())
 	var spare := state.armoury.spare(item.id)
@@ -201,8 +209,6 @@ func _build_detail(item: ItemDefinition) -> void:
 				_detail.add_child(Kit.label(effect, Kit.BRIGHT, Kit.HEADING, true))
 	if item.description != "":
 		_detail.add_child(Kit.text_block(item.description, Kit.DIM, Kit.BODY))
-	if item.required_rank > 0:
-		_detail.add_child(Kit.label("NEEDS RANK %d" % item.required_rank, Kit.DIM, Kit.SMALL))
 
 	_detail.add_child(Kit.spacer(0, 4))
 	var spare := state.armoury.spare(item.id)
@@ -213,22 +219,27 @@ func _build_detail(item: ItemDefinition) -> void:
 	_detail.add_child(Kit.text_block(owned, Kit.DIM, Kit.SMALL))
 
 	var buy_row := Kit.hbox(10)
-	var locked: MissionDefinition = ui.locked_by(item.id)
-	if locked != null:
-		buy_row.add_child(Kit.label("LOCKED · CLEAR %s" % locked.display_name.to_upper(), Kit.DIM, Kit.SMALL, true))
-	elif item.in_shop:
-		var affordable := state.can_afford(item.cost)
+	# BUYING COPIES ONLY. Opening a line is the TOOLING FABRICATOR's job, so
+	# this page has two answers rather than four: you can buy it, or you cannot
+	# afford to.
+	if not _Pricing.for_sale(item):
+		buy_row.add_child(Kit.label("NOT ISSUED", Kit.DIM, Kit.SMALL))
+	elif not state.is_unlocked(item.id):
+		buy_row.add_child(Kit.label("OPEN THIS LINE IN TOOLING  %d" % _Pricing.item_unlock(item),
+			Kit.DIM, Kit.SMALL, true))
+	else:
+		var price: int = _Pricing.item_buy(item)
+		var affordable := state.can_afford(price)
 		var buy := Kit.button("BUY", Kit.BRIGHT if affordable else Kit.PROBLEM)
 		buy.disabled = not affordable
 		buy.tooltip_text = "Buy one %s into stores." % item.display_name
 		buy.mouse_entered.connect(ui.hover)
 		buy.pressed.connect(func(): ui.play(&"select" if state.buy_item(item) else &"denied"))
 		buy_row.add_child(buy)
-		buy_row.add_child(Kit.label(str(item.cost), Kit.MONEY, Kit.HEADING, true))
+		buy_row.add_child(Kit.label(str(price), Kit.MONEY, Kit.HEADING, true))
 		if not affordable:
-			buy_row.add_child(Kit.label("NEED %d MORE" % (item.cost - state.available()), Kit.PROBLEM, Kit.SMALL))
-	else:
-		buy_row.add_child(Kit.label("NO LONGER SOLD", Kit.DIM, Kit.SMALL))
+			buy_row.add_child(Kit.label("NEED %d MORE" % (price - state.available()),
+				Kit.PROBLEM, Kit.SMALL))
 	_detail.add_child(buy_row)
 	if spare > 0:
 		# Buying and fitting are on different pages; this is the way between

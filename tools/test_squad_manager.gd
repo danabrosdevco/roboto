@@ -244,6 +244,9 @@ func _run() -> void:
 		"%d -> %d, expected +%d" % [before, state.available(), expect_back])
 
 	# The opt-in path, so turning allow_rebuild back on is covered too.
+	# OPEN THE LINE FIRST (Phase 3): recruit() refuses a chassis whose line is
+	# shut, and these setups predate that rule.
+	state.grant_unlock(&"soldier")
 	var wreck2 := state.recruit(state.catalogue.chassis_def(&"soldier"))
 	if wreck2 != null:
 		wreck2.status = SoldierRecord.Status.DESTROYED

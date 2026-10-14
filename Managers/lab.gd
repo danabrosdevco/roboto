@@ -45,6 +45,9 @@ signal finished(report_path: String)
 
 ## A LabPlan. Untyped on purpose — see the header.
 var plan = null
+## FALSE puts the player in the fight instead of above it. Measurement runs
+## leave this true; the sim arena's LEAD button turns it off.
+var spectate: bool = true
 var world: World = null
 var recorder: Node = null
 
@@ -74,7 +77,11 @@ func run() -> void:
 		recorder.recorded.connect(_on_recorded)
 	if _level == null:
 		await _enter_arena()
-	_become_ghost()
+	# SPECTATE OR LEAD. A measurement run is always watched — the player must
+	# not be able to affect the numbers — but the sim arena offers the same
+	# matchup as something you can fight in. See sim_arena_ui.gd.
+	if spectate:
+		_become_ghost()
 	_build_hud()
 	_hud_layer.visible = true
 	Engine.time_scale = clampf(float(plan.speed), 0.5, 4.0)

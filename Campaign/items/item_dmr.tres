@@ -31,5 +31,4 @@ signal_bonus = 0.0
 sensor_bonus = 0.0
 signal_resistance_bonus = 0.0
 self_revive_seconds = 0.0
-required_rank = 1
 chassis_whitelist = Array[StringName]([])

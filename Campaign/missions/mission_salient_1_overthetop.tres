@@ -5,12 +5,12 @@
 [ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="3_stwy5"]
 [ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="4_syjgu"]
 [ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="5_lqsvf"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="6_1bdoy"]
+[ext_resource type="Resource" uid="uid://cmssop3mmaqpv" path="res://Campaign/chassis/chassis_mechanic.tres" id="6_1bdoy"]
 [ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="7_bmg7k"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="8_a8eba"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_bulwark.tres" id="9_hme47"]
+[ext_resource type="Resource" uid="uid://dfb0r1gpfovj3" path="res://Campaign/chassis/chassis_rover_gl.tres" id="8_a8eba"]
+[ext_resource type="Resource" uid="uid://1r4qf1a7xbwo" path="res://Campaign/chassis/chassis_bulwark.tres" id="9_hme47"]
 [ext_resource type="Resource" uid="uid://daikhvrvnhg7g" path="res://Campaign/chassis/chassis_walker.tres" id="10_i8sjp"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mortar_track.tres" id="11_vwp38"]
+[ext_resource type="Resource" uid="uid://6wjqh3ttofnc" path="res://Campaign/chassis/chassis_mortar_track.tres" id="11_vwp38"]
 [ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="12_emqi0"]
 [ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="13_q7uw1"]
 [ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="14_4qji0"]
@@ -600,7 +600,7 @@ wake_after_seconds = 660.0
 [resource]
 script = ExtResource("16_2daps")
 id = &"salient_1_overthetop"
-display_name = "Over The Top"
+display_name = "Trenchline"
 briefing = "The salient has been held for nine weeks and shelled for six. Four lines, dug in depth, with the tubes that have been ranging on us sat behind the last of them.
 
 There is no flank. The ground is nine hundred metres wide and every metre of it is observed. You will go up the middle, you will take the lines in order, and you will do it with whatever you still have when you get there.
@@ -616,4 +616,7 @@ compute_reward = 4
 unlocks = Array[StringName]([])
 squad_size = -1
 repeatable = true
-requires = Array[StringName]([])
+defence = false
+sim = false
+garrison_posts = Array[StringName]([])
+requires = Array[StringName]([&"basin_1_anchor"])

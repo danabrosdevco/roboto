@@ -34,6 +34,21 @@ const _KillKinds := preload("res://Campaign/kill_kinds.gd")
 # Every item, module and chassis in the game. Handed to CampaignState so records
 # can derive their stats, and read by the squad manager UI and the spawner.
 @export var catalogue: ItemCatalogue
+# EVERY PLACE ON THE BOARD, and what each one pays. Handed to CampaignState the
+# same way the item catalogue is. Typed Resource rather than LocationCatalogue
+# because a new `class_name` is not visible to another script until the editor
+# rescans and this project cannot run --import.
+#
+# DEFAULTED WITH A preload RATHER THAN WIRED IN THE SCENE. Env/world.tscn has
+# no stored value for a property that did not exist when it was written, so the
+# script default is what applies — which is the one case where "scene values
+# beat script defaults" does not bite. Setting it in the inspector still wins,
+# and should, once there is a reason to point a campaign at a different board.
+@export var locations: Resource = preload("res://Campaign/location_catalogue.tres")
+
+## The other side's turn. Preloaded rather than named, because a new `class_name`
+## is not visible until the editor rescans.
+const _EnemyTurn := preload("res://Campaign/enemy_turn.gd")
 
 # ── DEV: launching a mission level directly ───
 # Running valley_level.tscn (or world.tscn pointed at it) skips the base, so
@@ -166,6 +181,7 @@ func _ready() -> void:
 	# active_slot stays empty, nothing is written, and START replaces it.
 	state = CampaignState.new()
 	state.catalogue = catalogue
+	state.locations = locations
 	# NOWHERE TO SAVE. Not a default, not the legacy path — nowhere. See
 	# CampaignState.save_to_disk: anything that writes this campaign would be
 	# writing over a real one.
@@ -338,6 +354,19 @@ func _seed_new_campaign() -> void:
 		state.player_record.display_name = CampaignState.PLAYER_DEFAULT_NAME
 		state.player_record.set_chassis(player_frame, catalogue)
 
+	# ── WHAT A NEW CAMPAIGN STARTS WITH OPEN (Phase 3) ──────────────────
+	# Lines are bought now, so a fresh campaign that had none open could not
+	# build a single robot or fit a single thing. What you are ISSUED is open
+	# for free: the frame you start on, the rifle you start with, and whatever
+	# is in stores. The Ancient Rifle is band ISSUED and is open anyway — this
+	# covers it twice rather than relying on the band staying that way.
+	if player_frame != null:
+		state.grant_unlock(player_frame.id)
+	if starting_weapon_id != &"":
+		state.grant_unlock(starting_weapon_id)
+	for item_id in starting_stock:
+		state.grant_unlock(item_id)
+
 	# Stores first, then issue each soldier their weapon out of it.
 	for item_id in starting_stock:
 		state.armoury.add(item_id)
@@ -414,6 +443,7 @@ func new_profile(profile_name: String, squad_name: String = "", player_name: Str
 		state = CampaignState.new()
 	state.restore_from(CampaignState.new().to_dict())
 	state.catalogue = catalogue
+	state.locations = locations
 	state.save_path = _SaveSlots.path_for(id)
 	state.profile_name = wanted
 	state.created_utc = Time.get_datetime_string_from_system(true)
@@ -455,6 +485,7 @@ func load_profile(id: String) -> bool:
 		state = CampaignState.new()
 	state.restore_from(data)
 	state.catalogue = catalogue
+	state.locations = locations
 	state.save_path = _SaveSlots.path_for(id)
 	_adopt_state(id)
 	return true
@@ -519,6 +550,15 @@ func _adopt_state(id: String) -> void:
 # delete user://campaign.json by hand.
 func reset_campaign() -> void:
 	state = CampaignState.new()
+	# THE TWO CATALOGUES, same as the other two paths that build a state
+	# (the scratch campaign in _ready and load_profile). A bare CampaignState
+	# has neither, and NOTHING complains: state.locations is null, so every
+	# `if state.locations != null` guard in this file quietly takes the other
+	# branch and the whole territory layer vanishes — no site ownership, no
+	# per-turn income, no defences, every board figure 0. Only tools call this,
+	# and four of them were testing against that dead layer without knowing.
+	state.catalogue = catalogue
+	state.locations = locations
 	_seed_new_campaign()
 	current_mission = null
 	in_mission = false
@@ -782,6 +822,23 @@ func available_missions() -> Array[MissionDefinition]:
 	# pause menu, and neither should silently turn the other off.
 	var all_open: bool = unlock_all_missions or _debug_switch("debug.unlock_all_missions")
 	for m in missions:
+		# A DEFENCE IS NOT A MISSION YOU CHOOSE TO RUN (Phase 6.2).
+		#
+		# It is an answer to a raid that is in doubt, and it exists only while
+		# that raid is waiting. Offering it from the board whenever you fancied
+		# one would make losing ground impossible: you could simply defend a
+		# site nobody was attacking, forever, for free.
+		#
+		# BEFORE the all_open branch, because the DEBUG switch opens the
+		# LADDER — it is not meant to conjure an attack that is not happening.
+		if m != null and m.defence:
+			if state == null or state.under_attack == &"":
+				continue
+			var site_d = state.locations.for_mission(m.id) if state.locations != null else null
+			if site_d == null or site_d.id != state.under_attack:
+				continue
+			out.append(m)
+			continue
 		if all_open or (state != null and state.campaign_won):
 			# Both filters skipped, not just the gate: dropping only `requires`
 			# would still retire each non-repeatable mission the moment you
@@ -1062,37 +1119,42 @@ func _debug_switch(key: String) -> bool:
 	return bool(Settings.get_value(key))
 
 
-## The operation that unlocks `id` (an item or a frame) while it is still
-## locked; null when it isn't locked. Only what an operation lists in its
-## `unlocks` is ever locked: everything else is simply available.
-func locked_by(id: StringName) -> MissionDefinition:
-	if state == null or id == &"" or state.unlocked.has(id):
-		return null
-	# THE ONE GATE, so the DEBUG switch only has to open this. The armourer, the
-	# factory, the squad manager and the chassis holograms all ask this same
-	# question, so opening it here opens weapons, frames, equipment and modules
-	# together and nothing had to learn about the switch.
-	#
-	# `in_shop = false` is NOT affected and must not be: that is a thing taken
-	# out of the player's game (the shotgun, the pistol), not a thing they have
-	# yet to earn.
+## IS THIS LINE STILL SHUT? (Phase 3.6)
+##
+## This replaces `locked_by()`, which answered "which OPERATION unlocks this"
+## and returned the mission. Operations no longer hand out kit: you open a line
+## by paying for it in the fabrication car, so the question has no mission in
+## it any more and the answer is a plain bool.
+##
+## STILL THE ONE GATE. The armourer, the factory, the squad manager and the
+## chassis holograms all ask this same question, so the DEBUG switch only has
+## to open it here and weapons, frames, equipment and modules open together.
+##
+## `in_shop = false` is NOT affected and must not be: that is a thing taken out
+## of the player's game, not a thing they have yet to buy.
+func is_locked(id: StringName) -> bool:
+	if state == null or id == &"":
+		return false   # no campaign to ask; nothing is gated in a stand-in
+	if state.is_unlocked(id):
+		return false
 	if _debug_switch("debug.unlock_all_gear"):
-		return null
-	for m in missions:
-		if m != null and m.unlocks.has(id):
-			return m
-	return null
+		return false
+	return true
 
 
-# A save from before an operation unlocked something has cleared it without
-# being given it. Hand those over quietly on load (loading must not save).
+# RETIRED WITH mission.unlocks (Phase 3.6).
+#
+# This used to hand over the kit an operation listed, to a save that had
+# cleared it before the list existed. Operations no longer grant anything —
+# lines are bought in the fabrication car — so there is nothing owed.
+#
+# `MissionDefinition.unlocks` is still authored on the twelve missions and is
+# deliberately left there rather than stripped out of authored resources: it
+# records what the old progression intended, and nothing reads it. If the
+# design ever wants operations to OPEN a line for free rather than gate it,
+# state.grant_unlock() is the one call that would do it.
 func _grant_owed_unlocks() -> void:
-	for m in missions:
-		if m == null or not state.completed_missions.has(m.id):
-			continue
-		for u in m.unlocks:
-			if not state.unlocked.has(u):
-				state.unlocked.append(u)
+	pass
 
 
 # Pulls the live player body's condition onto their record.
@@ -1249,9 +1311,10 @@ func extract(success: bool = true) -> Dictionary:
 	# standing next to four dented squadmates.
 	_write_back_player()
 
-	# Veterancy. add_xp(), rank, rank_title() and every required_rank gate have
-	# been implemented all along with NOTHING calling add_xp — so rank was
-	# permanently 0 and every gate permanently shut. This is the missing call.
+	# Veterancy. add_xp(), rank and rank_title() were implemented all along
+	# with NOTHING calling add_xp, so rank was permanently 0. This is the
+	# missing call. The rank GATES it used to open are gone (Phase 3.7) —
+	# rank still drives stats, it just no longer locks kit or frames.
 	result["ranked_up"] = _award_experience(success)
 
 	# Bonus objectives pay out whether or not the mission itself succeeded —
@@ -1289,12 +1352,108 @@ func extract(success: bool = true) -> Dictionary:
 		# the arena a third time must not append a duplicate id, but it does
 		# need to bump the counter the terminal reads.
 		state.record_clear(current_mission.id)
-		var newly: Array[StringName] = []
-		for u in current_mission.unlocks:
-			if not state.unlocked.has(u):
-				state.unlocked.append(u)
-				newly.append(u)
-		result["unlocked"] = newly
+		# ── TERRITORY ────────────────────────────────────────────────────
+		# A TURN IS AN OPERATION (§5), and clearing one takes the ground it
+		# was fought over (§2).
+		#
+		# ADVANCE FIRST, THEN CLAIM. Income is paid for what you held going
+		# INTO the operation, so a site taken now starts paying from the next
+		# one — "holding a site for three turns pays three times", not four.
+		# Its COMPUTE is immediate, because site_compute() is derived from
+		# what you hold rather than banked on capture.
+		#
+		# ON SUCCESS ONLY, deliberately. A failed run is VOIDED back to the
+		# dictionary taken at deployment (see the note further down), so a
+		# turn burned on a loss would be rolled back anyway — doing it here
+		# keeps the two from disagreeing.
+		# ── A SIM ARENA COSTS NOTHING AND CHANGES NOTHING (Phase 6.4) ─
+		#
+		# A free action: no turn, no pay, no ground, and the other side does
+		# not get a move. Practising must never cost you the campaign — and now
+		# that a turn IS an operation, everything below would have made it do
+		# exactly that.
+		#
+		# The CLEAR is still recorded above, because the `requires` ladder runs
+		# through the arenas and they are still the thing that opens Hillfort.
+		if current_mission.sim:
+			result["sim"] = true
+			result["turn"] = state.turn
+		else:
+			# ANSWERING THE RAID CLEARS IT. Playing the defence IS the answer, so
+			# the pending flag goes whatever the result was — winning keeps the
+			# ground, losing it is handled by the site changing hands below.
+			if current_mission.defence and state.under_attack != &"":
+				var answered = state.locations.for_mission(current_mission.id) if state.locations != null else null
+				if answered != null and answered.id == state.under_attack:
+					state.under_attack = &""
+					state.under_attack_turn = -1
+					result["answered"] = String(answered.id)
+	
+			var before_income := state.income_per_turn()
+	
+			state.advance_turn()
+			result["turn"] = state.turn
+			result["income"] = before_income
+	
+			# ── A PENDING DEFENCE YOU DID NOT ANSWER (Phase 6.2) ─────────
+			#
+			# A raid too close to call does not take the site — it offers you the
+			# fight. Doing something ELSE is how you decline, and declining is a
+			# real choice with a real cost: it settles on paper, seeded, so you
+			# cannot reroll a bad answer by walking away twice.
+			#
+			# BEFORE the enemy's next move, so one raid is resolved before another
+			# can land.
+			if state.under_attack != &"" and state.under_attack != current_mission.id:
+				var ua: StringName = state.under_attack
+				var settled: int = _EnemyTurn.settle(state, ua, _act())
+				state.under_attack = &""
+				state.under_attack_turn = -1
+				result["declined_site"] = String(ua)
+				result["declined_outcome"] = settled
+				print("[Campaign] declined the defence of %s: %s" % [ua,
+					"held anyway" if settled == _EnemyTurn.Outcome.HELD else "lost"])
+	
+			# ── THE OTHER SIDE PLAYS TOO (Phase 6.1) ────────────────────
+			#
+			# A turn is an operation, so this is the only place the other side
+			# moves. Every 2-3 turns it takes a site on your frontier — and a site
+			# can only be attacked if it borders ground you do not hold, which is
+			# the whole defensive game (§6).
+			var enemy: Dictionary = _EnemyTurn.play(state, _act())
+			result["enemy"] = enemy
+			match int(enemy["outcome"]):
+				_EnemyTurn.Outcome.LOST:
+					print("[Campaign] turn %d: they took %s" % [state.turn, enemy["site"]])
+				_EnemyTurn.Outcome.IN_DOUBT:
+					# NOT TAKEN. Held open for the player to answer — the ops table
+					# marks it and offers the defence.
+					state.under_attack = enemy["site"]
+					state.under_attack_turn = state.turn
+					print("[Campaign] turn %d: %s is under attack and in doubt" % [
+						state.turn, enemy["site"]])
+				_EnemyTurn.Outcome.HELD:
+					print("[Campaign] turn %d: the garrison at %s held" % [state.turn, enemy["site"]])
+			var site = state.locations.for_mission(current_mission.id) if state.locations != null else null
+			if site != null:
+				var was := state.site_owner(site.id)
+				state.set_site_owner(site.id, Enums.Factions.PLAYER)
+				if was != int(Enums.Factions.PLAYER):
+					result["site_taken"] = site.display_name
+					result["site_compute"] = site.compute
+			else:
+				# Not every operation is a place: the three Sim Arenas are a
+				# practice track and deliberately off the adjacency graph (§15),
+				# asked by the `sim` flag rather than by an id prefix.
+				# Silent for those, loud for anything else, because an operation
+				# with no location is a site that can never be held or paid for.
+				if not current_mission.sim:
+					push_warning("Campaign: operation '%s' has no Location, so clearing it takes no ground and pays nothing per turn." % current_mission.id)
+		# NOTHING IS UNLOCKED BY CLEARING AN OPERATION ANY MORE (Phase 3.6).
+		# Kit is bought in the fabrication car. The debrief still carries the
+		# key so the screen does not have to learn a new shape; it is always
+		# empty, and the row it drives simply never appears.
+		result["unlocked"] = [] as Array[StringName]
 		# THE END. Clearing the last operation wins the campaign, once: the
 		# HUD follows MISSION COMPLETE with YOU WON, and from then on every
 		# operation is open at the terminal to replay in any order.
@@ -1402,3 +1561,12 @@ func _weighted(tally: Dictionary, rate: int) -> int:
 		var supply: int = frame.supply if frame != null else 1
 		total += rate * maxi(supply, 1) * int(tally[kind])
 	return total
+
+
+## WHICH ACT THE CAMPAIGN IS IN. Phase 7 gives this a real source; until then
+## everything that asks gets 1, which is the Act 1 experience the shipped maps
+## were authored as.
+func _act() -> int:
+	if state != null and state.has_method("act"):
+		return int(state.act())
+	return 1

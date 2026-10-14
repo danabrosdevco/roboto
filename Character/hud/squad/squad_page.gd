@@ -1090,8 +1090,6 @@ func _never_fits(record: SoldierRecord, item: ItemDefinition) -> bool:
 # Why an item in stores cannot go on this robot, in words; "" if it can.
 func _cannot_fit(record: SoldierRecord, item: ItemDefinition) -> String:
 	var state: CampaignState = ui.state
-	if not state.is_player_record(record) and record.rank < item.required_rank:
-		return "needs rank %d" % item.required_rank
 	if state.is_player_record(record) and not item.fits_player():
 		return "squadmates only"
 	if not state.is_player_record(record) and not item.fits_ai():
