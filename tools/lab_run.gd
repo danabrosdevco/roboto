@@ -28,11 +28,23 @@ extends SceneTree
 
 const PLAN_DIR := "res://Campaign/lab/plans"
 ## Wall-clock ceiling. A plan that has not finished by now is wedged, not slow,
+const _Analytics := preload("res://Managers/analytics.gd")
+
 ## and saying so beats hanging until somebody notices.
 const PATIENCE := 2400.0
 
 
 func _init() -> void:
+	# THE SCORES COME FROM ANALYTICS, AND ANALYTICS TURNS ITSELF OFF UNDER A
+	# --script HARNESS so test suites do not write into the playtest folder
+	# (analytics.gd:_should_record). This launcher IS that harness, so without
+	# this line every damage, shot, kill and accuracy column comes back ZERO
+	# while the fights themselves run perfectly — which is exactly how a lab
+	# report can look complete and mean nothing. tools/lab_walker.gd and
+	# lab_armour.gd already set it; lab_run.gd and lab_watch.gd did not, so
+	# every table either of them has ever printed had blank damage columns.
+	# Master points the folder at user://lab in lab_mode.
+	_Analytics.force_enable = true
 	Settings.path = "user://settings_probe.json"
 	var args := OS.get_cmdline_user_args()
 	if args.is_empty():
