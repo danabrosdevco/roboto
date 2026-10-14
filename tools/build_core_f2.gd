@@ -29,8 +29,15 @@ extends SceneTree
 #
 # Every number below is lifted from tools/concepts_core_f.gd — _raft(), _fin(),
 # _trunk(), _rim(), _conduit() — and from ConceptsCore2's _console/_bands/
-# _risers/_pad/_kerb/_lugs. Nothing is re-tuned. That file stays the authority;
-# this one is the same shape rebuilt out of MeshInstance3D so it can ship.
+# _risers/_pad/_kerb/_lugs. That file was the authority and this one was the same
+# shape rebuilt out of MeshInstance3D so it could ship.
+#
+# NO LONGER TRUE OF THE MEMBERS, as of the 2026-10-13 review. The sizes that
+# fix the proportions and the whole palette are set HERE now and the concept
+# file does not have them: the fin section, the corner posts, the inset body,
+# the course depth, the rack panels and every texture. What is still lifted
+# unchanged is everything the review did not ask about — the raft, the
+# conduits, the corbel, the pad, the lugs and all three overall heights.
 #
 # THE TWO THINGS THAT MAKE THIS CORE WHAT IT IS, and neither may be touched:
 #
@@ -51,11 +58,18 @@ extends SceneTree
 # mesh's material_override. Nothing structural is in that node, so it can never
 # repaint the plant-grey.
 #
-# Paint holds TWENTY meshes, in three groups:
+# Paint holds NINETEEN meshes, in three groups:
 #
 #   RaftLipXNeg / RaftLipXPos / RaftLipZNeg / RaftLipZPos        4   ground ring
 #   ConduitPipeL / ConduitGlandL / ConduitPipeR / ConduitGlandR  4   ground runs
-#   Fin{NE,NW,SE,SW}{Blade,Foot,Head}                           12   full height
+#   Fin{E,W,S,N}{Blade,Head} + Fin{E,W,S}Foot                   11   full height
+#   (the N fin starts above the console bay and so has no foot)
+#
+# THE PAINT GLOWS, which widens that contract: each material has
+# emission_enabled with `emission` set to the same faction colour as
+# `albedo_color`. An owner-colour system that sets albedo_color ALONE will
+# repaint the surface and leave it glowing in the previous owner's colour, so it
+# must set both. See PAINT_GLOW.
 #
 # THIS REPLACES THE FAKE. Env/world_objects/core_signal.gd builds a procedural
 # "DeckCollar" and "ClimbBand" and tints them from HUDPalette, and its own
@@ -117,11 +131,63 @@ extends SceneTree
 
 const OUT_DIR := "res://maps/blocks/compute"
 
-## Plant-grey. Shared read-only — never mutated here, so no duplicate() needed.
-const MAT_CONCRETE := "res://textures/PSX_Textures/concrete_tx_5.tres"
+# ── THE PALETTE, and it is the half of the revision that is not geometry ─────
+#
+# Review, 2026-10-13: "the capture modules are not computery enough. look at the
+# old capture model, with its sleek lines, it looks like a piece of technology,
+# these don't."
+#
+# Measured against the shipped compute_core.map and its neighbours, the gap was
+# never complexity — the old core is 22 brushes. It was TEXTURE. Face counts:
+#
+#   compute_core.map        metal_floor_1 63 · glitch_tx_1 30 · rubber_tsk_1 29
+#   compute_rack_row.map    metal_floor_3 96 · glitch_tx_1 48 · metal_floor_1 35
+#   compute_data_hall.map   metal_floor_3 210 · metal_floor_1 84 · glitch_tx_1 66
+#
+# A QUARTER of the old core's faces are glitch_tx_1 — a green data-noise sheet
+# that is already emissive in its own .tres — and the family's cabinet bodies are
+# metal_floor_3, a perforated rack grille. F2 shipped with NEITHER: a concrete
+# shaft and metal_floor_1 decking, which is the texture set of a transformer
+# yard. That is most of why it read as plant.
+#
+## Cabinet body. The perforated grille every shipped rack in maps/blocks/compute
+## is skinned in, so the core is made of the same stuff as the racks around it.
+const MAT_RACK := "res://textures/PSX_Textures/metal_floor_3.tres"
+## Frame members — posts, courses, corbel. Ribbed metal, reads as extrusion.
+const MAT_FRAME := "res://textures/PSX_Textures/metal_wall_4.tres"
+## THE SCREEN. Already emission_enabled with a green at 0.9 energy in its own
+## .tres, so every face wearing it lights itself. This is the one the old core
+## carries on a quarter of its faces and F2 carried on none.
+const MAT_SCREEN := "res://textures/PSX_Textures/glitch_tx_1.tres"
+## Decking and the raft plate. Shared read-only — never mutated here.
 const MAT_METAL := "res://textures/PSX_Textures/metal_floor_1.tres"
+## The four footings the raft stands on, and the only poured thing left.
+const MAT_CONCRETE := "res://textures/PSX_Textures/concrete_tx_5.tres"
 ## The painted pieces get a fresh StandardMaterial3D each, built on this.
 const PAINT_TEX := "res://textures/PSX_Textures/metal_wall_3.png"
+
+## EMISSION ENERGY ON THE FACTION PAINT. Review: "the faction color needs to be
+## bright/glowing not flat."
+##
+## The pattern is Env/world_objects/core_signal.gd:181-188 — emission_enabled,
+## emission set to the faction colour, an energy multiplier. What is NOT copied
+## from there is SHADING_MODE_UNSHADED: that file applies it to thin open tubes
+## which are pure signal, whereas these are 19 structural-looking blades, lips
+## and pipes whose form has to survive. Unshaded flattens a blade into a sticker.
+##
+## 0.95 WAS PICKED BY PHOTOGRAPHING IT, not reasoned to, and the number is low
+## for a reason worth writing down. FAC_ADVERSARY is Color(0.91, 0.63, 0.23) —
+## its red channel is ALREADY at 0.91, so emission energy multiplies straight
+## into clipping rather than into brightness. 1.3 was the first value tried and
+## in tools/mockup_shots.gd it came back pale: red and green both pinned and the
+## amber went towards white, which is the colour the glow existed to show. 0.6
+## held the texture but still read as paint. At 0.95 the raft lip and the fins
+## are unmistakably lit strips against the grey, and a zoom still reads amber.
+##
+## IT DOES NOT BLOOM, because the mockup level's WorldEnvironment has no glow
+## pass — so "glowing" here is self-illumination, not a halo, and the value that
+## looks right is therefore much lower than one tuned against a bloom.
+const PAINT_GLOW := 0.95
 
 const _Palette := preload("res://Character/hud/hud_palette.gd")
 
@@ -136,8 +202,26 @@ const LUG_H := 0.26         ## ConceptsCore2.LUG_H
 const DECK_T := 0.34        ## ConceptsCore2.DECK_T
 const KERB_H := 0.15        ## ConceptsCore2.KERB_H
 
-const FIN_T := 0.2          ## ConceptsCoreF.F2_FIN_T
-const FIN_W := 0.62         ## ConceptsCoreF.F2_FIN_W
+# SLIMMED, 2026-10-13. The concept's blade was 0.20 x 0.62 and at that section
+# it is a buttress, not a mullion. The old core's verticals are slim posts and
+# that is the whole of its "sleek lines"; nothing was added to it to get them.
+const FIN_T := 0.14         ## ConceptsCoreF.F2_FIN_T, was 0.20
+const FIN_W := 0.5          ## ConceptsCoreF.F2_FIN_W, was 0.62
+
+## ── THE RACK FRAME, all three numbers new in the 2026-10-13 revision ────────
+## Corner post section. Slim, square, full shaft height: four vertical lines in
+## every elevation, which is the thing the old core has and F2 did not.
+const POST := 0.18
+## How far the cabinet body is set back inside the frame plane. The posts and
+## the fins keep the silhouette at `sw`; the body falls away behind them, so
+## every face has a shadow line down each edge and a recess to put a screen in.
+const INSET := 0.12
+## Shelf course depth. Was a 0.14 band standing 0.08 proud; a rack's shelves are
+## SHALLOWER AND MORE FREQUENT than that, and reading as plant was the cost.
+const COURSE_H := 0.09
+## Rack panel thickness. Sits on the inset body, so its face is still 0.08
+## behind the frame plane and it reads as something set INTO the cabinet.
+const PANEL_T := 0.06
 
 ## shaft width, overall height, output filename. ConceptsCoreF.SHAFT and
 ## ConceptsCore2.H_SMALL / H_MEDIUM / H_LARGE.
@@ -149,7 +233,11 @@ const SIZES := [
 
 var _concrete: Material
 var _metal: Material
+var _rack: Material
+var _frame: Material
+var _screen: Material
 var _paint_tex: Texture2D
+var _screen_faces: int      ## how much of the model wears glitch_tx_1
 var _root: Node3D
 var _structure: Node3D
 var _paint: Node3D
@@ -159,8 +247,12 @@ var _hulls: Array[Node3D]   ## pieces that also get a collision box
 func _init() -> void:
 	_concrete = load(MAT_CONCRETE)
 	_metal = load(MAT_METAL)
+	_rack = load(MAT_RACK)
+	_frame = load(MAT_FRAME)
+	_screen = load(MAT_SCREEN)
 	_paint_tex = load(PAINT_TEX)
-	if _concrete == null or _metal == null or _paint_tex == null:
+	if (_concrete == null or _metal == null or _rack == null or _frame == null
+			or _screen == null or _paint_tex == null):
 		printerr("build_core_f2: a material failed to load, so every piece would be bare")
 		quit(1)
 		return
@@ -168,6 +260,7 @@ func _init() -> void:
 		var sw: float = spec[0]
 		var target: float = spec[1]
 		var path: String = "%s/%s" % [OUT_DIR, spec[2]]
+		_screen_faces = 0
 		var node := _build(sw, target)
 		var bb := _bounds(node, node)
 		var packed := PackedScene.new()
@@ -184,8 +277,14 @@ func _init() -> void:
 		print("build_core_f2: wrote %s" % path)
 		print("    measured  W %.2f  H %.2f  L %.2f   (origin at %.2f, %.2f, %.2f)"
 				% [bb.size.x, bb.size.y, bb.size.z, bb.position.x, bb.position.y, bb.position.z])
+		var meshes: int = _count_meshes(node)
 		print("    footprint %.2f square · paint pieces %d · meshes %d"
-				% [_raft_half(sw) * 2.0, _paint.get_child_count(), _count_meshes(node)])
+				% [_raft_half(sw) * 2.0, _paint.get_child_count(), meshes])
+		# Every piece here is a box or a short cylinder, so "faces" is 6 a piece
+		# and the ratio is comparable with a .map brush count. The shipped
+		# compute_core.map carries glitch_tx_1 on 30 of its 134 faces: 22%.
+		print("    glitch_tx_1 on %d of %d pieces — %.0f%% of faces (old core 22%%)"
+				% [_screen_faces, meshes, 100.0 * float(_screen_faces) / float(meshes)])
 		node.free()
 	quit(0)
 
@@ -200,7 +299,9 @@ func _init() -> void:
 func _mesh(parent: Node, nm: String, mesh: Mesh, at: Vector3,
 		euler: Vector3 = Vector3.ZERO, mat: Material = null) -> MeshInstance3D:
 	if mat == null:
-		mat = _concrete
+		mat = _rack
+	if mat == _screen:
+		_screen_faces += 1
 	var m := MeshInstance3D.new()
 	m.name = nm
 	m.mesh = mesh
@@ -212,7 +313,8 @@ func _mesh(parent: Node, nm: String, mesh: Mesh, at: Vector3,
 	return m
 
 
-## A structural piece, in plant-grey. `solid` adds a matching collision box.
+## A structural piece. Defaults to the rack body texture; `solid` adds a
+## matching collision box.
 func _part(nm: String, size: Vector3, at: Vector3, euler: Vector3 = Vector3.ZERO,
 		mat: Material = null, solid: bool = false) -> MeshInstance3D:
 	var m := _mesh(_structure, nm, _boxm(size), at, euler, mat)
@@ -238,6 +340,13 @@ func _paint_material() -> StandardMaterial3D:
 	# The colour core_signal.gd starts an unowned core at, so a core dropped in
 	# a level with nothing wired to it already reads as StratCom's.
 	m.albedo_color = _Palette.FAC_ADVERSARY
+	# AND IT GLOWS. Painted amber on a grey machine in a grey level is amber-grey;
+	# the faction has to be findable across a field. core_signal.gd's _emissive()
+	# is the project's pattern and this is it, minus the unshaded mode — see
+	# PAINT_GLOW for why that part does not come across.
+	m.emission_enabled = true
+	m.emission = _Palette.FAC_ADVERSARY
+	m.emission_energy_multiplier = PAINT_GLOW
 	m.metallic_specular = 0.0
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	return m
@@ -308,8 +417,12 @@ func _build(sw: float, target: float) -> Node3D:
 func _raft(sw: float, rw: float) -> void:
 	for sx: float in [-1.0, 1.0]:
 		for sz: float in [-1.0, 1.0]:
+			# The four footings, and the only poured thing left in the model: a
+			# steel raft shimmed onto concrete pads is the reading, and it is
+			# also what keeps one grey material in a model that is otherwise
+			# all equipment.
 			_part("RaftPad%s" % _corner(sx, sz), Vector3(0.52, 0.3, 0.52),
-					Vector3(sx * (rw - 0.42), 0.15, sz * (rw - 0.42)), Vector3.ZERO, _metal)
+					Vector3(sx * (rw - 0.42), 0.15, sz * (rw - 0.42)), Vector3.ZERO, _concrete)
 	_part("RaftPlate", Vector3(rw * 2.0, 0.22, rw * 2.0), Vector3(0, 0.41, 0),
 			Vector3.ZERO, _metal)
 
@@ -376,35 +489,144 @@ func _raft(sw: float, rw: float) -> void:
 func _trunk(sw: float, target: float, neck: float) -> void:
 	if neck - GROUND < 1.2:
 		push_warning("build_core_f2: %.2f m of shaft above the raft, so the console has nowhere to go" % (neck - GROUND))
-	_shaft_with_bay(sw, neck, minf(sw * 0.74, 1.5))
 
-	# Band courses, so a tall box is not one tall box. Spaced at about 2 m,
-	# which is the course height the shipped compute blocks already use.
-	var n: int = maxi(1, int((neck - GROUND) / 2.1))
-	for i in range(1, n):
-		_part("Band%d" % i, Vector3(sw + 0.16, 0.14, sw + 0.16),
-				Vector3(0, GROUND + (neck - GROUND) * float(i) / float(n), 0))
+	# THE CABINET IS NOT THE SILHOUETTE ANY MORE. The body is built INSET on
+	# every side; the four posts and the four fins hold the outline at `sw`, so
+	# the overall box, the collision and the measured bounds are unchanged while
+	# every elevation gains four vertical shadow lines and a recess.
+	var bw: float = sw - INSET * 2.0
+	_shaft_with_bay(bw, neck, minf(bw * 0.74, 1.5))
+	_frame_posts(sw, neck)
+	_courses(sw, neck)
+	_rack_faces(sw, bw, neck)
 
 	# Two cable risers and their tie, up the BACK face. A blank back is the
-	# thing that makes a slab read as a placeholder.
+	# thing that makes a slab read as a placeholder. They run in the CORNER
+	# CHANNELS now — in line with the posts, against the inset body — so they
+	# are cable trunking inside the frame instead of two pipes crossing the vent
+	# panels that the revision put in the middle of that face.
 	var r: float = clampf(sw * 0.06, 0.07, 0.14)
 	var ry1: float = neck - 0.4
 	for sx: float in [-1.0, 1.0]:
 		_mesh(_structure, "Riser%s" % ("R" if sx > 0.0 else "L"),
 				_cylm(r, ry1 - GROUND, 8),
-				Vector3(sx * sw * 0.25, (GROUND + ry1) * 0.5, sw * 0.5 + r),
+				Vector3(sx * (sw * 0.5 - POST * 0.5), (GROUND + ry1) * 0.5, bw * 0.5 + r),
 				Vector3.ZERO, _metal)
-	_part("RiserTie", Vector3(sw * 0.55, r * 2.2, r * 2.2),
-			Vector3(0, ry1, sw * 0.5 + r), Vector3.ZERO, _metal)
+	_part("RiserTie", Vector3(sw - POST, r * 2.2, r * 2.2),
+			Vector3(0, ry1, bw * 0.5 + r), Vector3.ZERO, _frame)
 
 	# The corbel: a slab off the shaft head and a neck up to the cap.
 	var ctop: float = target - LUG_H - DECK_T - 0.2
 	var cw: float = maxf(sw, PAD * 1.5) + 0.1
 	_part("CorbelSlab", Vector3(cw, 0.22, cw), Vector3(0, neck + 0.11, 0),
-			Vector3.ZERO, null, true)
+			Vector3.ZERO, _frame, true)
 	_part("CorbelNeck", Vector3(PAD * 1.6, ctop - neck - 0.22, PAD * 1.6),
-			Vector3(0, (ctop + neck + 0.22) * 0.5, 0), Vector3.ZERO, null, true)
+			Vector3(0, (ctop + neck + 0.22) * 0.5, 0), Vector3.ZERO, _frame, true)
+	# A lit course under the corbel, right round. The corbel is where the eye
+	# stops on a 12 m core and it was a bare grey shelf.
+	# ITS TOP IS BURIED IN THE CORBEL ON PURPOSE. Left a centimetre clear it was
+	# a 3.5 m square emissive TABLE seen from the camera's height, not a reveal;
+	# an emissive box only reads as a line if every face but the edge is covered.
+	_part("CorbelLight", Vector3(cw - 0.16, 0.07, cw - 0.16),
+			Vector3(0, neck - 0.025, 0), Vector3.ZERO, _screen)
 	_pad(target)
+
+
+## FOUR SLIM CORNER POSTS, full shaft height, outer faces flush with `sw`.
+##
+## This is the single change that does most of the work the review asked for.
+## The old core is 22 brushes and gets its "sleek lines" from thin members —
+## slim posts, shallow shelves, an inset cabinet — not from detail. F2 had one
+## chunky box with a band round it, and a box with a band round it is plant.
+func _frame_posts(sw: float, neck: float) -> void:
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			_part("FramePost%s" % _corner(sx, sz),
+					Vector3(POST, neck - GROUND, POST),
+					Vector3(sx * (sw - POST) * 0.5, (neck + GROUND) * 0.5,
+							sz * (sw - POST) * 0.5),
+					Vector3.ZERO, _frame)
+
+
+## SHALLOW SHELF COURSES, and more of them than the band they replace.
+##
+## 0.09 deep standing 0.03 proud of the frame plane, at roughly 1.7 m — the
+## rhythm of a rack, where the old 0.14 band every 2.1 m was the rhythm of a
+## concrete lift. They cross in front of the recessed panels, which is what
+## stops a tall lit slot reading as a stripe.
+##
+## 1.7 AND NOT 1.3, WHICH WAS RENDERED FIRST. At 1.3 the 12.4 m core came back
+## with seven courses and read as a ladder — the shipped core carries TWO across
+## its whole height, and the lesson of this revision is that thin members beat
+## many members. 1.7 gives 2 / 2 / 5 at the three sizes.
+func _courses(sw: float, neck: float) -> void:
+	var h: float = neck - GROUND
+	var n: int = maxi(3, int(h / 1.7))
+	for i in range(1, n):
+		var y: float = GROUND + h * float(i) / float(n)
+		_part("Course%d" % i, Vector3(sw + 0.06, COURSE_H, sw + 0.06),
+				Vector3(0, y, 0), Vector3.ZERO, _frame)
+		# A LIT REVEAL UNDER EACH SHELF, right round. This is the shipped core's
+		# own move — three of its five glitch_tx_1 brushes are 0.25 m bands at
+		# height, not panels — and it is what makes a horizontal read as a
+		# running light rather than a ledge. It stops at the posts, which stand
+		# proud of it, so the line is broken at the corners the way a real one is.
+		_part("CourseLight%d" % i, Vector3(sw - 0.04, 0.07, sw - 0.04),
+				Vector3(0, y - COURSE_H * 0.5 - 0.035, 0), Vector3.ZERO, _screen)
+
+
+## THE RACK FACES — glitch_tx_1 panels in the recess, two to a face.
+##
+## WHERE THE DATA TEXTURE WENT. The shipped core carries glitch_tx_1 on about a
+## quarter of its faces and F2 carried none; this is the bulk of the correction.
+## Each face has two bays, between a corner post and the central fin: a recessed
+## GRILLE panel filling the bay, with a slim LIT STRIP down its inner edge.
+##
+## IT IS A STRIP AND NOT THE WHOLE PANEL, AND THAT WAS RENDERED BOTH WAYS. The
+## first pass put glitch_tx_1 across the entire bay — eight 5 m emissive sheets —
+## and the lit mockup came back as a green lamp with a machine inside it: the
+## emission swamped the texture, so the data noise that was the entire point of
+## the texture was invisible and the panels read as flat paint. The old core
+## never does this. Its glitch brushes are 0.25 m BANDS and one console screen;
+## the glow is in thin lines against dark metal, which is also why it reads as
+## sleek. So: grille where the area is, glitch where the line is.
+##
+## Both sit ON the inset body, so their faces are still 0.04-0.08 m behind the
+## frame plane. A screen flush with the posts would read as a sticker.
+func _rack_faces(sw: float, bw: float, neck: float) -> void:
+	var bay_in: float = FIN_W * 0.5 + 0.05
+	var bay_out: float = sw * 0.5 - POST - 0.05
+	var bay_w: float = bay_out - bay_in
+	if bay_w < 0.12:
+		push_warning("build_core_f2: %.2f m of bay beside the fin at sw %.2f, so the rack faces are a line and the core keeps no data texture at all" % [bay_w, sw])
+		return
+	var lit_w: float = minf(0.1, bay_w * 0.35)
+	for face in [[1.0, 0.0, "E"], [-1.0, 0.0, "W"], [0.0, 1.0, "S"], [0.0, -1.0, "N"]]:
+		var nx: float = face[0]
+		var nz: float = face[1]
+		var tag: String = face[2]
+		var yaw: float = atan2(nx, nz)
+		# -Z is the approach face and its lower 0.9 m is the console bay, so its
+		# panels start above the bay head — same rule the north fin follows.
+		var y0: float = 2.12 if tag == "N" else GROUND + 0.1
+		var y1: float = neck - 0.08
+		if y1 - y0 < 0.3:
+			push_warning("build_core_f2: %.2f m of panel on face %s, so that face stays bare" % [y1 - y0, tag])
+			continue
+		var out_n := Vector3(nx, 0, nz) * (bw * 0.5 + PANEL_T * 0.5 - 0.02)
+		var lit_n := Vector3(nx, 0, nz) * (bw * 0.5 + PANEL_T - 0.02 + 0.02)
+		var tangent := Vector3(nz, 0, -nx)
+		var mid := Vector3(0, (y0 + y1) * 0.5, 0)
+		for side: float in [-1.0, 1.0]:
+			var sfx: String = "A" if side > 0.0 else "B"
+			_mesh(_structure, "RackPanel%s%s" % [tag, sfx],
+					_boxm(Vector3(bay_w, y1 - y0, PANEL_T)),
+					out_n + tangent * (side * (bay_in + bay_w * 0.5)) + mid,
+					Vector3(0, yaw, 0), _rack)
+			_mesh(_structure, "RackLit%s%s" % [tag, sfx],
+					_boxm(Vector3(lit_w, y1 - y0, 0.04)),
+					lit_n + tangent * (side * (bay_in + lit_w * 0.5)) + mid,
+					Vector3(0, yaw, 0), _screen)
 
 
 ## THE SHAFT, as five brushes around the console void.
@@ -419,11 +641,16 @@ func _trunk(sw: float, target: float, neck: float) -> void:
 ## of the slab; reproduced here as a plain box, the centre has to be moved back
 ## by half its depth or it floats a hand's width proud of the bay. That hovering
 ## fault is the one the kit's own note was written about.
+## TAKES THE BODY WIDTH, NOT THE OVERALL WIDTH, since the 2026-10-13 revision:
+## the cabinet is built INSET and the posts and fins carry the outline. The
+## recess depth drops by exactly that inset, so the lit plate, the kick rail and
+## therefore the distance the player's 2 m InteractRaycast has to cover all stay
+## at the world positions the header's arithmetic was done for.
 func _shaft_with_bay(sw: float, neck: float, w: float) -> void:
 	var face: float = -sw * 0.5         # the approach face, -Z
 	var y0 := 1.1                       # recess floor
 	var y1 := 2.0                       # recess head
-	var depth := 0.49                   # how far the recess bites in
+	var depth: float = 0.49 - INSET     # measured from the INSET body face
 	var jamb: float = (sw - w) * 0.5
 	if jamb <= 0.05:
 		push_warning("build_core_f2: %.2f m of jamb beside the console, so the bay cuts the shaft in two" % jamb)
@@ -445,10 +672,14 @@ func _shaft_with_bay(sw: float, neck: float, w: float) -> void:
 	# InteractRaycast is aimed at — and a kick rail at knee height standing
 	# proud of the face, so there is a horizontal saying "stand here" rather
 	# than a hole in a wall.
+	# The plate is glitch_tx_1 now. It was metal_floor_1 — a grey rectangle in a
+	# hole, which is a hatch, not an interface. The texture is emissive in its
+	# own .tres, so the thing the player has to walk up and press is the one lit
+	# object on the approach face.
 	_mesh(_structure, "ConsolePlate", _boxm(Vector3(w * 0.8, 0.62, 0.1)),
-			Vector3(0, 1.55, face + 0.42 - 0.05), Vector3.ZERO, _metal)
+			Vector3(0, 1.55, face + depth - 0.05), Vector3.ZERO, _screen)
 	_part("ConsoleKickRail", Vector3(w * 0.95, 0.09, 0.14),
-			Vector3(0, 1.02, face - 0.06), Vector3.ZERO, _metal)
+			Vector3(0, 1.02, face - 0.06), Vector3.ZERO, _frame)
 
 
 ## THE CAP, AND IT IS THE SAME CAP AT EVERY SIZE. 2.60 m across, lug tops at
@@ -460,8 +691,20 @@ func _shaft_with_bay(sw: float, neck: float, w: float) -> void:
 ## BORED HOLE DRAWS IDENTICALLY TO A FLAT FACE, which is what killed the Yoke.
 func _pad(top: float) -> void:
 	var deck_top: float = top - LUG_H
+	# THE LIT SLOT, now actually lit: glitch_tx_1 under the deck overhang, so the
+	# shadow line under the cap is a green reveal. This is the piece the concept
+	# always described as lit and that shipped in grey.
+	# THE SLOT STAYS GREY AND GETS A LIT LINE INSIDE IT. Lighting the whole 0.20 m
+	# slot was tried and on the small core the cap read as a lamp — the slot is
+	# 2.31 m across, so it is the largest single face anywhere near the top.
+	# Shortening it instead left it floating clear of the corbel neck it is
+	# supposed to sit on. So: full-depth slot in plant metal, with a 0.06 m
+	# reveal of glitch_tx_1 tucked under the deck overhang, 1.5 cm proud of the
+	# slot so the line is the only part of it that shows.
 	_part("PadSlot", Vector3(PAD * 1.78, 0.2, PAD * 1.78),
 			Vector3(0, deck_top - DECK_T - 0.1, 0), Vector3.ZERO, _metal)
+	_part("PadLight", Vector3(PAD * 1.8, 0.06, PAD * 1.8),
+			Vector3(0, deck_top - DECK_T - 0.03, 0), Vector3.ZERO, _screen)
 	_part("PadDeck", Vector3(PAD * 2.0, DECK_T, PAD * 2.0),
 			Vector3(0, deck_top - DECK_T * 0.5, 0), Vector3.ZERO, _metal, true)
 	var t := 0.14
@@ -531,8 +774,13 @@ func _fins(sw: float, neck: float) -> void:
 		var nz: float = face[1]
 		var tag: String = face[2]
 		var yaw: float = atan2(nx, nz)
-		# Half the thickness buried in the shaft: welded on, not floating beside.
-		var at := Vector3(nx * sw * 0.5, 0, nz * sw * 0.5)
+		# SEATED ON THE INSET BODY, NOT ON THE OLD FLUSH FACE. Since the cabinet
+		# fell back by INSET, a blade left at sw * 0.5 would float clear of it.
+		# Its BACK goes on the body face and its front lands all but flush with
+		# the posts, so the fin reads as a mullion in the frame rather than a
+		# buttress strapped to a box — which is the whole of the slimming.
+		var off: float = sw * 0.5 - INSET + FIN_T * 0.5
+		var at := Vector3(nx * off, 0, nz * off)
 		var is_front: bool = tag == "N"
 		var y0: float = 2.05 if is_front else GROUND
 		var h: float = neck - y0
@@ -545,13 +793,13 @@ func _fins(sw: float, neck: float) -> void:
 		# standing in a slot; a flare reads as something welded. The north fin
 		# starts in mid-air above a door and has no deck to meet.
 		if not is_front:
-			_painted("Fin%sFoot" % tag, _boxm(Vector3(FIN_W + 0.3, 0.34, FIN_T + 0.16)),
-					at + Vector3(0, GROUND + 0.17, 0), Vector3(0, yaw, 0))
+			_painted("Fin%sFoot" % tag, _boxm(Vector3(FIN_W + 0.24, 0.26, FIN_T + 0.12)),
+					at + Vector3(0, GROUND + 0.13, 0), Vector3(0, yaw, 0))
 		# THE HEAD, under the corbel, and deliberately the heaviest section: at
 		# 12.4 m the shaft's own courses carry the middle and only the head is
 		# still a shape.
-		_painted("Fin%sHead" % tag, _boxm(Vector3(FIN_W + 0.22, 0.46, FIN_T + 0.1)),
-				at + Vector3(0, neck - 0.23, 0), Vector3(0, yaw, 0))
+		_painted("Fin%sHead" % tag, _boxm(Vector3(FIN_W + 0.18, 0.34, FIN_T + 0.08)),
+				at + Vector3(0, neck - 0.17, 0), Vector3(0, yaw, 0))
 
 ## -Z is the approach face, so -Z is north.
 func _corner(sx: float, sz: float) -> String:
@@ -683,9 +931,10 @@ func _count_meshes(n: Node) -> int:
 #
 #   2. CoreSignal, if one is attached, should stop building its own
 #      presentation. Its DeckCollar and ClimbBand are the placeholder this
-#      replaces; the replacement is `get_node("Paint").get_children()`, twenty
+#      replaces; the replacement is `get_node("Paint").get_children()`, nineteen
 #      MeshInstance3D each with its own StandardMaterial3D to set albedo_color
-#      on. That is a change to core_signal.gd, which this task did not touch.
+#      AND `emission` on — both, or the glow keeps the old owner's colour. That
+#      is a change to core_signal.gd, which this task did not touch.
 #
 #   3. Nav. The raft is a 0.52 m sheer step with a 3.28 / 4.43 / 6.30 m square
 #      footprint — a bigger obstacle than the shipped cores at every size — so
