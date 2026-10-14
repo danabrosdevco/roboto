@@ -99,28 +99,53 @@ extends SceneTree
 #      In flight they read as three unequal pads bolted to the dome, which is
 #      the correct Swarm read anyway.
 #
-#   4. THE SENSOR IS LIT, IN BOTH STATES. Six unequal emissive ocelli on the
-#      drum's forward flank. A powered sensor is the one thing a wreck never
-#      has, and it costs six spheres. This is also the "not ours" read — see
-#      NO EYE below.
+#   4. THE SENSOR IS LIT, IN BOTH STATES. The eye's texture is albedo only and
+#      does not glow, so the three remaining emissive ocelli are what keeps the
+#      placed frame powered after dark. A lit lamp is the one thing a wreck
+#      never has, and it costs three spheres. See THE EYE below.
 #
 # Nothing is bent, nothing is shed and nothing is detached anywhere in the
 # placed pose: every hoop is circular, every blade straight and in its own
 # plane, and every joint is a modelled gland that the boom rotates in.
 #
 # ─────────────────────────────────────────────
-# NO EYE, AND NOTHING NAMED "Eye"
+# THE EYE — ADDED 2026-10-13, REVERSING THIS FILE'S OWN ARGUMENT
 #
-# The Walker's single offset optic in a chamfered head is Home Command's grammar
-# and the player's own factory, and Swarm must not borrow it. The sensor is
-# instead six unequal OCELLI scattered on the drum's forward flank, no two sizes
-# alike and no two spacings alike — the Broodcarrier's answer, and for the same
-# reason. They are the only pieces on the frame that keep their own material and
-# are therefore the only pieces left off the livery list; they are built through
-# _unpainted_mesh() so that "what is not painted" is one grep.
-# check_frame.gd's EYE EXCLUDED assertion does not fire on this frame because
-# there is nothing called Eye to exclude; the exclusion it protects is done here
-# by hand.
+# This frame originally shipped with NO eye on purpose: the Walker's single
+# offset optic is Home Command's grammar and the player's own factory, and the
+# claim was that Swarm must not borrow it. The human has now looked at the frame
+# and asked for the eye. The human is the authority on how a frame reads, so the
+# eye is here, and the old argument is recorded rather than deleted because the
+# tension it names is real and visible — see the report.
+#
+# IT IS THE SAME PART AS THE WALKER'S AND THE BULWARK'S, not a lookalike: one
+# offset optic, robot_eye_psx.png as albedo on its own StandardMaterial3D, built
+# by _eye_material() copied from build_bulwark.gd. Asymmetry is the whole tell,
+# so it sits forward and to STARBOARD, up on the drum's dome. Which side and
+# which latitude are not free — see EYE_DIR, which is solved against the band,
+# the drooped rotor hoops and the Walker's own offset.
+#
+# IN A SOCKET, BECAUSE THERE IS NO FACE TO SET IT INTO. The Walker and the
+# Bulwark sink their eye into a chamfered head; a sphere stuck straight onto an
+# ellipsoid is a blister, not an installed optic. So a shallow painted collar —
+# Rig/EyePod/Socket — is sunk into the skin along the surface normal and the eye
+# stands proud of it. The collar is bodywork and IS painted; the eye is not.
+#
+# ABSENT FROM THE LIVERY LIST, which is the single most-repeated trap here:
+# `pieces` is Array[Node3D] and an empty or untyped one makes FactionLivery walk
+# its whole parent and paint everything, the eye included — which is how the
+# Bulwark shipped with a faction-coloured eye. It is built through
+# _unpainted_mesh() and it is NAMED "Eye", which is what arms check_frame.gd's
+# EYE EXCLUDED assertion. That assertion only fires when a node called Eye
+# exists, so the name is load-bearing.
+#
+# THE OCELLI ARE CUT FROM SIX TO THREE. Six unequal ocelli AND a Walker eye is
+# two sensor stories at once, and the eye has to be the thing you read at forty
+# pixels. The three that stay are all on the STARBOARD half and low centre,
+# clear of the eye, at their original unequal sizes and spacings: they are no
+# longer the sensor, they are running lamps, and they are kept because the eye's
+# texture is albedo only and a frame whose only sensor is unlit loses the
+# "powered, not wreckage" argument in the placed pose entirely.
 #
 # ─────────────────────────────────────────────
 # TWO CONES FLIPPED, AND WHY
@@ -178,6 +203,11 @@ const BARK := "res://Character/components/bark.tscn"
 const SPARK := "res://Character/components/spark_burst.tscn"
 const OIL := "res://Character/components/oil_spray.tscn"
 const LIVERY := "res://faction_livery.gd"
+## The Walker's eye is a plain StandardMaterial3D with this as albedo — not the
+## shared faction metal. Carried over verbatim from build_bulwark.gd (which took
+## it from the Walker) so all three frames' eyes are the same object on screen.
+## Do not make a second one.
+const EYE_TEX := "res://textures/PSX_Textures/robot_eye_psx.png"
 ## spotter_drone.gd, the existing flying script. It now declares
 ## _carries_a_weapon() -> false, which is exactly right for a frame that carries
 ## no weapon: handle_weapon_logic and roll_combat_action both no-op through it,
@@ -194,6 +224,27 @@ const V2 := "res://sounds/sfx/Robot Droid Voices/WAV_RDV__73.wav"
 const ROTOR_LOOP := "res://sounds/sfx/quadcopter loop/freesound_community-mini-quadcopter-flying-loop-80330.mp3"
 
 const DEG := PI / 180.0
+
+## A LOOK AT THE OTHER STATE, AND NOTHING MORE.
+##
+##   godot --headless ... --script res://tools/build_tick.gd -- placed
+##
+## Writes the SAME scene with the eight rotations and the one slide already at
+## their placed values, so shoot_chassis.gd and mockup_shots.gd — neither of
+## which can drive a node — can photograph the pose this frame spends most of
+## its life in. A model that only works in one of its two states has failed,
+## and there was no way to see the second one before this.
+##
+## IT IS A DEBUG SWITCH, NOT A SECOND FRAME. The scene on disk must ship in
+## FLIGHT, which is what the placement contract in the header assumes, so this
+## shouts at the end of the run and the next thing you do is re-run with no
+## argument. Nothing else in the build differs: same geometry, same names, same
+## materials, same livery list.
+var _placed := false
+var _out_deg := 0.0
+var _knee_deg := 0.0
+var _tower_y := 0.0
+var _droop_deg := 0.0
 
 # ── the two states, as numbers ───────────────
 const FLIGHT_OUT := 46.0
@@ -261,15 +312,37 @@ const DRUM_SQUASH := Vector3(1.0, 0.64, 1.06)
 
 var _root: CharacterBody3D
 var _metal: Material
+## THE LIFT MODULE'S OWN MATERIALS, off the livery list. See _fan().
+## Built once each and shared across the pieces that use them because they are
+## read-only here — the same call build_lance.gd makes for its rubber and hub
+## steel. The eye, by contrast, gets a fresh material per call.
+var _blade: StandardMaterial3D
+var _alloy: StandardMaterial3D
 ## Every painted piece, collected as it is built. A piece is painted unless it
 ## went through _unpainted_mesh(), which is the one door out and exists only for
 ## the ocelli.
 var _paint: Array[Node3D] = []
 var _ocelli_count := 0
+var _unpainted_rotor_count := 0
 
 
 func _init() -> void:
+	_placed = OS.get_cmdline_user_args().has("placed")
+	_out_deg = PLACED_OUT if _placed else FLIGHT_OUT
+	_knee_deg = PLACED_KNEE if _placed else FLIGHT_KNEE
+	_tower_y = PLACED_TOWER_Y if _placed else FLIGHT_TOWER_Y
+	_droop_deg = PLACED_DROOP if _placed else FLIGHT_DROOP
 	_metal = load(METAL)
+	# DARK COMPOSITE AND BARE ALLOY — see _fan() for why the lift module is not
+	# bodywork and therefore not painted.
+	# DULL, NOT BRIGHT. The first pass used 0.47 albedo at 0.6 metallic and the
+	# three hoops came back as polished chrome rings — the brightest thing in the
+	# lit shot by a distance, pulling the read off the body and off the eye. The
+	# hoops are the largest shapes on the frame, so their material cannot also be
+	# the loudest. Grey cast alloy, barely shiny: plainly not paint, plainly not
+	# the hero.
+	_blade = _plain(Color(0.10, 0.10, 0.11), 0.1, 0.72)
+	_alloy = _plain(Color(0.33, 0.34, 0.355), 0.35, 0.58)
 	var body := _build()
 	var packed := PackedScene.new()
 	var err := packed.pack(body)
@@ -283,9 +356,13 @@ func _init() -> void:
 		quit(1)
 		return
 	print("build_tick: wrote %s" % OUT)
-	print("build_tick: %d painted pieces, %d ocelli left off the livery"
-			% [_paint.size(), _ocelli_count])
+	print("build_tick: %d painted pieces; off the livery: %d ocelli, %d lift-module pieces, 1 eye"
+			% [_paint.size(), _ocelli_count, _unpainted_rotor_count])
 	_report_reach()
+	if _placed:
+		print("build_tick: *** WROTE THE PLACED POSE. This scene must ship in")
+		print("build_tick: *** FLIGHT — re-run with no argument before anything")
+		print("build_tick: *** else. See the pose switch at the top of the file.")
 	quit(0)
 
 
@@ -314,10 +391,11 @@ func _report_reach() -> void:
 # PIECES
 # ─────────────────────────────────────────────
 
-## A painted mesh piece. EVERYTHING VISIBLE goes through here except the ocelli,
-## so nothing can be left without the shared faction metal — a single unpainted
-## piece is invisible as a bug until someone renders the frame in a faction
-## colour, and this frame has eighty of them.
+## A painted mesh piece. EVERYTHING VISIBLE goes through here except the three
+## things that are deliberately not bodywork — the ocelli, the eye and the lift
+## module — so nothing can be left without the shared faction metal by accident.
+## A single unpainted piece is invisible as a bug until someone renders the
+## frame in a faction colour, and this frame has eighty of them.
 func _mesh(parent: Node, nm: String, mesh: Mesh, at: Vector3,
 		euler: Vector3 = Vector3.ZERO, scl: Vector3 = Vector3.ONE) -> MeshInstance3D:
 	var m := _unpainted_mesh(parent, nm, mesh, at, euler, scl)
@@ -326,9 +404,12 @@ func _mesh(parent: Node, nm: String, mesh: Mesh, at: Vector3,
 	return m
 
 
-## The one door out of the paint list, and the only thing that uses it is the
-## sensor. A separate function rather than a flag so that "which pieces are not
-## painted" is answerable by grepping for one name.
+## THE ONE DOOR OUT OF THE PAINT LIST. A separate function rather than a flag so
+## that "which pieces are not painted" is answerable by grepping for one name.
+## Three callers, and each one is an argument made in a comment at its own call
+## site: _ocelli() (running lamps), _eye() (the identifying optic must not
+## change colour per faction) and _fan() (the lift module is hardware, not
+## bodywork). Anything that reaches for this fourth needs the same argument.
 func _unpainted_mesh(parent: Node, nm: String, mesh: Mesh, at: Vector3,
 		euler: Vector3 = Vector3.ZERO, scl: Vector3 = Vector3.ONE) -> MeshInstance3D:
 	var m := MeshInstance3D.new()
@@ -474,6 +555,7 @@ func _build() -> CharacterBody3D:
 	_fan_tower(rig)
 	_cradles(rig)
 	_ocelli(rig)
+	_eye(rig)
 
 	# A MOUNT WITH NOTHING ON IT, EVER. The Tick carries no weapon —
 	# spotter_drone.gd's _carries_a_weapon() returns false and this frame
@@ -535,11 +617,16 @@ func _build() -> CharacterBody3D:
 	#
 	# `pieces` is Array[Node3D]. An untyped array lands as [] and FactionLivery
 	# falls back to walking its whole parent — which paints every mesh on the
-	# frame. The same trap has a second door: FactionLivery._gather() RECURSES,
-	# so listing `Rig` once instead of eighty leaves would paint the ocelli too
-	# and lose the one thing marking this sensor as not the player's. So: leaves
-	# only, collected by _mesh() as each one is built, and the ocelli are not in
-	# it because they were built through _unpainted_mesh().
+	# frame, THE EYE INCLUDED. That is exactly how the Bulwark shipped with a
+	# faction-coloured eye: it was carefully left off a list that was never
+	# there. The trap has a second door: FactionLivery._gather() RECURSES, so
+	# listing `Rig` once instead of forty-odd leaves would repaint the eye, the
+	# ocelli and the whole lift module however carefully each was built.
+	#
+	# So: LEAVES ONLY, collected by _mesh() as each one is built. The three
+	# things that are not here are not here because they went through
+	# _unpainted_mesh() instead — the eye, the three ocelli and the twenty-four
+	# lift-module pieces. Each has its argument at its own call site.
 	livery.set("pieces", _paint)
 
 	# ── the body's own exports ──
@@ -659,12 +746,12 @@ func _legs(rig: Node3D) -> void:
 		# limbs start where a limb would and the four do not pile into the
 		# middle of the body.
 		var thigh := _node(hub, "Thigh", Vector3(0.0, 0.0, -0.62),
-				Vector3(FLIGHT_OUT * DEG, 0.0, 0.0))
+				Vector3(_out_deg * DEG, 0.0, 0.0))
 		_mesh(thigh, "Shoulder", _spherem(0.17), Vector3.ZERO)
 		_mesh(thigh, "Upper", _boxm(Vector3(0.21, 0.21, upper)),
 				Vector3(0.0, 0.0, -upper * 0.5))
 		var shin := _node(thigh, "Shin", Vector3(0.0, 0.0, -upper),
-				Vector3(FLIGHT_KNEE * DEG, 0.0, 0.0))
+				Vector3(_knee_deg * DEG, 0.0, 0.0))
 		_mesh(shin, "Knee", _spherem(0.14), Vector3.ZERO)
 		_mesh(shin, "Lower", _boxm(Vector3(0.16, 0.16, LEG_LOWER)),
 				Vector3(0.0, 0.0, -LEG_LOWER * 0.5))
@@ -686,7 +773,7 @@ func _legs(rig: Node3D) -> void:
 # is identical in both states, which is the difference between a concept and a
 # model.
 func _fan_tower(rig: Node3D) -> void:
-	var tower := _node(rig, "FanTower", Vector3(0.0, FLIGHT_TOWER_Y, 0.0))
+	var tower := _node(rig, "FanTower", Vector3(0.0, _tower_y, 0.0))
 	# The lump the fans hang off. The carrier is not a vehicle, it is more tick.
 	_mesh(tower, "Hub", _spherem(0.46), Vector3(0.06, -0.04, -0.04),
 			Vector3.ZERO, Vector3(1.15, 0.78, 1.1))
@@ -712,7 +799,7 @@ func _fan_tower(rig: Node3D) -> void:
 		_mesh(rotor, "Gland", _cylm(0.13, 0.13, 0.30, 8), Vector3.ZERO,
 				Vector3(0.0, 0.0, PI * 0.5))
 		var boom := _node(rotor, "Boom", Vector3.ZERO,
-				Vector3(FLIGHT_DROOP * DEG, 0.0, 0.0))
+				Vector3(_droop_deg * DEG, 0.0, 0.0))
 		_mesh(boom, "Arm", _boxm(Vector3(0.12, 0.12, reach)),
 				Vector3(0.0, 0.0, -reach * 0.5))
 		_fan(boom, Vector3(0.0, 0.06, -reach), fan_r)
@@ -725,11 +812,29 @@ func _fan_tower(rig: Node3D) -> void:
 ## reason is THE DROOPED ROTORS in the header and it is the one real argument
 ## this build has with the sheet. The blades keep the concept's three-fold count
 ## and reach to just inside the hoop.
+##
+## NOTHING IN HERE IS PAINTED, 2026-10-13, at the human's instruction: "the
+## rotors should have a non-faction colour". Two materials, both off the livery
+## list, the same deal build_lance.gd gives its tyres and hubs — rubber and bare
+## steel are not livery, and neither is a lift fan:
+##
+##   blades     DARK COMPOSITE, near black. This is what a blade is made of and
+##              what one looks like when it is turning, and it is the one piece
+##              on the frame that should read as moving.
+##   motor,     BARE MACHINED ALLOY, pale and a little shiny. Unpainted metal,
+##   duct,      which is what a bought-in module bolted to a painted airframe
+##   stators    looks like.
+##
+## The boom, the gland and the struts stay painted: those are the airframe this
+## module is bolted to, and the colour break is exactly at the joint. In the
+## placed pose that break is doing a second job — three pale hoops against a
+## faction-coloured drum read as hardware draped over a body rather than as
+## bodywork that has sagged.
 func _fan(boom: Node3D, at: Vector3, fan_r: float) -> void:
 	var fan := _node(boom, "Fan", at)
 	var outer: float = fan_r * DUCT_K
 	var tip: float = outer - BLADE_GAP
-	_mesh(fan, "Motor", _cylm(0.16, 0.16, 0.20, 10), Vector3.ZERO)
+	_rotor_mesh(fan, "Motor", _cylm(0.16, 0.16, 0.20, 10), _alloy, Vector3.ZERO)
 	# A WIDER CHORD THAN THE CONCEPT'S 0.10. concept_kit.rotor()'s blade is a
 	# sliver, which on a concept sheet is a line and on a real render is a
 	# whisker. 0.19 is build_brood.gd's own correction and it is still a blade
@@ -740,10 +845,10 @@ func _fan(boom: Node3D, at: Vector3, fan_r: float) -> void:
 		# Rotating about Y by -ba takes local +X to (cos ba, 0, sin ba), so the
 		# blade's long axis and its offset from the motor point the same way and
 		# the blade runs outward rather than across the hub.
-		_mesh(fan, "Blade%d" % (b + 1), blade,
+		_rotor_mesh(fan, "Blade%d" % (b + 1), blade, _blade,
 				Vector3(cos(ba) * tip * 0.5, 0.05, sin(ba) * tip * 0.5),
 				Vector3(0.0, -ba, 0.0))
-	_mesh(fan, "Duct", _torusm(outer - 0.10, outer), Vector3.ZERO)
+	_rotor_mesh(fan, "Duct", _torusm(outer - 0.10, outer), _alloy, Vector3.ZERO)
 	# THREE STATORS, offset 60 degrees from the blades so they never line up
 	# with one. They are what stops the hoop reading as a halo floating around
 	# the fan, and in the placed pose they are what says the hoop is still
@@ -751,9 +856,19 @@ func _fan(boom: Node3D, at: Vector3, fan_r: float) -> void:
 	var span: float = outer - 0.21
 	for s in 3:
 		var sa: float = TAU * float(s) / 3.0 + PI / 3.0
-		_mesh(fan, "Stator%d" % (s + 1), _boxm(Vector3(span, 0.05, 0.07)),
+		_rotor_mesh(fan, "Stator%d" % (s + 1), _boxm(Vector3(span, 0.05, 0.07)), _alloy,
 				Vector3(cos(sa) * (0.16 + span * 0.5), 0.0, sin(sa) * (0.16 + span * 0.5)),
 				Vector3(0.0, -sa, 0.0))
+
+
+## One piece of the lift module: built through _unpainted_mesh() so it stays off
+## the livery list, counted so the generator can print how many came off.
+func _rotor_mesh(parent: Node, nm: String, mesh: Mesh, mat: Material, at: Vector3,
+		euler: Vector3 = Vector3.ZERO) -> MeshInstance3D:
+	var m := _unpainted_mesh(parent, nm, mesh, at, euler)
+	m.material_override = mat
+	_unpainted_rotor_count += 1
+	return m
 
 
 # ─────────────────────────────────────────────
@@ -800,8 +915,21 @@ func _cradles(rig: Node3D) -> void:
 
 
 # ─────────────────────────────────────────────
-# THE SENSOR — six ocelli, and NOT AN EYE
+# THE RUNNING LAMPS — three ocelli, which used to be six and used to be the eye
 # ─────────────────────────────────────────────
+#
+# CUT FROM SIX TO THREE, 2026-10-13, when the eye arrived. Six unequal ocelli
+# scattered over the forward flank were the SENSOR on a frame that deliberately
+# had no eye; with a Walker optic on the same flank they became a second sensor
+# story competing with the first, and the eye has to be what you read at forty
+# pixels. The three kept are all on the PORT half or low centre, clear of the
+# eye to starboard, at their original directions and their original unequal
+# radii — nothing was re-nudged, three were deleted.
+#
+# THEY ARE NOT DECORATION. The eye's material is albedo only and does not emit,
+# so without these the placed frame has nothing lit on it at all, and "a wreck
+# does not have lit lamps" is the fourth of the four things this build does
+# about the drooped rotors reading as wreckage. See THE DROOPED ROTORS.
 #
 # PLACED ON THE ELLIPSOID, NOT NEAR IT. Each centre is the drum's actual surface
 # point along a chosen direction — centre + dir * (DRUM_R * DRUM_SQUASH) — so
@@ -809,23 +937,16 @@ func _cradles(rig: Node3D) -> void:
 # Nudged by eye against a squashed sphere they would have ended up floating off
 # the flanks or sunk inside, which is the same mistake in two directions.
 #
-# THE ONLY PIECES ON THE FRAME THAT KEEP THEIR OWN MATERIAL. A sensor repainted
-# in the faction colour on every faction is a sensor that identifies nothing.
-#
-# They are also the placed state's strongest claim to being alive: a wreck does
-# not have six lit eyes on it. See THE DROOPED ROTORS in the header.
+# OFF THE LIVERY LIST, like the eye and the lift module. A lamp repainted in the
+# faction colour on every faction is a lamp that signals nothing.
 func _ocelli(rig: Node3D) -> void:
 	var cluster := _node(rig, "SensorCluster", Vector3.ZERO)
 	var mat := _ocellus_material()
-	# direction, radius. No two sizes alike, no two spacings alike, and the
-	# cluster is off-centre on the forward flank rather than set in a face.
+	# direction, radius. No two sizes alike and no two spacings alike.
 	var eyes: Array = [
-		[Vector3(0.14, 0.30, -0.94), 0.085],
 		[Vector3(-0.29, 0.44, -0.85), 0.055],
-		[Vector3(0.49, 0.21, -0.85), 0.047],
 		[Vector3(-0.05, -0.18, -0.98), 0.068],
 		[Vector3(-0.62, 0.12, -0.77), 0.036],
-		[Vector3(0.33, 0.58, -0.75), 0.040],
 	]
 	var half := DRUM_R * DRUM_SQUASH
 	for i in eyes.size():
@@ -855,4 +976,127 @@ func _ocellus_material() -> StandardMaterial3D:
 	m.emission_enabled = true
 	m.emission = Color(0.52, 0.95, 0.72)
 	m.emission_energy_multiplier = 0.9
+	return m
+
+
+# ─────────────────────────────────────────────
+# THE EYE — the same part the Walker and the Bulwark carry
+# ─────────────────────────────────────────────
+#
+# The header's THE EYE section has the whole argument, including the one this
+# reverses. The mechanics here are three:
+#
+#   1. OFFSET, NOT CENTRED. Forward and to PORT. The asymmetry is the single
+#      most recognisable thing about this factory's frames and a centred eye
+#      throws it away. Port specifically because LobeB is the starboard bump
+#      and the snout hangs below: this is the only clear patch of forward skin.
+#
+#   2. IN A SOCKET. The Walker and the Bulwark sink their eye into a chamfered
+#      head FACE. There is no face here — the drum is an ellipsoid — and a
+#      sphere stuck on a sphere is a blister. A shallow collar driven in along
+#      the surface normal gives the optic something to be set into. The collar
+#      is bodywork and is PAINTED; only the eye itself is not.
+#
+#   3. NAMED "Eye", which is not cosmetic: check_frame.gd's EYE EXCLUDED
+#      assertion only fires when it can find a node by that name, so the name
+#      is what buys the test that stops this being faction-painted later.
+#
+# ON THE SKIN THE SAME WAY THE OCELLI ARE — dir * (DRUM_R * DRUM_SQUASH) rather
+# than a hand-nudged position, so the socket sits flush on the squashed sphere
+# instead of floating off it or sinking into it.
+## FORWARD, TO STARBOARD, AND UP ON THE DOME. Solved against three obstacles,
+## each of which cost a render:
+##
+##   THE BAND. The first placement sat on the drum's equator. The Band torus
+##   runs round it at y 0.07 with an outer radius of 0.99 — PROUD of the
+##   shell's own 0.91 — so the eye was fighting a ridge for the same surface,
+##   and at that latitude on a squashed sphere it sat on the silhouette edge
+##   and read as a bauble stuck to the rim. Up on the dome it is seated above
+##   the band instead, and the band becomes its lip.
+##
+##   THE DROOPED ROTORS. The second placement was at bearing 27.5 degrees, and
+##   FANS[0] is at 18 — nine degrees apart. In FLIGHT that is fine, the tower is
+##   1.5 m up; in the PLACED pose the first duct hoop swings down and passes
+##   directly across the eye. mockup_parts.gd's sixth rule is that nothing
+##   crosses the eye, and a frame checked in only one of its two states is
+##   exactly the failure this build keeps warning about. The fan bearings are
+##   18 / 147 / 265, so the eye goes in the 265-to-18 gap: bearing -24, which
+##   is 42 degrees off the nearest hoop and clear in both states.
+##
+##   THE OFFSET ITSELF. -24 degrees off dead-forward is the WALKER'S OWN
+##   offset — its eye is 0.26 off the centreline of a 1.0 m head. Starboard
+##   rather than port is forced by the hoops above; which side it is on was
+##   never the point, that it is on A side is.
+##
+## The ocelli moved to port to make room — see _ocelli().
+const EYE_DIR := Vector3(0.35, 0.58, -0.74)
+## THE WALKER'S OWN 0.17, not scaled to this frame. It was built at 0.15 first
+## and in the lit shot it read as a bauble on a 1.72 m drum rather than as the
+## optic — the drum is nearly twice the Walker head's 1.0 m, so anything smaller
+## than the family size disappears into it. The eye has to be the same part at
+## the same size; the drum is simply allowed to be the bigger thing around it.
+const EYE_R := 0.17
+## 0.82 of a sphere — the family's squash, off the Lance.
+const EYE_H := 0.279
+
+
+func _eye(rig: Node3D) -> void:
+	var d := EYE_DIR.normalized()
+	var half := DRUM_R * DRUM_SQUASH
+	var on_skin := Vector3(d.x * half.x, d.y * half.y, d.z * half.z)
+	# A pod carrying the position and the aim, so the socket and the eye inside
+	# it are both plain offsets along one local axis. Same discipline as the
+	# legs: the parent holds the bearing, the children hold nothing but depth.
+	var pod := _node(rig, "EyePod", on_skin, _aim_euler(d))
+	# WIDER THAN THE EYE BY HALF, AND THE EYE SITS DOWN IN IT. The first build
+	# had a 0.21 collar under a 0.17 eye standing 0.22 proud: the eye swamped
+	# the collar completely and there was no socket in the render at all, which
+	# is the blister this was supposed to prevent. 0.28 outer leaves a clear
+	# 0.11 rim all the way round.
+	_mesh(pod, "Socket", _cylm(0.26, 0.28, 0.12, 12), Vector3(0.0, -0.035, 0.0))
+	var eye_mesh := SphereMesh.new()
+	eye_mesh.radius = EYE_R
+	eye_mesh.height = EYE_H
+	eye_mesh.radial_segments = 14
+	eye_mesh.rings = 7
+	# ITS OWN MATERIAL AND OFF THE LIVERY LIST — _unpainted_mesh is the only
+	# door out of _paint. The one feature that identifies a robot in this game
+	# must not change colour per faction; the Bulwark shipped wrong exactly
+	# here. See THE EYE in the header.
+	# HALF-SUNK, like the Walker's in its head face: the squashed sphere's own
+	# half-height is 0.14, so at -0.01 it stands 0.13 above the pod's origin and
+	# 0.105 above the collar's lip — a lens in a mount, not a ball on a hull.
+	var eye := _unpainted_mesh(pod, "Eye", eye_mesh, Vector3(0.0, -0.01, 0.0))
+	eye.material_override = _eye_material()
+
+
+## The euler that points a node's local +Y along `d`.
+##
+## Godot composes eulers as Ry * Rx * Rz, so with Rz zero the local +Y lands at
+## (sin y * sin p, cos p, cos y * sin p). Reading that backwards: the pitch is
+## the angle off vertical and the yaw is the bearing of the horizontal part.
+## Written out rather than built from a Basis because a Basis cannot be handed
+## to _mesh(), and solved rather than eyeballed for the same reason the ocelli
+## are — a collar a few degrees off its own normal gapes on one side.
+func _aim_euler(d: Vector3) -> Vector3:
+	var n := d.normalized()
+	return Vector3(acos(clampf(n.y, -1.0, 1.0)), atan2(n.x, n.z), 0.0)
+
+
+## The eye's own material. Built fresh per call rather than loaded from a shared
+## .tres, because a material handed to two frames is one object — see the
+## duplicate() rule in CLAUDE.md. Identical to build_bulwark._eye_material() and
+## build_lance._eye_material(), which is the point: one part, three frames.
+func _eye_material() -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = load(EYE_TEX)
+	return m
+
+
+## Flat colour, for the lift module. build_lance.gd's own helper, same name.
+func _plain(albedo: Color, metallic: float, roughness: float) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = albedo
+	m.metallic = metallic
+	m.roughness = roughness
 	return m
