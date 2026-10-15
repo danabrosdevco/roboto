@@ -217,18 +217,21 @@ edges has the machine continuing upward behind it. Measured from the pad
 centre to the upper stage's face: **1.375 m (small) / 1.75 (med) / 2.50
 (large)**, against a barb reach of **1.44 m** on that bearing. So:
 
-| | clearance above the pad |
+| | horizontal clearance above the pad |
 |---|---|
 | small | **FOULS** — one leg's shin and barb stand inside the upper stage |
-| med | clear by ~0.31 m |
-| large | clear by ~1.06 m |
+| med | **0.08 m**, which is a miss rather than a clearance |
+| large | 0.84 m |
 
 The difference is `ext`, the slab that runs on PAST the pad before the mass
-starts: 0 / 12 / 36 units. **The one-constant fix is `ext` ≥ 6 on the small**,
-which pushes the pad 0.19 m further out and puts the whole drone in the clear —
-at the price of the pad overhanging the bund's −X edge by the same 0.19 m, at
-2.9 m up. **I have not made that change**: it moves the pad, and whether the
-drone or the machine gives way is not an art decision.
+starts: 0 / 12 / 36 units. **The one-constant fix is `ext` ≥ 6 on the small and
+≥ 24 on the med**, which pushes each pad further out and puts the whole drone
+in the clear — at the price, on the small, of the pad overhanging the bund's −X
+edge by 0.19 m at 2.9 m up. **I have not made that change**: it moves the pad,
+and whether the drone or the machine gives way is not an art decision. Note
+that the large core's 0.84 m is the only one with any room in it, and it has
+that because `ext` is 36 there — the fix is the thing that is already working
+at one size out of three.
 
 **3. One barb grips nothing, at every size, by design.** The pad's −X and −Y
 edges ARE the slab's edges — that is the cantilever — so the leg at the
@@ -240,12 +243,15 @@ grows a lip for them, or the clamp is accepted as gripping two edges and
 overhanging two. It photographs fine (`core_relay_small_tickclose.png`); it is
 a question about the fiction, not the render.
 
-*Method, stated: the test is split at the pad plane. Above it, any contact is a
-foul — a barb is MEANT to come down outside the edge, and an axis-aligned box
-round an angled barb always clips the deck corner, which is what made the first
-version report all four legs fouling at every size. Clearance is swept in 2 cm
-steps, so "clear by 0.31 m" means "0.31 m and no further tested". Barb tips are
-the barb mesh's AABB bottom, so they carry a few centimetres of slop.*
+*Method, stated, because two versions of it were wrong before this one. The
+test is split at the pad plane: above it, any contact is a foul — a barb is
+MEANT to come down outside the edge, and an axis-aligned box round an angled
+barb always clips the deck corner, which is what made the first version report
+all four legs fouling at every size. Clearance is then swept SIDEWAYS in 2 cm
+steps; growing the box in all six directions, which is what `AABB.grow` does,
+sent it down through the deck every box is standing on and reported "0.02 m" at
+every size — a measurement of the floor. Barb tips are the barb mesh's AABB
+bottom, so they carry a few centimetres of slop.*
 
 ## 5. The cost, measured rather than asserted
 
@@ -282,8 +288,8 @@ three of them are standing in walls.
 
 ## 6. What is the human's
 
-- **The small core's drone foul.** `ext` ≥ 6 fixes it and moves the pad 0.19 m
-  past the bund edge; the alternative is stepping the upper stage back.
+- **The small core fouls the drone and the medium clears it by 0.08 m.** `ext`
+  fixes both and moves the pad; the alternative is stepping the upper stage back.
 - **Whether a barb clamping on air at the overhang corner is acceptable**, or
   whether the pad needs a lip for it.
 - **Whether the small core needs to read across a map at all**, given 4.19 m of

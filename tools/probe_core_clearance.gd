@@ -165,10 +165,17 @@ func _tick(id: String) -> void:
 		var upper := _clip_above(box, pad_top + 0.02)
 		if upper.size.y <= 0.0:
 			continue
+		# GROWN SIDEWAYS ONLY. AABB.grow() expands in all six directions, and
+		# every one of these boxes is sitting ON the pad — so the first 2 cm of
+		# growth went straight down through the deck and every size came back
+		# "clear by 0.02 m", which is a measurement of the floor. The question
+		# is horizontal: how much further out could the drone reach before it
+		# touched the machine beside it.
 		var clear := 0.0
 		for g in GROW_MAX + 1:
 			var grow: float = float(g) * GROW
-			if _hits(space, upper.grow(grow), ex):
+			if _hits(space, AABB(upper.position - Vector3(grow, 0.0, grow),
+					upper.size + Vector3(grow * 2.0, 0.0, grow * 2.0)), ex):
 				break
 			clear = grow
 		if clear <= 0.0 and _hits(space, upper, ex):
