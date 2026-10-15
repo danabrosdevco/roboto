@@ -74,9 +74,9 @@ const SHOTS: Array = [
 	["11_the_fan_from_the_spawn", Vector3(0.0, EYE, 122.0), Vector3(0.0, 8.0, 40.0), 72.0, "eye"],
 
 	# ── ONE PER LANE, FROM ITS FOOT, which is where the choice is taken.
-	["12_centre_lane_foot", Vector3(0.0, EYE, 104.0), Vector3(0.0, 24.0, -40.0), 66.0, "eye"],
-	["13_west_lane_foot", Vector3(-92.0, EYE, 116.0), Vector3(-138.0, 10.0, 56.0), 66.0, "eye"],
-	["14_east_lane_foot", Vector3(92.0, EYE, 116.0), Vector3(108.0, 12.0, 44.0), 66.0, "eye"],
+	["12_centre_lane_foot", Vector3(0.0, EYE, 100.0), Vector3(0.0, 8.0, 8.0), 66.0, "eye"],
+	["13_west_lane_foot", Vector3(-118.0, EYE, 104.0), Vector3(-134.0, 8.0, 28.0), 66.0, "eye"],
+	["14_east_lane_foot", Vector3(108.0, EYE, 108.0), Vector3(110.0, 8.0, 28.0), 66.0, "eye"],
 
 	# ── THE CENTRE LANE: short and exposed, one bunker, straight at the gate.
 	["15_centre_the_bunker", Vector3(-34.0, EYE, 74.0), Vector3(4.0, 10.0, 48.0), 66.0, "eye"],
@@ -90,7 +90,7 @@ const SHOTS: Array = [
 	["21_the_west_gate", Vector3(-92.0, EYE, -54.0), Vector3(-54.0, 10.0, -54.0), 62.0, "eye"],
 
 	# ── THE EAST LANE: blocked until the gatehouse is taken.
-	["22_east_the_cross_wall", Vector3(104.0, EYE, 78.0), Vector3(104.0, 10.0, 24.0), 62.0, "eye"],
+	["22_east_the_cross_wall", Vector3(140.0, EYE, 86.0), Vector3(106.0, 8.0, 36.0), 66.0, "eye"],
 	["23_east_through_the_gate", Vector3(104.0, EYE, 56.0), Vector3(106.0, 10.0, 8.0), 66.0, "eye"],
 	["24_east_the_terrace", Vector3(120.0, EYE, -32.0), Vector3(146.0, 10.0, -28.0), 66.0, "eye"],
 	["25_the_east_gate", Vector3(92.0, EYE, -54.0), Vector3(54.0, 10.0, -54.0), 62.0, "eye"],

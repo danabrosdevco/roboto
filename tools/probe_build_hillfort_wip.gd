@@ -319,26 +319,232 @@ const BUNKERS: Array = [
 	["features/feature_berm", -124.0, -56.0, 10.0],
 ]
 
-## ── WHAT IS IN THE FORT. Big structures only this pass: the dish, the hall
-## and the ring. Offsets from the fort's centre.
+## ── WHAT IS IN THE FORT. Offsets from the fort's centre.
 ##
-## THE DISH IS ON THE BROW. Set back in the middle of the plateau it was
-## invisible from the spawn on the old steep version; on this one the ground is
-## gentle enough that it would read either way, but the composition is right
-## like this — the gate is in the south run and what you walk into is the dish.
+## THE DISH IS ON THE BROW, so the gate in the south run opens onto it and the
+## yard and the plant are behind. The compute kit fills the east strip, the
+## working side is west, and the towers and masts are what stand up on a map
+## where nothing else does.
 ##
 ## piece, x, z, yaw°
 const FORT_PIECES: Array = [
 	# At dz +1, not +8: the box sits 7 m south of its own origin because the
 	# bowl overhangs the pedestal forward. _group() prints the real box centre.
 	["landmarks/landmark_relay_dish", -10.0, 1.0, 0.0],
+
+	# ── EAST: the plant.
 	["compute/compute_data_hall", 38.0, -22.0, 90.0],
+	["compute/compute_chiller_yard", 34.0, 6.0, 0.0],
+	["compute/compute_network_cabinet", 54.0, -34.0, 90.0],
+	["compute/compute_network_cabinet", 54.0, -30.0, 90.0],
+	["compute/compute_network_cabinet", 54.0, -26.0, 90.0],
+	["compute/compute_transformer", 52.0, 6.0, 0.0],
+	["compute/compute_transformer", 52.0, 14.0, 0.0],
+	["compute/compute_generator", 52.0, 34.0, 90.0],
+	["compute/compute_rack_row", 34.0, 30.0, 0.0],
+	["compute/compute_rack_row", 34.0, 36.0, 0.0],
+	["fortifications/fort_floodlight_mast", 46.0, -41.0, 0.0],
+
+	# ── WEST: the working side, and the gun that covers the west gate.
+	["features/feature_watchtower", -48.0, -30.0, 0.0],
+	["fortifications/fort_gun_emplacement", -48.0, -8.0, 0.0],
+	["fortifications/fort_floodlight_mast", -50.0, 28.0, 0.0],
+	["props/prop_sandbag_nest", -56.0, 20.0, 0.0],
+
+	# ── THE GATE LANE, 14.6 m between the dish's pedestal and the south wall.
+	["features/feature_watchtower", 10.0, 40.0, 90.0],
+	["fortifications/fort_sentry_turret", 44.0, 42.0, 215.0],
+	["fortifications/fort_t_walls", -20.0, 40.0, 24.0],
+	["fortifications/fort_t_walls", -56.0, 40.0, 70.0],
+	["props/prop_jersey_barrier", 34.0, 44.0, 12.0],
+	["props/prop_jersey_barrier", 28.0, 44.0, 12.0],
+	["props/prop_crates", -34.0, 40.0, 30.0],
+	["props/prop_barrels", 20.0, 40.0, 0.0],
+
+	# ── NORTH: the yard behind the dish.
+	["fortifications/fort_checkpoint", -30.0, -34.0, 20.0],
+	["fortifications/fort_t_walls", 28.0, 24.0, -32.0],
 ]
 
-## No glacis dressing and no station dressing this pass. Terrain and big
-## structures first, so the shape can be judged before anything is furnished.
+## ── THE DRESSING, in world coordinates because almost none of it belongs to a
+## station: the station pads are 44 x 28 with a 24 x 22 bunker in the middle,
+## so there is nowhere on them to put anything. Everything that says what a
+## place IS stands round the pad rather than on it.
+##
+## FOUR JOBS, and a piece that is not doing one of them is not here:
+##   1. make each lane read as its own kind of place
+##   2. cover, only where cover is supposed to be
+##   3. ranging — something at height every 50 m or so along a lane
+##   4. say what a capture site is before anyone calls it an objective
+##
+## piece, x, z, yaw
+const LANE_DRESS: Array = [
+	# ════ CENTRE LANE — the swept glacis ════════════════════════════════════
+	#
+	# THE HARD RULE HERE IS WHAT IS ABSENT. This lane's identity is that being
+	# fast costs you, so nothing on it may be fought from: no hescos, no
+	# sandbags, no containers, no t-walls, no dragon teeth. What it gets is
+	# tall-and-thin (which gives no cover and ranges the distance) and
+	# flat-and-dead (which says what happens to people who come this way).
+	#
+	# Six floodlight masts, zig-zagged so one is within ~40 m of anywhere on
+	# the lane. 9.9 m tall and 3 m across: a ruler you cannot hide behind.
+	["fortifications/fort_floodlight_mast", -20.0, 88.0, 0.0],
+	["fortifications/fort_floodlight_mast", 34.0, 76.0, 0.0],
+	["fortifications/fort_floodlight_mast", 20.0, 52.0, 0.0],
+	["fortifications/fort_floodlight_mast", -40.0, 40.0, 0.0],
+	["fortifications/fort_floodlight_mast", -20.0, 16.0, 0.0],
+	["fortifications/fort_floodlight_mast", 28.0, 6.0, 0.0],
+	# NO CRATERS ON THIS LANE, and that is a correction rather than an
+	# omission. feature_crater_rim is a RING standing 0.75 m proud of the
+	# ground over 13 m — a fighting position, and a chain of them down the
+	# swept lane is a covered route with extra steps that a player finds on
+	# the first attempt. The shelled look is not worth the thing this lane
+	# exists to be. Craters are on the west and east, where cover belongs.
+	# The assaults that already failed here. Spaced over 30 m apart on
+	# purpose: four wrecks tell a story, four wrecks in a line are a trench.
+	["props/prop_robot_wreck", -56.0, 64.0, 40.0],
+	["props/prop_robot_wreck", 54.0, 44.0, 200.0],
+	["props/prop_robot_wreck", -42.0, 12.0, 130.0],
+	["props/prop_robot_wreck", 24.0, 90.0, 70.0],
+	# Rock slabs are the one prop in the kit with NO COLLISION AT ALL, which
+	# makes them the only thing that can be scattered on this lane without
+	# quietly repairing its exposure.
+	["props/prop_rock_slabs", -58.0, 96.0, 20.0],
+	["props/prop_rock_slabs", 56.0, 88.0, 70.0],
+	["props/prop_rock_slabs", -56.0, 32.0, 45.0],
+	["props/prop_rock_slabs", 52.0, 28.0, 10.0],
+	["props/prop_rock_slabs", -52.0, 8.0, 60.0],
+	["props/prop_rock_slabs", 38.0, 96.0, 30.0],
+	["props/prop_rock_slabs", -40.0, 66.0, 80.0],
+	["props/prop_rock_slabs", -44.0, 78.0, 25.0],
+	["props/prop_rock_slabs", 44.0, 60.0, 55.0],
+	["props/prop_rock_slabs", -56.0, 22.0, 15.0],
+	["props/prop_rock_slabs", 48.0, 18.0, 65.0],
+	["props/prop_rock_slabs", -26.0, 70.0, 35.0],
+	# Wire flanking the gate approach, not across it. The fort's defence, not
+	# the lane's cover.
+	["fortifications/fort_razor_wire", -40.0, -2.0, 90.0],
+	["fortifications/fort_razor_wire", -29.0, -2.0, 90.0],
+	["fortifications/fort_razor_wire", 36.0, -2.0, 90.0],
+	["fortifications/fort_razor_wire", 47.0, -2.0, 90.0],
+
+	# ── THE PILLARS, and the rock spires it is named for. 12.9 m each, so they
+	# are this lane's one piece of ranging that is not a mast — and they stand
+	# clear of the road's 16 m bed so they cannot be used as a covered line up
+	# the middle.
+	["features/feature_rock_spire", -26.0, 36.0, 0.0],
+	["features/feature_rock_spire", -30.0, 62.0, 140.0],
+	["features/feature_rock_spire", 26.0, 64.0, 60.0],
+	["features/feature_rock_spire", 30.0, 36.0, 20.0],
+	["features/feature_power_pylon", -52.0, 50.0, 0.0],
+
+	# ════ WEST LANE — the covered route ═════════════════════════════════════
+	#
+	# A BROKEN BUT CONTINUOUS SCREEN down the lane's east flank, between it and
+	# the fort. The wall line already hides this lane from the centre; what the
+	# dressing adds is the thing that makes it read as a route you MOVE ALONG
+	# rather than one that happens to be out of sight.
+	["features/feature_container_stack", -96.0, 92.0, 100.0],
+	["fortifications/fort_hesco_wall", -92.0, 60.0, 95.0],
+	["features/feature_container_stack", -98.0, 28.0, 85.0],
+	["fortifications/fort_hesco_wall", -94.0, -4.0, 95.0],
+	["features/feature_container_stack", -106.0, -34.0, 110.0],
+	["fortifications/fort_hesco_wall", -112.0, -52.0, 70.0],
+	# Cover pockets behind the screen, on the lane itself.
+	["features/feature_trench_revetment", -146.0, 50.0, 10.0],
+	["features/feature_trench_revetment", -134.0, 4.0, 95.0],
+	["features/feature_trench_revetment", -152.0, -40.0, 80.0],
+	["props/prop_sandbag_wall", -128.0, 52.0, 20.0],
+	["props/prop_sandbag_wall", -124.0, -8.0, 70.0],
+	["fortifications/fort_t_walls", -118.0, 8.0, 15.0],
+	["fortifications/fort_t_walls", -160.0, 38.0, 100.0],
+	# Natural cover and ranging on the flank. Outcrops are 7.9 m tall.
+	["features/feature_rock_outcrop", -178.0, 98.0, 20.0],
+	["features/feature_rock_outcrop", -174.0, 16.0, 70.0],
+	["features/feature_rock_outcrop", -162.0, -80.0, 40.0],
+	["features/feature_boulder_field", -118.0, -96.0, 30.0],
+	# Craters are welcome HERE: on a covered route a hole you can drop into is
+	# the route doing its job.
+	["features/feature_crater_rim", -174.0, 46.0, 0.0],
+	["features/feature_crater_rim", -112.0, -72.0, 0.0],
+	["features/feature_crater_rim", -150.0, 104.0, 0.0],
+	["fortifications/fort_floodlight_mast", -104.0, 70.0, 0.0],
+	["fortifications/fort_floodlight_mast", -110.0, -14.0, 0.0],
+
+	# ── THE CISTERN: a water and fuel point, which is what the name is for.
+	["features/feature_fuel_tanks", -160.0, 70.0, 0.0],
+	["props/prop_concrete_pipes", -160.0, 56.0, 10.0],
+	["props/prop_concrete_pipes", -148.0, 86.0, 70.0],
+	["compute/compute_cooling_unit", -130.0, 94.0, 0.0],
+	# ── THE SHOULDER: a fire base.
+	["fortifications/fort_mortar_pit", -164.0, -20.0, 0.0],
+	["fortifications/fort_ammo_dump", -156.0, 4.0, 0.0],
+	["props/prop_sandbag_nest", -140.0, -44.0, 0.0],
+	["features/feature_watchtower", -116.0, -20.0, 0.0],
+
+	# ════ EAST LANE — the one that looks held ═══════════════════════════════
+	#
+	# Everything here points south, at whoever is coming. Dragon teeth belong
+	# on THIS lane and not on the centre: in front of a defended wall they read
+	# as a defended line, and in open ground they would read as cover.
+	["fortifications/fort_dragon_teeth", 72.0, 54.0, 90.0],
+	["fortifications/fort_dragon_teeth", 86.0, 54.0, 90.0],
+	["fortifications/fort_dragon_teeth", 118.0, 54.0, 90.0],
+	["fortifications/fort_dragon_teeth", 134.0, 54.0, 90.0],
+	["fortifications/fort_dragon_teeth", 150.0, 54.0, 90.0],
+	["fortifications/fort_dragon_teeth", 166.0, 54.0, 90.0],
+	["fortifications/fort_razor_wire", 76.0, 72.0, 90.0],
+	["fortifications/fort_razor_wire", 90.0, 72.0, 90.0],
+	["fortifications/fort_razor_wire", 132.0, 72.0, 90.0],
+	["fortifications/fort_razor_wire", 148.0, 72.0, 90.0],
+	["fortifications/fort_razor_wire", 164.0, 72.0, 90.0],
+	["fortifications/fort_floodlight_mast", 96.0, 48.0, 0.0],
+	["fortifications/fort_floodlight_mast", 126.0, 48.0, 0.0],
+	["fortifications/fort_floodlight_mast", 170.0, 30.0, 0.0],
+	["features/feature_crater_rim", 170.0, 88.0, 0.0],
+	["features/feature_crater_rim", 76.0, -34.0, 0.0],
+	# Behind the wall, looking back down the lane.
+	["features/feature_watchtower", 88.0, 30.0, 90.0],
+	["features/feature_watchtower", 146.0, 30.0, 90.0],
+	["fortifications/fort_sentry_turret", 94.0, 34.0, 180.0],
+	["fortifications/fort_sentry_turret", 126.0, 34.0, 180.0],
+	["features/feature_pillbox", 84.0, -4.0, 20.0],
+	["fortifications/fort_gun_emplacement", 136.0, 8.0, 0.0],
+	["fortifications/fort_ammo_dump", 166.0, 10.0, 0.0],
+	["fortifications/fort_mortar_pit", 178.0, -4.0, 0.0],
+	# ── THE GATEHOUSE: the lock on this lane.
+	["fortifications/fort_checkpoint", 110.0, -8.0, 0.0],
+	["fortifications/fort_t_walls", 92.0, -26.0, 20.0],
+	["fortifications/fort_t_walls", 130.0, -2.0, 160.0],
+	# ── THE TERRACE: the gun line below the east gate.
+	["fortifications/fort_gun_emplacement", 166.0, -30.0, 0.0],
+	["fortifications/fort_hesco_sangar", 140.0, -56.0, 30.0],
+	["props/prop_sandbag_wall", 120.0, -46.0, 70.0],
+	["features/feature_rock_outcrop", 172.0, -78.0, 50.0],
+	["fortifications/fort_floodlight_mast", 116.0, -22.0, 0.0],
+]
+
+## What is at the trailhead. The only station with a pad big enough to dress:
+## 104 x 28, and no bunker on it.
+##
+## station, piece, dx, dz, yaw
+const STATION_DRESS: Array = [
+	["Trailhead", "features/feature_container_stack", -34.0, -8.0, 0.0],
+	["Trailhead", "features/feature_container_stack", -34.0, 4.0, 0.0],
+	["Trailhead", "machines/machine_semi_truck", 34.0, 0.0, 95.0],
+	["Trailhead", "machines/machine_bulldozer", 46.0, -8.0, 200.0],
+	["Trailhead", "fortifications/fort_hesco_wall", -14.0, -10.0, 0.0],
+	["Trailhead", "fortifications/fort_hesco_wall", 14.0, -10.0, 0.0],
+	["Trailhead", "fortifications/fort_floodlight_mast", -24.0, -4.0, 0.0],
+	["Trailhead", "props/prop_crates", 24.0, -11.0, 15.0],
+	["Trailhead", "props/prop_barrels", 20.0, 4.0, 0.0],
+	["Trailhead", "props/prop_lamp_post", -48.0, 8.0, 0.0],
+]
+
+## Nothing on the glacis belongs to a terrace any more; the table stays so the
+## group check keeps its shape.
 const TERRACE_DRESS: Array = []
-const STATION_DRESS: Array = []
 
 ## THE CAPTURE SITES — six, on 0.0932 km² of walled-in ground, which is about
 ## 15,500 m² each. Georgetown is 14,436 and the coast road 19,250 and both of
@@ -964,7 +1170,7 @@ func dress_for(station: String) -> Array:
 ## Every distinct piece the two scenes instance, for the ext_resource count.
 func all_pieces() -> Array:
 	var out: Array = []
-	for p: Array in FORT_PIECES + wall_pieces() + TERRACE_DRESS + LANE_WALLS + BUNKERS:
+	for p: Array in FORT_PIECES + wall_pieces() + TERRACE_DRESS + LANE_WALLS + BUNKERS + LANE_DRESS:
 		out.append(p)
 	for d: Array in STATION_DRESS:
 		out.append([d[1], d[2], d[3], d[4]])
@@ -1025,7 +1231,7 @@ func _installation() -> int:
 	# has to touch itself or it is a row of slabs) and _group gives it to
 	# anything under fortress/, which is exactly these.
 	var whole := Vector2(SIZE_X, SIZE_Z) * 0.5
-	bad += await _group("lanes", LANE_WALLS + BUNKERS, Vector2.ZERO, whole, whole)
+	bad += await _group("lanes", LANE_WALLS + BUNKERS + LANE_DRESS, Vector2.ZERO, whole, whole)
 	for s: Array in STATIONS:
 		# The fort's own group is above and already holds its cores; running it
 		# again as a station would report every pair twice.
@@ -1318,7 +1524,7 @@ func _art(by_name: Dictionary) -> String:
 	out.append("[node name=\"Structures\" type=\"Node3D\" parent=\".\"]")
 	out.append("")
 	i = 1
-	for p: Array in LANE_WALLS + BUNKERS:
+	for p: Array in LANE_WALLS + BUNKERS + LANE_DRESS:
 		out.append("[node name=\"Lane%02d_%s\" parent=\"Structures\" instance=ExtResource(\"%s\")]" % [
 				i, _node_tag(str(p[0])), _ext_id(str(p[0]))])
 		out.append(_rot_xform(float(p[3]), float(p[1]), _sits_at(p), float(p[2])))

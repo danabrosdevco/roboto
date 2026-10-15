@@ -85,8 +85,10 @@ const VIEWS: Array = [
 	# than against a number from somewhere else.
 	# ONLY=HW matches these two and not the big map's; ONLY=hillfort matches
 	# both levels, which is usually what you want for the comparison.
-	["hillfort_wip", "HW1_the_trailhead", Vector3(-137.0, 1.5, 61.0), Vector3(-10.0, 70.0, -58.0), "eye"],
-	["hillfort_wip", "HW2_the_gate", Vector3(115.0, 1.5, 18.0), Vector3(-10.0, 70.0, -58.0), "eye"],
+	["hillfort_wip", "HW1_the_spawn", Vector3(0.0, 1.5, 112.0), Vector3(-10.0, 50.0, -58.0), "eye"],
+	["hillfort_wip", "HW2_centre_lane", Vector3(0.0, 1.5, 62.0), Vector3(0.0, 8.0, -20.0), "eye"],
+	["hillfort_wip", "HW3_west_lane", Vector3(-130.0, 1.5, 62.0), Vector3(-124.0, 14.0, -30.0), "eye"],
+	["hillfort_wip", "HW4_east_lane", Vector3(110.0, 1.5, 70.0), Vector3(110.0, 10.0, 10.0), "eye"],
 ]
 
 ## MOCKUP=1. The proposal's geometry, dropped into the loaded level IN MEMORY
