@@ -180,8 +180,8 @@ const STATIONS: Array = [
 	["Trailhead", -137.0, 57.0, 15.0, 56.0, 36.0, 12.0],
 	["Cistern", -44.0, 98.0, 23.0, 44.0, 32.0, 11.0],
 	["Pillars", 48.0, 82.0, 31.0, 44.0, 32.0, 11.0],
-	["Gate", 115.0, 18.0, 38.0, 44.0, 32.0, 11.0],
-	["Terrace", 124.0, -66.0, 45.0, 44.0, 32.0, 16.0],
+	["Gate", 115.0, 18.0, 39.0, 44.0, 32.0, 11.0],
+	["Terrace", 124.0, -66.0, 47.0, 44.0, 32.0, 16.0],
 	# THE APRON, and it is the trick that makes the last ramp possible. A road
 	# leg's run-out has to cross the whole of the pad it arrives on, and the
 	# plateau's pad is 136 m across — a 70 m run-out, which is longer than any
@@ -190,7 +190,7 @@ const STATIONS: Array = [
 	# therefore not a road endpoint at all: the road ends on a small level
 	# apron at the plateau's own height, just outside the gate, and the two
 	# stamps meet at the lip asking for the same number.
-	["Apron", 48.0, 0.0, 70.0, 36.0, 24.0, 16.0],
+	["Apron", 48.0, 0.0, 70.0, 28.0, 20.0, 18.0],
 	["Fort", 0.0, -66.0, 70.0, 136.0, 112.0, 34.0],
 ]
 
@@ -200,7 +200,7 @@ const LEGS: Array = [
 	["Cistern", "Pillars", 12.0, 10.0],
 	["Pillars", "Gate", 12.0, 10.0],
 	["Gate", "Terrace", 12.0, 10.0],
-	["Terrace", "Apron", 12.0, 16.0],
+	["Terrace", "Apron", 12.0, 18.0],
 ]
 
 ## Small flat benches on the hillside, so the ground between the stations is
@@ -236,6 +236,42 @@ const LEGS: Array = [
 ## down after its own steep ring read as a crater. A ring that is LOWER than
 ## the thing it surrounds is a mesa; it was only ever the higher kind that was
 ## the problem.
+##
+## name, x, z, radius, falloff, y
+## TWO STEPS, NOT ONE, AND THE SECOND ONE IS WHAT LETS THE ROAD GO IN AT THE
+## GATE. The human played the first version and said the last ramp "doesn't
+## make it up directly" — it climbed the mesa and then ran sideways along the
+## front of the wall, because the climb finished 46 m before the gate and
+## everything after that was level traverse.
+##
+## The arithmetic behind that: the terrace is at 48 and the fort at 70, so the
+## last move is 22 m, and 22 m at the road's pitch needs ~70 m of graded run on
+## a mesa face only 20-30 m wide. It has to wrap. The only question is whether
+## it wraps while CLIMBING and then points at the gate, or climbs first and
+## traverses after — and the second is what it was doing.
+##
+## THE FIX IS THE ROAD'S SHAPE, NOT THE HILL'S. The last leg now wraps the
+## mesa while CLIMBING and spends its level run-out on a single stretch
+## pointing due north at the gate, so the last thing you do is walk up at it.
+## See _vias().
+##
+## TWO THINGS I TRIED FIRST AND TOOK BACK OUT, because the reasons are the
+## useful part:
+##
+##   RAISE THE TERRACE so the last move is shorter. Closed off by the near lip:
+##   a station standing on the terrace must be 23 m below the fort or the
+##   objective is invisible from it, and the Terrace station stands on it. The
+##   terrace is pinned at 48.
+##
+##   A SECOND STEP AT 59, halfway up the mesa, carrying no station and so not
+##   bound by the near lip. It worked on paper — it halved the final embankment
+##   from 20 m to 11 — and it does not fit. Three levels in the 44 m of radius
+##   between the pad's edge and the terrace leaves bands 2 to 6 m wide: no flat
+##   terrace to fight on, nowhere level to stand the glacis dressing, and a 46°
+##   bank where the flat used to be. Widening the outer ring to make room
+##   pushed 48 m ground out to r=130, where it became the skyline, and the dish
+##   went from visible at every station to visible at NONE. One step, and the
+##   last ramp rides a built causeway instead.
 ##
 ## name, x, z, radius, falloff, y
 const RINGS: Array = [
@@ -517,9 +553,13 @@ const STATION_DRESS: Array = [
 
 	# ── THE APRON. The last level ground before the gate, and the place the
 	# fort shoots at. Teeth and a wrecked column, nothing to hide behind.
+	# The causeway head. The two hesco runs flank the ramp where it reaches the
+	# apron, 19.6 m apart, so the way in reads as a made thing rather than a
+	# slope that happens to be walkable — and so the last stretch has sides.
+	["Apron", "fortifications/fort_hesco_wall", -12.0, 8.0, 90.0],
+	["Apron", "fortifications/fort_hesco_wall", 12.0, 8.0, 90.0],
 	["Apron", "fortifications/fort_dragon_teeth", -12.0, -8.0, 0.0],
-	["Apron", "props/prop_robot_wreck", 10.0, 4.0, 200.0],
-	["Apron", "props/prop_rubble_pile", -14.0, 6.0, 0.0],
+	["Apron", "props/prop_robot_wreck", 0.0, -12.0, 200.0],
 ]
 
 ## THE CAPTURE SITES — six of them, which on 0.094 km² of walled-in ground is
@@ -564,8 +604,8 @@ const OBJECTIVES: Array = [
 	["HFW_Trailhead", "obj_hfw_trailhead", "Trailhead", -137.0, 57.0, 15.0],
 	["HFW_Cistern", "obj_hfw_cistern", "The Cistern", -44.0, 98.0, 23.0],
 	["HFW_Pillars", "obj_hfw_pillars", "The Pillars", 48.0, 82.0, 31.0],
-	["HFW_Gate", "obj_hfw_gate", "The Gate", 115.0, 18.0, 38.0],
-	["HFW_Terrace", "obj_hfw_terrace", "The Terrace", 124.0, -66.0, 45.0],
+	["HFW_Gate", "obj_hfw_gate", "The Gate", 115.0, 18.0, 39.0],
+	["HFW_Terrace", "obj_hfw_terrace", "The Terrace", 124.0, -66.0, 47.0],
 	["HFW_Apron", "obj_hfw_apron", "The Apron", 48.0, 0.0, 70.0],
 	# The compound, broken up: taking the hilltop is not one objective, it is a
 	# gate, a yard, and three things inside worth standing on.
@@ -956,9 +996,28 @@ func _vias(from_name: String, to_name: String) -> Array[Vector2]:
 		# south of the lip the whole way, and the extra 33 m of road is what
 		# brings the grade to 20°. The last fifty metres of the climb are
 		# therefore walked along the front of the wall, under the guns.
+		# THE LAST LEG, AND THE WHOLE POINT OF IT IS WHERE THE LEVEL BIT GOES.
+		#
+		# 23 m of rise at the road's pitch needs ~75 m of graded run, and the
+		# mesa's face is 30 m wide, so this leg HAS to wrap. The first version
+		# wrapped the wrong way round: it climbed up the east side and then
+		# spent its whole 46 m run-out running WEST along the front of the wall
+		# to a gate off to one side. Played, that reads as the road arriving at
+		# the hill and giving up — "the last ramp doesn't make it up directly".
+		#
+		# Same wrap, opposite order. The climb now happens on the way round,
+		# and the level run-out is spent on ONE 27 m stretch from (56, 26) to
+		# the apron, pointing due north with the gate 18 m beyond it. You climb,
+		# you turn once at the foot, and the last thing you do is walk up at the
+		# gate.
+		#
+		# The cost is honest and it is fill: 16 m of embankment under the
+		# midpoint, 17 m under that last stretch. It is a built causeway across
+		# the terrace, its flanks are too steep to climb, and that is the
+		# correct shape for the approach to a hillfort — one way up, in the
+		# open, under the wall.
 		"Terrace-Apron":
-			return [Vector2(126.0, -30.0), Vector2(112.0, -4.0), Vector2(80.0, 12.0),
-					Vector2(56.0, 16.0)]
+			return [Vector2(118.0, -26.0), Vector2(92.0, 4.0), Vector2(56.0, 26.0)]
 	return []
 
 

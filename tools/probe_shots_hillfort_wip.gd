@@ -79,6 +79,11 @@ const SHOTS: Array = [
 	["15_the_terrace_looking_up", Vector3(124.0, EYE, -66.0), Vector3(0.0, 70.0, -66.0), 58.0, "eye"],
 	# The last ramp, walked: along the front of the wall to the gate.
 	["16_the_ramp", Vector3(96.0, EYE, 4.0), Vector3(48.0, 6.0, -16.0), 62.0, "eye"],
+	# ON the new causeway, two thirds of the way up, with the gate at the head
+	# of it. This is the camera for the change the human asked for: the last
+	# move is up and in, not up and then sideways.
+	["16b_up_the_ramp", Vector3(92.0, EYE, 4.0), Vector3(48.0, 10.0, -18.0), 62.0, "eye"],
+	["16c_the_causeway_from_below", Vector3(104.0, EYE, 54.0), Vector3(48.0, 16.0, -18.0), 58.0, "eye"],
 	["17_the_apron", Vector3(48.0, EYE, 12.0), Vector3(48.0, 12.0, -30.0), 62.0, "eye"],
 	# Inside: the yard, and the dish from its own foot.
 	["18_the_yard", Vector3(20.0, EYE, -104.0), Vector3(-10.0, 24.0, -64.0), 66.0, "eye"],
