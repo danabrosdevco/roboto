@@ -180,6 +180,9 @@ const SCREEN_TEX := "PSX_Textures/glitch_tx_neutral@0.04"
 ## count, so 42 and 41 are the candidates and 42 is nearer.
 const PAD_U := 42
 const PAD_GAP := 2
+## How much of the mass's -X face the inner raking strut is given, clear of the
+## return bank. The strut is 8 units thick and sits in the middle of it.
+const STRUT_GAP := 14
 const DECK_U := 11        # 0.34 m of shelf slab under the pad surface
 const KERB_U := 5
 const LUG_U := 8
@@ -224,20 +227,20 @@ const SPEC := {
 	"small": {
 		"bx": 72, "by": 56, "top": 134, "sh": 82,
 		"p0": -8, "b_in": 22, "b_yin": 14, "drop": 12,
-		"fd": 18, "ft": 5, "fins": 5, "fp": 12,
+		"fd": 18, "ft": 5, "fins": 5, "fp": 12, "ret": 2,
 		"s_len": 44, "s_y0": 2, "s_top": 62, "ext": 0,
 	},
 	"med": {
 		"bx": 96, "by": 76, "top": 224, "sh": 136,
 		"p0": -10, "b_in": 36, "b_yin": 26, "drop": 20,
-		"fd": 24, "ft": 6, "fins": 6, "fp": 15,
-		"s_len": 56, "s_y0": 4, "s_top": 100, "ext": 12,
+		"fd": 24, "ft": 6, "fins": 6, "fp": 15, "ret": 3,
+		"s_len": 56, "s_y0": 10, "s_top": 100, "ext": 12,
 	},
 	"large": {
 		"bx": 132, "by": 104, "top": 397, "sh": 240,
 		"p0": -14, "b_in": 44, "b_yin": 38, "drop": 36,
-		"fd": 34, "ft": 8, "fins": 8, "fp": 16,
-		"s_len": 76, "s_y0": 6, "s_top": 170, "ext": 36,
+		"fd": 34, "ft": 8, "fins": 8, "fp": 16, "ret": 4,
+		"s_len": 76, "s_y0": 22, "s_top": 170, "ext": 36,
 	},
 }
 
@@ -251,6 +254,7 @@ var _trim: Array = []
 var _paint: Array = []
 var _lit: Array = []
 var _dock := 0.0
+var _dock_at := Vector3.ZERO
 
 
 func _initialize() -> void:
@@ -387,6 +391,7 @@ func _relay(tag: String) -> void:
 	_bund(s)
 	_masses(s)
 	_fins(s)
+	_return_bank(s)
 	_terminations(s)
 	_shelf(s)
 
@@ -504,7 +509,7 @@ func _masses(s: Dictionary) -> void:
 ## collision brushes on every one of the 42 cores the levels hold.
 func _fins(s: Dictionary) -> void:
 	var ylo: int = -s.by + 8 + s.fd
-	var x: int = s.p0 + 6
+	var x: int = s.p0
 	var z0: int = GROUND_U + 4
 	var z1: int = s.sh - 10
 	for i in s.fins:
@@ -533,17 +538,85 @@ func _fins(s: Dictionary) -> void:
 	# the last panel ENDS at the top of the bank at every size, which is also
 	# what keeps the pulse's travel proportional to the machine's height.
 	var gaps: int = s.fins - 1
+	var ret_gaps: int = s.ret - 1
+	for i in gaps:
+		var gx0: int = s.p0 + i * s.fp + s.ft + 1
+		var gx1: int = s.p0 + (i + 1) * s.fp - 1
+		# THE LATER HALF OF ONE RUN. The return bank on the -X face carries
+		# steps 0 .. ret_gaps-1 and this face carries the rest, so the climb
+		# that starts at the corner here is the SAME climb that arrived at it.
+		var z := _step(s, ret_gaps + i)
+		_lit.append(_later_box(Vector3(u(gx0), u(ylo - s.fd + 3), u(z.x)),
+				Vector3(u(gx1), u(ylo - s.fd + 8), u(z.y)), SCREEN_TEX, u((z.x + z.y) / 2)))
+
+
+## THE RETURN: the bank, and the run in it, turning the -X/-Y corner.
+##
+## The human saw round two lit, liked it, and asked for one thing — "can we
+## have the glowing lines bit extend on two sides of it". TWO ADJACENT faces
+## and not two opposite ones, so it stays asymmetric (two of four), so it reads
+## as ONE run climbing AROUND the machine rather than as two decorations, and
+## because a run that turns the corner is visible from the approach bearing AND
+## from the flank. That last one matters: the previous round's open question was
+## whether the whole composition had to be turned 90 degrees because its richest
+## elevation faced away from the approach. It does not, now.
+##
+## IT IS THE SAME COMPONENT, NOT A SECOND IDEA. Same fins, same depth, same
+## 3-units-inboard-of-the-tips rule for the panels. A glowing line on a bare
+## face would read as a sticker where the first leg reads as light inside a
+## machine, and the two would not be one run.
+##
+## THE RETURN CARRIES THE LOW STEPS, which is forced and happens to be right.
+## The main bank climbs away from the corner toward +X, so its lowest step is
+## at the corner; the return therefore has to arrive there, and it does — it
+## starts low at the secondary mass and climbs to meet it. Read as a whole, the
+## pulse now leaves the glands in the tray, climbs the -X face, turns the
+## corner, and carries on up the flank to the shelf lip and the crown.
+##
+## WHERE IT STOPS IS WHERE THE BRACKET LANDS. The inner raking strut has to
+## bear on this same face — it is the only part of the mass's -X elevation that
+## is not behind the secondary mass — so the bank stops 14 units short of it and
+## the strut passes through the gap, which looks like what it is.
+func _return_bank(s: Dictionary) -> void:
+	var ylo: int = -s.by + 8 + s.fd
+	var z0: int = GROUND_U + 4
+	var z1: int = s.sh - 10
+	var w2: int = s.s_y0 - STRUT_GAP - ylo
+	if w2 < s.ret * s.ft + (s.ret - 1) * 4:
+		# Every early return warns. Too narrow a strip and the return would be
+		# fins with no gaps in them, i.e. no run at all, and the first leg would
+		# quietly become the only one.
+		push_warning("build_core_relay: only %.2f m of -X face is clear of the secondary mass, so the return bank has nowhere to run" % u(w2))
+		return
+	var g2: int = (w2 - s.ret * s.ft) / maxi(1, s.ret - 1)
+	var pitch: int = s.ft + g2
+	for i in s.ret:
+		var y: int = ylo + i * pitch
+		_trim.append(_later_box(Vector3(u(s.p0 - s.fd), u(y), u(z0)),
+				Vector3(u(s.p0), u(y + s.ft), u(z1)), PLATE_TEX))
+	for k in s.ret - 1:
+		var gy0: int = ylo + k * pitch + s.ft + 1
+		var gy1: int = ylo + (k + 1) * pitch - 1
+		# GAP 0 IS AT THE CORNER, so it takes the HIGHEST of the return's steps
+		# and hands the run to the main bank at the same height it left off.
+		var z := _step(s, s.ret - 2 - k)
+		_lit.append(_later_box(Vector3(u(s.p0 - s.fd + 3), u(gy0), u(z.x)),
+				Vector3(u(s.p0 - s.fd + 8), u(gy1), u(z.y)), SCREEN_TEX, u((z.x + z.y) / 2)))
+
+
+## Step `i` of the single run that crosses both faces, as (bottom, top) in
+## units. The run is fitted to the machine rather than stepped by a constant:
+## the last panel ENDS at the top of the bank at every size, which is what
+## keeps the pulse's travel proportional to the height of the thing it is
+## climbing.
+func _step(s: Dictionary, i: int) -> Vector2i:
 	var base: int = GROUND_U + 6
 	var span: int = s.sh - 14 - base
 	var panel: int = int(round(float(span) * 0.45))
-	var step: int = int(float(span - panel) / float(maxi(1, gaps - 1)))
-	for i in gaps:
-		var gx0: int = s.p0 + 6 + i * s.fp + s.ft + 1
-		var gx1: int = s.p0 + 6 + (i + 1) * s.fp - 1
-		var a: int = base + i * step
-		var b: int = mini(a + panel, s.sh - 14)
-		_lit.append(_later_box(Vector3(u(gx0), u(ylo - s.fd + 3), u(a)),
-				Vector3(u(gx1), u(ylo - s.fd + 8), u(b)), SCREEN_TEX, u((a + b) / 2)))
+	var n: int = (s.ret - 1) + (s.fins - 1)
+	var rise: int = int(float(span - panel) / float(maxi(1, n - 1)))
+	var a: int = base + i * rise
+	return Vector2i(a, mini(a + panel, s.sh - 14))
 
 
 ## THE CABLE TERMINATIONS: three of them along the secondary mass's shoulder,
@@ -650,6 +723,16 @@ func _shelf(s: Dictionary) -> void:
 	var px1: int = x0 + PAD_U * 2                # the pad's +X edge
 
 	_dock = u(dt)
+	# THE DOCK POINT, IN GODOT COORDINATES, written into the .map as a comment
+	# and turned into a `Dock` Marker3D by the dress pass.
+	#
+	# IT IS NOT DERIVABLE ANY MORE AND THAT IS A BREAKING CHANGE.
+	# holdable_core.gd::_dock_y() returns [4.2, 7.0, 12.4] off size_tier — the
+	# top of a core whose cap was CENTRED, which this one's is not: the pad is
+	# off-axis on a shelf at two thirds height. Its own comment says
+	# "placeholder until the real cores carry a dock marker". This is that
+	# marker, so there is something true to wire to; the wiring is GAMEPLAY's.
+	_dock_at = Vector3(u(y0 + PAD_U), u(dt), u(x0 + PAD_U))
 	box(Vector3(u(x0), u(y0), u(sh)), Vector3(u(xb), u(y1), u(dt)), PLATE_TEX)
 
 	# THE PAD IS AT THE SLAB'S FREE END, not against the mass. `ext` is slab
@@ -680,7 +763,7 @@ func _shelf(s: Dictionary) -> void:
 	# strut spaced evenly across the pad put its inboard one straight through
 	# the mass at two sizes out of three.
 	var drop: int = int(round(float(sh - GROUND_U) * 0.42))
-	for sy: int in [y0 + 10, s.s_y0 - 16]:
+	for sy: int in [y0 + 10, s.s_y0 - STRUT_GAP + 2]:
 		var a := sy
 		var b := sy + 8
 		_trim.append(_later_call(func() -> void:
@@ -773,7 +856,8 @@ func _emit(classname: String, tag: String, items: Array) -> void:
 ## that three lanes work in, and the tag is of no use to any other piece in the
 ## kit.
 func _map_text() -> String:
-	var lines := PackedStringArray(["// Game: Roboto", "// Format: Valve", "// entity 0", "{",
+	var lines := PackedStringArray(["// Game: Roboto", "// Format: Valve",
+			"// core:dock %.4f %.4f %.4f" % [_dock_at.x, _dock_at.y, _dock_at.z], "// entity 0", "{",
 			"\"mapversion\" \"220\"", "\"wad\" \"\"", "\"classname\" \"worldspawn\""])
 	var first: int = _brushes.size() if _entities.is_empty() else _entities[0].at
 	for b in range(0, first):

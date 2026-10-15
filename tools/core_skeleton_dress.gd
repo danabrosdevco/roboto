@@ -182,6 +182,30 @@ func _dress(nm: String) -> bool:
 		root.remove_child(old)
 		old.free()
 
+	# THE DOCK MARKER, REBUILT EVERY RUN for the same reason Signal is.
+	#
+	# holdable_core.gd lands the capture tap at Vector3(0, _dock_y(), 0) — on
+	# the core's own axis, at a height from a table of the three OLD prefab
+	# heights — and its own comment calls that "placeholder until the real cores
+	# carry a dock marker". The relay's pad is neither on the axis nor at the
+	# top: it is off-centre on a cantilevered shelf at two thirds height. So the
+	# builder writes the point into the .map and this puts a Marker3D on it.
+	# Nothing reads it yet. It exists so that when GAMEPLAY wires it there is
+	# one true answer rather than a fourth table.
+	var old_dock := root.get_node_or_null(^"Dock")
+	if old_dock != null:
+		root.remove_child(old_dock)
+		old_dock.free()
+	var dock_at: Variant = _read_dock(map_path)
+	if dock_at == null:
+		push_warning("core_skeleton_dress: %s carries no core:dock line, so the core ships without a dock marker and anything landing on it will use the old height table." % map_path)
+	else:
+		var marker := Marker3D.new()
+		marker.name = "Dock"
+		root.add_child(marker)
+		marker.position = dock_at
+		marker.owner = root
+
 	var signal_node := Node3D.new()
 	signal_node.name = "Signal"
 	signal_node.set_script(_pulse)
@@ -317,6 +341,22 @@ func _read_tags(map_path: String) -> Dictionary:
 			continue
 		out[idx.to_int()] = tag
 	return out
+
+
+## The `// core:dock x y z` line, in GODOT coordinates, or null if the map was
+## written before there was one. Variant rather than Vector3 on purpose: a
+## missing marker has to be distinguishable from a dock at the origin, which is
+## inside the machine.
+func _read_dock(map_path: String) -> Variant:
+	for line: String in FileAccess.get_file_as_string(map_path).split("\n"):
+		if not line.begins_with("// core:dock "):
+			continue
+		var parts := line.substr(13).strip_edges().split(" ", false)
+		if parts.size() != 3:
+			push_warning("core_skeleton_dress: '%s' is not three numbers, so the dock marker was skipped" % line)
+			return null
+		return Vector3(parts[0].to_float(), parts[1].to_float(), parts[2].to_float())
+	return null
 
 
 ## `core:lit y=3.1563` -> 3.1563. No y= means "never pulses" and comes back NAN.

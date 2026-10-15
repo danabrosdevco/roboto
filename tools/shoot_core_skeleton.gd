@@ -85,6 +85,9 @@ const FAR := 40.0
 ## fallen back to rest and the band in travel is partway up.
 const PHASE := "0.35"
 
+const TICK := "res://Character/characters/ai/tick.tscn"
+const TickPlaced := preload("res://tools/tick_placed.gd")
+
 var _cam: Camera3D
 
 
@@ -161,16 +164,32 @@ func _shots(out: String, id: String) -> void:
 	if packed == null:
 		push_warning("shoot_core_skeleton: no scene for '%s'" % id)
 		return
-	for view: String in ["eye", "far", "pulse", "flank"]:
-		# The flank is frozen too: the lit staircase between the fins is the one
-		# place the travel is visible as a STAIRCASE rather than as a line, and
-		# at rest every panel is at the same energy and proves nothing.
-		OS.set_environment("CORE_PHASE", PHASE if view == "pulse" or view == "flank" else "")
+	for view: String in ["eye", "far", "pulse", "flank", "tick", "tickclose"]:
+		# The flank is frozen too, and so are the docked shots: the lit staircase
+		# between the fins is the one place the travel is visible as a STAIRCASE
+		# rather than as a line, and at rest every panel is at the same energy
+		# and proves nothing. CAPTURE IS A PULSING CORE WITH A DRONE ON IT, so a
+		# still of it has to show both at once or it is a still of neither.
+		OS.set_environment("CORE_PHASE", PHASE if view != "eye" and view != "far" else "")
 		var core: Node3D = packed.instantiate()
 		root.add_child(core)
 		core.global_position = STAGE
 		await process_frame
 		await process_frame
+		# THE DRONE DOCKED, which is what a captured core looks like and what
+		# the human asked to see. The pose is tools/tick_placed.gd — which is
+		# build_tick.gd's own documented state change and nothing invented — and
+		# the seat is the core's Dock marker plus that file's LIFT.
+		#
+		# NOTE WHAT THIS IS NOT. Nothing in the game does this: holdable_core.gd
+		# spawns capture_tap.gd's procedural placeholder pod at
+		# Vector3(0, _dock_y(), 0), which on this core is a point in mid-air
+		# beside the crown. The marker exists so that can be fixed; until it is,
+		# these two shots are a rig staging a drone, not a screenshot of capture.
+		var tick: Node3D = null
+		if view.begins_with("tick"):
+			tick = _dock_tick(core)
+			await process_frame
 		var bb := _aabb(core, core)
 		var h: float = bb.size.y
 		var centre := STAGE + bb.position + bb.size * 0.5
@@ -202,8 +221,18 @@ func _shots(out: String, id: String) -> void:
 		var look: Vector3 = centre
 		if view != "far":
 			look = Vector3(STAGE.x, STAGE.y + h * 0.42, STAGE.z)
+		# THE CLOSE DOCK SHOT IS THE ONLY ONE NOT TAKEN FROM A PLAYER'S EYE, and
+		# it is a diagnostic rather than a picture of the game: the clamp is at
+		# 2.9 to 7.8 m and from the ground the shelf's own underside hides every
+		# leg. Camera 1.6 m above the pad, 7 m out, aimed at the dock point.
+		if view == "tickclose" and tick != null:
+			_cam.global_position = tick.global_position + bearing * 7.0 + Vector3(0, -0.4, 0)
+			look = tick.global_position
 		_cam.look_at(look, Vector3.UP)
 		await _shoot("%s/core_%s_%s.png" % [out, id, view])
+		if tick != null:
+			root.remove_child(tick)
+			tick.free()
 		root.remove_child(core)
 		core.free()
 	OS.set_environment("CORE_PHASE", "")
@@ -237,3 +266,27 @@ func _aabb(n: Node, body: Node3D) -> AABB:
 					float(i & 1), float((i >> 1) & 1), float((i >> 2) & 1))))
 		box = own if first else box.merge(own)
 	return box
+
+
+## A tick.tscn seated on `core`'s Dock marker, or null with a warning.
+##
+## It is parented to the ROOT and not to the core, so the core's own _aabb()
+## framing is unchanged between the docked and undocked views and the two can
+## be compared.
+func _dock_tick(core: Node3D) -> Node3D:
+	var packed := load(TICK) as PackedScene
+	if packed == null:
+		push_warning("shoot_core_skeleton: tick.tscn would not load, so the docked shots are of a bare core")
+		return null
+	var dock := core.get_node_or_null(^"Dock") as Node3D
+	if dock == null:
+		# Every early return warns. A core built before the dress pass learned
+		# to write the marker would otherwise be photographed bare and read as
+		# "the drone does not fit", which is a different finding entirely.
+		push_warning("shoot_core_skeleton: %s has no Dock marker — run tools/core_skeleton_dress.gd" % core.name)
+		return null
+	var tick: Node3D = packed.instantiate()
+	root.add_child(tick)
+	TickPlaced.seat(tick)
+	tick.global_position = dock.global_position + TickPlaced.LIFT
+	return tick

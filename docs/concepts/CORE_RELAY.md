@@ -20,6 +20,7 @@ nothing vertical"**, and **the console pedestal**. Round one is
 | scenes | `tools/block_prefabs.gd --only=<name> --force`, then **`tools/core_skeleton_dress.gd`** |
 | renders | `tools/shoot_core_skeleton.gd -- docs/concepts` (needs a window) → `core_relay_*.png` |
 | clearance | `tools/probe_core_clearance.gd`, and `CORE_FOOT=shipped\|r1` to compare eras |
+| dock test | `CORE_TICK=1 tools/probe_core_clearance.gd`, with `tools/tick_placed.gd` |
 
 **The dress pass is still not optional.** FuncGodot assigns materials by
 texture name, so a fresh prefab is navy metal with grey patches on it. It read
@@ -90,6 +91,29 @@ and the same flank shot showed **not one of the seven**. They are now three
 units inboard of the fin tips and still between two fins, so they are light
 coming out of a machine rather than a lamp stuck on the side of one.
 
+**The run turns the corner, and that deletes an open question.** The human saw
+this lit, liked it, and asked for one change — "can we have the glowing lines
+bit extend on two sides of it". It now does: a return of the same fin bank on
+the mass's **−X face**, with the same panels at the same depth, carrying the
+LOW steps of **one** run that then turns the corner and climbs the flank.
+`core_relay_large_flank.png` shows the whole of it — three panels on the
+approach face stepping up to seven across the bank — and `core_relay_large_tick.png`
+shows the other half of the same thing from the approach bearing. **Two
+adjacent faces, not opposite ones**, so it is still two of four and still
+asymmetric.
+
+That also answers round two's third open question, which was whether the whole
+composition had to be turned 90° because its richest elevation faced away from
+the approach. **It does not.** The approach now carries the start of the climb
+and the corner; the flank carries the ascent. Delete that decision.
+
+What makes it one run rather than two decorations: the return is the SAME
+component (same fins, same depth, same three-units-inboard-of-the-tips rule),
+and the step heights are a single table crossing both faces — the return's top
+step is the main bank's bottom step. The one thing that constrains it is the
+inner raking strut, which has to bear on that same face; the bank stops 14
+units short and the strut passes through the gap, which looks like what it is.
+
 **Amber is in four places, not spread over an area.** The first lit pass ran
 the crown slot across the whole face — 2.2 × 3.4 m of emissive amber on the
 large core — and it photographed as a backlit poster, which is the fault round
@@ -113,8 +137,8 @@ geometry one.
 | …as Godot X × Z | 3.50 × 4.50 | 4.75 × 6.00 | 6.50 × 8.25 |
 | pad | 2.625 sq | 2.625 sq | 2.625 sq |
 | **dock_height** | **2.91** | **4.59** | **7.84** |
-| brushes · collision | 53 · 9 | 55 · 9 | 59 · 9 |
-| Paint · Lit entities | 5 · 10 | 5 · 11 | 5 · 13 |
+| brushes · collision | 56 · 9 | 60 · 9 | 66 · 9 |
+| Paint · Lit entities | 5 · 11 | 5 · 13 | 5 · 16 |
 
 Heights are exact to round one's, which is the size hierarchy the site tiers
 were sized against. `probe_map_overlap`-style checking is built into the tool:
@@ -153,9 +177,9 @@ capsule radius 0.25, `InteractRaycast` 0.261 m forward of the camera, and no
 hit registered for a ray that starts inside the volume.
 
 **The pulse.** `core_pulse.gd` is untouched and the vertical path is intact,
-asymmetric as the brief asked: **glands in the tray (0.66 m) → the lit
-staircase up the fin bank → the shelf lip at the tip of the overhang → two
-crown slots.** 10 / 11 / 13 lit pieces, every one carrying `pulse_y`, **none
+asymmetric as the brief asked: **glands in the tray (0.66 m) → up the −X face →
+round the corner → up the fin bank → the shelf lip at the tip of the overhang →
+two crown slots.** 11 / 13 / 16 lit pieces, every one carrying `pulse_y`, **none
 constant** — the console plate was the only constant one and it is gone. Rest
 energy is baked once by the dress pass and nothing else writes
 `emission_energy_multiplier`.
@@ -164,6 +188,64 @@ energy is baked once by the dress pass and nothing else writes
 on every fitting, `grate_perf` on the tray and the vent, `glitch_tx_neutral` on
 the lit pieces with emission as well as albedo and `EMISSION_OP_ADD`. No
 concrete, no `metal_floor_3`. Every material `resource_local_to_scene`.
+
+## 4a. The TICK on the pad — three findings, none of them cosmetic
+
+The human asked to see the drone docked. Doing it properly turned up more than
+a picture. `tools/tick_placed.gd` is `build_tick.gd`'s own documented state
+change compiled — eight rotations, one slide, one translation — and
+`CORE_TICK=1 tools/probe_core_clearance.gd` seats a real `tick.tscn` on the
+real `Dock` marker and sweeps every one of its meshes against the core's own
+collision. Shots: `core_relay_*_tick.png` (approach, pulse frozen, drone
+docked) and `core_relay_*_tickclose.png` (the clamp).
+
+**1. Nothing in the game can dock anything on this core.** `holdable_core.gd`
+lands the tap at `Vector3(0, _dock_y(), 0)` where `_dock_y()` is
+`[4.2, 7.0, 12.4]` off `size_tier` — the top of a core whose cap was CENTRED.
+This pad is off-axis on a shelf at two thirds height, so that point is empty
+air beside the crown at every size. The file's own comment calls the table "a
+placeholder until the real cores carry a dock marker". **The prefabs now carry
+one**: a `Dock` Marker3D at `(-0.44, 2.91, -0.94)` / `(-1.06, 4.59, -0.94)` /
+`(-1.94, 7.84, -1.56)`, written by the builder into the `.map` as a
+`// core:dock` line and placed by the dress pass. Wiring it is GAMEPLAY's;
+nothing reads it yet. Note also that what the code spawns is not the TICK at
+all but `capture_tap.gd`'s procedural placeholder pod.
+
+**2. The small core fouls, by 0.06 m.** The TICK is 3.19 × 3.50 m placed and
+reaches **0.44 m past each pad edge**, and on a cantilevered shelf one of those
+edges has the machine continuing upward behind it. Measured from the pad
+centre to the upper stage's face: **1.375 m (small) / 1.75 (med) / 2.50
+(large)**, against a barb reach of **1.44 m** on that bearing. So:
+
+| | clearance above the pad |
+|---|---|
+| small | **FOULS** — one leg's shin and barb stand inside the upper stage |
+| med | clear by ~0.31 m |
+| large | clear by ~1.06 m |
+
+The difference is `ext`, the slab that runs on PAST the pad before the mass
+starts: 0 / 12 / 36 units. **The one-constant fix is `ext` ≥ 6 on the small**,
+which pushes the pad 0.19 m further out and puts the whole drone in the clear —
+at the price of the pad overhanging the bund's −X edge by the same 0.19 m, at
+2.9 m up. **I have not made that change**: it moves the pad, and whether the
+drone or the machine gives way is not an art decision.
+
+**3. One barb grips nothing, at every size, by design.** The pad's −X and −Y
+edges ARE the slab's edges — that is the cantilever — so the leg at the
+outboard corner closes on open air. The other three bite the deck. On the old
+centred cap all four came down the flanks of a mast, which is what
+`build_tick.gd` sized the thigh hinge for ("the barbs land 0.51 m OUTSIDE the
+pad edge, i.e. down the flanks, which is what gripping means"). Either the pad
+grows a lip for them, or the clamp is accepted as gripping two edges and
+overhanging two. It photographs fine (`core_relay_small_tickclose.png`); it is
+a question about the fiction, not the render.
+
+*Method, stated: the test is split at the pad plane. Above it, any contact is a
+foul — a barb is MEANT to come down outside the edge, and an axis-aligned box
+round an angled barb always clips the deck corner, which is what made the first
+version report all four legs fouling at every size. Clearance is swept in 2 cm
+steps, so "clear by 0.31 m" means "0.31 m and no further tested". Barb tips are
+the barb mesh's AABB bottom, so they carry a few centimetres of slop.*
 
 ## 5. The cost, measured rather than asserted
 
@@ -200,9 +282,10 @@ three of them are standing in walls.
 
 ## 6. What is the human's
 
-- **Whether the fin bank should be on the flank the player approaches.** It is
-  on −Y and the approach is −X, so the richest elevation is the one you see
-  second. Turning the composition 90° is one constant.
+- **The small core's drone foul.** `ext` ≥ 6 fixes it and moves the pad 0.19 m
+  past the bund edge; the alternative is stepping the upper stage back.
+- **Whether a barb clamping on air at the overhang corner is acceptable**, or
+  whether the pad needs a lip for it.
 - **Whether the small core needs to read across a map at all**, given 4.19 m of
   machine at 40 m is a smudge with an amber strip on it.
 - **The one new clash, and the four old ones**, which are placement rather
