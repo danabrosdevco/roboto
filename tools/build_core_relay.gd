@@ -180,6 +180,19 @@ const SCREEN_TEX := "PSX_Textures/glitch_tx_neutral@0.04"
 ## count, so 42 and 41 are the candidates and 42 is nearer.
 const PAD_U := 42
 const PAD_GAP := 2
+## DECK PAST THE PAD AT THE SLAB'S FREE END, so the fourth barb has something
+## to bite.
+##
+## The TICK clamps four legs and each one comes down OUTSIDE one pad edge —
+## that is what gripping means and build_tick.gd sized the thigh hinge for it.
+## Three of the four land on deck here. The fourth is the one at the free end
+## of the cantilever, where the pad's edge WAS the slab's edge, so it closed on
+## open air at every size: measured, it reaches 0.11 m past that edge. Eight
+## units is 0.25 m, which puts deck under it with 0.14 m to spare and is the
+## smallest number that does — the lip is a tip detail on the overhang, not a
+## second shelf, and the whole point of keeping it tight is that the cantilever
+## is the strongest thing on the model.
+const LIP_U := 8
 ## How much of the mass's -X face the inner raking strut is given, clear of the
 ## return bank. The strut is 8 units thick and sits in the middle of it.
 const STRUT_GAP := 14
@@ -220,21 +233,36 @@ const SINK_U := 10
 ##   s_y0     ...its -Y face, hugging the +Y side so the tray stays open under
 ##            the cantilever...
 ##   s_top    ...and its height. Lower than the lower stage at every size.
-##   ext      how far the shelf slab runs out PAST the pad. On the large core
-##            the pad alone would leave the overhang looking like a step; the
-##            slab carries it out and the pad sits on the end of it.
+##   ext      how far the shelf slab runs BACK from the pad toward the mass —
+##            and therefore how far the pad stands off the mass, which is the
+##            one number the docked drone's clearance depends on. On the large
+##            core the pad alone would leave the overhang looking like a step;
+##            the slab carries it out and the pad sits on the end of it.
+##
+##            IT IS SET BY THE DRONE NOW, NOT BY THE DRAWING. The placed TICK
+##            is 3.19 x 3.50 m and reaches 1.66 m from the dock point toward
+##            the mass, against 1.375 + ext/32 m of room, so the 0 / 12 / 36
+##            this shipped with FOULED the small core and missed on the medium
+##            by 0.08 m. The rule is now: run the slab back until either the
+##            drone has real room or the slab reaches the bund's own -X edge,
+##            whichever comes first. On the medium those coincide at 36 — flush
+##            with the bund, 0.84 m of clearance, the same margin the large has
+##            always had. ON THE SMALL THEY DO NOT MEET AT ALL: the bund edge
+##            is at ext 0, so every millimetre of clearance is a millimetre of
+##            diving board, and the small core does not take the drone. See
+##            section 4a of docs/concepts/CORE_RELAY.md.
 const SPEC := {
 	"small": {
 		"bx": 72, "by": 56, "top": 134, "sh": 82,
 		"p0": -8, "b_in": 22, "b_yin": 14, "drop": 12,
 		"fd": 18, "ft": 5, "fins": 5, "fp": 12, "ret": 2,
-		"s_len": 44, "s_y0": 2, "s_top": 62, "ext": 0,
+		"s_len": 44, "s_y0": 2, "s_top": 62, "ext": 24,
 	},
 	"med": {
 		"bx": 96, "by": 76, "top": 224, "sh": 136,
 		"p0": -10, "b_in": 36, "b_yin": 26, "drop": 20,
 		"fd": 24, "ft": 6, "fins": 6, "fp": 15, "ret": 3,
-		"s_len": 56, "s_y0": 10, "s_top": 100, "ext": 12,
+		"s_len": 56, "s_y0": 10, "s_top": 100, "ext": 36,
 	},
 	"large": {
 		"bx": 132, "by": 104, "top": 397, "sh": 240,
@@ -356,7 +384,9 @@ func u(n: int) -> float:
 func _over_pad(tag: String) -> Array:
 	var s: Dictionary = SPEC[tag]
 	var xb: int = s.p0 + s.b_in
-	var x0: int = xb - PAD_GAP - PAD_U * 2 - s.ext
+	# THE PAD, not the slab: the slab runs LIP_U further out at the free end and
+	# `ext` further back toward the mass, and neither of those is pad.
+	var px0: int = xb - PAD_GAP - PAD_U * 2 - s.ext
 	var y0: int = -s.by
 	var floor_z: int = s.sh + DECK_U + LUG_U
 	var out: Array = []
@@ -364,7 +394,7 @@ func _over_pad(tag: String) -> Array:
 		var hit := false
 		for face: Dictionary in _brushes[b]:
 			for p: Vector3 in face.poly:
-				if p.z > float(floor_z) + 0.5 and p.x > float(x0) + 0.5 and p.x < float(x0 + PAD_U * 2) - 0.5 \
+				if p.z > float(floor_z) + 0.5 and p.x > float(px0) + 0.5 and p.x < float(px0 + PAD_U * 2) - 0.5 \
 						and p.y > float(y0) + 0.5 and p.y < float(y0 + PAD_U * 2) - 0.5:
 					hit = true
 					break
@@ -715,12 +745,13 @@ func _shelf(s: Dictionary) -> void:
 	# and "nothing above it" is a contract the TICK is built against rather
 	# than a figure of speech. Anything else ever hung on that face has to be
 	# thinner than this gap or the build fails, which is the point.
-	var x0: int = xb - PAD_GAP - PAD_U * 2 - s.ext   # the slab's free end
+	var px0: int = xb - PAD_GAP - PAD_U * 2 - s.ext  # the pad's -X edge
+	var x0: int = px0 - LIP_U                    # the slab's free end, LIP_U further out
 	var ylo: int = -s.by + 8 + s.fd
 	var y0: int = -s.by                          # flush with the bund's -Y edge
 	var y1: int = y0 + PAD_U * 2
 	var dt: int = sh + DECK_U                    # THE PAD SURFACE
-	var px1: int = x0 + PAD_U * 2                # the pad's +X edge
+	var px1: int = px0 + PAD_U * 2               # the pad's +X edge
 
 	_dock = u(dt)
 	# THE DOCK POINT, IN GODOT COORDINATES, written into the .map as a comment
@@ -732,7 +763,7 @@ func _shelf(s: Dictionary) -> void:
 	# off-axis on a shelf at two thirds height. Its own comment says
 	# "placeholder until the real cores carry a dock marker". This is that
 	# marker, so there is something true to wire to; the wiring is GAMEPLAY's.
-	_dock_at = Vector3(u(y0 + PAD_U), u(dt), u(x0 + PAD_U))
+	_dock_at = Vector3(u(y0 + PAD_U), u(dt), u(px0 + PAD_U))
 	box(Vector3(u(x0), u(y0), u(sh)), Vector3(u(xb), u(y1), u(dt)), PLATE_TEX)
 
 	# THE PAD IS AT THE SLAB'S FREE END, not against the mass. `ext` is slab
@@ -745,11 +776,11 @@ func _shelf(s: Dictionary) -> void:
 	# are also the two the player sees — are left clean, and the two toward the
 	# machine get the kerb. Trim, so nothing on the pad is solid.
 	_trim.append(_later_box(Vector3(u(px1 - 4), u(y0), u(dt)), Vector3(u(px1), u(y1), u(dt + KERB_U)), PLATE_TEX))
-	_trim.append(_later_box(Vector3(u(x0), u(y1 - 4), u(dt)), Vector3(u(px1 - 4), u(y1), u(dt + KERB_U)), PLATE_TEX))
+	_trim.append(_later_box(Vector3(u(px0), u(y1 - 4), u(dt)), Vector3(u(px1 - 4), u(y1), u(dt + KERB_U)), PLATE_TEX))
 	# The four landing lugs, the TICK's designed interface, inboard of the pad
 	# corners. Trim: a navmesh island at 8 m is a place the planner will try to
 	# send somebody.
-	for lx: int in [x0 + 9, px1 - 9]:
+	for lx: int in [px0 + 9, px1 - 9]:
 		for ly: int in [y0 + 9, y1 - 9]:
 			_trim.append(_later_box(Vector3(u(lx - 3), u(ly - 3), u(dt)),
 					Vector3(u(lx + 3), u(ly + 3), u(dt + LUG_U)), PLATE_TEX))

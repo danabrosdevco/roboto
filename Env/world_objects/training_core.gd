@@ -125,6 +125,13 @@ func _build() -> void:
 	core.name = "Hold"
 	core.size_tier = tier
 	core.mark_noun = noun
+	# THE TOP OF THIS POST, read off the box above rather than left to the tier
+	# table. The two agreed by coincidence — a 4.2 m body against tier 0's 4.2 —
+	# and holdable_core's table is now the last-resort fallback that WARNS,
+	# because the relay cores' pad is off-axis and no height can describe it.
+	# This core really is a centred cap on a mast, so an axis dock is correct
+	# here; saying so is what stops the warning being noise.
+	core.dock_height = bm.size.y
 	core.interactible = inter
 	add_child(core)
 

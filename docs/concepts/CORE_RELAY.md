@@ -2,7 +2,9 @@
 
 Round two of `docs/briefs/COMPUTE_CORE_ART.md`, which still governs the
 CONTRACTS and whose VISUAL direction is overridden here by the human.
-2026-10-14 · **status: built, shipped, photographed lit at three sizes.**
+2026-10-14 · **status: built, shipped, photographed lit at three sizes — and
+as of the same day WIRED: the game's own capture code docks the drone on the
+pad, asserted on a gate. Section 4a is that round and is the one to read.**
 
 > "yeah i don't like the bands. can we do like a more asymmetrical structure
 > that's more imposing / wider, looks like technology and is visually more
@@ -20,7 +22,8 @@ nothing vertical"**, and **the console pedestal**. Round one is
 | scenes | `tools/block_prefabs.gd --only=<name> --force`, then **`tools/core_skeleton_dress.gd`** |
 | renders | `tools/shoot_core_skeleton.gd -- docs/concepts` (needs a window) → `core_relay_*.png` |
 | clearance | `tools/probe_core_clearance.gd`, and `CORE_FOOT=shipped\|r1` to compare eras |
-| dock test | `CORE_TICK=1 tools/probe_core_clearance.gd`, with `tools/tick_placed.gd` |
+| dock clearance | `CORE_TICK=1 tools/probe_core_clearance.gd`, with `tools/tick_placed.gd` |
+| **dock, on a gate** | **`tools/test_holdable_core.gd`** — the real dock path, on the real prefabs |
 
 **The dress pass is still not optional.** FuncGodot assigns materials by
 texture name, so a fresh prefab is navy metal with grey patches on it. It read
@@ -135,10 +138,20 @@ geometry one.
 | height | **4.19** | **7.00** | **12.41** |
 | footprint, map X × Y | **4.50 × 3.50** | **6.00 × 4.75** | **8.25 × 6.50** |
 | …as Godot X × Z | 3.50 × 4.50 | 4.75 × 6.00 | 6.50 × 8.25 |
+| shelf tip past the bund's −X edge | **1.06** | 0.31 | 0.01 |
 | pad | 2.625 sq | 2.625 sq | 2.625 sq |
-| **dock_height** | **2.91** | **4.59** | **7.84** |
+| **dock point**, Godot, local | **(−0.44, 2.91, −1.69)** | **(−1.06, 4.59, −1.69)** | **(−1.94, 7.84, −1.56)** |
+| `ext` · `LIP_U`, units | 24 · 8 | 36 · 8 | 36 · 8 |
+| **drone clearance above the pad** | **0.46** | **0.84** | **0.84** |
 | brushes · collision | 56 · 9 | 60 · 9 | 66 · 9 |
 | Paint · Lit entities | 5 · 11 | 5 · 13 | 5 · 16 |
+
+The FOOTPRINT row is the bund, which is what a level places and what the
+clearance sweep measures; it has not moved. The SHELF now reaches past it at
+the free end, which nothing at ground level cares about — the slab is at 2.91
+to 7.84 m — but which does mean **a small core within about a metre of a wall
+on its −Z side will have its shelf inside that wall.** The row is there so that
+is a known number rather than a surprise.
 
 Heights are exact to round one's, which is the size hierarchy the site tiers
 were sized against. `probe_map_overlap`-style checking is built into the tool:
@@ -189,69 +202,96 @@ on every fitting, `grate_perf` on the tray and the vent, `glitch_tx_neutral` on
 the lit pieces with emission as well as albedo and `EMISSION_OP_ADD`. No
 concrete, no `metal_floor_3`. Every material `resource_local_to_scene`.
 
-## 4a. The TICK on the pad — three findings, none of them cosmetic
+## 4a. The TICK on the pad — THE GAME DOES IT NOW, and the geometry moved to let it
 
-The human asked to see the drone docked. Doing it properly turned up more than
-a picture. `tools/tick_placed.gd` is `build_tick.gd`'s own documented state
-change compiled — eight rotations, one slide, one translation — and
-`CORE_TICK=1 tools/probe_core_clearance.gd` seats a real `tick.tscn` on the
-real `Dock` marker and sweeps every one of its meshes against the core's own
-collision. Shots: `core_relay_*_tick.png` (approach, pulse frozen, drone
-docked) and `core_relay_*_tickclose.png` (the clamp).
+Round two staged a drone by hand in a camera script, which proves a marker is
+in the right place and nothing at all about whether capture can use it. The
+human's answer to that was the whole of this round's brief: *"can you please fix
+it so that it works between the tick and the capture objective? that's the whole
+point — they have to work together."*
 
-**1. Nothing in the game can dock anything on this core.** `holdable_core.gd`
-lands the tap at `Vector3(0, _dock_y(), 0)` where `_dock_y()` is
-`[4.2, 7.0, 12.4]` off `size_tier` — the top of a core whose cap was CENTRED.
-This pad is off-axis on a shelf at two thirds height, so that point is empty
-air beside the crown at every size. The file's own comment calls the table "a
-placeholder until the real cores carry a dock marker". **The prefabs now carry
-one**: a `Dock` Marker3D at `(-0.44, 2.91, -0.94)` / `(-1.06, 4.59, -0.94)` /
-`(-1.94, 7.84, -1.56)`, written by the builder into the `.map` as a
-`// core:dock` line and placed by the dress pass. Wiring it is GAMEPLAY's;
-nothing reads it yet. Note also that what the code spawns is not the TICK at
-all but `capture_tap.gd`'s procedural placeholder pod.
+**1. The core places the drone on the pad, in its own code, and a gate says so.**
+`holdable_core.gd::_call_tap` did `tap.position = Vector3(0.0, _dock_y(), 0.0)`:
+the core's own AXIS, at a height off `size_tier`. That is true of a core whose
+cap is a centred slab on a mast, and this one's is not — the pad is off-axis on
+a cantilevered shelf at two thirds height — so capture dropped the pod through
+the model at every size and nothing said a word, because a prefab and a pod in
+the same space is not an error, it is two meshes. There is now a `_dock_point()`
+that returns a **Vector3**, read off the `Dock` marker the prefabs ship, and
+`tools/test_holdable_core.gd` runs the real dock path on the real prefabs and
+measures where the pod stopped: **0.000 m from the marker at all three sizes**,
+with the host moved to (12, 3, −7) and turned 37° so that an identity transform
+cannot pass the test by accident. The axis the old line used is 1.74 / 1.99 /
+2.49 m away from the pad, and the test asserts that too — if it ever reads zero,
+the pad has moved back onto the axis and the fix has been undone by geometry.
 
-**2. The small core fouls, by 0.06 m.** The TICK is 3.19 × 3.50 m placed and
-reaches **0.44 m past each pad edge**, and on a cantilevered shelf one of those
-edges has the machine continuing upward behind it. Measured from the pad
-centre to the upper stage's face: **1.375 m (small) / 1.75 (med) / 2.50
-(large)**, against a barb reach of **1.44 m** on that bearing. So:
+**2. The machine gave way, not the drone.** `ext` — the slab that runs back from
+the pad toward the mass, and therefore how far the pad stands off it — is now
+**24 / 36 / 36** against round two's 0 / 12 / 36. The rule is written down in
+`build_core_relay.gd`: run the slab back until either the drone has real room or
+the slab reaches the bund's own −X edge, whichever comes first. On the medium
+those coincide exactly at 36.
 
-| | horizontal clearance above the pad |
-|---|---|
-| small | **FOULS** — one leg's shin and barb stand inside the upper stage |
-| med | **0.08 m**, which is a miss rather than a clearance |
-| large | 0.84 m |
+| | horizontal clearance above the pad | was |
+|---|---|---|
+| small | **0.46 m** | FOULED |
+| med | **0.84 m** | 0.08 m |
+| large | **0.84 m** | 0.84 m |
 
-The difference is `ext`, the slab that runs on PAST the pad before the mass
-starts: 0 / 12 / 36 units. **The one-constant fix is `ext` ≥ 6 on the small and
-≥ 24 on the med**, which pushes each pad further out and puts the whole drone
-in the clear — at the price, on the small, of the pad overhanging the bund's −X
-edge by 0.19 m at 2.9 m up. **I have not made that change**: it moves the pad,
-and whether the drone or the machine gives way is not an art decision. Note
-that the large core's 0.84 m is the only one with any room in it, and it has
-that because `ext` is 36 there — the fix is the thing that is already working
-at one size out of three.
+**3. All four barbs are on deck.** The pad's outboard edge WAS the slab's edge —
+that is what a cantilever is — so the leg at the free end closed on open air at
+every size while the other three bit. It overhangs by a measured 0.11 m, so the
+slab now runs `LIP_U` = 8 units (0.25 m) past the pad at that end and the barb
+stands on 0.14 m of it. **Eight units and not more**: the lip is a tip detail on
+the overhang, not a second shelf, and the cantilever is the strongest thing on
+the model. `core_relay_small_tickclose.png` is the shot — four legs down, inside
+the lugs, the machine clear behind.
 
-**3. One barb grips nothing, at every size, by design.** The pad's −X and −Y
-edges ARE the slab's edges — that is the cantilever — so the leg at the
-outboard corner closes on open air. The other three bite the deck. On the old
-centred cap all four came down the flanks of a mast, which is what
-`build_tick.gd` sized the thigh hinge for ("the barbs land 0.51 m OUTSIDE the
-pad edge, i.e. down the flanks, which is what gripping means"). Either the pad
-grows a lip for them, or the clamp is accepted as gripping two edges and
-overhanging two. It photographs fine (`core_relay_small_tickclose.png`); it is
-a question about the fiction, not the render.
+*The probe had been lying about this, and the lie is worth keeping written down.
+It dropped a ray from 0.1 m above each barb tip, and the barbs come down 5 to
+11 cm BELOW the deck surface — they are meant to; a clamp hooks an edge, it does
+not stand on a floor — so the ray started INSIDE the slab, where a trimesh
+either misses or reports its far side. It called a barb standing on 0.25 m of
+new lip "NOTHING UNDER IT". It now starts clear above the pad and compares the
+surface it finds to the tip.*
 
-*Method, stated, because two versions of it were wrong before this one. The
-test is split at the pad plane: above it, any contact is a foul — a barb is
-MEANT to come down outside the edge, and an axis-aligned box round an angled
-barb always clips the deck corner, which is what made the first version report
-all four legs fouling at every size. Clearance is then swept SIDEWAYS in 2 cm
-steps; growing the box in all six directions, which is what `AABB.grow` does,
-sent it down through the deck every box is standing on and reported "0.02 m" at
-every size — a measurement of the floor. Barb tips are the barb mesh's AABB
-bottom, so they carry a few centimetres of slop.*
+**4. The small core survives, and it is the one to look at.** Placed, the TICK
+is 3.19 × 3.50 m against a 4.50 × 3.50 m footprint, so a captured small core is
+mostly drone and no arithmetic changes that. What `ext` 24 costs is **1.06 m of
+shelf hanging past the bund's −X edge**, at 2.91 m up on a 4.19 m machine.
+`core_relay_small_tick.png` and `core_relay_small_flank.png` are the evidence
+and the verdict is that it reads as a machine with an overhang rather than as a
+bird table — the crown still goes up past the pad, the fin bank and the amber
+still carry, and the drone is a big thing clamped onto a small relay, which is
+what a small relay being taken should look like. **If the human disagrees, the
+dial is `ext` on the small and the next stop down is 18** — 0.26 m of clearance
+for 0.56 m of overhang. Below that it fouls again, and there is no version of
+this where the small core both clears the drone and keeps its slab inside its
+own plinth: the bund edge is at `ext` 0.
+
+**5. What is still not wired, and it is not in a file this lane may touch.**
+`capture_tap.gd` now builds its body from **the real `tick.tscn` rig** (another
+lane, this round), so the thing the game lands is the TICK and not the old
+procedural pod. Two numbers are missing before the shot and the game agree:
+
+- **the pose.** The tap carries the rig in its FLIGHT pose. Measured, that pose
+  is 4.08 × 4.52 m and spans 3.25 m — wider than the 2.625 m pad and wider than
+  the small core's entire footprint. The placed pose is 3.19 × 3.50 and clears.
+  `tools/tick_placed.gd` is the state change, compiled: thigh −22°, shin −62°,
+  `FanTower.position.y` 0.76, booms −48°.
+- **the lift.** In the placed pose the rig's own bottom is 2.11 m below its
+  origin, so the body wants `TickPlaced.LIFT` (+2.00 m) above the dock point or
+  it sits with its barbs 2 m under the shelf.
+
+Both belong in `capture_tap.gd`, on landing. The dock POSITION is correct
+without them.
+
+**The renders are of the game's number now.** `tools/shoot_core_skeleton.gd`
+seats a real `HoldableCore` on the model the way `site_slice.gd` does and asks
+it where a tap goes, rather than reading the marker itself — so if the drone is
+in the wrong place in `core_relay_*_tick.png`, it is in the wrong place in the
+game. Only the pose is still the rig's, for the reason above.
+
 
 ## 5. The cost, measured rather than asserted
 
@@ -288,10 +328,15 @@ three of them are standing in walls.
 
 ## 6. What is the human's
 
-- **The small core fouls the drone and the medium clears it by 0.08 m.** `ext`
-  fixes both and moves the pad; the alternative is stepping the upper stage back.
-- **Whether a barb clamping on air at the overhang corner is acceptable**, or
-  whether the pad needs a lip for it.
+- **The small core's shelf now hangs 1.06 m past its own plinth**, which is what
+  clearing the drone there costs. Decided rather than asked, because the brief
+  was to make it work; `ext` 18 is the next stop down if the overhang is worse
+  than the margin. See 4a.4.
+- **The fourth barb grips now** — 0.25 m of lip at the free end, decided rather
+  than asked, for the reason in 4a.3. The alternative that was rejected was
+  calling a clamp that grips three edges and overhangs one correct.
+- **The drone's POSE and LIFT on landing**, which live in `capture_tap.gd` and
+  are the last two numbers between the shot and the game. 4a.5 has both.
 - **Whether the small core needs to read across a map at all**, given 4.19 m of
   machine at 40 m is a smudge with an amber strip on it.
 - **The one new clash, and the four old ones**, which are placement rather

@@ -87,6 +87,10 @@ const PHASE := "0.35"
 
 const TICK := "res://Character/characters/ai/tick.tscn"
 const TickPlaced := preload("res://tools/tick_placed.gd")
+## THE GAME'S OWN DOCK CODE, so the docked shots stop being a rig's opinion.
+## Round two staged the drone off the Dock marker directly, which proves the
+## marker is in the right place and NOTHING about whether capture can use it.
+const _Hold := preload("res://Env/world_objects/holdable_core.gd")
 
 var _cam: Camera3D
 
@@ -179,13 +183,15 @@ func _shots(out: String, id: String) -> void:
 		# THE DRONE DOCKED, which is what a captured core looks like and what
 		# the human asked to see. The pose is tools/tick_placed.gd — which is
 		# build_tick.gd's own documented state change and nothing invented — and
-		# the seat is the core's Dock marker plus that file's LIFT.
+		# THE POSITION IS THE GAME'S, asked of a real HoldableCore rather than
+		# read off the marker by this file. See _dock_tick.
 		#
-		# NOTE WHAT THIS IS NOT. Nothing in the game does this: holdable_core.gd
-		# spawns capture_tap.gd's procedural placeholder pod at
-		# Vector3(0, _dock_y(), 0), which on this core is a point in mid-air
-		# beside the crown. The marker exists so that can be fixed; until it is,
-		# these two shots are a rig staging a drone, not a screenshot of capture.
+		# Round two's version of these shots was a rig staging a drone:
+		# holdable_core.gd dropped its tap at Vector3(0, _dock_y(), 0), on the
+		# core's own axis, which on a relay core is mid-air beside the crown, so
+		# the photograph and the game disagreed and only the photograph was
+		# right. That is fixed; these shots are now of the same number capture
+		# uses.
 		var tick: Node3D = null
 		if view.begins_with("tick"):
 			tick = _dock_tick(core)
@@ -268,7 +274,19 @@ func _aabb(n: Node, body: Node3D) -> AABB:
 	return box
 
 
-## A tick.tscn seated on `core`'s Dock marker, or null with a warning.
+## A tick.tscn seated where THE GAME would put it, or null with a warning.
+##
+## THE POSITION COMES FROM holdable_core.gd AND NOT FROM THIS FILE, and that is
+## the whole difference between this round's docked shots and the last one's. A
+## real HoldableCore is seated on the model exactly as site_slice.gd seats one
+## — a child of the point, a sibling of the `Core` — and asked for the point it
+## would hand a tap. That is the same expression `_call_tap` assigns, so if the
+## drone is in the wrong place in these shots, it is in the wrong place in the
+## game; staging it off the Dock marker by hand could never say that.
+##
+## Only the POSE is still this file's: the game's tap carries the tick's rig in
+## its FLIGHT pose, and a photograph of a captured core wants the clamp. See
+## tools/tick_placed.gd, and the report that came with this round.
 ##
 ## It is parented to the ROOT and not to the core, so the core's own _aabb()
 ## framing is unchanged between the docked and undocked views and the two can
@@ -278,15 +296,18 @@ func _dock_tick(core: Node3D) -> Node3D:
 	if packed == null:
 		push_warning("shoot_core_skeleton: tick.tscn would not load, so the docked shots are of a bare core")
 		return null
-	var dock := core.get_node_or_null(^"Dock") as Node3D
-	if dock == null:
+	if core.get_node_or_null(^"Dock") == null:
 		# Every early return warns. A core built before the dress pass learned
 		# to write the marker would otherwise be photographed bare and read as
 		# "the drone does not fit", which is a different finding entirely.
 		push_warning("shoot_core_skeleton: %s has no Dock marker — run tools/core_skeleton_dress.gd" % core.name)
 		return null
+	var hold = _Hold.new()
+	hold.name = "Hold"
+	core.add_child(hold)
+	var at: Vector3 = hold.to_global(hold._dock_point())
 	var tick: Node3D = packed.instantiate()
 	root.add_child(tick)
 	TickPlaced.seat(tick)
-	tick.global_position = dock.global_position + TickPlaced.LIFT
+	tick.global_position = at + TickPlaced.LIFT
 	return tick

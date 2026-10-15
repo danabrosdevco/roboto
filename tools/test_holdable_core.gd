@@ -204,5 +204,126 @@ func _init() -> void:
 		"it got %d" % stolen[0])
 	late.queue_free()
 
+	await _dock_suite()
+
 	print("%d failure(s)" % _fails)
 	quit(1 if _fails > 0 else 0)
+
+
+## ─────────────────────────────────────────────
+## THE TAP LANDS ON THE PAD, WHICH IS A PLACE AND NOT A HEIGHT.
+##
+## THE BUG THIS IS ON A GATE FOR. `_call_tap` used to do
+## `tap.position = Vector3(0.0, _dock_y(), 0.0)` — the core's own AXIS, at a
+## height off `size_tier`. The three relay cores built by
+## tools/build_core_relay.gd carry their landing pad OFF-AXIS, out on a
+## cantilevered shelf at two thirds height, so that point is mid-air beside the
+## crown at every size: capture dropped the drone through the model and nothing
+## in the project said a word, because a prefab and a pod occupying the same
+## space is not an error, it is two meshes.
+##
+## An art round can photograph a drone staged by hand and prove none of this.
+## So this runs the REAL dock path on the REAL prefabs and measures where the
+## pod stopped.
+##
+## THE HOST IS MOVED AND TURNED, and that is the half of it a test at the
+## origin cannot see: the dock marker is read in GLOBAL space and assigned in
+## the core's LOCAL space, so an identity transform passes whether or not the
+## conversion is there at all. 37 degrees off the axis at (12, 3, -7) fails
+## loudly if anyone ever drops the to_local.
+## ─────────────────────────────────────────────
+const RELAYS := {
+	"small": ["res://maps/blocks/compute/compute_core_small.tscn", 0],
+	"med": ["res://maps/blocks/compute/compute_core.tscn", 1],
+	"large": ["res://maps/blocks/compute/compute_core_large.tscn", 2],
+}
+## The bund's SHORT axis at each tier, which is what footprint() has to agree
+## with — it returned the long-dead 1.88 / 3.38 / 5.19 trio until this round,
+## so core_signal.gd was drawing its deck collar inside the machine.
+const RELAY_FOOT := {"small": 3.50, "med": 4.75, "large": 6.50}
+
+
+func _dock_suite() -> void:
+	for id: String in RELAYS:
+		var packed := load(RELAYS[id][0]) as PackedScene
+		if packed == null:
+			_check("[%s] the prefab loads" % id, false, String(RELAYS[id][0]))
+			continue
+		# SEATED THE WAY site_slice.gd SEATS ONE: `Hold` is a child of the
+		# authored capture point and a SIBLING of the `Core` model, so a core
+		# that only searched its own children would find no marker. That is the
+		# arrangement the eight maps ship, so it is the one under test.
+		var host := Node3D.new()
+		host.name = "Point_" + id
+		root.add_child(host)
+		host.global_position = Vector3(12.0, 3.0, -7.0)
+		host.rotation.y = deg_to_rad(37.0)
+		var model: Node3D = packed.instantiate()
+		model.name = "Core"
+		host.add_child(model)
+
+		var hold = _Point.new()
+		hold.name = "Hold"
+		hold.size_tier = int(RELAYS[id][1])
+		hold.tap_flight_seconds = 0.1
+		host.add_child(hold)
+		await physics_frame
+
+		var dock := model.get_node_or_null(^"Dock") as Node3D
+		_check("[%s] the prefab ships a Dock marker" % id, dock != null,
+			"run tools/core_skeleton_dress.gd if not")
+		if dock == null:
+			continue
+		_check("[%s] ...which the core finds from a sibling" % id,
+			hold._find_dock() == dock)
+		_check("[%s] ...and is NOT on the core's axis, which is the whole point" % id,
+			Vector2(dock.position.x, dock.position.z).length() > 0.5,
+			"dock = %s" % str(dock.position))
+
+		hold._call_tap()
+		var tap = hold._tap
+		_check("[%s] the dock path calls a tap" % id, tap != null)
+		if tap == null:
+			continue
+		var landed := [Vector3.ZERO, false]
+		tap.docked.connect(func(t): landed[0] = t.global_position; landed[1] = true)
+		for _i in 90:
+			await physics_frame
+			if landed[1]:
+				break
+		_check("[%s] ...which docks" % id, landed[1])
+		var off: float = landed[0].distance_to(dock.global_position)
+		_check("[%s] ...ON THE PAD, not on the axis" % id, off < 0.01,
+			"%.3f m from the marker (pod at %s, pad at %s)" % [off, str(landed[0]), str(dock.global_position)])
+		var axis: float = host.to_global(Vector3(0.0, hold._dock_y(), 0.0)).distance_to(dock.global_position)
+		_check("[%s] ...and the axis it used to use is %.2f m away from the pad" % [id, axis],
+			axis > 0.5, "if this ever reads 0 the pad has moved back onto the axis")
+
+		_check("[%s] footprint() matches the bund's short side" % id,
+			absf(hold.footprint() - float(RELAY_FOOT[id])) < 0.01,
+			"%.2f, want %.2f" % [hold.footprint(), float(RELAY_FOOT[id])])
+
+		host.queue_free()
+		await physics_frame
+
+	# ── AND THE FALLBACK STILL WORKS, LOUDLY ────
+	# A core with no marker is the bunker and the training post, which are
+	# flat-topped masts where the axis IS the pad. dock_height is how they say
+	# so; without it the tier table answers and push_warnings, and
+	# core_signal.gd still gets a shaft height out of _dock_y either way.
+	var bare = _Point.new()
+	bare.name = "Mast"
+	bare.size_tier = 1
+	root.add_child(bare)
+	bare.dock_height = 4.9
+	_check("a core with no marker docks on its own axis at dock_height",
+		bare._dock_point().is_equal_approx(Vector3(0.0, 4.9, 0.0)),
+		str(bare._dock_point()))
+	_check("...and _dock_y agrees with it, because core_signal reads that",
+		is_equal_approx(bare._dock_y(), 4.9), "%.2f" % bare._dock_y())
+	bare.dock_height = -1.0
+	bare._dock_hunted = false
+	_check("...and with neither, the tier table answers rather than nothing",
+		is_equal_approx(bare._dock_y(), 7.0), "%.2f" % bare._dock_y())
+	_check("...having said so out loud", bare._dock_warned)
+	bare.queue_free()

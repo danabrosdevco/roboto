@@ -195,18 +195,33 @@ func _tick(id: String) -> void:
 	# AND WHAT EACH BARB IS ACTUALLY STANDING ON. A clamp that closes on thin
 	# air is a different failure from one that closes on the machine, and on a
 	# shelf with open sky on three sides it is the likely one. The tip is the
-	# bottom centre of the barb's own box, and the ray is dropped from 0.1 m
-	# above it.
+	# bottom centre of the barb's own box.
+	#
+	# THE RAY STARTS WELL ABOVE THE PAD AND NOT JUST ABOVE THE TIP, and the
+	# difference is not pedantry: the barbs come down 5 to 11 cm BELOW the deck
+	# surface — they are meant to, that is a clamp hooking an edge rather than
+	# a foot standing on a floor — so a ray from tip + 0.1 m starts INSIDE the
+	# slab. From inside a trimesh it either misses or reports the far side, and
+	# this probe did both: it called a barb standing on 0.25 m of lip "NOTHING
+	# UNDER IT" because its start was 6 mm under the deck top. Starting clear
+	# above and comparing the surface to the tip says the true thing instead.
 	for i in barbs.size():
 		var b: AABB = barbs[i]
 		var tip := Vector3(b.position.x + b.size.x * 0.5, b.position.y, b.position.z + b.size.z * 0.5)
-		var rq := PhysicsRayQueryParameters3D.create(tip + Vector3(0, 0.10, 0), tip - Vector3(0, 2.5, 0))
+		var top := maxf(pad_top, tip.y) + 0.60
+		var rq := PhysicsRayQueryParameters3D.create(Vector3(tip.x, top, tip.z), Vector3(tip.x, tip.y - 3.0, tip.z))
 		rq.exclude = ex
 		var hit := space.intersect_ray(rq)
 		var local: Vector3 = core.global_transform.affine_inverse() * tip
+		var said := "NOTHING UNDER IT"
+		if not hit.is_empty():
+			var surf: float = (hit["position"] as Vector3).y
+			# Over deck AT the pad surface is a grip; anything much lower is the
+			# tray floor or the ground, which is not something to hook.
+			said = ("on deck, tip %.2f m below the surface" % (surf - tip.y)) if absf(surf - pad_top) < 0.05 \
+					else "over nothing nearer than %.2f m below the tip" % (tip.y - surf)
 		print("                 barb %d at local (%.2f, %.2f, %.2f) — %s"
-				% [i + 1, local.x, local.y, local.z,
-						("grips %.2f m below the tip" % (tip.y - (hit["position"] as Vector3).y)) if not hit.is_empty() else "NOTHING UNDER IT"])
+				% [i + 1, local.x, local.y, local.z, said])
 	root.remove_child(tick)
 	tick.free()
 	root.remove_child(core)

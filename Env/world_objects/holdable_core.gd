@@ -84,11 +84,27 @@ signal tap_lost()
 @export var mark_noun: String = "CORE"
 ## Where the tap sits when it lands, in metres above this node.
 ##
-## -1 derives it from `size_tier`, which is right for the authored core
-## prefabs and WRONG for anything else — the bunker is a 4.5 m post and tier 1
-## would dock a tap at 7 m, hanging in the air above it. Anything that is not
-## one of the three core prefabs should set this from its own geometry.
+## A HEIGHT AND NOTHING ELSE, WHICH IS THE BUG THIS NOW ONLY HALF OWNS. Taken
+## alone it puts the tap on the core's own AXIS, and the three relay cores'
+## landing pad is off-axis on a cantilevered shelf at two thirds height — so
+## an axis dock is empty air beside the crown at every size and no amount of
+## getting the height right fixes it. `dock_marker` / the `Dock` node is the
+## real answer and this is the fallback for anything that has no marker to
+## read. See _dock_point.
+##
+## -1 derives it from `size_tier`, which is right for a core whose cap was
+## CENTRED — the training core's 1 x 4.2 m post is the last one of those — and
+## WRONG for everything else: the bunker is a 4.5 m post and tier 1 would dock
+## a tap at 7 m, hanging in the air above it.
 @export var dock_height: float = -1.0
+## THE PAD, as a node rather than as a number.
+##
+## Left empty, _dock_point hunts for a child or sibling called `Dock`, which is
+## what the three relay prefabs ship (tools/build_core_relay.gd writes a
+## `// core:dock` line into the .map and tools/core_skeleton_dress.gd turns it
+## into a Marker3D). Set it when the marker is somewhere a search would not
+## look, or is called something else.
+@export var dock_marker: NodePath
 ## How long the tap takes to come down. Set on the tap before it is parented —
 ## see _call_tap.
 @export var tap_flight_seconds: float = 4.2
@@ -104,6 +120,15 @@ var _beat: int = -1
 var _tap: Node3D = null
 var _player: Node3D = null
 var _anchor: Node3D = null
+## The resolved `Dock` marker, found once and kept. Resolved LAZILY rather than
+## in _ready for the reason the whole file is careful about: a core seated by a
+## patch script is parented before its siblings exist, so a search at ready
+## finds nothing and caches the nothing.
+var _dock_node: Node3D = null
+var _dock_hunted: bool = false
+## So the fallback says its piece once per core instead of once per frame —
+## _dock_y() is called by core_signal and by the probes.
+var _dock_warned: bool = false
 ## How long the terminal watchdog has been running. See _watch_terminal.
 var _watch_elapsed: float = 0.0
 ## WHO HELD THIS BEFORE YOU DID, captured at ready from whatever the level
@@ -459,9 +484,10 @@ func _call_tap() -> void:
 	# descent in _ready, which fires the moment it is parented — so a property
 	# set afterwards is read by nothing and silently does not apply.
 	tap.flight_seconds = tap_flight_seconds
-	# On the core's head. Placeholder until the real cores carry a dock marker;
-	# size_tier stands in for the three prefab heights until then.
-	tap.position = Vector3(0.0, _dock_y(), 0.0)
+	# ON THE PAD, which is a POINT and not a height. See _dock_point: this line
+	# used to read Vector3(0.0, _dock_y(), 0.0) and that is why nothing in the
+	# game could dock anything on a relay core.
+	tap.position = _dock_point()
 	tap.docked.connect(_on_tap_docked)
 	tap.destroyed.connect(_on_tap_destroyed)
 	add_child(tap)
@@ -555,22 +581,107 @@ func is_held_by_player() -> bool:
 	return holder == Holder.PLAYER
 
 
-## Where a tap lands. The tier table matches the three authored core prefabs —
-## 4.19 / 6.97 / 12.38 m — and `dock_height` overrides it for anything built
-## rather than instanced.
-func _dock_y() -> float:
+## WHERE A TAP LANDS, IN THIS NODE'S OWN SPACE, AS A POINT.
+##
+## THE THING THIS FIXES. The tap used to be dropped at Vector3(0, _dock_y(), 0)
+## — the core's own axis, at a height off `size_tier`. That was true of a core
+## whose cap was a CENTRED slab on a mast, and the three relay cores are not
+## that: tools/build_core_relay.gd puts the landing pad off-axis, out on a
+## cantilevered shelf at two thirds height, with the crown going on up past it.
+## An axis dock on one of those is empty air beside the mass at every size, so
+## capture landed the drone through the model and NOTHING IN THE GAME COULD
+## DOCK ANYTHING ON A RELAY CORE. A dock expressed as a height cannot describe
+## a pad that is not on the axis, which is the whole reason this returns a
+## Vector3.
+##
+## In priority: the marker you pointed at, the `Dock` node the relay prefabs
+## ship, then `dock_height` on the axis, then the tier table. The last of those
+## WARNS, loudly and by name, because a silent fallback to a plausible-looking
+## height is exactly how this stayed broken through a whole art round.
+func _dock_point() -> Vector3:
+	var m := _find_dock()
+	if m != null:
+		return to_local(m.global_position)
 	if dock_height >= 0.0:
-		return dock_height
+		# Authored from the thing's own geometry — the bunker kit's DockPad and
+		# the training core's post both do this. On the axis, which is right
+		# for both of them: they are posts with flat tops.
+		return Vector3(0.0, dock_height, 0.0)
+	if not _dock_warned:
+		_dock_warned = true
+		push_warning(("HoldableCore '%s' (tier %d) has no Dock marker and no dock_height, so the tap lands on its AXIS at the tier height %.2f m. "
+				+ "That is only right for a core with a centred cap; on a relay core the pad is off-axis on a shelf and this point is mid-air. "
+				+ "Seat a `Dock` marker (tools/core_skeleton_dress.gd does it from the .map) or set dock_height from the geometry.")
+				% [name, size_tier, _tier_dock_y()])
+	return Vector3(0.0, _tier_dock_y(), 0.0)
+
+
+## The `Dock` marker, found once. A core seated by a patch script is a SIBLING
+## of the model it is docking on — site_slice.gd adds `Hold` next to the
+## authored point's `Core` — so a search of its own children is not enough and
+## the parent's subtree is the one that holds the prefab. It is not a search of
+## the LEVEL: the parent here is one capture point.
+func _find_dock() -> Node3D:
+	if _dock_hunted:
+		return _dock_node
+	_dock_hunted = true
+	if not dock_marker.is_empty():
+		_dock_node = get_node_or_null(dock_marker) as Node3D
+		if _dock_node == null:
+			push_warning("HoldableCore '%s': dock_marker '%s' points at nothing, so the dock falls back. Fix the path or clear it and let the search run." % [name, String(dock_marker)])
+		else:
+			return _dock_node
+	_dock_node = _named_dock(self)
+	if _dock_node == null:
+		var p := get_parent()
+		if p != null:
+			_dock_node = _named_dock(p)
+	return _dock_node
+
+
+func _named_dock(n: Node) -> Node3D:
+	for c in n.get_children():
+		if c.name == &"Dock" and c is Node3D:
+			return c as Node3D
+		var f := _named_dock(c)
+		if f != null:
+			return f
+	return null
+
+
+## Where a tap lands, as a HEIGHT — kept because core_signal.gd sizes its light
+## shaft off it and the slice probe reads it. It is now the Y OF THE DOCK POINT
+## rather than a table of its own: two numbers that can disagree is one too
+## many, and on a relay core the table is the one that is wrong.
+func _dock_y() -> float:
+	return _dock_point().y
+
+
+## The old table, which is the last resort and nothing else. 4.19 / 6.97 /
+## 12.38 m rounded — the top of a CENTRED cap, which only the training core's
+## post still is.
+func _tier_dock_y() -> float:
 	return [4.2, 7.0, 12.4][clampi(size_tier, 0, 2)]
 
 
-## How WIDE this core stands, matching the same three authored prefabs the
-## height table comes from — 1.88 / 3.38 / 5.19 m across. Here rather than in
-## whoever is drawing it, for the same reason _dock_y is: two tables that can
-## disagree is one table too many, and the FX need the footprint to sit a
-## collar outside the pillar instead of inside it.
+## How WIDE this core stands, across the SHORT axis. The three relay cores are
+## 3.50 / 4.75 / 6.50 m on Godot X and 4.50 / 6.00 / 8.25 m on Godot Z, and the
+## footprint is a RECTANGLE now, so one number cannot describe it. The short
+## side is the one quoted, and core_signal.gd takes 0.92 of it as a RADIUS —
+## which still clears the long half at every size (3.22 against 2.25, 4.37
+## against 3.00, 5.98 against 4.13), so a round collar sits outside the plinth
+## rather than cutting across it.
+##
+## IT WAS 1.88 / 3.38 / 5.19 UNTIL NOW, which is the trio build_core_relay.gd
+## replaced. Every one of those is smaller than the core it was describing, so
+## core_signal.gd was drawing its deck collar INSIDE the machine at all three
+## sizes — the one place in this file where a stale table was visible on screen
+## rather than only in a position.
+##
+## Here rather than in whoever is drawing it, for the same reason the dock is:
+## two tables that can disagree is one table too many.
 func footprint() -> float:
-	return [1.88, 3.38, 5.19][clampi(size_tier, 0, 2)]
+	return [3.50, 4.75, 6.50][clampi(size_tier, 0, 2)]
 
 
 ## THE SAFETY NET, in case the watchdog above ever loses a race anyway.
