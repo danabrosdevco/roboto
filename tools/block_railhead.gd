@@ -562,7 +562,8 @@ func _number(n: int, uc: float, v0: float, h: float, face: float, s: float, tex:
 
 ## 1. MOTIVE. Not enterable: a hull the length of a car, a cab, and the things
 ## that sell that the building moves. One solid box for collision; the rest is
-## drawn. Its rear (-X) face is flush against Operations' sealed front. Painted
+## drawn. Its rear (-X) face is flush against the sealed front of whichever car
+## is laid directly behind it — Fabrication, under the current CARS order. Painted
 ## and swept like the rest: nothing about it is worn.
 func _hull_motive() -> void:
 	box(Vector3(-HL, -OW, -0.5), Vector3(HL, OW, H + 0.25), {"top": CONC, "side": GREEN, "bottom": CONC})
@@ -617,7 +618,18 @@ func _hull_motive() -> void:
 ## Changing TABLE_TOP means retuning the zoomed camera, which is GAMEPLAY's --
 ## tell them rather than moving it quietly.
 func _car_ops() -> void:
-	_shell(false, true, HULL, false, TILE)
+	# OPEN AT BOTH ENDS AND A SIDE DOOR ONTO THE PLATFORM.
+	#
+	# The sealed front belongs to whichever car sits BEHIND THE MOTIVE, not to
+	# Operations — see CARS in build_railhead.gd. Operations was Car2 when this
+	# said false; the reorder in f5847c82 moved it to Car5 and left the seal
+	# behind, which walled Operations off from Repair and opened Fabrication
+	# into the motive's solid hull. Reorder the rake again and this pair of
+	# flags is what to check.
+	#
+	# side_door true: you wake in Operations and you leave from Operations.
+	# docs/briefs/PLATFORM_DOOR_TO_OPS.md — the walk to the exit was 64.8 m.
+	_shell(true, true, HULL, true, TILE)
 	# THE OPERATIONS TABLE. Issued, bolted down, and old. Toe recess, plinth,
 	# slab, lip — each a little wider than the one below, so it reads as a top
 	# set on a cabinet base rather than one moulded lump.
@@ -722,7 +734,7 @@ func _car_ops() -> void:
 	box(Vector3(END - 0.0625, -0.75, 0.9), Vector3(END, 0.75, 1.1), BRASS)
 	_door_furniture(-1.0, 1)
 	_lamps("ops", 3.6)
-	_glaze(false)
+	_glaze(true)   # the side door needs its glazing and frame
 	_handrails([[-13.0, -11.0], [-9.0, -7.0], [7.5, 15.75]], [[-13.0, -11.0], [-9.0, -7.0], [7.5, 15.75]])
 	_bogies()
 
@@ -834,7 +846,9 @@ func _car_armoury() -> void:
 ## an unfinished frame stands beside them. The software branch that builds it
 ## out is not here yet, and the empty mounts say so.
 func _car_fab() -> void:
-	_shell(true, true, HULL)
+	# FRONT SEALED: this car sits directly behind the Motive, whose rear is a
+	# solid hull. That seal follows the POSITION, not the car — see _car_ops.
+	_shell(false, true, HULL)
 	for x: float in FAB_X:
 		box(Vector3(x - 1.5, -HW, 0.0), Vector3(x + 1.5, -3.0, 1.0), GREEN_P)
 		box(Vector3(x - 1.0, -HW, 1.0), Vector3(x + 1.0, -3.2, 2.8), GREEN_P)
@@ -945,7 +959,10 @@ func _car_barracks() -> void:
 ## railhead_car_platform_ramp is the same car with the rear open onto a
 ## boarding ramp: the way off at a stop with no station.
 func _car_platform(ramp_end: bool = false) -> void:
-	_shell(true, ramp_end, HULL, true)
+	# NO SIDE DOOR ANY MORE. It moved to Operations, five cars up the rake, so
+	# the player leaves from the car they wake in — docs/briefs/PLATFORM_DOOR_TO_OPS.md.
+	# Left open here and the train has a hole in its far end.
+	_shell(true, ramp_end, HULL, false)
 	if ramp_end:
 		ramp(-HL - RAMP_LEN, -RAMP_HALF_W, -HL, RAMP_HALF_W, -DECK_RISE, -DECK_RISE, 0.0, "+x", {"top": GRATE, "side": GREEN_P, "bottom": GREEN_P})
 	for s: float in [-1.0, 1.0]:
@@ -990,7 +1007,7 @@ func _car_platform(ramp_end: bool = false) -> void:
 	_door_furniture(1.0, 5)
 	_door_furniture(-1.0, 6 if ramp_end else -1)
 	_lamps("platform")
-	_glaze(true)
+	_glaze(false)
 	_ducts()
 	_lane_lines()
 	_deck_track()

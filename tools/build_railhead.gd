@@ -263,17 +263,17 @@ func _record_markers() -> void:
 		var cx: float = -R.END + R.BAR_PITCH * (i + 0.5)
 		_anchors["BarracksRack_%02d" % (i + 1)] = _at("Barracks", cx, R.BAR_Y0 + R.BAR_DEPTH * 0.5, 0.0)
 	# Platform: where the player arrives, where the squad forms up, the door.
-	_anchors["PlayerArrival"] = _at("Platform", -8.0, 0.0, 1.0)
-	_anchors["SquadMuster"] = _at("Platform", 4.0, 0.0, 0.0)
+	_anchors["PlayerArrival"] = _at("Operations", -8.0, 0.0, 1.0)
+	_anchors["SquadMuster"] = _at("Operations", 4.0, 0.0, 0.0)
 	for i in 4:
-		_anchors["SquadMuster_Slot%d" % (i + 1)] = _at("Platform", 1.0 + i * 2.5, 0.0, 0.0)
+		_anchors["SquadMuster_Slot%d" % (i + 1)] = _at("Operations", 1.0 + i * 2.5, 0.0, 0.0)
 	# The platform door is the side door onto the station, at the car's middle.
-	_anchors["PlatformDoor"] = _at("Platform", 0.0, R.HW, 0.0)
-	_anchors["PlatformDoor_Outside"] = _at("Platform", 0.0, R.OW + 2.5, 0.0)
+	_anchors["PlatformDoor"] = _at("Operations", 0.0, R.HW, 0.0)
+	_anchors["PlatformDoor_Outside"] = _at("Operations", 0.0, R.OW + 2.5, 0.0)
 	# The leaf slides +X into a pocket of real space beside the opening.
-	_anchors["PlatformDoor_LeafClosed"] = _at("Platform", 0.0, R.HW - 0.05, 1.7)
-	_anchors["PlatformDoor_LeafOpen"] = _at("Platform", 2.0 * R.DOOR, R.HW - 0.05, 1.7)
-	_anchors["PlatformDoor_Zone"] = _at("Platform", 0.0, 2.0, 0.0)
+	_anchors["PlatformDoor_LeafClosed"] = _at("Operations", 0.0, R.HW - 0.05, 1.7)
+	_anchors["PlatformDoor_LeafOpen"] = _at("Operations", 2.0 * R.DOOR, R.HW - 0.05, 1.7)
+	_anchors["PlatformDoor_Zone"] = _at("Operations", 0.0, 2.0, 0.0)
 	# Where the view hangs, one plate each side. Left is the platform side: the
 	# +Y wall, which is on the left walking toward the locomotive.
 	_anchors["Backdrop_Left"] = _at("Armoury", 0.0, R.BACKDROP_Y, 3.5)

@@ -1,45 +1,103 @@
-[gd_scene load_steps=10 format=3 uid="uid://7gu1l6g3rxax"]
+[gd_scene load_steps=12 format=3]
 
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_trackbed.tscn" id="1_tbnbs"]
-[ext_resource type="PackedScene" path="res://maps/railhead_station.tscn" id="4_8eqmo"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_hull_motive.tscn" id="5_dw1rh"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_fab.tscn" id="6_vr805"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_armoury.tscn" id="7_l1tol"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_repair.tscn" id="8_mt08m"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_ops.tscn" id="9_tgjsb"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_barracks.tscn" id="10_rsvjc"]
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_platform.tscn" id="11_1ebbp"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_trackbed.tscn" id="1_ux4da"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_4kxe8"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_arpvu"]
+[ext_resource type="PackedScene" path="res://maps/railhead_station.tscn" id="4_k6ewu"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_hull_motive.tscn" id="5_hhyil"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_fab.tscn" id="6_5qi20"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_armoury.tscn" id="7_poi1r"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_repair.tscn" id="8_uio3j"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_ops.tscn" id="9_qn3pv"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_barracks.tscn" id="10_u2dno"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_car_platform.tscn" id="11_2mxjk"]
 
 [node name="RailheadArt" type="Node3D"]
 
 [node name="Ground" type="Node3D" parent="."]
 
-[node name="Trackbed" parent="Ground" instance=ExtResource("1_tbnbs")]
+[node name="Trackbed" type="Node3D" parent="Ground" instance=ExtResource("1_ux4da")]
+script = ExtResource("2_4kxe8")
+local_map_file = "res://maps/blocks/railhead/railhead_trackbed.map"
+global_map_file = ""
+map_settings = ExtResource("3_arpvu")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Station" parent="Ground" instance=ExtResource("4_8eqmo")]
+[node name="Station" type="Node3D" parent="Ground" instance=ExtResource("4_k6ewu")]
 
 [node name="Rake" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, 0)
 
-[node name="Car1_Motive" parent="Rake" instance=ExtResource("5_dw1rh")]
+[node name="Car1_Motive" type="Node3D" parent="Rake" instance=ExtResource("5_hhyil")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 96)
+script = ExtResource("2_4kxe8")
+local_map_file = "res://maps/blocks/railhead/railhead_hull_motive.map"
+global_map_file = ""
+map_settings = ExtResource("3_arpvu")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car2_Fabrication" parent="Rake" instance=ExtResource("6_vr805")]
+[node name="Car2_Fabrication" type="Node3D" parent="Rake" instance=ExtResource("6_5qi20")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 64)
+script = ExtResource("2_4kxe8")
+local_map_file = "res://maps/blocks/railhead/railhead_car_fab.map"
+global_map_file = ""
+map_settings = ExtResource("3_arpvu")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car3_Armoury" parent="Rake" instance=ExtResource("7_l1tol")]
+[node name="Car3_Armoury" type="Node3D" parent="Rake" instance=ExtResource("7_poi1r")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 32)
+script = ExtResource("2_4kxe8")
+local_map_file = "res://maps/blocks/railhead/railhead_car_armoury.map"
+global_map_file = ""
+map_settings = ExtResource("3_arpvu")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car4_Repair" parent="Rake" instance=ExtResource("8_mt08m")]
+[node name="Car4_Repair" type="Node3D" parent="Rake" instance=ExtResource("8_uio3j")]
+script = ExtResource("2_4kxe8")
+local_map_file = "res://maps/blocks/railhead/railhead_car_repair.map"
+global_map_file = ""
+map_settings = ExtResource("3_arpvu")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car5_Operations" parent="Rake" instance=ExtResource("9_tgjsb")]
+[node name="Car5_Operations" type="Node3D" parent="Rake" instance=ExtResource("9_qn3pv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -32)
+script = ExtResource("2_4kxe8")
+local_map_file = "res://maps/blocks/railhead/railhead_car_ops.map"
+global_map_file = ""
+map_settings = ExtResource("3_arpvu")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car6_Barracks" parent="Rake" instance=ExtResource("10_rsvjc")]
+[node name="Car6_Barracks" type="Node3D" parent="Rake" instance=ExtResource("10_u2dno")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -64)
+script = ExtResource("2_4kxe8")
+local_map_file = "res://maps/blocks/railhead/railhead_car_barracks.map"
+global_map_file = ""
+map_settings = ExtResource("3_arpvu")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
-[node name="Car7_Platform" parent="Rake" instance=ExtResource("11_1ebbp")]
+[node name="Car7_Platform" type="Node3D" parent="Rake" instance=ExtResource("11_2mxjk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -96)
+script = ExtResource("2_4kxe8")
+local_map_file = "res://maps/blocks/railhead/railhead_car_platform.map"
+global_map_file = ""
+map_settings = ExtResource("3_arpvu")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000
 
 [node name="Markers" type="Node3D" parent="."]
 
@@ -131,37 +189,37 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -52.1875)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.1875, -49.5625)
 
 [node name="PlayerArrival" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1875, -104)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1875, -40)
 
 [node name="SquadMuster" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -92)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -28)
 
 [node name="SquadMuster_Slot1" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -95)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -31)
 
 [node name="SquadMuster_Slot2" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -92.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -28.5)
 
 [node name="SquadMuster_Slot3" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -90)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -26)
 
 [node name="SquadMuster_Slot4" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -87.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1875, -23.5)
 
 [node name="PlatformDoor" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 1.1875, -96)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 1.1875, -32)
 
 [node name="PlatformDoor_Outside" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.25, 1.1875, -96)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.25, 1.1875, -32)
 
 [node name="PlatformDoor_LeafClosed" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.45, 2.8875, -96)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.45, 2.8875, -32)
 
 [node name="PlatformDoor_LeafOpen" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.45, 2.8875, -92.75)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.45, 2.8875, -28.75)
 
 [node name="PlatformDoor_Zone" type="Node3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.1875, -96)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.1875, -32)
 
 [node name="Backdrop_Left" type="Node3D" parent="Markers"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 4.6875, 32)

@@ -54,7 +54,7 @@ const M_LEVER := "OpsLeverAnchor"
 ## The squad forms up where you leave from — see M_EXIT below. SquadSpawnPoint
 ## arcs them out BEHIND this point, so they stand on the platform rather than
 ## on the departure pad itself.
-const M_MUSTER := "Station_PlatformCentre"
+const M_MUSTER := "PlatformDoor_Outside"
 ## Which way the board faces on the table. 90 puts its long axis down the
 ## car; -90 reverses which end of the campaign is toward the locomotive.
 @export var table_yaw_degrees: float = 90.0
@@ -75,7 +75,7 @@ const M_MUSTER := "Station_PlatformCentre"
 ## station the train pulls into already has the marker: the fix is which point
 ## this level reads, not where any geometry sits. _audit_walk below is what
 ## catches it the next time the rake is re-ordered.
-const M_EXIT := "Station_PlatformCentre"
+const M_EXIT := "PlatformDoor_Outside"
 
 ## Set in the scene to the instanced art.
 @export var art: Node3D
