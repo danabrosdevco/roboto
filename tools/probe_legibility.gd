@@ -79,6 +79,14 @@ const VIEWS: Array = [
 	["hillfort", "H2_the_gate", Vector3(-196.0, 64.0, 146.0), Vector3(60.0, 96.0, -80.0), "abs"],
 	["georgetown", "G1_the_towpath", Vector3(-100.0, 1.7, -7.0), Vector3(140.0, 1.0, -7.0), "abs"],
 	["georgetown", "G2_the_stack", Vector3(30.0, -2.3, 60.0), Vector3(86.0, 20.0, 186.0), "abs"],
+	# ── THE HILLFORT COPY AT A QUARTER OF THE SIZE. The same two questions as
+	# H1 and H2 above, from the same places on the small map, so the above-eye
+	# share can be read against Hillfort's own 5.79% at the trailhead rather
+	# than against a number from somewhere else.
+	# ONLY=HW matches these two and not the big map's; ONLY=hillfort matches
+	# both levels, which is usually what you want for the comparison.
+	["hillfort_wip", "HW1_the_trailhead", Vector3(-137.0, 1.5, 61.0), Vector3(-10.0, 70.0, -58.0), "eye"],
+	["hillfort_wip", "HW2_the_gate", Vector3(115.0, 1.5, 18.0), Vector3(-10.0, 70.0, -58.0), "eye"],
 ]
 
 ## MOCKUP=1. The proposal's geometry, dropped into the loaded level IN MEMORY
