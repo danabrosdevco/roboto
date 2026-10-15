@@ -38,6 +38,103 @@ most wants and least often gets:
 
 
 
+## 2026-10-15 — the ops table, the proving ground, the bunker, and a core the drone can land on
+
+**Landed.**
+
+*Ops table* (`c2400afc`, `0a5672af`). `docs/briefs/OPS_TABLE_FURNITURE.md`. The
+ops car's placeholder met none of the brief: slab at 1.3 m against a 0.95 m
+standing height, a fake projection painted on it, a projector ring hung over
+it. All three gone — the projection draws additively with no depth test, so
+anything above the surface does not occlude it, it reads as broken. Now
+**7.0 x 3.0 at 0.95 m**, which is the widest the car allows: 9.0 m internal
+against a 3.0 m lane rule caps a centred table's half-width at 1.5, and the
+builder's lane check refused 3.2 at 2.906 m. `tools/fit_ops_table.gd` seats
+`OpsTableAnchor` and the Interactible, re-appliably, because
+`block_prefabs.gd` rebuilds the scene from scratch and this project's FGD has
+no point classes.
+
+*Railhead* (`f5847c82`). Rake reordered so the player's walk is **Operations →
+Barracks → Platform**; the industrial cars move ahead of Operations toward the
+motive. Re-centring the rake on the spawn instead was tried and is wrong — the
+station's PlatformDoor, RampTop and HeadHouse markers are pinned to a station
+at the origin, so shifting it 32 m put eleven markers inside colliders. The
+SpawnPoint moved to z −32 instead.
+
+*Proving* (`ec4cf69b`). Opened from a 90 x 56 m walled arena to **135 x 70 m**,
+one rectangle, with a **45 x 68 m bay** behind the enemy blockhouse carrying a
+clear 30 x 30 m bunker floor. `tools/build_proving.gd` is the generator —
+**and `tools/block_arena.gd` already existed, which my brief denied.** It was
+caught only because the agent proved the `.map` byte-identical before
+overwriting. Also found: the blockhouses were decks on posts with **2.6 m of
+headroom and the level exit underneath one**, so a 3.00 m Walker could not
+stand on the squad's own extraction point.
+
+*Bunker* (`b2785229`). `maps/blocks/bunker/`, three mountings on one mouth:
+**8.0 x 4.1875 m** clear opening, two leaves sliding **4.3 m** each, a 10 m
+unlit walkable tunnel. 4.1875 rather than 5.0 because the Causeway's interiors
+have 5.25 m of clearance and one leaf size had to serve all three. Driven by
+one float — `LeafLeft`/`LeafRight` lerp `position.x` against
+`stand_down_fraction()` — so a stall keeps its progress for free.
+
+*Compute core*, four rounds (`3297d16a` → `c035940e`). The banded skeleton was
+built, photographed lit, and **rejected by the human**: eight rings over 10.6 m
+at 0.62 m pitch photographs as a fire escape. Rebuilt as an **asymmetric relay
+machine** in `compute_transformer`'s register — bunded tray, offset stepped
+mass, fin bank, cable terminations, and a **landing shelf cantilevered** over
+the open quarter. The cap contract that made the small core a bird table now
+*generates* the asymmetry. Collision is **9 brushes at every size** against the
+shipped 25 — ~700 shapes saved across 42 instances.
+
+*And then made to work.* `holdable_core.gd:464` placed the tap at
+`Vector3(0, _dock_y(), 0)` — **the dock was a height, so an off-axis pad was
+unreachable by construction.** Now a dock POSITION off a `Dock` marker, with a
+named warning on every fallback. `footprint()` was returning numbers *smaller
+than the cores they described*, so the FX collar drew inside the machine.
+Clearance small FOULED → **0.46 m**, med 0.08 → **0.84 m**. All four barbs now
+stand on deck.
+
+*Textures.* `glitch_tx_neutral` (`9dd18136`) — `glitch_tx_1` measures
+**saturation 0.771** and cannot carry four faction hues; adding a grain that
+hued onto a faction colour muddies it even with `EMISSION_OP_ADD`. Same image,
+hue stripped, exposure kept: sat 0.109, peak unchanged.
+
+**Gates.** `check.sh --changed` PASS on every commit. `smoke.sh` PASS.
+`test_holdable_core.gd` **56 PASS / 0 FAIL**, the dock asserted at 0.000 m from
+the marker with the host turned 37° so an identity transform cannot pass it.
+**`test.sh` was skipped three times** — see Blocked.
+
+**Needs the human.**
+- **The small core's 1.06 m overhang** — the deliberate cost of making capture
+  work at that size. `docs/concepts/core_relay_small_flank.png`.
+- **Pittsburgh core placement**: 8 clashes, of which **5 pre-date all this
+  work**, 2 came from round one and 1 from round two. Four of its five cores
+  stand in something. Art cannot fix it; the cores need moving.
+- **A navmesh rebake is owed on ten levels, 42 instances** and has grown twice.
+- The two breaks in Salient, and whether Proving now reads too bare at nine
+  ground pieces.
+
+**Blocked / next.**
+- **`test.sh` is not usable in this checkout.** 100 suites at ~2 min each —
+  three-plus hours — because other lanes keep ten Godot processes live here.
+  Skipped three times running. It needs a lock or `--fast` as the default gate,
+  and that is the coordinator's call.
+- **The shared index went stale twice and once had 77 live files staged for
+  deletion**, including `tick.tscn` and GAMEPLAY's own brief. Any `git commit`
+  from it would have deleted them. Repaired both times. This is a property of
+  three lanes sharing one index, not of anyone's mistake, and it will recur.
+- **Two numbers belong to GAMEPLAY before capture looks right**: the tap
+  carries the TICK rig in its **flight** pose (4.08 x 4.52 m — wider than the
+  pad and wider than the small core's whole footprint) where the placed pose is
+  3.19 x 3.50; and the placed pose needs a **+2.00 m lift** or the barbs sit 2 m
+  under the shelf. `tools/tick_placed.gd` has both.
+- `site_slice.gd`'s placeholder core is still sized to the dead 1.88/3.38/5.19.
+  One line, in a file another lane is mid-edit in.
+- The faction-reactive glitch pass is briefed and scoped to **core and bunker
+  only** — the other ~dozen `glitch_tx_1` blocks stay as they are.
+
+---
+
 ## 2026-10-10 — Salient: traversable, legible, and something like a trench
 
 **Landed.** Four passes on Salient plus one regression of my own.
