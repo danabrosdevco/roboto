@@ -55,45 +55,49 @@ const EYE := 1.50
 #           history that came back black was this mistake.
 const SHOTS: Array = [
 	# ── THE PLAN. Straight down, framed on the whole playable rectangle, which
-	# is 376 x 248 inside the boundary walls. A 16:9 frame over a 1.52:1 map
-	# means the width is what fills it.
-	["00_plan", Vector3(0.0, 460.0, 0.0), Vector3(0.0, 0.0, 0.0), 40.0, "abs"],
-	["00b_plan_north", Vector3(0.0, 300.0, -56.0), Vector3(0.0, 0.0, -56.0), 46.0, "abs"],
-	# Obliques, for reading the climb as a climb.
-	["01_from_the_south", Vector3(-20.0, 190.0, 240.0), Vector3(0.0, 40.0, -40.0), 50.0, "abs"],
-	["02_from_the_west", Vector3(-330.0, 160.0, 60.0), Vector3(10.0, 40.0, -40.0), 48.0, "abs"],
-	["03_the_fort_from_the_east", Vector3(300.0, 150.0, -40.0), Vector3(0.0, 56.0, -70.0), 46.0, "abs"],
+	# is 376 x 248 inside the boundary walls.
+	["00_plan", Vector3(0.0, 420.0, 0.0), Vector3(0.0, 0.0, 0.0), 40.0, "abs"],
+	["00b_plan_north", Vector3(0.0, 260.0, -56.0), Vector3(0.0, 0.0, -56.0), 46.0, "abs"],
+	# Obliques, for reading the shape: a broad gentle dome with a walled fort on
+	# the crown and two wall lines dividing the approach into three.
+	["01_from_the_south", Vector3(-20.0, 150.0, 230.0), Vector3(0.0, 24.0, -40.0), 50.0, "abs"],
+	["02_from_the_west", Vector3(-320.0, 130.0, 60.0), Vector3(10.0, 24.0, -40.0), 48.0, "abs"],
+	["03_the_fort_from_the_east", Vector3(290.0, 120.0, -40.0), Vector3(0.0, 40.0, -70.0), 46.0, "abs"],
 
-	# ── EYE LEVEL, 1.50 m, through the filter. The three the brief names, plus
-	# the ones that answer whether a bench is a bench.
-	# From the trailhead looking up: the whole question of whether 62 m of dish
-	# on a 70 m plateau reads from the spawn at 190 m.
-	["10_trailhead_looking_up", Vector3(-137.0, EYE, 61.0), Vector3(-10.0, 70.0, -50.0), 62.0, "eye"],
-	["11_trailhead_the_staging", Vector3(-150.0, EYE, 68.0), Vector3(-120.0, 2.0, 50.0), 66.0, "eye"],
-	# A mid bench: the Pillars, a third of the way up, looking at the fort.
-	["12_pillars_looking_up", Vector3(48.0, EYE, 82.0), Vector3(-6.0, 70.0, -56.0), 62.0, "eye"],
-	["13_pillars_on_the_pad", Vector3(30.0, EYE, 90.0), Vector3(66.0, 2.0, 74.0), 66.0, "eye"],
-	# The Gate and the Terrace: the two stations whose near lip has to clear
-	# 23 m or the objective is invisible from the approach.
-	["14_the_gate_looking_up", Vector3(115.0, EYE, 18.0), Vector3(0.0, 70.0, -56.0), 60.0, "eye"],
-	["15_the_terrace_looking_up", Vector3(124.0, EYE, -66.0), Vector3(0.0, 70.0, -66.0), 58.0, "eye"],
-	# The last ramp, walked: along the front of the wall to the gate.
-	["16_the_ramp", Vector3(96.0, EYE, 4.0), Vector3(48.0, 6.0, -16.0), 62.0, "eye"],
-	# ON the new causeway, two thirds of the way up, with the gate at the head
-	# of it. This is the camera for the change the human asked for: the last
-	# move is up and in, not up and then sideways.
-	["16b_up_the_ramp", Vector3(92.0, EYE, 4.0), Vector3(48.0, 10.0, -18.0), 62.0, "eye"],
-	["16c_the_causeway_from_below", Vector3(104.0, EYE, 54.0), Vector3(48.0, 16.0, -18.0), 58.0, "eye"],
-	["17_the_apron", Vector3(48.0, EYE, 12.0), Vector3(48.0, 12.0, -30.0), 62.0, "eye"],
-	# Inside: the yard, and the dish from its own foot.
-	["18_the_yard", Vector3(20.0, EYE, -104.0), Vector3(-10.0, 24.0, -64.0), 66.0, "eye"],
-	["19_under_the_dish", Vector3(-52.0, EYE, -58.0), Vector3(-10.0, 45.0, -58.0), 70.0, "eye"],
-	# And from the fort, looking back down the whole climb.
-	["20_from_the_fort_looking_back", Vector3(48.0, EYE, -4.0), Vector3(-120.0, 10.0, 70.0), 64.0, "eye"],
-	["21_from_the_wall_looking_back", Vector3(0.0, EYE, -14.0), Vector3(-40.0, 20.0, 110.0), 66.0, "eye"],
-	# The ground the road does not go: the flanker's side of the map.
-	["22_the_west_shelf", Vector3(-140.0, EYE, -40.0), Vector3(-20.0, 40.0, -60.0), 60.0, "eye"],
-	["23_the_watchpost", Vector3(-6.0, EYE, 44.0), Vector3(-6.0, 30.0, -50.0), 60.0, "eye"],
+	# ── EYE LEVEL, 1.50 m, through the game's own signal filter.
+	# From the spawn, looking at the fort. The one question the whole redesign
+	# had to not break: on gentle ground there is no mesa to lift the dish, so
+	# it has to carry itself.
+	["10_trailhead_looking_up", Vector3(0.0, EYE, 112.0), Vector3(-10.0, 50.0, -58.0), 62.0, "eye"],
+	# THE FAN. Standing at the spawn looking north: the two lane walls end
+	# twenty metres short of here, and this is where the choice is made.
+	["11_the_fan_from_the_spawn", Vector3(0.0, EYE, 122.0), Vector3(0.0, 8.0, 40.0), 72.0, "eye"],
+
+	# ── ONE PER LANE, FROM ITS FOOT, which is where the choice is taken.
+	["12_centre_lane_foot", Vector3(0.0, EYE, 104.0), Vector3(0.0, 24.0, -40.0), 66.0, "eye"],
+	["13_west_lane_foot", Vector3(-92.0, EYE, 116.0), Vector3(-138.0, 10.0, 56.0), 66.0, "eye"],
+	["14_east_lane_foot", Vector3(92.0, EYE, 116.0), Vector3(108.0, 12.0, 44.0), 66.0, "eye"],
+
+	# ── THE CENTRE LANE: short and exposed, one bunker, straight at the gate.
+	["15_centre_the_bunker", Vector3(-34.0, EYE, 74.0), Vector3(4.0, 10.0, 48.0), 66.0, "eye"],
+	["16_centre_under_the_wall", Vector3(0.0, EYE, 40.0), Vector3(0.0, 26.0, -40.0), 62.0, "eye"],
+	["17_the_south_gate", Vector3(0.0, EYE, 12.0), Vector3(0.0, 10.0, -26.0), 62.0, "eye"],
+
+	# ── THE WEST LANE: long and covered, two bunkers, berms on the open bits.
+	["18_west_the_cistern", Vector3(-154.0, EYE, 92.0), Vector3(-126.0, 10.0, 68.0), 66.0, "eye"],
+	["19_west_the_shoulder", Vector3(-166.0, EYE, -4.0), Vector3(-136.0, 10.0, -24.0), 66.0, "eye"],
+	["20_from_the_fort_looking_back", Vector3(0.0, EYE, -12.0), Vector3(0.0, -6.0, 110.0), 70.0, "eye"],
+	["21_the_west_gate", Vector3(-92.0, EYE, -54.0), Vector3(-54.0, 10.0, -54.0), 62.0, "eye"],
+
+	# ── THE EAST LANE: blocked until the gatehouse is taken.
+	["22_east_the_cross_wall", Vector3(104.0, EYE, 78.0), Vector3(104.0, 10.0, 24.0), 62.0, "eye"],
+	["23_east_through_the_gate", Vector3(104.0, EYE, 56.0), Vector3(106.0, 10.0, 8.0), 66.0, "eye"],
+	["24_east_the_terrace", Vector3(120.0, EYE, -32.0), Vector3(146.0, 10.0, -28.0), 66.0, "eye"],
+	["25_the_east_gate", Vector3(92.0, EYE, -54.0), Vector3(54.0, 10.0, -54.0), 62.0, "eye"],
+
+	# ── INSIDE.
+	["26_the_yard", Vector3(0.0, EYE, -100.0), Vector3(-10.0, 30.0, -62.0), 66.0, "eye"],
+	["27_under_the_dish", Vector3(-52.0, EYE, -58.0), Vector3(-10.0, 45.0, -58.0), 70.0, "eye"],
 ]
 
 

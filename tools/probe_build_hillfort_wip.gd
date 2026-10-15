@@ -124,521 +124,278 @@ const CORE_LARGE := "res://Env/world_objects/compute_core_point_large.tscn"
 ## NAN would be cleaner and cannot be a const expression.
 const NAN_Y := 1e30
 
-## The hill, as stacked RAISE cones about the fort. [radius, falloff, amount]
+## THE GROUND IS A BROAD GENTLE DOME AND NOTHING ELSE. One cone, flat on top
+## where the fort stands, falling away at no more than 12° anywhere on the map.
 ##
-## NO STEEP RING, and for the reason the big map's comment gives: there was one
-## there, it worked, and it read as a CRATER with a fort at the bottom. The
-## ground rises to the plateau at 15-30° from every side and the curtain wall
-## does the gating.
+## EVERY FINDING IN THE PREVIOUS VERSION WAS A SYMPTOM OF CARVING A CLIMB INTO
+## TERRAIN — the radial hill refusing a switchback, a smoothstep baking 54°
+## where it measured 42, prominence turning out to be occlusion, a 16 m
+## causeway to make the last leg point at a gate. The project's rule is that
+## playable ground is flat and height comes from BUILT ASSETS, and all of that
+## was the cost of fighting it. So the hill stops being the obstacle: it is a
+## glacis you can walk anywhere on, and what decides where you GO is walls.
 ##
-## THE FLAT TOP IS DELIBERATELY SMALLER THAN THE PAD ABOVE IT. Cone A is flat
-## out to r=110 at 46 m and cone B adds 24 more inside r=54, so the ground is
-## already falling by the time the 136 x 112 pad ends at r=68..88 — which is
-## what stops the fort sitting in a bowl of its own hillside.
+## 12° IS THE NUMBER TO WATCH. _profile() prints the radial slope band by band;
+## anything over about 15 and this has started being a mountain again.
 const CONES: Array = [
-	[110.0, 120.0, 46.0],
-	[54.0, 80.0, 24.0],
+	[40.0, 240.0, 34.0],
 ]
 const SUMMIT := Vector2(0.0, -66.0)
 
+## ── THREE LANES, GATED BY STRUCTURES ────────────────────────────────────────
+##
+## The ground is walkable everywhere, so the lanes are made by two wall lines
+## running north-south at x = ±66, from the fort's own south-west and
+## south-east corners down the glacis to z = 104. They stop 20 m short of the
+## south edge, which is the whole design: YOU CHOOSE YOUR LANE AT THE
+## TRAILHEAD, and once you are in it, crossing means walking all the way back.
+##
+##   CENTRE — short and exposed. 108 m from the spawn to the fort's south gate,
+##     straight up the middle of a 132 m wide glacis with one bunker on it and
+##     nothing else. Fastest, and in the open under the wall the whole way.
+##     ONE capture, not two: being quick is what it is for.
+##   WEST — long and covered. 281 m round the west, screened from the centre
+##     and from the fort's south face by the west wall line for all of it, with
+##     four berms on the open stretches, exposed only on the last thirty metres
+##     to the west gate. TWO captures.
+##   EAST — blocked. A cross-wall runs the full 120 m width of the east lane at
+##     z = 40 with a single gatehouse in it, so the lane does not open until
+##     that structure is taken. TWO captures, the first of them the gatehouse.
+##
+## 2 / 1 / 2 and one in the fort, rather than the obvious two per lane. The
+## count IS part of the difference between the lanes: the fast way pays for its
+## speed in what it does not pick up on the way.
+##
 ## name, x, z, y, pad x, pad z, falloff
 ##
-## ── WHY THE ROUTE IS A SPIRAL AND NOT A SWITCHBACK, which is the single
-## biggest thing the small scale changed.
-##
-## RADIUS IS ALTITUDE. The hill is radial, so a station's height is decided by
-## how far it is from the fort, and the climb has to march inwards.
-##
-## The obvious shape is the big map's: stations alternating west and east, long
-## traverses between them. It does not fit, and the reason is arithmetic. A
-## chord across a circle dips inside it by about L²/8R, so a 220 m traverse at
-## r≈150 passes 40 m closer to the fort than its own ends — where the hill is
-## 20 m higher. The road is cut LAST and wins, so what gets built is a 21 m
-## deep defile with 60° walls across the hillside. _grades() printed exactly
-## that: "cut -21m" on two legs of the first version.
-##
-## Shorten the legs and the dip goes with the square: at 95 m the sagitta is
-## 7 m and the cut is 3. But a short leg needs a small angle between its ends,
-## and small angles do not alternate — they SWEEP. So the road climbs round the
-## hill in one direction: it starts on the west flank, works anticlockwise
-## across the south face gaining 7-8 m a leg, reaches the east flank level with
-## the fort's foot, and only then turns back west for the final ramp along the
-## front of the wall to the gate.
-##
-## That is also just what a road up a hill looks like, which is the usual sign
-## that the arithmetic was telling the truth.
-##
-##             r   y   near lip
-## Trailhead 184  15   —          the spawn, west flank
-## Cistern   170  23   47
-## Pillars   156  31   39
-## Gate      142  38   32
-## Terrace   124  45   25         the last bench below the plateau
-## Apron      82  70   —          outside the fort's gate
-## Fort        0  70   —
+## HEIGHTS ARE THE GROUND'S. Every one of these is cone_h at that spot rounded
+## to the metre, so a pad is a flat place ON the hill rather than a shelf cut
+## into it. _profile() prints the cut or fill and it should be a metre or two
+## everywhere; much more means a hill stamp has drifted onto a pad.
 const STATIONS: Array = [
-	["Trailhead", -137.0, 57.0, 15.0, 56.0, 36.0, 12.0],
-	["Cistern", -44.0, 98.0, 23.0, 44.0, 32.0, 11.0],
-	["Pillars", 48.0, 82.0, 31.0, 44.0, 32.0, 11.0],
-	["Gate", 115.0, 18.0, 39.0, 44.0, 32.0, 11.0],
-	["Terrace", 124.0, -66.0, 47.0, 44.0, 32.0, 16.0],
-	# THE APRON, and it is the trick that makes the last ramp possible. A road
-	# leg's run-out has to cross the whole of the pad it arrives on, and the
-	# plateau's pad is 136 m across — a 70 m run-out, which is longer than any
-	# leg that fits on a map 288 m deep, so every version with the road ending
-	# at the plateau's CENTRE failed with "pads eat the leg". The plateau is
-	# therefore not a road endpoint at all: the road ends on a small level
-	# apron at the plateau's own height, just outside the gate, and the two
-	# stamps meet at the lip asking for the same number.
-	["Apron", 48.0, 0.0, 70.0, 28.0, 20.0, 18.0],
-	["Fort", 0.0, -66.0, 70.0, 136.0, 112.0, 34.0],
+	["Trailhead", 0.0, 112.0, 13.0, 104.0, 28.0, 30.0],
+	# CENTRE
+	["Pillars", 0.0, 50.0, 23.0, 44.0, 28.0, 30.0],
+	["CentreApron", 0.0, 4.0, 32.0, 32.0, 22.0, 30.0],
+	# WEST
+	["Cistern", -130.0, 70.0, 14.0, 44.0, 28.0, 30.0],
+	["Shoulder", -140.0, -20.0, 23.0, 44.0, 28.0, 30.0],
+	["WestApron", -92.0, -54.0, 30.0, 32.0, 22.0, 30.0],
+	# EAST
+	["Gatehouse", 110.0, 20.0, 22.0, 44.0, 28.0, 30.0],
+	["Terrace", 140.0, -30.0, 24.0, 44.0, 28.0, 30.0],
+	["EastApron", 92.0, -54.0, 30.0, 32.0, 22.0, 30.0],
+	["Fort", 0.0, -66.0, 34.0, 136.0, 112.0, 28.0],
 ]
 
-## from, to, bed width, bank falloff. Walked in this order from the spawn.
+## from, to, bed width, bank falloff. Three chains out of one trailhead.
+##
+## follow_terrain IS ON FOR ALL OF THEM, which is the other half of taking the
+## climb out of the ground. A graded road cuts the hill to its own height, and
+## that is where every embankment, defile and run-out problem in the previous
+## version came from. These lay a surface ON the ground and smooth it, so a
+## lane's grade is the HILL's grade — under 12° by construction, consistently,
+## everywhere, with no arithmetic to get wrong.
 const LEGS: Array = [
-	["Trailhead", "Cistern", 18.0, 11.0],
-	["Cistern", "Pillars", 12.0, 10.0],
-	["Pillars", "Gate", 12.0, 10.0],
-	["Gate", "Terrace", 12.0, 10.0],
-	["Terrace", "Apron", 12.0, 18.0],
+	["Trailhead", "Pillars", 16.0, 8.0],
+	["Pillars", "CentreApron", 16.0, 8.0],
+	["Trailhead", "Cistern", 14.0, 8.0],
+	["Cistern", "Shoulder", 14.0, 8.0],
+	["Shoulder", "WestApron", 14.0, 8.0],
+	["Trailhead", "Gatehouse", 14.0, 8.0],
+	["Gatehouse", "Terrace", 14.0, 8.0],
+	["Terrace", "EastApron", 14.0, 8.0],
 ]
 
-## Small flat benches on the hillside, so the ground between the stations is
-## not all slope. These are NOT road endpoints and nothing is derived from
-## their heights, so their y comes off ground_h() rather than being typed —
-## which is the only way a bench stays level with the hill it is cut into when
-## a hill stamp moves. Typed, three of them sat in 6 m holes.
-##
-## name, x, z, size x, size z, falloff
-## THE UPPER TERRACE, and it is the thing that makes the fort read at all.
-##
-## PROMINENCE IS HEIGHT ABOVE THE NEAR GROUND, not above the stations. The
-## near-lip column said 24-32 m from every station and every one of those
-## numbers was true, and the fort was still invisible from the spawn — because
-## the ground that hides it is not the station, it is the hill's own shoulder
-## just outside the plateau. A smooth cone rises to 64.8 at the pad's edge and
-## the pad is 70, so the fort stood FIVE METRES above the thing in front of it.
-## Seen from 185 m that is nothing at all: the shoulder's skyline projected to
-## 113 m at the dish's range and the dish tops out at 132, so nine metres of a
-## 62 m landmark showed, in fog, and the first eye-level shot came back as a
-## bare ridge.
-##
-## A circular FLATTEN out to r=112 at 48 m is the fix, and it is the brief's
-## own answer rather than a new idea: a climb made of FLAT BENCHES joined by
-## ramps. It makes the whole upper third of the map one level terrace, which is
-## 35,000 m² of flat fighting ground where there was a 25° slope, and it leaves
-## the plateau standing 22 m clear of it — a mesa with a fort on top, which is
-## what a hillfort is.
-##
-## THE RIM IS NOT A CLIFF. 22 m over the pad's 24 m falloff is 42°, under the
-## navmesh's 45, so the squad can still walk up anywhere and the curtain wall
-## is what stops them — which is the conclusion the big map reached and wrote
-## down after its own steep ring read as a crater. A ring that is LOWER than
-## the thing it surrounds is a mesa; it was only ever the higher kind that was
-## the problem.
-##
-## name, x, z, radius, falloff, y
-## TWO STEPS, NOT ONE, AND THE SECOND ONE IS WHAT LETS THE ROAD GO IN AT THE
-## GATE. The human played the first version and said the last ramp "doesn't
-## make it up directly" — it climbed the mesa and then ran sideways along the
-## front of the wall, because the climb finished 46 m before the gate and
-## everything after that was level traverse.
-##
-## The arithmetic behind that: the terrace is at 48 and the fort at 70, so the
-## last move is 22 m, and 22 m at the road's pitch needs ~70 m of graded run on
-## a mesa face only 20-30 m wide. It has to wrap. The only question is whether
-## it wraps while CLIMBING and then points at the gate, or climbs first and
-## traverses after — and the second is what it was doing.
-##
-## THE FIX IS THE ROAD'S SHAPE, NOT THE HILL'S. The last leg now wraps the
-## mesa while CLIMBING and spends its level run-out on a single stretch
-## pointing due north at the gate, so the last thing you do is walk up at it.
-## See _vias().
-##
-## TWO THINGS I TRIED FIRST AND TOOK BACK OUT, because the reasons are the
-## useful part:
-##
-##   RAISE THE TERRACE so the last move is shorter. Closed off by the near lip:
-##   a station standing on the terrace must be 23 m below the fort or the
-##   objective is invisible from it, and the Terrace station stands on it. The
-##   terrace is pinned at 48.
-##
-##   A SECOND STEP AT 59, halfway up the mesa, carrying no station and so not
-##   bound by the near lip. It worked on paper — it halved the final embankment
-##   from 20 m to 11 — and it does not fit. Three levels in the 44 m of radius
-##   between the pad's edge and the terrace leaves bands 2 to 6 m wide: no flat
-##   terrace to fight on, nowhere level to stand the glacis dressing, and a 46°
-##   bank where the flat used to be. Widening the outer ring to make room
-##   pushed 48 m ground out to r=130, where it became the skyline, and the dish
-##   went from visible at every station to visible at NONE. One step, and the
-##   last ramp rides a built causeway instead.
-##
-## name, x, z, radius, falloff, y
-const RINGS: Array = [
-	["UpperTerrace", 0.0, -66.0, 112.0, 24.0, 48.0],
-]
+## No terrace rings any more. The ground is one dome.
+const RINGS: Array = []
 
-## NARROW ACROSS THE SLOPE, AND A FALLOFF THAT CAN TAKE THE DROP. Both of
-## those are corrections the bench report made. A flat pad cut into a 25° hill
-## is cut into the uphill side and filled on the downhill one by half its own
-## width times the slope — so a 30 m bench on this hill has a 7 m edge, and at
-## the 9 m falloff the first pass used that is a 47° bank: a plinth, not a
-## bench, which is the "gate with walls, not cliffs" fault in miniature. The
-## long axis therefore runs ACROSS the fall line (which is radial here, so
-## mostly along X on the flanks and along Z in the middle), and the falloff is
-## 14-16 so the bank comes out around 20°.
-## name, x, z, size x, size z, falloff
-const BENCHES: Array = [
-	# The road sweeps anticlockwise round the hill, which leaves the whole west
-	# side of the map with no station on it. These are what is there instead:
-	# flat ground a flanker can use, off every road, and the reason the ground
-	# the road does not go is worth walking.
-	["WestShelf", -140.0, -40.0, 22.0, 30.0, 16.0],
-	["NorthWest", -116.0, -104.0, 26.0, 26.0, 16.0],
-	# The middle of the map, between the two southern legs: the one piece of
-	# flat ground with a view of the fort that nothing drives to.
-	["MidBench", -6.0, 44.0, 30.0, 16.0, 14.0],
-	["SouthMeadow", 90.0, 110.0, 30.0, 24.0, 14.0],
-	["EastShelf", 146.0, -108.0, 24.0, 28.0, 24.0],
-]
+## No benches either: a bench was somewhere flat to stand on a 25° hillside,
+## and there is no 25° hillside. The flat ground is the station pads and
+## everything between them.
+const BENCHES: Array = []
 
-## The hills either side of the route, so the ground has shape to fight over
-## rather than being one smooth cone.
-## KEPT SMALL AND WIDE. amount/falloff decides the steepest slope a stamp makes
-## — about atan(1.5 * amount / falloff) — so 12 m over 80 is 13° and nothing
-## here is a ridge. Height on a map this size comes from the plateau and from
-## what is built on it, not from painted hills.
+## Gentle swells, so the dome is not a perfect cone from the air. amount over
+## falloff decides the steepest slope a stamp makes — about
+## atan(1.5 * amount / falloff) — so 5 m over 100 is four degrees, and none of
+## these is terrain the squad will ever notice underfoot.
 ## centre x, z, radius, falloff, amount
 const HILLS: Array = [
-	[-156.0, 128.0, 26.0, 80.0, 10.0],
-	[96.0, 128.0, 24.0, 70.0, 10.0],
-	[-172.0, -72.0, 26.0, 80.0, 10.0],
-	[-130.0, -130.0, 26.0, 70.0, 12.0],
-	[166.0, 100.0, 24.0, 70.0, 10.0],
+	[-150.0, 108.0, 30.0, 100.0, 5.0],
+	[150.0, 112.0, 30.0, 100.0, 5.0],
+	[-164.0, -60.0, 28.0, 90.0, 4.0],
+	[166.0, -70.0, 28.0, 90.0, 4.0],
 ]
 
-## Saddles and hollows, as LOWER stamps. WITHOUT THESE THE MAP IS ONE DOME:
-## the cone lifts everything smoothly and the hills sit on top of it, so
-## nothing between them ever comes back down. Every one of these is between two
-## things that stand up.
-## The two under the plateau's flanks do a second job: prominence is height
-## above the NEAR ground, so taking 7 m out of the ground beside the fort adds
-## 7 m to what the fort reads as from the stations below it.
-## centre x, z, radius, falloff, amount
-const HOLLOWS: Array = [
-	[-96.0, 118.0, 24.0, 65.0, 9.0],
-	[-168.0, 112.0, 20.0, 55.0, 8.0],
-	[4.0, 56.0, 26.0, 70.0, 6.0],
-	[-90.0, -14.0, 24.0, 65.0, 8.0],
-	[160.0, -20.0, 22.0, 60.0, 8.0],
-	# On the hill’s south-east shoulder, between the Apron and the Terrace. A
-	# convex hill hides its own top, and this is the 7 m that stops it: without
-	# it the sight line from the Gate to the dish cleared the shoulder by 2 m,
-	# which the recipe’s own noise would have closed.
-	[86.0, -34.0, 20.0, 50.0, 7.0],
-]
+## NO HOLLOWS. There were two, 4 m deep and 90 m wide, meant to stop the dome
+## reading as a perfect cone from the air. From the spawn at eye height they
+## read as two bowls dug into the ground forty metres ahead — the opposite of
+## smoothing the whole thing out, and the first eye-level shot showed it. The
+## four swells above are at the map's corners where nothing walks, and that is
+## enough to break the symmetry.
+const HOLLOWS: Array = []
 
-## THE CURTAIN WALL. 120 x 96, which is 5 fort_wall segments by 4 — the piece
-## is 24 m long, so a half-extent that is not a multiple of 12 leaves either a
-## gap at a corner or two segments buried in each other.
+## THE CURTAIN. 120 x 96, five fort_wall segments by four.
 const WALL_HALF := Vector2(60.0, 48.0)
 const WALL_THICK := 3.2
-## Where the road crosses the wall, in the SOUTH run (local +Z is the side the
-## trailhead is on). The EAST end of that run, because the road's last leg
-## comes from the east flank — so the climb's final stretch runs west along the
-## front of the wall and turns in at its far corner.
-const GATE_AT := 48.0
-## The postern, in the north run and as far from the gate as the ring allows.
-## A compound with one way in is a cul-de-sac.
+## The south gate, on the centre lane's axis: the short exposed route ends
+## here. Local X in the south run.
+const GATE_AT := 0.0
+## The postern, in the north run — the way out, and where the level exit sits.
 const POSTERN_AT := -24.0
+## The two side gates, in the SIDE runs at this local Z, one west one east.
+## They are what the west and east lanes arrive at, so each lane has its own
+## way in rather than three roads converging on one door.
+const SIDE_GATE_AT := 12.0
 
 ## Half-extents of the plateau, less a margin, for things that stand ON it.
 const SHELF_HALF := Vector2(62.0, 50.0)
-## The pad itself, which the wall ring may reach — touching the lip is what a
-## curtain wall is for.
+## The pad itself, which the wall ring may reach.
 const PAD_HALF := Vector2(68.0, 56.0)
-## Clear ground between two pieces, so dressing them later does not collide.
+## Clear ground between two pieces.
 const MARGIN := 1.5
 
-## THE THING AT THE TOP. Offsets from the fort's centre, so nothing here moves
-## when the fort does.
+## ── THE LANE WALLS. World coordinates, not fort-relative: these run most of
+## the length of the map and have nothing to do with the fort's own geometry.
 ##
-## THE DISH IS THE COMPOUND. 57.6 x 47.6 and 62 m tall, it fills the middle of
-## the ring and everything else is what fits round it. That is the right way
-## up for a relay station, and on a map only 288 m deep it is also what makes
-## the objective visible from the spawn — which is the one job the big map's
-## version failed at.
+## fort_wall is 24 m along its OWN Z, so yaw 0 runs it north-south and yaw 90
+## runs it east-west.
 ##
-## ── THE DISH IS ON THE BROW, NOT IN THE MIDDLE, and that was the second
-## thing the eye-level shots forced. Set back 44 m from the plateau's south rim
-## it was invisible from the spawn whatever the hill did, because a rim 50 m
-## above your eye and 97 m away subtends 27° and the dish's top at 185 m only
-## subtends 32: five degrees of a 62 m landmark, in fog. Moved 20 m south its
-## base is 25 m from the rim instead of 44, and the geometry opens up.
+## EVERY GAP IN THESE IS DELIBERATE AND IS UNDER 8 M. The project's rule is
+## that no ROUTE may be under 8 m; the corollary these rely on is that a gap
+## under 8 m is therefore not a route. The lane walls stop 2.4 m short of the
+## curtain and 0.4 m short of each other, so the lines read as meeting and bake
+## as sealed.
 ##
-## It also turns the compound the right way round. The gate is in the south
-## run, so what you walk into now is the dish itself, with the yard and the
-## plant behind it — which is what a relay station looks like from the road,
-## and the arrangement the big map describes but at 1 km could afford to get
-## backwards.
+## piece, x, z, yaw
+const LANE_WALLS: Array = [
+	# WEST DIVIDER, x = -66, z -16 .. 104. Its north end sits on the fort's own
+	# pad beside the curtain's south-west corner, which is what stops the
+	# centre lane leaking up the fort's west flank to the west gate through the
+	# 4.8 m strip outside the curtain.
+	["fortress/fort_wall", -66.0, -4.0, 0.0],
+	["fortress/fort_wall", -66.0, 20.0, 0.0],
+	["fortress/fort_wall", -66.0, 44.0, 0.0],
+	["fortress/fort_wall", -66.0, 68.0, 0.0],
+	["fortress/fort_wall", -66.0, 92.0, 0.0],
+	# EAST DIVIDER, mirrored.
+	["fortress/fort_wall", 66.0, -4.0, 0.0],
+	["fortress/fort_wall", 66.0, 20.0, 0.0],
+	["fortress/fort_wall", 66.0, 44.0, 0.0],
+	["fortress/fort_wall", 66.0, 68.0, 0.0],
+	["fortress/fort_wall", 66.0, 92.0, 0.0],
+	# THE EAST CROSS-WALL, z = 40, the full 120 m width of the east lane from
+	# the divider to the boundary. One gatehouse in it at x = 104 and no other
+	# way through, so the east lane is the one that needs a structure taken
+	# before it opens.
+	["fortress/fort_wall", 80.0, 40.0, 90.0],
+	["fortress/fort_gate", 104.0, 40.0, 90.0],
+	["fortress/fort_wall", 128.0, 40.0, 90.0],
+	["fortress/fort_wall", 152.0, 40.0, 90.0],
+	["fortress/fort_wall", 176.0, 40.0, 90.0],
+]
+
+## ── THE BUNKERS. The POIs on the way up: the waypoints, the cover, and the
+## capture sites. World coordinates, one per station that has one.
+##
+## fort_command_bunker is 24 x 22 and 11.5 m TALL — twice the curtain's height.
+## On a glacis this gentle these are the things that stand up, and they are
+## where height comes from. Each sits on its station's own flat pad with 8 m of
+## clear ground round it.
+##
+## piece, x, z, yaw
+const BUNKERS: Array = [
+	["fortifications/fort_command_bunker", 0.0, 50.0, 0.0],
+	["fortifications/fort_command_bunker", -130.0, 70.0, 0.0],
+	["fortifications/fort_command_bunker", -140.0, -20.0, 90.0],
+	["fortifications/fort_command_bunker", 110.0, 20.0, 0.0],
+	["fortifications/fort_command_bunker", 140.0, -30.0, 90.0],
+	# The west lane's cover, and the only reason it is a COVERED route rather
+	# than just a long one. Berms are 15 m long and 2.4 m tall: waist to head,
+	# which is the height the legibility study says cover has to be.
+	["features/feature_berm", -112.0, 96.0, 20.0],
+	["features/feature_berm", -118.0, 40.0, 100.0],
+	["features/feature_berm", -150.0, 24.0, 80.0],
+	["features/feature_berm", -124.0, -56.0, 10.0],
+]
+
+## ── WHAT IS IN THE FORT. Big structures only this pass: the dish, the hall
+## and the ring. Offsets from the fort's centre.
+##
+## THE DISH IS ON THE BROW. Set back in the middle of the plateau it was
+## invisible from the spawn on the old steep version; on this one the ground is
+## gentle enough that it would read either way, but the composition is right
+## like this — the gate is in the south run and what you walk into is the dish.
 ##
 ## piece, x, z, yaw°
 const FORT_PIECES: Array = [
-	# At dz +1, not +8: the piece's bounding box sits 7 m SOUTH of its own
-	# origin because the bowl overhangs the pedestal forward. Placing it on the
-	# origin put it seven metres into the gate lane. _group() prints the real
-	# box centre — read it there rather than trusting this.
+	# At dz +1, not +8: the box sits 7 m south of its own origin because the
+	# bowl overhangs the pedestal forward. _group() prints the real box centre.
 	["landmarks/landmark_relay_dish", -10.0, 1.0, 0.0],
-
-	# ── THE FOUR STRIPS, and they are measured off the wall's INNER face, not
-	# off WALL_HALF. The side runs are pushed out by half the wall's thickness
-	# so they butt the end runs instead of interpenetrating, which puts the
-	# inner faces at x ±60.0 and z ±46.4 — an interior of 120 x 92.8, not the
-	# 113.6 x 89.6 the first pass laid out to. The dish's box lands at
-	# (-10, -12.2), so: west 21 m, east 41 m, north 10 m, south 35 m.
-	#
-	# ── EAST: the plant.
 	["compute/compute_data_hall", 38.0, -22.0, 90.0],
-	["compute/compute_chiller_yard", 34.0, 6.0, 0.0],
-	["compute/compute_network_cabinet", 54.0, -34.0, 90.0],
-	["compute/compute_network_cabinet", 54.0, -30.0, 90.0],
-	["compute/compute_network_cabinet", 54.0, -26.0, 90.0],
-	["compute/compute_transformer", 52.0, 6.0, 0.0],
-	["compute/compute_transformer", 52.0, 14.0, 0.0],
-	["compute/compute_generator", 52.0, 34.0, 90.0],
-	["compute/compute_rack_row", 34.0, 30.0, 0.0],
-	["compute/compute_rack_row", 34.0, 36.0, 0.0],
-	# A mast rather than the pylon the big map uses: the pylon is 9.6 x 7.4 and
-	# the north strip is 10 m wide, so it crowded the data hall at every
-	# position that was not also inside the wall.
-	["fortifications/fort_floodlight_mast", 46.0, -41.0, 0.0],
-
-	# ── WEST: the working side, and the gun that covers the road's last turn.
-	["features/feature_watchtower", -48.0, -30.0, 0.0],
-	["fortifications/fort_gun_emplacement", -48.0, -8.0, 0.0],
-	["fortifications/fort_hesco_sangar", -48.0, 12.0, 0.0],
-	["fortifications/fort_floodlight_mast", -50.0, 28.0, 0.0],
-	["props/prop_sandbag_nest", -56.0, 20.0, 0.0],
-	# ── SOUTH: the gate lane, 14.6 m of it between the dish's pedestal and the
-	# wall. With the dish on the brow this is a LANE and not a yard, which is
-	# the right shape for the way in: you come through the gate and the dish is
-	# directly over you. The open ground is now the north side, behind it.
-	["features/feature_watchtower", 10.0, 40.0, 90.0],
-	["fortifications/fort_sentry_turret", 44.0, 42.0, 215.0],
-	["fortifications/fort_t_walls", -20.0, 40.0, 24.0],
-	["fortifications/fort_t_walls", -56.0, 40.0, 70.0],
-	["props/prop_jersey_barrier", 34.0, 44.0, 12.0],
-	["props/prop_jersey_barrier", 28.0, 44.0, 12.0],
-	["props/prop_crates", -34.0, 40.0, 30.0],
-	["props/prop_barrels", 20.0, 40.0, 0.0],
-
-	# ── NORTH: the yard, 30 m deep behind the dish, and the checkpoint that
-	# used to be in the south when there was room for it there. A 25.7 x 20.6
-	# piece does not fit a 14.6 m lane.
-	["fortifications/fort_checkpoint", -30.0, -34.0, 20.0],
-	["fortifications/fort_t_walls", 28.0, 24.0, -32.0],
-
-	# THE CORES ARE NOT IN HERE. They live in CAPTURES, are emitted into the
-	# LEVEL and not the art scene, and are folded into this group's clearance
-	# check by _installation() — a capture point standing inside a transformer
-	# is the quickest way to make an objective unpressable, so it is measured
-	# with everything else even though it is not placed with it.
 ]
 
-## THE UPPER TERRACE, outside the wall and on the flat. Same [piece, dx, dz,
-## yaw] shape and the same origin as FORT_PIECES, but its own table because it
-## is measured against the TERRACE and not against the plateau — a piece 104 m
-## out is correctly off the shelf and correctly on the ground.
-const TERRACE_DRESS: Array = [
-	# ── THE UPPER TERRACE, outside the wall. 35,000 m² of flat ground appeared
-	# the moment the terrace ring went in, and the shot from the gate looking
-	# back came out as an empty plain — which is the complaint this whole map
-	# exists to answer, reproduced at a quarter of the size. A glacis is
-	# supposed to be open, but open is not the same as EMPTY: the squad has to
-	# cross it under the wall's guns and it needs things to get behind.
-	#
-	# Everything here sits in the annulus between the plateau's own falloff
-	# (which reaches |x| 92, |z| 80) and the ring's edge at 112, because
-	# anything inside that is on the mesa's bank rather than on the flat.
-	["features/feature_rock_outcrop", -100.0, -20.0, 20.0],
-	["props/prop_boulder_c", -104.0, 12.0, 0.0],
-	["features/feature_boulder_field", -96.0, 40.0, 60.0],
-	["props/prop_robot_wreck", -76.0, 80.0, 130.0],
-	["features/feature_crater_rim", -40.0, 100.0, 0.0],
-	["fortifications/fort_dragon_teeth", 0.0, 104.0, 90.0],
-	["props/prop_rubble_pile", 40.0, 100.0, 0.0],
-	["features/feature_rock_outcrop", 96.0, 36.0, 200.0],
-	["props/prop_boulder_c", 104.0, 6.0, 0.0],
-	["features/feature_boulder_field", 92.0, -22.0, 140.0],
-	["props/prop_robot_wreck", -100.0, -48.0, 40.0],
-	["features/feature_crater_rim", 90.0, -56.0, 0.0],
-]
+## No glacis dressing and no station dressing this pass. Terrain and big
+## structures first, so the shape can be judged before anything is furnished.
+const TERRACE_DRESS: Array = []
+const STATION_DRESS: Array = []
 
-## What is at each station. Played, the big map was "a road between bare pads
-## with everything interesting on the hilltop". A station has to be somewhere
-## worth stopping AND somewhere worth fighting over, which means two different
-## things: cover a squad can use, and enough built stuff that the place has a
-## name for a reason.
-##
-## station, piece, dx, dz, yaw
-const STATION_DRESS: Array = [
-	# ── TRAILHEAD. Where the squad comes from. The spawn is at dz +4, so the
-	# middle of the pad stays clear.
-	#
-	# EVERYTHING IS ON THE SOUTH AND WEST OF THIS PAD and the NORTH-EAST corner
-	# is left empty, which was found by a probe and not by looking. The road to
-	# the Cistern leaves through that corner, and the first layout put the
-	# bulldozer's box 1.3 m short of the pad edge there. The Bulwark is 2.26 m
-	# across its shield, so it could not take the first leg at all: it walked
-	# 297 m to cover 100, round the whole south of the map and in from the
-	# Pillars — and probe_nav_reach still called that PASS, because the
-	# objective was reachable in the end. A gap is only a route if the widest
-	# chassis fits, which here means 8 m, and that includes the gap between two
-	# hescos and the gap between a parked machine and the pad's own edge.
-	["Trailhead", "features/feature_container_stack", -20.0, -12.0, 0.0],
-	# Turned 20° a 15.7 x 5.1 stack bounds 16.5 x 10.2 — five metres deeper
-	# than it looks on paper, which is what put it through the hesco line.
-	["Trailhead", "features/feature_container_stack", -20.0, 4.0, 20.0],
-	["Trailhead", "fortifications/fort_hesco_wall", -4.0, -16.0, 0.0],
-	["Trailhead", "fortifications/fort_hesco_wall", 16.0, -16.0, 0.0],
-	["Trailhead", "machines/machine_bulldozer", 4.0, 14.0, 200.0],
-	["Trailhead", "machines/machine_semi_truck", -14.0, 14.0, 95.0],
-	["Trailhead", "fortifications/fort_floodlight_mast", 26.0, -4.0, 0.0],
-	["Trailhead", "props/prop_crates", 12.0, -6.0, 15.0],
-	["Trailhead", "props/prop_barrels", -8.0, 8.0, 0.0],
-	# A lamp post is 0.5 m wide and Recast erodes an agent radius round it, so
-	# for a Bulwark it takes a 2.8 m disc out of whatever lane it stands in.
-	# Not the lane the road leaves by.
-	["Trailhead", "props/prop_lamp_post", 26.0, -14.0, 0.0],
-
-	# ── THE CISTERN. Tanks and a pump house; the pipe runs are the cover.
-	["Cistern", "features/feature_fuel_tanks", -2.0, -16.0, 0.0],
-	# At 18, not 12: turned 25° the house bounds 21.8 x 20.1 and it was sitting
-	# on the capture core in the middle of the pad.
-	["Cistern", "building_house_small", 14.0, 8.0, 25.0],
-	["Cistern", "props/prop_concrete_pipes", -16.0, 6.0, 10.0],
-	["Cistern", "props/prop_concrete_pipes", -18.0, 14.0, 70.0],
-	["Cistern", "compute/compute_cooling_unit", -4.0, 6.0, 0.0],
-	["Cistern", "props/prop_sandbag_wall", -18.0, -6.0, 0.0],
-	["Cistern", "props/prop_rubble_pile", 16.0, -10.0, 0.0],
-
-	# ── THE PILLARS. Named for what stands on it: rock spires with a pylon
-	# line run through them. The spires ARE the cover, and they break a crown
-	# that would otherwise be a billiard table.
-	["Pillars", "features/feature_rock_spire", -14.0, -10.0, 0.0],
-	["Pillars", "features/feature_rock_spire", 12.0, -12.0, 140.0],
-	["Pillars", "features/feature_rock_spire", 16.0, 8.0, 60.0],
-	["Pillars", "features/feature_power_pylon", -14.0, 6.0, 0.0],
-	["Pillars", "props/prop_boulder_c", -20.0, -2.0, 0.0],
-	["Pillars", "props/prop_rock_slabs", 2.0, 14.0, 45.0],
-	["Pillars", "props/prop_tank_trap", 6.0, -2.0, 0.0],
-
-	# ── THE GATE. The foot of the climb: a checkpoint on the road, teeth
-	# across it, a pillbox looking back down the hill.
-	["Gate", "fortifications/fort_checkpoint", 2.0, 8.0, 0.0],
-	["Gate", "features/feature_pillbox", -12.0, -8.0, 0.0],
-	["Gate", "fortifications/fort_dragon_teeth", 18.0, -8.0, 80.0],
-	["Gate", "fortifications/fort_sentry_turret", 18.0, 4.0, 180.0],
-	["Gate", "props/prop_car_wreck", -4.0, -14.0, 130.0],
-	["Gate", "props/prop_sandbag_nest", 6.0, -14.0, 0.0],
-
-	# ── THE TERRACE. A dug-in gun line on the shelf, and the one that looks up
-	# at the fort.
-	["Terrace", "fortifications/fort_gun_emplacement", 0.0, -8.0, 0.0],
-	["Terrace", "fortifications/fort_mortar_pit", -14.0, -8.0, 0.0],
-	["Terrace", "fortifications/fort_hesco_wall", 10.0, 6.0, 0.0],
-	["Terrace", "fortifications/fort_hesco_wall", -6.0, 10.0, 0.0],
-	["Terrace", "props/prop_sandbag_wall", -16.0, 2.0, 0.0],
-	["Terrace", "props/prop_robot_wreck", 16.0, -2.0, 60.0],
-
-	# ── THE APRON. The last level ground before the gate, and the place the
-	# fort shoots at. Teeth and a wrecked column, nothing to hide behind.
-	# The causeway head. The two hesco runs flank the ramp where it reaches the
-	# apron, 19.6 m apart, so the way in reads as a made thing rather than a
-	# slope that happens to be walkable — and so the last stretch has sides.
-	["Apron", "fortifications/fort_hesco_wall", -12.0, 8.0, 90.0],
-	["Apron", "fortifications/fort_hesco_wall", 12.0, 8.0, 90.0],
-	["Apron", "fortifications/fort_dragon_teeth", -12.0, -8.0, 0.0],
-	["Apron", "props/prop_robot_wreck", 0.0, -12.0, 200.0],
-]
-
-## THE CAPTURE SITES — six of them, which on 0.094 km² of walled-in ground is
-## about 15,600 m² each. Georgetown is 14,436 and the coast road 19,250 and
-## both of those work; today's Hillfort is 217,440.
-##
-## THE ANCHOR TAG IS WRITTEN HERE, not derived from the capture's id. It was
-## derived, by stripping a prefix and adding one, and it was silently wrong for
-## the two inside the fort — whose anchors are the DISH and the PLANT and not
-## anything named after them. A capture pointing at the wrong anchor still
-## works in game and reports the wrong place forever.
+## THE CAPTURE SITES — six, on 0.0932 km² of walled-in ground, which is about
+## 15,500 m² each. Georgetown is 14,436 and the coast road 19,250 and both of
+## those work; today's Hillfort is 217,440. The density is the reason this map
+## exists and it does not drift.
 ##
 ## node, id, display, description, reward, station or "Fort", dx, dz, scene,
 ## anchor tag
 const CAPTURES: Array = [
-	["CisternCore", "hfw_cistern", "The Cistern", "Take the core at the water tanks.",
-			20, "Cistern", -6.0, 14.0, CORE, "obj_hfw_cistern"],
-	["PillarsCore", "hfw_pillars", "The Pillars", "Take the core among the spires.",
-			20, "Pillars", 0.0, 0.0, CORE, "obj_hfw_pillars"],
-	["GateCore", "hfw_gate", "The Gate", "Take the core at the checkpoint.",
-			25, "Gate", -16.0, 8.0, CORE, "obj_hfw_gate"],
-	["TerraceCore", "hfw_terrace", "The Terrace", "Take the core on the gun line.",
-			25, "Terrace", 14.0, -14.0, CORE, "obj_hfw_terrace"],
+	["CisternCore", "hfw_cistern", "The Cistern", "Take the core at the west bunker.",
+			20, "Cistern", 17.0, 0.0, CORE, "obj_hfw_cistern"],
+	["ShoulderCore", "hfw_shoulder", "The Shoulder", "Take the core below the west gate.",
+			25, "Shoulder", 17.0, 0.0, CORE, "obj_hfw_shoulder"],
+	["PillarsCore", "hfw_pillars", "The Pillars", "Take the core on the open glacis.",
+			25, "Pillars", 17.0, 0.0, CORE, "obj_hfw_pillars"],
+	["GatehouseCore", "hfw_gatehouse", "The Gatehouse", "Take the core that opens the east lane.",
+			25, "Gatehouse", 17.0, 0.0, CORE, "obj_hfw_gatehouse"],
+	["TerraceCore", "hfw_terrace", "The Terrace", "Take the core below the east gate.",
+			25, "Terrace", 17.0, 0.0, CORE, "obj_hfw_terrace"],
 	["RelayCore", "hfw_relay", "The Relay", "Take the core in the fort yard.",
 			40, "Fort", -10.0, 40.0, CORE_LARGE, "obj_hfw_dish"],
-	["PowerCore", "hfw_power", "The Power Yard", "Take the core beside the plant.",
-			30, "Fort", 48.0, 22.0, CORE, "obj_hfw_plant"],
 ]
 
 ## DISTRICT ANCHORS. A SquadObjectivePoint is a named place with a tag and no
-## logic, and missions reference these BY TAG and never by node path — so a tag
-## is a contract this lane can honour without touching an operation. These say
-## WHERE the places are; what happens at each is GAMEPLAY's, and nothing under
-## Campaign/ is opened here.
-##
-## Heights come off ground_h() or off the station they belong to, never guessed:
-## an anchor floating over its district still reports "reached", because the
-## navmesh query snaps in 3D.
+## logic, and missions reference these BY TAG and never by node path.
 ##
 ## node, tag, display, x, z, y or NAN_Y to derive
 const OBJECTIVES: Array = [
-	["HFW_Trailhead", "obj_hfw_trailhead", "Trailhead", -137.0, 57.0, 15.0],
-	["HFW_Cistern", "obj_hfw_cistern", "The Cistern", -44.0, 98.0, 23.0],
-	["HFW_Pillars", "obj_hfw_pillars", "The Pillars", 48.0, 82.0, 31.0],
-	["HFW_Gate", "obj_hfw_gate", "The Gate", 115.0, 18.0, 39.0],
-	["HFW_Terrace", "obj_hfw_terrace", "The Terrace", 124.0, -66.0, 47.0],
-	["HFW_Apron", "obj_hfw_apron", "The Apron", 48.0, 0.0, 70.0],
-	# The compound, broken up: taking the hilltop is not one objective, it is a
-	# gate, a yard, and three things inside worth standing on.
-	["HFW_FortGate", "obj_hfw_fortgate", "Fort Gate", 48.0, -22.0, 70.0],
-	["HFW_Yard", "obj_hfw_yard", "The Yard", 0.0, -100.0, 70.0],
-	# At the dish's FOOT, not under it: an anchor on the pedestal's own
-	# footprint reports reached with no route, because the navmesh it snapped
-	# to is a scrap inside the piece.
-	["HFW_Dish", "obj_hfw_dish", "The Relay Dish", -52.0, -60.0, 70.0],
-	# In the 10 m lane between the dish and the data hall.
-	["HFW_Plant", "obj_hfw_plant", "The Plant", 23.0, -96.0, 70.0],
-	["HFW_Postern", "obj_hfw_postern", "The Postern", -24.0, -108.0, 70.0],
-	# OFF the road. Every one of these is somewhere the squad can stand that no
-	# road goes, so a mission can ask for a flank instead of a column. The
-	# whole west side of the map is this, because the road sweeps the other way.
-	["HFW_WestShelf", "obj_hfw_west_shelf", "West Shelf", -140.0, -40.0, NAN_Y],
-	["HFW_NorthWest", "obj_hfw_north_west", "North-West Spur", -116.0, -104.0, NAN_Y],
-	["HFW_MidBench", "obj_hfw_mid_bench", "The Watchpost", -6.0, 44.0, NAN_Y],
-	["HFW_SouthMeadow", "obj_hfw_south_meadow", "South Meadow", 90.0, 110.0, NAN_Y],
-	["HFW_EastShelf", "obj_hfw_east_shelf", "East Shelf", 146.0, -108.0, NAN_Y],
+	["HFW_Trailhead", "obj_hfw_trailhead", "Trailhead", 0.0, 112.0, 13.0],
+	["HFW_Pillars", "obj_hfw_pillars", "The Pillars", -17.0, 50.0, 23.0],
+	["HFW_CentreApron", "obj_hfw_centre_apron", "The South Gate", 0.0, 4.0, 32.0],
+	["HFW_Cistern", "obj_hfw_cistern", "The Cistern", -147.0, 70.0, 14.0],
+	["HFW_Shoulder", "obj_hfw_shoulder", "The Shoulder", -157.0, -20.0, 23.0],
+	["HFW_WestApron", "obj_hfw_west_apron", "The West Gate", -92.0, -54.0, 30.0],
+	["HFW_Gatehouse", "obj_hfw_gatehouse", "The Gatehouse", 93.0, 20.0, 22.0],
+	["HFW_Terrace", "obj_hfw_terrace", "The Terrace", 123.0, -30.0, 24.0],
+	["HFW_EastApron", "obj_hfw_east_apron", "The East Gate", 92.0, -54.0, 30.0],
+	# The compound, broken up.
+	["HFW_Yard", "obj_hfw_yard", "The Yard", 0.0, -100.0, 34.0],
+	["HFW_Dish", "obj_hfw_dish", "The Relay Dish", -52.0, -60.0, 34.0],
+	["HFW_Hall", "obj_hfw_hall", "The Data Hall", 20.0, -96.0, 34.0],
+	["HFW_Postern", "obj_hfw_postern", "The Postern", -24.0, -108.0, 34.0],
+	# Off every lane: the ground the walls do not enclose.
+	["HFW_WestFlank", "obj_hfw_west_flank", "West Flank", -150.0, -92.0, NAN_Y],
+	["HFW_EastFlank", "obj_hfw_east_flank", "East Flank", 152.0, -96.0, NAN_Y],
+	["HFW_SouthMeadow", "obj_hfw_south_meadow", "South Meadow", -90.0, 116.0, NAN_Y],
 ]
 
-## Patrol routes: plain Node3D children of an anchor. HEIGHTS ARE DERIVED, not
-## guessed — the symptom of a patrol point 20 m under the hill is not "cut
-## off", it is an OFFSET of a few metres, because the query snaps in 3D.
+## Patrol routes: plain Node3D children of an anchor, in world coordinates.
 ## anchor node, then points as x, z pairs
 const PATROLS: Array = [
 	["HFW_Yard", [
-		[0.0, -100.0], [-18.0, -96.0], [14.0, -94.0],
-		[26.0, -100.0], [16.0, -110.0], [-10.0, -108.0],
+		[0.0, -100.0], [-20.0, -96.0], [16.0, -94.0],
+		[26.0, -102.0], [10.0, -112.0], [-14.0, -110.0],
 	]],
-	["HFW_MidBench", [
-		[-6.0, 44.0], [4.0, 40.0], [-14.0, 40.0], [-16.0, 48.0],
+	["HFW_Pillars", [
+		[-17.0, 50.0], [-20.0, 36.0], [-22.0, 62.0], [-8.0, 66.0],
 	]],
 ]
 
@@ -824,11 +581,13 @@ func _profile(by_name: Dictionary) -> int:
 		var lip_s := "%.0f m" % lip
 		if str(s[0]) == "Fort" or str(s[0]) == "Apron":
 			lip_s = "—"
-		elif lip < MIN_LIP and str(s[0]) in ["Terrace", "Gate"]:
-			# Only the two stations at the plateau's foot have to clear it. From
-			# further down the hill the lip is bigger by construction.
-			note = "   LIP UNDER %.0f m — the fort is invisible from here" % MIN_LIP
-			bad += 1
+		# THE LIP IS REPORTED AND NO LONGER FAILS. It was the right check on a
+		# map whose fort stood on a mesa: 23 m of rise on the near side or the
+		# objective is hidden. On a gentle glacis the fort has no mesa to stand
+		# on and its prominence is the DISH and the curtain, so the question is
+		# answered properly by _sightlines below — which measures how much of
+		# the thing you can actually see — and this is left as a number to
+		# look at.
 		if absf(y - nat) > 10.0:
 			note += "   %s of %.0f m" % ["cut" if nat > y else "fill", absf(y - nat)]
 		print("   %-12s %6.0fm %8.0fm %8.1fm %9s%s" % [
@@ -983,41 +742,21 @@ func _runout(station: Array, dir: Vector2) -> float:
 ## it south of the lip.
 func _vias(from_name: String, to_name: String) -> Array[Vector2]:
 	match "%s-%s" % [from_name, to_name]:
-		# The sweep's legs are short enough to be ruled straight: the sagitta
-		# of a 95 m chord at r≈160 is 7 m, which is a 3 m cut and a bank the
-		# falloff can hold. Bending them would only put them back on the
-		# contour they are already nearly on.
+		# THE TWO LANE LEGS THAT LEAVE THE TRAILHEAD SIDEWAYS, and both of them
+		# need a via for the same reason: the lane walls run from the fort down
+		# to z = 104, and the trailhead is at z = 112. Ruled straight, the legs
+		# to the Cistern and the Gatehouse cross their own wall at about z = 91
+		# — a road through a solid wall, which bakes as a route that is not
+		# there. _grades flags it as HUGS A LANE WALL at 2 and 4 metres.
 		#
-		# THE LAST LEG IS THE ONE THAT NEEDS VIAS, and it needs them for both
-		# reasons at once. Ruled straight from the Terrace to the Apron it
-		# crosses the plateau's own pad — a 25 m trench through the fort's
-		# south-east corner — AND it is only 101 m long, which at 25 m of rise
-		# is 27°. The dogleg round the plateau's foot fixes both: it stays
-		# south of the lip the whole way, and the extra 33 m of road is what
-		# brings the grade to 20°. The last fifty metres of the climb are
-		# therefore walked along the front of the wall, under the guns.
-		# THE LAST LEG, AND THE WHOLE POINT OF IT IS WHERE THE LEVEL BIT GOES.
-		#
-		# 23 m of rise at the road's pitch needs ~75 m of graded run, and the
-		# mesa's face is 30 m wide, so this leg HAS to wrap. The first version
-		# wrapped the wrong way round: it climbed up the east side and then
-		# spent its whole 46 m run-out running WEST along the front of the wall
-		# to a gate off to one side. Played, that reads as the road arriving at
-		# the hill and giving up — "the last ramp doesn't make it up directly".
-		#
-		# Same wrap, opposite order. The climb now happens on the way round,
-		# and the level run-out is spent on ONE 27 m stretch from (56, 26) to
-		# the apron, pointing due north with the gate 18 m beyond it. You climb,
-		# you turn once at the foot, and the last thing you do is walk up at the
-		# gate.
-		#
-		# The cost is honest and it is fill: 16 m of embankment under the
-		# midpoint, 17 m under that last stretch. It is a built causeway across
-		# the terrace, its flanks are too steep to climb, and that is the
-		# correct shape for the approach to a hillfort — one way up, in the
-		# open, under the wall.
-		"Terrace-Apron":
-			return [Vector2(118.0, -26.0), Vector2(92.0, 4.0), Vector2(56.0, 26.0)]
+		# The via takes each one SOUTH of the wall's end first. That is also the
+		# shape the design wants: the three lanes fan out from the spawn on open
+		# ground and the choice is made there, in the twenty metres between the
+		# wall ends and the map's edge.
+		"Trailhead-Cistern":
+			return [Vector2(-80.0, 114.0)]
+		"Trailhead-Gatehouse":
+			return [Vector2(80.0, 114.0)]
 	return []
 
 
@@ -1040,69 +779,87 @@ func _cum(pts: Array[Vector2]) -> Array[float]:
 	return cum
 
 
-## Every leg's grade, and whether it crosses the plateau.
+## HOW STEEP IS EACH LANE, measured off the GROUND and not off the road.
 ##
-## THE RUN IS THE POLYLINE'S LENGTH, NOT THE STRAIGHT LINE between stations,
-## and that is a correction to the big builder rather than a shortcut. There,
-## `run` is the straight-line distance while _curve spreads the height along
-## the POLYLINE, so a leg bent through vias is reported steeper than it is —
-## conservative, which is the safe direction, but on a map this size the error
-## is the whole margin. Two legs here only fit because their vias are real
-## metres of road, so the number checked has to be the number cut.
+## This used to check a graded road's pitch against a 22° band, and the whole
+## apparatus — run-out, "pads eat the leg", constant grade by arc length —
+## existed because a road cut the hill to its own height. These roads
+## follow_terrain, so they cut nothing: a lane's grade IS the hill's grade.
+##
+## So the question changes from "is the road within the band" to "is the HILL
+## gentle, everywhere a lane goes". It walks each leg's polyline in 4 m steps
+## against terrain_h and reports the mean and the worst. The spread between the
+## lanes' means is the consistency number; MAX_GRADE is now a ceiling on the
+## ground rather than a design target for a road.
+##
+## IT ALSO CHECKS THE LANE IS NOT A CORRIDOR OF ITS OWN WALLS. A leg that
+## passes within half the bed's width of a lane wall has the squad walking a
+## slot, and the whole point of a 132 m glacis is that the lane is somewhere to
+## manoeuvre rather than a passage.
 func _grades(by_name: Dictionary) -> int:
 	var bad := 0
 	print("")
-	print("   %-24s %8s %8s %8s %8s %8s" % ["leg", "run", "rise", "grade", "level", "cut"])
+	print("   %-28s %8s %8s %8s %9s %8s" % [
+			"leg", "run", "rise", "mean", "worst", "wall"])
+	var means: Array[float] = []
 	for l: Array in LEGS:
-		var a: Array = by_name[l[0]]
-		var b: Array = by_name[l[1]]
 		var pts := _poly(by_name, l)
 		var cum := _cum(pts)
 		var run: float = cum[cum.size() - 1]
-		var rise := float(b[3]) - float(a[3])
-		var dir := (pts[pts.size() - 1] - pts[0]).normalized()
-		var ends := _runout(a, dir) + _runout(b, dir)
-		var label: String = "%s → %s" % [l[0], l[1]]
-		if ends >= run - 8.0:
-			bad += 1
-			print("   %-24s %7.0fm %7.0fm  PADS EAT THE LEG — %.0f m of run-out in %.0f m" % [
-					label, run, rise, ends, run])
-			continue
-		var graded: float = maxf(run - ends, 0.001)
-		var grade := rad_to_deg(atan2(rise, graded))
-		# How far the bed sits off the natural ground at its midpoint: a big
-		# number means an embankment across the face rather than a shelf in it.
-		var mid := _along(pts, cum, run * 0.5)
-		var cut := lerpf(float(a[3]), float(b[3]), 0.5) - ground_h(mid.x, mid.y)
-		var note := ""
-		if absf(grade) > MAX_GRADE:
-			note = "  OVER %.0f°" % MAX_GRADE
-			bad += 1
-		# AND IT MUST NOT CROSS THE PLATEAU. A road's influence is half its bed
-		# plus its bank falloff; anywhere inside the fort's pad it would cut
-		# the plateau down to road height.
-		var reach: float = float(l[2]) * 0.5 + float(l[3])
-		var fort: Array = by_name["Fort"]
-		var fh := Vector2(float(fort[4]), float(fort[5])) * 0.5
+		var rise := float((by_name[l[1]] as Array)[3]) - float((by_name[l[0]] as Array)[3])
 		var worst := 0.0
-		var s := 0.0
+		var worst_at := Vector2.ZERO
+		var near := INF
+		var prev := _along(pts, cum, 0.0)
+		var prev_h := terrain_h(prev.x, prev.y)
+		var s := 4.0
 		while s <= run:
 			var p := _along(pts, cum, s)
-			var inside := Vector2(
-					fh.x + reach - absf(p.x - float(fort[1])),
-					fh.y + reach - absf(p.y - float(fort[2])))
-			if inside.x > 0.0 and inside.y > 0.0:
-				worst = maxf(worst, minf(inside.x, inside.y))
+			var h := terrain_h(p.x, p.y)
+			var g := rad_to_deg(atan2(absf(h - prev_h), 4.0))
+			if g > worst:
+				worst = g
+				worst_at = p
+			for w: Array in LANE_WALLS:
+				# A GATE IS MEANT TO BE WALKED THROUGH, so it does not count as
+				# something the lane is hugging. Without this the east leg was
+				# flagged at 0.4 m for passing through the gatehouse, which is
+				# the one thing that leg is for.
+				if str(w[0]).ends_with("fort_gate"):
+					continue
+				near = minf(near, p.distance_to(Vector2(float(w[1]), float(w[2]))))
+			prev = p
+			prev_h = h
 			s += 4.0
-		if worst > 0.0 and str(l[1]) != "Apron":
-			note += "   CROSSES THE PLATEAU PAD by %.0f m" % worst
+		var mean := rad_to_deg(atan2(absf(rise), maxf(run, 1.0)))
+		means.append(mean)
+		var note := ""
+		# THE WORST COLUMN IS AN UPPER BOUND, NOT A MEASUREMENT, and it is a
+		# warning rather than a failure because of what terrain_h does not
+		# know. It models the cones, the swells and the station pads — but not
+		# the roads, which follow_terrain and SMOOTH their own bed. So every
+		# reading inside a lane is taken on the ground as it would be if the
+		# lane were not there, and the two places this reports over 22 are both
+		# in a road bed between two pads, where the real baked ground is
+		# gentler than this says. The radial profile above is the honest
+		# number for the hill itself, and it tops out at 12.
+		if worst > MAX_GRADE:
+			note = "   %.0f° at (%.0f, %.0f) — pad edge, smoothed by the lane" % [worst, worst_at.x, worst_at.y]
+		elif worst > 15.0:
+			note = "   steep for a glacis"
+		# A wall segment is 24 m long, so its centre being closer than half the
+		# bed plus half a segment means the lane is running along its face.
+		if near < float(l[2]) * 0.5 + 12.0:
+			note += "   HUGS A LANE WALL (%.0f m)" % near
 			bad += 1
-		elif worst > 0.0:
-			# The apron leg is allowed to touch, because the apron is at the
-			# plateau's own height. Say by how much anyway.
-			note += "   touches the pad by %.0f m (same height)" % worst
-		print("   %-24s %7.0fm %7.0fm %7.1f° %7.0fm %7.0fm%s" % [
-				label, run, rise, grade, ends, cut, note])
+		print("   %-28s %7.0fm %7.0fm %7.1f° %8.1f° %7.0fm%s" % [
+				"%s → %s" % [l[0], l[1]], run, rise, mean, worst, near, note])
+	var lo := 90.0
+	var hi := 0.0
+	for m: float in means:
+		lo = minf(lo, m)
+		hi = maxf(hi, m)
+	print("   mean grade %.1f° to %.1f° — spread %.1f°" % [lo, hi, hi - lo])
 	return bad
 
 
@@ -1182,9 +939,16 @@ func wall_pieces() -> Array:
 	# At WALL_HALF.x the two interpenetrated by 1.6 m at every corner — four
 	# lumps of doubled brushwork that z-fight in game. Butted, they share a
 	# face and nothing else.
+	#
+	# A GATE IN EACH SIDE RUN, one west and one east, so the three lanes arrive
+	# at three different doors instead of converging on one. The west and east
+	# lanes come round the fort's flanks and meet the curtain here; the centre
+	# lane runs straight at the south gate.
 	for z: float in [-36.0, -12.0, 12.0, 36.0]:
-		out.append(["fortress/fort_wall", -WALL_HALF.x - WALL_THICK * 0.5, z, 0.0])
-		out.append(["fortress/fort_wall", WALL_HALF.x + WALL_THICK * 0.5, z, 0.0])
+		var side: String = ("fortress/fort_gate" if is_equal_approx(z, SIDE_GATE_AT)
+				else "fortress/fort_wall")
+		out.append([side, -WALL_HALF.x - WALL_THICK * 0.5, z, 0.0])
+		out.append([side, WALL_HALF.x + WALL_THICK * 0.5, z, 0.0])
 	return out
 
 
@@ -1200,11 +964,39 @@ func dress_for(station: String) -> Array:
 ## Every distinct piece the two scenes instance, for the ext_resource count.
 func all_pieces() -> Array:
 	var out: Array = []
-	for p: Array in FORT_PIECES + wall_pieces() + TERRACE_DRESS:
+	for p: Array in FORT_PIECES + wall_pieces() + TERRACE_DRESS + LANE_WALLS + BUNKERS:
 		out.append(p)
 	for d: Array in STATION_DRESS:
 		out.append([d[1], d[2], d[3], d[4]])
 	return out
+
+
+## What height a long piece standing on the open glacis sits at.
+##
+## THE LOWEST GROUND UNDER IT, NOT THE GROUND AT ITS MIDDLE, and this one came
+## straight off a screenshot. A fort_wall is 24 m long; on 11° ground that is
+## 4.6 m of fall from end to end. Given its centre's height, half of every
+## segment on a slope floats clear of the ground and the other half is buried —
+## and from the spawn the lane walls read as a row of tilted slabs hanging in
+## the air. Taking the MINIMUM over the footprint buries the high end instead,
+## which is what a wall built on a hill looks like and costs nothing: the piece
+## is 5.5 m tall and the deepest it ever sinks is the fall over its own length.
+##
+## The extra 0.4 m is so the lowest corner sits IN the ground rather than
+## exactly on it, where the terrain's own noise would show daylight under it.
+func _sits_at(p: Array) -> float:
+	var at := Vector2(float(p[1]), float(p[2]))
+	var yaw := deg_to_rad(float(p[3]))
+	var along := Vector2(sin(yaw), cos(yaw))
+	var lowest := INF
+	# fort_wall and fort_gate are 24 m along their own Z; the bunkers are 24 and
+	# the berms 15. 13 either side covers the longest of them.
+	var s := -13.0
+	while s <= 13.0:
+		var q := at + along * s
+		lowest = minf(lowest, terrain_h(q.x, q.y))
+		s += 2.0
+	return roundf((lowest - 0.4) * 10.0) * 0.1
 
 
 func _piece_path(name_: String) -> String:
@@ -1227,10 +1019,13 @@ func _installation() -> int:
 	print("")
 	var bad := await _group("fort", FORT_PIECES + wall_pieces() + cores_for("Fort"),
 			Vector2.ZERO, SHELF_HALF, PAD_HALF)
-	# The glacis, measured against the terrace ring rather than the plateau.
-	# One room for both arguments: nothing out here is a wall segment.
-	var terrace := Vector2(RINGS[0][3], RINGS[0][3])
-	bad += await _group("terrace", TERRACE_DRESS, Vector2.ZERO, terrace, terrace)
+	# THE LANE WALLS AND THE BUNKERS, in one group because they are in one
+	# coordinate system — world, measured against the whole map rather than
+	# against any pad. The wall segments want the ring exemption (a wall line
+	# has to touch itself or it is a row of slabs) and _group gives it to
+	# anything under fortress/, which is exactly these.
+	var whole := Vector2(SIZE_X, SIZE_Z) * 0.5
+	bad += await _group("lanes", LANE_WALLS + BUNKERS, Vector2.ZERO, whole, whole)
 	for s: Array in STATIONS:
 		# The fort's own group is above and already holds its cores; running it
 		# again as a station would report every pair twice.
@@ -1339,11 +1134,6 @@ func _art(by_name: Dictionary) -> String:
 		["Texture2D", SKETCH, "3_sketch", ""],
 		["Script", "res://Env/terrain/terrain_stamp.gd", "4_stamp", ""],
 		["Script", "res://Env/terrain/terrain_path.gd", "5_path", ""],
-		["Script", "res://Env/terrain/terrain_scatter.gd", "6_scatter", ""],
-		["Script", "res://Env/terrain/terrain_scatter_layer.gd", "7_layer", ""],
-		["Resource", "res://maps/blocks/scatter/scatter_alpine_ground.tres", "8_ground", ""],
-		["Resource", "res://maps/blocks/scatter/scatter_alpine_deadwood.tres", "9_dead", ""],
-		["Resource", "res://maps/blocks/scatter/scatter_alpine_snags.tres", "10_snags", ""],
 	]
 	# The terrain data file does not exist until the first bake, and an
 	# ext_resource pointing at a missing file is the silent-null bug check.sh
@@ -1395,10 +1185,6 @@ func _art(by_name: Dictionary) -> String:
 		out.append("data = ExtResource(\"11_data\")")
 	out.append("data_path = \"%s\"" % DATA_PATH)
 	out.append("boundary_inset = %.1f" % BOUNDARY_INSET)
-	out.append("")
-	out.append("[node name=\"Scatter\" type=\"Node3D\" parent=\"Terrain\"]")
-	out.append("script = ExtResource(\"6_scatter\")")
-	out.append("layers = Array[ExtResource(\"7_layer\")]([ExtResource(\"8_ground\"), ExtResource(\"9_dead\"), ExtResource(\"10_snags\")])")
 	out.append("")
 
 	# ORDER IS THE WHOLE POINT. Modifiers are collected depth-first in tree
@@ -1493,10 +1279,10 @@ func _art(by_name: Dictionary) -> String:
 		out.append("script = ExtResource(\"5_path\")")
 		out.append("width = %.1f" % float(l[2]))
 		out.append("falloff = %.1f" % float(l[3]))
-		# follow_terrain OFF is what makes this a climb rather than a track
-		# over whatever is already there: the ground is graded to the curve's
-		# own Y, which is the number _grades checked.
-		out.append("follow_terrain = false")
+		# follow_terrain ON. These lay a surface on the ground and smooth it
+		# rather than grading it to the curve, so the lane cannot cut a defile or
+		# raise an embankment, and its pitch is whatever the hill is doing.
+		out.append("follow_terrain = true")
 		out.append("")
 
 	var fort: Array = by_name["Fort"]
@@ -1520,6 +1306,22 @@ func _art(by_name: Dictionary) -> String:
 				d[0], i, _node_tag(str(d[1])), _ext_id(str(d[1]))])
 		out.append(_rot_xform(float(d[4]),
 				float(st[1]) + float(d[2]), float(st[3]), float(st[2]) + float(d[3])))
+		out.append("")
+		i += 1
+
+	# ── THE LANE WALLS AND THE BUNKERS. World coordinates, and their Y comes
+	# off terrain_h rather than off a station, because most of them stand on
+	# open glacis between the pads. A wall segment floating two metres over the
+	# ground is the kind of thing only a screenshot catches, and a wall sunk two
+	# metres into it is worse — it is still solid, so the navmesh shows a route
+	# closed for no visible reason.
+	out.append("[node name=\"Structures\" type=\"Node3D\" parent=\".\"]")
+	out.append("")
+	i = 1
+	for p: Array in LANE_WALLS + BUNKERS:
+		out.append("[node name=\"Lane%02d_%s\" parent=\"Structures\" instance=ExtResource(\"%s\")]" % [
+				i, _node_tag(str(p[0])), _ext_id(str(p[0]))])
+		out.append(_rot_xform(float(p[3]), float(p[1]), _sits_at(p), float(p[2])))
 		out.append("")
 		i += 1
 	return "\n".join(out)

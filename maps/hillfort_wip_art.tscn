@@ -1,60 +1,17 @@
-[gd_scene load_steps=62 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://Env/terrain/generated_terrain.gd" id="1_terrain"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="2_recipe"]
 [ext_resource type="Texture2D" path="res://Env/terrain/sketches/hillfort_wip.png" id="3_sketch"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_stamp.gd" id="4_stamp"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_path.gd" id="5_path"]
-[ext_resource type="Script" path="res://Env/terrain/terrain_scatter.gd" id="6_scatter"]
-[ext_resource type="Script" path="res://Env/terrain/terrain_scatter_layer.gd" id="7_layer"]
-[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_alpine_ground.tres" id="8_ground"]
-[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_alpine_deadwood.tres" id="9_dead"]
-[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_alpine_snags.tres" id="10_snags"]
 [ext_resource type="Resource" path="res://maps/terrain_data/hillfort_wip_level_terrain.res" id="11_data"]
 [ext_resource type="PackedScene" path="res://maps/blocks/landmarks/landmark_relay_dish.tscn" id="p_landmark_relay_dish"]
 [ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_data_hall.tscn" id="p_compute_data_hall"]
-[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_chiller_yard.tscn" id="p_compute_chiller_yard"]
-[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_network_cabinet.tscn" id="p_compute_network_cabinet"]
-[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_transformer.tscn" id="p_compute_transformer"]
-[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_generator.tscn" id="p_compute_generator"]
-[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_rack_row.tscn" id="p_compute_rack_row"]
-[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_floodlight_mast.tscn" id="p_fort_floodlight_mast"]
-[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_watchtower.tscn" id="p_feature_watchtower"]
-[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_gun_emplacement.tscn" id="p_fort_gun_emplacement"]
-[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_hesco_sangar.tscn" id="p_fort_hesco_sangar"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_sandbag_nest.tscn" id="p_prop_sandbag_nest"]
-[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_sentry_turret.tscn" id="p_fort_sentry_turret"]
-[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_t_walls.tscn" id="p_fort_t_walls"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_jersey_barrier.tscn" id="p_prop_jersey_barrier"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_crates.tscn" id="p_prop_crates"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_barrels.tscn" id="p_prop_barrels"]
-[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_checkpoint.tscn" id="p_fort_checkpoint"]
 [ext_resource type="PackedScene" path="res://maps/blocks/fortress/fort_wall.tscn" id="p_fort_wall"]
 [ext_resource type="PackedScene" path="res://maps/blocks/fortress/fort_gate.tscn" id="p_fort_gate"]
-[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_rock_outcrop.tscn" id="p_feature_rock_outcrop"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_boulder_c.tscn" id="p_prop_boulder_c"]
-[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_boulder_field.tscn" id="p_feature_boulder_field"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_robot_wreck.tscn" id="p_prop_robot_wreck"]
-[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_crater_rim.tscn" id="p_feature_crater_rim"]
-[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_dragon_teeth.tscn" id="p_fort_dragon_teeth"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_rubble_pile.tscn" id="p_prop_rubble_pile"]
-[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_container_stack.tscn" id="p_feature_container_stack"]
-[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_hesco_wall.tscn" id="p_fort_hesco_wall"]
-[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_bulldozer.tscn" id="p_machine_bulldozer"]
-[ext_resource type="PackedScene" path="res://maps/blocks/machines/machine_semi_truck.tscn" id="p_machine_semi_truck"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_lamp_post.tscn" id="p_prop_lamp_post"]
-[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_fuel_tanks.tscn" id="p_feature_fuel_tanks"]
-[ext_resource type="PackedScene" path="res://maps/blocks/building_house_small.tscn" id="p_building_house_small"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_concrete_pipes.tscn" id="p_prop_concrete_pipes"]
-[ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_cooling_unit.tscn" id="p_compute_cooling_unit"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_sandbag_wall.tscn" id="p_prop_sandbag_wall"]
-[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_rock_spire.tscn" id="p_feature_rock_spire"]
-[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_power_pylon.tscn" id="p_feature_power_pylon"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_rock_slabs.tscn" id="p_prop_rock_slabs"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_tank_trap.tscn" id="p_prop_tank_trap"]
-[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_pillbox.tscn" id="p_feature_pillbox"]
-[ext_resource type="PackedScene" path="res://maps/blocks/props/prop_car_wreck.tscn" id="p_prop_car_wreck"]
-[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_mortar_pit.tscn" id="p_fort_mortar_pit"]
+[ext_resource type="PackedScene" path="res://maps/blocks/fortifications/fort_command_bunker.tscn" id="p_fort_command_bunker"]
+[ext_resource type="PackedScene" path="res://maps/blocks/features/feature_berm.tscn" id="p_feature_berm"]
 
 [sub_resource type="Resource" id="Resource_recipe"]
 script = ExtResource("2_recipe")
@@ -116,45 +73,69 @@ road_falloff = 5.0
 road_smoothing = 40.0
 bridge_clearance = 2.0
 
+[sub_resource type="Curve3D" id="Curve3D_trailhead_pillars"]
+bake_interval = 2.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 13, 112, 0, 0, 0, 0, 0, 0, 0, 13, 84.1, 0, 0, 0, 0, 0, 0, 0, 23, 77.9, 0, 0, 0, 0, 0, 0, 0, 23, 50),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_pillars_centre_apron"]
+bake_interval = 2.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 23, 50, 0, 0, 0, 0, 0, 0, 0, 23, 29.3, 0, 0, 0, 0, 0, 0, 0, 32, 24.7, 0, 0, 0, 0, 0, 0, 0, 32, 4),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
 [sub_resource type="Curve3D" id="Curve3D_trailhead_cistern"]
 bake_interval = 2.0
 _data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -137, 15, 57, 0, 0, 0, 0, 0, 0, -98.0197, 15, 74.1849, 0, 0, 0, 0, 0, 0, -76.0653, 23, 83.8637, 0, 0, 0, 0, 0, 0, -44, 23, 98),
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 13, 112, 0, 0, 0, 0, 0, 0, -65.9621, 13, 113.6491, 0, 0, 0, 0, 0, 0, -80, 13.5101, 114, 0, 0, 0, 0, 0, 0, -90.1223, 14, 105.0923, 0, 0, 0, 0, 0, 0, -130, 14, 70),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+}
+point_count = 5
+
+[sub_resource type="Curve3D" id="Curve3D_cistern_shoulder"]
+bake_interval = 2.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -130, 14, 70, 0, 0, 0, 0, 0, 0, -134.5, 14, 29.5, 0, 0, 0, 0, 0, 0, -135.5, 23, 20.5, 0, 0, 0, 0, 0, 0, -140, 23, -20),
 "tilts": PackedFloat32Array(0, 0, 0, 0)
 }
 point_count = 4
 
-[sub_resource type="Curve3D" id="Curve3D_cistern_pillars"]
+[sub_resource type="Curve3D" id="Curve3D_shoulder_west_apron"]
 bake_interval = 2.0
 _data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -44, 23, 98, 0, 0, 0, 0, 0, 0, -11.1627, 23, 92.2892, 0, 0, 0, 0, 0, 0, 15.1627, 31, 87.7108, 0, 0, 0, 0, 0, 0, 48, 31, 82),
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -140, 23, -20, 0, 0, 0, 0, 0, 0, -118.4, 23, -35.3, 0, 0, 0, 0, 0, 0, -113.6, 30, -38.7, 0, 0, 0, 0, 0, 0, -92, 30, -54),
 "tilts": PackedFloat32Array(0, 0, 0, 0)
 }
 point_count = 4
 
-[sub_resource type="Curve3D" id="Curve3D_pillars_gate"]
+[sub_resource type="Curve3D" id="Curve3D_trailhead_gatehouse"]
 bake_interval = 2.0
 _data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 48, 31, 82, 0, 0, 0, 0, 0, 0, 72.7042, 31, 58.4019, 0, 0, 0, 0, 0, 0, 90.2958, 39, 41.5981, 0, 0, 0, 0, 0, 0, 115, 39, 18),
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 13, 112, 0, 0, 0, 0, 0, 0, 51.8058, 13, 113.2951, 0, 0, 0, 0, 0, 0, 80, 16.382, 114, 0, 0, 0, 0, 0, 0, 94.244, 22, 69.3687, 0, 0, 0, 0, 0, 0, 110, 22, 20),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+}
+point_count = 5
+
+[sub_resource type="Curve3D" id="Curve3D_gatehouse_terrace"]
+bake_interval = 2.0
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 110, 22, 20, 0, 0, 0, 0, 0, 0, 123.5, 22, -2.5, 0, 0, 0, 0, 0, 0, 126.5, 24, -7.5, 0, 0, 0, 0, 0, 0, 140, 24, -30),
 "tilts": PackedFloat32Array(0, 0, 0, 0)
 }
 point_count = 4
 
-[sub_resource type="Curve3D" id="Curve3D_gate_terrace"]
+[sub_resource type="Curve3D" id="Curve3D_terrace_east_apron"]
 bake_interval = 2.0
 _data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 115, 39, 18, 0, 0, 0, 0, 0, 0, 117.8861, 39, -8.9374, 0, 0, 0, 0, 0, 0, 120.5812, 47, -34.0911, 0, 0, 0, 0, 0, 0, 124, 47, -66),
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 140, 24, -30, 0, 0, 0, 0, 0, 0, 118.4, 24, -40.8, 0, 0, 0, 0, 0, 0, 113.6, 30, -43.2, 0, 0, 0, 0, 0, 0, 92, 30, -54),
 "tilts": PackedFloat32Array(0, 0, 0, 0)
 }
 point_count = 4
-
-[sub_resource type="Curve3D" id="Curve3D_terrace_apron"]
-bake_interval = 2.0
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 124, 47, -66, 0, 0, 0, 0, 0, 0, 118.0068, 47, -26.0451, 0, 0, 0, 0, 0, 0, 118, 47.0138, -26, 0, 0, 0, 0, 0, 0, 92, 59.046, 4, 0, 0, 0, 0, 0, 0, 61.1609, 70, 22.8461, 0, 0, 0, 0, 0, 0, 56, 70, 26, 0, 0, 0, 0, 0, 0, 48, 70, 0),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0)
-}
-point_count = 7
 
 [node name="HillfortWipArt" type="Node3D"]
 
@@ -165,55 +146,42 @@ data = ExtResource("11_data")
 data_path = "res://maps/terrain_data/hillfort_wip_level_terrain.res"
 boundary_inset = 4.0
 
-[node name="Scatter" type="Node3D" parent="Terrain"]
-script = ExtResource("6_scatter")
-layers = Array[ExtResource("7_layer")]([ExtResource("8_ground"), ExtResource("9_dead"), ExtResource("10_snags")])
-
 [node name="Hills" type="Node3D" parent="Terrain"]
 
 [node name="Hill1" type="Node3D" parent="Terrain/Hills"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -156, 0, 128)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -150, 0, 108)
 script = ExtResource("4_stamp")
 shape = 1
-radius = 26.0
-falloff = 80.0
-amount = 10.0
+radius = 30.0
+falloff = 100.0
+amount = 5.0
 paint = 0
 
 [node name="Hill2" type="Node3D" parent="Terrain/Hills"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96, 0, 128)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0, 112)
 script = ExtResource("4_stamp")
 shape = 1
-radius = 24.0
-falloff = 70.0
-amount = 10.0
+radius = 30.0
+falloff = 100.0
+amount = 5.0
 paint = 0
 
 [node name="Hill3" type="Node3D" parent="Terrain/Hills"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -172, 0, -72)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -164, 0, -60)
 script = ExtResource("4_stamp")
 shape = 1
-radius = 26.0
-falloff = 80.0
-amount = 10.0
+radius = 28.0
+falloff = 90.0
+amount = 4.0
 paint = 0
 
 [node name="Hill4" type="Node3D" parent="Terrain/Hills"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130, 0, -130)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 166, 0, -70)
 script = ExtResource("4_stamp")
 shape = 1
-radius = 26.0
-falloff = 70.0
-amount = 12.0
-paint = 0
-
-[node name="Hill5" type="Node3D" parent="Terrain/Hills"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 166, 0, 100)
-script = ExtResource("4_stamp")
-shape = 1
-radius = 24.0
-falloff = 70.0
-amount = 10.0
+radius = 28.0
+falloff = 90.0
+amount = 4.0
 paint = 0
 
 [node name="HighGround" type="Node3D" parent="Terrain"]
@@ -222,510 +190,287 @@ paint = 0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -66)
 script = ExtResource("4_stamp")
 shape = 1
-radius = 110.0
-falloff = 120.0
-amount = 46.0
-paint = 0
-
-[node name="Cone2" type="Node3D" parent="Terrain/HighGround"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -66)
-script = ExtResource("4_stamp")
-shape = 1
-radius = 54.0
-falloff = 80.0
-amount = 24.0
+radius = 40.0
+falloff = 240.0
+amount = 34.0
 paint = 0
 
 [node name="Hollows" type="Node3D" parent="Terrain"]
 
-[node name="Hollow1" type="Node3D" parent="Terrain/Hollows"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -96, 0, 118)
-script = ExtResource("4_stamp")
-shape = 2
-radius = 24.0
-falloff = 65.0
-amount = 9.0
-paint = 0
-
-[node name="Hollow2" type="Node3D" parent="Terrain/Hollows"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -168, 0, 112)
-script = ExtResource("4_stamp")
-shape = 2
-radius = 20.0
-falloff = 55.0
-amount = 8.0
-paint = 0
-
-[node name="Hollow3" type="Node3D" parent="Terrain/Hollows"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 56)
-script = ExtResource("4_stamp")
-shape = 2
-radius = 26.0
-falloff = 70.0
-amount = 6.0
-paint = 0
-
-[node name="Hollow4" type="Node3D" parent="Terrain/Hollows"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 0, -14)
-script = ExtResource("4_stamp")
-shape = 2
-radius = 24.0
-falloff = 65.0
-amount = 8.0
-paint = 0
-
-[node name="Hollow5" type="Node3D" parent="Terrain/Hollows"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 160, 0, -20)
-script = ExtResource("4_stamp")
-shape = 2
-radius = 22.0
-falloff = 60.0
-amount = 8.0
-paint = 0
-
-[node name="Hollow6" type="Node3D" parent="Terrain/Hollows"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 86, 0, -34)
-script = ExtResource("4_stamp")
-shape = 2
-radius = 20.0
-falloff = 50.0
-amount = 7.0
-paint = 0
-
 [node name="Shelves" type="Node3D" parent="Terrain"]
 
-[node name="UpperTerrace" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 48, -66)
-script = ExtResource("4_stamp")
-footprint = 0
-radius = 112.0
-falloff = 24.0
-paint = 1
-
 [node name="Trailhead" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -137, 15, 57)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 13, 112)
 script = ExtResource("4_stamp")
 footprint = 1
-size = Vector2(56, 36)
-falloff = 12.0
-paint = 1
-
-[node name="Cistern" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, 23, 98)
-script = ExtResource("4_stamp")
-footprint = 1
-size = Vector2(44, 32)
-falloff = 11.0
+size = Vector2(104, 28)
+falloff = 30.0
 paint = 1
 
 [node name="Pillars" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 31, 82)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 23, 50)
 script = ExtResource("4_stamp")
 footprint = 1
-size = Vector2(44, 32)
-falloff = 11.0
+size = Vector2(44, 28)
+falloff = 30.0
 paint = 1
 
-[node name="Gate" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 115, 39, 18)
+[node name="CentreApron" type="Node3D" parent="Terrain/Shelves"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 32, 4)
 script = ExtResource("4_stamp")
 footprint = 1
-size = Vector2(44, 32)
-falloff = 11.0
+size = Vector2(32, 22)
+falloff = 30.0
+paint = 1
+
+[node name="Cistern" type="Node3D" parent="Terrain/Shelves"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130, 14, 70)
+script = ExtResource("4_stamp")
+footprint = 1
+size = Vector2(44, 28)
+falloff = 30.0
+paint = 1
+
+[node name="Shoulder" type="Node3D" parent="Terrain/Shelves"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -140, 23, -20)
+script = ExtResource("4_stamp")
+footprint = 1
+size = Vector2(44, 28)
+falloff = 30.0
+paint = 1
+
+[node name="WestApron" type="Node3D" parent="Terrain/Shelves"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -92, 30, -54)
+script = ExtResource("4_stamp")
+footprint = 1
+size = Vector2(32, 22)
+falloff = 30.0
+paint = 1
+
+[node name="Gatehouse" type="Node3D" parent="Terrain/Shelves"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 110, 22, 20)
+script = ExtResource("4_stamp")
+footprint = 1
+size = Vector2(44, 28)
+falloff = 30.0
 paint = 1
 
 [node name="Terrace" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 124, 47, -66)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, 24, -30)
 script = ExtResource("4_stamp")
 footprint = 1
-size = Vector2(44, 32)
-falloff = 16.0
+size = Vector2(44, 28)
+falloff = 30.0
 paint = 1
 
-[node name="Apron" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 70, 0)
+[node name="EastApron" type="Node3D" parent="Terrain/Shelves"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 92, 30, -54)
 script = ExtResource("4_stamp")
 footprint = 1
-size = Vector2(28, 20)
-falloff = 18.0
+size = Vector2(32, 22)
+falloff = 30.0
 paint = 1
 
 [node name="Fort" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 70, -66)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 34, -66)
 script = ExtResource("4_stamp")
 footprint = 1
 size = Vector2(136, 112)
-falloff = 34.0
-paint = 1
-
-[node name="WestShelf" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -140, 42, -40)
-script = ExtResource("4_stamp")
-footprint = 1
-size = Vector2(22, 30)
-falloff = 16.0
-paint = 1
-
-[node name="NorthWest" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -116, 63, -104)
-script = ExtResource("4_stamp")
-footprint = 1
-size = Vector2(26, 26)
-falloff = 16.0
-paint = 1
-
-[node name="MidBench" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 45, 44)
-script = ExtResource("4_stamp")
-footprint = 1
-size = Vector2(30, 16)
-falloff = 14.0
-paint = 1
-
-[node name="SouthMeadow" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 20, 110)
-script = ExtResource("4_stamp")
-footprint = 1
-size = Vector2(30, 24)
-falloff = 14.0
-paint = 1
-
-[node name="EastShelf" type="Node3D" parent="Terrain/Shelves"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 146, 33, -108)
-script = ExtResource("4_stamp")
-footprint = 1
-size = Vector2(24, 28)
-falloff = 24.0
+falloff = 28.0
 paint = 1
 
 [node name="Roads" type="Node3D" parent="Terrain"]
 
+[node name="Trailhead_Pillars" type="Path3D" parent="Terrain/Roads"]
+curve = SubResource("Curve3D_trailhead_pillars")
+script = ExtResource("5_path")
+width = 16.0
+falloff = 8.0
+follow_terrain = true
+
+[node name="Pillars_CentreApron" type="Path3D" parent="Terrain/Roads"]
+curve = SubResource("Curve3D_pillars_centre_apron")
+script = ExtResource("5_path")
+width = 16.0
+falloff = 8.0
+follow_terrain = true
+
 [node name="Trailhead_Cistern" type="Path3D" parent="Terrain/Roads"]
 curve = SubResource("Curve3D_trailhead_cistern")
 script = ExtResource("5_path")
-width = 18.0
-falloff = 11.0
-follow_terrain = false
+width = 14.0
+falloff = 8.0
+follow_terrain = true
 
-[node name="Cistern_Pillars" type="Path3D" parent="Terrain/Roads"]
-curve = SubResource("Curve3D_cistern_pillars")
+[node name="Cistern_Shoulder" type="Path3D" parent="Terrain/Roads"]
+curve = SubResource("Curve3D_cistern_shoulder")
 script = ExtResource("5_path")
-width = 12.0
-falloff = 10.0
-follow_terrain = false
+width = 14.0
+falloff = 8.0
+follow_terrain = true
 
-[node name="Pillars_Gate" type="Path3D" parent="Terrain/Roads"]
-curve = SubResource("Curve3D_pillars_gate")
+[node name="Shoulder_WestApron" type="Path3D" parent="Terrain/Roads"]
+curve = SubResource("Curve3D_shoulder_west_apron")
 script = ExtResource("5_path")
-width = 12.0
-falloff = 10.0
-follow_terrain = false
+width = 14.0
+falloff = 8.0
+follow_terrain = true
 
-[node name="Gate_Terrace" type="Path3D" parent="Terrain/Roads"]
-curve = SubResource("Curve3D_gate_terrace")
+[node name="Trailhead_Gatehouse" type="Path3D" parent="Terrain/Roads"]
+curve = SubResource("Curve3D_trailhead_gatehouse")
 script = ExtResource("5_path")
-width = 12.0
-falloff = 10.0
-follow_terrain = false
+width = 14.0
+falloff = 8.0
+follow_terrain = true
 
-[node name="Terrace_Apron" type="Path3D" parent="Terrain/Roads"]
-curve = SubResource("Curve3D_terrace_apron")
+[node name="Gatehouse_Terrace" type="Path3D" parent="Terrain/Roads"]
+curve = SubResource("Curve3D_gatehouse_terrace")
 script = ExtResource("5_path")
-width = 12.0
-falloff = 18.0
-follow_terrain = false
+width = 14.0
+falloff = 8.0
+follow_terrain = true
+
+[node name="Terrace_EastApron" type="Path3D" parent="Terrain/Roads"]
+curve = SubResource("Curve3D_terrace_east_apron")
+script = ExtResource("5_path")
+width = 14.0
+falloff = 8.0
+follow_terrain = true
 
 [node name="Fort" type="Node3D" parent="."]
 
 [node name="Fort01_landmark_relay_dish" parent="Fort" instance=ExtResource("p_landmark_relay_dish")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 70, -65)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 34, -65)
 
 [node name="Fort02_compute_data_hall" parent="Fort" instance=ExtResource("p_compute_data_hall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 38, 70, -88)
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 38, 34, -88)
 
-[node name="Fort03_compute_chiller_yard" parent="Fort" instance=ExtResource("p_compute_chiller_yard")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 70, -60)
+[node name="Fort03_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -48, 34, -18)
 
-[node name="Fort04_compute_network_cabinet" parent="Fort" instance=ExtResource("p_compute_network_cabinet")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 54, 70, -100)
+[node name="Fort04_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -48, 34, -114)
 
-[node name="Fort05_compute_network_cabinet" parent="Fort" instance=ExtResource("p_compute_network_cabinet")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 54, 70, -96)
+[node name="Fort05_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -24, 34, -18)
 
-[node name="Fort06_compute_network_cabinet" parent="Fort" instance=ExtResource("p_compute_network_cabinet")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 54, 70, -92)
+[node name="Fort06_fort_gate" parent="Fort" instance=ExtResource("p_fort_gate")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -24, 34, -114)
 
-[node name="Fort07_compute_transformer" parent="Fort" instance=ExtResource("p_compute_transformer")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 70, -60)
+[node name="Fort07_fort_gate" parent="Fort" instance=ExtResource("p_fort_gate")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 34, -18)
 
-[node name="Fort08_compute_transformer" parent="Fort" instance=ExtResource("p_compute_transformer")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 70, -52)
+[node name="Fort08_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 34, -114)
 
-[node name="Fort09_compute_generator" parent="Fort" instance=ExtResource("p_compute_generator")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 52, 70, -32)
+[node name="Fort09_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 34, -18)
 
-[node name="Fort10_compute_rack_row" parent="Fort" instance=ExtResource("p_compute_rack_row")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 70, -36)
+[node name="Fort10_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 34, -114)
 
-[node name="Fort11_compute_rack_row" parent="Fort" instance=ExtResource("p_compute_rack_row")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 70, -30)
+[node name="Fort11_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 48, 34, -18)
 
-[node name="Fort12_fort_floodlight_mast" parent="Fort" instance=ExtResource("p_fort_floodlight_mast")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 70, -107)
+[node name="Fort12_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 48, 34, -114)
 
-[node name="Fort13_feature_watchtower" parent="Fort" instance=ExtResource("p_feature_watchtower")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, 70, -96)
+[node name="Fort13_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61.6, 34, -102)
 
-[node name="Fort14_fort_gun_emplacement" parent="Fort" instance=ExtResource("p_fort_gun_emplacement")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, 70, -74)
+[node name="Fort14_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 61.6, 34, -102)
 
-[node name="Fort15_fort_hesco_sangar" parent="Fort" instance=ExtResource("p_fort_hesco_sangar")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, 70, -54)
+[node name="Fort15_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61.6, 34, -78)
 
-[node name="Fort16_fort_floodlight_mast" parent="Fort" instance=ExtResource("p_fort_floodlight_mast")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 70, -38)
+[node name="Fort16_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 61.6, 34, -78)
 
-[node name="Fort17_prop_sandbag_nest" parent="Fort" instance=ExtResource("p_prop_sandbag_nest")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -56, 70, -46)
+[node name="Fort17_fort_gate" parent="Fort" instance=ExtResource("p_fort_gate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61.6, 34, -54)
 
-[node name="Fort18_feature_watchtower" parent="Fort" instance=ExtResource("p_feature_watchtower")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 10, 70, -26)
+[node name="Fort18_fort_gate" parent="Fort" instance=ExtResource("p_fort_gate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 61.6, 34, -54)
 
-[node name="Fort19_fort_sentry_turret" parent="Fort" instance=ExtResource("p_fort_sentry_turret")]
-transform = Transform3D(-0.8192, 0, 0.5736, 0, 1, 0, -0.5736, 0, -0.8192, 44, 70, -24)
+[node name="Fort19_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61.6, 34, -30)
 
-[node name="Fort20_fort_t_walls" parent="Fort" instance=ExtResource("p_fort_t_walls")]
-transform = Transform3D(0.9135, 0, -0.4067, 0, 1, 0, 0.4067, 0, 0.9135, -20, 70, -26)
-
-[node name="Fort21_fort_t_walls" parent="Fort" instance=ExtResource("p_fort_t_walls")]
-transform = Transform3D(0.342, 0, -0.9397, 0, 1, 0, 0.9397, 0, 0.342, -56, 70, -26)
-
-[node name="Fort22_prop_jersey_barrier" parent="Fort" instance=ExtResource("p_prop_jersey_barrier")]
-transform = Transform3D(0.9781, 0, -0.2079, 0, 1, 0, 0.2079, 0, 0.9781, 34, 70, -22)
-
-[node name="Fort23_prop_jersey_barrier" parent="Fort" instance=ExtResource("p_prop_jersey_barrier")]
-transform = Transform3D(0.9781, 0, -0.2079, 0, 1, 0, 0.2079, 0, 0.9781, 28, 70, -22)
-
-[node name="Fort24_prop_crates" parent="Fort" instance=ExtResource("p_prop_crates")]
-transform = Transform3D(0.866, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866, -34, 70, -26)
-
-[node name="Fort25_prop_barrels" parent="Fort" instance=ExtResource("p_prop_barrels")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 70, -26)
-
-[node name="Fort26_fort_checkpoint" parent="Fort" instance=ExtResource("p_fort_checkpoint")]
-transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, -30, 70, -100)
-
-[node name="Fort27_fort_t_walls" parent="Fort" instance=ExtResource("p_fort_t_walls")]
-transform = Transform3D(0.848, 0, 0.5299, 0, 1, 0, -0.5299, 0, 0.848, 28, 70, -42)
-
-[node name="Fort28_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -48, 70, -18)
-
-[node name="Fort29_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -48, 70, -114)
-
-[node name="Fort30_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -24, 70, -18)
-
-[node name="Fort31_fort_gate" parent="Fort" instance=ExtResource("p_fort_gate")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -24, 70, -114)
-
-[node name="Fort32_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 70, -18)
-
-[node name="Fort33_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 70, -114)
-
-[node name="Fort34_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 70, -18)
-
-[node name="Fort35_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 70, -114)
-
-[node name="Fort36_fort_gate" parent="Fort" instance=ExtResource("p_fort_gate")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 48, 70, -18)
-
-[node name="Fort37_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 48, 70, -114)
-
-[node name="Fort38_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61.6, 70, -102)
-
-[node name="Fort39_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 61.6, 70, -102)
-
-[node name="Fort40_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61.6, 70, -78)
-
-[node name="Fort41_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 61.6, 70, -78)
-
-[node name="Fort42_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61.6, 70, -54)
-
-[node name="Fort43_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 61.6, 70, -54)
-
-[node name="Fort44_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61.6, 70, -30)
-
-[node name="Fort45_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 61.6, 70, -30)
-
-[node name="Fort46_feature_rock_outcrop" parent="Fort" instance=ExtResource("p_feature_rock_outcrop")]
-transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, -100, 70, -86)
-
-[node name="Fort47_prop_boulder_c" parent="Fort" instance=ExtResource("p_prop_boulder_c")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -104, 70, -54)
-
-[node name="Fort48_feature_boulder_field" parent="Fort" instance=ExtResource("p_feature_boulder_field")]
-transform = Transform3D(0.5, 0, -0.866, 0, 1, 0, 0.866, 0, 0.5, -96, 70, -26)
-
-[node name="Fort49_prop_robot_wreck" parent="Fort" instance=ExtResource("p_prop_robot_wreck")]
-transform = Transform3D(-0.6428, 0, -0.766, 0, 1, 0, 0.766, 0, -0.6428, -76, 70, 14)
-
-[node name="Fort50_feature_crater_rim" parent="Fort" instance=ExtResource("p_feature_crater_rim")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 70, 34)
-
-[node name="Fort51_fort_dragon_teeth" parent="Fort" instance=ExtResource("p_fort_dragon_teeth")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 70, 38)
-
-[node name="Fort52_prop_rubble_pile" parent="Fort" instance=ExtResource("p_prop_rubble_pile")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 70, 34)
-
-[node name="Fort53_feature_rock_outcrop" parent="Fort" instance=ExtResource("p_feature_rock_outcrop")]
-transform = Transform3D(-0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, -0.9397, 96, 70, -30)
-
-[node name="Fort54_prop_boulder_c" parent="Fort" instance=ExtResource("p_prop_boulder_c")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 104, 70, -60)
-
-[node name="Fort55_feature_boulder_field" parent="Fort" instance=ExtResource("p_feature_boulder_field")]
-transform = Transform3D(-0.766, 0, -0.6428, 0, 1, 0, 0.6428, 0, -0.766, 92, 70, -88)
-
-[node name="Fort56_prop_robot_wreck" parent="Fort" instance=ExtResource("p_prop_robot_wreck")]
-transform = Transform3D(0.766, 0, -0.6428, 0, 1, 0, 0.6428, 0, 0.766, -100, 70, -114)
-
-[node name="Fort57_feature_crater_rim" parent="Fort" instance=ExtResource("p_feature_crater_rim")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 70, -122)
+[node name="Fort20_fort_wall" parent="Fort" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 61.6, 34, -30)
 
 [node name="Stations" type="Node3D" parent="."]
 
-[node name="Trailhead01_feature_container_stack" parent="Stations" instance=ExtResource("p_feature_container_stack")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -157, 15, 45)
+[node name="Structures" type="Node3D" parent="."]
 
-[node name="Trailhead02_feature_container_stack" parent="Stations" instance=ExtResource("p_feature_container_stack")]
-transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, -157, 15, 61)
+[node name="Lane01_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -66, 29.6, -4)
 
-[node name="Trailhead03_fort_hesco_wall" parent="Stations" instance=ExtResource("p_fort_hesco_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -141, 15, 41)
+[node name="Lane02_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -66, 25.4, 20)
 
-[node name="Trailhead04_fort_hesco_wall" parent="Stations" instance=ExtResource("p_fort_hesco_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -121, 15, 41)
+[node name="Lane03_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -66, 22.1, 44)
 
-[node name="Trailhead05_machine_bulldozer" parent="Stations" instance=ExtResource("p_machine_bulldozer")]
-transform = Transform3D(-0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, -0.9397, -133, 15, 71)
+[node name="Lane04_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -66, 17.3, 68)
 
-[node name="Trailhead06_machine_semi_truck" parent="Stations" instance=ExtResource("p_machine_semi_truck")]
-transform = Transform3D(-0.0872, 0, -0.9962, 0, 1, 0, 0.9962, 0, -0.0872, -151, 15, 71)
+[node name="Lane05_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -66, 13.2, 92)
 
-[node name="Trailhead07_fort_floodlight_mast" parent="Stations" instance=ExtResource("p_fort_floodlight_mast")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -111, 15, 53)
+[node name="Lane06_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 28.7, -4)
 
-[node name="Trailhead08_prop_crates" parent="Stations" instance=ExtResource("p_prop_crates")]
-transform = Transform3D(0.9659, 0, -0.2588, 0, 1, 0, 0.2588, 0, 0.9659, -125, 15, 51)
+[node name="Lane07_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 24.6, 20)
 
-[node name="Trailhead09_prop_barrels" parent="Stations" instance=ExtResource("p_prop_barrels")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -145, 15, 65)
+[node name="Lane08_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 22, 44)
 
-[node name="Trailhead10_prop_lamp_post" parent="Stations" instance=ExtResource("p_prop_lamp_post")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -111, 15, 43)
+[node name="Lane09_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 17.2, 68)
 
-[node name="Cistern11_feature_fuel_tanks" parent="Stations" instance=ExtResource("p_feature_fuel_tanks")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 23, 82)
+[node name="Lane10_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 13.2, 92)
 
-[node name="Cistern12_building_house_small" parent="Stations" instance=ExtResource("p_building_house_small")]
-transform = Transform3D(0.9063, 0, -0.4226, 0, 1, 0, 0.4226, 0, 0.9063, -30, 23, 106)
+[node name="Lane11_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 80, 21.7, 40)
 
-[node name="Cistern13_prop_concrete_pipes" parent="Stations" instance=ExtResource("p_prop_concrete_pipes")]
-transform = Transform3D(0.9848, 0, -0.1736, 0, 1, 0, 0.1736, 0, 0.9848, -60, 23, 104)
+[node name="Lane12_fort_gate" parent="Structures" instance=ExtResource("p_fort_gate")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 104, 21.4, 40)
 
-[node name="Cistern14_prop_concrete_pipes" parent="Stations" instance=ExtResource("p_prop_concrete_pipes")]
-transform = Transform3D(0.342, 0, -0.9397, 0, 1, 0, 0.9397, 0, 0.342, -62, 23, 112)
+[node name="Lane13_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 128, 20, 40)
 
-[node name="Cistern15_compute_cooling_unit" parent="Stations" instance=ExtResource("p_compute_cooling_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, 23, 104)
+[node name="Lane14_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 152, 12.2, 40)
 
-[node name="Cistern16_prop_sandbag_wall" parent="Stations" instance=ExtResource("p_prop_sandbag_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62, 23, 92)
+[node name="Lane15_fort_wall" parent="Structures" instance=ExtResource("p_fort_wall")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 176, 7.9, 40)
 
-[node name="Cistern17_prop_rubble_pile" parent="Stations" instance=ExtResource("p_prop_rubble_pile")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 23, 88)
+[node name="Lane16_fort_command_bunker" parent="Structures" instance=ExtResource("p_fort_command_bunker")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 22.6, 50)
 
-[node name="Pillars18_feature_rock_spire" parent="Stations" instance=ExtResource("p_feature_rock_spire")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 31, 72)
+[node name="Lane17_fort_command_bunker" parent="Structures" instance=ExtResource("p_fort_command_bunker")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130, 13.6, 70)
 
-[node name="Pillars19_feature_rock_spire" parent="Stations" instance=ExtResource("p_feature_rock_spire")]
-transform = Transform3D(-0.766, 0, -0.6428, 0, 1, 0, 0.6428, 0, -0.766, 60, 31, 70)
+[node name="Lane18_fort_command_bunker" parent="Structures" instance=ExtResource("p_fort_command_bunker")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -140, 22.6, -20)
 
-[node name="Pillars20_feature_rock_spire" parent="Stations" instance=ExtResource("p_feature_rock_spire")]
-transform = Transform3D(0.5, 0, -0.866, 0, 1, 0, 0.866, 0, 0.5, 64, 31, 90)
+[node name="Lane19_fort_command_bunker" parent="Structures" instance=ExtResource("p_fort_command_bunker")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 110, 21.6, 20)
 
-[node name="Pillars21_feature_power_pylon" parent="Stations" instance=ExtResource("p_feature_power_pylon")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 31, 88)
+[node name="Lane20_fort_command_bunker" parent="Structures" instance=ExtResource("p_fort_command_bunker")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 140, 23.6, -30)
 
-[node name="Pillars22_prop_boulder_c" parent="Stations" instance=ExtResource("p_prop_boulder_c")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 31, 80)
+[node name="Lane21_feature_berm" parent="Structures" instance=ExtResource("p_feature_berm")]
+transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, -112, 12.4, 96)
 
-[node name="Pillars23_prop_rock_slabs" parent="Stations" instance=ExtResource("p_prop_rock_slabs")]
-transform = Transform3D(0.7071, 0, -0.7071, 0, 1, 0, 0.7071, 0, 0.7071, 50, 31, 96)
+[node name="Lane22_feature_berm" parent="Structures" instance=ExtResource("p_feature_berm")]
+transform = Transform3D(-0.1736, 0, -0.9848, 0, 1, 0, 0.9848, 0, -0.1736, -118, 15.5, 40)
 
-[node name="Pillars24_prop_tank_trap" parent="Stations" instance=ExtResource("p_prop_tank_trap")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54, 31, 80)
+[node name="Lane23_feature_berm" parent="Structures" instance=ExtResource("p_feature_berm")]
+transform = Transform3D(0.1736, 0, -0.9848, 0, 1, 0, 0.9848, 0, 0.1736, -150, 14.9, 24)
 
-[node name="Gate25_fort_checkpoint" parent="Stations" instance=ExtResource("p_fort_checkpoint")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 117, 39, 26)
-
-[node name="Gate26_feature_pillbox" parent="Stations" instance=ExtResource("p_feature_pillbox")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 103, 39, 10)
-
-[node name="Gate27_fort_dragon_teeth" parent="Stations" instance=ExtResource("p_fort_dragon_teeth")]
-transform = Transform3D(0.1736, 0, -0.9848, 0, 1, 0, 0.9848, 0, 0.1736, 133, 39, 10)
-
-[node name="Gate28_fort_sentry_turret" parent="Stations" instance=ExtResource("p_fort_sentry_turret")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 133, 39, 22)
-
-[node name="Gate29_prop_car_wreck" parent="Stations" instance=ExtResource("p_prop_car_wreck")]
-transform = Transform3D(-0.6428, 0, -0.766, 0, 1, 0, 0.766, 0, -0.6428, 111, 39, 4)
-
-[node name="Gate30_prop_sandbag_nest" parent="Stations" instance=ExtResource("p_prop_sandbag_nest")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 121, 39, 4)
-
-[node name="Terrace31_fort_gun_emplacement" parent="Stations" instance=ExtResource("p_fort_gun_emplacement")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 124, 47, -74)
-
-[node name="Terrace32_fort_mortar_pit" parent="Stations" instance=ExtResource("p_fort_mortar_pit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 110, 47, -74)
-
-[node name="Terrace33_fort_hesco_wall" parent="Stations" instance=ExtResource("p_fort_hesco_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 134, 47, -60)
-
-[node name="Terrace34_fort_hesco_wall" parent="Stations" instance=ExtResource("p_fort_hesco_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 118, 47, -56)
-
-[node name="Terrace35_prop_sandbag_wall" parent="Stations" instance=ExtResource("p_prop_sandbag_wall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 108, 47, -64)
-
-[node name="Terrace36_prop_robot_wreck" parent="Stations" instance=ExtResource("p_prop_robot_wreck")]
-transform = Transform3D(0.5, 0, -0.866, 0, 1, 0, 0.866, 0, 0.5, 140, 47, -68)
-
-[node name="Apron37_fort_hesco_wall" parent="Stations" instance=ExtResource("p_fort_hesco_wall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 36, 70, 8)
-
-[node name="Apron38_fort_hesco_wall" parent="Stations" instance=ExtResource("p_fort_hesco_wall")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 70, 8)
-
-[node name="Apron39_fort_dragon_teeth" parent="Stations" instance=ExtResource("p_fort_dragon_teeth")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 70, -8)
-
-[node name="Apron40_prop_robot_wreck" parent="Stations" instance=ExtResource("p_prop_robot_wreck")]
-transform = Transform3D(-0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, -0.9397, 48, 70, -12)
+[node name="Lane24_feature_berm" parent="Structures" instance=ExtResource("p_feature_berm")]
+transform = Transform3D(0.9848, 0, -0.1736, 0, 1, 0, 0.1736, 0, 0.9848, -124, 27, -56)
