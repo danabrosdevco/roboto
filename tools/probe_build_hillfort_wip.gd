@@ -1384,6 +1384,12 @@ func _art(by_name: Dictionary) -> String:
 		["Texture2D", SKETCH, "3_sketch", ""],
 		["Script", "res://Env/terrain/terrain_stamp.gd", "4_stamp", ""],
 		["Script", "res://Env/terrain/terrain_path.gd", "5_path", ""],
+		["Script", "res://Env/terrain/terrain_scatter.gd", "6_scatter", ""],
+		["Script", "res://Env/terrain/terrain_scatter_layer.gd", "7_layer", ""],
+		["Resource", "res://maps/blocks/scatter/scatter_hfw_ground.tres", "8_ground", ""],
+		["Resource", "res://maps/blocks/scatter/scatter_hfw_micro.tres", "9_micro", ""],
+		["Resource", "res://maps/blocks/scatter/scatter_hfw_deadwood.tres", "10_dead", ""],
+		["Resource", "res://maps/blocks/scatter/scatter_hfw_snags.tres", "11_snags", ""],
 	]
 	# The terrain data file does not exist until the first bake, and an
 	# ext_resource pointing at a missing file is the silent-null bug check.sh
@@ -1435,6 +1441,26 @@ func _art(by_name: Dictionary) -> String:
 		out.append("data = ExtResource(\"11_data\")")
 	out.append("data_path = \"%s\"" % DATA_PATH)
 	out.append("boundary_inset = %.1f" % BOUNDARY_INSET)
+	out.append("")
+	# ── THE SCATTER. Four layers, ALL OF THEM MESH-ONLY.
+	#
+	# They are hfw_ copies of the alpine set rather than the alpine set itself,
+	# for one reason: the shipped deadwood carries a 0.6 m collision radius and
+	# the snags 0.35, and ASSETS.md section 5 says ground clutter is mesh-only.
+	# A solid snag erodes an agent radius plus its own off the navmesh all round
+	# it, and — the thing that actually matters here — it GENERATES COVER
+	# POINTS. Scatter with collision on the centre lane would hand back the
+	# exposure that the whole dressing pass was about. Mesh-only cannot, by
+	# construction, and the cover re-bake proves it.
+	#
+	# Resources are shared, so these are copies and not edits: nine other maps
+	# use the alpine set and none of them asked for this.
+	#
+	# The deadwood and the snags are capped at max_mountain 0.25, which is the
+	# sketch mask doing per-lane work — see probe_paint_hillfort_wip.gd.
+	out.append("[node name=\"Scatter\" type=\"Node3D\" parent=\"Terrain\"]")
+	out.append("script = ExtResource(\"6_scatter\")")
+	out.append("layers = Array[ExtResource(\"7_layer\")]([ExtResource(\"8_ground\"), ExtResource(\"9_micro\"), ExtResource(\"10_dead\"), ExtResource(\"11_snags\")])")
 	out.append("")
 
 	# ORDER IS THE WHOLE POINT. Modifiers are collected depth-first in tree
@@ -1917,7 +1943,7 @@ func _recipe() -> PackedStringArray:
 		"sketch_edge_noise = 14.0",
 		# Low on purpose. The white mask is here for the rock ZONE; the hill's
 		# real 70 m is stamped on afterwards.
-		"sketch_mountain_height = 2.5",
+		"sketch_mountain_height = 0.0",
 		# No painted water anywhere, and the level parked far below the map:
 		# water_level is ONE global height, so a tarn on the plateau would
 		# flood the trailhead to match.

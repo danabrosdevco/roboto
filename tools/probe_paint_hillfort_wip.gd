@@ -70,7 +70,7 @@ func _initialize() -> void:
 			elif _rough(x, z, n):
 				im.set_pixel(c, r, YELLOW)
 				counts.yellow += 1
-			elif z > 54.0 + n:
+			else:
 				im.set_pixel(c, r, GREEN)
 				counts.green += 1
 	print("   %d x %d px at %.0f m/px — white %d, yellow %d, green %d" % [
@@ -84,22 +84,33 @@ func _initialize() -> void:
 ## of the flanking stations on purpose — the progression grass → brown upland →
 ## grey rock is the only thing on a map this small that reads as altitude, and
 ## it only reads if the three bands are actually in different places.
-func _rock(x: float, z: float, n: float) -> bool:
-	if _disc(x, z, SUMMIT.x, SUMMIT.y - 14.0, 96.0 + n):
-		return true
-	# Two spurs, so the rock does not end on a circle.
-	if _disc(x, z, -112.0, -112.0, 46.0 + n):
-		return true
-	if _disc(x, z, 118.0, -116.0, 44.0 + n):
-		return true
-	return false
+## THE WHITE MASK IS NOW A SCATTER MASK, not a mountain.
+##
+## `zone` comes straight off this channel and it is the ONLY per-place lever
+## the scatter system has: a TerrainScatterLayer can be filtered by slope,
+## height, paint, water and zone, and by nothing else. There is no way to say
+## "more dead wood on the west lane" — so this says it, by painting the lanes
+## that should be bare and leaving the one that should not.
+##
+##   WHITE  → zone 1 → the CENTRE lane, the EAST lane and the fort. Swept
+##            ground and held ground: the hfw_deadwood and hfw_snags layers
+##            are capped at max_mountain 0.25 and do not go here, so neither
+##            lane grows a copse that could be fought from.
+##   GREEN  → zone 0 → the WEST lane. The screened route, and the one that
+##            carries the dead trees, the fallen wood and the brush.
+##
+## sketch_mountain_height IS ZERO in the recipe, so none of this adds height.
+## It used to add 2.5 m of crag, which was texture on a hill that no longer
+## exists and would now be bumps on ground the whole redesign flattened.
+## White here paints material and gates scatter; it does not shape anything.
+func _rock(x: float, _z: float, n: float) -> bool:
+	return x > -68.0 + n
 
 
-## The mid slopes, so the stone does not stop at a line.
-func _rough(x: float, z: float, n: float) -> bool:
-	if _ellipse(x, z, SUMMIT.x, SUMMIT.y + 10.0, 168.0 + n, 150.0 + n):
-		return true
-	return false
+## The fade between the two, so the vegetation thins rather than stopping on a
+## line. Yellow is broken ground; it reads as the lane's edge.
+func _rough(x: float, _z: float, n: float) -> bool:
+	return x > -92.0 + n
 
 
 func _disc(x: float, z: float, cx: float, cz: float, r: float) -> bool:

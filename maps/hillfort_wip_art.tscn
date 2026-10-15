@@ -1,10 +1,16 @@
-[gd_scene load_steps=60 format=3]
+[gd_scene load_steps=66 format=3]
 
 [ext_resource type="Script" path="res://Env/terrain/generated_terrain.gd" id="1_terrain"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_recipe.gd" id="2_recipe"]
 [ext_resource type="Texture2D" path="res://Env/terrain/sketches/hillfort_wip.png" id="3_sketch"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_stamp.gd" id="4_stamp"]
 [ext_resource type="Script" path="res://Env/terrain/terrain_path.gd" id="5_path"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter.gd" id="6_scatter"]
+[ext_resource type="Script" path="res://Env/terrain/terrain_scatter_layer.gd" id="7_layer"]
+[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_hfw_ground.tres" id="8_ground"]
+[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_hfw_micro.tres" id="9_micro"]
+[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_hfw_deadwood.tres" id="10_dead"]
+[ext_resource type="Resource" path="res://maps/blocks/scatter/scatter_hfw_snags.tres" id="11_snags"]
 [ext_resource type="Resource" path="res://maps/terrain_data/hillfort_wip_level_terrain.res" id="11_data"]
 [ext_resource type="PackedScene" path="res://maps/blocks/landmarks/landmark_relay_dish.tscn" id="p_landmark_relay_dish"]
 [ext_resource type="PackedScene" path="res://maps/blocks/compute/compute_data_hall.tscn" id="p_compute_data_hall"]
@@ -96,7 +102,7 @@ sketch = ExtResource("3_sketch")
 sketch_metres_per_pixel = 4.0
 sketch_blend = 14.0
 sketch_edge_noise = 14.0
-sketch_mountain_height = 2.5
+sketch_mountain_height = 0.0
 water_level = -200.0
 water_depth = 5.0
 water_bank = 30.0
@@ -183,6 +189,10 @@ recipe = SubResource("Resource_recipe")
 data = ExtResource("11_data")
 data_path = "res://maps/terrain_data/hillfort_wip_level_terrain.res"
 boundary_inset = 4.0
+
+[node name="Scatter" type="Node3D" parent="Terrain"]
+script = ExtResource("6_scatter")
+layers = Array[ExtResource("7_layer")]([ExtResource("8_ground"), ExtResource("9_micro"), ExtResource("10_dead"), ExtResource("11_snags")])
 
 [node name="Hills" type="Node3D" parent="Terrain"]
 
