@@ -587,6 +587,11 @@ const OBJECTIVES: Array = [
 	["HFW_Dish", "obj_hfw_dish", "The Relay Dish", -52.0, -60.0, 34.0],
 	["HFW_Hall", "obj_hfw_hall", "The Data Hall", 20.0, -96.0, 34.0],
 	["HFW_Postern", "obj_hfw_postern", "The Postern", -24.0, -108.0, 34.0],
+	# WHERE THE WAY DOWN IS. SiteSlice raises the entrance kit at this node and
+	# nothing else in the level needs to know the coordinate — the rule this
+	# project has broken on terrain three times is that a typed position is
+	# correct until somebody moves the thing it was copied from.
+	["HFW_Bunker", "obj_hfw_bunker", "The Way Down", 6.0, -99.0, 34.0],
 	# Off every lane: the ground the walls do not enclose.
 	["HFW_WestFlank", "obj_hfw_west_flank", "West Flank", -150.0, -92.0, NAN_Y],
 	["HFW_EastFlank", "obj_hfw_east_flank", "East Flank", 152.0, -96.0, NAN_Y],
@@ -606,7 +611,37 @@ const PATROLS: Array = [
 ]
 
 ## The level exit, inside the postern. Offsets from the fort.
-const EXIT_AT := Vector2(-24.0, -38.0)
+## ── THE BUNKER. Offsets from the fort's centre.
+##
+## IT IS A MARKER AND NOT A PREFAB. SiteSlice._build_bunker() raises the kit at
+## a node this level names, which is GAMEPLAY's wiring — so what TERRAIN owns
+## is WHERE, and proving there is room. Instancing it here as well would build
+## it twice.
+##
+## AT THE FORT, IN THE NORTH YARD BEHIND THE DISH. The fort is the climax of
+## the climb and §12.8 makes these same doors how you ARRIVE on the defence of
+## the site, so the squad comes up out of the ground inside the compound and
+## turns to hold the gate. The module faces +Z, which here is south, straight
+## down the yard at the dish and the gate beyond it.
+##
+## THE MOUNTING IS "cliff", AND THAT IS A FIT AS WELL AS A JUDGEMENT.
+## "open" is the obvious choice for a flat compound, and it does not fit: with
+## its sunken court it is 33.8 m deep and the yard between the dish's north
+## face and the curtain is 30.6. "cliff" is 18.3, leaves 12 m spare, and its
+## revetted headwall is what a tunnel mouth driven into the back of a rampart
+## actually looks like — the curtain's north run plus the plateau falling away
+## behind it IS a revetment. "wall" needs a ceiling and there is none.
+##
+## bunker_offset stays ZERO: the marker already stands in the open and the
+## clearance is checked by _installation() rather than assumed.
+const BUNKER_AT := Vector2(6.0, -33.0)
+const BUNKER_MOUNT := "cliff"
+const BUNKER_PREFAB := "bunker/bunker_entrance_cliff"
+
+## The level exit, in the bunker's own tunnel: ExitVolume is 4 m inside the
+## mouth, which is -Z from the marker. §12.7 replaces the extraction pad with
+## the doors, so the exit goes where the doors are rather than at the postern.
+const EXIT_AT := Vector2(BUNKER_AT.x, BUNKER_AT.y - 4.0)
 
 
 func _initialize() -> void:
@@ -1209,6 +1244,15 @@ func _piece_path(name_: String) -> String:
 	return name_ if name_.begins_with("res://") else "res://maps/blocks/%s.tscn" % name_
 
 
+## The bunker, as a [piece, dx, dz, yaw] row for the clearance check ONLY. It
+## is never emitted: the level carries a marker and SiteSlice raises the kit
+## there at runtime, so instancing it here would build it twice. What this is
+## for is proving the marker has room — a marker is a POSITION and nothing
+## about it promises 9 m of clear ground in front of a 9 m door.
+func bunker_check() -> Array:
+	return [[BUNKER_PREFAB, BUNKER_AT.x, BUNKER_AT.y, 0.0]]
+
+
 ## The capture cores hosted by one station or by the fort, as [piece, dx, dz,
 ## yaw] rows, so they can be measured alongside the dressing they stand in.
 func cores_for(host: String) -> Array:
@@ -1223,7 +1267,7 @@ func cores_for(host: String) -> Array:
 ## fort and for each station: on the pad, and clear of each other.
 func _installation() -> int:
 	print("")
-	var bad := await _group("fort", FORT_PIECES + wall_pieces() + cores_for("Fort"),
+	var bad := await _group("fort", FORT_PIECES + wall_pieces() + cores_for("Fort") + bunker_check(),
 			Vector2.ZERO, SHELF_HALF, PAD_HALF)
 	# THE LANE WALLS AND THE BUNKERS, in one group because they are in one
 	# coordinate system — world, measured against the whole map rather than
@@ -1546,6 +1590,9 @@ func _level(by_name: Dictionary) -> String:
 		["Shader", "res://Env/new_sky_oct.16.gdshader", "7_sky", ""],
 		["PackedScene", "res://Env/world_objects/squad_objective_point.tscn",
 				"8_sqpoint", "uid://62y43tyd5sx6"],
+		["PackedScene", "res://Env/world_objects/cover_point_spawner.tscn",
+				"9_coverspawn", "uid://cyslwv078g4sk"],
+		["Script", "res://Env/world_objects/cover_point.gd", "10_coverpt", ""],
 	]
 	var seen := {}
 	for c: Array in CAPTURES:
@@ -1657,11 +1704,33 @@ func _level(by_name: Dictionary) -> String:
 	out.append(_xform(float(trail[1]), float(trail[3]) + 1.15,
 			float(trail[2]) + float(trail[5]) * 0.5 - 14.0))
 	out.append("")
-	out.append("[node name=\"SquadSpawnPoint\" type=\"Node3D\" parent=\".\"]")
-	out.append(_xform(float(trail[1]) - 10.0, float(trail[3]),
-			float(trail[2]) + float(trail[5]) * 0.5 - 20.0))
+	# ── WHERE THE SQUAD FORMS UP. A shipped level carries one of these and the
+	# WIP did not, so the squad had a spawn point and nowhere to stand.
+	#
+	# EIGHT AUTHORED STANDS rather than leaving squad_spawn_point to space them
+	# off `spacing`: the trailhead pad is 104 x 28 of flat ground and two ranks
+	# of four, four metres apart, is a formation rather than a queue. They are
+	# west of the spawn so the muster is beside the road and not on it — the
+	# centre lane leaves this pad up the middle.
+	var muster_x := float(trail[1]) - 10.0
+	var muster_z := float(trail[2]) + 2.0
+	var stands: PackedStringArray = []
+	for i in 8:
+		stands.append("NodePath(\"Stand%02d\")" % (i + 1))
+	out.append("[node name=\"SquadMuster\" type=\"Node3D\" parent=\".\" node_paths=PackedStringArray(\"slot_markers\")]")
+	out.append(_xform(muster_x, float(trail[3]), muster_z))
 	out.append("script = ExtResource(\"3_squad\")")
+	out.append("callsign = \"BRAVO\"")
+	out.append("max_slots = 999")
+	out.append("slot_markers = [%s]" % ", ".join(stands))
 	out.append("")
+	for i in 8:
+		# Relative to the muster, which is itself on the pad.
+		var col := i % 4
+		var row := i / 4
+		out.append("[node name=\"Stand%02d\" type=\"Node3D\" parent=\"SquadMuster\"]" % (i + 1))
+		out.append(_xform(float(col) * 4.0 - 6.0, 0.0, float(row) * 4.0 - 2.0))
+		out.append("")
 	out.append("[node name=\"NavigationRegion3D\" type=\"NavigationRegion3D\" parent=\".\"]")
 	out.append("navigation_mesh = SubResource(\"NavigationMesh_hfw\")")
 	out.append("")
@@ -1681,6 +1750,35 @@ func _level(by_name: Dictionary) -> String:
 	out.append("transform = Transform3D(0.633, 0.548, -0.547, 0, 0.706, 0.708, 0.774, -0.448, 0.447, 0, 0, 0)")
 	out.append("shadow_opacity = 0.9")
 	out.append("directional_shadow_max_distance = 400.0")
+	out.append("")
+
+	# ── COVER, AND IT IS A BOOTSTRAP LIKE THE TERRAIN DATA.
+	#
+	# The points are BAKED children: tools/probe_cover_mutaha.gd walks the
+	# navmesh edges, casts at the geometry either side and rewrites everything
+	# under this node. It needs two things to already be here — the spawner,
+	# and a cover_point.gd ext_resource to point the new nodes at — and
+	# check.sh fails a scene that declares an id it never uses. So this emits
+	# ONE seed point to keep the id honest, and the baker replaces the lot.
+	#
+	# WHICH MEANS A --force REBUILD THROWS THE BAKED COVER AWAY, exactly as it
+	# throws the navmesh away. Rebuild, then re-bake terrain, navmesh and cover
+	# in that order.
+	out.append("[node name=\"CoverPointSpawner\" parent=\".\" node_paths=PackedStringArray(\"navigation_region\") instance=ExtResource(\"9_coverspawn\")]")
+	out.append("navigation_region = NodePath(\"../NavigationRegion3D\")")
+	# 5000 is what valley_basin uses: sample the whole map rather than a disc
+	# round the origin.
+	out.append("sample_radius = 5000.0")
+	out.append("wall_detect_length = 1.0")
+	out.append("open_detect_length = 1.0")
+	out.append("arm_span_offset = 0.3")
+	out.append("debug_visualize = false")
+	out.append("")
+	out.append("[node name=\"CoverPoint_0\" type=\"Node3D\" parent=\"CoverPointSpawner\"]")
+	out.append(_xform(float(fort[1]), float(fort[3]), float(fort[2])))
+	out.append("script = ExtResource(\"10_coverpt\")")
+	out.append("cover_direction = Vector3(0, 0, 1)")
+	out.append("is_crouch_cover = true")
 	out.append("")
 
 	out.append("[node name=\"EnemySquadObjs\" type=\"Node\" parent=\".\"]")

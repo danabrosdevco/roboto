@@ -43,6 +43,7 @@ var _levels := [
 	"res://maps/appendix/mutaha_level.tscn",
 	"res://maps/mutaha_wip_level.tscn",
 	"res://maps/hillfort_level.tscn",
+	"res://maps/hillfort_wip_level.tscn",
 	"res://maps/pittsburgh_level.tscn",
 	"res://maps/causeway_level.tscn",
 	# The three operations at the end of the ladder. Causeway was already in

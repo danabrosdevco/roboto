@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MinimapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Campaign/minimap_data.gd" id="1_4r6ef"]
+
+[resource]
+script = ExtResource("1_4r6ef")
+level_scene_path = "res://maps/hillfort_wip_level.tscn"
+image_path = "res://maps/minimaps/hillfort_wip_level.png"
+world_min = Vector2(-202.99, -202.99)
+world_max = Vector2(202.99, 202.99)
+objective_ids = Array[StringName]([&"hfw_cistern", &"hfw_shoulder", &"hfw_pillars", &"hfw_gatehouse", &"hfw_terrace", &"hfw_relay"])
+objective_names = Array[String](["The Cistern", "The Shoulder", "The Pillars", "The Gatehouse", "The Terrace", "The Relay"])
+objective_positions = Array[Vector3]([Vector3(-113, 14, 70), Vector3(-123, 23, -20), Vector3(17, 23, 50), Vector3(127, 22, 20), Vector3(157, 24, -30), Vector3(-10, 34, -26)])
+objective_kinds = Array[StringName]([&"capture", &"capture", &"capture", &"capture", &"capture", &"capture"])
+insertion_positions = Array[Vector3]([Vector3(0, 14.15, 112)])
