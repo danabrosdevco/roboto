@@ -98,6 +98,28 @@ const SHOTS: Array = [
 	# ── INSIDE.
 	["26_the_yard", Vector3(0.0, EYE, -100.0), Vector3(-10.0, 30.0, -62.0), 66.0, "eye"],
 	["27_under_the_dish", Vector3(-52.0, EYE, -58.0), Vector3(-10.0, 45.0, -58.0), 70.0, "eye"],
+
+	# ══ ONE PER OBJECTIVE, in order, framed on the GROUND AROUND the marker
+	# rather than on the node. The question these answer is "what is this
+	# place", so each stands far enough back that the approach, the cover and
+	# what the place is for are all in frame.
+	["obj_1_cistern", Vector3(-120.0, EYE, 118.0), Vector3(-126.0, 8.0, 72.0), 66.0, "eye"],
+	["obj_2_shoulder", Vector3(-130.0, EYE, 26.0), Vector3(-134.0, 8.0, -18.0), 66.0, "eye"],
+	["obj_3_pillars", Vector3(36.0, EYE, 88.0), Vector3(4.0, 8.0, 50.0), 66.0, "eye"],
+	["obj_4_gatehouse", Vector3(164.0, EYE, 0.0), Vector3(120.0, 12.0, 24.0), 66.0, "eye"],
+	["obj_5_terrace", Vector3(176.0, EYE, 10.0), Vector3(150.0, 8.0, -32.0), 66.0, "eye"],
+	["obj_6_relay", Vector3(28.0, EYE, -20.0), Vector3(-14.0, 6.0, -32.0), 68.0, "eye"],
+	# THE BUNKER, AND THE KIT IS NOT IN THESE. SiteSlice raises the entrance at
+	# this marker at runtime, so what the camera sees is the GROUND the doors
+	# will stand in. Said plainly rather than dressed up.
+	#
+	# 7a from the yard, in the 10 m lane between the dish and the data hall,
+	# looking north at the spot.
+	["obj_7_bunker", Vector3(-16.0, EYE, -84.0), Vector3(10.0, 6.0, -101.0), 72.0, "eye"],
+	# 7b ON the spot, looking out the way a squad does on a defence: they come
+	# UP out of the dark and turn to hold what is in front. This is the beat
+	# CAMPAIGN_REWORK 12.8 is built on.
+	["obj_7b_bunker_arrival", Vector3(6.0, EYE, -97.0), Vector3(6.0, 10.0, -58.0), 72.0, "eye"],
 ]
 
 
