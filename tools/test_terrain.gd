@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: terrain
 
 # ─────────────────────────────────────────────
 # TERRAIN — the generator, the meshes, the collision and the template level.
@@ -812,6 +813,34 @@ func _test_scatter() -> void:
 	await process_frame
 
 
+## WHERE THE TERRAIN NODE LIVES NOW, and why this is a search.
+##
+## Commit edb67742 split all nine levels into an art scene and a level scene,
+## and the terrain went INSIDE the art — so `NavigationRegion3D/Terrain` became
+## `NavigationRegion3D/<Name>Art/Terrain` and the two hard-coded lookups here
+## have returned null ever since.
+##
+## IT DID NOT COST TWO ASSERTIONS, IT COST EIGHT. Both call sites early-return
+## on a null terrain, so everything behind them — the template's size and
+## relief, the outpost pad, the level exit — stopped running and reported
+## nothing at all. A skipped check and a passing check look identical from the
+## outside. Nobody saw it because this suite was in `# BUCKET: terrain` but not
+## in the lane gate anyone actually ran.
+##
+## Found by SEARCH rather than by a second hard-coded path: the art/level split
+## was not the first reorganisation and will not be the last. `owned` is false
+## because the node belongs to the art scene's root, not to the level.
+func _find_terrain(level: Node) -> Node3D:
+	var region := level.get_node_or_null(^"NavigationRegion3D")
+	if region == null:
+		push_warning("test_terrain: %s has no NavigationRegion3D" % level.name)
+		return null
+	for n in region.find_children("Terrain", "", true, false):
+		return n as Node3D
+	push_warning("test_terrain: no Terrain node under %s's NavigationRegion3D" % level.name)
+	return null
+
+
 func _test_template_level() -> void:
 	var packed: PackedScene = load(TEMPLATE)
 	_check("template level loads", packed != null)
@@ -821,7 +850,7 @@ func _test_template_level() -> void:
 	root.add_child(level)
 	await physics_frame
 	await physics_frame
-	var terrain := level.get_node_or_null(^"NavigationRegion3D/Terrain") as Node3D
+	var terrain := _find_terrain(level)
 	_check("template has its terrain, with baked data", terrain != null and terrain.data != null)
 	if terrain == null or terrain.data == null:
 		level.queue_free()
@@ -835,7 +864,7 @@ func _test_template_level() -> void:
 	var space: PhysicsDirectSpaceState3D = spawn.get_world_3d().direct_space_state
 	var hit: Dictionary = space.intersect_ray(PhysicsRayQueryParameters3D.create(spawn.global_position + Vector3.UP, spawn.global_position + Vector3.DOWN * 50.0))
 	_check("there is ground under the spawn point", not hit.is_empty() and hit.position.y < spawn.global_position.y)
-	var pad := level.get_node(^"NavigationRegion3D/Terrain/Stamps/OutpostPad") as Node3D
+	var pad := terrain.get_node(^"Stamps/OutpostPad") as Node3D
 	var pad_ground: float = terrain.get_height_at(pad.global_position)
 	_check("the outpost pad is flat at its own height", absf(pad_ground - pad.global_position.y) < 0.01,
 			"%.3f vs %.3f" % [pad_ground, pad.global_position.y])
@@ -890,7 +919,7 @@ func _test_mutaha_level() -> void:
 	# The navigation map picks the region up on a physics frame, not at once.
 	for _i in 6:
 		await physics_frame
-	var terrain := level.get_node_or_null(^"NavigationRegion3D/Terrain") as Node3D
+	var terrain := _find_terrain(level)
 	_check("mutaha has its terrain, with baked data", terrain != null and terrain.data != null)
 	if terrain == null or terrain.data == null:
 		root.remove_child(level)
@@ -902,9 +931,14 @@ func _test_mutaha_level() -> void:
 	var space: PhysicsDirectSpaceState3D = spawn.get_world_3d().direct_space_state
 	var hit: Dictionary = space.intersect_ray(PhysicsRayQueryParameters3D.create(spawn.global_position + Vector3.UP, spawn.global_position + Vector3.DOWN * 50.0))
 	_check("there is ground under the mutaha spawn point", not hit.is_empty() and hit.position.y < spawn.global_position.y)
+	# THE DETAIL STRING IS NOT DECORATION. This check covers two nodes and used
+	# to report neither, so a failure said only that one of them was wrong
+	# somewhere on a 1 km map. Name both gaps.
+	var squad_gap: float = terrain.get_height_at(squad.global_position) - squad.global_position.y
+	var exit_gap: float = terrain.get_height_at(exit.global_position) - exit.global_position.y
 	_check("the mutaha squad spawn and exit stand on the ground",
-			absf(terrain.get_height_at(squad.global_position) - squad.global_position.y) < 0.25
-			and absf(terrain.get_height_at(exit.global_position) - exit.global_position.y) < 0.25)
+			absf(squad_gap) < 0.25 and absf(exit_gap) < 0.25,
+			"squad %+.2f m, exit %+.2f m (+ is ground above the node)" % [squad_gap, exit_gap])
 	var region := level.get_node(^"NavigationRegion3D") as NavigationRegion3D
 	var nm := region.navigation_mesh
 	_check("mutaha navmesh is baked", nm != null and nm.get_polygon_count() > 100,

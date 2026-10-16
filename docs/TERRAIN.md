@@ -285,13 +285,69 @@ like spawning cover points at boulders.
 ## Navigation
 
 The terrain goes under the `NavigationRegion3D`, as `terrain.fbx` does in the
-valley. Its chunks are real meshes, so the default *Mesh Instances* bake mode
-sees them, and scattered props become obstacles. **Re-bake after every
-Generate.** The navmesh doesn't follow the ground by itself.
+valley. **Re-bake after every Generate** — the navmesh doesn't follow the
+ground by itself.
 
-Keep `filter_baking_aabb` over the playable area only. The template's covers
-about 1.1 km × 280 m and bakes in about 6 s. Its `agent_radius` / `agent_max_climb`
-match the valley mission's.
+**Check which bake source the level is on before you reason about any of this.**
+It is not uniform across the project:
+
+- **`geometry_parsed_geometry_type = 1`** — static colliders. Ten active levels,
+  including depot, georgetown, heliostat, both hillforts, pittsburgh, polaris,
+  proving, salient and valley_basin. Geometry with no collider is **invisible**
+  to the bake, and a collider with no mesh blocks a route **invisibly**.
+- **unset** — mesh instances, Godot's default. Seven levels, including the
+  terrain template this document is written around, plus causeway and
+  mutaha_wip. The terrain's chunks are real meshes, so this mode sees them, and
+  scattered props become obstacles.
+
+The same geometry bakes differently under the two, so **a clearance result
+proved on one level does not transfer to another.** Say which mode you measured
+on.
+
+`filter_baking_aabb` must cover everything you built, with a few metres to
+spare. **It clips the bake and reports nothing.** On Proving it stayed pinned to
+the old arena, so a new wing baked completely empty, nothing pathed onto it, and
+no error was raised anywhere. The template's covers about 1.1 km × 280 m and
+bakes in about 6 s.
+
+### Clearance — the bake is the only thing enforcing it
+
+**Godot has no per-agent path clearance.** `NavigationServer3D.map_get_path()`
+takes no radius, so every chassis queries the same mesh and gets the same route
+regardless of how wide it is. There is no runtime check to fall back on: if a
+route is too tight for a Bulwark, the path still returns and the body grinds
+along the wall. A chassis that genuinely needs different clearance needs **its
+own navmesh on its own navigation layer**.
+
+Measured frames — physics bodies, from `tools/probe_chassis_size.gd`, not
+guessed off the art:
+
+| chassis | width | height | note |
+|---|---|---|---|
+| Walker | 1.70 | **3.00** | the tall one; drives `agent_height` |
+| Bulwark | 1.90 hull / **2.26 with shield** | 2.82 | the wide one; measure against 2.26 |
+| Rover | 1.70 | 1.70 | **3.40 long** — it can enter a corridor it cannot turn in |
+| Reclaimer | 1.50 | 3.10 | |
+| player drone | 0.50 | 1.70 | **eye at 1.50 m** — where every shot is taken from |
+
+Then the three things that quietly undo a setting you thought you made:
+
+- **`agent_radius` is CEILED to whole `cell_size` units**, and
+  **`agent_max_climb` is FLOORED to whole `cell_height` units.** A radius of
+  0.6 at a 0.25 cell becomes 0.75. The inspector keeps showing what you typed.
+- **Recast erodes `agent_radius` off EVERY side.** Usable width is built width
+  minus twice the radius, so an 8 m lane at radius 1.25 leaves 5.5 m.
+- **`agent_height` defaults to 1.5**, which is under half a Walker. Set it to
+  3.0 and set it explicitly, because a default is invisible until somebody
+  changes it.
+
+And the rule that is not a setting at all: **nothing solid between 0.25 m and
+0.5 m.** Below 0.25 the baker walks over it; above 0.5 it is honestly a wall.
+In between, the baker refuses to climb it *and* `move_and_slide` steps the body
+over it — so it bakes as a wall the squad then walks straight through.
+
+Build generous and the bake cannot argue. A route under 8 m wide is one you
+will be back to widen.
 
 A town-sized map makes a much bigger navmesh, because every block, street and
 embankment is a separate walkable surface. Mutaha's covers 910 m square. At
@@ -319,6 +375,16 @@ settings for other big sketch maps.
   see is what you stand on. `tools/test_terrain.gd` checks this with raycasts.
 - **Boundary walls** (on by default) stand `boundary_inset` metres in from the
   edge, so nobody climbs the border mountains and walks off the world.
+  **It defaults to 60 m**, which is sane on a kilometre-wide map and walls off a
+  third of the ground on a small one. The density figure you are judging the map
+  by is computed over the INSET rectangle, not the full size — set it
+  deliberately.
+- **The size you ask for is not the size you get.** Width and depth both round
+  **up** to whole 64-cell chunks, which is 128 m at a 2 m cell. 352 × 288 — a
+  figure that looked perfectly reasonable in a brief — baked as **384 × 384**:
+  half again the ground asked for, 0.147 km², and straight out of the density
+  band. Only multiples of the chunk size mean anything. The bake prints the real
+  figure and nothing else catches it.
 
 ---
 
