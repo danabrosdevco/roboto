@@ -152,6 +152,10 @@ silent one is how a red suite survives a report.
   window on the human's machine and takes time, so it is their call, not a
   thing to do unannounced.
   Run muted (`--audio-driver Dummy`), and never let a run write `campaign.json`.
+  What you still cannot do is **judge how it feels on their behalf.** Running
+  it tells you whether it works; whether a lane is tense or boring, whether a
+  weapon is satisfying, whether a mission is too long — those are the human's,
+  and no amount of running it substitutes.
 - **A render is evidence only if the thing is in it.** Much of what matters is
   raised at runtime: `SiteSlice` builds the bunker entrance at a marker, doors
   are driven open by script, cover and scatter are baked in a later pass. A
@@ -170,10 +174,6 @@ silent one is how a red suite survives a report.
   looks like proof. Render with a window, at the 1152x648 the game uses, with
   the eye at 1.50 m. Three separate "the lighting is broken" investigations
   were this filter and not the lights.
-  What you still cannot do is **judge how it feels on their behalf.** Running
-  it tells you whether it works; whether a lane is tense or boring, whether a
-  weapon is satisfying, whether a mission is too long — those are the human's,
-  and no amount of running it substitutes.
 - **Scene values beat script defaults.** Changing an `@export` default does
   nothing for a node already in a `.tscn`. Check the scene.
 - **`queue_free()` is deferred.** `remove_child()` first when rebuilding UI.
