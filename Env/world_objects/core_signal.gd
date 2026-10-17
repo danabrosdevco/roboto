@@ -61,6 +61,13 @@ var _beam: MeshInstance3D = null
 var _beam_mat: StandardMaterial3D = null
 var _base_colour: Color = HUDPalette.FAC_ADVERSARY
 var _foot: float = 3.38
+var _circle: MeshInstance3D
+var _circle_mat: StandardMaterial3D
+## How far either side of the capture point to look for the floor. Generous
+## downward because a core can sit on a gantry over a drop; short upward so an
+## indoor ring measures its own floor and not the ceiling above it.
+const CAST_UP := 1.5
+const CAST_DOWN := 50.0
 
 
 func _ready() -> void:
@@ -90,6 +97,65 @@ func _build() -> void:
 	_collar.material_override = _collar_mat
 	_collar.position = Vector3(0.0, 0.17, 0.0)
 	add_child(_collar)
+
+	# THE STANDING CIRCLE — where you have to be, drawn on the ground.
+	#
+	# The collar above frames the CORE. This frames the CAPTURE, and they are
+	# not the same ring: the collar sits at the plinth's edge and the circle
+	# sits at channel_range, which is metres further out and is the only one
+	# that answers "am I close enough".
+	#
+	# Reported from play as "the ring is not visible" once the real core art
+	# went in — and it was right, because the only ring on screen was hugging a
+	# structure that had got big enough to hide it. A capture is ten seconds of
+	# standing still and had nothing on the floor saying where.
+	#
+	# READ OFF THE CORE, never a copy. channel_range is the rule; a second
+	# number here would be a ring that lies about where the edge is, which is
+	# worse than no ring at all.
+	var reach: float = float(core.channel_range) if core != null \
+		and "channel_range" in core else 7.0
+	_circle = MeshInstance3D.new()
+	_circle.name = "StandingCircle"
+	var ring := TorusMesh.new()
+	ring.inner_radius = maxf(reach - 0.18, 0.2)
+	ring.outer_radius = reach
+	ring.rings = 48
+	_circle.mesh = ring
+	_circle_mat = _emissive()
+	# FAINT UNTIL IT MATTERS. A hostile core's circle is a hint; it brightens
+	# when you are working it. See _on_progress.
+	_circle_mat.emission_energy_multiplier = 0.35
+	_circle.material_override = _circle_mat
+	# NOT CARRIED BY THIS NODE'S TRANSFORM, which is the whole reason the ring
+	# needed fixing. The beacon frames the SITE from across the map and the ring
+	# frames the CAPTURE at your feet, and site_slice._dress() moves this node
+	# to a BeaconMount so the column clears a bunker's roof — which took the
+	# ring up with it. Every one of the ten bunkers drew its circle 5 m in the
+	# air and 15.6 m sideways, round the beacon instead of round the terminal
+	# you actually press. Identical on all ten, because it is a fixed offset in
+	# the kit rather than ten authoring mistakes.
+	#
+	# top_level cuts the ring loose from that move; _seat_circle() then puts it
+	# where the channel is REALLY measured. Surface cores are unaffected — their
+	# terminal sits on the core, so the ring lands where it already was.
+	_circle.top_level = true
+	add_child(_circle)
+	_seat_circle()
+	# AND AGAIN AFTER THE FIRST PHYSICS STEP. Two things are not ready yet at
+	# this point and both of them matter:
+	#
+	#   - _dress() moves this node to the beacon mount AFTER add_child returns,
+	#     and on a core seated by a patch script the interactible is wired a
+	#     step later still, so the centre read above can be the wrong one.
+	#   - the level's colliders are not in the physics world until a step has
+	#     run, so the ground cast in _seat_circle finds nothing and falls back.
+	#
+	# ONE-SHOT, not a _process: this fires once, re-reads both, and disconnects
+	# itself. Seating twice is cheap; a ring that cached a wrong centre is a
+	# capture the player cannot find.
+	get_tree().physics_frame.connect(_seat_circle, CONNECT_ONE_SHOT)
+
 
 	# THE CLIMB, AND THE WHOLE POINT OF THIS NODE.
 	#
@@ -217,6 +283,13 @@ func _on_progress(fraction: float) -> void:
 		_band_mat.emission_energy_multiplier = 1.0 + 3.0 * f
 	if _collar_mat != null:
 		_collar_mat.emission_energy_multiplier = 0.4 + 2.2 * f
+	# THE CIRCLE BRIGHTENS WITH THE WORK, so the thing you are standing in is
+	# also the thing telling you how far through you are. It carries the same
+	# fraction both ways: HoldableCore._reverse_tick emits 1.0 falling to 0.0
+	# while they take it back, so a core slipping away dims on the floor in
+	# front of you without needing a second channel of its own.
+	if _circle_mat != null:
+		_circle_mat.emission_energy_multiplier = 0.35 + 2.6 * f
 
 
 ## Each beat gets a sound and a visible kick, so the three moments read as
@@ -276,10 +349,31 @@ func _on_holder(h: int) -> void:
 	if _beam_mat != null:
 		_beam_mat.emission_energy_multiplier = 2.2 if h == 2 else 1.4
 		_beam_mat.albedo_color.a = 0.30 if h == 2 else 0.22
+	# AND THE MACHINE ITSELF, not just the dressing. The beacon, collar and beam
+	# above are all nodes THIS script built, so recolouring them was easy and
+	# looked complete — while the core's own 18-to-33 painted fins and lit
+	# slots kept the amber the generator baked in, and a captured core went on
+	# advertising itself as the enemy's. core_pulse.gd owns those materials and
+	# the long version of why only `emission` is written.
+	_recolour_model(_base_colour)
 	if h == 2:
 		_start_beacon()
 	else:
 		_stop_beacon()
+
+
+## Hand the colour to the core model's own pulse script, wherever it is under
+## the core. Found by method rather than by path: the model is a generated
+## block scene whose node names change when the generator is rerun, and a path
+## into it would be silently stale rather than loudly wrong.
+func _recolour_model(c: Color) -> void:
+	if core == null or not is_instance_valid(core):
+		return   # already warned at ready; a core with no body is not this node's bug
+	for n in core.find_children("*", "", true, false):
+		if n.has_method(&"set_faction_colour"):
+			n.call(&"set_faction_colour", c)
+			return
+	push_warning("CoreSignal: %s has no core_pulse under it, so the machine keeps its old colour when the holder changes." % name)
 
 
 ## A LOOPING TWEEN, not a _process and not an await loop. set_loops() keeps it
@@ -352,3 +446,75 @@ func _say(stream: AudioStream, pitch: float) -> void:
 	_voice.stream = stream
 	_voice.pitch_scale = pitch
 	_voice.play()
+
+
+## PUT THE STANDING CIRCLE WHERE THE CHANNEL IS ACTUALLY MEASURED.
+##
+## holdable_core._physics_process tests
+## `_player.global_position.distance_to(interactible.global_position)` against
+## channel_range, falling back to the core's own origin. That point — not this
+## node, not the beacon mount, not the bunker host — is the centre the player
+## has to be inside. The ring is the on-screen statement of that rule, so it
+## reads the same field rather than keeping a second copy, for exactly the
+## reason the radius does.
+##
+## Y COMES FROM THE GROUND, found by casting. The first cut took it from the
+## capture point itself on the assumption that the interactible sits at the
+## foot of its collision box. It does not: TerminalFace is 1.36 m up the
+## revetment, so every bunker ring hung at chest height — better than the 5 m
+## it started at, and still not something you can stand in. The ground is the
+## only thing that knows where the ground is.
+##
+## THE FALLBACK IS LOUD, because a ring that silently defaults to the capture
+## point looks almost right and is exactly the bug this replaced.
+func _seat_circle() -> void:
+	if _circle == null or not is_instance_valid(_circle):
+		return
+	var at: Vector3 = _capture_centre()
+	var y: float = at.y
+	var world := get_world_3d()
+	if world != null:
+		var q := PhysicsRayQueryParameters3D.create(
+			at + Vector3(0.0, CAST_UP, 0.0), at - Vector3(0.0, CAST_DOWN, 0.0))
+		# EXCLUDE THE MACHINE ITSELF, or the cast lands on its own plinth.
+		#
+		# OFF THE HOST, NOT OFF `core`. The HoldableCore is a bare script node
+		# seated ON the prefab — it owns no collision at all, so excluding it
+		# excludes nothing and the cast stops 0.53 m up on the bund. That is
+		# the core's own kerb, not the floor, and it put every surface ring
+		# half a metre in the air on the first attempt at this. The host is
+		# this node's parent, which is the prefab root for a surface core and
+		# SiteBunker for a bunker, and it is the thing that owns the bodies.
+		var skip: Array[RID] = []
+		var host := get_parent()
+		if host != null:
+			for b in _solids(host):
+				skip.append(b.get_rid())
+		q.exclude = skip
+		var hit := world.direct_space_state.intersect_ray(q)
+		if hit.is_empty():
+			push_warning("CoreSignal: found no ground under %s's capture point, so its standing circle stays at the terminal's own height and may hang in the air." % String(core.name) if core != null else "a core")
+		else:
+			y = float(hit.position.y)
+	else:
+		push_warning("CoreSignal: no physics world yet, so %s's standing circle is seated at the terminal height until it is re-seated." % String(core.name) if core != null else "a core")
+	# ON the deck, not in it — a torus centred at 0 is half underground.
+	_circle.global_position = Vector3(at.x, y + 0.06, at.z)
+
+
+func _capture_centre() -> Vector3:
+	if core == null or not is_instance_valid(core):
+		return global_position
+	var it = core.get("interactible")
+	if it != null and is_instance_valid(it) and it is Node3D:
+		return (it as Node3D).global_position
+	return (core as Node3D).global_position
+
+
+func _solids(n: Node) -> Array[CollisionObject3D]:
+	var out: Array[CollisionObject3D] = []
+	if n is CollisionObject3D:
+		out.append(n)
+	for c in n.get_children():
+		out.append_array(_solids(c))
+	return out

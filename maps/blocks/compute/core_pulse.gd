@@ -51,11 +51,18 @@ extends Node3D
 # is the whole reason this effect was chosen over a single sine — it scales into
 # "this is a bigger machine" for free.
 #
-# THE HUE NEVER MOVES. Only energy is animated. Faction colour is the
-# gameplay-critical read ("who owns this"), so a core that strobed through
-# colours would be answering the wrong question. The 19 painted fins and lips
-# hold a CONSTANT faction glow throughout, which also gives the travelling band
-# a fixed reference to be brighter and dimmer than.
+# THE HUE NEVER MOVES ON ITS OWN. Only energy is animated here. Faction colour
+# is the gameplay-critical read ("who owns this"), so a core that strobed
+# through colours would be answering the wrong question. The 19 painted fins
+# and lips hold a CONSTANT faction glow throughout, which also gives the
+# travelling band a fixed reference to be brighter and dimmer than.
+#
+# WHAT CHANGES THE HUE IS CAPTURE, and only capture — `set_faction_colour()`
+# at the bottom of this file. Before that existed a captured core stayed amber
+# forever: every material's `emission` is baked at HUDPalette.FAC_ADVERSARY by
+# the generator, the beacon and collar recoloured on capture because
+# core_signal.gd owns those, and the machine the player had just taken went on
+# advertising itself as the enemy's. That is the one thing the colour is for.
 # ─────────────────────────────────────────────
 
 ## Metres per second the band climbs. 6.0 is fast enough to read as a signal
@@ -88,6 +95,7 @@ const PEAK_GAIN := 2.4
 
 
 func _ready() -> void:
+	_watch_for_capture()
 	var lit := get_node_or_null(^"Lit")
 	if lit == null:
 		# Every early return warns. A core with no Lit node is a core built by
@@ -221,3 +229,104 @@ func _energy_at(at: float, delay: float, rest: float) -> float:
 		return lerpf(rest, peak, sin(u / RISE * PI * 0.5))
 	# TRANS_SINE / EASE_IN is 1 - cos(x * PI/2).
 	return lerpf(peak, rest, 1.0 - cos((u - RISE) / FALL * PI * 0.5))
+
+
+# ─────────────────────────────────────────────
+# WHO OWNS THIS CORE, as a colour.
+# ─────────────────────────────────────────────
+
+## Both lit groups the generator writes: the travelling band and the constant
+## painted fins. Tinting only "Lit" leaves the fins amber on a captured core,
+## which reads as half-taken — and the fins are the brighter of the two.
+const LIT_GROUPS: Array[StringName] = [&"Lit", &"Paint"]
+
+## What this core is currently advertising. Starts at the baked amber so a
+## core that is never captured is never written to at all.
+var _faction_colour := Color(0.91, 0.63, 0.23)
+
+
+## RE-TINT EVERY LIT MATERIAL ON THIS CORE.
+##
+## EMISSION ONLY — never `emission_energy_multiplier`. That float is the pulse,
+## it is mid-tween on a dozen materials at any moment, and `_rest()` reads it
+## back as the single source of truth for brightness. Writing it here would
+## fight the tween and permanently re-base the rest energy to whatever the
+## crest happened to be when the player pressed the terminal.
+##
+## SAFE PER-INSTANCE because every one of these materials carries
+## `resource_local_to_scene = true` — 142 of them across the six core scenes,
+## checked rather than assumed. Without that, capturing one core would recolour
+## every core in the level, including the ones still held against you.
+## If a future generator drops that flag this turns into exactly that bug, so
+## the flag is the thing to protect.
+func set_faction_colour(c: Color) -> void:
+	_faction_colour = c
+	var touched := 0
+	for group in LIT_GROUPS:
+		var node := get_node_or_null(NodePath(group))
+		if node == null:
+			continue
+		for child in node.get_children():
+			var mi := child as MeshInstance3D
+			if mi == null:
+				continue
+			var mat := mi.material_override as StandardMaterial3D
+			if mat == null:
+				continue
+			mat.emission = c
+			touched += 1
+	if touched == 0:
+		# Every early return warns. A core that cannot be recoloured still
+		# captures perfectly well and simply keeps flying the enemy's colour,
+		# which is invisible as a bug and obvious as a complaint.
+		push_warning("core_pulse: %s has no lit material to recolour, so capturing it will not change its colour." % name)
+
+
+## The colour this core is showing. For probes and shot tools.
+func faction_colour() -> Color:
+	return _faction_colour
+
+
+## FIND THE OBJECTIVE THIS CORE IS THE BODY OF, and recolour when it completes.
+##
+## WHY IT SEARCHES UPWARD instead of being wired in the scene. This script is
+## on the "Signal" node INSIDE maps/blocks/compute/compute_core*.tscn, which
+## tools/build_core_relay.gd REBUILDS FROM SCRATCH on every geometry change —
+## an exported NodePath into the parent scene would be erased by the next
+## rebuild and would be pointing out of this scene anyway. The same reason
+## fit_ops_table.gd exists. Searching costs one walk at ready and survives.
+##
+## Two owners, because there are two capture systems and a core can be under
+## either:
+##   - Campaign/interact_objective.gd — a capture point placed straight in a
+##     level, which is what hillfort_wip and the other maps instance. It has
+##     `objective_completed` and no notion of faction at all: completing it
+##     means the PLAYER took it, so it goes to HELD.
+##   - Env/world_objects/holdable_core.gd — the campaign site system, which
+##     does have a holder. That one is driven by core_signal.gd calling
+##     set_faction_colour() directly, so nothing is connected here.
+##
+## FOUR LEVELS because the chain is Signal -> ComputeCore -> Core -> the
+## objective root, and a slice or a future wrapper may add one more.
+func _watch_for_capture() -> void:
+	var n: Node = get_parent()
+	for _i in 4:
+		if n == null:
+			break
+		if n.has_signal(&"objective_completed"):
+			if not n.is_connected(&"objective_completed", _on_objective_completed):
+				n.connect(&"objective_completed", _on_objective_completed)
+			# ALREADY TAKEN WHEN WE LOADED. A level restored mid-mission, or a
+			# core completed before this node readied, would otherwise sit amber
+			# having missed the only signal it was listening for.
+			if "completed" in n and n.completed:
+				set_faction_colour(HUDPalette.HELD)
+			return
+		n = n.get_parent()
+	# NOT A WARNING. A core photographed on an empty stage, or dropped into a
+	# level as scenery, has no objective above it and is not broken — the same
+	# case the header makes for the pulse running with no wrapper at all.
+
+
+func _on_objective_completed(_objective: Variant = null) -> void:
+	set_faction_colour(HUDPalette.HELD)
