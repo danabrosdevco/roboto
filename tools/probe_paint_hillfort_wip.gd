@@ -35,8 +35,8 @@ extends SceneTree
 const DST := "D:/Godot Games/roboto/Env/terrain/sketches/hillfort_wip.png"
 
 ## Must match the recipe in probe_build_hillfort_wip.gd.
-const SIZE_X := 384.0
-const SIZE_Z := 384.0
+const SIZE_X := 640.0
+const SIZE_Z := 640.0
 ## Must match SOUTH_SHIFT in probe_build_hillfort_wip.gd. The sketch is sampled
 ## in WORLD coordinates but written into a rectangle centred on the Terrain
 ## node, so without this every mask would land 64 m north of the ground it was

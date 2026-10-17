@@ -95,7 +95,7 @@ const SKETCH := "res://Env/terrain/sketches/hillfort_wip.png"
 ## ground as asked for, 0.147 km², and straight out of the band. The recipe
 ## says so in one line of @export doc and the bake prints the real figure;
 ## nothing else would have caught it.
-const SIZE_X := 384.0
+const SIZE_X := 640.0
 ## 256 -> 384 on 2026-10-17: the approach was too short. The player met the
 ## Pillars garrison 64 m off the spawn, about 14 seconds in, and the human asked
 ## for 20-30 more before first contact.
@@ -104,7 +104,7 @@ const SIZE_X := 384.0
 ## 4.5 m/s, so 20-30 s is 90-135 m — and the terrain rounds Z up to whole
 ## 64-cell chunks, which at this 2 m cell is 128 m. There was exactly one size
 ## that satisfied the request, and it is this.
-const SIZE_Z := 384.0
+const SIZE_Z := 640.0
 
 ## ALL OF THE NEW GROUND GOES SOUTH, and this is how.
 ##
@@ -129,7 +129,31 @@ const SOUTH_SHIFT := 64.0
 ## this size 60 m a side would wall off a third of the ground and leave the
 ## Terrace and half the hills outside the world. The area the density number is
 ## computed over is this inset rectangle, not SIZE_X by SIZE_Z.
-const BOUNDARY_INSET := 4.0
+## ── THE BACKDROP RING, 2026-10-17 ───────────────────────────────────────────
+##
+## The map used to END. Flat ground to a hard square edge and then nothing, so
+## from anywhere near the rim it read as a tabletop about to fall away.
+##
+## FIXED WITHOUT GIVING THE PLAYER ANY MORE GROUND. The rectangle grew from
+## 384 to 640 square and the inset grew from 4 m to 132 m by exactly the same
+## amount, so the boundary walls land on the SAME WORLD COORDINATES they
+## already had — x +/-188, z -124..+252. Every metre of the 256 m added is
+## outside the wall: it is scenery, not level.
+##
+##   640 * 0.5 - 132 = 188   (was 384 * 0.5 - 4 = 188)
+##
+## The ring is filled by the recipe's border mountains, which were switched off
+## on this map (border_sides = 0) and are now on at 118 m wide — just inside the
+## 128 m ring, so the crest sits clear of the wall rather than on top of it.
+##
+## 58 m OF CREST, AGAINST THE PLATEAU'S 34. High enough to close the horizon
+## from the trailhead, low enough that the fort is still the thing you look at:
+## the dish tops out around 96 m and keeps the skyline. Ruggedness 0.62 and
+## 34 m of noise so the rim reads as range rather than as a wall — a smooth
+## even crest at a constant height is just a bigger tabletop edge.
+##
+## The navmesh is deliberately NOT baked out here; see filter_baking_aabb.
+const BOUNDARY_INSET := 132.0
 
 ## A leg gentler than this is a walk; steeper and the bots start scrabbling.
 const MAX_GRADE := 22.0
@@ -1656,6 +1680,7 @@ func _level(by_name: Dictionary) -> String:
 		["PackedScene", "res://Env/world_objects/cover_point_spawner.tscn",
 				"9_coverspawn", "uid://cyslwv078g4sk"],
 		["Script", "res://Env/world_objects/cover_point.gd", "10_coverpt", ""],
+		["Script", "res://Managers/AI/patrol_path.gd", "11_patrol", ""],
 	]
 	var seen := {}
 	for c: Array in CAPTURES:
@@ -1713,8 +1738,16 @@ func _level(by_name: Dictionary) -> String:
 	# box would stop 64 m short of the new southern ground — the whole of the
 	# approach this was grown for, unwalkable, with no error anywhere. That is
 	# the Proving failure exactly, on the one map that just grew.
+	# AND IT STOPS AT THE WALLS, not at the terrain's edge. Since the backdrop
+	# ring went in, SIZE_X by SIZE_Z is 640 square and most of that is border
+	# mountain the player can never reach. Baking it would spend the time
+	# rasterising scree and would hand the squad walkable polygons OUTSIDE the
+	# boundary walls, which is how a flanker ends up pathing round the back of
+	# the world. The playable rectangle is the inset one.
+	var play_x := SIZE_X * 0.5 - BOUNDARY_INSET
+	var play_z := SIZE_Z * 0.5 - BOUNDARY_INSET
 	out.append("filter_baking_aabb = AABB(%.0f, -40, %.0f, %.0f, 400, %.0f)" % [
-			-SIZE_X * 0.5 - 8.0, SOUTH_SHIFT - SIZE_Z * 0.5 - 8.0, SIZE_X + 16.0, SIZE_Z + 16.0])
+			-play_x - 8.0, SOUTH_SHIFT - play_z - 8.0, play_x * 2.0 + 16.0, play_z * 2.0 + 16.0])
 	out.append("")
 
 	out.append("[sub_resource type=\"ShaderMaterial\" id=\"ShaderMaterial_sky\"]")
@@ -1808,6 +1841,12 @@ func _level(by_name: Dictionary) -> String:
 	out.append("")
 	out.append("[node name=\"LevelExit\" parent=\"NavigationRegion3D\" instance=ExtResource(\"5_exit\")]")
 	out.append(_xform(float(fort[1]) + EXIT_AT.x, float(fort[3]), float(fort[2]) + EXIT_AT.y))
+	# THE WAY OUT WAITS FOR THE OPERATION. Without this the doors are live from
+	# the moment the mission starts and the player can walk out of the tunnel
+	# they just walked in through, before taking anything. GAMEPLAY set it by
+	# hand and a --force rebuild cleared it.
+	# docs/FEATURE_CHECKLISTS.md, "A new SITE", item 5.
+	out.append("requires_objectives_complete = true")
 	out.append("")
 	out.append("[node name=\"WorldEnvironment\" parent=\".\" instance=ExtResource(\"6_env\")]")
 	out.append("environment = SubResource(\"Environment_hfw\")")
@@ -1877,6 +1916,29 @@ func _level(by_name: Dictionary) -> String:
 			out.append("")
 			pi += 1
 
+	# ── AND THE ROUTES THAT WRAP THOSE MARKERS. MARKERS ARE NOT A ROUTE.
+	#
+	# A spec's `route_tag` resolves against nodes in the "patrol_paths" group,
+	# which PatrolPath joins in _ready. Patrol1..6 are plain Node3D children
+	# and join nothing, so without a PatrolPath over them the lookup finds
+	# NOTHING, warns once at runtime, and the squad stands still for the whole
+	# mission. GAMEPLAY hit exactly this, added two by hand, and a --force
+	# rebuild here deleted them again — which is why they are generated now
+	# rather than seated afterwards. docs/FEATURE_CHECKLISTS.md, "A new MAP",
+	# item 11.
+	out.append("[node name=\"Patrols\" type=\"Node3D\" parent=\".\"]")
+	out.append("")
+	for p: Array in PATROLS:
+		var tag := "patrol_hfw_%s" % str(p[0]).trim_prefix("HFW_").to_snake_case()
+		var paths := PackedStringArray()
+		for i in (p[1] as Array).size():
+			paths.append("NodePath(\"../../EnemySquadObjs/%s/Patrol%d\")" % [p[0], i + 1])
+		out.append("[node name=\"%s\" type=\"Node\" parent=\"Patrols\" node_paths=PackedStringArray(\"points\")]" % tag)
+		out.append("script = ExtResource(\"11_patrol\")")
+		out.append("tag = &\"%s\"" % tag)
+		out.append("points = [%s]" % ", ".join(paths))
+		out.append("")
+
 	for c: Array in CAPTURES:
 		var host: Array = by_name[c[5]]
 		out.append("[node name=\"%s\" parent=\".\" node_paths=PackedStringArray(\"linked_squad_point\") instance=ExtResource(\"%s\")]" % [
@@ -1887,6 +1949,17 @@ func _level(by_name: Dictionary) -> String:
 		out.append("display_name = \"%s\"" % c[2])
 		out.append("description = \"%s\"" % c[3])
 		out.append("reward_resources = %d" % int(c[4]))
+		# OPTIONAL, EVERY ONE OF THEM, and this is not a shrug.
+		#
+		# The operation is won at the bunker. A compulsory capture makes a
+		# route that does not pass it UNFINISHABLE — and the whole design here
+		# is three lanes carrying 2/1/2 captures, so taking the centre lane
+		# means skipping four of the six ON PURPOSE. Leave these compulsory and
+		# the fast lane cannot be completed at all.
+		#
+		# GAMEPLAY set this by hand and a --force rebuild reset all six.
+		# docs/FEATURE_CHECKLISTS.md, "A new SITE", item 6.
+		out.append("optional = true")
 		out.append("linked_squad_point = NodePath(\"../EnemySquadObjs/%s\")" % _anchor_for(str(c[9])))
 		out.append("")
 
@@ -1941,11 +2014,11 @@ func _recipe() -> PackedStringArray:
 		# mountain, and a flat pad cut into a mountainside is the crater the
 		# rules warn about. The hill itself is the relief; the fog and the
 		# boundary walls close the edge.
-		"border_sides = 0",
-		"border_height = 0.0",
-		"border_width = 0.0",
-		"border_noise = 0.0",
-		"border_ruggedness = 0.0",
+		"border_sides = 15",
+		"border_height = 58.0",
+		"border_width = 118.0",
+		"border_noise = 34.0",
+		"border_ruggedness = 0.62",
 		# TURNED DOWN, not off. Playable ground must be flat and bots cannot
 		# use jagged terrain, so the recipe's own relief is texture rather than
 		# shape: 3 m of hill over a 160 m wavelength is a swell you do not

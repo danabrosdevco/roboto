@@ -59,8 +59,8 @@
 
 [sub_resource type="Resource" id="Resource_recipe"]
 script = ExtResource("2_recipe")
-size_x = 384.0
-size_z = 384.0
+size_x = 640.0
+size_z = 640.0
 cell_size = 2.0
 random_seed = 23
 layout = 2
@@ -72,11 +72,11 @@ floor_roughness = 0.25
 floor_edge_noise = 0.35
 meander = 0.0
 meander_scale = 300.0
-border_sides = 0
-border_height = 0.0
-border_width = 0.0
-border_noise = 0.0
-border_ruggedness = 0.0
+border_sides = 15
+border_height = 58.0
+border_width = 118.0
+border_noise = 34.0
+border_ruggedness = 0.62
 hills_height = 3.0
 hills_scale = 160.0
 hills_octaves = 4
@@ -189,7 +189,7 @@ script = ExtResource("1_terrain")
 recipe = SubResource("Resource_recipe")
 data = ExtResource("11_data")
 data_path = "res://maps/terrain_data/hillfort_wip_level_terrain.res"
-boundary_inset = 4.0
+boundary_inset = 132.0
 
 [node name="Scatter" type="Node3D" parent="Terrain"]
 script = ExtResource("6_scatter")

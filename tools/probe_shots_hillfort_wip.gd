@@ -56,7 +56,7 @@ const EYE := 1.50
 const SHOTS: Array = [
 	# ── THE PLAN. Straight down, framed on the whole playable rectangle, which
 	# is 376 x 248 inside the boundary walls.
-	["00_plan", Vector3(0.0, 560.0, 64.0), Vector3(0.0, 0.0, 64.0), 40.0, "abs"],
+	["00_plan", Vector3(0.0, 920.0, 64.0), Vector3(0.0, 0.0, 64.0), 40.0, "abs"],
 	["00b_plan_north", Vector3(0.0, 260.0, -56.0), Vector3(0.0, 0.0, -56.0), 46.0, "abs"],
 	# Obliques, for reading the shape: a broad gentle dome with a walled fort on
 	# the crown and two wall lines dividing the approach into three.
