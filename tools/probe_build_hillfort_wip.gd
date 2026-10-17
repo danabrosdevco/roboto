@@ -729,10 +729,37 @@ func _initialize() -> void:
 				art.length(), level.length()])
 		quit(1)
 		return
+	# ── --force REBUILDS THE ART. THE LEVEL NEEDS --force-level, SEPARATELY.
+	#
+	# This is the guard build_georgetown.gd, build_polaris.gd and
+	# build_salient.gd already keep, and it is here because this tool was the
+	# one that did not. On 2026-10-17 a --force run to lengthen the APPROACH
+	# also rewrote the level and silently reset three things GAMEPLAY had set
+	# by hand: `optional` on all six captures, `requires_objectives_complete`
+	# on the level exit, and both PatrolPath nodes. Nothing errored. The map
+	# loaded, looked right and was still walkable — so the report that came
+	# back was "terrain rebuild deletes the map, but it is still playable",
+	# which is the most expensive shape a bug can have here.
+	#
+	# The three settings above are generated now, so a rewrite would reproduce
+	# them. THAT IS NOT THE POINT. A level accumulates things this tool has
+	# never heard of — an ops layer, a slice, an objective somebody added this
+	# morning — and the guard is what stops the next one disappearing. It has
+	# already happened twice in this project: once on polaris, once here.
+	#
+	# So --force means the art, which is TERRAIN's and is regenerated from the
+	# tables above. The level is GAMEPLAY's once it exists.
+	var force_level := OS.get_cmdline_user_args().has("--force-level")
+	var writes: Array = [[OUT_ART, art, force]]
+	if FileAccess.file_exists(ProjectSettings.globalize_path(OUT_LEVEL)) and not force_level:
+		print("   %s left alone — it carries gameplay nodes this tool did not" % OUT_LEVEL.get_file())
+		print("   write and cannot reproduce. Pass --force-level to overwrite it anyway.")
+	else:
+		writes.append([OUT_LEVEL, level, force or force_level])
 	# THE FILES ON DISK ARE THE SOURCE once a human has opened them. Same rule
 	# the block_*.gd tools keep and for the same reason.
-	for pair: Array in [[OUT_ART, art], [OUT_LEVEL, level]]:
-		if FileAccess.file_exists(pair[0]) and not force:
+	for pair: Array in writes:
+		if FileAccess.file_exists(pair[0]) and not bool(pair[2]):
 			print("SKIP  %s exists — it may hold editor changes. Pass --force." % pair[0])
 			continue
 		var f := FileAccess.open(pair[0], FileAccess.WRITE)

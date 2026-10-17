@@ -236,12 +236,42 @@ const HOLLOWS: Array = [
 
 
 func _initialize() -> void:
+	# ── THE FLAG IS --force-level, NOT --force, AND THAT IS DELIBERATE.
+	#
+	# Every other map builder in this project treats --force as "rebuild the
+	# ART" and keeps the level behind a second, explicit --force-level:
+	# build_georgetown.gd, build_polaris.gd, build_salient.gd. This tool has no
+	# separate art scene — hillfort_level.tscn IS its only output — so here
+	# --force would have meant "regenerate the level", the one thing that word
+	# means nowhere else.
+	#
+	# That inconsistency is a trap rather than a detail. The header above has
+	# warned since 2026-09-29 that this level has DIVERGED from the table and
+	# carries a ReachObjective, a RelayObjective with its interactible and
+	# terminal, extra patrol points and a moved spawn, none of which this tool
+	# can reproduce — and the same muscle-memory --force that is harmless on
+	# the other four builders would have taken all of it out.
+	#
+	# hillfort_wip lost three of GAMEPLAY's settings to exactly that confusion
+	# on 2026-10-17. So: --force alone now refuses and says what it would have
+	# destroyed.
 	var force := false
+	var asked_force := false
 	for a in OS.get_cmdline_user_args():
-		if a == "--force":
+		if a == "--force-level":
 			force = true
+		elif a == "--force":
+			asked_force = true
 		else:
 			print("ignoring argument '%s'" % a)
+	if asked_force and not force:
+		print("REFUSED  --force rebuilds ART on the other builders; this tool only writes")
+		print("         maps/hillfort_level.tscn, and that scene has diverged from this")
+		print("         table. Regenerating it drops the ReachObjective, the RelayObjective")
+		print("         with its interactible and terminal, the extra patrol points and the")
+		print("         moved spawn. Pass --force-level if you really mean that.")
+		quit(1)
+		return
 	var by_name := {}
 	for s: Array in STATIONS:
 		by_name[s[0]] = s
