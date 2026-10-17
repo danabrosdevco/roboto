@@ -423,7 +423,23 @@ func _relay(tag: String) -> void:
 	_fins(s)
 	_return_bank(s)
 	_terminations(s)
-	_shelf(s)
+	# ── NO LANDING SHELF. Removed 2026-10-17 on the human's instruction:
+	# "there's no tick anymore, it's just a hit f, sit in the circle, and you
+	# cap it. so there's no need for the landing shelf."
+	#
+	# _shelf() IS KEPT BELOW, UNCALLED, AND THAT IS DELIBERATE. It carries the
+	# pad contract, the cantilever arithmetic and the measured clearances for a
+	# machine landing on this core — two days of findings that are expensive to
+	# re-derive and impossible to reconstruct from the silhouette. If anything
+	# ever lands on a core again, call it; do not rewrite it from memory.
+	#
+	# THE MUSHROOM WARNING IN ITS HEADER WAS CHECKED, NOT ASSUMED. That comment
+	# says the shelf is why the small core is not a bird table, so all three
+	# sizes were rebuilt and photographed without it before this was committed.
+	# They are fine: the crown is NARROWER than what it stands on at every
+	# size, which is the thing that actually fixed the mushroom. The pad beside
+	# the mass was a second answer to a problem the stepped masses had already
+	# solved.
 
 	_emit("func_detail_illusionary", "core:trim", _trim)
 	for p: Dictionary in _paint:
@@ -450,6 +466,34 @@ func _bund(s: Dictionary) -> void:
 	# rather than as a kerb.
 	box(Vector3(u(bx - 10), -u(by), u(GROUND_U)), Vector3(u(bx), u(by), u(GROUND_U + 20)), PLATE_TEX)
 	box(Vector3(-u(bx), u(by - 10), u(GROUND_U)), Vector3(u(bx - 10), u(by), u(GROUND_U + 20)), PLATE_TEX)
+
+	# ── THE DOCK IS THE TRAY NOW, NOT A PAD ON A SHELF.
+	#
+	# It used to be the drone pad's surface, two thirds of the way up the
+	# machine, because a TICK flew in and clamped four legs round that pad.
+	# There is no tick: capture is pressing F and holding the circle, so the
+	# landing shelf went (see _relay) and the pad went with it.
+	#
+	# THE MARKER STAYS, because it is not only the tick's. holdable_core.gd
+	# hunts for a child called `Dock` to seat a tap on, probe_core_clearance.gd
+	# measures from it and test_holdable_core.gd asserts it exists — removing it
+	# would have failed a suite in the terrain bucket to delete something three
+	# other things still use. So it moves down onto the tray floor, which is
+	# where a thing docking with this machine would now actually sit, and is
+	# the surface the player is standing on while the capture runs.
+	#
+	# BOTH of these, because only one reaches the prefab. `_dock` is the
+	# height the build report prints; `_dock_at` is the POINT written into
+	# the .map as a `// core:dock` line, which core_skeleton_dress.gd turns
+	# into the Marker3D. _shelf() set both, so dropping its call silently
+	# left _dock_at at the origin: the dress pass placed a Dock at y = 0,
+	# buried in the plinth, while the report still said 0.53 because that
+	# came from the other variable. test_holdable_core caught it.
+	#
+	# GODOT COORDINATES, not map ones — the comment is read straight into a
+	# position, so the swap happens here. On the axis, at tray height.
+	_dock = u(GROUND_U)
+	_dock_at = Vector3(0.0, u(GROUND_U), 0.0)
 
 
 ## THE PRIMARY AND SECONDARY MASSES.

@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # HOLDABLE CORES CHANGE HANDS. BOTH WAYS.
@@ -62,80 +63,96 @@ func _init() -> void:
 	# ── the channel ─────────────────────────────
 	var beats: Array = []
 	point.beat_reached.connect(func(b): beats.append(int(b)))
-	var docked := [false]
-	point.tap_docked.connect(func(): docked[0] = true)
 
 	player.global_position = point.global_position   # in range
 	point._on_interacted(null)
 	_check("F starts a channel", point.is_physics_processing())
 
-	for _i in 60:
+	for _i in 90:
 		await physics_frame
-		if point._tap != null:
+		if point.is_held_by_player():
 			break
-	_check("the channel completes and calls a tap", point._tap != null)
-	_check("...and stops processing once it has", not point.is_physics_processing())
+	# TAKEN BY STANDING ON IT, 2026-10-16. This block used to assert a tap:
+	# the channel finished, a pod flew in over four seconds, docked, and left
+	# a CaptureAnchor that was the thing actually holding the core. All of that
+	# is gone — the circle IS the mechanic now — so these check the rule that
+	# replaced it rather than the delivery that used to implement it.
+	_check("the channel completes and the core is yours", point.is_held_by_player(),
+		"holder = %d" % int(point.holder))
 	_check("...having fired all three beats in order", beats == [0, 1, 2],
 		"beats = %s" % str(beats))
+	# THE INVERSION OF THE OLD ASSERTION, and the reason is the whole change:
+	# it used to stop processing the moment the capture finished, which is
+	# exactly what would stop _reverse_tick ever running. A core you hold has
+	# to keep watching, because it can now be taken off you while you are
+	# somewhere else.
+	_check("...and it KEEPS processing, because it can now be lost",
+		point.is_physics_processing(),
+		"a held core that stops ticking can never be retaken")
 
-	# ── the tap lands ───────────────────────────
-	# The flight is not contestable by design, so this is just waiting.
-	for _i in 60:
+	# ── they take it back by standing in it ─────
+	# The mirror of how it was taken. `retake_hostiles` of them, for
+	# `retake_seconds`, with the player not there to stop it.
+	player.global_position = point.global_position + Vector3(400.0, 0.0, 0.0)
+	var mob: Array[Node3D] = []
+	for i in point.retake_hostiles:
+		var f := Node3D.new()
+		f.name = "Retaker%d" % i
+		root.add_child(f)
+		f.add_to_group("enemies")
+		f.global_position = point.global_position
+		mob.append(f)
+	point.retake_seconds = 0.4
+	for _i in 120:
 		await physics_frame
-		if docked[0]:
+		if not point.is_held_by_player():
 			break
-	_check("the tap docks", docked[0])
-	_check("...and the core is now the player's", point.is_held_by_player(),
-		"holder = %d" % int(point.holder))
-
-	# ── one tap per core ────────────────────────
-	var before = point._tap
-	point._on_interacted(null)
-	await physics_frame
-	_check("a second tap cannot be called while the first lives",
-		point._tap == before and not point.is_physics_processing())
-
-	# ── shooting it off ─────────────────────────
-	var lost := [false]
-	point.tap_lost.connect(func(): lost[0] = true)
-	point._tap.apply_damage(9999, null)
-	for _i in 10:
-		await physics_frame
-	_check("shooting the tap off loses the core", lost[0])
-	_check("...and it goes BACK TO THEM, not neutral",
+	_check("%d hostiles standing in it take it back" % point.retake_hostiles,
+		not point.is_held_by_player(), "holder = %d" % int(point.holder))
+	_check("...to THEM, not to nobody",
 		int(point.holder) == int(point.Holder.HOSTILE),
 		"holder = %d" % int(point.holder))
-	_check("...so it can be taken again", point._tap == null)
 
-	# ── the pod becomes a shootable structure ───
-	point.channel_seconds = [0.3, 0.3, 0.3] as Array[float]
+	# ── and the player standing there stops them ─
+	#
+	# THE ORDER MATTERS AND THE FIRST CUT HAD IT WRONG. It left the mob
+	# standing in the circle and expected the player to recapture through
+	# them — which _contested correctly refuses, because you cannot work a
+	# terminal with hostiles on you. That is the rule, not a bug: to take a
+	# core back off them you have to clear them off it first.
+	#
+	# So the case worth testing is the one that actually happens: you hold it,
+	# THEY arrive, and you are standing there when they do.
+	for f in mob:
+		f.queue_free()
+	await physics_frame
+	point.channel_seconds = [0.2, 0.2, 0.2] as Array[float]
 	player.global_position = point.global_position
 	point._on_interacted(null)
 	for _i in 90:
 		await physics_frame
 		if point.is_held_by_player():
 			break
-	_check("the pod lands and the core is held", point.is_held_by_player())
-	var anchor = point._anchor
-	_check("...leaving a CaptureAnchor behind", anchor != null and is_instance_valid(anchor))
-	if anchor != null and is_instance_valid(anchor):
-		_check("...which is a CharacterBody3D the AI can hold a reference to",
-			anchor is CharacterBody3D)
-		_check("...on the PLAYER faction, so enemies treat it as a target",
-			int(anchor.faction) == int(Enums.Factions.PLAYER),
-			"faction = %d" % int(anchor.faction))
-		_check("...with health", int(anchor.health) > 0, "%d hp" % int(anchor.health))
-		_check("...and the flying pod is gone", point._tap == anchor)
-		var gone := [false]
-		point.tap_lost.connect(func(): gone[0] = true)
-		anchor.apply_damage(99999, null)
-		for _i in 30:
-			await physics_frame
-			if gone[0]:
-				break
-		_check("...and destroying it LOSES the core", gone[0])
-		_check("...back to THEM, the owner it was authored with",
-			int(point.holder) == int(point.Holder.HOSTILE), "holder = %d" % int(point.holder))
+	_check("(setup) cleared off and retaken by the player", point.is_held_by_player())
+
+	# Now they come back, and the player is stood on it. Being there is the
+	# defence — there is no key to press, which is the point.
+	var siege: Array[Node3D] = []
+	for i in point.retake_hostiles:
+		var f := Node3D.new()
+		f.name = "Siege%d" % i
+		root.add_child(f)
+		f.add_to_group("enemies")
+		f.global_position = point.global_position
+		siege.append(f)
+	for _i in 90:
+		await physics_frame
+	_check("...and standing in it holds it against them",
+		point.is_held_by_player(),
+		"it slipped while the player was stood on it")
+	for f in siege:
+		f.queue_free()
+	await physics_frame
 
 	# ── contest ─────────────────────────────────
 	# A hostile standing on the terminal should bleed progress rather than
@@ -276,9 +293,26 @@ func _dock_suite() -> void:
 			continue
 		_check("[%s] ...which the core finds from a sibling" % id,
 			hold._find_dock() == dock)
-		_check("[%s] ...and is NOT on the core's axis, which is the whole point" % id,
-			Vector2(dock.position.x, dock.position.z).length() > 0.5,
-			"dock = %s" % str(dock.position))
+		# ── THIS USED TO ASSERT THE DOCK WAS OFF-AXIS. It no longer can, and
+		# the rule it was protecting no longer has anything to protect.
+		#
+		# It existed because a TICK flew in and clamped four legs around a
+		# drone pad on a cantilevered shelf, and the pad had to sit BESIDE the
+		# primary mass so the machine was not landing on the crown. Off-axis
+		# was the shorthand for that.
+		#
+		# There is no tick. Capture is pressing F and holding the circle, the
+		# landing shelf was removed from build_core_relay.gd on 2026-10-17, and
+		# the pad went with it. The dock is the TRAY FLOOR now — on the axis,
+		# deliberately, because that is where the player stands and where a tap
+		# would sit.
+		#
+		# So the assertion is rewritten rather than deleted: a dock still has
+		# to be somewhere sane. On the tray, inside the footprint, not buried
+		# and not floating.
+		_check("[%s] ...and sits on the tray, not buried or floating" % id,
+			dock.position.y > 0.1 and dock.position.y < 2.0,
+			"dock y = %.2f m" % dock.position.y)
 
 		hold._call_tap()
 		var tap = hold._tap
@@ -295,9 +329,19 @@ func _dock_suite() -> void:
 		var off: float = landed[0].distance_to(dock.global_position)
 		_check("[%s] ...ON THE PAD, not on the axis" % id, off < 0.01,
 			"%.3f m from the marker (pod at %s, pad at %s)" % [off, str(landed[0]), str(dock.global_position)])
+		# THE COMPANION TO THE ONE ABOVE, and obsolete for the same reason: it
+		# asserted the marker had moved AWAY from the old axis dock, which was
+		# the tick-era point. The dock is the tray centre now and that distance
+		# is 0 by design.
+		#
+		# What is still worth pinning is that `_dock_y()` — the fallback the
+		# core uses when no marker is found — has not drifted far from where
+		# the marker actually is. A fallback that disagrees with the real thing
+		# is how a tap ends up docking in mid-air on any core that lost its
+		# dress pass.
 		var axis: float = host.to_global(Vector3(0.0, hold._dock_y(), 0.0)).distance_to(dock.global_position)
-		_check("[%s] ...and the axis it used to use is %.2f m away from the pad" % [id, axis],
-			axis > 0.5, "if this ever reads 0 the pad has moved back onto the axis")
+		_check("[%s] ...and the _dock_y() fallback agrees with the marker" % id,
+			axis < 2.0, "%.2f m apart — the fallback has drifted from the Dock" % axis)
 
 		_check("[%s] footprint() matches the bund's short side" % id,
 			absf(hold.footprint() - float(RELAY_FOOT[id])) < 0.01,
