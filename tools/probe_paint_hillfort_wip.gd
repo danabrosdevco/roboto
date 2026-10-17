@@ -36,7 +36,12 @@ const DST := "D:/Godot Games/roboto/Env/terrain/sketches/hillfort_wip.png"
 
 ## Must match the recipe in probe_build_hillfort_wip.gd.
 const SIZE_X := 384.0
-const SIZE_Z := 256.0
+const SIZE_Z := 384.0
+## Must match SOUTH_SHIFT in probe_build_hillfort_wip.gd. The sketch is sampled
+## in WORLD coordinates but written into a rectangle centred on the Terrain
+## node, so without this every mask would land 64 m north of the ground it was
+## painted for — the lanes masked onto the wrong strip, silently.
+const SOUTH_SHIFT := 64.0
 const MPP := 4.0
 
 ## Where the fort stands. Everything here is laid out about it, because that is
@@ -60,7 +65,7 @@ func _initialize() -> void:
 	im.fill(BLACK)
 	var counts := {"white": 0, "yellow": 0, "green": 0}
 	for r in h:
-		var z := -SIZE_Z * 0.5 + r * MPP + MPP * 0.5
+		var z := SOUTH_SHIFT - SIZE_Z * 0.5 + r * MPP + MPP * 0.5
 		for c in w:
 			var x := -SIZE_X * 0.5 + c * MPP + MPP * 0.5
 			var n := wob.get_noise_2d(x, z) * 14.0

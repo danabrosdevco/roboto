@@ -96,7 +96,35 @@ const SKETCH := "res://Env/terrain/sketches/hillfort_wip.png"
 ## says so in one line of @export doc and the bake prints the real figure;
 ## nothing else would have caught it.
 const SIZE_X := 384.0
-const SIZE_Z := 256.0
+## 256 -> 384 on 2026-10-17: the approach was too short. The player met the
+## Pillars garrison 64 m off the spawn, about 14 seconds in, and the human asked
+## for 20-30 more before first contact.
+##
+## 128 m IS BOTH THE ANSWER AND THE ONLY AVAILABLE ONE. The squad moves at
+## 4.5 m/s, so 20-30 s is 90-135 m — and the terrain rounds Z up to whole
+## 64-cell chunks, which at this 2 m cell is 128 m. There was exactly one size
+## that satisfied the request, and it is this.
+const SIZE_Z := 384.0
+
+## ALL OF THE NEW GROUND GOES SOUTH, and this is how.
+##
+## The rectangle is centred on the Terrain node, so simply growing SIZE_Z would
+## have put 64 m of dead ground BEHIND the fort and bought only 64 m of
+## approach — half the request, plus a bald apron nobody will ever walk on.
+##
+## So the Terrain node moves +64 on Z and its six group nodes (Hills,
+## HighGround, Hollows, Shelves, Roads, Scatter) move -64, which cancels
+## exactly. Every stamp underneath therefore keeps the WORLD coordinate it has
+## always had, in the tables above, unedited — the fort, the lanes, the walls,
+## the captures and all nine inner stations are where they were, and the only
+## thing that moved is the Trailhead.
+##
+## Compensating on the six GROUPS rather than inside _xform() and _curve() is
+## deliberate: it is six lines against a hundred call sites, and a missed call
+## site would put one stamp 64 m out of place with nothing to say so. Prove it
+## by sampling ground height at the fort and at Pillars before and after —
+## PROFILE=1 prints both.
+const SOUTH_SHIFT := 64.0
 ## Invisible walls this far in from the edge. THE DEFAULT IS 60, and on a map
 ## this size 60 m a side would wall off a third of the ground and leave the
 ## Terrace and half the hills outside the world. The area the density number is
@@ -173,7 +201,7 @@ const SUMMIT := Vector2(0.0, -66.0)
 ## into it. _profile() prints the cut or fill and it should be a metre or two
 ## everywhere; much more means a hill stamp has drifted onto a pad.
 const STATIONS: Array = [
-	["Trailhead", 0.0, 112.0, 13.0, 104.0, 28.0, 30.0],
+	["Trailhead", 0.0, 236.0, 0.0, 104.0, 28.0, 30.0],
 	# CENTRE
 	["Pillars", 0.0, 50.0, 23.0, 44.0, 28.0, 30.0],
 	["CentreApron", 0.0, 4.0, 32.0, 32.0, 22.0, 30.0],
@@ -573,7 +601,7 @@ const CAPTURES: Array = [
 ##
 ## node, tag, display, x, z, y or NAN_Y to derive
 const OBJECTIVES: Array = [
-	["HFW_Trailhead", "obj_hfw_trailhead", "Trailhead", 0.0, 112.0, 13.0],
+	["HFW_Trailhead", "obj_hfw_trailhead", "Trailhead", 0.0, 236.0, 0.0],
 	["HFW_Pillars", "obj_hfw_pillars", "The Pillars", -17.0, 50.0, 23.0],
 	["HFW_CentreApron", "obj_hfw_centre_apron", "The South Gate", 0.0, 4.0, 32.0],
 	["HFW_Cistern", "obj_hfw_cistern", "The Cistern", -147.0, 70.0, 14.0],
@@ -1435,6 +1463,10 @@ func _art(by_name: Dictionary) -> String:
 	out.append("[node name=\"HillfortWipArt\" type=\"Node3D\"]")
 	out.append("")
 	out.append("[node name=\"Terrain\" type=\"Node3D\" parent=\".\"]")
+	# THE SHIFT. See SOUTH_SHIFT: this moves the rectangle south so the growth
+	# is one-sided, and every group below moves back by the same amount so the
+	# stamps keep their world coordinates.
+	out.append(_xform(0.0, 0.0, SOUTH_SHIFT))
 	out.append("script = ExtResource(\"1_terrain\")")
 	out.append("recipe = SubResource(\"Resource_recipe\")")
 	if has_data:
@@ -1469,6 +1501,7 @@ func _art(by_name: Dictionary) -> String:
 	# roads cut last of all. Move Roads above Shelves and every landing
 	# swallows the leg arriving at it.
 	out.append("[node name=\"Hills\" type=\"Node3D\" parent=\"Terrain\"]")
+	out.append(_xform(0.0, 0.0, -SOUTH_SHIFT))
 	out.append("")
 	var i := 1
 	for g: Array in HILLS:
@@ -1484,6 +1517,7 @@ func _art(by_name: Dictionary) -> String:
 		i += 1
 
 	out.append("[node name=\"HighGround\" type=\"Node3D\" parent=\"Terrain\"]")
+	out.append(_xform(0.0, 0.0, -SOUTH_SHIFT))
 	out.append("")
 	i = 1
 	for c: Array in CONES:
@@ -1499,6 +1533,7 @@ func _art(by_name: Dictionary) -> String:
 		i += 1
 
 	out.append("[node name=\"Hollows\" type=\"Node3D\" parent=\"Terrain\"]")
+	out.append(_xform(0.0, 0.0, -SOUTH_SHIFT))
 	out.append("")
 	i = 1
 	for g: Array in HOLLOWS:
@@ -1514,6 +1549,7 @@ func _art(by_name: Dictionary) -> String:
 		i += 1
 
 	out.append("[node name=\"Shelves\" type=\"Node3D\" parent=\"Terrain\"]")
+	out.append(_xform(0.0, 0.0, -SOUTH_SHIFT))
 	out.append("")
 	# THE BIG TERRACE GOES DOWN FIRST, so the pads and benches that stand on it
 	# win where they overlap. Put it after them and the fort's plateau becomes
@@ -1547,6 +1583,7 @@ func _art(by_name: Dictionary) -> String:
 		out.append("")
 
 	out.append("[node name=\"Roads\" type=\"Node3D\" parent=\"Terrain\"]")
+	out.append(_xform(0.0, 0.0, -SOUTH_SHIFT))
 	out.append("")
 	for k: String in curves:
 		var l: Array = curves[k]
@@ -1671,8 +1708,13 @@ func _level(by_name: Dictionary) -> String:
 	# Proving this box was silently clipping the bake to the old arena, and a
 	# new wing would have been unwalkable with nothing saying why. It is
 	# derived from SIZE_X and SIZE_Z so it cannot fall behind them.
+	# AND IT FOLLOWS THE SHIFT. The box is in WORLD space while SIZE_Z is now
+	# measured about a rectangle centred at z = SOUTH_SHIFT, so an unshifted
+	# box would stop 64 m short of the new southern ground — the whole of the
+	# approach this was grown for, unwalkable, with no error anywhere. That is
+	# the Proving failure exactly, on the one map that just grew.
 	out.append("filter_baking_aabb = AABB(%.0f, -40, %.0f, %.0f, 400, %.0f)" % [
-			-SIZE_X * 0.5 - 8.0, -SIZE_Z * 0.5 - 8.0, SIZE_X + 16.0, SIZE_Z + 16.0])
+			-SIZE_X * 0.5 - 8.0, SOUTH_SHIFT - SIZE_Z * 0.5 - 8.0, SIZE_X + 16.0, SIZE_Z + 16.0])
 	out.append("")
 
 	out.append("[sub_resource type=\"ShaderMaterial\" id=\"ShaderMaterial_sky\"]")

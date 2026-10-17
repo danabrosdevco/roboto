@@ -56,7 +56,7 @@ const EYE := 1.50
 const SHOTS: Array = [
 	# ── THE PLAN. Straight down, framed on the whole playable rectangle, which
 	# is 376 x 248 inside the boundary walls.
-	["00_plan", Vector3(0.0, 420.0, 0.0), Vector3(0.0, 0.0, 0.0), 40.0, "abs"],
+	["00_plan", Vector3(0.0, 560.0, 64.0), Vector3(0.0, 0.0, 64.0), 40.0, "abs"],
 	["00b_plan_north", Vector3(0.0, 260.0, -56.0), Vector3(0.0, 0.0, -56.0), 46.0, "abs"],
 	# Obliques, for reading the shape: a broad gentle dome with a walled fort on
 	# the crown and two wall lines dividing the approach into three.
@@ -68,10 +68,10 @@ const SHOTS: Array = [
 	# From the spawn, looking at the fort. The one question the whole redesign
 	# had to not break: on gentle ground there is no mesa to lift the dish, so
 	# it has to carry itself.
-	["10_trailhead_looking_up", Vector3(0.0, EYE, 112.0), Vector3(-10.0, 50.0, -58.0), 62.0, "eye"],
+	["10_trailhead_looking_up", Vector3(0.0, EYE, 236.0), Vector3(-10.0, 50.0, -58.0), 62.0, "eye"],
 	# THE FAN. Standing at the spawn looking north: the two lane walls end
 	# twenty metres short of here, and this is where the choice is made.
-	["11_the_fan_from_the_spawn", Vector3(0.0, EYE, 122.0), Vector3(0.0, 8.0, 40.0), 72.0, "eye"],
+	["11_the_fan_from_the_spawn", Vector3(0.0, EYE, 246.0), Vector3(0.0, 8.0, 40.0), 72.0, "eye"],
 
 	# ── ONE PER LANE, FROM ITS FOOT, which is where the choice is taken.
 	["12_centre_lane_foot", Vector3(0.0, EYE, 100.0), Vector3(0.0, 8.0, 8.0), 66.0, "eye"],
