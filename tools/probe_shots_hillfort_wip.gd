@@ -95,6 +95,25 @@ const SHOTS: Array = [
 	["24_east_the_terrace", Vector3(120.0, EYE, -32.0), Vector3(146.0, 10.0, -28.0), 66.0, "eye"],
 	["25_the_east_gate", Vector3(92.0, EYE, -54.0), Vector3(54.0, 10.0, -54.0), 62.0, "eye"],
 
+	# ══ THE EDGES. Standing just inside each boundary wall, looking OUT.
+	#
+	# These exist because the map used to end: flat ground to a hard square
+	# edge and then sky, so from anywhere near the rim it read as a tabletop
+	# about to fall away. The backdrop ring went in on 2026-10-17 and the only
+	# way to know whether it works is to stand where the complaint came from.
+	#
+	# THE PLAYABLE RECTANGLE IS x +/-188, z -124..+252, so each of these is
+	# about 13 m inside its wall — close enough that the wall is in frame and
+	# the question is honestly put. A shot taken from the middle of the map
+	# would show a convincing horizon no matter how thin the ring was.
+	["30_edge_south", Vector3(0.0, EYE, 240.0), Vector3(0.0, 14.0, 300.0), 72.0, "eye"],
+	["31_edge_north", Vector3(130.0, EYE, -110.0), Vector3(130.0, 20.0, -190.0), 72.0, "eye"],
+	["32_edge_west", Vector3(-175.0, EYE, 64.0), Vector3(-250.0, 20.0, 64.0), 72.0, "eye"],
+	["33_edge_east", Vector3(175.0, EYE, 64.0), Vector3(250.0, 20.0, 64.0), 72.0, "eye"],
+	# The corner is the worst case: two edges at once, and the diagonal is the
+	# longest sightline out of the box.
+	["34_edge_southwest", Vector3(-170.0, EYE, 236.0), Vector3(-250.0, 16.0, 310.0), 76.0, "eye"],
+
 	# ── INSIDE.
 	["26_the_yard", Vector3(0.0, EYE, -100.0), Vector3(-10.0, 30.0, -62.0), 66.0, "eye"],
 	["27_under_the_dish", Vector3(-52.0, EYE, -58.0), Vector3(-10.0, 45.0, -58.0), 70.0, "eye"],
