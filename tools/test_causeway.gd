@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: terrain
 
 # ─────────────────────────────────────────────
 # CAUSEWAY AND FORT TESTS

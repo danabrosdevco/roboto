@@ -48,11 +48,11 @@ func _init() -> void:
 	for id in [&"soldier", &"mechanic", &"rover", &"walker", &"m4", &"frag",
 			&"smoke", &"repair_kit", &"machine_gun", &"heavy_mg", &"optics"]:
 		st.grant_unlock(id)
-	st.set_site_owner(&"hillfort", Enums.Factions.PLAYER)
+	st.set_site_owner(&"hillfort_wip", Enums.Factions.PLAYER)
 	st.set_site_owner(&"valley_basin", Enums.Factions.PLAYER)
 	st.completed_missions.append(&"arena_1_contact")
 	st.completed_missions.append(&"arena_3_firing_line")
-	st.completed_missions.append(&"hillfort_1_relay")
+	st.completed_missions.append(&"hfw_1_fort")
 	st.completed_missions.append(&"basin_1_anchor")
 	st.under_attack = &"valley_basin"
 	st.under_attack_turn = 6

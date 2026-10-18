@@ -54,9 +54,137 @@ const INTERACTIBLE := preload("res://Env/world_objects/components/template_inter
 var core: Node3D = null
 
 
+## THE REAL ART, instead of the generated placeholder.
+##
+## WHY THIS EXISTS. The whole argument for teaching capture in the arena is at
+## the top of this file: "whatever it teaches has to be what the campaign then
+## asks for". That was true of the MECHANISM from the start — same HoldableCore,
+## same channel, same drone — and false of everything the player looks at. They
+## learned the verb against a grey box and then met a 7 m compute core, and
+## learned the way out against a second grey box and then met a tunnel mouth
+## with doors.
+##
+## `core_scene` instances a compute_core_point prefab and takes its own
+## Interactible. `bunker_mount` instead raises the entrance kit by mounting
+## name, exactly as SiteSlice does on a real site. Neither set keeps the old
+## placeholder, which is still the right answer for anything without art yet.
+@export var core_scene: PackedScene
+## One of SiteSlice's mountings: open, cliff or wall. Set INSTEAD of core_scene.
+@export var bunker_mount: StringName = &""
+## Tier of the prefab in `core_scene`, for sizing the interact volume. Small 0,
+## standard 1, large 2 — a mismatch puts the player inside the volume, where
+## the ray reports nothing to press.
+@export var core_tier: int = 1
+
+const BUNKER_MOUNTS := {
+	&"open": preload("res://maps/blocks/bunker/bunker_entrance_open.tscn"),
+	&"cliff": preload("res://maps/blocks/bunker/bunker_entrance_cliff.tscn"),
+	&"wall": preload("res://maps/blocks/bunker/bunker_entrance_wall.tscn"),
+}
+
+
 func _on_objective_ready() -> void:
 	position = place
-	_build()
+	if bunker_mount != &"":
+		_build_from_kit()
+	elif core_scene != null:
+		_build_from_prefab()
+	else:
+		_build()
+
+
+## A real compute core, seated the way SiteSlice seats one: instance the
+## prefab, find the Interactible it already carries, hang a HoldableCore off
+## that. Nothing is generated and nothing is doubled.
+func _build_from_prefab() -> void:
+	var art := core_scene.instantiate()
+	art.name = "Art"
+	add_child(art)
+	var inter := _interactible_in(art)
+	if inter == null:
+		push_warning("TrainingCore '%s': the core prefab has no Interactible, so the exercise has nothing to press. Falling back to the placeholder." % name)
+		art.queue_free()
+		_build()
+		return
+	_wire_core(inter, core_tier)
+
+
+## The bunker entrance kit, which is what the way out looks like on every real
+## site since §12.7 replaced the extraction pad with the doors.
+func _build_from_kit() -> void:
+	var mount: PackedScene = BUNKER_MOUNTS.get(bunker_mount, null)
+	if mount == null:
+		push_warning("TrainingCore '%s': '%s' is not a bunker mounting; expected one of %s. Falling back to the placeholder." % [
+			name, String(bunker_mount), str(BUNKER_MOUNTS.keys())])
+		_build()
+		return
+	var kit := mount.instantiate()
+	kit.name = "Entrance"
+	add_child(kit)
+	# F GOES ON THE TERMINAL FACE, not in the middle of the doorway — the same
+	# handle SiteSlice uses, and a rename upstream has to be loud rather than
+	# quietly leaving an exercise with nothing to interact with.
+	var face := _named_in(kit, "TerminalFace")
+	if face == null:
+		push_warning("TrainingCore '%s': the bunker kit has no TerminalFace, so there is nowhere to put the prompt." % name)
+	var inter: Interactible = INTERACTIBLE.instantiate()
+	inter.name = "Interactible"
+	add_child(inter)
+	inter.collision_layer = 3
+	inter.type = Enums.InteractTypes.OBJECTIVE
+	inter.destroy_on_use = false
+	inter.disable_on_use = false
+	inter.global_position = (face as Node3D).global_position if face != null \
+		else global_position + Vector3(0.0, 1.0, 0.0)
+	var ics := CollisionShape3D.new()
+	var ibox := BoxShape3D.new()
+	ibox.size = Vector3(3.0, 2.6, 3.0)
+	ics.shape = ibox
+	inter.add_child(ics)
+	_wire_core(inter, 1)
+
+
+## The half both real-art paths share: the HoldableCore and its signal, which
+## are the part that was always real.
+func _wire_core(inter: Interactible, tier: int) -> void:
+	core = Node3D.new()
+	core.set_script(_Core)
+	core.name = "Hold"
+	core.size_tier = tier
+	core.mark_noun = noun
+	core.interactible = inter
+	add_child(core)
+	var fx := Node3D.new()
+	fx.set_script(_Signal)
+	fx.name = "Signal"
+	fx.core = core
+	add_child(fx)
+	# SHUT UNTIL ITS TURN, same rule and same reason as the placeholder path:
+	# HoldableCore.complete()s on capture without consulting `active`, so the
+	# bunker could be taken before the core and tick a line never shown.
+	if not active:
+		inter.collision_layer = 0
+		objective_activated.connect(_on_turn_came)
+
+
+func _interactible_in(n: Node) -> Interactible:
+	if n is Interactible:
+		return n as Interactible
+	for c in n.get_children():
+		var f := _interactible_in(c)
+		if f != null:
+			return f
+	return null
+
+
+func _named_in(n: Node, named: String) -> Node:
+	if String(n.name) == named:
+		return n
+	for c in n.get_children():
+		var f := _named_in(c, named)
+		if f != null:
+			return f
+	return null
 
 
 func _build() -> void:

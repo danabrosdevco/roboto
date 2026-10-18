@@ -1,0 +1,220 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=20 format=3 uid="uid://fd3nj06ukpma"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" path="res://maps/polaris_level.tscn" id="3_map"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rifle"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="6_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+[ext_resource type="Resource" uid="uid://1rea71mf80nx" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="8_armour"]
+[ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="9_marks"]
+[ext_resource type="Resource" uid="uid://daikhvrvnhg7g" path="res://Campaign/chassis/chassis_walker.tres" id="11_walker"]
+
+[sub_resource type="Resource" id="A_south"]
+script = ExtResource("2_espec")
+callsign = "SNOWLINE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_s"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_east"]
+script = ExtResource("2_espec")
+callsign = "HOARFROST"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("6_chaser"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pol_garage"
+spawn_tag = &"obj_pol_ring_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_west"]
+script = ExtResource("2_espec")
+callsign = "PACKICE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("8_armour"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pol_cinema"
+spawn_tag = &"obj_pol_ring_w"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_north"]
+script = ExtResource("2_espec")
+callsign = "WINDCHILL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_deck"]
+script = ExtResource("2_espec")
+callsign = "BLACKICE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_armour"), ExtResource("8_armour"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_e"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 90.0
+
+[sub_resource type="Resource" id="A_blvd"]
+script = ExtResource("2_espec")
+callsign = "DRIFTWAY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_armour"), ExtResource("8_armour"), ExtResource("9_marks"), ExtResource("5_rifle"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_w"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 150.0
+
+[sub_resource type="Resource" id="A_sub"]
+script = ExtResource("2_espec")
+callsign = "SNOWPLOUGH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("6_chaser"), ExtResource("6_chaser"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pol_garage"
+spawn_tag = &"obj_pol_ring_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 210.0
+
+[sub_resource type="Resource" id="A_mplex"]
+script = ExtResource("2_espec")
+callsign = "GRITTER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("8_armour"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pol_cinema"
+spawn_tag = &"obj_pol_ring_s"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 270.0
+
+[sub_resource type="Resource" id="A_last"]
+script = ExtResource("2_espec")
+callsign = "ICEFALL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_walker"), ExtResource("8_armour"), ExtResource("9_marks"), ExtResource("5_rifle"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pol_court"
+spawn_tag = &"obj_pol_ring_n"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 330.0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"polaris_2_defend"
+display_name = "Polaris — Hold"
+briefing = "THE RING ROAD IS A CLOSED LOOP AND THEY ARE ON ALL OF IT.
+
+You held this court once already, against five waves somebody else counted for you. Nothing is counting this time. They come in off the loop — south across the car park, east round the parking deck, west down the boulevard past the multiplex, north out of the subdivision, which is still the one direction the court has nothing covering.
+
+Three things are yours and all three are in the open: the uplink in the entry court, the multiplex relay on the west flank, the deck relay on the east. The mall is a wall at your back with no way through it. There is no straight on this site longer than a hundred and fifty metres and no corner a vehicle cannot reach.
+
+Your garrison is on the planters, both corrals and both anchor lobes — which is the court and its two shoulders, and nothing at all out in the asphalt. The aisles are cover for whoever is crossing, not for whoever is holding. That was true when you were the one crossing.
+
+There is no extraction and nothing to carry home: what you are fighting for is the ground you already own, and everything it pays you."
+level_scene = ExtResource("3_map")
+map_position = Vector2(0, 0)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("A_south"), SubResource("A_east"), SubResource("A_west"), SubResource("A_north"), SubResource("A_deck"), SubResource("A_blvd"), SubResource("A_sub"), SubResource("A_mplex"), SubResource("A_last")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"pol_breach", &"pol_relay_cinema", &"pol_relay_deck"])
+reward_resources = 0
+compute_reward = 0
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = true
+defence = true
+sim = false
+garrison_posts = Array[StringName]([&"obj_pol_planters", &"obj_pol_corral_w", &"obj_pol_corral_e", &"obj_pol_anchor_w", &"obj_pol_anchor_e"])
+requires = Array[StringName]([&"polaris_1_siege"])

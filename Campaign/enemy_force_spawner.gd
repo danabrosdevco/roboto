@@ -1099,12 +1099,21 @@ func _apply_loadout(soldier: Soldier, frame: ChassisDefinition, seed_text: Strin
 # So this re-tests at the finished position and nudges outward until the body
 # is genuinely in the clear, re-standing at each step because moving sideways
 # changes what is underfoot.
+#
+# IT ALSO OWNS A SECOND FAULT THAT LOOKS NOTHING LIKE THE FIRST: a body seated
+# ON TOP OF a capture objective. That is not an overlap and _body_fits is right
+# to pass it — see _on_objective_prop, added after a playtest found hostiles
+# standing on the Hillfort relay core where no shot could reach them.
 # ─────────────────────────────────────────────
 func _settle_clear(at: Vector3, soldier: Soldier, level: Node, reach: float) -> Vector3:
 	if not (level is Node3D) or not level.is_inside_tree():
 		return at
 	var space := (level as Node3D).get_world_3d().direct_space_state
-	if space == null or _body_fits(at, reach, space, soldier):
+	if space == null:
+		return at
+	# TWO WAYS A SEAT IS WRONG, and only one of them is an overlap. See
+	# _on_objective_prop for the other.
+	if _body_fits(at, reach, space, soldier) and not _on_objective_prop(at, space):
 		return at
 	for step in SEAT_STEPS:
 		var out := float(step + 1) * SEAT_STEP
@@ -1120,11 +1129,68 @@ func _settle_clear(at: Vector3, soldier: Soldier, level: Node, reach: float) -> 
 			# air, which is not an improvement on either count.
 			if not _has_floor(stood, space):
 				continue
-			if _body_fits(stood, reach, space, soldier):
+			if _body_fits(stood, reach, space, soldier) and not _on_objective_prop(stood, space):
 				return stood
-	push_warning("EnemyForceSpawner: %s is inside the level at (%.0f, %.1f, %.0f) and nowhere within %.0fm is clear — the post it spawns on needs moving." % [
+	push_warning("EnemyForceSpawner: %s is inside the level (or on an objective) at (%.0f, %.1f, %.0f) and nowhere within %.0fm is clear — the post it spawns on needs moving." % [
 		soldier.soldier_name, at.x, at.y, at.z, float(SEAT_STEPS) * SEAT_STEP])
 	return at
+
+
+## IS IT STANDING ON THE CAPTURE OBJECTIVE ITSELF?
+##
+## REPORTED FROM PLAY ON HILLFORT: hostiles "within the capture objective" that
+## could not be shot. Measured, DISH-1 was standing 1.6 m up and dead centre on
+## the relay core — on top of its plinth, screened from every approach by its
+## own tower, with a clear line to the player and none back.
+##
+## _body_fits CANNOT SEE THIS, and nothing is wrong with _body_fits. A body on
+## top of a plinth overlaps nothing at all: it is standing on a surface, the
+## same way it stands on the ground. The seat passed every test it was given
+## because being on the furniture is not a collision.
+##
+## It happens wherever an authored garrison post and a slice-built core landed
+## on the same spot — obj_hillfort_dish is exactly where HillfortSlice seats
+## RelayObjective — and the posts predate the cores by a long way, so the
+## overlap was nobody's mistake. Moving nine posts would fix the nine we know
+## about; this fixes the rule, which is that the objective is scenery and a
+## garrison stands AROUND it.
+##
+## The bunker counts too, for the same reason and more so: its roof is flat.
+func _on_objective_prop(at: Vector3, space: PhysicsDirectSpaceState3D) -> bool:
+	var q := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 0.4, at + Vector3.DOWN * 2.5)
+	var skip: Array[RID] = []
+	for _i in 4:
+		q.exclude = skip
+		var hit := space.intersect_ray(q)
+		if hit.is_empty():
+			return false
+		if hit.collider is CharacterBody3D or hit.collider is RigidBody3D:
+			skip.append(hit.rid)
+			continue
+		return _owned_by_objective(hit.collider as Node)
+	return false
+
+
+## Walk up from a collider looking for the thing that owns it. Bounded, because
+## this runs once per body per seat candidate and a level is deep.
+func _owned_by_objective(n: Node) -> bool:
+	var up: Node = n
+	for _i in 6:
+		if up == null:
+			return false
+		if String(up.name) == "SiteBunker":
+			return true
+		var s = up.get_script()
+		if s != null and String(s.resource_path).ends_with("holdable_core.gd"):
+			return true
+		# A core is a prefab with the HoldableCore hanging off it rather than
+		# scripting it, so the sibling has to be looked at too.
+		for c in up.get_children():
+			var cs = c.get_script()
+			if cs != null and String(cs.resource_path).ends_with("holdable_core.gd"):
+				return true
+		up = up.get_parent()
+	return false
 
 
 ## Is there room for this body AT this exact spot? Other bodies are ignored —

@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # ITEM FACTS — the figures a gear card prints, read off the gear's own scenes.

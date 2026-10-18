@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # RECLAIMER — the tracked repair and salvage frame drives like something on
@@ -95,6 +96,11 @@ func _flat(a: Vector3, b: Vector3) -> float:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	var cat: ItemCatalogue = load(CATALOGUE)
 

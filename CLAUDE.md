@@ -49,6 +49,25 @@ purpose. `lore.txt` is the current world.
    `tick.tscn`. Check what is really there before you trust any commit, and
    stage paths explicitly rather than `-a`.
 
+## When you are doing X, read Y
+
+This file is the entry point, not the whole story. These are not optional
+reading — each one exists because the short version here was not enough and
+something shipped broken.
+
+| when you are | read |
+|---|---|
+| asked for a **new** chassis, map, site, mission, weapon or objective | **`docs/FEATURE_CHECKLISTS.md`** — binding; account for every line |
+| about to report **any** work | **`docs/TESTING.md`** — what each tool proves, the five buckets, what to run for what you touched |
+| starting on anything at all | `docs/BRIEFING.md` §3 and §4 — the invariants and the failure patterns |
+| wondering whose file this is | `docs/BOARD.md` → the ownership table |
+| writing a level, or looking at one | `docs/TERRAIN.md`, `docs/BLOCKS.md` |
+| closing a session | `docs/reports/<YOUR LANE>.md` — the template is at the top |
+
+The first two are also packaged as the **`dcw-agent-instructions`** skill,
+which surfaces itself when the work matches — nobody has to invoke it by name.
+It is a router to the same documents, not a second copy of them.
+
 ## Before you finish — non-negotiable
 
 Run the verification script. It must print `PASS`.
@@ -61,76 +80,10 @@ If it fails, fix it. Do not report a task complete with a failing check. If
 you genuinely cannot make it pass, say so explicitly and explain what's
 blocking.
 
-## The tools, and what each one actually proves
-
-Measured 2026-10-16, not remembered. `tools/` holds **103 `test_*.gd`, 90
-`probe_*.gd`, 19 `shot_*.gd`** and 148 builders and utilities. Three prefixes,
-three different contracts:
-
-| prefix | what it is | how it is run | how it reports |
-|---|---|---|---|
-| `test_*.gd` | an assertion suite | by `tools/test.sh`, and by hand | **exit code** — 0 passes |
-| `probe_*.gd` | a diagnostic | by hand, always | prints measurements |
-| `shot_*.gd` | a camera | by hand, **headful** | writes PNGs |
-
-**The exit code is the contract for a suite, not the printing.** All 103 call
-`quit()` with a code and `test.sh` reads only that; the `PASS`/`FAIL` line is a
-house style 48 of them use. A new suite must `quit(0)` on success and non-zero
-on failure, whatever else it prints.
-
-**A probe answers "what is it", a suite answers "is it right".** Use a probe
-when you are finding something out and a suite when you are pinning something
-down. Fourteen probes currently print `PASS`/`FAIL` and are suites wearing the
-wrong prefix — do not copy them.
-
-**A `shot_` tool must refuse `--headless` and say so.** The dummy renderer
-returns blank textures, so a headless render comes back flat and *looks like
-proof*. Sixteen of the nineteen guard against it; three do not.
-
-### The four runners
-
-```bash
-bash tools/check.sh --changed     # parse + scenes, only what you touched
-bash tools/check.sh               # the whole project, slow
-bash tools/smoke.sh [seconds]     # boot the game, default 15
-bash tools/test.sh                # every test_*.gd
-bash tools/test.sh --fast         # only suites that never boot world.tscn
-bash tools/gate_terrain.sh        # TERRAIN's lane, per-suite timeout
-```
-
-**`check.sh`** runs three phases: GDScript parse, scene/resource integrity
-(`load_steps` included), and overlapping brushes. It proves code *parses*. It
-cannot prove it *runs*.
-
-**`smoke.sh`** boots the real game headless with `-- --no-save` and fails on
-any runtime error in the window. This is the only thing that catches a null
-node path, a bad cast or an unassigned export on frame one.
-
-**`test.sh`** globs every `tools/test_*.gd`. `--fast` skips any suite whose
-file mentions `world.tscn` — the tier marker is read from the file, so it never
-drifts. Two suites are PARKED in the script and named there with the reason.
-
-**`test.sh` has no per-suite timeout, and one suite never terminates.**
-`test_designator_squad.gd` hangs; `test.sh` waits on each suite forever, so
-everything behind it stalls. Twelve orphaned Godot process pairs were once
-found from it, aged up to four days. This is why `gate_terrain.sh` exists and
-why **"I ran the full suite" has not been true of this project for some time.**
-Say which suites you ran.
-
-### What to run, by what you touched
-
-| you changed | run |
-|---|---|
-| anything at all | `check.sh --changed` — **non-negotiable, must print `PASS`** |
-| something that loads at startup | `+ smoke.sh` |
-| the ledger, armoury, store, or anything with an invariant | `+ test.sh` (or the named suites) |
-| a level, blocks, prefabs or navigation | `+ gate_terrain.sh` |
-| `Campaign/locations/*` or `location_catalogue.tres` | `+ test_campaign_spine.gd` — a new Location moves §2's income totals and a degree count |
-| a mission's enemy force | `+ measure_resistance.gd`, `+ spawn_geometry_audit.gd` |
-| anything you cannot see | **render it** — a `shot_` tool, and look at the image |
-
-If you cannot run something, say which one and why. A named gap is useful; a
-silent one is how a red suite survives a report.
+That is the floor, not the ceiling. **`docs/TESTING.md`** has what each tool
+actually proves, the five named buckets, and a table of what to run for what
+you touched. Read it before you report — and never write "the full suite",
+which has not been a true statement here for some time.
 
 ## This machine
 
@@ -209,14 +162,20 @@ Ask rather than guess, especially about:
 Work through this literally before you report. Each line is here because
 skipping it has cost a session.
 
+**0 · If it was a new anything, the list is accounted for.** Chassis, map,
+site, mission, weapon, objective — go back to **`docs/FEATURE_CHECKLISTS.md`**
+and state every line as done or not-applicable. This is item zero because a
+feature that is 90% registered is a feature that silently does nothing, and
+nothing downstream will catch it.
+
 **1 · It parses.** `bash tools/check.sh --changed` prints `PASS`. No
 exceptions, no "it's only a comment".
 
-**2 · You ran what the change earned.** See the table in *What to run, by what
-you touched*. Then **name the suites you ran and their counts** — "30/30 on
+**2 · You ran what the change earned.** See `docs/TESTING.md` → *What to run,
+by what you touched*. Then **name the suites and their counts** — "30/30 on
 `test_hillfort_wip`" is a report; "tests pass" is not. Never write "the full
-suite" — `test.sh` cannot currently finish (see above), so the phrase is
-always either false or unverifiable.
+suite" — `test.sh` cannot currently finish, so the phrase is always either
+false or unverifiable.
 
 **3 · You looked at anything visual.** If the change affects something on
 screen, render it with a `shot_` tool and *open the image*. A structural probe

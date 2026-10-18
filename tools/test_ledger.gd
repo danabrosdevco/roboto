@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 ## Prices come from the band table now (Campaign/pricing.gd), NOT from the
 ## `cost` a fixture sets — make_item()'s cost argument is inert for anything
@@ -34,6 +35,11 @@ var _failures: int = 0
 
 
 func _initialize() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	# A PROBE FILE, NOT THE PLAYER'S SETTINGS. locked_by() consults the DEBUG
 	# "unlock all gear" switch, which lives in settings.json — so with that
 	# ticked on the machine running the suite, every unlock check here failed and
@@ -388,7 +394,7 @@ func test_the_ally_ramp() -> void:
 	# broke at a link nothing walks any more. Retired rather than deleted,
 	# because deleting authored content is the human's call.
 	var files := ["arena_1_contact", "arena_3_firing_line",
-		"hillfort_1_relay",
+		"hfw_1_fort",
 		"basin_1_anchor", "coast_1_road", "pitt_1_rivers"]
 	var by_id: Dictionary = {}
 	for f in files:

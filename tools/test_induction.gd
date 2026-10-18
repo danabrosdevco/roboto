@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE DEPOT INDUCTION — the first visit to base is a mission, and only the
@@ -75,6 +76,11 @@ func _says(n: Node, text: String) -> bool:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_induction_test.json"
 	await process_frame
 	var master: Master = load("res://Managers/master.tscn").instantiate()

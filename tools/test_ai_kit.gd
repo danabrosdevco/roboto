@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # THE REST OF THE KIT, NOW THAT THE SQUAD CAN ACTUALLY USE IT.

@@ -635,7 +635,14 @@ func _rejoin_position(squad: Squad) -> Vector3:
 # Must run while the nodes still exist. A soldier that was freed mid-mission is
 # recorded as destroyed rather than silently skipped, or the roster would
 # quietly keep anyone who died to something that queue_free()d them.
-func write_back() -> Dictionary:
+## `practice` COUNTS WITHOUT WRITING BACK. A sim arena exercise and a lab
+## fight pass no turn, pay nothing and take no ground — and they must not be
+## the thing that destroys a squadmate either. In practice the tallies are
+## still collected so the debrief can say honestly what happened out there,
+## but no record is touched: nothing comes home damaged, nothing comes home
+## DESTROYED, and `missions_survived` does not tick for a mission that was not
+## one. See Campaign.is_practice().
+func write_back(practice: bool = false) -> Dictionary:
 	var survivors := 0
 	var lost := 0
 	for node in _spawned.keys():
@@ -643,10 +650,18 @@ func write_back() -> Dictionary:
 		if record == null:
 			continue
 		if node == null or not is_instance_valid(node):
-			record.read_from(null)
+			if not practice:
+				record.read_from(null)
 			lost += 1
 			continue
 		var soldier := node as Soldier
+		if practice:
+			# A LIVE NODE IS A SURVIVOR, always. read_from only ever reports
+			# DESTROYED for a body that is gone — the branch above — so there
+			# is nothing else to test here, and the record is deliberately
+			# left untouched.
+			survivors += 1
+			continue
 		record.read_from(soldier)
 		if record.status == SoldierRecord.Status.DESTROYED:
 			lost += 1

@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # A DEFENCE IS THE SAME GROUND, THE OTHER WAY ROUND.

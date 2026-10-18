@@ -229,6 +229,33 @@ func _bind_campaign() -> void:
 #
 # Read off the record rather than set to max_health directly: the record is
 # what the heal touched, and it carries the module bonuses with it.
+
+
+## ARRIVING SOMEWHERE NEW — put the body back the way it deploys.
+##
+## The player is carried ACROSS a level change rather than rebuilt from their
+## record (see _repair_at_base above, which exists for the same reason), so
+## everything that happened on the last map was still on them when the next
+## one opened: the health they limped out with, and a suppression state that
+## decays in seconds but was mid-decay at the moment the level unloaded.
+##
+## This is not the same as _repair_at_base. That is HOME repairing you between
+## operations and it touches the record. This is the body itself being put
+## back to deployable, which has to happen on every load — including arena
+## exercises and lab fights, where the record is deliberately never touched at
+## all and so could not carry the repair even if it wanted to.
+##
+## Called by World.load_next_level, after place_at.
+func reset_for_new_level() -> void:
+	health = max_health
+	# EVERYTHING THE SUPPRESSION SYSTEM BUILDS UP, not just the headline
+	# number. signal_integrity is the lasting degradation; the lock timer and
+	# the latch are the short-lived state on top of it, and leaving either
+	# behind means arriving unable to shoot straight for reasons belonging to
+	# a map that no longer exists.
+	signal_integrity = 1.0
+	_signal_locked_t = 0.0
+	_ekill_latched = false
 func _repair_at_base(campaign: Node) -> void:
 	health = max_health
 	# And the record with it, so the two cannot disagree about how hurt you are.
@@ -944,3 +971,23 @@ func _signal_move_scale() -> float:
 		SignalState.DEGRADED: return signal_speed_degraded
 		SignalState.FUZZED:   return signal_speed_fuzzed
 	return 1.0
+
+
+## FORGET WHAT THE CROSSHAIR WAS ON, and tell the HUD so.
+##
+## For anything that takes the screen away and gives it back — the operations
+## board, the squad manager. They hide the HUD on open and restore it on close
+## by putting back exactly what was visible, which is right for the purse and
+## the squad list and WRONG for the interact prompt: that prompt was visible
+## because the player was looking at the thing they just pressed F on, so
+## restoring it puts a stale "F | SELECT MISSION" back on screen. If the next
+## thing that happens is a level load, the table it named is freed and nothing
+## ever takes the prompt down again — reported twice from the sim arena.
+##
+## check_interactible() cannot fix it on its own: it early-returns when what it
+## found equals what it had, and after a board close both are usually null, so
+## it never emits and the HUD never hears. Clearing the memory here forces the
+## next frame to re-acquire from scratch and say so either way.
+func forget_interactible() -> void:
+	current_interactible = null
+	activate_interactible_ui.emit(null)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=40 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
@@ -25,12 +25,20 @@
 [ext_resource type="Resource" uid="uid://oem8mh562jhf" path="res://Campaign/missions/mission_basin_1_anchor.tres" id="100_b1"]
 [ext_resource type="Resource" uid="uid://4ctfgm8cxpe7" path="res://Campaign/missions/mission_pitt_1_rivers.tres" id="101_p1"]
 [ext_resource type="Resource" uid="uid://cry1dne04yl1u" path="res://Campaign/missions/mission_mutaha_2_city.tres" id="103_m2"]
-[ext_resource type="Resource" uid="uid://ca167sd6w3m08" path="res://Campaign/missions/mission_hillfort_1_relay.tres" id="104_hf"]
 [ext_resource type="Resource" uid="uid://dj8rl1sqyxtts" path="res://Campaign/missions/mission_georgetown_1_ascent.tres" id="105_gt"]
 [ext_resource type="Resource" uid="uid://dnuyyo4868s2o" path="res://Campaign/missions/mission_polaris_1_siege.tres" id="106_pol"]
 [ext_resource type="Resource" uid="uid://bu5n0k87wqkyd" path="res://Campaign/missions/mission_causeway_1_tower.tres" id="107_cw"]
 [ext_resource type="Resource" uid="uid://cd0kxuw1x1q6m" path="res://Campaign/missions/mission_salient_1_overthetop.tres" id="108_sal"]
 [ext_resource type="Resource" uid="uid://trt8yf8ngk4k" path="res://Campaign/missions/mission_basin_2_defend.tres" id="109_b2d"]
+[ext_resource type="Resource" uid="uid://c06xmxyuaw2bu" path="res://Campaign/missions/mission_coast_2_defend.tres" id="111_c2"]
+[ext_resource type="Resource" uid="uid://cgtxdu5m42nrq" path="res://Campaign/missions/mission_pitt_2_defend.tres" id="112_p2"]
+[ext_resource type="Resource" uid="uid://bqbco6djbe7mq" path="res://Campaign/missions/mission_mutaha_3_defend.tres" id="113_m3"]
+[ext_resource type="Resource" uid="uid://bssew42jrc5y7" path="res://Campaign/missions/mission_georgetown_2_defend.tres" id="114_gt2"]
+[ext_resource type="Resource" uid="uid://fd3nj06ukpma" path="res://Campaign/missions/mission_polaris_2_defend.tres" id="115_pol2"]
+[ext_resource type="Resource" uid="uid://byuyd6eebokpn" path="res://Campaign/missions/mission_causeway_2_defend.tres" id="116_cw2"]
+[ext_resource type="Resource" uid="uid://bk3flmnv585fp" path="res://Campaign/missions/mission_salient_2_defend.tres" id="117_sal2"]
+[ext_resource type="Resource" uid="uid://c4upcpnw7um6o" path="res://Campaign/missions/mission_hfw_1_fort.tres" id="118_hfw"]
+[ext_resource type="Resource" uid="uid://be637425ivucl" path="res://Campaign/missions/mission_hfw_2_defend.tres" id="119_hfw2"]
 
 [node name="World" type="Node3D" node_paths=PackedStringArray("player", "current_level", "ai_manager", "game_manager", "squad_spawner", "objective_tracker", "Campaign", "enemy_spawner")]
 script = ExtResource("1_2t272")
@@ -90,10 +98,11 @@ script = ExtResource("12_1xc4a")
 [node name="CampaignManager" type="Node" parent="." groups=["campaign"]]
 script = ExtResource("15_3b3cm")
 base_level = ExtResource("16_oio3q")
-missions = Array[ExtResource("16_oqoj0")]([ExtResource("95_a1"), ExtResource("97_a3"), ExtResource("104_hf"), ExtResource("100_b1"), ExtResource("98_c1"), ExtResource("101_p1"), ExtResource("103_m2"), ExtResource("105_gt"), ExtResource("106_pol"), ExtResource("107_cw"), ExtResource("108_sal"), ExtResource("109_b2d")])
+missions = Array[ExtResource("16_oqoj0")]([ExtResource("95_a1"), ExtResource("97_a3"), ExtResource("118_hfw"), ExtResource("100_b1"), ExtResource("98_c1"), ExtResource("101_p1"), ExtResource("103_m2"), ExtResource("105_gt"), ExtResource("106_pol"), ExtResource("107_cw"), ExtResource("108_sal"), ExtResource("111_c2"), ExtResource("112_p2"), ExtResource("113_m3"), ExtResource("114_gt2"), ExtResource("115_pol2"), ExtResource("116_cw2"), ExtResource("117_sal2"), ExtResource("119_hfw2"), ExtResource("109_b2d")])
 catalogue = ExtResource("18_kolru")
 starting_chassis = ExtResource("11_6rcry")
-starting_resources = 500
+starting_resources = 1000
+starting_compute = 2
 starting_stock = Array[StringName]([&"m4", &"m4", &"m4", &"m4", &"frag", &"frag", &"frag", &"repair_kit"])
 
 [node name="EnemyForceSpawner" type="Node" parent="." node_paths=PackedStringArray("world", "ai_manager")]

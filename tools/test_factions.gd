@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: shell
 
 # ─────────────────────────────────────────────
 # FACTIONS — who attacks whom

@@ -92,6 +92,25 @@ const CONTACT_REPORT_SECONDS: float = 45.0
 var _contact_marks: Dictionary = {}   # instance_id -> ScanEnemyMarker
 
 
+## WIPE THE BOARD — a new level knows nothing about the last one.
+##
+## The HUD outlives the level (it hangs off the player, who is carried across
+## rather than rebuilt), so contact marks from the operation you just left
+## survived the load and sat on the new map pointing at world positions that
+## mean nothing there. Forty-five seconds of a dead site's sightings, drawn
+## over the one you just arrived at.
+##
+## Called by World.load_next_level. The marks are children of this node, so
+## they are freed rather than merely forgotten — a stale Control that nothing
+## refreshes is still a Control being drawn.
+func clear_contacts() -> void:
+	for id in _contact_marks:
+		var mark = _contact_marks[id]
+		if mark != null and is_instance_valid(mark):
+			mark.queue_free()
+	_contact_marks.clear()
+
+
 func _exit_tree() -> void:
 	Settings.remove_listener(_on_setting_changed)
 
@@ -219,15 +238,15 @@ func activate_interactible(interactible: Interactible):
 			# InteractTypes is append-only — its values are stored as ints in
 			# .tscn files, so removing one silently renumbers every interactible
 			# authored after it. Dead branch, deliberately.
-			interact_label.text = "F | Interact"
+			interact_label.text = _prompt("INTERACT")
 		Enums.InteractTypes.MISSION:
 			# The terminal knows which operation is queued. `value` is
 			# meaningless on a terminal, which is where "F | 0" came from.
-			interact_label.text = "F | %s" % _prompt_from(interactible.get_parent(), "Select Mission")
+			interact_label.text = _prompt(_prompt_from(interactible.get_parent(), "Select Mission"))
 		Enums.InteractTypes.DEPART:
 			# The lever knows whether the train has gone yet, and whether there
 			# is anywhere to go. Same parent-asks-the-node route as MISSION.
-			interact_label.text = "F | %s" % _prompt_from(interactible.get_parent(), "Depart")
+			interact_label.text = _prompt(_prompt_from(interactible.get_parent(), "Depart"))
 		Enums.InteractTypes.RESUPPLY:
 			# A Drayman's chute. The frame knows how many charges are left and
 			# whether it is spent, and it is an ANCESTOR of the Interactible
@@ -235,16 +254,16 @@ func activate_interactible(interactible: Interactible):
 			# its parent is the wrist. _prompt_from's direct-parent route, which
 			# MISSION and DEPART use, would ask a bare Node3D and always fall
 			# back.
-			interact_label.text = "F | %s" % _prompt_from(_prompt_owner(interactible), "Resupply")
+			interact_label.text = _prompt(_prompt_from(_prompt_owner(interactible), "Resupply"))
 		Enums.InteractTypes.OBJECTIVE:
 			# The console doesn't own the objective — InteractObjective holds an
 			# array of them and tags each one on _ready, so ask the tag.
 			var objective := _objective_tag(interactible)
 			interact_label.text = _objective_prompt(objective)
 		Enums.InteractTypes.HEALTH:
-			interact_label.text = "F | Repair  +%d" % value
+			interact_label.text = _prompt("REPAIR +%d" % value)
 		_:
-			interact_label.text = "F | %d" % value  # default label for others
+			interact_label.text = _prompt(str(value))
 
 	if interact_textures.has(type):
 		interact_texture.texture = interact_textures[type]
@@ -260,6 +279,27 @@ func activate_interactible(interactible: Interactible):
 # part of something bigger than itself. Returns the direct parent when nothing
 # up the tree answers, so _prompt_from then falls back exactly as it does for a
 # static world object.
+
+
+## THE PROMPT, IN ONE PLACE AND IN THE GAME'S OWN VOICE.
+##
+## It used to be "F | Interact" at font size 30 in whatever font Godot picked,
+## white, in sentence case. Every other thing on this HUD is DS-Digital at
+## 13-16 in the signal palette and upper case, so the one piece of text the
+## player reads most often was the only piece that looked like a placeholder.
+##
+## WHAT CHANGED, and why each bit:
+##   - the key and the verb are separated by two spaces, not " | ". A pipe is
+##     punctuation the player has to parse; a gap is not.
+##   - UPPER CASE, because the rest of the HUD is and a prompt that is not
+##     reads as a different system talking.
+##   - the verb is the whole message. "F  SELECT MISSION" says what pressing
+##     it does; "F | 7" said what the thing was worth, which is not a prompt.
+##
+## Everything funnels through here so the next change is one edit rather than
+## seven — the seven were already drifting.
+func _prompt(verb: String) -> String:
+	return "F  %s" % verb.strip_edges().to_upper()
 func _prompt_owner(node: Node) -> Node:
 	var up: Node = node.get_parent()
 	while up != null:
@@ -296,9 +336,12 @@ func _objective_tag(source: Object) -> Object:
 # there is nothing left to press there.
 func _objective_prompt(objective: Object) -> String:
 	var text := _prompt_from(objective, "Interact")
+	# A FINISHED OBJECTIVE IS A LABEL, NOT A PROMPT. It keeps whatever the
+	# objective wants to say and loses the key, because there is nothing left
+	# to press.
 	if objective != null and is_instance_valid(objective) and objective.get("completed") == true:
 		return text
-	return "F | %s" % text
+	return _prompt(text)
 
 
 # Kept so the prompt follows a capture while you look at the console. The

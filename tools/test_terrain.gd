@@ -1,5 +1,19 @@
 extends SceneTree
 # BUCKET: terrain
+# PARKED: mutaha_wip's LevelExit stands 0.58 m above the ground (tolerance is
+# PARKED: 0.25; its squad spawn is exact at 0.00). 112 of 113 checks pass. The
+# PARKED: fix is a position on a gameplay node in a level scene, so it is not
+# PARKED: TERRAIN's to make — unpark this the moment that exit is seated.
+#
+# THE REASON THIS WAS PARKED FOR IS ALREADY FIXED, and the note is rewritten
+# rather than left: it said "template and mutaha load with terrain.data null,
+# 99 of 101 passing". That was edb67742 moving the terrain node inside the art
+# scene while two hard-coded `NavigationRegion3D/Terrain` lookups stayed put,
+# and it is repaired in _find_terrain() below. A park note describing a bug
+# that no longer exists is worse than no note, because the next person reads
+# it, believes the suite is understood, and leaves it parked forever. The
+# count moved 99/101 -> 112/113 because eight checks behind those null guards
+# had been silently SKIPPED, not passing.
 
 # ─────────────────────────────────────────────
 # TERRAIN — the generator, the meshes, the collision and the template level.

@@ -252,4 +252,46 @@ for lvl in maps/georgetown_level.tscn maps/polaris_level.tscn maps/causeway_leve
 		maps/hillfort_level.tscn; do
 	[ -f "$lvl" ] && add_cover_spawner "$lvl"
 done
+
+# ── 4 · THE SITE SLICE ───────────────────────────────────────────────────────
+#
+# A FOURTH JOB, added 2026-10-14 with the site conversions.
+#
+# Every map is now a SITE: cores you hold, a bunker that ends the operation,
+# heat, a garrison, an attack and a defence. All of that is built at runtime by
+# one node carrying a <name>_slice.gd script, placed at the level root.
+#
+# For Georgetown, Polaris and Salient that node is on ground the terrain tools
+# rewrite. build_georgetown.gd and build_polaris.gd emit the whole .tscn from a
+# template on --force-level, and build_salient.gd does the same to its level —
+# so a rebuild drops the slice and the map silently plays as it did before the
+# conversion. No error: site_slice's own warnings never fire, because the node
+# that would have warned is not there. That is the exact failure this script
+# exists to stop, and it now covers it.
+#
+# IDEMPOTENT like the rest: a level that already carries its slice is skipped.
+add_site_slice() {
+	local level="$1" script="$2" node="$3" id="94_slice"
+	[ -f "$level" ] || { echo "      MISSING  $level"; return 1; }
+	if grep -q "name=\"$node\"" "$level"; then
+		echo "      ok       $(basename "$level") already carries $node"
+		return 0
+	fi
+	local ls new last
+	ls=$(head -1 "$level" | grep -oE 'load_steps=[0-9]+' | cut -d= -f2)
+	new=$((ls + 1))
+	sed -i "1s/load_steps=$ls/load_steps=$new/" "$level"
+	last=$(grep -n '^\[ext_resource' "$level" | tail -1 | cut -d: -f1)
+	awk -v l="$last" -v s="$script" -v i="$id" \
+		'NR==l { print; print "[ext_resource type=\"Script\" path=\"" s "\" id=\"" i "\"]"; next } { print }' \
+		"$level" > "$level.tmp" && mv "$level.tmp" "$level"
+	printf '\n[node name="%s" type="Node3D" parent="."]\nscript = ExtResource("%s")\n' "$node" "$id" >> "$level"
+	echo "      added    $node to $(basename "$level")"
+}
+
+echo "── Site slices ──"
+add_site_slice maps/georgetown_level.tscn res://Env/world_objects/lockside_slice.gd   LocksideSlice   || rc=1
+add_site_slice maps/polaris_level.tscn    res://Env/world_objects/polaris_slice.gd    PolarisSlice    || rc=1
+add_site_slice maps/salient_level.tscn    res://Env/world_objects/trenchline_slice.gd TrenchlineSlice || rc=1
+
 exit $rc

@@ -437,8 +437,8 @@ func refresh() -> void:
 		var f := _facts_for(m)
 		facts[m.id] = f
 		nodes.append({"id": m.id, "at": place[m.id], "tint": _tint_for(f),
-			"icon": ICONS.get(m.id, _Icons.Kind.MARKER),
-			"scale": _icon_scale(m.id) * (1.3 if _takeable(f) else 1.0)})
+			"icon": ICONS.get(_site_key(m), _Icons.Kind.MARKER),
+			"scale": _icon_scale(_site_key(m)) * (1.3 if _takeable(f) else 1.0)})
 
 
 	# ── THE SIM ARENA, AS ONE ENTRY ─────────────────────────────────────
@@ -631,25 +631,65 @@ func _tint_for(f: Dictionary) -> Color:
 		return _Pal.GONE
 	return _Pal.FAC_ADVERSARY
 
-## The dotted routes: the authored borders, filtered to sites that are
-## actually on this board.
+## THE ROUTES, OFF THE LOCATIONS — the same graph the game plays against.
 ##
-## An edge naming a site the campaign does not have is dropped WITH A WARNING
-## rather than quietly — a border to nowhere means ADJACENCY and the mission
-## list have drifted apart, and that is worth hearing about the first time it
-## happens rather than discovering as a gap in the map.
+## This used to draw a hand-authored ADJACENCY table keyed by mission id. That
+## table was right to exist when there was nothing else, and its own comment is
+## right that `requires` is an unlock order rather than geography — but a
+## measured `Location.connects_to` now exists, reciprocal and asserted by a
+## suite, and EnemyTurn.frontier() decides what can be attacked from IT.
+##
+## Two graphs, and they disagreed. ADJACENCY bordered Coast Road with Qamareen;
+## connects_to borders Qamareen with Valley Basin and Three Rivers and not with
+## Coast Road at all. So the board drew the player one map and the frontier rule
+## played another — the dotted line you were reading was not the line the enemy
+## was moving along.
+##
+## Keyed to the MISSION ids the markers use, because a pin is still drawn per
+## operation; the lookup goes through the catalogue so neither end has to know
+## the other's naming.
 func _edges(missions: Array) -> Array:
-	var known := {}
+	var state = Campaign.state if Campaign != null else null
+	var cat = state.locations if state != null else null
+	if cat == null:
+		push_warning("OpsTable: no location catalogue, so no routes can be drawn between sites.")
+		return []
+	# Location id -> the mission id drawn for it.
+	var pin := {}
 	for m in missions:
-		known[m.id] = true
+		var l = cat.for_mission(m.id)
+		if l != null and not pin.has(l.id):
+			pin[l.id] = m.id
 	var out: Array = []
-	for pair in ADJACENCY:
-		if known.has(pair[0]) and known.has(pair[1]):
-			out.append([pair[0], pair[1]])
-		else:
-			var missing = pair[0] if not known.has(pair[0]) else pair[1]
-			push_warning("OpsTable: ADJACENCY has a border to '%s', which is not in Campaign.missions. That route is not drawn." % String(missing))
+	var seen := {}
+	for lid in pin:
+		var l = cat.of(lid)
+		if l == null or not ("connects_to" in l):
+			continue
+		for other in l.connects_to:
+			if not pin.has(other):
+				# A border to somewhere with no marker on this board. Not an
+				# error — the later acts add sites — but silence here would hide
+				# a typo in a location's connects_to forever.
+				print("[OpsTable] '%s' borders '%s', which has no marker on this board." % [
+					String(lid), String(other)])
+				continue
+			# UNDIRECTED: listed on both sides, drawn once.
+			var key: String = "%s|%s" % [String(mini_id(lid, other)), String(maxi_id(lid, other))]
+			if seen.has(key):
+				continue
+			seen[key] = true
+			out.append([pin[lid], pin[other]])
 	return out
+
+
+## The two ends of a border in a fixed order, so an undirected pair has one key.
+static func mini_id(a: StringName, b: StringName) -> StringName:
+	return a if String(a) <= String(b) else b
+
+
+static func maxi_id(a: StringName, b: StringName) -> StringName:
+	return b if String(a) <= String(b) else a
 
 
 # ─────────────────────────────────────────────
@@ -676,20 +716,42 @@ func _edges(missions: Array) -> Array:
 ## diamond, which is honest — it says "a place" and claims nothing about it.
 ##
 ## See Env/world_objects/site_icons.gd for the drawings.
+## KEYED BY LOCATION ID, because that is what _site_key() hands the lookup.
+##
+## IT WAS KEYED BY MISSION ID AND EVERY SITE MISSED. _site_key resolves a
+## mission to its Location and returns the LOCATION's id — so
+## `ICONS.get(_site_key(m))` was asking a mission-keyed table for
+## "valley_basin" and getting nothing, every time, for every site that had a
+## Location. The default is MARKER, a plain diamond, so the board drew ten
+## identical diamonds at one size and looked merely plain rather than broken.
+## Reported from play as "all the icons are wrong".
+##
+## The same miss hit HEIGHTS through _icon_scale, which is why they were all
+## the same size as well: an unknown height falls back to 40 m.
+##
+## docs/briefs/ONE_PIN_PER_SITE.md called this re-key out as outstanding and it
+## is the thing it was waiting for. A site has one icon; what you DO there does
+## not change what the place looks like, so the attack and the defence of one
+## site share a row rather than needing two.
+##
+## THE SIM ARENAS STAY MISSION-KEYED. They deliberately have no Location (§15 —
+## a practice track, off the adjacency graph), so _site_key falls back to the
+## mission id for them and finds these.
 const ICONS := {
-	&"arena_1_contact":      _Icons.Kind.DERRICK,
-	&"arena_3_firing_line":  _Icons.Kind.DERRICK,
-	&"arena_5_proving":      _Icons.Kind.DERRICK,
-	&"hillfort_1_relay":     _Icons.Kind.RELAY,
-	&"basin_1_anchor":       _Icons.Kind.ANCHOR,
-	&"basin_2_defend":       _Icons.Kind.ANCHOR,
-	&"coast_1_road":         _Icons.Kind.BRIDGE,
-	&"pitt_1_rivers":        _Icons.Kind.FURNACE,
-	&"mutaha_2_city":        _Icons.Kind.WHEEL,
-	&"georgetown_1_ascent":  _Icons.Kind.STACK,
-	&"polaris_1_siege":      _Icons.Kind.MALL,
-	&"causeway_1_tower":     _Icons.Kind.TOWER,
-	&"salient_1_overthetop": _Icons.Kind.CLOCKTOWER,
+	&"arena_1_contact":     _Icons.Kind.DERRICK,
+	&"arena_3_firing_line": _Icons.Kind.DERRICK,
+	&"arena_5_proving":     _Icons.Kind.DERRICK,
+	&"hillfort_wip":        _Icons.Kind.RELAY,
+	&"valley_basin":        _Icons.Kind.ANCHOR,
+	&"coast_road":          _Icons.Kind.BRIDGE,
+	&"three_rivers":        _Icons.Kind.FURNACE,
+	&"qamareen":            _Icons.Kind.WHEEL,
+	&"lockside":            _Icons.Kind.STACK,
+	&"polaris":             _Icons.Kind.MALL,
+	&"causeway":            _Icons.Kind.TOWER,
+	&"over_the_top":        _Icons.Kind.CLOCKTOWER,
+	# The retired original, kept so that un-retiring it needs no edit here.
+	&"hillfort":            _Icons.Kind.RELAY,
 }
 
 
@@ -703,18 +765,43 @@ const ICONS := {
 ## So the board scales them LOGARITHMICALLY, which keeps the order honest
 ## (the tower is plainly the biggest thing on the table, the bridge plainly
 ## the smallest) while keeping the smallest one legible. See _icon_scale.
+## KEYED BY LOCATION ID, for the same reason as ICONS above — _icon_scale is
+## called with _site_key(), so a mission-keyed table missed on every site and
+## every landmark fell back to 40 m. That is why they were all one size.
 const HEIGHTS := {
 	&"arena_1_contact": 16.0, &"arena_3_firing_line": 16.0,
-	&"arena_5_proving": 16.0, &"hillfort_1_relay": 63.0,
-	&"basin_1_anchor": 240.0, &"coast_1_road": 4.5,
-	&"pitt_1_rivers": 44.0, &"mutaha_2_city": 48.0,
-	&"georgetown_1_ascent": 44.0, &"polaris_1_siege": 15.0,
-	&"causeway_1_tower": 408.0, &"salient_1_overthetop": 51.5,
+	&"arena_5_proving": 16.0,
+	&"hillfort_wip": 62.0, &"hillfort": 63.0,
+	&"valley_basin": 240.0, &"coast_road": 4.5,
+	&"three_rivers": 44.0, &"qamareen": 48.0,
+	&"lockside": 44.0, &"polaris": 15.0,
+	&"causeway": 408.0, &"over_the_top": 51.5,
 }
 
 
 ## Log-scaled icon size, 0.62 for the shortest landmark up to 1.0 for the
 ## tallest. Unknown heights sit in the middle rather than at either end.
+
+
+## THE SITE A MISSION IS FOUGHT OVER, as an id — the key the board's three
+## authored tables use.
+##
+## LAYOUT, ICONS and HEIGHTS are facts about a PLACE: where it sits on the
+## board, what landmark stands for it, how tall that landmark is. They were
+## keyed by mission id, which meant the defence of Valley Basin needed its own
+## entry in all three saying the same thing as the attack's — and got the
+## attack's coordinates copied in as a stopgap, which is how two pins came to be
+## drawn on one spot.
+##
+## Falls back to the mission id so the sim arenas, which have no Location by
+## design, still find their own entries.
+func _site_key(m) -> StringName:
+	var state = Campaign.state if Campaign != null else null
+	var cat = state.locations if state != null else null
+	if cat == null:
+		return m.id
+	var l = cat.for_mission(m.id)
+	return l.id if l != null else m.id
 static func _icon_scale(id) -> float:
 	var h: float = float(HEIGHTS.get(id, 40.0))
 	return 0.62 + 0.38 * clampf(log(maxf(h, 2.0)) / log(408.0), 0.0, 1.0)
@@ -744,7 +831,11 @@ static func _icon_scale(id) -> float:
 ## anyone borders.
 const LAYOUT := {
 	# ── the theatre ─────────────────────────────
-	&"hillfort_1_relay":     Vector2(0.0, 0.0),
+	# THE OPENING SITE. This is Hillfort — the rebuilt one, a quarter of the
+	# ground with six capture points instead of two. hillfort_1_relay was
+	# swapped out for it on 2026-10-15 and its board rows went with it; the
+	# old mission and level are still on disk, just not in the campaign.
+	&"hfw_1_fort":           Vector2(0.0, 0.0),
 	&"basin_1_anchor":       Vector2(175.0, -80.0),
 	# THE DEFENCE OF THE SAME GROUND sits where the attack does, because it IS
 	# the same place. Two pins on one spot is not right either — the board
@@ -765,34 +856,6 @@ const LAYOUT := {
 }
 
 
-## WHICH SITES BORDER WHICH — the geography, authored.
-##
-## NOT DERIVED FROM `requires`. That field is an unlock order: it says what
-## you must have finished before an operation is offered, which is a property
-## of the campaign's pacing and not of the ground. Drawing it as routes made
-## the board claim that Qamareen borders Three Rivers because one follows the
-## other in the mission list, which is not a statement anybody authored.
-##
-## Adjacency is the thing the later campaign actually needs: territory that
-## pays per turn, an enemy that attacks what you hold, and a decision between
-## defending a place and pushing on to the next one. All three of those are
-## questions about what is NEXT TO what.
-##
-## Undirected — listed once, drawn once. A site with no entry simply has no
-## borders, which is the right answer for the sim arenas.
-const ADJACENCY := [
-	[&"hillfort_1_relay", &"basin_1_anchor"],
-	[&"hillfort_1_relay", &"salient_1_overthetop"],
-	[&"basin_1_anchor", &"coast_1_road"],
-	[&"basin_1_anchor", &"pitt_1_rivers"],
-	[&"salient_1_overthetop", &"pitt_1_rivers"],
-	[&"coast_1_road", &"mutaha_2_city"],
-	[&"pitt_1_rivers", &"mutaha_2_city"],
-	[&"pitt_1_rivers", &"georgetown_1_ascent"],
-	[&"mutaha_2_city", &"polaris_1_siege"],
-	[&"georgetown_1_ascent", &"polaris_1_siege"],
-	[&"polaris_1_siege", &"causeway_1_tower"],
-]
 
 
 ## Authored positions where we have them, DAG serpentine where we do not.

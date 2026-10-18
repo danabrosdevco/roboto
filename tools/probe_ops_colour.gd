@@ -98,8 +98,8 @@ func _init() -> void:
 	_check("the board draws a site you HOLD as blue", tint.is_equal_approx(_Pal.HELD),
 		"held=%s locked=%s -> %s" % [str(held), str(locked), str(tint)])
 	_check("...even though its prerequisite was never run",
-		not state.completed_missions.has(&"hillfort_1_relay"),
-		"hillfort cleared = %s" % str(state.completed_missions.has(&"hillfort_1_relay")))
+		not state.completed_missions.has(&"hfw_1_fort"),
+		"hillfort cleared = %s" % str(state.completed_missions.has(&"hfw_1_fort")))
 	_check("LOCKED and DEPLOYABLE are exact opposites", locked != deployable,
 		"locked=%s deployable=%s" % [str(locked), str(deployable)])
 

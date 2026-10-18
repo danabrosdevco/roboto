@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE CAMPAIGN SPINE — turns, ownership, and ground that pays.
@@ -55,7 +56,7 @@ func _init() -> void:
 
 	# No island: you must be able to walk the board from the opening site.
 	var seen := {}
-	var queue: Array = [&"hillfort"]
+	var queue: Array = [&"hillfort_wip"]
 	while not queue.is_empty():
 		var id = queue.pop_front()
 		if seen.has(id):
@@ -95,14 +96,14 @@ func _init() -> void:
 	_check("a fresh campaign holds nothing", s.held_sites().is_empty(),
 		str(s.held_sites()))
 	_check("...and every place starts theirs",
-		s.site_owner(&"hillfort") == int(Enums.Factions.SWARM),
-		"owner = %d" % s.site_owner(&"hillfort"))
+		s.site_owner(&"hillfort_wip") == int(Enums.Factions.SWARM),
+		"owner = %d" % s.site_owner(&"hillfort_wip"))
 	_check("...so it earns nothing per turn", s.income_per_turn() == 0)
 
-	s.set_site_owner(&"hillfort", Enums.Factions.PLAYER)
-	_check("taking a place makes it yours", s.holds(&"hillfort"))
+	s.set_site_owner(&"hillfort_wip", Enums.Factions.PLAYER)
+	_check("taking a place makes it yours", s.holds(&"hillfort_wip"))
 	_check("...recorded against the turn it was taken",
-		s.site_since(&"hillfort") == 0, "turn %d" % s.site_since(&"hillfort"))
+		s.site_since(&"hillfort_wip") == 0, "turn %d" % s.site_since(&"hillfort_wip"))
 	_check("...and it pays its rate", s.income_per_turn() == 8,
 		"%d/turn" % s.income_per_turn())
 	_check("...and its compute is yours, derived not banked",
@@ -118,7 +119,7 @@ func _init() -> void:
 	_check("...and the turn counter moved three", s.turn == 3, "turn %d" % s.turn)
 
 	# Losing it stops the income AND takes the compute back, in full.
-	s.set_site_owner(&"hillfort", Enums.Factions.SWARM)
+	s.set_site_owner(&"hillfort_wip", Enums.Factions.SWARM)
 	_check("losing it stops the income", s.income_per_turn() == 0)
 	_check("...and takes the compute with it, all of it", s.site_compute() == 0)
 	var after_loss := s.available()
@@ -129,10 +130,10 @@ func _init() -> void:
 	# ── ownership is NOT completed_missions ─────
 	# The trap Phase 1 names outright. A cleared operation whose site was lost
 	# again must read as theirs, or the whole layer is decoration.
-	s.completed_missions.append(&"hillfort_1_relay")
+	s.completed_missions.append(&"hfw_1_fort")
 	_check("a cleared operation does NOT mean you hold the ground",
-		not s.holds(&"hillfort"),
-		"completed_missions has it; sites says owner %d" % s.site_owner(&"hillfort"))
+		not s.holds(&"hillfort_wip"),
+		"completed_missions has it; sites says owner %d" % s.site_owner(&"hillfort_wip"))
 
 	# ── it survives the save ────────────────────
 	s.set_site_owner(&"valley_basin", Enums.Factions.PLAYER)
@@ -144,7 +145,7 @@ func _init() -> void:
 	_check("...and so does who holds what",
 		round_trip.holds(&"valley_basin")
 		and round_trip.site_owner(&"coast_road") == int(Enums.Factions.HOME)
-		and not round_trip.holds(&"hillfort"),
+		and not round_trip.holds(&"hillfort_wip"),
 		str(round_trip.sites))
 	_check("...and the income it implies", round_trip.income_per_turn() == 13,
 		"%d/turn" % round_trip.income_per_turn())

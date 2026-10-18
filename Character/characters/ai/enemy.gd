@@ -1289,12 +1289,23 @@ var _since_hit: float = AIEquipment.NEVER_HIT
 ## How far out we are willing to look for the hostiles standing around a
 ## prospective landing point. Beyond this a throw is not on anyway.
 const EQUIPMENT_CLUSTER_RADIUS: float = 6.0
-## How far a robot will throw to a point the player designated. AIGrenade's own
-## max_throw_distance is 30 and it is the longest throw in the kit, so this is
-## that with a little slack: a robot a metre outside the grenade's own limit
-## should walk-to-throw eventually rather than refuse on a rounding error.
-## Beyond it the order is refused OUT LOUD — see order_use_equipment.
-const ORDERED_THROW_RANGE: float = 34.0
+## How far a robot will throw to a point the player designated.
+##
+## 34 UNTIL 2026-10-17, derived from AIGrenade's own max_throw_distance of 30
+## plus slack. That reasoning was about what a robot would choose on its own,
+## and this is not that number: it is the reach of a verb the PLAYER aims with
+## a crosshair, and a crosshair goes wherever they are looking.
+##
+## At 34 the designator refused most of what a player actually points at —
+## `tools/test_designator_squad.gd` aims at a mark 59 m out, which is an
+## ordinary thing to want smoke on, and got TOO FAR. The refusal was correct
+## and the limit was wrong.
+##
+## 60 is the player-facing answer: far enough that aiming at the far side of a
+## firefight works, short enough that a mark across the map still refuses OUT
+## LOUD rather than silently doing nothing — see order_use_equipment, and the
+## suite's own "a mark three hundred metres away is refused".
+const ORDERED_THROW_RANGE: float = 60.0
 
 # ── STUCK DETECTION ───────────────────────────
 const STUCK_CHECK_INTERVAL: float = 3.0
@@ -4437,6 +4448,21 @@ func can_revive() -> bool:
 	return downed and not _revive_spent
 
 
+
+
+## Is this a sim arena exercise or a lab fight? Asked of the campaign rather
+## than worked out here, so the rule lives in ONE place — see
+## Campaign.is_practice(), which also covers a lab fight having no mission at
+## all. Found by group and called by name rather than preloaded: campaign.gd
+## reaches back into bodies, and a preload here would close that circle.
+func _practice_run() -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return false
+	var cm = tree.get_first_node_in_group(&"campaign")
+	if cm == null or not cm.has_method("is_practice"):
+		return false   # no campaign: a bare level or a probe. Not practice.
+	return bool(cm.is_practice())
 func revive(spends: bool = true) -> void:
 	if not downed:
 		return
@@ -4445,7 +4471,12 @@ func revive(spends: bool = true) -> void:
 	# a refit, which left a robot that had been patched up at base deploying
 	# with last mission's charge already gone — it came home repaired and went
 	# out with no revive left, which is the opposite of what the repair bought.
-	_revive_spent = spends
+	#
+	# AND A PRACTICE RUN SPENDS NOTHING. In a sim arena exercise or a lab fight
+	# the one-per-mission charge does not burn: an exercise passes no turn,
+	# pays nothing and takes no ground, so it must not be the thing that leaves
+	# you with a squadmate who cannot be stood up. See Campaign.is_practice().
+	_revive_spent = spends and not _practice_run()
 	# Cancels any nanite timer still running. If a squadmate or the player got
 	# here first, the charge was not spent and stays available for next time.
 	_self_revive_gen += 1

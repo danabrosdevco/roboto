@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # SQUAD MANAGER — the three pages, driven the way a player drives them: find
@@ -13,6 +14,7 @@ extends SceneTree
 const CAT := "res://Campaign/items & catalogue/test_item_catalogue.tres"
 const _SOLDIER := preload("res://Character/characters/ai/soldier.gd")
 const _Icons := preload("res://Character/hud/icons/icons.gd")
+const _Pricing := preload("res://Campaign/pricing.gd")
 
 var _fails := 0
 var ui: SquadManagerUI
@@ -57,6 +59,15 @@ func _run() -> void:
 	recl.benched = true
 	state.armoury.add(&"m4")
 	state.armoury.add(&"frag")
+	# OPEN THE LINES FOR THE KIT THIS TEST SHOPS FOR (Phase 3), same reason the
+	# soldier line is opened further down: these setups predate the rule.
+	# shop_items() hides anything whose fabrication line is shut UNLESS you hold
+	# a spare, so the frag added above vanished from the Armorer the moment it
+	# was fitted, and `optics` — the catalogue's only MODULE — was never listed
+	# at all, which left "BUY AT THE ARMORER" landing on a rifle for a frame
+	# with no weapon slot.
+	state.grant_unlock(&"frag")
+	state.grant_unlock(&"optics")
 
 	var s := GDScript.new()
 	s.source_code = "extends Node\nvar state\nvar catalogue\nvar in_mission = false\nfunc selected_mission():\n\treturn null\n"
@@ -296,7 +307,11 @@ func _run() -> void:
 	before = state.available()
 	_press(armorer._detail, "BUY")
 	_check("BUY puts one in stores", state.armoury.spare(&"frag") == spare + 1)
-	_check("...for its price", before - state.available() == cat.item(&"frag").cost)
+	# PRICE COMES FROM PRICING, NOT FROM ItemDefinition.cost. Bands replaced the
+	# per-item figure; `cost` is still on the resource and still readable, which
+	# is why asserting it looked fine and failed.
+	_check("...for its price", before - state.available() == _Pricing.item_buy(cat.item(&"frag")),
+		"%d spent, %d expected" % [before - state.available(), _Pricing.item_buy(cat.item(&"frag"))])
 	_press(armorer._detail, "SELL ONE")
 	_check("SELL ONE takes one back out", state.armoury.spare(&"frag") == spare)
 

@@ -36,6 +36,162 @@ most wants and least often gets:
 
 ---
 
+## 2026-10-15 (later) — the redoubt IS Hillfort now, and a regression I shipped in the entry above
+
+**Landed.** `hillfort_1_relay` is out of the campaign; `hfw_1_fort` is the
+opening site at the board's `(0, 0)`. Location and missions renamed to
+**Hillfort** / **Hillfort — Hold** for the player; internal ids stay
+`hillfort_wip` / `hfw_*` because renaming those buys nothing visible and costs
+the save format, the board tables, the callsign pool and nine suites.
+
+**Nothing deleted.** `mission_hillfort_1_relay.tres`,
+`mission_hillfort_2_defend.tres`, `loc_hillfort.tres` and
+`maps/hillfort_level.tscn` are all still on disk and still load — just
+unregistered from `Env/world.tscn`, `location_catalogue.tres` and the board
+tables. Swapping back is re-adding four references. Authored content does not
+get deleted without being asked.
+
+Touched: `Env/world.tscn` (shared), `location_catalogue.tres`,
+`loc_valley_basin.tres`, `mission_basin_1_anchor.tres`, `ops_table.gd`,
+`callsigns.gd`, and eleven suites repointed off `hillfort_1_relay` /
+`&"hillfort"`.
+
+**The load-bearing edit was `mission_basin_1_anchor.requires`.**
+`available_missions()` gates on `completed_missions.has(req)`, so a mission not
+in `Campaign.missions` can never complete — leaving Valley Basin requiring
+`hillfort_1_relay` would have locked the whole campaign after the tutorial,
+silently, with the board just never offering a second site. Caught by reading
+the gate rather than by a test.
+
+**I shipped a regression in the entry above and did not notice.** Adding
+`loc_hillfort_wip` as a TENTH location broke three checks in
+`test_campaign_spine.gd` — "the nine places that exist" read 10, the income
+totals read 238/13 against §2's 230/12, and Valley Basin's degree read 6. I
+reported that session as green having run `check.sh`, the new suite and
+`smoke.sh`, but not the spine. **A new Location is a change to the board's
+arithmetic and `test_campaign_spine.gd` is the thing that knows it** — run it
+whenever `location_catalogue.tres` moves. The swap removes the tenth location
+and all three are green again, but they were red for the length of a report.
+
+**Gates.** `check.sh --changed`: PASS. `test_campaign_spine` 0 FAIL (was 3),
+`test_opening` 1 FAIL, `test_enemy_turn` 0, `test_turn_loop` 0,
+`test_callsigns` 0, `test_ops_board` 0, `test_hillfort_wip` 0. `smoke.sh`:
+PASS.
+
+The one `test_opening` failure is **not mine and predates today** —
+`...against four / 6 hostiles`, which is `arena_3_firing_line` fielding six
+against a spec of four. It is on the known-open list from earlier in this
+session and `git diff` shows I never touched that mission. The two checks that
+matter for the swap both pass: "CLEARING THE SECOND OPENS HILLFORT" now
+resolves to `hfw_1_fort`, and nothing deeper opens with it.
+
+**Needs the human.** Still nobody has played it — that line from the entry
+above stands and is now more urgent, because this is the only opening site
+there is.
+
+- **Start a fresh campaign.** A `campaign.json` from before the swap holds
+  `hillfort` as a site id and `hillfort_1_relay` in `completed_missions`. It
+  will not crash — the site resolves to nothing and pays nothing, the mission
+  is inert — but the run will have a hole in it.
+- The display name is now plain "Hillfort". If you would rather keep
+  "Hillfort Redoubt" while both exist on disk, it is one line in
+  `loc_hillfort_wip.tres` and two in the missions.
+- `Env/world.tscn` is shared and I removed two mission references from it.
+
+
+**Verified live, after the swap.** `tools/test_hillfort_live.gd` — new — boots
+Master, resets the campaign and walks the whole opening: fresh save offers only
+the first exercise, the training opens the Hillfort, **clearing the Hillfort
+opens Valley Basin**, the board draws one pin named Hillfort, the slice builds
+six reachable cores and a bunker, **taking a core calls the counter-attack**
+(52 hostiles to 59), taking the bunker with five cores still theirs ends the
+operation and opens the way out, extraction pays 270 and the site becomes held,
+and the defence appears only once the site is raided. **33/33.**
+
+Those are the three things the structural suite cannot reach — a gate that
+locks the campaign, a wave that never comes, and a defence that never offers
+itself all look like nothing at all from the file layer.
+
+One number worth recording: the live run counts 52 hostiles on the map where
+the roster authors 48. Deployed in isolation the spawner produces exactly 48
+Soldiers and nothing else, so the roster is right and the extra four are the
+campaign layer — heat starts committing reinforcements as soon as an operation
+begins, and the live run counted two seconds in. Not chased further; it is
+pre-existing SiteHeat behaviour, not something this work introduced.
+
+**Blocked / next.** Nothing blocked. `arena_3_firing_line`'s six-vs-four is
+sitting open and is a two-minute fix if you want the spec honoured.
+
+## 2026-10-15 — Hillfort Redoubt is a playable site, and the bunker stays where TERRAIN put it
+
+**Landed.** `hillfort_wip` went from geometry-with-markers to a registered,
+playable location, per `docs/briefs/HILLFORT_WIP_HANDOVER.md` §3. New:
+`Campaign/missions/mission_hfw_1_fort.tres`, `mission_hfw_2_defend.tres`,
+`Campaign/locations/loc_hillfort_wip.tres` (**Hillfort Redoubt**),
+`Env/world_objects/hillfort_wip_slice.gd`, `tools/test_hillfort_wip.gd`,
+`tools/shot_bunker_arrival.gd`. Registered in `Env/world.tscn` (shared — said
+so here), `Campaign/location_catalogue.tres`, and the three board tables in
+`ops_table.gd`. Reciprocal edge added to `loc_valley_basin.tres`.
+
+It sits BESIDE Hillfort rather than replacing it — same `requires`
+(`arena_3_firing_line`), both connecting to Valley Basin, so the campaign forks
+and the two can be played against each other. That is the only arrangement in
+which building an alternative first mission means anything.
+
+Difficulty matched to Hillfort **to the unit** with `measure_resistance.gd`:
+48 on map, 31 reserve, 79 total, both missions; defences 14 and 14. Same
+chassis vocabulary too — rifleman, shotgunner, chaser, hopper. **No marksman**,
+on the human's instruction: a 281 m covered lane wants one badly and that is
+why the first mission does not hand the player one.
+
+In TERRAIN's level I added the slice node, two `PatrolPath` nodes, the exit
+gate, `optional = true` on all six captures, and the rebalanced rewards.
+`site_slice.gd` gained a `bunker_yaw` export — additive, defaults 0, nothing
+else changes.
+
+**I was wrong, and reversed it.** §4 asked GAMEPLAY to settle the bunker's
+facing and TERRAIN preferred turning it 90°. I set it to 90 on that
+recommendation, then built `shot_bunker_arrival.gd` to photograph it and found
+the recommendation makes it worse: 90° points the doors square into the Data
+Hall 14 m east (blocked 20.8 m), 180° into the rampart (12 m), while the
+as-authored 0° is clear for 60 m with the dish beside the frame rather than
+filling it. **Left at 0 — TERRAIN's option 1, not their recommendation.** The
+export stays because it is how the next one gets settled by looking.
+
+**Also wrong once and caught by a tool:** the four reserve waves were first
+authored as kill-triggered ADVANCE specs, which put all 79 bodies on the map at
+once — 65% harder than Hillfort while claiming to match it.
+`measure_resistance.gd` showed 79/0 against Hillfort's 48/31. They are now
+RESERVE waves keyed to capture ids, since `Campaign._on_objective_changed`
+passes the completed objective's id straight to `wake()` — so taking the
+Gatehouse releases the east lane, which is §1's design exactly.
+
+**Gates.** `check.sh --changed`: PASS. `tools/test_hillfort_wip.gd`: 30/30.
+`smoke.sh`: PASS, booted clean. `spawn_geometry_audit.gd`: 79 bodies / 0 badly
+placed on the attack, 14 / 0 on the defence. `probe_nav_vs_art.gd`: no walkable
+navmesh inside any slice-built solid — **no rebake needed**.
+`_advance_reach.gd`: nothing on this map frozen. I did NOT run the full
+`test.sh` — it takes the better part of an hour and nothing here touches the
+ledger or the armoury.
+
+**Needs the human.** **Nobody has played it.** Every number is measured and
+none is felt. Specifically:
+
+- The lane split is 108 m centre against 281 m west. That is a 2.6x walking
+  difference no probe can judge. If west is boring rather than tense, the fix
+  is content on it, not a reward.
+- The reward spread between lanes is only 25 resources, deliberately — a lane
+  should be a tactical choice, not an economic one. If the fast lane feels
+  free, the spread is too small.
+- The bunker arrival at yaw 0. I am confident on the measurement and the frame
+  looks right, but TERRAIN disagreed and they built the ground.
+- `Env/world.tscn` is a shared file and I added two missions to it, inserted
+  before `basin_2_defend` so `is_final_mission()` still resolves.
+
+**Blocked / next.** Nothing blocked. Next would be a playtest of both openings
+back to back, which is the whole point of the map and the one thing this lane
+cannot do.
+
 ## 2026-10-05 (later) — the cores get the size they deserve, and every played map gets cover
 
 **Landed.** Three jobs off the back of the entry above.

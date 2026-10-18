@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # NESTS AND REINFORCEMENTS — the Valley Foundry's two hives hatch bodies once
@@ -57,6 +58,11 @@ func _named(callsign: String) -> Array:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	var mission: MissionDefinition = load(MISSION)
 	_check("the Foundry is a mission: the north gate and the way out",

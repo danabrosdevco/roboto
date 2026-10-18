@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="PackedScene" path="res://maps/georgetown_art.tscn" id="1_art"]
 [ext_resource type="PackedScene" uid="uid://g7fmy28elpah" path="res://Env/world_objects/spawn_point.tscn" id="2_spawn"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://maps/gameplay/georgetown_ops.tscn" id="91_ops"]
 [ext_resource type="PackedScene" uid="uid://cyslwv078g4sk" path="res://Env/world_objects/cover_point_spawner.tscn" id="92_coverspawn"]
 [ext_resource type="Script" path="res://Env/world_objects/cover_point.gd" id="93_coverpt"]
+[ext_resource type="Script" path="res://Env/world_objects/lockside_slice.gd" id="900_slice"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_top_color = Color(0.52, 0.55, 0.58, 1)
@@ -6324,3 +6325,6 @@ script = ExtResource("93_coverpt")
 cover_direction = Vector3(-0.980581, 0, 0.196116)
 metadata/cover_direction = Vector3(-0.980581, 0, 0.196116)
 
+
+[node name="LocksideSlice" type="Node3D" parent="."]
+script = ExtResource("900_slice")

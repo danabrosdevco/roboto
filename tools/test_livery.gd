@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # FACTION LIVERY — is every metal panel actually painted?

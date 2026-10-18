@@ -1,0 +1,115 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3 uid="uid://be637425ivucl"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" path="res://maps/hillfort_wip_level.tscn" id="3_map"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rifle"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="6_shot"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="7_chaser"]
+
+[sub_resource type="Resource" id="D_centre"]
+script = ExtResource("2_espec")
+callsign = "CENTRERUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("7_chaser")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_hfw_centre_apron"
+spawn_tag = &"obj_hfw_south_meadow"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="D_west"]
+script = ExtResource("2_espec")
+callsign = "WESTRUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_hfw_shoulder"
+spawn_tag = &"obj_hfw_west_flank"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="D_east"]
+script = ExtResource("2_espec")
+callsign = "EASTRUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("7_chaser")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_hfw_terrace"
+spawn_tag = &"obj_hfw_east_flank"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="D_yard"]
+script = ExtResource("2_espec")
+callsign = "YARDRUSH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("7_chaser")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_hfw_dish"
+spawn_tag = &"obj_hfw_south_meadow"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"hfw_2_defend"
+display_name = "Hillfort — Hold"
+briefing = "THEY ARE COMING BACK UP THE HILL, and this time the three lanes are working against you.
+
+You hold the fort and the cores on all three approaches. They do not have to pick a lane the way you did — they are coming up the centre, the west and the east at once, and the cross-wall that kept you out of the east is now a wall you are standing behind with your back to it.
+
+HOLD ANY ONE POINT AND THE SITE IS STILL YOURS. They have to take all of it, which on a hill with six cores and a rampart is a great deal of ground to cover. Watch the pressure readout — their supply is finite and when it is spent and the hill is clear, you have held.
+
+The way down is behind the dish if it goes badly."
+level_scene = ExtResource("3_map")
+map_position = Vector2(0, -95)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("D_centre"), SubResource("D_west"), SubResource("D_east"), SubResource("D_yard")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"hfw_cistern", &"hfw_shoulder", &"hfw_pillars", &"hfw_gatehouse", &"hfw_terrace", &"hfw_relay"])
+reward_resources = 0
+compute_reward = 0
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = true
+defence = true
+sim = false
+garrison_posts = Array[StringName]([&"obj_hfw_dish", &"obj_hfw_yard", &"obj_hfw_centre_apron", &"obj_hfw_west_apron", &"obj_hfw_east_apron"])
+requires = Array[StringName]([&"hfw_1_fort"])

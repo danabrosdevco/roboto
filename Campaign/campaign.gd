@@ -79,6 +79,17 @@ const _EnemyTurn := preload("res://Campaign/enemy_turn.gd")
 # now, not from a number on the record.
 @export var starting_chassis_id: StringName = &"soldier"
 @export var starting_resources: int = 0
+## COMPUTE IN HAND ON A FRESH CAMPAIGN, before any ground is held.
+##
+## Compute is normally earned by HOLDING sites, which means a new campaign has
+## none at all and the first site has to be taken with whatever the squad
+## mustered with. Raised from nothing on 2026-10-16 because the opening was
+## reported as far too hard: the player needs something to spend before the
+## first fight, not after it.
+##
+## SET IN Env/world.tscn, not here — a scene value beats a script default and
+## the node in that scene is the one the game runs.
+@export var starting_compute: int = 0
 # Item ids granted to stores on a fresh campaign, and the weapon every starting
 # soldier is issued. Without these a new save has an empty armoury and a squad
 # holding nothing, because the chassis ships with no gun by design.
@@ -340,6 +351,7 @@ func _return_unusable_player_kit() -> void:
 func _seed_new_campaign() -> void:
 	state.supply_cap = starting_squad_size
 	state.award(starting_resources)
+	state.award_compute(starting_compute)
 	for i in starting_squad_size:
 		var r := SoldierRecord.new()
 		r.display_name = starting_names[i] if i < starting_names.size() else "Unit-%02d" % (i + 1)
@@ -535,6 +547,12 @@ func _adopt_state(id: String) -> void:
 	_pay_compute_owed()
 	_grant_owed_unlocks()
 	current_mission = null
+	# REMEMBER WHERE THE TRAIN ENDED UP. See last_site above — the next
+	# departure checks it to decide whether it has anywhere to travel to.
+	if state != null and state.locations != null and current_mission != null:
+		var where = state.locations.for_mission(current_mission.id)
+		if where != null:
+			last_site = where.id
 	in_mission = false
 	profile_changed.emit(id)
 	state_loaded.emit()
@@ -805,6 +823,27 @@ func get_mission(id: StringName) -> MissionDefinition:
 
 ## The campaign's last operation: the last entry in `missions`, which is the
 ## order the terminal offers them in.
+## IS THIS A PRACTICE RUN — a sim arena exercise or a lab fight?
+##
+## NOTHING PRACTISED COSTS ANYTHING. A sim mission already passes no turn, pays
+## nothing, takes no ground and gives the other side no move. Two things were
+## missing from that list and both bit the same way — they made the free thing
+## expensive:
+##
+##   - a revive in the arena spent the robot's one-per-mission charge, so an
+##     exercise could leave you with a squadmate who could not be stood up
+##   - a squadmate destroyed in the arena was written back as DESTROYED and had
+##     to be rebuilt, which is the opposite of practice
+##
+## Asked in ONE place because two of them would drift: a lab fight is not a
+## mission at all and has no `current_mission` to read, so it announces itself
+## by joining the "practice" group for as long as it runs (see Laboratory.run).
+func is_practice() -> bool:
+	if current_mission != null and "sim" in current_mission and current_mission.sim:
+		return true
+	return not get_tree().get_nodes_in_group(&"practice").is_empty()
+
+
 func is_final_mission(m: MissionDefinition) -> bool:
 	if m == null:
 		return false
@@ -1205,12 +1244,30 @@ func _write_back_player() -> void:
 #
 # OPTIONAL OBJECTIVES ARE TICKED TOO. The point is to see the full payout; a
 # debug clear that silently pays the minimum teaches you the wrong number.
-func debug_complete_mission() -> String:
+## OPEN THE WAY OUT. What winning a site operation actually does.
+##
+## THE BUNKER UNLOCKS THE EXIT; IT DOES NOT TELEPORT YOU. §12.7 is "take the
+## ground, stand down, go home", and the going home is the player's to walk.
+##
+## The first cut moved the player into the exit, the way the debug clear does.
+## Three things were wrong with that. It took the walk out of the player's
+## hands at the one moment they have earned it. It depended on an Area3D
+## producing body_entered for a body that was teleported into it, which it does
+## not reliably do — the squad arrived 0.5 m from an open door and the
+## operation never ended. And the same hole is in debug_complete_mission, which
+## nobody noticed because what you do after pressing that is walk about.
+##
+## So the operation opens the gate and lights it, and the player leaves on
+## their own feet through the exit that was always there.
+##
+## IT TICKS THE REQUIRED OBJECTIVES TOO, and that is not generosity: a
+## core-driven objective will not stay ticked while its core is still theirs —
+## HoldableCore republishes it from the core's own holder — so the gate has to
+## come off rather than the cores being lied about. §12.7 says explicitly you do
+## not have to clear the cores to take the bunker.
+func open_way_out() -> String:
 	if not in_mission:
 		return "NOT ON AN OPERATION — DEPLOY FIRST."
-	if objectives == null:
-		return "NO OBJECTIVE TRACKER — NOTHING TO COMPLETE."
-
 	var ticked := 0
 	# duplicate(): complete() emits, and a listener that prunes or adds an
 	# objective would otherwise mutate the array being walked.
@@ -1228,18 +1285,29 @@ func debug_complete_mission() -> String:
 
 	var exit := _find_mission_exit()
 	if exit == null:
-		# NOT SILENT. The objectives are ticked either way, so this is still
-		# useful — you can walk out yourself — but the half that did not happen
-		# has to say so or it reads as the button doing nothing.
-		return "%d OBJECTIVE(S) CLEARED, BUT THIS LEVEL HAS NO EXIT TO SEND YOU TO." % ticked
+		push_warning("Campaign: the operation is over but this level has no exit to open, so there is no way out of it.")
+		return "%d OBJECTIVE(S) CLEARED, BUT THIS LEVEL HAS NO EXIT." % ticked
+	exit.requires_objectives_complete = false
+	# LIT, NOT JUST OPEN. LevelExit only shows its beacon when it would take you
+	# somewhere; an exit that has quietly become usable is one the player has no
+	# reason to walk to.
+	if exit.has_method("_refresh_live"):
+		exit._refresh_live()
+	return "%d OBJECTIVE(S) CLEARED. THE WAY OUT IS OPEN." % ticked
 
-	# BY CLASS, NOT BY GROUP. The player node is called `test_character` in
-	# world.tscn and is in no group at all, so there is nothing to look up.
+
+## The debug clear. Opens the way out AND walks you to it, because the point of
+## the button is not to walk.
+func debug_complete_mission() -> String:
+	var said := open_way_out()
+	if not in_mission:
+		return said
+	var exit := _find_mission_exit()
 	var player := _first_of_class(get_tree().root, "Player")
-	if player == null or not (player is Node3D):
-		return "%d OBJECTIVE(S) CLEARED, BUT THE PLAYER IS NOT IN THE TREE TO MOVE." % ticked
+	if exit == null or player == null or not (player is Node3D):
+		return said
 	(player as Node3D).global_position = exit.global_position + Vector3.UP * 0.5
-	return "%d OBJECTIVE(S) CLEARED. EXTRACTING." % ticked
+	return said
 
 
 ## The way out of the level.
@@ -1282,6 +1350,19 @@ func _first_of_class(n: Node, cls: String) -> Node:
 	return null
 
 
+## WHERE THE TRAIN IS STANDING, as a Location id.
+##
+## RUNTIME ONLY, deliberately not in CampaignState and not in the save. It is
+## used for one thing: deciding whether the departure ride has anywhere to go.
+## Take a site, have it raided the next turn, and the defence is on the ground
+## you are already parked at — so the train does not travel, it just opens its
+## doors. See DepartureRide.begin().
+##
+## Losing it across a save/load is the right failure: on a fresh boot the train
+## plays the full ride, which is a second of spectacle rather than a wrong
+## answer. Putting it in the save would mean a migration for a cosmetic.
+var last_site: StringName = &""
+
 # Success path. Collect the squad, pay out, save, and head home.
 func extract(success: bool = true) -> Dictionary:
 	var result := {"survivors": 0, "lost": 0, "reward": 0, "success": success, "seconds": seconds_this_mission}
@@ -1300,7 +1381,7 @@ func extract(success: bool = true) -> Dictionary:
 			r.kills_by_kind_this_mission = {}
 	_xp_this_mission.clear()
 	if spawner != null:
-		var counts := spawner.write_back()
+		var counts := spawner.write_back(is_practice())
 		result["survivors"] = counts["survivors"]
 		result["lost"] = counts["lost"]
 

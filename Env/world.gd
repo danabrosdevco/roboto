@@ -82,6 +82,20 @@ func load_next_level(next_level_scene: PackedScene, success: bool = true) -> voi
 	if new_level.spawn_point:
 		player.place_at(new_level.spawn_point.global_transform)
 		player.last_bonfire = current_level.spawn_point.global_position
+	# ARRIVING SOMEWHERE NEW CARRIES NOTHING OVER.
+	#
+	# The player and their HUD survive a level change — they are moved, not
+	# rebuilt — so without this the last map came with them: the health they
+	# limped out on, a half-decayed suppression state, and forty-five seconds
+	# of contact marks pointing at world positions that mean nothing here.
+	if player.has_method("reset_for_new_level"):
+		player.reset_for_new_level()
+	# THE PLAYER'S OWN `hud` EXPORT, not a node path. The HUD is wired in the
+	# scene and is not necessarily a child called "HUD"; guessing the path
+	# would fail silently and leave the marks exactly where they were.
+	var hud = player.hud if player != null and "hud" in player else null
+	if hud != null and is_instance_valid(hud) and hud.has_method("clear_contacts"):
+		hud.clear_contacts()
 	await get_tree().process_frame
 	# AND A PHYSICS FRAME, because the enemy force is placed against the
 	# NAVIGATION MAP and the navigation server only commits its regions on a

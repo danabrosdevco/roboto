@@ -1,0 +1,178 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=18 format=3 uid="uid://cgtxdu5m42nrq"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://r8jyom1thto0" path="res://maps/pittsburgh_level.tscn" id="3_pitt"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rifle"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="6_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+[ext_resource type="Resource" uid="uid://1rea71mf80nx" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="8_armour"]
+[ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="9_marks"]
+[ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="10_rover"]
+
+[sub_resource type="Resource" id="A_nw"]
+script = ExtResource("2_espec")
+callsign = "KOLCHUGA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("8_armour"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pitt_dam"
+spawn_tag = &"obj_pitt_in_nw"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_shore"]
+script = ExtResource("2_espec")
+callsign = "KREMEN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("6_chaser"), ExtResource("6_chaser"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pitt_shore"
+spawn_tag = &"obj_pitt_in_shore"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_south"]
+script = ExtResource("2_espec")
+callsign = "KORUND"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pitt_strip"
+spawn_tag = &"obj_pitt_in_south"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_mon"]
+script = ExtResource("2_espec")
+callsign = "GRANIT"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("8_armour"), ExtResource("9_marks"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pitt_furnace"
+spawn_tag = &"obj_pitt_in_mon"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_ne"]
+script = ExtResource("2_espec")
+callsign = "TIEJIA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pitt_port"
+spawn_tag = &"obj_pitt_in_ne"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 120.0
+
+[sub_resource type="Resource" id="A_east"]
+script = ExtResource("2_espec")
+callsign = "TIESHA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("10_rover"), ExtResource("8_armour"), ExtResource("8_armour"), ExtResource("5_rifle"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pitt_strip"
+spawn_tag = &"obj_pitt_in_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 240.0
+
+[sub_resource type="Resource" id="A_late"]
+script = ExtResource("2_espec")
+callsign = "JINSHA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_chaser"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_pitt_shore"
+spawn_tag = &"obj_pitt_in_nw"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 360.0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"pitt_2_defend"
+display_name = "Three Rivers — Hold"
+briefing = "Six roads in and five relays over a kilometre of river, and this is the one site where they do not have to choose an axis.
+
+Upstream on the Ohio for the dam. Up the south bank for the shore post. Out of the south hills for the Strip. Off the Monongahela bluff for the furnace. The plateau road for the port, behind all of it. Then the east road, late, with armour on it, straight up the middle at the Strip again — because by then they will know which relay you have been standing on.
+
+You cannot hold five things a kilometre apart. Your garrison is on the island, the bridgehead, the point, the Ohio bank and the coke works, which is one squad per valley and no reserve. This is the hub: every other site on the frontier is reachable from here, which is why they want it and why you are going to be doing this again.
+
+There is no extraction and nothing to carry home: what you are fighting for is the ground you already own, and everything it pays you."
+level_scene = ExtResource("3_pitt")
+map_position = Vector2(430, 0)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("A_nw"), SubResource("A_shore"), SubResource("A_south"), SubResource("A_mon"), SubResource("A_ne"), SubResource("A_east"), SubResource("A_late")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"pitt_relay_dam", &"pitt_relay_shore", &"pitt_relay_strip", &"pitt_relay_furnace", &"pitt_relay_port"])
+reward_resources = 0
+compute_reward = 0
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = true
+defence = true
+sim = false
+garrison_posts = Array[StringName]([&"obj_pitt_island", &"obj_pitt_bridge", &"obj_pitt_point", &"obj_pitt_ohio", &"obj_pitt_coke"])
+requires = Array[StringName]([&"pitt_1_rivers"])

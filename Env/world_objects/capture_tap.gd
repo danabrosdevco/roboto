@@ -90,93 +90,69 @@ func _ready() -> void:
 ## is, so the system can be played before TERRAIN draws the real one.
 ## docs/briefs/CAMPAIGN_REWORK.md §13.2 and §12.9 have the two real drone
 ## classes this stands in for.
+## THE TICK — TERRAIN's model, in place of the generated quadcopter.
+##
+## It is the thing that comes in and hacks a core, and it now looks like one:
+## a drum body on four barbed legs with three ducted rotors and a sensor
+## cluster. docs/concepts/hack_tick.png is where it came from.
+##
+## ITS RIG ONLY, NOT THE WHOLE SCENE. Character/characters/ai/tick.tscn is a
+## CharacterBody3D with a script, a nav agent, a detection area and the
+## "enemies" group on it — it is an AI unit in its own right. Instancing that
+## whole thing to use as a prop would put a live hostile in the middle of the
+## player's capture. So this takes the Rig subtree, which is the model, and
+## frees the rest.
+##
+## WHAT THE PLACEHOLDER GOT RIGHT AND THIS KEEPS: the thing has to READ AT
+## RANGE. The first cut was a 0.55 m box that nobody ever saw arrive, and the
+## playtest reported "the drones never came" when they came every time. If the
+## tick turns out to be smaller than the 3.4 m span the box was grown to, that
+## is the number to revisit — see tools/shot_drone.gd, which photographs it.
+const TICK := preload("res://Character/characters/ai/tick.tscn")
+
+
 func _build_body() -> void:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.30, 0.55, 0.82)
-	mat.emission_enabled = true
-	mat.emission = Color(0.40, 0.78, 0.95)
-	mat.emission_energy_multiplier = 1.1
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	var whole := TICK.instantiate()
+	var rig := whole.get_node_or_null(^"Rig")
+	if rig == null:
+		push_warning("CaptureTap: tick.tscn has no Rig, so the tap has no body and will arrive invisible. The model has been renamed.")
+		whole.queue_free()
+		return
+	# Off the AI body BEFORE that body is freed, and before this is added to
+	# the tree — a reparent of a node whose owner is going away loses it.
+	whole.remove_child(rig)
+	add_child(rig)
+	rig.name = "Rig"
+	whole.queue_free()
+	_mesh = _first_mesh(rig)
+	# THE ROTORS, for the spin. The tick carries three in a FanTower; turning
+	# the tower is one tween against three meshes.
+	_rotors = rig.get_node_or_null(^"FanTower")
+	if _rotors == null:
+		push_warning("CaptureTap: the tick has no FanTower, so its rotors will not turn. Not fatal; it will fly in still.")
 
-	# THE HULL. Slung under the rotors, deep enough to read side-on.
-	_mesh = MeshInstance3D.new()
-	_mesh.name = "Pod"
-	var hull := BoxMesh.new()
-	hull.size = Vector3(1.30, 0.62, 1.30)
-	_mesh.mesh = hull
-	_mesh.material_override = mat
-	add_child(_mesh)
-
-	# THE CLAW it docks with, below the hull — the part that meets the core.
-	var claw := MeshInstance3D.new()
-	claw.name = "Claw"
-	var cm := CylinderMesh.new()
-	cm.top_radius = 0.62
-	cm.bottom_radius = 0.30
-	cm.height = 0.55
-	claw.mesh = cm
-	claw.material_override = mat
-	claw.position = Vector3(0.0, -0.56, 0.0)
-	add_child(claw)
-
-	# FOUR BOOMS AND FOUR DISCS. The silhouette is the read: a cross of rotors
-	# says aircraft at a distance where no amount of detail would.
-	var rotor_mat := StandardMaterial3D.new()
-	rotor_mat.albedo_color = Color(0.62, 0.86, 1.0, 0.75)
-	rotor_mat.emission_enabled = true
-	rotor_mat.emission = Color(0.55, 0.85, 1.0)
-	rotor_mat.emission_energy_multiplier = 1.6
-	rotor_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	rotor_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-
-	_rotors = Node3D.new()
-	_rotors.name = "Rotors"
-	add_child(_rotors)
-	for corner in [Vector3(1, 0, 1), Vector3(1, 0, -1), Vector3(-1, 0, 1), Vector3(-1, 0, -1)]:
-		var arm := MeshInstance3D.new()
-		var am := BoxMesh.new()
-		am.size = Vector3(0.16, 0.14, 1.30)
-		arm.mesh = am
-		arm.material_override = mat
-		arm.position = corner * Vector3(0.55, 0.0, 0.0) + Vector3(0.0, 0.18, 0.0)
-		arm.look_at_from_position(arm.position, arm.position + corner, Vector3.UP)
-		_rotors.add_child(arm)
-
-		var disc := MeshInstance3D.new()
-		var dm := CylinderMesh.new()
-		dm.top_radius = 0.62
-		dm.bottom_radius = 0.62
-		dm.height = 0.05
-		disc.mesh = dm
-		disc.material_override = rotor_mat
-		disc.position = corner * Vector3(1.05, 0.0, 1.05) + Vector3(0.0, 0.30, 0.0)
-		_rotors.add_child(disc)
-
-	# A LIGHT, so it is a moving source rather than a shape. This is what makes
-	# it findable in the dark bowl Valley Basin is lit as.
-	var lamp := OmniLight3D.new()
-	lamp.name = "Lamp"
-	lamp.omni_range = 18.0
-	lamp.light_energy = 3.0
-	lamp.light_color = Color(0.45, 0.78, 1.0)
-	# Shadows off: it moves every frame of a four-second descent, and a
-	# shadow-casting moving light is the most expensive thing in a scene.
-	lamp.shadow_enabled = false
-	lamp.position = Vector3(0.0, -0.2, 0.0)
-	add_child(lamp)
-
-	var shape := CollisionShape3D.new()
+	# THE INTERACT/DAMAGE VOLUME stays generated. It is gameplay, not art, and
+	# the model's own collision belongs to the AI body that was just freed.
+	var solid := StaticBody3D.new()
+	solid.name = "Body"
+	var cs := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = Vector3(1.40, 1.30, 1.40)
-	shape.shape = box
-	add_child(shape)
+	cs.shape = box
+	solid.add_child(cs)
+	add_child(solid)
 
-	_spin()
 
-
-## Rotors turn. A LOOPING TWEEN, not a _process: it is killed with the node,
-## where an await chain would still be pending at quit — which is how this
-## project learned a coroutine outliving the tree segfaults in cleanup.
+## The first MeshInstance3D under the rig, which is what the damage flash and
+## the dissolve act on.
+func _first_mesh(n: Node) -> MeshInstance3D:
+	if n is MeshInstance3D:
+		return n
+	for c in n.get_children():
+		var m := _first_mesh(c)
+		if m != null:
+			return m
+	return null
 func _spin() -> void:
 	if _rotors == null:
 		push_warning("CaptureTap: no rotor node, so the drone arrives perfectly still.")

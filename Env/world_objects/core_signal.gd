@@ -95,7 +95,13 @@ func _build() -> void:
 	_collar.mesh = _tube(_foot * 0.92, 0.34)
 	_collar_mat = _emissive()
 	_collar.material_override = _collar_mat
-	_collar.position = Vector3(0.0, 0.17, 0.0)
+	# TOP-LEVEL, FOR THE SAME REASON THE RING IS — see _seat_deck. The collar is
+	# deck furniture and the beacon is column furniture, and _dress() moving
+	# this node to a BeaconMount used to drag the deck up the column with it.
+	# The human caught this one in a render too, after the ring was fixed: a
+	# teal hoop hanging five metres over a bunker, "an objective floating in
+	# the air". Fixing the ring and leaving its sibling was the mistake.
+	_collar.top_level = true
 	add_child(_collar)
 
 	# THE STANDING CIRCLE — where you have to be, drawn on the ground.
@@ -136,12 +142,12 @@ func _build() -> void:
 	# you actually press. Identical on all ten, because it is a fixed offset in
 	# the kit rather than ten authoring mistakes.
 	#
-	# top_level cuts the ring loose from that move; _seat_circle() then puts it
+	# top_level cuts the ring loose from that move; _seat_deck() then puts it
 	# where the channel is REALLY measured. Surface cores are unaffected — their
 	# terminal sits on the core, so the ring lands where it already was.
 	_circle.top_level = true
 	add_child(_circle)
-	_seat_circle()
+	_seat_deck()
 	# AND AGAIN AFTER THE FIRST PHYSICS STEP. Two things are not ready yet at
 	# this point and both of them matter:
 	#
@@ -149,12 +155,12 @@ func _build() -> void:
 	#     and on a core seated by a patch script the interactible is wired a
 	#     step later still, so the centre read above can be the wrong one.
 	#   - the level's colliders are not in the physics world until a step has
-	#     run, so the ground cast in _seat_circle finds nothing and falls back.
+	#     run, so the ground cast in _seat_deck finds nothing and falls back.
 	#
 	# ONE-SHOT, not a _process: this fires once, re-reads both, and disconnects
 	# itself. Seating twice is cheap; a ring that cached a wrong centre is a
 	# capture the player cannot find.
-	get_tree().physics_frame.connect(_seat_circle, CONNECT_ONE_SHOT)
+	get_tree().physics_frame.connect(_seat_deck, CONNECT_ONE_SHOT)
 
 
 	# THE CLIMB, AND THE WHOLE POINT OF THIS NODE.
@@ -467,8 +473,13 @@ func _say(stream: AudioStream, pitch: float) -> void:
 ##
 ## THE FALLBACK IS LOUD, because a ring that silently defaults to the capture
 ## point looks almost right and is exactly the bug this replaced.
-func _seat_circle() -> void:
-	if _circle == null or not is_instance_valid(_circle):
+func _seat_deck() -> void:
+	# BOTH OR NEITHER. The ring and the collar are one piece of deck furniture
+	# and seating only one of them is how this bug survived its first fix.
+	var has_ring: bool = _circle != null and is_instance_valid(_circle)
+	var has_collar: bool = _collar != null and is_instance_valid(_collar)
+	if not has_ring and not has_collar:
+		push_warning("CoreSignal: nothing to seat on the deck, so this capture has no ring and no collar to say where to stand.")
 		return
 	var at: Vector3 = _capture_centre()
 	var y: float = at.y
@@ -493,13 +504,18 @@ func _seat_circle() -> void:
 		q.exclude = skip
 		var hit := world.direct_space_state.intersect_ray(q)
 		if hit.is_empty():
-			push_warning("CoreSignal: found no ground under %s's capture point, so its standing circle stays at the terminal's own height and may hang in the air." % String(core.name) if core != null else "a core")
+			push_warning("CoreSignal: found no ground under %s's capture point, so its ring and collar stay at the terminal's own height and may hang in the air." % String(core.name) if core != null else "a core")
 		else:
 			y = float(hit.position.y)
 	else:
-		push_warning("CoreSignal: no physics world yet, so %s's standing circle is seated at the terminal height until it is re-seated." % String(core.name) if core != null else "a core")
-	# ON the deck, not in it — a torus centred at 0 is half underground.
-	_circle.global_position = Vector3(at.x, y + 0.06, at.z)
+		push_warning("CoreSignal: no physics world yet, so %s's ring and collar are seated at the terminal height until they are re-seated." % String(core.name) if core != null else "a core")
+	# ON the deck, not in it — a torus centred at 0 is half underground. The
+	# collar rides a touch higher than the ring because it is the thicker tube
+	# of the two and would otherwise bury half its section in the floor.
+	if has_ring:
+		_circle.global_position = Vector3(at.x, y + 0.06, at.z)
+	if has_collar:
+		_collar.global_position = Vector3(at.x, y + 0.17, at.z)
 
 
 func _capture_centre() -> Vector3:

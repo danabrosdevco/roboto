@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # EVERY TAG A MISSION NAMES EXISTS IN THE LEVEL IT DEPLOYS TO.
@@ -56,6 +57,11 @@ func _check(label: String, ok: bool, detail: String = "") -> void:
 
 
 func _initialize() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	_run.call_deferred()
 
 

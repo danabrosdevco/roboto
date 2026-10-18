@@ -69,7 +69,16 @@ signal tap_lost()
 @export_range(0, 2) var size_tier: int = 1
 @export var channel_seconds: Array[float] = [4.0, 6.0, 10.0]
 ## Measured from the terminal, not from this node.
-@export var channel_range: float = 4.5
+##
+## 4.5 UNTIL 2026-10-16, which was a circle you could miss by standing where
+## you had just shot somebody from. The capture is the whole verb of the
+## campaign and it is ten seconds of standing still, so the place to stand has
+## to be somewhere you arrive in rather than somewhere you aim for.
+##
+## core_signal.gd draws the ring at exactly this number — it reads the field
+## rather than carrying its own, because a ring that disagrees with the rule
+## is worse than no ring.
+@export var channel_range: float = 7.0
 ## Progress survives briefly if the player steps out and comes back.
 @export var grace_seconds: float = 2.0
 ## How fast contested progress bleeds away, as a multiple of the fill rate.
@@ -387,7 +396,14 @@ func _find_player() -> Node3D:
 # ── The channel ──────────────────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
+	# A HELD CORE KEEPS TICKING, because losing it is now a thing that happens
+	# while you are somewhere else. The channel is the only reason this ran
+	# before, so it switched itself off the moment a capture finished — and
+	# _reverse_tick would never have been reached.
 	if not _channelling:
+		if holder == Holder.PLAYER:
+			_reverse_tick(delta)
+			return
 		set_physics_process(false)
 		return
 	if _player == null or not is_instance_valid(_player):
@@ -419,6 +435,77 @@ func _physics_process(delta: float) -> void:
 	if _t >= duration():
 		_complete()
 
+
+
+# ── They take it back the same way ───────────────────────────────────────────
+#
+# A core you hold is watched for hostiles standing in its circle. Enough of
+# them, for long enough, and it goes back — the mirror of how you took it, and
+# the replacement for shooting an anchor off the top of it.
+#
+# WHY A COUNT AND NOT ONE BODY. A single wanderer brushing the radius should
+# not start unpicking a capture; it has to read as them COMMITTING to retaking
+# it. Two is the smallest number that reads as deliberate, and it is the same
+# number EnemyCommander sends (see _send_retakers).
+#
+# NO GRACE GOING THIS WAY. Grace exists so the player can step out of the
+# circle to deal with something; the enemy stepping out IS the player dealing
+# with something, and the progress should fall the moment it does.
+
+## How many hostiles have to be standing in it before a held core starts
+## slipping, and how long they need. Slower than taking it: losing ground you
+## are standing on should take longer than the walk back to defend it.
+@export var retake_hostiles: int = 2
+@export var retake_seconds: float = 9.0
+
+var _retake_t: float = 0.0
+
+
+## Runs on a core the player holds. Separate from _physics_process so the two
+## directions cannot share a timer — that is exactly how a half-finished
+## capture would have leaked into a half-finished loss.
+func _reverse_tick(delta: float) -> void:
+	if holder != Holder.PLAYER:
+		_retake_t = 0.0
+		return
+	var at: Vector3 = interactible.global_position if interactible != null else global_position
+	# THE PLAYER STANDING ON IT STOPS EVERYTHING. Being there is the defence;
+	# they do not have to press anything to hold what is already theirs.
+	if _player != null and is_instance_valid(_player) \
+			and _player.global_position.distance_to(at) <= channel_range:
+		if _retake_t > 0.0:
+			_retake_t = maxf(0.0, _retake_t - delta * 2.0)
+			channel_progress.emit(1.0 - _retake_t / maxf(retake_seconds, 0.1))
+		return
+	var on_it := _hostiles_in(at)
+	if on_it < retake_hostiles:
+		# Falls back immediately — see the note on grace above.
+		if _retake_t > 0.0:
+			_retake_t = maxf(0.0, _retake_t - delta * 2.0)
+			channel_progress.emit(1.0 - _retake_t / maxf(retake_seconds, 0.1))
+		return
+	_retake_t += delta
+	channel_progress.emit(1.0 - clampf(_retake_t / maxf(retake_seconds, 0.1), 0.0, 1.0))
+	if _retake_t >= retake_seconds:
+		_retake_t = 0.0
+		_set_holder(Holder.HOSTILE)
+
+
+## How many live hostiles are inside the circle. _contested answers "any?" and
+## this answers "how many?" — the retake needs the count and the contest does
+## not, so they are two functions rather than one with a flag.
+func _hostiles_in(at: Vector3) -> int:
+	var n := 0
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e == null or not is_instance_valid(e) or not (e is Node3D):
+			continue
+		if "alive" in e and not e.alive:
+			continue
+		if "faction" in e and not Enums.are_hostile(Enums.Factions.PLAYER, e.faction):
+			continue
+		if (e as Node3D).global_position.distance_to(at) <= channel_range:
+			n += 1
+	return n
 
 ## A hostile inside the same radius the player has to stand in. Deliberately
 ## the same number: the rule is "you cannot do this while they are on you",
@@ -463,13 +550,27 @@ func _break_channel() -> void:
 	channel_interrupted.emit()
 
 
+## TAKEN BY STANDING ON IT, 2026-10-16.
+##
+## This used to call a tap: a pod flew in over four seconds, docked, and became
+## a CaptureAnchor — a shootable structure that was the thing actually holding
+## the core, so the enemy took ground back by destroying it.
+##
+## That went for three reasons, all reported from play: the flight looked bad,
+## the structure hid the core's own ring behind it, and the whole layer existed
+## to deliver a thing whose only job was to say "this is yours" — which the
+## holder already says.
+##
+## SO THE CIRCLE IS THE WHOLE MECHANIC NOW. You press F, you stand in it, it is
+## yours. They take it back the same way, which is _reverse_tick below. One
+## rule, both directions, no delivery.
 func _complete() -> void:
 	_channelling = false
 	_t = 0.0
 	_grace = 0.0
 	_beat = -1
 	set_physics_process(false)
-	_call_tap()
+	_set_holder(Holder.PLAYER)
 
 
 # ── The tap ──────────────────────────────────────────────────────────────────
@@ -572,6 +673,16 @@ func _set_holder(h: Holder) -> void:
 	if holder == h:
 		return
 	holder = h
+	# BECOMING YOURS STARTS THE WATCH. _reverse_tick only runs on a core the
+	# player holds, and _physics_process had switched itself off when the
+	# capture finished — so without this a core could be taken and never lost.
+	# Turned back off when it stops being yours, because a hostile core has
+	# nothing to watch for until somebody presses F on it again.
+	if h == Holder.PLAYER:
+		_retake_t = 0.0
+		set_physics_process(true)
+	elif not _channelling:
+		set_physics_process(false)
 	holder_changed.emit(h)
 
 

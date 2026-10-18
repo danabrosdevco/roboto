@@ -308,4 +308,4 @@ repeatable = false
 defence = false
 sim = false
 garrison_posts = Array[StringName]([])
-requires = Array[StringName]([&"hillfort_1_relay"])
+requires = Array[StringName]([&"hfw_1_fort"])

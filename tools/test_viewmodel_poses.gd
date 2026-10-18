@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # WHAT THE VIEWMODEL POSES ACTUALLY RESOLVE TO ON SCREEN.

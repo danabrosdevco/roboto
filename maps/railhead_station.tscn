@@ -1,16 +1,16 @@
 [gd_scene load_steps=4 format=3]
 
-[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_station.tscn" id="1_0i6w0"]
-[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_oxs3b"]
-[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_fsp5g"]
+[ext_resource type="PackedScene" path="res://maps/blocks/railhead/railhead_station.tscn" id="1_ahtp5"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_rt3d5"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="3_v5mgl"]
 
 [node name="RailheadStation" type="Node3D"]
 
-[node name="Station" type="Node3D" parent="." instance=ExtResource("1_0i6w0")]
-script = ExtResource("2_oxs3b")
+[node name="Station" type="Node3D" parent="." instance=ExtResource("1_ahtp5")]
+script = ExtResource("2_rt3d5")
 local_map_file = "res://maps/blocks/railhead/railhead_station.map"
 global_map_file = ""
-map_settings = ExtResource("3_fsp5g")
+map_settings = ExtResource("3_v5mgl")
 print_profiling_data = false
 block_until_complete = false
 set_owner_batch_size = 1000

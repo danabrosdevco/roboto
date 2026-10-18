@@ -163,3 +163,42 @@ func _weapon_on_target() -> bool:
 	if to.length_squared() < 0.25:
 		return true   # directly below it: any bearing is as good as another
 	return rad_to_deg(_turret_forward().angle_to(to.normalized())) <= fire_cone_degrees
+
+
+# ─────────────────────────────────────────────
+# STANDING OFF
+# ─────────────────────────────────────────────
+# SpotterDrone circles its STATION at orbit_radius. For a camera that is
+# right: the station is the slot it was given and 14 m is just enough not to
+# hover. For a gun it is wrong twice over. Under an ADVANCE order the station
+# becomes the enemy's position, so the Kite flew to the people shooting at it
+# and circled 14 m above their heads — about 26 m of slant range at cruise
+# height — while carrying a machine gun effective to 99 m. It threw away
+# seventy metres of standoff and then died in it.
+#
+# So when it has something to shoot, it circles THAT, at engage_radius.
+# Everything else is inherited: same _steer, same turn rate, same banking.
+
+## How far out to circle a target. 60 m keeps the Kite inside the machine
+## gun's useful envelope — 12 mrad of spread is 0.72 m of scatter at this
+## range — while standing well outside what rifles do back. Measured, not
+## chosen: see docs/briefs/NEW_CHASSIS_AUDIT.md.
+@export var engage_radius: float = 60.0
+
+
+# The point being circled. The target while there is one, the inherited
+# station otherwise — so out of contact it still sits in its squad slot and
+# behaves like any other drone in the line.
+func _station_centre() -> Vector3:
+	if combat_target != null and is_instance_valid(combat_target) and combat_target.alive:
+		return combat_target.global_position
+	return super()
+
+
+# Wide while engaging, the station radius otherwise. Read by handle_movement
+# for the circle AND by slot_tolerance for the leash, so both agree about how
+# far out this frame is supposed to be.
+func _orbit_radius_now() -> float:
+	if combat_target != null and is_instance_valid(combat_target) and combat_target.alive:
+		return engage_radius
+	return super()

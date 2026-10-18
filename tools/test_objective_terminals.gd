@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # EVERY CONSOLE A PLAYER CAN WALK UP TO HAS TO BE WIRED TO SOMETHING.

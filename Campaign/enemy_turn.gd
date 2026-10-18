@@ -111,6 +111,22 @@ static func pick_target(state) -> StringName:
 		var l = state.locations.of(id)
 		if l == null:
 			continue
+		# A SITE WITH NO DEFENCE IS NOT RAIDABLE.
+		#
+		# A raid that comes out IN_DOUBT is an invitation: the board paints the
+		# site red and the readout says, in these words, "UNDER ATTACK / DEFEND
+		# IT". If that Location has no defend_mission_id there is nothing for
+		# available_missions() to offer, no DEFEND button appears, and the only
+		# move left is to walk away and let settle() roll it on paper — the
+		# decline branch, presented as the only branch.
+		#
+		# That was true of eight sites out of nine for a while. All nine have a
+		# defence now, so this filters nothing today; it stays as the thing that
+		# catches the tenth site being added without one, which would otherwise
+		# show up as a promise the board could not keep.
+		if not ("defend_mission_id" in l) or l.defend_mission_id == &"":
+			push_warning("EnemyTurn: '%s' has no defence authored, so it cannot be raided — the board would offer a DEFEND with nothing behind it. See docs/briefs/ATTACK_AND_DEFEND.md." % String(id))
+			continue
 		var worth: int = int(l.resources_per_turn) * 2 + int(l.compute) * 10
 		if worth > best_worth:
 			best_worth = worth

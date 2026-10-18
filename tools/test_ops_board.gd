@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # ONE PIN PER PLACE, AND THE ARENA IS THE ONLY ONE YOU CAN ACT ON AT FIRST.
@@ -33,6 +34,11 @@ func _check(label: String, ok: bool, detail: String = "") -> void:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_board_test.json"
 	await process_frame
 	var world: Node = load("res://Env/world.tscn").instantiate()
@@ -84,7 +90,7 @@ func _init() -> void:
 
 	# ── 2 · THE WAR IS SHUT UNTIL TRAINING IS DONE ──
 	_check("a fresh campaign has not finished training", not table._training_done())
-	var hill = cm.get_mission(&"hillfort_1_relay")
+	var hill = cm.get_mission(&"hfw_1_fort")
 	_check("(setup) the first real site exists", hill != null)
 	if hill != null:
 		var f: Dictionary = table._facts_for(hill)
@@ -148,6 +154,37 @@ func _init() -> void:
 			table._pin_for(&"basin_1_anchor") == &"basin_1_anchor")
 		state.under_attack = &""
 
+
+	# ── EVERY SITE HAS ITS OWN ICON ───────────
+	#
+	# ICONS and HEIGHTS are keyed by LOCATION id and looked up with
+	# _site_key(), which resolves a mission to its Location. When they were
+	# keyed by MISSION id every site missed silently: the default is a plain
+	# MARKER diamond at a default 40 m height, so the board drew ten identical
+	# diamonds and looked merely plain rather than broken. Reported from play
+	# as "all the icons are wrong".
+	#
+	# A default is the WRONG failure here, so this asserts there is no default
+	# in use: every pin on the board must resolve to an authored icon and an
+	# authored height.
+	var tbl = load("res://Env/world_objects/ops_table.gd")
+	var icons: Dictionary = tbl.ICONS
+	var heights: Dictionary = tbl.HEIGHTS
+	var no_icon: Array[String] = []
+	var no_height: Array[String] = []
+	for m in cm.missions:
+		if m == null or m.defence:
+			continue   # a defence folds onto its attack's pin
+		var l = cm.state.locations.for_mission(m.id) if cm.state.locations != null else null
+		var key: StringName = l.id if l != null else m.id
+		if not icons.has(key):
+			no_icon.append("%s -> %s" % [m.id, key])
+		if not heights.has(key):
+			no_height.append("%s -> %s" % [m.id, key])
+	_check("every pin on the board has its own icon", no_icon.is_empty(),
+		str(no_icon) if not no_icon.is_empty() else "%d pins" % icons.size())
+	_check("...and its own measured height", no_height.is_empty(),
+		str(no_height) if not no_height.is_empty() else "")
 	_done()
 
 

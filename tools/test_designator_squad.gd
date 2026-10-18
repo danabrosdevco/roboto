@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # A REAL SQUAD, ONE ROBOT PER ITEM, ORDERED THROUGH THE REAL TOOL.
@@ -74,6 +75,16 @@ func _bodies_in(level: Node) -> int:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
+	# ITS OWN SETTINGS FILE, not the player's. 43 suites read the real
+	# settings.json, so one that leaves a DEBUG switch on changes what the next
+	# one sees — and this suite booted a world against whatever state that file
+	# happened to be in.
+	Settings.path = "user://settings_designator_probe.json"
 	await process_frame
 	var world_scene: Node = load("res://Env/world.tscn").instantiate()
 	world_scene.get_node("CampaignManager").autosave = false
@@ -326,7 +337,26 @@ func _init() -> void:
 		commander.issue_equipment_order(&"smoke", "SMOKE", mark, true), false)
 	_check("...it is held instead", _queued.size(), held + 1)
 	_check("...and nothing was refused", _refusals.size(), was)
-	print("      it said: %s : STANDING BY" % str(_queued[-1]))
+	# GUARDED, AND THIS ONE LINE IS WHY tools/test.sh HAS NEVER FINISHED.
+	#
+	# When the check above fails, `_queued` is EMPTY — and `_queued[-1]` on an
+	# empty Array is an out-of-bounds error in GDScript, not a null. The script
+	# then dies mid-run with a worker thread still unjoined, so the process
+	# never exits: "A Thread object is being destroyed without its completion
+	# having been realized", then "Pages in use exist at exit".
+	#
+	# From the outside that is indistinguishable from an infinite loop, which
+	# is what it was diagnosed as — and because test.sh waits on each suite
+	# forever, ONE failing assertion in one suite stalled the entire runner for
+	# every lane. Twelve orphaned Godot process pairs were found from it, aged
+	# up to four days.
+	#
+	# A diagnostic print must never be able to take the suite down. If there is
+	# nothing queued, say so: that IS the information.
+	if _queued.is_empty():
+		print("      it said: NOTHING WAS QUEUED — the order was not held")
+	else:
+		print("      it said: %s : STANDING BY" % str(_queued[-1]))
 	_check("the designator's screen says it is standing by",
 		tool_node.is_queued(), true)
 

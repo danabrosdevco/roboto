@@ -605,6 +605,62 @@ optional = true
 reward_resources = 80
 linked_squad_point = NodePath("../Posts/POL_Garage")
 
+; ── THE TWO CORES THE SITE WAS MISSING ───────
+;
+; CinemaRoof and DeckTop above are `eliminate_objective.gd` Node3Ds — a
+; callsign and a kill count, with nothing in the world to walk up to. The
+; Breach is the only HOLDABLE thing on this map, and a site needs the cores
+; `site_slice._seat_core()` can seat a HoldableCore on: a host with an
+; `Interactible` under it, which means a compute_core_point*.tscn instance and
+; nothing else. docs/briefs/SITE_CONVERSION.md lists three cores here
+; (`pol_breach`, `pol_cinema`, `pol_garage`); two of the three were not cores.
+;
+; Added alongside the eliminates rather than replacing them. The eliminates are
+; "the marksmen on that frontage are dead"; these are "their compute is ours",
+; and the mission .tres decides which it asks for.
+;
+; BOTH ARE TIER 0 AND MUST BE DECLARED TIER 0. `site_slice._fit_reach()`
+; overwrites the prefab's reach_size from a tier table, so a slice that says
+; tier 2 over a small core builds a volume the player stands inside — and an
+; interact ray that starts inside its own volume reports nothing. Small is also
+; the right size on merit: these are the two things taking fire off the court,
+; not the prize in the middle of it.
+;
+; NEITHER IS ON ITS OBJECTIVE, AND BOTH WERE MEASURED (tools/probe_site_cores.gd):
+;   (96, 86)  is the parking deck's own edge — 6.88 m of spread across a core
+;             footprint, and the flat spot 4 m west at 6.81 m is the deck ROOF,
+;             which the briefing says is sealed with no way up onto it. So the
+;             core goes on the asphalt at its feet, 4 m west, where the fight
+;             the briefing describes actually happens.
+;   (-92, 92) is 10 m under the multiplex canopy, which is a beacon column
+;             through a roof. 6 m east-south-east is open sky and dead flat,
+;             and it is the side the squad crosses from.
+; The y on both is the measured ground (-0.06), not a rounded nought.
+;
+; THE CINEMA ONE IS YAWED 180 and the deck one is not. The service alcove is
+; the prefab's -X (docs/BLOCKS.md) and is the only spot a body can stand while
+; it channels, so it has to face the arrival side. Everything arrives from the
+; court at (0, 56): that is EAST of the multiplex and WEST of the deck. North
+; is -Z and east is +X on this map — checked against POL_NorthLot (0, -80) and
+; the brief's entries, because the Breach's own comment above has it backwards.
+[node name="RelayCinema" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -88, -0.06, 88)
+channel_duration = 8.0
+id = &"pol_relay_cinema"
+display_name = "The Multiplex Relay"
+description = "Six metres off the multiplex frontage, out on the asphalt where there is nothing to stand behind. Eight seconds, and the four marksmen in the frontage are looking straight down it — so this is a core you take after the building, not instead of it."
+reward_resources = 80
+linked_squad_point = NodePath("../Posts/POL_Cinema")
+
+[node name="RelayDeck" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 92, -0.06, 86)
+channel_duration = 8.0
+id = &"pol_relay_deck"
+display_name = "The Deck Relay"
+description = "At the foot of the parking deck on the court side, four metres clear of the structure. Eight seconds with the aisles behind you and the deck garrison in front — the deck is sealed, so everything that answers this comes round it at ground level."
+reward_resources = 80
+linked_squad_point = NodePath("../Posts/POL_Garage")
+
 [node name="StorageHive" type="Node3D" parent="." node_paths=PackedStringArray("linked_squad_point")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -313, 0, -158)
 script = ExtResource("7_eliminate")

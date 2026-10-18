@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # A CAPTURE YOU CAN SEE AND HEAR.
@@ -113,6 +114,37 @@ func _init() -> void:
 	# regression here would put five of these on the slice's frame budget.
 	_check("it never takes a _process slot",
 		not fx.is_processing() and not fx.is_physics_processing())
+
+	# ── THE STANDING CIRCLE DOES NOT RIDE THE BEACON ───
+	#
+	# site_slice._dress() moves this whole node to a BeaconMount so a bunker's
+	# beacon column clears its roof. The ring used to be an ordinary child and
+	# went up with it: all ten bunkers drew their capture circle 5 m in the air
+	# and 15.6 m sideways, round the beacon instead of round the terminal you
+	# press. Nothing caught it for the life of the feature, because every
+	# structural check it had — does a ring exist, is it the right radius, does
+	# it read channel_range — passed the whole time.
+	#
+	# Moving the node is the exact thing _dress does, so that is what this does.
+	var ring: MeshInstance3D = fx.get_node_or_null(^"StandingCircle")
+	_check("there is a standing circle at all", ring != null)
+	if ring != null:
+		var before: Vector3 = ring.global_position
+		fx.global_position += Vector3(9.0, 5.0, 0.0)
+		await process_frame
+		_check("...and moving the signal to a beacon mount does not take it along",
+			ring.global_position.is_equal_approx(before),
+			"was %s, now %s" % [str(before), str(ring.global_position)])
+		# AND IT IS ROUND THE RIGHT POINT. holdable_core measures the channel
+		# from the interactible, so that is the centre — a ring anywhere else
+		# is an instruction to stand somewhere that does not work.
+		var centre: Vector3 = core.global_position
+		if core.interactible != null:
+			centre = (core.interactible as Node3D).global_position
+		_check("...and it is centred where the channel is measured from",
+			absf(ring.global_position.x - centre.x) < 0.01
+				and absf(ring.global_position.z - centre.z) < 0.01,
+			"ring %s vs capture point %s" % [str(ring.global_position), str(centre)])
 
 	print("")
 	print("%d failure(s)" % _fails)

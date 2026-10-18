@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # MORTAR — the Reclaimer's boom takes a 60mm tube in place of the welder, and
@@ -77,6 +78,11 @@ func _hold(frames: int) -> int:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	var cat: ItemCatalogue = load(CATALOGUE)
 

@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE SIM ARENA IS ITS OWN PLACE.
@@ -22,6 +23,11 @@ func _check(label: String, ok: bool, detail: String = "") -> void:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_probe.json"
 	await process_frame
 	var world: Node = load("res://Env/world.tscn").instantiate()
@@ -308,6 +314,60 @@ func _init() -> void:
 			"at %v" % p)
 	lvl.queue_free()
 
+	# ── THE TRAINING TRACK FINISHES, AND SAYS SO ──
+	#
+	# A cleared exercise used to read "RUN x1" and keep its ENTER button, which
+	# made a sequence you finish look like a list you grind. There is nothing
+	# to gain from a second run: an exercise pays nothing and costs no turn.
+	var ui2 = _UI.new()
+	ui2.campaign = cm
+	ui2.catalogue = cm.catalogue
+	var sims: Array = ui2._sim_missions()
+	_check("(setup) there are exercises to finish", not sims.is_empty())
+	# ONE AT A TIME, AND THE NAME IS THE BIG THING.
+	#
+	# These used to assert a LIST: every exercise drawn at once, each saying
+	# NOT RUN or COMPLETED, the cleared ones greyed but still there. That was
+	# the old screen and the checks were right about it. The screen now shows
+	# only the exercise you are on, because a list invites you to pick and
+	# there is nothing to pick — they run in order.
+	if not sims.is_empty():
+		var fresh = ui2._training_row(sims[0], 1, sims.size())
+		var w1 := _labels(fresh)
+		_check("the exercise offers a way in",
+			_has_button(fresh, "ENTER"), str(w1))
+		_check("...and says where you are in the sequence",
+			_has(w1, "EXERCISE 1 OF %d" % sims.size()), str(w1))
+		_check("...and leads with the NAME",
+			_has(w1, sims[0].display_name.to_upper()), str(w1))
+		# The name has to be the biggest thing on the card — that was the whole
+		# complaint about the old row, where it was set at BODY like everything
+		# else with a clipped line of briefing under it taking more room.
+		_check("...at a size nothing else on the card uses",
+			_biggest_label(fresh) == sims[0].display_name.to_upper(),
+			"biggest is '%s'" % _biggest_label(fresh))
+		_check("...and the briefing is NOT squeezed in under it",
+			not _has_substring(w1, sims[0].briefing.left(20)), str(w1))
+		fresh.free()
+
+		# AND THE SEQUENCE ADVANCES. _draw_training picks the first uncleared
+		# one, so clearing the first has to move it on rather than leave a
+		# finished exercise sitting at the top of the screen.
+		_check("a fresh exercise is not cleared", not ui2._is_cleared(sims[0]))
+		cm.state.record_clear(sims[0].id)
+		_check("...and running it clears it", ui2._is_cleared(sims[0]))
+		if sims.size() > 1:
+			_check("...while the next one is still ahead of you",
+				not ui2._is_cleared(sims[1]))
+
+	# ── AND THE TAB GOES WHEN THERE IS NOTHING ON IT ──
+	_check("while training is unfinished, both tabs are offered",
+		not ui2._training_over())
+	for sim in sims:
+		cm.state.record_clear(sim.id)
+	_check("once every exercise is cleared, training is over", ui2._training_over())
+	ui2.free()
+
 	print("")
 	print("%d failure(s)" % _fails)
 	quit(1 if _fails > 0 else 0)
@@ -364,3 +424,38 @@ func _all_nodes(n: Node) -> Array:
 	for c in n.get_children():
 		out.append_array(_all_nodes(c))
 	return out
+
+
+## True when a button with this text sits anywhere under a control.
+func _has_button(n: Node, text: String) -> bool:
+	if n is Button and String((n as Button).text).strip_edges() == text:
+		return true
+	for c in n.get_children():
+		if _has_button(c, text):
+			return true
+	return false
+
+
+## The text of the largest label under a node. The exercise name has to be the
+## biggest thing on its card — that was the whole point of the rework, and a
+## check on the words alone would pass on the old layout too.
+func _biggest_label(n: Node, best: Array = [0, ""]) -> String:
+	if n is Label:
+		var px: int = (n as Label).get_theme_font_size("font_size")
+		if px > int(best[0]):
+			best[0] = px
+			best[1] = (n as Label).text
+	for c in n.get_children():
+		_biggest_label(c, best)
+	return String(best[1])
+
+
+## Does any label contain this text? `_has` is an exact match on a whole label,
+## which cannot answer "is the briefing in here somewhere".
+func _has_substring(words: Array, want: String) -> bool:
+	if want.strip_edges() == "":
+		return false
+	for w in words:
+		if String(w).find(want) >= 0:
+			return true
+	return false

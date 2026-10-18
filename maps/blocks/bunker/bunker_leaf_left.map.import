@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://3f4dqic3rwhs"
+path="res://.godot/imported/bunker_leaf_left.map-98d7124fbe5527b01fcf472d83caaf49.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bunker/bunker_leaf_left.map"
+dest_files=["res://.godot/imported/bunker_leaf_left.map-98d7124fbe5527b01fcf472d83caaf49.tres"]
+
+[params]
+

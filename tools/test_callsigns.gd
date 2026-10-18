@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE THREE FACTIONS DO NOT SOUND ALIKE.
@@ -41,7 +42,7 @@ func _init() -> void:
 	# Command; a Swarm squad called ABUTMENT on the Causeway would throw away
 	# the one thing telling the player who they are fighting.
 	var leaked: Array = []
-	for site in [&"causeway", &"lockside", &"polaris", &"hillfort"]:
+	for site in [&"causeway", &"lockside", &"polaris", &"hillfort_wip"]:
 		var with_site := _Cs.pool(Enums.Factions.SWARM, site)
 		if with_site.size() != swarm.size():
 			leaked.append(String(site))

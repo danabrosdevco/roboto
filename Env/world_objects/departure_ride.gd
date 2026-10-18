@@ -316,8 +316,15 @@ func begin(mission = null) -> void:
 		return
 	running = true
 	_mission = mission
-	set_physics_process(true)
 	departed.emit(mission)
+
+	# NO JOURNEY TO A PLACE YOU ARE ALREADY AT. See _already_there: the doors
+	# open and that is the whole departure.
+	if _already_there(mission):
+		_on_arrived()
+		return
+
+	set_physics_process(true)
 
 	if _ride != null and _ride.is_valid():
 		_ride.kill()
@@ -335,8 +342,92 @@ func begin(mission = null) -> void:
 	_ride.tween_callback(_on_arrived)
 
 
+## IS THE TRAIN ALREADY THERE?
+##
+## Take a site and the enemy raids it on the next turn, and the defence is
+## fought on ground the train is already standing at. Playing the full ride for
+## that is a lie the player can read: the tunnel goes past the windows for ten
+## seconds and the doors open onto the same platform.
+##
+## So a same-site departure skips straight to the arrival — the doors just
+## open. Nothing else changes: the pad is armed the same way, `arrived` fires
+## the same way, and the mission loads the same way.
+##
+## Campaign.last_site is runtime-only and empty on a fresh boot, which is the
+## right default: an unknown position plays the ride, which is a second of
+## spectacle rather than a wrong answer. See the note on it in campaign.gd.
+func _already_there(mission) -> bool:
+	if mission == null:
+		return false
+	var cm := get_tree().get_first_node_in_group(&"campaign")
+	if cm == null or not (&"last_site" in cm):
+		return false   # no campaign to ask; ride, because that is never wrong
+	var standing: StringName = cm.last_site
+	if standing == &"":
+		return false
+	if cm.state == null or cm.state.locations == null:
+		return false
+	var going = cm.state.locations.for_mission(mission.id)
+	if going == null:
+		return false   # the sim arena has no Location, deliberately
+	return going.id == standing
+
+
+
+# ── The carriage riding the rail ─────────────────────────────────────────────
+#
+# NOTHING IN THE TRAIN MOVES, says the header, and that is still true of the
+# TRAIN: moving the carriage would move the floor out from under the player,
+# the squad and the physics. What moves is the ART — the dressing hanging off
+# `art`, which nothing stands on — by about a centimetre.
+#
+# A centimetre is the whole trick. Reported from play: the ride read as "the
+# lights outside are doing something" rather than as travelling, because the
+# only thing in motion was 20 m away through a window. A carriage that rocks
+# very slightly against a tunnel that scrolls is a train; either alone is a
+# light show.
+#
+# TWO FREQUENCIES THAT DO NOT DIVIDE INTO EACH OTHER (2.7 and 3.9 Hz), so the
+# sway never settles into a loop you can hear counting. Scaled by `_rate`, the
+# same 0..1 the tunnel and the lamps use, so it builds through the acceleration
+# and dies through the brake without a second timeline to keep in step.
+#
+# AMPLITUDE IS IN METRES and deliberately tiny. Above about 0.02 the floor and
+# the dressing visibly disagree, because only one of them is moving.
+@export var sway_metres: float = 0.011
+@export var sway_roll_degrees: float = 0.22
+
+var _sway_t: float = 0.0
+var _art_home: Transform3D
+var _art_homed: bool = false
+
+
+## Rock the dressing. Called from _physics_process, which is already running
+## for the tunnel scroll, so this adds no new process.
+func _sway(delta: float) -> void:
+	if art == null or not is_instance_valid(art):
+		return
+	if not _art_homed:
+		_art_home = art.transform
+		_art_homed = true
+	if _rate <= 0.0001:
+		# Stopped. Put it back exactly rather than leaving it a millimetre out,
+		# for the reason _on_arrived gives about a rate of 1e-7.
+		art.transform = _art_home
+		return
+	_sway_t += delta
+	var a: float = sway_metres * _rate
+	var up: float = sin(_sway_t * TAU * 2.7) * a
+	var side: float = sin(_sway_t * TAU * 3.9) * a * 0.8
+	var roll: float = deg_to_rad(sway_roll_degrees) * _rate \
+		* sin(_sway_t * TAU * 1.3)
+	art.transform = _art_home \
+		.translated_local(Vector3(side, up, 0.0)) \
+		.rotated_local(Vector3.FORWARD, roll)
+
 func _physics_process(delta: float) -> void:
 	_scroll += _rate * line_speed * delta
+	_sway(delta)
 	for m in _mats:
 		m.set_shader_parameter(&"rate", _rate)
 		m.set_shader_parameter(&"scroll", _scroll)
@@ -355,22 +446,34 @@ func _on_arrived() -> void:
 	set_physics_process(false)
 	_set_lamp_level(1.0)
 	_open_door()
-	# THE PAD COMES ALIVE HERE and not when the mission was queued. Walking out
-	# of a train that has not moved would deploy you from the station you are
-	# already standing in.
+	# THE PAD COMES ALIVE WHEN THE DOORS FINISH OPENING, not when the train
+	# stops. It used to arm here, which is 1.6 s before the leaf has finished
+	# travelling — so the way out existed, and could be walked into, while the
+	# door in front of it was still sliding. _open_door arms it on the end of
+	# its own tween instead, which is the moment the opening is actually there.
+	arrived.emit(_mission)
+
+
+## Slide the leaf, then hand over the way out. The arming is chained onto the
+## END of the tween deliberately: see the note in _on_arrived.
+func _open_door() -> void:
+	if _leaf == null:
+		# No leaf was built; _build_leaf already said why. The pad still has to
+		# come alive or the ride is a soft-lock — there is simply no door to
+		# wait on.
+		_arm_the_way_out()
+		return
+	var t := create_tween()
+	t.tween_property(_leaf, ^"global_position", _leaf_open, door_seconds) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	t.tween_callback(_arm_the_way_out)
+
+
+func _arm_the_way_out() -> void:
 	if exit_to_arm != null and exit_to_arm.has_method(&"arm"):
 		exit_to_arm.arm()
 	else:
 		push_warning("DepartureRide: nothing to arm, so the departure pad's gate is whatever it was — check railhead_level.gd wired exit_to_arm.")
-	arrived.emit(_mission)
-
-
-func _open_door() -> void:
-	if _leaf == null:
-		return   # no leaf was built; _build_leaf already said why
-	var t := create_tween()
-	t.tween_property(_leaf, ^"global_position", _leaf_open, door_seconds) \
-			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
 ## Scale every lamp off its AUTHORED energy rather than its current one, so

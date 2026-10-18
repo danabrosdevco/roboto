@@ -313,8 +313,14 @@ always — you're looking right at them.
   and resource integrity.
 - `bash tools/test.sh` runs the headless logic suites (`tools/test_*.gd`). The
   ledger has one; four ledger bugs shipped in two days before it existed.
+  **It cannot currently finish** — `test_designator_squad.gd` never terminates
+  and `test.sh` has no per-suite timeout, so everything behind it stalls.
 - `bash tools/smoke.sh` boots the game headless and fails on runtime errors.
   check.sh proves scripts *parse*; this proves they *run*.
+- **The full account of the tools lives in `CLAUDE.md`** — what each prefix
+  (`test_` / `probe_` / `shot_`) contracts to do, what each runner covers, and
+  a table of what to run for what you touched. The four lines here are the
+  summary; do not let the two drift.
 - `.tscn`/`.tres` edits: verify `ext_resource` ids are all declared and used, and
   that `load_steps` equals ext + sub + 1. Godot does not reliably pick up an
   externally edited `.tres` until the project is closed and reopened.

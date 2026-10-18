@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b0febe6cqipvd"
+path="res://.godot/imported/bunker_mouth.map-d64b6f4134d2e7db29478bd3a099c944.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bunker/bunker_mouth.map"
+dest_files=["res://.godot/imported/bunker_mouth.map-d64b6f4134d2e7db29478bd3a099c944.tres"]
+
+[params]
+

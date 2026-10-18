@@ -37,6 +37,21 @@ const _Heat := preload("res://Env/world_objects/site_heat.gd")
 const _Commander := preload("res://Env/world_objects/enemy_commander.gd")
 const _BunkerObj := preload("res://Env/world_objects/bunker_objective.gd")
 const _Signal := preload("res://Env/world_objects/core_signal.gd")
+
+## The two door leaves, and the way out past them. Held so the stand-down can
+## drive the doors and the win can open the exit.
+var _leaf_left: Node3D = null
+var _leaf_right: Node3D = null
+var _exit_volume: Node3D = null
+
+## HOW TALL THE BEACON STANDS, per map.
+##
+## CoreSignal exports BEACON_HEIGHT at 34 m and _dress never set it, so every
+## site got 34 whatever its geometry — and a subclass had no way to change it.
+## That is fine in an open bowl and wrong indoors: the Causeway's cores sit at
+## y 72 and y 138 in halls with 5.25 m of clearance, where a 34 m column spears
+## six floors. 0 keeps CoreSignal's own default.
+@export var beacon_height: float = 0.0
 const INTERACTIBLE := preload("res://Env/world_objects/components/template_interactible.tscn")
 
 ## The authored capture points, and the size each should be.
@@ -65,6 +80,25 @@ const INTERACTIBLE := preload("res://Env/world_objects/components/template_inter
 ## Only if the marker is gone, and it says so when it uses this.
 @export var bunker_fallback: Vector3 = Vector3.ZERO
 @export var bunker_tier: int = 1
+
+## WHICH WAY THE DOORS FACE, in degrees about Y.
+##
+## The entrance kit is authored facing +Z and nine sites were fine with that,
+## so this defaults to 0 and changes nothing anywhere it is not set.
+##
+## HILLFORT REDOUBT NEEDED IT. Its bunker sits 17 m behind the relay dish's
+## pedestal, so a squad surfacing there got the back of a 62 m dish filling the
+## frame and no sightline at all to the gate the doors are meant to hold —
+## §12.8 is "you come up out of the ground and turn round to hold the ground in
+## front of them", and there was no ground in front of them to hold. TERRAIN
+## measured the clearance at that exact spot and asked for the call; turning
+## the doors keeps the measurement and buys 50 m of open yard, where moving the
+## entrance would have thrown the clearance away.
+##
+## It rotates the HOST, so the kit, its handles and both leaves travel with it
+## and nothing downstream has to know.
+@export var bunker_yaw: float = 0.0
+
 
 ## Total enemy supply for the site. Measured off the authored force rather than
 ## invented — §2, resistance is supply, not squad count. basin_1_anchor's
@@ -112,6 +146,21 @@ func _ready() -> void:
 	var op_def = cm_op.current_mission if cm_op != null and "current_mission" in cm_op else null
 	var is_defence: bool = op_def != null and "defence" in op_def and op_def.defence
 
+	# SOMEBODY COMES BACK FOR WHAT YOU TAKE. HoldableCore lets hostiles retake
+	# a core by standing in its circle; this is the thing that sends them.
+	# Added here rather than into every level, for the same reason the cores
+	# are: the behaviour belongs to a SITE, and a level should not carry nodes
+	# that belong to a system.
+	var retakers := Node.new()
+	retakers.name = "CoreRetakers"
+	retakers.set_script(preload("res://Env/world_objects/core_retakers.gd"))
+	# BEFORE add_child, like SiteOperation below: CoreRetakers scans for cores
+	# in _ready, which fires the moment it is parented. Handing it the level
+	# rather than letting it find its own way is what stops it depending on
+	# get_tree().current_scene, which is null in every headless harness.
+	retakers.search_root = level
+	add_child(retakers)
+
 	operation = Node3D.new()
 	operation.set_script(_Op)
 	operation.name = "SiteOperation"
@@ -132,6 +181,22 @@ func _ready() -> void:
 	heat.operation = operation
 	operation.heat = heat
 
+	# AND IT HAS TO ACTUALLY END THE OPERATION.
+	#
+	# SiteOperation decides the win; nothing used to act on it. operation_complete
+	# ticked BunkerObjective's line and that was all — the player stood in a
+	# finished mission with no extraction objective pointing anywhere, because
+	# §12.7 replaced the extraction with the bunker and the going-home half was
+	# never wired. Campaign.open_way_out() is the real sequence; see the note there
+	# for why it moves the player rather than calling extract().
+	operation.operation_complete.connect(_on_operation_won)
+	# THE DOORS ARE THE PROGRESS BAR. §12.7 is "the time it takes to open the
+	# way down", and the player spends it standing next to this being shot at —
+	# so the leaves have to say how far through it is with no HUD element. One
+	# float drives both, and because it is a position rather than an animation,
+	# a stand-down that stalls when the bunker is lost simply stops moving and
+	# resumes where it left off.
+	operation.stand_down_progress.connect(_on_doors)
 	add_child(operation)
 
 	# The bunker as a HUD line, so the stand-down is read where every other
@@ -254,6 +319,22 @@ func _seat_core(host: Node3D, tier: int) -> Node3D:
 func _build_core_body(host: Node3D, tier: int) -> void:
 	if host.get_node_or_null(^"CoreBody") != null:
 		return   # already standing; a level can be re-entered
+	# AND NOT ON A HOST THAT ALREADY HAS A REAL CORE.
+	#
+	# This builds a placeholder column for a host that is only a terminal. Every
+	# capture point on the eight maps still to convert is a
+	# compute_core_point*.tscn, which ships an actual `Core` mesh — so this
+	# would stand a grey box inside it and add a second collider around it.
+	# _hide_authored_console() hides the Terminal's parts and has never touched
+	# `Core`, so nothing downstream caught it.
+	#
+	# The docstring above used to say Valley Basin was exempt because it uses
+	# capture_point.tscn. It does not: valley_basin_level.tscn instances
+	# compute_core_point_small.tscn, same as the rest. Found by a recon pass
+	# over the maps rather than by anything going wrong, because a box inside a
+	# core looks like a core.
+	if host.get_node_or_null(^"Core") != null:
+		return
 	_hide_authored_console(host)
 	var foot: float = [1.88, 3.38, 5.19][clampi(tier, 0, 2)]
 	var tall: float = [4.19, 6.97, 12.38][clampi(tier, 0, 2)]
@@ -302,56 +383,97 @@ func _build_core_body(host: Node3D, tier: int) -> void:
 
 
 ## The bunker has no authored furniture, so it brings its own terminal.
+## WHICH MOUNTING THE BUNKER USES, per map.
+##
+## TERRAIN's kit ships the entrance as one module plus three surrounds, because
+## nine maps that look nothing alike cannot share one monument: "open" is a
+## sunken court for open ground, "cliff" a revetted headwall for a slope, and
+## "wall" a flush interior surround for somewhere with a ceiling. See
+## docs/briefs/BUNKER_ENTRANCE_MODEL.md.
+@export var bunker_mount: StringName = &"open"
+
+## NUDGE OFF THE MARKER, in the level's own axes.
+##
+## A marker is a POSITION and nothing about it promises 9 m of clear ground in
+## front of a 9 m door. Two of the nine landed in something: the Causeway's
+## CW_Bunker is a post INSIDE an authored sandbag redoubt, so the entrance came
+## up buried 3.3 m with its doorway packed, and Polaris had a wall 2 m off the
+## opening. Both were found by tools/probe_bunker_clear.gd, which is the thing
+## to re-run after moving one of these.
+##
+## Measured, never guessed — the rule this project has broken on terrain three
+## times. Zero on a map whose marker already stands in the open.
+@export var bunker_offset: Vector3 = Vector3.ZERO
+
+const BUNKER_MOUNTS := {
+	&"open": preload("res://maps/blocks/bunker/bunker_entrance_open.tscn"),
+	&"cliff": preload("res://maps/blocks/bunker/bunker_entrance_cliff.tscn"),
+	&"wall": preload("res://maps/blocks/bunker/bunker_entrance_wall.tscn"),
+}
+
+
+## THE WAY DOWN — a real entrance now, not the placeholder post.
+##
+## It used to build a 1.2 m glowing box on a 6 m slab, which is the wrong order
+## of magnitude for a thing a train runs under and read as a bollard. The kit
+## replaces it wholesale: a mouth, two leaves that slide, a signal strip, and
+## the named handles this function hangs gameplay off —
+##
+##   TerminalFace   where you press F
+##   DockPad        where the tap drone lands
+##   ExitVolume     the point past which the squad has left
+##   LeafLeft/Right the stand-down, as geometry
+##
+## NOTHING IS MEASURED OFF THE MESH. Every one of those is a node TERRAIN
+## placed from its own constants, so this reads positions rather than guessing
+## them — the rule this project has broken on terrain three times.
 func _build_bunker(level: Node) -> Node3D:
 	var host := Node3D.new()
-	host.name = "BasinBunker"
+	host.name = "SiteBunker"
 	add_child(host)
 	var mark := _find(level, bunker_marker) as Node3D
 	if mark != null:
-		host.global_position = mark.global_position
+		host.global_position = mark.global_position + bunker_offset
 	else:
 		push_warning("SiteSlice: no '%s' marker in the level, so the bunker falls back to a typed position that may no longer be on the ground." % bunker_marker)
-		host.global_position = bunker_fallback
+		host.global_position = bunker_fallback + bunker_offset
+	host.rotation.y = deg_to_rad(bunker_yaw)
 
-	# GEOMETRY, because the first playtest could not find it: the bunker was a
-	# bare Interactible standing in a field with nothing to see. Placeholder —
-	# §13.1 has the real portal kit — but it has to be findable before anybody
-	# can say whether holding it is any good.
-	var pad := MeshInstance3D.new()
-	pad.name = "Pad"
-	var pm := BoxMesh.new()
-	pm.size = Vector3(6.0, 0.4, 6.0)
-	pad.mesh = pm
-	var pmat := StandardMaterial3D.new()
-	pmat.albedo_color = Color(0.16, 0.18, 0.17)
-	pad.material_override = pmat
-	pad.position = Vector3(0.0, 0.2, 0.0)
-	host.add_child(pad)
+	var mount: PackedScene = BUNKER_MOUNTS.get(bunker_mount, null)
+	if mount == null:
+		push_warning("SiteSlice: '%s' is not a bunker mounting; using the open court. Pick one of %s." % [
+			String(bunker_mount), str(BUNKER_MOUNTS.keys())])
+		mount = BUNKER_MOUNTS[&"open"]
+	var kit := mount.instantiate()
+	kit.name = "Entrance"
+	host.add_child(kit)
 
-	var post := MeshInstance3D.new()
-	post.name = "Portal"
-	var bm := BoxMesh.new()
-	bm.size = Vector3(1.2, 4.5, 1.2)
-	post.mesh = bm
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.22, 0.30, 0.26)
-	mat.emission_enabled = true
-	mat.emission = Color(0.40, 0.78, 0.95)
-	mat.emission_energy_multiplier = 1.2
-	post.material_override = mat
-	post.position = Vector3(0.0, 2.4, 0.0)
-	host.add_child(post)
+	# THE HANDLES. A missing one is not survivable silently — the whole point of
+	# the kit is that gameplay attaches to names rather than to coordinates, so
+	# a rename upstream has to be loud.
+	var face := _find(kit, "TerminalFace") as Node3D
+	var dock := _find(kit, "DockPad") as Node3D
+	var way_out := _find(kit, "ExitVolume") as Node3D
+	_leaf_left = _find(kit, "LeafLeft") as Node3D
+	_leaf_right = _find(kit, "LeafRight") as Node3D
+	for pair in [["TerminalFace", face], ["DockPad", dock], ["ExitVolume", way_out],
+			["LeafLeft", _leaf_left], ["LeafRight", _leaf_right]]:
+		if pair[1] == null:
+			push_warning("SiteSlice: the bunker kit has no '%s'. It has been renamed or the module is stale, and the bunker will not work properly without it." % pair[0])
 
+	# F GOES ON THE TERMINAL FACE, not in the middle of the doorway.
 	var inter = INTERACTIBLE.instantiate()
 	host.add_child(inter)
+	if face != null:
+		inter.global_position = face.global_position
 	var cs := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	# Sized to a thing you walk up to and no bigger. An oversized volume is one
 	# the player ends up standing INSIDE, where the interact ray reports
 	# nothing at all — the same trap the compute cores already document.
-	box.size = Vector3(2.4, 1.4, 2.4)
+	box.size = Vector3(2.4, 1.8, 2.4)
 	cs.shape = box
-	cs.position = Vector3(0.0, 0.7, 0.0)
+	cs.position = Vector3(0.0, 0.9, 0.0)
 	inter.add_child(cs)
 
 	var core := Node3D.new()
@@ -359,12 +481,13 @@ func _build_bunker(level: Node) -> Node3D:
 	core.name = "Hold"
 	core.size_tier = bunker_tier
 	core.mark_noun = "BUNKER"
-	# From the post this actually builds (4.5 m tall, centred 2.4), not from the
-	# tier table — see dock_height.
-	core.dock_height = 4.9
+	# OFF THE PAD TERRAIN PLACED, not from the tier table and not from the
+	# geometry. The drone is 3.4 m across and has to land ON the model.
+	core.dock_height = (dock.global_position.y - host.global_position.y) if dock != null else 4.9
 	core.interactible = inter
 	host.add_child(core)
-	_dress(host, core)
+	_exit_volume = way_out
+	_dress(host, core, _find(kit, "BeaconMount") as Node3D)
 	return core
 
 
@@ -464,15 +587,34 @@ func _refresh_readout() -> void:
 ## That is the SECOND time this slice has lost the same race (see
 ## holdable_core._take_terminal). The lesson both times is the same — when an
 ## authored node already exposes a knob, set the knob.
+## THE REACH VOLUME — but only where the prefab did not author one.
+##
+## THIS USED TO OVERWRITE, ALWAYS, from a table of its own:
+##     foot = [1.88, 3.38, 5.19][tier]
+##     tall = [4.19, 6.97, 12.38][tier]
+## Those numbers were measured off the OLD core art. TERRAIN rebuilt the three
+## core prefabs on 2026-10-14 and they are a different size and no longer
+## square in plan — small is 3.56 x 4.50 x 5.56, medium 4.81 x 7.31 x 6.31,
+## large 6.56 x 12.72 x 8.25 — and the new prefabs carry their OWN reach, inset
+## about 0.7 m inside the core, which is the clearance this is supposed to
+## produce. Overwriting that with the stale table put a 3.08 m volume around a
+## 3.56 x 5.56 m core: smaller than the thing it belongs to, so the terminal
+## can only be reached from inside the core.
+##
+## Scene values beat script defaults — the project's own rule. A prefab that
+## says what its reach is, wins. This now fills in only for a host that never
+## said, which is what the fallback was for in the first place.
 func _fit_reach(inter: Node, tier: int) -> void:
 	var term := inter.get_parent()
 	if term == null or not ("reach_size" in term):
 		push_warning("SiteSlice: a terminal has no reach_size, so its core keeps the console-sized reach and a tall one cannot be used.")
 		return
-	var foot: float = [1.88, 3.38, 5.19][clampi(tier, 0, 2)]
-	var tall: float = [4.19, 6.97, 12.38][clampi(tier, 0, 2)]
+	if term.reach_size != Vector3.ZERO:
+		return   # the prefab authored it; see above
+	var foot: float = [3.56, 4.81, 6.56][clampi(tier, 0, 2)]
+	var tall: float = [4.50, 7.31, 12.72][clampi(tier, 0, 2)]
 	# The core footprint plus a margin, and its FULL height — a volume that
-	# stops 3 m up on a 12.4 m core is one you can see and cannot use.
+	# stops 3 m up on a 12.7 m core is one you can see and cannot use.
 	term.reach_size = Vector3(foot + 1.2, tall, foot + 1.2)
 
 
@@ -507,7 +649,15 @@ func _hide_authored_console(host: Node3D) -> void:
 ## find the shaft height, and add_child runs _ready synchronously — a node
 ## handed its subject afterwards has already decided it has none. The same
 ## mistake cost this slice two bugs; see §12 and holdable_core._on_tap_docked.
-func _dress(host: Node3D, core: Node3D) -> void:
+## Light and sound for a core.
+##
+## `mount` is where the beacon STANDS, when that is not the thing itself. A
+## surface core is its own beacon base and passes nothing. The bunker is not:
+## its origin is the middle of the doorway, so a column raised there goes up
+## through the opening and out of the roof — which is exactly what the first
+## screenshots of all nine maps showed. TERRAIN put a BeaconMount node off to
+## one side of the mouth for this, and using it is the whole fix.
+func _dress(host: Node3D, core: Node3D, mount: Node3D = null) -> void:
 	if core == null or not is_instance_valid(core):
 		push_warning("SiteSlice: asked to dress nothing, so a core will capture in silence.")
 		return
@@ -515,4 +665,49 @@ func _dress(host: Node3D, core: Node3D) -> void:
 	fx.set_script(_Signal)
 	fx.name = "Signal"
 	fx.core = core
+	# BEFORE add_child: CoreSignal reads its height in _ready, which fires the
+	# instant it is parented.
+	if beacon_height > 0.0:
+		fx.BEACON_HEIGHT = beacon_height
 	host.add_child(fx)
+	if mount != null and is_instance_valid(mount):
+		# AFTER add_child, because a global position means nothing until the
+		# node is in the tree.
+		fx.global_position = mount.global_position
+
+
+## The operation is won. Take the squad home.
+##
+## DEFERRED, because operation_complete can fire from inside a physics step —
+## the stand-down ticks in _physics_process — and the campaign touches the
+## objective list and the exit, neither of which should change mid-step.
+func _on_operation_won() -> void:
+	_open_way_out.call_deferred()
+
+
+func _open_way_out() -> void:
+	var cm = get_tree().get_first_node_in_group("campaign")
+	if cm == null or not cm.has_method("open_way_out"):
+		push_warning("SiteSlice '%s': the operation was won but there is no campaign to extract through, so the mission cannot end." % name)
+		return
+	print("[SiteSlice] operation won: %s" % cm.open_way_out())
+
+
+## HOW FAR EACH LEAF RUNS. Must match block_bunker.gd's TRAVEL — the leaves
+## overlap their jambs by 0.3 m when shut, so a shorter throw leaves the way
+## down visibly blocked and a longer one drives them into the surround.
+const LEAF_TRAVEL := 4.3
+
+
+## Open the doors to match the stand-down.
+##
+## POSITION, NOT AN ANIMATION. TERRAIN built LeafLeft and LeafRight as separate
+## nodes precisely so one float could drive them: see the note at the top of
+## tools/build_bunker.gd. It also means there is no animation state to get out
+## of sync with the operation when a stand-down is interrupted and resumed.
+func _on_doors(fraction: float) -> void:
+	var f: float = clampf(fraction, 0.0, 1.0)
+	if _leaf_left != null and is_instance_valid(_leaf_left):
+		_leaf_left.position.x = -LEAF_TRAVEL * f
+	if _leaf_right != null and is_instance_valid(_leaf_right):
+		_leaf_right.position.x = LEAF_TRAVEL * f

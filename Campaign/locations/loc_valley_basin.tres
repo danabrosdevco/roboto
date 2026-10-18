@@ -12,4 +12,4 @@ start_owner = 4
 resources_per_turn = 13
 compute = 1
 resistance = 82
-connects_to = Array[StringName]([&"hillfort", &"coast_road", &"over_the_top", &"three_rivers", &"qamareen"])
+connects_to = Array[StringName]([&"hillfort_wip", &"coast_road", &"over_the_top", &"three_rivers", &"qamareen"])

@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # MORE THAN ONE CAMPAIGN, AND THE OLD ONE SURVIVES.

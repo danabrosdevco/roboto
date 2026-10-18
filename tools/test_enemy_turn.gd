@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE OTHER SIDE PLAYS TOO.
@@ -54,15 +55,15 @@ func _init() -> void:
 	# ── the frontier rule ───────────────────────
 	var s := _make(cat, locs)
 	# Hold Hillfort alone. It borders only Valley Basin, which is theirs.
-	s.set_site_owner(&"hillfort", Enums.Factions.PLAYER)
+	s.set_site_owner(&"hillfort_wip", Enums.Factions.PLAYER)
 	var f := _Turn.frontier(s)
-	_check("a lone holding is on the frontier", f.has(&"hillfort"), str(f))
+	_check("a lone holding is on the frontier", f.has(&"hillfort_wip"), str(f))
 
 	# Now hold the basin too. Hillfort's ONLY neighbour is the basin, so it
 	# becomes interior and untouchable — the rule's whole point.
 	s.set_site_owner(&"valley_basin", Enums.Factions.PLAYER)
 	f = _Turn.frontier(s)
-	_check("CONSOLIDATING MAKES A SITE INTERIOR", not f.has(&"hillfort"), str(f))
+	_check("CONSOLIDATING MAKES A SITE INTERIOR", not f.has(&"hillfort_wip"), str(f))
 	_check("...while the new edge is exposed", f.has(&"valley_basin"))
 	_check("...and nothing you do not hold is on your frontier",
 		not f.has(&"causeway"))
@@ -70,7 +71,7 @@ func _init() -> void:
 	# ── targeting ───────────────────────────────
 	# Hold two sites of very different worth. They should go for the rich one.
 	var s2 := _make(cat, locs)
-	s2.set_site_owner(&"hillfort", Enums.Factions.PLAYER)      # 8/turn, 1 compute
+	s2.set_site_owner(&"hillfort_wip", Enums.Factions.PLAYER)      # 8/turn, 1 compute
 	s2.set_site_owner(&"causeway", Enums.Factions.PLAYER)      # 55/turn, 2 compute
 	_check("THEY GO FOR THE THROAT, not the nearest thing",
 		_Turn.pick_target(s2) == &"causeway", String(_Turn.pick_target(s2)))
@@ -97,22 +98,22 @@ func _init() -> void:
 
 	# ── a turn, played ──────────────────────────
 	var s4 := _make(cat, locs)
-	s4.set_site_owner(&"hillfort", Enums.Factions.PLAYER)
+	s4.set_site_owner(&"hillfort_wip", Enums.Factions.PLAYER)
 	s4.turn = _first_move_turn()
 	var r: Dictionary = _Turn.play(s4, 1)
 	_check("the other side takes a turn", int(r["outcome"]) != _Turn.Outcome.QUIET,
 		"outcome %d on %s" % [int(r["outcome"]), str(r["site"])])
 	_check("...and a bare garrison loses the ground",
-		int(r["outcome"]) == _Turn.Outcome.LOST and not s4.holds(&"hillfort"),
-		"outcome %d, still held = %s" % [int(r["outcome"]), str(s4.holds(&"hillfort"))])
+		int(r["outcome"]) == _Turn.Outcome.LOST and not s4.holds(&"hillfort_wip"),
+		"outcome %d, still held = %s" % [int(r["outcome"]), str(s4.holds(&"hillfort_wip"))])
 
 	# A turn it does not act on changes nothing.
 	var s5 := _make(cat, locs)
-	s5.set_site_owner(&"hillfort", Enums.Factions.PLAYER)
+	s5.set_site_owner(&"hillfort_wip", Enums.Factions.PLAYER)
 	s5.turn = 1
 	var quiet: Dictionary = _Turn.play(s5, 1)
 	_check("a quiet turn takes nothing", int(quiet["outcome"]) == _Turn.Outcome.QUIET
-		and s5.holds(&"hillfort"))
+		and s5.holds(&"hillfort_wip"))
 
 	# ── in doubt is an INVITATION, not a result ──
 	# It must not change hands on its own: the caller decides whether to offer

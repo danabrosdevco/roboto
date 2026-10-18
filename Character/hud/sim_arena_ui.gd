@@ -86,8 +86,19 @@ func _ready() -> void:
 	head.add_child(shut)
 	column.add_child(head)
 
+	# THE TRAINING TAB GOES AWAY ONCE TRAINING IS OVER.
+	#
+	# Both exercises completed means there is nothing on that tab you can press
+	# — every row says COMPLETED and none of them has an ENTER. A tab that
+	# cannot be acted on is a tab that teaches the player to ignore tabs, and
+	# the arena's whole second life is free play. So the sim collapses to THE
+	# LAB and stops asking which half you wanted.
 	var tabs := Kit.hbox(6)
-	for spec in [[&"training", "TRAINING"], [&"lab", "THE LAB"]]:
+	var specs: Array = [[&"training", "TRAINING"], [&"lab", "THE LAB"]]
+	if _training_over():
+		specs = [[&"lab", "THE LAB"]]
+		_tab = &"lab"
+	for spec in specs:
 		var id: StringName = spec[0]
 		var b := Kit.button(String(spec[1]), Kit.DIM, Kit.BODY)
 		b.pressed.connect(func(): _show(id))
@@ -142,37 +153,81 @@ func rebuild() -> void:
 	_detail_pane.visible = _detail.get_child_count() > 0
 
 
-## The three authored arenas, in the order they are meant to be run.
+## ONE EXERCISE AT A TIME, which is what makes it read as a sequence.
+##
+## It used to list every arena at once, each a small heading over a clipped
+## line of briefing. Two problems with that: a list invites you to pick, and
+## there is nothing to pick — they are meant to be run in order — and the
+## thing you actually need to read, the NAME, was the smallest part of the row.
+##
+## So: the next uncleared one, on its own, large. The ones behind you are gone
+## rather than greyed, because a finished exercise is not a choice either. The
+## step counter is what keeps it from looking like the only one there has ever
+## been, and `_training_over()` drops the whole tab once both are done.
 func _draw_training() -> void:
-	var any := false
-	for m in _sim_missions():
-		any = true
-		_body.add_child(_training_row(m))
-	if not any:
+	var all := _sim_missions()
+	var next = null
+	var step := 0
+	for i in all.size():
+		if not _is_cleared(all[i]):
+			next = all[i]
+			step = i + 1
+			break
+	if next == null:
+		# Every exercise cleared. _training_over() normally collapses the tab
+		# before this can be seen, so reaching here means the tab was forced.
+		_body.add_child(Kit.label("TRAINING COMPLETE", HUDPalette.HELD, Kit.BODY, true))
+		return
+	if all.is_empty():
 		_body.add_child(Kit.label("NO TRAINING AVAILABLE", Kit.PROBLEM, Kit.BODY, true))
+		return
+	_body.add_child(_training_row(next, step, all.size()))
 
 
-func _training_row(m) -> Control:
-	var state = campaign.state if campaign != null and "state" in campaign else null
-	var clears: int = state.clears_of(m.id) if state != null else 0
-	var card := Kit.card(Kit.BRIGHT if clears > 0 else Kit.LINE,
-		func(): training_chosen.emit(m.id), func(): pass, 8.0)
+## One exercise, as a row.
+##
+## A CLEARED ONE SAYS COMPLETED AND CANNOT BE RE-ENTERED. It used to say
+## "RUN x1" and keep its ENTER button, which made the training track read as a
+## list of things you could grind rather than a sequence you finish. There is
+## nothing to gain from a second run — an exercise pays nothing and costs no
+## turn — so offering it is offering busywork.
+## THE NAME IS THE BIGGEST THING ON IT.
+##
+## FIRST CONTACT and TAKE AND HOLD are the whole content of this screen, and
+## they used to be set at BODY — the same size as everything else — with a
+## clipped line of briefing under them taking up more room than they did. The
+## briefing is gone: the exercise opens with it anyway, and a sentence cut off
+## at 110 characters taught nobody anything.
+func _training_row(m, step: int, of: int) -> Control:
+	var card := Kit.card(Kit.LINE,
+		func(): training_chosen.emit(m.id), func(): pass, 14.0)
+	var col := Kit.vbox(6)
+	card.add_child(col)
+	# EXERCISE 1 OF 2 — small, above, so the big line underneath is the name
+	# and nothing else. This is what says "sequence" now that only one shows.
+	col.add_child(Kit.label("EXERCISE %d OF %d" % [step, of], Kit.DIM, Kit.SMALL, true))
+	col.add_child(Kit.label(m.display_name.to_upper(), Kit.BRIGHT, TITLE, true))
 	var row := Kit.hbox(10)
-	card.add_child(row)
-	var col := Kit.vbox(2)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_child(Kit.label(m.display_name.to_upper(), Kit.BRIGHT, Kit.BODY, true))
-	if m.briefing != "":
-		var brief := Kit.label(m.briefing.left(110), Kit.DIM, Kit.SMALL)
-		brief.clip_text = true
-		col.add_child(brief)
-	row.add_child(col)
-	row.add_child(Kit.label("RUN x%d" % clears if clears > 0 else "NOT RUN",
-		Kit.DIM, Kit.SMALL, true))
-	var go := Kit.button("ENTER", Kit.BRIGHT, Kit.SMALL)
+	col.add_child(row)
+	var go := Kit.button("ENTER", Kit.BRIGHT, Kit.BODY)
 	go.pressed.connect(func(): training_chosen.emit(m.id))
 	row.add_child(go)
 	return card
+
+
+## Big enough that the exercise name is the first thing read, and the only
+## thing at this size anywhere in the arena. Kit tops out at HEADING 16, which
+## is a heading among body text rather than a title.
+const TITLE := 30
+
+
+## Has this exercise been run? One place, because _draw_training asks it per
+## mission to find the next one and nothing else should re-derive it.
+func _is_cleared(m) -> bool:
+	var state = campaign.state if campaign != null and "state" in campaign else null
+	if state == null or not state.has_method("clears_of"):
+		return false
+	return state.clears_of(m.id) > 0
 
 
 ## Two sides, built from the catalogue, and a choice about who holds the gun.
@@ -419,3 +474,21 @@ func _sim_missions() -> Array:
 		if m != null and m.sim:
 			out.append(m)
 	return out
+
+
+## Both exercises run at least once.
+##
+## ASKED OF THE SIM MISSIONS THEMSELVES rather than counted, so a third
+## exercise added later is included without anyone remembering to change a
+## number here. Same rule OpsTable._training_done() uses to open the war.
+func _training_over() -> bool:
+	var state = campaign.state if campaign != null and "state" in campaign else null
+	if state == null:
+		push_warning("SimArenaUI: no campaign state, so whether training is finished cannot be read. Showing both tabs.")
+		return false
+	var any := false
+	for m in _sim_missions():
+		any = true
+		if state.clears_of(m.id) <= 0:
+			return false
+	return any

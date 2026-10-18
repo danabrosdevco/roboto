@@ -27,21 +27,44 @@ if [ -z "${GODOT:-}" ]; then
 	exit 2
 fi
 
-# PARKED SUITES — skipped, and named here rather than deleted or renamed so
-# that bringing one back is removing a line, and so nobody has to wonder why a
-# suite stopped running. Each is failing on authored content, not on logic:
+# PARKED SUITES — skipped, with the reason travelling IN THE SUITE as a
+# `# PARKED:` line rather than in a list here. Bringing one back is deleting
+# that line, and nobody has to wonder why a suite stopped running.
 #
-#   test_terrain         the template and mutaha levels load with terrain.data
-#                        null. 99 of its 101 checks were passing, so this is the
-#                        expensive one to leave parked — narrow it to the two
-#                        level checks and the rest can gate again
-#   test_tutorial        the depot has no lesson signs left, so the walk-up,
-#                        library and stand-down checks have nothing to read
+# IT MOVED OUT OF THIS FILE ON 2026-10-16, and the reason is worth keeping:
+# tools/bucket.sh needs the same answer, and when the list lived here only
+# this script could see it — so `bucket.sh terrain` reported FAIL on
+# test_terrain, which this script had been deliberately skipping for days.
+# Two runners, two lists, two different opinions about the same suite. The tag
+# travels with the file, so they cannot disagree.
 #
-# A suite parked here is a suite nobody is watching. Put them back.
-PARKED="test_terrain test_tutorial"
+# Parked as of the move, both failing on authored content and not on logic:
+#   test_terrain    template and mutaha load with terrain.data null — 99 of
+#                   its 101 checks were passing, so narrowing it to the two
+#                   level checks would let the rest gate again
+#   test_tutorial   the depot has no lesson signs left
+#
+# A parked suite is a suite nobody is watching. Put them back.
 
-# WHY THE WHOLE SUITE TAKES A QUARTER OF AN HOUR, and what --fast is for.
+# PACE THE LOOP: Engine.max_fps = 60, IN EVERY SUITE THAT BOOTS A WORLD.
+#
+# A `--script` run has NO FRAME CAP. `_process` then spins as fast as the
+# machine allows and starves the physics tick, so every `await physics_frame`
+# waits far longer in wall clock than the 1/60 s it is written as — and the
+# settle loops here run as long as `for _i in 900`. That is most of why this
+# suite was slow.
+#
+# On one suite it crossed from slow into looking BROKEN:
+# tools/test_designator_squad.gd set neither this nor Settings.path and
+# produced no output at all before a 150 s timeout. Adding the cap turned the
+# silent hang into the real error underneath it (an out-of-bounds array read
+# during world settle). A hang is the worst way for a test to fail, because it
+# looks like the machine rather than the code.
+#
+# 2026-10-14: 47 suites boot a world and only 4 capped the loop. All of them do
+# now. If you write a new suite that boots a world, put the line in.
+#
+# WHY THE WHOLE SUITE STILL TAKES A WHILE, and what --fast is for.
 #
 # A suite that boots Env/world.tscn and loads a level spends most of its life
 # WAITING. `for _i in 420: await physics_frame` is seven seconds of wall clock,
@@ -73,18 +96,23 @@ fi
 FAIL=0
 FOUND=0
 SKIPPED=0
+PARKED_NAMES=""
 
 for suite in tools/test_*.gd; do
 	[ -f "$suite" ] || continue
 	base="$(basename "$suite" .gd)"
-	case " $PARKED " in
-		*" $base "*)
-			echo "── $base.gd ── PARKED, see the list in test.sh"
-			echo
-			SKIPPED=$((SKIPPED + 1))
-			continue
-			;;
-	esac
+	# PARKED — READ FROM THE SUITE, not from a list here. The list that used to
+	# live in this script is below, kept only as history: tools/bucket.sh also
+	# needs to know what is parked, and two runners with separate lists is how
+	# `bucket.sh terrain` reported FAIL on a suite this one had deliberately
+	# been skipping. The tag travels with the file, so it cannot disagree.
+	if grep -q "^# PARKED:" "$suite"; then
+		echo "── $base.gd ── PARKED: $(sed -n 's/^# PARKED: *//p' "$suite" | head -1)"
+		echo
+		SKIPPED=$((SKIPPED + 1))
+		PARKED_NAMES="$PARKED_NAMES $base"
+		continue
+	fi
 	# The world is the expensive part, so its presence is the tier marker. Read
 	# from the file rather than kept as a list here: a list would drift the
 	# first time a suite started or stopped booting the world.
@@ -133,7 +161,7 @@ fi
 # a different claim when three of them never ran, and a parked suite that nobody
 # is reminded about is a parked suite forever.
 if [ "$SKIPPED" != "0" ]; then
-	SKIP_NOTE=" ($SKIPPED not run$([ "$FAST_ONLY" = "1" ] && echo ", fast tier only")$([ -n "$PARKED" ] && echo "; parked: $PARKED"))"
+	SKIP_NOTE=" ($SKIPPED not run$([ "$FAST_ONLY" = "1" ] && echo ", fast tier only")$([ -n "$PARKED_NAMES" ] && echo "; parked:$PARKED_NAMES"))"
 else
 	SKIP_NOTE=""
 fi

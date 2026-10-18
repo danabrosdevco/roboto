@@ -69,6 +69,12 @@ var _hud: Label = null
 # ─────────────────────────────────────────────
 func run() -> void:
 	results.clear()
+	# IN THE "practice" GROUP WHILE IT RUNS, which is how a body several layers
+	# down knows that nothing here is real. Nothing in a lab fight should cost
+	# anything: a revive does not spend the one-per-mission charge, and no
+	# record goes home damaged. See Campaign.is_practice(), which is the only
+	# thing that reads this.
+	add_to_group(&"practice")
 	if plan == null or world == null:
 		push_warning("Laboratory: no plan or no world — nothing to run.")
 		finished.emit("")

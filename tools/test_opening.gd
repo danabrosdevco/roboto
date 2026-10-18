@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # WHAT A FRESH CAMPAIGN ASKS OF YOU, IN ORDER.
@@ -26,6 +27,11 @@ func _check(label: String, ok: bool, detail: String = "") -> void:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_probe.json"
 	await process_frame
 	var world: Node = load("res://Env/world.tscn").instantiate()
@@ -61,7 +67,7 @@ func _init() -> void:
 	open = _ids(cm.available_missions())
 	_check("clearing it opens the second exercise", open.has("arena_3_firing_line"),
 		str(open))
-	_check("...and the war is still shut", not open.has("hillfort_1_relay"), str(open))
+	_check("...and the war is still shut", not open.has("hfw_1_fort"), str(open))
 
 	var a3 = cm.get_mission(&"arena_3_firing_line")
 	_check("the second brings your squad", a3.squad_size != 0,
@@ -82,7 +88,7 @@ func _init() -> void:
 	# ── 4 · then the war opens ──────────────────
 	state.completed_missions.append(&"arena_3_firing_line")
 	open = _ids(cm.available_missions())
-	_check("CLEARING THE SECOND OPENS HILLFORT", open.has("hillfort_1_relay"), str(open))
+	_check("CLEARING THE SECOND OPENS HILLFORT", open.has("hfw_1_fort"), str(open))
 	_check("...and nothing deeper than that", not open.has("basin_1_anchor"), str(open))
 
 	# ── two exercises, not three ────────────────

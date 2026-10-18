@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: shell
 
 # ─────────────────────────────────────────────
 # SETTINGS & OPTIONS — does every option actually reach the thing it controls,
@@ -61,6 +62,11 @@ func _wipe() -> void:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	# BEFORE anything else — Master's _enter_tree is Settings' first touch.
 	Settings.path = TEST_PATH
 	_wipe()

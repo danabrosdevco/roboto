@@ -821,8 +821,22 @@ display_index = 3
 ; EAST (the portal is in the +x face) and the top hall opens NORTH (its
 ; stairwell comes up on the -z side).
 
+; ── FOUR OF THESE SEVEN WERE FLOATING, AND THE Y VALUES BELOW ARE MEASURED ──
+;
+; Staging, Crossing, Checkpoint and Ammo all carried a round y — 1, 5, 1, 1 —
+; and the ground under them is 0.21, 4.00, -0.25 and -0.16. So each stood 0.79
+; to 1.25 m clear of the floor: a core you can see daylight under, with its
+; plinth in the air and its service alcove above the step a body can climb.
+; Nothing warned. The yard, the basement, the twelfth and the uplink were all
+; dead on, which is why it read as deliberate.
+;
+; Found by tools/probe_site_cores.gd, which drops a short ray from just above
+; each core's feet with the core's OWN collision excluded. Both halves of that
+; matter: a ray from high up hits the hall ceiling above an indoor core, and a
+; ray that keeps the core's own body hits the top of its head and calls that
+; the ground — the first run of the survey reported this deck "at 8.52 m".
 [node name="RelayStaging" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -350, 1, 30)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -350, 0.21, 30)
 channel_duration = 6.0
 id = &"cway_relay_staging"
 display_name = "The Staging Yard"
@@ -838,7 +852,7 @@ linked_squad_point = NodePath("../Posts/CW_Staging")
 ; On a SOUND span, deliberately: the core is 4.2 m across and the breach lanes
 ; are 7 m, so putting it on one of those would wall the crossing off entirely.
 [node name="RelayCrossing" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 4, 0)
 channel_duration = 10.0
 id = &"cway_relay_crossing"
 display_name = "Mid Causeway"
@@ -847,7 +861,7 @@ reward_resources = 110
 linked_squad_point = NodePath("../Posts/CW_DeckMid")
 
 [node name="RelayCheckpoint" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("10_capture_mid")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 352, 1, 58)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 352, -0.25, 58)
 channel_duration = 12.0
 id = &"cway_relay_checkpoint"
 display_name = "The Checkpoint"
@@ -939,7 +953,7 @@ reward_resources = 150
 linked_squad_point = NodePath("../Posts/CW_WalkN")
 
 [node name="Ammo" parent="." node_paths=PackedStringArray("linked_squad_point") instance=ExtResource("6_capture")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 548, 1, 146)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 548, -0.16, 146)
 channel_duration = 8.0
 id = &"cway_ammo"
 display_name = "The Ammunition Dump"

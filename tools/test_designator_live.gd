@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # THE DESIGNATOR, IN THE PLAYER'S HANDS.
@@ -49,6 +50,11 @@ func _find(node: Node, named: String) -> Node:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	var world_scene: Node = load("res://Env/world.tscn").instantiate()
 	world_scene.get_node("CampaignManager").autosave = false

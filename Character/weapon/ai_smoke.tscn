@@ -19,7 +19,7 @@
 [node name="AI_Smoke" type="Node3D"]
 script = ExtResource("1_smoke")
 equipment_name = "Smoke Canister"
-cooldown = 16.0
+cooldown = 8.0
 canister_scene = ExtResource("2_canister")
 screen_fraction = 0.6
 min_screen_metres = 5.0

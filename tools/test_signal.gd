@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # SIGNAL INTEGRITY, AND THAT THE PLAYER HAS ONE

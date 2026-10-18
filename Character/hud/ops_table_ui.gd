@@ -98,6 +98,18 @@ func close() -> void:
 	_hide_player(false)
 	PauseHold.release(HOLD)
 	_hide_other_hud(false)
+	# AND DO NOT HAND BACK A STALE INTERACT PROMPT.
+	#
+	# _hide_other_hud restores everything it hid, which is right for the purse
+	# and the squad list. It is wrong for the interact prompt: that was on
+	# screen because the player was looking at this table in order to press F
+	# on it, so restoring it puts the prompt back with the table's own words.
+	# If a level load follows — which it does on every deploy — the table is
+	# freed and nothing ever takes the prompt down again. Reported twice from
+	# the sim arena as "still have the problem with select mission".
+	var body := _player()
+	if body != null and body.has_method("forget_interactible"):
+		body.forget_interactible()
 	# The click on CLOSE must not reach the gun as a held trigger. The same
 	# static flag the debrief screen reuses rather than inventing its own.
 	SquadManagerUI.release_pending = true

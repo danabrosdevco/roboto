@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE WIN IS CAUSAL, AND THE GAME CAN NOW BE LOST.

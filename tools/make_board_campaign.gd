@@ -32,7 +32,7 @@ const CLEARED := {
 	&"arena_1_contact": 2,
 	&"arena_3_firing_line": 1,
 	&"arena_5_proving": 3,
-	&"hillfort_1_relay": 1,
+	&"hfw_1_fort": 1,
 	&"basin_1_anchor": 1,
 	&"coast_1_road": 1,
 }

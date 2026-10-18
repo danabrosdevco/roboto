@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE LEVER AND THE TABLE MUST NOT SHARE A VOLUME.

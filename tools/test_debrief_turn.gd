@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE DEBRIEF HAS TO SAY A TURN HAPPENED.

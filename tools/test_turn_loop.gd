@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE TURN LOOP, END TO END.
@@ -22,6 +23,11 @@ func _check(label: String, ok: bool, detail: String = "") -> void:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_probe.json"
 	await process_frame
 	var world: Node = load("res://Env/world.tscn").instantiate()
@@ -49,7 +55,7 @@ func _init() -> void:
 	# the doubt band is 0.8-1.25, so a garrison of 8 + 12 sits at 1.11 — which
 	# is the only way the DECLINE path below is reachable at all.
 	state.compute_earned = 12
-	state.set_site_owner(&"hillfort", Enums.Factions.PLAYER)
+	state.set_site_owner(&"hillfort_wip", Enums.Factions.PLAYER)
 	var before_turn: int = state.turn
 	cm.select_mission(&"basin_1_anchor")
 	cm.current_mission = cm.get_mission(&"basin_1_anchor")

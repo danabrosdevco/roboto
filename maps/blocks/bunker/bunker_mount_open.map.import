@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bxjr0m16y4000"
+path="res://.godot/imported/bunker_mount_open.map-890fc90483ed22eafddf872a575220de.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bunker/bunker_mount_open.map"
+dest_files=["res://.godot/imported/bunker_mount_open.map-890fc90483ed22eafddf872a575220de.tres"]
+
+[params]
+

@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # RELOADS ARE CONTINUOUS, AND THEY PUT THE GUN BACK.

@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # A CAPTURE POINT YOU CANNOT PRESS IS WORSE THAN NO CAPTURE POINT.
@@ -24,9 +25,15 @@ extends SceneTree
 # ─────────────────────────────────────────────
 
 const VARIANTS := [
-	{"scene": "res://Env/world_objects/compute_core_point_small.tscn", "foot": 1.88, "tall": 4.19},
-	{"scene": "res://Env/world_objects/compute_core_point.tscn", "foot": 3.38, "tall": 6.97},
-	{"scene": "res://Env/world_objects/compute_core_point_large.tscn", "foot": 5.19, "tall": 12.38},
+	# MEASURED OFF THE 2026-10-14 ART, which is bigger than the models these
+	# numbers were first written against and is no longer SQUARE in plan — so
+	# the footprint is now two numbers, not one.
+	{"scene": "res://Env/world_objects/compute_core_point_small.tscn",
+		"foot": 3.56, "deep": 5.56, "tall": 4.50},
+	{"scene": "res://Env/world_objects/compute_core_point.tscn",
+		"foot": 4.81, "deep": 6.31, "tall": 7.31},
+	{"scene": "res://Env/world_objects/compute_core_point_large.tscn",
+		"foot": 6.56, "deep": 8.25, "tall": 12.72},
 ]
 ## What the player's own InteractRaycast can reach, read from the scene so this
 ## test fails loudly if someone shortens it.
@@ -54,6 +61,11 @@ func _find(n: Node, cls: String) -> Node:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_probe.json"
 	await process_frame
 	var world: Node = load("res://Env/world.tscn").instantiate()
@@ -108,9 +120,14 @@ func _test(v: Dictionary) -> void:
 	var inter: Node3D = point.get_node_or_null("Terminal/Interactible")
 	var cs := inter.get_node_or_null("CollisionShape3D") as CollisionShape3D if inter != null else null
 	var shape := cs.shape as BoxShape3D if cs != null else null
-	_check("   its reach is the footprint, not bigger",
-		shape != null and absf(shape.size.x - foot) < 0.05 and absf(shape.size.z - foot) < 0.05,
-		str(shape.size) if shape != null else "no box shape")
+	# NOT BIGGER THAN THE CORE, which is the whole point: a reach volume that
+	# overhangs its core is one the player ends up standing INSIDE, where the
+	# interact ray reports nothing at all. Asserted as a bound now rather than
+	# an exact match — the prefabs author their own inset and it differs per
+	# axis, because the cores are not square.
+	_check("   its reach is inside the core, not bigger",
+		shape != null and shape.size.x <= foot + 0.05 and shape.size.z <= v["deep"] + 0.05,
+		"reach %s vs core %.2f x %.2f" % [str(shape.size) if shape != null else "none", foot, float(v["deep"])])
 
 	# ── AND THE CONSOLE CASING IS GONE ──
 	var term := point.get_node_or_null("Terminal")

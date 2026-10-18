@@ -215,7 +215,10 @@ func takes_cover() -> bool:
 # Without this the squad re-issues the same order every frame because the drone
 # is permanently `orbit_radius` from where it was told to stand.
 func slot_tolerance(squad_tolerance: float) -> float:
-	return maxf(squad_tolerance, orbit_radius + 4.0)
+	# _orbit_radius_now, not orbit_radius: an armed flyer standing off at weapon
+	# range is legitimately further from its slot than a camera is, and reading
+	# the fixed value here would have the squad recall it every frame it engaged.
+	return maxf(squad_tolerance, _orbit_radius_now() + 4.0)
 
 
 # A drone needs its own airspace in a formation, or the line packs its slot in
@@ -267,10 +270,18 @@ func handle_movement(delta: float) -> void:
 		return
 
 	# On station: circle. Never hover — see failure 1 in the header.
-	_orbit_angle += delta * orbit_speed / maxf(orbit_radius, 1.0)
-	var on_circle := centre + Vector3(cos(_orbit_angle), 0.0, sin(_orbit_angle)) * orbit_radius
+	_orbit_angle += delta * orbit_speed / maxf(_orbit_radius_now(), 1.0)
+	var on_circle := centre + Vector3(cos(_orbit_angle), 0.0, sin(_orbit_angle)) * _orbit_radius_now()
 	_steer(on_circle, cruise_speed * 0.8, cruise_height, delta)
 
+
+
+## The radius being circled right now, as a virtual so an ARMED flyer can
+## stand off at weapon range instead of orbiting on top of what it is
+## shooting. The Spotter and the Broodcarrier are cameras and want the station
+## radius, so they inherit this unchanged and nothing about them moves.
+func _orbit_radius_now() -> float:
+	return orbit_radius
 
 # Where it should be circling right now. A FOLLOW slot moves with the squad
 # every frame, so it is read live rather than remembered; an ordered point was

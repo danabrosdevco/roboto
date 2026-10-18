@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://d2lifwjx1uamp"
+path="res://.godot/imported/bunker_mount_cliff.map-16633477cb00cc354c8ff1d44ae2496a.tres"
+
+[deps]
+
+source_file="res://maps/blocks/bunker/bunker_mount_cliff.map"
+dest_files=["res://.godot/imported/bunker_mount_cliff.map-16633477cb00cc354c8ff1d44ae2496a.tres"]
+
+[params]
+

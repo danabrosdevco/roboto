@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # VEHICLE — the rover drives, aims and goes down like a vehicle, and the
@@ -117,6 +118,11 @@ func _deck_under(body: Node3D) -> float:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	_catalogue = load(CATALOGUE)
 	var world_scene: Node = load("res://Env/world.tscn").instantiate()
@@ -522,7 +528,7 @@ func _init() -> void:
 	# needed it was the fight that paid for it. It arrives a mission earlier now.
 	var unlocks_it := cm.missions.filter(func(m): return m != null and m.unlocks.has(&"rover"))
 	_check("the rover is unlocked by clearing the hillfort, with the gun it comes with",
-		unlocks_it.size() == 1 and unlocks_it[0].id == &"hillfort_1_relay"
+		unlocks_it.size() == 1 and unlocks_it[0].id == &"hfw_1_fort"
 		and unlocks_it[0].unlocks.has(&"machine_gun"), str(unlocks_it.map(func(m): return str(m.id))))
 	# The grenade launcher is one of the late, high-power unlocks, not a
 	# second gun that arrives with the rover.

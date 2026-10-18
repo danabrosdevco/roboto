@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE TWO SIM ARENA EXERCISES ARE ASSAULTS, AND EACH LEAVES BY ITS OWN DOOR.
@@ -29,6 +30,11 @@ func _check(label: String, ok: bool, detail: String = "") -> void:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_arena_test.json"
 	await process_frame
 	var master: Master = load("res://Managers/master.tscn").instantiate()
@@ -87,8 +93,12 @@ func _init() -> void:
 		# the bunker is shut — layer 0, invisible to the interact ray — until
 		# the core is done. Without this you could walk past the core, press F
 		# on the bunker and tick a line the HUD had never shown.
-		var b_inter = bunker.get_node_or_null("Interactible")
-		var c_inter = core.get_node_or_null("Interactible")
+		# FOUND ANYWHERE UNDER IT, not as a direct child. The arena raises real
+		# art now (2026-10-16) and the prefab carries its own Interactible
+		# several nodes down, so a direct-child lookup returned null for a
+		# terminal that is present and working.
+		var b_inter = _find_interactible(bunker)
+		var c_inter = _find_interactible(core)
 		_check("(setup) both captures built a terminal",
 			b_inter != null and c_inter != null)
 		if b_inter != null and c_inter != null:
@@ -156,3 +166,16 @@ func _exit_zs(world) -> Array:
 		out.append(snappedf(e.global_position.z, 0.5))
 	out.sort()
 	return out
+
+
+## The Interactible under a capture, wherever the art happens to put it.
+func _find_interactible(n: Node):
+	if n == null:
+		return null
+	if n is Interactible:
+		return n
+	for c in n.get_children():
+		var f = _find_interactible(c)
+		if f != null:
+			return f
+	return null

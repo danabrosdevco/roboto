@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # SCRAPPING A WRECK, AND THE LEDGER SURVIVING IT.

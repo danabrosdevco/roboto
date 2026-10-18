@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://e03bilyr2fo7"]
+[gd_scene load_steps=9 format=3 uid="uid://e03bilyr2fo7"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_kc6b8"]
 [ext_resource type="PackedScene" uid="uid://c07fskogq55of" path="res://maps/causeway_art.tscn" id="2_phyx7"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://cyslwv078g4sk" path="res://Env/world_objects/cover_point_spawner.tscn" id="92_coverspawn"]
 [ext_resource type="PackedScene" path="res://maps/gameplay/causeway_ops.tscn" id="92_ops"]
 [ext_resource type="Script" path="res://Env/world_objects/cover_point.gd" id="93_coverpt"]
+[ext_resource type="Script" path="res://Env/world_objects/causeway_slice.gd" id="900_slice"]
 [ext_resource type="NavigationMesh" uid="uid://dh3q1mimuwhb" path="res://maps/causeway_level_nav.tres" id="nav_causeway"]
 
 [node name="CausewayLevel" type="Node3D" node_paths=PackedStringArray("spawn_point", "nav_region")]
@@ -12565,3 +12566,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 687.935, 1, 201)
 script = ExtResource("93_coverpt")
 cover_direction = Vector3(0, 0, 1)
 metadata/cover_direction = Vector3(0, 0, 1)
+
+[node name="CausewaySlice" type="Node3D" parent="."]
+script = ExtResource("900_slice")

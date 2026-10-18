@@ -139,7 +139,14 @@ func _shot(path: String, pose: String) -> Image:
 	var want: float = float(hip_fov) if hip_fov != null else 70.0
 	if pose == "ads" and ads_fov != null:
 		want = float(ads_fov)
-	cam.fov = want
+	# FOV=n overrides it, for the one question the game's own FOV cannot answer:
+	# WHERE IS THE PART THE PLAYER CANNOT SEE. The Squad Automatic's feed cover,
+	# box and belt all work correctly and all of it happens outside the frame, so
+	# a render at the real FOV shows a barrel and proves nothing. Widening the
+	# lens puts the action and the screen edge in one picture. DIAGNOSTIC ONLY —
+	# never solve a pose against a render taken at anything but the real FOV.
+	var forced := float(OS.get_environment("FOV"))
+	cam.fov = forced if forced > 1.0 else want
 	var model := _viewmodel(gun)
 	_tint(model)
 	# A WEAPON THE PLAYER HOLDS IS LOADED. PlayerWeapon._on_initialize fills the

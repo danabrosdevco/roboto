@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE LAST EXERCISE TEACHES CAPTURING.
@@ -58,8 +59,18 @@ func _init() -> void:
 	_check("...an interact volume on layer 3, where the player's ray can find it",
 		tc.core.interactible != null and tc.core.interactible.collision_layer == 3,
 		"layer %d" % (tc.core.interactible.collision_layer if tc.core.interactible else -1))
-	_check("...something solid to walk up to",
-		tc.get_node_or_null(^"CoreSolid") != null)
+	# SOLID, NOT "has a node called CoreSolid".
+	#
+	# This checked for the placeholder's own box by name. The arena now raises
+	# the REAL compute_core_point prefab (2026-10-16), which brings its own
+	# StaticBody3D from maps/blocks/compute/compute_core.tscn — more solid than
+	# the generated box, and under a different name.
+	#
+	# So it asks the question it actually cares about: is there anything the
+	# player can walk into. That survives the next art change too, which the
+	# node-name version did not.
+	_check("...something solid to walk up to", _has_collider(tc),
+		"no StaticBody3D or CollisionShape3D anywhere under it")
 	_check("...and a beacon, so it can be found",
 		tc.get_node_or_null(^"Signal") != null)
 
@@ -77,3 +88,17 @@ func _done() -> void:
 	print("")
 	print("%d failure(s)" % _fails)
 	quit(1 if _fails > 0 else 0)
+
+
+## Anything the player can walk into, anywhere under this node. Deliberately
+## not a name match: the placeholder builds "CoreSolid", the real prefab brings
+## "entity_0_worldspawn", and a third one will be called something else again.
+func _has_collider(n: Node) -> bool:
+	if n is CollisionShape3D and (n as CollisionShape3D).shape != null:
+		return true
+	if n is StaticBody3D or n is CharacterBody3D:
+		return true
+	for c in n.get_children():
+		if _has_collider(c):
+			return true
+	return false

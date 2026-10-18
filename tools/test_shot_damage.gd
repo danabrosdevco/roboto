@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # SHOT DAMAGE — what one round is worth, counting what it breaks up into.

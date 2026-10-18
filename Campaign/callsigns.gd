@@ -209,6 +209,13 @@ const BY_SITE := {
 	&"causeway": "SITE_CAUSEWAY",
 	&"lockside": "SITE_LOCKSIDE",
 	&"polaris": "SITE_POLARIS",
+	# BOTH HILLFORTS POINT AT THE SAME POOL. `hillfort_wip` is the one in the
+	# campaign since 2026-10-15 — the rebuilt, quarter-size fort — and
+	# `hillfort` is the original, still on disk and still loadable but no
+	# longer in the catalogue. It is the same place with the same garrison, so
+	# it keeps the same names, and leaving the old key in means swapping back
+	# does not silently drop the site's callsigns.
+	&"hillfort_wip": "SITE_HILLFORT",
 	&"hillfort": "SITE_HILLFORT",
 }
 

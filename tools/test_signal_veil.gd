@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # LOSING SIGNAL TAKES INFORMATION AWAY, IN ORDER.

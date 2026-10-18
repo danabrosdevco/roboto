@@ -5,18 +5,18 @@
 [ext_resource type="PackedScene" path="res://maps/polaris_level.tscn" id="3_map"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
 [ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rif"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="6_hvy"]
+[ext_resource type="Resource" uid="uid://1rea71mf80nx" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="6_hvy"]
 [ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shg"]
 [ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="8_mks"]
 [ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="9_cha"]
 [ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="10_hop"]
 [ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="11_rov"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover_gl.tres" id="12_lob"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mortar_track.tres" id="13_mor"]
+[ext_resource type="Resource" uid="uid://dfb0r1gpfovj3" path="res://Campaign/chassis/chassis_rover_gl.tres" id="12_lob"]
+[ext_resource type="Resource" uid="uid://6wjqh3ttofnc" path="res://Campaign/chassis/chassis_mortar_track.tres" id="13_mor"]
 [ext_resource type="Resource" uid="uid://daikhvrvnhg7g" path="res://Campaign/chassis/chassis_walker.tres" id="14_wal"]
 [ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="15_bom"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="16_mec"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="17_nst"]
+[ext_resource type="Resource" uid="uid://cmssop3mmaqpv" path="res://Campaign/chassis/chassis_mechanic.tres" id="16_mec"]
+[ext_resource type="Resource" uid="uid://cs8bt1nelm1a2" path="res://Campaign/chassis/chassis_nest.tres" id="17_nst"]
 
 [sub_resource type="Resource" id="G_fuel"]
 script = ExtResource("2_espec")
@@ -1193,10 +1193,13 @@ level_scene = ExtResource("3_map")
 map_position = Vector2(0, 0)
 enemy_force = Array[ExtResource("2_espec")]([SubResource("G_fuel"), SubResource("G_roww"), SubResource("G_row"), SubResource("G_pads"), SubResource("G_bank"), SubResource("G_drive"), SubResource("G_rowpat"), SubResource("G_rings"), SubResource("G_lots"), SubResource("G_lotm"), SubResource("G_signs"), SubResource("G_cinema"), SubResource("G_garage"), SubResource("G_marq"), SubResource("G_ringpat"), SubResource("G_court"), SubResource("G_valet"), SubResource("G_cartw"), SubResource("G_carte"), SubResource("G_charge"), SubResource("G_food"), SubResource("G_anchw"), SubResource("G_anche"), SubResource("G_dock"), SubResource("G_bins"), SubResource("G_field"), SubResource("G_garden"), SubResource("G_hive"), SubResource("G_bigbox"), SubResource("G_northpat"), SubResource("G_lotarmour"), SubResource("G_walker"), SubResource("W1_a"), SubResource("W1_b"), SubResource("W1_c"), SubResource("W2_a"), SubResource("W2_b"), SubResource("W2_c"), SubResource("W2_d"), SubResource("W3_a"), SubResource("W3_b"), SubResource("W3_c"), SubResource("W3_d"), SubResource("W4_a"), SubResource("W4_b"), SubResource("W4_c"), SubResource("W4_d"), SubResource("W5_a"), SubResource("W5_b"), SubResource("W5_c"), SubResource("W5_d"), SubResource("W5_e"), SubResource("W5_f"), SubResource("W5_dock"), SubResource("K_seventy"), SubResource("K_onefourty"), SubResource("K_oneeighty")])
 replace_level_enemies = false
-active_objectives = Array[StringName]([&"pol_breach", &"pol_wave_1", &"pol_wave_2", &"pol_wave_3", &"pol_wave_4", &"pol_wave_5", &"pol_cinema", &"pol_garage", &"pol_hive_storage", &"pol_extract"])
+active_objectives = Array[StringName]([&"pol_breach", &"pol_wave_1", &"pol_wave_2", &"pol_wave_3", &"pol_wave_4", &"pol_wave_5", &"pol_cinema", &"pol_garage", &"pol_hive_storage", &"pol_relay_cinema", &"pol_relay_deck", &"pol_extract"])
 reward_resources = 1400
 compute_reward = 4
 unlocks = Array[StringName]([&"heavy_mg"])
 squad_size = -1
 repeatable = false
+defence = false
+sim = false
+garrison_posts = Array[StringName]([])
 requires = Array[StringName]([&"georgetown_1_ascent"])

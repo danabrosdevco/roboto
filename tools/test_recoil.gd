@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # WHAT FIRING A WEAPON DOES TO THE CAMERA, IN DEGREES.

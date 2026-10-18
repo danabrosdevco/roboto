@@ -61,9 +61,26 @@ const SWARM_PATHS := {
 ## what turns up once the campaign has escalated. Act decides which tiers are
 ## drawn from, so Act 2 and Act 3 feel different without a number being tuned
 ## twice.
+## MARKSMAN MOVED TO TIER 2 ON 2026-10-16, from play.
+##
+## Tier 1 is what a player meets on their FIRST site, before they have bought
+## a rifle for themselves or learned what cover is for. A marksman punishes
+## standing still at a range the player has no answer to yet — reported as the
+## thing making the opening site unfair, and it was in the starting pool on
+## every act-1 map.
+##
+## It is not a nerf to the marksman, it is a later introduction: act 2 opens
+## tier 2 and it arrives then, alongside the armour and the mortar track that
+## give the player a reason to stop walking in the open.
+##
+## THIS IS WHAT ACTUALLY SPAWNS, which is worth knowing before authoring a
+## roster: a mission with a Location has its rosters REBUILT from these pools
+## to the site's supply budget. The authored specs keep their tags, postures
+## and wake triggers — only the composition is replaced. So "I did not put a
+## marksman in the mission file" does not mean one cannot turn up.
 const SWARM_TIERS := {
-	1: [&"rifleman", &"chaser", &"leaper", &"shotgunner", &"marksman"],
-	2: [&"rifleman_armoured", &"rover_gl", &"mortar_track", &"brood"],
+	1: [&"rifleman", &"chaser", &"leaper", &"shotgunner"],
+	2: [&"rifleman_armoured", &"rover_gl", &"mortar_track", &"brood", &"marksman"],
 	3: [&"bastion", &"see_engine"],
 }
 
