@@ -104,6 +104,10 @@ REPORTED=0
 PARKED_N=0
 PARKED_NAMES=""
 FAILED_NAMES=""
+## Timing, summed as it goes. See the note by the stopwatch in the run loop.
+TOTAL_S=0
+SLOWEST_S=0
+SLOWEST_NAME=""
 
 for suite in tools/test_*.gd; do
 	[ -f "$suite" ] || continue
@@ -131,9 +135,21 @@ for suite in tools/test_*.gd; do
 	fi
 	RAN=$((RAN + 1))
 	echo "── $base ──"
+	started=$(date +%s)
 	out="$(timeout "${TIMEOUT}s" "$GODOT" --headless --audio-driver Dummy --path . \
 		--script "res://$suite" 2>&1)"
 	status=$?
+	# MEASURED, NEVER WRITTEN DOWN. docs/TESTING.md refuses to carry suite
+	# sizes because a hand-kept number was wrong inside a day, and a timing
+	# table would rot the same way — so the runner that does the work is the
+	# thing that reports how long it took. Collected per suite and summed at
+	# the end, so "which one is slow" is answerable without a stopwatch.
+	elapsed=$(( $(date +%s) - started ))
+	TOTAL_S=$((TOTAL_S + elapsed))
+	if [ "$elapsed" -ge "$SLOWEST_S" ]; then
+		SLOWEST_S=$elapsed
+		SLOWEST_NAME=$base
+	fi
 	# THE NOISE FILTER, AND IT IS NOT COSMETIC.
 	#
 	# Measured across three buckets: 15,748 lines of output, 13,356 of them
@@ -181,10 +197,14 @@ for suite in tools/test_*.gd; do
 			FAILED_NAMES="$FAILED_NAMES $base(no-assertions)"
 		fi
 	fi
+	echo "   ${elapsed}s"
 	echo
 done
 
 echo "─────────────────────────────────────────"
+if [ "$RAN" -gt 0 ]; then
+	echo "      $((TOTAL_S / 60))m$((TOTAL_S % 60))s for $RAN suite(s), slowest $SLOWEST_NAME at ${SLOWEST_S}s"
+fi
 NOTE=""
 [ "$SKIPPED" -gt 0 ] && NOTE=" ($SKIPPED skipped, --quick)"
 [ "$REPORTED" -gt 0 ] && NOTE="$NOTE ($REPORTED report-only)"

@@ -82,14 +82,26 @@ node path, a bad cast or an unassigned export on frame one.
 
 **`test.sh`** globs every `tools/test_*.gd`. `--fast` skips any suite whose
 file mentions `world.tscn` — the tier marker is read from the file, so it never
-drifts. Two suites are PARKED in the script and named there with the reason.
+drifts. Parked suites are skipped by reading `# PARKED:` **from the file**, the
+same way buckets and `# REPORTS:` are read; there is no list in the runner.
 
-**`test.sh` has no per-suite timeout, and one suite never terminates.**
-`test_designator_squad.gd` hangs; `test.sh` waits on each suite forever, so
-everything behind it stalls. Twelve orphaned Godot process pairs were once
-found from it, aged up to four days. That is why `bucket.sh` has a per-suite
-timeout and counts one as a failure — and why **"I ran the full suite" has not
-been true of this project for some time.** Say which suites you ran.
+**`test.sh` finishes, as of 2026-10-17 — it did not before.**
+`test_designator_squad.gd` was believed to loop forever. It does not: it runs
+97 assertions in 15 seconds and then a DIAGNOSTIC PRINT killed it, indexing
+`_queued[-1]` on an array a failing check had just proved empty. `[-1]` on an
+empty Array is an out-of-bounds ERROR in GDScript, the script died with a
+worker thread unjoined, and the process never exited — indistinguishable from a
+hang from outside. `test.sh` has no per-suite timeout, so it waited forever and
+everything behind it stalled; twelve orphaned Godot process pairs were once
+found from it, aged up to four days.
+
+The print is guarded now and a full run takes **about 24 minutes** for 104
+suites. **`bucket.sh` still has the per-suite timeout and `test.sh` still does
+not**, so one new dead suite can stall the whole run again — prefer a bucket.
+
+**Still say which suites you ran.** "The full suite" was untrue for months
+without anyone noticing, which is the argument for naming what you ran rather
+than for trusting that the phrase means something.
 
 **A suite that asserts nothing is a failure here too.** An exit code cannot
 tell "everything passed" from "nothing ran": both are 0, and a test that has
