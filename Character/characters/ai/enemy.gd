@@ -400,6 +400,16 @@ const CULL_EXEMPT_SECONDS := 90.0
 ## because they are already called from outside the tick. Nothing may be added
 ## to _physics_process that a frozen robot needs in order to come back.
 var cull_frozen: bool = false
+## Prototype state for cull_coarse_step. usec of the last coarse visit, so the
+## step is sized by real elapsed time rather than by an assumed sweep rate that
+## changes with population; and the path point currently being walked to, kept
+## so the sweep is not asking the navigation server on every visit.
+var _coarse_last_us: int = 0
+var _coarse_waypoint: Vector3 = Vector3.ZERO
+## The destination the waypoint above was resolved against, so a squad that
+## re-slots its ADVANCE is noticed without asking the navigation server every
+## sweep to find out.
+var _coarse_dest: Vector3 = Vector3.ZERO
 ## SHOOT WITHOUT WAITING FOR THE SIGHT PICTURE. Set from a module at spawn.
 ##
 ## Normally a robot holds its trigger until _aim_tracking passes
@@ -2131,6 +2141,105 @@ func _can_freeze_for_cull() -> bool:
 	if signal_integrity < 1.0 or _signal_locked_t > 0.0 or _ekill_latched:
 		return false
 	return true
+
+
+## ─────────────────────────────────────────────
+## A FROZEN ROBOT WITH SOMEWHERE TO BE STILL GETS THERE. (PROTOTYPE)
+## ─────────────────────────────────────────────
+## Called by AIManager._poll_frozen on its round-robin sweep — roughly four
+## times a second per robot — and ONLY when slow_tick_advance is on. Off by
+## default: this is an experiment, and with the flag down nothing below runs
+## and the cull behaves exactly as it always has.
+##
+## WHAT IT IS FOR. Distance culling freezes the whole brain, so a robot ordered
+## across the map stops dead and never arrives. Seven separate mechanisms exist
+## to patch that — always_active, never_culled/_exempt_left, on_patrol and its
+## bigger radius, _woken_t, and _let_them_walk_in() in two different files —
+## and each was added after something was found standing still. Measured
+## 2026-10-17: a counter-attack squad ordered to a core from 32 m was still at
+## 34.2 / 31.6 / 31.0 m after seventy seconds of simulation.
+##
+## IT IS NOT A BRAIN. No target selection, no line of sight, no weapons, no
+## move_and_slide — _apply_motion costs give-way, shove damping and step-over,
+## which is the cost this is avoiding. It walks the path the agent already has
+## and nothing else. A robot more than activation_distance from anything that
+## would fight it has nothing to aim at, so the only thing it was losing by
+## being frozen was the walking.
+##
+## A GARRISON IS LEFT ALONE. No orders means nowhere to be: it costs nothing
+## and loses nothing by waiting, which is what the cull is for and why this
+## does not simply un-freeze everything.
+##
+## WALKS THE PATH, NOT A CACHED DIRECTION. The distinction is load-bearing — an
+## earlier LOD throttle cached a DIRECTION and robots oscillated against walls
+## with a perfectly good path in hand. The query answers to the same global
+## budget as the awake path does, and degrades the same way when refused.
+func cull_coarse_step() -> void:
+	if not cull_frozen or not alive or downed or ai_state == AIState.DEAD:
+		return
+	# NOWHERE TO BE. The common case by far, and deliberately the cheapest.
+	#
+	# OFF movement_target, NOT off the nav agent. move_to() on a PASSIVE robot
+	# stores the destination here and returns WITHOUT touching nav_agent — on
+	# purpose, so a squad re-issuing ADVANCE does not buy a path resolution for
+	# every robot nobody can see. The consequence is that a frozen robot's
+	# agent has no target at all, so is_navigation_finished() is always true:
+	# the first cut of this asked the agent and bailed on every single visit,
+	# and the A/B showed 0.0 m closed with the flag both down AND up.
+	if nav_agent == null or movement_target == Vector3.ZERO:
+		return
+
+	var now := Time.get_ticks_usec()
+	# First visit since freezing: take a step of one sweep rather than of the
+	# whole time since boot.
+	var dt: float = float(now - _coarse_last_us) / 1_000_000.0 \
+		if _coarse_last_us > 0 else AIManager.FROZEN_SWEEP_SECONDS
+	_coarse_last_us = now
+	# A robot that has been frozen a long while must not teleport when the
+	# sweep reaches it. Clamped to a couple of sweeps' worth of walking.
+	dt = clampf(dt, 0.0, AIManager.FROZEN_SWEEP_SECONDS * 2.0)
+	if dt <= 0.0:
+		return
+
+	# ARRIVED. Stop before the last step overshoots into a jitter around the
+	# destination that nobody is there to see and everybody pays for.
+	if global_position.distance_to(movement_target) <= nav_agent.target_desired_distance:
+		return
+
+	var to: Vector3 = _coarse_waypoint
+	# Re-resolve only when the waypoint is spent, missing, or aimed at a stale
+	# destination — and only if the frame can afford it. Over budget, keep
+	# walking at the one we have: the same fallback the awake path takes.
+	var moved: bool = _coarse_dest.distance_squared_to(movement_target) > 1.0
+	if to == Vector3.ZERO or moved or global_position.distance_to(to) < NAV_UNDERFOOT:
+		if not _take_nav_query(nav_queries_per_frame, int(nav_query_budget_ms * 1000.0)):
+			return
+		var asked := Time.get_ticks_usec()
+		# POINT THE AGENT AT IT HERE, since move_to deliberately did not. This
+		# is the one nav query a frozen robot buys, and it buys it only when
+		# the destination changed or the leg ran out — not on every sweep.
+		if moved:
+			nav_agent.set_target_position(movement_target)
+			_coarse_dest = movement_target
+		to = nav_agent.get_next_path_position()
+		_nav_spent_us += Time.get_ticks_usec() - asked
+		_coarse_waypoint = to
+	if to == Vector3.ZERO:
+		return
+
+	# STRAIGHT AT THE WAYPOINT, IN 3D. The navmesh carries the height, so
+	# following it is what keeps the robot on walkable ground without a single
+	# collision query — there is no move_and_slide here to stand it up.
+	var leg: Vector3 = to - global_position
+	var dist: float = leg.length()
+	if dist < 0.001:
+		return
+	var travel: float = minf(move_speed * dt, dist)
+	global_position += leg / dist * travel
+	# So a thaw mid-walk does not re-derive a direction from a stale cache.
+	var flat := Vector3(leg.x, 0.0, leg.z)
+	if flat.length_squared() > 0.0001:
+		_nav_dir = flat
 
 
 ## Switch the tick off and hand this robot to AIManager, which is the only

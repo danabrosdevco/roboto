@@ -5,6 +5,19 @@ class_name AIManager
 @export var player: Player
 @export var stimulus_manager: StimulusManager
 
+## PROTOTYPE, OFF BY DEFAULT — slow-tick LOD for culled robots.
+##
+## With this up, _poll_frozen's existing round-robin also walks a frozen robot
+## along its orders (Enemy.cull_coarse_step) instead of only deciding whether
+## to wake it. The intent is to retire the seven exemptions that exist because
+## a frozen robot with somewhere to be never arrived; nothing is retired yet.
+##
+## A NEW EXPORT, so the scene has no stored value for it and this default is
+## what actually applies — the reverse of CLAUDE.md's usual warning, and only
+## true because the property is new. Set it on the node from a bench or a test
+## rig; it needs no scene edit to turn on.
+@export var slow_tick_advance: bool = false
+
 # All registered AI bodies in the current level
 var all_ai: Array[AI] = []
 
@@ -654,6 +667,18 @@ func _poll_frozen(delta: float) -> void:
 			_frozen.remove_at(_frozen_cursor)
 			e.thaw_from_cull()
 			continue
+		# STILL FROZEN, BUT STILL WALKING. (PROTOTYPE, off by default.)
+		#
+		# This sweep already reaches every frozen robot about four times a
+		# second, which is a scheduler nobody was using for anything but the
+		# wake test. With the flag up it also advances a robot that has orders
+		# along the path it was given — see Enemy.cull_coarse_step, which does
+		# no thinking and no move_and_slide.
+		#
+		# It is deliberately HERE, after the wake test: a robot that should be
+		# awake wakes this frame and takes a real tick instead.
+		if slow_tick_advance:
+			e.cull_coarse_step()
 		_frozen_cursor += 1
 
 
