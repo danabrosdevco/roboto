@@ -48,6 +48,9 @@ enum Status { ACTIVE, WOUNDED, DESTROYED }
 # Longest self-revive among fitted modules; 0 = none. Longest rather than
 # summed: two nanite modules are one soldier getting up, not getting up twice.
 @export var effective_self_revive: float = 0.0
+## What a module does to the charges on equipment this frame already carries.
+## Read by SquadSpawner when it fills AIEquipmentSlot.quantity.
+@export var effective_equipment_multiplier: float = 1.0
 # True if any fitted module says "shoot without waiting for the sight picture".
 # A flag rather than a sum: one of these is a doctrine, two is still the same
 # doctrine.
@@ -242,6 +245,7 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 	var sensors := chassis.base_sensor_range
 	var resistance := 0.0
 	var self_revive := 0.0
+	var gear_mult := 1.0
 	var suppressive := false
 	for module_id in module_ids:
 		if module_id == &"":
@@ -250,12 +254,14 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 		if module == null:
 			continue
 		health += module.health_bonus
+		health = int(round(float(health) * module.health_multiplier))
 		accuracy += module.accuracy_bonus
 		speed *= module.speed_multiplier
 		signal_gain += module.signal_bonus
 		sensors += module.sensor_bonus
 		resistance += module.signal_resistance_bonus
 		self_revive = maxf(self_revive, module.self_revive_seconds)
+		gear_mult *= module.equipment_quantity_multiplier
 		suppressive = suppressive or module.suppressive_fire
 
 	max_health = maxi(1, health)
@@ -265,6 +271,7 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 	effective_sensor_range = maxf(4.0, sensors)
 	effective_signal_resistance_bonus = resistance
 	effective_self_revive = self_revive
+	effective_equipment_multiplier = gear_mult
 	effective_suppressive = suppressive
 	# Pulling a health module must not leave someone on negative health.
 	damage = clampi(damage, 0, max_health)

@@ -295,6 +295,7 @@ func _apply_module_stats(record, catalogue) -> void:
 	if _base_max_health < 0:
 		_base_max_health = int(max_health)
 	var hp_bonus := 0
+	var hp_mult := 1.0
 	var spd := 1.0
 	for id in record.module_ids:
 		if id == &"":
@@ -305,10 +306,11 @@ func _apply_module_stats(record, catalogue) -> void:
 		if m == null or not m.fits_player():
 			continue
 		hp_bonus += m.health_bonus
+		hp_mult *= m.health_multiplier
 		spd *= m.speed_multiplier
 
 	var old_max := int(max_health)
-	max_health = maxi(1, _base_max_health + hp_bonus)
+	max_health = maxi(1, int(round(float(_base_max_health + hp_bonus) * hp_mult)))
 	# Keep the damage you have TAKEN constant, the same rule squadmates follow:
 	# fitting +25 armour at 300/500 leaves you at 325/525, not 300/525. Never
 	# lets unfitting a module kill you, though.

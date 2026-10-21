@@ -66,7 +66,7 @@ func _initialize() -> void:
 	test_compute_buys_supply()
 	test_supply_survives_save()
 	test_old_saves_are_paid_for_past_clears()
-	test_utility_harness_adds_a_slot()
+	test_utility_harness()
 	test_everyone_standing_comes_home_repaired()
 	test_compute_is_capacity()
 	test_software_is_held_compute()
@@ -834,7 +834,7 @@ func test_old_saves_are_paid_for_past_clears() -> void:
 	again.free()
 
 
-func test_utility_harness_adds_a_slot() -> void:
+func test_utility_harness() -> void:
 	var cat := real_catalogue()
 	var state := make_state(4000)
 	state.catalogue = cat
@@ -846,15 +846,34 @@ func test_utility_harness_adds_a_slot() -> void:
 		state.buy_item(cat.item(id))
 	check("a soldier has two equipment slots", s.equipment_ids.size() == 2)
 	check("the harness fits", state.fit_item(s, cat.item(&"utility_harness"), 0))
-	check("...and adds a third slot", s.equipment_ids.size() == 3, str(s.equipment_ids.size()))
+	# IT USED TO ADD A THIRD SLOT. Since 2026-10-18 it multiplies the charges
+	# on the slots the frame already has instead — an extra mount is a module
+	# that asks the player a second question, and more of what they already
+	# chose is an answer.
+	#
+	# equipment_slot_bonus still EXISTS on ItemDefinition and SoldierRecord
+	# still reads it; no shipped item uses it any more. The "what hung in the
+	# bonus slot goes back to stores" path is therefore no longer covered by
+	# anything, which is a known gap rather than an oversight: the first item
+	# to use that field again should bring this test back with it.
+	check("...and does not add a third slot", s.equipment_ids.size() == 2, str(s.equipment_ids.size()))
+	s.recompute_stats(cat)
+	check("...it multiplies the charges instead",
+		is_equal_approx(s.effective_equipment_multiplier,
+			cat.item(&"utility_harness").equipment_quantity_multiplier),
+		str(s.effective_equipment_multiplier))
 	state.fit_item(s, cat.item(&"frag"), 0)
 	state.fit_item(s, cat.item(&"hatchling"), 1)
-	check("...which takes kit like the others", state.fit_item(s, cat.item(&"emp"), 2) and s.equipment_ids[2] == &"emp")
-	check("taking the harness off takes the slot away", state.unfit_item(s, ItemDefinition.Kind.MODULE, 0)
-		and s.equipment_ids.size() == 2)
-	check("...and what hung there goes back to stores", state.armoury.spare(&"emp") == 1
+	check("...and the two real slots still take kit",
+		s.equipment_ids[0] == &"frag" and s.equipment_ids[1] == &"hatchling")
+	check("taking the harness off returns it to stores",
+		state.unfit_item(s, ItemDefinition.Kind.MODULE, 0)
 		and state.armoury.spare(&"utility_harness") == 1)
-	check("...while the other two stay fitted", s.equipment_ids[0] == &"frag" and s.equipment_ids[1] == &"hatchling")
+	s.recompute_stats(cat)
+	check("...and the charges go back to normal",
+		is_equal_approx(s.effective_equipment_multiplier, 1.0),
+		str(s.effective_equipment_multiplier))
+	check("...while the kit stays fitted", s.equipment_ids[0] == &"frag" and s.equipment_ids[1] == &"hatchling")
 	invariant(state, "after the harness comes off")
 	var chaser := state.recruit(buyable(state, enemy_frame(CHASER)))
 	check("a chaser cannot wear a harness", not state.fit_item(chaser, cat.item(&"utility_harness"), 0))

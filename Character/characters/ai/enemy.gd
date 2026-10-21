@@ -439,19 +439,28 @@ const SUPPRESSIVE_FLOOR := 0.08
 ## make it miss a great deal — 3.0, roughly a third of the hits at three times
 ## the rate.
 ##
-## TONED DOWN TO 1.6, because the thing it was paying for now pays for itself.
+## NO PENALTY AT ALL, as of 2026-10-18. 3.0 -> 1.6 -> 1.0, and the reason for
+## each step was the same: the thing the penalty paid for kept paying for
+## itself.
+##
 ## When 3.0 was set, suppression was measured at the round's IMPACT point, so a
-## stream of near misses mostly did nothing at all and volume of fire had no
-## value except the hits it happened to land — the penalty had to be brutal or
-## the module was simply a damage upgrade. Volume is now worth something on its
+## stream of near misses mostly did nothing and volume of fire had no value
+## except the hits it happened to land — the penalty had to be brutal or the
+## module was simply a damage upgrade. Volume became worth something on its
 ## own: fire is measured along the whole flight path, a connecting round is
-## worth 1.5x a passing one, and signal recovery is half what it was. A Cyclic
-## Feed robot earns its seat by pinning things, so it no longer has to be
-## crippled to stop it also winning the damage race.
+## worth 1.5x a passing one, and signal recovery is half what it was. That
+## bought the move to 1.6.
+##
+## WHAT 1.0 COSTS, SAID OUT LOUD. Cyclic Feed now has no downside on this axis,
+## so if it is ever strictly best the trade has to be rebuilt somewhere the
+## player can SEE — fewer rounds, a longer breathe between bursts, more heat.
+## It must not come back here. Shots that miss for reasons nobody can observe
+## is the thing this change exists to stop, and re-raising this number would
+## reintroduce exactly that.
 ##
 ## One const, deliberately: this is the global ratio between aimed and cyclic
 ## accuracy, not a per-robot dial.
-const SUPPRESSIVE_SPREAD := 1.6
+const SUPPRESSIVE_SPREAD := 1.0
 var _suppress_pause: float = 0.0
 ## Seconds after going down before this robot gets back up by itself, once per
 ## deployment. Set from the Nanite Reboot module at spawn; 0 is never.

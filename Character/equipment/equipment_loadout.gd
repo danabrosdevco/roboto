@@ -540,7 +540,13 @@ func apply_record(record, catalogue) -> void:
 
 	# Before choosing what to hold: an empty grenade slot cannot be equipped,
 	# and whether it is empty depends on this.
-	_scale_thrown_capacity()
+	# THE HARNESS REACHES THE PLAYER TOO. It used to help you by adding a third
+	# equipment slot; since 2026-10-18 it multiplies what each slot carries
+	# instead, and this is the only place the player's thrown reserve is
+	# decided. Without this the module would be live on squadmates and inert in
+	# your own hands, which is the worst kind of half-working.
+	_scale_thrown_capacity(record.effective_equipment_multiplier
+		if "effective_equipment_multiplier" in record else 1.0)
 
 	# Prefer the newly-built item occupying the slot that was held before the
 	# swap. If that slot no longer exists or cannot equip, use the normal fallback.
@@ -571,7 +577,7 @@ func apply_record(record, catalogue) -> void:
 
 # Two frags fitted is twice the frags carried. Thrown items only: guns share a
 # reserve by calibre on purpose, and a second rifle is not a second bandolier.
-func _scale_thrown_capacity() -> void:
+func _scale_thrown_capacity(mult: float = 1.0) -> void:
 	if ammo == null:
 		return
 	var carriers := {}
@@ -600,7 +606,13 @@ func _scale_thrown_capacity() -> void:
 		# item falls back to NONE: carry no frags and you have no frags, rather
 		# than a full pouch of something you cannot throw.
 		var floor_carriers: int = 0 if stock.requires_carrier else 1
-		ammo.set_carriers(stock.ammo_type, int(carriers.get(stock.ammo_type, floor_carriers)))
+		# The multiplier scales what you are ALREADY carrying and never creates
+		# a carrier out of nothing: no frags fitted still means no frags, with
+		# or without a harness.
+		var n: int = int(carriers.get(stock.ammo_type, floor_carriers))
+		if n > 0:
+			n = maxi(1, int(round(float(n) * mult)))
+		ammo.set_carriers(stock.ammo_type, n)
 
 
 func _build_item(catalogue, item_id: StringName) -> PlayerEquipment:

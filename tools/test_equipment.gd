@@ -81,7 +81,13 @@ func _init() -> void:
 	rec.module_ids = [&"overclock_servos", &"hardened_uplink"] as Array[StringName]
 	rec.recompute_stats(cat)
 	_check("overclock folds into speed", is_equal_approx(rec.effective_speed, 1.2), str(rec.effective_speed))
-	_check("uplink folds into resistance", is_equal_approx(rec.effective_signal_resistance_bonus, 1.0))
+	# Off the item, not a copy of its number — the same rule the armour check
+	# below follows. The uplink was retuned on 2026-10-18 and a hardcoded 1.0
+	# here failed for no reason connected to what it tests.
+	_check("uplink folds into resistance",
+		is_equal_approx(rec.effective_signal_resistance_bonus,
+			cat.item(&"hardened_uplink").signal_resistance_bonus),
+		str(rec.effective_signal_resistance_bonus))
 	var rec2 := SoldierRecord.new()
 	rec2.chassis_id = &"soldier"
 	rec2.module_ids = [&"nanite_reboot"] as Array[StringName]
@@ -101,10 +107,16 @@ func _init() -> void:
 	# Off the item, not a copy of its number: this is testing that the bonus
 	# ARRIVES, and hardcoding it meant retuning the module broke the test that
 	# had nothing to do with the tuning.
-	var plate: int = cat.item(&"armor_plating").health_bonus
+	# OFF THE ITEM, BOTH WAYS. Armour Plating became proportional on
+	# 2026-10-18 (health_bonus 15 -> health_multiplier 1.2) because a flat
+	# bonus is a quarter of a Soldier and nothing on a Bulwark. Reading both
+	# fields keeps this testing that the bonus ARRIVES rather than what it is.
+	var plate_def = cat.item(&"armor_plating")
+	var want_hp: int = int(round(float(base_max + plate_def.health_bonus)
+		* plate_def.health_multiplier))
 	_check("armour plating reaches the player's body",
-		int(player.max_health) == base_max + plate,
-		"%d -> %d, expected +%d" % [base_max, int(player.max_health), plate])
+		int(player.max_health) == want_hp,
+		"%d -> %d, expected %d" % [base_max, int(player.max_health), want_hp])
 	_check("overclock reaches the player's legs", is_equal_approx(player._speed_mult, 1.2))
 	prec.module_ids = [&"hardened_uplink"] as Array[StringName]
 	player._apply_module_stats(prec, cat)
@@ -158,15 +170,30 @@ func _init() -> void:
 	for _i in 3:
 		await physics_frame
 
-	# ── UTILITY HARNESS: A THIRD THROWABLE, ON 6 ─
-	# The record grows the slot; the loadout has to turn it into a key.
+	# ── UTILITY HARNESS: MORE OF WHAT YOU CARRY ──
+	# It used to add a third equipment slot. Since 2026-10-18 it multiplies the
+	# charges on the slots a frame already has, because an extra slot is a
+	# module that asks you a second question — go and fill the empty mount —
+	# and more of what you chose is an answer instead.
 	var harnessed := SoldierRecord.new()
 	harnessed.set_chassis(cat.chassis_def(&"soldier"), cat)
 	harnessed.weapon_ids[0] = &"m4"
 	harnessed.module_ids[0] = &"utility_harness"
 	harnessed.fit_equipment_capacity(cat)
-	_check("a harness gives the player three equipment slots", harnessed.equipment_ids.size() == 3,
+	var harness_def = cat.item(&"utility_harness")
+	_check("a harness no longer grows the slot count",
+		harnessed.equipment_ids.size()
+			== cat.chassis_def(&"soldier").equipment_slots + harness_def.equipment_slot_bonus,
 		str(harnessed.equipment_ids.size()))
+	harnessed.recompute_stats(cat)
+	_check("...it multiplies what the slots carry instead",
+		is_equal_approx(harnessed.effective_equipment_multiplier,
+			harness_def.equipment_quantity_multiplier),
+		str(harnessed.effective_equipment_multiplier))
+
+	# THE THIRD KEY IS STILL UNDER TEST. No player chassis fields three
+	# equipment mounts today, so nothing else would exercise slot 6 — and the
+	# mapping is a real thing that can break. Built by hand for that reason.
 	harnessed.equipment_ids = [&"frag", &"emp", &"hatchling"] as Array[StringName]
 	player.loadout.apply_record(harnessed, cat)
 	for _i in 3:

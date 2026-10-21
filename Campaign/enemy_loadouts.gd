@@ -404,6 +404,17 @@ static func apply(soldier: Node, frame: ChassisDefinition,
 
 	# ── equipment ─────────────────────────────
 	# Built fresh per body so two hostiles carrying frags do not share a count.
+	#
+	# THE MODULES ARE READ FIRST, even though they are fitted below: the
+	# Utility Harness multiplies the charges on equipment, and equipment is
+	# built before modules in this function. Reading the roll rather than
+	# reordering the function keeps the fitting order the rest of this file
+	# documents.
+	var gear_mult := 1.0
+	for mod_id in kit.get("modules", []):
+		var mod_def := catalogue.item(mod_id)
+		if mod_def != null:
+			gear_mult *= mod_def.equipment_quantity_multiplier
 	var slots: Array[AIEquipmentSlot] = []
 	for id_value in kit.get("equipment", []):
 		var gear := catalogue.item(id_value)
@@ -411,7 +422,7 @@ static func apply(soldier: Node, frame: ChassisDefinition,
 			continue
 		var slot := AIEquipmentSlot.new()
 		slot.equipment_scene = gear.ai_scene
-		slot.quantity = gear.quantity
+		slot.quantity = maxi(1, int(round(float(gear.quantity) * gear_mult)))
 		slot.label = gear.short_label()
 		slot.item_id = gear.id
 		slots.append(slot)
@@ -425,6 +436,7 @@ static func apply(soldier: Node, frame: ChassisDefinition,
 		if module == null:
 			continue
 		soldier.max_health += module.health_bonus
+		soldier.max_health = int(round(float(soldier.max_health) * module.health_multiplier))
 		soldier.accuracy_skill += module.accuracy_bonus
 		soldier.move_speed *= module.speed_multiplier
 		soldier.sensor_range += module.sensor_bonus

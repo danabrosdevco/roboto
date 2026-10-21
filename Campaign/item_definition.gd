@@ -88,6 +88,15 @@ enum Kind {
 # spawned. Kept as plain numbers rather than a script hook so the UI can show
 # "+15 HP" without running anything.
 @export var health_bonus: int = 0
+## PROPORTIONAL HEALTH, applied after health_bonus.
+##
+## A flat bonus is worth wildly different amounts depending on the frame: the
+## +15 Armour Plating used to give is a quarter of a 60 hp Soldier and under
+## four percent of a 400 hp Bulwark, so the same module was a must-have on
+## infantry and a rounding error on a heavy. A multiplier is the same deal
+## everywhere, which is what a module the player chooses once per line has to
+## be. Flat is still here because some things should be flat.
+@export var health_multiplier: float = 1.0
 @export var accuracy_bonus: float = 0.0
 @export var damage_bonus: int = 0
 @export var speed_multiplier: float = 1.0
@@ -107,6 +116,15 @@ enum Kind {
 ## Extra equipment slots while fitted. Taking the module off hands whatever
 ## sat in the slot back to stores.
 @export var equipment_slot_bonus: int = 0
+## MORE OF WHAT IT ALREADY CARRIES, rather than another thing to carry.
+##
+## The Utility Harness used to add a slot, which made it a module that asked
+## the player a second question — now you have an empty mount, go and fill it.
+## Multiplying the charges on the equipment a frame was built with answers the
+## question instead: a Drayman's two repair kits become four and nobody opens
+## another screen. See the note on equipment_slot_bonus above for the shape it
+## replaced.
+@export var equipment_quantity_multiplier: float = 1.0
 ## Fires without waiting for the sight picture. A robot normally holds its
 ## trigger until _aim_tracking has climbed past _prefire_threshold(), which is
 ## why infantry that has stopped shoots steadily and anything on the move
@@ -205,6 +223,8 @@ func effect_summary() -> String:
 	var parts: Array = []
 	if health_bonus != 0:
 		parts.append("%+d HP" % health_bonus)
+	if not is_equal_approx(health_multiplier, 1.0):
+		parts.append("%+.0f%% HP" % ((health_multiplier - 1.0) * 100.0))
 	if damage_bonus != 0:
 		parts.append("%+d DMG" % damage_bonus)
 	if accuracy_bonus != 0.0:
@@ -222,6 +242,8 @@ func effect_summary() -> String:
 		parts.append("-%.0f%% JAM" % (cut * 100.0))
 	if equipment_slot_bonus != 0:
 		parts.append("%+d EQUIP SLOT" % equipment_slot_bonus)
+	if not is_equal_approx(equipment_quantity_multiplier, 1.0):
+		parts.append("x%.3g CHARGES" % equipment_quantity_multiplier)
 	if self_revive_seconds > 0.0:
 		parts.append("SELF-REVIVE %.0fs" % self_revive_seconds)
 	# ONLY A MODULE ACTUALLY GRANTS THIS. SoldierRecord.recompute() aggregates

@@ -254,22 +254,35 @@ func _test_an_unlisted_frame_rolls_nothing() -> void:
 
 
 func _test_the_rover_never_gets_servos() -> void:
-	# Rule 2 at the top of the table: legal is not the same as fielded.
-	# Overclock Servos pass every catalogue check on a rover and must still
-	# never appear, because a faster rover is a different vehicle.
+	# "A faster rover is a different vehicle." That rule used to live only in
+	# the roll table — servos passed every catalogue check on a rover and the
+	# table simply declined to field them, which is why this test asserted
+	# their legality first, so a catalogue change could not quietly make it
+	# vacuous.
+	#
+	# ON 2026-10-18 THE CATALOGUE TOOK THE RULE OVER. Overclock Servos are
+	# fits_vehicles = false, so ChassisDefinition.takes() now refuses them on
+	# anything with `drives` — the Rover, Drayman, Lance, Vessel and the
+	# tracked Reclaimer. The guard is one level deeper than it was and the
+	# table's restraint is no longer the only thing holding.
+	#
+	# BOTH HALVES STILL MATTER. The catalogue is the rule; the roller never
+	# producing them is the behaviour. A future edit that made servos legal on
+	# vehicles again would be caught by the first check, and one that made the
+	# roller ignore the catalogue by the second.
 	var servos := _cat.item(&"overclock_servos")
 	var rover := _frame(&"rover")
-	_ok("servos really would be legal on a rover",
-			servos != null and servos.fits_ai() and servos.fits_chassis(&"rover")
-			and servos.fits_vehicles,
-			"the test is vacuous if they are not")
+	_ok("the catalogue refuses servos on a frame that drives",
+			servos != null and not servos.fits_vehicles and rover != null
+			and rover.drives and not rover.takes(servos),
+			"a faster rover is a different vehicle, and the catalogue says so now")
 	var found := false
 	for n in 300:
 		var kit: Dictionary = _Loadouts.roll_for(rover, _cat, "servo/R/%d" % n)
 		if kit["modules"].has(&"overclock_servos"):
 			found = true
 			break
-	_ok("...and a rover never rolls them anyway", not found)
+	_ok("...and the roll table never offers them either", not found)
 
 
 func _test_a_coax_implies_a_main_gun() -> void:

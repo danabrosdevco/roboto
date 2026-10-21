@@ -321,7 +321,12 @@ func _fit_loadout(soldier: Soldier, record: SoldierRecord) -> void:
 			continue
 		var slot := AIEquipmentSlot.new()
 		slot.equipment_scene = kit.ai_scene
-		slot.quantity = kit.quantity
+		# MODULES REACH THE CHARGES, not just the body. The Utility Harness
+		# multiplies what a frame carries, and this is the one place a squad
+		# robot's charges are decided — set it from the catalogue alone and the
+		# module silently does nothing.
+		slot.quantity = maxi(1, int(round(float(kit.quantity)
+			* record.effective_equipment_multiplier)))
 		# WHAT IT IS, not just what to instantiate. Both of these were left
 		# unset, and both are read downstream: the squad HUD printed the word
 		# "EQUIPMENT" for every spend because Enemy falls back to that on an
