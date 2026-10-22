@@ -111,12 +111,20 @@ const _Mark := preload("res://Campaign/chassis_mark.gd")
 ## the level it stores to what the frame has.
 func mark_spec(n: int) -> Resource:
 	if n <= 0:
+		# THE MAIN GUN ONLY. NOT THE COAX — recruit() is explicit that a second
+		# mount ships empty, because "a mount you were simply handed is not a
+		# decision", and coax_weapon_id says what the mount is DESIGNED AROUND
+		# rather than what the campaign gives you. Synthesising Mk 0 as
+		# starting + coax would hand every Walker a free coaxial gun and
+		# silently reverse that.
+		#
+		# The decision survives, one level up: the Walker's Mk 1 is where the
+		# coax arrives, so it is bought once for the line instead of once per
+		# robot. That is the whole move this system makes.
 		var zero := _Mark.new()
 		var guns: Array[StringName] = []
 		if starting_weapon_id != &"":
 			guns.append(starting_weapon_id)
-		if coax_weapon_id != &"":
-			guns.append(coax_weapon_id)
 		zero.weapon_ids = guns
 		return zero
 	var i := n - 1

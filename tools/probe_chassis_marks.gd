@@ -77,12 +77,14 @@ func _init() -> void:
 		# MK 0 HAS TO MATCH THE FRAME. Checked against the fields directly
 		# rather than against mark_spec, or this only proves the synthesis
 		# agrees with itself.
+		# THE MAIN GUN, AND DELIBERATELY NOT THE COAX. recruit() ships a second
+		# mount empty on purpose; Mk 0 has to match what the campaign actually
+		# hands you, or every two-mount frame starts with a gun it was never
+		# given. The coax arrives at Mk 1 instead.
 		var zero = frame.mark_spec(0)
 		var want: Array[StringName] = []
 		if frame.starting_weapon_id != &"":
 			want.append(frame.starting_weapon_id)
-		if frame.coax_weapon_id != &"":
-			want.append(frame.coax_weapon_id)
 		if Array(zero.weapon_ids) != Array(want):
 			print("          FAIL  Mk 0 is %s, the frame says %s"
 				% [str(zero.weapon_ids), str(want)])

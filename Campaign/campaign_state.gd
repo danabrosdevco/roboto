@@ -61,6 +61,20 @@ const SAVE_VERSION := 1
 ## is_unlocked(). Kept only so a save written before the change can be read
 ## and migrated in from_dict; nothing else should ever touch it.
 @export var unlocked: Array[StringName] = []
+
+# ── PRODUCTION LINES ──────────────────────────
+# What each chassis line BUILDS, rather than what any one robot carries. See
+# docs/briefs/MARK_SYSTEM_SPEC.md.
+#
+# DELIBERATELY NOT A SECOND HOME FOR "IS THE LINE OPEN". That is
+# is_unlocked(), which reads allocations[unlock_key(id)] and is what
+# unlock_chassis() writes. Two places storing the same fact is how they start
+# disagreeing.
+#
+## chassis id -> mark level. Absent means Mk 0, which every open line is.
+@export var line_marks: Dictionary = {}
+## chassis id -> the one module adopted for that line. Absent means none.
+@export var line_modules: Dictionary = {}
 @export var selected_mission_id: StringName = &""
 
 # ── COMPUTE AND SUPPLY ────────────────────────
@@ -1048,6 +1062,88 @@ func release_unknown_software(known: Array) -> Array[StringName]:
 ## starting weapon (a pistol) and otherwise empty slots; a Chaser or Hopper
 ## fights with what it was built with. Returns the new record, or null if it
 ## could not be paid for.
+# ─────────────────────────────────────────────
+# PRODUCTION LINES
+# ─────────────────────────────────────────────
+
+## What mark this line currently builds. Clamped to what the frame authors, so
+## a save naming a mark a retuned chassis no longer has cannot ask for it.
+func mark_of(chassis_id: StringName) -> int:
+	var n := int(line_marks.get(chassis_id, 0))
+	if catalogue == null:
+		return maxi(0, n)
+	var frame := catalogue.chassis_def(chassis_id)
+	return clampi(n, 0, frame.top_mark() if frame != null else 0)
+
+
+## The module adopted for this line, or &"" for none.
+func module_of(chassis_id: StringName) -> StringName:
+	return StringName(line_modules.get(chassis_id, &""))
+
+
+## EVERY ROBOT ON THIS LINE BECOMES WHAT THE LINE NOW BUILDS.
+##
+## The one function all three line operations share — adopting a mark,
+## adopting a module, and building a new unit all end here. Returns how many
+## records it rewrote.
+##
+## A BULK WRITE, NOT A DERIVED READ. The spec's §1 explains why at length: 11
+## production files read weapon_ids / equipment_ids / module_ids and 12 suites
+## assert on them, seven of those being chassis suites that build their
+## fixtures by writing loadout ids directly. Keeping the arrays as storage and
+## overwriting them here leaves every one of those untouched.
+##
+## BENCHED AND DESTROYED RECORDS TOO. A line revision is the factory changing
+## what it turns out, not a quartermaster walking round the ones on parade —
+## skipping the bench would mean a robot's spec depended on where it happened
+## to be standing when you paid.
+##
+## WHAT WAS FITTED IS NOT RETURNED TO STORES. Checked rather than assumed: the
+## ledger invariant is available() == earned - sum(allocations), which is about
+## money and not inventory, so overwriting these cannot unbalance it.
+func apply_line_spec(chassis_id: StringName) -> int:
+	if catalogue == null:
+		push_warning("CampaignState: no catalogue, so line '%s' cannot be applied and its robots keep whatever they had." % String(chassis_id))
+		return 0
+	var frame := catalogue.chassis_def(chassis_id)
+	if frame == null:
+		push_warning("CampaignState: no chassis '%s' in the catalogue, so its line cannot be applied." % String(chassis_id))
+		return 0
+	var spec = frame.mark_spec(mark_of(chassis_id))
+	if spec == null:
+		push_warning("CampaignState: chassis '%s' has no spec at mark %d, so its robots keep whatever they had." % [String(chassis_id), mark_of(chassis_id)])
+		return 0
+
+	var module := module_of(chassis_id)
+	var n := 0
+	for r in roster:
+		if r == null or r.chassis_id != chassis_id:
+			continue
+		# SIZED TO THE FRAME, not to the spec. A mark that overruns its mounts
+		# is an authoring error probe_chassis_marks already fails on; this
+		# clamps rather than growing a robot a mount it does not have.
+		# BEFORE the arrays, because recompute_stats below reads it.
+		r.mark_level = mark_of(chassis_id)
+		r.weapon_ids = _sized(spec.weapon_ids, frame.weapon_slots)
+		r.equipment_ids = _sized(spec.equipment_ids, frame.equipment_slots)
+		r.module_ids = _sized([module] if module != &"" else [], maxi(1, frame.module_slots))
+		r.fit_equipment_capacity(catalogue)
+		r.recompute_stats(catalogue)
+		n += 1
+	if n > 0:
+		roster_changed.emit()
+	return n
+
+
+## `ids` padded or truncated to exactly `slots`, so a record's arrays always
+## match its frame no matter what a mark asked for.
+func _sized(ids: Array, slots: int) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for i in maxi(0, slots):
+		out.append(StringName(ids[i]) if i < ids.size() else &"")
+	return out
+
+
 func recruit(chassis: ChassisDefinition) -> SoldierRecord:
 	if chassis == null or not chassis.purchasable:
 		return null
@@ -1075,6 +1171,12 @@ func recruit(chassis: ChassisDefinition) -> SoldierRecord:
 	# measures a complete frame, and nothing in the campaign does.
 	record.benched = supply_of(record) > supply_free()
 	roster.append(record)
+	# IT ARRIVES AT WHAT THE LINE BUILDS. Appended first so apply_line_spec
+	# sees it; at Mk 0 this writes back the same main gun the block above just
+	# issued, which is why that block stays rather than being replaced — it is
+	# what Mk 0 is synthesised FROM.
+	if mark_of(chassis.id) > 0 or module_of(chassis.id) != &"":
+		apply_line_spec(chassis.id)
 	team_of(record)
 	ledger_changed.emit()
 	roster_changed.emit()
@@ -1690,6 +1792,11 @@ func to_dict() -> Dictionary:
 		"version": SAVE_VERSION,
 		"earned": earned,
 		"allocations": allocations,
+		# PRODUCTION LINES. Read back through data.get with an empty default,
+		# so a save written before marks existed loads every line at Mk 0 with
+		# no module — which is exactly what an un-advanced line is.
+		"line_marks": line_marks.duplicate(),
+		"line_modules": line_modules.duplicate(),
 		"roster": records,
 		"completed_missions": missions,
 		"mission_clears": mission_clears.duplicate(),
@@ -1728,6 +1835,8 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	var s := CampaignState.new()
 	s.earned = int(data.get("earned", 0))
 	s.allocations = data.get("allocations", {})
+	s.line_marks = data.get("line_marks", {})
+	s.line_modules = data.get("line_modules", {})
 	s._next_id = int(data.get("next_id", 1))
 	s.squad_name = str(data.get("squad_name", "NAMELESS"))
 	s.profile_name = str(data.get("profile_name", ""))

@@ -51,6 +51,9 @@ enum Status { ACTIVE, WOUNDED, DESTROYED }
 ## What a module does to the charges on equipment this frame already carries.
 ## Read by SquadSpawner when it fills AIEquipmentSlot.quantity.
 @export var effective_equipment_multiplier: float = 1.0
+## Role tuning from this robot's mark — repair_rate, salvage_rate,
+## reload_rate. Empty for a line whose marks tune nothing.
+@export var effective_tuning: Dictionary = {}
 # True if any fitted module says "shoot without waiting for the sight picture".
 # A flag rather than a sum: one of these is a doctrine, two is still the same
 # doctrine.
@@ -83,6 +86,10 @@ enum Status { ACTIVE, WOUNDED, DESTROYED }
 #
 # An empty StringName means an empty slot. Slot COUNT comes from the chassis, so
 # these arrays are resized to match whenever the chassis changes.
+## WHAT MARK OF ITS LINE THIS ROBOT IS. Written by
+## CampaignState.apply_line_spec; read by recompute_stats, which is why it
+## lives on the record rather than only in the state.
+@export var mark_level: int = 0
 @export var chassis_id: StringName = &""
 @export var weapon_ids: Array[StringName] = []
 @export var equipment_ids: Array[StringName] = []
@@ -247,6 +254,20 @@ func recompute_stats(catalogue: ItemCatalogue) -> void:
 	var self_revive := 0.0
 	var gear_mult := 1.0
 	var suppressive := false
+
+	# ── THE LINE'S MARK, BEFORE ANY MODULE ────
+	# HERE RATHER THAN IN apply_line_spec, and that is the whole point. This
+	# function is called from 29 places — fitting, unfitting, changing chassis,
+	# loading a save — and anything that applied a mark's bonuses OUTSIDE it
+	# would have them silently wiped by the next caller. A robot's stats have
+	# one derivation and the mark is part of it.
+	var mark = chassis.mark_spec(mark_level)
+	if mark != null:
+		health += mark.health_bonus
+		accuracy += mark.accuracy_bonus
+		speed *= mark.speed_multiplier
+		sensors += mark.sensor_bonus
+	effective_tuning = mark.tuning.duplicate() if mark != null else {}
 	for module_id in module_ids:
 		if module_id == &"":
 			continue
@@ -491,6 +512,7 @@ func to_dict() -> Dictionary:
 		"equipment": kit,
 		"equipment_max": equipment_max,
 		"chassis_id": String(chassis_id),
+		"mark_level": mark_level,
 		"weapon_ids": weapon_ids.map(func(v): return String(v)),
 		"equipment_ids": equipment_ids.map(func(v): return String(v)),
 		"module_ids": module_ids.map(func(v): return String(v)),
@@ -516,6 +538,8 @@ static func from_dict(data: Dictionary) -> SoldierRecord:
 	r.missions_survived = int(data.get("missions_survived", 0))
 	r.confirmed_kills = int(data.get("confirmed_kills", 0))
 	r.revives = int(data.get("revives", 0))
+	# Saves from before marks have none: every line reads as Mk 0.
+	r.mark_level = int(data.get("mark_level", 0))
 	var kinds: Dictionary = data.get("kills_by_kind", {})
 	for kind in kinds:
 		# Through the rename table, so a career tally does not split into two
