@@ -81,7 +81,7 @@ func rebuild() -> void:
 
 	var frames := HBoxContainer.new()
 	frames.add_theme_constant_override("separation", 14)
-	for frame in ui.buildable_frames():
+	for frame in ui.production_lines():
 		frames.add_child(_frame_card(frame))
 	add_child(_scroller(frames))
 
@@ -240,16 +240,28 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 		col.add_child(comes)
 
 	col.add_child(Kit.fill())
-	# BUILDING ONLY. Opening a frame's line is the TOOLING FABRICATOR's job,
-	# and SquadManagerUI.buildable_frames() already skips a shut one — so a
-	# locked card cannot normally reach here at all. The branch stays as a
-	# plain statement of where to go rather than a second place to pay.
+	# OPENING A LINE HAPPENS HERE NOW. This used to read "OPEN THIS LINE IN
+	# TOOLING" and send the player to a page of its own — a whole screen whose
+	# only job was charging for a thing you were already looking at. Tooling is
+	# gone and the button is on the card.
 	if not ui.state.is_unlocked(frame.id):
-		var lock := Kit.label("OPEN THIS LINE IN TOOLING  %d" % _Pricing.chassis_unlock(frame),
-			Kit.DIM, Kit.SMALL, true)
-		lock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		col.add_child(lock)
-		card.modulate = Color(1, 1, 1, 0.6)
+		var open_cost: int = _Pricing.chassis_unlock(frame)
+		var can_open: bool = state.can_afford(open_cost) \
+			and state.unlock_requirements_met(frame)
+		var row := Kit.hbox(10)
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		var ob := Kit.button("OPEN LINE", Kit.MONEY if can_open else Kit.PROBLEM, 18)
+		ob.disabled = not can_open
+		ob.tooltip_text = "Pay once to open the line. Each unit then costs %d." \
+			% _Pricing.chassis_buy(frame)
+		ob.mouse_entered.connect(ui.hover)
+		ob.pressed.connect(func(): _open_production(frame))
+		row.add_child(ob)
+		row.add_child(Kit.label(str(open_cost), Kit.MONEY, 18, true))
+		col.add_child(row)
+		if not state.unlock_requirements_met(frame):
+			col.add_child(Kit.label("ANOTHER LINE COMES FIRST", Kit.PROBLEM, Kit.SMALL))
+		card.modulate = Color(1, 1, 1, 0.75)
 		return card
 	var price: int = _Pricing.chassis_buy(frame)
 	var affordable := state.can_afford(price)
@@ -402,6 +414,12 @@ func _line_corner(frame: ChassisDefinition) -> Control:
 	var state: CampaignState = ui.state
 	var row := Kit.hbox(6)
 	var mk := state.mark_of(frame.id)
+	# A SHUT LINE HAS NOTHING TO ADVANCE. UPGRADE and MODULE on a card whose
+	# only live control is OPEN LINE is three buttons where one applies, and
+	# the two dead ones are the louder pair. The mark badge goes too: "MK 0" on
+	# a line that builds nothing is a fact about nothing.
+	if not state.is_unlocked(frame.id):
+		return row
 	row.add_child(Kit.label("MK %d" % mk, Kit.BRIGHT, Kit.SMALL, true))
 	var mod_id := state.module_of(frame.id)
 	if mod_id != &"":
@@ -612,7 +630,17 @@ func _module_card(frame: ChassisDefinition, item: ItemDefinition) -> Control:
 	if taken:
 		col.add_child(Kit.label("FITTED", Kit.COMPUTE, Kit.SMALL, true))
 	elif not researched:
-		col.add_child(Kit.label("NOT RESEARCHED", Kit.DIM, Kit.SMALL))
+		# A BUTTON, NOT A STATEMENT. "NOT RESEARCHED" was true while the
+		# Tooling page existed to do something about it; with that gone it
+		# would be a dead end on the only build decision the system asks for.
+		var ucost: int = _Pricing.item_unlock(item)
+		var rb := Kit.button("RESEARCH %d" % ucost,
+			Kit.MONEY if state.can_afford(ucost) else Kit.PROBLEM, Kit.SMALL)
+		rb.disabled = not state.can_afford(ucost)
+		rb.tooltip_text = "Opens this module for every line, not just this one."
+		rb.mouse_entered.connect(ui.hover)
+		rb.pressed.connect(func(): _research(item))
+		col.add_child(rb)
 	elif state.module_of(frame.id) != &"":
 		col.add_child(Kit.label("THIS LINE HAS ONE", Kit.DIM, Kit.SMALL))
 	elif state.mark_of(frame.id) < frame.top_mark():
@@ -622,3 +650,30 @@ func _module_card(frame: ChassisDefinition, item: ItemDefinition) -> Control:
 	return card
 
 
+
+
+func _open_production(frame: ChassisDefinition) -> void:
+	if not ui.state.unlock_chassis(frame):
+		ui.play(&"denied")
+		return
+	ui.play(&"select")
+	_last_built = "%s LINE OPEN" % Kit.frame_word(frame).to_upper()
+
+
+## RESEARCH A MODULE FROM THE CARD THAT OFFERS IT.
+##
+## Opening an item's line was the Tooling fabricator's other job. With that
+## page gone there would be no way to research a module at all, and the
+## keystone — the one build decision this system asks for — would be
+## permanently out of reach. So the module card does it, on the card the
+## player is already looking at.
+##
+## STILL TWO PAYMENTS, NOT ONE. Opening the line is what makes a module
+## available to EVERY line; adopting it is what puts it on THIS one. Rolling
+## them into a single price would hide the fact that the first one is already
+## paid for the next frame that wants it.
+func _research(item: ItemDefinition) -> void:
+	if not ui.state.unlock_item(item):
+		ui.play(&"denied")
+		return
+	ui.play(&"select")

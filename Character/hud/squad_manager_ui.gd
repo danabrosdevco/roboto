@@ -66,12 +66,12 @@ const _SquadPage := preload("res://Character/hud/squad/squad_page.gd")
 const _ArmorerPage := preload("res://Character/hud/squad/armorer_page.gd")
 const _FactoryPage := preload("res://Character/hud/squad/factory_page.gd")
 const _SoftwarePage := preload("res://Character/hud/squad/software_page.gd")
-## THE ONLY PLACE A LINE IS OPENED. The armourer and the factory show what is
-## already open; this shows what is not. See tooling_page.gd.
-const _ToolingPage := preload("res://Character/hud/squad/tooling_page.gd")
-const TABS := [&"squad", &"armorer", &"factory", &"tooling", &"software"]
+# TOOLING IS GONE (2026-10-22). Its whole job was opening a line, which now
+# happens on the Factory card for the line it opens — a page whose only reason
+# to exist was charging for the thing you were already looking at.
+const TABS := [&"squad", &"armorer", &"factory", &"software"]
 const TAB_TITLES := {&"squad": "SQUAD", &"armorer": "ARMORER", &"factory": "FACTORY",
-	&"tooling": "TOOLING", &"software": "SOFTWARE"}
+	&"software": "SOFTWARE"}
 
 var campaign: Node
 var state: CampaignState
@@ -328,8 +328,6 @@ func _build_ui() -> void:
 				page = _ArmorerPage.new()
 			&"factory":
 				page = _FactoryPage.new()
-			&"tooling":
-				page = _ToolingPage.new()
 			&"software":
 				page = _SoftwarePage.new()
 		page.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -477,6 +475,32 @@ func is_locked(id: StringName) -> bool:
 	if state != null:
 		return not state.is_unlocked(id)
 	return false
+
+
+## EVERY PRODUCTION LINE, open or not — open ones first, each half cheapest
+## first.
+##
+## buildable_frames() below hides a shut line, which was right while the
+## Tooling fabricator was the place you opened one. With that page gone the
+## Factory is the only place a line exists at all, and a line you cannot see
+## is a line you will never open. Shut ones are drawn dimmed with their price.
+func production_lines() -> Array:
+	var open_lines: Array = []
+	var shut: Array = []
+	if catalogue == null:
+		return open_lines
+	for frame in catalogue.chassis:
+		if frame == null or not frame.purchasable:
+			continue
+		if is_locked(frame.id):
+			shut.append(frame)
+		else:
+			open_lines.append(frame)
+	var by_price := func(a: ChassisDefinition, b: ChassisDefinition) -> bool:
+		return _Pricing.chassis_buy(a) < _Pricing.chassis_buy(b)
+	open_lines.sort_custom(by_price)
+	shut.sort_custom(by_price)
+	return open_lines + shut
 
 
 func buildable_frames() -> Array:
