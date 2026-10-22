@@ -515,10 +515,18 @@ func _line_detail(frame: ChassisDefinition) -> Control:
 
 	# ── THE MODULE ────────────────────────────
 	col.add_child(Kit.label("MODULE", Kit.BRIGHT, Kit.HEADING, true))
+	var offered: Array[ItemDefinition] = state.modules_for(frame)
+	if offered.is_empty():
+		# Not currently reachable — every frame takes something — but an empty
+		# heading with nothing under it reads as a page that failed to load,
+		# and a line with no keystone is a thing the catalogue could produce.
+		col.add_child(Kit.label("NOTHING IN THE CATALOGUE FITS THIS FRAME",
+			Kit.DIM, Kit.SMALL))
+		return col
 	var grid := HFlowContainer.new()
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 8)
-	for item in state.modules_for(frame):
+	for item in offered:
 		grid.add_child(_module_card(frame, item))
 	col.add_child(grid)
 	return col
@@ -572,16 +580,18 @@ func _delta_bar(name: String, now: float, next: float, top: float, dp: int = 0) 
 	return Kit.stat_bar(name, now, next, top, reading, 64.0, 72.0)
 
 
-## One module the line could take. Ineligible ones are SHOWN, greyed, with the
-## reason — a Rover driver should learn Overclock Servos exist and why they are
-## not for him, rather than never seeing them.
+## One module the line could take.
+##
+## ELIGIBILITY IS NOT TESTED HERE. modules_for only returns what this frame
+## takes, so anything reaching this function can go on it — the states left to
+## draw are all about the PLAYER's progress rather than the frame's rules:
+## fitted, affordable, not researched yet, or not at the top of the rail.
 func _module_card(frame: ChassisDefinition, item: ItemDefinition) -> Control:
 	var state: CampaignState = ui.state
 	var taken: bool = state.module_of(frame.id) == item.id
-	var fits: bool = frame.takes(item)
 	var researched: bool = state.is_unlocked(item.id)
 	var cost: int = _Pricing.module_buy(frame)
-	var ready: bool = fits and researched and state.module_of(frame.id) == &"" \
+	var ready: bool = researched and state.module_of(frame.id) == &"" \
 		and state.mark_of(frame.id) >= frame.top_mark() and state.can_afford(cost)
 
 	var edge := Kit.COMPUTE if taken else (Kit.LINE if ready else Kit.FAINT)
@@ -601,8 +611,6 @@ func _module_card(frame: ChassisDefinition, item: ItemDefinition) -> Control:
 		col.add_child(Kit.label(eff, Kit.BRIGHT if ready or taken else Kit.DIM, Kit.SMALL))
 	if taken:
 		col.add_child(Kit.label("FITTED", Kit.COMPUTE, Kit.SMALL, true))
-	elif not fits:
-		col.add_child(Kit.label(_why_not(frame, item), Kit.PROBLEM, Kit.SMALL))
 	elif not researched:
 		col.add_child(Kit.label("NOT RESEARCHED", Kit.DIM, Kit.SMALL))
 	elif state.module_of(frame.id) != &"":
@@ -614,27 +622,3 @@ func _module_card(frame: ChassisDefinition, item: ItemDefinition) -> Control:
 	return card
 
 
-## WHY THIS FRAME WILL NOT TAKE THIS MODULE, derived rather than assumed.
-##
-## The first cut printed "NOT FOR A FRAME THAT DRIVES" for everything takes()
-## refused, which is true of Overclock Servos on a Rover and false of the
-## Utility Harness — that one is whitelisted to the Soldier and would be
-## refused on a Walker, which has legs. A reason the screen has not actually
-## checked is the same mistake as calling an old save corrupt: confidently
-## wrong, and wrong in a way the player cannot argue with.
-##
-## Mirrors ChassisDefinition.takes() in the order it tests, so the words always
-## name the rule that actually fired.
-func _why_not(frame: ChassisDefinition, item: ItemDefinition) -> String:
-	if not item.fits_chassis(frame.id):
-		var only: Array = []
-		for id in item.chassis_whitelist:
-			var other: ChassisDefinition = ui.catalogue.chassis_def(id) \
-				if ui.catalogue != null else null
-			only.append(Kit.frame_word(other).to_upper() if other != null
-				else String(id).to_upper())
-		return "ONLY FOR THE %s" % " / ".join(only) if not only.is_empty() \
-			else "NOT FOR THIS FRAME"
-	if frame.drives and not item.fits_vehicles:
-		return "NOT FOR A FRAME THAT DRIVES"
-	return "NOT FOR THIS FRAME"

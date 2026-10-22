@@ -1155,16 +1155,24 @@ func adopt_module(frame: ChassisDefinition, item: ItemDefinition) -> bool:
 	return true
 
 
-## Which modules this line could adopt, for the Factory to draw. Includes the
-## ineligible ones — the UI shows them greyed with the reason rather than
-## hiding them, so a Rover driver learns Overclock Servos exist and why they
-## are not for him.
+## Which modules this line could adopt.
+##
+## WHAT THE FRAME CAN TAKE, AND NOTHING ELSE. An earlier cut returned
+## everything and let the Factory grey out the rest with a reason, on the
+## theory that a Rover driver should learn Overclock Servos exist. In practice
+## that is five dead cards in a row of seven, and a module a frame can NEVER
+## take is not a thing the player is deciding about — it is noise wearing the
+## costume of a choice.
+##
+## STILL INCLUDES THE UNRESEARCHED ONES, which are a different thing: those a
+## frame CAN take and the player has not bought yet, so they are the goal
+## rather than the noise. The Factory shows them with their price.
 func modules_for(frame: ChassisDefinition) -> Array[ItemDefinition]:
 	var out: Array[ItemDefinition] = []
 	if frame == null or catalogue == null:
 		return out
 	for item in catalogue.items_of_kind(ItemDefinition.Kind.MODULE):
-		if item != null and _Pricing.for_sale(item):
+		if item != null and _Pricing.for_sale(item) and frame.takes(item):
 			out.append(item)
 	return out
 
