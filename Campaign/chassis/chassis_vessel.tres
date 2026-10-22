@@ -1,7 +1,32 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://bssfuoi1n3pjc"]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_iiiy3"]
 [ext_resource type="PackedScene" path="res://Character/characters/ai/vessel.tscn" id="2_scene"]
+
+[sub_resource type="Resource" id="Resource_1okry"]
+script = ExtResource("1_iiiy3")
+weapon_ids = Array[StringName]([&"hatchling_launcher"])
+equipment_ids = Array[StringName]([&"hatchling"])
+health_bonus = 30
+speed_multiplier = 1.0
+sensor_bonus = 0.0
+accuracy_bonus = 0.0
+tuning = {
+"reload_rate": 1.4
+}
+
+[sub_resource type="Resource" id="Resource_ic33j"]
+script = ExtResource("1_iiiy3")
+weapon_ids = Array[StringName]([&"hatchling_launcher"])
+equipment_ids = Array[StringName]([&"hatchling"])
+health_bonus = 60
+speed_multiplier = 1.0
+sensor_bonus = 10.0
+accuracy_bonus = 0.0
+tuning = {
+"reload_rate": 2.0
+}
 
 [resource]
 script = ExtResource("1_chassisdef")
@@ -28,3 +53,4 @@ equipment_slots = 1
 module_slots = 2
 musters_at_base = true
 unlock_requires = Array[StringName]([])
+marks = Array[Resource]([SubResource("Resource_1okry"), SubResource("Resource_ic33j")])

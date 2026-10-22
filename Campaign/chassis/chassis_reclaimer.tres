@@ -1,7 +1,32 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://c543tvfyia5hs"]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_dq730"]
 [ext_resource type="PackedScene" path="res://Character/characters/ai/vehicle_reclaimer.tscn" id="2_scene"]
+
+[sub_resource type="Resource" id="Resource_i0dqr"]
+script = ExtResource("1_dq730")
+weapon_ids = Array[StringName]([])
+equipment_ids = Array[StringName]([])
+health_bonus = 25
+speed_multiplier = 1.0
+sensor_bonus = 0.0
+accuracy_bonus = 0.0
+tuning = {
+"salvage_rate": 1.5
+}
+
+[sub_resource type="Resource" id="Resource_316xc"]
+script = ExtResource("1_dq730")
+weapon_ids = Array[StringName]([])
+equipment_ids = Array[StringName]([])
+health_bonus = 50
+speed_multiplier = 1.0
+sensor_bonus = 15.0
+accuracy_bonus = 0.0
+tuning = {
+"salvage_rate": 1.9
+}
 
 [resource]
 script = ExtResource("1_chassisdef")
@@ -28,3 +53,4 @@ equipment_slots = 0
 module_slots = 3
 musters_at_base = true
 unlock_requires = Array[StringName]([])
+marks = Array[Resource]([SubResource("Resource_i0dqr"), SubResource("Resource_316xc")])

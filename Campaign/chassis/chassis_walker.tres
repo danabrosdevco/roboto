@@ -1,7 +1,28 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://daikhvrvnhg7g"]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
-[ext_resource type="PackedScene" uid="uid://dtlld5v15l6gl" path="res://Character/characters/ai/walker.tscn" id="2_scene"]
+[ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_p62p3"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/walker.tscn" id="2_scene"]
+
+[sub_resource type="Resource" id="Resource_nhrgq"]
+script = ExtResource("1_p62p3")
+weapon_ids = Array[StringName]([&"autocannon", &"heavy_mg"])
+equipment_ids = Array[StringName]([])
+health_bonus = 30
+speed_multiplier = 1.0
+sensor_bonus = 0.0
+accuracy_bonus = 0.0
+tuning = {}
+
+[sub_resource type="Resource" id="Resource_efkot"]
+script = ExtResource("1_p62p3")
+weapon_ids = Array[StringName]([&"light_cannon", &"heavy_mg"])
+equipment_ids = Array[StringName]([])
+health_bonus = 60
+speed_multiplier = 1.0
+sensor_bonus = 0.0
+accuracy_bonus = 0.05
+tuning = {}
 
 [resource]
 script = ExtResource("1_chassisdef")
@@ -28,3 +49,4 @@ equipment_slots = 0
 module_slots = 3
 musters_at_base = true
 unlock_requires = Array[StringName]([])
+marks = Array[Resource]([SubResource("Resource_nhrgq"), SubResource("Resource_efkot")])

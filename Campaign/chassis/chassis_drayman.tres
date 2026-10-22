@@ -1,7 +1,28 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://dnl25r5kq6k0m"]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
 
+[ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_1bp2y"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
 [ext_resource type="PackedScene" path="res://Character/characters/ai/drayman.tscn" id="2_scene"]
+
+[sub_resource type="Resource" id="Resource_d1yqr"]
+script = ExtResource("1_1bp2y")
+weapon_ids = Array[StringName]([])
+equipment_ids = Array[StringName]([&"repair_kit", &"repair_kit", &"repair_kit"])
+health_bonus = 25
+speed_multiplier = 1.0
+sensor_bonus = 0.0
+accuracy_bonus = 0.0
+tuning = {}
+
+[sub_resource type="Resource" id="Resource_x28pm"]
+script = ExtResource("1_1bp2y")
+weapon_ids = Array[StringName]([])
+equipment_ids = Array[StringName]([&"repair_kit", &"repair_kit", &"mine_heavy", &"mine_heavy"])
+health_bonus = 50
+speed_multiplier = 1.0
+sensor_bonus = 10.0
+accuracy_bonus = 0.0
+tuning = {}
 
 [resource]
 script = ExtResource("1_chassisdef")
@@ -28,3 +49,4 @@ equipment_slots = 4
 module_slots = 2
 musters_at_base = true
 unlock_requires = Array[StringName]([])
+marks = Array[Resource]([SubResource("Resource_d1yqr"), SubResource("Resource_x28pm")])

@@ -82,6 +82,51 @@ class_name ChassisDefinition
 ## everything, which is the point: a chain is a deliberate statement.
 @export var unlock_requires: Array[StringName] = []
 
+## MK 1 AND MK 2. What this production line builds once it has been advanced.
+##
+## MK 0 IS NOT IN HERE — it is `starting_weapon_id` and `coax_weapon_id` above,
+## which already say what the line builds today. `mark_spec(0)` synthesises it
+## from them, so there is one source of truth for the frame's base loadout
+## rather than two that drift apart.
+##
+## Empty on every non-purchasable frame, deliberately: a line the player
+## cannot open has nothing to advance.
+##
+## TYPED `Resource` RATHER THAN `ChassisMark`, and preloaded rather than named.
+## A new class_name only enters the global class list when the EDITOR rescans,
+## and everything in this project is verified headlessly — `Array[ChassisMark]`
+## fails to parse under `--script` until somebody opens the editor, which is
+## not a dependency a data file should have. The class_name is still declared
+## on chassis_mark.gd, so the friendly name works in the inspector once the
+## editor has seen it.
+@export var marks: Array[Resource] = []
+
+const _Mark := preload("res://Campaign/chassis_mark.gd")
+
+
+## The spec this line builds at mark level `n`, with 0 synthesised.
+##
+## Returns null only for a level this frame does not author, which is a
+## caller's bug rather than a state the game can reach — CampaignState clamps
+## the level it stores to what the frame has.
+func mark_spec(n: int) -> Resource:
+	if n <= 0:
+		var zero := _Mark.new()
+		var guns: Array[StringName] = []
+		if starting_weapon_id != &"":
+			guns.append(starting_weapon_id)
+		if coax_weapon_id != &"":
+			guns.append(coax_weapon_id)
+		zero.weapon_ids = guns
+		return zero
+	var i := n - 1
+	return marks[i] if i < marks.size() else null
+
+
+## The highest mark this line can be advanced to. 0 means Mk 0 only.
+func top_mark() -> int:
+	return marks.size()
+
 
 ## Whether `item` goes on this frame at all: the item's whitelist allows the
 ## frame, and a turret takes only what was made for it.
