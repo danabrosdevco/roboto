@@ -45,8 +45,6 @@ const DRAG_KEY := "squad_page_robot"
 
 var ui   # the SquadManagerUI; untyped because it preloads this script
 var selected: SoldierRecord
-var slot_kind: int = ItemDefinition.Kind.WEAPON
-var slot_index: int = 0
 
 var _left: VBoxContainer
 var _head: VBoxContainer
@@ -136,18 +134,6 @@ func on_open() -> void:
 		_select(ui.state.player_record, false)
 
 
-## Arriving from the Armorer's "fit it": land on the selected robot's first
-## empty slot of that kind (or its first, if none is empty).
-func focus_kind(kind: int) -> void:
-	if not _listed(selected):
-		_select(ui.state.player_record, false)
-	var slots: Array = _slots(selected, kind)
-	if slots.is_empty():
-		return
-	slot_kind = kind
-	slot_index = maxi(slots.find(&""), 0)
-
-
 func rebuild() -> void:
 	if not _listed(selected):
 		_select(ui.state.player_record, false)
@@ -180,7 +166,6 @@ func _listed(record: SoldierRecord) -> bool:
 
 func _select(record: SoldierRecord, announce: bool = true) -> void:
 	selected = record
-	_default_slot()
 	if announce:
 		ui.play(&"select")
 		rebuild()
@@ -192,7 +177,6 @@ func _select(record: SoldierRecord, announce: bool = true) -> void:
 # become a drag.
 func _pick(record: SoldierRecord) -> void:
 	selected = record
-	_default_slot()
 	ui.play(&"select")
 	for card in _cards:
 		if is_instance_valid(card):
@@ -202,36 +186,6 @@ func _pick(record: SoldierRecord) -> void:
 
 # The slot most worth looking at: the weapon if there is none, then the first
 # empty gear or module slot, else the weapon.
-func _default_slot() -> void:
-	slot_kind = ItemDefinition.Kind.WEAPON
-	slot_index = 0
-	if selected == null:
-		return
-	var frame := _frame(selected)
-	if frame != null and frame.weapon_slots == 0:
-		slot_kind = ItemDefinition.Kind.MODULE
-		return
-	# An empty slot that falls back to a built-in (the Reclaimer's welder) is
-	# not a gap to point at first.
-	var stands_in: bool = frame != null and frame.weapon_replaces_built_in
-	var gap: int = -1 if stands_in else selected.weapon_ids.find(&"")
-	if gap >= 0:
-		# POINT AT THE GAP, NOT AT SLOT ONE. A two-mount frame is bought with its
-		# coax empty and its main gun already fitted, so opening on the first slot
-		# would land on the gun it came with and hide the only decision there is.
-		slot_index = gap
-		return
-	if selected.weapon_ids.is_empty():
-		return
-	for kind in [ItemDefinition.Kind.EQUIPMENT, ItemDefinition.Kind.MODULE]:
-		var slots: Array = _slots(selected, kind)
-		var empty := slots.find(&"")
-		if empty >= 0:
-			slot_kind = kind
-			slot_index = empty
-			return
-
-
 # ─────────────────────────────────────────────
 # ROSTER — the seats, the teams, the bench
 # ─────────────────────────────────────────────
@@ -654,32 +608,17 @@ func _strip(record: SoldierRecord, frame: ChassisDefinition) -> Control:
 
 
 ## Select `record` and land on one of its slots, from a click on a roster card.
-func open_at(record: SoldierRecord, kind: int, index: int) -> void:
-	if record == null:
-		return
-	if selected != record:
-		_select(record, false)
-	slot_kind = kind
-	slot_index = maxi(index, 0)
-	ui.play(&"select")
-	rebuild()
-
-
 func _mini(item: ItemDefinition, wide: bool, text: String = "", fixed: bool = false,
 		missing: bool = false, record: SoldierRecord = null, kind: int = -1, index: int = -1) -> Control:
 	var tile := PanelContainer.new()
 	var border := Kit.PROBLEM if missing else (Kit.LINE if item != null or text != "" else Kit.FAINT)
 	tile.add_theme_stylebox_override("panel", Kit.box(border, Color(0, 0, 0, 0.25), 1, 1.0))
 	tile.custom_minimum_size = Vector2(46 if wide else 22, 21)
+	# ALWAYS IGNORE. These were clickable — "EDIT THIS SLOT" jumped the detail
+	# pane to that slot so it could be refitted. There is no refitting a single
+	# robot any more, so a tile that invited a click would be a control that
+	# does nothing, which is worse than one that was never offered.
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if record != null and kind >= 0 and not fixed:
-		tile.mouse_filter = Control.MOUSE_FILTER_STOP
-		tile.tooltip_text = "EDIT THIS SLOT"
-		tile.mouse_entered.connect(ui.hover)
-		tile.gui_input.connect(func(e: InputEvent):
-			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
-				accept_event()
-				open_at(record, kind, index))
 	var tint := Kit.DIM if fixed else Kit.BRIGHT
 	if item != null:
 		var tex := Icons.item(item, "s")
@@ -858,11 +797,14 @@ func _build_detail() -> void:
 		kit_row.add_child(_group("MODULES", _tiles(ItemDefinition.Kind.MODULE, r.module_ids)))
 	_detail.add_child(kit_row)
 
-	# The spacer that used to sit here is gone. It separated the slot tiles from
-	# the stores list, which the "IN STORES" heading already does, and seven
-	# pixels of column was the difference between that list showing two rows and
-	# three.
-	_stores()
+	# WHERE THE STORES LIST USED TO BE. A robot's kit comes from its production
+	# line now, so there is nothing here to pick from — the line's spec is set
+	# on the Factory page and reaches every robot on it at once. Saying so
+	# beats an empty column where a list used to be.
+	var frame_now := _frame(r)
+	if frame_now != null and frame_now.purchasable:
+		_detail.add_child(Kit.label("ISSUED BY THE %s LINE" % Kit.frame_word(frame_now).to_upper(),
+			Kit.DIM, Kit.SMALL))
 
 
 func _group(title: String, tiles: Array) -> Control:
@@ -875,10 +817,32 @@ func _group(title: String, tiles: Array) -> Control:
 	return col
 
 
+## WHAT THIS ROBOT CARRIES, SHOWN AND NOT TOUCHED.
+##
+## These used to be the fitting UI: click a tile to select the slot, pick from
+## the stores list below, right-click to take it off. All of that moved to the
+## Factory when a loadout stopped belonging to a robot and started belonging to
+## its production line — a Rover carries what the Rover line builds, and
+## changing it one robot at a time is no longer a thing the game can express.
+##
+## The tiles stay because WHAT IT CARRIES is still the first thing you want to
+## know about a robot you are looking at. They are just read-only now, which is
+## what _fixed_tile has always drawn for a wreck.
 func _tiles(kind: int, ids: Array) -> Array:
 	var out: Array = []
+	var wide: bool = kind == ItemDefinition.Kind.WEAPON
+	# AN EMPTY MOUNT IS NOT ALWAYS AN EMPTY MOUNT. On a frame whose weapon
+	# REPLACES a built-in — the Reclaimer's boom, the Drayman's — nothing
+	# fitted means the built-in is on it, so the tile says WELDER rather than
+	# EMPTY. Reading that slot as "unarmed" is the exact mistake the Reclaimer
+	# card was changed to stop making.
+	var frame := _frame(selected)
+	var built_in: String = frame.built_in if frame != null \
+		and frame.weapon_replaces_built_in and kind == ItemDefinition.Kind.WEAPON else ""
 	for i in ids.size():
-		out.append(_slot_tile(kind, i, ids[i]))
+		var item: ItemDefinition = ui.item(ids[i]) if ids[i] != &"" else null
+		var blank: String = built_in if built_in != "" else "EMPTY"
+		out.append(_fixed_tile(item, "" if item != null else blank, wide))
 	return out
 
 
@@ -912,220 +876,6 @@ func _fixed_tile(item: ItemDefinition, text: String, wide: bool = true) -> Contr
 
 # A slot you can click: its item's icon and short name, or empty. Selected,
 # its border is bright and the stores list below is for it.
-func _slot_tile(kind: int, index: int, item_id: StringName) -> Control:
-	var item: ItemDefinition = ui.item(item_id)
-	# A WRECK'S SLOTS ARE WELDED SHUT. Its kit was destroyed with it and pays
-	# out through SCRAP at half price — but only if the player cannot simply
-	# right-click every module off first and keep the lot. Left open, the
-	# scrap value was a tax on not knowing the trick.
-	#
-	# A fixed tile rather than a disabled one: same picture, no click target,
-	# no hover, nothing to wonder about.
-	if selected != null and selected.status == SoldierRecord.Status.DESTROYED:
-		# Same width rule as the live tile below, or a wreck's panel is wider
-		# than a working robot's for no reason the player can see.
-		return _fixed_tile(item, "EMPTY" if item == null else "",
-				kind == ItemDefinition.Kind.WEAPON)
-	var wide := kind == ItemDefinition.Kind.WEAPON
-	var is_sel := kind == slot_kind and index == slot_index
-	var missing := wide and item == null and not _armed(selected)
-	var border := Kit.BRIGHT if is_sel else (Kit.PROBLEM if missing else (Kit.LINE if item != null else Kit.FAINT))
-	var pick := func():
-		slot_kind = kind
-		slot_index = index
-		ui.play(&"select")
-		_rebuild_detail()
-	var tile := Kit.card(border, pick, ui.hover, 4.0)
-	# 44 tall rather than 56. Two rows of these sit between the stats and the
-	# stores list, so twelve pixels off each is twenty-four back for the list —
-	# and the tile still holds its icon and its name.
-	tile.custom_minimum_size = Vector2(120, 44) if wide else Vector2(56, 44)
-	# Right-click takes it off: the commonest thing to do to a full slot.
-	tile.gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT \
-				and item_id != &"":
-			tile.accept_event()
-			_take_off(kind, index))
-	var col := Kit.vbox(2)
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	tile.add_child(col)
-	if item != null:
-		col.add_child(Kit.icon(Icons.item(item, "m"), Kit.BRIGHT, Vector2(80, 28) if wide else Vector2(28, 28)))
-		var l := Kit.label(item.short_label().to_upper(), Kit.DIM, 11)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.clip_text = true
-		col.add_child(l)
-		tile.tooltip_text = "%s\n%s\nRight-click to take it off." % [item.display_name, item.effect_summary()]
-	else:
-		var frame := _frame(selected)
-		var stand_in := frame.built_in if wide and frame != null and frame.weapon_replaces_built_in else ""
-		var l := Kit.label(stand_in if stand_in != "" else "EMPTY", Kit.PROBLEM if missing else Kit.DIM, 12)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		col.add_child(l)
-		tile.tooltip_text = "Empty. Pick something from stores below." if stand_in == "" \
-			else "The %s, built in. Anything fitted here takes its place." % stand_in.to_lower()
-	return tile
-
-
-# What is in stores for the selected slot. Fits on a click; what cannot go on
-# this robot is listed dim with the reason, so a rifle in stores never looks
-# lost.
-func _stores() -> void:
-	var state: CampaignState = ui.state
-	var r := selected
-	var slots: Array = _slots(r, slot_kind)
-	_detail.add_child(Kit.heading("IN STORES · %s" % Kit.KIND_NAMES.get(slot_kind, "")))
-	if slot_index >= slots.size():
-		_detail.add_child(Kit.label("NO SLOT FOR THIS ON THIS FRAME", Kit.DIM, Kit.SMALL))
-		return
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_detail.add_child(scroll)
-	var list := Kit.vbox(4)
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(list)
-
-	var current: StringName = slots[slot_index]
-	if current != &"":
-		var on: ItemDefinition = ui.item(current)
-		var off := Kit.card(Kit.LINE, func(): _take_off(slot_kind, slot_index), ui.hover, 6.0)
-		var row := Kit.hbox(10)
-		row.add_child(Kit.label("TAKE OFF", Kit.BRIGHT, Kit.BODY, true))
-		row.add_child(Kit.label(on.display_name.to_upper() if on != null else "?", Kit.DIM, Kit.BODY))
-		row.add_child(Kit.fill())
-		row.add_child(Kit.label("BACK TO STORES", Kit.DIM, Kit.SMALL))
-		off.add_child(row)
-		list.add_child(off)
-
-	var offered := 0
-	var elsewhere := 0
-	for item in ui.shop_items():
-		if item.kind != slot_kind or state.armoury.spare(item.id) <= 0:
-			continue
-		if _never_fits(r, item):
-			elsewhere += 1
-			continue
-		var reason := _cannot_fit(r, item)
-		list.add_child(_store_row(item, reason))
-		offered += 1
-	if offered == 0:
-		list.add_child(Kit.label("NOTHING IN STORES FOR THIS SLOT", Kit.DIM, Kit.SMALL))
-	if elsewhere > 0:
-		# WHAT WAS HIDDEN, COUNTED. Silence here would make a gun you own look
-		# lost, which is the exact thing the dim rows were there to prevent.
-		list.add_child(Kit.label("%d MORE IN STORES, FOR OTHER FRAMES" % elsewhere,
-			Kit.DIM, Kit.SMALL))
-	# THE WAY TO THE SHOP IS ALWAYS THERE. It used to appear only when stores
-	# were empty for this slot, which is exactly backwards: having one spare
-	# rifle is the moment you are most likely to want a second, and the button
-	# vanished the instant you owned anything at all.
-	var go := Kit.button("BUY AT THE ARMORER", Kit.BRIGHT, Kit.SMALL)
-	go.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	go.mouse_entered.connect(ui.hover)
-	var kind := slot_kind
-	go.pressed.connect(func(): ui.show_tab(&"armorer", {"kind": kind}))
-	list.add_child(go)
-
-
-func _store_row(item: ItemDefinition, reason: String) -> Control:
-	var state: CampaignState = ui.state
-	var wide := item.kind == ItemDefinition.Kind.WEAPON
-	var usable := reason == ""
-	var fit := func():
-		if not usable:
-			ui.play(&"denied")
-			return
-		ui.play(&"fit" if state.fit_item(selected, item, slot_index) else &"denied")
-	var row_box := Kit.card(Kit.LINE, fit, ui.hover, 6.0)
-	var row := Kit.hbox(10)
-	row_box.add_child(row)
-	var tint := Kit.BRIGHT if usable else Kit.DIM
-	# Matched to the slot tiles above, which is both consistent and the last
-	# twenty pixels needed: at 36 the rows were 48 tall and the list showed two
-	# and a half of them, which is the worst possible number for a list you pick
-	# from — enough to look complete, not enough to be.
-	row.add_child(Kit.icon(Icons.item(item, "m"), tint, Vector2(80, 28) if wide else Vector2(28, 28)))
-	var words := Kit.vbox(1)
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	words.add_child(Kit.label(item.display_name.to_upper(), tint, Kit.BODY, true))
-	var sub := Kit.effect_text(item) if usable else reason.to_upper()
-	if sub != "":
-		words.add_child(Kit.label(sub, Kit.DIM if usable else Kit.PROBLEM, 12))
-	row.add_child(words)
-	row.add_child(Kit.label("X%d" % state.armoury.spare(item.id), tint, Kit.BODY, true))
-	row_box.tooltip_text = "Fit to %s" % selected.display_name if usable else reason
-	if not usable:
-		row_box.modulate = Color(1, 1, 1, 0.7)
-	return row_box
-
-
-## REFUSALS THAT CAN NEVER BECOME YESES ARE NOT LISTED AT ALL.
-##
-## A dim row with a reason is the right answer for something you could fit
-## later: "needs rank 3" is a goal, and "one per robot" is a thing you have
-## already done once. But a turret gun will never go on a soldier and a rifle
-## will never go on a Rover, and listing those is a list of what this robot is
-## NOT — which on a frame with three slots was most of what you scrolled past.
-##
-## The rows do not vanish without a word: _stores() counts them and says how
-## many are in stores for other frames, so a gun you own never looks lost.
-func _never_fits(record: SoldierRecord, item: ItemDefinition) -> bool:
-	var state: CampaignState = ui.state
-	# The player is a special case in the other direction: a squad-only item is
-	# permanently not theirs.
-	if state.is_player_record(record):
-		return not item.fits_player()
-	if not item.fits_ai():
-		return true
-	if not item.fits_chassis(record.chassis_id):
-		return true
-	var frame := _frame(record)
-	# frame.takes() is the one place that knows a turret takes only what was made
-	# for it, and that a frame which drives has no use for kit written for legs.
-	return frame != null and not frame.takes(item)
-
-
-# Why an item in stores cannot go on this robot, in words; "" if it can.
-func _cannot_fit(record: SoldierRecord, item: ItemDefinition) -> String:
-	var state: CampaignState = ui.state
-	if state.is_player_record(record) and not item.fits_player():
-		return "squadmates only"
-	if not state.is_player_record(record) and not item.fits_ai():
-		return "you only"
-	if not item.fits_chassis(record.chassis_id):
-		return "not on this frame"
-	if item.one_per_robot and state.holds_elsewhere(record, item, slot_index):
-		return "one per robot"
-	var frame := _frame(record)
-	if frame != null and not frame.takes(item):
-		# Two rules end up here, and they are not the same refusal: a turret
-		# takes weapons made for it, and a frame that drives has no use for kit
-		# written for legs (nanites). Say which one stopped it.
-		if frame.drives and not item.fits_vehicles:
-			return "not on this frame"
-		return "turret weapons only"
-	return ""
-
-
-func _take_off(kind: int, index: int) -> void:
-	if selected == null:
-		return
-	ui.play(&"remove" if ui.state.unfit_item(selected, kind, index) else &"denied")
-
-
-func _slots(record: SoldierRecord, kind: int) -> Array:
-	match kind:
-		ItemDefinition.Kind.WEAPON:
-			return record.weapon_ids
-		ItemDefinition.Kind.EQUIPMENT:
-			return record.equipment_ids
-		ItemDefinition.Kind.MODULE:
-			return record.module_ids
-	return []
-
-
 func _frame(record: SoldierRecord) -> ChassisDefinition:
 	return ui.frame_of(record)
 
