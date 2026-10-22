@@ -174,6 +174,41 @@ static func chassis_unlock(frame) -> int:
 	return int(round(float(chassis_buy(frame)) * CHASSIS_UNLOCK))
 
 
+# ── PRODUCTION LINES ─────────────────────────────────────────────────────────
+# A Mark and a module are bought ONCE FOR A WHOLE LINE and apply to every unit
+# on it, in service and future. Priced off the unit, so a line of heavies costs
+# more to advance than a line of troopers for the same reason a heavy costs
+# more to build.
+#
+# FLAT, REGARDLESS OF HOW MANY YOU FIELD. The value already scales with the
+# size of the line — revising four Rovers is worth four times revising one —
+# so charging per robot as well would tax the player twice for the same
+# decision, and would make the system worst exactly where it is meant to be
+# best. The cost instead rewards specialising in the line you actually field.
+
+## Mk 1 is three units, Mk 2 is six. Steep against a unit price on purpose:
+## advancing a line is the campaign's long-term sink, and the alternative use
+## of the money is simply MORE ROBOTS, which has to stay a real competitor.
+const MARK_BUY := {1: 3.0, 2: 6.0}
+## The line's one module. Dearer than either Mark because it is the only
+## irreversible choice in the system.
+const MODULE_BUY := 8.0
+
+
+## What advancing this line to mark `n` costs. 0 for a mark it does not author.
+static func mark_buy(frame, n: int) -> int:
+	if frame == null or not MARK_BUY.has(n):
+		return 0
+	return int(round(float(chassis_buy(frame)) * float(MARK_BUY[n])))
+
+
+## What adopting this line's module costs.
+static func module_buy(frame) -> int:
+	if frame == null:
+		return 0
+	return int(round(float(chassis_buy(frame)) * MODULE_BUY))
+
+
 ## A frame nobody can buy — the enemy-only ones, the structures, and the Diver.
 ## `purchasable` is authored on the chassis and is the stronger statement, the
 ## same way in_shop is for items.

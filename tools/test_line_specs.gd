@@ -22,6 +22,7 @@ extends SceneTree
 # IT WRITES NO SAVE — the state is built in memory and never asked to persist.
 # ─────────────────────────────────────────────
 
+const _Pricing := preload("res://Campaign/pricing.gd")
 const CAT := "res://Campaign/items & catalogue/test_item_catalogue.tres"
 
 var _fails := 0
@@ -173,7 +174,122 @@ func _init() -> void:
 		StringName(round_trip.line_modules.get(&"rover", round_trip.line_modules.get("rover", &"")))
 			== &"optics", str(round_trip.line_modules))
 
+	await _adoption(cat)
 	_done()
+
+
+## ── BUYING A MARK AND A MODULE ──────────────────────────────────────────────
+##
+## A fresh state, because the one above has been poked at directly — line_marks
+## written by hand — and the whole point here is that the PAID path does the
+## same work and leaves the money right.
+func _adoption(cat) -> void:
+	print("")
+	var s := CampaignState.new()
+	s.armoury = Armoury.new()
+	s.catalogue = cat
+	s.award(100000)
+	var rover: ChassisDefinition = cat.chassis_def(&"rover")
+	var walker: ChassisDefinition = cat.chassis_def(&"walker")
+
+	# ── A SHUT LINE CANNOT BE ADVANCED ────────
+	# Before anything else, because a gate that only the UI enforces is not a
+	# gate: anything else calling adopt_mark would walk straight past it.
+	_check("a shut line refuses a mark", not s.adopt_mark(rover))
+	_check("...and takes no money for refusing", s.available() == 100000,
+		"%d" % s.available())
+
+	s.unlock_chassis(rover)
+	s.unlock_chassis(walker)
+	for item in cat.items_of_kind(ItemDefinition.Kind.MODULE):
+		s.unlock_item(item)
+	var after_unlocks := s.available()
+	var r1 := s.recruit(rover)
+	var r2 := s.recruit(rover)
+	_check("(setup) two rovers on an open line", r1 != null and r2 != null)
+	if r1 == null or r2 == null:
+		return
+
+	# ── PAYING FOR MK 1 ───────────────────────
+	var purse := s.available()
+	var price := _Pricing.mark_buy(rover, 1)
+	_check("adopting Mk 1 succeeds", s.adopt_mark(rover))
+	_check("...and costs exactly what the table says",
+		s.available() == purse - price, "%d -> %d, price %d" % [purse, s.available(), price])
+	_check("...and the line now builds Mk 1", s.mark_of(&"rover") == 1)
+	_check("...and both rovers were revised",
+		r1.weapon_ids[0] == rover.mark_spec(1).weapon_ids[0]
+		and r2.weapon_ids[0] == rover.mark_spec(1).weapon_ids[0])
+	_invariant(s, "after Mk 1")
+
+	# ── AND IT ONLY HAPPENS ONCE PER TIER ─────
+	# A second Mk 1 would be a second allocation under the same key and a
+	# second deduction for a thing the line already has.
+	var held := s.available()
+	s.adopt_mark(rover)
+	_check("advancing again moves to Mk 2, not Mk 1 twice", s.mark_of(&"rover") == 2)
+	_check("...at Mk 2's price", s.available() == held - _Pricing.mark_buy(rover, 2),
+		"%d -> %d" % [held, s.available()])
+	_check("there is nothing above what the frame authors",
+		not s.adopt_mark(rover) and s.mark_of(&"rover") == rover.top_mark())
+	_invariant(s, "at the top of the rail")
+
+	# ── THE MODULE ────────────────────────────
+	var plating: ItemDefinition = cat.item(&"armor_plating")
+	var servos: ItemDefinition = cat.item(&"overclock_servos")
+	var before_mod := s.available()
+	_check("a rover refuses Overclock Servos", not s.adopt_module(rover, servos),
+		"a frame that drives has nothing to overclock")
+	_check("...and is not charged for the refusal", s.available() == before_mod)
+	_check("a rover adopts Armour Plating", s.adopt_module(rover, plating))
+	_check("...at the module price",
+		s.available() == before_mod - _Pricing.module_buy(rover),
+		"%d -> %d" % [before_mod, s.available()])
+	_check("...and it reached both rovers",
+		r1.module_ids.has(&"armor_plating") and r2.module_ids.has(&"armor_plating"))
+	_check("...and the walker line did not get one",
+		s.module_of(&"walker") == &"", str(s.module_of(&"walker")))
+
+	# IRREVERSIBLE. The one decision the system asks for stays made.
+	var settled := s.available()
+	_check("the module cannot be swapped", not s.adopt_module(rover, cat.item(&"optics")))
+	_check("...and trying costs nothing", s.available() == settled)
+	_invariant(s, "after the module")
+
+	# ── A MODULE STILL HAS TO BE RESEARCHED ───
+	var fresh := CampaignState.new()
+	fresh.armoury = Armoury.new()
+	fresh.catalogue = cat
+	fresh.award(100000)
+	fresh.unlock_chassis(rover)
+	_check("an unresearched module cannot be adopted",
+		not fresh.adopt_module(rover, plating),
+		"opening a line buys the frame, not every module that fits it")
+
+	# ── THE MONEY ADDS UP ACROSS A WHOLE RUN ──
+	# test_ledger's own invariant, run here too because this is the first
+	# system to write allocation keys it does not own.
+	_check("every line purchase is in the ledger",
+		s.allocations.has(CampaignState.mark_key(&"rover", 1))
+		and s.allocations.has(CampaignState.mark_key(&"rover", 2))
+		and s.allocations.has(CampaignState.module_key(&"rover")),
+		str(s.allocations.keys()))
+	_check("...and spending equals what was earned minus them",
+		s.available() == s.earned - _spent(s), "available %d" % s.available())
+	_check("(context) unlocks came out of the same purse", after_unlocks < 100000)
+
+
+func _spent(s: CampaignState) -> int:
+	var total := 0
+	for cost in s.allocations.values():
+		total += int(cost)
+	return total
+
+
+func _invariant(s: CampaignState, label: String) -> void:
+	_check("%s: available == earned - allocations" % label,
+		s.available() == s.earned - _spent(s),
+		"available=%d earned=%d allocated=%d" % [s.available(), s.earned, _spent(s)])
 
 
 func _done() -> void:

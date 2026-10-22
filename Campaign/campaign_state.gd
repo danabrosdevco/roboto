@@ -1081,6 +1081,87 @@ func module_of(chassis_id: StringName) -> StringName:
 	return StringName(line_modules.get(chassis_id, &""))
 
 
+## Allocation keys. Separate per mark so advancing twice is two purchases and
+## the ledger can tell them apart; one for the module because there is one.
+static func mark_key(id: StringName, n: int) -> String:
+	return "mark:%s:%d" % [id, n]
+static func module_key(id: StringName) -> String:
+	return "module:%s" % id
+
+
+## ADVANCE A LINE BY ONE MARK.
+##
+## ONE AT A TIME, deliberately. Jumping straight to Mk 2 would skip Mk 1's
+## allocation and leave the ledger describing a line that was never advanced —
+## and "pay for each tier" is also what makes the rail a progression rather
+## than a menu.
+func adopt_mark(frame: ChassisDefinition) -> bool:
+	if frame == null or not frame.purchasable:
+		return false
+	# THE LINE HAS TO BE OPEN. Same gate recruit() answers to: a line nobody
+	# has paid to open cannot be advanced past the spec it does not build.
+	if not is_unlocked(frame.id):
+		return false
+	var next := mark_of(frame.id) + 1
+	if next > frame.top_mark():
+		return false   # nothing authored above this
+	var cost := _Pricing.mark_buy(frame, next)
+	if not _allocate_quiet(mark_key(frame.id, next), cost):
+		return false
+	line_marks[frame.id] = next
+	apply_line_spec(frame.id)
+	ledger_changed.emit()
+	return true
+
+
+## ADOPT THIS LINE'S ONE MODULE.
+##
+## IRREVERSIBLE, AND THE ONLY IRREVERSIBLE THING HERE. A line has one keystone
+## and choosing it is the single build decision the system asks for; letting it
+## be swapped would make it a loadout slot again, which is the whole thing this
+## replaced.
+func adopt_module(frame: ChassisDefinition, item: ItemDefinition) -> bool:
+	if frame == null or item == null or not frame.purchasable:
+		return false
+	if not is_unlocked(frame.id):
+		return false
+	if module_of(frame.id) != &"":
+		return false   # already chosen, and it does not change
+	if item.kind != ItemDefinition.Kind.MODULE:
+		return false
+	# ELIGIBILITY IS THE FRAME'S ANSWER, NOT A COPY OF IT. takes() already
+	# refuses a module whose fits_vehicles is false on anything that drives,
+	# which is what makes Overclock Servos and Nanite Reboot legs-only. A
+	# second rule here would be a second rule to keep in step.
+	if not frame.takes(item):
+		return false
+	# A MODULE IS STILL A THING THAT HAD TO BE RESEARCHED. The line being open
+	# buys the frame, not every module that could go on it.
+	if not is_unlocked(item.id):
+		return false
+	var cost := _Pricing.module_buy(frame)
+	if not _allocate_quiet(module_key(frame.id), cost):
+		return false
+	line_modules[frame.id] = item.id
+	apply_line_spec(frame.id)
+	ledger_changed.emit()
+	return true
+
+
+## Which modules this line could adopt, for the Factory to draw. Includes the
+## ineligible ones — the UI shows them greyed with the reason rather than
+## hiding them, so a Rover driver learns Overclock Servos exist and why they
+## are not for him.
+func modules_for(frame: ChassisDefinition) -> Array[ItemDefinition]:
+	var out: Array[ItemDefinition] = []
+	if frame == null or catalogue == null:
+		return out
+	for item in catalogue.items_of_kind(ItemDefinition.Kind.MODULE):
+		if item != null and _Pricing.for_sale(item):
+			out.append(item)
+	return out
+
+
 ## EVERY ROBOT ON THIS LINE BECOMES WHAT THE LINE NOW BUILDS.
 ##
 ## The one function all three line operations share — adopting a mark,
