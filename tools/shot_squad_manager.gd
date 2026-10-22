@@ -94,6 +94,29 @@ func _run() -> void:
 				r.damage = r.max_health
 		_select("VESNA"))
 	await _shoot(&"factory", "live_factory.png", Callable())
+	# THE LINE RAIL, which is the whole Mark system on screen. Shot at Mk 1 on
+	# an advanced line so the picture shows all three states at once: a
+	# superseded tier, the one in service, and the one it costs money to reach.
+	await _shoot(&"factory", "live_factory_line.png", func():
+		var page: Control = ui._pages[&"factory"]
+		state.line_marks[&"rover"] = 1
+		state.apply_line_spec(&"rover")
+		page._detail = &"rover"
+		page.rebuild())
+	# AND AT THE TOP OF THE RAIL, where the module becomes reachable — the
+	# locked state is what the shot above shows, so this is the other half.
+	await _shoot(&"factory", "live_factory_module.png", func():
+		var page: Control = ui._pages[&"factory"]
+		# RESEARCHED, so the picture shows a module that can actually be taken.
+		# Without this every card reads NOT RESEARCHED and the state a player
+		# spends most of their time looking at is the one never photographed.
+		for m in state.modules_for(state.catalogue.chassis_def(&"rover")):
+			state.unlock_item(m)
+		state.award(4000)   # so the picture shows prices, not NOT RESEARCHED
+		state.line_marks[&"rover"] = 2
+		state.apply_line_spec(&"rover")
+		page._detail = &"rover"
+		page.rebuild())
 	await _shoot(&"armorer", "live_armorer_weapon.png", func(): _pick(&"cluster_launcher"))
 	await _shoot(&"armorer", "live_armorer_equipment.png", func(): _pick(&"emp"))
 	await _shoot(&"armorer", "live_armorer_module.png", func(): _pick(&"optics"))

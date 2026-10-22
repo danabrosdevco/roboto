@@ -45,6 +45,8 @@ var _last_built := ""
 ## right after the click that needed it.
 var _scroll_x := 0
 var _restore_x := 0
+## Which line's rail is open, or &"" for the row of cards.
+var _detail: StringName = &""
 
 
 func setup(owner_ui) -> void:
@@ -54,6 +56,9 @@ func setup(owner_ui) -> void:
 
 func on_open() -> void:
 	_last_built = ""
+	# Always onto the row. Opening the manager to find yourself inside one
+	# line's rail is the screen remembering something you did not ask it to.
+	_detail = &""
 
 
 func rebuild() -> void:
@@ -61,6 +66,18 @@ func rebuild() -> void:
 	Kit.clear(self)
 	var state: CampaignState = ui.state
 	add_child(_hangar(state))
+
+	# ONE LINE, OR ALL OF THEM. The detail is the same page rather than a tab
+	# of its own: advancing a line is a thing you do WHILE looking at what you
+	# are building, and sending the player somewhere else to do it is the trip
+	# this whole system exists to remove.
+	if _detail != &"":
+		var frame: ChassisDefinition = ui.catalogue.chassis_def(_detail) \
+			if ui.catalogue != null else null
+		if frame != null:
+			add_child(_line_detail(frame))
+			return
+		_detail = &""   # the frame went away under us; fall back to the row
 
 	var frames := HBoxContainer.new()
 	frames.add_theme_constant_override("separation", 14)
@@ -166,6 +183,13 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 	card.custom_minimum_size.x = CARD_WIDTH
 	var col := Kit.vbox(8)
 	card.add_child(col)
+
+	# ── THE LINE'S CONTROLS, IN THE CORNER ────
+	# On the card rather than behind a click, because advancing a line is the
+	# thing this page is FOR and a control you have to go looking for is one
+	# nobody finds. MODULE is drawn even while it is locked: a player should
+	# learn the keystone exists long before they can afford it.
+	col.add_child(_line_corner(frame))
 
 	var art := Kit.icon(Icons.chassis(frame, "l"), Kit.BRIGHT, Vector2(128, 128))
 	art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -362,3 +386,255 @@ func _mount_line(frame: ChassisDefinition) -> String:
 	if frame.weapon_replaces_built_in and frame.built_in == "WELDER":
 		return "%d X ARM" % frame.weapon_slots
 	return "%d X SMALL ARMS" % frame.weapon_slots
+
+
+# ─────────────────────────────────────────────
+# PRODUCTION LINES
+# ─────────────────────────────────────────────
+
+## The mark badge and the two line controls, along the top of a card.
+##
+## NO BUTTON ONCE A THING IS DONE. A disabled control reading "MK 2 ADOPTED"
+## is the screen talking about itself; the badge beside it already says what
+## the line builds. MODULE is the exception while it is locked — it is drawn
+## greyed so the keystone is discoverable before it is reachable.
+func _line_corner(frame: ChassisDefinition) -> Control:
+	var state: CampaignState = ui.state
+	var row := Kit.hbox(6)
+	var mk := state.mark_of(frame.id)
+	row.add_child(Kit.label("MK %d" % mk, Kit.BRIGHT, Kit.SMALL, true))
+	var mod_id := state.module_of(frame.id)
+	if mod_id != &"":
+		var mod_def: ItemDefinition = ui.item(mod_id)
+		row.add_child(Kit.label("◆ %s" % (mod_def.short_label().to_upper()
+			if mod_def != null else String(mod_id).to_upper()), Kit.COMPUTE, Kit.SMALL))
+	row.add_child(Kit.fill())
+
+	if mk < frame.top_mark():
+		var cost: int = _Pricing.mark_buy(frame, mk + 1)
+		var can: bool = state.can_afford(cost) and state.is_unlocked(frame.id)
+		var up := Kit.button("UPGRADE %d" % cost, Kit.MONEY if can else Kit.PROBLEM, Kit.SMALL)
+		up.disabled = not can
+		up.mouse_entered.connect(ui.hover)
+		up.pressed.connect(func(): _advance(frame))
+		row.add_child(up)
+	if mod_id == &"":
+		var mcost: int = _Pricing.module_buy(frame)
+		var ready: bool = mk >= frame.top_mark() and state.can_afford(mcost)
+		var mb := Kit.button("MODULE %d" % mcost, Kit.COMPUTE if ready else Kit.DIM, Kit.SMALL)
+		mb.disabled = not ready
+		mb.tooltip_text = "Open at Mk %d." % frame.top_mark() if mk < frame.top_mark() \
+			else "One module, for the whole line, chosen once."
+		mb.mouse_entered.connect(ui.hover)
+		mb.pressed.connect(func(): _open_line(frame))
+		row.add_child(mb)
+	return row
+
+
+func _advance(frame: ChassisDefinition) -> void:
+	var state: CampaignState = ui.state
+	var n: int = state.mark_of(frame.id) + 1
+	var built: int = _in_service(frame)
+	if not state.adopt_mark(frame):
+		ui.play(&"denied")
+		return
+	ui.play(&"select")
+	# WHAT IT DID TO THE ROBOTS YOU ALREADY HAVE, said out loud. The whole
+	# point of a line upgrade is that it reaches them, and a toast that only
+	# said "Mk 2" would leave the player to guess whether it had.
+	_last_built = "%s LINE AT MK %d%s" % [Kit.frame_word(frame).to_upper(), n,
+		"" if built == 0 else " — %d IN SERVICE REVISED" % built]
+
+
+func _open_line(frame: ChassisDefinition) -> void:
+	ui.play(&"select")
+	_detail = frame.id
+	rebuild()   # only this page changes; the ledger did not move
+
+
+func _in_service(frame: ChassisDefinition) -> int:
+	var n := 0
+	for r in ui.state.roster:
+		if r != null and r.chassis_id == frame.id:
+			n += 1
+	return n
+
+
+## ONE LINE'S RAIL: where it is, what the next mark costs, and what that does
+## to the robots you already have.
+##
+## THE BARS ARE THE POINT. Kit.stat_bar draws anything beyond `base` in the
+## UPGRADE colour, so passing the CURRENT value as base and the NEXT MARK's as
+## total shows the gain as a ghost extension on the same bar. A tier whose
+## only description is a sentence is a tier the player cannot judge before
+## paying for it — and four of the twelve lines progress by tuning alone, so
+## for those this is the entire readout.
+func _line_detail(frame: ChassisDefinition) -> Control:
+	var state: CampaignState = ui.state
+	var col := Kit.vbox(10)
+
+	var back := Kit.button("← ALL LINES", Kit.DIM, Kit.SMALL)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	back.mouse_entered.connect(ui.hover)
+	back.pressed.connect(func():
+		ui.play(&"select")
+		_detail = &""
+		rebuild())
+	col.add_child(back)
+
+	var head := Kit.hbox(10)
+	head.add_child(Kit.icon(Icons.chassis(frame, "m"), Kit.BRIGHT, Vector2(48, 48)))
+	var words := Kit.vbox(2)
+	words.add_child(Kit.label(Kit.frame_word(frame).to_upper(), Kit.BRIGHT, 24, true))
+	var served: int = _in_service(frame)
+	words.add_child(Kit.label("%d IN SERVICE%s" % [served,
+		"" if served == 0 else " · EVERY ONE REVISED ON ADOPTION"], Kit.DIM, Kit.SMALL))
+	head.add_child(words)
+	col.add_child(head)
+
+	# ── THE RAIL ──────────────────────────────
+	var mk: int = state.mark_of(frame.id)
+	var rail := Kit.hbox(8)
+	for n in range(0, frame.top_mark() + 1):
+		rail.add_child(_mark_step(frame, n, mk))
+	col.add_child(rail)
+
+	# ── WHAT THE NEXT ONE DOES ────────────────
+	if mk < frame.top_mark():
+		var next = frame.mark_spec(mk + 1)
+		var now = frame.mark_spec(mk)
+		col.add_child(Kit.label("NEXT MARK", Kit.DIM, Kit.SMALL, true))
+		col.add_child(_delta_bar("HULL", frame.base_health + now.health_bonus,
+			frame.base_health + next.health_bonus, HULL_TOP))
+		col.add_child(_delta_bar("SENSOR", frame.base_sensor_range + now.sensor_bonus,
+			frame.base_sensor_range + next.sensor_bonus, SENSOR_TOP))
+		var sp := _Facts.chassis_speed(frame)
+		if sp > 0.0:
+			col.add_child(_delta_bar("SPEED", sp * now.speed_multiplier,
+				sp * next.speed_multiplier, SPEED_TOP, 1))
+
+	# ── THE MODULE ────────────────────────────
+	col.add_child(Kit.label("MODULE", Kit.BRIGHT, Kit.HEADING, true))
+	var grid := HFlowContainer.new()
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	for item in state.modules_for(frame):
+		grid.add_child(_module_card(frame, item))
+	col.add_child(grid)
+	return col
+
+
+## One tier on the rail. Reads the same vocabulary as every other: what it
+## builds, and either a price, IN SERVICE, SUPERSEDED or LOCKED.
+func _mark_step(frame: ChassisDefinition, n: int, current: int) -> Control:
+	var spec = frame.mark_spec(n)
+	var edge := Kit.BRIGHT if n == current else (Kit.LINE if n < current else Kit.FAINT)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", Kit.box(edge, Kit.PANEL, 1, 10.0))
+	panel.custom_minimum_size.x = 190.0
+	var col := Kit.vbox(4)
+	panel.add_child(col)
+	col.add_child(Kit.label("MK %d" % n, edge, Kit.SMALL, true))
+	if spec != null:
+		for wid in spec.weapon_ids:
+			if wid != &"":
+				var w: ItemDefinition = ui.item(wid)
+				col.add_child(Kit.label(w.short_label().to_upper() if w != null
+					else String(wid).to_upper(), Kit.BRIGHT, Kit.SMALL))
+		for eid in spec.equipment_ids:
+			if eid != &"":
+				var e: ItemDefinition = ui.item(eid)
+				col.add_child(Kit.label(e.short_label().to_upper() if e != null
+					else String(eid).to_upper(), Kit.MONEY, Kit.SMALL))
+		if spec.weapon_ids.is_empty() and spec.equipment_ids.is_empty() and n == 0:
+			col.add_child(Kit.label(frame.built_in if frame.built_in != "" else "—",
+				Kit.DIM, Kit.SMALL))
+	col.add_child(Kit.fill())
+	var state: CampaignState = ui.state
+	var note := "SUPERSEDED" if n < current else ("IN SERVICE" if n == current
+		else (str(_Pricing.mark_buy(frame, n)) if n == current + 1 else "LOCKED"))
+	col.add_child(Kit.label(note, Kit.BRIGHT if n == current else Kit.DIM, Kit.SMALL))
+	return panel
+
+
+## Current value, with the next mark's gain drawn beyond it.
+##
+## `dp` because SPEED is a number like 6.8 and HULL is a number like 200, and
+## one format for both printed the Rover's speed as "7" — a reading that is
+## wrong in the only digit that distinguishes one frame from another. The card
+## row has always used %.1f for speed; this matches it rather than inventing a
+## second convention on the same screen.
+func _delta_bar(name: String, now: float, next: float, top: float, dp: int = 0) -> Control:
+	var fmt := "%%.%df" % dp
+	var reading: String = fmt % now
+	if next > now:
+		reading = "%s +%s" % [fmt % now, fmt % (next - now)]
+	return Kit.stat_bar(name, now, next, top, reading, 64.0, 72.0)
+
+
+## One module the line could take. Ineligible ones are SHOWN, greyed, with the
+## reason — a Rover driver should learn Overclock Servos exist and why they are
+## not for him, rather than never seeing them.
+func _module_card(frame: ChassisDefinition, item: ItemDefinition) -> Control:
+	var state: CampaignState = ui.state
+	var taken: bool = state.module_of(frame.id) == item.id
+	var fits: bool = frame.takes(item)
+	var researched: bool = state.is_unlocked(item.id)
+	var cost: int = _Pricing.module_buy(frame)
+	var ready: bool = fits and researched and state.module_of(frame.id) == &"" \
+		and state.mark_of(frame.id) >= frame.top_mark() and state.can_afford(cost)
+
+	var edge := Kit.COMPUTE if taken else (Kit.LINE if ready else Kit.FAINT)
+	var pick := func():
+		if not ready:
+			ui.play(&"denied")
+			return
+		ui.play(&"fit" if state.adopt_module(frame, item) else &"denied")
+	var card := Kit.card(edge, pick, ui.hover, 8.0)
+	card.custom_minimum_size.x = 210.0
+	var col := Kit.vbox(3)
+	card.add_child(col)
+	col.add_child(Kit.label(item.display_name.to_upper(),
+		Kit.COMPUTE if (taken or ready) else Kit.DIM, Kit.SMALL, true))
+	var eff := item.effect_summary()
+	if eff != "":
+		col.add_child(Kit.label(eff, Kit.BRIGHT if ready or taken else Kit.DIM, Kit.SMALL))
+	if taken:
+		col.add_child(Kit.label("FITTED", Kit.COMPUTE, Kit.SMALL, true))
+	elif not fits:
+		col.add_child(Kit.label(_why_not(frame, item), Kit.PROBLEM, Kit.SMALL))
+	elif not researched:
+		col.add_child(Kit.label("NOT RESEARCHED", Kit.DIM, Kit.SMALL))
+	elif state.module_of(frame.id) != &"":
+		col.add_child(Kit.label("THIS LINE HAS ONE", Kit.DIM, Kit.SMALL))
+	elif state.mark_of(frame.id) < frame.top_mark():
+		col.add_child(Kit.label("AT MK %d" % frame.top_mark(), Kit.DIM, Kit.SMALL))
+	else:
+		col.add_child(Kit.label(str(cost), Kit.MONEY, Kit.SMALL, true))
+	return card
+
+
+## WHY THIS FRAME WILL NOT TAKE THIS MODULE, derived rather than assumed.
+##
+## The first cut printed "NOT FOR A FRAME THAT DRIVES" for everything takes()
+## refused, which is true of Overclock Servos on a Rover and false of the
+## Utility Harness — that one is whitelisted to the Soldier and would be
+## refused on a Walker, which has legs. A reason the screen has not actually
+## checked is the same mistake as calling an old save corrupt: confidently
+## wrong, and wrong in a way the player cannot argue with.
+##
+## Mirrors ChassisDefinition.takes() in the order it tests, so the words always
+## name the rule that actually fired.
+func _why_not(frame: ChassisDefinition, item: ItemDefinition) -> String:
+	if not item.fits_chassis(frame.id):
+		var only: Array = []
+		for id in item.chassis_whitelist:
+			var other: ChassisDefinition = ui.catalogue.chassis_def(id) \
+				if ui.catalogue != null else null
+			only.append(Kit.frame_word(other).to_upper() if other != null
+				else String(id).to_upper())
+		return "ONLY FOR THE %s" % " / ".join(only) if not only.is_empty() \
+			else "NOT FOR THIS FRAME"
+	if frame.drives and not item.fits_vehicles:
+		return "NOT FOR A FRAME THAT DRIVES"
+	return "NOT FOR THIS FRAME"
