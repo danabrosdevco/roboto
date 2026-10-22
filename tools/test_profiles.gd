@@ -52,6 +52,7 @@ func _init() -> void:
 	_test_never_writes_without_a_profile()
 	_test_many()
 	_test_delete()
+	_test_outdated()
 
 	_clean()
 	print("")
@@ -209,8 +210,79 @@ func _test_delete() -> void:
 
 
 # ─────────────────────────────────────────────
+## A CAMPAIGN FROM AN OLDER BUILD.
+##
+## The Mark system took SAVE_VERSION to 2 and v1 saves are not loadable: they
+## describe robots carrying modules fitted one at a time from a shop that no
+## longer exists. The human's call was to drop them rather than invent a
+## migration nobody can verify.
+##
+## WHAT THIS IS REALLY ABOUT IS HOW IT IS TOLD. "Old" and "corrupt" are
+## different things to say to somebody about their campaign, and the easy
+## implementation — reuse `broken` — tells half the players something untrue
+## and frightening about a file that is perfectly intact. And nothing deletes
+## it: refusing to load is the whole requirement.
+func _test_outdated() -> void:
+	_clean()
+	_make("Current Run", "Bravo", "Dana")
+	var old_path := _SaveSlots.path_for(_SaveSlots.unique_id("Old Run"))
+	_write(old_path, JSON.stringify({
+		"version": 1, "profile_name": "Old Run", "squad_name": "Alpha",
+		"earned": 4200, "completed_missions": ["arena_1_contact"],
+		"player_record": {"display_name": "Dana"},
+		"last_played_utc": Time.get_datetime_string_from_system(true),
+	}, "\t"))
+
+	var all := _SaveSlots.list()
+	_check("an older build's campaign is still listed", all.size() == 2,
+		"%d profile(s)" % all.size())
+	var old_entry := {}
+	var new_entry := {}
+	for e in all:
+		if String(e["profile_name"]) == "Old Run":
+			old_entry = e
+		elif String(e["profile_name"]) == "Current Run":
+			new_entry = e
+	if old_entry.is_empty() or new_entry.is_empty():
+		_check("both profiles are in the list", false,
+			str(all.map(func(e): return e["profile_name"])))
+		return
+
+	_check("...and is marked as from an older build", bool(old_entry["outdated"]))
+	_check("...and NOT as broken, because it is not damaged",
+		not bool(old_entry["broken"]),
+		"calling an old campaign corrupt is untrue and frightening")
+	_check("...while the current one is neither",
+		not bool(new_entry["outdated"]) and not bool(new_entry["broken"]))
+
+	# It still shows what it was, so the player can tell which campaign they
+	# are being asked to give up.
+	_check("...and it still shows its name and progress",
+		String(old_entry["profile_name"]) == "Old Run"
+			and int(old_entry["resources"]) == 4200
+			and int(old_entry["missions"]) == 1,
+		str(old_entry))
+
+	_check("the game does not open into it",
+		_SaveSlots.most_recent() != String(old_entry["id"]),
+		"most_recent picked '%s'" % _SaveSlots.most_recent())
+	_check("...it opens into the playable one instead",
+		_SaveSlots.most_recent() == String(new_entry["id"]))
+	_check("loading it is refused", CampaignState.load_from_disk(old_path) == null)
+	_check("...and the file is left exactly where it was",
+		FileAccess.file_exists(old_path),
+		"refusing to load is the requirement; deleting is not")
+
+
+# ─────────────────────────────────────────────
+## OFF THE CONSTANT, NOT A LITERAL. These fixtures stand for campaigns this
+## build can play; writing a fixed version number meant that the day
+## SAVE_VERSION moved, every profile in this suite silently became an OLD
+## profile and the suite started testing the opposite of what it says.
+## _test_outdated below is where an old one is written on purpose.
 func _make(profile: String, squad: String, who: String) -> void:
-	var d := {"version": 1, "profile_name": profile, "squad_name": squad,
+	var d := {"version": CampaignState.SAVE_VERSION,
+		"profile_name": profile, "squad_name": squad,
 		"earned": 10, "completed_missions": [],
 		"player_record": {"display_name": who},
 		"last_played_utc": Time.get_datetime_string_from_system(true)}

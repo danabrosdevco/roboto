@@ -6,12 +6,18 @@ extends SceneTree
 #   godot --audio-driver Dummy --path . --script res://tools/migrate_save.gd \
 #       -- <in.json> <out.json> [profile name] [--keep-won]
 #
-# THE FORMAT DID NOT CHANGE. SAVE_VERSION is still 1 and CampaignState.from_dict
-# is written to tolerate old saves, so the work here is not reshaping records —
-# it is the three things the format gained, and checking that every id the save
-# names still exists. A save that loads but refers to a frame or an item the
-# project has since dropped is worse than one that fails: it comes up looking
-# fine with holes in it.
+# IT CANNOT CROSS v1 → v2, and it refuses rather than pretending. The Mark
+# system took SAVE_VERSION to 2 on 2026-10-22 and changed what a robot's
+# loadout IS: a v1 save describes modules fitted one at a time from a shop
+# that no longer exists, and no amount of reshaping makes that a v2 campaign.
+# Bumping the number would hand back a file that loads looking fine and is
+# wrong in ways nobody can see, which is the opposite of what this tool is for.
+#
+# WITHIN a version the work is not reshaping records — CampaignState.from_dict
+# reads every field through a default — it is the three things the format
+# gained, and checking that every id the save names still exists. A save that
+# loads but refers to a frame or an item the project has since dropped is
+# worse than one that fails: it comes up looking fine with holes in it.
 #
 # WHAT IT DOES
 #   - profile_name, created_utc, last_played_utc. Saves live in user://saves now,
@@ -74,6 +80,22 @@ func _init() -> void:
 		return
 
 	var data: Dictionary = parsed
+	# ── NOT ACROSS THE v1 → v2 BOUNDARY ───────
+	# The Mark system (2026-10-22) made SAVE_VERSION 2, and a v1 save describes
+	# robots carrying modules fitted one at a time from a shop that no longer
+	# exists. There is no honest reshaping of that: bumping the number would
+	# produce a file claiming to be v2 while holding v1 content, which loads
+	# looking fine and is wrong in ways nobody can see. Refuse it here rather
+	# than hand back something still unloadable — the whole point of this tool
+	# is that it proves its output loads.
+	if CampaignState.is_outdated(data):
+		printerr("migrate_save: %s is save version %d and this build reads %d."
+			% [in_path, int(data.get("version", 0)), CampaignState.SAVE_VERSION])
+		printerr("  The Mark system changed what a robot's loadout IS, so there is")
+		printerr("  nothing to carry across. The file is left alone; start a new")
+		printerr("  campaign.")
+		quit(1)
+		return
 	_audit(data)
 	_migrate(data, profile, keep_won)
 

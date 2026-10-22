@@ -21,7 +21,14 @@ class_name CampaignState
 
 const SAVE_PATH := "user://campaign.json"
 # Bump when the shape changes so migrate() has something to switch on.
-const SAVE_VERSION := 1
+#
+# 2 — THE MARK SYSTEM, 2026-10-22. A robot's loadout stopped being something
+# the player fitted one at a time and became what its production line builds,
+# so a v1 save describes a game that no longer exists: robots carrying modules
+# bought from a shop that is gone, on lines that have no mark. The human's
+# call was that the change is big enough to drop them rather than invent a
+# migration nobody can verify.
+const SAVE_VERSION := 2
 
 @export var roster: Array[SoldierRecord] = []
 @export var earned: int = 0
@@ -2139,6 +2146,9 @@ static func load_dict(path: String = SAVE_PATH) -> Dictionary:
 	if typeof(got) != TYPE_DICTIONARY:
 		push_error("CampaignState: save at %s is not valid JSON" % path)
 		return {}
+	if is_outdated(got):
+		push_warning("CampaignState: %s is from an older build (save version %d, this build reads %d) and is not loadable. The file is left alone." % [path, int(got.get("version", 0)), SAVE_VERSION])
+		return {}
 	return migrate(got)
 
 
@@ -2156,11 +2166,28 @@ static func load_from_disk(path: String = SAVE_PATH) -> CampaignState:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		push_error("CampaignState: save at %s is not valid JSON" % path)
 		return null
+	if is_outdated(parsed):
+		push_warning("CampaignState: %s is from an older build (save version %d, this build reads %d) and is not loadable. The file is left alone." % [path, int(parsed.get("version", 0)), SAVE_VERSION])
+		return null
 	return from_dict(migrate(parsed))
 
 
 # Every field read above already has a default, so a save written before a field
 # existed loads cleanly. This is here for the changes defaults can't cover.
+## IS THIS SAVE FROM A BUILD WHOSE SHAPE WE NO LONGER READ?
+##
+## Separate from "broken", and the distinction is the whole point: a corrupt
+## file and a file from last month are different things to tell a player, and
+## calling an old campaign corrupt is both untrue and alarming.
+##
+## NOTHING DELETES IT. The file stays exactly where it is — refusing to load
+## it is the entire requirement, and removing somebody's campaign is hard to
+## forgive and trivial to avoid. It stays listed so it can be seen and
+## deliberately removed by the person whose campaign it is.
+static func is_outdated(data: Dictionary) -> bool:
+	return int(data.get("version", 0)) < SAVE_VERSION
+
+
 static func migrate(data: Dictionary) -> Dictionary:
 	var version := int(data.get("version", 0))
 	if version > SAVE_VERSION:

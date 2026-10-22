@@ -113,11 +113,18 @@ static func unique_id(wanted: String) -> String:
 ##
 ## Each entry is what a menu needs without having to load the save properly:
 ## { id, path, profile_name, squad_name, player_name, missions, resources,
-##   day, last_played, created, broken }
+##   day, last_played, created, broken, outdated }
 ##
 ## `broken` marks a file that is present but unreadable. It is still listed, on
 ## purpose: a save that has gone bad should be visible and deletable rather than
 ## quietly absent, which reads as "the game ate my campaign".
+##
+## `outdated` marks one written by a build whose save shape this one no longer
+## reads — a Mark-system campaign cannot be made out of a v1 save. TWO FLAGS
+## RATHER THAN ONE because they say different things to a player: `broken` is
+## "this file is damaged" and `outdated` is "this campaign belongs to an older
+## version of the game". Both are listed and neither is deleted; a menu that
+## conflates them tells half its users something untrue and alarming.
 static func list() -> Array:
 	var out: Array = []
 	var dir := DirAccess.open(DIR)
@@ -136,7 +143,7 @@ static func list() -> Array:
 static func most_recent() -> String:
 	var all := list()
 	for entry in all:
-		if not entry["broken"]:
+		if not entry["broken"] and not entry["outdated"]:
 			return String(entry["id"])
 	return ""
 
@@ -210,7 +217,7 @@ static func _summarise(path: String, id: String) -> Dictionary:
 	var entry := {
 		"id": id, "path": path, "profile_name": id, "squad_name": "",
 		"player_name": "", "missions": 0, "resources": 0, "day": 0,
-		"last_played": "", "created": "", "broken": true,
+		"last_played": "", "created": "", "broken": true, "outdated": false,
 	}
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
@@ -221,6 +228,12 @@ static func _summarise(path: String, id: String) -> Dictionary:
 		return entry
 	var d: Dictionary = parsed
 	entry["broken"] = false
+	# FROM AN OLDER BUILD IS NOT THE SAME AS CORRUPT. A v1 save parses
+	# perfectly — it simply describes a game this build no longer plays — so
+	# it gets its own flag and its own words in the menu. Lumping it in with
+	# `broken` would tell the player their campaign is damaged, which is untrue
+	# and frightening.
+	entry["outdated"] = CampaignState.is_outdated(d)
 	entry["profile_name"] = str(d.get("profile_name", "")).strip_edges()
 	if entry["profile_name"] == "":
 		entry["profile_name"] = str(d.get("squad_name", UNTITLED))
