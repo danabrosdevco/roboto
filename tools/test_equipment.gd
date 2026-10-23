@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # EQUIPMENT & MODULES — does each item actually DO the thing it says?
@@ -46,6 +47,11 @@ func _spawn(level: Node, mgr: Node, player: Node3D, faction: int, at: Vector3) -
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	# Autosave off: this reads the save on this machine but must never write it.
 	var world_scene: Node = load("res://Env/world.tscn").instantiate()
@@ -75,7 +81,13 @@ func _init() -> void:
 	rec.module_ids = [&"overclock_servos", &"hardened_uplink"] as Array[StringName]
 	rec.recompute_stats(cat)
 	_check("overclock folds into speed", is_equal_approx(rec.effective_speed, 1.2), str(rec.effective_speed))
-	_check("uplink folds into resistance", is_equal_approx(rec.effective_signal_resistance_bonus, 1.0))
+	# Off the item, not a copy of its number — the same rule the armour check
+	# below follows. The uplink was retuned on 2026-10-18 and a hardcoded 1.0
+	# here failed for no reason connected to what it tests.
+	_check("uplink folds into resistance",
+		is_equal_approx(rec.effective_signal_resistance_bonus,
+			cat.item(&"hardened_uplink").signal_resistance_bonus),
+		str(rec.effective_signal_resistance_bonus))
 	var rec2 := SoldierRecord.new()
 	rec2.chassis_id = &"soldier"
 	rec2.module_ids = [&"nanite_reboot"] as Array[StringName]
@@ -95,10 +107,16 @@ func _init() -> void:
 	# Off the item, not a copy of its number: this is testing that the bonus
 	# ARRIVES, and hardcoding it meant retuning the module broke the test that
 	# had nothing to do with the tuning.
-	var plate: int = cat.item(&"armor_plating").health_bonus
+	# OFF THE ITEM, BOTH WAYS. Armour Plating became proportional on
+	# 2026-10-18 (health_bonus 15 -> health_multiplier 1.2) because a flat
+	# bonus is a quarter of a Soldier and nothing on a Bulwark. Reading both
+	# fields keeps this testing that the bonus ARRIVES rather than what it is.
+	var plate_def = cat.item(&"armor_plating")
+	var want_hp: int = int(round(float(base_max + plate_def.health_bonus)
+		* plate_def.health_multiplier))
 	_check("armour plating reaches the player's body",
-		int(player.max_health) == base_max + plate,
-		"%d -> %d, expected +%d" % [base_max, int(player.max_health), plate])
+		int(player.max_health) == want_hp,
+		"%d -> %d, expected %d" % [base_max, int(player.max_health), want_hp])
 	_check("overclock reaches the player's legs", is_equal_approx(player._speed_mult, 1.2))
 	prec.module_ids = [&"hardened_uplink"] as Array[StringName]
 	player._apply_module_stats(prec, cat)
@@ -152,15 +170,30 @@ func _init() -> void:
 	for _i in 3:
 		await physics_frame
 
-	# ── UTILITY HARNESS: A THIRD THROWABLE, ON 6 ─
-	# The record grows the slot; the loadout has to turn it into a key.
+	# ── UTILITY HARNESS: MORE OF WHAT YOU CARRY ──
+	# It used to add a third equipment slot. Since 2026-10-18 it multiplies the
+	# charges on the slots a frame already has, because an extra slot is a
+	# module that asks you a second question — go and fill the empty mount —
+	# and more of what you chose is an answer instead.
 	var harnessed := SoldierRecord.new()
 	harnessed.set_chassis(cat.chassis_def(&"soldier"), cat)
 	harnessed.weapon_ids[0] = &"m4"
 	harnessed.module_ids[0] = &"utility_harness"
 	harnessed.fit_equipment_capacity(cat)
-	_check("a harness gives the player three equipment slots", harnessed.equipment_ids.size() == 3,
+	var harness_def = cat.item(&"utility_harness")
+	_check("a harness no longer grows the slot count",
+		harnessed.equipment_ids.size()
+			== cat.chassis_def(&"soldier").equipment_slots + harness_def.equipment_slot_bonus,
 		str(harnessed.equipment_ids.size()))
+	harnessed.recompute_stats(cat)
+	_check("...it multiplies what the slots carry instead",
+		is_equal_approx(harnessed.effective_equipment_multiplier,
+			harness_def.equipment_quantity_multiplier),
+		str(harnessed.effective_equipment_multiplier))
+
+	# THE THIRD KEY IS STILL UNDER TEST. No player chassis fields three
+	# equipment mounts today, so nothing else would exercise slot 6 — and the
+	# mapping is a real thing that can break. Built by hand for that reason.
 	harnessed.equipment_ids = [&"frag", &"emp", &"hatchling"] as Array[StringName]
 	player.loadout.apply_record(harnessed, cat)
 	for _i in 3:
@@ -195,6 +228,10 @@ func _init() -> void:
 		and is_equal_approx(tool_clip.size.x, bar.icon_size.x * charge),
 		"visible=%s width=%s charge=%s" % [tool_clip.visible, tool_clip.size.x, charge])
 	_check("...and the rifle's, which has no charge, does not", not (bar._chips[0]["fill_clip"] as Control).visible)
+	_test_carrier_required_ammo(player, cat)
+	for _i in 3:
+		await physics_frame
+
 	# Back to this machine's own kit for the rest of the run.
 	var cm_node: Node = world_scene.get_node("CampaignManager")
 	player.loadout.apply_record(cm_node.state.player_record, cat)
@@ -345,3 +382,58 @@ func _init() -> void:
 	print("")
 	print("ALL EQUIPMENT CHECKS PASS" if _fails == 0 else "%d EQUIPMENT CHECK(S) FAILED" % _fails)
 	quit(1 if _fails > 0 else 0)
+
+
+# ── YOU ONLY CARRY WHAT YOU ARE CARRYING ─────
+## A thrown item's reserve used to exist whether or not the item did: thirty-six
+## frags in your pocket with no frag slot fitted. Two separate clamps enforced
+## it — set_carriers() and _carriers_of() both floored the count at one — so the
+## second one quietly undid the first, and fixing only one left a fitted frag
+## with NO grenades at all.
+##
+## A gun calibre still floors at one. That is deliberate and the comment in
+## _scale_thrown_capacity says so: a rifle's reserve is a reserve by calibre,
+## not a bandolier you have to be holding.
+func _test_carrier_required_ammo(player: Node3D, cat) -> void:
+	print("")
+	print("══ AMMO YOU HAVE TO CARRY ════════════════════════════════")
+	var pool: AmmoPool = player.ammo
+	var kit := SoldierRecord.new()
+	kit.chassis_id = &"soldier"
+	kit.weapon_ids = [&"cluster_launcher"] as Array[StringName]
+
+	kit.equipment_ids = [] as Array[StringName]
+	player.loadout.apply_record(kit, cat)
+	pool.refill_all()
+	_check("no frag fitted, no grenades", pool.get_count(&"grenade") == 0
+		and pool.get_capacity(&"grenade") == 0,
+		"%d / %d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])
+	# THE GUN CALIBRE MUST NOT FOLLOW IT DOWN. The launcher is a weapon, and a
+	# weapon's reserve is by calibre.
+	_check("...but the launcher still has its 40mm", pool.get_count(&"40mm") == 36,
+		"%d / %d" % [pool.get_count(&"40mm"), pool.get_capacity(&"40mm")])
+
+	kit.equipment_ids = [&"frag"] as Array[StringName]
+	player.loadout.apply_record(kit, cat)
+	pool.refill_all()
+	# FROM THE ITEM, not a number typed here. One frag fitted carries exactly
+	# what the item says a frag is — four, the standard for every grenade-type
+	# item — and the whole point of the per-carrier rule is that those two agree.
+	# Hardcoding 36 pinned a stock that was eighteen times every other thrown item
+	# in the game, so the test defended the bug.
+	var per_nade: int = cat.item(&"frag").quantity
+	_check("fit one frag and the grenades arrive", pool.get_count(&"grenade") == per_nade,
+		"%d / %d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])
+
+	kit.equipment_ids = [&"frag", &"frag"] as Array[StringName]
+	player.loadout.apply_record(kit, cat)
+	pool.refill_all()
+	_check("...two frags carry twice as many", pool.get_count(&"grenade") == per_nade * 2,
+		"%d / %d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])
+
+	# And back to nothing, which is the direction the two clamps broke.
+	kit.equipment_ids = [] as Array[StringName]
+	player.loadout.apply_record(kit, cat)
+	pool.refill_all()
+	_check("...unfit them all and they are gone again", pool.get_count(&"grenade") == 0,
+		"%d / %d" % [pool.get_count(&"grenade"), pool.get_capacity(&"grenade")])

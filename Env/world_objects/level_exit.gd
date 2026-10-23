@@ -8,9 +8,10 @@ class_name LevelExit
 # next_level on it. At base that's the mission terminal writing the selected
 # operation in. On a mission it's World pointing it back at home base.
 #
-# Two flags and a refusal are the only additions:
+# Three flags and a refusal are the only additions:
 #   is_departure                  marks this as the one the terminal writes to
 #   requires_objectives_complete  won't let you leave mid-mission
+#   requires_arming               won't let you leave until something opens it
 # and it refuses rather than emitting a null scene, which used to hand World a
 # null and fail somewhere much less obvious.
 # ─────────────────────────────────────────────
@@ -33,12 +34,59 @@ class_name LevelExit
 @export var is_departure: bool = false
 # Extraction gate. Off by default so ordinary doors behave as they always did.
 @export var requires_objectives_complete: bool = false
+## A gate something else has to OPEN, on top of there being a destination.
+##
+## The railhead's departure pad uses it. The pad is on the platform OUTSIDE the
+## train, so walking onto it before the train has gone anywhere would deploy
+## you from the station you are already standing in — the point of the
+## departure ride is that you travel first and leave second
+## (docs/briefs/DEPARTURE_RIDE.md). DepartureRide calls arm() when the train
+## stops.
+##
+## Off by default, so every other exit in the project behaves exactly as it
+## did. And railhead_level.gd only turns it on when it has actually found a
+## lever to open it with: a gate with no opener is a soft-lock, and the whole
+## base would become undeployable.
+
+## THE EXTRACTION OBJECTIVE THIS GATE BELONGS TO. Leave it empty on a level
+## with one way out, which is nearly all of them.
+##
+## SET IT WHERE A LEVEL HOLDS TWO. The proving ground does: the first exercise
+## extracts at the enemy blockhouse, the second works a core and takes the
+## bunker in the bay behind it and extracts there, and
+## MissionObjective._ready frees whichever objective the operation left out of
+## its list. The gate it hangs on does NOT go with it — this node's own Area3D
+## ends the mission on body entry whether the objective exists or not, and
+## _refresh_live lights it the moment the real objectives are done. That is two
+## lit beacons either of which ends the run, in the level that teaches the
+## player what extraction is.
+@export var pairs_with_objective: NodePath
+
+@export var requires_arming: bool = false
+var armed: bool = false
 
 signal next_level_signal(level: PackedScene)
 signal exit_blocked(reason: String)
 
 
 func _ready() -> void:
+	# AN EXIT THE OPERATION DID NOT ASK FOR IS NOT A WAY OUT. See
+	# pairs_with_objective above for why the gate does not go when its
+	# objective does. Children are ready before their parent, so by the time
+	# this runs the objective has already called queue_free on itself.
+	if not pairs_with_objective.is_empty():
+		var paired := get_node_or_null(pairs_with_objective)
+		if paired == null:
+			# A WRONG PATH, not a mission that left the objective out: this
+			# would silently keep a live second exit, which is the whole thing
+			# the pairing exists to prevent.
+			push_warning("LevelExit %s: pairs_with_objective '%s' resolves to nothing, so this gate cannot tell whether the operation wants it. Closing it." % [name, pairs_with_objective])
+			queue_free()
+			return
+		if paired.is_queued_for_deletion():
+			queue_free()
+			return
+
 	if is_departure:
 		add_to_group("departure_exits")
 	_refresh_live()
@@ -55,10 +103,26 @@ func _ready() -> void:
 # operation is selected, on a mission once the objectives that gate extraction
 # are done.
 func _refresh_live() -> void:
-	var open := next_level != null and (not requires_objectives_complete or _objectives_done())
+	var open := next_level != null \
+			and (not requires_objectives_complete or _objectives_done()) \
+			and (not requires_arming or armed)
 	for part in live_parts:
 		if part != null:
 			part.visible = open
+
+
+## Open the gate. DepartureRide calls this when the train stops; nothing else
+## should. Harmless on an exit that does not require arming, which is why it
+## does not complain about one.
+func arm() -> void:
+	armed = true
+	_refresh_live()
+
+
+## Shut it again. For a departure that is cancelled rather than completed.
+func disarm() -> void:
+	armed = false
+	_refresh_live()
 
 
 func _on_area_3d_body_entered(body: Node3D) -> void:
@@ -73,6 +137,12 @@ func _on_area_3d_body_entered(body: Node3D) -> void:
 
 	if requires_objectives_complete and not _objectives_done():
 		exit_blocked.emit("OBJECTIVES INCOMPLETE")
+		return
+
+	if requires_arming and not armed:
+		# You are standing on the platform you started on. Throw the lever in
+		# the ops car and the train takes you somewhere worth getting off at.
+		exit_blocked.emit("TRAIN HAS NOT MOVED")
 		return
 
 	next_level_signal.emit(next_level)

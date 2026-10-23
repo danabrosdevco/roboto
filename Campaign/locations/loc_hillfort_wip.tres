@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Location" load_steps=2 format=3 uid="uid://beccoxggr6ow5"]
+
+[ext_resource type="Script" path="res://Campaign/location.gd" id="1_loc"]
+
+[resource]
+script = ExtResource("1_loc")
+id = &"hillfort_wip"
+display_name = "Hillfort"
+mission_id = &"hfw_1_fort"
+defend_mission_id = &"hfw_2_defend"
+start_owner = 4
+resources_per_turn = 8
+compute = 1
+resistance = 45
+connects_to = Array[StringName]([&"valley_basin"])

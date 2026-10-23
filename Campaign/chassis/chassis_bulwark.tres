@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_gk2g4"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/bulwark.tscn" id="2_scene"]
+
+[sub_resource type="Resource" id="Resource_t0cfb"]
+script = ExtResource("1_gk2g4")
+weapon_ids = Array[StringName]([&"autocannon"])
+equipment_ids = Array[StringName]([])
+health_bonus = 50
+speed_multiplier = 1.0
+sensor_bonus = 0.0
+accuracy_bonus = 0.0
+tuning = {}
+
+[sub_resource type="Resource" id="Resource_4ywqs"]
+script = ExtResource("1_gk2g4")
+weapon_ids = Array[StringName]([&"light_cannon"])
+equipment_ids = Array[StringName]([])
+health_bonus = 100
+speed_multiplier = 1.0
+sensor_bonus = 0.0
+accuracy_bonus = 0.05
+tuning = {}
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"bulwark"
+display_name = "Bulwark"
+description = "Walks in front. A tower shield on one arm and a single weapon on the other, and a hardened uplink that shrugs off the fire it is standing in. It will not take cover, because it is cover."
+scene = ExtResource("2_scene")
+cost = 380
+purchasable = true
+supply = 3
+starting_weapon_id = &"heavy_mg"
+coax_weapon_id = &""
+base_health = 400
+base_speed = 1.0
+base_accuracy = 0.95
+base_sensor_range = 45.0
+weapon_slots = 1
+built_in = "CLAWS"
+weapon_replaces_built_in = false
+turret = true
+vehicle = true
+drives = false
+equipment_slots = 0
+module_slots = 3
+musters_at_base = true
+unlock_requires = Array[StringName]([])
+marks = Array[Resource]([SubResource("Resource_t0cfb"), SubResource("Resource_4ywqs")])

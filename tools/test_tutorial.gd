@@ -1,4 +1,7 @@
 extends SceneTree
+# BUCKET: campaign
+# PARKED: the depot has no lesson signs left, so the walk-up, library and
+# PARKED: stand-down checks have nothing to read.
 
 # ─────────────────────────────────────────────
 # TUTORIAL SIGNS — stand at one and it is readable.
@@ -71,6 +74,11 @@ func _sign_saying(signs: Array, fragment: String) -> TutorialLabel:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_tutorial_test.json"
 	# A new player's base. Whether the signs are up depends on the save, and
 	# this machine's save is whatever was last played.

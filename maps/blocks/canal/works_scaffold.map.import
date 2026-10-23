@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://14w15pd2mpbv"
+path="res://.godot/imported/works_scaffold.map-7defae9c364db0e17291bfce2ce078f6.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/works_scaffold.map"
+dest_files=["res://.godot/imported/works_scaffold.map-7defae9c364db0e17291bfce2ce078f6.tres"]
+
+[params]
+

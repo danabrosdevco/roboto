@@ -1,0 +1,19 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://maps/blocks/bunker/bunker_entrance.tscn" id="1_xtmu8"]
+[ext_resource type="PackedScene" path="res://maps/blocks/bunker/bunker_mount_wall.tscn" id="2_bb7t1"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="3_gtqxn"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="4_ppucw"]
+
+[node name="BunkerEntranceWall" type="Node3D"]
+
+[node name="Entrance" type="Node3D" parent="." instance=ExtResource("1_xtmu8")]
+
+[node name="Mount" type="Node3D" parent="." instance=ExtResource("2_bb7t1")]
+script = ExtResource("3_gtqxn")
+local_map_file = "res://maps/blocks/bunker/bunker_mount_wall.map"
+global_map_file = ""
+map_settings = ExtResource("4_ppucw")
+print_profiling_data = false
+block_until_complete = false
+set_owner_batch_size = 1000

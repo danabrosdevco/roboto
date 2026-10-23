@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: campaign
 
 # ─────────────────────────────────────────────
 # THE DEBUG TAB'S SWITCHES DO WHAT THE ROWS SAY THEY DO.
@@ -8,7 +9,7 @@ extends SceneTree
 # one opens the gate, unticking it closes it again, and the campaign save never
 # learns either happened. That property is the only reason it is safe to hand a
 # playtester, and it lives in two functions a long way from the menu —
-# `Campaign.available_missions()` and `Campaign.locked_by()` — so nothing about
+# `Campaign.available_missions()` and `Campaign.is_locked()` — so nothing about
 # the menu would break if someone changed them.
 #
 # So this pins the behaviour rather than the wiring: the same campaign, asked
@@ -33,6 +34,11 @@ func _check(label: String, ok: bool, detail: String = "") -> void:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_probe.json"
 	await process_frame
 
@@ -65,7 +71,28 @@ func _init() -> void:
 
 	# ── SWITCH ONE: THE LADDER ───────────────────
 	var closed: int = cm.available_missions().size()
-	var total: int = cm.missions.size()
+	# EVERY MISSION THE LADDER CAN OPEN, which is not every mission there is.
+	#
+	# A DEFENCE IS NOT ON THE LADDER (Phase 6.2). available_missions() filters
+	# the defences out BEFORE it looks at the switch, deliberately: a defence
+	# answers a raid that is in doubt and exists only while one is waiting, so
+	# a switch that opened the ladder AND conjured an attack would make losing
+	# ground impossible. See the comment at the top of available_missions().
+	#
+	# This suite asserted `== cm.missions.size()` and so failed the day the
+	# first defence was added — on correct behaviour, which is the worst kind
+	# of red.
+	var total: int = 0
+	var defences: Array = []
+	for m in cm.missions:
+		if m == null:
+			continue
+		if m.defence:
+			defences.append(String(m.id))
+		else:
+			total += 1
+	print("      %d operation(s) on the ladder, plus %d defence(s) that are "
+		% [total, defences.size()] + "never on it: %s" % str(defences))
 	_check("(setup) the ladder gates something to begin with", closed < total,
 		"%d of %d already open, so this proves nothing" % [closed, total])
 	Settings.set_value(MISSIONS, true)
@@ -89,38 +116,43 @@ func _init() -> void:
 		"%d open, was %d" % [cm.available_missions().size(), closed])
 
 	# ── SWITCH TWO: THE HARDWARE ─────────────────
-	# Asked of something a mission actually gates, found rather than named, so
-	# this keeps working when the unlock ladder is re-tuned.
+	# Anything whose line is still shut. Found rather than named, so this keeps
+	# working as the catalogue is re-tuned. Operations no longer gate kit
+	# (Phase 3) — a line is shut until it is paid for — so this walks the
+	# catalogue rather than the missions' `unlocks`.
 	var gated: StringName = &""
-	for m in cm.missions:
-		if m == null:
-			continue
-		for id in m.unlocks:
-			if cm.locked_by(id) != null:
-				gated = id
+	if cm.catalogue != null:
+		for i in cm.catalogue.items:
+			if i != null and cm.is_locked(i.id):
+				gated = i.id
 				break
-		if gated != &"":
-			break
+		if gated == &"":
+			for c in cm.catalogue.chassis:
+				if c != null and cm.is_locked(c.id):
+					gated = c.id
+					break
 	_check("(setup) something in the catalogue is still locked", gated != &"",
 		"this save has unlocked everything, so the switch cannot be tested")
 	if gated != &"" and editor:
 		Settings.set_value(GEAR, true)
-		_check("UNLOCK ALL HARDWARE unlocks %s" % String(gated), cm.locked_by(gated) == null)
+		_check("UNLOCK ALL HARDWARE unlocks %s" % String(gated), not cm.is_locked(gated))
 		Settings.set_value(GEAR, false)
-		_check("...and unticking it locks %s again" % String(gated), cm.locked_by(gated) != null)
+		_check("...and unticking it locks %s again" % String(gated), cm.is_locked(gated))
 
 	# NEITHER SWITCH TOUCHES THE SAVE. This is the claim the DEBUG tab makes in
 	# so many words, and the reason the switches are a setting rather than a
-	# write into `state.unlocked`.
-	var owned: int = state.unlocked.size()
+	# write into the ledger.
+	#
+	# THE ALLOCATIONS ARE THE UNLOCK SET NOW, so that is what must not move.
+	var owned: int = state.allocations.size()
 	Settings.set_value(MISSIONS, true)
 	Settings.set_value(GEAR, true)
 	var _ignored: Array = cm.available_missions()
 	if gated != &"":
-		cm.locked_by(gated)
+		var _also: bool = cm.is_locked(gated)
 	_check("neither switch writes anything into the campaign",
-		state.unlocked.size() == owned,
-		"unlocked went from %d to %d" % [owned, state.unlocked.size()])
+		state.allocations.size() == owned,
+		"allocations went from %d to %d" % [owned, state.allocations.size()])
 	Settings.set_value(MISSIONS, false)
 	Settings.set_value(GEAR, false)
 
@@ -142,7 +174,7 @@ func _init() -> void:
 			cm.available_missions().size() == closed,
 			"%d open with the switch ON, expected the gated %d" % [cm.available_missions().size(), closed])
 		if gated != &"":
-			_check("...and UNLOCK ALL HARDWARE does nothing", cm.locked_by(gated) != null,
+			_check("...and UNLOCK ALL HARDWARE does nothing", cm.is_locked(gated),
 				"%s came unlocked with the switch ON" % String(gated))
 		var menu := OptionsMenu.new()
 		root.add_child(menu)

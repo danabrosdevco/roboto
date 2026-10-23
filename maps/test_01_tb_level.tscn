@@ -11,7 +11,7 @@
 [ext_resource type="Material" uid="uid://c3ah6cphgru5b" path="res://textures/textures_pack/Metal_08-256x256.tres" id="9_02i21"]
 [ext_resource type="Material" uid="uid://bde6oldkjwj" path="res://textures/textures_pack/Metal_05-256x256.tres" id="10_ghr7v"]
 [ext_resource type="PackedScene" uid="uid://big5ms541m2j7" path="res://Env/world_objects/level_exit.tscn" id="11_f72j7"]
-[ext_resource type="PackedScene" uid="uid://fgdjjw1lgv8e" path="res://maps/civil-unrest_level.tscn" id="12_bxu3r"]
+[ext_resource type="PackedScene" uid="uid://fgdjjw1lgv8e" path="res://maps/appendix/civil-unrest_level.tscn" id="12_bxu3r"]
 [ext_resource type="PackedScene" uid="uid://cml2uoky1hnes" path="res://Env/world_environment.tscn" id="13_yamel"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_b87a8"]

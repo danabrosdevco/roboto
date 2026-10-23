@@ -1,5 +1,13 @@
 extends Node
 
+## Robots are built through CsgBake.make() rather than scene.instantiate(): a
+## CSGShape3D rebuilds its geometry the first time it enters the tree, which cost
+## 8.6 ms per robot and made a 40-strong reserve wave a 336 ms frame. make()
+## hands back the same node with the CSG already replaced by the mesh baked once
+## at startup. It has to happen BEFORE the node is added to the tree — see
+## csg_bake.gd for why neither _enter_tree nor _ready will do.
+const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
+
 # ─────────────────────────────────────────────
 # LABORATORY — AI-vs-AI fights in the arena, watched from a ghost camera.
 #
@@ -37,6 +45,9 @@ signal finished(report_path: String)
 
 ## A LabPlan. Untyped on purpose — see the header.
 var plan = null
+## FALSE puts the player in the fight instead of above it. Measurement runs
+## leave this true; the sim arena's LEAD button turns it off.
+var spectate: bool = true
 var world: World = null
 var recorder: Node = null
 
@@ -58,6 +69,12 @@ var _hud: Label = null
 # ─────────────────────────────────────────────
 func run() -> void:
 	results.clear()
+	# IN THE "practice" GROUP WHILE IT RUNS, which is how a body several layers
+	# down knows that nothing here is real. Nothing in a lab fight should cost
+	# anything: a revive does not spend the one-per-mission charge, and no
+	# record goes home damaged. See Campaign.is_practice(), which is the only
+	# thing that reads this.
+	add_to_group(&"practice")
 	if plan == null or world == null:
 		push_warning("Laboratory: no plan or no world — nothing to run.")
 		finished.emit("")
@@ -66,7 +83,11 @@ func run() -> void:
 		recorder.recorded.connect(_on_recorded)
 	if _level == null:
 		await _enter_arena()
-	_become_ghost()
+	# SPECTATE OR LEAD. A measurement run is always watched — the player must
+	# not be able to affect the numbers — but the sim arena offers the same
+	# matchup as something you can fight in. See sim_arena_ui.gd.
+	if spectate:
+		_become_ghost()
 	_build_hud()
 	_hud_layer.visible = true
 	Engine.time_scale = clampf(float(plan.speed), 0.5, 4.0)
@@ -154,8 +175,8 @@ func _find_axis() -> void:
 # ─────────────────────────────────────────────
 func _fight(m, r: int, n: int) -> Dictionary:
 	var place := _starts(m, r)
-	var allies := _spawn_side(m.allies, Enums.Factions.ALLIED, place["ally"], place["hostile"], "ALLY", m.weapon_swaps)
-	var hostiles := _spawn_side(m.hostiles, Enums.Factions.ENEMY, place["hostile"], place["ally"], "HOSTILE", m.weapon_swaps)
+	var allies := _spawn_side(m.allies, Enums.Factions.ALLIED, place["ally"], place["hostile"], "ALLY", m.weapon_swaps, m.coax_swaps)
+	var hostiles := _spawn_side(m.hostiles, Enums.Factions.ENEMY, place["hostile"], place["ally"], "HOSTILE", m.weapon_swaps, m.coax_swaps)
 	var a_members: Array = allies.squad_members.duplicate() if allies != null else []
 	var h_members: Array = hostiles.squad_members.duplicate() if hostiles != null else []
 	await get_tree().physics_frame
@@ -227,7 +248,7 @@ func _starts(m, r: int) -> Dictionary:
 
 
 func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, callsign: String,
-		swaps: Dictionary = {}) -> Squad:
+		swaps: Dictionary = {}, coax_swaps: Dictionary = {}) -> Squad:
 	var members: Array[Soldier] = []
 	var n := roster.size()
 	# The ring turned to face the other side. Laid out in world space it put
@@ -241,7 +262,7 @@ func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, 
 		var frame = roster[i]
 		if frame == null or frame.scene == null:
 			continue
-		var s := frame.scene.instantiate() as Soldier
+		var s := _CsgBake.make(frame.scene) as Soldier
 		if s == null:
 			continue
 		s.faction = faction
@@ -268,8 +289,11 @@ func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, 
 		# HALF-ARMED — the coax mount is a purchase — but a bench measures the
 		# complete machine, or a frame built around two guns is scored on one.
 		# `coax_weapon_id` names the gun that mount is designed around.
-		if frame.coax_weapon_id != &"" and s.get("coax_mount") != null:
-			var second := _issued_weapon_id(frame.coax_weapon_id, frame)
+		var coax_id: StringName = frame.coax_weapon_id
+		if coax_swaps.has(frame.id):
+			coax_id = coax_swaps[frame.id]
+		if coax_id != &"" and s.get("coax_mount") != null:
+			var second := _issued_weapon_id(coax_id, frame)
 			if second != null:
 				s.equip_coax_scene(second)
 		if world.enemy_spawner != null:

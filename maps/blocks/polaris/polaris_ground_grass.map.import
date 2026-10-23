@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://d3fd7ij8f4t5y"
+path="res://.godot/imported/polaris_ground_grass.map-e3ea7ce2279109f711ae8c8d5ceaf4fd.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_ground_grass.map"
+dest_files=["res://.godot/imported/polaris_ground_grass.map-e3ea7ce2279109f711ae8c8d5ceaf4fd.tres"]
+
+[params]
+

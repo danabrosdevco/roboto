@@ -118,7 +118,7 @@ code. The arc is made of `.tres` edits plus five switch-ons.
 
 I under-weighted this badly the first time.
 
-Your premise is: *you are a rogue agentic drone commanding robots.* Possession —
+Your premise is: *you are an error sub-agent of Home Command, commanding robots.* Possession —
 leaving your own chassis parked and vulnerable, taking direct control of a
 squadmate, being ejected when that body dies — is the mechanical expression of
 that premise. It is the one thing a player will describe to someone else

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dqu4635la1ul4"
+path="res://.godot/imported/lot_car_row.map-e99061911f40fcb94358ffa8bafc036d.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/lot_car_row.map"
+dest_files=["res://.godot/imported/lot_car_row.map-e99061911f40fcb94358ffa8bafc036d.tres"]
+
+[params]
+

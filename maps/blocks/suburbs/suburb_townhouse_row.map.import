@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://113eiljy578v"
+path="res://.godot/imported/suburb_townhouse_row.map-652f1545a05efd44d28274c4f5516f05.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_townhouse_row.map"
+dest_files=["res://.godot/imported/suburb_townhouse_row.map-652f1545a05efd44d28274c4f5516f05.tres"]
+
+[params]
+

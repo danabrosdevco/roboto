@@ -12,8 +12,8 @@ extends RefCounted
 # open editor has registered the script yet.
 # ─────────────────────────────────────────────
 
-const VERSION := "0.007a"
-const EXPORTED := "2026-09-20"
+const VERSION := "0.009a"
+const EXPORTED := "2026-10-02"
 
 
 ## "v0.002a" in an exported build. Run from the editor it is "v0.002a+dev":

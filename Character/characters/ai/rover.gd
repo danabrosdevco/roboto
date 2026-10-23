@@ -46,6 +46,13 @@ extends Soldier
 # which swings the nose round towards where it is going, then drive on.
 ## Longest a single leg of a three-point turn runs.
 @export var backoff_seconds: float = 1.4
+## How far a reverse leg must actually GAIN before it is allowed to end on
+## heading alone. Without it a wedged rover backed up a few centimetres, decided
+## it was pointing the right way, drove forward and wedged again — the whole
+## point of reversing is clearance, not aim, and a rover stuck on a bridge edge
+## is usually aimed correctly already. It can still stop early by running into
+## something behind it; that is a real reason to stop.
+@export var backoff_min_metres: float = 1.6
 ## Throttle open and the wheels hardly turning for this long means it is up
 ## against something, and it takes the next leg rather than sit there pushing.
 @export var pinned_after: float = 0.35
@@ -145,6 +152,7 @@ extends Soldier
 
 var _steer: float = 0.0          # wheel angle now, radians; + is left
 var _manoeuvre_t: float = 0.0    # seconds left of the current turn leg
+var _manoeuvre_from: Vector3 = Vector3.INF   # where the current leg began
 var _manoeuvre_gear: float = 0.0 # -1 backing out, +1 pulling forward out
 var _manoeuvre_steer: float = 0.0
 var _manoeuvres: int = 0         # legs taken on this order
@@ -202,6 +210,7 @@ func _physics_process(delta: float) -> void:
 	super(delta)
 	if movement_state == MovementState.NONE:
 		_manoeuvre_t = 0.0   # stopped: an unfinished leg is not owed to the next order
+		_manoeuvre_from = Vector3.INF
 	if not downed and alive:
 		_tick_rig(delta)
 
@@ -281,10 +290,13 @@ func move_along_nav(delta):
 		# drives on.
 		if _blocked(_manoeuvre_gear, speed):
 			_manoeuvre_t = 0.0
+			_manoeuvre_from = Vector3.INF
 			if _manoeuvre_gear < 0.0 and not _blocked(1.0, 0.0):
 				_start_manoeuvre(1.0, err)
-		elif has_path and absf(err) < deg_to_rad(35.0 if _manoeuvre_gear < 0.0 else 20.0) and not _blocked(1.0, 0.0):
+		elif has_path and absf(err) < deg_to_rad(35.0 if _manoeuvre_gear < 0.0 else 20.0) \
+				and not _blocked(1.0, 0.0) and _manoeuvre_gained() >= backoff_min_metres:
 			_manoeuvre_t = 0.0
+			_manoeuvre_from = Vector3.INF
 	elif has_path:
 		var want := _nav_dir.normalized()
 		if absf(err) > deg_to_rad(115.0) and global_position.distance_to(_goal()) < reverse_within \
@@ -382,7 +394,16 @@ func _nav_error() -> float:
 
 # One leg of a three-point turn. Backing out, the lock goes AWAY from where it
 # is heading, which swings the nose round towards it; pulling forward, the lock
-# points where it is heading.
+
+
+## Ground actually gained by the current turn leg, flat. A leg that has not
+## moved the rover has not done its job, however well aimed it now is.
+func _manoeuvre_gained() -> float:
+	if _manoeuvre_from == Vector3.INF:
+		return INF   # no leg running: never blocks an end-of-leg test
+	return Vector2(global_position.x - _manoeuvre_from.x,
+		global_position.z - _manoeuvre_from.z).length()
+
 func _start_manoeuvre(gear: float, err: float) -> void:
 	if _manoeuvres >= max_manoeuvres:
 		# Wedged somewhere it cannot turn out of. Stop, and let the squad or the
@@ -392,6 +413,7 @@ func _start_manoeuvre(gear: float, err: float) -> void:
 			_gave_up_at = global_position
 		_manoeuvres = 0
 		_manoeuvre_t = 0.0
+		_manoeuvre_from = Vector3.INF
 		halt()
 		return
 	_manoeuvres += 1
@@ -399,6 +421,7 @@ func _start_manoeuvre(gear: float, err: float) -> void:
 	_reset_progress()
 	_manoeuvre_gear = -1.0 if gear < 0.0 else 1.0
 	_manoeuvre_t = backoff_seconds
+	_manoeuvre_from = global_position
 	var side := signf(err) if absf(err) > 0.05 else (1.0 if randf() < 0.5 else -1.0)
 	_manoeuvre_steer = (side if _manoeuvre_gear > 0.0 else -side) * deg_to_rad(max_steer_degrees)
 

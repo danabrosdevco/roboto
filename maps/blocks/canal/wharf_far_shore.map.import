@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bm4mu1rf2b6sr"
+path="res://.godot/imported/wharf_far_shore.map-c61713b14bd0a47a76f87a0a8264c0be.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/wharf_far_shore.map"
+dest_files=["res://.godot/imported/wharf_far_shore.map-c61713b14bd0a47a76f87a0a8264c0be.tres"]
+
+[params]
+

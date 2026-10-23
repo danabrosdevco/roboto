@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b3pgahoobf2a8"
+path="res://.godot/imported/lot_planter_bed.map-034143d90a7523ce987be7e126e31ed1.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/lot_planter_bed.map"
+dest_files=["res://.godot/imported/lot_planter_bed.map-034143d90a7523ce987be7e126e31ed1.tres"]
+
+[params]
+

@@ -438,6 +438,13 @@ func _is_repairable_ally(body) -> bool:
 	# one is not: `downed` distinguishes the wreck you can bring back from the
 	# one you can't.
 	if "downed" in body and body.downed:
+		# ONE REVIVE EACH, PER MISSION. A body that has already used its charge
+		# is not a patient — it is out for the rest of the operation. Declining
+		# to target it is what tells the player so: the prompt never appears,
+		# rather than appearing and quietly achieving nothing.
+		# See Enemy.revive() for why the allowance is one, whatever spends it.
+		if body.has_method("can_revive") and not body.can_revive():
+			return false
 		return not Enums.are_hostile(Enums.Factions.PLAYER, body.faction)
 	if "alive" in body and not body.alive:
 		return false

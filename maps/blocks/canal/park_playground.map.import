@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://0gcewg8sbcpd"
+path="res://.godot/imported/park_playground.map-7c702097a8cdf93af644f8ea6025abe8.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/park_playground.map"
+dest_files=["res://.godot/imported/park_playground.map-7c702097a8cdf93af644f8ea6025abe8.tres"]
+
+[params]
+

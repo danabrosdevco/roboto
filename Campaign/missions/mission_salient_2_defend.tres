@@ -1,0 +1,281 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3 uid="uid://bk3flmnv585fp"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" path="res://maps/salient_level.tscn" id="3_map"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rifle"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="6_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+[ext_resource type="Resource" uid="uid://1rea71mf80nx" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="8_armour"]
+[ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="9_marks"]
+[ext_resource type="Resource" uid="uid://daikhvrvnhg7g" path="res://Campaign/chassis/chassis_walker.tres" id="11_walker"]
+[ext_resource type="Resource" uid="uid://cmssop3mmaqpv" path="res://Campaign/chassis/chassis_mechanic.tres" id="12_mech"]
+
+[sub_resource type="Resource" id="A_west"]
+script = ExtResource("2_espec")
+callsign = "UDAR"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_front"
+spawn_tag = &"obj_salient_jumpoff"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_rail"]
+script = ExtResource("2_espec")
+callsign = "VIKHR"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_railhead"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_village"]
+script = ExtResource("2_espec")
+callsign = "SMERCH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("8_armour"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_village"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_church"]
+script = ExtResource("2_espec")
+callsign = "TAYFUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_church"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_west2"]
+script = ExtResource("2_espec")
+callsign = "GROZA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_armour"), ExtResource("8_armour"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_front"
+spawn_tag = &"obj_salient_jumpoff"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 90.0
+
+[sub_resource type="Resource" id="A_rail2"]
+script = ExtResource("2_espec")
+callsign = "MOLNIYA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("6_chaser"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_railhead"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 150.0
+
+[sub_resource type="Resource" id="A_village2"]
+script = ExtResource("2_espec")
+callsign = "PLAMYA"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_armour"), ExtResource("8_armour"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_village"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 210.0
+
+[sub_resource type="Resource" id="A_church2"]
+script = ExtResource("2_espec")
+callsign = "LIEHUO"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_chaser"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_church"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 270.0
+
+[sub_resource type="Resource" id="A_west3"]
+script = ExtResource("2_espec")
+callsign = "ZHURONG"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_armour"), ExtResource("12_mech"), ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_support"
+spawn_tag = &"obj_salient_jumpoff"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 330.0
+
+[sub_resource type="Resource" id="A_rail3"]
+script = ExtResource("2_espec")
+callsign = "LEIGONG"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_walker"), ExtResource("8_armour"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_railhead"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 390.0
+
+[sub_resource type="Resource" id="A_village3"]
+script = ExtResource("2_espec")
+callsign = "JINGLEI"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("6_chaser"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_front"
+spawn_tag = &"obj_salient_village"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 450.0
+
+[sub_resource type="Resource" id="A_last"]
+script = ExtResource("2_espec")
+callsign = "HUOYAN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_armour"), ExtResource("8_armour"), ExtResource("9_marks"), ExtResource("5_rifle"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_salient_guns"
+spawn_tag = &"obj_salient_church"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 510.0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"salient_2_defend"
+display_name = "Trenchline — Hold"
+briefing = "THE LADDER, BACKWARDS.
+
+Four lines at sixty, a hundred and ninety, three hundred and thirty and four hundred and twenty metres, and you own all four of them. They are coming to break them in the other order, and they do not have to do it all at once — a salient is a thing with enemy on three sides of it, and that is what you are standing in.
+
+Out of the west, over the old jump-off, straight at the forward relay: that is the fight you expect and the one they want you watching. The railhead in the north and the church in the south-east are the ones that matter. They are behind your lines before they start, and they go for the battery and the support relay — which is to say they go for the middle of the ladder and cut it, so the forward line is holding ground that nothing can reach.
+
+There is no flank. Nine hundred metres wide and every metre observed, which was the problem on the way in and is the problem now from the other side. Your garrison is on the three relays and watching the north out of the redoubt and the OP tower.
+
+Three hundred and sixty-five of resistance: the hardest site on the board, and twelve columns of it. Give ground one line at a time. There is no extraction and nothing to carry home: what you are fighting for is the ground you already own, and everything it pays you."
+level_scene = ExtResource("3_map")
+map_position = Vector2(0.62, 0.38)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("A_west"), SubResource("A_rail"), SubResource("A_village"), SubResource("A_church"), SubResource("A_west2"), SubResource("A_rail2"), SubResource("A_village2"), SubResource("A_church2"), SubResource("A_west3"), SubResource("A_rail3"), SubResource("A_village3"), SubResource("A_last")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"sal_relay_front", &"sal_relay_support", &"sal_relay_guns", &"sal_relay_back"])
+reward_resources = 0
+compute_reward = 0
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = true
+defence = true
+sim = false
+garrison_posts = Array[StringName]([&"obj_salient_front", &"obj_salient_support", &"obj_salient_guns", &"obj_salient_redoubt", &"obj_salient_op_tower"])
+requires = Array[StringName]([&"salient_1_overthetop"])

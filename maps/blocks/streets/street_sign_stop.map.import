@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://4sjsaurgvupt"
+path="res://.godot/imported/street_sign_stop.map-7f1be7ca7f11d4848a752161ce5a0d95.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_sign_stop.map"
+dest_files=["res://.godot/imported/street_sign_stop.map-7f1be7ca7f11d4848a752161ce5a0d95.tres"]
+
+[params]
+

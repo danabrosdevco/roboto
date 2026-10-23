@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # SMOKE BLOCKS SIGHT AND NOTHING ELSE.
@@ -41,6 +42,11 @@ func _find(n: Node, cls: String) -> Node:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_probe.json"
 	await process_frame
 	var world: Node = load("res://Env/world.tscn").instantiate()
@@ -51,7 +57,7 @@ func _init() -> void:
 	var player: Node3D = _find(root, "Player")
 	var level: Node = player.get_parent()
 	var mgr = _find(root, "AIManager")
-	level.add_child(load("res://maps/valley_level.tscn").instantiate())
+	level.add_child(load("res://maps/appendix/valley_level.tscn").instantiate())
 	for _i in 20:
 		await physics_frame
 

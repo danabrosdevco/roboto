@@ -1,0 +1,57 @@
+// Game: Roboto
+// Format: Valve
+// entity 0
+{
+"mapversion" "220"
+"wad" ""
+"classname" "worldspawn"
+// brush 0
+{
+( -128 -48 -6 ) ( -32 -48 -6 ) ( -128 48 -6 ) PSX_Textures/metal_rusty_tsk_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -128 48 -6 ) ( -128 -48 2 ) ( -128 -48 -6 ) PSX_Textures/metal_rusty_tsk_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -128 -48 -6 ) ( -128 -48 2 ) ( -32 -48 -6 ) PSX_Textures/metal_rusty_tsk_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -32 48 42 ) ( -128 48 2 ) ( -128 48 -6 ) PSX_Textures/metal_rusty_tsk_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -128 -48 2 ) ( -128 48 2 ) ( -32 48 42 ) PSX_Textures/metal_rusty_tsk_2 [ 0 -1 0 0 ] [ -0.923077 0 -0.384615 0 ] 0 1 1
+( -32 -48 -6 ) ( -32 -48 42 ) ( -32 48 42 ) PSX_Textures/metal_rusty_tsk_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 1
+{
+( -32 48 -6 ) ( 32 -48 -6 ) ( 32 48 -6 ) PSX_Textures/metal_rusty_tsk_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -32 -48 42 ) ( 32 48 42 ) ( 32 -48 42 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -32 -48 -6 ) ( 32 -48 42 ) ( 32 -48 -6 ) PSX_Textures/metal_rusty_tsk_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 -48 -6 ) ( 32 48 42 ) ( 32 48 -6 ) PSX_Textures/metal_rusty_tsk_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 48 -6 ) ( -32 48 42 ) ( -32 48 -6 ) PSX_Textures/metal_rusty_tsk_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -32 48 -6 ) ( -32 -48 42 ) ( -32 -48 -6 ) PSX_Textures/metal_rusty_tsk_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 2
+{
+( 32 -48 42 ) ( 32 -48 -32 ) ( 32 48 42 ) PSX_Textures/metal_rusty_tsk_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 116 48 -44 ) ( 32 48 -32 ) ( 32 -48 -32 ) PSX_Textures/metal_rusty_tsk_1 [ 0 -1 0 0 ] [ 0.98995 0 -0.141421 0 ] 0 1 1
+( 32 48 42 ) ( 32 48 -32 ) ( 116 48 -44 ) PSX_Textures/metal_rusty_tsk_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 32 48 42 ) ( 116 -48 4 ) ( 32 -48 42 ) PSX_Textures/metal_rusty_tsk_2 [ 0 1 0 0 ] [ 0.911108 0 -0.412168 0 ] 0 1 1
+( 32 -48 42 ) ( 116 -48 4 ) ( 32 -48 -32 ) PSX_Textures/metal_rusty_tsk_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 116 -48 4 ) ( 116 48 4 ) ( 116 48 -44 ) PSX_Textures/metal_rusty_tsk_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+// brush 3
+{
+( -26 29 42 ) ( 26 -29 42 ) ( 26 29 42 ) PSX_Textures/metal_rusty_tsk_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -26 -29 61 ) ( 26 29 61 ) ( 26 -29 61 ) PSX_Textures/metal_rusty_tsk_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -26 -29 42 ) ( 26 -29 61 ) ( 26 -29 42 ) PSX_Textures/metal_rusty_tsk_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 26 -29 42 ) ( 26 29 61 ) ( 26 29 42 ) PSX_Textures/metal_rusty_tsk_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 26 29 42 ) ( -26 29 61 ) ( -26 29 42 ) PSX_Textures/metal_rusty_tsk_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -26 29 42 ) ( -26 -29 61 ) ( -26 -29 42 ) PSX_Textures/metal_rusty_tsk_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+}
+// entity 1
+{
+"classname" "func_detail_illusionary"
+// brush 4
+{
+( 31 2 49 ) ( 140 2 17 ) ( 141 2 21 ) PSX_Textures/metal_floor_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 141 2 21 ) ( 140 2 17 ) ( 140 -2 17 ) PSX_Textures/metal_floor_1 [ 0 1 0 0 ] [ -0.242536 0 -0.970143 0 ] 0 1 1
+( 140 -2 17 ) ( 140 2 17 ) ( 31 2 49 ) PSX_Textures/metal_floor_1 [ 0 -1 0 0 ] [ 0.959506 0 -0.28169 0 ] 0 1 1
+( 140 -2 17 ) ( 31 -2 49 ) ( 33 -2 53 ) PSX_Textures/metal_floor_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 33 -2 53 ) ( 31 -2 49 ) ( 31 2 49 ) PSX_Textures/metal_floor_1 [ 0 -1 0 0 ] [ -0.447214 0 -0.894427 0 ] 0 1 1
+( 141 2 21 ) ( 141 -2 21 ) ( 33 -2 53 ) PSX_Textures/metal_floor_1 [ 0 1 0 0 ] [ 0.958798 0 -0.284088 0 ] 0 1 1
+}
+}

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dybwglh3ruen5"
+path="res://.godot/imported/suburb_church.map-6d445a3893a3f2c3a93c01e54e1f673a.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_church.map"
+dest_files=["res://.godot/imported/suburb_church.map-6d445a3893a3f2c3a93c01e54e1f673a.tres"]
+
+[params]
+

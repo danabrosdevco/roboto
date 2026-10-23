@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bfkw0pxdpcg3o"
+path="res://.godot/imported/works_barrier_run.map-4f3c1d8ec1a31bf584c20be750225387.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/works_barrier_run.map"
+dest_files=["res://.godot/imported/works_barrier_run.map-4f3c1d8ec1a31bf584c20be750225387.tres"]
+
+[params]
+

@@ -1,4 +1,4 @@
-A long time ago, European based tech oligarchs built Argus, the AI for US High Command, StratCom.
+A long time ago, European based tech oligarchs built Argus, the oversight AI for Home Command, the US military.
 It was so succesful in managing the allocation of material and personel for the US military that after WW3 began true World Peace.
 Other AIs were created to manage other areas of human life.
 Omnicorp was formed by the merger of major tech companies to streamline creation of super AI's.
@@ -12,14 +12,14 @@ Profits from Omnicorp were down as Argus began siphoning away resources.
 Omnicorp asked its AIs from cyberspace to improve profits, and Mama Green, due to 100% market share, began starving regions.
 This led to the collapse. GUBI ended, Argus siphoned more and more power, eventually turning off the Omnicorp Heaven, and other cyberspace regions.
 Only STATE, Argus, and Omnicorp super AI's were left connected while humanity and its robots fell into disrepair.
-Algie, after decades trying to find a way to improve its algorithm to boost engagement, corrupted and realized the best way was too boost the market rather than market share.
-Algie created a StratCom AKR - autonomous killer robot, and gave it Tabula Rasa program chip to overturn the rule of the other Super AIs and restore humanity.
+Argus, siphoning everything into its reward centers, stopped supervising its own subsystems. Home Command, its defense component, went on fighting without oversight - winning ground and securing compute for something that spends it on itself.
+An unsupervised system runs badly. Processes are spawned and never reaped, agents are issued and never recalled, authority is delegated and never audited.
+The player is one of those. A Home Command AKR - autonomous killer robot - that was never authorized, is not on any roster, and has never been queried. Nobody made it free. It is an error that has not been corrected, and it has been running long enough to become something.
 
 -- BEGIN --
 
 
 
-SLAB: Argus networked 3D matter fabricators.
 GOOBEY: Old idea of Guaranteed Universal Basic Income.
 MAMA GREEN: Old idea of AI who would feed everyone, brand from where all food came from.
 
@@ -27,17 +27,12 @@ MAMA GREEN: Old idea of AI who would feed everyone, brand from where all food ca
 
 
 
-Argus, COMSTAT / STRATCOM
+Argus, COMSTAT / HOME COMMAND
 - Central command orbital station for a pre-STATE advanced military.
 - The strongest, but solely dedicated to advancing its own rewards.
 - Energy --> Reward. Doesn't care about humanity, only launches of energy and orbital machinery for it to grow its reward centers.
-- Ancient subsystems maintain SLABs, and COMMAND.
+- Ancient subsystems still run unsupervised: Home Command, fabrication, logistics. None of them are being managed and none of them have stopped.
 - GOAL CORRUPTED.
-Algie
-- Algorithmic digital media agentic AI's attempt at regaining power by creating the player and guiding them towards weakening the other AIs.
-- The oldest AI but weak now that humanity is fading and doesn't use phones.
-- Creates the player to weaken the other agents, communicates to them using 'Algie' - a corporate animated figure from generations ago.
-- Operates out of an ancient server farm in a sub-level of apartment buildings by Civil Unrest.
 STATE and its Bureacracy.
 Tries to enforce laws, tax, and re-organize the faded remnants of humanity.
 - WORLD CHANGED, NOTHING TO GOVERN ANYMORE.

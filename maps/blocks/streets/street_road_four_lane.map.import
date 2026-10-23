@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://udsbjny28g2i"
+path="res://.godot/imported/street_road_four_lane.map-f9e08945c38b666405bc3a33040fcd62.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_road_four_lane.map"
+dest_files=["res://.godot/imported/street_road_four_lane.map-f9e08945c38b666405bc3a33040fcd62.tres"]
+
+[params]
+

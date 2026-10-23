@@ -1,0 +1,21 @@
+// Game: Roboto
+// Format: Valve
+// entity 0
+{
+"mapversion" "220"
+"wad" ""
+"classname" "worldspawn"
+}
+// entity 1
+{
+"classname" "func_detail_illusionary"
+// brush 0
+{
+( -9600 0 -83 ) ( 9600 -10240 -83 ) ( 9600 0 -83 ) PSX_Textures/water_2 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -9600 -10240 -77 ) ( 9600 0 -77 ) ( 9600 -10240 -77 ) PSX_Textures/water_2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -9600 -10240 -83 ) ( 9600 -10240 -77 ) ( 9600 -10240 -83 ) PSX_Textures/water_2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 9600 -10240 -83 ) ( 9600 0 -77 ) ( 9600 0 -83 ) PSX_Textures/water_2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 9600 0 -83 ) ( -9600 0 -77 ) ( -9600 0 -83 ) PSX_Textures/water_2 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -9600 0 -83 ) ( -9600 -10240 -77 ) ( -9600 -10240 -83 ) PSX_Textures/water_2 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+}

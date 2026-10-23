@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # MINES ONLY EVER ANSWER TO THE OTHER SIDE.
@@ -45,6 +46,11 @@ func _find(n: Node, cls: String) -> Node:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_probe.json"
 	await process_frame
 	var world: Node = load("res://Env/world.tscn").instantiate()
@@ -55,7 +61,7 @@ func _init() -> void:
 	_player = _find(root, "Player")
 	_level = _player.get_parent()
 	_mgr = _find(root, "AIManager")
-	_level.add_child(load("res://maps/valley_level.tscn").instantiate())
+	_level.add_child(load("res://maps/appendix/valley_level.tscn").instantiate())
 	for _i in 20:
 		await physics_frame
 	var space := _player.get_world_3d().direct_space_state

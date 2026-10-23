@@ -22,6 +22,10 @@ const SIZES := {
 ## reuses the frag's model when thrown, and two identical grenades in a list say
 ## nothing, so it borrows the flashbang from the same pack.
 const MODEL_OVERRIDES := {
+	# The Picket's launcher is a hand-built .tscn, and model_in() only follows
+	# imported blend/glb/gltf/fbx/dae — so without this line model_for() cannot
+	# see it and the item bakes as a blank white rectangle.
+	&"rocket_pods": "res://Character/weapon/models/rocket_pods_model.tscn",
 	&"emp": "res://3d_assets/Flat Grenades_FBX/Flashbang_West.fbx",
 	# Built from primitives, so there is no model file in their scenes for
 	# model_in() to find.
@@ -67,12 +71,20 @@ const FRAMINGS := {
 	# A two-handed spear reads lengthways like a gun, not stood on end.
 	&"repair_lance": "side",
 	&"hatchling": "three_quarter",
+	# A slab with a screen on top is nothing side-on — a bar. Three-quarter is the
+	# only angle that shows it has a face.
+	&"designator": "three_quarter",
 }
 
 const MODEL_EXTENSIONS := ["blend", "glb", "gltf", "fbx", "dae"]
 
 ## Drawings for things with no model: SVG path data in a 32x32 box.
 const DRAWINGS := {
+	# LIGHT CANNON. Shares autocannon_model.tscn in the world, so it is drawn
+	# here or it bakes a second picture indistinguishable from the AC20's —
+	# see the note above about two guns on one model. Read it by the single
+	# big bore and the six-round clip: one round at a time, and countable.
+	&"light_cannon": "M2 3.9H5.2V8.3H2Z M3.6 5.1V7.1 M5.2 5.0H20V7.2H5.2Z M20 3.9H26.2V8.3H20Z M11 7.2V11.4H16.4V7.2 M12.8 7.2V11.4 M14.6 7.2V11.4 M26.2 5.4H29 M22 3.9V2.1H23.8V3.9",
 	&"repair_kit": "M5 11H27V26H5Z M12 11V8H20V11 M16 14V23 M11.5 18.5H20.5",
 	&"scanner": "M6 16a10 10 0 1 0 20 0a10 10 0 1 0 -20 0 M11 16a5 5 0 1 0 10 0a5 5 0 1 0 -10 0 M16 16L24 8",
 	&"armor_plating": "M8 6H24L27 11L24 27H8L5 11Z M5 11H27 M11 16H21 M12 21H20",
@@ -101,6 +113,15 @@ const DRAWINGS := {
 	&"autocannon": "M2 5.2H4.2 M3.1 4.1V6.3 M4.2 4.4H21V7H4.2Z M6 4.4V2.6H8.4V4.4 M10 7V10.2H15.4V7 M21 3.6H23.2V7.8H21Z M24.4 3.6H26.6V7.8H24.4Z M27.8 3.6H30V7.8H27.8Z M23.2 5.7H24.4 M26.6 5.7H27.8",
 	# Heavy MG: a perforated cooling jacket and a belt running into the feed.
 	# Read it by the belt — this is the one that keeps going.
+	# THE DRAYMAN'S BOOM. A built-in, not an item, and the only built-in with no
+	# model to bake from: the arm is geometry on the truck itself
+	# (Rig/ArmBase -> Shoulder -> Elbow -> Wrist), so there is no tool scene to
+	# point BUILT_INS at and the frame's weapon column was blank. Drawn instead,
+	# in the wide 32x12 weapon box: two beams at an angle with a pin at each
+	# joint, a ram under the first beam, and a belt of rounds paying out of the
+	# chute at the end. Read it by the belt — that is what says RESUPPLY and not
+	# welder, which is the one thing this badge must never be mistaken for.
+	&"boom": "M2 9.4H4.6V12H2Z M3.3 9.4V7 M3.3 7L13 3.4 M4.2 8.8L12.6 5.6 M13 2.2H15.6V4.8H13Z M15.6 3.5L21.4 7 M21 5.8H24.2V9H21Z M24.4 7.2H26.2V9H24.4Z M26.4 8H28.2V9.8H26.4Z M28.4 8.8H30.2V10.6H28.4Z",
 	&"heavy_mg": "M8 4.2H24V7.4H8Z M11 4.2V7.4 M14 4.2V7.4 M17 4.2V7.4 M20 4.2V7.4 M24 5H30 M4.4 3.4H8V8.2H4.4Z M2 8.2H4.4L4.4 10.6H2Z M4.4 10.6H6.8V13H4.4 M6.8 10.6V13 M2 10.6V13 M6 3.4V1.6H7.6",
 }
 
@@ -125,6 +146,16 @@ static func drawing_box(cls: String) -> Vector2:
 ## need no entry: that item's icon is found first.
 const BUILT_INS := {
 	&"welder": "res://3d_assets/chatgptg/frontline_maintainer_arcwelder_tool_v2.glb",
+	# The command designator. A built-in like the welder: never bought, so it has
+	# no catalogue entry to hang an icon on, and the weapon bar drew a blank chip
+	# on key 2 because of it.
+	&"designator": "res://Character/weapon/models/designator_model.tscn",
+	# AN EMPTY PATH MEANS "DRAWN, NOT MODELLED". The Drayman's boom is part of
+	# the truck's own body — there is no tool scene to render, and leaving it out
+	# of this table altogether would leave the frame with a blank weapon column
+	# forever, because bake_icons only walks these keys. Its picture is the
+	# &"boom" entry in DRAWINGS above.
+	&"boom": "",
 }
 
 

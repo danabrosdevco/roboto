@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Location" load_steps=2 format=3 uid="uid://0wamoclhx8gf"]
+
+[ext_resource type="Script" path="res://Campaign/location.gd" id="1_loc"]
+
+[resource]
+script = ExtResource("1_loc")
+id = &"qamareen"
+display_name = "Qamareen"
+mission_id = &"mutaha_2_city"
+defend_mission_id = &"mutaha_3_defend"
+start_owner = 4
+resources_per_turn = 25
+compute = 1
+resistance = 250
+connects_to = Array[StringName]([&"valley_basin", &"three_rivers"])

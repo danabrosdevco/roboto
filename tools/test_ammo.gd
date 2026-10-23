@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: kit
 
 # ─────────────────────────────────────────────
 # EVERY AMMO STOCK ACTUALLY CARRIES ITS NUMBERS.
@@ -39,10 +40,17 @@ func _find(n: Node, cls: String) -> Node:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	Settings.path = "user://settings_probe.json"
 	await process_frame
 
 	var types: Array = []
+	## Types that only exist while the player carries the item that uses them.
+	var carried: Dictionary = {}
 	var dir := DirAccess.open(DIR)
 	if dir == null:
 		_check("the ammo folder exists", false, DIR)
@@ -60,6 +68,8 @@ func _init() -> void:
 			"type=%s amount=%s — properties set before `script =` are discarded" % [str(t), str(a)])
 		if ok:
 			types.append(t)
+			if bool(stock.get("requires_carrier")):
+				carried[t] = true
 
 	# ── AND THE PLAYER IS ACTUALLY HOLDING THEM ──
 	var world: Node = load("res://Env/world.tscn").instantiate()
@@ -73,9 +83,21 @@ func _init() -> void:
 	if pool == null:
 		_report()
 		return
+	# A GUN CALIBRE IS A RESERVE; A THROWN ITEM IS NOT.
+	#
+	# A rifle calibre is there whether or not the rifle is in your hands. A frag,
+	# an EMP, a mine, the drone pack — those only exist because you are carrying
+	# the thing that throws them, and the pool used to hand out a full load of all
+	# of them to a player carrying none. Both halves are asserted: the reserve
+	# that should be there, and the pouch that should be empty.
 	for t in types:
-		_check("...and starts with %s" % t, pool.get_count(t) > 0,
-			"not in test_character.tscn's starting_ammo")
+		if carried.has(t):
+			_check("...and does NOT start with %s, which needs its item carried" % t,
+				pool.get_count(t) == 0,
+				"%d in the pool with nothing fitted" % pool.get_count(t))
+		else:
+			_check("...and starts with %s" % t, pool.get_count(t) > 0,
+				"not in test_character.tscn's starting_ammo")
 	_report()
 
 

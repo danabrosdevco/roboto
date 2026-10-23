@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cvg1pwbta7ijr"
+path="res://.godot/imported/trench_traverse.map-08feb7556646d3b48ec815b2a1c5036b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/trench_traverse.map"
+dest_files=["res://.godot/imported/trench_traverse.map-08feb7556646d3b48ec815b2a1c5036b.tres"]
+
+[params]
+

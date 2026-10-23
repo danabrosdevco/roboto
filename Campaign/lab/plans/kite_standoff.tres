@@ -1,0 +1,73 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_soldier.tres" id="4_sol"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_kite.tres" id="5_kit"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_walker.tres" id="6_wlk"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover.tres" id="7_rov"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "KITE vs 4 rifles, 60 m — the audit scenario, for comparison"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_kit"), ExtResource("5_kit")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 60.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "KITE vs 8 rifles, 60 m — volume, which the audit did not test"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_kit"), ExtResource("5_kit")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol"), ExtResource("4_sol")])
+hostile_order = 0
+distance = 60.0
+repeats = 3
+time_limit = 120.0
+weapon_swaps = {
+&"soldier": &"m4"
+}
+
+[sub_resource type="Resource" id="M3"]
+script = ExtResource("2_match")
+label = "KITE vs 2 Walkers, 70 m — something that outranges a rifle"
+allies = Array[ExtResource("3_chassis")]([ExtResource("5_kit"), ExtResource("5_kit")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_wlk"), ExtResource("6_wlk")])
+hostile_order = 0
+distance = 70.0
+repeats = 3
+time_limit = 120.0
+
+[sub_resource type="Resource" id="M4"]
+script = ExtResource("2_match")
+label = "ROVER control vs 2 Walkers, 70 m — the same fight on the ground"
+allies = Array[ExtResource("3_chassis")]([ExtResource("7_rov"), ExtResource("7_rov")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("6_wlk"), ExtResource("6_wlk")])
+hostile_order = 0
+distance = 70.0
+repeats = 3
+time_limit = 120.0
+
+[resource]
+script = ExtResource("1_plan")
+title = "Does the Kite stand off now"
+question = "SpotterDrone circles its STATION at orbit_radius, and under an ADVANCE order the station becomes the enemy's position — so the Kite flew to the people shooting at it and circled 14 m above their heads, roughly 26 m of slant range at cruise height, carrying a machine gun effective to 99 m.
+
+It now circles the TARGET at engage_radius, 60 m, and transit_distance went 40 to 95 so the approach threshold is wider than the orbit and it does not fly in and back out again. _orbit_radius_now() is a virtual on SpotterDrone; the Spotter and the Broodcarrier are cameras, inherit it unchanged, and do not move.
+
+The measure is DAMAGE TAKEN, not the win rate. The audit already had the Kite winning this fight 100% with zero deaths, which is why the complaint that it gets smoked did not show up: four dug-in riflemen die before the range matters. So two harder fights are here as well — eight rifles for volume, and two Walkers for something that outranges a rifle and can actually punish a frame that closes to 26 m.
+
+The Rover control is the same fight on the ground, so the question stays the one that matters: does altitude plus standoff buy anything a wheeled frame does not already have."
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2"), SubResource("M3"), SubResource("M4")])
+repeats_override = 0
+speed = 4.0

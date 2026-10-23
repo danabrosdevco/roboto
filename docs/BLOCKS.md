@@ -18,11 +18,12 @@ built geometry saved under it, the same shape as `concrete_bridge.tscn`.
 | `maps/blocks/props/` | Small pieces for scattering or placing by hand: boulders, rubble, barriers, sandbags, hesco, tank traps, drums, crates, wrecks, poles, pipes. |
 | `maps/blocks/alpine/` | Dead wood and mountain ground cover for above the treeline: standing snags, dead conifers, a leaning snag, stumps, deadfall, a root plate, a log pile, krummholz scrub, tussocks, a scree patch, an erratic and a route marker. Built for scattering. |
 | `maps/blocks/solar/` | AI-built solar: panel rows, a tracker, a field the size of a lot, heliostats and a solar tower, battery containers, inverters, drone docks, and canopy arrays big enough to walk under. |
-| `maps/blocks/compute/` | AI compute: server racks, chillers, a generator, a transformer, a data hall, a compute obelisk, monoliths, cables, cabinets, a satellite dish. |
+| `maps/blocks/compute/` | AI compute: server racks, chillers, a generator, a transformer, a data hall, a compute obelisk, monoliths, core columns, cables, cabinets, a satellite dish. |
 | `maps/blocks/landmarks/` | Set pieces a map is built round: the orbital tether anchor at the heart of the valley basin, and a clock tower and a big wheel, one on each bank of Mutaha. |
 | `maps/blocks/industrial/` | The city's industry: warehouses, a sawtooth factory, hangars, a plant office and gate, a car park and a parking deck, container and scrap yards, a coal pile, a smokestack, a blast furnace, silos, a water tower, a gantry crane, a gas holder, a conveyor, a pipe rack, a substation, rail track and wagons, a coal barge, a lock and dam. |
 | `maps/blocks/machines/` | Machine tools, a robot arm and a robot assembly line, plant and vehicles: forklift, excavator, bulldozer, racking, steel coils, a workbench, a semi-truck. |
 | `maps/blocks/fortifications/` | Hardpoints: a command bunker, gun and mortar pits, hesco walls, T-walls, a hesco sangar, a checkpoint, dragon's teeth, razor wire, a sentry turret's mount, an ammo dump, a floodlight mast. |
+| `maps/blocks/bunker/` | The surface entrance to the underground rail station: one mouth (8.0 × 4.19 m clear, a 10 m sealed tunnel behind), two sliding leaves as pieces of their own, a signal band, and three surrounds — a sunken court, a revetted cliff headwall and a flush interior. Assembled by `tools/build_bunker.gd` into `bunker_entrance*.tscn`, which carry the named nodes GAMEPLAY drives. See `docs/briefs/BUNKER_ENTRANCE_MODEL.md`. |
 | `maps/blocks/bridges/` | Bridges built off `long_bridge.map`: short to very long, two-lane and highway, a footbridge, two trusses, a causeway, a shelled bridge, a gorge bridge and a stone humpback. The squad can walk over every one. |
 | `maps/blocks/causeway/` | A derelict highway in 48 m sections that butt end to end, with an approach ramp and three states of disrepair. For a crossing too long to be one bridge. |
 | `maps/blocks/fortress/` | Machine-built fortification: the citadel (a 260 m tower inside a 200 m walled fort, with the pit down to its basement), a keep on its own podium, and wall and gate sections for outworks. |
@@ -194,11 +195,12 @@ Three habits that avoid nearly all of it:
 | `tools/test_block_reach.gd` | nothing — it reports which decks a piece grows navmesh on and whether the squad can get to any of them |
 | `tools/block_doodads.gd` | `features/` and `props/` maps (it extends the buildings tool's brush kit) |
 | `tools/block_ai_infra.gd` | `solar/`, `compute/` and `landmarks/` maps (it extends the doodads tool) |
-| `tools/block_industrial.gd` | `industrial/`, `machines/` and `fortifications/` maps, the clock tower and big wheel in `landmarks/` and the monolith in `compute/` (it extends the AI-infra tool). Name pieces after the folder to write only those. |
+| `tools/block_industrial.gd` | `industrial/`, `machines/` and `fortifications/` maps, the clock tower and big wheel in `landmarks/` and the monolith and core columns in `compute/` (it extends the AI-infra tool). Name pieces after the folder to write only those. |
 | `tools/block_bridges.gd` | `bridges/` maps (it extends the industrial tool) |
 | `tools/block_fortress.gd` | `causeway/` and `fortress/` maps (it extends the bridges tool) |
 | `tools/block_homebase.gd` | `maps/depot/depot_level.map` — a whole level, not a block (it extends the fortress tool) |
-| `tools/block_arena.gd` | `maps/proving/proving_level.map` — a whole level, the arena, rebuilt (it extends the fortress tool) |
+| `tools/build_proving.gd` | `maps/proving/proving_level.map` — a whole level, the proving ground: the arena, opened up, plus the bay behind the enemy blockhouse (it extends the fortress tool) |
+| `tools/block_arena.gd` | SUPERSEDED by `build_proving.gd`, 2026-10-13. Still builds the 2026-10 arena with `--legacy`, and refuses to write otherwise |
 | `tools/block_ground.gd` | `ground/` maps — micro-terrain (it extends the fortress tool) |
 | `tools/block_prefabs.gd` | A prefab for each map in a folder |
 
@@ -209,7 +211,7 @@ godot --headless --path . --script res://tools/block_industrial.gd -- maps/block
 godot --headless --path . --script res://tools/block_bridges.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_fortress.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_homebase.gd -- maps
-godot --headless --path . --script res://tools/block_arena.gd -- maps
+godot --headless --path . --script res://tools/build_proving.gd -- maps
 godot --headless --path . --script res://tools/block_ground.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_estates.gd -- maps/blocks
 godot --headless --path . --script res://tools/block_prefabs.gd -- maps/blocks/features
@@ -609,6 +611,29 @@ Panels and mirrors face the prefab's -Z. Turn it so -Z points at the sun.
 - **compute_monolith** (7 m): a tapering black slab on a footing, with a line
   of light down each broad face and a crown of light. The broad faces face the
   prefab's ±Z. On Mutaha they ring the obelisk and line the island's avenue.
+- **compute_core_large / compute_core / compute_core_small** (12.4, 7.0 and
+  3.7 m): the core column, an alternative to the monolith as a capture
+  objective. A stack of compute cassettes inside an open cage of four battered
+  posts, lit through the recessed spines *between* the cassettes instead of
+  along its edges, standing clear of its own plinth so light shows underneath,
+  and with the head cut off at 29° with a lit plate inset in the cut.
+  - **The service alcove and the lit cut both face the prefab's -X in Godot**
+    (-Y in the map). That is the piece's front: yaw it to face the approach, the
+    way the relay dish is yawed. A capture channels for several seconds inside
+    3 m, and the alcove is where a body stands to do it — the monolith is a
+    sealed slab and answers "where do I stand" with nothing.
+  - **Every lit face is `glitch_tx_1` and nothing else uses it**, so FuncGodot
+    gives the prefab one surface for all of it. Going dark on capture is a
+    single material swap, which is the point of building it this way.
+  - The plinth is 0.22 m pad + 0.8 m collar, and nothing in between on purpose:
+    0.22 m is under the 0.45 m a body steps over and 0.8 m is over the 0.5 m
+    the navmesh baker climbs, so there is no step the bake calls walkable and
+    `move_and_slide` then refuses.
+  - All three clear the 1.2 m a standing cover point probes at, so each one
+    generates cover and is something to fight round rather than past.
+  - Distinct from the monolith and the obelisk on silhouette alone — notched and
+    sheared against smooth and capped — which is what lets all three stand in
+    one level without reading as the same prop twice.
 - **compute_cable_run** (12.5 m): three cables snaking into a junction box.
 - **compute_network_cabinet:** a roadside cabinet with a whip antenna.
 - **compute_satellite_dish:** a 4 m dish on a pedestal, tilted to face -Z.
@@ -982,13 +1007,13 @@ read as mould.
 not as a lit strip. The trim is `metal_wall_5` and the markings are
 `concrete_tx_4` — pale paint on dark steel.
 
-
 ### The proving ground (`maps/proving/proving_level.map`)
 
-Not a block — a whole level, written by `tools/block_arena.gd`, and a
-replacement for the arena. Same footprint: 88 × 54 m of grass in a walled
-rectangle. Everything else is different, because three things made the arena
-hard to read and all three are fixable in the geometry:
+Not a block — a whole level, written by `tools/build_proving.gd`. As of 2026-10-13
+it is the arena (88 × 68 m of grass in a walled rectangle, widened from 54 and
+opened up) plus a 45 × 68 m bay behind the enemy blockhouse holding a clear
+30 × 30 m floor for the bunker. Three things made the original arena hard to
+read and all three are fixable in the geometry:
 
 - **Everything in it was 4 m tall.** Every cover wall and every pillar, so
   nothing could be seen over and there was no way to tell a thing you shoot
@@ -1028,7 +1053,7 @@ Three things that cost a rebuild each, worth not repeating:
   lanes, white treadplate and pale concrete all rendered as white paper under
   the shared sun. The whole palette is chosen from the dark end.
 
-The level scene (`build_proving.gd`, in the scratchpad) carries the arena's
+The level scene (`maps/proving_level.tscn`) carries the arena's
 mission scaffolding — hostile muster, an eliminate objective over the field,
 and an extraction that only opens once it is clear — plus cover points
 generated off the baked navmesh by `CoverPointSpawner`.

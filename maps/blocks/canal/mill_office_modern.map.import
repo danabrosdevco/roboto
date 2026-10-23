@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bijom30it61oq"
+path="res://.godot/imported/mill_office_modern.map-a6772574b444c708e786087a53f4eb31.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/mill_office_modern.map"
+dest_files=["res://.godot/imported/mill_office_modern.map-a6772574b444c708e786087a53f4eb31.tres"]
+
+[params]
+

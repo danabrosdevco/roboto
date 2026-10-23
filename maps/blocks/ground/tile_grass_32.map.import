@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://duglpyi28p75a"
+path="res://.godot/imported/tile_grass_32.map-7384c6708ca1e7a4817107ddfcb5f123.tres"
+
+[deps]
+
+source_file="res://maps/blocks/ground/tile_grass_32.map"
+dest_files=["res://.godot/imported/tile_grass_32.map-7384c6708ca1e7a4817107ddfcb5f123.tres"]
+
+[params]
+

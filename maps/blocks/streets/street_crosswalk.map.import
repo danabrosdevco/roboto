@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://csames8ruod20"
+path="res://.godot/imported/street_crosswalk.map-48671e80a8bf6ddfb89d1b93cb784fbb.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_crosswalk.map"
+dest_files=["res://.godot/imported/street_crosswalk.map-48671e80a8bf6ddfb89d1b93cb784fbb.tres"]
+
+[params]
+

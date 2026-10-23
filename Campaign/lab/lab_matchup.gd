@@ -56,3 +56,10 @@ enum Order {
 ## soldiers had rifles" is a question about kit, and it is not worth a duplicate
 ## chassis .tres to ask it.
 @export var weapon_swaps: Dictionary = {}
+
+## Re-kit the SECOND mount for this fight only: {chassis id: weapon id}.
+##
+## weapon_swaps reaches the primary mount only, and the coax is filled from
+## ChassisDefinition.coax_weapon_id — so "give the Walker two heavy MGs" was
+## not expressible, and the only way to ask it was to edit a shipped chassis.
+@export var coax_swaps: Dictionary = {}

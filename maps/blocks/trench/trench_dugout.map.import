@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://cl3bqwr7d1opo"
+path="res://.godot/imported/trench_dugout.map-a56a5ed88f3981716cabda64ea6f3a96.tres"
+
+[deps]
+
+source_file="res://maps/blocks/trench/trench_dugout.map"
+dest_files=["res://.godot/imported/trench_dugout.map-a56a5ed88f3981716cabda64ea6f3a96.tres"]
+
+[params]
+

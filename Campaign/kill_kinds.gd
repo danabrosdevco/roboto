@@ -32,7 +32,18 @@ const FRAMES := {
 	&"mortar_track": "res://Campaign/chassis/chassis_mortar_track.tres",
 	&"spotter": "res://Campaign/chassis/chassis_spotter.tres",
 	&"walker": "res://Campaign/chassis/chassis_walker.tres",
+	&"bulwark": "res://Campaign/chassis/chassis_bulwark.tres",
 	&"diver": "res://Campaign/chassis/chassis_diver.tres",
+	# THE EIGHT NEW FRAMES, 2026-10-10. These ids are permanent the day a kill
+	# is saved against one — see the gunship note above for what renaming costs.
+	&"lance": "res://Campaign/chassis/chassis_lance.tres",
+	&"picket": "res://Campaign/chassis/chassis_picket.tres",
+	&"kite": "res://Campaign/chassis/chassis_kite.tres",
+	&"drayman": "res://Campaign/chassis/chassis_drayman.tres",
+	&"vessel": "res://Campaign/chassis/chassis_vessel.tres",
+	&"brood": "res://Campaign/chassis/chassis_brood.tres",
+	&"bastion": "res://Campaign/chassis/chassis_bastion.tres",
+	&"see_engine": "res://Campaign/chassis/chassis_see_engine.tres",
 }
 
 ## Scene file (no extension) -> frame id, for robots with no frame of record.

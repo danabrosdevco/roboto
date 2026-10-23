@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Character/weapon/ai_weapon.gd" id="1_payy6"]
 [ext_resource type="PackedScene" uid="uid://chv5jfp7dw2bo" path="res://Character/weapon/tracer.tscn" id="2_awy8x"]
-[ext_resource type="Texture2D" uid="uid://bvk26224sihon" path="res://2d_assets/metal textures poly.com/metal_plate_02_diff_4k.jpg" id="3_llbx3"]
+[ext_resource type="Texture2D" path="res://textures/PSX_Textures/robot_metal_psx.png" id="3_llbx3"]
 [ext_resource type="PackedScene" uid="uid://bq3ky68ibirr6" path="res://Character/weapon/muzzle_flash.tscn" id="4_wm7qy"]
 [ext_resource type="AudioStream" uid="uid://cv8qan32ox2h7" path="res://sounds/sfx/weapons/melee/WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_17.wav" id="4_x4srj"]
 [ext_resource type="AudioStream" uid="uid://hahkpraem6bf" path="res://sounds/sfx/weapons/ar15/682140__henkonen__metal-click.wav" id="6_cev26"]

@@ -41,8 +41,8 @@ func _initialize() -> void:
 	var moves: Array = []
 	for m in OS.get_environment("MOVE").split(",", false):
 		moves.append(m.strip_edges())
-	if path == "" or moves.is_empty():
-		print("usage: LEVEL=res://maps/<name>_level.tscn MOVE=a/b,c/d [--apply]")
+	if path == "":
+		print("usage: LEVEL=res://maps/<name>_level.tscn [MOVE=a/b,c/d] [--apply]")
 		quit(2)
 		return
 	var art_path := OS.get_environment("ART")
@@ -55,6 +55,28 @@ func _initialize() -> void:
 		quit(1)
 		return
 	var level := packed.instantiate(PackedScene.GEN_EDIT_STATE_MAIN)
+
+	# WORK THE LIST OUT RATHER THAN BE TOLD IT. Every level in this project
+	# keeps its art as siblings of the exit under the navigation region:
+	# Terrain, Dressing, Buildings, Bridges, Fort, Field, Plant, the FuncGodot
+	# maps. What stays behind is the exit and anything carrying a Campaign
+	# script, because that is gameplay whoever placed it. Typing the list by
+	# hand for nine levels is nine chances to leave a group out.
+	if moves.is_empty():
+		var region := level.get_node_or_null(^"NavigationRegion3D")
+		if region == null:
+			print("FAIL  %s has no NavigationRegion3D to split under" % path.get_file())
+			quit(1)
+			return
+		for c in region.get_children():
+			if str(c.name) == "LevelExit" or _is_gameplay(c):
+				continue
+			moves.append("NavigationRegion3D/%s" % c.name)
+		print("   auto: %s" % ", ".join(moves))
+	if moves.is_empty():
+		print("FAIL  nothing to move")
+		quit(1)
+		return
 
 	# Everything that moves has to share one parent, because what replaces them
 	# is a single instance of the art scene and it can only go in one place.
@@ -83,8 +105,9 @@ func _initialize() -> void:
 	for n: Node in taken:
 		holder.remove_child(n)
 		art.add_child(n)
-	for n: Node in art.find_children("*", "", true, false):
-		n.owner = art
+	var bases := {}
+	reown(art, art, null, null, bases)
+	free_bases(bases)
 	# THE PATHS OF EVERYTHING MOVED HAVE CHANGED, by exactly one level: what was
 	# NavigationRegion3D/Terrain is now NavigationRegion3D/<Art>/Terrain. Any
 	# NodePath left in the level that pointed into the art is now broken, and a
@@ -178,3 +201,64 @@ func _names(level: Node, holder: Node) -> Array:
 		if not out.has(str(c.name)):
 			out.append("%s/%s" % [holder.name, c.name])
 	return out
+
+
+## A node the GAMEPLAY lane owns: anything running a script out of Campaign/,
+## at any depth. Those stay in the level whatever they are called.
+func _is_gameplay(node: Node) -> bool:
+	var s: Script = node.get_script()
+	if s != null and s.resource_path.begins_with("res://Campaign/"):
+		return true
+	for c in node.get_children():
+		if _is_gameplay(c):
+			return true
+	return false
+
+
+## WHO OWNS WHAT, AND WHY IT IS NOT "EVERYTHING".
+##
+## A packed scene writes out every node the root OWNS. Set the owner of every
+## descendant and the insides of each instanced prefab get written as declared
+## nodes — 96 prefabs became 2353 node entries the first time this ran, and
+## worse than the bloat, it PINS them: each one is re-declared with its own
+## type, so editing landmark_relay_dish.tscn would no longer reach the level
+## that instances it. The whole prefab workflow quietly stops working.
+##
+## So: an instance ROOT is owned, because that is what writes the
+## `instance=ExtResource(...)` line. Nothing inside one is touched.
+static func reown(root: Node, node: Node, inst: Node, base: Node, cache: Dictionary) -> void:
+	for c in node.get_children():
+		var next_inst := inst
+		var next_base := base
+		if c.scene_file_path != "":
+			# An instance ROOT is owned: that is what writes the instance= line.
+			c.owner = root
+			next_inst = c
+			next_base = _base_of(c.scene_file_path, cache)
+		elif inst == null:
+			c.owner = root
+		else:
+			# INSIDE AN INSTANCE, and this is the distinction that matters. If
+			# the prefab has a node at this path it is the prefab's own and must
+			# not be written — owner cleared. If it does not, somebody ADDED it,
+			# and it has to stay: patrol points are children of instanced
+			# objective anchors, and clearing those would delete the patrol
+			# routes this whole exercise exists to protect.
+			var twin: Node = null
+			if base != null:
+				twin = base.get_node_or_null(NodePath(String(inst.get_path_to(c))))
+			c.owner = null if twin != null else root
+		reown(root, c, next_inst, next_base, cache)
+
+
+static func _base_of(path: String, cache: Dictionary) -> Node:
+	if not cache.has(path):
+		var p := load(path) as PackedScene
+		cache[path] = p.instantiate() if p != null else null
+	return cache[path]
+
+
+static func free_bases(cache: Dictionary) -> void:
+	for k in cache:
+		if cache[k] is Node:
+			(cache[k] as Node).free()

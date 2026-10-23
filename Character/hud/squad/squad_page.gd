@@ -31,13 +31,20 @@ const Kit := preload("res://Character/hud/squad/ui_kit.gd")
 const Icons := preload("res://Character/hud/icons/icons.gd")
 const DETAIL_WIDTH := 400.0
 const REPAIR_TOOL := &"repair_tool"
+## A frame's real speed lives on its SCENE. By path, not class_name — see the
+## note in item_facts.gd.
+const _Facts := preload("res://Campaign/item_facts.gd")
+## Tops of the stat bars, FIXED so two robots can be compared by eye. Shared
+## with the Factory's frame cards on purpose: the same stat should be the same
+## length of bar wherever it is drawn.
+const HULL_TOP := 400.0
+const SPEED_TOP := 20.0
+const SENSOR_TOP := 120.0
 ## What a dragged card carries: {DRAG_KEY: the robot's record}.
 const DRAG_KEY := "squad_page_robot"
 
 var ui   # the SquadManagerUI; untyped because it preloads this script
 var selected: SoldierRecord
-var slot_kind: int = ItemDefinition.Kind.WEAPON
-var slot_index: int = 0
 
 var _left: VBoxContainer
 var _head: VBoxContainer
@@ -112,7 +119,11 @@ func setup(owner_ui) -> void:
 	side.add_theme_stylebox_override("panel", line)
 	side.custom_minimum_size = Vector2(DETAIL_WIDTH, 0)
 	add_child(side)
-	_detail = Kit.vbox(8)
+	# FIVE, NOT EIGHT. The detail column is exactly full at 544px: measured, its
+	# children came to 448 and twelve eight-pixel gaps came to 96, which left the
+	# stores list underneath 79 pixels — one and a half rows of a list you are
+	# meant to choose from. Four pixels a gap is forty-eight back.
+	_detail = Kit.vbox(4)
 	side.add_child(_detail)
 
 
@@ -121,18 +132,6 @@ func setup(owner_ui) -> void:
 func on_open() -> void:
 	if not _listed(selected):
 		_select(ui.state.player_record, false)
-
-
-## Arriving from the Armorer's "fit it": land on the selected robot's first
-## empty slot of that kind (or its first, if none is empty).
-func focus_kind(kind: int) -> void:
-	if not _listed(selected):
-		_select(ui.state.player_record, false)
-	var slots: Array = _slots(selected, kind)
-	if slots.is_empty():
-		return
-	slot_kind = kind
-	slot_index = maxi(slots.find(&""), 0)
 
 
 func rebuild() -> void:
@@ -167,7 +166,6 @@ func _listed(record: SoldierRecord) -> bool:
 
 func _select(record: SoldierRecord, announce: bool = true) -> void:
 	selected = record
-	_default_slot()
 	if announce:
 		ui.play(&"select")
 		rebuild()
@@ -179,7 +177,6 @@ func _select(record: SoldierRecord, announce: bool = true) -> void:
 # become a drag.
 func _pick(record: SoldierRecord) -> void:
 	selected = record
-	_default_slot()
 	ui.play(&"select")
 	for card in _cards:
 		if is_instance_valid(card):
@@ -189,36 +186,6 @@ func _pick(record: SoldierRecord) -> void:
 
 # The slot most worth looking at: the weapon if there is none, then the first
 # empty gear or module slot, else the weapon.
-func _default_slot() -> void:
-	slot_kind = ItemDefinition.Kind.WEAPON
-	slot_index = 0
-	if selected == null:
-		return
-	var frame := _frame(selected)
-	if frame != null and frame.weapon_slots == 0:
-		slot_kind = ItemDefinition.Kind.MODULE
-		return
-	# An empty slot that falls back to a built-in (the Reclaimer's welder) is
-	# not a gap to point at first.
-	var stands_in: bool = frame != null and frame.weapon_replaces_built_in
-	var gap: int = -1 if stands_in else selected.weapon_ids.find(&"")
-	if gap >= 0:
-		# POINT AT THE GAP, NOT AT SLOT ONE. A two-mount frame is bought with its
-		# coax empty and its main gun already fitted, so opening on the first slot
-		# would land on the gun it came with and hide the only decision there is.
-		slot_index = gap
-		return
-	if selected.weapon_ids.is_empty():
-		return
-	for kind in [ItemDefinition.Kind.EQUIPMENT, ItemDefinition.Kind.MODULE]:
-		var slots: Array = _slots(selected, kind)
-		var empty := slots.find(&"")
-		if empty >= 0:
-			slot_kind = kind
-			slot_index = empty
-			return
-
-
 # ─────────────────────────────────────────────
 # ROSTER — the seats, the teams, the bench
 # ─────────────────────────────────────────────
@@ -430,7 +397,7 @@ func _card(record: SoldierRecord, where: Dictionary = {}) -> Control:
 	# Under the icon, what the frame and its modules add up to: the number you
 	# are actually comparing when you pick who goes.
 	var mugshot := Kit.vbox(2)
-	mugshot.add_child(Kit.icon(Icons.chassis(frame, "s"), tint, Vector2(40, 40)))
+	mugshot.add_child(Kit.icon(Icons.chassis(frame, "s", record.cosmetic_id), tint, Vector2(40, 40)))
 	var hp := Kit.label("%d HP" % record.max_health, Kit.DIM, 11)
 	hp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mugshot.add_child(hp)
@@ -473,7 +440,7 @@ func _drag(record: SoldierRecord, card: Control) -> Variant:
 	var ghost := PanelContainer.new()
 	ghost.add_theme_stylebox_override("panel", Kit.box(Kit.BRIGHT, Kit.PANEL, 2, 8.0))
 	var row := Kit.hbox(8)
-	row.add_child(Kit.icon(Icons.chassis(_frame(record), "s"), Kit.BRIGHT, Vector2(28, 28), true))
+	row.add_child(Kit.icon(Icons.chassis(_frame(record), "s", record.cosmetic_id), Kit.BRIGHT, Vector2(28, 28), true))
 	row.add_child(Kit.label(record.display_name.to_upper(), Kit.BRIGHT, 18, true))
 	ghost.add_child(row)
 	ghost.modulate.a = 0.85
@@ -580,7 +547,11 @@ func _notification(what: int) -> void:
 func _status(record: SoldierRecord) -> Array:
 	var state: CampaignState = ui.state
 	if record.status == SoldierRecord.Status.DESTROYED:
-		return ["DESTROYED", Kit.PROBLEM]
+		# NAMES THE ACTION, unlike the squad HUD's version of this state. In
+		# the field a destroyed frame is inert and is drawn that way — there is
+		# nothing to be done about it while you are out there. At base it is
+		# the one thing on the card you CAN act on, so it says so.
+		return ["DESTROYED · SCRAP IT", Kit.PROBLEM]
 	if not _armed(record):
 		return ["NO WEAPON", Kit.PROBLEM]
 	if state.is_player_record(record):
@@ -637,32 +608,17 @@ func _strip(record: SoldierRecord, frame: ChassisDefinition) -> Control:
 
 
 ## Select `record` and land on one of its slots, from a click on a roster card.
-func open_at(record: SoldierRecord, kind: int, index: int) -> void:
-	if record == null:
-		return
-	if selected != record:
-		_select(record, false)
-	slot_kind = kind
-	slot_index = maxi(index, 0)
-	ui.play(&"select")
-	rebuild()
-
-
 func _mini(item: ItemDefinition, wide: bool, text: String = "", fixed: bool = false,
 		missing: bool = false, record: SoldierRecord = null, kind: int = -1, index: int = -1) -> Control:
 	var tile := PanelContainer.new()
 	var border := Kit.PROBLEM if missing else (Kit.LINE if item != null or text != "" else Kit.FAINT)
 	tile.add_theme_stylebox_override("panel", Kit.box(border, Color(0, 0, 0, 0.25), 1, 1.0))
 	tile.custom_minimum_size = Vector2(46 if wide else 22, 21)
+	# ALWAYS IGNORE. These were clickable — "EDIT THIS SLOT" jumped the detail
+	# pane to that slot so it could be refitted. There is no refitting a single
+	# robot any more, so a tile that invited a click would be a control that
+	# does nothing, which is worse than one that was never offered.
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if record != null and kind >= 0 and not fixed:
-		tile.mouse_filter = Control.MOUSE_FILTER_STOP
-		tile.tooltip_text = "EDIT THIS SLOT"
-		tile.mouse_entered.connect(ui.hover)
-		tile.gui_input.connect(func(e: InputEvent):
-			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
-				accept_event()
-				open_at(record, kind, index))
 	var tint := Kit.DIM if fixed else Kit.BRIGHT
 	if item != null:
 		var tex := Icons.item(item, "s")
@@ -714,7 +670,10 @@ func _build_detail() -> void:
 	var destroyed := r.status == SoldierRecord.Status.DESTROYED
 
 	var head := Kit.hbox(12)
-	head.add_child(Kit.icon(Icons.chassis(frame, "m"), Kit.PROBLEM if destroyed else Kit.BRIGHT, Vector2(64, 64)))
+	# 48, not 64. The name, the frame line and the history sit beside it and are
+	# what the block is actually for; the portrait is identification, and it only
+	# has to be big enough to tell a Walker from a soldier at a glance.
+	head.add_child(Kit.icon(Icons.chassis(frame, "m", r.cosmetic_id), Kit.PROBLEM if destroyed else Kit.BRIGHT, Vector2(48, 48)))
 	var who := Kit.vbox(2)
 	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(who)
@@ -737,13 +696,12 @@ func _build_detail() -> void:
 	name_edit.focus_exited.connect(func():
 		if is_instance_valid(name_edit) and not ui.is_rebuilding():
 			commit.call(name_edit.text))
-	# The frame's health beside the name: the one number a refit changes that
-	# the slot tiles below do not show.
-	var name_row := Kit.hbox(10)
+	# Health used to sit beside the name as the one number a refit changed that
+	# the slot tiles did not show. It is in the STATS block now, with the four
+	# others a refit changes and with the part the modules bought drawn in white —
+	# which is the thing a lone "75 HP" could never say.
 	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_row.add_child(name_edit)
-	name_row.add_child(Kit.label("%d HP" % r.max_health, Kit.DIM, 18, true))
-	who.add_child(name_row)
+	who.add_child(name_edit)
 	var rank_row := Kit.hbox(6)
 	rank_row.add_child(Kit.label(_frame_line(r), Kit.DIM, Kit.SMALL))
 	if not is_player:
@@ -759,25 +717,52 @@ func _build_detail() -> void:
 	_detail.add_child(head)
 
 	if destroyed:
+		# A DESTROYED FRAME IS NOT A REPAIR JOB. The only decision left is what
+		# you get for the metal, so SCRAP is the button — REBUILD only appears
+		# when the campaign has been told to allow it (CampaignState.
+		# allow_rebuild), because offering both makes the distinction the squad
+		# HUD now draws between DOWNED and DESTROYED meaningless.
 		var row := Kit.hbox(10)
-		row.add_child(Kit.label("DESTROYED", Kit.PROBLEM, Kit.HEADING, true))
+		row.add_child(Kit.label("DESTROYED", Kit.DIM, Kit.HEADING, true))
 		row.add_child(Kit.fill())
-		var cost := state.repair_cost(r)
-		var rebuild_btn := Kit.button("REBUILD", Kit.BRIGHT if state.can_afford(cost) else Kit.PROBLEM)
-		rebuild_btn.disabled = not state.can_afford(cost)
-		rebuild_btn.tooltip_text = "Rebuild %s at full health." % r.display_name
-		rebuild_btn.mouse_entered.connect(ui.hover)
-		rebuild_btn.pressed.connect(func():
-			ui.play(&"fit" if state.repair_soldier(record) else &"denied"))
-		row.add_child(rebuild_btn)
-		row.add_child(Kit.label(str(cost), Kit.MONEY, Kit.HEADING, true))
+
+		var back := state.scrap_value(r)
+		var scrap_btn := Kit.button("SCRAP", Kit.BRIGHT)
+		scrap_btn.disabled = not state.can_scrap(r)
+		scrap_btn.tooltip_text = \
+			"Break %s for parts: a third of the frame and half of everything fitted to it, %d in all. The kit does not come back." \
+			% [r.display_name, back]
+		scrap_btn.mouse_entered.connect(ui.hover)
+		scrap_btn.pressed.connect(func():
+			# -1 is a refusal, 0 is a worthless wreck scrapped successfully.
+			ui.play(&"denied" if state.scrap_soldier(record) < 0 else &"fit"))
+		row.add_child(scrap_btn)
+		row.add_child(Kit.label("+%d" % back, Kit.MONEY, Kit.HEADING, true))
 		_detail.add_child(row)
+
+		if state.allow_rebuild:
+			var rebuild_row := Kit.hbox(10)
+			rebuild_row.add_child(Kit.fill())
+			var cost := state.repair_cost(r)
+			var rebuild_btn := Kit.button("REBUILD", Kit.BRIGHT if state.can_afford(cost) else Kit.PROBLEM)
+			rebuild_btn.disabled = not state.can_afford(cost)
+			rebuild_btn.tooltip_text = "Rebuild %s at full health." % r.display_name
+			rebuild_btn.mouse_entered.connect(ui.hover)
+			rebuild_btn.pressed.connect(func():
+				ui.play(&"fit" if state.repair_soldier(record) else &"denied"))
+			rebuild_row.add_child(rebuild_btn)
+			rebuild_row.add_child(Kit.label(str(cost), Kit.MONEY, Kit.HEADING, true))
+			_detail.add_child(rebuild_row)
 	elif not is_player:
 		var row := Kit.hbox(10)
 		row.add_child(_bench_button(r, false))
 		if r.benched:
 			row.add_child(Kit.label("STAYS AT BASE · EARNS NO XP", Kit.DIM, Kit.SMALL))
 		_detail.add_child(row)
+		_cosmetic_row(r)
+		_pauldron_row(r)
+
+	_stat_block(r, frame)
 
 	# The weapon (and the player's built-in repair tool) on one row, gear and
 	# modules side by side on the next: stacked, they left the stores list
@@ -787,24 +772,39 @@ func _build_detail() -> void:
 		weapon_row.add_child(_group("WEAPON", [_fixed_tile(null, frame.built_in)]))
 	else:
 		# Named for what it takes, so a rifle refused by a rover reads as a rule.
+		# THE SAME THREE WORDS THE ARMORER CARD USES. A weapon's card names its
+		# mount class — TURRET, INFANTRY, ARTICULATED ARM (see Kit.mount_class)
+		# — and the slot it drops into has to be called the same thing, or the
+		# player is matching two vocabularies for one idea.
+		#
+		# This said "TOOL", which named the Reclaimer's boom by what happens to
+		# be on it rather than by what it is. An arm is a mount: the welder is
+		# what it holds today and a mortar is what it holds instead, and nothing
+		# stops a later frame having one.
 		var slot_name := "WEAPON"
 		if frame != null and frame.turret:
 			slot_name = "TURRET"
 		elif frame != null and frame.weapon_replaces_built_in:
-			slot_name = "TOOL"   # the Reclaimer's boom: the welder, or a mortar in its place
+			slot_name = "ARTICULATED ARM"
 		weapon_row.add_child(_group(slot_name, _tiles(ItemDefinition.Kind.WEAPON, r.weapon_ids)))
 	if is_player and ui.item(REPAIR_TOOL) != null:
 		weapon_row.add_child(_group("BUILT IN · KEY 3", [_fixed_tile(ui.item(REPAIR_TOOL), "")]))
 	_detail.add_child(weapon_row)
 	var kit_row := Kit.hbox(18)
 	if not r.equipment_ids.is_empty():
-		kit_row.add_child(_group("GEAR", _tiles(ItemDefinition.Kind.EQUIPMENT, r.equipment_ids)))
+		kit_row.add_child(_group("EQUIPMENT", _tiles(ItemDefinition.Kind.EQUIPMENT, r.equipment_ids)))
 	if not r.module_ids.is_empty():
 		kit_row.add_child(_group("MODULES", _tiles(ItemDefinition.Kind.MODULE, r.module_ids)))
 	_detail.add_child(kit_row)
 
-	_detail.add_child(Kit.spacer(0, 2))
-	_stores()
+	# WHERE THE STORES LIST USED TO BE. A robot's kit comes from its production
+	# line now, so there is nothing here to pick from — the line's spec is set
+	# on the Factory page and reaches every robot on it at once. Saying so
+	# beats an empty column where a list used to be.
+	var frame_now := _frame(r)
+	if frame_now != null and frame_now.purchasable:
+		_detail.add_child(Kit.label("ISSUED BY THE %s LINE" % Kit.frame_word(frame_now).to_upper(),
+			Kit.DIM, Kit.SMALL))
 
 
 func _group(title: String, tiles: Array) -> Control:
@@ -817,24 +817,56 @@ func _group(title: String, tiles: Array) -> Control:
 	return col
 
 
+## WHAT THIS ROBOT CARRIES, SHOWN AND NOT TOUCHED.
+##
+## These used to be the fitting UI: click a tile to select the slot, pick from
+## the stores list below, right-click to take it off. All of that moved to the
+## Factory when a loadout stopped belonging to a robot and started belonging to
+## its production line — a Rover carries what the Rover line builds, and
+## changing it one robot at a time is no longer a thing the game can express.
+##
+## The tiles stay because WHAT IT CARRIES is still the first thing you want to
+## know about a robot you are looking at. They are just read-only now, which is
+## what _fixed_tile has always drawn for a wreck.
 func _tiles(kind: int, ids: Array) -> Array:
 	var out: Array = []
+	var wide: bool = kind == ItemDefinition.Kind.WEAPON
+	# AN EMPTY MOUNT IS NOT ALWAYS AN EMPTY MOUNT. On a frame whose weapon
+	# REPLACES a built-in — the Reclaimer's boom, the Drayman's — nothing
+	# fitted means the built-in is on it, so the tile says WELDER rather than
+	# EMPTY. Reading that slot as "unarmed" is the exact mistake the Reclaimer
+	# card was changed to stop making.
+	var frame := _frame(selected)
+	var built_in: String = frame.built_in if frame != null \
+		and frame.weapon_replaces_built_in and kind == ItemDefinition.Kind.WEAPON else ""
 	for i in ids.size():
-		out.append(_slot_tile(kind, i, ids[i]))
+		var item: ItemDefinition = ui.item(ids[i]) if ids[i] != &"" else null
+		var blank: String = built_in if built_in != "" else "EMPTY"
+		out.append(_fixed_tile(item, "" if item != null else blank, wide))
 	return out
 
 
 # Something that is part of the body, not a slot: shown, never swapped.
-func _fixed_tile(item: ItemDefinition, text: String) -> Control:
+# `wide` is the WEAPON width, and it has to match _slot_tile's: a wreck draws
+# fixed tiles in place of clickable ones, and a fixed tile that is always the
+# weapon width made every equipment and module slot on a destroyed robot more
+# than twice as wide as the same slot on a live one.
+#
+# Four slots at 120 instead of 56 took the kit row from 254px to 510, which is
+# over DETAIL_WIDTH (400) — and `side.custom_minimum_size` is a MINIMUM, so the
+# whole detail column grew to fit and pushed its right-hand content off the
+# screen. That is the "selecting a destroyed robot runs off the end" report:
+# nothing to do with the DESTROYED label, everything to do with this default.
+func _fixed_tile(item: ItemDefinition, text: String, wide: bool = true) -> Control:
 	var tile := PanelContainer.new()
 	tile.add_theme_stylebox_override("panel", Kit.box(Kit.FAINT, Color(0, 0, 0, 0.2), 1, 4.0))
-	tile.custom_minimum_size = Vector2(120, 56)
+	tile.custom_minimum_size = Vector2(120, 44) if wide else Vector2(56, 44)
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var col := Kit.vbox(2)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	tile.add_child(col)
 	if item != null:
-		col.add_child(Kit.icon(Icons.item(item, "m"), Kit.DIM, Vector2(96, 36)))
+		col.add_child(Kit.icon(Icons.item(item, "m"), Kit.DIM, Vector2(80, 28) if wide else Vector2(28, 28)))
 		text = item.short_label().to_upper()
 	var l := Kit.label(text, Kit.DIM, 11)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -844,168 +876,6 @@ func _fixed_tile(item: ItemDefinition, text: String) -> Control:
 
 # A slot you can click: its item's icon and short name, or empty. Selected,
 # its border is bright and the stores list below is for it.
-func _slot_tile(kind: int, index: int, item_id: StringName) -> Control:
-	var item: ItemDefinition = ui.item(item_id)
-	var wide := kind == ItemDefinition.Kind.WEAPON
-	var is_sel := kind == slot_kind and index == slot_index
-	var missing := wide and item == null and not _armed(selected)
-	var border := Kit.BRIGHT if is_sel else (Kit.PROBLEM if missing else (Kit.LINE if item != null else Kit.FAINT))
-	var pick := func():
-		slot_kind = kind
-		slot_index = index
-		ui.play(&"select")
-		_rebuild_detail()
-	var tile := Kit.card(border, pick, ui.hover, 4.0)
-	tile.custom_minimum_size = Vector2(120, 56) if wide else Vector2(56, 56)
-	# Right-click takes it off: the commonest thing to do to a full slot.
-	tile.gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT \
-				and item_id != &"":
-			tile.accept_event()
-			_take_off(kind, index))
-	var col := Kit.vbox(2)
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	tile.add_child(col)
-	if item != null:
-		col.add_child(Kit.icon(Icons.item(item, "m"), Kit.BRIGHT, Vector2(96, 36) if wide else Vector2(36, 36)))
-		var l := Kit.label(item.short_label().to_upper(), Kit.DIM, 11)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.clip_text = true
-		col.add_child(l)
-		tile.tooltip_text = "%s\n%s\nRight-click to take it off." % [item.display_name, item.effect_summary()]
-	else:
-		var frame := _frame(selected)
-		var stand_in := frame.built_in if wide and frame != null and frame.weapon_replaces_built_in else ""
-		var l := Kit.label(stand_in if stand_in != "" else "EMPTY", Kit.PROBLEM if missing else Kit.DIM, 12)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		col.add_child(l)
-		tile.tooltip_text = "Empty. Pick something from stores below." if stand_in == "" \
-			else "The %s, built in. Anything fitted here takes its place." % stand_in.to_lower()
-	return tile
-
-
-# What is in stores for the selected slot. Fits on a click; what cannot go on
-# this robot is listed dim with the reason, so a rifle in stores never looks
-# lost.
-func _stores() -> void:
-	var state: CampaignState = ui.state
-	var r := selected
-	var slots: Array = _slots(r, slot_kind)
-	_detail.add_child(Kit.heading("IN STORES · %s" % Kit.KIND_NAMES.get(slot_kind, "")))
-	if slot_index >= slots.size():
-		_detail.add_child(Kit.label("NO SLOT FOR THIS ON THIS FRAME", Kit.DIM, Kit.SMALL))
-		return
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_detail.add_child(scroll)
-	var list := Kit.vbox(4)
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(list)
-
-	var current: StringName = slots[slot_index]
-	if current != &"":
-		var on: ItemDefinition = ui.item(current)
-		var off := Kit.card(Kit.LINE, func(): _take_off(slot_kind, slot_index), ui.hover, 6.0)
-		var row := Kit.hbox(10)
-		row.add_child(Kit.label("TAKE OFF", Kit.BRIGHT, Kit.BODY, true))
-		row.add_child(Kit.label(on.display_name.to_upper() if on != null else "?", Kit.DIM, Kit.BODY))
-		row.add_child(Kit.fill())
-		row.add_child(Kit.label("BACK TO STORES", Kit.DIM, Kit.SMALL))
-		off.add_child(row)
-		list.add_child(off)
-
-	var offered := 0
-	for item in ui.shop_items():
-		if item.kind != slot_kind or state.armoury.spare(item.id) <= 0:
-			continue
-		var reason := _cannot_fit(r, item)
-		list.add_child(_store_row(item, reason))
-		offered += 1
-	if offered == 0:
-		list.add_child(Kit.label("NOTHING IN STORES FOR THIS SLOT", Kit.DIM, Kit.SMALL))
-	# THE WAY TO THE SHOP IS ALWAYS THERE. It used to appear only when stores
-	# were empty for this slot, which is exactly backwards: having one spare
-	# rifle is the moment you are most likely to want a second, and the button
-	# vanished the instant you owned anything at all.
-	var go := Kit.button("BUY AT THE ARMORER", Kit.BRIGHT, Kit.SMALL)
-	go.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	go.mouse_entered.connect(ui.hover)
-	var kind := slot_kind
-	go.pressed.connect(func(): ui.show_tab(&"armorer", {"kind": kind}))
-	list.add_child(go)
-
-
-func _store_row(item: ItemDefinition, reason: String) -> Control:
-	var state: CampaignState = ui.state
-	var wide := item.kind == ItemDefinition.Kind.WEAPON
-	var usable := reason == ""
-	var fit := func():
-		if not usable:
-			ui.play(&"denied")
-			return
-		ui.play(&"fit" if state.fit_item(selected, item, slot_index) else &"denied")
-	var row_box := Kit.card(Kit.LINE, fit, ui.hover, 6.0)
-	var row := Kit.hbox(10)
-	row_box.add_child(row)
-	var tint := Kit.BRIGHT if usable else Kit.DIM
-	row.add_child(Kit.icon(Icons.item(item, "m"), tint, Vector2(96, 36) if wide else Vector2(36, 36)))
-	var words := Kit.vbox(1)
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	words.add_child(Kit.label(item.display_name.to_upper(), tint, Kit.BODY, true))
-	var sub := Kit.effect_text(item) if usable else reason.to_upper()
-	if sub != "":
-		words.add_child(Kit.label(sub, Kit.DIM if usable else Kit.PROBLEM, 12))
-	row.add_child(words)
-	row.add_child(Kit.label("X%d" % state.armoury.spare(item.id), tint, Kit.BODY, true))
-	row_box.tooltip_text = "Fit to %s" % selected.display_name if usable else reason
-	if not usable:
-		row_box.modulate = Color(1, 1, 1, 0.7)
-	return row_box
-
-
-# Why an item in stores cannot go on this robot, in words; "" if it can.
-func _cannot_fit(record: SoldierRecord, item: ItemDefinition) -> String:
-	var state: CampaignState = ui.state
-	if not state.is_player_record(record) and record.rank < item.required_rank:
-		return "needs rank %d" % item.required_rank
-	if state.is_player_record(record) and not item.fits_player():
-		return "squadmates only"
-	if not state.is_player_record(record) and not item.fits_ai():
-		return "you only"
-	if not item.fits_chassis(record.chassis_id):
-		return "not on this frame"
-	if item.one_per_robot and state.holds_elsewhere(record, item, slot_index):
-		return "one per robot"
-	var frame := _frame(record)
-	if frame != null and not frame.takes(item):
-		# Two rules end up here, and they are not the same refusal: a turret
-		# takes weapons made for it, and a frame that drives has no use for kit
-		# written for legs (nanites). Say which one stopped it.
-		if frame.drives and not item.fits_vehicles:
-			return "not on this frame"
-		return "turret weapons only"
-	return ""
-
-
-func _take_off(kind: int, index: int) -> void:
-	if selected == null:
-		return
-	ui.play(&"remove" if ui.state.unfit_item(selected, kind, index) else &"denied")
-
-
-func _slots(record: SoldierRecord, kind: int) -> Array:
-	match kind:
-		ItemDefinition.Kind.WEAPON:
-			return record.weapon_ids
-		ItemDefinition.Kind.EQUIPMENT:
-			return record.equipment_ids
-		ItemDefinition.Kind.MODULE:
-			return record.module_ids
-	return []
-
-
 func _frame(record: SoldierRecord) -> ChassisDefinition:
 	return ui.frame_of(record)
 
@@ -1016,3 +886,125 @@ func _frame_line(record: SoldierRecord) -> String:
 	if ui.state.is_player_record(record):
 		return "%s FRAME · YOU" % Kit.frame_word(_frame(record))
 	return "%s · %s" % [Kit.frame_word(_frame(record)), record.rank_title().to_upper()]
+
+
+## WHAT THIS ROBOT IS NOW, and how much of that you bought.
+##
+## The page used to show one number — max_health beside the name — and it was
+## the FINISHED figure, so a Walker with armour plating read 335 and nothing
+## said that 15 of it came out of a module slot. Everything else a module
+## changed was invisible: a Sensor Relay adds thirty metres of sight and the
+## page never mentioned sensors at all.
+##
+## Each bar is drawn twice over: the frame's own figure in BRIGHT, and the part
+## the modules added continuing it in UPGRADE white. No attribution text — the
+## module tiles are a few rows below, and a line reading "+15 ARMOUR PLATE" says
+## in words what the white already says in place.
+##
+## Nothing was added to the data for this. recompute_stats() already folds every
+## module into these fields and the base sits on the chassis, so the block is a
+## reader.
+func _stat_block(r: SoldierRecord, frame: ChassisDefinition) -> void:
+	if frame == null:
+		# EVERY EARLY RETURN WARNS. A record naming a frame the catalogue has
+		# dropped has no base to compare against, so a block here would be
+		# comparing its stats with nothing and drawing everything as a bonus.
+		push_warning("SquadPage: '%s' has no chassis in the catalogue, so its stats block is skipped." % r.display_name)
+		return
+	_detail.add_child(Kit.heading("STATS"))
+	_detail.add_child(Kit.stat_bar("HULL", frame.base_health, r.max_health, HULL_TOP,
+		str(r.max_health)))
+	# effective_speed is a MULTIPLIER — base_speed is 1.00 on every frame — so
+	# the metres per second only exist on the chassis scene.
+	var base_speed := _Facts.chassis_speed(frame)
+	if base_speed > 0.0:
+		var now := base_speed * r.effective_speed
+		_detail.add_child(Kit.stat_bar("SPEED", base_speed, now, SPEED_TOP, "%.1f M/S" % now))
+	_detail.add_child(Kit.stat_bar("SENSOR", frame.base_sensor_range, r.effective_sensor_range,
+		SENSOR_TOP, "%d M" % int(round(r.effective_sensor_range))))
+	_detail.add_child(Kit.stat_bar("ACCURACY", frame.base_accuracy * 100.0,
+		r.effective_accuracy * 100.0, 100.0, "%d%%" % int(round(r.effective_accuracy * 100.0))))
+	if r.effective_signal_resistance_bonus > 0.0:
+		# Shown as the reduction you actually get, not the raw divisor: "+100%
+		# RES" means nothing, "-50% JAM" means something.
+		var cut: float = 1.0 - 1.0 / (1.0 + r.effective_signal_resistance_bonus)
+		_detail.add_child(Kit.stat_bar("JAM RES", 0.0, cut * 100.0, 100.0,
+			"-%d%%" % int(round(cut * 100.0))))
+
+	# POSITIVES ONLY. A frame without suppressive fire says nothing about
+	# suppressive fire: a row of NO THIS and NO THAT is a panel telling you what
+	# a robot is not, which is the longest way to say nothing.
+	var extras: Array[String] = []
+	if r.effective_suppressive:
+		extras.append("SUPPRESSIVE FIRE")
+	if r.effective_self_revive > 0.0:
+		extras.append("SELF-REVIVE %ds" % int(round(r.effective_self_revive)))
+	if not extras.is_empty():
+		_detail.add_child(Kit.label(" · ".join(extras), Kit.BRIGHT, Kit.SMALL, true))
+
+
+## THE HAT. One button that cycles whatever this frame can wear, with the name
+## of what it has on beside it.
+##
+## A cycle rather than a list because there are at most three per frame and the
+## detail column is already dense — a dropdown would cost a row and a popup to
+## say the same thing. The icon beside the name redraws with it, so the choice
+## is visible from the card as well as from here.
+##
+## NOTHING IS SHOWN FOR A FRAME WITH NO KIT. Cosmetics.for_frame always returns
+## NONE, so a size of one means there is genuinely nothing to pick and a control
+## would be dead the moment it was drawn.
+func _cosmetic_row(r: SoldierRecord) -> void:
+	var options := Cosmetics.for_frame(r.chassis_id)
+	if options.size() <= 1:
+		return
+	var state: CampaignState = ui.state
+	var row := Kit.hbox(10)
+	row.add_child(Kit.label("DRESS", Kit.DIM, Kit.SMALL))
+	var button := Kit.button(Cosmetics.display_name(r.cosmetic_id), Kit.BRIGHT, Kit.SMALL)
+	button.tooltip_text = "Headgear for %s. Appearance only — it changes no stat, and earns and costs nothing." % r.display_name
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.mouse_entered.connect(ui.hover)
+	var record := r
+	button.pressed.connect(func():
+		var next := Cosmetics.next_for_frame(record.chassis_id, record.cosmetic_id)
+		ui.play(&"fit" if state.set_cosmetic(record, next) else &"denied"))
+	row.add_child(button)
+	row.add_child(Kit.label("%d OF %d" % [maxi(options.find(r.cosmetic_id), 0) + 1, options.size()],
+			Kit.DIM, Kit.SMALL))
+	row.add_child(Kit.fill())
+	_detail.add_child(row)
+
+
+## PAULDRONS, as their own tick rather than another hat.
+##
+## They are not headgear and do not compete with it — a Captain wears both — so
+## putting them in the DRESS cycle meant the only way to have both was a third
+## combined entry, FULL DRESS, which said nothing the two separate things did
+## not. The tick replaces it.
+##
+## Shown greyed below Captain rather than hidden, because a locked thing you can
+## see is a reason to keep promoting and a thing you cannot see is not.
+func _pauldron_row(r: SoldierRecord) -> void:
+	if not Cosmetics.pauldrons_fit(r.chassis_id):
+		return
+	var state: CampaignState = ui.state
+	var earned := r.rank >= Cosmetics.PAULDRONS_RANK
+	var row := Kit.hbox(10)
+	row.add_child(Kit.label("PAULDRONS", Kit.DIM, Kit.SMALL))
+	var button := Kit.button("ON" if r.pauldrons else "OFF",
+			Kit.BRIGHT if earned else Kit.DIM, Kit.SMALL)
+	button.disabled = not earned
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.tooltip_text = ("Shoulder plates for %s. Appearance only." % r.display_name) \
+			if earned else "Earned at %s." % SoldierRecord.rank_title_at(Cosmetics.PAULDRONS_RANK)
+	button.mouse_entered.connect(ui.hover)
+	var record := r
+	button.pressed.connect(func():
+		ui.play(&"fit" if state.set_pauldrons(record, not record.pauldrons) else &"denied"))
+	row.add_child(button)
+	if not earned:
+		row.add_child(Kit.label("LOCKED · %s" % SoldierRecord.rank_title_at(Cosmetics.PAULDRONS_RANK).to_upper(),
+				Kit.DIM, Kit.SMALL))
+	row.add_child(Kit.fill())
+	_detail.add_child(row)

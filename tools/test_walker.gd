@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # WALKER TESTS
@@ -60,6 +61,9 @@ func test_it_is_bought_half_armed() -> void:
 		check("the walker is in the catalogue", false, "no chassis_def(&\"walker\")")
 		return
 	check("the walker has two weapon mounts", frame.weapon_slots == 2, str(frame.weapon_slots))
+	# OPEN THE LINE FIRST (Phase 3): recruit() refuses a chassis whose line is
+	# shut, and these setups predate that rule.
+	state.grant_unlock(frame.id)
 	var w := state.recruit(frame)
 	check("recruiting one works", w != null)
 	if w == null:

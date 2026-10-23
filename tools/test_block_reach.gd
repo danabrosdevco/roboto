@@ -1,4 +1,6 @@
 extends SceneTree
+# BUCKET: terrain
+# REPORTS: prints a table and asserts nothing — see bucket.sh
 
 # ─────────────────────────────────────────────
 # TEST BLOCK REACH — every deck a piece grows navmesh on, and whether the squad

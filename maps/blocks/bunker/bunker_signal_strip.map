@@ -1,0 +1,17 @@
+// Game: Roboto
+// Format: Valve
+// entity 0
+{
+"mapversion" "220"
+"wad" ""
+"classname" "worldspawn"
+// brush 0
+{
+( 56 128 144 ) ( 62 -128 144 ) ( 62 128 144 ) PSX_Textures/glitch_tx_1 [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 56 -128 152 ) ( 62 128 152 ) ( 62 -128 152 ) PSX_Textures/glitch_tx_1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 56 -128 144 ) ( 62 -128 152 ) ( 62 -128 144 ) PSX_Textures/glitch_tx_1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 62 -128 144 ) ( 62 128 152 ) ( 62 128 144 ) PSX_Textures/glitch_tx_1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 62 128 144 ) ( 56 128 152 ) ( 56 128 144 ) PSX_Textures/glitch_tx_1 [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 56 128 144 ) ( 56 -128 152 ) ( 56 -128 144 ) PSX_Textures/glitch_tx_1 [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+}

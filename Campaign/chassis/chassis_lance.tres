@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_n3yuu"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/lance.tscn" id="2_scene"]
+
+[sub_resource type="Resource" id="Resource_tuna0"]
+script = ExtResource("1_n3yuu")
+weapon_ids = Array[StringName]([&"light_cannon"])
+equipment_ids = Array[StringName]([&"repair_kit"])
+health_bonus = 15
+speed_multiplier = 1.0
+sensor_bonus = 0.0
+accuracy_bonus = 0.0
+tuning = {}
+
+[sub_resource type="Resource" id="Resource_bsp57"]
+script = ExtResource("1_n3yuu")
+weapon_ids = Array[StringName]([&"autocannon"])
+equipment_ids = Array[StringName]([&"repair_kit"])
+health_bonus = 30
+speed_multiplier = 1.0
+sensor_bonus = 0.0
+accuracy_bonus = 0.05
+tuning = {}
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"lance"
+display_name = "Lance"
+description = "Two driven wheels, a castor and a gun bolted in the nose. No turret ring: it aims by pointing itself, so it shoots what it is driving at and nothing else. The cheapest thing you can field that is not on foot."
+scene = ExtResource("2_scene")
+cost = 90
+purchasable = true
+supply = 1
+starting_weapon_id = &"light_cannon"
+coax_weapon_id = &""
+base_health = 110
+base_speed = 1.0
+base_accuracy = 1.0
+base_sensor_range = 60.0
+weapon_slots = 1
+built_in = "CLAWS"
+weapon_replaces_built_in = false
+turret = false
+vehicle = true
+drives = true
+equipment_slots = 1
+module_slots = 1
+musters_at_base = true
+unlock_requires = Array[StringName]([])
+marks = Array[Resource]([SubResource("Resource_tuna0"), SubResource("Resource_bsp57")])

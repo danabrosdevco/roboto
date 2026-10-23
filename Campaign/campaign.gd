@@ -1,10 +1,13 @@
 extends Node
 class_name CampaignManager
 
+const _SaveSlots := preload("res://Campaign/save_slots.gd")
+
 # Playtest analytics. By path: see the note in analytics.gd.
 const _Analytics := preload("res://Managers/analytics.gd")
 const _Induction := preload("res://Campaign/induction.gd")
 const _SoftwareTree := preload("res://Campaign/software_tree.gd")
+const _KillKinds := preload("res://Campaign/kill_kinds.gd")
 
 # ─────────────────────────────────────────────
 # CAMPAIGN — the autoload that owns state across level loads.
@@ -31,6 +34,21 @@ const _SoftwareTree := preload("res://Campaign/software_tree.gd")
 # Every item, module and chassis in the game. Handed to CampaignState so records
 # can derive their stats, and read by the squad manager UI and the spawner.
 @export var catalogue: ItemCatalogue
+# EVERY PLACE ON THE BOARD, and what each one pays. Handed to CampaignState the
+# same way the item catalogue is. Typed Resource rather than LocationCatalogue
+# because a new `class_name` is not visible to another script until the editor
+# rescans and this project cannot run --import.
+#
+# DEFAULTED WITH A preload RATHER THAN WIRED IN THE SCENE. Env/world.tscn has
+# no stored value for a property that did not exist when it was written, so the
+# script default is what applies — which is the one case where "scene values
+# beat script defaults" does not bite. Setting it in the inspector still wins,
+# and should, once there is a reason to point a campaign at a different board.
+@export var locations: Resource = preload("res://Campaign/location_catalogue.tres")
+
+## The other side's turn. Preloaded rather than named, because a new `class_name`
+## is not visible until the editor rescans.
+const _EnemyTurn := preload("res://Campaign/enemy_turn.gd")
 
 # ── DEV: launching a mission level directly ───
 # Running valley_level.tscn (or world.tscn pointed at it) skips the base, so
@@ -61,6 +79,17 @@ const _SoftwareTree := preload("res://Campaign/software_tree.gd")
 # now, not from a number on the record.
 @export var starting_chassis_id: StringName = &"soldier"
 @export var starting_resources: int = 0
+## COMPUTE IN HAND ON A FRESH CAMPAIGN, before any ground is held.
+##
+## Compute is normally earned by HOLDING sites, which means a new campaign has
+## none at all and the first site has to be taken with whatever the squad
+## mustered with. Raised from nothing on 2026-10-16 because the opening was
+## reported as far too hard: the player needs something to spend before the
+## first fight, not after it.
+##
+## SET IN Env/world.tscn, not here — a scene value beats a script default and
+## the node in that scene is the one the game runs.
+@export var starting_compute: int = 0
 # Item ids granted to stores on a fresh campaign, and the weapon every starting
 # soldier is issued. Without these a new save has an empty armoury and a squad
 # holding nothing, because the chassis ships with no gun by design.
@@ -142,30 +171,37 @@ func _ready() -> void:
 	if unlock_all_missions:
 		push_warning("Campaign: unlock_all_missions is ON. Every mission is selectable and none ever retire. Turn this off before exporting a build.")
 
-	state = CampaignState.load_from_disk()
-	if state == null:
-		state = CampaignState.new()
-		_seed_new_campaign()
-	state.catalogue = catalogue
-	if not state.soldier_repaired.is_connected(_on_soldier_repaired):
-		state.soldier_repaired.connect(_on_soldier_repaired)
+	# MENU FIRST, BUT THE WORLD BEHIND IT IS NOT EMPTY.
+	#
+	# The player still chooses on the front page — that is what menu-first means.
+	# What it cannot mean is that nothing is loaded underneath: World loads the
+	# depot before the menu is dismissed, on_level_loaded deploys the squad from
+	# the roster, and with no roster the depot came up with no allies, no
+	# casualty and no induction. Every tool that boots the world without a menu
+	# lost its squad the same way.
+	#
+	# So: open the most recent campaign speculatively. Picking a different one on
+	# the menu replaces it and re-deploys (see _adopt_state).
+	_SaveSlots.adopt_legacy()
+	var open_id := _SaveSlots.most_recent()
+	if open_id != "" and load_profile(open_id):
+		return
 
-	# Armoury transactions write straight through, so a crash at base can never
-	# cost you a purchase you already paid for.
-	if not state.ledger_changed.is_connected(_queue_base_save):
-		state.ledger_changed.connect(_queue_base_save)
-	if not state.roster_changed.is_connected(_queue_base_save):
-		state.roster_changed.connect(_queue_base_save)
-	_repair_roster()
-	state.recompute_roster()
-	# After the catalogue: a save from before teams gets its INFANTRY and ARMOR
-	# built from what each robot's frame is.
-	state.ensure_teams()
-	if not state.teams_changed.is_connected(_on_teams_changed):
-		state.teams_changed.connect(_on_teams_changed)
-	_pay_compute_owed()
-	_grant_owed_unlocks()
-	state_loaded.emit()
+	# Nothing saved. A scratch campaign, IN MEMORY ONLY, so the depot behind the
+	# menu is populated and headless tools still work. It is not a profile:
+	# active_slot stays empty, nothing is written, and START replaces it.
+	state = CampaignState.new()
+	state.catalogue = catalogue
+	state.locations = locations
+	# NOWHERE TO SAVE. Not a default, not the legacy path — nowhere. See
+	# CampaignState.save_to_disk: anything that writes this campaign would be
+	# writing over a real one.
+	state.save_path = ""
+	active_slot = ""
+	_seed_new_campaign()
+	_adopt_state("")
+	return
+
 
 
 # A save from before compute — or from before an op paid any — has cleared ops
@@ -315,6 +351,7 @@ func _return_unusable_player_kit() -> void:
 func _seed_new_campaign() -> void:
 	state.supply_cap = starting_squad_size
 	state.award(starting_resources)
+	state.award_compute(starting_compute)
 	for i in starting_squad_size:
 		var r := SoldierRecord.new()
 		r.display_name = starting_names[i] if i < starting_names.size() else "Unit-%02d" % (i + 1)
@@ -329,6 +366,19 @@ func _seed_new_campaign() -> void:
 		state.player_record.display_name = CampaignState.PLAYER_DEFAULT_NAME
 		state.player_record.set_chassis(player_frame, catalogue)
 
+	# ── WHAT A NEW CAMPAIGN STARTS WITH OPEN (Phase 3) ──────────────────
+	# Lines are bought now, so a fresh campaign that had none open could not
+	# build a single robot or fit a single thing. What you are ISSUED is open
+	# for free: the frame you start on, the rifle you start with, and whatever
+	# is in stores. The Ancient Rifle is band ISSUED and is open anyway — this
+	# covers it twice rather than relying on the band staying that way.
+	if player_frame != null:
+		state.grant_unlock(player_frame.id)
+	if starting_weapon_id != &"":
+		state.grant_unlock(starting_weapon_id)
+	for item_id in starting_stock:
+		state.grant_unlock(item_id)
+
 	# Stores first, then issue each soldier their weapon out of it.
 	for item_id in starting_stock:
 		state.armoury.add(item_id)
@@ -338,15 +388,195 @@ func _seed_new_campaign() -> void:
 			for r in state.roster:
 				state.fit_item(r, gun, 0)
 
-	if autosave:
+	# ONLY A REAL PROFILE IS WRITTEN. A scratch campaign standing behind the main
+	# menu must not touch the disk — and with no profile open, save_path is still
+	# the legacy user://campaign.json, which is the save a player may well still
+	# be relying on.
+	if autosave and active_slot != "":
 		state.save_to_disk()
 
+
+# ─────────────────────────────────────────────
+# CAMPAIGN PROFILES
+# ─────────────────────────────────────────────
+# There used to be one save and one way to start over: delete campaign.json by
+# hand. A campaign is a file under user://saves now, and these are what a menu
+# drives. See save_slots.gd.
+#
+# NOTHING HERE TOUCHES THE OLD user://campaign.json. It is adopted — copied — on
+# first boot and then left alone, so a player who was mid-run when they updated
+# keeps it either way.
+
+## Which campaign is open. Empty before one has been chosen.
+var active_slot: String = ""
+
+## Emitted when the open campaign changes: a different profile loaded, a new one
+## started. The HUD and the menus reload from `state` on this.
+signal profile_changed(id: String)
+
+
+## True once a campaign is actually open. False while the main menu is up: the
+## state exists but it is a placeholder, not anybody's save.
+func has_open_profile() -> bool:
+	return active_slot != ""
+
+
+## The campaign CONTINUE should resume, or "" when there is nothing to continue.
+func most_recent_profile() -> String:
+	return _SaveSlots.most_recent()
+
+
+## Every campaign on disk, most recently played first. See SaveSlots.list().
+func profiles() -> Array:
+	return _SaveSlots.list()
+
+
+func active_profile_name() -> String:
+	return state.profile_name if state != null and state.profile_name != "" else "Campaign"
+
+
+## Start a fresh campaign and make it the open one.
+##
+## `squad_name` and `player_name` are what the player types before the game
+## starts; both fall back to the defaults rather than being left blank, because
+## an empty name reads as a bug everywhere it is then printed.
+func new_profile(profile_name: String, squad_name: String = "", player_name: String = "") -> String:
+	var wanted := profile_name.strip_edges()
+	if wanted == "":
+		wanted = _SaveSlots.UNTITLED
+	if not _SaveSlots.ensure_dir():
+		return ""
+	var id := _SaveSlots.unique_id(wanted)
+
+	# IN PLACE, for the same reason load_profile is. A blank campaign is just the
+	# dictionary of a blank CampaignState put through the one path that knows how
+	# to read a save.
+	if state == null:
+		state = CampaignState.new()
+	state.restore_from(CampaignState.new().to_dict())
+	state.catalogue = catalogue
+	state.locations = locations
+	state.save_path = _SaveSlots.path_for(id)
+	state.profile_name = wanted
+	state.created_utc = Time.get_datetime_string_from_system(true)
+	var squad := squad_name.strip_edges().to_upper()
+	if squad != "":
+		state.squad_name = squad
+	_seed_new_campaign()
+	if state.player_record != null:
+		var who := player_name.strip_edges()
+		if who != "":
+			state.player_record.display_name = who
+	_adopt_state(id)
+	# Written immediately, even with autosave off: a profile the player named and
+	# then could not find because nothing had been committed to disk is worse
+	# than a stray file.
+	state.save_to_disk()
+	return id
+
+
+## Open an existing campaign. False when it is missing or unreadable — the
+## campaign already open is left alone in that case rather than being replaced
+## with a blank one.
+func load_profile(id: String) -> bool:
+	if not _SaveSlots.exists(id):
+		push_warning("Campaign: no profile '%s' to load; staying on '%s'." % [id, active_slot])
+		return false
+	# RESTORED INTO THE STATE WE ALREADY HAVE, not swapped for a new one.
+	#
+	# Half the game holds a reference to this object and binds to ITS signals —
+	# the player's loadout to roster_changed, the squad manager, the wallet, the
+	# induction. Replacing it left every one of them listening to a state nobody
+	# emits on, so fitting a weapon at base changed the record and never reached
+	# your hands. restore_from exists for exactly this and says so.
+	var data := CampaignState.load_dict(_SaveSlots.path_for(id))
+	if data.is_empty():
+		push_warning("Campaign: profile '%s' could not be read; staying on '%s'." % [id, active_slot])
+		return false
+	if state == null:
+		state = CampaignState.new()
+	state.restore_from(data)
+	state.catalogue = catalogue
+	state.locations = locations
+	state.save_path = _SaveSlots.path_for(id)
+	_adopt_state(id)
+	return true
+
+
+## Delete a campaign. Deleting the one that is open leaves nothing open, which
+## the caller has to resolve — the menu does, by going back to the profile list.
+func delete_profile(id: String) -> bool:
+	if not _SaveSlots.delete(id):
+		return false
+	if id == active_slot:
+		active_slot = ""
+		profile_changed.emit("")
+	return true
+
+
+## Rename the open campaign. The FILE keeps its name: renaming it would break
+## anything holding the id, and the id is not shown to anyone.
+func rename_profile(new_name: String) -> void:
+	var wanted := new_name.strip_edges()
+	if wanted == "" or state == null:
+		push_warning("Campaign: refused to rename the profile to nothing.")
+		return
+	state.profile_name = wanted
+	if autosave:
+		state.save_to_disk()
+	profile_changed.emit(active_slot)
+
+
+## Wire up a state that has just become the open one. Shared by new and load so
+## the two cannot drift.
+func _adopt_state(id: String) -> void:
+	active_slot = id
+	if not state.soldier_repaired.is_connected(_on_soldier_repaired):
+		state.soldier_repaired.connect(_on_soldier_repaired)
+	if not state.ledger_changed.is_connected(_queue_base_save):
+		state.ledger_changed.connect(_queue_base_save)
+	if not state.roster_changed.is_connected(_queue_base_save):
+		state.roster_changed.connect(_queue_base_save)
+	_repair_roster()
+	state.recompute_roster()
+	# After the catalogue: a save from before teams gets its INFANTRY and ARMOR
+	# built from what each robot's frame is.
+	state.ensure_teams()
+	if not state.teams_changed.is_connected(_on_teams_changed):
+		state.teams_changed.connect(_on_teams_changed)
+	_pay_compute_owed()
+	_grant_owed_unlocks()
+	current_mission = null
+	# REMEMBER WHERE THE TRAIN ENDED UP. See last_site above — the next
+	# departure checks it to decide whether it has anywhere to travel to.
+	if state != null and state.locations != null and current_mission != null:
+		var where = state.locations.for_mission(current_mission.id)
+		if where != null:
+			last_site = where.id
+	in_mission = false
+	profile_changed.emit(id)
+	state_loaded.emit()
+	# RE-DEPLOY INTO THE LEVEL THAT IS ALREADY UP. The depot loads before the
+	# player has chosen a campaign, so its squad was spawned from whatever roster
+	# existed at the time. Opening one has to stand the right robots up.
+	var world_node := get_parent()
+	if world_node != null and world_node.get("current_level") != null:
+		on_level_loaded(world_node.current_level)
 
 # Wipes the save and starts over. Bind it to a debug key while you're iterating
 # — otherwise every change to the starting roster is invisible until you go and
 # delete user://campaign.json by hand.
 func reset_campaign() -> void:
 	state = CampaignState.new()
+	# THE TWO CATALOGUES, same as the other two paths that build a state
+	# (the scratch campaign in _ready and load_profile). A bare CampaignState
+	# has neither, and NOTHING complains: state.locations is null, so every
+	# `if state.locations != null` guard in this file quietly takes the other
+	# branch and the whole territory layer vanishes — no site ownership, no
+	# per-turn income, no defences, every board figure 0. Only tools call this,
+	# and four of them were testing against that dead layer without knowing.
+	state.catalogue = catalogue
+	state.locations = locations
 	_seed_new_campaign()
 	current_mission = null
 	in_mission = false
@@ -385,6 +615,10 @@ func _queue_base_save() -> void:
 
 func _flush_base_save() -> void:
 	_save_queued = false
+	# No profile open means the scratch campaign behind the menu. It has nowhere
+	# to go and must not go looking.
+	if not has_open_profile():
+		return
 	# Re-checked: a deferred call lands a frame later, and that frame may be
 	# the one begin_deploy() ran in.
 	if in_mission or not autosave:
@@ -589,6 +823,27 @@ func get_mission(id: StringName) -> MissionDefinition:
 
 ## The campaign's last operation: the last entry in `missions`, which is the
 ## order the terminal offers them in.
+## IS THIS A PRACTICE RUN — a sim arena exercise or a lab fight?
+##
+## NOTHING PRACTISED COSTS ANYTHING. A sim mission already passes no turn, pays
+## nothing, takes no ground and gives the other side no move. Two things were
+## missing from that list and both bit the same way — they made the free thing
+## expensive:
+##
+##   - a revive in the arena spent the robot's one-per-mission charge, so an
+##     exercise could leave you with a squadmate who could not be stood up
+##   - a squadmate destroyed in the arena was written back as DESTROYED and had
+##     to be rebuilt, which is the opposite of practice
+##
+## Asked in ONE place because two of them would drift: a lab fight is not a
+## mission at all and has no `current_mission` to read, so it announces itself
+## by joining the "practice" group for as long as it runs (see Laboratory.run).
+func is_practice() -> bool:
+	if current_mission != null and "sim" in current_mission and current_mission.sim:
+		return true
+	return not get_tree().get_nodes_in_group(&"practice").is_empty()
+
+
 func is_final_mission(m: MissionDefinition) -> bool:
 	if m == null:
 		return false
@@ -606,6 +861,23 @@ func available_missions() -> Array[MissionDefinition]:
 	# pause menu, and neither should silently turn the other off.
 	var all_open: bool = unlock_all_missions or _debug_switch("debug.unlock_all_missions")
 	for m in missions:
+		# A DEFENCE IS NOT A MISSION YOU CHOOSE TO RUN (Phase 6.2).
+		#
+		# It is an answer to a raid that is in doubt, and it exists only while
+		# that raid is waiting. Offering it from the board whenever you fancied
+		# one would make losing ground impossible: you could simply defend a
+		# site nobody was attacking, forever, for free.
+		#
+		# BEFORE the all_open branch, because the DEBUG switch opens the
+		# LADDER — it is not meant to conjure an attack that is not happening.
+		if m != null and m.defence:
+			if state == null or state.under_attack == &"":
+				continue
+			var site_d = state.locations.for_mission(m.id) if state.locations != null else null
+			if site_d == null or site_d.id != state.under_attack:
+				continue
+			out.append(m)
+			continue
 		if all_open or (state != null and state.campaign_won):
 			# Both filters skipped, not just the gate: dropping only `requires`
 			# would still retire each non-repeatable mission the moment you
@@ -632,8 +904,6 @@ func select_mission(id: StringName) -> void:
 	# UI, gets the behaviour for free.
 	_push_destination()
 	mission_selected.emit(selected_mission())
-
-
 func selected_mission() -> MissionDefinition:
 	return get_mission(state.selected_mission_id)
 
@@ -804,8 +1074,18 @@ func on_level_loaded(level: Node) -> void:
 # Contribution is counted in KILLS rather than damage only because kills are
 # what the body already tracks; damage dealt would be the better measure and is
 # the natural upgrade when something records it.
+## XP IS PAID BY WEIGHT, not by headcount.
+##
+## A kill is worth half what it was and is then multiplied by the SUPPLY the
+## dead frame occupied — the same number that decides how many seats it takes in
+## your own squad. A rifleman is 1, a rover or a reclaimer 2, a walker 3. So
+## killing a walker is worth three riflemen, which is roughly what it costs.
+##
+## Revives are paid the same way and at the full rate, because getting a walker
+## back on its feet is worth more than shooting a rifleman.
 const XP_SURVIVED := 25
-const XP_PER_KILL := 6
+const XP_PER_KILL := 3
+const XP_PER_REVIVE := 6
 const XP_MISSION_SUCCESS := 15
 
 
@@ -829,7 +1109,8 @@ func _award_experience(success: bool) -> Array:
 		if not went.has(record):
 			continue
 		var before := record.rank
-		var gained := XP_PER_KILL * record.confirmed_kills_this_mission
+		var gained := _weighted(record.kills_by_kind_this_mission, XP_PER_KILL)
+		gained += _weighted(record.revives_by_kind_this_mission, XP_PER_REVIVE)
 		gained += XP_SURVIVED
 		if success:
 			gained += XP_MISSION_SUCCESS
@@ -877,37 +1158,42 @@ func _debug_switch(key: String) -> bool:
 	return bool(Settings.get_value(key))
 
 
-## The operation that unlocks `id` (an item or a frame) while it is still
-## locked; null when it isn't locked. Only what an operation lists in its
-## `unlocks` is ever locked: everything else is simply available.
-func locked_by(id: StringName) -> MissionDefinition:
-	if state == null or id == &"" or state.unlocked.has(id):
-		return null
-	# THE ONE GATE, so the DEBUG switch only has to open this. The armourer, the
-	# factory, the squad manager and the chassis holograms all ask this same
-	# question, so opening it here opens weapons, frames, equipment and modules
-	# together and nothing had to learn about the switch.
-	#
-	# `in_shop = false` is NOT affected and must not be: that is a thing taken
-	# out of the player's game (the shotgun, the pistol), not a thing they have
-	# yet to earn.
+## IS THIS LINE STILL SHUT? (Phase 3.6)
+##
+## This replaces `locked_by()`, which answered "which OPERATION unlocks this"
+## and returned the mission. Operations no longer hand out kit: you open a line
+## by paying for it in the fabrication car, so the question has no mission in
+## it any more and the answer is a plain bool.
+##
+## STILL THE ONE GATE. The armourer, the factory, the squad manager and the
+## chassis holograms all ask this same question, so the DEBUG switch only has
+## to open it here and weapons, frames, equipment and modules open together.
+##
+## `in_shop = false` is NOT affected and must not be: that is a thing taken out
+## of the player's game, not a thing they have yet to buy.
+func is_locked(id: StringName) -> bool:
+	if state == null or id == &"":
+		return false   # no campaign to ask; nothing is gated in a stand-in
+	if state.is_unlocked(id):
+		return false
 	if _debug_switch("debug.unlock_all_gear"):
-		return null
-	for m in missions:
-		if m != null and m.unlocks.has(id):
-			return m
-	return null
+		return false
+	return true
 
 
-# A save from before an operation unlocked something has cleared it without
-# being given it. Hand those over quietly on load (loading must not save).
+# RETIRED WITH mission.unlocks (Phase 3.6).
+#
+# This used to hand over the kit an operation listed, to a save that had
+# cleared it before the list existed. Operations no longer grant anything —
+# lines are bought in the fabrication car — so there is nothing owed.
+#
+# `MissionDefinition.unlocks` is still authored on the twelve missions and is
+# deliberately left there rather than stripped out of authored resources: it
+# records what the old progression intended, and nothing reads it. If the
+# design ever wants operations to OPEN a line for free rather than gate it,
+# state.grant_unlock() is the one call that would do it.
 func _grant_owed_unlocks() -> void:
-	for m in missions:
-		if m == null or not state.completed_missions.has(m.id):
-			continue
-		for u in m.unlocks:
-			if not state.unlocked.has(u):
-				state.unlocked.append(u)
+	pass
 
 
 # Pulls the live player body's condition onto their record.
@@ -940,6 +1226,143 @@ func _write_back_player() -> void:
 	record.missions_survived += 1
 
 
+# ─────────────────────────────────────────────
+# DEBUG: CLEAR THE OPERATION FROM WHERE YOU ARE STANDING.
+#
+# Ticks every objective and then leaves, so you can see a debrief, a payout and
+# the state of the base after a mission without playing the mission. Used for
+# checking the things that only exist on the way out — rewards, compute, rank
+# ups, what the next operation unlocks.
+#
+# IT WALKS THE PLAYER INTO THE EXIT RATHER THAN CALLING extract() ITSELF, and
+# that is deliberate. Extraction is not one call: MissionExit runs extract() and
+# THEN emits next_level_signal, World.load_next_level does its own lifecycle on
+# the other side of that, and extract() clears in_mission in between, which the
+# second half reads. A debug path that called extract() direct would pay out and
+# then strand the player in a finished mission with no level change. Moving the
+# player is the one action that puts the real sequence in motion.
+#
+# OPTIONAL OBJECTIVES ARE TICKED TOO. The point is to see the full payout; a
+# debug clear that silently pays the minimum teaches you the wrong number.
+## OPEN THE WAY OUT. What winning a site operation actually does.
+##
+## THE BUNKER UNLOCKS THE EXIT; IT DOES NOT TELEPORT YOU. §12.7 is "take the
+## ground, stand down, go home", and the going home is the player's to walk.
+##
+## The first cut moved the player into the exit, the way the debug clear does.
+## Three things were wrong with that. It took the walk out of the player's
+## hands at the one moment they have earned it. It depended on an Area3D
+## producing body_entered for a body that was teleported into it, which it does
+## not reliably do — the squad arrived 0.5 m from an open door and the
+## operation never ended. And the same hole is in debug_complete_mission, which
+## nobody noticed because what you do after pressing that is walk about.
+##
+## So the operation opens the gate and lights it, and the player leaves on
+## their own feet through the exit that was always there.
+##
+## IT TICKS THE REQUIRED OBJECTIVES TOO, and that is not generosity: a
+## core-driven objective will not stay ticked while its core is still theirs —
+## HoldableCore republishes it from the core's own holder — so the gate has to
+## come off rather than the cores being lied about. §12.7 says explicitly you do
+## not have to clear the cores to take the bunker.
+func open_way_out() -> String:
+	if not in_mission:
+		return "NOT ON AN OPERATION — DEPLOY FIRST."
+	var ticked := 0
+	# duplicate(): complete() emits, and a listener that prunes or adds an
+	# objective would otherwise mutate the array being walked.
+	for o in objectives.objectives().duplicate():
+		if o == null or not is_instance_valid(o):
+			continue
+		if o.completed or o.failed:
+			continue
+		# The extraction objective is the one you are about to satisfy by
+		# arriving. Ticking it here would mark it done before you got there.
+		if o.is_extraction:
+			continue
+		o.complete()
+		ticked += 1
+
+	var exit := _find_mission_exit()
+	if exit == null:
+		push_warning("Campaign: the operation is over but this level has no exit to open, so there is no way out of it.")
+		return "%d OBJECTIVE(S) CLEARED, BUT THIS LEVEL HAS NO EXIT." % ticked
+	exit.requires_objectives_complete = false
+	# LIT, NOT JUST OPEN. LevelExit only shows its beacon when it would take you
+	# somewhere; an exit that has quietly become usable is one the player has no
+	# reason to walk to.
+	if exit.has_method("_refresh_live"):
+		exit._refresh_live()
+	return "%d OBJECTIVE(S) CLEARED. THE WAY OUT IS OPEN." % ticked
+
+
+## The debug clear. Opens the way out AND walks you to it, because the point of
+## the button is not to walk.
+func debug_complete_mission() -> String:
+	var said := open_way_out()
+	if not in_mission:
+		return said
+	var exit := _find_mission_exit()
+	var player := _first_of_class(get_tree().root, "Player")
+	if exit == null or player == null or not (player is Node3D):
+		return said
+	(player as Node3D).global_position = exit.global_position + Vector3.UP * 0.5
+	return said
+
+
+## The way out of the level.
+##
+## IT IS A `LevelExit`, NOT A `MissionExit`. MissionExit is a subclass that no
+## map actually places — every level, proving ground included, instances the
+## plain LevelExit — so looking for the subclass found nothing and this reported
+## every level as having no exit. Both names are accepted in case that changes.
+##
+## NOT A DEPARTURE EXIT EITHER: `is_departure` marks the gate at base that sends
+## you OUT on an operation, which is the opposite of what is wanted here.
+func _find_mission_exit() -> Node3D:
+	for n in _all_of_class(get_tree().root, ["LevelExit", "MissionExit"]):
+		if n.get("is_departure"):
+			continue
+		if n.get("next_level") == null:
+			continue   # a door with nowhere to send you; a plain prop
+		return n as Node3D
+	return null
+
+
+func _all_of_class(n: Node, names: Array) -> Array[Node3D]:
+	var out: Array[Node3D] = []
+	var s: Script = n.get_script() as Script
+	if s != null and names.has(String(s.get_global_name())) and n is Node3D:
+		out.append(n as Node3D)
+	for c in n.get_children():
+		out.append_array(_all_of_class(c, names))
+	return out
+
+
+func _first_of_class(n: Node, cls: String) -> Node:
+	var s: Script = n.get_script() as Script
+	if s != null and s.get_global_name() == StringName(cls):
+		return n
+	for c in n.get_children():
+		var f := _first_of_class(c, cls)
+		if f != null:
+			return f
+	return null
+
+
+## WHERE THE TRAIN IS STANDING, as a Location id.
+##
+## RUNTIME ONLY, deliberately not in CampaignState and not in the save. It is
+## used for one thing: deciding whether the departure ride has anywhere to go.
+## Take a site, have it raided the next turn, and the defence is on the ground
+## you are already parked at — so the train does not travel, it just opens its
+## doors. See DepartureRide.begin().
+##
+## Losing it across a save/load is the right failure: on a fresh boot the train
+## plays the full ride, which is a second of spectacle rather than a wrong
+## answer. Putting it in the save would mean a migration for a cosmetic.
+var last_site: StringName = &""
+
 # Success path. Collect the squad, pay out, save, and head home.
 func extract(success: bool = true) -> Dictionary:
 	var result := {"survivors": 0, "lost": 0, "reward": 0, "success": success, "seconds": seconds_this_mission}
@@ -958,7 +1381,7 @@ func extract(success: bool = true) -> Dictionary:
 			r.kills_by_kind_this_mission = {}
 	_xp_this_mission.clear()
 	if spawner != null:
-		var counts := spawner.write_back()
+		var counts := spawner.write_back(is_practice())
 		result["survivors"] = counts["survivors"]
 		result["lost"] = counts["lost"]
 
@@ -969,9 +1392,10 @@ func extract(success: bool = true) -> Dictionary:
 	# standing next to four dented squadmates.
 	_write_back_player()
 
-	# Veterancy. add_xp(), rank, rank_title() and every required_rank gate have
-	# been implemented all along with NOTHING calling add_xp — so rank was
-	# permanently 0 and every gate permanently shut. This is the missing call.
+	# Veterancy. add_xp(), rank and rank_title() were implemented all along
+	# with NOTHING calling add_xp, so rank was permanently 0. This is the
+	# missing call. The rank GATES it used to open are gone (Phase 3.7) —
+	# rank still drives stats, it just no longer locks kit or frames.
 	result["ranked_up"] = _award_experience(success)
 
 	# Bonus objectives pay out whether or not the mission itself succeeded —
@@ -1009,12 +1433,108 @@ func extract(success: bool = true) -> Dictionary:
 		# the arena a third time must not append a duplicate id, but it does
 		# need to bump the counter the terminal reads.
 		state.record_clear(current_mission.id)
-		var newly: Array[StringName] = []
-		for u in current_mission.unlocks:
-			if not state.unlocked.has(u):
-				state.unlocked.append(u)
-				newly.append(u)
-		result["unlocked"] = newly
+		# ── TERRITORY ────────────────────────────────────────────────────
+		# A TURN IS AN OPERATION (§5), and clearing one takes the ground it
+		# was fought over (§2).
+		#
+		# ADVANCE FIRST, THEN CLAIM. Income is paid for what you held going
+		# INTO the operation, so a site taken now starts paying from the next
+		# one — "holding a site for three turns pays three times", not four.
+		# Its COMPUTE is immediate, because site_compute() is derived from
+		# what you hold rather than banked on capture.
+		#
+		# ON SUCCESS ONLY, deliberately. A failed run is VOIDED back to the
+		# dictionary taken at deployment (see the note further down), so a
+		# turn burned on a loss would be rolled back anyway — doing it here
+		# keeps the two from disagreeing.
+		# ── A SIM ARENA COSTS NOTHING AND CHANGES NOTHING (Phase 6.4) ─
+		#
+		# A free action: no turn, no pay, no ground, and the other side does
+		# not get a move. Practising must never cost you the campaign — and now
+		# that a turn IS an operation, everything below would have made it do
+		# exactly that.
+		#
+		# The CLEAR is still recorded above, because the `requires` ladder runs
+		# through the arenas and they are still the thing that opens Hillfort.
+		if current_mission.sim:
+			result["sim"] = true
+			result["turn"] = state.turn
+		else:
+			# ANSWERING THE RAID CLEARS IT. Playing the defence IS the answer, so
+			# the pending flag goes whatever the result was — winning keeps the
+			# ground, losing it is handled by the site changing hands below.
+			if current_mission.defence and state.under_attack != &"":
+				var answered = state.locations.for_mission(current_mission.id) if state.locations != null else null
+				if answered != null and answered.id == state.under_attack:
+					state.under_attack = &""
+					state.under_attack_turn = -1
+					result["answered"] = String(answered.id)
+	
+			var before_income := state.income_per_turn()
+	
+			state.advance_turn()
+			result["turn"] = state.turn
+			result["income"] = before_income
+	
+			# ── A PENDING DEFENCE YOU DID NOT ANSWER (Phase 6.2) ─────────
+			#
+			# A raid too close to call does not take the site — it offers you the
+			# fight. Doing something ELSE is how you decline, and declining is a
+			# real choice with a real cost: it settles on paper, seeded, so you
+			# cannot reroll a bad answer by walking away twice.
+			#
+			# BEFORE the enemy's next move, so one raid is resolved before another
+			# can land.
+			if state.under_attack != &"" and state.under_attack != current_mission.id:
+				var ua: StringName = state.under_attack
+				var settled: int = _EnemyTurn.settle(state, ua, _act())
+				state.under_attack = &""
+				state.under_attack_turn = -1
+				result["declined_site"] = String(ua)
+				result["declined_outcome"] = settled
+				print("[Campaign] declined the defence of %s: %s" % [ua,
+					"held anyway" if settled == _EnemyTurn.Outcome.HELD else "lost"])
+	
+			# ── THE OTHER SIDE PLAYS TOO (Phase 6.1) ────────────────────
+			#
+			# A turn is an operation, so this is the only place the other side
+			# moves. Every 2-3 turns it takes a site on your frontier — and a site
+			# can only be attacked if it borders ground you do not hold, which is
+			# the whole defensive game (§6).
+			var enemy: Dictionary = _EnemyTurn.play(state, _act())
+			result["enemy"] = enemy
+			match int(enemy["outcome"]):
+				_EnemyTurn.Outcome.LOST:
+					print("[Campaign] turn %d: they took %s" % [state.turn, enemy["site"]])
+				_EnemyTurn.Outcome.IN_DOUBT:
+					# NOT TAKEN. Held open for the player to answer — the ops table
+					# marks it and offers the defence.
+					state.under_attack = enemy["site"]
+					state.under_attack_turn = state.turn
+					print("[Campaign] turn %d: %s is under attack and in doubt" % [
+						state.turn, enemy["site"]])
+				_EnemyTurn.Outcome.HELD:
+					print("[Campaign] turn %d: the garrison at %s held" % [state.turn, enemy["site"]])
+			var site = state.locations.for_mission(current_mission.id) if state.locations != null else null
+			if site != null:
+				var was := state.site_owner(site.id)
+				state.set_site_owner(site.id, Enums.Factions.PLAYER)
+				if was != int(Enums.Factions.PLAYER):
+					result["site_taken"] = site.display_name
+					result["site_compute"] = site.compute
+			else:
+				# Not every operation is a place: the three Sim Arenas are a
+				# practice track and deliberately off the adjacency graph (§15),
+				# asked by the `sim` flag rather than by an id prefix.
+				# Silent for those, loud for anything else, because an operation
+				# with no location is a site that can never be held or paid for.
+				if not current_mission.sim:
+					push_warning("Campaign: operation '%s' has no Location, so clearing it takes no ground and pays nothing per turn." % current_mission.id)
+		# NOTHING IS UNLOCKED BY CLEARING AN OPERATION ANY MORE (Phase 3.6).
+		# Kit is bought in the fabrication car. The debrief still carries the
+		# key so the screen does not have to learn a new shape; it is always
+		# empty, and the row it drives simply never appears.
+		result["unlocked"] = [] as Array[StringName]
 		# THE END. Clearing the last operation wins the campaign, once: the
 		# HUD follows MISSION COMPLETE with YOU WON, and from then on every
 		# operation is open at the terminal to replay in any order.
@@ -1107,3 +1627,27 @@ func on_returned_to_base() -> void:
 
 func save() -> void:
 	state.save_to_disk()
+
+
+## A tally of frame id -> count, paid at `rate` per supply point.
+##
+## FALLS BACK TO SUPPLY 1 for anything it cannot identify, which is the same
+## thing supply_of() does for a record with no frame. An unknown kind is still
+## worth something: the robot did the work whether or not the catalogue has an
+## entry for what it shot.
+func _weighted(tally: Dictionary, rate: int) -> int:
+	var total := 0
+	for kind: StringName in tally:
+		var frame := _KillKinds.frame_of(kind)
+		var supply: int = frame.supply if frame != null else 1
+		total += rate * maxi(supply, 1) * int(tally[kind])
+	return total
+
+
+## WHICH ACT THE CAMPAIGN IS IN. Phase 7 gives this a real source; until then
+## everything that asks gets 1, which is the Act 1 experience the shipped maps
+## were authored as.
+func _act() -> int:
+	if state != null and state.has_method("act"):
+		return int(state.act())
+	return 1

@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://wy5i02nh87m3"
+path="res://.godot/imported/street_storm_inlet.map-7474e7969b4d3725e56ffd35607092af.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_storm_inlet.map"
+dest_files=["res://.godot/imported/street_storm_inlet.map-7474e7969b4d3725e56ffd35607092af.tres"]
+
+[params]
+

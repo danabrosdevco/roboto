@@ -1,7 +1,32 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
 
+[ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_4aiqp"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
 [ext_resource type="PackedScene" path="res://Character/characters/ai/mechanic_chassis.tscn" id="2_scene"]
+
+[sub_resource type="Resource" id="Resource_r3e8v"]
+script = ExtResource("1_4aiqp")
+weapon_ids = Array[StringName]([])
+equipment_ids = Array[StringName]([&"repair_tool"])
+health_bonus = 15
+speed_multiplier = 1.0
+sensor_bonus = 0.0
+accuracy_bonus = 0.0
+tuning = {
+"repair_rate": 1.4
+}
+
+[sub_resource type="Resource" id="Resource_jm10h"]
+script = ExtResource("1_4aiqp")
+weapon_ids = Array[StringName]([])
+equipment_ids = Array[StringName]([&"repair_tool"])
+health_bonus = 30
+speed_multiplier = 1.1
+sensor_bonus = 0.0
+accuracy_bonus = 0.0
+tuning = {
+"repair_rate": 1.9
+}
 
 [resource]
 script = ExtResource("1_chassisdef")
@@ -13,14 +38,19 @@ cost = 70
 purchasable = true
 supply = 1
 starting_weapon_id = &""
+coax_weapon_id = &""
 base_health = 60
 base_speed = 1.0
 base_accuracy = 1.0
 base_sensor_range = 45.0
 weapon_slots = 0
 built_in = "WELDER"
+weapon_replaces_built_in = false
 turret = false
 vehicle = false
+drives = false
 equipment_slots = 1
 module_slots = 2
-required_rank = 0
+musters_at_base = true
+unlock_requires = Array[StringName]([])
+marks = Array[Resource]([SubResource("Resource_r3e8v"), SubResource("Resource_jm10h")])

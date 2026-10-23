@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://2ujl8ibllpbt"
+path="res://.godot/imported/street_utility_cabinet.map-0b521c44c0ced483abc90ea19c391a66.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_utility_cabinet.map"
+dest_files=["res://.godot/imported/street_utility_cabinet.map-0b521c44c0ced483abc90ea19c391a66.tres"]
+
+[params]
+

@@ -53,6 +53,20 @@ func _on_area_3d_body_entered(body: Node3D) -> void:
 		return
 
 	if resolved == Mode.DEPLOY:
+		# ARGUS TOOK THE SURPLUS, AND THE BOOKS DO NOT BALANCE.
+		#
+		# A requisition does not take a robot off the roster or uninstall
+		# anything — it just leaves more compute held than earned, and the
+		# choice of what to give up is the player's. So departure is refused
+		# until they have made it. See CampaignState.requisition_compute.
+		#
+		# Refused on the DEPLOY leg only. Blocking the way HOME over a ledger
+		# would strand the squad in the field for an accounting problem they
+		# can only fix at base, which is the worst version of this idea.
+		var owed: int = Campaign.state.over_allocated_by() if Campaign.state != null else 0
+		if owed > 0:
+			blocked.emit("REQUISITIONED — FREE %d COMPUTE TO DEPLOY" % owed)
+			return
 		Campaign.begin_deploy()
 	else:
 		if requires_objectives_complete and not _objectives_complete():

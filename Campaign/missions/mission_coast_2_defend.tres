@@ -1,0 +1,157 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=16 format=3 uid="uid://c06xmxyuaw2bu"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://be3pa15jtbg7" path="res://maps/coastal-road_level.tscn" id="3_coast"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rifle"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="6_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+[ext_resource type="Resource" uid="uid://1rea71mf80nx" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="8_armour"]
+[ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="9_marks"]
+
+[sub_resource type="Resource" id="A_east"]
+script = ExtResource("2_espec")
+callsign = "PRIBOY"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("8_armour"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_coast_town"
+spawn_tag = &"obj_coast_east_in"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_north"]
+script = ExtResource("2_espec")
+callsign = "PRILIV"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("6_chaser"), ExtResource("6_chaser"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_coast_craters"
+spawn_tag = &"obj_coast_north_in"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_ford"]
+script = ExtResource("2_espec")
+callsign = "POTOK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("9_marks")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_coast_bridge"
+spawn_tag = &"obj_coast_ford_hills"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_east2"]
+script = ExtResource("2_espec")
+callsign = "SHKVAL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("8_armour"), ExtResource("9_marks"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_coast_town"
+spawn_tag = &"obj_coast_east_in"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 120.0
+
+[sub_resource type="Resource" id="A_flank"]
+script = ExtResource("2_espec")
+callsign = "VIKHR"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_chaser"), ExtResource("6_chaser"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_coast_bridge"
+spawn_tag = &"obj_coast_north_in"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 180.0
+
+[sub_resource type="Resource" id="A_last"]
+script = ExtResource("2_espec")
+callsign = "BURAN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("8_armour"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_coast_craters"
+spawn_tag = &"obj_coast_ford_hills"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 300.0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"coast_2_defend"
+display_name = "Coast Road — Hold"
+briefing = "Seven hundred metres of road and three relays strung along it, and they are coming for all three at once.
+
+The weight is on the east road, because the town relay is the one worth having and the road is the only straight way to it. The crater field gets the flank off the north hills. The bridgehead at the west end gets whatever walks down out of the fords — the far end of your own line, four hundred metres from anywhere you can reinforce it from.
+
+That is the problem with this place and it has always been the problem: it is a line, and a line has two ends. Your garrison is in the town, at the centre, on the hill and at the east approaches. Decide early which relay you are prepared to lose.
+
+There is no extraction and nothing to carry home: what you are fighting for is the ground you already own, and everything it pays you."
+level_scene = ExtResource("3_coast")
+map_position = Vector2(360, 30)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("A_east"), SubResource("A_north"), SubResource("A_ford"), SubResource("A_east2"), SubResource("A_flank"), SubResource("A_last")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"coast_relay_bridge", &"coast_relay_craters", &"coast_relay_town"])
+reward_resources = 0
+compute_reward = 0
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = true
+defence = true
+sim = false
+garrison_posts = Array[StringName]([&"obj_coast_town_w", &"obj_coast_centre", &"obj_coast_hill", &"obj_coast_town_e"])
+requires = Array[StringName]([&"coast_1_road"])

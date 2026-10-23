@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://brvkw7igaxt5j"
+path="res://.godot/imported/suburb_billboard.map-55a5fab41a9977dc223c9f4530750fd4.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_billboard.map"
+dest_files=["res://.godot/imported/suburb_billboard.map-55a5fab41a9977dc223c9f4530750fd4.tres"]
+
+[params]
+

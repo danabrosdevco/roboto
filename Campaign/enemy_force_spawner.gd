@@ -1,6 +1,18 @@
 extends Node
 class_name EnemyForceSpawner
 
+## Preloaded rather than named: a new `class_name` is not visible until the
+## editor rescans and this project cannot run --import.
+const _Gen := preload("res://Campaign/force_generator.gd")
+
+## Robots are built through CsgBake.make() rather than scene.instantiate(): a
+## CSGShape3D rebuilds its geometry the first time it enters the tree, which cost
+## 8.6 ms per robot and made a 40-strong reserve wave a 336 ms frame. make()
+## hands back the same node with the CSG already replaced by the mesh baked once
+## at startup. It has to happen BEFORE the node is added to the tree — see
+## csg_bake.gd for why neither _enter_tree nor _ready will do.
+const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
+
 # ─────────────────────────────────────────────
 # ENEMY FORCE SPAWNER — builds a mission's opposition from EnemySquadSpecs.
 #
@@ -25,6 +37,33 @@ class_name EnemyForceSpawner
 ## the walkable ground, small enough that a squad never silently appears in a
 ## different part of the map from the one it was authored into.
 @export var max_spawn_snap: float = 45.0
+
+# ── VARIED KIT ────────────────────────────────
+# OPT IN PER SQUAD, NOT ON EVERYWHERE.
+#
+# This started as a master switch defaulting to ON, which made every hostile
+# in the game — including the three riflemen of the first tutorial contact —
+# roll for armour and a bigger gun. That is a wholesale rebalance of the
+# campaign disguised as a feature, and it takes the choice away from the thing
+# that is supposed to own difficulty: "Composition per mission is your entire
+# difficulty curve" (EnemySquadSpec). An upgraded garrison should be something
+# a LATER mission asks for, on the squads it wants it on.
+#
+# So the real dial is EnemySquadSpec.kit_variance, authored per squad and 0 by
+# default. This stays only as a kill switch for the whole system.
+@export var randomise_loadouts: bool = true
+## Mixed into every body's seed, so the whole force can be rerolled without
+## touching the mission. Change it and every hostile in the game is carrying
+## something different; leave it and a mission plays the same way twice.
+@export var loadout_seed: int = 0
+
+## By path, not by class_name: a brand-new class_name is not resolvable until
+## the editor rescans, and that rescan must not be run with the editor open.
+const _Loadouts := preload("res://Campaign/enemy_loadouts.gd")
+
+## Set at deploy time from the mission id, so two missions on the same map do
+## not field the same kit, and a retry of one of them does.
+var _mission_seed: String = ""
 ## Stands each spawned body on the real ground: see ground_snap.gd. By path,
 ## not class_name, so an open editor never compiles this before it exists.
 const _Ground := preload("res://Campaign/ground_snap.gd")
@@ -59,6 +98,10 @@ signal reinforcements_woken(tag: StringName, squads: int)
 var _losses: int = 0
 var _counted: Dictionary = {}
 var _kill_waves: Array = []        # [{"after": int, "tag": StringName}]
+## [{"after": float, "tag": StringName}], by MISSION SECONDS since the force
+## deployed. Physics time, so a paused game does not spend it.
+var _time_waves: Array = []
+var _elapsed: float = 0.0
 ## Reserves listening for this tag come in when any nest is destroyed. A
 ## convention rather than a field: a mission names the wave, the building does
 ## not have to know about it.
@@ -72,6 +115,12 @@ func losses() -> int:
 
 # Every early return here used to be silent, which meant "no enemies spawned"
 # and "no warnings" arrived together and told you nothing. They all talk now.
+## Generate the force from the site, the act and who holds it (Phase 4). Off
+## turns the whole thing back into the authored constant it used to be, which
+## is what the Laboratory and the shot scripts want.
+@export var generate_force: bool = true
+
+
 func deploy_force(level: Node, mission: MissionDefinition) -> void:
 	clear()
 	if level == null:
@@ -81,15 +130,76 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 		push_warning("EnemyForceSpawner: no current mission. Campaign.current_mission is null, which usually means the level was launched directly instead of deployed to from base. See Campaign.debug_mission.")
 		return
 	_level = level
+	_mission_seed = "%s:%d" % [mission.id, loadout_seed]
 	if mission.replace_level_enemies:
 		_clear_level_hostiles(level)
-	if mission.enemy_force.is_empty():
+	# ── GENERATED, NOT CONSTANT (Phase 4) ───────────────────────────────
+	#
+	# What a site fields is a function of the site, the act and who holds it —
+	# §10. The AUTHORED specs are still the map's shape: every tag, posture and
+	# wake trigger comes through untouched and only the composition is rebuilt.
+	# See force_generator.gd for why that split is the whole mitigation.
+	#
+	# OFF BY DEFAULT UNTIL THE CAMPAIGN CAN ANSWER. With no Location for this
+	# operation — the three Sim Arenas, or a level launched directly — compose()
+	# hands the authored force straight back, so nothing that works today stops
+	# working.
+	var force: Array = mission.enemy_force
+	# THE GROUP, NOT THE AUTOLOAD. campaign.gd already names EnemyForceSpawner,
+	# so naming Campaign here is a parse-time cycle and every file that touches
+	# either one fails to compile. CampaignManager carries groups=["campaign"]
+	# in Env/world.tscn, so it is findable before any _ready has run.
+	var cm = get_tree().get_first_node_in_group("campaign")
+	var state = cm.state if cm != null and "state" in cm else null
+	if generate_force and state != null and state.locations != null:
+		var site = state.locations.for_mission(mission.id)
+		if site != null:
+			var act: int = state.act() if state.has_method("act") else 1
+			# WHOSE ARMY IS THIS. On an attack it is whoever HOLDS the place.
+			# On a defence the holder is the player, so it is whoever is coming
+			# to take it — see ForceGenerator.attacker_for_act.
+			var builder: int = _Gen.attacker_for_act(act) if mission.defence \
+				else state.site_owner(site.id)
+			force = _Gen.compose(mission.enemy_force, site, act,
+				builder, state.catalogue, _mission_seed)
+			print("[EnemyForce] composed for %s: act %d, %s %d, %d spec(s)" % [
+				site.id, act, "attacked by" if mission.defence else "held by",
+				builder, force.size()])
+
+	# ── THE PLAYER'S GARRISON, ON A DEFENCE (Phase 5) ───────────────────
+	#
+	# §6: take a site and it is defended. The garrison is free, comes with the
+	# ground, and is sized on COMPUTE — a player-wide number, so every site you
+	# hold is defended exactly as well as every other. §6 is emphatic that it
+	# must NOT track site value, or your richest sites become your safest.
+	#
+	# Built from frames the player has UNLOCKED. A garrison fielding kit you
+	# never opened would hand you through the back door what Phase 3 just made
+	# you pay for at the front.
+	#
+	# Spawned through this same spawner on the PLAYER faction: register_enemy()
+	# only means "an AI the manager knows about", and hostility is decided by
+	# faction — so a friendly squad travels the authored road exactly like a
+	# hostile one.
+	if mission.defence and not mission.garrison_posts.is_empty():
+		var g_state = cm.state if cm != null and "state" in cm else null
+		var g_cat = g_state.catalogue if g_state != null else null
+		var garrison: Array = _Gen.garrison(g_state, g_cat, mission.garrison_posts,
+			"%s/garrison" % mission.id)
+		if garrison.is_empty():
+			push_warning("EnemyForceSpawner: '%s' is a defence with garrison posts but nothing was built for them, so you are holding it alone." % mission.id)
+		else:
+			print("[EnemyForce] garrison: %d post(s), %d supply" % [
+				garrison.size(), _Gen.garrison_supply(g_state)])
+			force = force + garrison
+
+	if force.is_empty():
 		push_warning("EnemyForceSpawner: mission '%s' has an empty enemy_force." % mission.id)
 		return
-	print("[EnemyForce] deploying %d spec(s) for mission '%s'" % [mission.enemy_force.size(), mission.id])
+	print("[EnemyForce] deploying %d spec(s) for mission '%s'" % [force.size(), mission.id])
 
 	var hostiles := 0
-	for spec in mission.enemy_force:
+	for spec in force:
 		if spec == null:
 			continue
 		if spec.body_count() <= 0:
@@ -120,6 +230,8 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 			_reserves[spec.reinforcement_tag].append(spec)
 			if spec.wake_after_kills > 0:
 				_kill_waves.append({"after": spec.wake_after_kills, "tag": spec.reinforcement_tag})
+			if spec.wake_after_seconds > 0.0:
+				_time_waves.append({"after": spec.wake_after_seconds, "tag": spec.reinforcement_tag})
 			continue
 
 		var squad := _spawn_squad(level, spec)
@@ -128,6 +240,14 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 			hostiles += squad.squad_members.size()
 	if not _reserves.is_empty():
 		print("[EnemyForce] reserves held: %s" % str(pending_reserve_tags()))
+	# THE CLOCK STARTS HERE, and only if something is waiting on it. Set
+	# explicitly rather than left to the default: physics processing is ON by
+	# default, so without this every spawner in the game would tick once a frame
+	# to look at an empty array.
+	_elapsed = 0.0
+	set_physics_process(not _time_waves.is_empty())
+	if not _time_waves.is_empty():
+		print("[EnemyForce] timed waves: %s" % str(_time_waves))
 	force_deployed.emit(_squads.size(), hostiles)
 
 
@@ -175,11 +295,9 @@ func wake(tag: StringName) -> int:
 		squad.set_objective(Squad.SquadObjective.ADVANCE, destination, true)
 		# They come in from outside activation_distance on purpose, so they are
 		# exempt from the culling that would otherwise freeze them where they
-		# landed until the player walked out to meet them. Only reinforcements
-		# get this: see the note on the gate in Enemy._physics_process.
-		for member in squad.squad_members:
-			if member != null and is_instance_valid(member):
-				member.exempt_from_culling()
+		# landed until the player walked out to meet them. See _let_them_walk_in,
+		# and the note on the gate in Enemy._physics_process.
+		_let_them_walk_in(squad, destination)
 		woken += 1
 
 	if woken > 0:
@@ -214,7 +332,7 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		if frame == null or frame.scene == null:
 			push_error("EnemyForceSpawner: '%s' roster slot %d has no scene." % [spec.callsign, i])
 			continue
-		var soldier := frame.scene.instantiate() as Soldier
+		var soldier := _CsgBake.make(frame.scene) as Soldier
 		if soldier == null:
 			push_error("EnemyForceSpawner: %s is not a Soldier scene." % frame.scene.resource_path)
 			continue
@@ -225,6 +343,7 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 		# garrison reads RELAY-1..RELAY-6 instead of RELAY-L-1 / RELAY-M-1.
 		soldier.soldier_name = "%s-%d" % [spec.callsign, i + 1]
 		_apply_frame(soldier, frame)
+		_apply_loadout(soldier, frame, "%s/%s/%d" % [_mission_seed, spec.callsign, i], spec)
 		# For the playtest log: "Chaser", not "enemy_chaser". Legacy count-form
 		# frames are built on the fly and have no name worth reporting.
 		if frame.resource_path != "":
@@ -265,6 +384,7 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 				# Re-seat on the surface it was pushed onto, WITHOUT the snap
 				# that pulled it back into the pile.
 				at = _Ground.stand(spread, soldier, level, false)
+			at = _settle_clear(at, soldier, level, reach)
 			taken.append([at, reach])
 		soldier.position = level.to_local(at)
 		level.add_child(soldier)
@@ -292,6 +412,10 @@ func _spawn_squad(level: Node, spec: EnemySquadSpec) -> Squad:
 	squad.name = "Hostile_%s" % spec.callsign
 	squad.callsign = spec.callsign
 	squad.player_commandable = false
+	# ANY NON-HOSTILE SQUAD THIS SPAWNER BUILDS IS A GARRISON, and garrisons are
+	# not commanded. The player's own squads come from squad_spawner.gd; nothing
+	# friendly that arrives through here should reach the order wheel.
+	squad.autonomous = not Enums.are_hostile(Enums.Factions.PLAYER, spec.faction)
 	# Membership before the node enters the tree — Squad._ready() connects every
 	# member's signals and would otherwise connect to an empty array.
 	squad.squad_members = members
@@ -312,6 +436,27 @@ func _watch_losses(body: Enemy) -> void:
 		return   # nothing spawned to watch
 	body.went_down.connect(_on_body_lost.bind(body))
 	body.destroyed.connect(_on_body_lost.bind(body))
+
+
+## THE ONLY THING THIS TICKS FOR is a wave waiting on the clock, and it turns
+## itself off the moment the last one has gone in. A spawner that ticked for the
+## whole mission to watch a number nothing reads is the cost this avoids — most
+## missions have no timed wave at all and never run this once.
+func _physics_process(delta: float) -> void:
+	if _time_waves.is_empty():
+		set_physics_process(false)
+		return
+	_elapsed += delta
+	var due: Array = []
+	for wave in _time_waves:
+		if float(wave["after"]) <= _elapsed:
+			due.append(wave)
+	for wave in due:
+		_time_waves.erase(wave)
+		print("[EnemyForce] %.0fs in: calling in '%s'" % [_elapsed, wave["tag"]])
+		wake(wave["tag"])
+	if _time_waves.is_empty():
+		set_physics_process(false)
 
 
 func _on_body_lost(body: Enemy) -> void:
@@ -461,6 +606,57 @@ func _apply_frame(soldier: Soldier, frame: ChassisDefinition) -> void:
 		soldier.sensor_range = frame.base_sensor_range
 
 
+# ─────────────────────────────────────────────
+# A SQUAD WALKING IN FROM A LONG WAY OUT HAS TO BE LET TO WALK.
+#
+# Distance culling freezes any hostile further than activation_distance (75 m)
+# from the nearest thing it would fight, and it deliberately IGNORES
+# always_active — see the note on the gate in Enemy._physics_process for why.
+# So an ADVANCE squad authored to come in from 200 m does not come in. It stands
+# on its spawn until the fight happens to reach it, and on a mission built around
+# the fight coming to the PLAYER, that never happens.
+#
+# Measured on the Georgetown landing: WHARF, four riflemen on ADVANCE with
+# always_active set, 208 m out, moved 0.0 m in 160 s of mission. The squad 30 m
+# FURTHER out walked in fine — because it was a RESERVE, and wake() had already
+# been exempting the squads it sent in.
+#
+# So the exemption is granted wherever an ADVANCE is issued rather than only at
+# wake(), and it is SIZED TO THE WALK. The flat 90 s covers the 90 m a
+# reinforcement used to spawn at and nothing further: at the pace a squad
+# actually advances it leaves anything past ~200 m frozen short of its
+# objective, which is the same bug one wave later.
+#
+# Narrow on purpose. Only a squad actually ordered to cross open ground gets it,
+# only until it ARRIVES (the cull clears never_culled inside the activation
+# radius), and never a garrison or a patrol — those are what the 70 idle brains
+# in the Foundry note were about.
+# ─────────────────────────────────────────────
+## The pace an advancing squad actually keeps, in m/s, which is far below any
+## chassis move_speed: a squad under orders stops for cover, for contact and for
+## each other. Measured at 2.4 m/s over open ground with shooting on the
+## Georgetown landing (tools/_gt_advance.gd), so this is deliberately slower —
+## the number only sets how long the exemption lasts, and the cost of being
+## generous is one brain ticking a little past its arrival.
+const ADVANCE_PACE := 2.0
+
+
+func _let_them_walk_in(squad: Squad, destination: Vector3) -> void:
+	if squad == null or not is_instance_valid(squad):
+		push_warning("EnemyForceSpawner: asked to let a squad walk in that is not there, so nothing was exempted and a distant advance may freeze on its spawn.")
+		return
+	var walk: float = squad.get_center().distance_to(destination)
+	for member in squad.squad_members:
+		if member == null or not is_instance_valid(member):
+			continue
+		# Already inside the radius: it was never going to be culled on the way,
+		# and an exemption it does not need is a brain running for the rest of the
+		# mission for nothing.
+		if walk <= float(member.activation_distance):
+			continue
+		member.exempt_from_culling(maxf(Enemy.CULL_EXEMPT_SECONDS, walk / ADVANCE_PACE))
+
+
 # Posture is applied AFTER the squad is in the tree, because set_patrol and
 # set_objective both read member positions via get_center().
 func _apply_posture(squad: Squad, spec: EnemySquadSpec, route: PatrolPath, post: SquadObjectivePoint) -> void:
@@ -476,8 +672,11 @@ func _apply_posture(squad: Squad, spec: EnemySquadSpec, route: PatrolPath, post:
 				post.global_position if post != null else squad.get_center(), true)
 		EnemySquadSpec.Posture.ADVANCE:
 			squad.target_objective = post
-			squad.set_objective(Squad.SquadObjective.ADVANCE,
-				_advance_destination(squad, spec, post), true)
+			var push_to: Vector3 = _advance_destination(squad, spec, post)
+			squad.set_objective(Squad.SquadObjective.ADVANCE, push_to, true)
+			# An ADVANCE authored from outside the activation radius is a walk the
+			# squad has to be allowed to take. See _let_them_walk_in.
+			_let_them_walk_in(squad, push_to)
 		EnemySquadSpec.Posture.RESERVE:
 			# Inert until something wakes them. This is the hook reinforcements
 			# will hang off — a director flips them to ADVANCE on a trigger.
@@ -573,7 +772,7 @@ const RING_GAP := 0.5
 ## many turns it tries at each step.
 const SEAT_STEP := 1.6
 const SEAT_TURNS := 8
-const SEAT_STEPS := 4
+const SEAT_STEPS := 8
 
 
 # WHERE A BODY WILL ACTUALLY FIT.
@@ -606,12 +805,55 @@ func _seat_for(at: Vector3, soldier: Soldier, level: Node, anchor: Vector3, take
 				return candidate
 			if step == 0:
 				break   # the drawn seat is one spot, not eight
-	# NOBODY STACKS, EVER. A post wedged between buildings can fail the clear
-	# test at every candidate — and falling back to one spot for all of them
-	# put three bodies inside each other at Mutaha's north island, which is
+	# SECOND BEST IS OUT OF THE WALL, NOT OUT OF A SQUADMATE.
+	#
+	# This used to fall straight through to the spacing-only search below, and
+	# on a brush map that is how bodies end up INSIDE the level. Audited across
+	# every mission: 124 hostiles standing in worldspawn geometry, including
+	# the ones reported from play on Polaris, inside the ramp down to the
+	# basement. Every one of them is on a TrenchBroom map; the generated-
+	# terrain valleys are almost clean, because open ground always has a free
+	# AND clear seat and the fallback never runs.
+	#
+	# The old ordering reasoned that standing inside a squadmate is worse than
+	# standing in a doorway. That is true, and it is also already handled:
+	# _spread_from below is a pass whose entire job is pushing overlapping
+	# bodies apart after the ground has had its say. Nothing anywhere digs a
+	# body out of a wall. So the preference inverts — take the seat that is
+	# clear of the level and let the spacing pass separate them.
+	for step in SEAT_STEPS:
+		var out := float(step) * SEAT_STEP
+		for turn in SEAT_TURNS:
+			var angle := TAU * float(turn) / float(SEAT_TURNS)
+			var candidate: Vector3 = at if step == 0 else at + Vector3(cos(angle), 0.0, sin(angle)) * out
+			if _seat_is_clear(candidate, reach, space, level as Node3D):
+				return candidate
+			if step == 0:
+				break
+
+	# THIRD: ROOM, EVEN WITHOUT A NAVMESH TO STAND ON.
+	#
+	# _seat_is_clear needs walkable ground within 2m as well as space, and
+	# inside a structure there is often no navmesh at all — an interior the bake
+	# never reached refuses every candidate however much room is actually there.
+	# That is 62 of the 75 bodies found buried across the brush maps: not short
+	# of space, short of MESH. Somewhere with room and no mesh is a worse seat
+	# than one with both, and a far better one than standing in a wall.
+	for step in SEAT_STEPS:
+		var out := float(step) * SEAT_STEP
+		for turn in SEAT_TURNS:
+			var angle := TAU * float(turn) / float(SEAT_TURNS)
+			var candidate: Vector3 = at if step == 0 else at + Vector3(cos(angle), 0.0, sin(angle)) * out
+			if _seat_has_room(candidate, reach, space):
+				return candidate
+			if step == 0:
+				break
+
+	# NOBODY STACKS, EVER. A post wedged between buildings can fail both tests
+	# at every candidate — and falling back to one spot for all of them put
+	# three bodies inside each other at Mutaha's north island, which is
 	# precisely the pile this pass exists to prevent (see Enemy._damp_shoving
-	# for what an overlapping pair then does). Standing in a doorway is a bad
-	# spawn; standing INSIDE a squadmate is a broken one.
+	# for what an overlapping pair then does).
 	for step in SEAT_STEPS:
 		var out := float(step) * SEAT_STEP
 		for turn in SEAT_TURNS:
@@ -621,6 +863,13 @@ func _seat_for(at: Vector3, soldier: Soldier, level: Node, anchor: Vector3, take
 				return candidate
 			if step == 0:
 				break
+	# EVERY ONE OF THESE IS A BODY IN A WALL. Three searches found nowhere with
+	# room within range of the post, so the drawn seat is all that is left and
+	# it is very likely inside the level. Silent, this is invisible until a
+	# player walks into it; named, it points straight at the post that needs
+	# moving. tools/spawn_geometry_audit.gd lists them all at once.
+	push_warning("EnemyForceSpawner: no clear seat within %.0fm of (%.0f, %.0f, %.0f) for %s — placing it on its ring offset, which may be inside the level." % [
+		float(SEAT_STEPS) * SEAT_STEP, anchor.x, anchor.y, anchor.z, soldier.soldier_name])
 	return at   # the ring drew this seat: at least it is spread like the others
 
 
@@ -635,6 +884,23 @@ func _seat_is_free(at: Vector3, reach: float, taken: Array) -> bool:
 		if Vector2(other.x - at.x, other.z - at.z).length() < room:
 			return false
 	return true
+
+
+## Room for a body here, measured against the REAL SURFACE rather than the
+## navmesh. The same sphere _seat_is_clear uses, seated on whatever a ray finds
+## underfoot — so it works inside a structure the navmesh bake never entered.
+func _seat_has_room(at: Vector3, reach: float, space: PhysicsDirectSpaceState3D) -> bool:
+	var down := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 2.0, at + Vector3.DOWN * 4.0)
+	var hit := space.intersect_ray(down)
+	if hit.is_empty():
+		return false   # nothing to stand on at all
+	var ball := SphereShape3D.new()
+	ball.radius = reach
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = ball
+	q.transform = Transform3D(Basis(), Vector3(at.x, (hit.position as Vector3).y + reach + 0.1, at.z))
+	q.collide_with_areas = false
+	return space.intersect_shape(q, 1).is_empty()
 
 
 func _seat_is_clear(at: Vector3, reach: float, space: PhysicsDirectSpaceState3D, level: Node3D) -> bool:
@@ -775,10 +1041,219 @@ func _is_hostile_squad(squad: Squad) -> bool:
 # Drops references only. The level unload frees the nodes.
 func clear() -> void:
 	_losses = 0
+	_elapsed = 0.0
 	_counted.clear()
 	_kill_waves.clear()
+	_time_waves.clear()
+	set_physics_process(false)
 	_squads.clear()
 	# Holds specs waiting on an objective that will never fire now, and a stale
 	# entry would send the next mission's reinforcements into the wrong level.
 	_reserves.clear()
 	_level = null
+
+
+## Rolled kit for one body. The arithmetic lives in EnemyLoadouts so that the
+## nest, which hatches bodies on a path of its own, cannot drift from this one.
+##
+## `variance` is the squad's kit_variance: the chance THIS body is an upgraded
+## one. Rolled off the same seed as the kit itself, so which bodies in a squad
+## are upgraded is as repeatable as what they are carrying.
+func _apply_loadout(soldier: Soldier, frame: ChassisDefinition, seed_text: String,
+		spec: EnemySquadSpec) -> void:
+	var forced := {
+		"modules": spec.forced_modules,
+		"equipment": spec.forced_equipment,
+		"weapons": spec.forced_weapons,
+	}
+	var authored: bool = not (spec.forced_modules.is_empty()
+			and spec.forced_equipment.is_empty() and spec.forced_weapons.is_empty())
+	var variance: float = spec.kit_variance
+	# AUTHORED KIT IS NOT OPTIONAL. A squad that names what it carries gets it
+	# whatever its variance says — the dial is for the random half.
+	if not randomise_loadouts or (variance <= 0.0 and not authored):
+		return
+	if variance < 1.0 and not authored:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash(seed_text + "/upgraded")
+		if rng.randf() >= variance:
+			return   # an ordinary body in a partly upgraded squad
+	_Loadouts.apply(soldier, frame, _catalogue(), seed_text, forced)
+
+
+# ─────────────────────────────────────────────
+# THE LAST CHECK, MADE WHERE THE BODY ACTUALLY ENDS UP.
+#
+# _seat_is_clear tests a sphere seated on the NAVMESH point near a candidate.
+# GroundSnap.stand then puts the body on the REAL SURFACE it finds by raycast,
+# which is not always the same height — a navmesh at ground level under a
+# walkway, a ledge the surface probe finds first, a ramp whose deck is above
+# the mesh. The clearance was measured at one height and the body was put at
+# another, so a seat that passed every test still arrived inside the level.
+#
+# That is 62 of the 75 bodies the audit found buried across the brush maps:
+# not a search that gave up — a search that succeeded and was then overruled
+# by the ground. None of them warned, because as far as _seat_for was
+# concerned it had found somewhere good.
+#
+# So this re-tests at the finished position and nudges outward until the body
+# is genuinely in the clear, re-standing at each step because moving sideways
+# changes what is underfoot.
+#
+# IT ALSO OWNS A SECOND FAULT THAT LOOKS NOTHING LIKE THE FIRST: a body seated
+# ON TOP OF a capture objective. That is not an overlap and _body_fits is right
+# to pass it — see _on_objective_prop, added after a playtest found hostiles
+# standing on the Hillfort relay core where no shot could reach them.
+# ─────────────────────────────────────────────
+func _settle_clear(at: Vector3, soldier: Soldier, level: Node, reach: float) -> Vector3:
+	if not (level is Node3D) or not level.is_inside_tree():
+		return at
+	var space := (level as Node3D).get_world_3d().direct_space_state
+	if space == null:
+		return at
+	# TWO WAYS A SEAT IS WRONG, and only one of them is an overlap. See
+	# _on_objective_prop for the other.
+	if _body_fits(at, reach, space, soldier) and not _on_objective_prop(at, space):
+		return at
+	for step in SEAT_STEPS:
+		var out := float(step + 1) * SEAT_STEP
+		for turn in SEAT_TURNS:
+			var angle := TAU * float(turn) / float(SEAT_TURNS)
+			var candidate: Vector3 = at + Vector3(cos(angle), 0.0, sin(angle)) * out
+			# Re-stood WITHOUT the navmesh pull: the pull is what would drag it
+			# back towards the spot it is trying to get out of.
+			var stood := _Ground.stand(candidate, soldier, level, false)
+			# AND IT HAS TO HAVE A FLOOR. GroundSnap.stand returns the spot
+			# lifted clear when it finds no surface at all — "trust the navmesh".
+			# Accepting that here moved eleven bodies out of a wall and into the
+			# air, which is not an improvement on either count.
+			if not _has_floor(stood, space):
+				continue
+			if _body_fits(stood, reach, space, soldier) and not _on_objective_prop(stood, space):
+				return stood
+	push_warning("EnemyForceSpawner: %s is inside the level (or on an objective) at (%.0f, %.1f, %.0f) and nowhere within %.0fm is clear — the post it spawns on needs moving." % [
+		soldier.soldier_name, at.x, at.y, at.z, float(SEAT_STEPS) * SEAT_STEP])
+	return at
+
+
+## IS IT STANDING ON THE CAPTURE OBJECTIVE ITSELF?
+##
+## REPORTED FROM PLAY ON HILLFORT: hostiles "within the capture objective" that
+## could not be shot. Measured, DISH-1 was standing 1.6 m up and dead centre on
+## the relay core — on top of its plinth, screened from every approach by its
+## own tower, with a clear line to the player and none back.
+##
+## _body_fits CANNOT SEE THIS, and nothing is wrong with _body_fits. A body on
+## top of a plinth overlaps nothing at all: it is standing on a surface, the
+## same way it stands on the ground. The seat passed every test it was given
+## because being on the furniture is not a collision.
+##
+## It happens wherever an authored garrison post and a slice-built core landed
+## on the same spot — obj_hillfort_dish is exactly where HillfortSlice seats
+## RelayObjective — and the posts predate the cores by a long way, so the
+## overlap was nobody's mistake. Moving nine posts would fix the nine we know
+## about; this fixes the rule, which is that the objective is scenery and a
+## garrison stands AROUND it.
+##
+## The bunker counts too, for the same reason and more so: its roof is flat.
+func _on_objective_prop(at: Vector3, space: PhysicsDirectSpaceState3D) -> bool:
+	var q := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 0.4, at + Vector3.DOWN * 2.5)
+	var skip: Array[RID] = []
+	for _i in 4:
+		q.exclude = skip
+		var hit := space.intersect_ray(q)
+		if hit.is_empty():
+			return false
+		if hit.collider is CharacterBody3D or hit.collider is RigidBody3D:
+			skip.append(hit.rid)
+			continue
+		return _owned_by_objective(hit.collider as Node)
+	return false
+
+
+## Walk up from a collider looking for the thing that owns it. Bounded, because
+## this runs once per body per seat candidate and a level is deep.
+func _owned_by_objective(n: Node) -> bool:
+	var up: Node = n
+	for _i in 6:
+		if up == null:
+			return false
+		if String(up.name) == "SiteBunker":
+			return true
+		var s = up.get_script()
+		if s != null and String(s.resource_path).ends_with("holdable_core.gd"):
+			return true
+		# A core is a prefab with the HoldableCore hanging off it rather than
+		# scripting it, so the sibling has to be looked at too.
+		for c in up.get_children():
+			var cs = c.get_script()
+			if cs != null and String(cs.resource_path).ends_with("holdable_core.gd"):
+				return true
+		up = up.get_parent()
+	return false
+
+
+## Is there room for this body AT this exact spot? Other bodies are ignored —
+## spacing is _spread_from's job and two robots touching is not a bug worth
+## moving someone into a wall over.
+##
+## THE BODY'S OWN SHAPE, SHRUNK — not a sphere of its half-width. A sphere
+## that size centred on the origin reaches below the feet of anything wide and
+## low, so a Rover reported itself stuck in the floor it was standing on,
+## nothing ever fitted, and the search lifted 97 bodies into the air looking
+## for somewhere that did. Shrunk because a garrison belongs up against cover
+## and a full-size test calls that a collision.
+func _body_fits(at: Vector3, reach: float, space: PhysicsDirectSpaceState3D, soldier: Soldier) -> bool:
+	var shape := _shrunk_shape(soldier)
+	if shape == null:
+		return true   # nothing to test with: do not move it on a guess
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = shape
+	q.transform = Transform3D(Basis(), at)
+	q.collide_with_areas = false
+	for hit in space.intersect_shape(q, 8):
+		var other = hit.collider
+		if other == soldier or other is CharacterBody3D or other is RigidBody3D:
+			continue
+		return false
+	return true
+
+
+## The body's collision shape at 60% of its size, for the fit test above.
+func _shrunk_shape(body: Node3D) -> Shape3D:
+	for c in body.get_children():
+		if not (c is CollisionShape3D) or c.shape == null:
+			continue
+		var s: Shape3D = c.shape
+		if s is CapsuleShape3D:
+			var cap := CapsuleShape3D.new()
+			cap.radius = maxf((s as CapsuleShape3D).radius * 0.6, 0.1)
+			cap.height = maxf((s as CapsuleShape3D).height * 0.6, 0.3)
+			return cap
+		if s is BoxShape3D:
+			var box := BoxShape3D.new()
+			box.size = (s as BoxShape3D).size * 0.6
+			return box
+		if s is CylinderShape3D:
+			var cyl := CylinderShape3D.new()
+			cyl.radius = maxf((s as CylinderShape3D).radius * 0.6, 0.1)
+			cyl.height = maxf((s as CylinderShape3D).height * 0.6, 0.3)
+			return cyl
+	return null
+
+
+## Something solid within a couple of metres under `at`. Other bodies are
+## looked through, the same way GroundSnap._surface does it.
+func _has_floor(at: Vector3, space: PhysicsDirectSpaceState3D) -> bool:
+	var q := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 0.2, at + Vector3.DOWN * 2.5)
+	var skip: Array[RID] = []
+	for _i in 4:
+		q.exclude = skip
+		var hit := space.intersect_ray(q)
+		if hit.is_empty():
+			return false
+		if hit.collider is CharacterBody3D or hit.collider is RigidBody3D:
+			skip.append(hit.rid)
+			continue
+		return true
+	return false

@@ -7,3 +7,4 @@ script = ExtResource("1_stock")
 ammo_type = &"drone"
 amount = 2
 capacity = 2
+requires_carrier = true

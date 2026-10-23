@@ -358,9 +358,26 @@ func _build_debug() -> void:
 		"EVERY OPERATION SELECTABLE AT THE TERMINAL, IGNORING WHAT IT REQUIRES, AND NONE RETIRE WHEN CLEARED — SO YOU CAN RUN ONE AGAIN.")
 	_toggle("debug.unlock_all_gear", "UNLOCK ALL HARDWARE",
 		"EVERY WEAPON, FRAME, MODULE AND PIECE OF EQUIPMENT BUYABLE NOW. YOU STILL PAY FOR IT. DOES NOT BRING BACK ANYTHING TAKEN OUT OF THE GAME, LIKE THE SHOTGUN.")
+	_header("CONTACT AND TARGETING — REVERSIBLE, AND ALL DEFAULT TO HOW THE GAME SHIPS")
+	_toggle("debug.contact_overlay", "VIEW CONTACT / TARGETING",
+		"DRAWS WHAT EACH SIDE KNOWS: EVERY LIVE CONTACT, HOW MANY ROBOTS ARE SHOOTING IT, THE DAMAGE PER SECOND ALREADY COMMITTED, AND HOW LONG SINCE ANYONE LAST SAW IT.")
+	_toggle("debug.contact_distribution", "SPREAD FIRE",
+		"ROBOTS AVOID PILING ONTO SOMETHING ALREADY DYING. OFF, EVERY ROBOT SHOOTS WHATEVER IS NEAREST — WHICH IS WHAT THE GAME DID BEFORE. FIVE ON ONE WALKER STILL CONCENTRATES EITHER WAY.")
+	_toggle("debug.contact_enemy_distribution", "SPREAD FIRE — THEM TOO",
+		"THE SAME, FOR THE ENEMY. THIS IS A DIFFICULTY CHANGE, NOT A POLISH ONE: THEIR SQUADS STOP WASTING FOUR ROBOTS ON ONE OF YOURS.")
+	_toggle("debug.contact_mortar_needs_eyes", "MORTARS NEED A SPOTTER",
+		"A TUBE ONLY FIRES AT SOMETHING SOMEBODY CAN CURRENTLY SEE. OFF, IT PICKS ITS OWN TARGETS AT FULL RANGE THROUGH WALLS, WHICH IS WHAT IT DID BEFORE.")
+	_toggle("debug.contact_accuracy", "SPOTTING TIGHTENS AIM",
+		"A ROBOT SHOOTING SOMETHING A SQUADMATE HAS EYES ON AIMS BETTER. THIS IS WHAT MAKES THE SPOTTER WORTH ITS SEAT.")
+	_toggle("debug.contact_engage_unseen", "FIRE ON SPOTTED CONTACTS",
+		"LETS A ROBOT SHOOT SOMETHING IT CANNOT PERSONALLY SEE, SO LONG AS A SQUADMATE CAN AND THE SHOT IS NOT THROUGH A WALL. OFF BY DEFAULT: IT IS THE ONE THAT COULD MAKE SENSOR RANGE STOP MATTERING.")
+	_toggle("debug.signal_readout", "VIEW SIGNAL INTEGRITY",
+		"PUTS THE FIGURES UNDER THE BLUE STRIP: LINK QUALITY AS A PERCENTAGE AND THE RAW VALUE DRIVING THE SCREEN. THE STRIP ITSELF IS ALWAYS LIVE — THIS ONLY NAMES THE NUMBER, SO YOU CAN SAY WHAT THE FEED LOOKS LIKE AT A GIVEN ONE.")
 	_header("PERMANENT — GOES INTO THE SAVE AND CANNOT BE TAKEN BACK")
 	_give("GIVE RESOURCES", "ADDS 5000 TO THE PURSE.", "+5000", 5000, false)
 	_give("GIVE COMPUTE", "ADDS 50 UNSPENT COMPUTE.", "+50", 50, true)
+	_complete_mission_row()
+	_promote_all_row()
 
 
 ## One handout row: a name, a button, and the campaign on the other end of it.
@@ -382,6 +399,40 @@ func _give(label: String, hint: String, button_text: String, amount: int, comput
 	row["enabled"] = Callable()
 	row["controls"] = [button]
 
+
+
+
+## The mission-clear row. Same shape as _give — a name, a button, and the
+## campaign on the other end — but it only does anything while you are actually
+## on an operation, so it reads back as unavailable at base and in the menu.
+func _complete_mission_row() -> void:
+	var row := _new_row("COMPLETE OPERATION",
+		"TICKS EVERY OBJECTIVE, OPTIONAL ONES INCLUDED, AND WALKS YOU INTO THE EXTRACTION POINT. PAYS OUT IN FULL AND CLEARS THE OPERATION. ONLY WORKS WHILE YOU ARE ON ONE.")
+	var line: HBoxContainer = row["line"]
+	line.add_child(_gap(ARROW_W))
+	var button := _flat_button("CLEAR", FONT_ROW)
+	button.custom_minimum_size = Vector2(VALUE_W, 0)
+	button.pressed.connect(_on_complete_mission)
+	line.add_child(button)
+	line.add_child(_gap(READOUT_W))
+	row["refresh"] = Callable()
+	row["enabled"] = Callable()
+	row["controls"] = [button]
+
+
+func _on_complete_mission() -> void:
+	_play(confirm_sound)
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	if campaign == null or not campaign.has_method("debug_complete_mission"):
+		# Says why rather than doing nothing. The options screen opens from the
+		# MAIN MENU too, where there is no campaign in the tree at all.
+		_flash("NO CAMPAIGN LOADED — START A RUN FIRST.", COL_WARN)
+		return
+	# One string back, because the campaign knows all the ways this can refuse
+	# — not on an operation, no tracker, no exit in the level — and the menu
+	# should not be guessing at them a second time.
+	var said: String = str(campaign.debug_complete_mission())
+	_flash(said, COL_BRIGHT if said.ends_with("EXTRACTING.") else COL_WARN)
 
 func _on_give(amount: int, compute: bool) -> void:
 	_play(confirm_sound)
@@ -904,3 +955,49 @@ class _Bar extends Control:
 	func _pick_at(x: float) -> void:
 		var frac := clampf(x / maxf(size.x, 1.0), 0.0, 1.0)
 		picked.emit(snap(lerpf(min_value, max_value, frac)))
+
+
+## Promote the whole roster to the top rank, so the rank-gated kit can be seen
+## without playing twenty operations for it.
+##
+## PERMANENT, and sitting under that header for a reason: rank is saved state
+## and there is no undo. It is here rather than in a console because it is the
+## only way to look at Captain-rank cosmetics on a fresh save.
+func _promote_all_row() -> void:
+	var row := _new_row("PROMOTE EVERYONE",
+		"EVERY ROBOT ON THE ROSTER STRAIGHT TO CAPTAIN, BENCHED ONES INCLUDED. XP IS ZEROED AT THE TOP RANK BECAUSE THERE IS NOTHING LEFT TO SPEND IT ON.")
+	var line: HBoxContainer = row["line"]
+	line.add_child(_gap(ARROW_W))
+	var button := _flat_button("MAX", FONT_ROW)
+	button.custom_minimum_size = Vector2(VALUE_W, 0)
+	button.pressed.connect(_on_promote_all)
+	line.add_child(button)
+	line.add_child(_gap(READOUT_W))
+	row["refresh"] = Callable()
+	row["enabled"] = Callable()
+	row["controls"] = [button]
+
+
+func _on_promote_all() -> void:
+	_play(confirm_sound)
+	# Through the "campaign" group, not a path: this screen lives above World
+	# and opens from the main menu too, where there is no campaign at all.
+	var campaign := get_tree().get_first_node_in_group("campaign")
+	var state = campaign.get("state") if campaign != null else null
+	if state == null:
+		_flash("NO CAMPAIGN LOADED — START A RUN FIRST.", COL_WARN)
+		return
+	var promoted := 0
+	for record in state.roster:
+		if record == null or record.rank >= record.max_rank:
+			continue
+		record.rank = record.max_rank
+		record.xp = 0
+		# Through the same path a real promotion takes, so the kit changes here
+		# exactly as it would after twenty operations.
+		record.adopt_best_cosmetic()
+		promoted += 1
+	if promoted == 0:
+		_flash("EVERY ROBOT IS ALREADY AT TOP RANK.", COL_BRIGHT)
+		return
+	_flash("%d ROBOT(S) PROMOTED TO %s." % [promoted, state.roster[0].rank_title()], COL_BRIGHT)

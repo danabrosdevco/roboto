@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # MORTAR — the Reclaimer's boom takes a 60mm tube in place of the welder, and
@@ -77,6 +78,11 @@ func _hold(frames: int) -> int:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	var cat: ItemCatalogue = load(CATALOGUE)
 
@@ -121,7 +127,7 @@ func _init() -> void:
 	var player: Node3D = _find(root, "Player")
 	var level: Node = player.get_parent()
 	var ai: AIManager = _find(root, "AIManager")
-	var valley = load("res://maps/valley_level.tscn").instantiate()
+	var valley = load("res://maps/appendix/valley_level.tscn").instantiate()
 	level.add_child(valley)
 	for _i in 60:
 		await physics_frame
@@ -140,6 +146,10 @@ func _init() -> void:
 	state.armoury = Armoury.new()
 	state.catalogue = cat
 	state.award(99999)
+	# Recruiting is gated on the line being open (Phase 3); this suite is about
+	# the mortar, not the catalogue, so it opens what it needs.
+	state.grant_unlock(frame.id)
+	state.grant_unlock(&"soldier")
 	var tube_rec := state.recruit(frame)
 	tube_rec.benched = false
 	tube_rec.weapon_ids[0] = &"mortar"

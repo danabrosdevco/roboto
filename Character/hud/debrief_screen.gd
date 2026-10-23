@@ -50,12 +50,68 @@ func _ready() -> void:
 func _on_extracted(mission: MissionDefinition, result: Dictionary) -> void:
 	_mission = mission
 	_pending = result
+	_cover()
+
+
+# ─────────────────────────────────────────────
+# THE DEPOT FLASH.
+#
+# The debrief waits for returned_to_base, for a good reason: the level behind
+# it should be home, with nothing left running in the one you just left. What
+# it did NOT account for is the gap. World._change_level adds the base,
+# places the player, and then awaits a process frame AND a physics frame
+# before calling on_returned_to_base — both load-bearing, the physics one
+# because the navigation server only commits its regions on a physics step
+# and the enemy spawner queries it.
+#
+# So for at least two frames the depot is on screen, lit, with no debrief over
+# it. You extract and you see home before you are told what happened.
+#
+# The awaits cannot go. So the screen is covered at EXTRACT instead, the
+# moment the result exists, and stays covered across the swap until the real
+# debrief is built on top of it. Nothing about the load sequence changes.
+#
+# NO PAUSE HOLD on the cover. show_result takes one; taking one here would
+# pause the tree during the level load, which is exactly where that sequence
+# is doing careful work with the navigation server.
+var _blackout: ColorRect = null
+
+
+func _cover() -> void:
+	if _blackout != null and is_instance_valid(_blackout):
+		return
+	_blackout = ColorRect.new()
+	# The debrief's own backdrop colour, so the cover and the screen that
+	# replaces it are the same black and the handover is invisible.
+	_blackout.color = Color(0.025, 0.04, 0.035, 1.0)
+	_blackout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_blackout.mouse_filter = Control.MOUSE_FILTER_STOP
+	_blackout.process_mode = Node.PROCESS_MODE_ALWAYS
+	_blackout.z_index = 109   # under the debrief itself, over everything else
+	var host: Node = get_parent()
+	if host == null:
+		push_warning("DebriefScreen: no parent to hang the extraction cover on, so the depot will flash.")
+		_blackout = null
+		return
+	host.add_child(_blackout)
+
+
+func _uncover() -> void:
+	if _blackout == null or not is_instance_valid(_blackout):
+		return
+	# remove_child first: queue_free is deferred, and a cover that lingers one
+	# frame on top of the debrief is the same bug pointing the other way.
+	_blackout.get_parent().remove_child(_blackout)
+	_blackout.queue_free()
+	_blackout = null
 
 
 # Shown at base, not at the extraction point: the level behind it is home, and
-# nothing is left running in the one you just left.
+# nothing is left running in the one you just left. The cover above holds the
+# screen in the meantime.
 func _on_home() -> void:
 	if _pending.is_empty():
+		_uncover()   # arrived home without a result to show: let the base through
 		return
 	show_result(_mission, _pending)
 	_pending = {}
@@ -112,6 +168,9 @@ func show_result(mission: MissionDefinition, result: Dictionary) -> void:
 	_result_now = result
 	_build(mission, result)
 	visible = true
+	# AFTER visible, never before: dropping the cover first would show one
+	# frame of depot between the two, which is the bug this exists to stop.
+	_uncover()
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	PauseHold.take(&"debrief")
 	_counting = 0.0
@@ -119,6 +178,7 @@ func show_result(mission: MissionDefinition, result: Dictionary) -> void:
 
 
 func close() -> void:
+	_uncover()   # belt and braces: never leave the screen black
 	if not visible:
 		return
 	visible = false
@@ -236,6 +296,7 @@ func _build(mission: MissionDefinition, result: Dictionary) -> void:
 		_build_won()
 		return
 
+	_column.add_child(_turn_report(result))
 	_column.add_child(_rewards(result))
 
 	var squad: Array = result.get("squad", [])
@@ -301,23 +362,42 @@ func _rewards(result: Dictionary) -> Control:
 	var mission_pay := int(result.get("reward", 0))
 	var bonus := int(result.get("objective_reward", 0))
 	var salvage := int(result.get("salvage", 0))
-	var parts := PackedStringArray()
+	# EVERY SOURCE, AS ITS OWN ROW. Name and amount kept apart so the panel can
+	# lay them out as figures rather than join them into a sentence.
+	var sources: Array = []
 	if mission_pay > 0:
-		parts.append("%d MISSION" % mission_pay)
+		sources.append(["OPERATION", mission_pay])
 	if bonus > 0:
-		parts.append("%d BONUS" % bonus)
+		sources.append(["OBJECTIVES", bonus])
 	if salvage > 0:
-		parts.append("%d SALVAGE" % salvage)
-	# WHAT YOU EARNED IS THE HEADLINE, not what you happen to be holding.
+		sources.append(["SALVAGE", salvage])
+	# GROUND YOU HOLD. The turn's income arrives through award() like
+	# everything else, so it was already inside the total — just invisible,
+	# which made the one number that rewards holding territory the one number
+	# the player could not see.
+	var holdings := int(result.get("income", 0))
+	if holdings > 0:
+		sources.append(["HOLDINGS", holdings])
+	# WHAT YOU EARNED IS THE HEADLINE, and WHERE IT CAME FROM is a LIST.
 	#
-	# The big number used to be the balance, with the payout as a footnote
-	# beside the breakdown — so the screen you get for finishing a mission led
-	# with a number that barely moved. The take is the thing you did; the
-	# balance is context for it, and goes underneath.
+	# It used to be one run-together string — "500 MISSION + 200 BONUS + 21
+	# HOLDINGS" — under the number, with the balance beneath that. Three
+	# problems: the sources ran into each other, the one that matters least
+	# (the balance) got a line of its own, and the one the campaign layer
+	# exists to reward (holdings) was buried in the middle of a sentence.
+	#
+	# One row per source instead, right-aligned, so they read as a column of
+	# figures rather than prose. The balance is gone — it is on the HUD and in
+	# the squad manager, and it is not what this screen is about.
 	var earned := after - before
 	var money := _counter("EARNED", 0, earned, Kit.MONEY,
-		" + ".join(parts) if earned > 0 else "NO PAYOUT", "+")
-	money.add_child(Kit.label("%d IN THE BANK" % after, Kit.DIM, Kit.SMALL))
+		"" if earned > 0 else "NO PAYOUT", "+")
+	for part in sources:
+		var line := Kit.hbox(8)
+		line.add_child(Kit.label(String(part[0]), Kit.DIM, Kit.SMALL))
+		line.add_child(Kit.fill())
+		line.add_child(Kit.label(str(int(part[1])), Kit.MONEY, Kit.SMALL, true))
+		money.add_child(line)
 	row.add_child(money)
 	var gained := int(result.get("compute", 0))
 	if gained > 0:
@@ -644,3 +724,77 @@ func _clock(seconds: float) -> String:
 		return "%d:%02d" % [whole / 60, whole % 60]
 	@warning_ignore("integer_division")
 	return "%dh %02dm" % [whole / 3600, (whole % 3600) / 60]
+
+
+## THE TURN, AND WHAT THE OTHER SIDE DID WITH IT.
+##
+## Phase 6 made clearing an operation advance the campaign — time moves, held
+## ground pays, and the enemy takes a site every 2-3 turns. All of that
+## happened INVISIBLY: the debrief reported a payout and a body count exactly
+## as it had before, so the player had no way to know a turn had passed, that
+## they now held somewhere, or that something of theirs had just been taken.
+##
+## This is the one screen between an operation and the board, so it is where
+## that belongs.
+func _turn_report(result: Dictionary) -> Control:
+	var box := Kit.vbox(4)
+	var turn := int(result.get("turn", 0))
+	if bool(result.get("sim", false)) or turn <= 0:
+		# A sim arena is a free action: no turn passed and nothing moved, and
+		# saying so would be noise on a screen that is already busy.
+		box.visible = false
+		return box
+
+	var head := Kit.hbox(10)
+	head.add_child(Kit.label("TURN %d" % turn, Kit.BRIGHT, Kit.HEADING, true))
+	var took := String(result.get("site_taken", ""))
+	if took != "":
+		head.add_child(Kit.label("%s IS YOURS" % took.to_upper(), HUDPalette.HELD, Kit.BODY, true))
+		var cpu := int(result.get("site_compute", 0))
+		if cpu > 0:
+			head.add_child(Kit.label("+%d COMPUTE" % cpu, Kit.COMPUTE, Kit.SMALL, true))
+	box.add_child(head)
+
+	# WHAT THEY DID WITH THEIR MOVE. The three outcomes read very differently
+	# and the player has to be able to tell them apart at a glance — one of
+	# them is an instruction.
+	var enemy: Dictionary = result.get("enemy", {})
+	var site := String(enemy.get("site", ""))
+	match int(enemy.get("outcome", -1)):
+		2:   # EnemyTurn.Outcome.LOST
+			box.add_child(Kit.label("ADVERSARY TOOK %s" % _site_name(site).to_upper(), Kit.PROBLEM, Kit.BODY, true))
+		1:   # HELD
+			box.add_child(Kit.label("THE GARRISON AT %s HELD" % _site_name(site).to_upper(),
+				Kit.DIM, Kit.SMALL))
+		3:   # IN_DOUBT — SAID ON THE BOARD, NOT HERE.
+			# A raid in doubt is a thing you go and answer, so it belongs where
+			# you choose where to go: the operations table marks the site in
+			# CRIT red and offers the defence. Saying it on the debrief as well
+			# made the one screen you cannot act from carry the instruction.
+			pass
+		_:
+			pass   # a quiet turn: they did not move, and silence says that
+
+	# A defence you walked away from, resolved on paper while you were out.
+	var declined := String(result.get("declined_site", ""))
+	if declined != "":
+		var held_it: bool = int(result.get("declined_outcome", 0)) == 1
+		box.add_child(Kit.label(
+			"%s: %s WITHOUT YOU" % [_site_name(declined).to_upper(), "HELD" if held_it else "LOST"],
+			Kit.DIM if held_it else Kit.PROBLEM, Kit.SMALL, true))
+	return box
+
+
+## A site's NAME, not its id. `enemy.site` and `declined_site` carry location
+## ids — "coast_road" — and printing those put THEY TOOK COAST_ROAD on the
+## screen. Falls back to a tidied id when there is no campaign to ask, so a
+## harness still reads sensibly.
+func _site_name(id: String) -> String:
+	if id == "":
+		return ""
+	var state = _campaign.get("state") if _campaign != null else null
+	if state != null and state.get("locations") != null:
+		var l = state.locations.of(StringName(id))
+		if l != null:
+			return String(l.display_name)
+	return id.replace("_", " ")

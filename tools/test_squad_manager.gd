@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # SQUAD MANAGER — the three pages, driven the way a player drives them: find
@@ -13,6 +14,7 @@ extends SceneTree
 const CAT := "res://Campaign/items & catalogue/test_item_catalogue.tres"
 const _SOLDIER := preload("res://Character/characters/ai/soldier.gd")
 const _Icons := preload("res://Character/hud/icons/icons.gd")
+const _Pricing := preload("res://Campaign/pricing.gd")
 
 var _fails := 0
 var ui: SquadManagerUI
@@ -57,6 +59,15 @@ func _run() -> void:
 	recl.benched = true
 	state.armoury.add(&"m4")
 	state.armoury.add(&"frag")
+	# OPEN THE LINES FOR THE KIT THIS TEST SHOPS FOR (Phase 3), same reason the
+	# soldier line is opened further down: these setups predate the rule.
+	# shop_items() hides anything whose fabrication line is shut UNLESS you hold
+	# a spare, so the frag added above vanished from the Armorer the moment it
+	# was fitted, and `optics` — the catalogue's only MODULE — was never listed
+	# at all, which left "BUY AT THE ARMORER" landing on a rifle for a frame
+	# with no weapon slot.
+	state.grant_unlock(&"frag")
+	state.grant_unlock(&"optics")
 
 	var s := GDScript.new()
 	s.source_code = "extends Node\nvar state\nvar catalogue\nvar in_mission = false\nfunc selected_mission():\n\treturn null\n"
@@ -96,20 +107,19 @@ func _run() -> void:
 	squad._select(state.player_record, false)
 	squad.rebuild()
 	await process_frame
+	# THE KIT ON A CARD IS SHOWN AND NOT TOUCHED.
+	#
+	# It used to be clickable — "EDIT THIS SLOT" selected that robot and opened
+	# the detail pane on the slot you pressed. A loadout belongs to a
+	# production line now (docs/briefs/MARK_SYSTEM_SPEC.md), so there is no
+	# refitting one robot, and a tile that invited a click would be a control
+	# that does nothing. That is worse than one never offered, which is what
+	# this now checks.
 	var other := _card("BRAVO-1")
 	var tiles: Array = []
 	_clickable_tiles(other, tiles)
-	_check("the kit on a roster card takes clicks", not tiles.is_empty(), "%d clickable" % tiles.size())
-	if not tiles.is_empty():
-		var press := InputEventMouseButton.new()
-		press.button_index = MOUSE_BUTTON_LEFT
-		press.pressed = true
-		tiles[0].gui_input.emit(press)
-		await process_frame
-		_check("...and opens that robot on the slot you clicked",
-			squad.selected != null and squad.selected.display_name.to_upper().begins_with("BRAVO-1")
-			and squad.slot_kind == ItemDefinition.Kind.WEAPON,
-			"selected %s, kind %d" % [squad.selected.display_name if squad.selected else "-", squad.slot_kind])
+	_check("the kit on a roster card is not clickable", tiles.is_empty(),
+		"%d still take clicks" % tiles.size())
 
 	# The robots on foot are one team until you make more, and you are IN it:
 	# you lead from inside a team rather than standing above them all, so the
@@ -191,25 +201,31 @@ func _run() -> void:
 
 	_click(_card("BRAVO-3"))
 	_check("clicking a card selects it", squad.selected == b3)
-	_check("...on its empty weapon slot", squad.slot_kind == ItemDefinition.Kind.WEAPON and squad.slot_index == 0)
-	_check("the list under it is what is in stores for that slot", _says(squad._detail, "ANCIENT RIFLE")
-		and not _says(squad._detail, "FRAG"))
-	_click(_panel_with(squad._detail, "ANCIENT RIFLE"))
-	_check("clicking it fits it", b3.weapon_ids[0] == &"m4", str(b3.weapon_ids))
-	_check("...out of stores", state.armoury.spare(&"m4") == 0)
-	_check("...and the card now reads READY", _says(_card("BRAVO-3"), "READY"))
-	_click(_panel_with(squad._detail, "TAKE OFF"))
-	_check("TAKE OFF puts it back in stores", b3.weapon_ids[0] == &"" and state.armoury.spare(&"m4") == 1)
-	state.fit_item(b3, cat.item(&"m4"), 0)
-	_right_click(_panel_with(squad._detail, "RIFLE"))
-	_check("right-clicking a slot takes its item off", b3.weapon_ids[0] == &"", str(b3.weapon_ids))
 
-	_click(_card("BRAVO-3"))
-	squad.slot_kind = ItemDefinition.Kind.EQUIPMENT
-	squad.slot_index = 0
-	squad._rebuild_detail()
-	_click(_panel_with(squad._detail, "FRAG"))
-	_check("gear fits the same way", b3.equipment_ids[0] == &"frag", str(b3.equipment_ids))
+	# ── NOTHING ON THIS PAGE FITS ANYTHING ────
+	#
+	# What used to be here was the whole fitting flow: the stores list for the
+	# selected slot, clicking a row to fit it, TAKE OFF to return it, and
+	# right-clicking a tile to strip it. All of it went when a loadout stopped
+	# belonging to a robot and started belonging to its line.
+	#
+	# THE CHECKS ARE KEPT, INVERTED, rather than deleted. "The squad page
+	# cannot change a loadout" is a rule worth a test — if a stores list ever
+	# comes back, something has quietly reintroduced per-robot fitting and the
+	# Factory is no longer the only place a spec is decided.
+	state.fit_item(b3, cat.item(&"m4"), 0)
+	squad.rebuild()
+	_check("the detail shows what the robot carries", _says(squad._detail, "RIFLE"),
+		"a loadout you cannot see is worse than one you cannot change")
+	_check("...and says where it came from", _says(squad._detail, "ISSUED BY"))
+	_check("there is no stores list to fit from", not _says(squad._detail, "IN STORES"))
+	_check("...and nothing to take off with", _panel_with(squad._detail, "TAKE OFF") == null)
+	var kit_tiles: Array = []
+	_clickable_tiles(squad._detail, kit_tiles)
+	_check("...and no slot in the detail takes a click", kit_tiles.is_empty(),
+		"%d clickable" % kit_tiles.size())
+	_check("the kit itself is untouched by looking at it",
+		b3.weapon_ids[0] == &"m4", str(b3.weapon_ids))
 
 	_press(_card("BRAVO-4"), "BENCH")
 	_check("BENCH on a card benches it", b4.benched)
@@ -220,28 +236,71 @@ func _run() -> void:
 	_check("with no seat free, the bench refuses", b4.benched)
 	_check("a wreck on the bench has no deploy switch", _button_in(_card("HOPPER-1"), "") == null)
 
+	# ── A WRECK IS SCRAPPED, NOT REPAIRED ───────
+	# This used to assert REBUILD, which is now off by default: a DESTROYED
+	# frame is destroyed, and a 2x repair that quietly undoes that makes the
+	# distinction the squad HUD draws between DOWNED and DESTROYED a lie. The
+	# rebuild path still exists and is still covered — see below — it just is
+	# not what the card offers unless the campaign opts in.
 	var before := state.available()
+	var wreck_id := wreck.id
+	var expect_back := state.scrap_value(wreck)
 	_click(_card("HOPPER-1"))
-	_press(squad._detail, "REBUILD")
-	_check("REBUILD brings a wreck back", wreck.status == SoldierRecord.Status.ACTIVE and wreck.damage == 0)
-	_check("...for its price", state.available() < before)
+	_check("a wreck offers SCRAP", _button_in(squad._detail, "SCRAP") != null)
+	_check("...and does NOT offer REBUILD by default",
+		_button_in(squad._detail, "REBUILD") == null)
+	_press(squad._detail, "SCRAP")
+	var still_there := false
+	for r in state.roster:
+		if r.id == wreck_id:
+			still_there = true
+	_check("SCRAP takes the wreck off the roster", not still_there)
+	_check("...and pays a third of the frame back",
+		state.available() == before + expect_back,
+		"%d -> %d, expected +%d" % [before, state.available(), expect_back])
+
+	# The opt-in path, so turning allow_rebuild back on is covered too.
+	# OPEN THE LINE FIRST (Phase 3): recruit() refuses a chassis whose line is
+	# shut, and these setups predate that rule.
+	state.grant_unlock(&"soldier")
+	var wreck2 := state.recruit(state.catalogue.chassis_def(&"soldier"))
+	if wreck2 != null:
+		wreck2.status = SoldierRecord.Status.DESTROYED
+		wreck2.damage = wreck2.max_health
+		state.allow_rebuild = true
+		squad.rebuild()
+		_click(_card(wreck2.display_name.to_upper()))
+		var cost_before := state.available()
+		_press(squad._detail, "REBUILD")
+		_check("with allow_rebuild on, REBUILD is offered and brings a wreck back",
+			wreck2.status == SoldierRecord.Status.ACTIVE and wreck2.damage == 0)
+		_check("...for its price", state.available() < cost_before)
+		state.allow_rebuild = false
 
 	# THE RECLAIMER'S SLOT IS ITS BOOM. Empty, the welder is on it — so an empty
 	# slot there is not an unarmed robot, and the slot says what is in it.
 	_check("a Reclaimer on its welder is not an unarmed robot", _card("RECLAIMER-1") != null
 		and not _says(_card("RECLAIMER-1"), "NO WEAPON"))
 	_click(_card("RECLAIMER-1"))
+	# ARTICULATED ARM, not "TOOL". The slot is named for what it IS — a mount a
+	# later frame could also have — rather than for the welder that happens to be
+	# on it, and it matches the mount class the armorer card prints.
 	_check("...its empty slot shows the welder, and is a slot to fill",
-		_says(squad._detail, "WELDER") and _says(squad._detail, "TOOL"))
+		_says(squad._detail, "WELDER") and _says(squad._detail, "ARTICULATED ARM"))
 	_click(_card("MECHANIC-1"))
 	_check("a mechanic has no weapon slot to pick, so it shows its built-in welder",
 		_says(squad._detail, "WELDER"))
-	_press(squad._detail, "BUY AT THE ARMORER")
-	_check("with nothing in stores for a slot, the button goes to the Armorer",
+	# THE BRIDGE TO THE ARMORER IS GONE WITH THE STORES LIST. "BUY AT THE
+	# ARMORER" existed because buying and fitting were on different pages and
+	# something had to carry you between them; a loadout comes from a line now,
+	# so there is no trip to make. The Armorer page itself is still here and
+	# still tested below — it is step 7 that removes it — so this reaches it
+	# directly rather than through a button that no longer exists.
+	_check("nothing on the squad page sends you to the Armorer any more",
+		_button_in(squad._detail, "BUY AT THE ARMORER") == null)
+	ui.show_tab(&"armorer")
+	_check("the Armorer is still reachable while it exists",
 		ui._tab == &"armorer" and ui._pages[&"armorer"].visible)
-	var picked: ItemDefinition = ui.item(ui._pages[&"armorer"].selected_id)
-	_check("...already on that kind of gear", picked != null and picked.kind == ItemDefinition.Kind.MODULE,
-		str(picked.id if picked != null else null))
 
 	# ── ARMORER ──────────────────────────────────
 	var armorer: Control = ui._pages[&"armorer"]
@@ -258,7 +317,11 @@ func _run() -> void:
 	before = state.available()
 	_press(armorer._detail, "BUY")
 	_check("BUY puts one in stores", state.armoury.spare(&"frag") == spare + 1)
-	_check("...for its price", before - state.available() == cat.item(&"frag").cost)
+	# PRICE COMES FROM PRICING, NOT FROM ItemDefinition.cost. Bands replaced the
+	# per-item figure; `cost` is still on the resource and still readable, which
+	# is why asserting it looked fine and failed.
+	_check("...for its price", before - state.available() == _Pricing.item_buy(cat.item(&"frag")),
+		"%d spent, %d expected" % [before - state.available(), _Pricing.item_buy(cat.item(&"frag"))])
 	_press(armorer._detail, "SELL ONE")
 	_check("SELL ONE takes one back out", state.armoury.spare(&"frag") == spare)
 

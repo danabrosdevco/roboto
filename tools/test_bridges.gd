@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: terrain
 
 # ─────────────────────────────────────────────
 # BRIDGE TESTS
@@ -80,7 +81,7 @@ func _cross(path: String, bank: float) -> void:
 	region.add_child(bridge)
 	var box := _footprint(bridge)
 	if box.size == Vector3.ZERO:
-		_check("%s has collision to walk on" % name, false, "no convex collision shapes in it")
+		_check("%s has collision to walk on" % name, false, "no collision shape in it sizes to anything")
 		root.remove_child(stage)
 		stage.free()
 		return
@@ -159,19 +160,34 @@ func _over(box: AABB, p: Vector3) -> bool:
 	return p.x >= box.position.x and p.x <= box.end.x and p.z >= box.position.z and p.z <= box.end.z
 
 
-## The world box round every convex collision shape in `n`.
+## The world box round every collision shape in `n`.
+##
+## IT USED TO READ ConvexPolygonShape3D ONLY, and that is a trap worth a
+## comment. FuncGodot's worldspawn used to emit one convex hull per brush, so
+## reading hulls read every bridge. It is CONCAVE now (6fa1d74b) and the 338
+## blocks on disk were collapsed to one trimesh each, so every bridge's
+## collision became a ConcavePolygonShape3D — and this function then returned
+## an empty AABB and the suite failed 24 checks with "no convex collision
+## shapes in it". The bridges were fine; the measuring was reading for a shape
+## type that no longer exists in them.
+##
+## So it asks the SHAPE for its points rather than assuming which kind it is:
+## hull points, trimesh faces, and a debug mesh for anything else — the same
+## last resort build_salient.gd and enemy.gd's _shape_box already use. A shape
+## that sizes to nothing is reported rather than skipped, because a bridge with
+## no collision has to fail loudly and not silently measure 0 x 0.
 func _footprint(n: Node3D) -> AABB:
 	var box := AABB()
 	var first := true
 	for cs: CollisionShape3D in n.find_children("*", "CollisionShape3D", true, false):
-		if not (cs.shape is ConvexPolygonShape3D):
+		if cs.shape == null:
 			continue
 		var xf := Transform3D.IDENTITY
 		var node: Node = cs
 		while node != n:
 			xf = (node as Node3D).transform * xf
 			node = node.get_parent()
-		for q: Vector3 in (cs.shape as ConvexPolygonShape3D).points:
+		for q: Vector3 in _shape_points(cs.shape):
 			var p := xf * q
 			if first:
 				box = AABB(p, Vector3.ZERO)
@@ -179,3 +195,21 @@ func _footprint(n: Node3D) -> AABB:
 			else:
 				box = box.expand(p)
 	return box
+
+
+## Every point a shape is made of, whatever kind of shape it is.
+func _shape_points(s: Shape3D) -> PackedVector3Array:
+	if s is ConvexPolygonShape3D:
+		return (s as ConvexPolygonShape3D).points
+	if s is ConcavePolygonShape3D:
+		# `data` is the triangle soup: three vertices per face, in order.
+		return (s as ConcavePolygonShape3D).get_faces()
+	# Boxes, cylinders and anything else a bridge might one day carry. The
+	# debug mesh is the shape's own outline, so its vertices bound it.
+	var dbg := s.get_debug_mesh()
+	if dbg == null:
+		return PackedVector3Array()
+	var arrays := dbg.surface_get_arrays(0) if dbg.get_surface_count() > 0 else []
+	if arrays.is_empty() or arrays[Mesh.ARRAY_VERTEX] == null:
+		return PackedVector3Array()
+	return arrays[Mesh.ARRAY_VERTEX]

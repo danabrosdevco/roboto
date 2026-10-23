@@ -1,0 +1,263 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3 uid="uid://byuyd6eebokpn"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://e03bilyr2fo7" path="res://maps/causeway_level.tscn" id="3_map"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rifle"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="6_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+[ext_resource type="Resource" uid="uid://1rea71mf80nx" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="8_armour"]
+[ext_resource type="Resource" uid="uid://dwa610h0q63pn" path="res://Campaign/chassis/chassis_marksman.tres" id="9_marks"]
+[ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="10_rover"]
+[ext_resource type="Resource" uid="uid://daikhvrvnhg7g" path="res://Campaign/chassis/chassis_walker.tres" id="11_walker"]
+
+[sub_resource type="Resource" id="A_stage"]
+script = ExtResource("2_espec")
+callsign = "CAISSON"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_staging"
+spawn_tag = &"obj_cway_terrace"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_deck"]
+script = ExtResource("2_espec")
+callsign = "PILECAP"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_deck_mid"
+spawn_tag = &"obj_cway_terrace"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_check"]
+script = ExtResource("2_espec")
+callsign = "DEADSHORE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("8_armour"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_checkpoint"
+spawn_tag = &"obj_cway_sangar_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_yard"]
+script = ExtResource("2_espec")
+callsign = "SHUTTERING"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_yard_west"
+spawn_tag = &"obj_cway_flood_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_ammo"]
+script = ExtResource("2_espec")
+callsign = "FALSEWORK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("6_chaser"), ExtResource("6_chaser"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_ammo"
+spawn_tag = &"obj_cway_sangar_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 90.0
+
+[sub_resource type="Resource" id="A_base"]
+script = ExtResource("2_espec")
+callsign = "TRESTLE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_hall_00"
+spawn_tag = &"obj_cway_flood_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 150.0
+
+[sub_resource type="Resource" id="A_deck2"]
+script = ExtResource("2_espec")
+callsign = "BREASTWORK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("10_rover"), ExtResource("8_armour"), ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_deck_mid"
+spawn_tag = &"obj_cway_terrace"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 210.0
+
+[sub_resource type="Resource" id="A_twelfth"]
+script = ExtResource("2_espec")
+callsign = "EMBRASURE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_hall_12"
+spawn_tag = &"obj_cway_sangar_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 270.0
+
+[sub_resource type="Resource" id="A_crown"]
+script = ExtResource("2_espec")
+callsign = "MANTLET"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("9_marks"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_hall_23"
+spawn_tag = &"obj_cway_flood_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 330.0
+
+[sub_resource type="Resource" id="A_west2"]
+script = ExtResource("2_espec")
+callsign = "SAPHEAD"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("8_armour"), ExtResource("8_armour"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_staging"
+spawn_tag = &"obj_cway_terrace"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 400.0
+
+[sub_resource type="Resource" id="A_last"]
+script = ExtResource("2_espec")
+callsign = "ESCALADE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("11_walker"), ExtResource("8_armour"), ExtResource("9_marks"), ExtResource("5_rifle"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_cway_yard_west"
+spawn_tag = &"obj_cway_sangar_east"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 450.0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"causeway_2_defend"
+display_name = "The Causeway — Hold"
+briefing = "TWELVE HUNDRED METRES OF GROUND ON A SITE WITH TWO WAYS IN, AND THEY ARE USING BOTH.
+
+This is the richest thing you own and it is shaped like a corridor. The far bank first: a column off the west terrace for the staging yard, and a second straight out onto the deck behind it. Six hundred metres of open span with a one-metre parapet and nothing else on it at all — you crossed it once under fire and know exactly what it is worth.
+
+In the east they come round the flood channel and up past the sangars, for the checkpoint and then the fort yard. One opening in the curtain wall, which cuts both ways: nothing gets in without coming through your gateway, and nothing you lose outside the walls can be helped from inside them. The gun pits, the mortars and the ammunition dump are all out there.
+
+Then the tower, and the tower is the part to think about now rather than later. Twenty-four halls, one ramp each, and it moves wall to wall — so every floor is entered through a hole in its own floor with you on the far side of the room. They will send infantry up it: the basement, the twelfth, and eventually the crown. A hundred and thirty-eight metres of stairwell with no windows and one door at each end. Nothing comes in and nothing gets out.
+
+Your garrison is on the north-west and south-east bastions, the staging yard, the deck midpoint and the two set-back halls. Everything else is distance.
+
+There is no extraction and nothing to carry home: what you are fighting for is the ground you already own, and everything it pays you."
+level_scene = ExtResource("3_map")
+map_position = Vector2(0, 0)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("A_stage"), SubResource("A_deck"), SubResource("A_check"), SubResource("A_yard"), SubResource("A_ammo"), SubResource("A_base"), SubResource("A_deck2"), SubResource("A_twelfth"), SubResource("A_crown"), SubResource("A_west2"), SubResource("A_last")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"cway_relay_staging", &"cway_relay_crossing", &"cway_relay_checkpoint", &"cway_relay_yard", &"cway_relay_basement", &"cway_relay_twelfth", &"cway_uplink", &"cway_ammo"])
+reward_resources = 0
+compute_reward = 0
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = true
+defence = true
+sim = false
+garrison_posts = Array[StringName]([&"obj_cway_bastion_nw", &"obj_cway_bastion_se", &"obj_cway_staging", &"obj_cway_deck_mid", &"obj_cway_hall_12", &"obj_cway_hall_23"])
+requires = Array[StringName]([&"causeway_1_tower"])

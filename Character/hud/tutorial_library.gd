@@ -25,7 +25,10 @@ signal closed
 
 const _Toast := preload("res://Character/hud/tutorial_toast.gd")
 const LABEL_SCRIPT := "res://Env/world_objects/tutorial_label.gd"
-const FALLBACK_BASE := "res://maps/depot_level.tscn"
+## Only reached when the campaign node cannot be found — it normally reads
+## Campaign.base_level. Kept in step with Env/world.tscn all the same: a
+## fallback that points at the old base is a fallback that lies.
+const FALLBACK_BASE := "res://maps/railhead_level.tscn"
 
 const COL_DIM    := HUDPalette.DIM
 const COL_BRIGHT := HUDPalette.BRIGHT

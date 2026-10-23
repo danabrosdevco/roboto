@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://di06rdpcww5od"
+path="res://.godot/imported/suburb_bus_shelter.map-b7a5478ef1d9eefce7f2e25588fe2a08.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_bus_shelter.map"
+dest_files=["res://.godot/imported/suburb_bus_shelter.map-b7a5478ef1d9eefce7f2e25588fe2a08.tres"]
+
+[params]
+

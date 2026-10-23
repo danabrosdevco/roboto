@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://cmortartrack01"]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=3 format=3 uid="uid://6wjqh3ttofnc"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
 [ext_resource type="PackedScene" path="res://Character/characters/ai/vehicle_reclaimer.tscn" id="2_scene"]
@@ -13,6 +13,7 @@ cost = 0
 purchasable = false
 supply = 2
 starting_weapon_id = &"mortar"
+coax_weapon_id = &""
 base_health = 150
 base_speed = 1.0
 base_accuracy = 1.0
@@ -25,4 +26,5 @@ vehicle = false
 drives = true
 equipment_slots = 0
 module_slots = 3
-required_rank = 0
+musters_at_base = true
+unlock_requires = Array[StringName]([])

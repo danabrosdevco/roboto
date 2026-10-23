@@ -6,5 +6,6 @@
 [resource]
 script = ExtResource("1_qsrw6")
 equipment_scene = ExtResource("1_ahno5")
-quantity = 1
-label = "Frag Grenade"
+quantity = 4
+label = "Frag"
+item_id = &"frag"

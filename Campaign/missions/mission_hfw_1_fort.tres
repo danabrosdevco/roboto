@@ -1,0 +1,373 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3 uid="uid://c4upcpnw7um6o"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" path="res://maps/hillfort_wip_level.tscn" id="3_map"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rifle"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="6_shot"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="7_chaser"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="8_hopper"]
+
+[sub_resource type="Resource" id="C_pill"]
+script = ExtResource("2_espec")
+callsign = "PILLARS"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("7_chaser")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_hfw_pillars"
+spawn_tag = &"obj_hfw_pillars"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="C_gate"]
+script = ExtResource("2_espec")
+callsign = "SOUTHGATE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("6_shot")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_hfw_centre_apron"
+spawn_tag = &"obj_hfw_centre_apron"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="C_pat"]
+script = ExtResource("2_espec")
+callsign = "STONES"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("7_chaser"), ExtResource("6_shot")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 0
+route_tag = &"patrol_hfw_pillars"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="W_cist"]
+script = ExtResource("2_espec")
+callsign = "CISTERN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("7_chaser")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_hfw_cistern"
+spawn_tag = &"obj_hfw_cistern"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="W_shou"]
+script = ExtResource("2_espec")
+callsign = "SHOULDER"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("8_hopper")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_hfw_shoulder"
+spawn_tag = &"obj_hfw_shoulder"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="W_gate"]
+script = ExtResource("2_espec")
+callsign = "WESTGATE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("7_chaser")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_hfw_west_apron"
+spawn_tag = &"obj_hfw_west_apron"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="E_gh"]
+script = ExtResource("2_espec")
+callsign = "GATEHOUSE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("6_shot"), ExtResource("7_chaser")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_hfw_gatehouse"
+spawn_tag = &"obj_hfw_gatehouse"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="E_terr"]
+script = ExtResource("2_espec")
+callsign = "TERRACE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("8_hopper")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_hfw_terrace"
+spawn_tag = &"obj_hfw_terrace"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="E_gate"]
+script = ExtResource("2_espec")
+callsign = "EASTGATE"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("7_chaser")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_hfw_east_apron"
+spawn_tag = &"obj_hfw_east_apron"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="F_pat"]
+script = ExtResource("2_espec")
+callsign = "YARDWATCH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("7_chaser")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 0
+route_tag = &"patrol_hfw_yard"
+post_tag = &""
+spawn_tag = &""
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="F_dish"]
+script = ExtResource("2_espec")
+callsign = "DISH"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_hfw_dish"
+spawn_tag = &"obj_hfw_dish"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="F_hall"]
+script = ExtResource("2_espec")
+callsign = "HALL"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("8_hopper")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 1
+route_tag = &""
+post_tag = &"obj_hfw_hall"
+spawn_tag = &"obj_hfw_hall"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="V1"]
+script = ExtResource("2_espec")
+callsign = "MEADOW"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("6_shot"), ExtResource("7_chaser")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_hfw_pillars"
+spawn_tag = &"obj_hfw_south_meadow"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"hfw_pillars"
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="V2"]
+script = ExtResource("2_espec")
+callsign = "WESTRUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("6_shot"), ExtResource("7_chaser"), ExtResource("8_hopper")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_hfw_shoulder"
+spawn_tag = &"obj_hfw_west_flank"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"hfw_shoulder"
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="V3"]
+script = ExtResource("2_espec")
+callsign = "EASTRUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("6_shot"), ExtResource("7_chaser"), ExtResource("8_hopper")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_hfw_terrace"
+spawn_tag = &"obj_hfw_east_flank"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"hfw_gatehouse"
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="V4"]
+script = ExtResource("2_espec")
+callsign = "POSTERN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("6_shot"), ExtResource("6_shot"), ExtResource("6_shot"), ExtResource("7_chaser"), ExtResource("7_chaser"), ExtResource("8_hopper")])
+count = 0
+kit_variance = 0.0
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 3
+route_tag = &""
+post_tag = &"obj_hfw_yard"
+spawn_tag = &"obj_hfw_postern"
+spawn_offset = Vector3(0, 0, 0)
+always_active = false
+faction = 1
+reinforcement_tag = &"hfw_relay"
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"hfw_1_fort"
+display_name = "Hillfort"
+briefing = "A RELAY DISH ON AN IRON-AGE HILLFORT, same as the other one, except that this time you can see the whole thing from where you are standing. The dome in front of you is one broad glacis and the fort is on top of it. Nothing on this hill is too steep to walk up. What decides where you go is WALLS, which are things somebody built, and there are three ways past them.
+
+YOU PICK YOUR LANE AT THE TRAILHEAD AND YOU ARE COMMITTED. Two wall lines run north from the fort's own corners down to the treeline, and they stop twenty metres short of the bottom. Once you are inside one, crossing to another means walking all the way back down.
+
+  CENTRE   a hundred metres, straight up the open glacis, under the wall the
+           whole way. The fast one. There is ONE core on it — the Pillars —
+           and that is the price of the speed.
+  WEST     two hundred and eighty, screened for nearly all of it: four berms,
+           the cistern, the shoulder bench. TWO cores. You are only in the
+           open for the last thirty metres, at the west gate.
+  EAST     shut. A cross-wall runs the full width of the hill with a single
+           gatehouse in it, and the gatehouse has a core. TAKE IT AND THE LANE
+           OPENS — the terrace and the east gate are behind it, and so is
+           their garrison, which has been sitting there the whole time.
+
+THE RELAY IS IN THE FORT YARD and it is the largest core on the site. The dish
+over it is sixty-two metres and it is what you have been looking at since you
+arrived.
+
+NONE OF THE CORES ARE COMPULSORY. The operation ends at THE WAY DOWN — a tunnel
+mouth driven into the back of the north rampart, past the dish — and you can
+walk to it having taken one core or all six. The difference is what you are
+paid and what you are carrying when the last of them comes out of the postern
+at you."
+level_scene = ExtResource("3_map")
+map_position = Vector2(0, -95)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("C_pill"), SubResource("C_gate"), SubResource("C_pat"), SubResource("W_cist"), SubResource("W_shou"), SubResource("W_gate"), SubResource("E_gh"), SubResource("E_terr"), SubResource("E_gate"), SubResource("F_pat"), SubResource("F_dish"), SubResource("F_hall"), SubResource("V1"), SubResource("V2"), SubResource("V3"), SubResource("V4")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"hfw_cistern", &"hfw_shoulder", &"hfw_pillars", &"hfw_gatehouse", &"hfw_terrace", &"hfw_relay"])
+reward_resources = 225
+compute_reward = 1
+unlocks = Array[StringName]([&"rover", &"machine_gun", &"mine_heavy", &"mine_cluster"])
+squad_size = -1
+repeatable = false
+defence = false
+sim = false
+garrison_posts = Array[StringName]([])
+requires = Array[StringName]([&"arena_3_firing_line"])

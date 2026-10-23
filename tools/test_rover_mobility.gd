@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: terrain
 
 # ─────────────────────────────────────────────
 # WHAT THE ROVER CAN DRIVE OVER, AND UP.

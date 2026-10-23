@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # NESTS AND REINFORCEMENTS — the Valley Foundry's two hives hatch bodies once
@@ -13,7 +14,7 @@ extends SceneTree
 # never writes it.
 # ─────────────────────────────────────────────
 
-const MISSION := "res://Campaign/missions/mission_valley_6_foundry.tres"
+const MISSION := "res://Campaign/missions/appendix/mission_valley_6_foundry.tres"
 
 var _fails := 0
 
@@ -57,6 +58,11 @@ func _named(callsign: String) -> Array:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	var mission: MissionDefinition = load(MISSION)
 	_check("the Foundry is a mission: the north gate and the way out",
@@ -75,7 +81,7 @@ func _init() -> void:
 		await physics_frame
 	var player: Node3D = _find(root, "Player")
 	var level: Node = player.get_parent()
-	var valley = load("res://maps/valley_level.tscn").instantiate()
+	var valley = load("res://maps/appendix/valley_level.tscn").instantiate()
 	level.add_child(valley)
 	for _i in 30:
 		await physics_frame

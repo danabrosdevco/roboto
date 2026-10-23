@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bgptrqs4ne82r"
+path="res://.godot/imported/mark_aqueduct_piers.map-755b6e61c808d2d51c84dbaaaa4b51df.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/mark_aqueduct_piers.map"
+dest_files=["res://.godot/imported/mark_aqueduct_piers.map-755b6e61c808d2d51c84dbaaaa4b51df.tres"]
+
+[params]
+

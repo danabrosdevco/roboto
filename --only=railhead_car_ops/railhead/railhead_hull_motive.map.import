@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://bwe5bo6r0h45j"
+path="res://.godot/imported/railhead_hull_motive.map-b58e096dd5a7e16e24586d7bc7f3495e.tres"
+
+[deps]
+
+source_file="res://--only=railhead_car_ops/railhead/railhead_hull_motive.map"
+dest_files=["res://.godot/imported/railhead_hull_motive.map-b58e096dd5a7e16e24586d7bc7f3495e.tres"]
+
+[params]
+

@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # VEHICLE — the rover drives, aims and goes down like a vehicle, and the
@@ -117,6 +118,11 @@ func _deck_under(body: Node3D) -> float:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	_catalogue = load(CATALOGUE)
 	var world_scene: Node = load("res://Env/world.tscn").instantiate()
@@ -128,7 +134,7 @@ func _init() -> void:
 	var level: Node = player.get_parent()
 	var cm: CampaignManager = world_scene.get_node("CampaignManager")
 	_mgr = _find(root, "AIManager")
-	var valley = load("res://maps/valley_level.tscn").instantiate()
+	var valley = load("res://maps/appendix/valley_level.tscn").instantiate()
 	level.add_child(valley)
 	for _i in 20:
 		await physics_frame
@@ -501,6 +507,9 @@ func _init() -> void:
 	state.armoury = Armoury.new()
 	state.catalogue = _catalogue
 	state.award(2000)
+	# OPEN THE LINE FIRST (Phase 3): recruit() refuses a chassis whose line is
+	# shut, and these setups predate that rule.
+	state.grant_unlock(frame.id)
 	var rec := state.recruit(frame)
 	_check("a new rover comes with the machine gun on its turret", rec != null and rec.weapon_ids[0] == &"machine_gun")
 	_check("...and takes two seats", rec != null and state.supply_of(rec) == 2 and not rec.benched)
@@ -508,6 +517,7 @@ func _init() -> void:
 		state.armoury.add(id)
 	_check("a rifle does not go on a turret", not state.can_fit(rec, _catalogue.item(&"m4")))
 	_check("...the grenade launcher does", state.can_fit(rec, _catalogue.item(&"grenade_launcher")))
+	state.grant_unlock(&"soldier")
 	var grunt := state.recruit(_catalogue.chassis_def(&"soldier"))
 	_check("turret weapons do not go on a soldier", not state.can_fit(grunt, _catalogue.item(&"machine_gun")))
 	_check("...nor on you", not state.can_fit(state.player_record, _catalogue.item(&"machine_gun")))
@@ -518,7 +528,7 @@ func _init() -> void:
 	# needed it was the fight that paid for it. It arrives a mission earlier now.
 	var unlocks_it := cm.missions.filter(func(m): return m != null and m.unlocks.has(&"rover"))
 	_check("the rover is unlocked by clearing the hillfort, with the gun it comes with",
-		unlocks_it.size() == 1 and unlocks_it[0].id == &"hillfort_1_relay"
+		unlocks_it.size() == 1 and unlocks_it[0].id == &"hfw_1_fort"
 		and unlocks_it[0].unlocks.has(&"machine_gun"), str(unlocks_it.map(func(m): return str(m.id))))
 	# The grenade launcher is one of the late, high-power unlocks, not a
 	# second gun that arrives with the rover.

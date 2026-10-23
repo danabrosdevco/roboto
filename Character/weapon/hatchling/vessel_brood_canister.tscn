@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+; VESSEL BROOD CANISTER — the round the Vessel's launcher puts downrange.
+;
+; An INSTANCE of the hand-thrown Hatchling Canister with one property changed:
+; explosion_scene points at vessel_brood_payload.tscn instead of
+; hatchling_payload.tscn. Everything else — the model, the impact fusing, the
+; burst sound, the AIGrenadeProjectile base — is inherited, so a fix to the
+; thrown charge reaches this one too.
+;
+; It exists at all because explosion_scene lives on the ROUND, and
+; AIWeaponGrenadeLauncher has overrides for fuse, blast and radius but none for
+; what the round bursts into. One instanced scene is the cheapest way to point a
+; launcher at a different payload.
+
+[ext_resource type="PackedScene" path="res://Character/weapon/hatchling/hatchling_canister.tscn" id="1_canister"]
+[ext_resource type="PackedScene" path="res://Character/weapon/hatchling/vessel_brood_payload.tscn" id="2_payload"]
+
+[node name="Vessel_Brood_Canister" instance=ExtResource("1_canister")]
+explosion_scene = ExtResource("2_payload")

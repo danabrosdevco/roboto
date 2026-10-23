@@ -61,6 +61,20 @@ class Readout:
 # Position within the EQUIPMENT list. 0 is key 4, 1 is key 5, and so on.
 # Ignored for PRIMARY/SIDEARM/MELEE.
 @export var equipment_order: int = 0
+## RESERVES ONE KEY FOR THIS ITEM instead of giving it a position in the
+## equipment row. Empty for everything you buy, which is almost everything.
+##
+## The row is POSITIONAL: apply_record numbers bought equipment 0, 1, 2 and the
+## loadout turns those into keys 4, 5 and 6. That is right for ordnance — the
+## key means "the second thing I bought" — and wrong for a built-in tool, whose
+## key has to be the same every mission however much the player has in their
+## pouches. A built-in squatting a position either moves with your shopping or
+## pushes a bought item off the end of the row, and the designator did both
+## before this existed.
+##
+## Set it to an InputMap action the loadout's `slot_actions` also lists; the
+## item is then bound to that action alone and left out of the row entirely.
+@export var fixed_slot_action: StringName = &""
 @export var icon: Texture2D
 
 # ── VIEWMODEL ─────────────────────────────────
@@ -71,7 +85,13 @@ class Readout:
 @export var base_position: Vector3 = Vector3(0.31, -0.425, -0.015)
 @export var base_rotation: Vector3 = Vector3(-0.3, 6.0, 2.8)
 @export var obstructed_position: Vector3 = Vector3(-0.5, -0.425, -1.0)
-@export var obstructed_rotation: Vector3 = Vector3(0.3, 270.0, 3.0)
+## Swung aside, muzzle to the LEFT of screen. 90, not 270: the two are the same
+## line mirrored, and 270 pointed the barrel out to the right and back across the
+## view, so a long weapon swept three quarters of a turn to get there instead of
+## a quarter. It reads as the gun whipping round the wrong way. The shotgun was
+## given 90 on its own when someone hit this before, which left eighteen other
+## items still inheriting the flip — fixed on the class this time.
+@export var obstructed_rotation: Vector3 = Vector3(0.3, 90.0, 3.0)
 ## Swing aside when something is right in front of the camera. Off for items
 ## used up close: the repair tool's whole job is standing against a robot,
 ## which is exactly what the obstruction ray sees.
@@ -118,6 +138,8 @@ var _bob_time: float = 0.0
 ## What bob added to viewmodel.position last frame, taken back out before the
 ## pose lerp runs again. See the note in update_view().
 var _last_bob: Vector3 = Vector3.ZERO
+## The pose lerp's own state, in DEGREES. See update_view().
+var _pose_rotation: Vector3 = Vector3.ZERO
 var _equip_timer: float = 0.0
 
 
@@ -140,8 +162,16 @@ func initialize(p_player: Node, p_cam: Camera3D, p_ammo: AmmoPool) -> void:
 	# where no scale would ever bring it into view.
 	if use_default_position == false and not _rest_pose_read:
 		base_position = viewmodel.position
-		base_rotation = viewmodel.rotation
+		# DEGREES, because every pose in this system is degrees — swing_rotation
+		# (-18, 6, 0), the default reload_rotation (0.2, 20.5, 58.0), the bob term
+		# at amount * 20.0 — and update_view() ends by writing rotation_DEGREES.
+		# Reading .rotation here took the authored pose in radians and handed it to
+		# a degrees pipeline, so the repair lance's 107.9 degrees of yaw became 1.88
+		# and the lance lay flat across the screen: the exact thing its own scene
+		# comment says the authored basis exists to prevent.
+		base_rotation = viewmodel.rotation_degrees
 		_rest_pose_read = true
+	_pose_rotation = base_rotation
 	set_hidden(true)
 
 
@@ -177,7 +207,11 @@ func equip() -> void:
 	# rather than popping in at the ready pose.
 	if viewmodel != null:
 		viewmodel.position = obstructed_position
-		viewmodel.rotation = obstructed_rotation
+		# Degrees. Assigning .rotation here put the then-default holster pose of
+		# (0.3, 270, 3) on screen as 15469 degrees of yaw and 172 of roll — every
+		# item in the game spun through forty-three turns each time you drew it.
+		viewmodel.rotation_degrees = obstructed_rotation
+		_pose_rotation = obstructed_rotation
 	_on_equip()
 	equipped.emit()
 
@@ -334,28 +368,71 @@ func update_view(delta: float, p_move_factor: float, p_obstructed: bool, p_ads: 
 	viewmodel.position -= _last_bob
 	_last_bob = Vector3.ZERO
 
-	if viewmodel.position.distance_to(target_pos) > 0.001:
+	# AN ITEM MAY DRIVE ITS OWN POSE EXACTLY. pose_speed is an exponential chase:
+	# it is right for the handful of poses this used to switch between, and wrong
+	# for a scripted sequence, where it rounds every beat off into one slow
+	# wallow. See PlayerWeapon._reload_frame.
+	if _pose_is_exact():
+		viewmodel.position = target_pos
+	elif viewmodel.position.distance_to(target_pos) > 0.001:
 		viewmodel.position = viewmodel.position.lerp(target_pos, delta * pose_speed)
-	if viewmodel.rotation.distance_to(target_rot) > 0.001:
-		viewmodel.rotation = viewmodel.rotation.lerp(target_rot, delta * pose_speed)
+	# THE ROTATION LERP KEEPS ITS OWN STATE AND NEVER READS THE NODE BACK.
+	#
+	# It ran on viewmodel.rotation, which is RADIANS, while the write at the
+	# bottom of this function is rotation_DEGREES. So every frame read back 1/57.3
+	# of what the frame before it wrote, and a pose settled at about 17% of the
+	# angle it named — the 270 degree holster yaw arrived as 45.8. Same shape as
+	# the bob double-count above, same cure: the lerp owns its state rather than
+	# reading it off the thing it just drove.
+	if _pose_is_exact():
+		_pose_rotation = target_rot
+	elif _pose_rotation.distance_to(target_rot) > 0.001:
+		_pose_rotation = _pose_rotation.lerp(target_rot, delta * pose_speed)
 
+	# BOB AND ANY ADDITIVE OFFSET GO ON AFTER THE LERP, and come back off at the
+	# top of the next frame by the same accounting. See the note above: anything
+	# written into viewmodel.position that the lerp then reads back as "where the
+	# weapon is" feeds itself.
+	var offset := Vector3.ZERO
 	if _apply_bob():
-		viewmodel.position += bob_offset
-		_last_bob = bob_offset
+		offset += bob_offset
+	offset += _extra_position()
+	viewmodel.position += offset
+	_last_bob = offset
 
 	var bob_rotation := Vector3(
 		sin(_bob_time * 2.0) * amount * 20.0,
 		sin(_bob_time) * amount * 10.0,
 		0.0
 	)
-	viewmodel.rotation_degrees = viewmodel.rotation + _extra_rotation() + bob_rotation
+	viewmodel.rotation_degrees = _pose_rotation + _extra_rotation() + bob_rotation
 
 
 func _bob_amount_now() -> float:
 	return bob_amount
 
 
+## An additive position offset applied AFTER the pose lerp — the positional twin
+## of _extra_rotation().
+##
+## A movement that has to land on a DEADLINE belongs here rather than in
+## _get_pose_target(), because the lerp only ever chases its target at
+## pose_speed. At the default 10 that is a 0.1s time constant, so a 0.16s thrust
+## routed through the pose reaches about four fifths of its extension by the
+## moment it is supposed to connect, peaks after the hit has already landed, and
+## reads as a shove rather than a stab. Out here it is exact.
+func _extra_position() -> Vector3:
+	return Vector3.ZERO
+
+
 # [position, rotation]. Guns override to add the ADS and reload poses.
+## Does this item put the viewmodel exactly where it says, rather than having it
+## chased there at pose_speed? False for everything that just switches between a
+## few poses; true while a weapon is running a scripted reload.
+func _pose_is_exact() -> bool:
+	return false
+
+
 func _get_pose_target() -> Array:
 	if is_obstructed:
 		return [obstructed_position, obstructed_rotation]

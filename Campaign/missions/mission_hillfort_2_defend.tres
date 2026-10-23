@@ -1,0 +1,115 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3 uid="uid://etcwpd4jbgas"]
+
+[ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
+[ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
+[ext_resource type="PackedScene" uid="uid://bt27tf1xtntmx" path="res://maps/hillfort_level.tscn" id="3_hillfort"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="5_rifle"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="6_chaser"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="7_shot"]
+
+[sub_resource type="Resource" id="A_trail"]
+script = ExtResource("2_espec")
+callsign = "TRAILRUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_hillfort_dish"
+spawn_tag = &"obj_hillfort_trailhead"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_saddle"]
+script = ExtResource("2_espec")
+callsign = "SADDLEBACK"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("6_chaser"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_hillfort_fortgate"
+spawn_tag = &"obj_hillfort_saddle"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 0.0
+
+[sub_resource type="Resource" id="A_shoulder"]
+script = ExtResource("2_espec")
+callsign = "SHOULDERRUN"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("5_rifle"), ExtResource("7_shot")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_hillfort_dish"
+spawn_tag = &"obj_hillfort_shoulder"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 90.0
+
+[sub_resource type="Resource" id="A_second"]
+script = ExtResource("2_espec")
+callsign = "SECONDCLIMB"
+roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_rifle"), ExtResource("7_shot"), ExtResource("6_chaser"), ExtResource("6_chaser")])
+count = 0
+kit_variance = 0.3
+forced_modules = Array[StringName]([])
+forced_equipment = Array[StringName]([])
+forced_weapons = Array[StringName]([])
+posture = 2
+route_tag = &""
+post_tag = &"obj_hillfort_dish"
+spawn_tag = &"obj_hillfort_trailhead"
+spawn_offset = Vector3(0, 0, 0)
+always_active = true
+faction = 1
+reinforcement_tag = &""
+wake_after_kills = 0
+wake_after_seconds = 180.0
+
+[resource]
+script = ExtResource("1_missdef")
+id = &"hillfort_2_defend"
+display_name = "Hillfort — Hold"
+briefing = "They are climbing it again. The relay dish in the fort yard is yours and it is the only thing up here worth taking, so there is nothing to guess about where they are going.
+
+Three columns on the hill. One on the trail you came up yourself, below the cistern. One over the saddle to the south-east. One round the west shoulder, which is the only side of this hill that is not the trail — and that is why it is on the list at all, because one way on makes a queue and not a fight.
+
+Your garrison is in the fort yard, on the gate and down the climb at the terrace and the old gate. It buys you the time to be in the right place; it does not hold the yard for you.
+
+Hold the dish. There is no extraction and nothing to carry home: what you are fighting for is the ground you already own, and everything it pays you."
+level_scene = ExtResource("3_hillfort")
+map_position = Vector2(92, 26)
+enemy_force = Array[ExtResource("2_espec")]([SubResource("A_trail"), SubResource("A_saddle"), SubResource("A_shoulder"), SubResource("A_second")])
+replace_level_enemies = true
+active_objectives = Array[StringName]([&"hillfort_relay"])
+reward_resources = 0
+compute_reward = 0
+unlocks = Array[StringName]([])
+squad_size = -1
+repeatable = true
+defence = true
+sim = false
+garrison_posts = Array[StringName]([&"obj_hillfort_yard", &"obj_hillfort_fortgate", &"obj_hillfort_terrace", &"obj_hillfort_gate"])
+requires = Array[StringName]([&"hillfort_1_relay"])

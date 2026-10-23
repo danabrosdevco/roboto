@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://chpwo8r7w6xv"
+path="res://.godot/imported/street_junction_cross.map-55c59f9915cedb8aa6383a09dc202a62.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_junction_cross.map"
+dest_files=["res://.godot/imported/street_junction_cross.map-55c59f9915cedb8aa6383a09dc202a62.tres"]
+
+[params]
+

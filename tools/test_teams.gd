@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # TEAMS — the squad goes into the field as the teams made on the squad page,
@@ -110,6 +111,11 @@ func _withdraw(spawner: SquadSpawner, ai: AIManager) -> void:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	var world_scene: Node = load("res://Env/world.tscn").instantiate()
 	world_scene.get_node("CampaignManager").autosave = false
@@ -317,7 +323,31 @@ func _init() -> void:
 		"order at y %.2f, hostile at %.2f" % [armor.objective_position.y, foe.global_position.y])
 	_check("...the toast and the marker say ARMOR : ADVANCE", hud._toast.text == "ARMOR : ADVANCE"
 		and _marker_text(commander, armor) == "ARMOR : ADVANCE", "%s / %s" % [hud._toast.text, _marker_text(commander, armor)])
+	# PUT IT WHERE THE CROSSHAIR CAN REACH, exactly as the hostile above is
+	# placed. This used to aim at wherever the squad happened to be standing,
+	# on the strength of the comment above it — "your own robots stand ahead of
+	# you" — which was true at the DEPOT, one room with everything in it.
+	#
+	# The base is the train now, and railhead_level.gd posts the squad to the
+	# barracks racks (squad_spawn_point.gd:42 honours slot_markers), so
+	# squad_members[0] stands six bulkheads and a hundred metres down the rake
+	# and the crosshair lands on a wall — measured: entity_0_worldspawn.
+	#
+	# The behaviour under test is that a tap at one of your own robots advances
+	# the SELECTED team to the ground under it, and does not change which team
+	# is selected. Where the base parks its squad is no part of that.
 	var mine: Soldier = infantry.squad_members[0]
+	var mine_seen := false
+	for dir in [-ahead, side, -side, (-ahead + side).normalized(), (-ahead - side).normalized()]:
+		for dist in [8.0, 5.0]:
+			mine.global_position = here + dir * dist
+			await physics_frame
+			commander.cam.look_at(mine.global_position)
+			if commander._aim_result().get("collider") == mine:
+				mine_seen = true
+				break
+		if mine_seen:
+			break
 	commander.cam.look_at(mine.global_position)
 	var aimed = commander._aim_result().get("collider")
 	_check("(setup) the crosshair is on one of your robots", aimed is Soldier

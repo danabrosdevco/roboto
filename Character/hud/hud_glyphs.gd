@@ -81,6 +81,20 @@ static func _item_for_scene(cat: ItemCatalogue, scene_path: String) -> ItemDefin
 	return _by_ai_scene.get(scene_path)
 
 
+## A catalogue entry by its id, or null when there is no campaign in the tree.
+##
+## Public and living here rather than being asked of the catalogue directly,
+## because reaching the catalogue at all means the "campaign" group walk below —
+## and a piece of HUD that hard-wires its own copy of that walk is one more
+## place to fix when the wiring changes. The designator's screen uses it to turn
+## a squadmate's equipment slot into an icon.
+static func item_by_id(item_id: StringName) -> ItemDefinition:
+	if item_id == &"":
+		return null
+	var cat := _catalogue()
+	return cat.item(item_id) if cat != null else null
+
+
 static func _catalogue() -> ItemCatalogue:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:

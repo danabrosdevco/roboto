@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="LocationCatalogue" load_steps=11 format=3 uid="uid://2ndo66hi8wjg"]
+
+[ext_resource type="Script" path="res://Campaign/location_catalogue.gd" id="1_cat"]
+[ext_resource type="Resource" uid="uid://ceplpneh376dq" path="res://Campaign/locations/loc_valley_basin.tres" id="4_valley_basin"]
+[ext_resource type="Resource" uid="uid://c6bmw7r1dm07q" path="res://Campaign/locations/loc_coast_road.tres" id="5_coast_road"]
+[ext_resource type="Resource" uid="uid://chmejqq3sp0s1" path="res://Campaign/locations/loc_over_the_top.tres" id="6_over_the_top"]
+[ext_resource type="Resource" uid="uid://b87ht4snpp0gu" path="res://Campaign/locations/loc_three_rivers.tres" id="7_three_rivers"]
+[ext_resource type="Resource" uid="uid://0wamoclhx8gf" path="res://Campaign/locations/loc_qamareen.tres" id="8_qamareen"]
+[ext_resource type="Resource" uid="uid://b7cfurgi7s7c4" path="res://Campaign/locations/loc_lockside.tres" id="9_lockside"]
+[ext_resource type="Resource" uid="uid://c3ap553nrkwbg" path="res://Campaign/locations/loc_polaris.tres" id="10_polaris"]
+[ext_resource type="Resource" uid="uid://crf1aoho5uom" path="res://Campaign/locations/loc_causeway.tres" id="11_causeway"]
+[ext_resource type="Resource" path="res://Campaign/locations/loc_hillfort_wip.tres" id="12_hillfort_wip"]
+
+[resource]
+script = ExtResource("1_cat")
+locations = Array[Resource]([ExtResource("12_hillfort_wip"), ExtResource("4_valley_basin"), ExtResource("5_coast_road"), ExtResource("6_over_the_top"), ExtResource("7_three_rivers"), ExtResource("8_qamareen"), ExtResource("9_lockside"), ExtResource("10_polaris"), ExtResource("11_causeway")])

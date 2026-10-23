@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Location" load_steps=2 format=3 uid="uid://chmejqq3sp0s1"]
+
+[ext_resource type="Script" path="res://Campaign/location.gd" id="1_loc"]
+
+[resource]
+script = ExtResource("1_loc")
+id = &"over_the_top"
+display_name = "Trenchline"
+mission_id = &"salient_1_overthetop"
+defend_mission_id = &"salient_2_defend"
+start_owner = 4
+resources_per_turn = 23
+compute = 1
+resistance = 365
+connects_to = Array[StringName]([&"valley_basin", &"three_rivers"])

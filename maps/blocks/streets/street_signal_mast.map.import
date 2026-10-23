@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c46eanswl4l3h"
+path="res://.godot/imported/street_signal_mast.map-5a7c5866bb7090a12fd49055dbd95414.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_signal_mast.map"
+dest_files=["res://.godot/imported/street_signal_mast.map-5a7c5866bb7090a12fd49055dbd95414.tres"]
+
+[params]
+

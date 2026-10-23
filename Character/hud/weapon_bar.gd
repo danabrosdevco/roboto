@@ -106,6 +106,13 @@ var _loadout: EquipmentLoadout = null
 # Scene path -> icon (or null), so the catalogue is searched once per item.
 var _icon_cache: Dictionary = {}
 var _row: HBoxContainer = null
+## How many key chips the bar draws. Matches EquipmentLoadout.slot_actions:
+## 1-3 weapons and the two built-in tools, 4-6 the equipment you buy. Hardcoded
+## rather than read off the loadout because
+## the bar is built before it has found one, and a bar that grew a chip two
+## frames into the mission would reflow under the player's eyes.
+const SLOT_COUNT: int = 6
+
 var _chips: Array[Dictionary] = []
 var _highlight: float = 0.0
 var _deny_slot: int = -1
@@ -124,7 +131,7 @@ func _build() -> void:
 	_row.add_theme_constant_override("separation", int(chip_gap))
 	_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_row)
-	for i in 6:
+	for i in SLOT_COUNT:
 		_chips.append(_make_chip(i))
 
 

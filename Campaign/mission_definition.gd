@@ -55,6 +55,33 @@ class_name MissionDefinition
 
 # ── REPLAYABILITY ─────────────────────────────
 @export var repeatable: bool = false
+
+## A DEFENCE, NOT AN ATTACK (Phase 5). Flips the operation: you start on the
+## ground you already hold, your garrison spawns with you, and the attacker
+## comes in from a frontier edge.
+##
+## A defence pays NOTHING — §2. The stake is the yield you keep, which is the
+## whole reason it is worth turning up for, and paying for it as well would
+## make losing ground profitable.
+@export var defence: bool = false
+
+## A SIM ARENA — A FREE ACTION, NOT AN OPERATION (Phase 6.4).
+##
+## The three Sim Arenas were ordinary missions: they paid resources and
+## compute, sat on the `requires` ladder and would now burn a TURN, which makes
+## practising cost you ground. They are a practice track, so:
+##
+##   no turn passes · nothing is paid · no site changes hands
+##   the other side does not get a move · it can be run as often as you like
+##
+## §15 already settled that they are not territory and are not on the adjacency
+## graph. This is the same statement, applied to the turn loop.
+@export var sim: bool = false
+
+## Where the player's garrison digs in, by anchor tag. One squad per post,
+## sized from compute and built from what the player has unlocked — see
+## force_generator.garrison(). Empty on an attack.
+@export var garrison_posts: Array[StringName] = []
 # Missions that must be completed before this one appears.
 @export var requires: Array[StringName] = []
 

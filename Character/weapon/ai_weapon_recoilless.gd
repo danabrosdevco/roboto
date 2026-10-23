@@ -35,6 +35,30 @@ class_name AIWeaponRecoilless
 @export var analytics_label: String = "Recoilless"
 
 
+## Same class of problem as the Cluster Launcher: the tube's damage is on the
+## ROCKET, not on the weapon, so base_damage here describes nothing that is ever
+## fired. Read it off the round. No submunitions — a rocket is one blast.
+##
+## Cached for the same reason the launcher's is: building a rocket to ask it a
+## question is cheap once and absurd per redraw.
+var _shot_damage: Dictionary = {}
+
+
+func shot_damage() -> Dictionary:
+	if not _shot_damage.is_empty():
+		return _shot_damage
+	if rocket_scene == null:
+		push_warning("AIWeaponRecoilless on '%s' has no rocket_scene, so its reported damage is the weapon's base_damage, which a launcher does not use." % name)
+		return super.shot_damage()
+	var round_node := rocket_scene.instantiate()
+	var impact: int = base_damage
+	if "blast_damage" in round_node:
+		impact = int(round_node.get("blast_damage"))
+	round_node.free()
+	_shot_damage = {"impact": impact, "submunitions": 0, "each": 0, "total": impact}
+	return _shot_damage
+
+
 # The base calls this on the frame the shot goes off. A hitscan weapon traces a
 # ray here; this puts a round in the air instead.
 func check_damage(weapon_target: Vector3) -> void:

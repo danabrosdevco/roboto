@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="LabPlan" load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://Campaign/lab/lab_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Campaign/lab/lab_matchup.gd" id="2_match"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="3_chassis"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_lance.tres" id="4_lance"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_picket.tres" id="5_picket"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_kite.tres" id="6_kite"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_drayman.tres" id="7_drayman"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_vessel.tres" id="8_vessel"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_brood.tres" id="9_brood"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_bastion.tres" id="10_bastion"]
+[ext_resource type="Resource" path="res://Campaign/chassis/chassis_see_engine.tres" id="11_seeengine"]
+[ext_resource type="Resource" uid="uid://daikhvrvnhg7g" path="res://Campaign/chassis/chassis_walker.tres" id="12_walker"]
+
+[sub_resource type="Resource" id="M1"]
+script = ExtResource("2_match")
+label = "the new five vs the new three"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_lance"), ExtResource("5_picket"), ExtResource("6_kite"), ExtResource("7_drayman"), ExtResource("8_vessel")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("9_brood"), ExtResource("10_bastion"), ExtResource("11_seeengine")])
+hostile_order = 1
+distance = 70.0
+repeats = 1
+time_limit = 240.0
+swap_sides = false
+hostiles_on_post = false
+
+[sub_resource type="Resource" id="M2"]
+script = ExtResource("2_match")
+label = "the same five vs three Walkers — the control"
+allies = Array[ExtResource("3_chassis")]([ExtResource("4_lance"), ExtResource("5_picket"), ExtResource("6_kite"), ExtResource("7_drayman"), ExtResource("8_vessel")])
+ally_order = 1
+hostiles = Array[ExtResource("3_chassis")]([ExtResource("12_walker"), ExtResource("12_walker"), ExtResource("12_walker")])
+hostile_order = 1
+distance = 70.0
+repeats = 1
+time_limit = 240.0
+swap_sides = false
+hostiles_on_post = false
+
+[resource]
+script = ExtResource("1_plan")
+title = "The new frames"
+question = "Every chassis built on 2026-10-10, on the floor at once, at 1x. This is a LOOK, not a measurement: one repeat of each, eight frames that have never been in the same place, and nothing here settles a balance question.
+
+WHAT TO WATCH, in rough order of what is most likely to be broken.
+
+DOES ANYTHING SHOOT AT ALL. Five of these eight had an empty AllowedCombatOptions until today, which makes roll_combat_action return at enemy.gd:3053 — the frame still fires, but only through the full settle gate and never commits a burst. If the fight looks slow and polite, that is what it looks like.
+
+THE PICKET'S ROCKETS ARE INDIRECT. They arc, and nothing in this project leads a moving target. Against the Broodcarrier — the only thing on the floor that flies and moves — they should miss. That is the open identity question made visible: a frame named for air defence firing a weapon that cannot hit air.
+
+THE KITE SHOULD FIRE WHILE MOVING. It is the first armed aerial the player has ever had, and its script had to reach Enemy's weapon loop from under a stub that says 'No weapon, ever'. Rounds leaving the pod is the whole proof.
+
+THE BASTION PLANTS AND HARDENS. It arrives already planted with move_speed 0. Watch whether the Broodcarrier and See-Engine near it visibly shrug off suppression that the same frames take badly when alone — and remember the hardening is same-faction, so in the lab all three hostiles share ENEMY and all three should benefit.
+
+THE SEE-ENGINE NEVER SHOOTS. Its pupil lights while it is feeding contacts and goes dark the frame it dies. If the hostiles get measurably worse after it falls, the frame exists; if nothing changes, it does not.
+
+THE VESSEL OPENS ITS DOORS AND DROPS HOPPERS. Two per canister, two canisters, then thirty seconds of recharge. Doors shut outside contact, so the moment they swing is the moment it decides.
+
+THE DRAYMAN SHOULD NOT BE IN THE FIGHT. It has no weapon and four equipment slots. If it drives at the enemy it is the ADVANCE conflict coming back.
+
+THE LANCE AIMS BY POINTING ITS WHOLE BODY. No turret. Watch it slew the hull at 50 degrees a second rather than snapping a gun round.
+
+THE CONTROL asks the only question that matters for the enemy three: is fighting a Broodcarrier, a Bastion and a See-Engine a different fight from fighting three Walkers? If it plays the same, the three new frames are a reskin and the faction work bought nothing."
+matchups = Array[Resource]([SubResource("M1"), SubResource("M2")])
+repeats_override = 0
+speed = 1.0

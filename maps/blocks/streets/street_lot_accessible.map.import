@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://0tg11ecgooak"
+path="res://.godot/imported/street_lot_accessible.map-e2400af576518ff25e380a177277d577.tres"
+
+[deps]
+
+source_file="res://maps/blocks/streets/street_lot_accessible.map"
+dest_files=["res://.godot/imported/street_lot_accessible.map-e2400af576518ff25e380a177277d577.tres"]
+
+[params]
+

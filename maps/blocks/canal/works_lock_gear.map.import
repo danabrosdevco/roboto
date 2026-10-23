@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c8jajjurwu23c"
+path="res://.godot/imported/works_lock_gear.map-f557069f038d900e366ccfffc4601709.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/works_lock_gear.map"
+dest_files=["res://.godot/imported/works_lock_gear.map-f557069f038d900e366ccfffc4601709.tres"]
+
+[params]
+

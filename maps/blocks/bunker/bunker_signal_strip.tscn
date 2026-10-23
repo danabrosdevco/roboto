@@ -1,0 +1,44 @@
+[gd_scene load_steps=7 format=4]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_gb6fo"]
+[ext_resource type="Resource" path="res://addons/func_godot/func_godot_default_map_settings.tres" id="2_frcuy"]
+[ext_resource type="Material" path="res://textures/PSX_Textures/glitch_tx_1.tres" id="3_538ne"]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_xi543"]
+_surfaces = [{
+"aabb": AABB(-4, 4.5, 1.75, 8, 0.25, 0.1875),
+"attribute_data": PackedByteArray("AABgvgAAAD8AAHi+AAAAPwAAeL4AAAC/AABgvgAAAL8AAGA+AAAAPwAAYD4AAAC/AAB4PgAAAL8AAHg+AAAAPwAAYD4AABC/AABgPgAAGL8AAHg+AAAYvwAAeD4AABC/AAAAvwAAEL8AAAC/AAAYvwAAAD8AABi/AAAAPwAAEL8AAHi+AAAQvwAAeL4AABi/AABgvgAAGL8AAGC+AAAQvwAAAL8AABC/AAAAvwAAGL8AAAA/AAAYvwAAAD8AABC/"),
+"format": 34359742487,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcA"),
+"material": ExtResource("3_538ne"),
+"name": "PSX_Textures/glitch_tx_1",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 24,
+"vertex_data": PackedByteArray("AACAwAAAkEAAAOA/AACAwAAAkEAAAPg/AACAQAAAkEAAAPg/AACAQAAAkEAAAOA/AACAwAAAmEAAAOA/AACAQAAAmEAAAOA/AACAQAAAmEAAAPg/AACAwAAAmEAAAPg/AACAwAAAkEAAAOA/AACAwAAAmEAAAOA/AACAwAAAmEAAAPg/AACAwAAAkEAAAPg/AACAwAAAkEAAAPg/AACAwAAAmEAAAPg/AACAQAAAmEAAAPg/AACAQAAAkEAAAPg/AACAQAAAkEAAAPg/AACAQAAAmEAAAPg/AACAQAAAmEAAAOA/AACAQAAAkEAAAOA/AACAQAAAkEAAAOA/AACAQAAAmEAAAOA/AACAwAAAmEAAAOA/AACAwAAAkEAAAOA//38AAP//////fwAA//////9/AAD//////38AAP//////f////3//v/9/////f/+//3////9//7//f////3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+//3//f////7//f/9/////v/9//3////+//3//f////7////9//////////3//////////f/////////9///////////8AAP+//////wAA/7//////AAD/v/////8AAP+/")
+}]
+
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_3x3bp"]
+vertices = PackedVector3Array(-4, 4.5, 1.75, -4, 4.5, 1.9375, 4, 4.5, 1.9375, 4, 4.5, 1.75, -4, 4.75, 1.75, 4, 4.75, 1.75, 4, 4.75, 1.9375, -4, 4.75, 1.9375, -4, 4.5, 1.75, -4, 4.75, 1.75, -4, 4.75, 1.9375, -4, 4.5, 1.9375, -4, 4.5, 1.9375, -4, 4.75, 1.9375, 4, 4.75, 1.9375, 4, 4.5, 1.9375, 4, 4.5, 1.9375, 4, 4.75, 1.9375, 4, 4.75, 1.75, 4, 4.5, 1.75, 4, 4.5, 1.75, 4, 4.75, 1.75, -4, 4.75, 1.75, -4, 4.5, 1.75)
+indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_2ungn"]
+data = PackedVector3Array(-4, 4.5, 1.75, -4, 4.5, 1.9375, 4, 4.5, 1.9375, -4, 4.5, 1.75, 4, 4.5, 1.9375, 4, 4.5, 1.75, -4, 4.75, 1.75, 4, 4.75, 1.75, 4, 4.75, 1.9375, -4, 4.75, 1.75, 4, 4.75, 1.9375, -4, 4.75, 1.9375, -4, 4.5, 1.75, -4, 4.75, 1.75, -4, 4.75, 1.9375, -4, 4.5, 1.75, -4, 4.75, 1.9375, -4, 4.5, 1.9375, -4, 4.5, 1.9375, -4, 4.75, 1.9375, 4, 4.75, 1.9375, -4, 4.5, 1.9375, 4, 4.75, 1.9375, 4, 4.5, 1.9375, 4, 4.5, 1.9375, 4, 4.75, 1.9375, 4, 4.75, 1.75, 4, 4.5, 1.9375, 4, 4.75, 1.75, 4, 4.5, 1.75, 4, 4.5, 1.75, 4, 4.75, 1.75, -4, 4.75, 1.75, 4, 4.5, 1.75, -4, 4.75, 1.75, -4, 4.5, 1.75)
+
+[node name="BunkerSignalStrip" type="Node3D"]
+script = ExtResource("1_gb6fo")
+local_map_file = "res://maps/blocks/bunker/bunker_signal_strip.map"
+map_settings = ExtResource("2_frcuy")
+
+[node name="entity_0_worldspawn" type="StaticBody3D" parent="."]
+collision_mask = 0
+
+[node name="entity_0_mesh_instance" type="MeshInstance3D" parent="entity_0_worldspawn"]
+mesh = SubResource("ArrayMesh_xi543")
+
+[node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="entity_0_worldspawn"]
+occluder = SubResource("ArrayOccluder3D_3x3bp")
+
+[node name="entity_0_collision_shape" type="CollisionShape3D" parent="entity_0_worldspawn"]
+shape = SubResource("ConcavePolygonShape3D_2ungn")

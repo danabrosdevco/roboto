@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://c56fu5u0t3y8h"
+path="res://.godot/imported/park_overgrown_bed.map-48ae39a1a6136ad2598ba2f616f3225b.tres"
+
+[deps]
+
+source_file="res://maps/blocks/canal/park_overgrown_bed.map"
+dest_files=["res://.godot/imported/park_overgrown_bed.map-48ae39a1a6136ad2598ba2f616f3225b.tres"]
+
+[params]
+

@@ -1,6 +1,10 @@
 extends Node3D
 class_name ChassisHologram
 
+## One price table — Campaign/pricing.gd, preloaded because a new `class_name`
+## is not visible until the editor rescans.
+const _Pricing := preload("res://Campaign/pricing.gd")
+
 # ─────────────────────────────────────────────
 # CHASSIS HOLOGRAM — a bay in the depot projecting a frame you can walk round.
 #
@@ -151,7 +155,7 @@ func _project(def: ChassisDefinition, sweep: bool) -> void:
 # Tint, pad ring and bay light all from the one colour: cyan for a frame the
 # factory can build today, amber for one an operation still owes you.
 func _dress(def: ChassisDefinition) -> void:
-	var colour: Color = locked_tint if _locked_by(def) != null else tint
+	var colour: Color = locked_tint if _is_locked(def) else tint
 	_skin.set_shader_parameter("tint", colour)
 	_skin.set_shader_parameter("base_y", (model_root if model_root != null else self).global_position.y)
 	_skin.set_shader_parameter("span", maxf(bay_height, 0.5))
@@ -302,11 +306,11 @@ func _relabel(def: ChassisDefinition) -> void:
 		return
 	# ASCII only. The project font is DS-Digital, which has no middle dot.
 	var facts := PackedStringArray()
-	var locked: MissionDefinition = _locked_by(def)
-	if locked != null:
-		facts.append("LOCKED > CLEAR %s" % locked.display_name.to_upper())
+	var locked: bool = _is_locked(def)
+	if locked:
+		facts.append("OPEN LINE %d RES" % _Pricing.chassis_unlock(def))
 	else:
-		facts.append("%d RES" % def.cost)
+		facts.append("%d RES" % _Pricing.chassis_buy(def))
 	facts.append("%d HP" % def.base_health)
 	if def.weapon_slots > 0:
 		facts.append("%d GUN" % def.weapon_slots)
@@ -328,10 +332,13 @@ func _show_empty() -> void:
 		glow.light_energy = 0.0
 
 
-func _locked_by(def: ChassisDefinition) -> MissionDefinition:
+## Is this frame's line still shut? Replaces _locked_by(), which named the
+## operation that would unlock it — operations no longer grant frames, you open
+## the line in the fabrication car.
+func _is_locked(def: ChassisDefinition) -> bool:
 	if def == null:
-		return null
+		return false
 	var campaign := get_tree().get_first_node_in_group("campaign")
-	if campaign == null or not campaign.has_method("locked_by"):
-		return null
-	return campaign.locked_by(def.id)
+	if campaign == null or not campaign.has_method("is_locked"):
+		return false   # no campaign in the tree; a bay in isolation locks nothing
+	return campaign.is_locked(def.id)

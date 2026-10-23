@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: shell
 
 # PauseHold composition — the exact sequence that let the game run underneath
 # the mission briefing. world.gd holds "level_load", the briefing opens inside

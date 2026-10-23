@@ -1,0 +1,67 @@
+[gd_scene load_steps=7 format=3]
+
+; CLUSTER ROUND — one 40mm carrier shell, built to fit the launcher's chamber.
+;
+; SIZED OFF THE CHAMBER, not off a guess. cluster_launcher_model.tscn chambers
+; are CylinderMesh r 0.1, h 0.94, so the body sits at r 0.085 with a rim at 0.098
+; and the whole round is 0.80 long: it fills the bore it goes into and still
+; slides, and the rim stands proud of the drum face the way a loaded round does.
+;
+; BUILT ALONG +Y, like every CylinderMesh, and placed with the chamber's own
+; basis so it lies down the bore. The nose is the fat ogive of a low-velocity
+; grenade rather than a bullet point — this is a thing that is lobbed, and the
+; silhouette should say so at the moment it is being loaded, which is the only
+; time the player ever sees one up close.
+
+[sub_resource type="StandardMaterial3D" id="mat_case"]
+resource_name = "RoundCase"
+albedo_color = Color(0.27, 0.3, 0.18, 1)
+metallic = 0.1
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="mat_head"]
+resource_name = "RoundHead"
+albedo_color = Color(0.2, 0.21, 0.13, 1)
+metallic = 0.15
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="mat_rim"]
+resource_name = "RoundRim"
+albedo_color = Color(0.45, 0.36, 0.17, 1)
+metallic = 0.65
+roughness = 0.45
+
+[sub_resource type="CylinderMesh" id="m_case"]
+top_radius = 0.085
+bottom_radius = 0.085
+height = 0.46
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="m_head"]
+top_radius = 0.052
+bottom_radius = 0.085
+height = 0.28
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="m_rim"]
+top_radius = 0.098
+bottom_radius = 0.098
+height = 0.06
+radial_segments = 8
+
+[node name="ClusterRoundModel" type="Node3D"]
+
+[node name="Case" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+material_override = SubResource("mat_case")
+mesh = SubResource("m_case")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.43, 0)
+material_override = SubResource("mat_head")
+mesh = SubResource("m_head")
+
+[node name="Rim" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
+material_override = SubResource("mat_rim")
+mesh = SubResource("m_rim")

@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_8h1wm"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="PackedScene" path="res://Character/characters/ai/picket.tscn" id="2_scene"]
+
+[sub_resource type="Resource" id="Resource_0yua1"]
+script = ExtResource("1_8h1wm")
+weapon_ids = Array[StringName]([&"cluster_launcher"])
+equipment_ids = Array[StringName]([])
+health_bonus = 0
+speed_multiplier = 1.0
+sensor_bonus = 10.0
+accuracy_bonus = 0.0
+tuning = {}
+
+[sub_resource type="Resource" id="Resource_ucrk1"]
+script = ExtResource("1_8h1wm")
+weapon_ids = Array[StringName]([&"mortar"])
+equipment_ids = Array[StringName]([])
+health_bonus = 25
+speed_multiplier = 1.0
+sensor_bonus = 20.0
+accuracy_bonus = 0.0
+tuning = {}
+
+[resource]
+script = ExtResource("1_chassisdef")
+id = &"picket"
+display_name = "Picket"
+description = "Six tubes on a trunnion and a sensor dish, on legs. Built to be positioned, not driven: it sees further than anything that is not a drone and it reaches past anything that is not a cannon. The launcher only elevates, so everything it fires arcs. On legs, so it takes the kit a Rover cannot. Thin, and worth its seat only when there is ground you need hit from a long way off."
+scene = ExtResource("2_scene")
+cost = 210
+purchasable = true
+supply = 2
+starting_weapon_id = &"rocket_pods"
+coax_weapon_id = &""
+base_health = 140
+base_speed = 0.9
+base_accuracy = 1.0
+base_sensor_range = 75.0
+weapon_slots = 1
+built_in = "CLAWS"
+weapon_replaces_built_in = false
+turret = true
+vehicle = true
+drives = false
+equipment_slots = 0
+module_slots = 2
+musters_at_base = true
+unlock_requires = Array[StringName]([])
+marks = Array[Resource]([SubResource("Resource_0yua1"), SubResource("Resource_ucrk1")])

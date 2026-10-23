@@ -1,4 +1,5 @@
 extends SceneTree
+# BUCKET: frames
 
 # ─────────────────────────────────────────────
 # BARKS — the squad says the right thing at the right moment.
@@ -50,6 +51,11 @@ func _heard_search(heard: Array) -> bool:
 
 
 func _init() -> void:
+	# PACE THE LOOP — see the note in tools/test.sh. Without this a
+	# --script run has no frame cap, _process spins flat out and starves
+	# physics, and every await physics_frame below takes far longer in
+	# wall clock than the 1/60 s it is written as.
+	Engine.max_fps = 60
 	await process_frame
 	# Autosave off: this reads the save on this machine but must never write it.
 	var world_scene: Node = load("res://Env/world.tscn").instantiate()

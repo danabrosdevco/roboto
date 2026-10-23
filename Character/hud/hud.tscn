@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://ib6m72545n75"]
+[gd_scene load_steps=22 format=3 uid="uid://ib6m72545n75"]
 
 [ext_resource type="PackedScene" uid="uid://b4n2skq3ovhu6" path="res://Character/hud/scan_effect.tscn" id="1_80vuv"]
 [ext_resource type="Script" path="res://Character/hud/hud.gd" id="1_nopku"]
@@ -19,6 +19,7 @@
 [ext_resource type="AudioStream" uid="uid://bh7ralx5afru3" path="res://sounds/sfx/psx ui sfx/squad_manager/PageA.ogg" id="16_cnjdy"]
 [ext_resource type="AudioStream" uid="uid://1dtcl250xe7c" path="res://sounds/sfx/psx ui sfx/squad_manager/PageB.ogg" id="17_34lhm"]
 [ext_resource type="Script" path="res://Character/hud/weapon_bar.gd" id="20_wepbar"]
+[ext_resource type="FontFile" path="res://2d_assets/fonts/DS-Digital/DS-DIGI.TTF" id="900_hudfont"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bvcf1"]
 shader = ExtResource("8_21qk7")
@@ -92,8 +93,12 @@ grow_vertical = 2
 
 [node name="InteractText" type="Label" parent="InteractBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = "F | 7"
+theme_override_fonts/font = ExtResource("900_hudfont")
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.62, 0.95, 0.66, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.55)
+theme_override_constants/outline_size = 4
+text = "F  SELECT MISSION"
 horizontal_alignment = 1
 vertical_alignment = 1
 

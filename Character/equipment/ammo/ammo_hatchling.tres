@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="AmmoStock" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="AmmoStock" load_steps=2 format=3 uid="uid://cpw13l6xa2dnn"]
 
 [ext_resource type="Script" path="res://Character/equipment/ammo_stock.gd" id="1_stock"]
 
@@ -7,3 +7,4 @@ script = ExtResource("1_stock")
 ammo_type = &"hatchling"
 amount = 2
 capacity = 3
+requires_carrier = true

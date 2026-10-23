@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://lfvgu5r375bb"
+path="res://.godot/imported/lot_snow_pile.map-d92da1d2017124ecb69ab9605b4fc6f3.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/lot_snow_pile.map"
+dest_files=["res://.godot/imported/lot_snow_pile.map-d92da1d2017124ecb69ab9605b4fc6f3.tres"]
+
+[params]
+

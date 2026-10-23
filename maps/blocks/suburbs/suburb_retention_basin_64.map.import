@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://b1q368vr0sit8"
+path="res://.godot/imported/suburb_retention_basin_64.map-820d4a226a9911f51a96e2b9b1cf5208.tres"
+
+[deps]
+
+source_file="res://maps/blocks/suburbs/suburb_retention_basin_64.map"
+dest_files=["res://.godot/imported/suburb_retention_basin_64.map-820d4a226a9911f51a96e2b9b1cf5208.tres"]
+
+[params]
+

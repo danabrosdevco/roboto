@@ -6,7 +6,7 @@
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_rover.tres" id="4_rover"]
 [ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="5_mech"]
 [ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
-[ext_resource type="PackedScene" uid="uid://bry0vr0coxyl4" path="res://maps/valley_level.tscn" id="7_valley"]
+[ext_resource type="PackedScene" uid="uid://bry0vr0coxyl4" path="res://maps/appendix/valley_level.tscn" id="7_valley"]
 
 [sub_resource type="Resource" id="M1"]
 script = ExtResource("2_match")

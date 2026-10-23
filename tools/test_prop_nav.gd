@@ -1,4 +1,6 @@
 extends SceneTree
+# BUCKET: terrain
+# REPORTS: prints a table and asserts nothing — see bucket.sh
 
 # ─────────────────────────────────────────────
 # TEST PROP NAV — what does a prop actually do to a navmesh?

@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_lgvpx")
-level_scene_path = "res://maps/arena_level.tscn"
+level_scene_path = "res://maps/appendix/arena_level.tscn"
 image_path = "res://maps/minimaps/arena_level.png"
 world_min = Vector2(-68.6574, -68.9074)
 world_max = Vector2(69.1574, 68.9074)

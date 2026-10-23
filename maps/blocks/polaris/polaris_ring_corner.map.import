@@ -1,0 +1,14 @@
+[remap]
+
+importer="func_godot.map"
+type="Resource"
+uid="uid://dwdlutal8hrea"
+path="res://.godot/imported/polaris_ring_corner.map-bfcf255246a9874d7287ba7344264810.tres"
+
+[deps]
+
+source_file="res://maps/blocks/polaris/polaris_ring_corner.map"
+dest_files=["res://.godot/imported/polaris_ring_corner.map-bfcf255246a9874d7287ba7344264810.tres"]
+
+[params]
+
