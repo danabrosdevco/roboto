@@ -50,9 +50,25 @@ func _init() -> void:
 	cm.reset_campaign()
 
 	# ── 1 · CLEAR AND GO HOME ───────────────────
-	await _deploy(cm, world, &"arena_1_contact")
+	# AN OPERATION THAT IS NOT IN THE CAMPAIGN. First Contact was cut on
+	# 2026-10-22, so the only thing left that leaves by the BLOCKHOUSE is
+	# arena_5_proving, which is on disk and not in Campaign.missions. It is
+	# loaded straight off the file rather than asked for by id — because the
+	# rule under test is the LEVEL's, not the campaign's: the proving ground
+	# holds both gates and whichever operation runs must light exactly one.
+	# Drop this half and the two-live-gates failure stops being tested at all.
+	# ADOPTED INTO THE CAMPAIGN FIRST, and that is not a formality:
+	# MissionObjective._ready asks Campaign.is_objective_active(), which reads
+	# the CURRENT mission — and select_mission() on an operation the campaign
+	# has never heard of leaves that null, so nothing is pruned and all five
+	# objectives stay up. Skipping this step produced, exactly, the two live
+	# extraction gates this suite exists to catch.
+	var floor_op = load("res://Campaign/missions/mission_arena_5_proving.tres")
+	if not cm.missions.has(floor_op):
+		cm.missions.append(floor_op)
+	await _deploy_def(cm, world, floor_op)
 	var one := _objective_ids(cm)
-	_check("the first exercise clears the floor", one.has(&"proving_clear"), str(one))
+	_check("an operation that only clears the floor asks for that", one.has(&"proving_clear"), str(one))
 	_check("...and leaves by the blockhouse", one.has(&"proving_extract"), str(one))
 	_check("...and is not asked to capture anything",
 		not one.has(&"proving_capture") and not one.has(&"proving_bunker"), str(one))
@@ -130,9 +146,18 @@ func _deploy(cm, world, id: StringName) -> void:
 	if m == null:
 		_check("(setup) %s exists" % String(id), false)
 		return
+	await _deploy_def(cm, world, m)
+
+
+## The same, for an operation that is not in Campaign.missions — see the note
+## on the first section.
+func _deploy_def(cm, world, m) -> void:
+	if m == null:
+		_check("(setup) the operation loaded", false)
+		return
 	cm.in_mission = false
 	cm.debug_mission = m
-	cm.select_mission(id)
+	cm.select_mission(m.id)
 	await world.load_next_level(m.level_scene)
 	cm.on_level_loaded(world.current_level)
 	for _i in 60:

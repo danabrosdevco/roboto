@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3 uid="uid://bnygpdpgt07ir"]
+[gd_scene load_steps=39 format=3 uid="uid://bnygpdpgt07ir"]
 
 [ext_resource type="Script" path="res://Env/world.gd" id="1_2t272"]
 [ext_resource type="PackedScene" uid="uid://baiflljpvuniv" path="res://Managers/ai_manager.tscn" id="2_d77gp"]
@@ -19,7 +19,6 @@
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="16_oqoj0"]
 [ext_resource type="Resource" uid="uid://ciftj4gygiyem" path="res://Campaign/items & catalogue/test_item_catalogue.tres" id="18_kolru"]
 [ext_resource type="Script" path="res://Campaign/enemy_force_spawner.gd" id="18_r3yq3"]
-[ext_resource type="Resource" uid="uid://3jioym1uw0m6" path="res://Campaign/missions/mission_arena_1_contact.tres" id="95_a1"]
 [ext_resource type="Resource" uid="uid://bkty15qc166vb" path="res://Campaign/missions/mission_arena_3_firing_line.tres" id="97_a3"]
 [ext_resource type="Resource" uid="uid://xmjjinhqkvrq" path="res://Campaign/missions/mission_coast_1_road.tres" id="98_c1"]
 [ext_resource type="Resource" uid="uid://oem8mh562jhf" path="res://Campaign/missions/mission_basin_1_anchor.tres" id="100_b1"]
@@ -98,7 +97,7 @@ script = ExtResource("12_1xc4a")
 [node name="CampaignManager" type="Node" parent="." groups=["campaign"]]
 script = ExtResource("15_3b3cm")
 base_level = ExtResource("16_oio3q")
-missions = Array[ExtResource("16_oqoj0")]([ExtResource("95_a1"), ExtResource("97_a3"), ExtResource("118_hfw"), ExtResource("100_b1"), ExtResource("98_c1"), ExtResource("101_p1"), ExtResource("103_m2"), ExtResource("105_gt"), ExtResource("106_pol"), ExtResource("107_cw"), ExtResource("108_sal"), ExtResource("111_c2"), ExtResource("112_p2"), ExtResource("113_m3"), ExtResource("114_gt2"), ExtResource("115_pol2"), ExtResource("116_cw2"), ExtResource("117_sal2"), ExtResource("119_hfw2"), ExtResource("109_b2d")])
+missions = Array[ExtResource("16_oqoj0")]([ExtResource("97_a3"), ExtResource("118_hfw"), ExtResource("100_b1"), ExtResource("98_c1"), ExtResource("101_p1"), ExtResource("103_m2"), ExtResource("105_gt"), ExtResource("106_pol"), ExtResource("107_cw"), ExtResource("108_sal"), ExtResource("111_c2"), ExtResource("112_p2"), ExtResource("113_m3"), ExtResource("114_gt2"), ExtResource("115_pol2"), ExtResource("116_cw2"), ExtResource("117_sal2"), ExtResource("119_hfw2"), ExtResource("109_b2d")])
 catalogue = ExtResource("18_kolru")
 starting_chassis = ExtResource("11_6rcry")
 starting_resources = 1000

@@ -33,7 +33,7 @@ class_name ConceptsCore
 #
 # THE QUESTION ALL FIFTEEN EXIST TO ASK: one form scaled, or three forms?
 # A and B say one form, by two different arguments. C, D and E say three.
-# docs/concepts/COMPUTE_CORES.md carries the argument; this file carries the
+# docs/concepts/archive/COMPUTE_CORES.md carries the argument; this file carries the
 # geometry.
 # ─────────────────────────────────────────────
 

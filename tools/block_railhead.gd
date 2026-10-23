@@ -146,7 +146,7 @@ const LAMP_T := "PSX_Textures/hl_office_complex_style_drop_ceiling_1_1"
 ## THE OPERATIONS TABLE'S VERTICALS, named because tools/fit_ops_table.gd has to
 ## agree with them: it seats the OpsTableAnchor at TABLE_TOP and sizes the
 ## Interactible to the slab. Change one of these and run that script again.
-## docs/briefs/OPS_TABLE_FURNITURE.md fixes TABLE_TOP at the standing-table
+## docs/briefs/archive/OPS_TABLE_FURNITURE.md fixes TABLE_TOP at the standing-table
 ## working height and caps the lip at 30 mm; both are quoted there as the
 ## numbers the runtime projection was built against.
 const TABLE_DECK := 0.89     ## underside of the slab
@@ -603,7 +603,7 @@ func _hull_motive() -> void:
 ## at runtime by Env/world_objects/ops_table.gd and is not drawn here — an
 ## earlier version of this car painted a fake projection onto the slab and hung
 ## a projector ring over it, and both had to come out. See
-## docs/briefs/OPS_TABLE_FURNITURE.md, which sets the geometry this has to meet:
+## docs/briefs/archive/OPS_TABLE_FURNITURE.md, which sets the geometry this has to meet:
 ##
 ##   - top surface at TABLE_TOP (0.95 m), the working height for a standing
 ##     table, at least 1.5 x 1.1 m. Ours is 2.6 x 1.8, which leaves 0.21 m of
@@ -628,7 +628,7 @@ func _car_ops() -> void:
 	# flags is what to check.
 	#
 	# side_door true: you wake in Operations and you leave from Operations.
-	# docs/briefs/PLATFORM_DOOR_TO_OPS.md — the walk to the exit was 64.8 m.
+	# docs/briefs/archive/PLATFORM_DOOR_TO_OPS.md — the walk to the exit was 64.8 m.
 	_shell(true, true, HULL, true, TILE)
 	# THE OPERATIONS TABLE. Issued, bolted down, and old. Toe recess, plinth,
 	# slab, lip — each a little wider than the one below, so it reads as a top
@@ -960,7 +960,7 @@ func _car_barracks() -> void:
 ## boarding ramp: the way off at a stop with no station.
 func _car_platform(ramp_end: bool = false) -> void:
 	# NO SIDE DOOR ANY MORE. It moved to Operations, five cars up the rake, so
-	# the player leaves from the car they wake in — docs/briefs/PLATFORM_DOOR_TO_OPS.md.
+	# the player leaves from the car they wake in — docs/briefs/archive/PLATFORM_DOOR_TO_OPS.md.
 	# Left open here and the train has a hole in its far end.
 	_shell(true, ramp_end, HULL, false)
 	if ramp_end:

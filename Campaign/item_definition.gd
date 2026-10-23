@@ -243,7 +243,15 @@ func effect_summary() -> String:
 	if equipment_slot_bonus != 0:
 		parts.append("%+d EQUIP SLOT" % equipment_slot_bonus)
 	if not is_equal_approx(equipment_quantity_multiplier, 1.0):
-		parts.append("x%.3g CHARGES" % equipment_quantity_multiplier)
+		# NOT %g. GDScript's % has no `g` conversion — it prints "unsupported
+		# format character" to the log and hands back the format string
+		# unchanged, so the Utility Harness has been advertising its own
+		# source code wherever this is drawn. It is the only item in the
+		# catalogue with a quantity multiplier, which is why nothing caught
+		# it until a line that TAKES the harness was photographed.
+		var mult: float = equipment_quantity_multiplier
+		parts.append("x%d CHARGES" % int(round(mult)) if is_equal_approx(mult, round(mult))
+			else "x%.1f CHARGES" % mult)
 	if self_revive_seconds > 0.0:
 		parts.append("SELF-REVIVE %.0fs" % self_revive_seconds)
 	# ONLY A MODULE ACTUALLY GRANTS THIS. SoldierRecord.recompute() aggregates

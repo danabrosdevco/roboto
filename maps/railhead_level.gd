@@ -49,7 +49,7 @@ const M_SPAWN_FACE := "HoloTable"
 const M_TABLE := "OpsTableAnchor"
 ## The departure lever's pivot, outboard of the table's platform end. Also put
 ## there by tools/fit_ops_table.gd, and placed where it is so that throwing it
-## leaves you facing the way out — docs/briefs/OPS_TABLE_LEVER.md.
+## leaves you facing the way out — docs/briefs/archive/OPS_TABLE_LEVER.md.
 const M_LEVER := "OpsLeverAnchor"
 ## The squad forms up where you leave from — see M_EXIT below. SquadSpawnPoint
 ## arcs them out BEHIND this point, so they stand on the platform rather than

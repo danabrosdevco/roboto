@@ -117,7 +117,7 @@ prerequisites = [NodePath("../SupportLine")]
 ; dead" vs "is this line's compute ours").
 ;
 ; ── THE LADDER IS IN THE SIZES ───────────────
-; docs/briefs/SITE_CONVERSION.md calls x = 60 / 190 / 330 / 420 "a literal
+; docs/briefs/archive/SITE_CONVERSION.md calls x = 60 / 190 / 330 / 420 "a literal
 ; depth ladder", so the cores climb with it — small at the first line, medium
 ; at support, the 12.4 m one on the gun line because the guns are what the
 ; whole attack is for and it should be the thing you steer by from no-man's

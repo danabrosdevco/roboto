@@ -13,6 +13,12 @@ extends SceneTree
 # cannot be finished, or one that comes back every time, is worse than none.
 # ─────────────────────────────────────────────
 
+## The MEMORY list and the induction's own copy of what it teaches, so the two
+## rifle steps are checked against the real thing rather than a literal that
+## can drift away from it.
+const _Programs := preload("res://Campaign/software_tree.gd")
+const _Induction := preload("res://Campaign/induction.gd")
+
 var _fails := 0
 
 
@@ -101,8 +107,8 @@ func _init() -> void:
 
 	var ids := _ids(cm)
 	_check("the first visit sets eight objectives (%d)" % ids.size(), ids.size() == 8, str(ids))
-	for want in [&"induct_read_keys", &"induct_repair_self", &"induct_revive_squad", &"induct_buy_rifle",
-			&"induct_fit_rifle", &"induct_order_follow",
+	for want in [&"induct_read_keys", &"induct_repair_self", &"induct_revive_squad", &"induct_load_weapon",
+			&"induct_carry_weapon", &"induct_order_follow",
 			&"induct_order_advance", &"induct_pick_op"]:
 		_check("...including %s" % String(want), _obj(cm, want) != null, str(ids))
 
@@ -161,29 +167,35 @@ func _init() -> void:
 		await process_frame
 		_check("ordering an ADVANCE completes its objective", _done(cm, &"induct_order_advance"))
 
-	# ── BUY A RIFLE, THEN PUT IT IN YOUR OWN HANDS ──
-	# The squad musters armed and the player does not, which is the ONLY reason
-	# these two are not complete before the player touches anything.
+	# ── LOAD A WEAPON, THEN PUT IT IN YOUR OWN HANDS ──
+	# NOBODY MUSTERS UNARMED ANY MORE. The shop is gone, and you are issued a
+	# rifle you cannot lose — so what keeps these two from completing before
+	# the player touches anything is that the induction names a weapon that is
+	# NOT issued. Name the Ancient Rifle here and both tick on the first frame.
 	_check("every starting soldier is issued an Ancient Rifle",
 		cm.state.roster.all(func(r): return r != null and r.weapon_ids.has(&"m4")),
 		str(cm.state.roster.map(func(r): return str(r.weapon_ids))))
-	_check("...and you are the one who musters unarmed",
-		not cm.state.player_record.weapon_ids.has(&"m4"),
+	_check("...and so are you, now that there is no shop to send you to",
+		cm.state.player_record.weapon_ids.has(&"m4"),
 		str(cm.state.player_record.weapon_ids))
-	_check("(setup) so neither the buy nor the fit is done", not _done(cm, &"induct_buy_rifle")
-		and not _done(cm, &"induct_fit_rifle"))
+	_check("...and the issued Frag is in your hands too",
+		cm.state.player_record.equipment_ids.has(&"frag"),
+		str(cm.state.player_record.equipment_ids))
+	_check("the induction teaches a weapon that is NOT issued",
+		not _Programs.is_issued(_Induction.TAUGHT_WEAPON), String(_Induction.TAUGHT_WEAPON))
+	_check("(setup) so neither the load nor the carry is done",
+		not _done(cm, &"induct_load_weapon") and not _done(cm, &"induct_carry_weapon"))
 
-	cm.state.armoury.add(&"m4")
-	cm.state.ledger_changed.emit()
+	cm.state.award_compute(2)
+	_check("(setup) the taught weapon loads", _Programs.load_item(cm.state, _Induction.TAUGHT_WEAPON))
 	await process_frame
-	_check("buying an Ancient Rifle completes the buy objective", _done(cm, &"induct_buy_rifle"))
-	_check("...and the fit objective still wants it in YOUR hands",
-		not _done(cm, &"induct_fit_rifle"), "fitting completed itself off a purchase")
+	_check("loading it completes the load objective", _done(cm, &"induct_load_weapon"))
+	_check("...and the carry objective still wants it in YOUR hands",
+		not _done(cm, &"induct_carry_weapon"), "carrying completed itself off a load")
 
-	cm.state.player_record.weapon_ids[0] = &"m4"
-	cm.state.roster_changed.emit()
+	cm.state.carry_weapon(cm.catalogue.item(_Induction.TAUGHT_WEAPON))
 	await process_frame
-	_check("arming yourself completes the fit objective", _done(cm, &"induct_fit_rifle"))
+	_check("carrying it completes the carry objective", _done(cm, &"induct_carry_weapon"))
 
 	# ── 5. CHOOSE AN OPERATION ────────────────────
 	_check("(setup) the induction is not finished yet", not cm.state.completed_tutorial)

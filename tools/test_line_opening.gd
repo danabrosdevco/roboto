@@ -14,14 +14,17 @@ extends SceneTree
 #   ARMORER    buys copies. Shows ONLY what is already open.
 #   FACTORY    builds robots. Shows ONLY frames already open.
 #
-# The Mark system removed the reason for the first one: a line's spec, its
-# price and its units are all on the Factory card now, so a separate screen to
-# pay for the thing you are already looking at is a trip with no destination.
+# BOTH OF THE FIRST TWO ARE GONE. The Mark system took Tooling's reason to
+# exist — a line's spec, its price and its units are all on the Factory card
+# now, so a separate screen to pay for the thing you are already looking at is
+# a trip with no destination — and then took the Armorer's, because a loadout
+# comes from a line and there are no copies left to buy. The player's own gun
+# went to MEMORY (step 7b, docs/briefs/archive/MEMORY_SCREEN_SPEC.md).
 #
-# WHAT SURVIVES UNCHANGED is the rule underneath, which was never about the
-# page: THE ARMOURER MUST NOT LIST WHAT YOU CANNOT BUY. A shop quietly
-# offering something it will then refuse is how a shop starts refusing its own
-# customers, and that failure is silent.
+# WHAT SURVIVES UNCHANGED is the rule underneath, which was never about either
+# page: DO NOT OFFER WHAT YOU CANNOT BUY. Something quietly offered and then
+# refused is a screen refusing its own player, and that failure is silent. It
+# is the Factory's module card that carries the rule now.
 #
 # WHAT IS NEW is the other half: the Factory now has to list a SHUT line too,
 # because it is the only place one exists. A line you cannot see is a line you
@@ -32,6 +35,8 @@ extends SceneTree
 const _Pricing := preload("res://Campaign/pricing.gd")
 const _Factory := preload("res://Character/hud/squad/factory_page.gd")
 const CATALOGUE := "res://Campaign/items & catalogue/test_item_catalogue.tres"
+## The UI kit, for its motion switch — see the MOTION block in ui_kit.gd.
+const Kit := preload("res://Character/hud/squad/ui_kit.gd")
 
 var _fails: int = 0
 
@@ -44,6 +49,11 @@ func _check(label: String, ok: bool, detail: String = "") -> void:
 
 func _init() -> void:
 	Settings.path = "user://settings_probe.json"
+	# MOTION OFF. The squad manager fades its cards in and counts its numbers
+	# up now; both are INTERMEDIATE for up to a third of a second, which is a
+	# card at half alpha in a render and a price that is correct but not final
+	# in an assertion. Off, every helper applies its end state at once.
+	Kit.motion = false
 	await process_frame
 
 	var cat: ItemCatalogue = load(CATALOGUE)
@@ -56,7 +66,7 @@ func _init() -> void:
 		str(SquadManagerUI.TABS))
 	_check("...and the others are all still here",
 		SquadManagerUI.TABS.has(&"squad") and SquadManagerUI.TABS.has(&"factory")
-		and SquadManagerUI.TABS.has(&"software"),
+		and SquadManagerUI.TABS.has(&"memory"),
 		str(SquadManagerUI.TABS))
 
 	var state := CampaignState.new()
@@ -66,14 +76,14 @@ func _init() -> void:
 	ui.state = state
 	ui.catalogue = cat
 
-	# ── THE ARMOURER STILL SHOWS ONLY WHAT IS OPEN ──
-	# The rule the old suite existed for, and the one that outlived its page.
-	var listed: Array = ui.shop_items()
-	var shut: Array = []
-	for i in listed:
-		if not state.is_unlocked(i.id):
-			shut.append(String(i.id))
-	_check("the ARMORER lists nothing you have not opened", shut.is_empty(), str(shut))
+	# ── NEITHER SHOP IS A TAB ANY MORE ──────────
+	# The rule both of them guarded — DO NOT OFFER WHAT YOU CANNOT BUY — is
+	# what outlived them, and it lives on the Factory card and the module
+	# picker now. The pages themselves are gone (step 7b).
+	_check("the ARMORER is not a tab either", not SquadManagerUI.TABS.has(&"armorer"),
+		str(SquadManagerUI.TABS))
+	_check("...which leaves exactly three", SquadManagerUI.TABS.size() == 3,
+		str(SquadManagerUI.TABS))
 
 	# ── THE FACTORY SHOWS BOTH, AND KNOWS THE DIFFERENCE ──
 	var rover: ChassisDefinition = cat.chassis_def(&"rover")
@@ -130,14 +140,15 @@ func _init() -> void:
 			"open costs %d" % _Pricing.chassis_unlock(walker))
 		page.queue_free()
 
-	# ── AN ITEM'S LINE STILL OPENS, FOR THE ARMOURER AND THE MODULE PICKER ──
+	# ── AN ITEM'S LINE STILL OPENS, FOR THE MODULE PICKER ──
+	# No shop reads this any more, but the Factory's module card does: a module
+	# is researched before it can be adopted, and that research is this unlock.
 	var smoke := cat.item(&"smoke")
 	if smoke != null:
-		var i_before: int = ui.shop_items().size()
+		_check("(setup) an item's line starts shut", not state.is_unlocked(smoke.id))
+		_check("a shut item cannot be bought", not state.buy_item(smoke))
 		state.unlock_item(smoke)
-		_check("opening an item's line puts it in the ARMORER",
-			ui.shop_items().size() == i_before + 1)
-		_check("...and only then can it be bought", state.buy_item(smoke))
+		_check("...and only once its line is open can it be", state.buy_item(smoke))
 
 	# ── PRICING IS THE TABLE'S, NOT A SECOND COPY ──
 	_check("the price to open is twice the price to build",

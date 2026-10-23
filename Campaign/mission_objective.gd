@@ -63,6 +63,22 @@ func _ready() -> void:
 		queue_free()
 		return
 
+	# AN OBJECTIVE WITH NO ID CANNOT BE ASKED FOR, AND IS THEREFORE NEVER
+	# DROPPED. `active_objectives` names ids, so a blank one can never appear
+	# in it — which is exactly why the line above exempts it, and exactly why
+	# a blank one then runs in EVERY operation on this level.
+	#
+	# That is right for the capture-point PREFABS, which ship blank and have
+	# an id authored on each instance. It is wrong for anything else, and the
+	# one time it happened the HUD counted 0/3 while listing four, with a
+	# fourth line reading CAPTURE THE OBJECTIVE that nothing could ever tick.
+	# It is not freed here — on those prefabs the script is on the root and
+	# freeing it would take the art with it — so it says so instead.
+	if campaign != null and id == &"":
+		push_warning(("MissionObjective '%s' has no id, so no operation can ask for it and nothing "
+			+ "will prune it: it will run in every operation on this level. Author an id on the "
+			+ "instance, or have whatever adopted it stand it down. Node: %s") % [name, get_path()])
+
 	add_to_group("mission_objectives")
 	for prereq in prerequisites:
 		if prereq != null:

@@ -17,7 +17,7 @@ extends "res://Env/world_objects/site_slice.gd"
 # trail alone would be a queue.
 #
 # It is still the right opening site, and its defence is the gentlest on the
-# board. See docs/briefs/ATTACK_AND_DEFEND.md.
+# board. See docs/briefs/archive/ATTACK_AND_DEFEND.md.
 # ─────────────────────────────────────────────
 
 

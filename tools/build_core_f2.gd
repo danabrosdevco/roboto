@@ -23,7 +23,7 @@ extends SceneTree
 # WHAT THIS IS
 #
 # Concept F2 RAFT, chosen AS PRESENTED at the end of three rounds — see
-# docs/concepts/CORE_F_VARIANTS.md §2 and §7, and COMPUTE_CORES_2.md §1 for why
+# docs/concepts/archive/CORE_F_VARIANTS.md §2 and §7, and COMPUTE_CORES_2.md §1 for why
 # F won at all. The face-mounted-fin fix floated in §7 is deliberately NOT
 # applied here: the human picked the corner fins that were drawn.
 #

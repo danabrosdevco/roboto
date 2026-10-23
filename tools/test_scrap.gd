@@ -57,6 +57,12 @@ func _init() -> void:
 	# CampaignState.recruit puts it — and this setup predates that rule, so it
 	# was asking for a frame it had not paid to open and getting null.
 	s.grant_unlock(frame.id)
+	# MEASURED, NOT ASSUMED. What this robot costs is the frame, plus the
+	# module, plus opening the module's line — and none of those are the
+	# `cost` field on the resource any more (pricing.gd has bands). Taking the
+	# purse before and after is the only version that stays true when a price
+	# moves.
+	var purse_before := s.available()
 	var rec := s.recruit(frame)
 	_check("(setup) recruited a %s for %d" % [frame.display_name, frame.cost], rec != null)
 	if rec == null:
@@ -71,6 +77,13 @@ func _init() -> void:
 		if it != null and it.cost > 0:
 			module = it
 			break
+	# ITS LINE HAS TO BE OPEN FIRST. buy_item() refuses anything still shut
+	# (Phase 3), so without this the purchase silently did not happen, the
+	# robot went to the breaker wearing only its issued rifle, and the
+	# half-price-for-kit path this suite exists for was never run at all —
+	# while every check around it still passed.
+	if module != null:
+		s.unlock_item(module)
 	if module != null and s.buy_item(module):
 		_check("(setup) bought and fitted a %s for %d" % [module.display_name, module.cost],
 			s.fit_item(rec, module, 0))
@@ -123,7 +136,7 @@ func _init() -> void:
 	# whole outlay — frame plus bought kit — rather than the frame alone: with
 	# kit in the payout, "frame.cost - expect" went negative and the assertion
 	# became one that nothing could fail.
-	var outlay: int = frame.cost + (module.cost if module != null else 0)
+	var outlay: int = purse_before - purse_after_buy
 	_check("...and everything that did not come back is still booked",
 		booked == outlay - expect,
 		"booked %d, outlay %d, paid back %d" % [booked, outlay, expect])

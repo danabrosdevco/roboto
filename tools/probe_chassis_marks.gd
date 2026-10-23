@@ -6,7 +6,7 @@ extends SceneTree
 #   godot --headless --audio-driver Dummy --path . \
 #       --script res://tools/probe_chassis_marks.gd
 #
-# The gate on step 1 of docs/briefs/MARK_SYSTEM_SPEC.md. Prints all three
+# The gate on step 1 of docs/briefs/archive/MARK_SYSTEM_SPEC.md. Prints all three
 # specs for every purchasable line and fails on anything that would be silent
 # in play.
 #

@@ -10,7 +10,7 @@ class_name DepartureRide
 # Then you walk out and the pad loads the mission the way it always has.
 #
 # THE RIDE COVERS NO LOAD, AND THAT IS THE WHOLE POINT.
-# docs/briefs/DEPARTURE_RIDE.md has the long version. The short version: the
+# docs/briefs/archive/DEPARTURE_RIDE.md has the long version. The short version: the
 # obvious build loads the destination during the ride, and World.load_next_level
 # frees the current level before instantiating the next — so that version is a
 # ride on a train being deleted underneath you. It needs threaded loading,

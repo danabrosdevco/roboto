@@ -354,8 +354,8 @@ rivers made non-navigable.
 ## Lanes
 
 Four lanes — TERRAIN, GAMEPLAY, MARKETING and the coordinator — share one
-checkout and one branch. Collisions are prevented by who owns
-which path, not by branching.
+checkout. Collisions in it are prevented by who owns which path; work that
+wants its own branch takes a worktree rather than switching this one.
 
 | Path | Owner |
 |---|---|
@@ -366,7 +366,7 @@ which path, not by branching.
 | `tools/test_*.gd` EXCEPT the terrain suites below, `docs/GAMEPLAN.md`, `docs/BARK_LIBRARY.md` | GAMEPLAY |
 | `tools/test_terrain.gd`, `test_block_*.gd`, `test_prop_nav.gd`, `test_water_navmesh.gd` | TERRAIN |
 | `docs/BOARD.md`, `docs/GDD.md`, `docs/APPENDIX.md`, `docs/briefs/**` EXCEPT `MARKETING.md` | COORDINATOR |
-| `docs/marketing/**`, `docs/briefs/MARKETING.md` | MARKETING |
+| `docs/marketing/**`, `docs/briefs/archive/MARKETING.md` | MARKETING |
 | `docs/reports/<LANE>.md` | that lane, and only that lane |
 
 **Shared — neither agent edits without saying so first:** `Env/world.tscn` ·
@@ -405,7 +405,12 @@ not be recovered — the tools printed "SKIP … it may hold TrenchBroom edits" 
 `tools/test.sh` after touching the ledger, armoury or anything with an
 invariant. `tools/smoke.sh` after touching anything that loads at startup.
 
-**Staying out of each other's way.** One checkout, one branch, and another agent
-is usually mid-edit. Do not `git checkout`, do not `git checkout -b`, do not
-stage files that are not yours. Check the branch with `git branch --show-current`
-only.
+**Staying out of each other's way.** Updated 2026-10-23: **branching is
+allowed now** — branches, commits, merges and pushing a feature branch are
+all fine. Two limits: **never push to `main` and never force-push.**
+
+What has NOT changed is this working directory. Several lanes point at it and
+another agent is usually mid-edit, so **do not `git checkout` or `git switch`
+HERE** — it yanks the files out from under them. Open a worktree instead;
+`.claude/worktrees/` already holds two. Still do not stage files that are not
+yours. Check where you are with `git branch --show-current`.

@@ -612,7 +612,7 @@ linked_squad_point = NodePath("../Posts/POL_Garage")
 ; Breach is the only HOLDABLE thing on this map, and a site needs the cores
 ; `site_slice._seat_core()` can seat a HoldableCore on: a host with an
 ; `Interactible` under it, which means a compute_core_point*.tscn instance and
-; nothing else. docs/briefs/SITE_CONVERSION.md lists three cores here
+; nothing else. docs/briefs/archive/SITE_CONVERSION.md lists three cores here
 ; (`pol_breach`, `pol_cinema`, `pol_garage`); two of the three were not cores.
 ;
 ; Added alongside the eliminates rather than replacing them. The eliminates are

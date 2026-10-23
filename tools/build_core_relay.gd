@@ -23,7 +23,7 @@ extends "res://tools/block_industrial.gd"
 # ─────────────────────────────────────────────
 # WHY ROUND ONE WENT IN THE BIN
 #
-# docs/concepts/CORE_SKELETON.md records what was built and docs/concepts/
+# docs/concepts/archive/CORE_SKELETON.md records what was built and docs/concepts/
 # core_skel_row.png is what the human looked at:
 #
 #   "i don't like the bands. can we do like a more asymmetrical structure
@@ -250,7 +250,7 @@ const SINK_U := 10
 ##            always had. ON THE SMALL THEY DO NOT MEET AT ALL: the bund edge
 ##            is at ext 0, so every millimetre of clearance is a millimetre of
 ##            diving board, and the small core does not take the drone. See
-##            section 4a of docs/concepts/CORE_RELAY.md.
+##            section 4a of docs/concepts/archive/CORE_RELAY.md.
 const SPEC := {
 	"small": {
 		"bx": 72, "by": 56, "top": 134, "sh": 82,

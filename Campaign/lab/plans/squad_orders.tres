@@ -20,6 +20,7 @@ time_limit = 120.0
 swap_sides = false
 hostiles_on_post = true
 weapon_swaps = {}
+coax_swaps = {}
 
 [sub_resource type="Resource" id="M2"]
 script = ExtResource("2_match")
@@ -34,6 +35,7 @@ time_limit = 120.0
 swap_sides = false
 hostiles_on_post = true
 weapon_swaps = {}
+coax_swaps = {}
 
 [sub_resource type="Resource" id="M3"]
 script = ExtResource("2_match")
@@ -48,6 +50,7 @@ time_limit = 120.0
 swap_sides = false
 hostiles_on_post = true
 weapon_swaps = {}
+coax_swaps = {}
 
 [sub_resource type="Resource" id="M4"]
 script = ExtResource("2_match")
@@ -62,6 +65,7 @@ time_limit = 120.0
 swap_sides = false
 hostiles_on_post = true
 weapon_swaps = {}
+coax_swaps = {}
 
 [resource]
 script = ExtResource("1_plan")

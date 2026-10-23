@@ -6,7 +6,7 @@ extends Resource
 #
 # A Mark is what the line BUILDS, not what one robot happens to be carrying.
 # Adopting Mk 1 on the Rover line rewrites every Rover in service and every
-# Rover built afterwards — see docs/briefs/MARK_SYSTEM_SPEC.md §3.
+# Rover built afterwards — see docs/briefs/archive/MARK_SYSTEM_SPEC.md §3.
 #
 # MK 0 IS NOT ONE OF THESE. Every ChassisDefinition already carries
 # `starting_weapon_id` and `coax_weapon_id`, which already describe what the

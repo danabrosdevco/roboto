@@ -7,7 +7,7 @@ class_name ConceptsCore2
 # medium of each.
 #
 # WHY THERE IS A ROUND TWO. Round one (tools/concepts_core.gd,
-# docs/concepts/COMPUTE_CORES.md) asked one question — one form scaled or three
+# docs/concepts/archive/COMPUTE_CORES.md) asked one question — one form scaled or three
 # forms — and designed for ONE interface: a face at ground level the player
 # walks up to and presses a key. Since then the human has picked a hack drone,
 # TICK (docs/concepts/HACK_DRONE.md), and it lands ON TOP. So the core now has

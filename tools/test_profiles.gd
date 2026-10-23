@@ -228,7 +228,7 @@ func _test_outdated() -> void:
 	var old_path := _SaveSlots.path_for(_SaveSlots.unique_id("Old Run"))
 	_write(old_path, JSON.stringify({
 		"version": 1, "profile_name": "Old Run", "squad_name": "Alpha",
-		"earned": 4200, "completed_missions": ["arena_1_contact"],
+		"earned": 4200, "completed_missions": ["arena_3_firing_line"],
 		"player_record": {"display_name": "Dana"},
 		"last_played_utc": Time.get_datetime_string_from_system(true),
 	}, "\t"))

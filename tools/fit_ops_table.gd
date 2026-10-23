@@ -14,7 +14,7 @@ extends SceneTree
 #
 # It now seats TWO of those pairs. The second is the departure lever's pivot,
 # outboard of the table's exit end, which Env/world_objects/departure_lever.gd
-# generates a handle on — docs/briefs/OPS_TABLE_LEVER.md. Same reasoning
+# generates a handle on — docs/briefs/archive/OPS_TABLE_LEVER.md. Same reasoning
 # throughout: a point class the FGD cannot express, on a scene that is
 # rewritten from scratch every rebuild.
 #
@@ -38,7 +38,7 @@ extends SceneTree
 #
 # The geometry it depends on lives in tools/block_railhead.gd as TABLE_TOP and
 # the slab's half-extents, and the contract those satisfy is written down in
-# docs/briefs/OPS_TABLE_FURNITURE.md. If the table moves, change the constants
+# docs/briefs/archive/OPS_TABLE_FURNITURE.md. If the table moves, change the constants
 # below to match and run this again.
 # ─────────────────────────────────────────────
 
@@ -60,7 +60,7 @@ const ANCHOR := "OpsTableAnchor"
 ## is welded into the car's one merged mesh and cannot rotate.
 ##
 ## Design and the geometry TERRAIN builds around it:
-## docs/briefs/OPS_TABLE_LEVER.md.
+## docs/briefs/archive/OPS_TABLE_LEVER.md.
 ##
 ## WHY IT IS OUTBOARD OF THE SLAB, which is the whole reason these numbers are
 ## what they are. The table's own Interactible is sized to the full slab

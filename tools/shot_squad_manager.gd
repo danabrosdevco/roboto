@@ -21,6 +21,11 @@ extends SceneTree
 
 const CAT := "res://Campaign/items & catalogue/test_item_catalogue.tres"
 const SHOT := Vector2i(1920, 1080)
+## The UI kit, for its motion switch — see the MOTION block in ui_kit.gd.
+const Kit := preload("res://Character/hud/squad/ui_kit.gd")
+## The carry list and its costs (Campaign/software_tree.gd), so the MEMORY
+## shots load things the same way the page does rather than writing the ledger.
+const _Memory := preload("res://Campaign/software_tree.gd")
 
 var _out := "docs/marketing/wip"
 var ui: SquadManagerUI
@@ -34,6 +39,11 @@ func _initialize() -> void:
 
 func _run() -> void:
 	Settings.path = "user://settings_probe.json"
+	# MOTION OFF. The squad manager fades its cards in and counts its numbers
+	# up now; both are INTERMEDIATE for up to a third of a second, which is a
+	# card at half alpha in a render and a price that is correct but not final
+	# in an assertion. Off, every helper applies its end state at once.
+	Kit.motion = false
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:
 		_out = args[0]
@@ -94,6 +104,17 @@ func _run() -> void:
 				r.damage = r.max_health
 		_select("VESNA"))
 	await _shoot(&"factory", "live_factory.png", Callable())
+	# THE CARD CORNER, which is the control the player actually reaches for.
+	# The shot above is every line SHUT, so it shows OPEN LINE and nothing
+	# else — the mark badge and the two buttons only exist once a line is
+	# running, and until this they were never photographed at all.
+	await _shoot(&"factory", "live_factory_open.png", func():
+		state.award(4000)
+		for id in [&"soldier", &"rover", &"mechanic"]:
+			state.unlock_chassis(_cat.chassis_def(id))
+		state.line_marks[&"rover"] = 1
+		state.apply_line_spec(&"rover")
+		ui._pages[&"factory"].rebuild())
 	# THE LINE RAIL, which is the whole Mark system on screen. Shot at Mk 1 on
 	# an advanced line so the picture shows all three states at once: a
 	# superseded tier, the one in service, and the one it costs money to reach.
@@ -102,6 +123,20 @@ func _run() -> void:
 		state.line_marks[&"rover"] = 1
 		state.apply_line_spec(&"rover")
 		page._detail = &"rover"
+		page.rebuild())
+	# A LINE WHOSE MARKS CARRY EQUIPMENT, which the Rover's do not. The
+	# Soldier goes one frag at Mk 1 to two at Mk 2, so this is also the shot
+	# that proves the diff counts rather than tests membership: the second
+	# frag has to read as "+ FRAG" beside the one that was already there.
+	# A LINE WHOSE MARKS CARRY EQUIPMENT, which the Rover's do not. The
+	# Soldier goes one frag at Mk 1 to two at Mk 2, so this is also the shot
+	# that proves the diff COUNTS rather than tests membership: the second
+	# frag has to read as "+ FRAG" beside the one that was already there.
+	await _shoot(&"factory", "live_factory_line_kit.png", func():
+		var page: Control = ui._pages[&"factory"]
+		state.line_marks[&"soldier"] = 1
+		state.apply_line_spec(&"soldier")
+		page._detail = &"soldier"
 		page.rebuild())
 	# AND AT THE TOP OF THE RAIL, where the module becomes reachable — the
 	# locked state is what the shot above shows, so this is the other half.
@@ -117,16 +152,34 @@ func _run() -> void:
 		state.apply_line_spec(&"rover")
 		page._detail = &"rover"
 		page.rebuild())
-	await _shoot(&"armorer", "live_armorer_weapon.png", func(): _pick(&"cluster_launcher"))
-	await _shoot(&"armorer", "live_armorer_equipment.png", func(): _pick(&"emp"))
-	await _shoot(&"armorer", "live_armorer_module.png", func(): _pick(&"optics"))
-	await _shoot(&"armorer", "live_armorer_folded.png", func():
-		_pick(&"optics")
-		var page: Control = ui._pages[&"armorer"]
-		page._folded[ItemDefinition.Kind.WEAPON] = true
-		page._folded[ItemDefinition.Kind.EQUIPMENT] = true
-		page.rebuild())
+	# THE ARMORER IS GONE (step 7b) and so are its four shots. Any
+	# live_armorer_*.png still sitting in the output directory is a picture of
+	# a screen that no longer exists; they are not regenerated and they are not
+	# evidence of anything.
+
+	# ── MEMORY ───────────────────────────────────
+	# Shot with a couple of things loaded, one thing carried, and one thing out
+	# of reach. A screen photographed with everything affordable is a screen
+	# photographed without its only decision in it.
+	await _shoot(&"memory", "live_memory_weapons.png", func():
+		state.award_compute(5)
+		_Memory.load_item(state, &"bolt")
+		_Memory.load_item(state, &"squad_auto")
+		state.carry_weapon(_cat.item(&"squad_auto"))
+		_memory()._show(&"weapons"))
+	await _shoot(&"memory", "live_memory_equipment.png", func():
+		_Memory.load_item(state, &"smoke")
+		state.player_record.equipment_ids.fill(&"")
+		state.carry_equipment(_cat.item(&"frag"))
+		state.carry_equipment(_cat.item(&"smoke"))
+		_memory()._show(&"kit"))
+	await _shoot(&"memory", "live_memory_upgrades.png", func():
+		_memory()._show(&"upgrades"))
 	quit(0)
+
+
+func _memory() -> Control:
+	return ui._pages[&"memory"]
 
 
 func _robot(frame: StringName, name: String, weapons: Array, kit: Array, mods: Array,
@@ -158,12 +211,6 @@ func _select(who: String) -> void:
 			page.rebuild()
 			return
 	push_warning("shot_squad_manager: no robot called '%s' to select." % who)
-
-
-func _pick(id: StringName) -> void:
-	var page: Control = ui._pages[&"armorer"]
-	page.selected_id = id
-	page.rebuild()
 
 
 func _shoot(tab: StringName, file: String, prepare: Callable) -> void:

@@ -73,12 +73,11 @@ func _init() -> void:
 ## From a fresh save to the first site, through the gates the player meets.
 func _ladder(cm) -> void:
 	var open := _ids(cm.available_missions())
-	_check("a fresh campaign offers only the first exercise",
-		open == ["arena_1_contact"], str(open))
-
-	cm.state.completed_missions.append(&"arena_1_contact")
-	open = _ids(cm.available_missions())
-	_check("...the war is still shut after one", not open.has(String(SITE)), str(open))
+	# ONE EXERCISE SINCE 2026-10-22, not two: First Contact was cut and Take
+	# And Hold is the whole of training.
+	_check("a fresh campaign offers only the exercise",
+		open == ["arena_3_firing_line"], str(open))
+	_check("...and the war is shut until it is cleared", not open.has(String(SITE)), str(open))
 
 	cm.state.completed_missions.append(&"arena_3_firing_line")
 	open = _ids(cm.available_missions())

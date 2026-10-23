@@ -53,7 +53,7 @@ func _init() -> void:
 	# --clear-some: pretend a few early ops are done, so the board has all
 	# three states on it at once instead of a wall of identical locked grey.
 	if args.has("--clear-some"):
-		for id in [&"arena_1_contact", &"arena_3_firing_line", &"arena_5_proving"]:
+		for id in [&"arena_3_firing_line", &"arena_5_proving"]:
 			if not campaign.state.completed_missions.has(id):
 				campaign.state.completed_missions.append(id)
 			campaign.state.record_clear(id)

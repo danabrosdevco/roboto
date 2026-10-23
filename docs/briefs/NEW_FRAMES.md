@@ -1,6 +1,11 @@
 # Brief — ten new frames
 
-Written 2026-10-10 by GAMEPLAY. Status: **brief complete, build started**.
+Written 2026-10-10 by GAMEPLAY. **Status, re-measured 2026-10-23: EIGHT OF
+TEN BUILT.** Lance, Kite, Picket, Drayman, Vessel, Broodcarrier, Bastion and
+See-Engine all exist as `Campaign/chassis/chassis_*.tres`. **Outstanding:
+SAPPER (supply 1, hull 55, infantry) and WARDEN (supply 2, hull 160, emitter
+platform).** Everything below is the original brief; read §Buyable for those
+two and treat the rest as history.
 
 Ten chassis, following the process the Bulwark went through: concept art first,
 then one frame built end to end — scene, script, chassis definition, catalogue,

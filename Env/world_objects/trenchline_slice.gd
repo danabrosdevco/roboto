@@ -38,6 +38,6 @@ func _init() -> void:
 
 	resistance = 365
 	# THE HARDEST SITE ON THE BOARD, and a 940 m map. Last to get a defence for
-	# balance reasons — see docs/briefs/ATTACK_AND_DEFEND.md's build order.
+	# balance reasons — see docs/briefs/archive/ATTACK_AND_DEFEND.md's build order.
 	defence_assault_seconds = 480.0
 	stand_down_seconds = 45.0

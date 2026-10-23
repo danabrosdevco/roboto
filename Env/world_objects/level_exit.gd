@@ -40,7 +40,7 @@ class_name LevelExit
 ## train, so walking onto it before the train has gone anywhere would deploy
 ## you from the station you are already standing in — the point of the
 ## departure ride is that you travel first and leave second
-## (docs/briefs/DEPARTURE_RIDE.md). DepartureRide calls arm() when the train
+## (docs/briefs/archive/DEPARTURE_RIDE.md). DepartureRide calls arm() when the train
 ## stops.
 ##
 ## Off by default, so every other exit in the project behaves exactly as it

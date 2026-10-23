@@ -4,7 +4,7 @@ extends SceneTree
 # ─────────────────────────────────────────────
 # THE SIM ARENA IS ITS OWN PLACE.
 #
-# docs/briefs/SIM_ARENA_MODE.md. A free action must not look like a costly one:
+# docs/briefs/archive/SIM_ARENA_MODE.md. A free action must not look like a costly one:
 # the arenas used to sit on the operations table beside sites that cost a turn
 # and can be lost, offered with the same furniture.
 #
@@ -51,7 +51,7 @@ func _init() -> void:
 		_check("...the arena is one entry instead", table._has_training())
 		# NINE, NOT TEN. The board draws one pin per PLACE now, so the basin's
 		# defence no longer has a marker of its own — see _board_missions and
-		# docs/briefs/ONE_PIN_PER_SITE.md.
+		# docs/briefs/archive/ONE_PIN_PER_SITE.md.
 		_check("...alongside the real sites", drawn.size() >= 9,
 			"%d drawn" % drawn.size())
 	else:
@@ -64,7 +64,10 @@ func _init() -> void:
 	root.add_child(ui)
 	await process_frame
 	var training: Array = ui._sim_missions()
-	_check("there are exactly TWO exercises, then the war", training.size() == 2,
+	# ONE SINCE 2026-10-22. First Contact was cut: it was solo, eliminate and
+	# extract, and it stood in front of the only exercise that teaches the verb
+	# the campaign is made of.
+	_check("there is exactly ONE exercise, then the war", training.size() == 1,
 		"%d" % training.size())
 	var costly: Array = []
 	for m in training:
@@ -257,7 +260,7 @@ func _init() -> void:
 		if "tag" in n and String(n.tag).begins_with("obj_arena"):
 			posts[n.tag] = (n as Node3D).global_position
 
-	for spec in [["arena_1_contact", 1], ["arena_3_firing_line", 3]]:
+	for spec in [["arena_3_firing_line", 3]]:
 		var def = cm.get_mission(StringName(spec[0]))
 		_check("%s fields %d squad(s)" % [spec[0], spec[1]],
 			def != null and def.enemy_force.size() == int(spec[1]),
@@ -290,7 +293,7 @@ func _init() -> void:
 	# matter. Nothing points at it now; arena 1 garrisons `obj_arena_blockhouse`
 	# on the deck itself. Left where the level author put it.
 	var used := {}
-	for mid in ["arena_1_contact", "arena_3_firing_line"]:
+	for mid in ["arena_3_firing_line"]:
 		var d = cm.get_mission(StringName(mid))
 		if d == null:
 			continue
@@ -353,6 +356,13 @@ func _init() -> void:
 		# AND THE SEQUENCE ADVANCES. _draw_training picks the first uncleared
 		# one, so clearing the first has to move it on rather than leave a
 		# finished exercise sitting at the top of the screen.
+		#
+		# ASKED BEFORE THE CLEAR, not after. There is ONE exercise since First
+		# Contact was cut on 2026-10-22, so clearing the first one finishes
+		# training — and the "both tabs are offered" check that used to sit
+		# below this was reading a board that had just been completed.
+		_check("while training is unfinished, both tabs are offered",
+			not ui2._training_over())
 		_check("a fresh exercise is not cleared", not ui2._is_cleared(sims[0]))
 		cm.state.record_clear(sims[0].id)
 		_check("...and running it clears it", ui2._is_cleared(sims[0]))
@@ -361,8 +371,6 @@ func _init() -> void:
 				not ui2._is_cleared(sims[1]))
 
 	# ── AND THE TAB GOES WHEN THERE IS NOTHING ON IT ──
-	_check("while training is unfinished, both tabs are offered",
-		not ui2._training_over())
 	for sim in sims:
 		cm.state.record_clear(sim.id)
 	_check("once every exercise is cleared, training is over", ui2._training_over())

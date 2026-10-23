@@ -348,6 +348,27 @@ func _return_unusable_player_kit() -> void:
 		rec.recompute_stats(catalogue)
 
 
+# ISSUED IS CARRIED, not merely available. The Ancient Rifle and the Frag cost
+# no compute and are always in memory (software_tree.gd CARRY, cost 0), so a
+# new campaign starts with both in hand — otherwise mission one opens with an
+# empty grenade slot and a trip to the MEMORY screen to tick two free things
+# on, which is a chore standing where a start should be.
+func _carry_issued() -> void:
+	if state == null or state.player_record == null or catalogue == null:
+		return
+	for entry in _SoftwareTree.CARRY:
+		if int(entry["cost"]) > 0:
+			continue
+		var item: ItemDefinition = catalogue.item(entry["item"])
+		if item == null:
+			push_warning("Campaign: issued item '%s' is not in the catalogue." % entry["item"])
+			continue
+		if item.kind == ItemDefinition.Kind.WEAPON:
+			state.carry_weapon(item)
+		else:
+			state.carry_equipment(item)
+
+
 func _seed_new_campaign() -> void:
 	state.supply_cap = starting_squad_size
 	state.award(starting_resources)
@@ -365,6 +386,7 @@ func _seed_new_campaign() -> void:
 	if player_frame != null and state.player_record != null:
 		state.player_record.display_name = CampaignState.PLAYER_DEFAULT_NAME
 		state.player_record.set_chassis(player_frame, catalogue)
+		_carry_issued()
 
 	# ── WHAT A NEW CAMPAIGN STARTS WITH OPEN (Phase 3) ──────────────────
 	# Lines are bought now, so a fresh campaign that had none open could not

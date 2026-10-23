@@ -28,7 +28,7 @@ answer.
 > `add_salvage()` and `state.award(salvage)` at debrief, so salvage is real
 > money. But §7 also says there is one undifferentiated `earned` pool and
 > `restock_roster()` is free. Is "salvage and repair are the economy" — the
-> fourth claim in `docs/briefs/MARKETING.md` — true on screen, or is the honest
+> fourth claim in `docs/briefs/archive/MARKETING.md` — true on screen, or is the honest
 > version just "salvage is where money comes from"? Marketing has written the
 > narrow one.
 >
@@ -154,7 +154,7 @@ not marketing's to edit, and `project.godot` is on the shared list.
 
 **There is no rain in the game.**
 
-> `docs/briefs/MARKETING.md` describes the tonal centre as "rain falls on a
+> `docs/briefs/archive/MARKETING.md` describes the tonal centre as "rain falls on a
 > planet bereft of the people that constructed it." I grepped `Env/`,
 > `Character/`, `Managers/` and `Campaign/` for rain, precipitation, weather and
 > fog: **nothing.** The only matches are the letters inside "terrain".

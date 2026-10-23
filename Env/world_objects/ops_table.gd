@@ -5,7 +5,7 @@ extends Node3D
 #
 # This is the layer that knows about the campaign. It reads the mission list,
 # works out what each site is worth and who holds it, and hands plain data to
-# HoloBoard, which draws it and knows nothing. See docs/briefs/OPERATIONS_TABLE.md.
+# HoloBoard, which draws it and knows nothing. See docs/briefs/archive/OPERATIONS_TABLE.md.
 #
 # IT DRAWS EVERY MISSION, NOT THE AVAILABLE ONES. Campaign.available_missions()
 # retires a cleared non-repeatable op entirely — eleven of the twelve shipped
@@ -729,7 +729,7 @@ static func maxi_id(a: StringName, b: StringName) -> StringName:
 ## The same miss hit HEIGHTS through _icon_scale, which is why they were all
 ## the same size as well: an unknown height falls back to 40 m.
 ##
-## docs/briefs/ONE_PIN_PER_SITE.md called this re-key out as outstanding and it
+## docs/briefs/archive/ONE_PIN_PER_SITE.md called this re-key out as outstanding and it
 ## is the thing it was waiting for. A site has one icon; what you DO there does
 ## not change what the place looks like, so the attack and the defence of one
 ## site share a row rather than needing two.
@@ -738,7 +738,6 @@ static func maxi_id(a: StringName, b: StringName) -> StringName:
 ## a practice track, off the adjacency graph), so _site_key falls back to the
 ## mission id for them and finds these.
 const ICONS := {
-	&"arena_1_contact":     _Icons.Kind.DERRICK,
 	&"arena_3_firing_line": _Icons.Kind.DERRICK,
 	&"arena_5_proving":     _Icons.Kind.DERRICK,
 	&"hillfort_wip":        _Icons.Kind.RELAY,
@@ -769,7 +768,7 @@ const ICONS := {
 ## called with _site_key(), so a mission-keyed table missed on every site and
 ## every landmark fell back to 40 m. That is why they were all one size.
 const HEIGHTS := {
-	&"arena_1_contact": 16.0, &"arena_3_firing_line": 16.0,
+	&"arena_3_firing_line": 16.0,
 	&"arena_5_proving": 16.0,
 	&"hillfort_wip": 62.0, &"hillfort": 63.0,
 	&"valley_basin": 240.0, &"coast_road": 4.5,
@@ -850,9 +849,8 @@ const LAYOUT := {
 	&"polaris_1_siege":      Vector2(680.0, -15.0),
 	&"causeway_1_tower":     Vector2(845.0, -15.0),
 	# ── the rig, off the map ────────────────────
-	&"arena_1_contact":      Vector2(0.0, 250.0),
-	&"arena_3_firing_line":  Vector2(120.0, 250.0),
-	&"arena_5_proving":      Vector2(240.0, 250.0),
+	&"arena_3_firing_line":  Vector2(0.0, 250.0),
+	&"arena_5_proving":      Vector2(120.0, 250.0),
 }
 
 
@@ -987,7 +985,7 @@ func _find_interactible(node: Node):
 ##
 ## The defence is not dropped — it is FOLDED ONTO the attack's pin, as
 ## `defend_id` in _facts_for, and offered there when the site is under attack.
-## See docs/briefs/ONE_PIN_PER_SITE.md: what you can do somewhere is a property
+## See docs/briefs/archive/ONE_PIN_PER_SITE.md: what you can do somewhere is a property
 ## of the place, not a reason to draw a second place.
 ##
 ## The sim arena is left out here too (`m.sim`) and added back by refresh() as

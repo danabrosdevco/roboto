@@ -58,10 +58,10 @@ func _init() -> void:
 	print("before: induct_pick_op complete = %s" % str(pick.completed))
 	# THE ARENA'S OWN PATH, not a hand-rolled one: this is exactly what
 	# SimTerminal._on_training does when you press ENTER on an exercise.
-	cm.select_mission(&"arena_1_contact")
+	cm.select_mission(&"arena_3_firing_line")
 	for _i in 10:
 		await physics_frame
-	print("after select_mission(arena_1_contact): complete = %s" % str(pick.completed))
+	print("after select_mission(arena_3_firing_line): complete = %s" % str(pick.completed))
 	print("")
 	print("VERDICT: %s" % ("the signal DOES tick it — the gap is elsewhere"
 		if pick.completed else "the signal does NOT tick it"))

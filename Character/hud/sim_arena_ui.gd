@@ -4,7 +4,7 @@ class_name SimArenaUI
 # ─────────────────────────────────────────────
 # THE SIM ARENA — free actions, and the only place practising happens.
 #
-# docs/briefs/SIM_ARENA_MODE.md. Phase 6.4 made a `sim` mission cost nothing:
+# docs/briefs/archive/SIM_ARENA_MODE.md. Phase 6.4 made a `sim` mission cost nothing:
 # no turn, no pay, no ground, no enemy move, repeatable. What it did not do was
 # take the arenas OFF the operations table, where they were offered as the same
 # kind of choice as a war — one that costs a turn and can lose you a site, and

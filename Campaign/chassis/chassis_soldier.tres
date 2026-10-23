@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3 uid="uid://bvfe3x2f0fpmk"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
 [ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_r27bl"]
-[ext_resource type="PackedScene" path="res://Character/characters/ai/soldier_chassis.tscn" id="2_scene"]
+[ext_resource type="PackedScene" uid="uid://xcfbkp3wkupp" path="res://Character/characters/ai/soldier_chassis.tscn" id="2_scene"]
 
 [sub_resource type="Resource" id="Resource_nhqtl"]
 script = ExtResource("1_r27bl")

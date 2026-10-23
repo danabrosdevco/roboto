@@ -6,7 +6,7 @@ class_name ConceptsCoreF
 # sizes each, fifteen builders, plus five that seat TICK on every medium.
 #
 # WHY THERE IS A REFINEMENT ROUND. Round two (tools/concepts_core2.gd,
-# docs/concepts/COMPUTE_CORES_2.md) put up five concepts and the human chose
+# docs/concepts/archive/COMPUTE_CORES_2.md) put up five concepts and the human chose
 # F — CAPITAL, the constant-cap position: ONE 2.60 m lugged pad at every size,
 # the shaft growing beneath it in girth as well as height. The argument is in
 # COMPUTE_CORES_2.md §1 and it is not reopened here. A cap is a TERMINATOR

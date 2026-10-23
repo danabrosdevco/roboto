@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3 uid="uid://w68qnxe34swf"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
 [ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_gk2g4"]

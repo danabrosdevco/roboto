@@ -4,7 +4,7 @@ class_name SimTerminal
 # ─────────────────────────────────────────────
 # THE SIM ARENA'S DOOR, in the depot.
 #
-# docs/briefs/SIM_ARENA_MODE.md. The arenas came off the operations table
+# docs/briefs/archive/SIM_ARENA_MODE.md. The arenas came off the operations table
 # because a free action must not look like a costly one — but that left the
 # sim with no way in. This is it: something in the base you walk up to and
 # press F on, which opens SimArenaUI.

@@ -273,9 +273,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 37)
 objective_name = "The Proving Ground"
 tag = &"obj_arena_hostiles"
 
-[node name="BayCorePost" parent="." instance=ExtResource("10_kpg0b")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 64)
-objective_name = "Bay Core"
+[node name="FloorCorePost" parent="." instance=ExtResource("10_kpg0b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 12)
+objective_name = "Floor Core"
 tag = &"obj_arena_core"
 
 [node name="BayBunkerPost" parent="." instance=ExtResource("10_kpg0b")]
@@ -1330,7 +1330,7 @@ metadata/cover_direction = Vector3(0, 0, -1)
 
 [node name="TrainingCore" type="Node3D" parent="."]
 script = ExtResource("900_tcore")
-place = Vector3(0, 0, 65)
+place = Vector3(0, 0, 8)
 core_scene = ExtResource("900_corepoint")
 core_tier = 1
 id = &"proving_capture"

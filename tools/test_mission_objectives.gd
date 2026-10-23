@@ -295,7 +295,7 @@ func _instance_is_objective(packed: PackedScene) -> bool:
 ## MATCHED ON THE FILE NAME, like OBJECTIVE_SCRIPTS above and for the same
 ## reason: packed data gives a script resource, not a class, and an editor that
 ## has not rescanned has no class list to ask. `*_slice.gd` rather than a list
-## of the slices, so the eight conversions in docs/briefs/SITE_CONVERSION.md
+## of the slices, so the eight conversions in docs/briefs/archive/SITE_CONVERSION.md
 ## do not each need a line here.
 func _wins_at_bunker(packed: PackedScene) -> bool:
 	if packed == null:

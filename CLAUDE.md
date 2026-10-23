@@ -41,9 +41,14 @@ purpose. `lore.txt` is the current world.
 
 1. Read `docs/BRIEFING.md`. Sections 3 and 4 in particular — the invariants and
    the failure patterns. Most bugs in this project are repeats of those.
-2. Do not create or switch branches. Three lanes share one checkout and one
-   branch, and another agent is usually mid-edit — see `docs/BOARD.md` →
-   Protocol. Check where you are with `git branch --show-current`.
+2. **Branch and commit freely — but not by switching THIS checkout, and never
+   onto `main`.** Three lanes share this working directory, so a `git
+   checkout` or `git switch` here yanks the files out from under whoever is
+   mid-edit; **use a worktree instead** — `.claude/worktrees/` already holds
+   two, and the repo already carries nine branches. New branches, commits,
+   merges and pushing a feature branch are all fine. **Never push to `main`,
+   and never force-push anything.** Check where you are with
+   `git branch --show-current`.
 3. **`git status` goes stale here.** The shared index reports deletions for
    files that are sitting on disk — once 77 of them in one go, including
    `tick.tscn`. Check what is really there before you trust any commit, and

@@ -5,16 +5,16 @@
 [ext_resource type="PackedScene" uid="uid://r8jyom1thto0" path="res://maps/pittsburgh_level.tscn" id="3_pitt"]
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="4_chassisdef"]
 [ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="5_shot"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="6h_rifleheavy"]
+[ext_resource type="Resource" uid="uid://1rea71mf80nx" path="res://Campaign/chassis/chassis_rifleman_armoured.tres" id="6h_rifleheavy"]
 [ext_resource type="Resource" uid="uid://cl3tjym2xteg7" path="res://Campaign/chassis/chassis_rifleman.tres" id="6_rifle"]
 [ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="7_hopper"]
 [ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="8_chaser"]
-[ext_resource type="Resource" uid="uid://cytfo2gu6p5a1" path="res://Campaign/chassis/chassis_rover.tres" id="9_rover"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_mechanic.tres" id="10_mech"]
-[ext_resource type="Resource" uid="uid://c543tvfyia5hs" path="res://Campaign/chassis/chassis_reclaimer.tres" id="11_recl"]
-[ext_resource type="Resource" path="res://Campaign/chassis/chassis_nest.tres" id="12_nest"]
+[ext_resource type="Resource" uid="uid://c5aacn15f27gh" path="res://Campaign/chassis/chassis_rover.tres" id="9_rover"]
+[ext_resource type="Resource" uid="uid://bol6cfnsiefwl" path="res://Campaign/chassis/chassis_mechanic.tres" id="10_mech"]
+[ext_resource type="Resource" uid="uid://q3sj2ignm1g8" path="res://Campaign/chassis/chassis_reclaimer.tres" id="11_recl"]
+[ext_resource type="Resource" uid="uid://cs8bt1nelm1a2" path="res://Campaign/chassis/chassis_nest.tres" id="12_nest"]
 [ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="13_bomber"]
-[ext_resource type="Resource" uid="uid://dnn5fqbfxwsln" path="res://Campaign/chassis/chassis_spotter.tres" id="90_spotter"]
+[ext_resource type="Resource" uid="uid://bn3cx8q50dgpi" path="res://Campaign/chassis/chassis_spotter.tres" id="90_spotter"]
 
 [sub_resource type="Resource" id="S_rail"]
 script = ExtResource("2_espec")
@@ -531,4 +531,7 @@ compute_reward = 3
 unlocks = Array[StringName]([&"walker", &"cyclic_feed", &"squad_auto"])
 squad_size = -1
 repeatable = false
+defence = false
+sim = false
+garrison_posts = Array[StringName]([])
 requires = Array[StringName]([&"coast_1_road"])

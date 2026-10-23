@@ -91,15 +91,20 @@ func _init() -> void:
 	var hl := cat.item(&"hatchling_launcher")
 	_check("the hatchling launcher is unbuyable", hl != null and not _Pricing.for_sale(hl))
 
-	# The four old guns the human called "old and unused in the new system".
-	# They were ALREADY in_shop = false, which is the stronger statement and
-	# predates all of this — so nothing had to be retired.
+	# CARBINE, DMR AND PISTOL ARE GONE — deleted 2026-10-23, items only. Their
+	# MODELS stay: carbine and dmr pointed at the Ancient Rifle's own scene, and
+	# pistol_hud_weapon.tscn is used by five tools. The SHOTGUN survives as an
+	# item and is still the thing this check is about: it was already
+	# in_shop = false, which is the stronger statement.
+	_check("the deleted guns are really gone",
+		cat.item(&"carbine") == null and cat.item(&"dmr") == null
+		and cat.item(&"pistol") == null)
 	var retired: Array = []
-	for id in [&"dmr", &"carbine", &"shotgun", &"pistol"]:
+	for id in [&"shotgun"]:
 		var it := cat.item(id)
 		if it != null and _Pricing.for_sale(it):
 			retired.append(String(id))
-	_check("the four old guns stay out of the shop", retired.is_empty(), str(retired))
+	_check("the shotgun stays out of the shop", retired.is_empty(), str(retired))
 
 	# ── nothing in the shop is unpriced ─────────
 	# The real guard. An item added later with no band falls back to STANDARD,

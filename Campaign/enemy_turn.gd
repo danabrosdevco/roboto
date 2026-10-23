@@ -125,7 +125,7 @@ static func pick_target(state) -> StringName:
 		# catches the tenth site being added without one, which would otherwise
 		# show up as a promise the board could not keep.
 		if not ("defend_mission_id" in l) or l.defend_mission_id == &"":
-			push_warning("EnemyTurn: '%s' has no defence authored, so it cannot be raided — the board would offer a DEFEND with nothing behind it. See docs/briefs/ATTACK_AND_DEFEND.md." % String(id))
+			push_warning("EnemyTurn: '%s' has no defence authored, so it cannot be raided — the board would offer a DEFEND with nothing behind it. See docs/briefs/archive/ATTACK_AND_DEFEND.md." % String(id))
 			continue
 		var worth: int = int(l.resources_per_turn) * 2 + int(l.compute) * 10
 		if worth > best_worth:

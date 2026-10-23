@@ -36,6 +36,513 @@ most wants and least often gets:
 
 ---
 
+## 2026-10-23 — D1: missions and objectives written down, nothing in the game changed
+
+**Landed.** A reading job from the vault brief `Briefs/D1`. Two new files, no
+game file touched:
+
+- `tools/probe_mission_facts.gd` (new) — per live mission, the authored
+  objectives and what `active_objectives` keeps (`--static`, seconds), then a
+  real deploy of all 19 that prints `ObjectiveTracker`'s list with each line
+  marked `authored` or `RAISED`, the surviving exit gates, the site's core
+  counts, and what `open_way_out()` would pay. ~10 min.
+- Vault: `Reference/Missions and objectives.md`, plus rows in `Where the truth
+  lives`, `Traps`, `Backlog` (K7–K10, H10, H4 updated), `Open`, `Home`.
+
+What it found, all measured unless marked:
+- **Every site op's one required objective is raised at runtime** —
+  SiteSlice's `BunkerObjective`, no id. 18 of 19 live ops.
+- **Mutaha**: both live ops prune two relays the slice has already seated
+  cores on; `SiteOperation.held_cores()` counts the freed pair as held
+  (2 on the attack, 5 on the defence), so `mutaha_3_defend` cannot reach
+  GROUND LOST (that consequence code-read).
+- **Coast, Mutaha, Salient** `LevelExit` instances have no
+  `requires_objectives_complete` — stepping on the pad is a successful
+  extraction at any time (read off the scenes, not walked).
+- **`open_way_out()` pays for lines not done**: 940 res + 1 cpu on Polaris,
+  720 Causeway, 680 Salient, 220 Georgetown. Defences pay their cores' rewards
+  (up to 1,500 res + 3 cpu), against §2's "a defence pays nothing".
+- 19 dead objective ids across five levels, second route checked.
+- The campaign is won by clearing `missions.back()` = `basin_2_defend`.
+
+**Gates.** `check.sh --changed`: PASS (65 scripts, 42 scenes).
+`bucket.sh campaign`: **FAIL — 42 suites, 1 PARKED, 5 failed**:
+`test_arena_assault`, `test_core_retake_live`, `test_hillfort_live`,
+`test_sim_arena`, `test_site_win`. I changed no game file. Three print
+`0 failure(s)` and exit non-zero; `test_site_win` re-run by hand segfaults in
+cleanup (exit 139). Two stop with no summary. Not root-caused — vault Backlog
+H10. smoke.sh not run (nothing that loads at startup changed).
+
+**My own mistakes.** First draft of the note said winning at Hillfort paid
+~120 res for uncaptured optional cores. Wrong: `HoldableCore._guard_authored`
+un-ticks a core line whose core is not yours. Caught by adding the payout
+measurement to the probe; the real free money is on non-core lines. I also
+added a "free Master before quit" to the probe believing it cured its exit
+139. It did not; the comment now says so.
+
+**Needs the human.** The four judgement calls now in the vault's `Open`:
+does a bunker win clear the whole map, should a defence pay objective rewards,
+is `basin_2_defend` meant to be the campaign's win, and is
+`salient_1_overthetop` meant to be repeatable. None of the game feel was
+played.
+
+**Blocked / next.** K7 (Mutaha cores) and K10 (labels) are READY and small.
+K8 touches TERRAIN's level files. H10 is worth doing before anyone trusts the
+campaign bucket again.
+
+**Landed.** The human asked for a step between the button and the money: a
+screen showing Mk 0 / Mk 1 / Mk 2 and what each carries.
+
+Most of it already existed. `_line_detail` has drawn the rail since the Mark
+system landed — **it was simply unreachable from UPGRADE.** `UPGRADE <cost>`
+on the card called `_advance` and charged you on the spot, and the only route
+to the rail was the MODULE button, which is locked until the top mark. So on
+a Mk 0 line there was no way to see the ladder at all. The one decision this
+system asks for was the one thing you could not look at first.
+
+- **Both corner buttons open the line.** `UPGRADE 150 ▸` and `MODULE 400 ▸`,
+  and **neither is disabled any more** — looking is always allowed, and a
+  line you cannot afford is exactly the one you want to read. The colour
+  carries affordability; the page behind carries the refusal.
+- **`_adopt_row` is the only thing on that page that spends.** `ADOPT MK 2
+  300`, with `REVISES 1 IN SERVICE` beside it, or `SHORT 210` when you cannot.
+  A refusal is a sentence rather than a greyed button: you reached this page
+  deliberately.
+- **The rail marks what each mark ADDS with a `+`.** Every tier still lists
+  its whole kit — the question is "what does a Mk 2 carry" — but three nearly
+  identical lists is a spot-the-difference puzzle. **Matched as a multiset,
+  not with `has`**: the Soldier goes one frag at Mk 1 to two at Mk 2, and a
+  membership test would have called the second one carried-over and shown no
+  change for something you paid for. Mk 0 takes no prefixes; it is the
+  baseline.
+- **The NEXT MARK bars are bounded** to the rail's width. They were filling
+  the screen: HULL 200 → 220 drawn as 1800 px of bar with a 90 px ghost on
+  the end, on a readout whose entire job is making that gain obvious.
+- `_last_built` now prints on the detail too — `rebuild()` returns before it
+  for a detail view, so adopting from here confirmed itself onto a screen the
+  player was not looking at.
+
+**A bug I found by photographing a line I had not photographed before.**
+`ItemDefinition.effect_summary()` built the Utility Harness's text with
+`"x%.3g CHARGES"`, and **GDScript's `%` has no `g` conversion** — it logs
+"unsupported format character" and hands back the format string unchanged. The
+harness has been advertising its own source code wherever its effect is drawn,
+and it is the only item in the catalogue with a quantity multiplier, so
+nothing hit it until a frame that TAKES the harness got a shot. It reads
+`X2 CHARGES` now, and `smoke.sh` went from 3 warning lines to 1.
+
+**Gates.** `check.sh --changed`: **PASS**. `smoke.sh`: **PASS**, 15s, 1
+warning line. `test_squad_manager` **101/101** (up from 91 — ten new, all on
+this flow), `test_line_specs` 44/44, `test_line_opening` 19/19,
+`test_memory_screen` 38/38, `test_item_facts` 1/1. **Not `test.sh`.**
+
+The spend check is the point of the new block: a one-character slip back to
+`_advance` in the corner restores the old behaviour exactly, and every other
+check on that page would still pass.
+
+Rendered and opened: `live_factory_open.png` (the card corner, which was
+never photographed before — every line in the old shot is shut, so it showed
+OPEN LINE and nothing else), `live_factory_line.png` (Rover, Mk 1, with
+`SHORT 210`) and **`live_factory_line_kit.png`** (Soldier — the line whose
+marks carry equipment, and the one that proves the multiset diff: `MARK I` /
+`FRAG` / `+ FRAG`).
+
+**Needs the human.**
+- **Prices and pacing are unjudged.** I ran it, I did not play it. Whether
+  150 → 750 up the rail is right, and whether `+` is a strong enough mark for
+  what a tier adds, are yours. Dimming the carried rows was the first version
+  and it read as DISABLED, which is why it is a prefix.
+- **Shared file touched:** `Campaign/item_definition.gd`, for the format bug.
+  `maps/proving_level.tscn` and the hud/world scenes are untouched this time.
+
+**Blocked / next.** Nothing blocked. Still outstanding from yesterday: menu
+hover has no motion, and there is no keyboard or gamepad navigation anywhere
+in the squad manager.
+
+---
+
+## 2026-10-22 (later still) — the squad manager had no motion at all, and the first version of the fix was dead on arrival
+
+**Landed.** The menus, which the human reported as flat. They were: not one
+tween existed in any of the four squad-manager files, while the in-game HUD
+tweens in three. `open()` was `visible = true`.
+
+Four things, all in `ui_kit.gd` + `squad_manager_ui.gd`:
+
+- **An arrival.** The ground comes up in 0.09 s and the contents follow,
+  0.19 s all in. Not a wipe — `cyberspace_wipe.gd` is a door into somewhere
+  else and this is a panel over the world. **Closing stays instant**: the
+  pause hold, cursor, mouse mode and `release_pending` all let go on the same
+  frame, so fading out would show a ghost menu over a running game.
+- **A staggered entrance**, 0.022 s a card, capped at 0.30 s a page.
+  `Kit.stagger` finds the OUTERMOST PanelContainers, so the chrome stays put
+  and the contents arrive, and it needs nothing from the pages.
+  **Entrances only** — opening, or a tab you actually moved to. Every purchase
+  rebuilds the whole page and replaying the entrance on each would make buying
+  four things look like the screen was struggling.
+- **The purse counts.** RESOURCES and COMPUTE roll over 0.35 s instead of
+  snapping. It is the only thing on the screen that moves by itself.
+- **A refusal is no longer silence.** `sfx_denied` was assigned in NO SCENE in
+  the project against 23 `play(&"denied")` calls, so every one was mute;
+  `ClickA.ogg` at 0.72 pitch is wired in `hud.tscn` now, plus a 5 px shake.
+
+**The first version did not work at all, and nothing visual would have caught
+it.** Every tween was dead: the screen holds a PauseHold, and bound tweens do
+not advance under it — even with `PROCESS_MODE_ALWAYS` on the UI, inherited by
+the cards, and `can_process()` returning true on every one of them. They all
+sat at alpha 0. In the game that is not a subtle bug, it is **a screen that
+never appears.** `TWEEN_PAUSE_PROCESS` on all five tweens is the fix, and the
+comment in `ui_kit.gd` says so at length because the next person will
+reasonably assume ALWAYS is enough.
+
+**`Kit.motion`,** a static switch every helper honours by applying its end
+state instantly. It exists because a rolling number is INTERMEDIATE for a
+third of a second: `test_squad_manager` reads `_resources.text` and
+`_compute.text` directly and was passing only because neither value happened
+to change before those lines. Off in all three shot tools too, so a grab
+cannot catch a card mid-fade. It is also the shape a reduced-motion option
+would take; nothing reads it from Settings today.
+
+**Gates.** `check.sh --changed`: **PASS**. `smoke.sh`: **PASS**, 15s, 3
+warnings. `test_squad_manager` **91/91** (up from 89 — the two new ones are
+the motion checks), `test_line_opening` 19/19, `test_memory_screen` 38/38,
+`test_line_specs` 44/44. **Not `test.sh`** — it still cannot finish.
+
+Rendered `live_squad_walker.png` with motion off: every card at full alpha,
+nothing half-drawn. That is the regression check, not evidence of the motion —
+which is what the two new suite checks are for, because a no-op looks exactly
+like a finished animation one frame later.
+
+**Needs the human.**
+- **Go and feel it.** `play.cmd`. Whether 0.19 s is right, whether the stagger
+  reads as the screen registering or as lag, and whether the shake is too much
+  are all yours. Every number is a constant at the top of the MOTION block.
+- **`Character/hud/hud.tscn` WAS EDITED ON DISK WHILE YOUR EDITOR IS OPEN** —
+  one new AudioStreamPlayer and the `sfx_denied` binding. Reload it there
+  before saving anything from the editor.
+- **Shared files touched:** `Character/hud/hud.tscn`,
+  `Character/hud/squad/ui_kit.gd`, `Character/hud/squad_manager_ui.gd`.
+
+**Blocked / next.** Not done, and deliberately: **hover is still a stylebox
+swap** with no motion, and **there is no keyboard or gamepad navigation at
+all** — `ui_kit.gd` sets `focus_mode = FOCUS_NONE` on every button it makes,
+so the whole screen is mouse-only in a game whose other hand is on WASD.
+Those are the next slice.
+
+**I was wrong about.** I wrote in the MOTION comment that
+`PROCESS_MODE_ALWAYS` was enough for these tweens to run under the pause hold,
+and shipped the first version on that assumption. It is not, and the feature
+was entirely dead until the suite said so. I also first sampled the animation
+at a fixed 50 ms, which landed inside the expensive frame that builds the page
+and reported a working stagger as broken; it waits for the first card to move
+now.
+
+---
+
+## 2026-10-22 (later) — the sim arena loses an exercise, the core moves to the floor, and a fourth objective nobody authored
+
+**Landed.** Three things the human asked for, in one pass over the Proving
+Ground.
+
+*First Contact is cut.* `mission_arena_1_contact.tres` is deleted and with it
+every reference: `Env/world.tscn`'s mission list, three tables in
+`ops_table.gd`, four tools and nine suites, and two briefs. **It was the only
+unlocker of `emp` and `hatchling`**, so both moved onto `arena_3_firing_line`
+rather than falling out of the campaign silently. Take And Hold is now the
+opening operation and the whole of training.
+
+*The core moved to the middle of the floor.* `place` z 65 → **z 8**: 93 m from
+the spawn down to 36, out of the bay behind the enemy position and onto the
+arena floor where the first fight is. **Not z 0** — there is a cross-wall over
+the whole centreline whose deck is 4.59 m up, and placing on the nominal
+centre buries the pad in it. `probe_arena_cores.gd` said so by name, which is
+the only reason I know; the .tscn number looked perfectly reasonable. z 8 is
+the first flat open floor past it, and the wall is now the cover you cross to
+reach the core. The enemy post moved with it (`BayCorePost` → `FloorCorePost`,
+-6/0/12) and the counter-attack was re-aimed: ANSWER spawned at the bunker,
+which from the new core is an 80 m run, so it comes out of the blockhouse
+instead. Briefing rewritten to match.
+
+*The busted objective was a fourth one nobody authored.*
+`compute_core_point.tscn`'s ROOT is an `InteractObjective` with no id — a real
+site authors one on each instance, and `TrainingCore` instancing it for the
+art could not. It survived the prune (`MissionObjective._ready` exempts a
+blank id, which is exactly the hole), joined the tracker, and rendered as a
+permanent **CAPTURE THE OBJECTIVE** that nothing could ever tick, because
+`HoldableCore._take_terminal()` had just disconnected it from the one terminal
+that would have done it. The HUD was also counting it: it read **0/3 and
+listed four**; it now reads 0/2 and lists three.
+
+Fixed in three places, because it is a class and not an instance:
+`TrainingCore` stands down any objective inside art it adopts (it cannot free
+it — the script is on the root the art hangs off); `MissionObjective` now
+WARNS by name when an id-less objective survives the prune; and the same
+adoption now points the `HoldableCore` at the `Dock` marker the prefab has
+shipped all along, which it was missing because the search looks at itself and
+its parent and ours was neither.
+
+*New tool:* `tools/shot_arena_ops.gd` — deploys a real operation onto the
+arena, prints every objective with its interact point, and photographs the
+plan and each objective at eye height. A render of `proving_level.tscn` is a
+picture of the room; everything that matters here is raised at runtime.
+
+**Gates.** `check.sh --changed`: **PASS**. `smoke.sh`: **PASS**, booted clean,
+15s, **3 warning lines, down from 7**. Suites, by name and count:
+
+- `test_arena_assault` 21/21 · `test_sim_arena` 53/53 · `test_training_core` 10/10
+- `test_opening` 20/20 · `test_mission_objectives` 107/107 · `test_hillfort_live` 34/34
+- `test_turn_loop` 15/15 · `test_ledger` 170/170 · `test_campaign_spine` 26/26
+- `test_ops_board` 24/24 · `test_endings` 29/29 · `test_profiles` 33/33
+- `test_scrap` 16/16 · `test_induction` 41/41 · `test_requisition` 13/13
+- `test_minimap_objectives` 1/1 · `probe_arena_cores` 0 failures
+
+**I did not run `test.sh`** — it still cannot finish.
+
+**Three suites were green while testing nothing, and that is the more useful
+finding.** `test_scrap` bought a module with `buy_item()`, which refuses a shut
+line, so the purchase silently did not happen and the half-price-for-kit path
+the suite exists for never ran — every check around it passed. Its ledger
+assertion also read `ItemDefinition.cost`, which has not been the price since
+the bands landed; it measures the purse now. `test_opening` asserted "against
+four" against a six-robot force and had been red for days. `test_sim_arena`
+asked whether training was over AFTER clearing the only exercise.
+
+Rendered: `docs/marketing/wip/arena_plan.png`, `arena_from_spawn.png` and one
+per objective. I opened them. The core is visible from the spawn through the
+blockhouse arch at 36 m, which it was not at 93.
+
+**Needs the human.**
+- **`Env/world.tscn` WAS EDITED ON DISK WHILE YOUR EDITOR IS OPEN.** Reload it
+  in the editor before you save anything from there, or the in-memory copy —
+  which still has First Contact in its mission list — writes back over this.
+  This is the failure in `never-swap-files-while-the-editor-is-open`.
+- **Game feel is unjudged.** I ran it, I did not play it. Whether the core at
+  36 m is the right distance, and whether a counter-attack out of the
+  blockhouse lands better than one out of the bay, are yours.
+- **The BUNKER's capture still has no dock** and warns every run: the entrance
+  kit ships no `Dock` marker, and where a drone should land on a doorway is an
+  art call I did not want to guess. One line once decided.
+- **Nothing changes colour when you take it.** `CoreSignal: Signal has no
+  core_pulse under it` fires twice — core and bunker. Pre-existing, in the
+  prefab's own wiring, and touching it reaches the real sites.
+- **`proving_clear` and `proving_extract` are now dead in the shipped game.**
+  Only `arena_5_proving` asks for them and it is on disk but not in
+  `Campaign.missions`. `test_arena_assault` loads it off the file and adopts
+  it into the campaign so the two-live-gates rule is still tested, which is
+  the only thing still exercising that half of the level.
+- `Campaign/missions/appendix/mission_arena_2_mixed.tres` still
+  `requires arena_1_contact`. Parked content, left alone, dangling.
+- **Shared files touched:** `Env/world.tscn`, `Env/world_objects/ops_table.gd`,
+  `Campaign/mission_objective.gd`, `maps/proving_level.tscn`.
+- `Env/wor7E58.tmp`, `Env/worE2BF.tmp` and `Env/world.tscn~RF95a1614e.TMP` are
+  sitting in `Env/`, dated 6, 9 and 13 October. Not mine and not touched.
+
+**Blocked / next.** Nothing blocked.
+
+**I was wrong about.** I reached for an AABB measurement to fix the dock
+before checking whether the art already carried a marker. It did — `Core/Dock`
+on every compute core — so the measuring code came straight back out. I also
+first deployed `arena_5_proving` in `test_arena_assault` without adopting it
+into `Campaign.missions`, which left `current_mission` null, pruned nothing,
+and produced the two live extraction gates the suite exists to catch.
+
+---
+
+## 2026-10-22 — MEMORY replaces SOFTWARE and the Armorer; Mark system steps 1–7b
+
+**Landed.** The Mark system (`docs/briefs/archive/MARK_SYSTEM_SPEC.md`, steps 1–7a,
+seven commits) and then the screen that finished it.
+
+*MEMORY* (`Character/hud/squad/memory_page.gd`, new; `software_page.gd`
+deleted). Three sub-tabs over one ledger — WEAPONS, EQUIPMENT, UPGRADES — all
+on the tree's existing rule: a thing HOLDS compute while it is loaded and
+returns all of it when unloaded. The player's own carry list lives in
+`Campaign/software_tree.gd` as `CARRY`; the ledger line is numbers only, with
+no per-card explanation (the first draft printed "2 compute while racked, all
+of it back on removal" under every card, nine times on one page). Names and
+descriptions are read from `ItemDefinition`, never written twice.
+
+Five weapons (Ancient Rifle 0 ISSUED, Mark One 1, Repair Lance 1, Squad
+Automatic 2, Cluster Launcher 2) and eight equipment (Frag 0 ISSUED, Smoke 1,
+EMP / Heavy Mine / Cluster Mine 2, Recoilless / Drone Carrier / Hatchling 3).
+22 compute for all of it against a `starting_compute` of 2.
+
+*Cut, with the files as the evidence.* Scout Carbine and Marksman Rifle are
+`weapon_damage = 0`, `ammo_type = ""`, `in_shop = false` and both point
+`player_scene` at `m4_hud_weapon.tscn` — stubs wearing the Ancient Rifle's gun.
+Scanner too: one charge, nothing to read it on.
+
+*Step 7b, the last shop.* `armorer_page.gd` deleted, the tab gone,
+`SquadManagerUI.shop_items()` gone with it. **Three tabs: SQUAD, FACTORY,
+MEMORY.** `buy_item`/`sell_item` survive on CampaignState — `recover_kit` and
+the seed still move stock through them; only the shopfront went.
+
+*Two things the removal broke that I had not expected.* The induction's two
+rifle steps taught a shop that no longer exists AND relied on the player
+mustering unarmed, which `_carry_issued()` has now made false. Both steps are
+re-aimed at MEMORY (`induct_load_weapon` / `induct_carry_weapon`,
+`TAUGHT_WEAPON` is `bolt` not `m4`, new appended `Trigger.LOAD_PROGRAM`). And
+`test_scrap` had been quietly passing while testing nothing: `buy_item` refuses
+a shut line, so its module purchase silently did not happen and the robot went
+to the breaker wearing only its issued rifle. Fixed, and its ledger assertion
+now measures the outlay from the purse instead of reading `ItemDefinition.cost`,
+which has not been the price since the bands landed.
+
+**Gates.** `check.sh --changed`: **PASS**. `smoke.sh`: **PASS**, booted clean,
+15s, 7 warning lines. Suites, by name and count:
+
+- `test_memory_screen` (NEW) 38/38 · `test_squad_manager` 89/89
+- `test_line_opening` 19/19 · `test_line_specs` 44/44 · `test_ledger` 170/170
+- `test_induction` 41/41 · `test_scrap` 16/16 · `test_campaign_spine` 26/26
+- `test_pricing` 19/19 · `test_requisition` 13/13 · `test_profiles` 33/33
+- `test_profile_menu` 32/32 · `test_equipment` 60/60 · `test_teams` 83/83
+- `test_settings` 74/74
+
+Two reds that are **not** mine, checked rather than assumed:
+`test_tutorial` is marked PARKED at the top of its own file (the depot has no
+lesson signs left). `test_opening` fails "...against four — 6 hostiles" on
+`mission_arena_3_firing_line.tres`, last touched in `f21d08ed` on 2026-10-13.
+**I did not run `test.sh`** — it still cannot finish.
+
+Rendered: `tools/shot_squad_manager.gd` grew three MEMORY shots and lost its
+four Armorer ones. I opened all three —
+`docs/marketing/wip/live_memory_{weapons,equipment,upgrades}.png`. The first
+render caught the CARRY button stretched to the card's full width, which reads
+as a bar the card is made of rather than a thing to press; fixed and re-shot.
+
+**Needs the human.**
+- **Game feel is entirely unjudged.** I ran it, I did not play it. Whether 2
+  starting compute against a 1-compute Mark One is a real decision or just
+  thin is yours.
+- **The bands are a guess.** Which gun is worth 1 and which is worth 3 has
+  never been played.
+- `docs/marketing/wip/live_armorer_*.png` are now pictures of a screen that
+  does not exist. I restored them to HEAD rather than deleting tracked files;
+  they want deleting.
+- **Shared files touched:** `Character/hud/squad_manager_ui.gd` (tabs),
+  `docs/briefs/archive/MARK_SYSTEM_SPEC.md` (one line, §5.1), and `tools/shot_ui.gd`,
+  whose tooling/armorer block had been dead since 7a and now shoots MEMORY.
+- **NEW FILE AT THE PROJECT ROOT: `play.cmd`**, at the human's request — a
+  double-click that runs the game from source with no editor and no export
+  (`Godot.exe --path <here>`, plain binary not `_console.exe`). Verified both
+  ways: `--headless --quit` boots the real game and exits 0, and a bogus
+  `GODOT` hits the guard and exits 1. I did NOT open a window with it.
+- **A boot error that is not mine and that nobody has chased.** Piping a full
+  game boot prints `Cannot assign contents of "Array[Object]" to "Array[int]"`
+  TWICE, during scene load, before any campaign code runs. No file I touched
+  declares an `Array[int]` and I edited no `.tscn`, so it predates this
+  session — it has been hiding because `smoke.sh` counts warnings, not errors,
+  and the renderer's "Parameter m is null" noise is what everyone greps away.
+  It smells like a typed `@export` whose type changed under a scene that still
+  holds the old array.
+- `tools/wip_screens.gd` still draws a mock tab bar reading "SQUAD FACTORY
+  ARMORER SOFTWARE". It is a design mock-up, not the live UI, and I left it.
+
+**Blocked / next.** Nothing blocked. Next: the seven branches from
+`docs/concepts/SOFTWARE_CONCEPTS.md` — UPGRADES currently shows the four
+original branches with `UNWRITTEN` placeholders, which is the one tab of the
+three with no content behind it.
+
+**I was wrong about.** I wrote the spec's equipment table with Frag at 1 and
+the two tabs totalling 23; the human made Frag issued, and the suite caught the
+arithmetic at 22. Spec corrected. I also published a prototype naming the
+Recoilless Rifle `rocket` — that is its FILE name; its id is `recoilless`, and
+a lookup written from the filename finds nothing and fails silently.
+
+---
+
+## 2026-10-18 — impacts and tracers: a rendered concept, and the filter renders thin bright things BLACK
+
+**Landed.** Two NEW files, nothing existing touched: `tools/mock_impacts.gd`
+and `docs/concepts/IMPACTS.md` with 25 PNGs beside it in `docs/concepts/`.
+The tool has four modes — `survey` (what a round's raycast hands back),
+`rates` (rounds and live tracers at Qamareen), `bench` (cost), and the default
+headful render. It builds a pooled impact/tracer field at runtime in the
+proving ground and the Salient; the game is unmodified.
+
+**Four findings worth the board's attention.**
+
+1. **The signal filter's EDGE PASS inverts thin bright objects to near-black.**
+   `edge_color` is (0.02, 0.06, 0.06) at `edge_strength` 0.75, and a 1-2 px hot
+   streak on sky is a maximal luma step on every pixel it owns, so the pass
+   replaces three quarters of it with black. Proved by an A/B that keeps the
+   whole filter and zeroes ONLY `edge_strength` (`NOEDGE=1`, the `_noedge`
+   images). Measured threshold: **between 4 and 7 screen pixels.** This is a
+   project-wide rendering rule, not an impacts question — and
+   `tracer.tscn`'s own 8.5 cm mesh is ~3.4 px at 20 m, so **the shipped
+   tracers are probably going dark at range.** I did not render the game's own
+   tracer to confirm; somebody should.
+2. **Per-texture material awareness is UNAVAILABLE, not expensive.** The
+   project runs Jolt, and Jolt never populates `face_index`: -1 on all 921
+   surveyed hits. The three-bucket version works and is cheap, but the walk is
+   `GeneratedTerrain < _Built < Collision` — THREE levels, not the one the
+   source reads like — and it is memoised, which is what actually makes it
+   free (1 distinct collider in the proving ground, 2 in the Salient).
+3. **Beaded tracers fall out of cadence for free.** At 80 m the three rapid
+   classes give 5.6-7.7 beads in flight. No authored dash trail needed. The
+   autocannon is NOT the beaded one — 3 rounds at 0.50 s is a thumper.
+4. **Faction-coloured tracers do not survive.** Amber, green and tyrian all
+   render as the same pale yellow-white, mostly because an additive hot streak
+   clips to white before the filter even gets to it. Tested at full brightness
+   only; a dimmed variant is untested.
+
+**What happens on a hit today, for the record.** Nothing on brush or terrain.
+On a robot, `particle_effects_hit` fires a SparkBurst **at the body origin**,
+not at the hole. No impact sound anywhere. `Tracer.hit_effect_scene` exists
+and `tracer.tscn` leaves it null. `_one_round` computes the impact point and
+spends it only on suppression.
+
+**Budget.** One round (tracer + impact) 0.0037 ms. Pool tick 0.1141 ms empty,
+0.4569 ms fully saturated = 4.0 awake robots = 2.7% of a 60 Hz frame. Worst
+realistic Qamareen load is ~6.7 rounds/frame = 0.025 ms of registration. All
+CPU, timed synchronously — no `await physics_frame` in the loop.
+
+**Mistakes I made and corrected, all recorded in the files.** The bucket test
+walked one level and called the Salient's whole ground "brush". `hold()` froze
+every channel at a fraction of the LONGEST lifetime, so FREEZE=0.22 stepped
+3.08 s and every spark was dead — the freeze is now SECONDS, because one frame
+is one instant and channels with different lifetimes cannot share a phase. The
+first cameras aimed through a gateway and staged 26 impacts on a wall 60 m
+behind it; `_stage` now prints the range it hit and warns. `INSTANCE_CUSTOM` is
+vertex-only and the DUMMY renderer reports the compile failure then carries on,
+so a headless bench ran with five broken shaders and looked fine. `_ready()`
+called by hand AND by the tree built every channel twice. The bead measure
+compared spacing to streak length, which is the wrong measure. `PROCESS_MODE_
+DISABLED` deregisters the body, so every round aimed at the test robot went
+through it. And my soft-edge hypothesis for beating the edge pass **failed** —
+a 2 px streak has nothing to spread a ramp over.
+
+**Gates.** `bash tools/check.sh --changed`: **PASS** (6 scripts). Did not run
+`test.sh` (instructed not to, and it cannot finish). Did not run `smoke.sh` or
+any bucket — nothing in `Character/`, `Campaign/` or `Managers/` was modified,
+so no suite covers a change that does not exist. The tool itself was run ~20
+times headful and headless.
+
+**Needs the human.** **Game feel is entirely unjudged** — I ran it, I did not
+play it, and every picture is frozen. Tracer legibility is a moving property a
+still cannot settle. Open `impact_06_one_round_close.png` first; it is the one
+that shows the work. Shots 02-05 are weak pictures at 12 m — the channels are
+correct, the camera is too far to judge them. No audio exists, and the thing I
+most recommend building (the near-miss crack) is audio and entirely
+unprototyped. GPU fill cost of 1632 additive instances is unmeasured.
+
+**Blocked / next.** Nothing blocking. Order I would build in: (1) the
+near-miss crack, because `suppress_along` already computes distance-to-segment
+for every round and already finds the player — it is a presentation layer on
+correct existing arithmetic; (2) the apparent-width floor project-wide, and
+look at the shipped tracers through the filter before tuning anything new;
+(3) the pooled pit + spark fan on three buckets; (4) tracers at 1-in-5 with
+emergent beading. Not yet: faction colour (tested, fails) and the penetration
+tell (a picture of a mechanic that does not exist — `_one_round` stops at the
+first collider).
+
+**Files outside my lane: none.** `docs/concepts/` already holds other lanes'
+concept docs (DISMEMBERMENT.md, SCREEN_FEEDBACK.md); I added only
+`IMPACTS.md` and `impact_*.png`. No shared file touched. Nothing committed,
+no branch, no stash.
+
+---
+
 ## 2026-10-15 (later) — the redoubt IS Hillfort now, and a regression I shipped in the entry above
 
 **Landed.** `hillfort_1_relay` is out of the campaign; `hfw_1_fort` is the
@@ -125,7 +632,7 @@ sitting open and is a two-minute fix if you want the spec honoured.
 ## 2026-10-15 — Hillfort Redoubt is a playable site, and the bunker stays where TERRAIN put it
 
 **Landed.** `hillfort_wip` went from geometry-with-markers to a registered,
-playable location, per `docs/briefs/HILLFORT_WIP_HANDOVER.md` §3. New:
+playable location, per `docs/briefs/archive/HILLFORT_WIP_HANDOVER.md` §3. New:
 `Campaign/missions/mission_hfw_1_fort.tres`, `mission_hfw_2_defend.tres`,
 `Campaign/locations/loc_hillfort_wip.tres` (**Hillfort Redoubt**),
 `Env/world_objects/hillfort_wip_slice.gd`, `tools/test_hillfort_wip.gd`,

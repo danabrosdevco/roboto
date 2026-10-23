@@ -393,7 +393,7 @@ func test_the_ally_ramp() -> void:
 	# its .tres is still on disk, so this list went on loading it and the chain
 	# broke at a link nothing walks any more. Retired rather than deleted,
 	# because deleting authored content is the human's call.
-	var files := ["arena_1_contact", "arena_3_firing_line",
+	var files := ["arena_3_firing_line",
 		"hfw_1_fort",
 		"basin_1_anchor", "coast_1_road", "pitt_1_rivers"]
 	var by_id: Dictionary = {}
@@ -410,12 +410,14 @@ func test_the_ally_ramp() -> void:
 			chained = false
 		prev = m.id
 	check("each op unlocks the next, arena 1 through the hillfort and the basin to the three rivers", chained)
-	# You go alone once, and from the second op the cap comes off entirely:
-	# after that it is your supply, bought with compute at the Factory, that
-	# decides how many go in with you — not the mission.
-	# SIX, NOT SEVEN: arena_5_proving came out of the chain above when the sim
-	# arenas were cut to two.
-	check("alone once, then everyone you can supply", sizes == [0, -1, -1, -1, -1, -1], str(sizes))
+	# NOBODY GOES ALONE ANY MORE. arena_1_contact was the one solo operation
+	# (squad_size 0) and it was cut on 2026-10-22, so every op in the chain
+	# now takes -1: no cap from the mission at all, and it is your supply,
+	# bought with compute at the Factory, that decides how many go in with you.
+	# FIVE, NOT SIX: arena_5_proving left the chain when the arenas were cut
+	# to two, and arena_1_contact when they were cut to one.
+	check("everyone you can supply, from the first op on",
+		sizes == [-1, -1, -1, -1, -1], str(sizes))
 
 
 func names(records: Array) -> Array:
@@ -675,7 +677,12 @@ func test_software_is_held_compute() -> void:
 	var T = load("res://Campaign/software_tree.gd")
 	var state := make_state()
 	state.award_compute(4)
-	check("the tree has four branches of six programs", T.ids().size() == 24, str(T.ids().size()))
+	# nodes() is the BRANCHES. ids() is everything the ledger may hold, which
+	# since MEMORY also includes the player's carry list — so counting ids()
+	# here was counting two things and would move every time a gun does.
+	check("the tree has four branches of six programs", T.nodes().size() == 24, str(T.nodes().size()))
+	check("...and ids() knows the carry list as well, or a load unloads itself on reload",
+		T.ids().size() == T.nodes().size() + T.CARRY.size(), str(T.ids().size()))
 	check("a tier 2 program needs a tier 1 in its branch first",
 		T.install_block(state, &"command_2a").begins_with("NEEDS A TIER 1") and not T.install(state, &"command_2a"))
 	check("a tier 1 program installs, holding 1", T.install(state, &"command_1a") and state.compute_free() == 3)

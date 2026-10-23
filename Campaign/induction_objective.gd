@@ -20,6 +20,10 @@ class_name InductionObjective
 # over and activation does the connecting.
 # ─────────────────────────────────────────────
 
+## What is loaded into MEMORY, and what that costs. Preloaded rather than
+## named: a class_name is not visible until the editor rescans.
+const _Software := preload("res://Campaign/software_tree.gd")
+
 enum Trigger {
 	## Player back to full frame, by any means.
 	HEAL_SELF,
@@ -37,6 +41,10 @@ enum Trigger {
 	## slotted in beside the other menu-ish triggers: these are ints in a save
 	## and in any scene that ever authors one.
 	REVIEW_KEYS,
+	## `item_id` loaded into MEMORY (Campaign/software_tree.gd). Replaces
+	## BUY_ITEM for the induction, which cannot teach a shop that is gone.
+	## APPENDED, for the same reason REVIEW_KEYS was.
+	LOAD_PROGRAM,
 }
 
 @export var trigger: Trigger = Trigger.HEAL_SELF
@@ -79,7 +87,7 @@ func _on_activated() -> void:
 				# rather than hangs, and says why.
 				push_warning("InductionObjective '%s': no downed squadmate to revive, completing it so the induction can finish." % id)
 				complete()
-		Trigger.BUY_ITEM, Trigger.EQUIP_ITEM:
+		Trigger.BUY_ITEM, Trigger.EQUIP_ITEM, Trigger.LOAD_PROGRAM:
 			var state = _campaign.get("state") if _campaign != null else null
 			if state == null:
 				push_warning("InductionObjective '%s': no campaign state; it can never complete." % id)
@@ -156,10 +164,13 @@ func _on_order(_squad, verb: int, _position: Vector3, _target: Node) -> void:
 # rifles, one short. The baseline is the only version that survives the player
 # buying and fitting in either order.
 #
-# FIT: the gun is in YOUR hands. The squad musters armed and the player does
-# not — `Campaign._seed_new_campaign` issues a rifle to every roster record and
-# the player's own record is not in `roster` — so arming yourself is the one
-# fitting the induction can ask for that is not already done.
+# LOAD: the item is in MEMORY. The induction names a weapon that is NOT
+# issued, so this starts false — an issued one is loaded from the first frame
+# and the step would be ticked before the player read it.
+#
+# FIT: the gun is in YOUR hands. You muster carrying the issued rifle, so a
+# step naming THAT would also be done before it was read; naming something you
+# had to load first is the version that asks for an action.
 func _check_kit() -> void:
 	if completed:
 		return
@@ -168,6 +179,14 @@ func _check_kit() -> void:
 		return
 	if trigger == Trigger.BUY_ITEM:
 		if _owned(state) > _baseline:
+			complete()
+		return
+	if trigger == Trigger.LOAD_PROGRAM:
+		# is_loaded(), never is_installed(): an ISSUED item costs 0 and is
+		# never written to the ledger at all, so the ledger is the wrong place
+		# to ask. An induction step naming an issued item would simply never
+		# complete.
+		if _Software.is_loaded(state, item_id):
 			complete()
 		return
 	var me = state.player_record

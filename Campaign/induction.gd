@@ -33,8 +33,13 @@ class_name Induction
 const _Objective := preload("res://Campaign/induction_objective.gd")
 const _Commander := preload("res://Character/components/squad_commander.gd")
 
-## The rifle the induction teaches you to buy and fit.
-const TAUGHT_WEAPON := &"m4"
+## The weapon the induction teaches you to load and carry. NOT the Ancient
+## Rifle any more: that one is ISSUED and already in your hands from the first
+## frame (software_tree.gd CARRY, cost 0), so an objective asking you to get
+## hold of it would complete itself before you read it. The Mark One costs 1
+## compute against the 2 a new campaign starts with, so the lesson is both
+## affordable and a real decision.
+const TAUGHT_WEAPON := &"bolt"
 
 signal finished
 
@@ -90,17 +95,21 @@ func _build() -> void:
 	_add(&"induct_revive_squad", "GET YOUR SQUADMATE UP",
 		"One of Bravo is on the floor. Same tool, crosshair on them.",
 		_Objective.Trigger.REVIVE_SQUADMATE)
-	# SHOPPING, AND IT HAS TO BE REAL. YOU are the one who musters unarmed: the
-	# seed issues a rifle to every roster record and the player's record is not
-	# in the roster, so the squad arrives holding rifles and you do not. That is
-	# what keeps these two from completing themselves the moment they are built.
-	# Buying is counted against what you owned when the induction started, so
-	# fitting the rifle the instant you buy it still counts as having bought it.
-	_add(&"induct_buy_rifle", "BUY AN ANCIENT RIFLE",
-		"Your squad mustered with rifles. You did not. The armoury sells them and you can afford one.",
-		_Objective.Trigger.BUY_ITEM)
-	_add(&"induct_fit_rifle", "PUT THE RIFLE IN YOUR OWN HANDS",
-		"Buying it is not carrying it. Open the squad manager, find your own card, and fit it.",
+	# THE ONE LESSON THE REST OF THE CAMPAIGN IS BUILT ON. There is no shop any
+	# more — a robot's loadout comes from its production line, and your own gun
+	# comes out of MEMORY, where a weapon HOLDS compute while it is loaded and
+	# returns all of it when it is not. Compute is also seats, so this is the
+	# first time the player is asked the question the whole game asks: arm
+	# yourself, or field another robot.
+	#
+	# TWO STEPS, NOT ONE, because loading is not carrying and the distinction
+	# is the whole shape of the screen. You are issued a rifle and a frag, so
+	# neither of these can complete itself off what you already hold.
+	_add(&"induct_load_weapon", "LOAD A WEAPON INTO MEMORY",
+		"Open the squad manager and find MEMORY. A weapon there holds compute for as long as it is loaded, and gives all of it back when it is not.",
+		_Objective.Trigger.LOAD_PROGRAM)
+	_add(&"induct_carry_weapon", "PUT IT IN YOUR OWN HANDS",
+		"Loading it is not carrying it. You have one weapon slot; CARRY on the card decides what is in it.",
 		_Objective.Trigger.EQUIP_ITEM)
 	_add(&"induct_order_follow", "ORDER YOUR SQUAD TO FOLLOW",
 		"{command} gives orders. Aim at nothing in particular and your team forms up on you.",

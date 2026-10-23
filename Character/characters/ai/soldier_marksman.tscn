@@ -20,7 +20,7 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mygdm"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_6meyw"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_opj5x"]
 render_priority = 0
 shader = ExtResource("8_27chb")
 shader_parameter/use_normal_map = false
@@ -86,7 +86,7 @@ bark_clips = Array[AudioStream]([ExtResource("3_0ci13"), ExtResource("4_ic4jn"),
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="."]
-material_override = SubResource("ShaderMaterial_6meyw")
+material_override = SubResource("ShaderMaterial_opj5x")
 mesh = SubResource("CapsuleMesh_jrkgo")
 material = ExtResource("8_pr6gp")
 
@@ -105,7 +105,7 @@ material = SubResource("StandardMaterial3D_6qgus")
 
 [node name="Hat" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.86, 0)
-material_override = SubResource("ShaderMaterial_6meyw")
+material_override = SubResource("ShaderMaterial_opj5x")
 mesh = SubResource("CylinderMesh_hat")
 
 [node name="SparkBurst" parent="." instance=ExtResource("9_pm84i")]

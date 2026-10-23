@@ -28,20 +28,20 @@ func _init() -> void:
 	Settings.path = "user://settings_probe.json"
 	await process_frame
 
-	# ── only the SECOND exercise asks for it ────
-	# Three arenas became two: CONTACT is solo, eliminate and extract; FIRING
-	# LINE is where the squad, the core and the bunker are taught. The Proving
-	# Ground is shared by both, so the gating is the objective list and nothing
-	# else — MissionObjective._ready frees what the operation did not ask for.
-	var asks := {}
-	for id in ["arena_1_contact", "arena_3_firing_line"]:
-		var m = load("res://Campaign/missions/mission_%s.tres" % id)
-		asks[id] = m.active_objectives.has(&"proving_capture")
-	_check("THE SECOND exercise asks for the core", asks["arena_3_firing_line"])
-	_check("...and the first does not — it is eliminate and extract",
-		not asks["arena_1_contact"], str(asks))
+	# ── the exercise asks for it, and the level's other ops do not ────
+	# Three arenas became two, and on 2026-10-22 two became one: First Contact
+	# was solo, eliminate and extract, and it sat in front of the only thing
+	# that teaches capturing. TAKE AND HOLD is now the whole of training.
+	#
+	# THE PROVING GROUND IS STILL SHARED — arena_5_proving is on disk and uses
+	# the same level — so the gating is the objective list and nothing else:
+	# MissionObjective._ready frees what the operation did not ask for.
 	var a3 = load("res://Campaign/missions/mission_arena_3_firing_line.tres")
+	_check("THE exercise asks for the core", a3.active_objectives.has(&"proving_capture"))
 	_check("...and it asks for the bunker too", a3.active_objectives.has(&"proving_bunker"))
+	var a5 = load("res://Campaign/missions/mission_arena_5_proving.tres")
+	_check("...and the operation that only clears the floor does not",
+		not a5.active_objectives.has(&"proving_capture"), str(a5.active_objectives))
 
 	# ── it builds a real core, not a teaching mock ──
 	var lvl: Node = load("res://maps/proving_level.tscn").instantiate()

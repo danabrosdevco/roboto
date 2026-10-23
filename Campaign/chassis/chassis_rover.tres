@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="ChassisDefinition" load_steps=6 format=3 uid="uid://c5aacn15f27gh"]
 
 [ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
 [ext_resource type="Script" path="res://Campaign/chassis_mark.gd" id="1_wv4et"]
-[ext_resource type="PackedScene" path="res://Character/characters/ai/vehicle_rover.tscn" id="2_scene"]
+[ext_resource type="PackedScene" uid="uid://csdiwa6ujc6q7" path="res://Character/characters/ai/vehicle_rover.tscn" id="2_scene"]
 
 [sub_resource type="Resource" id="Resource_ygkj7"]
 script = ExtResource("1_wv4et")

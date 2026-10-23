@@ -7,10 +7,10 @@ class_name DepartureLever
 # You queue an operation at the operations table. You commit to it here, by
 # throwing a handle, and the train takes you there. The whole reason this is a
 # lever and not a button on the table's own board is that the commit should
-# cost a gesture: docs/briefs/DEPARTURE_RIDE.md.
+# cost a gesture: docs/briefs/archive/DEPARTURE_RIDE.md.
 #
 # WHY THE HANDLE IS GENERATED AND NOT MODELLED. TERRAIN builds the housing it
-# comes out of — docs/briefs/OPS_TABLE_LEVER.md — but not the handle, because
+# comes out of — docs/briefs/archive/OPS_TABLE_LEVER.md — but not the handle, because
 # FuncGodot merges every worldspawn brush in a car into one mesh, so a handle
 # drawn in the .map could not rotate. It would also be deleted by the next
 # geometry rebuild: tools/block_prefabs.gd writes those scenes from scratch.

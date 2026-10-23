@@ -23,7 +23,7 @@ extends "res://tools/block_industrial.gd"
 # ─────────────────────────────────────────────
 # WHY THERE IS NO HEAD ON THIS
 #
-# docs/briefs/COMPUTE_CORE_ART.md governs, and docs/concepts/CORE_LOOK3.md is
+# docs/briefs/COMPUTE_CORE_ART.md governs, and docs/concepts/archive/CORE_LOOK3.md is
 # the study it came off: five variants (TRUNK / UPLINK / PATCH / ANCHOR /
 # RELAY) on ONE SHARED BODY. The human was offered the five and chose "build
 # the skeleton, decide after" — because every fault across three rejected

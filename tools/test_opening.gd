@@ -4,12 +4,16 @@ extends SceneTree
 # ─────────────────────────────────────────────
 # WHAT A FRESH CAMPAIGN ASKS OF YOU, IN ORDER.
 #
-#   1. the depot      heal yourself, get your squadmate up, buy and fit a
-#                     rifle, give two orders, choose an operation
-#   2. CONTACT        solo, against a few. Eliminate and extract
-#   3. FIRING LINE    with your squad, against four. Work a core, take the
+#   1. the depot      heal yourself, get your squadmate up, load and carry a
+#                     weapon, give two orders, choose an operation
+#   2. TAKE AND HOLD  with your squad, against six. Work a core, take the
 #                     bunker, extract from it
-#   4. the war        Hillfort opens, and so does free play in the Lab
+#   3. the war        Hillfort opens, and so does free play in the Lab
+#
+# FIRST CONTACT USED TO SIT BETWEEN THEM and was cut on 2026-10-22. It was
+# solo against three on a floor you then crossed a second time, and it put a
+# whole operation in front of the only exercise that teaches CAPTURING —
+# which is the verb the entire campaign is made of.
 #
 # Each step has to be the ONLY thing available at the time, or the order is a
 # suggestion rather than a sequence.
@@ -50,33 +54,34 @@ func _init() -> void:
 		FileAccess.file_exists("res://Campaign/induction.gd"))
 
 	# ── 2 · only training is open ───────────────
+	# ONE EXERCISE NOW, NOT TWO. First Contact was cut on 2026-10-22: it was
+	# solo against three on a floor you then crossed again, and the thing the
+	# campaign is actually made of — taking ground and holding it — was behind
+	# it. Take And Hold is the opening operation, and it is also the only one
+	# that teaches the verb.
 	var open := _ids(cm.available_missions())
-	_check("A FRESH CAMPAIGN OFFERS ONLY THE FIRST EXERCISE",
-		open == ["arena_1_contact"], str(open))
-
-	# CONTACT is solo, against a few.
-	var a1 = cm.get_mission(&"arena_1_contact")
-	_check("...and it is SOLO", a1.squad_size == 0, "squad_size %d" % a1.squad_size)
-	_check("...against a few", _bodies(a1) <= 3, "%d hostiles" % _bodies(a1))
-	_check("...eliminate and extract, nothing else",
-		a1.active_objectives == ([&"proving_clear", &"proving_extract"] as Array[StringName]),
-		str(a1.active_objectives))
-
-	# ── 3 · clearing it opens the second ────────
-	state.completed_missions.append(&"arena_1_contact")
-	open = _ids(cm.available_missions())
-	_check("clearing it opens the second exercise", open.has("arena_3_firing_line"),
-		str(open))
-	_check("...and the war is still shut", not open.has("hfw_1_fort"), str(open))
+	_check("A FRESH CAMPAIGN OFFERS ONLY THE EXERCISE",
+		open == ["arena_3_firing_line"], str(open))
+	_check("...and nothing requires the exercise that was cut",
+		cm.get_mission(&"arena_1_contact") == null, "arena_1_contact is gone")
 
 	var a3 = cm.get_mission(&"arena_3_firing_line")
-	_check("the second brings your squad", a3.squad_size != 0,
+	_check("it brings your squad", a3.squad_size != 0,
 		"squad_size %d" % a3.squad_size)
-	_check("...against four", _bodies(a3) == 4, "%d hostiles" % _bodies(a3))
+	# SIX, AND THE BRIEFING SAYS SO — "You do not have to kill all six". This
+	# read `== 4` and had been red since the force was rewritten; the number
+	# in the suite was the stale one, not the number in the mission.
+	_check("...against six", _bodies(a3) == 6, "%d hostiles" % _bodies(a3))
+	# WHAT IT HANDS ON. First Contact was the only unlocker of the EMP and the
+	# hatchling charge; cutting it would have locked both out of the campaign
+	# for good, so they moved here.
+	for id in [&"emp", &"hatchling"]:
+		_check("...and it still hands you the %s" % String(id),
+			a3.unlocks.has(id), str(a3.unlocks))
 	# CORE, BUNKER, THEN OUT — and out is the BAY gate, not the blockhouse one.
-	# The proving ground holds both extractions and the mission picks which; the
-	# second exercise ends where the bunker is, rather than walking 46 m back
-	# the way it came. See docs/briefs/SIM_ARENA_MODE.md.
+	# The proving ground holds both extractions and the mission picks which; this
+	# exercise ends where the bunker is, rather than walking 46 m back the way
+	# it came. See docs/briefs/archive/SIM_ARENA_MODE.md.
 	_check("...and it teaches the CORE and the BUNKER",
 		a3.active_objectives.has(&"proving_capture")
 		and a3.active_objectives.has(&"proving_bunker")
@@ -85,18 +90,18 @@ func _init() -> void:
 	_check("...and it does NOT send you back to the blockhouse to leave",
 		not a3.active_objectives.has(&"proving_extract"), str(a3.active_objectives))
 
-	# ── 4 · then the war opens ──────────────────
+	# ── 3 · then the war opens ──────────────────
 	state.completed_missions.append(&"arena_3_firing_line")
 	open = _ids(cm.available_missions())
-	_check("CLEARING THE SECOND OPENS HILLFORT", open.has("hfw_1_fort"), str(open))
+	_check("CLEARING THE EXERCISE OPENS HILLFORT", open.has("hfw_1_fort"), str(open))
 	_check("...and nothing deeper than that", not open.has("basin_1_anchor"), str(open))
 
-	# ── two exercises, not three ────────────────
+	# ── one exercise, not two ───────────────────
 	var sims := 0
 	for m in cm.missions:
 		if m != null and m.sim:
 			sims += 1
-	_check("THERE ARE TWO EXERCISES, NOT THREE", sims == 2, "%d" % sims)
+	_check("THERE IS ONE EXERCISE, NOT TWO", sims == 1, "%d" % sims)
 	_check("...and the retired one is out of the campaign",
 		cm.get_mission(&"arena_5_proving") == null)
 

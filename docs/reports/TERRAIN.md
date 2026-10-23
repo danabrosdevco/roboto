@@ -42,7 +42,7 @@ most wants and least often gets:
 
 **Landed.**
 
-*Ops table* (`c2400afc`, `0a5672af`). `docs/briefs/OPS_TABLE_FURNITURE.md`. The
+*Ops table* (`c2400afc`, `0a5672af`). `docs/briefs/archive/OPS_TABLE_FURNITURE.md`. The
 ops car's placeholder met none of the brief: slab at 1.3 m against a 0.95 m
 standing height, a fake projection painted on it, a projector ring hung over
 it. All three gone — the projection draws additively with no depth test, so

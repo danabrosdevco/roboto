@@ -90,7 +90,7 @@ func _init() -> void:
 	var player: Player = world.player
 
 	# ── DEPLOY ───────────────────────────────────
-	var op: MissionDefinition = cm.get_mission(&"arena_1_contact")
+	var op: MissionDefinition = cm.get_mission(&"arena_3_firing_line")
 	var clears_before: int = cm.state.clears_of(op.id)
 	cm.select_mission(op.id)
 	await world.load_next_level(op.level_scene)

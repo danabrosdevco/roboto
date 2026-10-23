@@ -6,7 +6,7 @@ extends SceneTree
 #   godot --headless --audio-driver Dummy --path . \
 #       --script res://tools/build_chassis_marks.gd [-- --dry]
 #
-# Step 1 of docs/briefs/MARK_SYSTEM_SPEC.md. Writes ChassisMark sub-resources
+# Step 1 of docs/briefs/archive/MARK_SYSTEM_SPEC.md. Writes ChassisMark sub-resources
 # into the twelve purchasable Campaign/chassis/*.tres files.
 #
 # A TOOL RATHER THAN TWELVE HAND EDITS. A typed array of a custom Resource is

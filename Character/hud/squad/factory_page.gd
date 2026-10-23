@@ -428,19 +428,33 @@ func _line_corner(frame: ChassisDefinition) -> Control:
 			if mod_def != null else String(mod_id).to_upper()), Kit.COMPUTE, Kit.SMALL))
 	row.add_child(Kit.fill())
 
+	# NEITHER OF THESE SPENDS ANYTHING. Both open the line's own page, where
+	# the whole rail is laid out and the money is committed on a button that
+	# says what it is buying.
+	#
+	# UPGRADE USED TO CHARGE YOU ON THE SPOT, off a card that showed a price
+	# and a mark number and nothing else: no way to see what Mk 2 carried
+	# until you owned it, and no way to see the rail AT ALL on a Mk 0 line,
+	# because the only route to it was the MODULE button and that was locked
+	# until the top. The one decision this system asks for was the one thing
+	# you could not look at first.
+	#
+	# AND NEITHER IS DISABLED ANY MORE, which is the other half. LOOKING is
+	# always allowed — a line you cannot afford yet is exactly the line you
+	# want to read — so the colour carries affordability and the page behind
+	# carries the refusal.
 	if mk < frame.top_mark():
 		var cost: int = _Pricing.mark_buy(frame, mk + 1)
-		var can: bool = state.can_afford(cost) and state.is_unlocked(frame.id)
-		var up := Kit.button("UPGRADE %d" % cost, Kit.MONEY if can else Kit.PROBLEM, Kit.SMALL)
-		up.disabled = not can
+		var up := Kit.button("UPGRADE %d ▸" % cost,
+			Kit.MONEY if state.can_afford(cost) else Kit.DIM, Kit.SMALL)
+		up.tooltip_text = "See the whole rail. Nothing is spent until you adopt."
 		up.mouse_entered.connect(ui.hover)
-		up.pressed.connect(func(): _advance(frame))
+		up.pressed.connect(func(): _open_line(frame))
 		row.add_child(up)
 	if mod_id == &"":
 		var mcost: int = _Pricing.module_buy(frame)
 		var ready: bool = mk >= frame.top_mark() and state.can_afford(mcost)
-		var mb := Kit.button("MODULE %d" % mcost, Kit.COMPUTE if ready else Kit.DIM, Kit.SMALL)
-		mb.disabled = not ready
+		var mb := Kit.button("MODULE %d ▸" % mcost, Kit.COMPUTE if ready else Kit.DIM, Kit.SMALL)
 		mb.tooltip_text = "Open at Mk %d." % frame.top_mark() if mk < frame.top_mark() \
 			else "One module, for the whole line, chosen once."
 		mb.mouse_entered.connect(ui.hover)
@@ -510,6 +524,13 @@ func _line_detail(frame: ChassisDefinition) -> Control:
 	head.add_child(words)
 	col.add_child(head)
 
+	# WHAT JUST HAPPENED, ON THE PAGE IT HAPPENED ON. rebuild() prints
+	# _last_built under the row of all lines and returns before it for a
+	# detail, so adopting from here used to confirm itself onto a screen the
+	# player was not looking at.
+	if _last_built != "":
+		col.add_child(Kit.label(_last_built, Kit.BRIGHT, Kit.HEADING, true))
+
 	# ── THE RAIL ──────────────────────────────
 	var mk: int = state.mark_of(frame.id)
 	var rail := Kit.hbox(8)
@@ -521,15 +542,27 @@ func _line_detail(frame: ChassisDefinition) -> Control:
 	if mk < frame.top_mark():
 		var next = frame.mark_spec(mk + 1)
 		var now = frame.mark_spec(mk)
-		col.add_child(Kit.label("NEXT MARK", Kit.DIM, Kit.SMALL, true))
-		col.add_child(_delta_bar("HULL", frame.base_health + now.health_bonus,
+		# BOUNDED, AND NOT BECAUSE IT LOOKS NEATER. A stat bar fills the width
+		# it is given and this column is the whole screen, so HULL 200 -> 220
+		# was drawn as 1800 px of bar with a 90 px ghost on the end: a gain
+		# you have to hunt for on a readout that exists to make it obvious.
+		# Same width as the rail above it, so the two line up.
+		var deltas := Kit.vbox(4)
+		deltas.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		deltas.custom_minimum_size.x = 606.0
+		deltas.add_child(Kit.label("NEXT MARK", Kit.DIM, Kit.SMALL, true))
+		deltas.add_child(_delta_bar("HULL", frame.base_health + now.health_bonus,
 			frame.base_health + next.health_bonus, HULL_TOP))
-		col.add_child(_delta_bar("SENSOR", frame.base_sensor_range + now.sensor_bonus,
+		deltas.add_child(_delta_bar("SENSOR", frame.base_sensor_range + now.sensor_bonus,
 			frame.base_sensor_range + next.sensor_bonus, SENSOR_TOP))
 		var sp := _Facts.chassis_speed(frame)
 		if sp > 0.0:
-			col.add_child(_delta_bar("SPEED", sp * now.speed_multiplier,
+			deltas.add_child(_delta_bar("SPEED", sp * now.speed_multiplier,
 				sp * next.speed_multiplier, SPEED_TOP, 1))
+		deltas.add_child(_adopt_row(frame, mk))
+		col.add_child(deltas)
+	else:
+		col.add_child(Kit.label("AT THE TOP OF THE RAIL", Kit.BRIGHT, Kit.SMALL, true))
 
 	# ── THE MODULE ────────────────────────────
 	col.add_child(Kit.label("MODULE", Kit.BRIGHT, Kit.HEADING, true))
@@ -550,6 +583,39 @@ func _line_detail(frame: ChassisDefinition) -> Control:
 	return col
 
 
+## THE ONE CONTROL ON THIS SCREEN THAT SPENDS MONEY, and it says what it is
+## buying and what that does to the robots you already own.
+##
+## IT NAMES THE MARK. "UPGRADE 400" on a card told you a price and nothing
+## about what arrived for it; "ADOPT MK 2" sits under a rail that shows
+## exactly what a Mk 2 carries, which is the whole reason this page is the
+## step between the button and the money.
+##
+## REFUSAL IS A SENTENCE, NOT A GREYED BUTTON. You reached this page
+## deliberately, so being told nothing at the end of it is worse than being
+## told you are short.
+func _adopt_row(frame: ChassisDefinition, mk: int) -> Control:
+	var state: CampaignState = ui.state
+	var cost: int = _Pricing.mark_buy(frame, mk + 1)
+	var can: bool = state.can_afford(cost)
+	var served: int = _in_service(frame)
+	var row := Kit.hbox(10)
+	var go := Kit.button("ADOPT MK %d  %d" % [mk + 1, cost],
+		Kit.MONEY if can else Kit.DIM, Kit.BODY)
+	go.disabled = not can
+	go.mouse_entered.connect(ui.hover)
+	go.pressed.connect(func(): _advance(frame))
+	row.add_child(go)
+	if not can:
+		row.add_child(Kit.label("SHORT %d" % (cost - state.available()), Kit.PROBLEM, Kit.SMALL))
+	elif served > 0:
+		# The whole point of a LINE upgrade is that it reaches what you have.
+		row.add_child(Kit.label("REVISES %d IN SERVICE" % served, Kit.BRIGHT, Kit.SMALL))
+	else:
+		row.add_child(Kit.label("NOTHING IN SERVICE TO REVISE", Kit.DIM, Kit.SMALL))
+	return row
+
+
 ## One tier on the rail. Reads the same vocabulary as every other: what it
 ## builds, and either a price, IN SERVICE, SUPERSEDED or LOCKED.
 func _mark_step(frame: ChassisDefinition, n: int, current: int) -> Control:
@@ -562,17 +628,29 @@ func _mark_step(frame: ChassisDefinition, n: int, current: int) -> Control:
 	panel.add_child(col)
 	col.add_child(Kit.label("MK %d" % n, edge, Kit.SMALL, true))
 	if spec != null:
-		for wid in spec.weapon_ids:
-			if wid != &"":
-				var w: ItemDefinition = ui.item(wid)
-				col.add_child(Kit.label(w.short_label().to_upper() if w != null
-					else String(wid).to_upper(), Kit.BRIGHT, Kit.SMALL))
-		for eid in spec.equipment_ids:
-			if eid != &"":
-				var e: ItemDefinition = ui.item(eid)
-				col.add_child(Kit.label(e.short_label().to_upper() if e != null
-					else String(eid).to_upper(), Kit.MONEY, Kit.SMALL))
-		if spec.weapon_ids.is_empty() and spec.equipment_ids.is_empty() and n == 0:
+		# EVERY MARK LISTS ITS WHOLE KIT, and what it ADDS is marked with a +.
+		#
+		# The full list is what makes three panels comparable at a glance —
+		# the question is "what does a Mk 2 carry", not "what did the patch
+		# notes say". But a list repeated three times with one line different
+		# is a spot-the-difference puzzle, so the additions are called out.
+		#
+		# BY A PREFIX RATHER THAN BY COLOUR. Dimming the carried-over rows was
+		# the first version and it read as though they were DISABLED, which is
+		# the opposite of true: they are the kit the mark actually has.
+		#
+		# MK 0 TAKES NO PREFIXES. It is the baseline, so everything on it is
+		# new by definition and a column of plus signs says nothing.
+		var carried_w: Array = _ids_at(frame, n - 1, "weapon_ids") if n > 0 else []
+		for wid in _ids_at(frame, n, "weapon_ids"):
+			var w: ItemDefinition = ui.item(wid)
+			col.add_child(Kit.label(_kit_line(wid, w, carried_w, n), Kit.BRIGHT, Kit.SMALL))
+		var carried_e: Array = _ids_at(frame, n - 1, "equipment_ids") if n > 0 else []
+		for eid in _ids_at(frame, n, "equipment_ids"):
+			var e: ItemDefinition = ui.item(eid)
+			col.add_child(Kit.label(_kit_line(eid, e, carried_e, n), Kit.MONEY, Kit.SMALL))
+		if _ids_at(frame, n, "weapon_ids").is_empty() \
+				and _ids_at(frame, n, "equipment_ids").is_empty() and n == 0:
 			col.add_child(Kit.label(frame.built_in if frame.built_in != "" else "—",
 				Kit.DIM, Kit.SMALL))
 	col.add_child(Kit.fill())
@@ -581,6 +659,41 @@ func _mark_step(frame: ChassisDefinition, n: int, current: int) -> Control:
 		else (str(_Pricing.mark_buy(frame, n)) if n == current + 1 else "LOCKED"))
 	col.add_child(Kit.label(note, Kit.BRIGHT if n == current else Kit.DIM, Kit.SMALL))
 	return panel
+
+
+## What one mark carries in one slot group, blanks dropped. `field` is
+## "weapon_ids" or "equipment_ids" on the ChassisMark.
+##
+## RETURNS A FRESH ARRAY EVERY TIME, which _kit_line relies on: it consumes
+## entries out of the carried list as it matches them, and handing it the
+## resource's own array would empty the saved mark.
+func _ids_at(frame: ChassisDefinition, n: int, field: String) -> Array:
+	var out: Array = []
+	if n < 0:
+		return out
+	var spec = frame.mark_spec(n)
+	if spec == null:
+		return out
+	for id_value in spec.get(field):
+		if id_value != &"":
+			out.append(id_value)
+	return out
+
+
+## One kit row: its name, with a + when this mark is what adds it.
+##
+## MATCHED AS A MULTISET, not with `has`. A mark that goes from one frag to
+## two is adding one frag, and a plain membership test would call the second
+## one carried-over and show no change at all for something you paid for.
+func _kit_line(id_value: StringName, def: ItemDefinition, carried: Array, n: int) -> String:
+	var name_text: String = def.short_label().to_upper() if def != null \
+		else String(id_value).to_upper()
+	if n <= 0:
+		return name_text
+	if carried.has(id_value):
+		carried.erase(id_value)   # consumed, so a second copy reads as new
+		return name_text
+	return "+ %s" % name_text
 
 
 ## Current value, with the next mark's gain drawn beyond it.

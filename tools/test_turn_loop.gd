@@ -106,7 +106,7 @@ func _init() -> void:
 	var money_before: int = state.available()
 	var compute_before: int = state.compute_earned
 	state.under_attack = &""
-	cm.current_mission = cm.get_mission(&"arena_1_contact")
+	cm.current_mission = cm.get_mission(&"arena_3_firing_line")
 	var sim_r: Dictionary = cm.extract(true)
 	_check("a sim run is marked as one", bool(sim_r.get("sim", false)))
 	_check("NO TURN PASSES", state.turn == t_before, "%d -> %d" % [t_before, state.turn])
@@ -115,9 +115,9 @@ func _init() -> void:
 		"%d res, %d compute" % [state.available() - money_before,
 			state.compute_earned - compute_before])
 	_check("...and the other side does not get a move", not sim_r.has("enemy"))
-	_check("...and it can be run again", cm.get_mission(&"arena_1_contact").repeatable)
+	_check("...and it can be run again", cm.get_mission(&"arena_3_firing_line").repeatable)
 	_check("...but it still counts for the ladder, which runs through it",
-		state.completed_missions.has(&"arena_1_contact"))
+		state.completed_missions.has(&"arena_3_firing_line"))
 
 	print("%d failure(s)" % _fails)
 	quit(1 if _fails > 0 else 0)

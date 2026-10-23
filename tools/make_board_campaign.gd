@@ -29,7 +29,6 @@ const PROFILE_NAME := "BOARD TEST"
 ## ground behind you, one site cleared more than once, a live frontier, and a
 ## dark late campaign.
 const CLEARED := {
-	&"arena_1_contact": 2,
 	&"arena_3_firing_line": 1,
 	&"arena_5_proving": 3,
 	&"hfw_1_fort": 1,

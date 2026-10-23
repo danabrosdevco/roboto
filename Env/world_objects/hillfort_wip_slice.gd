@@ -7,7 +7,7 @@ extends "res://Env/world_objects/site_slice.gd"
 # size: TERRAIN measured the shipped one at 0.43 km² with two capture points —
 # 217,440 m² per objective, 3.5x sparser than the next worst map in the project
 # — and rebuilt it at 0.0983 km² with six. See
-# docs/briefs/HILLFORT_WIP_HANDOVER.md, which is the contract this file keeps.
+# docs/briefs/archive/HILLFORT_WIP_HANDOVER.md, which is the contract this file keeps.
 #
 # IT DOES NOT REPLACE loc_hillfort. Both are first sites and both gate off
 # arena_3_firing_line, so the campaign offers a fork and the two can be played

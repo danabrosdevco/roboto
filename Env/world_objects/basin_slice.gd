@@ -9,7 +9,7 @@ extends "res://Env/world_objects/site_slice.gd"
 # the measure of whether that generalisation worked is that a map costs thirty
 # lines of data rather than four hundred of code.
 #
-# docs/briefs/SITE_CONVERSION.md has the same table for the other eight,
+# docs/briefs/archive/SITE_CONVERSION.md has the same table for the other eight,
 # measured rather than guessed.
 #
 # WHY A SUBCLASS AND NOT EXPORTS IN THE SCENE. Both work, and the scene is

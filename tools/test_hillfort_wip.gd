@@ -6,7 +6,7 @@ extends SceneTree
 #
 #   godot --headless --audio-driver Dummy --path . --script res://tools/test_hillfort_wip.gd
 #
-# Built from docs/briefs/HILLFORT_WIP_HANDOVER.md, whose tag table is the
+# Built from docs/briefs/archive/HILLFORT_WIP_HANDOVER.md, whose tag table is the
 # contract between TERRAIN's map and GAMEPLAY's operation. Everything here
 # checks one half against the other, because every way this goes wrong is
 # silent:

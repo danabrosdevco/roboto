@@ -419,3 +419,151 @@ static func _catalogue() -> ItemCatalogue:
 	if campaign == null or not ("catalogue" in campaign):
 		return null
 	return campaign.catalogue as ItemCatalogue
+
+
+# ─────────────────────────────────────────────
+# MOTION
+#
+# The squad manager had none: not one tween in any of its four files, while
+# the in-game HUD tweens happily in three. Every state change was a single
+# frame — the screen appeared, pages swapped, prices jumped — and the whole
+# thing read as a spreadsheet that answered rather than as a machine you were
+# operating.
+#
+# TWEENS, NOT COROUTINES, and that is load-bearing. An `await
+# process_frame` loop that outlives the tree segfaults in cleanup when the
+# game quits mid-animation. A tween is owned by the node and dies with it.
+# The same rule is written on cyberspace_wipe.gd, which learned it first.
+#
+# EVERY TWEEN HERE SETS TWEEN_PAUSE_PROCESS, AND THAT IS NOT OPTIONAL.
+# Opening this screen takes a PauseHold, so the tree is paused the entire
+# time it is up. The default is TWEEN_PAUSE_BOUND, and bound was not enough:
+# SquadManagerUI is PROCESS_MODE_ALWAYS and its cards inherit it, every card
+# reports can_process() true — and not one tween advanced. Measured, by the
+# motion block in tools/test_squad_manager.gd, which found all four cards
+# sitting at alpha 0 fifty milliseconds in. Without this line the whole of
+# the above is dead code that leaves the screen invisible.
+#
+# ALPHA, NOT POSITION OR SCALE. Every card here lives in a container, and a
+# container rewrites its children's position and size on every layout pass —
+# a tween on either is overwritten mid-flight. Scale survives, but scaling
+# from the corner looks wrong and `pivot_offset` needs a size that does not
+# exist until after the first layout. Alpha is the one channel nothing else
+# owns.
+# ─────────────────────────────────────────────
+
+## How long one card takes to arrive, and how long a whole page may take.
+const FADE := 0.16
+const STAGGER_STEP := 0.022
+const STAGGER_CAP := 0.30
+
+## OFF MEANS INSTANT, NOT ABSENT. Everything below applies its end state
+## immediately when this is false — the card is opaque, the number is the new
+## number, the panel does not move. Nothing is skipped and nothing is left
+## half-applied, which is the only way a switch like this is safe.
+##
+## IT EXISTS FOR THE SUITES FIRST. A rolling number is INTERMEDIATE for a
+## third of a second, so a test that reads `_resources.text` right after a
+## purchase sees a value that is correct but not final.
+## tools/test_squad_manager.gd was passing only because the two numbers it
+## checks happened not to have changed; one more purchase anywhere above it
+## and it would have gone red for a feature working exactly as intended.
+##
+## It is also the shape a reduced-motion option would take, if one is ever
+## added to the options screen. Nothing reads it from Settings today.
+static var motion: bool = true
+
+
+## Fade `c` up from nothing, after `delay`.
+static func fade_in(c: Control, delay: float = 0.0) -> void:
+	if c == null:
+		return
+	if not motion:
+		c.modulate.a = 1.0
+		return
+	c.modulate.a = 0.0
+	var t := c.create_tween()
+	if delay > 0.0:
+		t.tween_interval(delay)
+	t.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	t.tween_property(c, "modulate:a", 1.0, FADE).set_ease(Tween.EASE_OUT)
+
+
+## Bring a freshly built page in, card by card. Returns how many it moved, so
+## a caller that expected some and got none can say so.
+##
+## THE CARDS ARE THE THINGS THAT REGISTER — every page here is built out of
+## PanelContainers and this finds the outermost ones, so the chrome (headings,
+## the ledger line, the tab row) stays put and the CONTENTS arrive. A page
+## with nothing card-shaped on it animates nothing, which is correct and is
+## why this does not warn.
+static func stagger(root: Node) -> int:
+	var cards: Array[Control] = []
+	_cards_in(root, cards)
+	if cards.is_empty():
+		return 0
+	var step: float = minf(STAGGER_STEP, STAGGER_CAP / float(cards.size()))
+	for i in cards.size():
+		fade_in(cards[i], step * float(i))
+	return cards.size()
+
+
+## Outermost PanelContainers, in tree order. Does not descend into one it has
+## found: a card inside a card is part of that card, not another row.
+static func _cards_in(n: Node, out: Array[Control]) -> void:
+	for c in n.get_children():
+		if c is PanelContainer:
+			out.append(c as Control)
+			continue
+		_cards_in(c, out)
+
+
+## Count a number up or down rather than snapping it. `fmt` is the whole
+## label, with one %d in it: "RESOURCES %d".
+##
+## RETURNS THE TWEEN so the caller can kill it before starting the next one.
+## Two rolls on one label at once fight over `text` every frame and the number
+## flickers between them.
+static func roll(label: Label, from: int, to: int, fmt: String, seconds: float = 0.35) -> Tween:
+	if label == null:
+		return null
+	if from == to or seconds <= 0.0 or not motion:
+		label.text = fmt % to
+		return null
+	var t := label.create_tween()
+	t.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	t.tween_method(func(v: float) -> void:
+		label.text = fmt % int(round(v)), float(from), float(to), seconds).set_ease(Tween.EASE_OUT)
+	return t
+
+
+## A short sideways shake: what a refusal looks like.
+##
+## MOVED BY ITS OFFSETS, not by `position`. These panels are anchored, and
+## anchors recompute `position` on every layout pass, so a tween on it is
+## overwritten mid-shake. The offsets are the thing the layout leaves alone.
+##
+## THE REST POSITION IS REMEMBERED ON THE NODE. A second nudge that started
+## mid-shake would otherwise capture a displaced offset as "home" and walk the
+## panel sideways a few pixels every time you were refused.
+static func nudge(c: Control, px: float = 5.0, seconds: float = 0.18) -> void:
+	if c == null or not motion:
+		return
+	var running = c.get_meta(&"kit_nudge", null)
+	if running != null and (running as Tween).is_valid():
+		(running as Tween).kill()
+	var base_l: float = float(c.get_meta(&"kit_nudge_left", c.offset_left))
+	var base_r: float = float(c.get_meta(&"kit_nudge_right", c.offset_right))
+	c.set_meta(&"kit_nudge_left", base_l)
+	c.set_meta(&"kit_nudge_right", base_r)
+	var apply := func(v: float) -> void:
+		c.offset_left = base_l + v
+		c.offset_right = base_r + v
+	var t := c.create_tween()
+	t.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	c.set_meta(&"kit_nudge", t)
+	var quarter: float = seconds * 0.25
+	t.tween_method(apply, 0.0, px, quarter)
+	t.tween_method(apply, px, -px * 0.6, quarter)
+	t.tween_method(apply, -px * 0.6, px * 0.25, quarter)
+	t.tween_method(apply, px * 0.25, 0.0, quarter)

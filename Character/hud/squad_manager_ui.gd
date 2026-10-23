@@ -10,13 +10,23 @@ const _Pricing := preload("res://Campaign/pricing.gd")
 # SQUAD MANAGER — three pages behind one key, each with one job:
 #
 #   SQUAD     who goes, in which team, what they carry  squad/squad_page.gd
-#   ARMORER   buying and selling gear                 squad/armorer_page.gd
-#   FACTORY   building robots, adding seats           squad/factory_page.gd
+#   FACTORY   production lines, marks, modules, seats   squad/factory_page.gd
+#   MEMORY    your own weapons, equipment, upgrades     squad/memory_page.gd
 #
 # One screen used to do all of it at once — roster, loadouts, a shop, the
 # stockpile, recruiting, supply — and playtesters could not find how to buy a
-# rifle. Now prices appear only at the Armorer, compute only at the Factory,
-# and the Squad page answers "is everyone ready?" before anything else.
+# rifle. It went to five pages, and then back to three as the shops went.
+#
+# THERE IS NO SHOP ANY MORE (2026-10-22, MARK_SYSTEM_SPEC.md step 7b). Tooling
+# sold the right to open a line; the Armorer sold copies of gear. The Mark
+# system made a robot's loadout a property of its production LINE, so there
+# are no copies to buy, and the Factory card charges for the line it is
+# already showing you. The player's own gun was the Armorer's last real
+# customer, and MEMORY took that — see docs/briefs/archive/MEMORY_SCREEN_SPEC.md.
+#
+# CampaignState.buy_item()/sell_item() SURVIVE and are still tested. Nothing
+# in the UI calls them now; they are the armoury's transaction shape, and
+# recover_kit and the seed still move stock through it.
 #
 # This file is the frame round the pages: opening and closing, the tabs, the
 # resources, sounds, and the few lookups every page needs. The pages build
@@ -63,15 +73,18 @@ static var release_pending: bool = false
 
 const Kit := preload("res://Character/hud/squad/ui_kit.gd")
 const _SquadPage := preload("res://Character/hud/squad/squad_page.gd")
-const _ArmorerPage := preload("res://Character/hud/squad/armorer_page.gd")
 const _FactoryPage := preload("res://Character/hud/squad/factory_page.gd")
-const _SoftwarePage := preload("res://Character/hud/squad/software_page.gd")
+const _MemoryPage := preload("res://Character/hud/squad/memory_page.gd")
 # TOOLING IS GONE (2026-10-22). Its whole job was opening a line, which now
 # happens on the Factory card for the line it opens — a page whose only reason
 # to exist was charging for the thing you were already looking at.
-const TABS := [&"squad", &"armorer", &"factory", &"software"]
-const TAB_TITLES := {&"squad": "SQUAD", &"armorer": "ARMORER", &"factory": "FACTORY",
-	&"software": "SOFTWARE"}
+#
+# SOFTWARE IS NOW MEMORY (2026-10-22), and holds the player's own weapons and
+# equipment beside the branches — see docs/briefs/archive/MEMORY_SCREEN_SPEC.md §2.1.
+# The KEY changed with the title, so a save or a context that still says
+# "software" lands on SQUAD rather than on a tab that no longer exists.
+const TABS := [&"squad", &"factory", &"memory"]
+const TAB_TITLES := {&"squad": "SQUAD", &"factory": "FACTORY", &"memory": "MEMORY"}
 
 var campaign: Node
 var state: CampaignState
@@ -81,6 +94,21 @@ var _hidden: Array[Control] = []
 var _tab: StringName = &"squad"
 var _tab_buttons := {}
 var _pages := {}
+# ── MOTION (see the MOTION block in ui_kit.gd) ──
+## The two halves of the screen, kept so opening can bring them in.
+var _backdrop: ColorRect
+var _column: VBoxContainer
+## True for the one rebuild that is an ARRIVAL — the screen opening, or a tab
+## you just pressed. False for the dozens that are a REFRESH: every purchase
+## rebuilds the whole page, and replaying the entrance on each of them would
+## make buying four things in a row look like the screen was struggling.
+var _entering: bool = false
+## What the purse said last, so a change can be counted rather than snapped.
+## -1 means "nothing to count from yet", which is the state on open.
+var _shown_resources: int = -1
+var _shown_compute: int = -1
+var _res_roll: Tween
+var _compute_roll: Tween
 var _resources: Label
 var _compute: Label
 var _rebuilding: bool = false
@@ -176,11 +204,46 @@ func open() -> void:
 	_play(sfx_open)
 	# Always onto the squad: "is everyone ready?" is what you open it to see.
 	_tab = &"squad"
+	# NOTHING TO COUNT FROM. The purse rolls when a number changes while you
+	# are looking at it; on the way in it is simply what it is.
+	_shown_resources = -1
+	_shown_compute = -1
 	for page in _pages.values():
 		page.on_open()
+	_entering = true
 	_rebuild()
+	_play_arrival()
 
 
+## THE SCREEN ARRIVES; IT DOES NOT SLIDE OR WIPE. The ground comes up first
+## and the contents a beat behind it, which reads as a panel being brought up
+## rather than as going somewhere else — this is a screen you open over the
+## world with TAB, not a destination.
+##
+## 0.19 s ALL IN, and that ceiling is the whole design. You open this
+## constantly; anything you can notice waiting for is worse than no animation
+## at all. The cards' own stagger (Kit.stagger) runs underneath it and is
+## capped at 0.30 s.
+func _play_arrival() -> void:
+	if _backdrop == null or _column == null:
+		return
+	if not Kit.motion:
+		_backdrop.modulate.a = 1.0
+		_column.modulate.a = 1.0
+		return
+	_backdrop.modulate.a = 0.0
+	_column.modulate.a = 0.0
+	var t := create_tween()
+	t.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	t.tween_property(_backdrop, "modulate:a", 1.0, 0.09).set_ease(Tween.EASE_OUT)
+	t.parallel().tween_property(_column, "modulate:a", 1.0, 0.19).set_ease(Tween.EASE_OUT).set_delay(0.04)
+
+
+# CLOSING IS INSTANT, ON PURPOSE. Everything else here releases on the same
+# frame — the pause hold, the cursor, the mouse mode, `release_pending` so the
+# click that dismissed the menu is not inherited by the gun. Fading out while
+# all of that has already happened shows you a ghost menu over a running game
+# for the length of the fade.
 func close() -> void:
 	visible = false
 	release_pending = true
@@ -214,10 +277,15 @@ static func _restore_mouse() -> void:
 func show_tab(tab: StringName, context: Dictionary = {}) -> void:
 	if not _pages.has(tab):
 		return
+	var moved: bool = tab != _tab
 	_tab = tab
 	if context.has("kind") and _pages[tab].has_method("focus_kind"):
 		_pages[tab].focus_kind(int(context["kind"]))
 	_play(sfx_select)
+	# A TAB YOU ACTUALLY MOVED TO is an arrival. Pressing the tab you are
+	# already on is not, or the page would flash every time a page sent you
+	# back to itself.
+	_entering = _entering or moved
 	_rebuild()
 
 
@@ -273,6 +341,7 @@ func _build_ui() -> void:
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(backdrop)
+	_backdrop = backdrop
 
 	var column := VBoxContainer.new()
 	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -282,6 +351,7 @@ func _build_ui() -> void:
 	column.offset_bottom = -panel_margin
 	column.add_theme_constant_override("separation", 12)
 	add_child(column)
+	_column = column
 
 	var header := Kit.hbox(6)
 	column.add_child(header)
@@ -324,17 +394,40 @@ func _build_ui() -> void:
 		match tab:
 			&"squad":
 				page = _SquadPage.new()
-			&"armorer":
-				page = _ArmorerPage.new()
 			&"factory":
 				page = _FactoryPage.new()
-			&"software":
-				page = _SoftwarePage.new()
+			&"memory":
+				page = _MemoryPage.new()
 		page.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		page.visible = false
 		column.add_child(page)
 		page.setup(self)
 		_pages[tab] = page
+
+
+## The two numbers in the header, counted rather than snapped.
+##
+## WHAT YOU SPENT IS THE ONLY THING ON THIS SCREEN THAT MOVES BY ITSELF. A
+## price changing from 4140 to 3890 between two frames is information you have
+## to go and check; the same change counted down over a third of a second is
+## the screen telling you it took the money.
+##
+## THE OLD TWEEN IS KILLED FIRST. Buy two things quickly and two rolls would
+## otherwise write `text` on the same frame, and the number flickers between
+## the two of them.
+func _roll_purse() -> void:
+	var res: int = state.available()
+	var comp: int = state.compute_free()
+	if _res_roll != null and _res_roll.is_valid():
+		_res_roll.kill()
+	if _compute_roll != null and _compute_roll.is_valid():
+		_compute_roll.kill()
+	_res_roll = Kit.roll(_resources, _shown_resources if _shown_resources >= 0 else res,
+		res, "RESOURCES %d")
+	_compute_roll = Kit.roll(_compute, _shown_compute if _shown_compute >= 0 else comp,
+		comp, "COMPUTE %d")
+	_shown_resources = res
+	_shown_compute = comp
 
 
 func _refresh_tabs() -> void:
@@ -362,12 +455,17 @@ func _rebuild() -> void:
 	_rebuilding = true
 	# Anything rebuilt under a still mouse fires mouse_entered: keep it quiet.
 	_suppress_hover_until_mouse_moves = true
-	_resources.text = "RESOURCES %d" % state.available()
-	_compute.text = "COMPUTE %d" % state.compute_free()
+	_roll_purse()
 	_refresh_tabs()
 	for tab in _pages:
 		_pages[tab].visible = tab == _tab
 	_pages[_tab].rebuild()
+	# ONLY ON AN ARRIVAL, and the flag is cleared here rather than by whoever
+	# set it so that every path out of this function leaves it false. A
+	# purchase rebuilds this page too, and it must not replay the entrance.
+	if _entering:
+		Kit.stagger(_pages[_tab])
+	_entering = false
 	_rebuilding = false
 
 
@@ -384,7 +482,15 @@ func play(what: StringName) -> void:
 		&"remove":
 			_play(sfx_pick_up)
 		&"denied":
+			# A REFUSAL USED TO BE SILENCE. There are 23 play(&"denied")
+			# calls across the three pages and `sfx_denied` was assigned in
+			# no scene in the project, so every one of them was mute — and
+			# because an unaffordable button is DISABLED, most refusals never
+			# reached even this. "No" was communicated by the screen being
+			# inert. The shake is here because it still works with the sound
+			# slot empty.
 			_play(sfx_denied)
+			Kit.nudge(_column)
 
 
 func hover() -> void:
@@ -417,43 +523,6 @@ func frame_of(record: SoldierRecord) -> ChassisDefinition:
 	if catalogue == null or record == null:
 		return null
 	return catalogue.chassis_def(record.chassis_id)
-
-
-## Everything the Armorer lists: all that is for sale, plus anything retired
-## from sale that you still have a spare of, so it can be fitted or sold.
-## Weapons, then gear, then modules; cheapest first; name breaks ties so the
-## order never reshuffles.
-# WHAT IS LOCKED IS NOT LISTED. Both shops used to print every entry in the
-# catalogue and stamp "LOCKED - CLEAR <OPERATION>" on the ones you cannot have,
-# which reads as a shop full of things being withheld rather than a shop. The
-# lock label stays for anything already in stores — you can own a thing whose
-# operation you have not cleared, and hiding THAT would lose it — but nothing
-# you have never had is advertised.
-func shop_items() -> Array:
-	var out: Array = []
-	if catalogue == null:
-		return out
-	for entry in catalogue.items:
-		if entry == null:
-			continue
-		var held: bool = state.armoury.spare(entry.id) > 0
-		if not held:
-			if not entry.in_shop:
-				continue
-			if is_locked(entry.id):
-				continue
-			# A tier you have not bought into: the Walker's guns before there is
-			# a Walker. See ItemDefinition.requires_chassis.
-			if not state.owns_any_chassis(entry.requires_chassis):
-				continue
-		out.append(entry)
-	out.sort_custom(func(a, b):
-		if a.kind != b.kind:
-			return a.kind < b.kind
-		if _Pricing.item_buy(a) != _Pricing.item_buy(b):
-			return _Pricing.item_buy(a) < _Pricing.item_buy(b)
-		return a.display_name < b.display_name)
-	return out
 
 
 ## Is this line still shut? (Campaign.is_locked), falling back to the ledger

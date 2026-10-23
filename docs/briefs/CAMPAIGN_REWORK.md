@@ -2369,7 +2369,7 @@ prefab, not the level — so the grep could not see them.
 `tools/probe_map_geography.gd` instantiates each map and walks the live tree,
 which is the only way to ask this question. What those three actually lack is
 ENTRY-NAMED tags; the ground is fully marked up. See
-`docs/briefs/SITE_CONVERSION.md`.
+`docs/briefs/archive/SITE_CONVERSION.md`.
 
 
 **What this leaves TERRAIN.** Not authoring connections: *dressing* ones that

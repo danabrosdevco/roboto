@@ -28,3 +28,4 @@ equipment_slots = 1
 module_slots = 2
 musters_at_base = true
 unlock_requires = Array[StringName]([])
+marks = Array[Resource]([])

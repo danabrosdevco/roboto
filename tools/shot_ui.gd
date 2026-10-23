@@ -13,6 +13,8 @@ extends SceneTree
 # renderer has no image to give. It never writes the campaign.
 # ─────────────────────────────────────────────
 
+## The UI kit, for its motion switch — see the MOTION block in ui_kit.gd.
+const Kit := preload("res://Character/hud/squad/ui_kit.gd")
 const _SimArena := preload("res://Character/hud/sim_arena_ui.gd")
 const _Squad := preload("res://Character/hud/squad_manager_ui.gd")
 const _Debrief := preload("res://Character/hud/debrief_screen.gd")
@@ -27,6 +29,8 @@ func _init() -> void:
 	_out = String(args[0]) if args.size() > 0 else "res://docs/marketing/wip"
 	DirAccess.make_dir_recursive_absolute(_out)
 	Settings.path = "user://settings_probe.json"
+	# MOTION OFF, so a grab cannot catch a card mid-fade. See ui_kit.gd.
+	Kit.motion = false
 	await process_frame
 	if DisplayServer.get_name() != "headless":
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
@@ -50,7 +54,6 @@ func _init() -> void:
 		st.grant_unlock(id)
 	st.set_site_owner(&"hillfort_wip", Enums.Factions.PLAYER)
 	st.set_site_owner(&"valley_basin", Enums.Factions.PLAYER)
-	st.completed_missions.append(&"arena_1_contact")
 	st.completed_missions.append(&"arena_3_firing_line")
 	st.completed_missions.append(&"hfw_1_fort")
 	st.completed_missions.append(&"basin_1_anchor")
@@ -108,20 +111,17 @@ func _shoot_squad() -> void:
 		ui.open()
 		for _i in 4:
 			await process_frame
+	# TOOLING AND THE ARMORER ARE BOTH GONE (steps 7a and 7b). What stands
+	# where they stood is MEMORY, which has three tabs of its own.
 	if ui.has_method("show_tab"):
-		ui.show_tab(&"tooling")
+		ui.show_tab(&"memory")
 		await process_frame
-		await _grab("ui_tooling_frames.png", "the tooling fabricator — frames")
-		var page = ui._pages.get(&"tooling")
+		await _grab("ui_memory_weapons.png", "memory — the guns you may carry")
+		var page = ui._pages.get(&"memory")
 		if page != null:
-			page._kind = &"weapons"
-			page.selected_id = &"heavy_mg"
-			page.rebuild()
+			page._show(&"upgrades")
 			await process_frame
-			await _grab("ui_tooling_weapons.png", "tooling — weapons, one selected")
-		ui.show_tab(&"armorer")
-		await process_frame
-		await _grab("ui_armorer.png", "the armourer — only what is open")
+			await _grab("ui_memory_upgrades.png", "memory — the branches, still blank")
 	layer.queue_free()
 	await process_frame
 

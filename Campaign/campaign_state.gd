@@ -71,7 +71,7 @@ const SAVE_VERSION := 2
 
 # ── PRODUCTION LINES ──────────────────────────
 # What each chassis line BUILDS, rather than what any one robot carries. See
-# docs/briefs/MARK_SYSTEM_SPEC.md.
+# docs/briefs/archive/MARK_SYSTEM_SPEC.md.
 #
 # DELIBERATELY NOT A SECOND HOME FOR "IS THE LINE OPEN". That is
 # is_unlocked(), which reads allocations[unlock_key(id)] and is what
@@ -132,6 +132,11 @@ const SUPPLY_COMPUTE_COST := 1
 # thing that names THEM; the contrast in the roster column is the point. Defined
 # once here because three different files were hardcoding the old "YOU".
 const PLAYER_DEFAULT_NAME := "PLAYER"
+## The gun you are issued and cannot lose. It is the cost-0 entry in
+## Campaign/software_tree.gd's CARRY list, named again here because this file
+## must not preload the tree (the tree types its parameters as CampaignState).
+## test_memory_screen.gd asserts the two agree.
+const ISSUED_WEAPON_ID := &"m4"
 
 # ── IDENTITY ──────────────────────────────────
 # What the squad was called before it was split into named teams. Nothing shows
@@ -1059,6 +1064,92 @@ func release_unknown_software(known: Array) -> Array[StringName]:
 		if not known.has(id):
 			compute_held.erase("software:%s" % id)
 			dropped.append(id)
+	return dropped
+
+
+# ── MEMORY: WHAT YOU CARRY ────────────────────
+# NONE OF THIS IS AN ARMOURY TRANSACTION. What is loaded in memory is a
+# program, not a copy sitting in stores, so carrying your own weapon takes
+# nothing out of the pool and putting it down returns nothing to it. That is
+# the whole difference between these and fit_item() above, and mixing them up
+# would print free copies of every gun you ever carried.
+#
+# THE GATE IS THE TREE'S, NOT THESE. Whether an item may be carried at all,
+# and whether it is loaded, is Campaign/software_tree.gd's business; these
+# refuse what physically cannot go in the slot and nothing else. Call
+# SoftwareTree.load_item()/unload_item() rather than reaching past them.
+
+## Put `item` in the player's one weapon slot. Refuses anything that has no
+## player implementation, because a gun with no HUDWeapon leaves you holding
+## nothing at all.
+func carry_weapon(item: ItemDefinition) -> bool:
+	if player_record == null or item == null:
+		return false
+	if item.kind != ItemDefinition.Kind.WEAPON or not item.fits_player():
+		push_warning("CampaignState.carry_weapon: %s is not a weapon the player can hold." % item.id)
+		return false
+	if player_record.weapon_ids.is_empty():
+		push_warning("CampaignState.carry_weapon: the player's frame has no weapon slot.")
+		return false
+	player_record.weapon_ids[0] = item.id
+	player_record.recompute_stats(catalogue)
+	roster_changed.emit()
+	return true
+
+
+## Put `item` in one of the player's equipment slots. `slot_index` of -1 takes
+## the first empty one, which is what a CARRY button on a card means; a full
+## row refuses rather than picking something to throw away for you.
+func carry_equipment(item: ItemDefinition, slot_index: int = -1) -> bool:
+	if player_record == null or item == null:
+		return false
+	if item.kind != ItemDefinition.Kind.EQUIPMENT or not item.fits_player():
+		push_warning("CampaignState.carry_equipment: %s is not equipment the player can carry." % item.id)
+		return false
+	var slots: Array = player_record.equipment_ids
+	if slot_index < 0:
+		slot_index = slots.find(&"")
+		if slot_index < 0:
+			return false   # every slot full: the page says so, this does not guess
+	if slot_index >= slots.size():
+		return false
+	if slots.has(item.id):
+		return false   # two of the same charge is one slot wasted, not two
+	slots[slot_index] = item.id
+	player_record.recompute_stats(catalogue)
+	roster_changed.emit()
+	return true
+
+
+func drop_equipment(slot_index: int) -> bool:
+	if player_record == null or slot_index < 0 or slot_index >= player_record.equipment_ids.size():
+		return false
+	if player_record.equipment_ids[slot_index] == &"":
+		return false
+	player_record.equipment_ids[slot_index] = &""
+	player_record.recompute_stats(catalogue)
+	roster_changed.emit()
+	return true
+
+
+## Take `item_id` out of the player's hands wherever it is — what unloading it
+## from memory has to do. A weapon slot left empty falls back to the issued
+## rifle: you are never unarmed by a click on this screen.
+func drop_player_item(item_id: StringName) -> int:
+	if player_record == null or item_id == &"":
+		return 0
+	var dropped := 0
+	for i in player_record.weapon_ids.size():
+		if player_record.weapon_ids[i] == item_id:
+			player_record.weapon_ids[i] = ISSUED_WEAPON_ID if i == 0 else &""
+			dropped += 1
+	for i in player_record.equipment_ids.size():
+		if player_record.equipment_ids[i] == item_id:
+			player_record.equipment_ids[i] = &""
+			dropped += 1
+	if dropped > 0:
+		player_record.recompute_stats(catalogue)
+		roster_changed.emit()
 	return dropped
 
 

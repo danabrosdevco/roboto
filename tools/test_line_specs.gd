@@ -7,7 +7,7 @@ extends SceneTree
 #   godot --headless --audio-driver Dummy --path . \
 #       --script res://tools/test_line_specs.gd
 #
-# The gate on step 2 of docs/briefs/MARK_SYSTEM_SPEC.md.
+# The gate on step 2 of docs/briefs/archive/MARK_SYSTEM_SPEC.md.
 #
 # WHAT THIS IS REALLY GUARDING. apply_line_spec is a BULK WRITE over the
 # roster, which is the cheap way to build this (spec §1) and also the way that

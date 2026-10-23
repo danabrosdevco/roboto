@@ -46,7 +46,7 @@ one. Masts in the accepted study were 0.90 / 1.30 / 1.95 m across.
 
 ## 3. The reference
 
-`docs/concepts/CORE_LOOK3.md` and the fifteen lit renders beside it
+`docs/concepts/archive/CORE_LOOK3.md` and the fifteen lit renders beside it
 (`docs/concepts/core_l3_*.png`) are the study this brief comes from. Five
 variants on one skeleton:
 

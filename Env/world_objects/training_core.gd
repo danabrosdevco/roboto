@@ -32,19 +32,30 @@ const INTERACTIBLE := preload("res://Env/world_objects/components/template_inter
 ## Where it stands. SET IN THE SCENE, not here — see the two nodes in
 ## maps/proving_level.tscn, which is the only thing that reads this default.
 ##
-## THE BAY, which is the 30 x 30 m floor at Godot z 59..89 behind the enemy
-## blockhouse. tools/build_proving.gd built it for exactly this and says so:
-## "a capture node and an extraction point in the same bay is what the bunker
-## is." The core sits at z 65 and the bunker at z 83, 18 m apart, both on the
-## centreline and both well inside the floor's +/-15 m edges.
+## THE CORE IS ON THE MAIN FLOOR AND THE BUNKER IS IN THE BAY, which is the
+## 30 x 30 m floor at Godot z 59..89 behind the enemy blockhouse. The core
+## stands at z 8 and the bunker at z 80.
+##
+## THEY USED TO BE 15 m APART IN THE SAME BAY — tools/build_proving.gd built
+## it that way and said so, "a capture node and an extraction point in the
+## same bay is what the bunker is". That was right while First Contact walked
+## the floor first. With First Contact cut on 2026-10-22 this became the
+## OPENING operation, and its first objective sat 93 m from the spawn behind
+## the enemy position: the player's first act in the campaign was a two-minute
+## walk. The core moved to the floor so the first fight happens on it.
+##
+## z 8, NOT z 0. There is a cross-wall over the whole centreline at z 0 whose
+## deck is 4.59 m up — placing on the nominal centre buries the pad in it, and
+## probe_arena_cores.gd says so by name. z 8 is the first flat open floor past
+## it, which also makes the wall the cover you cross to reach the core.
 ##
 ## THE OLD NUMBERS WERE z 30 AND 37, against the 88 x 54 m arena. The rebuild
 ## on 2026-10-13 made that ground the enemy blockhouse, so the core would have
 ## been placed inside a building. tools/probe_arena_cores.gd now casts for the
 ## floor, asks the navmesh, checks all four pad corners and walks a path from
-## the spawn — run it if these move again. The bay floor is at y 0, NOT the
-## 0.5 the navmesh bakes at; placing at 0.5 floats the pad.
-@export var place: Vector3 = Vector3(0.0, 0.0, 65.0)
+## the spawn — RUN IT IF THESE MOVE AGAIN; it is what caught z 0. The floor is
+## at y 0, NOT the 0.5 the navmesh bakes at; placing at 0.5 floats the pad.
+@export var place: Vector3 = Vector3(0.0, 0.0, 8.0)
 @export var tier: int = 0
 ## What it is called on the beacon and in the prompt. A bunker is a core in
 ## everything but name — §12.7 makes taking it the thing that ends an
@@ -52,6 +63,9 @@ const INTERACTIBLE := preload("res://Env/world_objects/components/template_inter
 @export var noun: String = "CORE"
 
 var core: Node3D = null
+## The adopted art's own landing pad, found by _dock_at() and handed to the
+## HoldableCore in _wire_core. Empty when the art carries no Dock marker.
+var _dock_path: NodePath
 
 
 ## THE REAL ART, instead of the generated placeholder.
@@ -106,7 +120,55 @@ func _build_from_prefab() -> void:
 		art.queue_free()
 		_build()
 		return
+	# THE PREFAB IS AN OBJECTIVE IN ITS OWN RIGHT, AND WE ONLY WANT ITS ART.
+	#
+	# compute_core_point.tscn's ROOT NODE is an InteractObjective carrying no
+	# id — a real site authors one on each instance (see hillfort_wip_slice),
+	# and this one cannot, because TrainingCore is already the objective for
+	# this capture. Left alone it joined the tracker as a FOURTH, id-less,
+	# always-live line: the HUD counted 0/3 and listed four, and the extra one
+	# said CAPTURE THE OBJECTIVE and could never be ticked, because
+	# HoldableCore._take_terminal() had just disconnected it from the one
+	# terminal that would have done it.
+	#
+	# It survived the prune in MissionObjective._ready because that exempts a
+	# blank id, and it cannot simply be freed: the objective script is on the
+	# ROOT, so freeing it takes the whole core with it. So it stands down.
+	_stand_down(art)
+	_dock_at(_named_in(art, "Dock"))
 	_wire_core(inter, core_tier)
+
+
+## Take an adopted prefab's own objective out of the mission without freeing
+## the node it is standing on. Leaving the group is what matters —
+## ObjectiveTracker.refresh() reads `mission_objectives` and nothing else —
+## and this runs during our own _ready, which is before the tracker is asked.
+func _stand_down(n: Node) -> void:
+	if n is MissionObjective:
+		var o := n as MissionObjective
+		o.remove_from_group("mission_objectives")
+		o.starts_active = false
+		o.active = false
+	for c in n.get_children():
+		_stand_down(c)
+
+
+## Point the capture at the landing pad the ART already carries.
+##
+## THE PREFAB SHIPS A `Dock` MARKER — Core/Dock on every compute_core_point —
+## and HoldableCore looks for one under itself and under its parent. Ours is
+## neither: _wire_core hangs a bare Hold node off TrainingCore while the
+## marker is several levels down inside Art, so the search missed it and the
+## dock fell all the way through to the tier table, warning by name every run
+## that the drone was landing on the axis at a height from a table.
+##
+## On a real site the HoldableCore is seated ON the prefab and the search
+## finds the marker for free. This is the adoption case saying where it went.
+func _dock_at(marker: Node3D) -> void:
+	if marker == null:
+		return   # no pad on this art: HoldableCore's table still applies, loudly
+	# Relative to the Hold node, which _wire_core is about to add beside Art.
+	_dock_path = NodePath("../" + String(get_path_to(marker)))
 
 
 ## The bunker entrance kit, which is what the way out looks like on every real
@@ -153,6 +215,8 @@ func _wire_core(inter: Interactible, tier: int) -> void:
 	core.size_tier = tier
 	core.mark_noun = noun
 	core.interactible = inter
+	if not _dock_path.is_empty():
+		core.dock_marker = _dock_path
 	add_child(core)
 	var fx := Node3D.new()
 	fx.set_script(_Signal)

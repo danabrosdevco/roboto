@@ -39,7 +39,7 @@ extends SceneTree
 # ─────────────────────────────────────────────
 
 ## WHICH LEVELS HOLD A SITE'S CORES, and how many each should have. The counts
-## are the brief's (docs/briefs/SITE_CONVERSION.md) plus what was added for the
+## are the brief's (docs/briefs/archive/SITE_CONVERSION.md) plus what was added for the
 ## three short maps, so a map that silently loses one fails here rather than in
 ## a playtest.
 const LEVELS := {
