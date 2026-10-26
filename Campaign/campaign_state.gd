@@ -19,8 +19,16 @@ class_name CampaignState
 # kit, player upgrades and unit purchases without three parallel systems.
 # ─────────────────────────────────────────────
 
+## THE PRE-PROFILE SAVE, and NO CODE READS THIS ANY MORE — as of 2026-10-26 it
+## is named here, printed by tools/probe_save_facts.gd, and nothing else. Saves
+## live in user://saves/ one file per profile; the live path to the old single
+## save is SaveSlots.LEGACY, which has its own copy of the string because it
+## swaps in a sandbox for tool runs. Kept so the path a player's campaign may
+## still be sitting at has a name. Deleting it is the tail of Backlog SV6.
 const SAVE_PATH := "user://campaign.json"
-# Bump when the shape changes so migrate() has something to switch on.
+# Bump when the shape changes. is_outdated() is all that reads it: a save from
+# an older shape is REFUSED, not transformed — there is no migrate() and the
+# note where it used to be says why.
 #
 # 2 — THE MARK SYSTEM, 2026-10-22. A robot's loadout stopped being something
 # the player fitted one at a time and became what its production line builds,
@@ -55,11 +63,14 @@ const SAVE_VERSION := 2
 ## for something you earn hours later by unlocking a frame. Each of those is
 ## shown once and its id recorded here. See LessonPrompts.
 ##
-## NOT rolled back by restore_from(), and not part of "what deployed". Dying
-## voids a run's purchases and repairs; it does not un-read something you were
-## told on the way in the door. They are marked on returned_to_base, which is
-## after extract() has already rewound, so a rollback that DID cover them would
-## be undoing a write that had not happened yet and then permitting it twice.
+## CARRIED BY restore_from() like every other field, since 2026-10-26 — and it
+## is still true that dying does not un-read something you were told on the way
+## in the door. Nothing marks a lesson during a run: both markers fire at base
+## (Campaign._is_base for the induction, LessonPrompts._on_home for the rest),
+## which is after extract() has already rewound. So the rewind has nothing to
+## roll back here, and what the list being carried actually fixes is a LOAD —
+## it used to be left behind, so one profile's lessons read as seen in the
+## next. See the note on restore_from().
 @export var lessons_seen: Array[StringName] = []
 ## Set when the last operation is cleared. Opens every mission at the terminal
 ## for good, and the win is only announced the once.
@@ -154,7 +165,16 @@ const ISSUED_WEAPON_ID := &"m4"
 ## WHERE THIS CAMPAIGN LIVES. Deliberately not exported — it is the name of the
 ## file, not something inside it, and writing it into the save would mean a save
 ## copied to another slot insisted on overwriting the one it came from.
-var save_path: String = SAVE_PATH
+##
+## EMPTY BY DEFAULT, AND THAT IS THE SAFE ANSWER. It defaulted to SAVE_PATH —
+## user://campaign.json, the save a player may still be playing — so every bare
+## CampaignState.new() in the project came into the world pointed at it, and
+## saving one wrote over a real campaign. It did exactly that once. Only
+## Campaign._ready blanked it, which covers the game and not the forty tools
+## and suites that build a state directly. A campaign with nowhere to live is
+## never written (see save_to_disk), so the only cost of this default is that
+## something meaning to write must say where. Backlog SV2.
+var save_path: String = ""
 
 # ── TEAMS ─────────────────────────────────────
 # The squad goes into the field as these teams, in this order, each one a squad
@@ -2022,8 +2042,12 @@ static func from_dict(data: Dictionary) -> CampaignState:
 	var s := CampaignState.new()
 	s.earned = int(data.get("earned", 0))
 	s.allocations = data.get("allocations", {})
-	s.line_marks = data.get("line_marks", {})
-	s.line_modules = data.get("line_modules", {})
+	# duplicate(), for the same reason `sites` below is duplicated: a Dictionary
+	# read out of JSON is shared with whatever else holds that parse, and both
+	# of these are mutated in place by adopt_mark / adopt_module. Restoring
+	# the same snapshot twice used to hand two states one dictionary.
+	s.line_marks = (data.get("line_marks", {}) as Dictionary).duplicate()
+	s.line_modules = (data.get("line_modules", {}) as Dictionary).duplicate()
 	s._next_id = int(data.get("next_id", 1))
 	s.squad_name = str(data.get("squad_name", "NAMELESS"))
 	s.profile_name = str(data.get("profile_name", ""))
@@ -2142,20 +2166,55 @@ static func _renamed(id: StringName) -> StringName:
 # there is exactly one place that knows how to read a save.
 #
 # `catalogue` deliberately stays: it is wiring, not campaign progress, and a
-# freshly parsed state has none.
+# freshly parsed state has none. `save_path` stays too, and must: it is which
+# FILE this is, not what is in it, and a load that adopted the dictionary's
+# idea of where it lives would write the loaded campaign back over the one it
+# was read into. Campaign.load_profile sets it immediately after this returns.
 #
-# Used by a failed run — see Campaign.extract(). If a field is ever added to
-# to_dict() and not to this list, the run would quietly keep it across a
-# rewind; test_endings covers that by round-tripping a state through here and
-# comparing the dictionaries.
+# THREE CALLERS, AND IT IS A LOAD FOR TWO OF THEM:
+#   - Campaign.load_profile  — opening a save
+#   - Campaign.new_profile   — blanking the state by restoring a blank dict
+#   - Campaign.extract       — the rewind after a failed run
+#
+# THIS LIST IS EVERY FIELD IN to_dict(), AND IT HAS TO BE. It held 22 of the
+# 29 until 2026-10-26, and the seven it forgot — line_marks, line_modules,
+# turn, sites, under_attack, under_attack_turn, lessons_seen — were not a
+# rewind nicety but a lost campaign: every boot came up at turn 0 on the
+# authored board with every production line at Mk 0, and the next autosave
+# wrote that over the file. new_profile inherited the same seven from whatever
+# was open. Measured by tools/probe_save_facts.gd §2 and §3 (Backlog SV1).
+#
+# WHAT ASSERTS IT, because the old comment named a guard that could not work:
+# it said test_endings covered a missed field, and test_endings restored a
+# state into ITSELF — where a field this function forgets already holds the
+# right value, so the check cannot fail. tools/test_restore_from.gd is the
+# replacement: it compares this list against to_dict()'s keys in the source,
+# and restores a played campaign into a DIFFERENT state (Backlog SV3).
 func restore_from(data: Dictionary) -> void:
 	var was := CampaignState.from_dict(data)
 	earned = was.earned
 	allocations = was.allocations
+	# THE PRODUCTION LINES. A robot's loadout belongs to its line, not to the
+	# robot, so a load that moved the roster and not these put every record
+	# back carrying Mk 2 kit on a line the game believed was at Mk 0.
+	line_marks = was.line_marks
+	line_modules = was.line_modules
 	roster = was.roster
 	completed_missions = was.completed_missions
 	mission_clears = was.mission_clears
+	# THE BOARD. Without these a load started on the authored map at turn 0
+	# however far the campaign had got, and a raid in progress was forgotten.
+	turn = was.turn
+	sites = was.sites
+	under_attack = was.under_attack
+	under_attack_turn = was.under_attack_turn
 	completed_tutorial = was.completed_tutorial
+	# LESSONS. Carried like everything else as of 2026-10-26. It changes
+	# nothing for the rewind — both markers fire at base (Campaign._is_base
+	# and LessonPrompts._on_home), after extract() has already rewound, so
+	# there is never a lesson marked during a run for a rewind to un-see — and
+	# it stops one profile's lessons being counted as read in the next.
+	lessons_seen = was.lessons_seen
 	campaign_won = was.campaign_won
 	compute_earned = was.compute_earned
 	compute_held = was.compute_held
@@ -2216,6 +2275,13 @@ func save_to_disk(path: String = "") -> bool:
 		push_error("CampaignState: could not open %s for writing (%s)" % [
 			path, error_string(FileAccess.get_open_error())])
 		return false
+	# WHEN THIS CAMPAIGN WAS LAST PLAYED, stamped here because here is the only
+	# moment it is true. The field was written to the save and read back by the
+	# profile menu to order the list, and set by nothing — so the ordering was
+	# really file mtime, and any tool that touched a save moved it to the top.
+	# Stamped after the file opened, so a write that could not happen does not
+	# claim a session. Backlog SV4.
+	last_played_utc = Time.get_datetime_string_from_system(true)
 	file.store_string(JSON.stringify(to_dict(), "\t"))
 	file.close()
 	return true
@@ -2225,14 +2291,20 @@ var _no_save_said: bool = false
 var _no_path_said: bool = false
 
 
-# Returns null when there's no save yet — the caller decides whether that means
-# "new campaign" or "something is wrong".
-## The save at `path` as a migrated dictionary, or empty when there is none.
+## The save at `path` as a dictionary, or empty when there is nothing readable
+## there — no file, unreadable, not JSON, or from a build whose shape this one
+## refuses. The caller decides whether empty means "new campaign" or "something
+## is wrong"; it is deliberately not told which, because nothing acts on the
+## difference and three callers guessing at it is worse than one not knowing.
 ##
 ## Split out of load_from_disk so a caller can restore_from() it INTO the state
 ## the game is already holding. See the note on restore_from: handing out a new
 ## object leaves every HUD and screen wired to one nobody updates.
-static func load_dict(path: String = SAVE_PATH) -> Dictionary:
+##
+## PATH IS REQUIRED. It defaulted to SAVE_PATH — the legacy user://campaign.json
+## — so a bare load_dict() read a file that is no longer any profile's. Every
+## caller already passes one. Backlog SV2.
+static func load_dict(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		return {}
 	var f := FileAccess.open(path, FileAccess.READ)
@@ -2248,27 +2320,30 @@ static func load_dict(path: String = SAVE_PATH) -> Dictionary:
 	if is_outdated(got):
 		push_warning("CampaignState: %s is from an older build (save version %d, this build reads %d) and is not loadable. The file is left alone." % [path, int(got.get("version", 0)), SAVE_VERSION])
 		return {}
-	return migrate(got)
+	# FROM A NEWER BUILD, which is not refused and probably should be: the save
+	# loads, from_dict ignores whatever it does not recognise, and the next
+	# autosave writes the older shape back over it. Warning is all this does.
+	# What should happen instead is Backlog SV5, and it is the human's call.
+	var version := int(got.get("version", 0))
+	if version > SAVE_VERSION:
+		push_warning("CampaignState: %s is version %d and this build reads %d. It will load, and saving will write the older shape back over it." % [
+			path, version, SAVE_VERSION])
+	return got
 
 
-static func load_from_disk(path: String = SAVE_PATH) -> CampaignState:
-	if not FileAccess.file_exists(path):
+## The save at `path` as a state of its own, or null when there is none to read.
+##
+## Through load_dict, so there is ONE reader. This used to be a second,
+## line-for-line copy of the same open-parse-gate sequence, which meant every
+## change to how a save is read had to be made twice and neither copy said so.
+## Both answers are unchanged: every way this can fail returned null before and
+## returns null now, because load_dict answers all of them with an empty
+## dictionary.
+static func load_from_disk(path: String) -> CampaignState:
+	var data := load_dict(path)
+	if data.is_empty():
 		return null
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		push_error("CampaignState: could not read %s" % path)
-		return null
-	var text := file.get_as_text()
-	file.close()
-
-	var parsed = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		push_error("CampaignState: save at %s is not valid JSON" % path)
-		return null
-	if is_outdated(parsed):
-		push_warning("CampaignState: %s is from an older build (save version %d, this build reads %d) and is not loadable. The file is left alone." % [path, int(parsed.get("version", 0)), SAVE_VERSION])
-		return null
-	return from_dict(migrate(parsed))
+	return from_dict(data)
 
 
 # Every field read above already has a default, so a save written before a field
@@ -2286,10 +2361,13 @@ static func load_from_disk(path: String = SAVE_PATH) -> CampaignState:
 static func is_outdated(data: Dictionary) -> bool:
 	return int(data.get("version", 0)) < SAVE_VERSION
 
-
-static func migrate(data: Dictionary) -> Dictionary:
-	var version := int(data.get("version", 0))
-	if version > SAVE_VERSION:
-		push_warning("CampaignState: save is version %d, this build reads %d." % [
-			version, SAVE_VERSION])
-	return data
+# THERE IS NO migrate(). There was, and it migrated nothing — one warning about
+# a newer save and `return data`, called by both load paths as though a save
+# were being transformed on the way in. It is not: every field is read through
+# data.get with a default, so a save written before a field existed loads
+# cleanly without anyone's help, and the one shape change that defaults could
+# not cover (v1 → v2, the mark system) was answered by refusing v1 rather than
+# by inventing a migration nobody could verify. is_outdated() is the whole
+# gate. The warning moved into load_dict, where the path can be named.
+# Backlog SV6. tools/migrate_save.gd is a separate thing and stays: it rewrites
+# an old file on disk, by hand, for somebody who asks it to.

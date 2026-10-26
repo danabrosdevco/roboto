@@ -25,6 +25,17 @@ func _check(label: String, ok: bool, detail: String = "") -> void:
 		_fails += 1
 
 
+## The first key that differs, named. A bare "the dictionaries are not equal" is
+## a failure nobody can act on, and the fields this catches are exactly the ones
+## nobody would guess at.
+func _first_difference(got: Dictionary, want: Dictionary) -> String:
+	for k in want:
+		if JSON.stringify(got.get(k)) != JSON.stringify(want[k]):
+			return "%s: got %s, wanted %s" % [k, JSON.stringify(got.get(k)),
+				JSON.stringify(want[k])]
+	return ""
+
+
 func _find(n: Node, cls: String) -> Node:
 	if n.get_script() != null and n.get_script().get_global_name() == cls:
 		return n
@@ -174,8 +185,17 @@ func _init() -> void:
 		JSON.stringify(after) == JSON.stringify(before_dict))
 	_check("...and the debrief said so rather than showing empty payouts", said_voided)
 
-	# The rewind copies fields across by hand. This is what catches one being
-	# missed when a field is added to to_dict() later.
+	# THE REWIND, ON THIS CAMPAIGN. restore_from copies fields across by hand,
+	# and what this checks is that the rewind puts THIS state back — the one the
+	# whole suite has been playing, with a real roster and a real board on it.
+	#
+	# IT IS NOT THE GUARD AGAINST A FORGOTTEN FIELD, and it used to claim to be.
+	# It restored the state into ITSELF: a field restore_from does not move
+	# already holds the snapshot's value, so the check passed while seven fields
+	# were being dropped by every load in the game. The second restore below is
+	# into a DIFFERENT state, which is the only arrangement that can fail;
+	# tools/test_restore_from.gd is the suite that owns it properly, including
+	# reading restore_from's list out of the source. Backlog SV3.
 	var snap := cm.state.to_dict()
 	cm.state.award(777)
 	cm.state.squad_name = "SCRATCH"
@@ -183,6 +203,11 @@ func _init() -> void:
 	_check("restore_from puts a campaign back exactly as it was",
 		JSON.stringify(cm.state.to_dict()) == JSON.stringify(snap),
 		"squad_name=%s" % cm.state.squad_name)
+	var elsewhere := CampaignState.new()
+	elsewhere.restore_from(snap)
+	_check("...and into a state that was never this campaign, field for field",
+		JSON.stringify(elsewhere.to_dict()) == JSON.stringify(snap),
+		_first_difference(elsewhere.to_dict(), snap))
 
 	# ── WIN ──────────────────────────────────────
 	var final_op: MissionDefinition = cm.missions.back()

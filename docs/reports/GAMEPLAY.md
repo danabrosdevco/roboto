@@ -33,8 +33,2228 @@ most wants and least often gets:
 - **Say when you were wrong.** A reversal recorded here saves the next agent
   from repeating it. The rover collision shape that was built, regressed
   `test_vehicle` and got reverted is exactly that kind of thing.
+---
+
+## 2026-10-26 — the save pass: SV1, SV2, SV3, SV4, SV6
+
+**Landed.** Six files, one of them new, all in the campaign layer and its
+tools. **`Campaign/campaign_state.gd` is the only game code touched.**
+
+- **SV1 — a load now restores the whole campaign.** `restore_from()` moved 22
+  of `to_dict()`'s 29 fields; the seven it forgot were `line_marks`,
+  `line_modules`, `turn`, `sites`, `under_attack`, `under_attack_turn`,
+  `lessons_seen`. It has three callers and only one of them is the rewind:
+  `load_profile` and `new_profile` both go through it, so **every boot came up
+  at turn 0 on the authored board with every production line at Mk 0, and the
+  next autosave wrote that over the file** — and a new campaign inherited the
+  same seven from whatever was open. All 29 move now.
+- **Two things fell out of SV1.** `from_dict` now `duplicate()`s `line_marks`
+  and `line_modules`, which were being handed out still shared with the JSON
+  parse exactly as `sites` had been — restoring one snapshot into two states
+  gave them one dictionary. And **a mark or module adopted in the field is now
+  undone by a failed run**, where before the line kept it while every record
+  went back to Mk 0 kit; the rewind is self-consistent now. Measured:
+  `probe_economy_facts.gd`'s rewind table reads `line mk 0` in both rows.
+- **SV2 — no state is born pointing at the legacy save.** `save_path` defaulted
+  to `SAVE_PATH`, `user://campaign.json`, and only `Campaign._ready` blanked
+  it, so `reset_campaign()` and all forty-odd tools and suites that build a
+  state directly were aimed at a real campaign. Default is `""` now.
+  `load_dict` / `load_from_disk` lost the same default and require a path —
+  **audited, every caller already passed one**, and the one tool that writes a
+  campaign without `save_to_disk` (`make_board_campaign.gd`) uses its own
+  `FileAccess`. `SAVE_PATH` is now read by **no code**; the live path to the old
+  single save is `SaveSlots.LEGACY`.
+- **SV3 — the test that could not fail is replaced.** New suite
+  **`tools/test_restore_from.gd`**, `# BUCKET: campaign`, no world, 14 checks:
+  both restore directions into a state that was never that campaign, the move
+  list read out of the source against `to_dict()`'s keys, that a restore does
+  not move the campaign's file, SV2, SV4, and the shared-dictionary trap.
+  `test_endings` keeps its self-restore — a fair check of *that* campaign's
+  rewind — with a comment saying it is not the guard, plus one restore into a
+  different state.
+- **SV4 — `last_played_utc` is stamped** in `save_to_disk`, after the file
+  opens. The profile menu sorts on it and nothing had ever set it, so
+  most-recent-first was really the file's mtime and any tool that touched a
+  save moved it to the top of the player's list.
+- **SV6 — `migrate()` is deleted.** It warned about a newer save and returned
+  its argument. The warning moved into `load_dict` where the path can be named;
+  `is_outdated()` is the whole gate; the comment where the function was says
+  why there is none. **`load_from_disk` now goes through `load_dict`** instead
+  of being a line-for-line second copy of the same open-parse-gate sequence —
+  every failure answer unchanged, all null before and after.
+- Three probes had stale claims about the gap and were corrected:
+  `probe_save_facts.gd` (§4 rewritten for the deleted `migrate`),
+  `probe_economy_facts.gd` (a **hardcoded** list of the seven fields printed as
+  "by reading it" — now derived) and `probe_squad_facts.gd` (§5's whole finding
+  was this bug; it now reports whether the line and the record agree, and says
+  SV1 has reopened if they do not).
+
+**Gates.** `check.sh --changed`: **PASS**, 84 scripts. `bucket.sh campaign`:
+**PASS, 43 suites**, 1 parked (`test_tutorial`) — including `test_restore_from`
+at 14/14 and `test_endings`' two restore checks green. `bucket.sh shell`:
+**PASS, 4 suites**. `smoke.sh`: **PASS**, booted clean for 15 s, 1 warning
+line. `probe_save_facts.gd`: `NOT MOVED (0)` in §2 and **0 / 0 / 0** in §3,
+against `NOT MOVED (7)` and 7 / 7 / 7 on the same probe before the change.
+`probe_squad_facts.gd` and `probe_economy_facts.gd` both exit 0.
+
+**The suite was A/B'd, because a suite that cannot fail is the bug it was
+written about.** Deleting `turn = was.turn` from `restore_from` turns
+`test_restore_from` red 4 of 14, exit 1 — caught in all three ways, in both
+directions.
+
+**Not verified.** The frames, kit and terrain buckets were not run; nothing
+outside the campaign layer was touched. **Nothing was played**, so this says
+the save works and says nothing about how the game feels. The v3-in-a-v2-build
+path (SV5) is still only reasoned about — the warning was moved, not tested
+against a real v3 file, because there is no such build. And the **three capture
+cores** still want your eyes; unrelated to this, still waiting.
+
+**I was wrong about one thing, from the ticket's own instruction.** SV3 said to
+give `probe_save_facts.gd` a `# BUCKET:` line so the gap would be asserted.
+`bucket.sh` only ever globs `tools/test_*.gd`, so that would have done exactly
+nothing — a tag nobody reads on a probe that asserts nothing. Hence a suite
+instead. The row now records the correction.
+
+**Needs the human.** **No scene or inspector work** — this is all script. Two
+things to look at in GitHub Desktop: the field list in `restore_from` (29
+assignments, and `lessons_seen` among them is the one line that reverses an
+earlier comment, which the comment now explains), and the **deletion** of
+`migrate()` with `load_from_disk` collapsed onto `load_dict`. Nothing was
+committed.
+
+**Blocked / next.** `SAVE_PATH` can be deleted now that no code reads it, and
+`SaveSlots.adopt_legacy()` may be able to go with it — both are **your call**,
+and the second one is a decision about somebody's old campaign, not a cleanup.
+Both are logged as open questions in the vault. Next on the board is the economy loop: K17, K11, K9 and
+K12's field-purchase gate, all decided, all in these same files.
+
+
+## 2026-10-26 — K25: eleven cast-failure orphans, and the recoilless makes one of them real
+
+**Landed.** Nine files, **all game code**, and **four of them are shared
+ground**: `Env/world.gd` (every level load goes through it), `Managers/lab.gd`,
+`Character/characters/ai/enemy.gd` and `Env/world_objects/chassis_hologram.gd`.
+The others are `Campaign/squad_spawner.gd`, `Character/components/rank_kit.gd`,
+`Character/components/squad_commander.gd` (two sites),
+`Character/weapon/hatchling/hatchling_payload.gd` and
+`Character/characters/ai/equipment/ai_grenade.gd`. **No `.tscn` or `.tres` was
+touched.** Every one takes the house form from
+`Campaign/enemy_force_spawner.gd:415-418` — instantiate untyped, cast, `free()`
+the untyped one if the cast failed — and **every bail now warns**, which it did
+not before in four of the eleven.
+
+**The one that matters is reachability, and it is one authored row away, not
+dead.** `Campaign/items/item_rocket.tres` is **`kind = EQUIPMENT`** with an
+`ai_scene` of `ai-wep_recoilless.tscn`, which is an **`AIWeapon`, not an
+`AIEquipment`** — and **neither builder of an equipment slot checks the kind**:
+`squad_spawner.gd:319` asks `fits_ai()` only, and `enemy_loadouts.gd:420` asks
+nothing but `ai_scene != null`. So the three `as AIEquipment` casts are not
+guarded by their callers at all; they are guarded by the fact that no
+ChassisMark, line spec or enemy spec currently names the recoilless in an
+equipment list (checked repo-wide; the only place that does is
+`tools/test_equipment.gd:370`). Put it on one robot and
+`Enemy._evaluate_equipment_use()` orphans a whole weapon scene **every 1.5 s of
+combat** (`EQUIPMENT_RECON_TIME`), for as long as the fight lasts. That gap is
+its own defect and is **reported, not fixed** — see [[Backlog]].
+
+**Measurements.** A throwaway `--headless --verbose` harness drove nine of the
+eleven bail paths directly and freed everything each path is supposed to own,
+against a **control arm** doing the same work and orphaning nothing.
+
+| arm | leaked instances | resources still in use | RIDs | exit |
+|---|---|---|---|---|
+| control | 0 | 0 | 0 | 0 |
+| **before** | **405** | **180** | **15 `CanvasItem`** | **139** |
+| after | 0 | 0 | 0 | 0 |
+
+Named in the before log: `scan_effect.tscn`'s three `ShaderMaterial`s, the whole
+of `soldier_rifle.tscn` (meshes, shapes, `robot_metal.tres` and its three PNGs),
+`Frag_West.fbx`'s four materials, `explosion.tscn`'s materials and shapes,
+`tracer.tscn`, `spark_burst.tscn`, `oil_spray.tscn` and the `soldier.gd`,
+`rank_kit.gd` and `scan_effect.gd` scripts. Harness deleted.
+
+**Gates.** `check.sh --changed` **PASS** (81 scripts, 51 scenes). `smoke.sh`
+**PASS** (booted clean, 15 s, 1 warning line) — run because `world.gd` is on the
+boot path. **All five buckets green, exit 0 each:** `campaign` **42** (1 PARKED,
+`test_tutorial`) 5m36s; `frames` **29** 8m26s, slowest `test_mortar` 63 s, and
+**`test_nest` did not flake this time**; `kit` **16** 2m39s; `terrain` **13**
+(3 report-only, 1 PARKED) 4m46s; `shell` **4** 26s. `test.sh` not run — it
+cannot finish here.
+
+**Needs the human.** Nothing in the editor; no scene or inspector value changed.
+Two judgement calls are yours: (1) whether the catalogue kind gap above is a
+catalogue fix (`recoilless` should not be `kind = EQUIPMENT` with a weapon
+scene) or a builder fix (filter on kind in both builders) — I left it alone
+because it changes what gets filtered; (2) `Env/world.gd`'s new bail
+**releases the `PauseHold`** before returning, which it must, or a bad level
+scene leaves the game paused for good — worth a second pair of eyes because
+that file is on every level load.
+
+**Not verified.** **No render.** Nothing on screen changes on today's authored
+data, and that is measured rather than assumed: an audit arm instantiated and
+class-checked every candidate and **all of them pass the cast** — 19 `_level`
+scenes are `TrenchBroomLevel`, 27 chassis definition scenes are `Node3D`, 11
+baked hats are `Node3D`, `squad.tscn` is a `Squad`, both grenade projectile
+scenes are `AIGrenadeProjectile`. So the only new artefact in the live game is a
+warning line. **`Env/world.gd:79`'s own bail was not driven** — a cast failure
+there used to error on `add_child(null)`, and a runtime error under `--script`
+hangs rather than exits, so there is no pre-fix leak report to produce for it;
+same for `chassis_hologram` and `lab.gd`, of which only `chassis_hologram` could
+be driven after the fix. **Game feel and balance: not assessed.** I did not play
+it.
+
+**I was wrong about one thing, from the brief.** K25's row says
+`squad_commander.gd:1013` "is polled several times a second, so this one
+repeats". It does not: `_dials[squad]` caches the answer, and the comment two
+lines above the leak says so — the orphan is **once per distinct item per
+squad**, not per poll. The site that actually repeats on a timer is
+`enemy.gd:3876`, at 1.5 s.
+
+**Blocked / next.** Nothing blocked. K25 closes the **K22 family** — K24, K26,
+K27, K28 and K25 are all done. The two loose ends it leaves are the catalogue
+kind gap above and `K30` (`ai_world_weapon_drone bomb.gd`), which K26 already
+raised.
+
+## 2026-10-26 — K27: eight tool-path orphans. Four of the eight were exiting 139 on their normal path
+
+**Landed.** Eight files, all under `tools/`. **No game code, no `.tscn`, no
+`.tres`, no shared runner.** Two of them — `tools/level_split.gd` and
+`tools/dress_pittsburgh.gd` — **are TERRAIN's territory**; flagging that
+explicitly. Every verdict below is an A/B of the pre-fix file (a copy of HEAD,
+driven on the real path, deleted afterwards) against the fixed one, read off
+`--headless --verbose`, not off the exit code.
+
+- **`level_split.gd`** — `art` at `:103` holds the level's whole art subtree
+  and `level` at `:57` is a second unparented orphan; neither was freed on any
+  of nine exits. New `_shed(level, art)` on every one, **dry run included**.
+  Dry run on `hillfort_wip_level`: exit **139**, 3195 leaked instances, 756
+  leaked RIDs across 8 server types → **exit 0, 0 leaked**, identical report
+  (953 nodes moved). `free_bases(bases)` at `:110` was already correct.
+- **`reinstance.gd`** — `scene` at `:43` leaked on all three exits, and the
+  base cache with it: `reown()` fills it at `:45`, *above* the dry-run exit,
+  so the `free_bases()` at `:67` only ever covered `--apply`. New `_shed()`.
+  Exit **139**, 1748 leaked instances, 427 resources still in use → **exit 0,
+  0/0**.
+- **`dress_pittsburgh.gd`** — the `{}` the ticket named at `:257` is
+  **unreachable without a writing run**: the dry run returns two lines above
+  it, so that cache only fills under `--apply`, which rewrites
+  `pittsburgh_art.tscn`. Named and freed anyway. The leak that *is* on the dry
+  run is `art` at `:199`, the whole Pittsburgh art scene: exit **139**, 2774
+  leaked instances, 574 resources still in use → **exit 0, 0/0**, identical
+  placement (170 placed, 241 refused).
+- **`bake_hats.gd`** — `out` at `:116` freed on all three exits. This is the
+  clean-exit case: **exit 0 both before and after** while leaking 222
+  instances, 11 `Headgear` holders, 7 materials and 2 `Resource still in use`
+  on real texture PNGs → 0/0, same 100 meshes across 11 hats. Measured on a
+  copy with `OUT_DIR` redirected to `user://`, so **the shipped hat scenes
+  were not rewritten**.
+- **`shot_bunker_arrival.gd`** — `level.free()` on the missing-slice bail at
+  `:83`. One mistyped slice name orphans a whole level *per yaw*: exit **139**,
+  5507 leaked instances, 471 resources still in use, 14 RID classes → **exit
+  0, 0/0/0**.
+- **`test_viewmodel_poses.gd`** — the line the ticket named (`:77-78`, not a
+  PlayerEquipment) **cannot fire**; all 13 scenes have `update_view`. Its
+  sibling two lines down (`vm == null`) **fires on every run** on
+  `scanner_hud_weapon.tscn` and leaks the whole scanner: `Node3D "Scanner"`,
+  `Node3D "ScannerTool"`, three `AudioStreamPlayer3D`, and 6 `Resource still
+  in use` (3 GDScripts, 3 WAVs). Both bails now `item.free()`, copying the
+  comment the success path at `:120` already carries. 18 + 6 → **0 + 0**.
+- **`test_same_site_ride.gd`** — both `_Pad` stubs freed. See below.
+- **`probe_piece_bounds.gd`** — `instantiate() as Node3D` replaced with the
+  untyped-then-cast form from `enemy_force_spawner.gd:415-418`. Reachable
+  straight from the `SCENE` argument: a Control-rooted scene left 15 leaked
+  instances and 4 resources still in use → **0/0**.
+
+**The open question, answered.** *Does a script-only orphan with no mesh or
+texture trip the sweep?* **Yes, but only its mild half.** Four control arms: a
+bare orphan `Node3D` = 1 leaked instance / 0 resources still in use; the same
+with an inner-class GDScript = 3 / 0; freed = 0 / 0; H10's own shape, a `Node`
+holding a `PackedScene` in meta = 8 / **5**. An inner-class script has no
+`resource_path` and a bare `Node3D` owns no server RID, so neither reaches "a
+destructor frees an RID into a dead server" — which is what 139 is. Worth
+freeing, never a 139 candidate.
+
+**Gates.** `check.sh --changed`: **PASS** (73 scripts, 51 scenes/resources).
+`smoke.sh`: **PASS** (booted clean, 15s, 1 warning line). `bucket.sh kit`:
+**PASS, 16 suites**. `bucket.sh campaign`: **PASS, 42 suites** (1 PARKED,
+`test_tutorial`). `bucket.sh terrain`: **PASS, 13 suites** (1 PARKED,
+`test_terrain`; 3 report-only). The two suites I edited are unchanged in
+result: `test_viewmodel_poses` **34 checks, 0 FAIL, exit 0** before and after;
+`test_same_site_ride` **11 PASS, 0 FAIL, exit 0** before and after. `frames`
+and `shell` not run — nothing I touched is in them. `test.sh` not run, by
+house rule.
+
+**Needs the human.** Nothing in-editor: no scene, resource or shared file was
+touched. Two judgement calls worth a look. **(1)** `dress_pittsburgh.gd`'s
+`--apply` path and `level_split.gd`'s `--apply` path were fixed but **not
+run** — the editor is open and both write content, so the `{}`-cache fix and
+the post-save `_shed()` are reasoned, not observed. **(2)** `bake_hats.gd` was
+proved on a redirected-output copy; the shipped version has not been run
+against the real `Character/characters/ai/hats`, deliberately.
+
+**Blocked / next.** K25 — the eight cast-failure leaks — is the remaining
+member of this family, and `probe_piece_bounds.gd` here was a ninth of exactly
+that shape found inside a K27 tool. Worth re-sweeping `tools/` for
+`instantiate() as ` once K25 lands.
 
 ---
+
+## 2026-10-26 — K26: the four AI-equipment orphans. Unreachable, real when driven, and now all five say so
+
+**Landed.** Five files, all `Character/characters/ai/equipment/`, all in
+GAMEPLAY's lane. **No `.tscn`, no `.tres`, no shared file.**
+
+- `ai_grenade.gd`, `ai_mine.gd`, `ai_smoke.gd`, `ai_deploy.gd` — the
+  `spawn_host()` call is now **above** the `instantiate()`, so the
+  `host == null` bail happens before there is anything to orphan. Each bail
+  now `push_warning`s and names the equipment.
+- The three silent `*_scene == null` returns in `ai_mine`, `ai_smoke` and
+  `ai_deploy` now warn too (`ai_grenade` already `push_error`ed).
+- `ai_repair_kit.gd` — **beyond the four sites K26 named**, and the one
+  genuinely reachable silent return of the family: both of its early returns
+  now warn. The ordered path never consults `can_use()`, so a repair the player
+  points at nobody lands on "no patient", spends the charge, and
+  `order_use_equipment()` returns `""` — success.
+
+**Can the guard fire?** No, at none of the four — but *not* for K24's reason,
+and that matters. `AIEquipment.spawn_host()` returns null only when the owner
+is unparented **AND** the equipment node is out of the tree; those are two
+different objects and nothing makes them exclusive, so unlike
+`drone_bomb._explode()` the guard is well-formed. It is dead because
+**`Enemy._spend_equipment()` (`enemy.gd:3913-3916`) `host.add_child`s the
+equipment on the line before `execute()`**, and the only three other callers
+(`test_ai_kit` ×2, `test_hatchling`) `root.add_child` it first. That is a
+property of the callers, not of the guard — a weaker clearance than K24's, and
+the reason the reorder was worth making anyway.
+
+**Does it leak when driven?** Yes, all four, heavily. A/B with a throwaway
+`--headless --verbose` harness (equipment and owner both unparented, everything
+the path owns freed by hand, `quit(0)`), control arm orphaning nothing:
+
+| arm | leaked instances | resources still in use | exit |
+|---|---|---|---|
+| control (execute() not called) | 0 | 0 | **0** |
+| before the fix | **250** | **186** | **139** |
+| after the fix | **0** | 0 | **0** |
+
+Named in the leak report: `AI_Grenade_Projectile`, `ClusterMineCanister`,
+`Smoke_Canister`, `Drone_Pack_Canister` — plus, from the grenade alone, the
+whole of `explosion.tscn` (every Curve, CurveTexture, ParticleProcessMaterial,
+mesh and the Explosion1.wav) because `ai_grenade_projectile` preloads it, and
+4 classes of RID including 17 `RendererSceneCull::Instance`. **The pre-fix run
+exited 139 here**, which is unusual for this family — K24's two real leaks both
+exited 0 while leaking. Harness deleted.
+
+**Also measured, and the reason the warnings are not cosmetic.**
+`Enemy._spend_equipment()` runs `slot.consume()`, the cooldown and the HUD
+timestamp **after** `execute()`, unconditionally — `execute()` returns `void`
+and nobody asks it whether anything happened. So every early return in the kit
+spends a charge on nothing, and on the ordered path the designator is told it
+worked.
+
+**Gates.** `check.sh --changed` **PASS**, twice — 83 scripts / 51 scenes on the
+first run, 73 / 51 on the re-run after the `ai_repair_kit` edit. The count
+dropped because another lane's files left the changed set mid-session, not
+because mine did: all five are in `git diff --name-only HEAD` on the second
+run, which I checked rather than assumed.
+`bucket.sh frames` **PASS, 29 suites**, 8m7s, exit 0, slowest `test_mortar` at
+61s. `bucket.sh kit` **PASS, 16 suites**, 2m21s, exit 0. **The frames run
+predates the `ai_repair_kit` edit** — the two are independent, but rather than
+assert that, I ran `test_item_facts` standalone afterwards (the only suite in
+the project that references the repair kit, and a `campaign` one): **PASS,
+exit 0**. `smoke.sh` not run — nothing here loads at startup. Nothing visual
+changed, so no render: the only
+new on-screen artefact is a warning in the log, and it is quoted above.
+
+**Needs the human.**
+- **The grenade is the only equipment with no `equipment_name`.**
+  `ai_grenade.tscn` leaves the `@export` at its default `"Equipment"`, and
+  `ai_emp_grenade.tscn` is an *instance* of it overriding only `grenade_scene`,
+  so it inherits that too. The other five scenes all set it ("Cluster Mine",
+  "Heavy Mine", "Smoke Canister", "Drone Carrier Pack", "Hatchling Charge"), so
+  every warning in this family — including the pre-existing `spawn_host` one —
+  reads "Equipment" for exactly the frag and the EMP. One inspector string in
+  `ai_grenade.tscn` fixes both; **I did not touch a `.tscn` with the editor
+  open.**
+- **No suite drives `ai_grenade.execute()` at all**, nor the drone pack's.
+  `test_ai_kit` covers `ai_smoke` and `ai_mine`; `test_hatchling` covers the
+  `ai_deploy` script via the hatchling scene. The grenade's execute path is
+  gated only by `check.sh` and by my own harness.
+
+**Blocked / next.** `Character/weapon/ai_world_weapon_drone bomb.gd:19` —
+reported, not fixed, because the fix is not one line. It
+`get_tree().current_scene.add_child(new_bomb)`: a null `current_scene` errors
+rather than leaking, **and parenting to `current_scene` is the
+mission-outliving bug `AIEquipment.spawn_host()` and `AIWeapon._level_node()`
+both exist to fix** — this is the last ordnance spawner that still does it. It
+extends `AIWorldWeapon`, which has no `_level_node()`, so the fix is a new
+helper or a walk up to the carrier body, not a line. Its own base class already
+records that `ai_drone_bomb_weapon.tscn` is referenced by nothing, and I
+confirmed that — so `fire_bomb()` is unreachable today. K27 is the next row in
+this family.
+
+## 2026-10-26 — K28: the two-levels-in-one-frame overlap, measured. It is a cleanliness issue, not a bug
+
+**Landed.** **Nothing in `world.gd` or `lab.gd` changed** — and that is the
+result, not a shortfall. The overlap K28 describes is real and I photographed
+it; the walk it was supposed to poison is not inside it.
+
+- **New: `tools/probe_level_overlap.gd`.** Brackets a real `hillfort_wip` →
+  base transition using World's own `child_entered_tree` /
+  `child_exiting_tree`, so it measures `load_next_level` without touching it.
+  Every count is taken twice, `!= null` and `is_instance_valid`, because a
+  freed node passes the first.
+- **The cheap half of the row is done.** The three tools the H10 fix missed no
+  longer double-call `cm.on_level_loaded()` after `await
+  world.load_next_level()`: `tools/probe_order_facts.gd`,
+  `tools/probe_slow_tick.gd`, `tools/shot_arena_ops.gd`. Each now carries the
+  `# NO SECOND on_level_loaded()` comment copied verbatim from
+  `tools/test_site_win.gd:59`, so the next reader does not put the line back.
+
+**What the walk actually sees.** The window is exactly as described, and it is
+one process frame long.
+
+| sample | frame | World's level children | `"enemies"` returns | under the outgoing level |
+|---|---|---|---|---|
+| before the transition | — | 1 | 30 (30 valid) | 30 |
+| incoming level enters the tree | 746 | **2** | **30 (30 valid, 0 queued)** | **30** |
+| same frame, after a message-queue flush | 746 | **2** | **30 (30 valid, 0 queued)** | **30** |
+| outgoing level leaves the tree | 746 | 2 | **0** | 0 |
+| `load_next_level()` returned | 748 | 1 | 4 (4 valid) | 0 |
+
+`AIManager.all_ai` after the transition: **4 entries, 4 valid, 4 under the
+incoming level, 0 freed-but-held, 0 orphans.** Same for the base → mission
+direction: 30 entries, 0 orphans, no stale base body.
+
+**Why it is harmless, in four measured parts.** (1) The delete flush is at the
+**end of the same process frame** as the `queue_free()`, and
+`register_world_objects()` sits behind `await process_frame` + `await
+physics_frame` — it ran at frame 748, two frames clear. (2)
+`PauseHold.take(&"level_load")` holds `tree.paused` across the whole of
+`load_next_level`, so nothing pausable ticks in the window. (3) **No physics
+step falls inside the window**, so every per-tick group walk — `site_operation`,
+`holdable_core`, `diver`, `drayman`, `mechanic`, `reclaimer`, `rover` — cannot
+run there; I checked the enclosing function of all seven and not one is
+`_ready`. (4) **Nothing in level content walks a group from `_ready` or
+`_enter_tree`.** The only two in the project, `Managers/game_manager.gd:12-15`
+and `Character/hud/squad_hud.gd:193`, are on persistent nodes under World and
+run once at boot, and the second walks `"squads"`.
+
+**`lab.gd:120-122` has a bigger margin.** Measured frame by frame with a
+synthetic subtree: a `queue_free()`d parent's children are out of their groups
+by **+1 process frame**. Lab walks the group at **+2** (`_clear_level`) and
+registers at **+3**, and `_clear_level` already guards with
+`is_instance_valid` and `is_queued_for_deletion`.
+
+**One genuinely new engine fact, now in [[Traps]].** `_propagate_exit_tree`
+goes **children-first**, so by the time a parent's `child_exiting_tree` fires
+its descendants have **already left their groups** — the group reads 0. A
+handler on that signal is therefore useless for inventorying what is going
+away, and worse, it looks like proof the overlap never happened.
+
+**Gates.** `bash tools/check.sh --changed`: **PASS**, 61 scripts, 51 scenes.
+`bash tools/smoke.sh`: **PASS**, booted clean, 15 s, 1 warning line.
+`bash tools/bucket.sh campaign`: **PASS, 42 suite(s)**, exit 0, 5m13s
+(1 PARKED: `test_tutorial`). `bash tools/bucket.sh frames`: **PASS, 29
+suite(s)**, exit 0, 8m12s. `probe_order_facts.gd`: exit **0**, which closes an
+open question in `Traps` — it was carrying the H10 test bug, not a leak of its
+own. `probe_level_overlap.gd`: exit **0**.
+
+**My own mistakes, both self-reported.** (1) `bucket.sh frames` was **red on
+the first run** — `test_nest`, *"...and cannot be ordered anywhere"*. The
+baseline rule says any red is mine, so I chased it: green **22/22 standalone**
+and green on a clean re-run of the whole bucket. It is a wall-clock check
+(`await _wait(1.0)`, then assert the hive drifted < 0.1 m) with 48 hostiles
+deployed, and it goes red under bucket load. Added to `Traps`. (2) The probe's
+second phase originally drove lab's sequence over World's **real**
+`current_level`, which frees the base out from under Campaign and the base UI
+— the run **exited 139** with every line still printed, the exact H10 shape and
+exactly the green-looking lie this project keeps paying for. Rewritten to use a
+synthetic subtree; exit 0. The reason is in the probe's header so nobody tries
+it again.
+
+**Needs the human — one decision, and it is yours because the file is
+shared.** `remove_child()` before `queue_free()` in
+`World.deload_current_level()` would match the project's own written rule and
+would still be correct. **The measurement does not earn it**: `Env/world.gd` is
+a shared file every level load goes through, and there is no observed defect to
+point at. Same for `lab.gd`. Say the word and it is two lines. Nothing to check
+in-editor — **no `.tscn` or `.tres` was touched**, and no file outside
+`tools/` was changed.
+
+**Not verified.** Anything a player sees or feels during a level transition —
+a flicker, a hitch, audio from the outgoing level, the HUD at the moment of the
+swap. **That is game feel and it is yours**; I ran it headless, which proves it
+works and says nothing about how it looks. I did not play it. I also did not
+run `kit`, `terrain` or `shell` (nothing I touched reaches them) and did not
+run `shot_arena_ops.gd`, which refuses `--headless` by contract — its edit is a
+deleted line plus a comment and it parses, but it has not been run headful.
+`probe_slow_tick.gd` was likewise not run (two 1000-frame phases); same
+one-line edit, parses clean.
+
+**Blocked / next.** Nothing blocked. K25 is the next row in the suggested
+order, and `probe_home_base.gd` is still the one unmeasured 139 suspect from
+the H10 family.
+
+---
+
+## 2026-10-26 — K24: the three instantiate-then-decide orphans, measured
+
+**Landed.** All three K24 sites now **build the node after the guard that can
+bail**, which is the form the row preferred — none of them needed a
+free-on-bail, so no `queue_free()`/`free()` was added anywhere.
+`Character/hud/debrief_screen.gd` `_cover()`, `Env/world_objects/site_slice.gd`
+`_seat_core()`, `Character/weapon/drone_bomb.gd` `_explode()`. The drone
+bomb's bail was also **silent** and now `push_warning`s, per the standing rule.
+`Env/world_objects/` is **shared ground** — `site_slice.gd` is one of mine
+this session, flagging it explicitly. No `.tscn` or `.tres` was touched.
+
+**Two of the three were real; one was a false positive.** Measured, not read:
+each bail path was driven directly from a throwaway `--script` harness that
+freed everything the path is supposed to own, then run `--verbose`.
+
+- **debrief_screen — real leak, unreachable guard.** Before:
+  `Leaked instance: ColorRect` plus `1 RID of type "CanvasItem" was leaked`.
+  After: clean. But `_cover()` is only called from `_on_extracted`, only
+  connected in `_ready()`, which only runs in the tree — so `get_parent()` is
+  never null in the live game, and both tools that build a `DebriefScreen`
+  (`shot_ui.gd`, `test_debrief_turn.gd`) parent it first. **The row's "runs on
+  every extraction debrief" is true of the function and not of the bail.**
+- **site_slice — real, and the only one printing the H10 tell.** Before:
+  `Leaked instance: Node3D "Hold"` plus
+  `Resource still in use: res://Env/world_objects/holdable_core.gd (GDScript)`.
+  After: clean. Reachable on **authored data**: `probe_site_cores` is PASS
+  today, so no live map fires it, but a capture point authored with no
+  `Interactible` under it does.
+- **drone_bomb — FALSE POSITIVE. The guard cannot fire.** `_explode()` is only
+  reached from `_detonate()`, i.e. from a contact signal, so the bomb is in the
+  tree and therefore has a parent; and a bomb *out* of the tree has no
+  `get_tree()`, so the `current_scene` read one line above errors before the
+  guard. Measured: `current_scene = null, bomb parent = root`, Explosion
+  spawned at `(1, 2, 3)`. Reordered and warned anyway — both are free.
+
+**Worth recording: neither live site exited 139 in isolation.** Both exited
+**0** while leaking. 139 needs the orphan *and* a server torn down that owns
+one of its RIDs. So **a clean exit code does not clear an orphan** — the
+`Leaked instance` / `Resource still in use` lines under `--verbose` are the
+evidence, and they name the object and the resource path.
+
+**Gates.** `check.sh --changed`: **PASS** (60 scripts, 51 scenes).
+`smoke.sh`: **PASS**, booted clean, 1 warning line. Buckets, all five:
+**campaign 42 PASS** (1 PARKED, `test_tutorial`), **frames 29 PASS**,
+**kit 16 PASS**, **terrain 13 PASS** (1 PARKED `test_terrain`, 3 report-only),
+**shell 4 PASS**. Nothing went red, so there was nothing to A/B against the
+2026-10-26 baseline. Happy paths re-proved: `probe_slices` **0 problem(s)**,
+exit 0, cores still seat on every live site; `probe_site_cores` PASS.
+Note the handover's counts were a day stale — `bucket.sh --list` says campaign
+**43** and terrain **14**; the 42 and 13 are what actually *ran*, the rest
+PARKED.
+
+**Looked at.** The extraction cover is the one visible thing whose build order
+moved, so it was rendered **headful at 1152×648** after the change →
+`docs/marketing/wip/k24_debrief_cover.png`, with the `ColorRect` logged as
+parented to the DebriefScreen's parent, at `(1152, 648)`, colour
+`(0.025, 0.04, 0.035, 1)`. The image is a full-screen near-black rectangle,
+which is exactly what the cover is — it proves the rect still covers the
+viewport and nothing else. The debrief **page** itself was not re-rendered;
+`test_debrief_turn` (campaign) builds it and passes, and nothing in this change
+touches it.
+
+**Needs the human.** Nothing in-editor: no scene, resource or inspector value
+was touched. `docs/marketing/wip/k24_debrief_cover.png` is new and has no
+`.import` yet, so the editor will import it on its next scan.
+
+**Not verified.** Game feel and balance — not played, not asked to.
+The **drone bomb's in-game** detonation: `_explode()` was driven directly and
+spawns the Explosion at the impact position, but no suite covers `drone_bomb`
+at all and a quadcopter was never flown. The **debrief bail in the live
+game** cannot be reached, so the fix there is defensive only. Whether any of
+these three ever contributed to a real 139 in a real run is **unproven** — the
+evidence is the leak report, not a crash.
+
+**Blocked / next.** K25, K26 and K27 are the same family and all READY. The
+harness recipe is three lines and is now written down in the vault's `Traps`:
+call the bail path on a bare `.new()`, free what the path owns, run
+`--headless --verbose`, grep `Leaked instance` and `Resource still in use`.
+K26's four AI-equipment sites are worth doing for the **silent returns** even
+though the row already suspects the leak never fires — exactly the shape found
+here on the drone bomb.
+
+---
+
+## 2026-10-26 — H10's game bug fixed, and the last three stale level lists
+
+**Landed. Two changes, and the first one turns the campaign bucket green.**
+
+**1 · The capture-path leak — H10's root cause, the half that was game code.**
+`Env/world_objects/holdable_core.gd:842` read
+`_Tap.new().anchor_scene`: it stood up a whole `CaptureTap` — a
+`StaticBody3D` — to get one `@export` default, then dropped it unparented and
+unfreed. **An orphaned node that still holds a Resource segfaults Godot 4.3 at
+exit**, because ObjectDB's final sweep deletes it after the servers owning its
+RIDs are gone, so a resource destructor frees an RID into a dead server.
+
+**Fixed by preload, not by `free()`, and the reason matters:** `anchor_scene`
+is declared `@export var anchor_scene: PackedScene = preload(...)`, so
+`.new()` was **only ever reading the script default** — it could never see a
+`.tscn` override. Promoting that default to
+`const DEFAULT_ANCHOR_SCENE` on `capture_tap.gd` and reading the const from
+`holdable_core` is therefore behaviour-identical, keeps one source of truth,
+and builds no body at all rather than building and discarding one on every
+capture. The long note lives on the const.
+
+**The sibling at `holdable_core.gd:582` is correct and was left alone** — it
+`add_child()`s the tap at `:594`.
+
+**2 · K20 — the last three hand-kept level lists**, all naming the retired
+`hillfort_level.tscn` and never the live `hillfort_wip_level.tscn`:
+`tools/probe_core_clearance.gd`, `tools/mission_ops.sh:252`, and
+`tools/probe_footing.gd`'s fallback default plus its usage comment.
+
+**`probe_core_clearance.gd` stays TYPED, deliberately.** H14's
+`tools/_live_sites.gd` derives sites from `world.tscn`, but this list asks a
+different question — scenes holding core prefabs, four of them
+`gameplay/*_ops.tscn` wrappers rather than levels — so deriving it would
+answer the wrong one. It just has to name the live fort.
+
+**`mission_ops.sh` now WARNS on a missing level.** It was a bare
+`[ -f "$lvl" ] && add_cover_spawner "$lvl"`, so a level retired out from under
+the list was skipped in silence — which is precisely how the retired fort sat
+in it unnoticed. Every early return warns.
+
+**Gates.** `check.sh --changed`: **PASS**. `smoke.sh`: **PASS**, booted clean
+15s, 1 warning line. **`bucket.sh campaign`: PASS, 42 suite(s)** (1 PARKED,
+`test_tutorial`) — it has been red all week and the five reds were all this one
+leak. **`bucket.sh frames`: PASS, 29 suite(s)**. The three suites individually,
+before and after:
+
+| suite | before | after |
+|---|---|---|
+| `test_site_win` | 14/14, exit **139** | 14/14, exit **0** |
+| `test_hillfort_live` | 34/34, exit **139** | 34/34, exit **0** |
+| `test_core_retake_live` | 13/13, exit **139** | 13/13, exit **0** |
+
+**And the `N resources still in use at exit` line is gone entirely**, which is
+the mechanism's own signature rather than a proxy for it.
+
+**K20 immediately found a bug, and I A/B'd it rather than report it as mine.**
+Repointing `probe_core_clearance.gd` took it from **8 clashes to 10**. The two
+new ones are on the live fort: **`ShoulderCore` at (-123, 23, -20)** against
+ten `Collision` shapes and **`PillarsCore` at (17, 23, 50)** inside
+`entity_0_worldspawn`, both on the plateau at y=23. Proven by running a
+pristine `HEAD` copy under a throwaway name — 8 clashes with the retired fort,
+10 with the live one — so these are new *information*, not a regression. Logged
+as **K23**; the level is TERRAIN's. The other 8 clashes are pre-existing and
+partly deliberate, as the probe's own header explains.
+
+**Needs the human.** Nothing in-editor from this change — no `.tscn` or
+`.tres` touched. **`tools/mission_ops.sh` is a tool TERRAIN also uses** and
+`Env/world_objects/` is shared ground — flagging both.
+
+**Not verified.** Nothing played, nothing rendered. The capture path now builds
+no tap to read a default, and **whether a capture still looks and feels right
+in game is untested** — the suites prove the anchor is raised and the core
+changes hands, not that the moment reads well. **K23's two clashes need a
+render, not a probe**: a body standing on a core plinth passes every overlap
+test, and I have not looked at either core.
+
+**My own mistakes.** Two greps with `\t` in a BRE pattern silently matched
+nothing, so an edit I believed had applied had not — caught both times by
+reading the output rather than the exit code. And the H10 row I wrote on
+2026-10-24 said **four** campaign suites when the bucket had five; I had built
+the list from the fast tier, which skips `test_sim_arena` because it boots
+`world.tscn`. The H9 agent caught it.
+
+**Blocked / next.** The K22 sweep landed and is now **K24–K28**: three orphan
+leaks on live game paths, eight cast-failure leaks (start with
+`squad_spawner.gd:147`, the twin of an already-fixed file), a silent four-way
+AI-equipment family, eight tool paths, and **K28 — `world.gd:127` calls
+`queue_free()` with no `remove_child()` while `load_next_level()` parents the
+replacement in the same frame, so two levels are in the tree when
+`register_world_objects()` walks it.** That last one is not a leak and may be a
+real correctness bug. `probe_mission_facts.gd`'s 139 is still unexplained.
+
+## 2026-10-26 — K21: `test_ammo`'s one honest FAIL was the SUITE, not the game
+
+**Landed.** One file: `tools/test_ammo.gd`. **No game code changed.**
+
+The FAIL was `...and does NOT start with grenade, which needs its item carried
+— 4 in the pool with nothing fitted`, exit 1, bucket `kit`. The arithmetic was
+right and the **premise** was false: something *is* fitted.
+`Campaign._carry_issued()` — added **2026-10-23, commit `aa2eaa51`**, a pure
+addition — puts the issued Ancient Rifle and the issued **Frag** straight into
+the player's record, so a new campaign musters with
+`equipment_ids = [&"frag", &""]` and `grenade` has one carrier from the first
+frame. Four in the pool is correct, and the owning code says so in its own
+comment: *"otherwise mission one opens with an empty grenade slot and a trip to
+the MEMORY screen to tick two free things on."*
+
+**Proved, not inferred.** A throwaway tool booted a real `world.tscn` and read
+it back: `weapon_ids = [&"m4"]`, `equipment_ids = [&"frag", &""]`,
+`is_issued(&"frag") == true`, the loadout holding a `Grenade` node in
+`Slot.EQUIPMENT` with `ammo_type=grenade`, grenade **4/4** — and `smoke` **0/0**
+beside it. Deleted after. **The failure pattern was itself the evidence:** of
+eight `requires_carrier` types only `grenade` was non-zero. A pool seeding
+thrown ammo blindly would have failed all eight.
+
+`test_ammo`'s check was last written **2026-10-17**, six days before the rule
+changed, and asserted a flat zero for every carried type. Rewritten to assert
+the rule that was always meant — **the pool agrees with what is in your
+hands**: zero carriers ⇒ zero reserve, a carrier fitted ⇒ a reserve. The
+carrier count is read off the live `PlayerEquipment` nodes in `Slot.EQUIPMENT`
+by a new `_fitted_thrown()` helper, which is an independent observation of the
+player's hands rather than a restatement of the pool's own books. Added one
+check pinning the issued Frag itself, so a change that stopped issuing it fails
+here instead of quietly sending every branch down the zero path and going green
+having stopped testing the interesting case. The old rule, its date and the
+commit are in a load-bearing comment.
+
+**Nothing was lost by adapting it**, which is the part worth checking before
+touching a check like this: `test_equipment._test_carrier_required_ammo` still
+pins the unfitted case properly — it applies a record with an **empty**
+`equipment_ids`, asserts 0 count / 0 capacity, then one frag, then two, then
+none again — and `test_induction` (bucket `campaign`) already asserted *"the
+issued Frag is in your hands too"* off the record. The rule `test_ammo` was
+contradicting was under test on both sides the whole time. `test_ammo` cannot
+arrange "nothing fitted": the campaign decides its loadout.
+
+**Gates.** `check.sh --changed`: **PASS** (54 scripts, 51 scenes).
+`test_ammo` alone: **1 FAIL / exit 1 → 32 PASS, 0 FAIL, exit 0**.
+`bucket.sh kit`: **PASS, 16 suites, exit 0**, 2m32s, slowest `test_lance` 26s.
+Not run: `smoke.sh` (nothing that loads at startup changed), `bucket.sh
+campaign` (no campaign code touched — and its baseline is 3 red on H10's
+unfixed `holdable_core.gd:842` leak), anything terrain or visual.
+
+**Found in passing — a new decoy, measured.** `ItemDefinition.ammo_type` is
+read in **exactly one place**, `equipment_loadout.gd:647`, inside `if node is
+PlayerWeapon`. So for `kind = EQUIPMENT` it is read by nothing, and **6 of 11
+equipment items leave it `&""`** — `frag`, `emp`, `hatchling`, `repair_kit`,
+`repair_tool`, `scanner` — while `drone_pack`, `mine_cluster`, `mine_heavy`,
+`recoilless` and `smoke` set it, which is what makes it look authoritative.
+Three of the blanks do draw on the AmmoPool. **A thrown item's ammo type lives
+on its scene** (`player_grenade.gd:23`), so anything mapping `equipment_ids` to
+ammo types through the catalogue silently misses the issued Frag. That is why
+the new helper reads nodes and not the record. Added to the vault's `Traps`;
+it also belongs as a `Where the truth lives` row and I did not add one.
+
+**Needs the human.** Nothing in-editor: no `.tscn` or `.tres` was touched, so
+there is nothing to reload. One judgement call is **yours and I did not make
+it**: K21's fix lands on **what the player is issued at the start of a
+mission** — four frags in hand before they have chosen anything. I verified it
+is deliberate and consistent; whether four is the right number, and whether
+mustering with a grenade already in the pouch is the opening you want, is game
+feel and balance. **I did not play the game.** The suite now follows whatever
+`_carry_issued` does, so changing that number will not make it red.
+
+**Blocked / next.** Nothing blocked. The adjacent thing I would do next is the
+`Where the truth lives` row for `ItemDefinition.ammo_type` above, beside the
+existing `weapon_damage` row — the two are the same mistake on the same
+resource.
+
+## 2026-10-24 — H12: the minimap miss now warns, and the bake list is a SUPERSET (measured)
+
+**Landed.** Two of H12's three parts. The third — the Salient bake itself — is
+the human's and is still outstanding.
+
+- **`Campaign/minimap_data.gd` — `for_mission()` warns on a miss.** It was one
+  silent `return null`; it is now three warning paths (no `level_scene`, no
+  baked `.tres`, and a `.tres` that exists and does not load as a
+  `MinimapData`), each naming **the mission, the level, the `.tres` it wanted
+  and the `minimap.sh` argument that bakes it**. A **null mission stays silent
+  on purpose**, and that is not a loophole: `Campaign/mission_map_board.gd`
+  `_show(null)` calls this on every base refresh with nothing queued, so
+  warning there would bury the real misses under base-UI noise. The comment
+  says so.
+- **`tools/minimap_bake.gd` — the mission half of the level list is derived.**
+  New static `level_list()` = `_live_sites.mission_levels()` + `sim_levels()`
+  + a typed `const EXTRA_LEVELS`, deduplicated. Static deliberately, so a probe
+  can ask what the list is **without running a bake** — the old `var _levels`
+  could not be asked at all, because `_init` is a coroutine and
+  `minimap_bake.gd.new()` does not even parse.
+- Two new hard stops in that tool. An **empty derivation aborts** (prints
+  `FAIL`, `quit(1)`, no `MINIMAP BAKE DONE`, so `minimap.sh` never reaches
+  `--import`) instead of baking six archive maps and reporting success. And a
+  `--` filter that matches **nothing** now FAILs instead of printing
+  `MINIMAP BAKE DONE` — which is live, because the house `-- --no-save` makes
+  `only` = `"--no-save"`, the same shape that had `probe_sites_live.gd` printing
+  an empty table and `0 problem(s)`.
+
+**THE TRAP THE ROW WARNED ABOUT IS REAL, and here are the numbers.** The typed
+array was **17 level paths against 9 live mission levels**, so
+`mission_levels()` alone would have **silently stopped baking eight maps, every
+one of which has a `.tres` on disk today**: `railhead` (the base —
+`audit_levels.gd` flags a base with no minimap), `appendix/valley` (the
+Laboratory's arena, and 14 suites load it), `heliostat` (a built, unconverted
+WIP site), `appendix/arena` + `appendix/homebase` + `appendix/mutaha` (archive,
+and dropping their maps would have quietly pre-empted H17), `proving` (a **sim**
+arena, so it comes back from `sim_levels()` and is named rather than skipped),
+and the retired `hillfort`. Measured with a throwaway probe that parsed the
+level paths out of the file on disk and diffed them against the helper, not from
+reading the code.
+
+**One row deleted, and it is the only behaviour change to the list:**
+`res://maps/hillfort_level.tscn`, the **retired** level. Its live replacement
+`hillfort_wip_level` now arrives through the derivation, and a stale row naming
+a retired level inside a tool is exactly H14's family of seven. The stale
+`maps/minimaps/hillfort_level.{tres,png,png.import}` on disk were **left
+alone** — authored output, and deleting it is not mine. Net 17 → 16 rows. Every
+surviving `EXTRA_LEVELS` row now carries a comment saying who loads it.
+
+**Load-bearing comments preserved, not stripped.** The old list's note about
+causeway/georgetown/polaris needing a re-bake whenever their ops layer moves
+(because markers come from the objectives in the **scene**, not the mission —
+Causeway shipped a map with an empty marker set) was re-homed into the header
+block. So was the railhead/depot note. Added: the expected one-line
+`camera_switcher` compile error the `world.tscn` read now prints, so nobody
+hunts it.
+
+**Gates.**
+
+- `check.sh --changed`: **PASS** (49 scripts parse, 51 scenes/resources
+  consistent).
+- `smoke.sh`: **PASS**, booted clean 15s, 1 warning line. A/B'd that warning by
+  reproducing the boot with the log kept: it is "A Thread object is being
+  destroyed without its completion having been realized", pre-existing and
+  unrelated. **No minimap warning at boot** — which is the null-mission path
+  proving it stays quiet.
+- `bucket.sh campaign`: **42 suites, 3 red — `test_core_retake_live`,
+  `test_hillfort_live`, `test_site_win`** (1 PARKED: `test_tutorial`), 5m18s.
+  That is the current known baseline exactly. `grep -c "^FAIL  "` over the whole
+  log returns **1** and that is `bucket.sh`'s own summary line — not one failing
+  assertion in the bucket. All three print every check and `0 failure(s)` and
+  then die in teardown; `test_site_win` re-run alone exits **139**. H10's
+  unfixed `Env/world_objects/holdable_core.gd:842` orphan. **Not mine** and not
+  touched.
+- `bucket.sh terrain`: **PASS, 13 suites** (3 report-only, 1 PARKED:
+  `test_terrain`), 4m48s.
+- **The warning proved by firing it, not by reading it:**
+  `tools/test_minimap_objectives.gd` (campaign bucket, exit **0**) walks all 27
+  live mission rows and emits **exactly two** warnings, both Salient —
+  "mission 'salient_1_overthetop' is on level res://maps/salient_level.tscn and
+  so wants res://maps/minimaps/salient_level.tres, which is not baked …". Two
+  warnings for two missions on one unbaked level, and no false positives
+  anywhere else.
+- Gap independently confirmed by `tools/audit_levels.gd`:
+  `salient_level.tscn >> no minimap`.
+
+**Needs the human. ONE COMMAND, and it is the whole of what is left on H12:**
+
+```
+bash tools/minimap.sh salient
+```
+
+**With the Godot editor CLOSED** — it opens a window to render (the dummy
+renderer returns blank textures) and then runs `--import`, which must not run
+against an open editor. It writes `maps/minimaps/salient_level.{png,tres}`.
+Until it runs, both Salient operations still brief "NO MAP DATA"; the
+difference after today is that they say so in the log. I did **not** attempt
+it, per the brief.
+
+Also for the human:
+
+- **I touched a file outside my lane.** `tools/minimap_bake.gd` is **TERRAIN's**
+  per `docs/BOARD.md:363`. H12's row names that file as the work, so it was
+  sanctioned, but TERRAIN should know. `Campaign/minimap_data.gd` is mine.
+- **No `.tscn` or `.tres` was edited**, so nothing needs reloading in the
+  editor.
+- Everything is **uncommitted**.
+
+**Not verified.**
+
+- **The bake itself.** Nothing here proves `minimap.sh salient` produces a good
+  map — only that Salient is in the list and that the list is right. The
+  Salient's `.tres` still does not exist.
+- **The new abort branches were not fired.** Both the empty-derivation stop and
+  the no-match-filter stop are code-read only: firing either means running
+  `minimap_bake.gd`, which is headful and is the thing I was told not to run.
+  The normal path is unaffected — `minimap.sh` passes `-- ""` when given no
+  argument, so `only` is `""` and both branches are skipped.
+- **The bake list was verified as a list, not as a run.** `level_list()` was
+  called from a throwaway probe; no level was actually baked.
+- **Game feel.** Not played, not rendered. A briefing with a Salient map on it
+  has never been looked at by anybody, including me.
+- Whether `appendix/arena`, `appendix/homebase` and `appendix/mutaha` deserve
+  minimaps at all is **H17's** call; I kept them precisely so that this ticket
+  did not decide it.
+
+**Mistakes.** One, caught before it shipped: on the first pass I swapped the
+`EXTRA_LEVELS` comments for `appendix/valley_level` and `heliostat_level`,
+labelling the Laboratory's arena a WIP terrain site and vice versa. Fixed in
+place. It is the exact mistake these comments exist to prevent, which is a point
+in favour of writing them.
+
+**Blocked / next.** Nothing blocked on code. Backlog K20 is the sibling and is
+untouched: `tools/probe_core_clearance.gd` still carries a hand-kept level list
+and still names the retired Hillfort and never the live `hillfort_wip`;
+`tools/mission_ops.sh:252` and `tools/probe_footing.gd`'s fallback default do
+too. The helper exists, so each is a two-line change — and `minimap_bake.gd`
+being derived now removes the last reason to leave them.
+
+**Reported, not edited** (and still stale, carried forward from H15):
+`docs/GDD.md:48`, `docs/TESTS.md:134`, `tools/test.sh:45` and
+`docs/marketing/SHOT_BRIEF.md:121/127` all carry depot wording. COORDINATOR's,
+MARKETING's and a shared runner.
+## 2026-10-24 — H15: the depot is deleted. Four render rigs held its FLOOR, not its path
+
+**Landed.** `maps/depot_level.tscn` and `maps/minimaps/depot_level.{tres,png,png.import}`
+are **gone**. There is one base level again — `maps/railhead_level.tscn`, which
+`Env/world.tscn` has loaded all along — and H8 is settled with it.
+
+**The row's consumer list was wrong in both directions, and the errors matter.**
+
+- **`test_tutorial.gd` never read the depot.** The row said it "reads the
+  base's lessons out of it while the game reads the railhead", and the vault
+  said the same. It does not and never did: it loads `Env/world.tscn` and
+  walks whatever base that carries, so it has been on the railhead since the
+  base changed. Nothing to repoint. It is red because the live base has
+  **zero** `TutorialLabel`s — measured — not because it was pinned to a decoy.
+- **`shoot_core_skeleton.gd` is not a consumer either.** It loads
+  `proving_level`, and the only time it names the depot is in a comment
+  explaining why it refuses to use it.
+- **`block_homebase.gd` is not a consumer of the scene.** It writes
+  `maps/depot/depot_level.map`, the brush source.
+- **One consumer the row did not name:** nothing, in the end — but
+  `tools/shot_depot_door.gd` reads like one and is not. It is called "depot"
+  and loads `railhead_level`. Checked `uid://di44xwffknyvf` as well as the
+  path, and every `.tscn`'s `[connection]` lines: no scene instanced the depot.
+  The only other carriers are `Env/wor7E58.tmp`, `Env/worE2BF.tmp` and
+  `maps/depot_level.tscn~RF*.TMP` — dead Godot editor leftovers from September.
+
+**The real work was the four render rigs, and it was not a path substitution.**
+`mock_damage.gd`, `mockup_gun.gd`, `mockup_drone.gd` and `mockup_shots.gd` each
+held a typed `STAGE = Vector3(0, 1.2, 0)` — the depot's inner floor at 0.19
+plus the metre from a 2 m capsule's centre to its feet. **The railhead's floor
+at the same x/z is 1.19**, so carrying the number across would have buried
+every subject to the waist and still produced a plausible picture. All four now
+derive the stage by raycast. `mock_damage.gd` already did, which is why it
+needed one line.
+
+**And one of them had nowhere to stand.** `mockup_shots.gd`'s kit line-up is
+~25 m of row with the camera ~21 m back; the depot swallowed that indoors
+because it was an 84 m hall, and the railhead's platform is a train. The first
+repoint came back as **a black rectangle with five pale smears in it** — the
+camera inside a carriage wall — and only opening the image said so. All four
+rigs now stage on the railhead's **open upper deck at y=11**, measured clear to
+120 m in all sixteen directions and 200 m overhead.
+
+**The sun was never the problem, and the file said it was.** Measured: the
+depot, the railhead, proving and all four store-shot levels each instance the
+same `Env/world_environment.tscn` — one `WorldEnvironment`, one
+`DirectionalLight3D`, identical bearing `(-0.268, -0.500, -0.824)` at identical
+energy. `mockup_shots.gd` carried a comment asserting that none of the five
+shot levels has a light and `homebase_level` is the only map in the repo that
+does; **false on every clause**, and corrected in place. `mock_damage.gd`'s
+`LIT` bearing transferred untouched because of it.
+
+Also: `_texts()` binned from `test_tutorial.gd` (H19 left it for this ticket;
+confirmed no other caller anywhere in `tools/`). `minimap_bake.gd` lost the
+depot row **and nothing else** — H12 owns that list's redesign.
+`05_depot_manager` in `mockup_shots.gd` repointed to the railhead with
+`HoloTable` as its anchor; **the id is deliberately unchanged**, because it is
+the shot number in `SHOT_BRIEF.md` and the argument the tool takes.
+
+**`TutorialLabel.in_library` KEPT**, with a comment on the export saying it has
+no reader. Removing an `@export` empties every scene still carrying it in
+silence, and the five carriers are in `maps/appendix/homebase_level.tscn` —
+TERRAIN's, and itself queued for appendix-or-delete under H17. Dropping
+authored values out of somebody else's archive to retire a bool is the wrong
+trade; data first, field second.
+
+**Gates.** `check.sh --changed`: **PASS**. **Project-wide `check.sh`** (the
+deletion gate): **all 624 scripts parse, all 1009 scenes and resources
+consistent** — so nothing anywhere is left holding a dangling `ext_resource` or
+a stale `load_steps`. Its brush pass fails on **59 `.map` files**; **measured,
+not asserted**: the newest `.map` in the whole project is from **2026-10-17**
+and **not one was modified today**, so none of them is mine. `smoke.sh`:
+**PASS** — booted clean, 15s, 1 warning line (an engine thread-cleanup warning
+at quit, unrelated). `bucket.sh terrain`: **PASS, 13 suites** (3 report-only,
+1 PARKED: `test_terrain`), exit 0. **`bucket.sh campaign`: 42 suites (1 PARKED:
+`test_tutorial`), 3 red — `test_core_retake_live`, `test_hillfort_live`,
+`test_site_win`.** That is **three of the four the brief named, not four**:
+`test_arena_assault` is green now, which is exactly what H10's report predicts,
+since H10 fixed the test-side cause in all four and left the game-side one. And
+**there is not a single failing assertion in the entire bucket** — `grep -c
+"^FAIL  "` over the whole run returns 1, and that one is `bucket.sh`'s own
+summary line. All three print every check clean and then die in teardown with
+leaked RIDs and "133 resources still in use", which is H10's signature for the
+unfixed `holdable_core.gd:842` leak — and those three are precisely the suites
+that reach `start_held()`. Nothing of mine is in that path.
+`test_tutorial` A/B'd across my own edit: **2 FAIL / 3 PASS, exit 1, byte-for-
+byte the same verdict before and after** — it is PARKED and still red on the
+base having no lesson signs. `audit_levels.gd` re-run: the depot is gone from
+its walk and the railhead's own minimap is present, so the deletion left no gap.
+
+**Rendered and opened, not just run.** Every render below was looked at, at
+1152x648 with the eye at 1.50 m, headful, through the signal filter:
+`mock_damage` frames + kinetic (the five-state progression row), `mockup_gun`
+at 0.25 and 0.48, `mockup_drone`'s body comparison, and **every one of
+`mockup_shots`' seven passes** — kit (line-up and a portrait), props, frames,
+rank, vrank and `05_depot_manager`. The two that could actually have failed
+were checked deliberately: the **kit line-up**, which is the widest row, and
+**vrank**, which has the longest camera pullback at 9.4 m. Both clear.
+Vehicles sit exactly where they used to: `FEET` is 1.01, which is the depot's
+old 1.2 minus its 0.19 floor, so the subject-to-floor offset is unchanged and
+only the floor moved.
+
+**Needs the human.**
+- **A `.tscn` was deleted on disk while your editor is open.** Reload before
+  you touch anything in the inspector. `maps/depot_level.tscn`,
+  `maps/minimaps/depot_level.tres`, `.png` and `.png.import` are gone; all four
+  are in HEAD and recoverable.
+- **Cross-lane files I touched, all deliberate:** `tools/minimap_bake.gd` and
+  `tools/block_homebase.gd` (TERRAIN), `Env/world_objects/tutorial_label.gd`
+  (TERRAIN, comment only), and `maps/**` for the deletion itself.
+- **`docs/GDD.md:48` still says "Home base is `depot_level`".** Stale, and the
+  COORDINATOR's file — reported, not edited. `tools/test.sh:45` and
+  `docs/TESTS.md:134` carry the same stale wording; `test.sh` is shared so I
+  left it. `docs/marketing/SHOT_BRIEF.md:121/127` names `depot_level`,
+  `ChassisBays` and `DummyTerminal` for shot 5 — MARKETING's to correct.
+- **A judgement to overrule if you disagree:** I **kept**
+  `maps/depot/depot_level.map` and `tools/block_homebase.gd`. The brush
+  geometry is authored TrenchBroom content that was lost to an overwrite once
+  already, and it is TERRAIN's. Running the tool still writes a valid map; it
+  just no longer feeds a scene, and the file now says so.
+- **Dead weight I did not sweep, because the editor is open:**
+  `maps/depot_level.tscn~RF535a4d68.TMP` and `~RF5381b711.TMP` (1 MB of orphan
+  editor backups), plus `Env/wor7E58.tmp` / `Env/worE2BF.tmp`, which hold a
+  stale `world.tscn` still pointing at the depot.
+
+**NOT verified.** Whether the roof is the *right-looking* stage for a kit
+catalogue — it is brighter, clearer and unobstructed, and it is a **look**
+judgement, which is yours. I did not play the game. I did not run `bucket.sh`
+frames, kit or shell, and I did not run `test.sh`.
+
+**Blocked / next.** H12 is unblocked: `minimap_bake.gd` now has no depot row,
+and its list is ready to be derived from `world.tscn`'s missions.
+
+---
+## 2026-10-24 — H10: the clean-printing exit 139, root-caused. Three faults, one family
+
+**Landed.** The family, measured with no Master and no level: **an orphaned node
+that keeps a Resource alive segfaults Godot 4.3 at exit.** ObjectDB's end-of-run
+sweep deletes whatever is still alive *after* the servers that own its RIDs are
+gone, so a resource destructor frees an RID into a dead server. The A/B that
+pins it: an orphan `StaticBody3D` + `CollisionShape3D` holding nothing exits
+**0**; the same one holding a single `PackedScene` in its meta exits **139**; a
+bare `Node` holding that `PackedScene` exits **139**. It is not the node and not
+the physics body — it is the resource dragged past shutdown.
+
+Three distinct instances, which is why "one bug" never fitted all five suites:
+
+1. **GAME BUG — `Env/world_objects/holdable_core.gd:842`, NOT FIXED, the
+   human's call.** `var scene: PackedScene = _Tap.new().anchor_scene` stands up
+   a whole `CaptureTap` — which `extends StaticBody3D`, and whose `anchor_scene`
+   export holds `capture_anchor.tscn` — purely to read one export default, and
+   never frees it. One leak per `start_held()`. 20-line reproduction: `_Tap.new()`,
+   read `.anchor_scene`, `quit(0)` → **139**; add `.free()` → **0**. The leaked
+   nameless `StaticBody3D` and `capture_anchor.tscn`'s sub-resources are visible
+   in `test_site_win --verbose`. This accounts for `test_site_win`,
+   `test_hillfort_live` and `test_core_retake_live` — exactly the three suites
+   that call `start_held()`. One `free()` is the whole fix; I did not make it,
+   because the ticket reserves game code for the human.
+2. **TEST BUG — fixed in four suites.** Each called `cm.on_level_loaded()`
+   explicitly straight after `await world.load_next_level()`, which **already
+   calls it** (`Env/world.gd:124`). That redeployed BOTH spawners in the same
+   frame as the first deploy, and on its own exits 139. A/B: drop the call →
+   **0**; keep it 10 physics frames later → **0**; 1 or 2 frames later → still
+   **139**. Dropped from `tools/test_arena_assault.gd`,
+   `tools/test_core_retake_live.gd`, `tools/test_hillfort_live.gd` and
+   `tools/test_site_win.gd`, each with the reason in a comment.
+3. **TEST BUG — fixed in `tools/test_sim_arena.gd`.** It built a scratch
+   `sim_arena_ui` (`lab_ui`) and a row box, neither parented nor freed — fault 1's
+   shape inside a suite. Two lines free them.
+
+**`test_ammo` is NOT in this family, and that matters.** It is one honest `FAIL`
+at exit 1 — *"does NOT start with grenade … 4 in the pool with nothing fitted"* —
+and the `ObjectDB instances leaked at exit` beside it is the line every run of
+this project prints. It is a real regression wearing H10's clothes and needs a
+row of its own. This is exactly the masking the ticket was opened about.
+
+**Gates.** `check.sh --changed`: **PASS** — 48 scripts parse, 51 scenes and
+resources consistent. Worth recording that the first run of it was **FAIL on
+`tools/mockup_shots.gd`** (`Identifier "STAGE" not declared`), which was **not
+mine**: the file's mtime was later than my own first edit, so another lane was
+mid-edit in the shared checkout, and a re-run twenty minutes later was green
+without me touching it. My five files were also parse-checked individually with
+the same `--check-only` invocation `check.sh` uses — **PASS on all five** — and
+`grep -c "Ã\|â€"` is 0 on each. Suites run
+individually, after the fix: `test_arena_assault` **21/21, exit 0** (was 139),
+`test_sim_arena` **53/53, exit 0** (was 139), `test_site_win` **14/14, exit 139**,
+`test_hillfort_live` **34/34, exit 139**, `test_core_retake_live` **13/13, exit
+139** — the last three stay red until fault 1 is fixed. `test_ammo` **1 FAIL,
+exit 1**, unchanged. No bucket run, no `smoke.sh`, no `test.sh`.
+
+**Needs the human.** (a) The decision on `holdable_core.gd:842`. (b) Nothing in
+the editor: no scene, resource or inspector value was touched — the only files
+changed are the five `tools/test_*.gd`. (c) `tools/mockup_shots.gd` is red in
+`check.sh --changed` and belongs to whoever is editing it.
+
+**Blocked / next.** `probe_mission_facts.gd` still exits 139 and is a **fourth,
+separate** leak: 23 `NavAgent` and 345 `RendererSceneCull::Instance` RIDs at
+exit, and **removing its Master detach changes nothing** (A/B'd, both 139), so
+its own comment about that is correct. Not root-caused. Also unverified: the
+exact object left dangling by fault 2 — the trigger and the cure are both
+proven, the dangling object is not identified; `probe_home_base.gd` and
+`probe_order_facts.gd`, which the vault blames on Master, were not re-measured;
+and no suite outside the six named here was examined, so other tools that
+`.new()` a Node and never free it are very likely still red. Nothing about game
+feel was judged and the game was not played.
+
+**I was wrong twice, on the record.** I first blamed the leaked orphan nodes
+reported by `--verbose` (identical in the crashing and clean arms, so not the
+cause), and then `CsgBake` (an A/B with the bake suppressed still exits 139).
+Both are ruled out. The vault's claim that *any* tool booting `master.tscn`
+under `--script` exits 139 is also too broad — booting Master and quitting
+exits 0, and so do `test_analytics` and `test_endings`, which boot Master and
+load a real level. `Traps.md` and the OA9 row now say so.
+
+## 2026-10-24 — H14: seven tools stopped carrying their own list of sites
+
+**Landed.** `probe_slices.gd` and `probe_sites_live.gd` each held a typed
+nine-row table of "site → [level scene, slice node]", and the first row of both
+named `maps/hillfort_level.tscn` — the **retired** Hillfort. The campaign has
+deployed `maps/hillfort_wip_level.tscn` since the rebuild, so both probes
+printed a tidy `ok` about a level the game does not load and said nothing at all
+about the one it does.
+
+Fixed by deleting the list, not by typing a better one. A hand-kept list in a
+tool IS the defect, and the project already solved this shape once with the
+`# BUCKET:` tags the runner reads off each suite.
+
+- **New: `tools/_live_sites.gd`.** `mission_levels()` reads `Env/world.tscn`'s
+  `missions` array through the PackedScene's `SceneState` — the same route
+  `probe_level_facts.gd` uses — and returns the distinct `level_scene` of every
+  non-`sim` mission in campaign order. `sim_levels()` returns the practice track
+  separately so a caller can **name what it skipped** instead of dropping it.
+  `sites()` adds the slice, found as the first node whose script extends
+  `site_slice.gd`, read off the state where it can be and only instantiating as
+  a fallback. The **label is derived too** — `coast_slice.gd` → `coast` — so
+  every converted table prints the row names it always did, with `hillfort` now
+  reading `hillfort_wip`.
+- **Why `sim` is the dividing line.** `MissionDefinition.sim` marks the arenas
+  that are a free action and not territory (§15); they carry no slice on
+  purpose. `arena_3_firing_line` → `maps/proving_level.tscn` is the only one,
+  and every converted tool now prints `sim arenas, not sites, skipped: …`.
+- **Established before changing anything:** `world.tscn`'s `missions` is 19
+  missions over 10 distinct levels; 18 non-sim over **9**. The retired
+  `hillfort_level.tscn` is in none of them. The `Campaign/missions/` folder was
+  not used for this — it holds missions that are not in the game.
+- **Converted, all seven.** `probe_slices`, `probe_sites_live` (the row), plus
+  `probe_bunker_clear`, `probe_bunker_sites` and `scan_bunker_spot`, which
+  carried the identical stale table, and `probe_standing_circle` and
+  `shot_bunkers`, which carried **both** Hillforts and so spent a tenth of
+  their output on the dead one.
+- **A level with no slice still FAILS.** Deriving the slice must not turn
+  "somebody regenerated this level from a template and it lost its slice node"
+  into "not a site" — that is the exact failure `probe_sites_live` exists for.
+  `_live_sites` hands the row over with an empty node and script, and every
+  caller fails it loudly.
+- **One extra guard.** `probe_standing_circle` takes its user args as site
+  filters, so the house `-- --no-save` matched nothing and it printed an empty
+  table and `0 circle(s)` — a silent pass. It now fails on a filter that
+  matches nothing, and its header says not to pass that flag.
+
+**What the probes said, before and after.** `probe_slices`, row one:
+`ok hillfort 1 core(s), bunker 'Hillfort_Postern', 3 entr(ies)` →
+`ok hillfort_wip 6 core(s), bunker 'HFW_Bunker', 3 entr(ies)`. `probe_sites_live`,
+row one: `hillfort yes 1 yes yes ok` → `hillfort_wip yes 6 yes yes ok`. The
+other eight rows are unchanged apart from order, which is now campaign order.
+Both are 0 problems / exit 0 before and after — **which is the point: they were
+green on the wrong level.**
+
+**Gates.** `check.sh --changed`: **PASS** (61 scripts, 51 scenes). `smoke.sh`:
+**PASS**, booted clean 15 s, 1 warning. `bucket.sh terrain`: **PASS**, 13
+suite(s) of the 14 listed (3 report-only, 1 PARKED — `test_terrain`), 4m52s.
+Probes run headless, muted, and none of them touches `CampaignState` or
+`SaveSlots` — `campaign.json` was checked by mtime before and after and is
+untouched. Ran and read: `probe_slices` (0 problems), `probe_sites_live` (0),
+`probe_bunker_clear` (0), `probe_bunker_sites` (0), `scan_bunker_spot`
+(`hillfort_wip`, and a bogus label to see the error path list the derived
+names), `probe_standing_circle` (**2 failures, pre-existing — see below**).
+
+**One transient red worth recording.** The first `check.sh --changed` of the
+session FAILED with `Identifier "count" not declared` in `probe_save_facts.gd`,
+`probe_squad_facts.gd` and `test_line_specs.gd`. That is H9's migration mid-edit
+in the shared checkout, not this work: the next run passed, and the script count
+moved 45 → 49 → 50 → 60 → 61 across runs as the other lane committed. If a check
+here goes red in files you have not touched, run it again before believing it.
+
+**Found in passing, proven not mine.** `probe_standing_circle` is **red on
+Georgetown**: `lockside RelayLock/Collar` and `…/Circle` report `no ground under
+it at all`. Proven pre-existing by **A/B** — `git show HEAD:…` into a throwaway
+file, run filtered to `lockside`, gives the identical two failures — so the
+probe was already red with the same finding and the conversion did not cause it.
+It is a live mission level and a real core, and it is in no backlog row. Worth
+someone's afternoon.
+
+**Deliberately left typed, and why.** `minimap_bake.gd`'s list is a *superset* —
+both bases, the appendix, the lab's levels — so `mission_levels()` alone would
+shrink it; backlog **H12** already owns deriving it, and the helper is now there
+for whoever takes it. `probe_core_clearance.gd`'s list is "scenes holding core
+prefabs", four of them `gameplay/*_ops.tscn` wrappers rather than levels, so it
+is a different question — **but it does still name the retired Hillfort and
+never the live one, which is a real stale row.** Also still typed:
+`mission_ops.sh:252` and `probe_footing.gd`'s fallback default. The
+hillfort-specific build/nav/paint/shot tools name the retired level because it
+is their *subject*; those are correct as they stand.
+
+**Not verified.** `shot_bunkers.gd` is converted but **not run** — it is a
+headful camera that opens a window and walks nine levels, and nobody asked for
+the pictures. It parses, and it uses the same two lines as the six probes that
+were run, but the renders themselves are unseen. `probe_bunker_sites` prints
+core counts that look doubled (`hillfort_wip` 13 against the level's 6) because
+it adds a *second* slice to a level that already carries one — that is its
+pre-existing design, unchanged here and unexamined. Nothing visual was rendered,
+because nothing visual changed: this is tool plumbing only. No game code, no
+scene, no level, no `.tres` was touched, so there is no game-feel or balance
+claim here at all.
+
+**Needs the human.** Nothing in-editor — no `.tscn`, `.tres` or game script was
+touched. Two calls are yours: whether the Georgetown `RelayLock` circle is worth
+a row of its own, and whether `probe_core_clearance.gd`'s stale Hillfort entry
+should be folded into H12 or handled on its own.
+
+**Shared files.** None of `Env/world.tscn`, `project.godot`, `CLAUDE.md`,
+`check.sh`, `test.sh` or `smoke.sh` was modified — `world.tscn` is only *read*.
+`tools/shot_bunkers.gd` and `tools/scan_bunker_spot.gd` are bunker-siting tools
+that TERRAIN also uses; flagging them explicitly. Everything is left
+uncommitted on `agent/cleanup-appx-and-catalogue`.
+
+**Blocked / next.** Nothing blocked. The obvious next pass is H12, which is now
+a two-line change on top of `_live_sites.gd` plus `base_level` and the lab
+plans.
+
+---
+## 2026-10-24 — H9: the legacy `count` + `chassis` squad form is gone, data first
+
+**Landed.** `EnemySquadSpec` had two ways to describe a squad. Now it has one.
+
+**The enumeration, which is item one because the hazard is an empty map.**
+Godot drops unrecognised properties in silence when loading a resource, so
+removing the fields before migrating the data would have emptied every mission
+still on the old form with no error and no warning. So: enumerate, migrate,
+prove, *then* remove, prove again.
+
+- **41 `.tres` files set `count`** (38 missions + 3 loose specs in
+  `Campaign/squad_specs/`). `Campaign/items & catalogue/test_item_catalogue.tres`
+  also matches a grep for `^chassis =` and is **not** one of them — that is
+  `ItemCatalogue.chassis`, an array of frames. Left alone.
+- **626 spec sightings in missions, of which 43 were legacy-form** (empty
+  `roster`, `count > 0`, `chassis` set). They are **39 distinct authored
+  specs**: 18 sub-resources each in `Campaign/missions/appendix/mission_valley.tres`
+  and `…/mission_valley_basin.tres` (those two files are identical but for uid,
+  level, id and display name), plus the 3 loose specs — two of which each
+  mission ext_resources, which is why the sighting count is 43 and not 39.
+- **The other 583 sightings were already roster-form and still carried a stale
+  `count`:** 564 at `count = 0` and **22 at `count = 3`, all in
+  `mission_hillfort_1_relay.tres`** — a roster of three beside a count of
+  three that nothing read.
+- **Live / not live, off `Env/world.tscn`'s `missions` array (19 missions), not
+  the folder.** **None of the 39 legacy specs is in a live mission.** Both
+  valley files are referenced by nothing at all — no mission list, no suite, no
+  tool, no uid — and `squadspec_3 shotguns.tres` is referenced by nothing
+  either, not even by the two valley missions that use the other two loose
+  specs. Second routes checked: `.gd`, `.tscn`, `.tres`, bare uid search, and
+  the eleven tools that walk `Campaign/missions` by `DirAccess` (only
+  `probe_level_facts.gd` descends into `appendix/`). `.godot/exported/*.res`
+  holds stale build copies of all of them; that is cache, not a route.
+
+**The migration.** All 39 to `roster`, mapping each PackedScene to the one
+`ChassisDefinition` that names it: `soldier_shotgun.tscn` → `chassis_shotgunner`,
+`enemy_nest-chaser.tscn` → `chassis_hopper`, `enemy_chaser.tscn` →
+`chassis_chaser`, `enemy_helicopter.tscn` → `chassis_helicopter`,
+`soldier_chassis.tscn` → `chassis_soldier`. Then `count` and `chassis` deleted
+from `Campaign/enemy_squad_spec.gd`, and the **586 stale `count` lines stripped
+from 35 mission `.tres`** so no file names a property that no longer exists.
+
+**How the force was proved preserved — not asserted, diffed.** New
+`tools/probe_enemy_force.gd` prints every spec in the project body by body:
+callsign, posture, body count, and the **sorted scene files of the frames**,
+across both mission folders and the loose specs. It reads both forms through
+`"count" in spec` rather than `spec.count`, so the same probe compiles and runs
+on either side of the change — which is the whole point, since a probe that
+only builds against one side cannot compare the two. Three runs:
+
+| run | specs | bodies | legacy-form |
+|---|---|---|---|
+| before anything | 626 | **2787** | 43 |
+| after migrating | 626 | **2787** | 0 |
+| after deleting the fields | 626 | **2787** | 0 |
+
+**The before/after reports are byte-identical apart from one line** — the
+legacy counter going 43 → 0. Every callsign, posture, per-spec count and frame
+list is unchanged, and the third run emits no "empty roster" warning, which is
+what an emptied mission would have looked like. A matching total was never
+going to be enough on its own: the two forms name different things (a
+PackedScene vs a `ChassisDefinition`), so the identities had to match too.
+
+**Consumers fixed, found by grepping every file that mentions
+`EnemySquadSpec`** (27 of them, `.claude/` excluded): `force_generator.gd` ×2
+(the weight fallback now reads `body_count()`; the `made.count = roster.size()`
+write is gone), `enemy_force_spawner.gd` ×2 (the skip warning, and
+`_bodies_of`'s legacy branch), `tools/test_force_generation.gd`,
+`tools/build_salient_mission.gd` ×2, `tools/test_wake.gd`. `body_count()` is
+**kept** — it is one line over `roster` now, but eleven call sites ask it and
+it is the name that carries the lesson about the skip that once threw away
+45 hostiles in Valley Siege.
+
+**One suite was red on correct behaviour and was repurposed, not deleted.**
+`test_force_generation._counts_agree()` asserted `s.count == s.roster.size()`
+— it existed to catch the stale field. It now asserts `body_count() ==
+roster.size()`, so the check stays real instead of vanishing with the field.
+19 checks, 0 failures, including that line.
+
+**Docs corrected.** `docs/CONTENT_RULES.md` §6.5 rewritten (and it now carries
+the two conversion traps below), a dated correction note added to
+`docs/GAMEPLAN.md` §8.3, and the stale "every shipped spec still carries a
+count of 3" comments in `Env/world_objects/ops_table.gd`,
+`tools/measure_resistance.gd` and `Env/world_objects/enemy_commander.gd` made
+true again without stripping why they are there. Vault: `Reference/Enemies.md`,
+`Where the truth lives.md`, `Tools.md`, `Backlog` H9 → DONE, new H21.
+
+**Two things measured that a body count cannot see, and they are judgements.**
+A `ChassisDefinition`'s `base_health` / `base_accuracy` / `base_sensor_range`
+**override** the scene's authored values (`_apply_frame`, anything above zero
+wins), and the legacy path deliberately wrapped the PackedScene in a definition
+with all three zeroed so the scene won. So a faithful-looking migration still
+moves stats:
+
+- hull agrees everywhere (60 / 45 / 60 / 100 against the scenes' own), **except
+  `squadspec_3 shotguns.tres`**, where `soldier_chassis.tscn` authors 100 and
+  `chassis_soldier` says 60 — and that file is referenced by nothing
+- accuracy and sensor range move on the chaser, hopper and gunship specs:
+  `chassis_chaser` 0.6 and `chassis_hopper` 0.8 against the script's 0.75
+  default, and sensor 55 / 60 / 60 m against 45
+- `chassis_soldier` has `starting_weapon_id = &"m4"` and `soldier_chassis.tscn`
+  bakes no `AIWeapon`, so that one spec's bodies would now be **issued a gun
+  they used to spawn without**
+
+**I took the real definitions anyway**, because that is what all 586 other
+specs in the game use and because all 39 affected specs are in content nothing
+loads. If any of those three files is ever brought back into the campaign,
+those are the numbers to look at. Recorded in `Reference/Enemies.md`.
+
+**Gates.** `check.sh --changed`: **PASS** (59 scripts, 51 scenes/resources —
+most are other lanes' uncommitted files in this shared checkout).
+`smoke.sh`: **PASS**, booted clean, 15s, 1 warning line. `bucket.sh frames`:
+**PASS — 29 suites**, 8m0s, slowest `test_mortar` at 61s. `bucket.sh campaign`:
+**FAIL — 42 suites, 1 PARKED (`test_tutorial`), 5 red:** `test_arena_assault`,
+`test_core_retake_live`, `test_hillfort_live`, `test_sim_arena`,
+`test_site_win`. Zero `FAIL` lines in any of them. Inside the green ones:
+`test_force_generation` 19/19 (including "ACT 1 IS THE AUTHORED NUMBER — 82 vs
+measured 82", i.e. the basin's supply total did not move),
+`test_mission_objectives` 107/107, `test_mission_tags` 77/77,
+`test_site_operation` 17/17. In `frames`, `test_wake` — whose spec-building
+code I edited — 19/19.
+
+**The fifth red was A/B'd rather than assumed.** My brief named H10's four and
+`test_sim_arena` is not one of them, so: run alone → **53/53 PASS,
+`0 failure(s)`, exit 139.** Then the six scripts this ticket changed restored
+from `HEAD` into the working tree, the same suite run against **pre-H9 code with
+post-H9 data**, and restored (all six `cmp`-verified identical afterwards) →
+**53/53 PASS, `0 failure(s)`, exit 139.** Identical. It is H10's family, and
+**H10's row understates the set: in `campaign` it is five, not four.** Three
+earlier entries in this file record the same five from sessions that changed no
+game code. I have not edited H10's row — a sibling is on that ticket — so it is
+flagged here and in the handover instead.
+
+**Did NOT verify.** **Game feel and balance: not played, not judged** — this is
+a data-shape change in content nothing loads, but nobody has walked any valley
+to see it. **Did not deploy a mission and count bodies on the ground**;
+`spawn_check.gd` and `measure_resistance.gd` were not run — the probe compares
+authored forces, not landed ones, and the spawner path for roster specs is
+unchanged code. Nothing visual changed, so **no render was taken**. The
+`base_*` override deltas above are **read off the resources, not observed in a
+fight**. `bucket.sh kit`, `terrain` and `shell` not run — nothing they cover
+changed.
+
+**Needs the human.**
+1. **`.tres` files were edited on disk — reload before touching the inspector.**
+   40 of them: the 5 migrated (`appendix/mission_valley.tres`,
+   `appendix/mission_valley_basin.tres`, the 3 in `Campaign/squad_specs/`) and
+   the 35 stripped of their stale `count` lines. `Env/world.tscn` was **not**
+   touched.
+2. **H21, and it is deliberate:** `EnemyForceSpawner.default_chassis` is now
+   read by nothing — its only reader was the legacy fallback — but
+   `Env/world.tscn:111` still assigns it. I left the export declared and
+   commented DEAD rather than edit a shared scene the editor has open; that is
+   exactly the edit H9 exists to warn about, and it wants its own pass.
+   `SquadSpawner.default_chassis` is a different field and is **live**.
+3. **Three files are referenced by nothing and are now migrated but still
+   dead:** `appendix/mission_valley.tres`, `appendix/mission_valley_basin.tres`
+   and `Campaign/squad_specs/squadspec_3 shotguns.tres`. Deleting authored
+   content is your call, not mine — say the word and they go. The third is
+   also misnamed: "3 shotguns", pointing at `soldier_chassis.tscn`.
+
+**Files outside my lane or shared.** `Env/world_objects/ops_table.gd` and
+`Env/world_objects/enemy_commander.gd` (comment-only), `docs/CONTENT_RULES.md`,
+`docs/GAMEPLAN.md`, and three `tools/` runners —
+`tools/measure_resistance.gd` (comment-only),
+`tools/build_salient_mission.gd`, `tools/test_wake.gd`,
+`tools/test_force_generation.gd`. New file: `tools/probe_enemy_force.gd`.
+No commit, no branch, no `git add`.
+
+**My own mistakes.** First draft of this entry claimed `test_force_generation`
+30/30 and `test_site_operation` 19/19 from eyeballing the printed blocks. Both
+wrong — 19 and 17 when counted off the log. Corrected before posting, and worth
+recording because an invented count is the exact failure
+`docs/TESTING.md` asks for named counts to prevent.
+
+**Blocked / next.** Nothing blocked. H21 is the loose end, and H10's row wants
+`test_sim_arena` added to it.
+
+---
+## 2026-10-24 — H19: the two deprecated HUD screens are gone, consumers first
+
+**Landed.** Three files deleted — `Character/hud/debug_overlay.gd` (245 lines),
+`Character/hud/debug_overlay.tscn` and `Character/hud/tutorial_library.gd`
+(229 lines) — and every consumer removed *before* them, in that order.
+
+**The consumer list, from a repo-wide grep of `DebugOverlay`, `TutorialLibrary`,
+`tutorial_library`, `_open_tutorials`, `debug_overlay`, excluding `.claude/`:**
+
+- `DebugOverlay` had **exactly one** consumer in the whole repo: its own
+  `debug_overlay.tscn`, which names the script as an `ext_resource`. Nothing
+  else — no scene, no `[connection]`, no `.tres`, no `.map`, no FGD, no
+  autoload, no input-map action for the `~` toggle its header advertises, and
+  no reference to its `uid://cgixlpeuaxv87`. The scene went with the script, so
+  the `load_steps` arithmetic never came up.
+- `TutorialLibrary` had **two**: `Managers/master.gd` (**a shared/core file** —
+  flagged) and `tools/test_tutorial.gd:174`. In `master.gd` that is the
+  `_TutorialLibrary` preload, the `_tutorials` field, `_open_tutorials()`,
+  `_close_tutorials()`, the `_menu == "tutorials"` ESC branch in `_input`, and
+  `"tutorials"` in the `_menu` doc comment. A tombstone comment replaces the
+  section, because the next person's question is "why is there no tutorials
+  screen" and the answer is "nothing ever opened it".
+- In `test_tutorial.gd`, the four library checks at `:173`–`:189`.
+
+**Two routes the row did not mention.** `Character/hud/lab_results.gd:11`
+described itself as "same frame as the options and tutorials screens" — a
+comment pointing at a file that no longer exists, so it is corrected. And
+**this file, at `:1708`**, carried an open family-sweep finding against
+`tutorial_library.gd:collect()` — a lesson sign authored as an instance of
+`tutorial_label.tscn` would vanish from the library silently. That latent bug
+is closed by deletion; the sibling finding about `tools/audit_audio.gd` and
+inherited weapon scenes is untouched and still open.
+
+**Kept deliberately.** `TutorialLabel.in_library` stands, per the row — H8/H15
+is retiring the depot's signs and that is their call. **Counted before leaving
+it: one file carries it, `maps/appendix/homebase_level.tscn`, 5 nodes, all
+`in_library = false`.** The export now means nothing, and removing it would
+have silently emptied those 5 entries. Also kept: `_texts()` in
+`test_tutorial.gd`, now called by nothing since the library block was its only
+caller — left in place because H15 repoints the rest of that suite and the
+brief said not to touch it beyond the library half. The `# PARKED:` reason, the
+header summary and one `printerr` string in that file lost the word "library",
+which is three words of comment, not a repoint.
+
+**No surviving file loses a property.** The only `@export`s removed anywhere
+were `player`, `squads` and `auto_discover_squads` on `debug_overlay.gd`, whose
+sole carrier was the `.tscn` deleted alongside it. `_TutorialLibrary` was a
+`const` and `_tutorials` a private `var`, neither serialised, so `master.tscn`
+is untouched. Verified by diff: no `-` line in any surviving script is an
+`@export`.
+
+**Gates.**
+
+- `check.sh --changed`: **PASS** — 58 scripts parse, 51 scenes and resources
+  consistent. (That set is larger than my change: `--changed` sweeps the whole
+  dirty working tree, so it is also green over the sibling lanes' in-flight
+  files.)
+- `bucket.sh shell`: **PASS, 4 suite(s)** (`test_factions`, `test_pause_hold`,
+  `test_settings`, `test_splash_skip`), 0m25s. **Baselined before the change at
+  PASS 4/4 as well**, so the pause menu is green on both sides of it —
+  `test_settings`' "ESC returns to the pause menu" is the check that covers the
+  ESC branch I removed.
+- `smoke.sh`: **PASS** — booted clean headless for 15s, 1 warning line.
+  `master.gd` loads at startup, so this one was earned.
+- `test_tutorial` (bucket `campaign`, and `# PARKED:`): **still red, 2 FAILs,
+  exit 1 — pre-existing, and A/B'd rather than asserted.** The two failures are
+  "the homebase signs are toasts (0 sign(s))" and "(setup) found the weapon
+  sign", both upstream of anything I touched; the suite then takes its bail-out
+  and the library block was unreachable even before the deletion. Because the
+  original file preloads a now-deleted script, a straight revert cannot run, so
+  the A/B was done against **pristine copies of both files restored from HEAD
+  under temporary names** (`tutorial_library_h19ab.gd`,
+  `test_tutorial_h19ab.gd`, preload repointed, both since deleted — no live
+  file was swapped). Identical output: same 2 FAILs, same 3 PASSes, exit 1.
+- Full `check.sh`, project-wide — **the gate that actually matters for a
+  deletion, and it is clean: all 643 scripts parse, all 1011 scenes and
+  resources consistent.** That is the real proof that nothing anywhere was left
+  holding a dangling `ext_resource` or a `load_steps` that no longer matches
+  its count. Its third pass, overlapping brushes, **fails on `.map` files
+  only** (`arena`, `autosave/arena.2–4`, `autosave/civil-unrest-4.1/.10/.11`,
+  `autosave/oyster-bay.1–3`, and more in the earlier run: `solar/*`,
+  `tower.map`, `depot_level`, `homebase_level`, `proving_level.1`, `test-02`,
+  `testmap2`). **Not mine, and measured rather than assumed:** my change
+  contains no `.map` at all (`git diff --name-only HEAD -- '*.map'` is empty)
+  and every failing map is byte-identical to HEAD, so those failures live in
+  committed TERRAIN content. I did not A/B the brush pass pre-change —
+  `--changed` is the contract and it reports "no maps to check".
+  *Process note:* I stopped that run once it was into the brush pass rather
+  than leave a Godot pair grinding unattended beside your open editor; it had
+  already flushed both sections above, and its child exited on its own (Godot
+  process count 11 → 9). The 9 remaining are your editor and the sibling lanes'
+  runs — **I killed none of them**, deliberately.
+
+**Needs the human.**
+
+- **The Godot editor is open and three files were deleted under it.** Its
+  `.godot/global_script_class_cache.cfg` still registers `DebugOverlay` and
+  `filesystem_cache8` still lists all three. That is stale cache, not a
+  reference — it clears on the editor's next scan — but expect the editor to
+  grumble once, and if `master.tscn` or `world.tscn` is open, **reload before
+  saving** so it does not write back a stale copy of `master.gd`.
+- **`master.gd` is a shared/core file.** It is the only file outside the HUD
+  folder that changed. Worth a read of the diff: 45 lines out, 25 in, all of it
+  the tutorials path plus one comment.
+- **Not rendered, and nothing to render.** The deleted screens were reachable
+  by nothing, so no pixel changes. The one screen the change touches is the
+  pause menu, and `_show_pause_menu`'s item list was not edited — there is no
+  `shot_` tool for the pause menu, and writing one was out of scope. If you
+  want eyes on it, ESC in game is faster than a new tool.
+- **Game feel: not assessed.** I did not play it, and this change should have
+  no feel at all — but that is a prediction, not a verdict.
+
+**Blocked / next.** Nothing blocked. **H15 is now unblocked and smaller than
+its row assumes** — the library half of `test_tutorial.gd` is already gone, so
+H15 inherits only the depot-facing half. H8/H15 should decide
+`TutorialLabel.in_library`'s fate; the count it needs is in this entry. Vault
+updated: `Backlog` H19 → DONE, `Decisions` line 25 given an "Executed
+2026-10-24" clause, `Reference/HUD and barks` tutorial-channel and
+questionable-content entries moved from DEPRECATED to DELETED, and **`Where the
+truth lives`' "what does a level's tutorial teach" row rewritten** — its real
+answer was a file this ticket deleted, which is the one row that would have
+actively misled the next session.
+
+**I was wrong about one thing, and corrected it.** The first tombstone comments
+I wrote dated the deletion 2026-10-23, which is the date the *decision* was
+taken; the deletion is 2026-10-24. Fixed in all three files before reporting.
+
+
+---
+## 2026-10-24 — H7 and H5: a decoy catalogue deleted, and test.sh can no longer hide a failure
+
+**Landed.**
+
+**H7.** `Campaign/item_catalogue.tres` deleted. **It was a SEVEN-item stub**
+(m4, shotgun, repair_kit, frag, optics, repair_tool, scanner, plus one
+chassis) — the backlog row said nine, `build_chassis_marks.gd`'s comment said
+nine, `test_pricing.gd`'s said ten, and the vault said nine. **Four records of
+a decoy's size, all wrong**, which is a fair description of what a decoy does
+to everything that mentions it. Nothing loaded it: those two comments were the
+only references in the repo, and both are rewritten with real figures — the
+live catalogue is **32 items and 12 chassis**, not the 34 one of them claimed.
+
+**H5.** Ported from `bucket.sh` into `tools/test.sh`:
+`TIMEOUT="${SUITE_TIMEOUT:-240}"`, the `timeout` wrapper, a 124 branch that
+counts a timeout as a failure, and `TIMED_OUT_NAMES` in the verdict. The
+comment carries the reason a timeout here is not just slowness: **`quit()` is
+the last line of a suite's `_init()`**, so a runtime error aborts before it and
+the SceneTree spins forever — which is how `test_line_specs` timed out at 240s
+this morning instead of printing a FAIL.
+
+**H5 grew a second half, found by using it.** Asked "which fast-tier suites
+failed?", `test.sh` printed *"SUITE FAILURES — see above"* over a **1.7 MB
+log** and named nothing. And the common failure here **exits 139 with no FAIL
+line at all** — every assertion clean, then a segfault in cleanup — so there
+was nothing to grep for either. **A failure you cannot locate is the one that
+gets called pre-existing without being checked**, which is the mistake this
+lane nearly made this morning. Added `FAILED_NAMES`, with the exit code per
+suite.
+
+**Gates.** `bash -n tools/test.sh`: OK. `check.sh --changed`: **PASS**, 17
+scripts, 11 scenes/resources.
+
+**The timeout was proven by firing it, not by seeing green.** `SUITE_TIMEOUT=3`
+capped 38 suites and exited 1; `=6` capped 27 and named every one; the default
+cap produced **no** spurious timeout across 66 suites.
+
+**`bash tools/test.sh --fast`, default cap, 66 suites run (40 skipped, 2
+parked):** `failed: test_arena_assault(139) test_core_retake_live(139)
+test_hillfort_live(139) test_site_win(139)`. **Four suites, all SIGSEGV, and
+nothing else.** Re-run individually: each exits 139 with **zero** FAIL lines.
+Confirmed across the whole 1.67 MB capture that **no suite printed a single
+assertion failure** — so nothing is logically broken, including the five frames
+whose mark ladders this lane rewrote earlier today.
+
+**H10 rewritten with that evidence.** It is at least 6 suites across 2 buckets
+(the four above, `test_ammo` at exit 1 with leaked ObjectDB instances, and
+`probe_mission_facts.gd` after a full Master deploy), it is one teardown or a
+small family rather than six bugs, and all four confirmed ones deploy and tear
+down a real level. That is where to start.
+
+**Needs the human.** Nothing in-editor. `tools/test.sh` is a **shared file** —
+flagging it explicitly.
+
+**Two items of the four asked for were already done, and one of them was my
+own error.** H11 had been fixed by another lane the previous day, and their
+wording is more accurate than the finding that opened the row: I had concluded
+"no shipped site uses FuncGodot" from grepping `_level.tscn` only. **Every
+site's `_art.tscn` is full of FuncGodot brushes** — 8 to 515 references each.
+Same mistake as three others this week: grep the file whose NAME matches the
+concept, miss the one next door. The D2 chat had already caught it and
+corrected `Traps` and `Where the truth lives` with better evidence than I had.
+
+H8 was already resolved into H15 on 2026-10-23, and **H15 already listed the
+eight depot consumers this lane then rediscovered from scratch** — a stale
+read of a backlog that had grown by roughly twenty rows. H15 is a session of
+its own: repoint `test_tutorial` off the decoy it currently tests, then eight
+tools, then retire the level and its minimap, partly behind H19.
+
+**Not verified.** Nothing played, nothing rendered; neither item touches
+anything on screen. No claim about feel.
+
+**Blocked / next.** H15 is the outstanding half of what was asked. H10 is now
+well enough characterised to be worth a session.
+
+## 2026-10-24 — RB2/RB3/RB4 as one deletion pass: bosses, the dead templates, and the robot FGD
+
+**Landed.** Nine files deleted, four edited. Bosses are cut, the two bare-`Enemy`
+scenes are gone, and robots no longer go through FuncGodot's FGD at all.
+
+Deleted: `Character/characters/ai/miniboss.gd`, `boss_guardian.tscn`,
+`enemy_template.tscn`, `enemy_shotgun.tscn`, and the entity resources
+`fgd_boss_guardian.tres`, `fgd_enemy_shotgun.tres`, `fgd_enemy_chaser.tres`,
+`fgd_enemy_leaper.tres`, `fgd_world_bonfire.tres`.
+
+Edited: `addons/func_godot/fgd/func_godot_fgd.tres` and
+`trenchbroom/robot_fgd.tres` (both stripped to `fgd_world_ceiling-lamp` only),
+`maps/appendix/civil-unrest_level.tscn`, `Campaign/kill_kinds.gd` (comment
+only), `tools/probe_body_facts.gd` (a print string that named `Boss`).
+
+**THE BACKLOG ROW FOR RB4 WAS WRONG, AND WRONG IN THE PROJECT'S OWN SIGNATURE
+WAY.** It said four entity resources were "outside the FGD", read off
+`trenchbroom/robot_fgd.tres`, which lists two. **That file has
+`base_fgd_files = [func_godot_fgd.tres]`, and the base listed all six** — so
+TrenchBroom could reach every one of them through the inheritance chain. The
+finding that warned about one-file inferences was itself a one-file inference.
+
+RB4 also said to delete `robot_fgd.tres`. **`trenchbroom/trenchbroom_config.tres`
+names it as `fgd_file`**, so deleting it would have broken map authoring for
+the arena and the proving ground, which are live. It was kept.
+
+**The test that actually settled liveness was the one neither pass had run:
+which `.map` names the classname.** Only `maps/civil-unrest-4.map`, for
+`boss_guardian`. Nothing placed the other five — `fgd_enemy_leaper` and
+`fgd_world_ceiling-lamp` included, which were the two "registered" ones.
+
+**Three judgement calls, all flagged rather than taken quietly.**
+
+1. **`kill_kinds.gd`'s `enemy_shotgun` and `boss_guardian` strings STAY**, and
+   now carry a comment saying why. On inspection they are genuinely dead
+   lookups — a deleted scene can never produce a kill, and `guardian` was never
+   a kind with a chassis. But this table is read when a debrief resolves a
+   kill, career tallies in `campaign.json` may carry what they resolved to, and
+   two dead dictionary entries cost nothing against orphaning a player's stats.
+2. **`fgd_world_ceiling-lamp` survives.** It is not a robot, and no decision
+   about robots reaches a lamp.
+3. **Surgery on an archive level rather than deleting it.**
+   `maps/appendix/civil-unrest_level.tscn` instanced all three doomed scenes,
+   so six nodes and three `ext_resource` lines came out and `Squad2`'s
+   `squad_members` was repaired (it named two of the removed nodes). **This is
+   a cross-lane edit — `maps/` is TERRAIN's.** Chosen over deleting the level
+   because deleting authored content nobody asked about is wider than the
+   ticket.
+
+**Gates.** `check.sh --changed`: **PASS** (15 scripts, 11 scenes/resources) —
+**after it caught me**: removing three `ext_resource` lines left
+`load_steps=360` where 357 was expected. `smoke.sh`: **PASS**, booted clean,
+15s, 1 warning. `bucket.sh frames`: **PASS, 29 suites**. `bucket.sh terrain`:
+**PASS, 13 suites** (3 report-only, 1 PARKED). `probe_body_facts.gd`: exit 0,
+and **orphan body scenes fell from 5 to 2** — the survivors being
+`capture_anchor.tscn` and `tick.tscn`, both of which have live second routes.
+`bucket.sh campaign` and `kit` **not re-run** after this pass; they were green
+to their known-red baseline earlier the same day and nothing here touches
+campaign state or items.
+
+**Needs the human.** **`maps/civil-unrest-4.map` still contains a
+`boss_guardian` entity**, so `civil-unrest_level.tscn` now diverges from its
+own source and regenerating it would fail on a deleted entity. It is an
+archive map nothing builds from, and the `.map` is TERRAIN's, so it was left
+alone — but it is real residue and somebody should decide whether the map goes
+too. Also: `CLAUDE.md` is untouched and still describes levels as TrenchBroom
+brush geometry, which is [[Backlog]] H11.
+
+**Not verified.** Nothing was played, nothing was rendered — this pass removed
+only unreachable content, so there was nothing to look at. No statement is made
+about feel.
+
+**Blocked / next.** H7, H5 and H11 are the cheapest remaining hygiene items and
+were checked rather than assumed: **nothing loads the 9-item stub catalogue**
+(only two comments mention it), `bucket.sh` already holds the entire per-suite
+timeout that `test.sh` lacks and its own comment at line 36 names the gap, and
+H11 is one paragraph. A1 is queued in the vault's `## Now`.
+
+## 2026-10-24 — the vehicle mark ladders redesigned, and the suite that hung instead of failing
+
+**Landed.** Six chassis ladders rewritten to the human's spec, in
+`Campaign/chassis/`: every turret line now starts on the **Ancient Machine
+Gun** and earns its real gun later.
+
+| line | Mk 0 | Mk 1 | Mk 2 |
+|---|---|---|---|
+| Walker | ancient mg | autocannon | autocannon + heavy_mg |
+| Bulwark | ancient mg | heavy_mg | heavy_mg |
+| Kite | ancient mg | heavy_mg | heavy_mg |
+| Rover | ancient mg | ancient mg | heavy_mg |
+| Picket | rocket_pods | rocket_pods | rocket_pods |
+| Lance | light_cannon | light_cannon | light_cannon |
+
+Mk 0 is `starting_weapon_id` on the `[resource]` block; Mk 1 and Mk 2 are the
+two `ChassisMark` sub-resources, in declaration order.
+
+**Picket and Lance keeping one gun the whole way is deliberate** — they buy
+hull, sensors and accuracy. Recorded in the vault's `Decisions` so nobody
+"upgrades" them back.
+
+**The whitelists went backwards, on purpose.** Five of the six widenings from
+the SQ1 fix earlier the same day became unnecessary — Bulwark and Lance no
+longer touch the autocannon, nobody but Lance needs the light cannon, Kite
+does not want rocket pods, Picket wants neither mortar nor cluster launcher. I
+**reverted all five** rather than leave unused permissions in the data looking
+like intent, which also undid the one narrowing I was uneasy about
+(`cluster_launcher` is back to an empty whitelist). Net change across both
+passes: **`heavy_mg` gains `kite`, `machine_gun` gains `bulwark`.** Nothing
+else moved.
+
+**A suite I broke, and the trap underneath it.** `test_line_specs` read
+`mark_spec(1).weapon_ids[1]` — valid while Walker Mk 1 filled both mounts,
+out of bounds the moment Mk 1 became a single autocannon. **It did not fail;
+it hung, and the bucket killed it at 240s.** `quit()` is the last line of
+`_init()`, so an error that aborts the function never reaches it and the
+SceneTree spins forever. Repointed the check at Mk 2 — now the tier that fills
+the second mount, so the suite's intent is unchanged — and made the expected
+value compute defensively, so a future ladder change turns it **red instead of
+silent**. The trap is in the vault's `Traps`; it is also the argument for H5.
+
+**Gates.** `check.sh --changed`: **PASS**. `probe_chassis_marks.gd`:
+**0 problems, exit 0** — and it was the `takes()` assertion added in the SQ1
+pass that proved all six ladders legal, including `machine_gun` on the Bulwark
+turret. `probe_squad_facts.gd` §8: **0 refused combinations**.
+`test_line_specs` alone: **44 PASS, exit 0**. `bucket.sh kit`: **16 suites, 1
+failed — `test_ammo`**, pre-existing, A/B proven by reverting the whole SQ1 fix
+and re-running. `bucket.sh campaign`: **42 suites, 1 PARKED, 5 failed** —
+H10's exact five, and the run fell from 9m20s to 5m37s once the hang was gone.
+`smoke.sh` **not run**.
+
+**Needs the human.** **Twelve `.tres` files changed on disk while the editor
+was open** — six chassis, six items. Reload before touching the inspector.
+Nothing else needs in-editor checking.
+
+**Not verified: whether any of this is any good.** Nothing was played and
+nothing was rendered. Four lines now open on a gun that is explicitly the old
+and feeble one, two lines never change weapon at all, and **whether that
+progression reads as earning something or as being under-equipped for two
+tiers is a feel question that was not tested.** The mark prices up the rail are
+still unplayed. Both are the human's.
+
+**My own mistakes this session, plainly.** One: I reported the SQ1 whitelist
+widening as the fix, and the ladder redesign immediately made five sixths of it
+dead — the widening was correct for the design as it stood and I should have
+asked whether the ladders were settled before touching their permissions. Two:
+I broke `test_line_specs` and would have reported the campaign bucket as
+"H10's five, unchanged" if I had not checked the one new name against
+yesterday's list.
+
+**Blocked / next.** C5 (Reclaimer's second arm) is specced and carries one
+design question inside it: `weapon_replaces_built_in` is a single boolean for
+the whole frame, so with two slots it has to mean "the first mount replaces the
+welder, the second does not" or the welder dies anyway. RB2/RB3/RB4 remain one
+coherent deletion pass.
+
+## 2026-10-24 — SQ1: six production lines no longer disarm themselves on load
+
+**Landed.** Six `chassis_whitelist` fields widened, in `Campaign/items/`:
+`item_autocannon` (+bulwark, +lance), `item_light_cannon` (+walker, +bulwark),
+`item_heavy_mg` (+kite), `item_rocket_pods` (+kite), `item_mortar` (+picket),
+`item_cluster_launcher` (empty → `[picket]`). Plus one assertion added to
+`tools/probe_chassis_marks.gd`.
+
+The bug, found by D6: `apply_line_spec()` writes a mark's ids without asking
+`ChassisDefinition.takes()`. Eight authored (line, mark, id) rows failed that
+gate — **every upgrade the Bulwark, Kite and Picket had**, plus Walker Mk 2 and
+Lance Mk 2. It played fine, because `SquadSpawner._fit_loadout` only checks
+`fits_ai()`. Then on load `_return_unfittable_squad_kit()` asked `takes()`, put
+the gun in stores, and nothing refilled the mount.
+
+**It was data, not code.** The marks were the design intent; the whitelists
+were stale relative to them. Two things worth recording:
+
+- **`requires_chassis` is read by no game code at all** — only
+  `audit_economy.gd` and two probes. `fits_chassis()` reads
+  `chassis_whitelist` only. The obvious fix of "widen whitelist *and*
+  requires_chassis" would have been half wasted.
+- **7 of 8 failed `fits_chassis()`; the 8th failed the turret clause.**
+  Picket Mk 1's `cluster_launcher` had an *empty* whitelist, which passes
+  "fits everything" and then fails "a turret insists on being named". Naming
+  picket **narrows** that item — checked first that Picket's mark is the only
+  squad-side namer and that the player's carry path does not go through
+  `takes()`.
+
+**The durable half.** `probe_chassis_marks.gd` printed `0 problem(s)` while all
+eight rows were broken — it checked catalogue resolution, mount counts and
+duplicate tiers, but never the frame's own gate. It now asserts
+`frame.takes()` on every (line, mark, id), **and the assertion was proven by
+reverting one row and watching it go red at exit 1**, not just by seeing green.
+
+**Gates.** `check.sh --changed`: **PASS** (13 scripts, 6 scenes/resources).
+`probe_chassis_marks.gd`: **0 problems, exit 0** — was 0 before the assertion
+existed, and the negative test confirms it now bites. `probe_squad_facts.gd`
+§8: **0 (line, mark, id) combinations refused, down from 8** — the probe that
+found the bug confirming it end to end. `bucket.sh kit`: **16 suites, 1 failed
+— `test_ammo`**, which is **pre-existing**: every assertion PASSes, there is no
+FAIL line, and it exits non-zero at teardown with leaked ObjectDB instances.
+A/B'd by reverting the whole fix and re-running — still exit 1. That is H10's
+signature, so H10 is now **at least 6 suites across 2 buckets**, not 5 in one,
+and the row has been widened to say so. `smoke.sh` and `bucket.sh campaign`
+**not run**.
+
+**Needs the human.** Six `.tres` files changed on disk **while the editor was
+open** — reload them before saving anything from the inspector, or Godot will
+write the old whitelists back. Nothing else needs in-editor checking; no scene
+wiring moved.
+
+**Not verified: anything about how this FEELS.** Nothing was played and nothing
+was rendered. Six lines can now keep the guns their marks always promised, and
+whether Bulwark Mk 2's light cannon or Kite Mk 2's rocket pods are any *good*
+on those frames is untested and unjudged — that is a balance question and it is
+the human's. The mark prices up the rail remain unplayed, as recorded in the
+vault's `Open`.
+
+**Blocked / next.** RB2/RB3/RB4 are one coherent deletion pass now that bosses,
+`enemy_template.tscn` and the robot FGD path are all decided cut. RB1 is a
+one-line `push_error` in `lab.gd:265` and should just be done inline rather
+than tasked.
+
+
+## 2026-10-23 — D7: the order layer written down, nothing in the game changed
+
+**Landed.** `Reference/Orders and squad AI.md` in the vault, and
+`tools/probe_order_facts.gd` — the only two files added. **A reading job:
+`squad.gd`, `squad_commander.gd`, `enemy.gd`, `soldier.gd`, both spawners and
+the equipment kit were read, not edited.** The probe is new in `tools/`, which
+is GAMEPLAY's; nothing shared was touched in the repo.
+
+What is now written down, after a real deploy on `basin_1_anchor` and
+`hfw_1_fort`:
+
+- **The player has TWO live verbs, not four.** Tap T issues
+  `Verb.ADVANCE`, which sets **`SquadObjective.DEFEND`** — the verb is the old
+  DEFEND renamed, and `SquadObjective.ADVANCE` is reached by no player verb at
+  all. Hold T sets `FOLLOW`. `Verb.CONTACT` is passed by nothing;
+  `Verb.ATTACK` has **no `case` in `_issue_order`'s match** and so marks the
+  ground and tells the squad nothing.
+- **`SquadObjective.WITHDRAW` has no setter anywhere** — scanned, every `.gd`
+  outside `tools/` — and `AISmoke.can_use()`'s first trigger tests for it, so
+  "screen the withdrawal" can never fire.
+- **Nothing appoints an NCO**, so `OVERWATCH` and `FLANKER` are unassignable,
+  `FALLBACK` is assigned nowhere, and **the player's squad never bounds** —
+  both orderable objectives route to `_defensive_assign_roles`.
+- **`Squad.default_objective` is read by nothing live**: it needs
+  `target_objective`, which is authored on zero nodes. Your squad therefore
+  arrives in a mission on `NONE`.
+- `assault_combat_leash` is exported and read by no code; `player_ordered` is
+  read only by analytics while its comment claims it decides things.
+
+Nine rows opened as `OA1`–`OA9` in the vault's `Backlog`, five of them wanting
+a design call rather than a fix. Five new traps and five new
+`Where the truth lives` rows; **one existing row in that file corrected** — it
+said `DEFEND` was not orderable, and `DEFEND` is what the tap sets.
+
+**Gates.** `check.sh --changed`: **PASS** (12 scripts). `bucket.sh frames`:
+**PASS, 29 suites, 8m10s**, slowest `test_mortar` at 62 s. `smoke.sh`: not run
+— nothing that loads at startup changed. `test.sh`: not run, and never will be
+from here.
+
+`probe_order_facts.gd` prints **10/10 PASS** and its verdict line. **Its exit
+code is 139 and that is not its bug** — any tool that boots `master.tscn`
+under `--script` segfaults in cleanup after `quit()`, measured today on
+`probe_home_base.gd` too (332 resources still in use, ObjectDB leaked).
+Freeing the `Master` first does not help. That is why it is a `probe_` with a
+printed verdict and not a suite, and it is more evidence for Backlog H10 —
+the five red `campaign` suites are probably one teardown.
+
+**Needs the human.** Nothing to check in-editor; no scene, resource or script
+in the game was modified. What needs a person is the five judgement calls in
+`OA1`–`OA9`: whether a squad should ever withdraw on its own, whether "send
+the vehicles at that one" is a verb worth wiring, whether the player's squad
+should bound while holding a point, whether it should fall in on you at a
+mission start, and whether `Verb.ATTACK` should be dropped. **Every leash,
+follow distance and interval was deliberately left out of the backlog** and
+recorded as a feel number in the reference note instead.
+
+**Not verified.** Game feel and balance — not played, only run headless.
+Whether the squad standing still on `NONE` at a mission start reads as broken
+or as correct in the hand is exactly the judgement running it cannot give.
+Both deploys were headless, so nothing visual was rendered or looked at;
+nothing in this session changes anything on screen.
+
+**Reversal to record.** The finding handed to this session said `DEFEND`,
+`WITHDRAW` and `PATROL` "cannot be ordered by the player". Two thirds right:
+`DEFEND` is the single thing the player orders most. The mistake is the
+natural one — reading the two enums and matching the names — and it is now a
+`Where the truth lives` row so the next reader does not repeat it.
+
+**Blocked / next.** Nothing blocked. `OA9` and `H10` are the same
+investigation and worth one session. `RB6`'s suggested D9 (`enemy.gd`'s
+movement and navigation) is still the largest undocumented subsystem.
+
+---
+
+## 2026-10-23 — D8: the robot body's class hierarchy written down, nothing in the game changed
+
+**Landed.** A reading job from the vault brief `Briefs/D8 — The robot body`.
+**One new repo file; no game file touched, nothing committed, no branch made.**
+
+- `tools/probe_body_facts.gd` (new, `# REPORTS:`, exit 0, ~2s) — prints five
+  sections: the class chain of all 23 body scripts read off
+  `Script.get_base_script()`; every `ChassisDefinition` with its root script,
+  class, whether a spawner can place it and whether it is route A or route B
+  armed; the body scenes no chassis claims; what each layer declares; and the
+  full `AI` member list plus the names `enemy.gd` and `test_character.gd`
+  declare twice. **Nothing is instantiated** — every answer comes from
+  `Script` and `SceneState`, so it does not need a level or run `_ready`.
+- Vault, outside the repo: `Reference/The robot body.md` (new), plus appends
+  to `Traps`, `Where the truth lives`, `Backlog` (RB1–RB6), `Open` and `Home`.
+
+**Three things worth the board's attention, all read-only findings.**
+
+1. **All three spawners cast `as Soldier`** — `squad_spawner.gd:273`,
+   `enemy_force_spawner.gd:335`, `lab.gd:265`. A body on bare `Enemy` cannot
+   be placed by anything, on either side. `lab.gd` is the only one that drops
+   it **in silence** (RB1). `enemy_template.tscn`, the scene a new frame is
+   copied from, is bare `Enemy` (RB3).
+2. **`AI` carries the signal system and nothing else.** `health`,
+   `max_health`, `faction`, `alive`, `gravity`, `handle_movement`,
+   `apply_damage`, `die` and 9 more are declared **twice**, independently, in
+   `enemy.gd` and `test_character.gd` — parallel declarations, not overrides.
+   That is the root cause of the duck-typing (`if "health" in body`) and of
+   `Campaign._write_back_player()` being a second, lossier copy of
+   `SquadSpawner.write_back()` (RB5, BLOCKED pending the human).
+3. **`Boss` / `miniboss.gd` / `boss_guardian.tscn` is unreachable from every
+   direction** — no callers, no chassis, extends `Enemy` so no spawner would
+   take it, its only body sits in an unreferenced level chain, and its FGD
+   entity is not in `trenchbroom/robot_fgd.tres`. Second routes checked;
+   **not deleted** — authored content needs a design call (RB2).
+
+**Gates.** `check.sh --changed`: **PASS** (12 scripts). `bucket.sh frames`:
+**PASS, 29 suites, 8m9s**, slowest `test_mortar` at 63s. The probe itself runs
+clean headless and exits 0. `smoke.sh` not run — nothing that loads at startup
+was touched. `test.sh` not run, ever.
+
+**Needs the human.**
+
+- **Nothing to check in-editor.** No `.tscn`, no `.tres` and no game script
+  was opened for writing.
+- **Two judgement calls are flagged in the handback, not in the docs**: whether
+  the Walker/SpotterDrone/rover "what you give up" table is the right framing
+  for someone adding a chassis, and whether `Boss` is dead or merely parked.
+- **Game feel and balance: not verified.** Nothing was played and nothing was
+  rendered — this session ran no `shot_` tool because it produced no visual
+  change.
+
+**Blocked / next.** RB6: `enemy.gd`'s movement-and-navigation subsystem is
+~1,040 of its 5,787 lines and is the one part of the file that earns its own
+reference doc. Everything else in there is either small or already covered by
+the vault's `Atlas/Robots and AI`.
+
+---
+
+## 2026-10-23 — D6: the campaign-layer robot written down, nothing in the game changed
+
+**Landed.** A reading job from the vault brief `Briefs/D6 — Your squad`. One
+new repo file; **no game file touched, nothing committed.**
+
+- `tools/probe_squad_facts.gd` (new, `# REPORTS:`, exit 0, ~15s) — boots a
+  DETACHED CampaignManager off `world.tscn`'s own packed values, the way
+  `probe_economy_facts.gd` does, and prints eight sections: every record's
+  frame / line mark vs record mark / fitted ids / state / career / all eleven
+  derived fields; whether a second `recompute_stats` moves anything; whether a
+  plain `Array` survives each of the four typed exports; `to_dict()`'s keys
+  derived against the record's export list plus a no-recompute round trip;
+  the mark-vs-line divergence across a real `restore_from`; the precedence
+  arithmetic; `can_fit()`; and every authored (line, mark, id) row against
+  `ChassisDefinition.takes()`. **Not `# BUCKET:`ed even though the brief asked
+  for it** — `bucket.sh` globs `tools/test_*.gd`, so the tag on a probe is read
+  by nothing. Same call D5 made. Logged as vault Backlog SQ4.
+- Vault: `Reference/Your squad.md` (new); appends to `Backlog` (new section,
+  SQ1–SQ6), `Traps` (three), `Where the truth lives` (five rows).
+
+**What the probe found that was not known.** Three worth the human's eye:
+
+1. **Six lines are armed by their marks with kit the frame's own `takes()`
+   refuses** — 8 rows: walker Mk 2, bulwark Mk 1+2, lance Mk 2, picket Mk 1+2,
+   kite Mk 1+2. `apply_line_spec` never asks, `_fit_loadout` checks only
+   `fits_ai()`, so it plays fine — and then `_return_unfittable_squad_kit()`
+   runs **on load** and takes the gun off. Measured: a Bulwark on a Mk 1 line
+   loads with `weapon_ids [&""]` and the autocannon in stores, and nothing
+   refills the mount. → SQ1, which needs a design call before a fix.
+2. **`effective_tuning` is written by `recompute_stats` and read by nothing.**
+   Six authored (line, mark) pairs; no reader for `repair_rate`,
+   `salvage_rate` or `reload_rate` anywhere in `Character/`, `Campaign/` or
+   `Managers/`. → SQ2.
+3. **All four typed `@export` arrays on `SoldierRecord` drop a plain `Array`
+   from script**, silently — K1's class of bug, reachable from code. → Traps.
+
+**Gates.** `check.sh --changed`: **PASS** (12 scripts, shared checkout — most
+of those are other lanes'). `bucket.sh campaign`: **42 suites, 1 PARKED
+(`test_tutorial`), 5 failed** — `test_arena_assault`, `test_core_retake_live`,
+`test_hillfort_live`, `test_sim_arena`, `test_site_win`. That is **exactly**
+Backlog H10's five, each printing `0 failure(s)` and dying in cleanup; nothing
+here touches them. `probe_squad_facts.gd` and `probe_chassis_marks.gd` both
+run clean (the latter: 12 lines, 0 problems). Did **not** run `smoke.sh` —
+nothing loads at startup that changed. Did **not** run `bucket.sh frames`.
+
+**Needs the human.** SQ1 is the one: widening the turret whitelists and
+`requires_chassis` on `autocannon` / `light_cannon` / `mortar` /
+`rocket_pods` / `heavy_mg` / `cluster_launcher` changes what six lines can
+hold, so it is a content call, not a refactor. SQ6 (`Status.WOUNDED` is
+written and never read) needs a design call on whether a wound should cost
+anything. **Nothing was verified by playing**, so nothing here is a statement
+about how the Factory or the squad page feels.
+
+**Blocked / next.** SQ3 and SQ5 are small and uncontroversial. SQ4 wants to
+land with SV1. I touched `docs/reports/GAMEPLAY.md` — **two sibling GAMEPLAY
+chats (D7, D8) were running at the same time**, so if this entry sits oddly
+against theirs, that is why.
+
+---
+
+## 2026-10-23 — D5: HUD and barks written down, nothing in the game changed
+
+**Landed.** A reading job from the vault brief `Briefs/D5`. One new repo file,
+no game file touched:
+
+- `tools/probe_hud_facts.gd` (new, `# REPORTS:`, but **exits 1 if any chassis
+  frame is mute on any line**) — instances every chassis scene and every AI
+  scene with a Bark, out of the tree, and prints per line which array the
+  voice actually plays from (`bark_set`, its `fallback`, `bark_clips`, or
+  none). Also every BarkSet on disk, `BarkDirector`'s constants, a measured
+  check of the NCO bonus, the comms log's vocabulary from `_compose()`, the
+  HUD scene's children, the filter's real uniforms, and every signal
+  `world.tscn` wires into the HUD. Static, under a minute, exit 0.
+  **Not `# BUCKET:`ed** even though the brief asked: `bucket.sh` only collects
+  `tools/test_*.gd`, so the tag on a probe would be read by nothing.
+- Vault: `Reference/HUD and barks.md` (new); `Traps`, `Where the truth lives`
+  (voice row corrected, tutorial row corrected, two rows added), `Home`
+  extended; Backlog D5 done, **K13–K16** added, K1 re-scoped, H6 given a
+  lead; the brief's status.
+
+**The finding.** `bark.tscn` assigns `bark_set_droid.tres` to every Bark, and
+that one BarkSet has clips on all seven lines — so **`bark_clips` is reached on
+none of 32 scenes**, and K1's dropped Bulwark clips cannot be heard. Frames
+differ by pitch only; your Soldier and most enemy infantry share 0.96–1.06.
+Second: `BarkDirector`'s NCO +1000 never applies (it compares `squad.nco`, a
+Soldier, to the Bark node `bark()` passes) — measured 0 vs 1000. → K13.
+Third: the shuffle bag's seam guard tests the wrong end and doubles the repeat
+it exists to prevent. → K14.
+
+**Gates.** `check.sh --changed`: PASS (4 scripts). `test_barks.gd`: exit 0,
+3/3 checks. `bucket.sh shell`: PASS, 4 suites. `bucket.sh frames` **not run**
+— nothing in it was touched. Render: `shot_arena_ops.gd` headful, 1152 × 648,
+eye 1.50 m, through the filter, five frames, opened. It runs its own camera,
+so the `F  SELECT MISSION` prompt in frame is from wherever the player body
+stands, and it has no damage arcs, contact marks or scan sweep in it.
+`BRAVO-4 IS DOWN` in the comms log is the induction's staged downing.
+
+**Needs the human.** Nothing to check in-editor — no scene was edited. The
+judgement calls: whether friendly `RELOADING` should be heard (K15); whether
+the NCO should be the mouthpiece once K13 makes it possible; whether your
+squad and enemy infantry should sound different (one BarkSet, same pitch).
+
+**Follow-up, same session — the human ruled on the findings.** Tickets in the
+vault Backlog: K13 re-scoped (NCOs are deprecated, so the bonus is removed, not
+fixed; the squadless-HOSTILE half stays), K14 approved, K15 re-scoped to a
+comment fix (friendly reload stays), K16 parked (scanner deprecated, coming
+back), new **K18** (director: paused barks lost, one slot per channel, `reset()`
+never called), **F6** (hostile voice), **S10** (one voice route, after F6),
+**H19** (remove `DebugOverlay` and the tutorial library — H18 was taken by
+another lane in the same minute). Decisions logged. Code: **deleted**
+`Character/hud/hit_indicator.gdshader` and `horror.gdshader` (unreferenced;
+tracked in git); DEPRECATED header comments on `debug_overlay.gd`,
+`tutorial_library.gd` and `HUD.activate_scan_effect`; one comment in
+`damage_directions.gd` updated for the deleted shader. Comments only otherwise.
+`check.sh --changed` PASS (9 scripts), `smoke.sh` PASS. `bucket.sh shell` not
+re-run for the comment-only edits.
+
+**Blocked / next.** K13, K14 and K18 are small and READY. Mistake of my own: the
+first run of `shot_arena_ops.gd` was given an absolute output path; it joins
+everything to `res://`, so nothing was written until I passed
+`.godot/d5_hud_shots`.
+
+---
+
+## 2026-10-23 — D4: saves and profiles written down, nothing in the game changed
+
+**Landed.** A reading job from the vault brief `Briefs/D4`. One new repo file,
+no game file touched:
+
+- `tools/probe_save_facts.gd` (new, `# REPORTS:`) — prints every key of a v2
+  save, script vars vs `to_dict` keys, what `from_dict` reads vs what
+  `to_dict` writes, which `to_dict` containers are the live object, and — the
+  point of it — **what `restore_from()` does not move**, measured by
+  restoring a state of sentinels into a different state. Then replays
+  `load_profile` and `new_profile` through a CampaignManager built from
+  `world.tscn`'s packed values, checks `migrate()`, writes a save to a
+  throwaway path and reads it back, and lists the keys and versions of the
+  player's real saves (opened read-only). Static, under a minute, exit 0.
+- Vault: `Reference/Saves and profiles.md` (new); `Traps`, `Where the truth
+  lives`, `Home` extended; Backlog D4 done, **SV1–SV5** added (SV, because
+  the Simplify section already owns S1–S6), one line added to D3's K12; the
+  brief's status.
+
+**The finding.** `restore_from()` moves 22 of the 29 fields. The seven it
+misses — `line_marks`, `line_modules`, `turn`, `sites`, `under_attack`,
+`under_attack_turn`, `lessons_seen` — are **never loaded by `load_profile`**
+and **carried into the next profile** by `load_profile` / `new_profile`. So
+every boot or CONTINUE comes up at turn 0 with the authored board and every
+line at Mk 0, and the next autosave writes that over the file. The real saves
+agree: `tdog.json` has four site ops cleared and `turn: 0`, `sites: {}`.
+`test_endings.gd:179`, which the code cites as the guard, restores a state
+into itself and cannot fail. → Backlog SV1 / SV3. **Not fixed — save
+behaviour is ask-first.**
+
+**Also found.** `CampaignState.save_path` defaults to `user://campaign.json`
+and the `--script` backstop does not reach it (SV2). `last_played_utc` is never
+stamped (SV4). A v3 save would load in this build (SV5). The project rename on
+2026-10-06 moved `user://` from `app_userdata\Roboto` to `…\Data Center Wars`,
+and the older saves are still in the old folder. **Every save on this machine
+but one (`aa-2.json`) is v1, and so OUTDATED.**
+
+**Gates.** check.sh --changed: PASS (4 scripts — includes other lanes'
+uncommitted files). The probe: exit 0, and its before/after stat of
+`user://campaign.json` and `user://saves` reads unchanged. It wrote only
+`user://probe_save_facts/` (deleted on exit). `bucket.sh campaign`: **FAIL,
+42 suites (1 PARKED), 5 red** — `test_arena_assault`, `test_core_retake_live`,
+`test_hillfort_live`, `test_sim_arena`, `test_site_win`, each with **zero
+`FAIL` lines**. That is exactly Backlog H10's list (exit in cleanup), and this
+session changed no game code. Inside it: `test_profiles` 33/33,
+`test_profile_menu` 32/32, `test_endings` 29/29. A before/after listing of
+`app_userdata\Data Center Wars\saves` and `…\Roboto\saves` is identical; only
+`logs/` and the suite's own `test_menu_saves/` sandbox moved.
+
+**Needs the human.** SV1 — the go-ahead, and the rewind call: should a failed
+run keep `lessons_seen` (today: yes, on purpose) while a load restores it?
+That probably means two move lists. SV2, SV4, SV5 are each one line and each
+touches the save, so they are yours to approve. Nothing to check in the
+editor; no scene was touched.
+
+**Blocked / next.** Not verified: the rewind row (read from `extract()`, not
+run — though D3's K12 measured the Factory mid-mission); `adopt_legacy()`
+re-adopting after every profile is deleted (read from the code — `--no-save`
+switches adoption off, so the probe cannot run it); and that `tdog.json`'s
+`turn: 0` was caused by this rather than predating territory.
+
+## 2026-10-23 — D3: the economy written down, nothing in the game changed
+
+**Landed.** A reading job from the vault brief `Briefs/D3`. One new repo file,
+no game file and no number touched:
+
+- `tools/probe_economy_facts.gd` (new, `# REPORTS:`) — reads the
+  CampaignManager's values out of `Env/world.tscn` as packed data, puts them
+  on a DETACHED `campaign.gd` (never in the tree, so it never opens the
+  player's profile; `save_path` empty, autosave off) and runs the real
+  `_seed_new_campaign()` + `_adopt_state()`. Prints the seed, both ledgers
+  after a boot, every key format made to appear once, a site-capture test, a
+  rewind test, and the full price table for 32 items and 12 frames, the 9
+  Locations and the 19 missions. Static, seconds, exit 0.
+- Vault: `Reference/Economy.md` (new); `Traps`, `Where the truth lives`,
+  `Atlas/Campaign and board`, `Home`, `Open` corrected or extended; Backlog D3
+  done, K11 and K12 added, S1 unblocked with D3's answer; the brief's status.
+
+**Two things the brief and the vault had wrong.** `allocate()` is the
+RESOURCE ledger, not compute — compute is `compute_held`, written by
+`install_software()`/`buy_supply()`. And **held Locations pay no compute**:
+`site_compute()` has no caller and `compute_free()` never reads it (K11).
+
+**My own mistake, caught by the probe.** Its first run copied state with
+`restore_from(to_dict())` and the scratch copies leaked purchases into each
+other — because `to_dict()` returns the live `allocations` dictionary. That
+turned out to be the real bug: `Campaign._pre_run` is taken the same way, so
+a failed run keeps resources spent in the field and drops what they bought
+(K12). The probe now deep-copies, and measures both snapshot shapes.
+
+**Gates.** check.sh --changed: PASS. `bucket.sh campaign`: 42 suites, 1
+PARKED (`test_tutorial`), **36 pass, 5 FAIL** — `test_arena_assault`,
+`test_core_retake_live`, `test_hillfort_live`, `test_sim_arena`,
+`test_site_win`, exactly Backlog H10's five, none touched by this session
+(it changed no game file). `test_ledger`, `test_requisition`, `test_endings`
+and `test_campaign_spine` pass. smoke.sh not run — nothing that loads at
+startup changed.
+
+**Needs the human.** Nothing in-editor — no scene or resource was touched.
+Three design calls are now in `Open`: should held ground pay compute (K11),
+is Argus's requisition in the game (nothing calls it), and is "nothing costs
+anything per turn, repair is never charged" deliberate. **Not verified:** the
+field-purchase path in K12 was measured on the ledger, not through a live
+deploy with TAB; game feel and balance not touched or judged.
+
+**Blocked / next.** K12 is READY and small. K11 waits on the Open question.
+
+**Addendum, same day — the human answered the three questions.** Recorded in
+the vault's `Decisions`, and the three are out of `Open`: holding a Location
+gives its compute (not per turn); income comes from what you hold *after* the
+mission; no upkeep, replacing dead robots is the upkeep; the ledger is never
+over-allocated and Argus's requisition is not in yet; no purchases in the
+field; `in_shop` stays as the research gate. Backlog rewritten to match: K11
+now READY (one sub-question: does an attack's `compute_reward` still pay on
+top), K12 is now "no purchases in the field" with the snapshot fixes folded
+in, **K17** new (income one operation late), S1 split into **S7** (dead shop
+calls and the stores), **S8** (`_kit_payout` and the SCRAP tooltip), **S9**
+(retire `BUY_ITEM` — rename, never delete, enums are append-only). The probe
+gained one line, which confirms a robot built on a Mk 1 line comes out Mk 1.
+check.sh --changed: PASS. Bucket not re-run: the only repo change is that
+probe line.
+
+## 2026-10-23 — D2: levels written down, nothing in the game changed
+
+**Landed.** A reading job from the vault brief `Briefs/D2`. One new repo file,
+no game or level file touched:
+
+- `tools/probe_level_facts.gd` (new, `# REPORTS:`) — walks every scene in
+  `maps/` and `maps/appendix/` (27) and prints, per scene: live or not and
+  what loads it (world.tscn missions/base, the Laboratory, dead missions,
+  tool/suite references), terrain vs FuncGodot counted **through the art**,
+  navmesh regions with polygons, the slice, and the markers the code looks up.
+  Ends with an experiment: a level whose `_art` file is missing (written to
+  `user://`, deleted after). Static, ~1 min, exit 0.
+- Vault: `Reference/Levels.md` (new); corrected `Traps`, `Where the truth
+  lives`, `Atlas/Levels and maps`, `Home`; Backlog D2 done, H11 reworded,
+  H12–H17 added; the D2 brief's status line.
+
+**I corrected the brief I was given.** Its "measured" section said zero
+shipped sites use FuncGodot. That came from grepping the `_level` files only.
+Every site's buildings are FuncGodot block prefabs in the `_art` scene, and
+Georgetown and Polaris have no heightfield at all. The vault's Traps and Where
+the truth lives had already repeated the wrong claim; both are fixed.
+
+**Gates.** check.sh --changed: PASS. `bucket.sh terrain`: PASS, 13 suites
+(3 report-only, 1 PARKED: `test_terrain`), 4m51s, shared tree. smoke.sh and
+test.sh not run (nothing that loads at startup changed). The probe exits 0.
+
+**Needs the human.** Three judgement calls are listed in the vault note. They
+are heliostat (dead, or unconverted?), whether `appendix/valley_level` stays
+as the suites' arena, and whether to delete the eight unreferenced scenes
+(H17).
+
+**Blocked / next.** H12 (Salient has no minimap) and H13 (Salient's ops layer
+is restored by nothing) are the two with player-visible consequences.
+
+**Follow-up, same day, on the human's answers.**
+- **`CLAUDE.md` changed (shared file).** The "What this is" paragraph now
+  describes both build routes and the level/art pair. H11 is done.
+- **`tools/minimap_bake.gd` changed (TERRAIN's file, at the human's request).**
+  `salient_level.tscn` is now in the list. **Not baked:** `minimap.sh` opens
+  a window and then runs `--import`, which must not run with the editor open.
+- **`tools/probe_level_facts.gd`** now prints the tag each slice entry marker
+  resolves to. That found H20: on Georgetown, `GT_Mill` and `GT_Pier` resolve
+  to untagged pins, so a reinforcement sent from either one spawns at the post
+  nearest the player. This is probed and read from the code, not played.
+- Vault: tickets H15 (deprecate the depot), H18 (Generate Terrain path) and
+  H20 are new; H17 records that the human confirmed the old scenes as old;
+  heliostat is recorded as WIP.
+- check.sh --changed: PASS. The probe exits 0.
 
 ## 2026-10-23 — D1: missions and objectives written down, nothing in the game changed
 
