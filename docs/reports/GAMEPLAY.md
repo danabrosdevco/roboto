@@ -36,6 +36,72 @@ most wants and least often gets:
 ---
 
 
+## 2026-10-26 (fifth) — D9 + RB6: the last domain doc
+
+**Landed.** [[Reference/Movement and navigation]] — **D1–D9 are now all
+written, and all nine carry a `verified-by` probe.** D9 and RB6 were the same
+ticket from two sides and closed together.
+
+New tool: **`tools/probe_movement_facts.gd`**, which the note names in its
+`verified-by`. Nothing is instantiated — every answer comes from
+`GDScript.source_code` and `SceneState`, the same bargain `probe_body_facts`
+makes. It reports three things that rot silently: how big the layer is, who
+overrides it, and **every authored number beside what each scene pins.**
+
+**I re-measured rather than inheriting the row's figures, and they moved.** The
+layer is **898 lines of function body across 21 entry points, 15% of the
+file** — the row said ~1,040 and ~18%. The difference is that the probe counts
+bodies only, which it says in its own output rather than leaving the reader to
+wonder. `Reference/The robot body`'s subsystem table now carries the measured
+number with a note that it supersedes the estimate.
+
+**Three findings the ticket did not predict.**
+
+1. **Seven of the 24 body scripts replace part of how they move, not three.**
+   `spotter_drone`, `enemy_helicopter` and `diver` replace all four movement
+   entry points; `rover` and `reclaimer` replace `move_along_nav`;
+   `enemy_nest` and `enemy_watcher` make it a no-op. The load-bearing one is
+   `off_navmesh_is_normal()` — it means *no adrift rescue and no drowning*,
+   and it is as true of the Diver underwater as of the Drone in the air, which
+   is why the probe labels it "off-mesh by design" rather than "flies".
+2. **`step_height` and `step_forward` are the only authored numbers in the
+   whole layer that disagree with their defaults.** `drayman` and
+   `vehicle_rover` pin **0.75 m / 0.9 m** against 0.45 / 0.35 — the two
+   wheeled frames climb higher lips and reach further past them than anything
+   on legs. Authored, not drift.
+3. **Ten scenes pin every budget and threshold at exactly today's defaults**,
+   so editing a default in `enemy.gd` would move only the other 17 and nothing
+   would report the split. This is the same trap A1 turned up on the LOD
+   distances two entries ago, so the probe now does the default-vs-scene
+   comparison for **every** export in the layer rather than for the one I
+   happened to suspect.
+
+**A1's handover honoured.** The nav-budget mechanism (both pools, the twins,
+the per-robot interval) is in the new doc; the *trap* stays in
+[[Atlas/Robots and AI]]; both notes now point at each other and neither
+repeats the other. `move_and_slide` is named as **still unmeasured** under its
+own heading rather than quietly left out.
+
+**Gates.** `check.sh --changed` **PASS** (78 scripts). `bucket.sh frames`
+**PASS — 29 suites**. The probe exits 0. **No game code changed** — this
+ticket added one tool and wrote vault notes. Campaign, kit, shell and terrain
+not run: nothing they cover was touched.
+
+**I corrected my own probe twice before trusting it.** The first version
+flagged `move_speed` as "DISAGREES WITH THE DEFAULT" across eighteen values —
+which is noise wearing a warning's clothes, since move_speed is *meant* to
+vary per chassis. It now marks each export as uniform-or-per-chassis and only
+flags the uniform ones, and names the offending scenes instead of printing a
+value histogram. The second was the "FLIES" label on the Diver.
+
+**Needs the human.** Nothing to check in-editor. One thing worth knowing: the
+doc records that **`move_and_slide` has never been timed**, so "movement is
+expensive" is still a guess about the one call nobody has measured. That is a
+`bench_ai.gd` job and a real one.
+
+**Blocked / next.** K32 (the Factory's card buttons in the field). K31 needs a
+design call. The board has no description work left on it.
+
 ## 2026-10-26 (fourth) — A1: the think/LOD mechanism, written down
 
 **Landed.** [[Atlas/Robots and AI]] went **97 → 243 lines**. The new section is
