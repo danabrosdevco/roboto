@@ -36,6 +36,65 @@ most wants and least often gets:
 ---
 
 
+## 2026-10-26 (fourth) — A1: the think/LOD mechanism, written down
+
+**Landed.** [[Atlas/Robots and AI]] went **97 → 243 lines**. The new section is
+*How often a robot decides anything*, and it is the mechanism the row said was
+missing — the note's culling section covered the traps and nothing described
+how the thing works. **Extended the Atlas note rather than writing beside it**,
+which the row required: D8's stated risk, "a second doc would disagree with
+it", is this project's signature failure.
+
+Written by reading `enemy.gd:582`, which carries a banner over **174 lines and
+16 `THINK_` constants** before a single function. Covers:
+
+- **Thinking is sliced, acting never is** — and why `_tick_los` is on the
+  *acting* side, which it was not at first: sliced, the Laboratory found rifle
+  troopers losing ~a quarter of their damage against leapers, and 4 hoppers vs
+  4 rifles going from ~33% to ~55% ally wins.
+- **What `lod_scale()` returns** — 1.0 inside 35 m, lerping to 4.0 at 80 m,
+  always 1.0 for your own commanded robots, and measured to the player's **eye**
+  rather than to the nearest hostile, which is deliberately the opposite
+  question from the distance cull.
+- **The three tiers and their floors**, combat as the *cheap* tier (12×, capped
+  at 0.35 s), the three watched moments, and the self-tuning budget with both
+  its guards — `_think_pressed` (the frame must be late AND thinking be part of
+  why) and `THINK_OVERDUE`.
+
+**Two facts nothing in the repo stated, both derived and checked.**
+
+1. **`lod_scale() > 2.0` means "further than 50 m."** That idiom gates three
+   unrelated behaviours — the up-to-four sidestep raycasts per shot, the
+   Rover's rig, the Reclaimer's tilt — and the distance falls out of the lerp
+   and is written down nowhere.
+2. **Those three distances are `@export`s that 10 of the 27 scenes in
+   `Character/characters/ai/` pin** (`bastion`, `brood`, `bulwark`, `drayman`,
+   `kite`, `lance`, `picket`, `see_engine`, `tick`, `vessel`). All ten match
+   today's defaults, so nothing disagrees — but editing the script default
+   alone would move the other 17 and silently leave those 10 behind. I checked
+   this *because* of the "scene values beat script defaults" invariant, and it
+   would have made the 50 m figure wrong per-chassis if any had differed.
+
+**D9 overlap resolved in one direction**, as the row asked. The nav-budget
+*trap* — the `get_next_path_position` / `is_navigation_finished` twins, and
+"if you add a call to `nav_agent`, put it in `_tick_nav`" — stays in the Atlas,
+where people trip over it. The *mechanism* belongs to
+`Reference/Movement and navigation`; the Atlas now carries a callout saying so
+and D9's backlog row records that it inherits it, so the two cannot end up
+disagreeing.
+
+**Gates.** No code changed — this is a vault-only ticket. `check.sh --changed`
+not re-run for it (nothing in the repo moved beyond the lane report).
+Every figure quoted was read out of `enemy.gd` or derived and checked against
+the scenes; the 50 m threshold was computed from the lerp rather than eyeballed.
+
+**Not verified.** I did not run `bench_ai.gd` — the note now points at it as
+the tool for this area, and I am repeating its documented behaviour and the
+Laboratory numbers already recorded in the source comments rather than
+re-measuring them. If any of those comments is stale, so is the note.
+
+**Blocked / next.** D9 (with RB6), then K32. K31 needs a design call.
+
 ## 2026-10-26 (later still) — K11b: lose the location, lose the compute
 
 **Landed.** The human settled K11b the day it was raised: *"if you lose a
