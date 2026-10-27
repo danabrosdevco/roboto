@@ -727,11 +727,14 @@ func _build_detail() -> void:
 		row.add_child(Kit.fill())
 
 		var back := state.scrap_value(r)
-		var scrap_btn := Kit.button("SCRAP", Kit.BRIGHT)
-		scrap_btn.disabled = not state.can_scrap(r)
-		scrap_btn.tooltip_text = \
+		# Scrapping and rebuilding are both refused in the field (Backlog K12),
+		# so they say so rather than looking available and playing "denied".
+		var afield: bool = ui.in_field()
+		var can_scrap: bool = state.can_scrap(r)
+		var scrap_btn := Kit.button("SCRAP", Kit.spend_colour(can_scrap, afield, Kit.BRIGHT))
+		Kit.gate_spend(scrap_btn, can_scrap, afield,
 			"Break %s for parts: a third of the frame and half of everything fitted to it, %d in all. The kit does not come back." \
-			% [r.display_name, back]
+			% [r.display_name, back])
 		scrap_btn.mouse_entered.connect(ui.hover)
 		scrap_btn.pressed.connect(func():
 			# -1 is a refusal, 0 is a worthless wreck scrapped successfully.
@@ -744,9 +747,11 @@ func _build_detail() -> void:
 			var rebuild_row := Kit.hbox(10)
 			rebuild_row.add_child(Kit.fill())
 			var cost := state.repair_cost(r)
-			var rebuild_btn := Kit.button("REBUILD", Kit.BRIGHT if state.can_afford(cost) else Kit.PROBLEM)
-			rebuild_btn.disabled = not state.can_afford(cost)
-			rebuild_btn.tooltip_text = "Rebuild %s at full health." % r.display_name
+			var can_rebuild: bool = state.can_afford(cost)
+			var rebuild_btn := Kit.button("REBUILD",
+				Kit.spend_colour(can_rebuild, afield, Kit.BRIGHT))
+			Kit.gate_spend(rebuild_btn, can_rebuild, afield,
+				"Rebuild %s at full health." % r.display_name)
 			rebuild_btn.mouse_entered.connect(ui.hover)
 			rebuild_btn.pressed.connect(func():
 				ui.play(&"fit" if state.repair_soldier(record) else &"denied"))

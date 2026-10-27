@@ -36,6 +36,57 @@ most wants and least often gets:
 ---
 
 
+## 2026-10-26 (sixth) — K32, and two holes it found in K12
+
+**Landed.** Every spending control in the squad manager now says **which**
+reason it is shut for. The rule is written **once** — `Kit.spend_colour()` and
+`Kit.gate_spend()` in `ui_kit.gd` — rather than copied onto three pages, which
+is how the wording drifts and how the fourth control gets missed. The field
+outranks the price, and out there the price is not mentioned at all. DIM in the
+field, never PROBLEM: being on an operation is not an error.
+
+Applied to **OPEN LINE, BUILD, ADOPT MK, RESEARCH** (Factory), **SCRAP,
+REBUILD** (squad page) and **LOAD / UNLOAD** on both of the memory page's lists.
+
+**Two corrections to the ticket's own scope, both from reading the code.**
+
+1. **UPGRADE and MODULE are navigation, not spending.** They open the line
+   detail page, and `factory_page` already records the decision that looking is
+   always allowed — *"a line you cannot afford yet is exactly the line you want
+   to read"*. The row listed them; I left them alone deliberately.
+2. **K12's gate had two holes.** `uninstall_software()` and `repair_soldier()`
+   were ungated. The first is inconsistent on its face — I gated
+   `refund_supply()` in K12 on the reasoning that freeing compute is the same
+   currency, and uninstalling a program does exactly that. The second is plain
+   spending: it writes a `repair:` allocation. Both now refuse in the field,
+   both are A/B'd in `test_ledger` (**195 checks**), and the field's own repair
+   is untouched — the Mechanic's tool is `apply_healing()`, which costs nothing.
+
+**No deadlock with the over-allocation gate**, which I checked rather than
+assumed: losing a site can leave the ledger under and `mission_exit` refuses to
+deploy until it is cleared, but that check runs **before** `begin_deploy()`, so
+`in_field` is still false and freeing compute at base is exactly as available
+as it ever was.
+
+**Gates.** `check.sh --changed` **PASS** (84 scripts). `bucket.sh campaign`
+**PASS — 43 suites, 1 parked**. `bucket.sh frames` **PASS — 29**.
+`test_ledger` 195 checks, up from 189. Not run: kit, shell, terrain —
+untouched.
+
+**Rendered all three pages in the field at 1920×1080 and opened them.**
+`shot_squad_manager.gd` now shoots the squad and memory pages in the field as
+well as the Factory: photographing only the page that was worked on is how the
+other two ship looking available and playing *denied*. The memory page's ledger
+line also reads correctly now (`0 LOADED · 0 IN SEATS · 4 FREE OF 4 COMPUTE`),
+which is the K11 collateral fix visible on screen.
+
+**Needs the human.** Nothing to check in-editor. `ui_kit.gd` is shared across
+the three squad-manager pages — I added two statics to it and changed no
+existing behaviour there.
+
+**Blocked / next.** **The READY queue is empty.** What is left needs decisions
+from you — see the cleaned-up list in chat.
+
 ## 2026-10-26 (fifth) — D9 + RB6: the last domain doc
 
 **Landed.** [[Reference/Movement and navigation]] — **D1–D9 are now all

@@ -567,3 +567,46 @@ static func nudge(c: Control, px: float = 5.0, seconds: float = 0.18) -> void:
 	t.tween_method(apply, px, -px * 0.6, quarter)
 	t.tween_method(apply, -px * 0.6, px * 0.25, quarter)
 	t.tween_method(apply, px * 0.25, 0.0, quarter)
+
+
+# ─────────────────────────────────────────────
+# A SPENDING CONTROL THAT IS SHUT SAYS WHICH REASON (Backlog K32).
+#
+# Every spending control in the squad manager already colours and greys itself
+# by whether the player can AFFORD it. The squad being in the field is a
+# second, unrelated reason, and folding the two together is what shipped
+# `NEEDS 1 COMPUTE` on the seat button with `COMPUTE 4` in the header a hand's
+# width away — the screen telling the player something untrue. It was caught in
+# a render, not by a test, which is the argument for rendering UI changes.
+#
+# So the two reasons stay apart, and THE FIELD OUTRANKS THE PRICE: out there
+# the price is beside the point and does not get mentioned at all.
+#
+# HERE RATHER THAN ON A PAGE because all three pages need it — the Factory
+# builds and adopts, the squad page scraps and rebuilds, the memory page loads
+# and unloads. Three copies of this rule is how the wording drifts and how the
+# fourth control gets missed.
+#
+# THE REFUSAL ITSELF IS NOT HERE. It lives in CampaignState, where every caller
+# has to come through it: "a gate that exists only in the UI is not a gate".
+# This is only how the refusal is explained.
+# ─────────────────────────────────────────────
+
+## Said the same way wherever a control is shut because the squad is out.
+const FIELD_REASON := "The squad is in the field. This happens back at base."
+
+## What colour a spending control should be.
+##
+## DIM in the field, never PROBLEM: being on an operation is not an error, and
+## red is how these pages say "you cannot afford that".
+static func spend_colour(ok: bool, afield: bool, normal: Color) -> Color:
+	if afield:
+		return DIM
+	return normal if ok else PROBLEM
+
+
+## Greys `b` and gives it the one tooltip that applies. `price_tip` is what to
+## say when the only thing stopping the player is what it costs.
+static func gate_spend(b: Button, ok: bool, afield: bool, price_tip: String) -> void:
+	b.disabled = afield or not ok
+	b.tooltip_text = FIELD_REASON if afield else price_tip

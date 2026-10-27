@@ -1036,9 +1036,20 @@ func test_nothing_is_bought_in_the_field() -> void:
 	state.award_compute(10)
 	var frame := cat.chassis_def(&"soldier")
 	var module := cat.item(&"armor_plating")
-	# A seat bought before we leave, so the refund below is refused for being
-	# in the field rather than for there being no seat to give back.
+	# EVERYTHING THE REFUSALS BELOW NEED, SET UP BEFORE WE LEAVE — so each one
+	# is refused for being in the field rather than for having no seat to give
+	# back, no program to uninstall and nothing to mend.
 	check("(setup) a seat is held before the squad leaves", state.buy_supply())
+	check("(setup) ...and a program is installed", state.install_software(&"held_before", 1))
+	var wreck := SoldierRecord.new()
+	wreck.id = state.mint_id()
+	wreck.display_name = "DENTED"
+	wreck.set_chassis(frame, cat)
+	wreck.damage = 20
+	state.roster.append(wreck)
+	check("(setup) ...and a damaged robot is on the roster, worth mending",
+		state.repair_cost(wreck) > 0 and state.can_repair(wreck),
+		"cost %d" % state.repair_cost(wreck))
 
 	state.in_field = true
 	var cash := state.available()
@@ -1053,6 +1064,8 @@ func test_nothing_is_bought_in_the_field() -> void:
 	check("in the field: giving a seat back is refused", not state.refund_supply())
 	check("in the field: buying kit is refused", not state.buy_item(module))
 	check("in the field: installing a program is refused", not state.install_software(&"command_1a", 1))
+	check("in the field: uninstalling one is refused too", not state.uninstall_software(&"held_before"))
+	check("in the field: a paid rebuild is refused", not state.repair_soldier(wreck))
 	check("...so not a resource moved, and nobody joined",
 		state.available() == cash and state.roster.size() == roster and state.supply_cap == cap,
 		"cash %d->%d roster %d->%d cap %d->%d" % [cash, state.available(),
@@ -1061,6 +1074,8 @@ func test_nothing_is_bought_in_the_field() -> void:
 	# The other half. Without it, every check above would also pass on a
 	# campaign that simply could not afford any of this.
 	state.in_field = false
+	check("at base: the same program uninstalls", state.uninstall_software(&"held_before"))
+	check("at base: the same rebuild goes through", state.repair_soldier(wreck))
 	check("at base: the same seat is given back", state.refund_supply())
 	check("at base: the same frame line opens", state.unlock_chassis(frame))
 	check("at base: the same item line opens", state.unlock_item(module))

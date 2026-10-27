@@ -1170,6 +1170,18 @@ func install_software(id: StringName, cost: int) -> bool:
 func uninstall_software(id: StringName) -> bool:
 	if not is_installed(id):
 		return false
+	# Uninstalling is not spending, it is the refund — and refund_supply() is
+	# gated for exactly the same reason: it frees compute, which is the currency
+	# the rest of this gate protects, and it changes what the player is carrying
+	# while they are out there carrying it. K12 gated the seat refund and missed
+	# this one; found closing K32, 2026-10-26.
+	#
+	# NO DEADLOCK WITH THE OVER-ALLOCATION GATE. Losing a site can leave the
+	# ledger under and mission_exit refuses to deploy until it is cleared — but
+	# that check runs BEFORE begin_deploy(), so `in_field` is still false and
+	# freeing compute at base is exactly as available as it ever was.
+	if _refuse_in_field("uninstalling %s" % id):
+		return false
 	compute_held.erase("software:%s" % id)
 	ledger_changed.emit()
 	return true
@@ -1550,6 +1562,14 @@ func can_repair(record: SoldierRecord) -> bool:
 func repair_soldier(record: SoldierRecord) -> bool:
 	var cost := repair_cost(record)
 	if cost <= 0 or not can_afford(cost):
+		return false
+	# PAID REPAIR IS A BASE ACTION. This writes a `repair:` allocation, so it is
+	# spending by the same definition as everything else K12 refuses, and it was
+	# missed there; found closing K32, 2026-10-26. The field has its own repair
+	# and it is a different thing entirely — the Mechanic's tool goes through
+	# apply_healing(), which costs nothing and is not touched here. Survivors are
+	# mended free at extraction by heal_survivors().
+	if _refuse_in_field("rebuilding %s" % record.display_name):
 		return false
 	var key := "repair:%s:%d" % [record.id, _next_purchase()]
 	# Quiet, then mend, then announce — same rule as buy_item. allocate() emits

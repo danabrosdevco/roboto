@@ -124,6 +124,16 @@ func _run() -> void:
 		ui.campaign = InFieldStub.new()
 		state.in_field = true
 		ui._pages[&"factory"].rebuild())
+	# ALL THREE PAGES OUT THERE, not just the Factory (Backlog K32). Every page
+	# has spending controls on it and all three had to learn to say why they are
+	# shut — the squad page scraps and rebuilds, the memory page loads and
+	# unloads programs. Photographing only the one that was worked on is how the
+	# other two ship looking available and playing "denied".
+	await _shoot(&"squad", "live_squad_in_field.png", func():
+		_select("VESNA")
+		ui._pages[&"squad"].rebuild())
+	await _shoot(&"memory", "live_memory_in_field.png", func():
+		ui._pages[&"memory"].rebuild())
 	# ...and home again, so every shot after this one is at base like the rest.
 	await _shoot(&"factory", "live_factory_back_at_base.png", func():
 		if ui.campaign != null:

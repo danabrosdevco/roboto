@@ -234,18 +234,23 @@ func _load_control(entry: Dictionary, item: ItemDefinition, loaded: bool, issued
 		var tag := Kit.label("ISSUED", Kit.MONEY, Kit.SMALL, true)
 		tag.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		return tag
+	# Loading and unloading both go through install_software / uninstall_software
+	# and are refused in the field (Backlog K12), so they say so rather than
+	# looking available and playing "denied".
+	var afield: bool = ui.in_field()
 	if loaded:
 		var off := Kit.button("UNLOAD", Kit.DIM, Kit.SMALL)
-		off.tooltip_text = "Returns all %d compute." % int(entry["cost"])
+		Kit.gate_spend(off, true, afield, "Returns all %d compute." % int(entry["cost"]))
 		off.mouse_entered.connect(ui.hover)
 		off.pressed.connect(func() -> void:
 			ui.play(&"remove" if Programs.unload_item(state, item.id) else &"denied"))
 		off.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		return off
 	var reason := Programs.load_block(state, item.id)
-	var on := Kit.button("LOAD %d" % int(entry["cost"]), Kit.COMPUTE if reason == "" else Kit.DIM, Kit.SMALL)
-	on.disabled = reason != ""
-	on.tooltip_text = reason if reason != "" else "Holds %d compute until unloaded." % int(entry["cost"])
+	var on := Kit.button("LOAD %d" % int(entry["cost"]),
+		Kit.spend_colour(reason == "", afield, Kit.COMPUTE), Kit.SMALL)
+	Kit.gate_spend(on, reason == "", afield,
+		reason if reason != "" else "Holds %d compute until unloaded." % int(entry["cost"]))
 	on.mouse_entered.connect(ui.hover)
 	on.pressed.connect(func() -> void:
 		ui.play(&"fit" if Programs.load_item(state, item.id) else &"denied"))
@@ -342,19 +347,23 @@ func _program_row(n: Dictionary) -> Control:
 		words.add_child(about)
 	row.add_child(words)
 
+	# Same gate as the carry list above: a program is installed and uninstalled
+	# at base, never on an operation.
+	var afield: bool = ui.in_field()
 	if installed:
 		var reason := Programs.uninstall_block(state, n["id"])
 		var off := Kit.button("UNLOAD", Kit.DIM, Kit.SMALL)
-		off.disabled = reason != ""
-		off.tooltip_text = reason if reason != "" else "Returns all %d compute." % n["cost"]
+		Kit.gate_spend(off, reason == "", afield,
+			reason if reason != "" else "Returns all %d compute." % n["cost"])
 		off.mouse_entered.connect(ui.hover)
 		off.pressed.connect(func() -> void:
 			ui.play(&"remove" if Programs.uninstall(state, n["id"]) else &"denied"))
 		row.add_child(off)
 	else:
-		var on := Kit.button("LOAD %d" % n["cost"], Kit.COMPUTE if block == "" else Kit.DIM, Kit.SMALL)
-		on.disabled = block != ""
-		on.tooltip_text = block if block != "" else "Holds %d compute until unloaded." % n["cost"]
+		var on := Kit.button("LOAD %d" % n["cost"],
+			Kit.spend_colour(block == "", afield, Kit.COMPUTE), Kit.SMALL)
+		Kit.gate_spend(on, block == "", afield,
+			block if block != "" else "Holds %d compute until unloaded." % n["cost"])
 		on.mouse_entered.connect(ui.hover)
 		on.pressed.connect(func() -> void:
 			ui.play(&"fit" if Programs.install(state, n["id"]) else &"denied"))

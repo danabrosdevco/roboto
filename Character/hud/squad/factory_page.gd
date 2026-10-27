@@ -278,10 +278,10 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 			and state.unlock_requirements_met(frame)
 		var row := Kit.hbox(10)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		var ob := Kit.button("OPEN LINE", Kit.MONEY if can_open else Kit.PROBLEM, 18)
-		ob.disabled = not can_open
-		ob.tooltip_text = "Pay once to open the line. Each unit then costs %d." \
-			% _Pricing.chassis_buy(frame)
+		var afield: bool = ui.in_field()
+		var ob := Kit.button("OPEN LINE", Kit.spend_colour(can_open, afield, Kit.MONEY), 18)
+		Kit.gate_spend(ob, can_open, afield,
+			"Pay once to open the line. Each unit then costs %d." % _Pricing.chassis_buy(frame))
 		ob.mouse_entered.connect(ui.hover)
 		ob.pressed.connect(func(): _open_production(frame))
 		row.add_child(ob)
@@ -293,10 +293,12 @@ func _frame_card(frame: ChassisDefinition) -> Control:
 		return card
 	var price: int = _Pricing.chassis_buy(frame)
 	var affordable := state.can_afford(price)
+	var build_afield: bool = ui.in_field()
 	var buy_row := Kit.hbox(10)
 	buy_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	var build := Kit.button("BUILD", Kit.BRIGHT if affordable else Kit.PROBLEM, 18)
-	build.disabled = not affordable
+	var build := Kit.button("BUILD", Kit.spend_colour(affordable, build_afield, Kit.BRIGHT), 18)
+	Kit.gate_spend(build, affordable, build_afield,
+		"Build one now. It joins the squad if a seat is free, the bench if not.")
 	build.mouse_entered.connect(ui.hover)
 	build.pressed.connect(func(): _build(frame))
 	buy_row.add_child(build)
@@ -628,13 +630,19 @@ func _adopt_row(frame: ChassisDefinition, mk: int) -> Control:
 	var can: bool = state.can_afford(cost)
 	var served: int = _in_service(frame)
 	var row := Kit.hbox(10)
+	var afield: bool = ui.in_field()
 	var go := Kit.button("ADOPT MK %d  %d" % [mk + 1, cost],
-		Kit.MONEY if can else Kit.DIM, Kit.BODY)
-	go.disabled = not can
+		Kit.spend_colour(can, afield, Kit.MONEY), Kit.BODY)
+	Kit.gate_spend(go, can, afield, "Adopt this mark for the whole line.")
 	go.mouse_entered.connect(ui.hover)
 	go.pressed.connect(func(): _advance(frame))
 	row.add_child(go)
-	if not can:
+	# THE REASON, IN THE RIGHT ORDER. "SHORT 150" out on an operation names a
+	# problem the player cannot do anything about and is not the one stopping
+	# them anyway.
+	if afield:
+		row.add_child(Kit.label("AT BASE ONLY", Kit.DIM, Kit.SMALL))
+	elif not can:
 		row.add_child(Kit.label("SHORT %d" % (cost - state.available()), Kit.PROBLEM, Kit.SMALL))
 	elif served > 0:
 		# The whole point of a LINE upgrade is that it reaches what you have.
@@ -775,10 +783,12 @@ func _module_card(frame: ChassisDefinition, item: ItemDefinition) -> Control:
 		# Tooling page existed to do something about it; with that gone it
 		# would be a dead end on the only build decision the system asks for.
 		var ucost: int = _Pricing.item_unlock(item)
+		var r_can: bool = state.can_afford(ucost)
+		var r_afield: bool = ui.in_field()
 		var rb := Kit.button("RESEARCH %d" % ucost,
-			Kit.MONEY if state.can_afford(ucost) else Kit.PROBLEM, Kit.SMALL)
-		rb.disabled = not state.can_afford(ucost)
-		rb.tooltip_text = "Opens this module for every line, not just this one."
+			Kit.spend_colour(r_can, r_afield, Kit.MONEY), Kit.SMALL)
+		Kit.gate_spend(rb, r_can, r_afield,
+			"Opens this module for every line, not just this one.")
 		rb.mouse_entered.connect(ui.hover)
 		rb.pressed.connect(func(): _research(item))
 		col.add_child(rb)
