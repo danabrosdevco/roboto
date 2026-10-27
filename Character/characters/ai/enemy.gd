@@ -3156,9 +3156,16 @@ func _max_range() -> float:
 	return weapon.max_effective_range
 
 func _on_reload_started() -> void:
-	# Deliberately kept for hostiles and filtered out for friendlies in the
-	# BarkSet: an ally announcing a reload is noise, an ENEMY announcing one
-	# tells the player to push. Same clip, opposite value.
+	# BOTH SIDES CALL THIS, ON PURPOSE (decided 2026-10-23, Backlog K15).
+	#
+	# The comment here used to say reload was "filtered out for friendlies in
+	# the BarkSet", and that was simply false: there is ONE BarkSet, with nine
+	# reload clips, and no per-faction filter anywhere near it. Friendlies bark
+	# and log RELOADING exactly as hostiles do.
+	#
+	# Which is the behaviour that was wanted. An ally calling a reload is the
+	# squad telling you it is briefly out of the fight; an enemy calling one
+	# tells you to push. Same clip, and it is useful in both directions.
 	if bark != null:
 		bark.bark(BarkSet.Line.RELOAD)
 	# Break contact while vulnerable rather than standing in the open.
@@ -3873,8 +3880,23 @@ func _evaluate_equipment_use() -> void:
 		var slot: AIEquipmentSlot = equipment_slots[i]
 		if not _equipment_slot_ready(i):
 			continue
-		var equipment = slot.equipment_scene.instantiate() as AIEquipment
+		# FREED ON A FAILED CAST, exactly as the `else` below frees a refusal.
+		# A mis-cast nulls the variable and leaves the node alive, and this
+		# loop runs once per EQUIPMENT_RECON_TIME (1.5 s) for every robot in
+		# combat — so the orphan repeats for as long as the fight lasts.
+		#
+		# AND IT IS REACHABLE ON SHIPPED DATA, not just on a mis-wire:
+		# `Campaign/items/item_rocket.tres` is `kind = EQUIPMENT` with an
+		# `ai_scene` of `ai-wep_recoilless.tscn`, which is an AIWeapon. Neither
+		# SquadSpawner nor EnemyLoadouts checks the kind before putting an
+		# item's `ai_scene` in a slot, so any robot issued the recoilless lands
+		# here every 1.5 s. K25, 2026-10-26.
+		var built := slot.equipment_scene.instantiate()
+		var equipment := built as AIEquipment
 		if equipment == null:
+			push_warning("%s: equipment slot %d holds '%s', which is not an AIEquipment; nothing can be spent from it." % [
+				name, i, slot.equipment_scene.resource_path])
+			built.free()
 			continue
 		if equipment.can_use(context):
 			_spend_equipment(i, equipment, context)
@@ -3968,9 +3990,14 @@ func order_use_equipment(item_id: StringName, at: Vector3, use_point: bool) -> S
 	if not _equipment_slot_ready(index):
 		var slot: AIEquipmentSlot = equipment_slots[index]
 		return "none left" if (slot != null and not slot.has_uses()) else "reloading"
-	var equipment = equipment_slots[index].equipment_scene.instantiate() as AIEquipment
+	# Freed on the bail, which is what the other two exits of this function
+	# already do — the "too far" return below and the autonomous path's refusal
+	# both free. The cast nulls the variable and leaves the node alive. K25.
+	var built := equipment_slots[index].equipment_scene.instantiate()
+	var equipment := built as AIEquipment
 	if equipment == null:
 		push_warning("%s: equipment slot %d has a scene that is not an AIEquipment." % [name, index])
+		built.free()
 		return "broken"
 	# OUT OF RANGE IS THE REFUSAL THE PLAYER WILL HIT MOST. A robot sixty metres
 	# from the mark cannot throw to it, and silently doing nothing would read as
