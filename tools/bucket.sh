@@ -176,6 +176,19 @@ for suite in tools/test_*.gd; do
 	# house style is `PASS`/`FAIL` per check, but plenty of suites print
 	# `  ok  ` rows or a single `ALL ... CHECKS PASS`, and all of them count.
 	asserted="$(printf '%s\n' "$out" | grep -cE "PASS|FAIL| ok |CHECKS")"
+	# A VERDICT THAT COUNTS ITS OWN CHECKS AND REACHES ZERO.
+	#
+	# The detector above is a word search, so it is satisfied by the word PASS
+	# anywhere — including in the suite's own summary line. A suite that aborts
+	# before it asserts anything and then prints "PASS  0 checks" therefore slid
+	# straight through: `asserted` was 1, the exit code was 0, and the bucket
+	# reported it green. Found on 2026-10-26 while deliberately breaking a new
+	# suite to prove it could fail: a TYPE error in the code under test stopped
+	# campaign_state.gd compiling, every test aborted, and the run said PASS.
+	#
+	# Matched on the summary shapes the suites here actually print, so it reads
+	# a claim of zero rather than guessing from the absence of output.
+	zero_verdict="$(printf '%s\n' "$out" | grep -cE "PASS +0 checks|0 of 0 checks|FAILED +0 of 0")"
 	if [ "$status" -eq 124 ]; then
 		echo "   TIMEOUT after ${TIMEOUT}s — counted as a failure."
 		FAIL=1
@@ -183,6 +196,12 @@ for suite in tools/test_*.gd; do
 	elif [ "$status" -ne 0 ]; then
 		FAIL=1
 		FAILED_NAMES="$FAILED_NAMES $base"
+	elif [ "$zero_verdict" -ne 0 ]; then
+		echo "   REACHED ITS VERDICT WITH ZERO CHECKS — counted as a failure."
+		echo "   It printed a summary saying 0 checks ran. That is not a pass:"
+		echo "   something aborted the suite before it asserted anything."
+		FAIL=1
+		FAILED_NAMES="$FAILED_NAMES $base(zero-checks)"
 	elif [ "$asserted" -eq 0 ]; then
 		# Exit 0 and nothing that looks like a check. Either a declared report
 		# or a suite that has stopped testing, and those are indistinguishable

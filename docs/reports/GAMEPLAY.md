@@ -35,6 +35,97 @@ most wants and least often gets:
   `test_vehicle` and got reverted is exactly that kind of thing.
 ---
 
+
+## 2026-10-26 (later) — the economy loop: K9, K11, K12, K17
+
+**Landed.** Four decisions from 2026-10-23, all in the campaign layer, built
+as one session because they all sit in `extract()` and `campaign_state.gd`.
+
+- **K11 — held Locations pay their compute.** `compute_free()` is now
+  `compute_earned + site_compute() − held`. It was `earned − held`, and that
+  was `site_compute()`'s only possible caller, so the 12 compute on the board
+  was credited to nobody. Probe, taking Hillfort: **`compute_free()` 2 → 2
+  before, 2 → 3 after.** Collateral, found by looking: `memory_page.gd` derived
+  its LOADED figure as `compute_earned − free − seats`, which becomes
+  "programs minus ground" and goes negative the moment you hold anything — it
+  now counts off the ledger, and the total it is "of" includes held ground.
+- **K17 — income is paid after the mission.** `advance_turn()` moves time and
+  nothing else; the new `pay_income()` pays and returns the figure; `extract()`
+  calls it after `set_site_owner(… PLAYER)`. Probe: `advance_turn()` read
+  `earned 1000 → 1008`, now reads `1000 → 1000` with `pay_income()` doing the
+  8. **The ordering question in the ticket, settled: after the enemy's move as
+  well.** A site they take in the same turn pays you nothing for it. Paying
+  before their move would have meant hoisting the capture above
+  `EnemyTurn.play()`, which lets them raid ground you just took — a bigger
+  change than the row asked for.
+- **K9 — objectives pay nothing.** Both payouts out of `extract()`. The
+  exports stay in the data with a block saying why; `ObjectiveTracker`'s two
+  getters stay and are marked reporting-only, since `probe_mission_facts`
+  reads them. `result["objective_reward"]` stays a permanent 0 so the debrief
+  row never appears, the way `unlocked` already does.
+- **K12 — nothing is bought in the field.** Twelve functions on
+  `CampaignState` ask `_refuse_in_field()` and warn when they refuse. The gate
+  is in the state, not the buttons. `in_field` is **not saved and not
+  restored**; `Campaign.in_mission` mirrors onto it through a **setter**,
+  because `in_mission` has six assignment sites and a hand-maintained mirror
+  goes stale at one of them.
+
+**Also:** `bucket.sh` had a hole — its "a suite that asserts nothing is a
+failure" guard was a word search for `PASS`, so it was satisfied by a suite's
+own `PASS  0 checks` summary. That is exactly the result that fooled me during
+the save pass. Fixed and **proved by tripping it**: a throwaway suite printing
+that line turned the bucket from green to `FAIL … (zero-checks)`, then
+deleted. `test_ledger` got the same in-suite guard.
+
+Files: `Campaign/campaign_state.gd`, `Campaign/campaign.gd`,
+`Campaign/mission_objective.gd`, `Campaign/objective_tracker.gd`,
+`Character/hud/squad/factory_page.gd`, `Character/hud/squad/memory_page.gd`,
+`tools/bucket.sh` (**shared**), `tools/test_ledger.gd`,
+`tools/test_campaign_spine.gd`, `tools/test_endings.gd`,
+`tools/probe_economy_facts.gd`, `tools/shot_squad_manager.gd`.
+
+**Gates.** `check.sh --changed` **PASS** (89 scripts). `bucket.sh campaign`
+**PASS — 43 suites, 1 parked** (`test_tutorial`). `bucket.sh frames`
+**PASS — 29 suites**. `bucket.sh shell` **PASS — 4 suites**. `smoke.sh`
+**PASS**, booted clean 15 s, 1 warning. `test_ledger` 191 checks (was 170; +21
+is the new field-gate A/B). Rendered `live_factory_in_field.png` at 1920×1080
+and opened it. **Not run:** `kit`, `terrain` — nothing in either was touched.
+`test.sh` not run; it still cannot finish.
+
+**I shipped a bug and the render caught it.** Folding "in the field" into the
+seat button's `enough` flag made it read **`NEEDS 1 COMPUTE` under a header
+showing `COMPUTE 4`** — the screen telling the player something untrue. A
+structural probe would never have seen it. The field is now a separate reason
+with its own words (`NOT IN THE FIELD`). This is the argument for item 3 of
+the Definition of Done in one picture.
+
+**Needs the human.**
+
+- **Nothing here has been played, and this is a large balance change.** K9
+  alone removed **9,490 resources and 11 compute** — the biggest income in the
+  game. What still pays one-off is **9,035 resources and 29 compute**; holding
+  the entire board pays **230 a turn and 12 compute**. Those four figures come
+  off `probe_economy_facts.gd`, not from arithmetic in my head.
+- **A defence mission now pays nothing at all** beyond salvage. Its whole
+  reward is keeping the site's income. That follows from the decision and may
+  still be wrong to feel.
+- **K11b — a decision I did not take.** First-clear compute totals **29 and is
+  permanent** (nothing un-claims it, so losing every site still leaves you all
+  29) against **12** for holding the whole board, and a capture pays both at
+  once. That makes "for as long as you hold it" a top-up on a larger permanent
+  reward. It is a balance call; it is in [[Open]] and as Backlog K11b.
+- **`over_allocated()` is now reachable without a requisition** — losing a site
+  can put the books under on its own, which is what `site_compute()`'s comment
+  always said should happen. `mission_exit.gd` then refuses to deploy with
+  `REQUISITIONED — FREE n COMPUTE`, naming a cause that may not be the real
+  one. Nobody has hit it in play.
+- Nothing to check in-editor: no scene or inspector changes, all script.
+
+**Blocked / next.** Per the rewritten `## Now`: A1, then D9/RB6, then **K32**
+(the Factory's card buttons still look live in the field — refused by the gate
+and legible only from the line across the top; doing it right means the same
+reason-separation at ~6 sites, which is why it is its own ticket). K31 and
+K11b need design calls.
 ## 2026-10-26 — the save pass: SV1, SV2, SV3, SV4, SV6
 
 **Landed.** Six files, one of them new, all in the campaign layer and its

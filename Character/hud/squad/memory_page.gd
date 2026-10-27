@@ -117,9 +117,16 @@ func _rebuild_ledger() -> void:
 	var state: CampaignState = ui.state
 	var free := state.compute_free()
 	var seats := _seats_held(state)
-	var loaded := state.compute_earned - free - seats
+	# COUNTED OFF THE LEDGER, not worked out by subtracting `free` from what was
+	# earned. compute_free() now includes the compute of every Location held
+	# (Backlog K11), so that subtraction came out as "programs minus ground" and
+	# went NEGATIVE as soon as you held a site.
+	var loaded := _loaded_held(state)
+	# Ground is compute you have, so it belongs in the total the three buckets
+	# are "of". compute_earned alone understates it by whatever you hold.
+	var total := state.compute_earned + state.site_compute()
 	var text := "%d LOADED · %d IN SEATS · %d FREE OF %d COMPUTE" % [
-		loaded, seats, free, state.compute_earned]
+		loaded, seats, free, total]
 	if tab == &"kit":
 		text += " · %d OF %d SLOTS CARRIED" % [_carried_count(state), state.player_record.equipment_ids.size()]
 	_ledger.text = text
@@ -130,6 +137,18 @@ func _seats_held(state: CampaignState) -> int:
 	var n := 0
 	for key in state.compute_held:
 		if str(key).begins_with("seat:"):
+			n += int(state.compute_held[key])
+	return n
+
+
+## Everything the ledger is holding that is NOT a seat — programs and loaded
+## kit today. Written as "not a seat" rather than "software:" on purpose: a new
+## kind of hold would then show up in the readout instead of silently going
+## missing from a line that claims to account for all of it.
+func _loaded_held(state: CampaignState) -> int:
+	var n := 0
+	for key in state.compute_held:
+		if not str(key).begins_with("seat:"):
 			n += int(state.compute_held[key])
 	return n
 

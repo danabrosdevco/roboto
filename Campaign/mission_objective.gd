@@ -21,12 +21,24 @@ class_name MissionObjective
 @export var display_name: String = "Objective"
 @export_multiline var description: String = ""
 
-# Bonus objectives don't gate extraction. They still pay out.
+# Bonus objectives don't gate extraction.
 @export var optional: bool = false
-# Paid on extraction, on top of the mission's own reward.
+
+# ─────────────────────────────────────────────
+# NEITHER OF THE TWO BELOW IS PAID ANY MORE (decided 2026-10-23, Backlog K9).
+#
+# Objectives used to pay in both currencies on extraction — around 9,500
+# resources and 10 compute authored across the operations, which was the
+# largest income in the game. CONTROL PAYS now, and only control: held sites
+# per turn, and the compute of held Locations.
+#
+# LEFT IN THE DATA ON PURPOSE. Stripping them would mean editing nineteen
+# .tres files for a number nothing reads, and the enum-and-scene rule here is
+# that authored values are not churned for tidiness. extract() no longer asks.
+# If objectives are ever meant to pay again, this is where the figures still
+# are — they are not lost, just unread.
+# ─────────────────────────────────────────────
 @export var reward_resources: int = 0
-## Compute for completing this, once per campaign — a bonus or hidden
-## objective is the other way compute is earned besides first clears.
 @export var compute_reward: int = 0
 
 # Optional ordering target so you can send a squad to this objective.

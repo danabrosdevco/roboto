@@ -109,6 +109,14 @@ func _init() -> void:
 		await physics_frame
 	_check("(setup) deployed to the arena", cm.in_mission
 		and world.current_level.scene_file_path == op.level_scene.resource_path)
+	# THE STATE KNOWS WHERE THE SQUAD IS, which is what the no-shopping gate
+	# stands on (Backlog K12). in_mission is assigned in six places, so it
+	# mirrors itself onto the state through a setter rather than being copied at
+	# each of them; this is the check that the mirror is actually connected.
+	# What the gate itself refuses is A/B'd in test_ledger, where a fixture can
+	# make the same call succeed at base.
+	_check("...and the campaign state knows it is in the field", cm.state.in_field,
+		"in_mission=%s in_field=%s" % [cm.in_mission, cm.state.in_field])
 
 	# ── SOMETHING TO LOSE ────────────────────────
 	# The rollback needs damage to undo. This operation deploys no squad
@@ -157,6 +165,11 @@ func _init() -> void:
 		debrief.close()
 	await process_frame
 	_check("...and CONTINUE lets you go, off the operation", not cm.in_mission and not paused and master._menu == "")
+	# AND THE SHOP IS OPEN AGAIN. The gate has to close on the way out as
+	# surely as it opens on the way in — a flag left set would lock the
+	# Factory for the rest of the session. Backlog K12.
+	_check("...and the state is out of the field, so base can spend again",
+		not cm.state.in_field, "in_field=%s" % cm.state.in_field)
 	_check("...alive, on full health", player.alive and int(player.health) == int(player.max_health),
 		"alive=%s hp=%s/%s" % [player.alive, player.health, player.max_health])
 	_check("...and the mission was not counted as cleared", cm.state.clears_of(op.id) == clears_before)
@@ -228,10 +241,23 @@ func _init() -> void:
 	cm.current_mission = final_op
 	cm.in_mission = true
 	var result: Dictionary = cm.extract(true)
-	var paid: int = final_op.compute_reward + 1
-	_check("the last op pays compute for its first clear and the hidden objective",
-		int(result.get("compute", 0)) == paid and cm.state.compute == compute_before + paid,
-		"result=%s compute %d -> %d, expected +%d" % [result.get("compute"), compute_before, cm.state.compute, paid])
+	# THE HIDDEN OBJECTIVE ABOVE PAYS NOTHING, and that is the point of leaving
+	# it set to 1. This check used to expect `compute_reward + 1` — the +1 being
+	# that bonus — and objectives stopped paying in either currency on
+	# 2026-10-23 (Backlog K9). A first clear still pays its own.
+	_check("the last op pays compute for its first clear, and the hidden objective pays none",
+		int(result.get("compute", 0)) == final_op.compute_reward,
+		"result=%s, the clear is worth %d" % [result.get("compute"), final_op.compute_reward])
+	# ...AND THE GROUND PAYS SEPARATELY. Holding the Location is worth its
+	# compute for as long as you hold it (Backlog K11), which is derived from
+	# what you hold rather than banked — so it moves `compute` without ever
+	# appearing in result["compute"]. Before K11 it was credited to nobody.
+	var took = cm.state.locations.for_mission(final_op.id) if cm.state.locations != null else null
+	var ground: int = int(took.compute) if took != null and cm.state.holds(took.id) else 0
+	_check("...and taking its Location pays that Location's compute, derived",
+		cm.state.compute == compute_before + final_op.compute_reward + ground,
+		"compute %d -> %d: the clear +%d, the ground +%d" % [
+			compute_before, cm.state.compute, final_op.compute_reward, ground])
 	# EVERY OPERATION ON THE LADDER — which is not every mission there is.
 	# A defence is filtered out of available_missions() before the won-campaign
 	# branch is even reached, deliberately: it answers a raid that is in doubt
@@ -245,7 +271,18 @@ func _init() -> void:
 	await process_frame
 	_check("back at base, the debrief says MISSION COMPLETE", debrief != null and debrief.visible
 		and _says(debrief, "MISSION COMPLETE"))
-	_check("...shows the compute it paid", debrief != null and _says(debrief, "+%d" % paid))
+	# THE COMPUTE ROW, only when there is compute. This used to look for
+	# `compute_reward + 1`, the +1 being a bonus objective — and objectives
+	# stopped paying on 2026-10-23 (Backlog K9). The last operation on the
+	# ladder is authored at 0 compute, so there is now nothing to pay and no row
+	# to find: asserting "+0" would be asserting that a feature is absent.
+	# The debrief's compute row is covered properly in test_debrief_turn, which
+	# feeds it a result dictionary instead of needing a mission that pays.
+	var clear_compute: int = final_op.compute_reward
+	if clear_compute > 0:
+		_check("...shows the compute it paid", debrief != null and _says(debrief, "+%d" % clear_compute))
+	else:
+		print("SKIP  the compute row — %s's first clear is authored at 0 compute, so none was paid" % final_op.id)
 	_check("...with a card for you", debrief != null and _says(debrief, "YOU"))
 
 	# ── THE COUNTERS ACTUALLY COUNT ──────────────

@@ -100,6 +100,7 @@ func _init() -> void:
 		"owner = %d" % s.site_owner(&"hillfort_wip"))
 	_check("...so it earns nothing per turn", s.income_per_turn() == 0)
 
+	var free_before := s.compute_free()
 	s.set_site_owner(&"hillfort_wip", Enums.Factions.PLAYER)
 	_check("taking a place makes it yours", s.holds(&"hillfort_wip"))
 	_check("...recorded against the turn it was taken",
@@ -108,15 +109,32 @@ func _init() -> void:
 		"%d/turn" % s.income_per_turn())
 	_check("...and its compute is yours, derived not banked",
 		s.site_compute() == 1, "%d" % s.site_compute())
+	# AND IT REACHES THE POOL YOU CAN ACTUALLY SPEND FROM. site_compute() was
+	# right all along and had no caller: compute_free() was `earned - held` and
+	# never added it, so Location.compute — 12 across the board — was credited
+	# to nobody. Backlog K11.
+	_check("...and it is spendable, not just reported",
+		s.compute_free() == free_before + 1,
+		"compute_free %d -> %d" % [free_before, s.compute_free()])
 
 	# ── PHASE 2's done-when, exactly ────────────
-	# "holding a site for three turns pays three times"
+	# "holding a site for three turns pays three times" — still true, and now
+	# it takes two calls to say it. advance_turn() moves time and pays nothing;
+	# extract() calls pay_income() once the ground has changed hands, so a site
+	# you have just taken pays for the operation that took it. Backlog K17.
 	var before := s.available()
 	for _i in 3:
 		s.advance_turn()
+		s.pay_income()
 	_check("holding a site for three turns pays three times",
 		s.available() - before == 24, "%d earned over 3 turns" % (s.available() - before))
 	_check("...and the turn counter moved three", s.turn == 3, "turn %d" % s.turn)
+	# THE SPLIT, STATED AS A TEST. If a future caller moves the turn and forgets
+	# to pay, this is the check that catches it rather than a silent lost wage.
+	var idle := s.available()
+	s.advance_turn()
+	_check("...while moving time on its own pays nobody", s.available() == idle,
+		"%d -> %d" % [idle, s.available()])
 
 	# Losing it stops the income AND takes the compute back, in full.
 	s.set_site_owner(&"hillfort_wip", Enums.Factions.SWARM)
@@ -124,6 +142,7 @@ func _init() -> void:
 	_check("...and takes the compute with it, all of it", s.site_compute() == 0)
 	var after_loss := s.available()
 	s.advance_turn()
+	s.pay_income()
 	_check("...so a turn after losing it pays nothing",
 		s.available() == after_loss, "%d -> %d" % [after_loss, s.available()])
 

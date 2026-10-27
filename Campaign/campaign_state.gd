@@ -365,15 +365,66 @@ func set_site_owner(id: StringName, owner: int) -> void:
 
 ## THE SINGLE MUTATION POINT FOR TIME (Phase 1.3).
 ##
-## Pays every held site first, then moves the counter, then announces it — in
-## that order, because a listener that reads `turn` from the signal must see
-## the number the income was paid FOR, not the one after it.
+## IT DOES NOT PAY. Income used to be collected right here, and because this
+## is called early in extract() that put the pay BEFORE the site changed
+## hands — so a place you had just taken started paying on the *next*
+## operation. The comment that used to sit here argued for it ("holding a site
+## for three turns pays three times", which it does either way).
+##
+## Decided 2026-10-23: income is what you hold AFTER the mission. extract()
+## therefore calls pay_income() itself, once the ground has moved. If you add
+## another caller that advances time, call pay_income() too or that turn pays
+## nobody. Backlog K17.
 func advance_turn() -> void:
+	turn += 1
+	turn_advanced.emit(turn)
+
+
+## PAYS EVERY HELD SITE FOR ONE TURN, and returns what it paid.
+##
+## Returns the figure rather than leaving the caller to ask income_per_turn()
+## again, because between the two reads a site can change hands and the
+## debrief would report a number nobody was paid.
+func pay_income() -> int:
 	var paid := income_per_turn()
 	if paid > 0:
 		award(paid)
-	turn += 1
-	turn_advanced.emit(turn)
+	return paid
+
+
+# ─────────────────────────────────────────────
+# NO SHOPPING IN THE FIELD
+#
+# TAB opens the squad manager mid-mission, and the Factory never asked whether
+# we were out there — so you could build a robot, open a production line, adopt
+# a mark or a module, install a program or buy a seat from inside a firefight.
+#
+# A GATE THAT EXISTS ONLY IN THE UI IS NOT A GATE (recruit()'s own words).
+# Greying the buttons leaves every one of these callable, and the Factory is
+# not the only caller. So the refusal lives here, at the bottom, where
+# everything has to come through it. Backlog K12.
+#
+# NOT SAVED AND NOT RESTORED, deliberately. It is a fact about this session,
+# not about the campaign: it is absent from to_dict()/from_dict(), so a save
+# can never come back from disk stuck in the field, and absent from
+# restore_from(), so the rewind cannot reach in and change where we are.
+# Campaign owns it — set in begin_deploy(), cleared in extract().
+# ─────────────────────────────────────────────
+
+## True between begin_deploy() and extract(). See the block above.
+var in_field: bool = false
+
+
+## Refuses a purchase that is being attempted mid-mission, and says so.
+##
+## Warns rather than failing quietly, because a spending function that returns
+## false for no stated reason is indistinguishable from one that cannot afford
+## it — and the UI plays the same "denied" sound for both.
+func _refuse_in_field(what: String) -> bool:
+	if not in_field:
+		return false
+	push_warning("CampaignState: refused %s — no purchases in the field (Backlog K12)." % what)
+	return true
 
 
 # ─────────────────────────────────────────────
@@ -490,6 +541,8 @@ func grant_unlock(id: StringName) -> void:
 func unlock_item(item: ItemDefinition) -> bool:
 	if item == null:
 		return false
+	if _refuse_in_field("opening the line for %s" % item.id):
+		return false
 	if not _Pricing.for_sale(item):
 		return false   # UNBUYABLE or cut; the catalogue should not have offered it
 	if is_unlocked(item.id):
@@ -501,6 +554,8 @@ func unlock_item(item: ItemDefinition) -> bool:
 
 func unlock_chassis(frame: ChassisDefinition) -> bool:
 	if frame == null:
+		return false
+	if _refuse_in_field("opening the line for %s" % frame.id):
 		return false
 	if not _Pricing.chassis_for_sale(frame):
 		return false
@@ -913,11 +968,25 @@ func mark_lesson(id: StringName) -> bool:
 	return true
 
 
+## WHAT IS LEFT TO SPEND: compute won, PLUS the compute of every Location you
+## hold, minus what seats and software are holding.
+##
+## site_compute() was missing from this sum, and it was site_compute()'s only
+## possible caller — so `Location.compute`, 12 across the whole board, was
+## never credited to anybody. Holding a place gives you its compute for as
+## long as you hold it (§2, decided 2026-10-23); it looked like it already
+## worked because capturing a site is also its operation's first clear, and
+## that pays `compute_reward` at the same moment. Backlog K11.
+##
+## DERIVED, not banked — see site_compute(). Losing a site takes its compute
+## back, which can leave the ledger over-allocated; that is the intended
+## behaviour and over_allocated_by() is the debt the player has to clear
+## before they can deploy again.
 func compute_free() -> int:
 	var held := 0
 	for amount in compute_held.values():
 		held += int(amount)
-	return compute_earned - held
+	return compute_earned + site_compute() - held
 
 
 func award_compute(amount: int) -> void:
@@ -1019,6 +1088,8 @@ func clear_compute_paid(mission_id: StringName) -> bool:
 
 
 func buy_supply() -> bool:
+	if _refuse_in_field("buying a seat"):
+		return false
 	if compute_free() < SUPPLY_COMPUTE_COST:
 		return false
 	compute_held["seat:%d" % _next_purchase()] = SUPPLY_COMPUTE_COST
@@ -1031,6 +1102,11 @@ func buy_supply() -> bool:
 ## a seat someone is in would field a robot with nowhere to sit, so the answer
 ## is to bench someone first. The starting seats were never held and stay.
 func refund_supply() -> bool:
+	# Giving a seat back is not a purchase, but it is still the squad's shape
+	# changing while the squad is standing in it — and it frees compute, which
+	# is the currency the rest of this gate protects.
+	if _refuse_in_field("giving a seat back"):
+		return false
 	var key := _newest_held("seat:")
 	if key == "":
 		return false
@@ -1050,6 +1126,8 @@ func is_installed(id: StringName) -> bool:
 
 
 func install_software(id: StringName, cost: int) -> bool:
+	if _refuse_in_field("installing %s" % id):
+		return false
 	if id == &"" or cost <= 0 or is_installed(id) or compute_free() < cost:
 		return false
 	compute_held["software:%s" % id] = cost
@@ -1216,6 +1294,8 @@ static func module_key(id: StringName) -> String:
 func adopt_mark(frame: ChassisDefinition) -> bool:
 	if frame == null or not frame.purchasable:
 		return false
+	if _refuse_in_field("adopting a mark on the %s line" % frame.id):
+		return false
 	# THE LINE HAS TO BE OPEN. Same gate recruit() answers to: a line nobody
 	# has paid to open cannot be advanced past the spec it does not build.
 	if not is_unlocked(frame.id):
@@ -1240,6 +1320,8 @@ func adopt_mark(frame: ChassisDefinition) -> bool:
 ## replaced.
 func adopt_module(frame: ChassisDefinition, item: ItemDefinition) -> bool:
 	if frame == null or item == null or not frame.purchasable:
+		return false
+	if _refuse_in_field("fitting %s to the %s line" % [item.id, frame.id]):
 		return false
 	if not is_unlocked(frame.id):
 		return false
@@ -1353,6 +1435,8 @@ func _sized(ids: Array, slots: int) -> Array[StringName]:
 
 func recruit(chassis: ChassisDefinition) -> SoldierRecord:
 	if chassis == null or not chassis.purchasable:
+		return null
+	if _refuse_in_field("building a %s" % chassis.id):
 		return null
 	# THE LINE HAS TO BE OPEN FIRST (Phase 3). The factory draws its BUILD
 	# button from line_state(), and a gate that exists only in the UI is not a
@@ -1630,6 +1714,8 @@ func scrap_soldier(record: SoldierRecord) -> int:
 	if record == null:
 		push_warning("scrap_soldier: nothing handed in, so nothing was scrapped.")
 		return -1
+	if _refuse_in_field("scrapping %s" % record.display_name):
+		return -1
 	if record.status != SoldierRecord.Status.DESTROYED:
 		push_warning("scrap_soldier: %s is %s, not DESTROYED. Only a wreck can be scrapped — repair it or leave it." % [record.display_name, SoldierRecord.Status.keys()[int(record.status)]])
 		return -1
@@ -1843,6 +1929,8 @@ func _slots_for(record: SoldierRecord, kind: int) -> Array:
 func buy_item(item: ItemDefinition) -> bool:
 	if item == null:
 		return false
+	if _refuse_in_field("buying %s" % item.id):
+		return false
 	# THE LINE HAS TO BE OPEN FIRST. Pay once to make a thing available, then
 	# pay per copy — Appendix A. A catalogue that offered a locked item would
 	# be offering something this refuses, so the two must agree.
@@ -1862,6 +1950,8 @@ func buy_item(item: ItemDefinition) -> bool:
 
 func buy_chassis(chassis: ChassisDefinition) -> bool:
 	if chassis == null:
+		return false
+	if _refuse_in_field("buying a %s frame" % chassis.id):
 		return false
 	if not is_unlocked(chassis.id):
 		return false
@@ -1886,6 +1976,8 @@ func buy_chassis(chassis: ChassisDefinition) -> bool:
 # anywhere else would be the second balance this system exists to avoid.
 # available() is still earned - sum(allocations) and still cannot drift.
 func sell_item(item: ItemDefinition) -> bool:
+	if item != null and _refuse_in_field("selling %s" % item.id):
+		return false
 	if item == null or armoury.spare(item.id) <= 0:
 		return false
 	var newest := _newest_purchase_key("item:%s:" % item.id)

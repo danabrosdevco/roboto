@@ -30,9 +30,16 @@ extends SceneTree
 # make every key format appear once and to measure two things the code does
 # that nothing else reports:
 #
-#   SITE COMPUTE   site_compute() is derived from held ground and has no
-#                  caller. This takes a site and reads compute_free() either
-#                  side of it.
+#   SITE COMPUTE   site_compute() is derived from held ground. It had NO
+#                  CALLER until 2026-10-26: compute_free() was earned minus
+#                  held and never added it, so Location.compute — 12 across
+#                  the board — was credited to nobody (Backlog K11). This
+#                  takes a site and reads compute_free() either side of it;
+#                  before the fix it printed "2 -> 2", now "2 -> 3".
+#   THE TURN       advance_turn() moves time and PAYS NOTHING since K17, and
+#                  pay_income() is what pays. Both are read below, because
+#                  the old order collected income before extract() moved the
+#                  ground and a site started paying one operation late.
 #   THE REWIND     what a failed run undoes. It snapshots, adopts a mark,
 #                  restores, and reads both ledgers back. Until 2026-10-26 it
 #                  was measuring restore_from() dropping line_marks and
@@ -190,9 +197,17 @@ func _report_site_compute(base: CampaignState) -> void:
 	print("   compute_free()     %d -> %d" % [free_before, s.compute_free()])
 	print("   site_compute()     %d" % s.site_compute())
 	print("   income_per_turn()  %d -> %d" % [income_before, s.income_per_turn()])
+	# THE TWO HALVES OF A TURN, read separately. advance_turn() used to pay,
+	# and because extract() calls it before the capture a site you had just
+	# taken started paying one operation late (Backlog K17). Now time and money
+	# are two calls and extract() pays after the ground has moved.
 	var earned_before := s.earned
 	s.advance_turn()
-	print("   advance_turn()     earned %d -> %d, turn %d" % [earned_before, s.earned, s.turn])
+	print("   advance_turn()     earned %d -> %d, turn %d   (pays nothing, by design)" % [
+		earned_before, s.earned, s.turn])
+	var before_pay := s.earned
+	var paid := s.pay_income()
+	print("   pay_income()       earned %d -> %d, paid %d" % [before_pay, s.earned, paid])
 
 
 # ── Every key format, made to appear ─────────────────────────────────────────
@@ -388,14 +403,26 @@ func _report_locations() -> void:
 func _report_missions(missions: Array) -> void:
 	print("")
 	print("══ MISSIONS — world.tscn's list, what clearing each pays once ═══════")
-	print("%-24s %4s %4s %6s %6s %8s %8s" % ["id", "sim", "def", "res", "cpu", "obj res", "obj cpu"])
+	print("%-24s %4s %4s %6s %6s %8s %8s" % ["id", "sim", "def", "res", "cpu", "UNPAID", "UNPAID"])
+	print("%-24s %4s %4s %6s %6s %8s %8s" % ["", "", "", "", "", "obj res", "obj cpu"])
+	var obj_res := 0
+	var obj_cpu := 0
 	for m in missions:
 		if m == null:
 			continue
 		var pay := _objective_pay(m)
+		obj_res += int(pay["resources"])
+		obj_cpu += int(pay["compute"])
 		print("%-24s %4s %4s %6d %6d %8d %8d" % [m.id, "yes" if m.sim else "", "yes" if m.defence else "",
 			int(m.reward_resources), int(m.compute_reward), int(pay["resources"]), int(pay["compute"])])
 	print("obj = authored on objectives the mission KEEPS (active_objectives), top level and one map deep.")
+	# THE TWO obj COLUMNS ARE NOT INCOME ANY MORE. Objectives stopped paying in
+	# either currency on 2026-10-23 (Backlog K9) — extract() no longer asks the
+	# tracker. The figures are still in the .tres files and still worth printing,
+	# because their SUM is what left the economy, and it is large.
+	print("THE TWO obj COLUMNS ARE NOT PAID (Backlog K9). Still authored; read by nothing.")
+	print("   what objectives would have paid in total: %d resources, %d compute" % [obj_res, obj_cpu])
+	print("   control pays instead — see the LOCATIONS total above for what the board is worth.")
 
 
 ## What the mission's KEPT objectives pay, read as packed data. Anything not in

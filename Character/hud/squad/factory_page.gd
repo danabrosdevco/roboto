@@ -65,6 +65,16 @@ func rebuild() -> void:
 	_restore_x = _scroll_x
 	Kit.clear(self)
 	var state: CampaignState = ui.state
+	# SAY SO BEFORE ANY OF IT IS OFFERED. Every spending call on this page is
+	# refused while the squad is out (Backlog K12) — the refusal is in
+	# CampaignState, because a gate that exists only in the UI is not a gate,
+	# but a button that silently plays "denied" is a bug as far as the player is
+	# concerned. The squad page has carried its own version of this line for a
+	# while; the Factory never asked where the squad was at all.
+	if ui.in_field():
+		add_child(Kit.text_block(
+			"IN THE FIELD: THE LINES ARE SHUT. BUILDING, SEATS AND MARKS WAIT FOR BASE",
+			Kit.DIM, Kit.SMALL))
 	add_child(_hangar(state))
 
 	# ONE LINE, OR ALL OF THEM. The detail is the same page rather than a tab
@@ -148,27 +158,45 @@ func _hangar(state: CampaignState) -> Control:
 	# HAVE is in the header beside the resources, not in this row, where
 	# "COMPUTE 2 [+1 SEAT] 1 COMPUTE" read as three numbers about one thing.
 	var cost := CampaignState.SUPPLY_COMPUTE_COST
-	var enough := state.compute_free() >= cost
+	# `enough` IS ABOUT THE PRICE AND NOTHING ELSE, because the label at the end
+	# of this row says which it is. Folding "we are in the field" into it made
+	# the button read "NEEDS 1 COMPUTE" with COMPUTE 4 in the header a hand's
+	# width away — caught in a render, and a structural check would never have
+	# seen it. The field is a separate reason and gets its own words.
+	var enough: bool = state.compute_free() >= cost
+	# `: bool` spelled out: ui is untyped, so an `and`/`not` on ui.in_field()
+	# infers nothing and := is a parse error.
+	var afield: bool = ui.in_field()
 	# A seat only HOLDS compute, so it can be given back in full — the
 	# newest one, and only while it is empty.
 	if state.seats_held() > 0:
-		var can_free := state.supply_free() >= 1
+		var can_free: bool = state.supply_free() >= 1 and not afield
 		var remove := Kit.button("REMOVE A SEAT", Kit.DIM)
 		remove.disabled = not can_free
 		remove.tooltip_text = "Give back a seat you added, for all its compute." if can_free \
-			else "Every seat has a robot in it: bench one first."
+			else ("The squad is in the field: seats change at base." if afield \
+			else "Every seat has a robot in it: bench one first.")
 		remove.mouse_entered.connect(ui.hover)
 		remove.pressed.connect(func(): ui.play(&"remove" if state.refund_supply() else &"denied"))
 		row.add_child(remove)
 		row.add_child(Kit.spacer(10, 0))
-	var add := Kit.button("ADD A SEAT", Kit.BRIGHT if enough else Kit.DIM)
-	add.disabled = not enough
-	add.tooltip_text = "One more seat: one more robot can deploy.\nCompute comes from first clears and bonus objectives."
+	var add := Kit.button("ADD A SEAT", Kit.BRIGHT if (enough and not afield) else Kit.DIM)
+	add.disabled = not enough or afield
+	# "...and bonus objectives" until 2026-10-26: objectives stopped paying in
+	# either currency (Backlog K9) and held Locations started paying compute
+	# (K11), so the sentence named the one source that had gone and missed the
+	# one that had arrived.
+	add.tooltip_text = "One more seat: one more robot can deploy.\nCompute comes from first clears and from the places you hold."
 	add.mouse_entered.connect(ui.hover)
 	add.pressed.connect(func(): ui.play(&"select" if state.buy_supply() else &"denied"))
 	row.add_child(add)
-	row.add_child(Kit.label("HOLDS %d COMPUTE" % cost if enough else "NEEDS %d COMPUTE" % cost,
-		Kit.COMPUTE if enough else Kit.PROBLEM, Kit.BODY, true))
+	# THE REASON, IN THE RIGHT ORDER. In the field the price is beside the
+	# point, so it does not get mentioned: "NEEDS 1 COMPUTE" under a header
+	# reading COMPUTE 4 is the screen telling the player something untrue.
+	var why := "NOT IN THE FIELD" if afield \
+		else ("HOLDS %d COMPUTE" % cost if enough else "NEEDS %d COMPUTE" % cost)
+	var why_colour = Kit.DIM if afield else (Kit.COMPUTE if enough else Kit.PROBLEM)
+	row.add_child(Kit.label(why, why_colour, Kit.BODY, true))
 	return strip
 
 

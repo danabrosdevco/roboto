@@ -106,7 +106,20 @@ func required_progress() -> Array:
 	return [done, list.size()]
 
 
-# Bonus paid at extraction for everything actually completed.
+# ─────────────────────────────────────────────
+# WHAT THE OBJECTIVES WOULD HAVE PAID — and nothing pays it.
+#
+# extract() called both of these until 2026-10-23, when objectives stopped
+# paying in either currency (Backlog K9) and control became the only income.
+# They are kept because tools/probe_mission_facts.gd reads them to REPORT what
+# the authored data still says, which is the only way to see the figures now
+# that the game ignores them.
+#
+# So: reporting only. Nothing in the campaign calls either one. Wiring one back
+# into extract() is a design decision, not a fix.
+# ─────────────────────────────────────────────
+
+## What completed objectives WOULD pay in resources. Unpaid — see above.
 func earned_objective_rewards() -> int:
 	var total := 0
 	for o in _objectives:
@@ -115,8 +128,8 @@ func earned_objective_rewards() -> int:
 	return total
 
 
-## Completed objectives that carry compute, as {id, compute}. The campaign pays
-## each one once per campaign, so replaying a mission cannot farm it.
+## What completed objectives WOULD pay in compute, as {id, compute}. Unpaid —
+## see above.
 func earned_compute() -> Array:
 	var out: Array = []
 	for o in _objectives:

@@ -76,9 +76,18 @@ func _initialize() -> void:
 	test_issued_lines_need_no_unlock()
 	test_old_unlocks_migrate_as_free()
 	test_rank_gates_nothing()
+	test_nothing_is_bought_in_the_field()
 
 	print("")
-	if _failures == 0:
+	# ZERO CHECKS IS NOT ZERO FAILURES. `_failures == 0` and `_checks == 0` are
+	# the same number and mean opposite things: a suite that aborts before it
+	# asserts anything — a compile error in the code under test will do it —
+	# used to print "PASS 0 checks" and exit 0, which is the one result a suite
+	# must never give. Caught on 2026-10-26 while A/B-ing a new suite.
+	if _checks == 0:
+		print("FAILED  nothing ran — no check was reached, which is not a pass")
+		_failures += 1
+	elif _failures == 0:
 		print("PASS  %d checks" % _checks)
 	else:
 		print("FAILED  %d of %d checks" % [_failures, _checks])
@@ -644,13 +653,23 @@ func test_everyone_standing_comes_home_repaired() -> void:
 
 # COMPUTE IS CAPACITY. Seats and software HOLD it; giving either back frees all
 # of it, any time. The compute twin of the resource invariant:
-#   compute_free() == compute_earned - sum(compute_held)
+#   compute_free() == compute_earned + site_compute() - sum(compute_held)
+#
+# site_compute() is in the sum since Backlog K11: holding a Location pays its
+# compute for as long as you hold it. It reads 0 for every state here, because
+# these fixtures have no LocationCatalogue and so hold no ground — which is
+# exactly why this invariant did NOT go red when the term was added, and why
+# the check that ground pays at all lives in test_campaign_spine, which has a
+# real board. Written out in full anyway: an invariant that is only accidentally
+# true is one nobody can rely on.
 func compute_invariant(state: CampaignState, label: String) -> void:
 	var held := 0
 	for v in state.compute_held.values():
 		held += int(v)
-	check("%s: compute free == earned - held" % label, state.compute_free() == state.compute_earned - held,
-		"free=%d earned=%d held=%d" % [state.compute_free(), state.compute_earned, held])
+	check("%s: compute free == earned + ground - held" % label,
+		state.compute_free() == state.compute_earned + state.site_compute() - held,
+		"free=%d earned=%d ground=%d held=%d" % [
+			state.compute_free(), state.compute_earned, state.site_compute(), held])
 
 
 func test_compute_is_capacity() -> void:
@@ -973,3 +992,62 @@ func test_unlocks_are_things_you_can_buy() -> void:
 			elif item == null and catalogue.chassis_def(id) == null:
 				bad.append("%s unlocks %s, which is in neither list" % [m.id, id])
 	check("every mission unlock is something the player can actually buy", bad.is_empty(), str(bad))
+
+
+# ─────────────────────────────────────────────
+# NO SHOPPING IN THE FIELD (Backlog K12)
+#
+# TAB opens the squad manager mid-mission and the Factory never asked where the
+# squad was, so a firefight was a shop: you could build a robot, open a line,
+# adopt a mark or a module, install a program or buy a seat from out there.
+#
+# A/B, BOTH WAYS ROUND, which is the whole point of this test. "Refused in the
+# field" proves nothing on its own — recruit() also returns null for a line
+# that is not open, buy_supply() for no compute, buy_item() for an item nobody
+# has unlocked. So every call is made TWICE, once out there and once at base,
+# and what is being tested is the DIFFERENCE between them.
+# ─────────────────────────────────────────────
+func test_nothing_is_bought_in_the_field() -> void:
+	var cat := real_catalogue()
+	var state := make_state(10000)
+	state.catalogue = cat
+	state.award_compute(10)
+	var frame := cat.chassis_def(&"soldier")
+	var module := cat.item(&"armor_plating")
+	# A seat bought before we leave, so the refund below is refused for being
+	# in the field rather than for there being no seat to give back.
+	check("(setup) a seat is held before the squad leaves", state.buy_supply())
+
+	state.in_field = true
+	var cash := state.available()
+	var roster := state.roster.size()
+	var cap := state.supply_cap
+	check("in the field: opening a frame's line is refused", not state.unlock_chassis(frame))
+	check("in the field: opening an item's line is refused", not state.unlock_item(module))
+	check("in the field: building a robot is refused", state.recruit(frame) == null)
+	check("in the field: adopting a mark is refused", not state.adopt_mark(frame))
+	check("in the field: fitting a module to a line is refused", not state.adopt_module(frame, module))
+	check("in the field: buying a seat is refused", not state.buy_supply())
+	check("in the field: giving a seat back is refused", not state.refund_supply())
+	check("in the field: buying kit is refused", not state.buy_item(module))
+	check("in the field: installing a program is refused", not state.install_software(&"command_1a", 1))
+	check("...so not a resource moved, and nobody joined",
+		state.available() == cash and state.roster.size() == roster and state.supply_cap == cap,
+		"cash %d->%d roster %d->%d cap %d->%d" % [cash, state.available(),
+			roster, state.roster.size(), cap, state.supply_cap])
+
+	# The other half. Without it, every check above would also pass on a
+	# campaign that simply could not afford any of this.
+	state.in_field = false
+	check("at base: the same seat is given back", state.refund_supply())
+	check("at base: the same frame line opens", state.unlock_chassis(frame))
+	check("at base: the same item line opens", state.unlock_item(module))
+	check("at base: the same build goes through", state.recruit(frame) != null)
+	check("at base: the same mark is adopted", state.adopt_mark(frame))
+	check("at base: the same module is fitted", state.adopt_module(frame, module))
+	check("at base: the same seat is bought again", state.buy_supply())
+	check("at base: the same kit is bought", state.buy_item(module))
+	check("at base: the same program installs", state.install_software(&"command_1a", 1))
+	check("...so every refusal above was the gate and not the price",
+		state.available() < cash and state.roster.size() == roster + 1,
+		"cash %d->%d roster %d->%d" % [cash, state.available(), roster, state.roster.size()])

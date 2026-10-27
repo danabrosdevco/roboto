@@ -115,6 +115,22 @@ func _run() -> void:
 		state.line_marks[&"rover"] = 1
 		state.apply_line_spec(&"rover")
 		ui._pages[&"factory"].rebuild())
+	# THE FACTORY WITH THE SQUAD OUT (Backlog K12). Nothing on this page can be
+	# bought in the field, so it says so across the top and the seat buttons
+	# grey. in_field() asks the campaign for `in_mission` and this tool has no
+	# CampaignManager, hence the stub at the bottom of this file — the smallest
+	# object that answers that one question.
+	await _shoot(&"factory", "live_factory_in_field.png", func():
+		ui.campaign = InFieldStub.new()
+		state.in_field = true
+		ui._pages[&"factory"].rebuild())
+	# ...and home again, so every shot after this one is at base like the rest.
+	await _shoot(&"factory", "live_factory_back_at_base.png", func():
+		if ui.campaign != null:
+			ui.campaign.free()
+		ui.campaign = null
+		state.in_field = false
+		ui._pages[&"factory"].rebuild())
 	# THE LINE RAIL, which is the whole Mark system on screen. Shot at Mk 1 on
 	# an advanced line so the picture shows all three states at once: a
 	# superseded tier, the one in service, and the one it costs money to reach.
@@ -237,3 +253,16 @@ func _shoot(tab: StringName, file: String, prepare: Callable) -> void:
 		printerr("shot_squad_manager: could not write %s (%s)" % [path, error_string(err)])
 	else:
 		print("wrote %s  %dx%d" % [path, img.get_width(), img.get_height()])
+
+
+## THE SMALLEST THING SquadManagerUI.in_field() WILL ANSWER TO.
+##
+## in_field() is `campaign != null and bool(campaign.get("in_mission"))`, so a
+## stub with that one property is enough to photograph the in-field pages
+## without a CampaignManager, a save, or a mission. Nothing else on the pages
+## reaches for the campaign while in_field() is true — next_op() returns null
+## before it asks, which is what keeps this honest rather than lucky.
+## A Node, not a RefCounted, because SquadManagerUI.campaign is typed `Node`.
+## Never added to the tree, so the back-at-base shot frees it by hand.
+class InFieldStub extends Node:
+	var in_mission: bool = true

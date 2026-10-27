@@ -125,7 +125,18 @@ var enemy_spawner: EnemyForceSpawner = null
 var departure_exits: Array[LevelExit] = []
 
 # True while the player is on a mission map rather than at base.
-var in_mission: bool = false
+## Whether the squad is out on an operation. SIX places assign this, which is
+## why it mirrors itself onto the state through a setter rather than being
+## copied at each of them: CampaignState refuses purchases while it is true
+## (Backlog K12), and a mirror maintained by hand at six sites is a mirror
+## that goes stale at one of them. See CampaignState.in_field.
+var in_mission: bool = false:
+	set(value):
+		in_mission = value
+		# Null during start-up, before the first state exists. _adopt_state
+		# carries the flag onto any state adopted later.
+		if state != null:
+			state.in_field = value
 ## Seconds of play on the current mission, paused time excluded. Read off the
 ## debrief as "how long that took".
 var seconds_this_mission: float = 0.0
@@ -553,6 +564,11 @@ func rename_profile(new_name: String) -> void:
 ## the two cannot drift.
 func _adopt_state(id: String) -> void:
 	active_slot = id
+	# A STATE ADOPTED MID-SESSION INHERITS WHERE WE ARE. in_mission's setter
+	# writes the flag onto whatever state was current at the time, so a state
+	# swapped in afterwards would come in reading "at base". It is a fact about
+	# the session, not the campaign, so it is carried here rather than saved.
+	state.in_field = in_mission
 	if not state.soldier_repaired.is_connected(_on_soldier_repaired):
 		state.soldier_repaired.connect(_on_soldier_repaired)
 	if not state.ledger_changed.is_connected(_queue_base_save):
@@ -1420,19 +1436,23 @@ func extract(success: bool = true) -> Dictionary:
 	# rank still drives stats, it just no longer locks kit or frames.
 	result["ranked_up"] = _award_experience(success)
 
-	# Bonus objectives pay out whether or not the mission itself succeeded —
-	# you did the work, and withholding it makes players avoid optional content.
-	var objective_reward := 0
+	# ── OBJECTIVES DO NOT PAY (decided 2026-10-23, Backlog K9) ──────────
+	#
+	# They used to, in both currencies, on the "you did the work" rule — and it
+	# was the largest income in the game: around 9,500 resources and 10 compute
+	# authored across the operations, against 230 resources a turn for holding
+	# the entire board. CONTROL PAYS now, and only control: held sites per turn
+	# (pay_income) and the compute of held Locations (site_compute).
+	#
+	# `reward_resources` and `compute_reward` on a MissionObjective therefore
+	# mean nothing. They are left in the data rather than stripped out of
+	# nineteen .tres files for a number nobody reads.
+	#
+	# The KEY stays in the result and stays zero, the same way `unlocked` does:
+	# the debrief drives a row off it, and a row fed zero simply never appears,
+	# so the screen does not have to learn a new shape.
 	var compute := 0
-	if objectives != null:
-		objective_reward = objectives.earned_objective_rewards()
-		state.award(objective_reward)
-		# Compute objectives pay once per campaign, success or not — the same
-		# "you did the work" rule as bonus resources, minus the farming.
-		for o in objectives.earned_compute():
-			var key := "%s:%s" % [String(current_mission.id) if current_mission != null else "", o["id"]]
-			compute += state.claim_compute(key, int(o["compute"]))
-	result["objective_reward"] = objective_reward
+	result["objective_reward"] = 0
 
 	# Salvage pays the same way: the wrecks were ground whether or not the
 	# mission came off.
@@ -1492,11 +1512,10 @@ func extract(success: bool = true) -> Dictionary:
 					state.under_attack_turn = -1
 					result["answered"] = String(answered.id)
 	
-			var before_income := state.income_per_turn()
-	
+			# TIME MOVES HERE. THE MONEY DOES NOT — see pay_income() further
+			# down, after the ground has changed hands. Backlog K17.
 			state.advance_turn()
 			result["turn"] = state.turn
-			result["income"] = before_income
 	
 			# ── A PENDING DEFENCE YOU DID NOT ANSWER (Phase 6.2) ─────────
 			#
@@ -1552,6 +1571,22 @@ func extract(success: bool = true) -> Dictionary:
 				# with no location is a site that can never be held or paid for.
 				if not current_mission.sim:
 					push_warning("Campaign: operation '%s' has no Location, so clearing it takes no ground and pays nothing per turn." % current_mission.id)
+
+			# ── INCOME, PAID LAST (Backlog K17) ─────────────────────────
+			#
+			# It used to come out of advance_turn() above, which runs BEFORE
+			# the capture — so a place you had just taken started paying on
+			# the NEXT operation. Decided 2026-10-23: income is what you hold
+			# AFTER the mission.
+			#
+			# AND AFTER THE OTHER SIDE HAS MOVED, which is the ordering this
+			# had to settle. A site they take in this same turn pays you
+			# nothing for it, so a raid costs you immediately rather than
+			# from next turn — that is the defensive game (§6) having teeth.
+			# The alternative, paying before their move, would have meant
+			# hoisting the capture above _EnemyTurn.play, and that lets them
+			# raid ground you have only just taken.
+			result["income"] = state.pay_income()
 		# NOTHING IS UNLOCKED BY CLEARING AN OPERATION ANY MORE (Phase 3.6).
 		# Kit is bought in the fabrication car. The debrief still carries the
 		# key so the screen does not have to learn a new shape; it is always
