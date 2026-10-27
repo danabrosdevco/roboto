@@ -65,7 +65,7 @@ func _initialize() -> void:
 	test_supply_caps_the_active_squad()
 	test_compute_buys_supply()
 	test_supply_survives_save()
-	test_old_saves_are_paid_for_past_clears()
+	test_old_saves_are_not_paid_for_past_clears()
 	test_utility_harness()
 	test_everyone_standing_comes_home_repaired()
 	test_compute_is_capacity()
@@ -829,35 +829,57 @@ func test_rank_gates_nothing() -> void:
 
 # Compute arrived after people had saves. An op cleared before it paid compute
 # pays it when the save loads — once, and without writing the save.
-func test_old_saves_are_paid_for_past_clears() -> void:
+# ─────────────────────────────────────────────
+# WAS `test_old_saves_are_paid_for_past_clears`, AND IT ASSERTED THE OPPOSITE.
+#
+# `_pay_compute_owed()` walked every completed mission on load and claimed its
+# first-clear compute — a migration for saves older than the compute economy.
+# First clears stopped paying on 2026-10-26 (Backlog K11b: lose the location,
+# lose the compute), so back-paying one would hand an old save up to 29 compute
+# that nothing can ever take away. The function is now
+# `_release_orphaned_software()` and pays nothing at all.
+#
+# HOW THE OLD VERSION FAILED IS WORTH MORE THAN THE TEST. It did not go red: it
+# called a method that no longer exists, which on an untyped local is a runtime
+# error that does NOT stop the suite — so its five checks simply stopped
+# running and `test_ledger` still printed **PASS, with five fewer checks than
+# the run before**. Only comparing the counts caught it (191 → 186), and
+# `bucket.sh` cannot: its guard fires on ZERO checks, not on fewer than last
+# time. Read the number, not just the word.
+# ─────────────────────────────────────────────
+func test_old_saves_are_not_paid_for_past_clears() -> void:
 	var state := make_state()
 	var paid_op := MissionDefinition.new()
 	paid_op.id = &"op_paid"
 	paid_op.compute_reward = 2
 	var free_op := MissionDefinition.new()
 	free_op.id = &"op_free"
-	var later_op := MissionDefinition.new()
-	later_op.id = &"op_later"
-	later_op.compute_reward = 1
 	state.completed_missions = [&"op_paid", &"op_free"] as Array[StringName]
 	var campaign := CampaignManager.new()
 	campaign.state = state
-	campaign.missions = [paid_op, free_op, later_op] as Array[MissionDefinition]
-	var announced := [0]
-	state.ledger_changed.connect(func(): announced[0] += 1)
-	campaign._pay_compute_owed()
-	check("a save that cleared an op before it paid compute is paid on load", state.compute == 2, str(state.compute))
-	check("...only for what it cleared", state.clear_compute_paid(&"op_paid") and not state.clear_compute_paid(&"op_later"))
-	check("...without announcing it (no save on load)", announced[0] == 0)
-	campaign._pay_compute_owed()
-	check("...and only once", state.compute == 2, str(state.compute))
-	var again := CampaignManager.new()
-	again.state = CampaignState.from_dict(state.to_dict())
-	again.missions = campaign.missions
-	again._pay_compute_owed()
-	check("...even across a save and reload", again.state.compute == 2, str(again.state.compute))
+	campaign.missions = [paid_op, free_op] as Array[MissionDefinition]
+	var before: int = state.compute
+	campaign._release_orphaned_software()
+	check("loading a save with cleared ops pays no compute for them",
+		state.compute == before, "%d -> %d" % [before, state.compute])
+	check("...and claims nothing, so a capture bonus could still be added later",
+		not state.clear_compute_paid(&"op_paid"))
+
+	# THE HALF THAT SURVIVED, and the only test that it is still on the load
+	# path: compute held by a program the tree has dropped is handed back.
+	var orphan := make_state()
+	orphan.award_compute(4)
+	orphan.compute_held["software:cut_in_a_patch"] = 2
+	var c2 := CampaignManager.new()
+	c2.state = orphan
+	c2.missions = [] as Array[MissionDefinition]
+	var free_before: int = orphan.compute_free()
+	c2._release_orphaned_software()
+	check("...while a program the tree no longer has still gives its compute back",
+		orphan.compute_free() == free_before + 2,
+		"%d -> %d" % [free_before, orphan.compute_free()])
 	campaign.free()
-	again.free()
+	c2.free()
 
 
 func test_utility_harness() -> void:

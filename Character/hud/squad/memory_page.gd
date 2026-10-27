@@ -123,8 +123,10 @@ func _rebuild_ledger() -> void:
 	# went NEGATIVE as soon as you held a site.
 	var loaded := _loaded_held(state)
 	# Ground is compute you have, so it belongs in the total the three buckets
-	# are "of". compute_earned alone understates it by whatever you hold.
-	var total := state.compute_earned + state.site_compute()
+	# are "of". compute_earned alone understates it by whatever you hold — and
+	# since first clears stopped paying it is just `starting_compute`, so the
+	# readout would have claimed the player owned 2 compute all campaign.
+	var total := state.compute_total()
 	var text := "%d LOADED · %d IN SEATS · %d FREE OF %d COMPUTE" % [
 		loaded, seats, free, total]
 	if tab == &"kit":

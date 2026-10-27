@@ -17,6 +17,10 @@ extends SceneTree
 # ─────────────────────────────────────────────
 
 const _Turn := preload("res://Campaign/enemy_turn.gd")
+## The garrison constants, so the fixtures below derive their compute from the
+## live balance numbers instead of carrying copies that go stale. Two of them
+## did exactly that on 2026-10-26.
+const _Forces := preload("res://Campaign/force_generator.gd")
 
 var _fails: int = 0
 
@@ -85,7 +89,12 @@ func _init() -> void:
 	var basin = locs.of(&"valley_basin")
 	var poor := _make(cat, locs)                      # 0 compute -> 8 supply
 	var rich := _make(cat, locs)
-	rich.compute_earned = 32                          # -> 40 supply
+	# A FINISHED CAMPAIGN, which §6 puts at 40 supply. DERIVED, not the literal
+	# 32 this used to be: that was `compute_earned` back when first clears paid
+	# compute, and at 2.3 supply per point it would now mean 82 — a number no
+	# campaign can reach, since the ceiling is starting_compute plus every
+	# Location's compute, which is 14.
+	rich.compute_earned = int(round((40.0 - _Forces.GARRISON_BASE) / _Forces.GARRISON_PER_COMPUTE))
 	_check("a bare garrison is overrun on paper",
 		_Turn.odds(poor, basin, 1) <= _Turn.DOUBT_LOW,
 		"%.2f" % _Turn.odds(poor, basin, 1))
@@ -119,10 +128,18 @@ func _init() -> void:
 	# It must not change hands on its own: the caller decides whether to offer
 	# the player the defence.
 	var s6 := _make(cat, locs)
-	# Deliberately inside the doubt band: a raid is 18 at act 1, and the band is
-	# 0.8-1.25, so a garrison of 8 + 12 = 20 lands at 1.11.
-	s6.compute_earned = 12
+	# THE HOLDING FIRST: held ground is part of the garrison sum now, so the
+	# compute below has to be derived against a board that already has it.
 	s6.set_site_owner(&"valley_basin", Enums.Factions.PLAYER)
+	# Deliberately inside the doubt band: a raid is 18 at act 1 and the band is
+	# 0.8-1.25, so the garrison has to land near 20.
+	#
+	# DERIVED, not the literal 12 this used to be — that was chosen when a
+	# garrison was `8 + compute_earned × 1.0`, and at 2.3 per point over
+	# compute_total() it put the ratio at 2.11, outside the band, so this setup
+	# simply could not be built and the suite said so.
+	s6.compute_earned = maxi(0,
+		int(round((20.0 - _Forces.GARRISON_BASE) / _Forces.GARRISON_PER_COMPUTE)) - s6.site_compute())
 	var ratio := _Turn.odds(s6, basin, 1)
 	if ratio > _Turn.DOUBT_LOW and ratio < _Turn.DOUBT_HIGH:
 		s6.turn = _first_move_turn()

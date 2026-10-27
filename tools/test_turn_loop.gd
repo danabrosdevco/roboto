@@ -12,6 +12,9 @@ extends SceneTree
 # ─────────────────────────────────────────────
 
 const _Turn := preload("res://Campaign/enemy_turn.gd")
+## The garrison constants, so the fixture below derives its compute from the
+## live balance numbers instead of carrying a copy that goes stale.
+const _Forces := preload("res://Campaign/force_generator.gd")
 
 var _fails: int = 0
 
@@ -52,10 +55,26 @@ func _init() -> void:
 	# ── a turn is an operation ──────────────────
 	state.earned = 100000
 	# ENOUGH COMPUTE THAT RAIDS LAND IN DOUBT. A raid is 18 supply at act 1 and
-	# the doubt band is 0.8-1.25, so a garrison of 8 + 12 sits at 1.11 — which
-	# is the only way the DECLINE path below is reachable at all.
-	state.compute_earned = 12
+	# the doubt band is 0.8-1.25, so the garrison has to sit near 20 — which is
+	# the only way the DECLINE path below is reachable at all.
+	#
+	# DERIVED FROM THE FORMULA, not the hardcoded 12 this used to be. That 12
+	# was picked when a garrison was `8 + compute_earned × 1.0` and compute
+	# came mostly from first clears. Since 2026-10-26 first clears pay nothing
+	# (K11b), the garrison reads `compute_total()` — held ground included — at
+	# 2.3 per point, and a literal 12 put it at 36 against an 18 raid: every
+	# raid HELD, the enemy never moved, and this suite failed on
+	# "THE OTHER SIDE ACTUALLY PLAYS" while the game was behaving correctly.
+	# THE HOLDINGS FIRST, THEN THE COMPUTE. Held ground is part of the garrison
+	# now, so deriving the compute before the sites are owned aims at the wrong
+	# board: the loop below clears basin_1_anchor over and over, so valley_basin
+	# is held throughout as well, and a figure set against zero sites drifted
+	# the ratio up past the doubt band after the very first operation.
 	state.set_site_owner(&"hillfort_wip", Enums.Factions.PLAYER)
+	state.set_site_owner(&"valley_basin", Enums.Factions.PLAYER)
+	var want := 20.0
+	state.compute_earned = maxi(0,
+		int(round((want - _Forces.GARRISON_BASE) / _Forces.GARRISON_PER_COMPUTE)) - state.site_compute())
 	var before_turn: int = state.turn
 	cm.select_mission(&"basin_1_anchor")
 	cm.current_mission = cm.get_mission(&"basin_1_anchor")

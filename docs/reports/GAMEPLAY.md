@@ -36,6 +36,83 @@ most wants and least often gets:
 ---
 
 
+## 2026-10-26 (later still) — K11b: lose the location, lose the compute
+
+**Landed.** The human settled K11b the day it was raised: *"if you lose a
+location you should lose the compute."* A first clear no longer claims
+`compute_reward`. A claim can never be taken back — `compute_claimed` has no
+un-claim — so first clears were **29 compute across the board that outlived
+every site that earned them**, against 12 for holding the whole map.
+
+**There is now exactly one source of compute in a campaign:** `starting_compute`
+(2) plus `Location.compute` for whatever you hold this minute. A ceiling of 14,
+and 12 of it can be taken off you.
+
+- `extract()`'s first-clear claim is gone; `MissionDefinition.compute_reward`
+  stays in the data unread, as K9 left the objective rewards.
+- `_pay_compute_owed()` — which back-paid first clears on load, as a migration
+  for pre-compute saves — is now `_release_orphaned_software()`. Back-paying
+  would have handed an old save the exact 29 this removed. Renamed rather than
+  gutted: a function called `_pay_compute_owed` that pays nothing is a name the
+  next person reads instead of the body.
+- New `compute_total()` = `compute_earned + site_compute()`. `compute_free()`,
+  the memory page and the garrison all read it.
+
+**The half of this that was not about the player's wallet, and nearly shipped
+broken.** `ForceGenerator.garrison_supply()` is `GARRISON_BASE + compute ×
+GARRISON_PER_COMPUTE`, and its own comment calls those two numbers *"the entire
+difficulty curve of every defence in the game"*. It read **`compute_earned`** —
+which, after this change, nothing adds to after the seed. Every defence in the
+game would have sat at its opening strength for the whole campaign, for ever,
+and no suite asserts the shape of that curve. It reads `compute_total()` now,
+and `GARRISON_PER_COMPUTE` went **1.0 → 2.3** because the input's ceiling fell
+from 31 to 14: `8 + 14 × 2.3 = 40` puts §6's authored endpoints back where they
+were. Probe: holding one Location gives a garrison of **15** against an 18 raid
+(you bleed), the whole board gives **40** (you hold).
+
+Files: `Campaign/campaign.gd`, `Campaign/campaign_state.gd`,
+`Campaign/force_generator.gd`, `Campaign/mission_definition.gd`,
+`Character/hud/squad/memory_page.gd`, `tools/probe_economy_facts.gd`,
+`tools/test_ledger.gd`, `tools/test_turn_loop.gd`, `tools/test_enemy_turn.gd`.
+
+**Gates.** `check.sh --changed` **PASS**. `bucket.sh campaign` **PASS — 43
+suites, 1 parked**. `bucket.sh frames` **PASS — 29**. `bucket.sh shell`
+**PASS — 4**. `smoke.sh` **PASS**. Not run: `kit`, `terrain` — untouched.
+Nothing rendered this time; no UI changed beyond one derived number on the
+memory page.
+
+**Two suite failures that were the suites, not the game.** `test_turn_loop` and
+`test_enemy_turn` each hardcoded a compute figure chosen to land raids inside
+the doubt band under the OLD formula (`8 + compute_earned × 1.0`). Both now
+derive it from `GARRISON_BASE` / `GARRISON_PER_COMPUTE`, so the next balance
+pass moves them with it instead of rotting. `test_enemy_turn`'s numbers now
+match §6 exactly: ratio 2.22 at act 1, 0.87 at act 3.
+
+**A failure mode worth more than the fix.** Renaming `_pay_compute_owed`
+left `test_ledger` calling a method that no longer existed. On an untyped local
+that is a runtime error which does **not** stop the suite — so five checks
+silently stopped running and the suite printed **`PASS  189 checks`** where the
+previous run said 191. Green, exit 0, not zero checks, nothing for `bucket.sh`
+to fire on. Only comparing the counts caught it. **Read the number, not just
+the word.** In [[Traps]].
+
+**Needs the human.**
+
+- **`GARRISON_PER_COMPUTE = 2.3` is a balance constant I changed, and it is
+  unplayed.** I raised it to PRESERVE the documented 8→40 curve rather than to
+  alter it — leaving it at 1.0 would have capped the best garrison in the game
+  at 22 against an 18 raid. But it is still a number nobody has felt, and it is
+  yours to retune.
+- **The curve has a new property: your garrisons weaken as you lose ground.**
+  That follows from compute being territory. It may be exactly right, or it may
+  be a death spiral — a bad run now compounds. Raised in [[Open]].
+- **Compute is now very scarce: a ceiling of 14 against seats at 1 each.**
+  Starting `supply_cap` is 4. Nothing else changed about prices.
+- Nothing to check in-editor. All script.
+
+**Blocked / next.** A1 — the think/LOD mechanism into [[Atlas/Robots and AI]] —
+which I am starting now. Then D9/RB6, then K32.
+
 ## 2026-10-26 (later) — the economy loop: K9, K11, K12, K17
 
 **Landed.** Four decisions from 2026-10-23, all in the campaign layer, built

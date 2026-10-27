@@ -215,18 +215,20 @@ func _ready() -> void:
 
 
 
-# A save from before compute — or from before an op paid any — has cleared ops
-# it was never paid for. Each pays its first-clear compute now, once. Quietly:
-# loading must not write the save by itself, and the next save keeps it (the
-# claims and the compute are saved together, so nothing can be paid twice).
-func _pay_compute_owed() -> void:
-	var owed := 0
-	for m in missions:
-		if m != null and state.completed_missions.has(m.id):
-			owed += state.claim_compute(CampaignState.clear_compute_key(m.id), m.compute_reward)
-	if owed > 0:
-		state.compute_earned += owed
-		print("[Campaign] +%d compute for operations cleared before they paid it." % owed)
+# WAS `_pay_compute_owed`, AND IT NO LONGER PAYS ANYTHING.
+#
+# It used to walk every completed mission on load and claim the first-clear
+# compute for any that had been cleared before the game paid it — a migration
+# for saves older than the compute economy. First clears stopped paying on
+# 2026-10-26 (Backlog K11b: lose the location, lose the compute), so back-
+# paying them would hand an old save up to 29 compute that nothing can ever
+# take away, which is the exact thing that decision removed.
+#
+# Renamed rather than gutted in place, because a function called
+# "_pay_compute_owed" that pays nothing is the kind of name the next person
+# reads instead of the body. What is left is the half that was always the
+# other job: releasing compute held by software the tree has dropped.
+func _release_orphaned_software() -> void:
 	# A program the tree no longer has (renamed or cut in a patch) hands its
 	# compute back rather than holding it forever out of reach.
 	var dropped := state.release_unknown_software(_SoftwareTree.ids())
@@ -582,7 +584,7 @@ func _adopt_state(id: String) -> void:
 	state.ensure_teams()
 	if not state.teams_changed.is_connected(_on_teams_changed):
 		state.teams_changed.connect(_on_teams_changed)
-	_pay_compute_owed()
+	_release_orphaned_software()
 	_grant_owed_unlocks()
 	current_mission = null
 	# REMEMBER WHERE THE TRAIN ENDED UP. See last_site above — the next
@@ -1466,11 +1468,19 @@ func extract(success: bool = true) -> Dictionary:
 		result["reward"] = current_mission.reward_resources
 		if not state.completed_missions.has(current_mission.id):
 			state.completed_missions.append(current_mission.id)
-		# FIRST clear only. Compute grows the squad; replaying the arena must
-		# not be a way to buy an army. A claim rather than "was it completed",
-		# so an op cleared before it paid anything still pays (on load).
-		compute += state.claim_compute(CampaignState.clear_compute_key(current_mission.id),
-			current_mission.compute_reward)
+		# ── A FIRST CLEAR PAYS NO COMPUTE (2026-10-26, Backlog K11b) ─────
+		#
+		# It used to claim `compute_reward` here, once per campaign. The
+		# human's rule: **lose the location, lose the compute.** A claim can
+		# never be taken back — `compute_claimed` has no un-claim — so a
+		# first clear was 29 compute across the board that stayed with you
+		# after every site that earned it had been lost, against 12 for
+		# holding the entire board. That made "for as long as you hold it"
+		# decorative, so the permanent half is gone and the compute of a
+		# place is now exactly `Location.compute`, derived from holding it.
+		#
+		# `MissionDefinition.compute_reward` is left in the data unread, the
+		# same as the objective rewards K9 retired.
 		# Separate from completed_missions because that array is a set: running
 		# the arena a third time must not append a duplicate id, but it does
 		# need to bump the counter the terminal reads.

@@ -185,7 +185,13 @@ static func compose(authored: Array, location, act: int, holder: int,
 				if c != null:
 					w += float(c.supply)
 			if w <= 0.0:
-				w = float(maxi(spec.count, 1))
+				# A roster with no supply in it — the three statics and the
+				# Diver are all supply 0 on purpose — still has to weigh
+				# something, so fall back to its body count. Was
+				# `maxi(spec.count, 1)` until the legacy field went (H9); a
+				# roster spec carried a stale count of 3, so this fallback used
+				# to weigh a nine-body nest post as three.
+				w = float(maxi(spec.body_count(), 1))
 		weights.append(w)
 		sum += w
 	if sum <= 0.0:
@@ -250,9 +256,9 @@ static func _refill(spec, share: int, pool: Array, rng: RandomNumberGenerator):
 		# the map says is defended must not come up empty.
 		roster.append(cheapest)
 	made.roster = roster
-	# count is ignored in roster form, but a stale 3 sitting next to a roster of
-	# eleven is a lie the next reader has to work out. Keep them agreeing.
-	made.count = roster.size()
+	# There used to be a `made.count = roster.size()` here, keeping the legacy
+	# field from sitting next to the roster telling a different story. The field
+	# went with H9; body_count() reads the roster now.
 	made.kit_variance = 0.35
 	return made
 
@@ -303,19 +309,47 @@ static func _pool(holder: int, act: int, catalogue: ItemCatalogue) -> Array:
 ## What a garrison is worth at zero compute — a token guard, enough that a site
 ## is never simply undefended.
 const GARRISON_BASE := 8
-## Supply per point of compute earned. The campaign pays 32 compute in total
-## (§6), so a finished campaign garrisons every site at roughly 40 supply.
+## Supply per point of compute the player HAS — see garrison_supply() for why
+## that is `compute_total()` and not `compute_earned`.
+##
+## WAS 1.0, AGAINST AN INPUT THAT REACHED 31. The campaign paid 2 at the seed
+## and 29 in first clears, so a finished campaign garrisoned at roughly 40 and
+## `enemy_turn.gd` sizes its raids against exactly that range (8 → 40, with an
+## act-1 raid committing 18).
+##
+## First clears stopped paying on 2026-10-26 (Backlog K11b), so the input now
+## reaches **14** — 2 at the seed plus 12 for holding every Location there is.
+## At 1.0 the best garrison in the game would be 22 against an 18 raid, and
+## the curve §6 describes ("late you hold comfortably") would simply not exist.
+## 8 + 14 × 2.3 = 40.2, which puts the endpoints back where they were authored.
+##
+## RAISED TO PRESERVE THE CURVE, NOT TO CHANGE IT — but it is still a balance
+## number nobody has played, and it is the human's to retune.
 ##
 ## BALANCE, not design: these two numbers are the entire difficulty curve of
 ## every defence in the game and they belong in one place for that reason.
-const GARRISON_PER_COMPUTE := 1.0
+const GARRISON_PER_COMPUTE := 2.3
 
 
 ## How much supply the player's garrison is worth, anywhere.
+##
+## READS `compute_total()`, NOT `compute_earned`. Since 2026-10-26 nothing adds
+## to `compute_earned` after the seed, so it is 2 for the whole campaign and a
+## garrison riding on it would never grow at all. What actually measures how
+## far along a campaign is now is how much ground is held — which is also the
+## better model: your garrisons are strong where your territory is, and they
+## weaken when you lose it.
+##
+## Falls back to `compute_earned` for anything that is not a CampaignState (the
+## laboratory hands this a stub), and to the base for nothing at all.
 static func garrison_supply(state) -> int:
 	if state == null:
 		return GARRISON_BASE
-	var compute: int = int(state.compute_earned) if "compute_earned" in state else 0
+	var compute := 0
+	if state.has_method("compute_total"):
+		compute = int(state.compute_total())
+	elif "compute_earned" in state:
+		compute = int(state.compute_earned)
 	return GARRISON_BASE + int(round(float(compute) * GARRISON_PER_COMPUTE))
 
 

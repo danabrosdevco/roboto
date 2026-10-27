@@ -54,6 +54,9 @@ extends SceneTree
 const WORLD := "res://Env/world.tscn"
 const _Pricing := preload("res://Campaign/pricing.gd")
 const _SoftwareTree := preload("res://Campaign/software_tree.gd")
+## The garrison constants. Compute is not only something the player spends —
+## it also sizes every defence, and nothing else reports that coupling.
+const _Forces := preload("res://Campaign/force_generator.gd")
 const _CampaignScript := preload("res://Campaign/campaign.gd")
 
 var _catalogue: ItemCatalogue
@@ -208,6 +211,19 @@ func _report_site_compute(base: CampaignState) -> void:
 	var before_pay := s.earned
 	var paid := s.pay_income()
 	print("   pay_income()       earned %d -> %d, paid %d" % [before_pay, s.earned, paid])
+	# THE GARRISON RIDES ON COMPUTE, and that coupling is invisible from either
+	# side. force_generator.garrison_supply() read `compute_earned` — which
+	# nothing adds to after the seed now that first clears pay nothing (K11b),
+	# so it would have sat at 2 for a whole campaign and every defence would
+	# have had the same strength. It reads compute_total() instead.
+	print("")
+	print("   compute_earned %d   site_compute %d   compute_total() %d" % [
+		s.compute_earned, s.site_compute(), s.compute_total()])
+	print("   garrison_supply()  %d supply   (8 + total x %.1f)   vs an act-1 raid of 18" % [
+		_Forces.garrison_supply(s), _Forces.GARRISON_PER_COMPUTE])
+	var full_total: int = s.compute_earned + _board_total_compute()
+	print("   holding the WHOLE board: total %d -> garrison %d supply" % [full_total,
+		_Forces.GARRISON_BASE + int(round(float(full_total) * _Forces.GARRISON_PER_COMPUTE))])
 
 
 # ── Every key format, made to appear ─────────────────────────────────────────
@@ -403,16 +419,18 @@ func _report_locations() -> void:
 func _report_missions(missions: Array) -> void:
 	print("")
 	print("══ MISSIONS — world.tscn's list, what clearing each pays once ═══════")
-	print("%-24s %4s %4s %6s %6s %8s %8s" % ["id", "sim", "def", "res", "cpu", "UNPAID", "UNPAID"])
-	print("%-24s %4s %4s %6s %6s %8s %8s" % ["", "", "", "", "", "obj res", "obj cpu"])
+	print("%-24s %4s %4s %6s %6s %8s %8s" % ["id", "sim", "def", "res", "UNPAID", "UNPAID", "UNPAID"])
+	print("%-24s %4s %4s %6s %6s %8s %8s" % ["", "", "", "", "cpu", "obj res", "obj cpu"])
 	var obj_res := 0
 	var obj_cpu := 0
+	var clear_cpu := 0
 	for m in missions:
 		if m == null:
 			continue
 		var pay := _objective_pay(m)
 		obj_res += int(pay["resources"])
 		obj_cpu += int(pay["compute"])
+		clear_cpu += int(m.compute_reward)
 		print("%-24s %4s %4s %6d %6d %8d %8d" % [m.id, "yes" if m.sim else "", "yes" if m.defence else "",
 			int(m.reward_resources), int(m.compute_reward), int(pay["resources"]), int(pay["compute"])])
 	print("obj = authored on objectives the mission KEEPS (active_objectives), top level and one map deep.")
@@ -420,9 +438,14 @@ func _report_missions(missions: Array) -> void:
 	# either currency on 2026-10-23 (Backlog K9) — extract() no longer asks the
 	# tracker. The figures are still in the .tres files and still worth printing,
 	# because their SUM is what left the economy, and it is large.
-	print("THE TWO obj COLUMNS ARE NOT PAID (Backlog K9). Still authored; read by nothing.")
-	print("   what objectives would have paid in total: %d resources, %d compute" % [obj_res, obj_cpu])
-	print("   control pays instead — see the LOCATIONS total above for what the board is worth.")
+	print("THREE OF THESE COLUMNS ARE NOT PAID. Still authored; read by nothing.")
+	print("   obj res / obj cpu — objectives stopped paying 2026-10-23 (K9):  %d resources, %d compute" % [
+		obj_res, obj_cpu])
+	print("   cpu — a first clear stopped paying 2026-10-26 (K11b):           %d compute" % clear_cpu)
+	print("   A CLAIM CAN NEVER BE TAKEN BACK, so first-clear compute outlived every site")
+	print("   that earned it. Lose the location, lose the compute: Location.compute is now")
+	print("   the only compute a place is worth. Only `res` is still paid on a clear.")
+	print("   See the LOCATIONS total above for what holding the board is worth.")
 
 
 ## What the mission's KEPT objectives pay, read as packed data. Anything not in
@@ -470,3 +493,15 @@ func _report_loss(s: CampaignState) -> void:
 	print("a STARTING %s, destroyed: scrap_value %d (no unit: allocation, so priced at today's chassis_buy %d / %d, credited to earned)" % [
 		r.chassis_id, c.scrap_value(r), _Pricing.chassis_buy(_catalogue.chassis_def(r.chassis_id)), c.scrap_divisor])
 	print("   kit it carries %s — _kit_payout rows %d (only item:<id>:<n> allocations pay)" % [str(r.all_fitted_ids()), c._kit_payout(r).size()])
+
+
+## Every Location's compute added up — what holding the entire board is worth.
+## Not a constant anywhere: it is the sum of the authored catalogue, so adding
+## a Location moves it and moves the garrison ceiling with it.
+func _board_total_compute() -> int:
+	var total := 0
+	if _locations == null:
+		return total
+	for l in _locations.all():
+		total += int(l.compute)
+	return total

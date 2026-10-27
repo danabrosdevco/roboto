@@ -968,25 +968,40 @@ func mark_lesson(id: StringName) -> bool:
 	return true
 
 
-## WHAT IS LEFT TO SPEND: compute won, PLUS the compute of every Location you
-## hold, minus what seats and software are holding.
+## ALL THE COMPUTE YOU HAVE: what was awarded, plus the compute of every
+## Location you hold.
 ##
-## site_compute() was missing from this sum, and it was site_compute()'s only
-## possible caller — so `Location.compute`, 12 across the whole board, was
-## never credited to anybody. Holding a place gives you its compute for as
-## long as you hold it (§2, decided 2026-10-23); it looked like it already
-## worked because capturing a site is also its operation's first clear, and
-## that pays `compute_reward` at the same moment. Backlog K11.
+## THE SECOND TERM IS THE WHOLE CAMPAIGN NOW. As of 2026-10-26 nothing else
+## adds to `compute_earned` after the seed — first clears stopped paying
+## (K11b), so `compute_earned` is `starting_compute` and debug handouts, and
+## everything else you have is ground you are holding this minute.
 ##
-## DERIVED, not banked — see site_compute(). Losing a site takes its compute
-## back, which can leave the ledger over-allocated; that is the intended
-## behaviour and over_allocated_by() is the debt the player has to clear
-## before they can deploy again.
+## Anything measuring "how far along is this campaign" must read THIS, not
+## `compute_earned`, or it reads 2 forever. force_generator.garrison_supply()
+## is the one that matters: it is the entire difficulty curve of every
+## defence, and it used to ride on first-clear compute.
+func compute_total() -> int:
+	return compute_earned + site_compute()
+
+
+## WHAT IS LEFT TO SPEND: everything you have, minus what seats and software
+## are holding.
+##
+## site_compute() had no caller at all until 2026-10-26 — this was
+## `compute_earned − held`, so `Location.compute`, 12 across the whole board,
+## was credited to nobody (Backlog K11).
+##
+## DERIVED, not banked — see site_compute(). **Losing a site takes its compute
+## back**, which is the rule the human set on 2026-10-26: lose the location,
+## lose the compute. That can leave the ledger over-allocated, which is
+## intended; over_allocated_by() is the debt they have to clear before they can
+## deploy again, and it is reachable in ordinary play now rather than only
+## after a requisition nothing performs.
 func compute_free() -> int:
 	var held := 0
 	for amount in compute_held.values():
 		held += int(amount)
-	return compute_earned + site_compute() - held
+	return compute_total() - held
 
 
 func award_compute(amount: int) -> void:
@@ -1068,10 +1083,25 @@ func _newest_held(prefix: String) -> String:
 	return newest
 
 
-## Marks `key` as paid and returns `amount`, or 0 if it was paid before. Every
-## compute source is a one-off — an op's first clear ("clear:<op>"), a hidden
-## objective ("<op>:<objective>") — so replays cannot farm it. The caller adds
-## the total with award_compute(), which announces it once.
+## ─────────────────────────────────────────────
+## NOTHING CLAIMS COMPUTE ANY MORE, and that is the point of the gate going
+## quiet rather than away.
+##
+## This was the once-per-campaign ratchet for the two one-off compute sources:
+## an op's first clear ("clear:<op>") and a hidden objective
+## ("<op>:<objective>"). Objectives stopped paying on 2026-10-23 (K9) and
+## first clears on 2026-10-26 (K11b), so **it has no caller in the game**.
+##
+## KEPT, with its save field, for two reasons. `compute_claimed` is in
+## `to_dict()`, so dropping it is a save-format change for a list that costs
+## nothing to carry; and existing saves have entries in it. If a capture bonus
+## is ever reinstated, this is the thing that stops a replay farming it.
+##
+## `clear_compute_paid()` below has had no caller for longer still.
+## ─────────────────────────────────────────────
+
+## Marks `key` as paid and returns `amount`, or 0 if it was paid before. The
+## caller adds the total with award_compute(), which announces it once.
 func claim_compute(key: String, amount: int) -> int:
 	if amount <= 0 or compute_claimed.has(key):
 		return 0

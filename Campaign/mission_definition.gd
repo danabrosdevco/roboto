@@ -40,8 +40,16 @@ class_name MissionDefinition
 # only ever accumulates and spending is derived from allocations, this is the
 # single place resources enter the game.
 @export var reward_resources: int = 0
-## Compute for the first clear only — replays pay resources, never compute.
-## Compute is spent on squad supply (and, later, the skill tree).
+## NOT PAID since 2026-10-26 (Backlog K11b). A first clear used to claim this
+## once per campaign, and a claim can never be taken back — so it was 29
+## compute across the board that outlived every site that earned it, against
+## 12 for holding the whole map. The human's rule is **lose the location, lose
+## the compute**, so the compute of a place is now `Location.compute` alone,
+## derived from holding it.
+##
+## Left in the data unread, like the objective rewards K9 retired: stripping it
+## means editing nineteen .tres files for a number nothing looks at. The
+## figures are still here if a capture bonus is ever wanted back.
 @export var compute_reward: int = 0
 @export var unlocks: Array[StringName] = []
 
