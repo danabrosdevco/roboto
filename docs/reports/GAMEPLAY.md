@@ -36,6 +36,66 @@ most wants and least often gets:
 ---
 
 
+## 2026-10-26 (seventh) — the bark family: K13, K14, K15, K18
+
+**Landed.** Four approved rows, all `BarkDirector` / `Bark`, taken as one
+session because fixing them separately is three visits to the same file.
+
+- **K13(a)** — the NCO bonus is **removed, not repaired**. NCOs are deprecated
+  and it compared `squad.nco` to the speaker, which is a `Bark` node and never
+  the NCO body, so it could not fire. Measured 0 against 1000 before, **0 both
+  ways** now. Nearest-to-camera was already the live rule, so **nothing
+  audible changed.**
+- **K13(b)** — `_channel_for` walks up from the Bark to the body for a faction,
+  the way `Bark._resolve_squad()` already walked up for the squad. It still
+  asks the speaker first, since the director does not require its speakers to
+  be Barks.
+- **K14** — the shuffle bag's seam guard, and it was **worse than the row
+  said**. Clips are drawn with `pop_back()`, so the next one out is the back;
+  the guard tested `bag[0]` and then moved the front **to the back** — so
+  whenever it fired it put the just-played clip directly into the next draw.
+  A *guaranteed* repeat, not a doubled chance.
+- **K15** — the comment claiming reload is "filtered out for friendlies in the
+  BarkSet", which was false: one BarkSet, nine reload clips, no filter.
+- **K18(a)** — a paused tree no longer swallows `DOWNED`; it goes straight to
+  the comms log, friendly only, no audio. **K18(c)** — `reset()` is called
+  from `World.load_next_level`; it had only ever been called by the Laboratory,
+  so cooldown stamps crossed levels and the dictionaries grew all session.
+
+**I measured instead of asserting, twice.**
+
+`probe_hud_facts.gd`'s squadless-channel line used to read as a standing fault.
+It builds a Bark under a real soldier body, and that chassis defaults to
+`Factions.ENEMY` — so after the fix it still printed HOSTILE, which was now
+the *right* answer for the right reason. **One answer proves nothing there**,
+so the probe asks from both sides and reports `ENEMY -> HOSTILE` and
+`PLAYER -> FRIENDLY`.
+
+And the new `test_barks` seam check is **seeded, over 400 draws and 50+
+seams**, because the bug is probabilistic — a single-seam test would have
+passed half the time with it still in. **A/B'd:** restoring the old guard
+fails it at draw 4, exit 1.
+
+**K18(b) is instrumented, not answered, and that is deliberate.** The row says
+measure before changing it, and the honest measurement **is not available
+headless**: `_in_earshot()` returns true when there is no camera, so a
+headless run has no 55 m bound at all and would overstate contention freely.
+So the change is a counter — incremented only when a candidate meets a slot
+held by a *different* squad — which `reset()` reports at level unload and
+which stays silent at zero. **It needs one real played session with a window.**
+
+**Gates.** `check.sh --changed` **PASS** (80 scripts). `bucket.sh frames`
+**PASS — 29 suites**. `bucket.sh campaign` **PASS — 43, 1 parked**.
+`smoke.sh` **PASS**, booted clean 15 s. Not run: kit, shell, terrain.
+
+**Needs the human.** **`Env/world.gd` is SHARED and I edited it** — one line
+plus its comment, calling `BarkDirector.reset()` after the deload in
+`load_next_level`. And K18(b) above wants a played session; the instrument is
+already in and will print itself.
+
+**Blocked / next.** Giving you the cleaned-up board and the outstanding
+questions, as asked.
+
 ## 2026-10-26 (sixth) — K32, and two holes it found in K12
 
 **Landed.** Every spending control in the squad manager now says **which**
@@ -84,7 +144,7 @@ which is the K11 collateral fix visible on screen.
 the three squad-manager pages — I added two statics to it and changed no
 existing behaviour there.
 
-**Blocked / next.** **The READY queue is empty.** What is left needs decisions
+**Blocked / next.** **Correction: I first wrote "the READY queue is empty" here, and that was wrong** — the `## Now` list was empty, the BOARD is not. ~58 rows are still open and many are READY. Continuing through them; what genuinely needs decisions
 from you — see the cleaned-up list in chat.
 
 ## 2026-10-26 (fifth) — D9 + RB6: the last domain doc

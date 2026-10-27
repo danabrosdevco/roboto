@@ -81,6 +81,9 @@ static var _squad_ms: Dictionary = {}     # squad instance id -> msec
 static var _speaker_ms: Dictionary = {}   # speaker instance id -> msec
 static var _line_ms: Dictionary = {}      # "squad:line" -> msec
 static var _pending: Dictionary = {}      # Channel -> candidate dictionary
+## Elections where a candidate met a slot already held by a DIFFERENT squad.
+## Counted, not warned — see the note where it is incremented. Backlog K18(b).
+static var _slot_contested: int = 0
 
 # Anything that wants to SEE what the squad is saying — the comms log reads
 # these. GDScript has no static signals, so this is a plain callable registry.
@@ -106,8 +109,30 @@ static func request(speaker: Node3D, line: int, squad: Node = null,
 	if not enabled or speaker == null or not is_instance_valid(speaker):
 		return
 	var tree := Engine.get_main_loop() as SceneTree
-	if tree == null or tree.paused:
-		return   # the squad manager and the pause screen stay quiet
+	if tree == null:
+		return
+	if tree.paused:
+		# THE SQUAD MANAGER AND THE PAUSE SCREEN STAY QUIET — but one line is
+		# not chatter. DOWNED is the only line this file calls "pure
+		# information the player has to have", and it was being dropped with
+		# everything else: a squadmate could go down across a level load or a
+		# briefing and nothing would ever say so. Backlog K18(a).
+		#
+		# REPORTED, NOT HELD. The alternative was queueing it until the tree
+		# unpauses, which needs an unpause hook and can double-fire; the text
+		# is the part that carries the information, and the voice line would be
+		# landing seconds late by then anyway.
+		#
+		# NO ELECTION AND NO COOLDOWN, deliberately: there is nothing to
+		# compete with while paused, and DOWNED fires once per robot per
+		# downing, so it cannot repeat its way into a spam.
+		#
+		# FRIENDLY ONLY, like every other report. The player's radio does not
+		# carry the enemy's traffic.
+		if line == BarkSet.Line.DOWNED \
+				and _channel_for(speaker, line, squad) == Channel.FRIENDLY:
+			_report(speaker, line, context)
+		return
 
 	var channel := _channel_for(speaker, line, squad)
 	var now := Time.get_ticks_msec()
@@ -133,6 +158,24 @@ static func request(speaker: Node3D, line: int, squad: Node = null,
 		return
 
 	var best: Dictionary = _pending[channel]
+	# MEASURING K18(b) RATHER THAN GUESSING AT IT.
+	#
+	# There is ONE pending slot per channel, game-wide, so two squads on
+	# opposite sides of the map compete in a single 0.15 s election and the
+	# loser is silenced. Whether that is a real fault depends entirely on how
+	# often it happens, and EARSHOT already bounds it to 55 m of the camera —
+	# which may make it almost never.
+	#
+	# So this counts the only case that matters: a candidate meeting a slot
+	# already held by a DIFFERENT squad. Two robots of the same squad competing
+	# is the election working as designed. reset() reports the tally at level
+	# unload, and it stays silent when the answer is zero.
+	#
+	# IT CANNOT BE MEASURED HEADLESS. _in_earshot() returns true when there is
+	# no camera ("don't silence the game"), so a headless run has no 55 m bound
+	# at all and would overstate this freely.
+	if best["squad"] != squad:
+		_slot_contested += 1
 	if candidate["priority"] > best["priority"] \
 			or (candidate["priority"] == best["priority"] and candidate["score"] > best["score"]):
 		_pending[channel] = candidate
@@ -140,7 +183,17 @@ static func request(speaker: Node3D, line: int, squad: Node = null,
 
 # Level unload frees every speaker. Pending candidates hold hard references, and
 # the cooldown dictionaries would grow forever across a campaign.
+## Called on level unload. **It was never called in the campaign** until
+## 2026-10-26 — only `Managers/lab.gd` ever did, although the comment here has
+## always said level unload should. Cooldown stamps from the last level carried
+## into the next one and the dictionaries grew for the whole session.
+## `World.load_next_level` calls it now. Backlog K18(c).
 static func reset() -> void:
+	# THE K18(b) TALLY, REPORTED WHERE IT IS FINALLY COMPLETE. Silent at zero,
+	# which is the answer that means the single pending slot never bit.
+	if _slot_contested > 0:
+		print("[BarkDirector] %d election(s) where two DIFFERENT squads wanted the same channel slot. See Backlog K18(b)." % _slot_contested)
+	_slot_contested = 0
 	_pending.clear()
 	_squad_ms.clear()
 	_speaker_ms.clear()
@@ -249,12 +302,31 @@ static func _channel_for(speaker: Node3D, line: int, squad: Node) -> int:
 		return Channel.ORDERS
 	if squad != null and is_instance_valid(squad) and "player_commandable" in squad:
 		return Channel.FRIENDLY if squad.player_commandable else Channel.HOSTILE
-	# No squad to ask: fall back to faction if the speaker exposes one.
-	if speaker.has_method("get_faction"):
-		var f = speaker.get_faction()
-		if f == Enums.Factions.PLAYER or f == Enums.Factions.ALLIED:
-			return Channel.FRIENDLY
+	# No squad to ask: fall back to the faction of whatever is speaking.
+	var f = _speaker_faction(speaker)
+	if f != null and (f == Enums.Factions.PLAYER or f == Enums.Factions.ALLIED):
+		return Channel.FRIENDLY
 	return Channel.HOSTILE
+
+
+## The faction of the thing actually speaking.
+##
+## THE SPEAKER IS A `Bark` NODE, NOT THE ROBOT. `Bark.bark()` passes `self`,
+## and a Bark has no `get_faction()` — so this used to ask an object that
+## could never answer, every squadless robot fell through to HOSTILE, and a
+## friendly without a squad never reached the comms log at all. Walk up to the
+## body, the same way `Bark._resolve_squad()` already does for the squad.
+##
+## Still asks the speaker FIRST, because the director does not require its
+## speakers to be Barks and anything that answers for itself should be
+## believed. Backlog K13.
+static func _speaker_faction(speaker: Node) -> Variant:
+	var n: Node = speaker
+	while n != null:
+		if n.has_method("get_faction"):
+			return n.get_faction()
+		n = n.get_parent()
+	return null
 
 
 # The camera IS the audio listener, so this is literally "can it be heard".
@@ -268,11 +340,19 @@ static func _in_earshot(speaker: Node3D) -> bool:
 # Who should speak for the squad. The NCO is the mouthpiece if there is one,
 # which finally gives Squad.nco a job; otherwise whoever is closest to the
 # listener, so the line comes from somewhere the player is looking.
-static func _speaker_score(speaker: Node3D, squad: Node) -> float:
+## NEAREST TO THE CAMERA WINS, and that is the whole rule.
+##
+## THERE WAS AN NCO BONUS HERE AND IT NEVER FIRED. It compared `squad.nco` to
+## the speaker — and the speaker is a `Bark` node, never the NCO robot — so
+## the +1000 could not match and `probe_hud_facts.gd` measured it at 0 against
+## 1000. NCOs were deprecated on 2026-10-23, so this is removed rather than
+## repaired: nearest-to-camera is what you already hear, and **nothing audible
+## changes.** Backlog K13.
+##
+## `Squad.nco` itself stays — `_acknowledge_order` still picks it first, and
+## whether that field goes is a separate question.
+static func _speaker_score(speaker: Node3D, _squad: Node) -> float:
 	var score := 0.0
-	if squad != null and is_instance_valid(squad) and "nco" in squad:
-		if squad.nco == speaker:
-			score += 1000.0
 	if speaker.is_inside_tree():
 		var cam := speaker.get_viewport().get_camera_3d()
 		if cam != null:

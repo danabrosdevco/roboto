@@ -90,10 +90,20 @@ func _next_clip(line: int) -> AudioStream:
 		for i in clips.size():
 			bag.append(i)
 		bag.shuffle()
-		# Avoid the seam: a reshuffle can put the clip we just played back at
-		# the front, which is the repeat the bag exists to prevent.
-		if bag.size() > 1 and _bags.has(line) and bag[0] == _last_index.get(line, -1):
-			bag.append(bag.pop_front())
+		# AVOID THE SEAM: a reshuffle can put the clip we just played where it
+		# is about to be drawn again, which is the one repeat the bag exists to
+		# prevent.
+		#
+		# IT USED TO CHECK THE WRONG END AND MOVE IT THE WRONG WAY, and so
+		# caused the repeat it was written to stop. Clips are drawn with
+		# pop_back(), so the next one out is the BACK — but this tested
+		# `bag[0]` and then did `bag.push_front(bag.pop_back())`, which takes the
+		# front and puts it at the back. When the guard fired it moved the
+		# just-played clip directly into the next draw: a guaranteed repeat
+		# where there had been a 1-in-n chance. Across a reshuffle that is
+		# 2/n rather than 1/n. Backlog K14.
+		if bag.size() > 1 and _bags.has(line) and bag[bag.size() - 1] == _last_index.get(line, -1):
+			bag.push_front(bag.pop_back())
 	var index: int = bag.pop_back()
 	_bags[line] = bag
 	_last_index[line] = index

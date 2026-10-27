@@ -76,7 +76,28 @@ func load_next_level(next_level_scene: PackedScene, success: bool = true) -> voi
 		Campaign.begin_deploy()
 	if current_level:
 		await deload_current_level(current_level)
-	var new_level := next_level_scene.instantiate() as TrenchBroomLevel
+	# THE BARK DIRECTOR'S STATE IS PER-LEVEL AND NOTHING WAS CLEARING IT.
+	#
+	# BarkDirector.reset() has always said in its own comment that level unload
+	# should call it, and the only caller in the project was Managers/lab.gd —
+	# so cooldown stamps from the last level carried into the next, and its
+	# dictionaries grew for the whole session. Backlog K18(c).
+	#
+	# AFTER the deload, so anything barking on its way out is still arbitrated
+	# normally and the clear is the last word on the level that just ended.
+	BarkDirector.reset()
+	# CHECKED, FREED AND RELEASED. The cast used to be used unconditionally, so
+	# a scene that is not a TrenchBroomLevel both orphaned a whole level AND
+	# errored on `add_child(null)` one line later, with the PauseHold still
+	# held — which leaves the game paused for good. The release matters as much
+	# as the free. K25, 2026-10-26.
+	var built := next_level_scene.instantiate()
+	var new_level := built as TrenchBroomLevel
+	if new_level == null:
+		push_error("World: '%s' is not a TrenchBroomLevel; nothing was loaded." % next_level_scene.resource_path)
+		built.free()
+		PauseHold.release(&"level_load")
+		return
 	add_child(new_level)
 	current_level = new_level
 	if new_level.spawn_point:

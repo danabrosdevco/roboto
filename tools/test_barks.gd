@@ -136,6 +136,62 @@ func _init() -> void:
 
 	BarkDirector.remove_listener(listener)
 	BarkDirector.reset()
+
+	_test_no_repeat_across_the_seam()
+
 	print("")
 	print("ALL BARK CHECKS PASS" if _fails == 0 else "%d BARK CHECK(S) FAILED" % _fails)
 	quit(1 if _fails > 0 else 0)
+
+
+# ─────────────────────────────────────────────
+# THE SHUFFLE BAG NEVER PLAYS THE SAME CLIP TWICE RUNNING (Backlog K14).
+#
+# Clips are drawn with pop_back(), so within one bag every index appears
+# exactly once and a repeat is impossible. The ONLY place two identical clips
+# can land back to back is the seam between one bag and the next — which is
+# precisely what the seam guard exists to prevent, and precisely what it used
+# to cause: it tested `bag[0]` and then moved the front to the BACK, straight
+# into the next draw. A guaranteed repeat whenever it fired, and 2/n across a
+# reshuffle instead of 1/n.
+#
+# SEEDED, so a failure is reproducible rather than a thing that happens on
+# some runs. Many reshuffles rather than one, because the bug is probabilistic
+# at ~2/4 per seam here — one seam would pass half the time with the bug still
+# in, which is the kind of test that is worse than none.
+# ─────────────────────────────────────────────
+func _test_no_repeat_across_the_seam() -> void:
+	seed(20261026)
+	var b := Bark.new()
+	var clips: Array[AudioStream] = []
+	for i in 4:
+		clips.append(AudioStreamWAV.new())
+	b.bark_clips = clips
+	var line: int = BarkSet.Line.HURT
+
+	var draws: Array[int] = []
+	var seams := 0
+	var last_bag_size := -1
+	for i in 400:
+		var clip := b._next_clip(line)
+		if clip == null:
+			break
+		draws.append(clips.find(clip))
+		# A bag that has just been refilled is the seam; count them so the
+		# check below cannot pass by never reaching one.
+		var size: int = (b._bags.get(line, []) as Array).size()
+		if size > last_bag_size and i > 0:
+			seams += 1
+		last_bag_size = size
+
+	var repeat_at := -1
+	for i in range(1, draws.size()):
+		if draws[i] == draws[i - 1]:
+			repeat_at = i
+			break
+	_check("(setup) the bag reshuffled enough times to be worth testing",
+		seams >= 50 and draws.size() == 400, "%d seams, %d draws" % [seams, draws.size()])
+	_check("the shuffle bag never plays the same clip twice running",
+		repeat_at < 0,
+		"clip %d repeated at draw %d" % [draws[repeat_at] if repeat_at >= 0 else -1, repeat_at])
+	b.free()
