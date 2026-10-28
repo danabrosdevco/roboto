@@ -190,8 +190,36 @@ func label() -> String:
 	if action == "":
 		return display_name if has_authored_name() else DEFAULT_DISPLAY_NAME
 	if has_authored_name():
-		return "%s %s" % [action, display_name]
+		return "%s %s" % [action, _without_doubled_article(action, display_name)]
 	return action
+
+
+# "Capture the" + "The Cistern" rendered "Capture the The Cistern" on the HUD —
+# on 23 of the 99 authored objectives, which is nearly every InteractObjective
+# in the game, because a place in this world is usually named with its article.
+#
+# BOTH HALVES ARE RIGHT AND ONLY THE JOIN IS WRONG. The verb carries the
+# article deliberately (see interact_objective.verb(): without it, CAPTURE WEST
+# GARRISON read as a telegram) and a level author names the place as the place
+# is called. So this collapses the join rather than renaming authored content
+# across eleven level scenes.
+#
+# WHICH ARTICLE SURVIVES IS NOT A CASE QUESTION. The list is rendered through a
+# display font with no lowercase glyphs — a shot of mutaha_wip reads CAPTURE
+# THE GATEHOUSE RELAY, though nothing in objective_hud.gd calls to_upper() on
+# the row. The verb's article is kept because the verb is the half this file
+# owns; the name is the level author's and is returned to them untouched.
+#
+# Backlog K10. Measured by tools/probe_objective_labels.gd, which composes
+# every authored objective's real label() without instantiating a level.
+func _without_doubled_article(action: String, name_text: String) -> String:
+	var low := action.to_lower()
+	for article in ["the", "a", "an"]:
+		# The trailing space matters: a name that is only the bare word "The"
+		# is left alone, and so is "Anchor" against the article "an".
+		if low.ends_with(" " + article) and name_text.to_lower().begins_with(article + " "):
+			return name_text.substr(article.length() + 1)
+	return name_text
 
 
 # Finds the campaign however it's wired: a node in the "campaign" group (the

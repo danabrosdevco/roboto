@@ -156,7 +156,50 @@ func _init() -> void:
 				"reinforcement_tag %s is not an objective in %s, not a callsign in this force, and not %s"
 					% [spec.reinforcement_tag, level, EnemyForceSpawner.NEST_DOWN_TAG])
 
+	_check_labels()
 	_finish()
+
+
+# ─────────────────────────────────────────────
+# THE HUD READS A SENTENCE, NOT A FIELD (Backlog K10).
+#
+# label() composes a verb from the objective's class with a name authored in a
+# level, and NEITHER FILE SHOWS THE SENTENCE THEY MAKE TOGETHER. So the bug was
+# invisible from both ends and shipped on 40 of the game's 99 authored
+# objectives: "Capture the The Cistern", "Extract Off The Crown".
+#
+# Constructed cases, not a scan of the levels — tools/probe_objective_labels.gd
+# does the scan and prints every real one. What a suite can hold is the RULE,
+# including the two near-misses that a naive article strip gets wrong.
+# ─────────────────────────────────────────────
+func _check_labels() -> void:
+	var cases := [
+		# [script, display_name, is_extraction, expected label]
+		["interact_objective.gd", "The Cistern", false, "Capture the Cistern"],
+		["interact_objective.gd", "Water Street", false, "Capture the Water Street"],
+		# "an" must not eat the front of a name that merely starts with those
+		# letters, and the verb's article is "the" here anyway.
+		["interact_objective.gd", "Anchor", false, "Capture the Anchor"],
+		# A name that is only the bare article keeps it: nothing is doubled.
+		["interact_objective.gd", "The", false, "Capture the The"],
+		# Eliminate's verb carries no article, so "The" stays put.
+		["eliminate_objective.gd", "The Yard Hive", false, "Eliminate The Yard Hive"],
+		# An authored extraction name IS the instruction.
+		["reach_objective.gd", "Off The Crown", true, "Off The Crown"],
+		# ...and the verb still covers the unnamed one, which is why it exists.
+		["reach_objective.gd", "", true, "Extract"],
+		# A plain Reach has no authored name anywhere in the project, so it is
+		# left exactly as it was.
+		["reach_objective.gd", "The Ridge", false, "Reach The Ridge"],
+	]
+	for c in cases:
+		var obj: Node = load("res://Campaign/%s" % c[0]).new()
+		obj.display_name = c[1]
+		obj.is_extraction = c[2]
+		var got: String = obj.label()
+		_check('label() reads "%s" for %s named "%s"' % [c[3], c[0], c[1]],
+			got == c[3], 'got "%s"' % got)
+		obj.free()
 
 
 func _finish() -> void:

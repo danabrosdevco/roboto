@@ -85,3 +85,23 @@ func _squad_present() -> bool:
 # inside it and the node is easy to place and forget.
 func verb() -> String:
 	return "Extract" if is_extraction else "Reach"
+
+
+# AN AUTHORED EXTRACTION NAME IS ALREADY THE INSTRUCTION, so prefixing the verb
+# wrote a second one: "Extract Off The Crown", "Extract Get out north".
+#
+# This is not a style preference, it is what the levels say. SEVEN of seven
+# authored extraction names in the project are preposition phrases — "Off The
+# Crown", "Off The Salient", "Off The Hill", "Out On The Upper Road", "Out The
+# Service Dock", "Get out north" twice — so every author who named one wrote a
+# direction to go, not a place to stand. And verb() above exists for the case
+# they did NOT name, which is the case it still covers.
+#
+# Extraction only. A plain Reach has no authored name anywhere, so there is no
+# evidence either way and "Reach <place>" stays as it is.
+#
+# Backlog K10; measured by tools/probe_objective_labels.gd.
+func label() -> String:
+	if is_extraction and has_authored_name():
+		return display_name
+	return super()
