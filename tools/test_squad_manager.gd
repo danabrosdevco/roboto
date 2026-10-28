@@ -308,9 +308,10 @@ func _run() -> void:
 	_check("...and the Armorer is not a tab", not SquadManagerUI.TABS.has(&"armorer"),
 		str(SquadManagerUI.TABS))
 	_check("...leaving exactly three", SquadManagerUI.TABS.size() == 3, str(SquadManagerUI.TABS))
-	# THE TRANSACTIONS SURVIVE THE PAGE. recover_kit and the campaign seed both
-	# move stock, so the armoury is not gone with its shopfront; only the UI
-	# that sold out of it is.
+	# THE TRANSACTIONS SURVIVE THE PAGE. The campaign seed moves stock, so the
+	# armoury is not gone with its shopfront; only the UI that sold out of it
+	# is. (This used to credit recover_kit as well. It has no caller anywhere —
+	# Backlog SQ3 — so the seed is the whole of it.)
 	var spare := state.armoury.spare(&"frag")
 	state.armoury.add(&"frag")
 	_check("stores still take stock with no shop on screen",

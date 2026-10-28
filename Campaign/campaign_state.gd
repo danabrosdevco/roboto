@@ -1604,14 +1604,12 @@ func heal_survivors() -> void:
 		r.status = SoldierRecord.Status.ACTIVE
 
 
-# Free full repair. Kept for debug and for a future "between campaigns" reset.
-func repair_all() -> void:
-	for r in roster:
-		if r.status != SoldierRecord.Status.DESTROYED:
-			r.damage = 0
-			r.signal_integrity = 1.0
-			r.status = SoldierRecord.Status.ACTIVE
-	roster_changed.emit()
+# THERE IS NO repair_all(). It was "kept for debug and for a future between-
+# campaigns reset", had no caller anywhere in the game, in tools/ or as a
+# [connection], and did strictly less than heal_survivors() above — which runs
+# the same loop and covers player_record as well. Deleted rather than kept for
+# a hypothetical caller, because a second function doing nearly the job of a
+# live one is how the two stop matching. Backlog SQ3.
 
 
 # Called on arrival at base. Ammunition and equipment only: damage was already
@@ -1826,18 +1824,11 @@ func scrap_soldier(record: SoldierRecord) -> int:
 	return back
 
 
-func remove_destroyed() -> Array[SoldierRecord]:
-	var lost: Array[SoldierRecord] = []
-	var kept: Array[SoldierRecord] = []
-	for r in roster:
-		if r.status == SoldierRecord.Status.DESTROYED:
-			lost.append(r)
-		else:
-			kept.append(r)
-	roster = kept
-	if not lost.is_empty():
-		roster_changed.emit()
-	return lost
+# THERE IS NO remove_destroyed(). It swept every DESTROYED record off the
+# roster in one go and returned them, and nothing has ever called it. A wreck
+# leaves the roster one way: the player scraps it, through scrap_soldier()
+# above, which is a decision with a payout attached. A silent bulk sweep is the
+# opposite of that, and having it sitting here invited one. Backlog SQ3.
 
 
 # ─────────────────────────────────────────────
@@ -1880,7 +1871,13 @@ func can_fit(record: SoldierRecord, item: ItemDefinition) -> bool:
 	# were two answers to the same question — "can this robot have this yet" —
 	# and the catalogue is the one that stays. Rank still exists and still
 	# means something for stats; it just does not lock anything.
-		return false
+	#
+	# A SECOND `return false` SAT HERE, over-indented, left behind when that
+	# gate's `if` was deleted and its comment was not. GDScript read it as a
+	# second statement inside the `armoury.spare(...)` block above, so it
+	# parsed, never ran, and looked for all the world like a condition. It did
+	# nothing and is gone. Backlog SQ3.
+	#
 	# Which implementation is required depends on WHO is carrying it. The pump
 	# shotgun has no HUDWeapon, so it can arm a squadmate and not you.
 	if is_player_record(record):
@@ -1952,15 +1949,15 @@ func recover_kit(record: SoldierRecord) -> void:
 	roster_changed.emit()
 
 
-# Fitting a soldier to a frame. Anything the smaller frame can't hold comes back
-# to stores rather than vanishing.
-func set_chassis(record: SoldierRecord, chassis: ChassisDefinition) -> bool:
-	if record == null or chassis == null:
-		return false
-	for displaced in record.set_chassis(chassis, catalogue):
-		armoury.add(displaced)
-	roster_changed.emit()
-	return true
+# THERE IS NO CampaignState.set_chassis() — SO THERE IS NO REFIT. It put an
+# existing robot on a different frame, returning anything the smaller frame
+# could not hold to stores, and nothing has ever called it: a frame is chosen
+# when the robot is built and never again. That is worth knowing rather than
+# discovering, because it is why `mark_level` travelling WITH a robot instead
+# of with its production line is unreachable today.
+#
+# SoldierRecord.set_chassis() is a different function and is very much alive —
+# recruit() and buy_chassis() both go through it. Backlog SQ3.
 
 
 # Called once after the catalogue is available, since max_health is derived and

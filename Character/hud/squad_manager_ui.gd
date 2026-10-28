@@ -25,8 +25,15 @@ const _Pricing := preload("res://Campaign/pricing.gd")
 # customer, and MEMORY took that — see docs/briefs/archive/MEMORY_SCREEN_SPEC.md.
 #
 # CampaignState.buy_item()/sell_item() SURVIVE and are still tested. Nothing
-# in the UI calls them now; they are the armoury's transaction shape, and
-# recover_kit and the seed still move stock through it.
+# in the UI calls them now; they are the armoury's transaction shape, and the
+# campaign seed still moves stock through it.
+#
+# NOT recover_kit, which this line used to name as well. It has no caller
+# anywhere — not in the game, not in tools/, not as a [connection] — so the
+# stock it was credited with moving has not moved since the shops went. The
+# seed is the whole of it. Deleting the trio is Backlog S7, which is a decision
+# about whether the shop comes back, not a cleanup; this is only the claim
+# being made honest. Backlog SQ3.
 #
 # This file is the frame round the pages: opening and closing, the tabs, the
 # resources, sounds, and the few lookups every page needs. The pages build
