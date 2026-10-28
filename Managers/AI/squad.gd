@@ -159,9 +159,11 @@ var _follow_reissue_t: float = 0.0
 # squad pulls them back. The order survives the firefight.
 @export var follow_combat_leash: float = 12.0
 @export var defend_combat_leash: float = 9.0
-# ASSAULT keeps advancing under fire; the leash tracks the objective rather than
-# a fixed post, so "engage along the way" falls out of it.
-@export var assault_combat_leash: float = 14.0
+# THERE IS NO assault_combat_leash. There was one, exported at 14.0, and it was
+# read by nothing for as long as it existed — the attempt it belonged to is
+# written up in _tick_assault(), which explains why ADVANCE cannot run a leash
+# at all. A tunable number that tunes nothing is worse than no number, so it is
+# gone rather than commented. Backlog OA5.
 # RUSHERS GET A LONG LEASH. A chaser or hopper with a live target may run this
 # far from its post or formation slot to reach it — the 9m defend leash
 # recalled a garrisoned hopper every time it went for someone 10m away. Once
@@ -234,9 +236,26 @@ var nco: Soldier = null
 var bound_pairs: Array = []
 
 # ── PLAYER COMMAND ────────────────────────────
-# Set when the player issues an order. Player orders outrank the squad's own
-# reasoning: they survive contact, and _disengage_and_resume() returns to them
-# rather than to the designer-placed objective.
+# Set when the player issues an order, by receive_player_order() and follow().
+#
+# IT IS A RECORD, NOT A MECHANISM, and this comment used to claim otherwise:
+# "player orders outrank the squad's own reasoning: they survive contact, and
+# _disengage_and_resume() returns to them rather than to the designer-placed
+# objective." Both halves of that behaviour are real and NEITHER of them is
+# done by this flag.
+#
+#   * Surviving contact is `force = true` on set_objective(), which is what
+#     skips the `context == ENGAGED` early return at line ~1189. Any caller
+#     can pass it; the player's route simply always does.
+#   * Returning to the order rather than the designer's is not a return at
+#     all. A player order OVERWRITES `objective`/`objective_position`, so by
+#     the time _disengage_and_resume() runs there is no designer objective
+#     left to go back to — see OA4, where `default_objective` is authored on
+#     three base levels and read by nothing.
+#
+# The only reader is analytics.gd, which tags an engagement "by_player".
+# Leave it that way or give it a job, but do not read behaviour into it.
+# Backlog OA8.
 var player_ordered: bool = false
 var ordered_target: CharacterBody3D = null
 
@@ -598,6 +617,10 @@ func _tick_assault() -> void:
 	# frame. They ran at the objective and never fired a shot.
 	#
 	# The rule is instead: kill what you can reach, advance when you can't.
+	#
+	# This is the reason there is no `assault_combat_leash`, whatever an older
+	# scene or diff shows. One was exported at 14.0 and never read; it is the
+	# residue of the attempt above, and was deleted rather than tuned (OA5).
 	for ai in get_orderable_members():
 		if not (ai is Soldier):
 			continue

@@ -151,9 +151,79 @@ func _init() -> void:
 		(m.world_point as Vector3).length() > 1.0)
 	_check("...and it is showing its age", bool(m.show_age))
 
+	_check_sky_callout_pays(world, player)
+
 	print("")
 	print("%d failure(s)" % _fail)
 	quit(1 if _fail > 0 else 0)
+
+
+# ─────────────────────────────────────────────
+# A CALLOUT COSTS THE SAME WHICHEVER ROUTE IT TOOK (Backlog OA7).
+#
+# There are two. _issue_order(Verb.CONTACT, …) is one; the other is
+# _issue_contextual_order() with the aim ray on open sky, which called
+# _call_contact() DIRECTLY — past the link check, past _transmit(), so no
+# integrity spent, no wavefront, no hostile told. A free callout, in the same
+# function as a comment reading "EVERY VERB PAYS".
+#
+# Measured as integrity spent, because that is the cost the player feels and
+# the one _transmit() is the only source of.
+# ─────────────────────────────────────────────
+func _check_sky_callout_pays(world: Node, player: Node3D) -> void:
+	var cmd: SquadCommander = null
+	for c in player.get_children():
+		if c is SquadCommander:
+			cmd = c as SquadCommander
+			break
+	if cmd == null:
+		_check("(setup) the player has a SquadCommander to call contacts with", false)
+		return
+	if cmd.tx_signal_cost <= 0.0:
+		_check("(setup) a transmission costs something, or this measures nothing",
+			false, "tx_signal_cost %.3f" % cmd.tx_signal_cost)
+		return
+
+	# Full link both times: link_down() now refuses a sky callout as well, and a
+	# refusal would read as "costs nothing" and pass for the wrong reason.
+	player.signal_integrity = 1.0
+	var at: Vector3 = player.global_position + Vector3(0, 0, 40)
+	cmd._call_contact(at, null)
+	var sky_spent: float = 1.0 - player.signal_integrity
+
+	player.signal_integrity = 1.0
+	cmd._transmit(SquadCommander.Verb.CONTACT, at)
+	var ordered_spent: float = 1.0 - player.signal_integrity
+
+	_check("a callout at open sky costs integrity, like any other transmission",
+		sky_spent > 0.0, "spent %.4f" % sky_spent)
+	_check("...and exactly what the ordered route costs, not a discount",
+		absf(sky_spent - ordered_spent) < 0.0001,
+		"sky %.4f vs ordered %.4f" % [sky_spent, ordered_spent])
+
+	# MOVING THE CHARGE MUST NOT DOUBLE IT. _issue_order now skips _transmit for
+	# CONTACT and lets _call_contact do it; if the skip were ever dropped, this
+	# route would pay twice and nothing else would notice.
+	if cmd.get_selected_squad() != null:
+		player.signal_integrity = 1.0
+		cmd._issue_order(SquadCommander.Verb.CONTACT, at, null)
+		var ordered_route: float = 1.0 - player.signal_integrity
+		_check("the ordered route charges once, not once per _transmit call",
+			absf(ordered_route - ordered_spent) < 0.0001,
+			"spent %.4f, one transmission is %.4f" % [ordered_route, ordered_spent])
+	else:
+		_check("(skipped) no squad selected, so the ordered route is not measured here",
+			true, "select a squad in this rig to cover it")
+
+	# And it is refused outright on a dead link, which the sky branch also used
+	# to walk straight past.
+	player.signal_integrity = 1.0
+	cmd._resync_t = 5.0
+	cmd._call_contact(at, null)
+	_check("...and a dead link refuses it rather than charging for it",
+		is_equal_approx(player.signal_integrity, 1.0),
+		"integrity %.4f" % player.signal_integrity)
+	cmd._resync_t = 0.0
 
 
 func _marks(hud: Node) -> Array:

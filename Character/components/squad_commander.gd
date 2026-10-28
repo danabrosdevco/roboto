@@ -436,13 +436,20 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 	else:
 		pos = position
 
-	# EVERY VERB PAYS. Before the match, so CONTACT and FOLLOW — both of which
-	# return early below — are charged exactly like ADVANCE. A callout is a
-	# transmission; so is telling the squad to come with you.
+	# EVERY VERB PAYS. Before the match, so FOLLOW — which returns early below —
+	# is charged exactly like ADVANCE. Telling the squad to come with you is a
+	# transmission.
 	#
 	# AFTER the position is resolved, though, because an ADVANCE is a DIRECTED
 	# transmission and the direction is the point it is ordered at.
-	_transmit(verb, pos)
+	#
+	# CONTACT PAYS IN _call_contact INSTEAD, because this is not the only route
+	# to one: _issue_contextual_order() calls _call_contact() directly when the
+	# aim ray hits open sky, and that route reached no cost, no wavefront and
+	# no hostile — a free callout, in the same file as a comment promising
+	# every verb pays. The charge belongs where the callout happens. Backlog OA7.
+	if verb != Verb.CONTACT:
+		_transmit(verb, pos)
 
 	match verb:
 		Verb.CONTACT:
@@ -477,6 +484,20 @@ func _issue_order(verb: int, position = null, target: Node = null) -> void:
 # PLAYER — emitting as PLAYER would reach nobody.
 # ─────────────────────────────────────────────
 func _call_contact(position: Vector3, target: Node) -> void:
+	# THE COST LIVES HERE, not in _issue_order, because there are two routes to
+	# a callout and only one of them goes through _issue_order. The other is
+	# _issue_contextual_order()'s open-sky branch, which used to arrive here
+	# directly: no integrity spent, no wavefront, nothing hostile told. A
+	# callout is a transmission on both routes or the price means nothing.
+	#
+	# The link check comes with it, for the same reason — the sky branch had
+	# none, so a callout went out on a dead link. Silent, like _issue_order's:
+	# this is reached by a key held down in the middle of a firefight.
+	# Backlog OA7.
+	if link_down():
+		return
+	_transmit(Verb.CONTACT, position)
+
 	# NOTE: Player has no ai_manager property (that lives on Enemy), so this
 	# resolves through World, which exports one.
 	var sm: StimulusManager = _get_stimulus_manager()
@@ -571,9 +592,15 @@ func _spawn_preview() -> void:
 		return
 	if _preview != null and is_instance_valid(_preview):
 		return
-	_preview = marker_scene.instantiate() as CommandMarker
+	# Freed on the bail: the cast nulls `_preview` and leaves the instanced
+	# scene alive, with nothing holding a reference to it. _spawn_preview is
+	# called from show_mark_preview on every designation hold, so the orphan
+	# would repeat per aim. K25, 2026-10-26.
+	var built := marker_scene.instantiate()
+	_preview = built as CommandMarker
 	if _preview == null:
-		push_warning("SquadCommander: marker_scene is not a CommandMarker.")
+		push_warning("SquadCommander: marker_scene '%s' is not a CommandMarker; no aim ghost." % marker_scene.resource_path)
+		built.free()
 		return
 	_preview.preview = true
 	world.add_child(_preview)
@@ -1010,10 +1037,20 @@ func orderable_equipment() -> Array:
 					# one instantiate — ONCE per distinct item per squad, now
 					# that the answer is kept. This is polled several times a
 					# second, because the readout has to be live.
-					var probe = slot.equipment_scene.instantiate() as AIEquipment
+					# FREED WHETHER OR NOT THE CAST TOOK. It used to free only
+					# inside the `!= null` arm, so a slot holding something
+					# that is not an AIEquipment orphaned the whole scene —
+					# and the recoilless is exactly that (see
+					# Enemy._evaluate_equipment_use). Once per distinct item
+					# per squad, because the answer is cached below. K25.
+					var built := slot.equipment_scene.instantiate()
+					var probe := built as AIEquipment
 					if probe != null:
 						at_point = probe.ordered_at_point
-						probe.free()
+					else:
+						push_warning("SquadCommander: '%s' holds '%s', which is not an AIEquipment." % [
+							String(slot.item_id), slot.equipment_scene.resource_path])
+					built.free()
 				# THE FULL NAME, NOT THE SHORT ONE. The slot's label is
 				# short_label(), which the squad HUD wants — it is captioning a
 				# thing that just happened and the context is obvious. On the
