@@ -29,8 +29,14 @@ enum Trigger {
 	HEAL_SELF,
 	## The robot the induction put on the floor, standing again.
 	REVIVE_SQUADMATE,
-	## `item_id` owned anywhere — in stores or already fitted.
-	BUY_ITEM,
+	## RETIRED, slot kept. This was "`item_id` owned anywhere", and the only way
+	## to acquire one was the shop, which went on 2026-10-22 — LOAD_PROGRAM
+	## replaced it. THE VALUE STAYS WHERE IT IS: these are ints, and removing
+	## one remaps every trigger after it. Nothing authors a trigger in a scene
+	## today (induction steps are built in code, Campaign/induction.gd) but the
+	## rule holds anyway, because the next thing to author one would inherit a
+	## silently shifted table. Backlog S9.
+	_RETIRED_BUY_ITEM,
 	## `item_id` fitted to a robot on the roster, the player included.
 	EQUIP_ITEM,
 	## Any operation chosen at the terminal.
@@ -42,13 +48,13 @@ enum Trigger {
 	## and in any scene that ever authors one.
 	REVIEW_KEYS,
 	## `item_id` loaded into MEMORY (Campaign/software_tree.gd). Replaces
-	## BUY_ITEM for the induction, which cannot teach a shop that is gone.
+	## _RETIRED_BUY_ITEM for the induction, which cannot teach a shop that is gone.
 	## APPENDED, for the same reason REVIEW_KEYS was.
 	LOAD_PROGRAM,
 }
 
 @export var trigger: Trigger = Trigger.HEAL_SELF
-## What BUY_ITEM and EQUIP_ITEM are looking for.
+## What EQUIP_ITEM and LOAD_PROGRAM are looking for.
 @export var item_id: StringName = &"m4"
 ## Which order ORDER_SQUAD wants, as a SquadCommander.Verb.
 @export var order_verb: int = 0
@@ -56,11 +62,6 @@ enum Trigger {
 var _player: Node
 var _casualty: Node
 var _campaign: Node
-## How many of item_id the player already had when this switched on. BUY_ITEM
-## measures against it rather than against zero.
-var _baseline: int = 0
-
-
 ## Handed the things it cannot look up for itself. Call before activate().
 func watch(campaign: Node, player: Node, casualty: Node) -> void:
 	_campaign = campaign
@@ -87,14 +88,11 @@ func _on_activated() -> void:
 				# rather than hangs, and says why.
 				push_warning("InductionObjective '%s': no downed squadmate to revive, completing it so the induction can finish." % id)
 				complete()
-		Trigger.BUY_ITEM, Trigger.EQUIP_ITEM, Trigger.LOAD_PROGRAM:
+		Trigger.EQUIP_ITEM, Trigger.LOAD_PROGRAM:
 			var state = _campaign.get("state") if _campaign != null else null
 			if state == null:
 				push_warning("InductionObjective '%s': no campaign state; it can never complete." % id)
 				return
-			# Taken BEFORE the first check, so "you bought one" means one more
-			# than the squad mustered with.
-			_baseline = _owned(state)
 			state.ledger_changed.connect(_check_kit)
 			state.roster_changed.connect(_check_kit)
 			_check_kit()
@@ -177,10 +175,6 @@ func _check_kit() -> void:
 	var state = _campaign.get("state") if _campaign != null else null
 	if state == null:
 		return
-	if trigger == Trigger.BUY_ITEM:
-		if _owned(state) > _baseline:
-			complete()
-		return
 	if trigger == Trigger.LOAD_PROGRAM:
 		# is_loaded(), never is_installed(): an ISSUED item costs 0 and is
 		# never written to the ledger at all, so the ledger is the wrong place
@@ -194,19 +188,8 @@ func _check_kit() -> void:
 		complete()
 
 
-## Every one of `item_id` the player has, in stores and in hands alike.
-func _owned(state) -> int:
-	var n: int = state.armoury.spare(item_id)
-	for record in _records(state):
-		if record != null:
-			n += record.weapon_ids.count(item_id)
-	return n
-
-
-func _records(state) -> Array:
-	var out: Array = []
-	for r in state.roster:
-		out.append(r)
-	if state.player_record != null:
-		out.append(state.player_record)
-	return out
+## _owned() AND _records() WENT WITH _RETIRED_BUY_ITEM. They counted every
+## copy of item_id in stores and in hands, which is a question only a shop
+## makes it possible to change the answer to. EQUIP_ITEM asks the player's own
+## weapon_ids and LOAD_PROGRAM asks the software tree; neither needs a tally.
+## Backlog S9.
