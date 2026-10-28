@@ -732,9 +732,18 @@ func _build_detail() -> void:
 		var afield: bool = ui.in_field()
 		var can_scrap: bool = state.can_scrap(r)
 		var scrap_btn := Kit.button("SCRAP", Kit.spend_colour(can_scrap, afield, Kit.BRIGHT))
-		Kit.gate_spend(scrap_btn, can_scrap, afield,
-			"Break %s for parts: a third of the frame and half of everything fitted to it, %d in all. The kit does not come back." \
-			% [r.display_name, back])
+		# WHAT IT ACTUALLY PAYS, not what the rule says it pays. This read "a
+		# third of the frame and half of everything fitted to it" against a kit
+		# payout that is always 0 in the shipped game — nothing has bought an
+		# item since the shops went, and only a bought item has an allocation
+		# to refund. See CampaignState.scrap_kit_value(). Backlog S8.
+		var kit_back: int = state.scrap_kit_value(r)
+		var scrap_tip := "Break %s for parts: a third of the frame, %d. Nothing it carries pays — issued kit is already inside the frame's price. The kit does not come back." \
+			% [r.display_name, back]
+		if kit_back > 0:
+			scrap_tip = "Break %s for parts: a third of the frame and half of what was bought for it, %d in all. The kit does not come back." \
+				% [r.display_name, back]
+		Kit.gate_spend(scrap_btn, can_scrap, afield, scrap_tip)
 		scrap_btn.mouse_entered.connect(ui.hover)
 		scrap_btn.pressed.connect(func():
 			# -1 is a refusal, 0 is a worthless wreck scrapped successfully.

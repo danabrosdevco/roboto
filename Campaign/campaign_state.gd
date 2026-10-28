@@ -1653,6 +1653,15 @@ func restock_roster() -> void:
 # is the point, and half is already what the game pays for an intact item, so
 # nothing new had to be invented.
 #
+# THE KIT HALF PAYS NOTHING IN THE SHIPPED GAME, and has not since the shops
+# went on 2026-10-22. It needs an `item:<id>:<n>` allocation; only buy_item()
+# writes one; nothing in the UI calls buy_item(). So in practice a wreck is
+# worth a third of its frame and that is all — the rule below is intact, there
+# is simply nothing for it to find. Left standing rather than cut, because it
+# is the shop's transaction shape and the shop's removal is its own open
+# question (Backlog S7). The SCRAP button no longer advertises it: see
+# scrap_kit_value(). Backlog S8.
+#
 # LEDGER SHAPE IS sell_item's, exactly: shrink the original allocation rather
 # than paying out of nowhere, and park the un-refunded two thirds under a key
 # nothing refunds. available() stays earned - sum(allocations) and there is no
@@ -1676,6 +1685,26 @@ func scrap_value(record: SoldierRecord) -> int:
 		return 0
 	@warning_ignore("integer_division")
 	var total: int = _unit_price(record) / maxi(scrap_divisor, 1)
+	total += scrap_kit_value(record)
+	return total
+
+
+## The KIT half of scrap_value, on its own, so a button can say which part of
+## the payout it is offering.
+##
+## IT IS 0 IN THE SHIPPED GAME and the SCRAP tooltip used to promise it anyway:
+## "a third of the frame and half of everything fitted to it". Paying for kit
+## needs an `item:<id>:<n>` allocation, only buy_item() writes one, and nothing
+## in the UI has called buy_item() since the shops went (2026-10-22 — see the
+## header of squad_manager_ui.gd). So every fitted item on every wreck takes
+## _kit_payout's "issued with the frame" branch and the player was told about
+## a payout that could not arrive. Backlog S8.
+##
+## DERIVED, NOT ASSUMED ZERO. _kit_payout is a live mechanism and the shop may
+## come back; the tooltip now reads this number rather than restating a rule,
+## so it goes on being true either way.
+func scrap_kit_value(record: SoldierRecord) -> int:
+	var total := 0
 	for pair in _kit_payout(record):
 		total += int(pair[2])
 	return total
