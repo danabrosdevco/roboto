@@ -35,6 +35,110 @@ most wants and least often gets:
   `test_vehicle` and got reverted is exactly that kind of thing.
 ---
 
+## 2026-10-28 — eight ready rows, and one of them had to be taken back out
+
+**Landed.** Eight commits on `agent/cleanup-appx-and-catalogue`, none pushed.
+
+- **K10 — the HUD was reading 40 of 99 objective labels wrong.** `label()`
+  composes a verb from the objective's class with a name authored in a level,
+  and **neither file shows the sentence they make together**, which is why
+  "Capture the The Cistern" and "Extract Off The Crown" shipped. The row said
+  five site levels; it is **eleven scenes**. 25 doubled articles collapse in
+  `mission_objective.label()`; 7 doubled verbs on extraction points go away
+  because `ReachObjective.label()` now returns an authored extraction name
+  as-is — all seven authored ones are preposition phrases, so every author who
+  named one wrote a direction, not a place. 40 → 8. `tools/probe_objective_labels.gd`
+  is new and reads every authored objective's real `label()` out of packed
+  data without instantiating a level.
+- **S8 — the SCRAP button promised a payout that cannot arrive.** The tooltip
+  now derives which halves it is offering (new `CampaignState.scrap_kit_value()`)
+  instead of restating a rule. **Not the deletion the row asked for** — see
+  *Blocked* below.
+- **OA5 / OA7 / OA8 — three order surfaces that said something untrue.** OA7
+  is the one with teeth: `_issue_order` carries a comment reading "EVERY VERB
+  PAYS", and the live route to a callout does not go through it —
+  `_issue_contextual_order` calls `_call_contact()` directly on an open-sky
+  aim, past the link check and past `_transmit()`. A free callout, two
+  functions below the comment promising it costs. The charge and the link
+  check moved into `_call_contact`.
+- **K30 and its last sibling.** `AIWorldWeapon` gained the `_level_node()` it
+  never had. The sweep found one more and it is the same mistake with the
+  branches reversed: `Enemy._spend_equipment` picked `current_scene` FIRST —
+  Master, above the level — and `get_parent()` only as the fallback.
+- **SQ3 (part) — three dead roster functions and an orphaned `return false`.**
+  The orphan sat over-indented in `can_fit()` where the Phase 3.7 rank gate's
+  `if` was deleted and its comment was not; GDScript read it as a second
+  statement inside the block above, so it parsed, never ran, and looked
+  exactly like a condition. `repair_all()`, `remove_destroyed()` and
+  `CampaignState.set_chassis()` are gone, each leaving a note in its place.
+- **S9 — the `BUY_ITEM` induction trigger is retired**, slot kept and renamed
+  `_RETIRED_BUY_ITEM`. Worth recording: **nothing in the project authors an
+  induction trigger in a scene or resource at all**, so the remap hazard the
+  row warns about was theoretical. The slot stays regardless.
+
+**Gates.** `check.sh --changed`: **PASS** after every commit. `smoke.sh`:
+**PASS**, booted clean for 15s. `bucket.sh frames`: **28 of 29**, 9m7s —
+`test_reclaimer` red, and it was mine (see below); it is 34/34 now.
+`bucket.sh campaign`: **PASS, 43 suites**, 5m18s, 1 parked. The parked one is
+`test_tutorial`, and I had it wrong on first sight — I read its standalone
+failure as another lane's breakage. It carries `# PARKED:` in its own header
+("the base has no lesson signs left"), so the bucket skips it by design and
+says so. Running a parked suite on its own and calling the result a regression
+is a mistake worth not repeating. Named suites:
+`test_mission_objectives` **115/115** (was 107), `test_contact_reports`
+**12/12** (was 8), `probe_order_facts` **11/11**, `test_reclaimer` 34/34,
+`test_ledger` 195/195, `test_squad_manager` 101/101, `test_induction` 41/41,
+`test_scrap` 16/16, `test_teams` 83/83, `test_equipment` 60/60,
+`test_ai_kit` 52/52, `test_mines` 13/13, `test_wake` 19/19,
+`test_defence` 29/29, `test_opening` 20/20, `test_memory_screen` 38/38.
+
+**Not run:** the kit, shell and terrain buckets. And **the frames bucket has
+not been re-run as a whole since `test_reclaimer` was fixed** — that suite is
+34/34 on its own, which is the evidence, but the 29 have not been seen green
+together in one pass.
+
+**I was wrong about two things.**
+
+1. **OA4 — I built it, it broke a suite, and I took it back out.** Making
+   `default_objective` apply with no `target_objective` meant every ad-hoc
+   squad got an ADVANCE at its own centre two frames in, because the script
+   default is ADVANCE and `squad.tscn` does not override it. `test_reclaimer`
+   went red on four checks — a Reclaimer that is supposed to turn on the spot
+   was being issued a move order. **And the deeper reason it cannot be taken
+   alone:** `SquadSpawnPoint`'s own default is FOLLOW, so switching this on
+   makes every mission squad fall in on the player at the start, which is
+   **OA6 — a design call the board explicitly reserves for you.** Fixing OA4
+   quietly answers OA6. The behaviour is reverted; both traps are now written
+   into `Squad._ready()`, with the guard whoever takes OA6 will need.
+2. **A comment I wrote in `mission_objective.gd` said the objective list is
+   not uppercased.** The render says otherwise — the list reads CAPTURE THE
+   GATEHOUSE RELAY, through a display font with no lowercase glyphs, though
+   nothing calls `to_upper()` on the row. Corrected in place. Opening the
+   image is the only reason I know.
+
+**Needs the human.**
+
+- **Eight objective labels are still two instructions**, and the fix is a
+  rename in TERRAIN's files, not code: `Take The First Line`,
+  `Through The Support Line`, `Silence The Gun Line`,
+  `Clear The Back Positions` (salient_ops), `Round The Deck`,
+  `Down The Boulevard`, `Out Of The Houses`, `All Four Roads` (polaris_ops).
+  The proposed rewrite for each is in [[Open]]. `All Four Roads` has no place
+  name hiding in it and may want a different objective type.
+- **OA7 changed what a callout costs.** A sky callout now spends 0.06
+  integrity and is refused on a dead link. Measured, not felt — if the
+  contextual key is something you hold down, this is a new price on it.
+- **OA6 now blocks OA4 as well.** One switch, two rows.
+- **S7 is not a cleanup.** Deleting the shop calls reverses a documented
+  decision from 2026-10-22. S8 and SQ3 both stopped at that line.
+
+**Blocked / next.** Ready and takeable: K3, K5, K6, M1, SQ4, SQ5, S10 (after
+F6), OA9, S3. **K4 is bigger than its row suggests** — every squad-manager
+page rebuilds itself through `Kit.clear()` on any change, so keyboard focus
+has to survive a rebuild, not just be switched on.
+
+---
+
 
 ## 2026-10-26 (seventh) — the bark family: K13, K14, K15, K18
 
