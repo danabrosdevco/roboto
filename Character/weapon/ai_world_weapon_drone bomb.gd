@@ -16,7 +16,12 @@ func play_shot_audio():
 
 func fire_bomb():
 	var new_bomb = bomb_scene.instantiate()
-	get_tree().current_scene.add_child(new_bomb)
+	# THE LEVEL, NOT current_scene. current_scene is Master in the game — above
+	# World — so a bomb parented there outlives the mission that dropped it, and
+	# in a headless run there is no current_scene and this errored outright. The
+	# last ordnance spawner doing it; see AIWorldWeapon._level_node(), which was
+	# added for this. Backlog K30.
+	_level_node().add_child(new_bomb)
 	# 1. Set starting position at tracer origin (on the weapon)
 	new_bomb.global_position = global_position
 	# 2. Get world-space forward direction from tracer_origin

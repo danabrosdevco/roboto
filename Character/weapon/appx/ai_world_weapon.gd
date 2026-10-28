@@ -28,6 +28,32 @@ func play_muzzle_flash():
 ## tracer spawner colours its round" has no exceptions waiting to be rediscovered.
 const WORLD_WEAPON_FACTION := Enums.Factions.ENEMY
 
+## Where what this weapon leaves behind goes: the level its carrier stands in.
+##
+## THE SAME HELPER AIWeapon HAS, and for the same reason — this class did not,
+## so AIWeaponDroneBomb reached for `get_tree().current_scene` instead, which
+## is the bug AIEquipment.spawn_host() and AIWeapon._level_node() both exist to
+## prevent. current_scene is Master in the game, ABOVE World, so anything
+## parented there outlives the level it was dropped in; and in a headless test
+## there is no current_scene at all, which is where every tracer used to fail
+## with "add_child on a null value". Backlog K30, reported by K26.
+##
+## A world-placed emplacement has no carrier, so its own parent is already in
+## the level — that is the second branch, and why this is not a copy of
+## AIWeapon._level_node().
+func _level_node() -> Node:
+	var n: Node = self
+	while n != null:
+		if n is CharacterBody3D and n.get_parent() != null:
+			return n.get_parent()
+		n = n.get_parent()
+	if get_parent() != null:
+		return get_parent()
+	if get_tree().current_scene != null:
+		return get_tree().current_scene
+	return get_tree().root
+
+
 func fire_tracer():
 	var new_tracer = tracer_scene.instantiate()
 	add_child(new_tracer)

@@ -254,11 +254,16 @@ func _row(faction, body: Node) -> Dictionary:
 ## Emitted on every confirmed sighting, with the side that saw it.
 ##
 ## THIS IS WHERE THE PLAYER'S CONTACT MARKS COME FROM. The pinned marks were
-## written against SquadCommander._call_contact, which is reached only by
-## Verb.CONTACT — and nothing issues that verb. The player's vocabulary was cut
-## to ADVANCE and FOLLOW at some point and CONTACT lost its input with it, so
-## the whole report layer was unreachable and no mark ever appeared in a
-## mission.
+## written against SquadCommander._call_contact. Nothing issues Verb.CONTACT —
+## the player's vocabulary was cut to ADVANCE and FOLLOW at some point and
+## CONTACT lost its input with it — so the whole report layer was unreachable
+## and no mark ever appeared in a mission.
+##
+## CAREFUL WITH THE SECOND HALF OF THAT, which this comment used to get wrong:
+## the VERB is unissued, the FUNCTION is not. _issue_contextual_order() calls
+## _call_contact() directly whenever the aim ray hits open sky, which is a live
+## route a player takes often. It simply never carried a mark, because a
+## callout at empty sky has no target to designate. Backlog OA7.
 ##
 ## Hanging it here instead is also the better design: a contact mark is a
 ## REPORT FROM YOUR SQUAD, not something you place by hand. note_seen is

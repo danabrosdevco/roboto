@@ -3930,10 +3930,19 @@ func _equipment_slot_ready(index: int) -> bool:
 func _spend_equipment(index: int, equipment: AIEquipment,
 		context: AIEquipment.EquipmentContext) -> void:
 	var slot: AIEquipmentSlot = equipment_slots[index]
-	# The running scene when there is one; the level this robot is in when the
-	# tree was started by a script (the tests, a lab run from the command line),
-	# which has none — the grenade was never thrown.
-	var host: Node = get_tree().current_scene if get_tree().current_scene != null else get_parent()
+	# THE LEVEL FIRST, current_scene only as the fallback — this had the two the
+	# other way round. current_scene is Master in this project, above World and
+	# above the level, which is the whole reason AIEquipment.spawn_host() exists
+	# and says so at length. The ordnance was already safe, because execute()
+	# routes through spawn_host with the robot as the owner; it was the carrier
+	# node itself that went to Master. Nothing reads its transform and it is
+	# freed at the end of this function, so the old order never showed — but it
+	# is the same mistake as K30's and the next thing to read `host` would
+	# inherit it. A robot's own parent IS the level it stands in.
+	var host: Node = get_parent()
+	if host == null:
+		# A robot mid-removal, or a tree started by a script with no scene.
+		host = get_tree().current_scene if get_tree().current_scene != null else get_tree().root
 	host.add_child(equipment)
 	equipment.execute(context)
 	slot.consume()
