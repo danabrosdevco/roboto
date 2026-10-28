@@ -210,6 +210,16 @@ var context: SquadContext = SquadContext.UNENGAGED:
 var objective: SquadObjective = SquadObjective.NONE
 var objective_position: Vector3 = Vector3.ZERO
 
+## Has anything ordered this squad yet — by any route, INCLUDING an order to
+## SquadObjective.NONE, which is what a reserve is given.
+##
+## Nothing reads it yet. It is kept because `objective == NONE` cannot answer
+## the question and the difference is not obvious: an untouched squad and a
+## deliberately inert reserve look identical through `objective`, so anyone
+## asking "has this squad been told anything" and reaching for the enum gets
+## the wrong answer and wakes the reserves. See the OA4/OA6 note in _ready().
+var _ordered: bool = false
+
 # ── CONTACT TRACKING ──────────────────────────
 # ENGAGED used to be purely event-driven: set by _on_combat_triggered, cleared
 # by a 2s poll that asked "does anyone still hold a live combat_target?".
@@ -290,9 +300,31 @@ func _ready() -> void:
 		if ai is Soldier:
 			ai.squad = self
 
+	# THE AUTHORED PAIR, AND WHY IT STAYS A PAIR. `default_objective` is read
+	# only when `target_objective` is also set, and target_objective is
+	# authored on NO node in the project — so the two base levels that set
+	# default_objective = DEFEND on their SquadSpawnPoint have that value
+	# dropped on the floor. Backlog OA4, and it is still true.
+	#
+	# APPLYING IT ANYWAY WAS TRIED ON 2026-10-28 AND PULLED BACK OUT. Two
+	# things it ran into, both worth knowing before trying again:
+	#
+	#   * The script default is ADVANCE and squad.tscn does not override it, so
+	#     EVERY ad-hoc squad got an ADVANCE at its own centre two frames in.
+	#     test_reclaimer went red on four checks — a Reclaimer that is supposed
+	#     to turn on the spot was being issued a move order instead.
+	#   * SquadSpawnPoint's own default is FOLLOW, so switching this on makes
+	#     every mission squad fall in on the player at the start. That is
+	#     exactly Backlog OA6, which is flagged as a DESIGN CALL and not a
+	#     defect. Fixing OA4 quietly answers OA6, and it is not ours to answer.
+	#
+	# Guarding on "has anything ordered this squad" is necessary but not
+	# sufficient — a reserve is ordered to NONE on purpose (see the RESERVE
+	# branch of EnemyForceSpawner._apply_posture), so `objective == NONE` reads
+	# an inert reserve as unordered. Whoever takes OA6 will need that guard too.
 	if target_objective != null:
-		# Wait until all members have finished their initialization (8 frames in Enemy)
-		# Use 10 frames to be safe
+		# Wait until all members have finished their initialization (8 frames in
+		# Enemy). Use 10 frames to be safe
 		for i in 2:
 			await get_tree().process_frame
 		set_objective(default_objective, target_objective.global_position)
@@ -1180,6 +1212,7 @@ func set_objective(
 
 	objective = new_objective
 	objective_position = position
+	_ordered = true   # see the declaration, and OA4 in Squad._ready()
 	# A FRESH ORDER IS A WATCHED MOMENT, for the squad and for its members.
 	#
 	# For the squad: without this one, a squad sitting on a 0.33 s far-band cadence

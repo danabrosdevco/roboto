@@ -88,7 +88,7 @@ func _run() -> void:
 	# tree, so it is simply done first.
 	_report_vocabularies()
 	var writes := _report_write_sites()
-	_report_authored_objectives()
+	await _report_authored_objectives()
 	_report_unreachable(writes)
 
 	await _boot()
@@ -234,8 +234,42 @@ func _report_authored_objectives() -> void:
 		targets.size(), "" if targets.size() > 0 else "   ← the gate on default_objective, set NOWHERE"])
 	for t in targets:
 		print("      %s" % t)
-	_check("default_objective is only applied when target_objective is set (Squad._ready)",
-		true, "%d defaults / %d targets" % [defaults.size(), targets.size()])
+	await _check_default_objective_is_inert(defaults.size())
+
+
+# A LIVE SQUAD, NOT A SCAN (OA4).
+#
+# This used to be _check(…, true, …) — a verdict that could not fail, printing
+# the scan counts beside it. It read as a measurement and was a label, and a
+# label cannot tell you when the thing it describes changes.
+#
+# It is written as "still inert" rather than "now applied" ON PURPOSE. Applying
+# it was tried on 2026-10-28 and taken back out: the script default is ADVANCE
+# and squad.tscn does not override it, so every ad-hoc squad got a move order
+# two frames in (test_reclaimer went red on four checks), and SquadSpawnPoint's
+# own default is FOLLOW, so switching it on makes every mission squad fall in
+# on the player — which is Backlog OA6, a design call nobody has made. The
+# second squad here is the trap that comes with the fix whenever it is taken: a
+# reserve is ORDERED to NONE, so a guard on `objective` reads it as unordered.
+func _check_default_objective_is_inert(authored: int) -> void:
+	var held := Squad.new()
+	held.default_objective = Squad.SquadObjective.DEFEND
+	root.add_child(held)
+	var reserve := Squad.new()
+	root.add_child(reserve)
+	reserve.set_objective(Squad.SquadObjective.NONE, Vector3.ZERO, true)
+	for _i in 6:
+		await process_frame
+	_check("an authored default_objective with no target_objective is still DROPPED",
+		held.objective == Squad.SquadObjective.NONE,
+		"objective %s, with %d authored in the project and 0 targets" % [
+			OBJECTIVE_NAMES[int(held.objective)], authored])
+	_check("...and `objective` cannot tell that squad from an ordered reserve — use _ordered",
+		reserve.objective == held.objective and reserve._ordered and not held._ordered,
+		"reserve objective %s, _ordered %s / %s" % [
+			OBJECTIVE_NAMES[int(reserve.objective)], reserve._ordered, held._ordered])
+	held.queue_free()
+	reserve.queue_free()
 
 
 func _collect(dir_path: String, suffix: String, out: Array) -> void:
