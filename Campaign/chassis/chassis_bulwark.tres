@@ -6,7 +6,7 @@
 
 [sub_resource type="Resource" id="Resource_t0cfb"]
 script = ExtResource("1_gk2g4")
-weapon_ids = Array[StringName]([&"autocannon"])
+weapon_ids = Array[StringName]([&"heavy_mg"])
 equipment_ids = Array[StringName]([])
 health_bonus = 50
 speed_multiplier = 1.0
@@ -16,7 +16,7 @@ tuning = {}
 
 [sub_resource type="Resource" id="Resource_4ywqs"]
 script = ExtResource("1_gk2g4")
-weapon_ids = Array[StringName]([&"light_cannon"])
+weapon_ids = Array[StringName]([&"heavy_mg"])
 equipment_ids = Array[StringName]([])
 health_bonus = 100
 speed_multiplier = 1.0
@@ -33,7 +33,7 @@ scene = ExtResource("2_scene")
 cost = 380
 purchasable = true
 supply = 3
-starting_weapon_id = &"heavy_mg"
+starting_weapon_id = &"machine_gun"
 coax_weapon_id = &""
 base_health = 400
 base_speed = 1.0

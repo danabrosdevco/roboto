@@ -47,8 +47,10 @@ func _init() -> void:
 		for spec in m.enemy_force:
 			if spec == null:
 				continue
-			# body_count(), NEVER spec.count — every shipped spec is roster-form
-			# and still carries a stale count of 3. ops_table.gd says the same.
+			# body_count(), not roster.size() inline — ops_table.gd says the
+			# same. It used to be the guard against the legacy `count` field,
+			# which every shipped spec carried as a stale 3; H9 removed the
+			# field on 2026-10-24 and the one-place habit stays.
 			var bodies: int = spec.body_count()
 			var sup := 0
 			for c in spec.roster:

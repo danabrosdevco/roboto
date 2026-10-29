@@ -24,17 +24,11 @@ extends SceneTree
 # would otherwise be measured sideways.
 # ─────────────────────────────────────────────
 
-const LEVELS := {
-	"hillfort":   ["res://maps/hillfort_level.tscn",     "HillfortSlice"],
-	"coast":      ["res://maps/coastal-road_level.tscn", "CoastSlice"],
-	"rivers":     ["res://maps/pittsburgh_level.tscn",   "RiversSlice"],
-	"qamareen":   ["res://maps/mutaha_wip_level.tscn",   "QamareenSlice"],
-	"lockside":   ["res://maps/georgetown_level.tscn",   "LocksideSlice"],
-	"polaris":    ["res://maps/polaris_level.tscn",      "PolarisSlice"],
-	"causeway":   ["res://maps/causeway_level.tscn",     "CausewaySlice"],
-	"trenchline": ["res://maps/salient_level.tscn",      "TrenchlineSlice"],
-	"basin":      ["res://maps/valley_basin_level.tscn", "BasinSlice"],
-}
+# THE SITES ARE DERIVED, NOT TYPED (backlog H14). The table that used to be
+# here named the retired maps/hillfort_level.tscn and had never heard of
+# maps/hillfort_wip_level.tscn, which is the Hillfort the campaign deploys — so
+# the bunker this measured was not the bunker in the game.
+const Sites := preload("res://tools/_live_sites.gd")
 
 ## How far in front of the door a squad needs to be able to stand.
 const APPROACH := 10.0
@@ -50,9 +44,12 @@ func _init() -> void:
 	Settings.path = "user://settings_probe.json"
 	Engine.max_fps = 60
 	await process_frame
+	var skipped := Sites.sim_levels()
+	if not skipped.is_empty():
+		print("sim arenas, not sites, skipped: %s" % ", ".join(skipped))
 	print("site         approach        threshold   lintel   verdict")
-	for name in LEVELS:
-		await _one(String(name), LEVELS[name][0], LEVELS[name][1])
+	for s in Sites.sites():
+		await _one(s.label, s.level, s.node)
 	print("")
 	print("%d problem(s)" % _fails)
 	quit(1 if _fails > 0 else 0)
@@ -64,7 +61,9 @@ func _one(label: String, level_path: String, node_name: String) -> void:
 	for _i in 70:
 		await physics_frame
 
-	var slice = level.get_node_or_null(NodePath(node_name))
+	# An empty name is _live_sites saying this level carries no slice script —
+	# reported below rather than dropped from the table.
+	var slice = level.get_node_or_null(NodePath(node_name)) if node_name != "" else null
 	var bunker = slice.get_node_or_null(^"SiteBunker") if slice != null else null
 	if bunker == null:
 		print("%-12s FAIL — no bunker built" % label)

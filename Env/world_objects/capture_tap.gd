@@ -56,7 +56,21 @@ signal destroyed(tap: CaptureTap)
 ## it frees itself and leaves a CaptureAnchor — a Nest-derived structure with
 ## health that the enemy can actually target and shoot. See capture_anchor.gd
 ## for why it has to be built that way.
-@export var anchor_scene: PackedScene = preload("res://Character/characters/ai/capture_anchor.tscn")
+##
+## THE DEFAULT IS A CONST SO NOBODY HAS TO BUILD A TAP TO READ IT.
+## holdable_core.start_held() wants this scene without wanting a tap, and it
+## used to get it with `_Tap.new().anchor_scene` — which stood up a whole
+## StaticBody3D, read one field and dropped it unparented and unfreed. An
+## orphaned node that still holds a Resource SEGFAULTS Godot 4.3 at exit:
+## ObjectDB's final sweep deletes it after the servers owning its RIDs are
+## gone, so the resource's destructor frees an RID into a dead server. That
+## one line was exit 139 on test_site_win, test_hillfort_live and
+## test_core_retake_live — the three suites that reach start_held() — and a
+## leak on every capture in a real run. Read the const; never `.new()` a Node
+## to read a default.
+const DEFAULT_ANCHOR_SCENE := preload("res://Character/characters/ai/capture_anchor.tscn")
+
+@export var anchor_scene: PackedScene = DEFAULT_ANCHOR_SCENE
 
 var alive: bool = true
 var landed: bool = false

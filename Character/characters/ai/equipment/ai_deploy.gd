@@ -99,14 +99,28 @@ func can_use(context: AIEquipment.EquipmentContext) -> bool:
 
 func execute(context: AIEquipment.EquipmentContext) -> void:
 	if canister_scene == null:
+		# Every early return warns. A pack wired to nothing looks exactly like a
+		# pack whose conditions are never met.
+		push_warning("AIDeploy '%s': no canister_scene assigned, so nothing can be deployed." % equipment_name)
 		return
 	var owner_ai := context.owner_ai
-	var canister = canister_scene.instantiate()
 	# THE LEVEL, not the current scene. See AIEquipment.spawn_host — the scene is
 	# Master, which outlives the mission and took the ordnance with it.
+	#
+	# ASKED BEFORE THE CANISTER IS BUILT, and that order is the fix: the bail
+	# below used to drop the only reference to a live Drone_Pack_Canister — the
+	# heaviest of the four, 15 meshes in the pack alone. Measured 2026-10-26
+	# (K26) by driving this path, exit 139. Unreachable today (every caller
+	# parents the equipment before calling execute()), kept this way so it stays
+	# unreachable AND harmless. Same reorder in ai_grenade, ai_mine, ai_smoke.
 	var host: Node = spawn_host(owner_ai)
 	if host == null:
+		# NOT SILENT: _spend_equipment consumes the charge and starts the
+		# cooldown either way, so a quiet return is a pack paid for and not opened.
+		push_warning("AIDeploy '%s': nowhere to spawn into, so nothing was deployed — the charge is spent anyway." % equipment_name)
 		return
+
+	var canister = canister_scene.instantiate()
 	host.add_child(canister)
 
 	var from: Vector3 = owner_ai.global_position + Vector3.UP * 1.2

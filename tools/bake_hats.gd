@@ -157,9 +157,17 @@ func _bake(rig: Node3D, key: String) -> int:
 	var packed := PackedScene.new()
 	if packed.pack(out) != OK:
 		push_error("bake_hats: could not pack %s" % key)
+		out.free()
 		return 0
 	var path := "%s/hat_%s.tscn" % [OUT_DIR, key]
 	if ResourceSaver.save(packed, path) != OK:
 		push_error("bake_hats: could not save %s" % path)
+		out.free()
 		return 0
+	# FREED ON EVERY EXIT. `out` is never parented — the PackedScene is the
+	# product, this tree is scratch — so nothing else can free it, and eleven
+	# orphaned holders carrying real ArrayMeshes and StandardMaterial3Ds go to
+	# ObjectDB's end-of-run sweep, which runs AFTER the servers that own those
+	# RIDs are gone. See Traps, "an orphaned node that keeps a Resource alive".
+	out.free()
 	return n

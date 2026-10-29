@@ -291,14 +291,21 @@ func _ready() -> void:
 ## authored node, which makes it the core's SIBLING, and a core only searches
 ## its own children.
 func _seat_core(host: Node3D, tier: int) -> Node3D:
-	var core := Node3D.new()
-	core.set_script(_Core)
-	core.name = "Hold"
-	core.size_tier = tier
+	# THE TERMINAL IS FOUND BEFORE THE CORE IS BUILT. The core used to be
+	# stood up first, and the bail below then dropped the only reference to
+	# it — the H10 defect class, since the orphan keeps the holdable_core.gd
+	# GDScript alive into ObjectDB's exit sweep. Measured on this exact path
+	# (K24, 2026-10-26): a leaked Node3D "Hold" and
+	# `Resource still in use: holdable_core.gd (GDScript)`, which is the tell
+	# in the log. A node that is never created cannot leak.
 	var inter = _interactible_under(host)
 	if inter == null:
 		push_warning("SiteSlice: '%s' has no Interactible, so it cannot be captured." % host.name)
 		return null
+	var core := Node3D.new()
+	core.set_script(_Core)
+	core.name = "Hold"
+	core.size_tier = tier
 	core.interactible = inter
 	host.add_child(core)
 	_dress(host, core)

@@ -80,6 +80,17 @@ var _blackout: ColorRect = null
 func _cover() -> void:
 	if _blackout != null and is_instance_valid(_blackout):
 		return
+	# ASK FOR THE PARENT BEFORE BUILDING ANYTHING. The ColorRect used to be
+	# built first and the bail below then dropped the only reference to it,
+	# which is the H10 defect class: ObjectDB sweeps whatever is still alive
+	# at exit AFTER the servers owning its RIDs have gone. Measured on this
+	# exact path (K24, 2026-10-26): one leaked ColorRect and one leaked
+	# CanvasItem RID. A node that is never created cannot leak.
+	var host: Node = get_parent()
+	if host == null:
+		push_warning("DebriefScreen: no parent to hang the extraction cover on, so the depot will flash.")
+		_blackout = null
+		return
 	_blackout = ColorRect.new()
 	# The debrief's own backdrop colour, so the cover and the screen that
 	# replaces it are the same black and the handover is invisible.
@@ -88,11 +99,6 @@ func _cover() -> void:
 	_blackout.mouse_filter = Control.MOUSE_FILTER_STOP
 	_blackout.process_mode = Node.PROCESS_MODE_ALWAYS
 	_blackout.z_index = 109   # under the debrief itself, over everything else
-	var host: Node = get_parent()
-	if host == null:
-		push_warning("DebriefScreen: no parent to hang the extraction cover on, so the depot will flash.")
-		_blackout = null
-		return
 	host.add_child(_blackout)
 
 

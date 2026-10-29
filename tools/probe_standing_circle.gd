@@ -30,18 +30,17 @@ extends SceneTree
 # only if the thing is in it". Same reason this waits 70 physics frames.
 # ─────────────────────────────────────────────
 
-const LEVELS := {
-	"hillfort":     ["res://maps/hillfort_level.tscn",      "HillfortSlice"],
-	"hillfort_wip": ["res://maps/hillfort_wip_level.tscn",  "HillfortWipSlice"],
-	"coast":        ["res://maps/coastal-road_level.tscn",  "CoastSlice"],
-	"rivers":       ["res://maps/pittsburgh_level.tscn",    "RiversSlice"],
-	"qamareen":     ["res://maps/mutaha_wip_level.tscn",    "QamareenSlice"],
-	"lockside":     ["res://maps/georgetown_level.tscn",    "LocksideSlice"],
-	"polaris":      ["res://maps/polaris_level.tscn",       "PolarisSlice"],
-	"causeway":     ["res://maps/causeway_level.tscn",      "CausewaySlice"],
-	"trenchline":   ["res://maps/salient_level.tscn",       "TrenchlineSlice"],
-	"basin":        ["res://maps/valley_basin_level.tscn",  "BasinSlice"],
-}
+# ITS USER ARGS ARE SITE NAMES, so do NOT hand it the house `-- --no-save`:
+# that is read as a site filter, matches nothing, and used to print an empty
+# table and "0 circle(s)", which reads exactly like a pass. It now FAILS on a
+# filter that matches nothing. Nothing here loads or writes a campaign anyway.
+#
+# THE SITES ARE DERIVED, NOT TYPED (backlog H14). The table that used to be
+# here carried BOTH Hillforts — the live maps/hillfort_wip_level.tscn and the
+# retired maps/hillfort_level.tscn — so a tenth of this probe's output was
+# measurements of a level the game does not load, and anything it found there
+# was a day spent on nothing.
+const Sites := preload("res://tools/_live_sites.gd")
 
 ## A step up is fine; a chest-high ledge is not. 0.60 m is the tallest thing
 ## the chassis table says a Walker steps onto without pathing round it.
@@ -73,14 +72,35 @@ func _init() -> void:
 	for a in OS.get_cmdline_user_args():
 		want.append(String(a))
 
+	var skipped := Sites.sim_levels()
+	if not skipped.is_empty():
+		print("sim arenas, not sites, skipped: %s" % ", ".join(skipped))
 	print("site         circle                      ring y   ground    gap  off-centre  verdict")
-	for name in LEVELS:
-		if not want.is_empty() and not want.has(String(name)):
+	var ran := 0
+	for s in Sites.sites():
+		if not want.is_empty() and not want.has(s.label):
 			continue
-		await _one(String(name), LEVELS[name][0], LEVELS[name][1])
+		ran += 1
+		if s.node == "":
+			print("%-12s FAIL — %s carries no slice node, so nothing was built" % [s.label, s.level])
+			_fails += 1
+			continue
+		await _one(s.label, s.level, s.node)
+	# A filter that matches nothing would otherwise print a clean table and a
+	# zero, which reads exactly like a pass.
+	if ran == 0:
+		print("FAIL  no site matched %s. The sites are %s." % [str(want), str(_labels())])
+		_fails += 1
 	print("")
 	print("%d circle(s) that lie about where to stand" % _fails)
 	quit(1 if _fails > 0 else 0)
+
+
+func _labels() -> Array:
+	var out: Array = []
+	for s in Sites.sites():
+		out.append(s.label)
+	return out
 
 
 func _one(label: String, level_path: String, node_name: String) -> void:

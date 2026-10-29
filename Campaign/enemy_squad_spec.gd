@@ -29,11 +29,15 @@ enum Posture {
 ## ONE ENTRY PER BODY. Drop in four riflemen, a hopper and a chaser and you get
 ## a six-robot MIXED squad — one Squad node, one set of orders, one callsign.
 ##
-## This is the field to use. `count` and `chassis` below are the old one-type
-## form, kept working because Godot silently drops properties it doesn't
-## recognise when loading a resource: deleting them would empty every mission
-## that still uses them, with no error and no warning, and you'd find out by
-## walking into an empty valley.
+## THE ONLY WAY TO DESCRIBE A SQUAD. There used to be a second one — a legacy
+## `count: int` + `chassis: PackedScene` pair, used when `roster` was empty —
+## and it was the project's cheapest example of its most expensive pattern:
+## two systems for one concept, with nothing in the data saying which applied.
+## Both fields were removed on 2026-10-24 (H9) once every authored spec had
+## been migrated, and the order mattered: Godot silently drops properties it
+## doesn't recognise when loading a resource, so deleting them first would have
+## emptied every mission still on the old form, with no error and no warning,
+## and you would have found out by walking into an empty valley.
 ##
 ## Why it matters: without this, a mixed garrison had to be three separate specs
 ## pointing at the same post_tag — which is three separate Squad nodes standing
@@ -44,12 +48,6 @@ enum Posture {
 ## it: one place to retune "rifle trooper" instead of editing every mission, and
 ## display_name feeds the comms log.
 @export var roster: Array[ChassisDefinition] = []
-
-# ── LEGACY ONE-TYPE FORM ──────────────────────
-# Used only when `roster` is empty.
-@export var count: int = 3
-# Null falls back to the spawner's default_chassis.
-@export var chassis: PackedScene
 
 ## ── UPGRADED KIT ──────────────────────────────
 ## The chance each body in this squad rolls its frame's loadout table
@@ -130,11 +128,14 @@ enum Posture {
 @export var wake_after_seconds: float = 0.0
 
 
-## How many bodies this spec describes, whichever form it was authored in.
+## How many bodies this spec describes.
 ##
-## Anything deciding "is this spec worth spawning" MUST ask this rather than
-## reading `count`. A roster spec sets count = 0 to mark the legacy field dead,
-## and the spawner's `count <= 0` skip silently threw away every roster squad in
-## the game — 45 hostiles in Valley Siege, no warning, an empty map.
+## KEPT AFTER THE LEGACY FORM WENT, deliberately. It is now one line over
+## `roster`, but it is the name eleven call sites already ask, and it is the
+## name that carries the lesson: the spawner used to decide "is this spec worth
+## spawning" by reading the legacy `count`, which a roster spec set to 0, and
+## that skip silently threw away every roster squad in the game — 45 hostiles
+## in Valley Siege, no warning, an empty map. Ask this, never `roster.size()`
+## scattered inline, so there stays one place that answers the question.
 func body_count() -> int:
-	return roster.size() if not roster.is_empty() else count
+	return roster.size()

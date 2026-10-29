@@ -35,6 +35,24 @@ extends "res://tools/level_map_rebuild.gd"
 # ─────────────────────────────────────────────
 
 
+## FREE WHAT THIS TOOL BUILT, ON EVERY EXIT — including the dry run.
+##
+## `level` is instantiated unparented and `art` holds the level's whole art
+## subtree lifted out of it, so neither is reachable from the tree and nothing
+## else will ever free them. An orphaned node that drags a Resource past
+## shutdown segfaults Godot 4.3's exit sweep: ObjectDB deletes it AFTER the
+## servers owning its RIDs have gone, so a destructor frees an RID into a dead
+## server (Traps, H10). At this scale that is every mesh, shape and material in
+## the level, and the dry run — the path this tool is normally used on — used to
+## take all of it to the sweep. Freed art-first, because art's children were
+## removed from the level and are no longer reachable through it.
+func _shed(level: Node, art: Node = null) -> void:
+	if art != null and is_instance_valid(art):
+		art.free()
+	if level != null and is_instance_valid(level):
+		level.free()
+
+
 func _initialize() -> void:
 	await process_frame
 	var path := OS.get_environment("LEVEL")
@@ -66,6 +84,7 @@ func _initialize() -> void:
 		var region := level.get_node_or_null(^"NavigationRegion3D")
 		if region == null:
 			print("FAIL  %s has no NavigationRegion3D to split under" % path.get_file())
+			_shed(level)
 			quit(1)
 			return
 		for c in region.get_children():
@@ -75,6 +94,7 @@ func _initialize() -> void:
 		print("   auto: %s" % ", ".join(moves))
 	if moves.is_empty():
 		print("FAIL  nothing to move")
+		_shed(level)
 		quit(1)
 		return
 
@@ -87,6 +107,7 @@ func _initialize() -> void:
 		var n := level.get_node_or_null(NodePath(m))
 		if n == null:
 			print("FAIL  %s has no node at %s" % [path.get_file(), m])
+			_shed(level)
 			quit(1)
 			return
 		if holder == null:
@@ -94,6 +115,7 @@ func _initialize() -> void:
 		elif n.get_parent() != holder:
 			print("FAIL  %s is under %s, not %s — everything moved must share a parent" % [
 					m, n.get_parent().name, holder.name])
+			_shed(level)
 			quit(1)
 			return
 		at = mini(at, n.get_index())
@@ -130,16 +152,19 @@ func _initialize() -> void:
 		print("   Fix those first: they are the silent half of this change.")
 		if apply:
 			print("FAIL  refusing to --apply with broken paths")
+			_shed(level, art)
 			quit(1)
 			return
 	if not apply:
 		print("   DRY RUN — pass --apply to write the two files")
+		_shed(level, art)
 		quit()
 		return
 
 	var art_scene := PackedScene.new()
 	if art_scene.pack(art) != OK or ResourceSaver.save(art_scene, art_path) != OK:
 		print("FAIL  could not write %s" % art_path)
+		_shed(level, art)
 		quit(1)
 		return
 	var stripped := _strip_defaults(FileAccess.get_file_as_string(art_path), art)
@@ -158,6 +183,7 @@ func _initialize() -> void:
 	var out := PackedScene.new()
 	if out.pack(level) != OK or ResourceSaver.save(out, path) != OK:
 		print("FAIL  could not write %s" % path)
+		_shed(level, art)
 		quit(1)
 		return
 	var text := _strip_defaults(FileAccess.get_file_as_string(path), level)
@@ -172,6 +198,8 @@ func _initialize() -> void:
 	lf.close()
 	print("      wrote both. REBAKE THE NAVMESH, then check nothing moved.")
 	print("LEVEL SPLIT DONE")
+	# Both files are on disk; the trees in memory are scratch from here.
+	_shed(level, art)
 	quit()
 
 

@@ -171,6 +171,9 @@ func _losing(context: AIEquipment.EquipmentContext) -> bool:
 
 func execute(context: AIEquipment.EquipmentContext) -> void:
 	if canister_scene == null:
+		# Every early return warns. A smoke slot wired to nothing is
+		# indistinguishable from a squad that never decides to screen.
+		push_warning("AISmoke '%s': no canister_scene assigned, so nothing can be thrown." % equipment_name)
 		return
 	var owner_ai := context.owner_ai
 	var mark := placement_or(context, _screen_point(context))
@@ -182,12 +185,23 @@ func execute(context: AIEquipment.EquipmentContext) -> void:
 		push_warning("AISmoke '%s': no throwable arc to %s, holding." % [equipment_name, str(mark)])
 		return
 
-	var canister = canister_scene.instantiate()
 	# THE LEVEL, not the current scene. See AIEquipment.spawn_host — the scene is
 	# Master, which outlives the mission and took the ordnance with it.
+	#
+	# ASKED BEFORE THE CANISTER IS BUILT, and that order is the fix: the bail
+	# below used to drop the only reference to a live Smoke_Canister. Measured
+	# 2026-10-26 (K26) by driving this path — orphaned body, shape, meshes and
+	# the smoke volume, exit 139. Unreachable today (every caller parents the
+	# equipment before calling execute()), kept this way so it stays unreachable
+	# AND harmless. Same reorder in ai_grenade, ai_mine and ai_deploy.
 	var host: Node = spawn_host(owner_ai)
 	if host == null:
+		# NOT SILENT: _spend_equipment consumes the charge and starts the
+		# cooldown either way, so a quiet return is a cloud paid for and not thrown.
+		push_warning("AISmoke '%s': nowhere to spawn into, so nothing was thrown — the charge is spent anyway." % equipment_name)
 		return
+
+	var canister = canister_scene.instantiate()
 	host.add_child(canister)
 	canister.global_position = from
 	if canister.has_method("setup"):

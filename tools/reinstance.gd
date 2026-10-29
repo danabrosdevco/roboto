@@ -46,12 +46,14 @@ func _initialize() -> void:
 	if not apply:
 		print("   %-30s %d node(s) declared inside an instance" % [path.get_file(), was])
 		print("   DRY RUN — pass --apply")
+		_shed(scene, bases)
 		quit()
 		return
 	var uid := ResourceLoader.get_resource_uid(path)
 	var out := PackedScene.new()
 	if out.pack(scene) != OK or ResourceSaver.save(out, path) != OK:
 		print("FAIL  could not write %s" % path)
+		_shed(scene, bases)
 		quit(1)
 		return
 	var text := _strip_defaults(FileAccess.get_file_as_string(path), scene)
@@ -64,10 +66,22 @@ func _initialize() -> void:
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	f.store_string(text)
 	f.close()
-	Split.free_bases(bases)
 	print("   %-30s %d -> %d node(s) declared inside an instance" % [
 			path.get_file(), was, _declared_inside_instances(path)])
+	_shed(scene, bases)
 	quit()
+
+
+## FREE THE SCRATCH TREE ON EVERY EXIT. `scene` is instantiated unparented, so
+## nothing else will ever free it, and the base cache was only freed on the
+## success path — the dry run, which is how this tool is normally used, took the
+## whole scene AND every prefab copy to ObjectDB's end-of-run sweep. That sweep
+## runs after the servers owning their RIDs are gone, which segfaults Godot 4.3
+## in cleanup (see Traps, H10).
+func _shed(scene: Node, bases: Dictionary) -> void:
+	Split.free_bases(bases)
+	if scene != null and is_instance_valid(scene):
+		scene.free()
 
 
 ## How many node entries this scene declares that sit under something it

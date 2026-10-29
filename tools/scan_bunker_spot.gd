@@ -17,17 +17,10 @@ extends SceneTree
 # Nothing is written. Read the answer and put it in the map's own *_slice.gd.
 # ─────────────────────────────────────────────
 
-const LEVELS := {
-	"causeway":   ["res://maps/causeway_level.tscn",     "CausewaySlice"],
-	"polaris":    ["res://maps/polaris_level.tscn",      "PolarisSlice"],
-	"hillfort":   ["res://maps/hillfort_level.tscn",     "HillfortSlice"],
-	"coast":      ["res://maps/coastal-road_level.tscn", "CoastSlice"],
-	"rivers":     ["res://maps/pittsburgh_level.tscn",   "RiversSlice"],
-	"qamareen":   ["res://maps/mutaha_wip_level.tscn",   "QamareenSlice"],
-	"lockside":   ["res://maps/georgetown_level.tscn",   "LocksideSlice"],
-	"trenchline": ["res://maps/salient_level.tscn",      "TrenchlineSlice"],
-	"basin":      ["res://maps/valley_basin_level.tscn", "BasinSlice"],
-}
+# THE SITES ARE DERIVED, NOT TYPED (backlog H14). The table that used to be
+# here named the retired maps/hillfort_level.tscn, so an offset scanned for
+# "hillfort" would have been typed into a slice the game never loads.
+const Sites := preload("res://tools/_live_sites.gd")
 
 const APPROACH := 10.0
 const HALF := 3.0
@@ -42,11 +35,21 @@ func _init() -> void:
 	await process_frame
 	var args := OS.get_cmdline_user_args()
 	var want := String(args[0]) if args.size() > 0 else "causeway"
-	if not LEVELS.has(want):
-		print("FAIL  '%s' is not one of %s" % [want, str(LEVELS.keys())])
+	var labels: Array = []
+	var pick: Dictionary = {}
+	for s in Sites.sites():
+		labels.append(s.label)
+		if s.label == want:
+			pick = s
+	if pick.is_empty():
+		print("FAIL  '%s' is not one of %s" % [want, str(labels)])
 		quit(1)
 		return
-	await _scan(want, LEVELS[want][0], LEVELS[want][1])
+	if pick.node == "":
+		print("FAIL  %s carries no slice node, so there is no bunker to scan round." % pick.level)
+		quit(1)
+		return
+	await _scan(want, pick.level, pick.node)
 	quit()
 
 

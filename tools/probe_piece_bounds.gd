@@ -31,9 +31,16 @@ func _initialize() -> void:
 		print("FAIL  %s did not load" % path)
 		quit(1)
 		return
-	var root := packed.instantiate() as Node3D
+	# INSTANTIATE UNTYPED, THEN CAST — the form enemy_force_spawner.gd:415-418
+	# uses. `instantiate() as Node3D` nulls the variable on a failed cast and
+	# leaves the object alive with nothing referring to it, and SCENE is a user
+	# argument, so any Control- or Node-rooted scene reaches it. An orphan that
+	# drags a Resource past shutdown segfaults Godot 4.3's exit sweep (Traps, H10).
+	var built := packed.instantiate()
+	var root := built as Node3D
 	if root == null:
 		print("FAIL  %s is not a Node3D" % path)
+		built.free()
 		quit(1)
 		return
 	get_root().add_child(root)

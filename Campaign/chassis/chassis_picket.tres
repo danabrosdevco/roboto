@@ -6,7 +6,7 @@
 
 [sub_resource type="Resource" id="Resource_0yua1"]
 script = ExtResource("1_8h1wm")
-weapon_ids = Array[StringName]([&"cluster_launcher"])
+weapon_ids = Array[StringName]([&"rocket_pods"])
 equipment_ids = Array[StringName]([])
 health_bonus = 0
 speed_multiplier = 1.0
@@ -16,7 +16,7 @@ tuning = {}
 
 [sub_resource type="Resource" id="Resource_ucrk1"]
 script = ExtResource("1_8h1wm")
-weapon_ids = Array[StringName]([&"mortar"])
+weapon_ids = Array[StringName]([&"rocket_pods"])
 equipment_ids = Array[StringName]([])
 health_bonus = 25
 speed_multiplier = 1.0

@@ -257,6 +257,10 @@ Then show it: `NEW IN STORES: MARKSMAN RIFLE` on the payout card.
 
 `EnemySquadSpec` already has `chassis`, `count`, `posture`, `route_tag`,
 `post_tag`, `spawn_tag`, `reinforcement_tag`, `always_active`, `faction`.
+
+> *`chassis` and `count` were removed on 2026-10-24 (H9). A squad is a
+> `roster: Array[ChassisDefinition]`, one entry per body — see
+> `docs/CONTENT_RULES.md` §6.5. The rest of this section still holds.*
 M2–M5 just need more specs pointing at `enemy_chaser.tscn`,
 `enemy_nest-chaser.tscn` and `boss_guardian.tscn`.
 

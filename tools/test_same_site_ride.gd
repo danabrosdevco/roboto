@@ -99,11 +99,21 @@ func _init() -> void:
 	# ── AND A REAL RIDE DOES NOT SHORT-CIRCUIT ─
 	var ride2 = RIDE.new()
 	root.add_child(ride2)
-	ride2.exit_to_arm = _Pad.new()
+	var pad2 := _Pad.new()
+	ride2.exit_to_arm = pad2
 	cm.last_site = &"somewhere_else_entirely"
 	ride2.begin(mission)
 	_check("a real departure is still running after begin", ride2.running and not ride2.arrived_already)
 
+	# BOTH STUBS FREED BY HAND. Neither is parented — a LevelExit normally is,
+	# but `exit_to_arm` is only read, never walked — so nothing else will ever
+	# free them, and both showed up as `Leaked instance: Node3D` under
+	# --verbose. Measured 2026-10-26: a script-only orphan like this leaks the
+	# ObjectDB instance and its inner-class GDScript, but drags no PATHED
+	# resource and no RID to the sweep, so it is the mild end of the family in
+	# Traps ("an orphaned node that keeps a Resource alive") — still the rule.
+	pad.free()
+	pad2.free()
 	_done()
 
 

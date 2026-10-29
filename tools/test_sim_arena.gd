@@ -155,6 +155,15 @@ func _init() -> void:
 		why.contains("THEIRS") and why.contains(str(lab_ui.PER_SIDE)), why)
 	lab_ui._side_b.clear()
 	lab_ui._picking = &"a"
+	# FREED, AND SO IS THE ROW BOX IT BUILT. lab_ui is never added to the tree,
+	# so nothing takes it down for us: left alive it reaches ObjectDB's
+	# end-of-run sweep, which runs AFTER the servers that own its canvas items
+	# have gone, and the process segfaults there — 53/53 PASS and exit 139.
+	# H10, root-caused 2026-10-24. Any scratch Control a suite builds and does
+	# not parent has to be freed by hand.
+	if box != null and box.get_parent() == null:
+		box.free()
+	lab_ui.free()
 
 	# ── THE WIPE FIRES ON GOING IN, NOT ON OPENING THE MENU ──
 	#

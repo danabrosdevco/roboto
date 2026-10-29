@@ -184,7 +184,16 @@ func _rebuild_model(def: ChassisDefinition) -> void:
 		old.free()
 	if def == null or def.scene == null:
 		return
-	var body := def.scene.instantiate() as Node3D
+	# Checked and freed. The cast result was used unconditionally, so a chassis
+	# scene that is not a Node3D orphaned a whole body AND then errored on the
+	# null in _Ground.foot_depth — the bay would be empty either way, and this
+	# way it says which chassis. K25, 2026-10-26.
+	var built := def.scene.instantiate()
+	var body := built as Node3D
+	if body == null:
+		push_warning("ChassisHologram: '%s' is not a Node3D; the bay shows nothing." % def.scene.resource_path)
+		built.free()
+		return
 	# How far below its origin the frame stands in the field, taken while it
 	# still HAS colliders — _strip is about to take them off.
 	var foot := _Ground.foot_depth(body)

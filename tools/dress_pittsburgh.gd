@@ -183,6 +183,18 @@ var _d: Data = null
 var _blockers: Array = []          ## [centre, radius] of everything already there
 
 
+## FREE THE SCRATCH TREE ON EVERY EXIT, the dry run included. `art` is the whole
+## Pittsburgh art scene instantiated unparented, so nothing else can ever free
+## it, and `bases` holds one instantiated copy of every prefab `reown()` looked
+## at. An orphan that drags a Resource past shutdown segfaults Godot 4.3's exit
+## sweep — ObjectDB deletes it after the servers owning its RIDs are gone (see
+## Traps, H10). This tool's normal use is the dry run, which leaked all of it.
+func _shed(art: Node, bases: Dictionary) -> void:
+	Split.free_bases(bases)
+	if art != null and is_instance_valid(art):
+		art.free()
+
+
 func _initialize() -> void:
 	await process_frame
 	var apply := OS.get_cmdline_user_args().has("--apply")
@@ -200,6 +212,7 @@ func _initialize() -> void:
 	var dressing := art.get_node_or_null(^"Dressing")
 	if dressing == null:
 		print("FAIL  %s has no Dressing group" % ART.get_file())
+		_shed(art, {})
 		quit(1)
 		return
 	# EVERYTHING THIS PASS ADDS GOES FIRST, so the table can be tuned and the
@@ -252,13 +265,19 @@ func _initialize() -> void:
 			made, dropped])
 	if not apply:
 		print("   DRY RUN — pass --apply")
+		_shed(art, {})
 		quit()
 		return
-	Split.reown(art, art, null, null, {})
+	# The base cache is NAMED and freed, the form level_split.gd:109-110 and
+	# reinstance.gd:45/:67 already use. Passing a literal `{}` here meant every
+	# prefab _base_of() instantiated into it was dropped on the floor.
+	var bases := {}
+	Split.reown(art, art, null, null, bases)
 	var uid := ResourceLoader.get_resource_uid(ART)
 	var out := PackedScene.new()
 	if out.pack(art) != OK or ResourceSaver.save(out, ART) != OK:
 		print("FAIL  could not write %s" % ART)
+		_shed(art, bases)
 		quit(1)
 		return
 	# The uid goes back on by hand: pack() makes a new resource with no
@@ -276,6 +295,7 @@ func _initialize() -> void:
 		ResourceUID.set_id(uid, ART)
 	print("      wrote %s. Run reinstance.gd on it, then REBAKE." % ART.get_file())
 	print("DRESS PITTSBURGH DONE")
+	_shed(art, bases)
 	quit()
 
 

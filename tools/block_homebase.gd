@@ -5,6 +5,19 @@ extends "res://tools/block_fortress.gd"
 #
 #   maps/depot/depot_level.map
 #
+# THE DEPOT IS NO LONGER THE HOME BASE, and the level that wore this map is
+# gone. maps/depot_level.tscn was deleted on 2026-10-24 (vault Backlog H15);
+# Env/world.tscn's base is maps/railhead_level.tscn and has been for some time.
+# This tool and the .map it writes were deliberately LEFT IN PLACE: the brush
+# geometry is authored TrenchBroom content that has been lost to an overwrite
+# once already (docs/BOARD.md, 2026-09-27), the room is a worked-out answer to
+# the four requirements below, and none of that stopped being true when the
+# level around it was retired. What it no longer has is a scene to feed.
+#
+# So: running this still writes a valid map you can open in TrenchBroom. It
+# does NOT put a base back in the game. Retiring the .map as well is TERRAIN's
+# call, not something to do on the way past.
+#
 #   godot --headless --path . --script res://tools/block_homebase.gd -- maps
 #   godot --headless --path . --script res://tools/block_homebase.gd -- maps --force
 #

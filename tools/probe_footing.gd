@@ -3,7 +3,7 @@ extends SceneTree
 # ─────────────────────────────────────────────
 # FOOTING — which placed pieces are standing in the air, and which are buried.
 #
-#   LEVEL=res://maps/hillfort_level.tscn godot --path . --script res://tools/probe_footing.gd
+#   LEVEL=res://maps/hillfort_wip_level.tscn godot --path . --script res://tools/probe_footing.gd
 #
 # NOT headless: it raycasts, and the collision comes from the level's own
 # bodies, which need a real physics world to be there.
@@ -62,7 +62,9 @@ func _initialize() -> void:
 	await process_frame
 	var path := OS.get_environment("LEVEL")
 	if path == "":
-		path = "res://maps/hillfort_level.tscn"
+		# THE LIVE FORT. This read hillfort_level.tscn until 2026-10-26 — the
+		# retired one — so an unset LEVEL silently probed a dead map.
+		path = "res://maps/hillfort_wip_level.tscn"
 	var packed := load(path) as PackedScene
 	if packed == null:
 		print("FAIL  %s will not load" % path)

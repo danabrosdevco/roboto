@@ -128,7 +128,6 @@ func _init() -> void:
 	var help := EnemySquadSpec.new()
 	help.callsign = "TEST-HELP"
 	help.roster = [load("res://Campaign/chassis/chassis_chaser.tres")] as Array[ChassisDefinition]
-	help.count = 0
 	help.posture = EnemySquadSpec.Posture.RESERVE
 	help.post_tag = &"obj_valley_mid"
 	help.spawn_tag = &"obj_valley_mid"

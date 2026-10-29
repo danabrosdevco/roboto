@@ -84,7 +84,14 @@ func _init() -> void:
 	cm.debug_mission = m
 	cm.select_mission(SITE)
 	await world.load_next_level(m.level_scene)
-	cm.on_level_loaded(world.current_level)
+	# NO SECOND on_level_loaded(). World.load_next_level() ends by calling it
+	# itself, so an explicit call here redeploys BOTH spawners in the same frame
+	# as the first deploy — and tearing a robot down that few frames after it
+	# was stood up leaves the engine something it only trips over in final
+	# cleanup: every assertion printed PASS and the run still handed the shell
+	# exit 139. H10, root-caused 2026-10-24: dropping this one line is the whole
+	# fix. A 10-frame gap before the second call also cures it; one or two
+	# frames do not. The call was redundant either way.
 	# LONGER THAN THE OTHER LIVE SUITES WAIT. The enemy force spawns over
 	# several frames and the squads group is what this whole test reads from,
 	# so starting before it is populated would measure an empty map.

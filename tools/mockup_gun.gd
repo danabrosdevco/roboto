@@ -15,12 +15,28 @@ extends SceneTree
 
 const SOLDIER := "res://Character/characters/ai/soldier_chassis.tscn"
 const RIFLE := "res://Character/weapon/ai-wep_m4.tscn"
-const LEVEL := "res://maps/depot_level.tscn"
-const STAGE := Vector3(0.0, 1.2, 0.0)
+## THE LIVE BASE. This used to be depot_level, which was retired on 2026-10-24
+## (vault Backlog H15) — the railhead is the base world.tscn actually loads.
+## The sun came with it for free: both levels instance the same
+## Env/world_environment.tscn, so the light this is shot under did not change.
+## What DID change is the floor, which is why STAGE's height is now probed.
+const LEVEL := "res://maps/railhead_level.tscn"
+
+## Where the soldier stands, in x and z only. THE HEIGHT IS DERIVED — see
+## _deck(). It used to be a typed 1.2, which was the depot's inner floor plus
+## the metre from a 2 m capsule's centre to its feet; the railhead's floor at
+## the same x/z is at 1.19, so the same typed number would have buried the
+## robot to the waist. A level swap is never a path substitution.
+const STAGE_XZ := Vector3(0.0, 0.0, 0.0)
+
+## Centre of a 2 m capsule above the floor it stands on.
+const FEET := 1.01
+
 const SPACING := 2.2
 const SCALES := [0.25, 0.32, 0.40, 0.48]
 
 var _cam: Camera3D
+var _stage := STAGE_XZ
 
 
 func _initialize() -> void:
@@ -43,19 +59,20 @@ func _run() -> void:
 	_cam.current = true
 	for _i in 30:
 		await process_frame
+	_stage = STAGE_XZ + Vector3(0, _deck(STAGE_XZ) + FEET, 0)
 
 	# ONE SHOT PER SCALE, FROM AN IDENTICAL CAMERA. Lined up in a row they are
 	# at different distances and different angles to the lens, and perspective
 	# swamps the thing being compared — the smallest gun looked the largest.
 	for s in SCALES:
-		var bot := _soldier(float(s), STAGE)
+		var bot := _soldier(float(s), _stage)
 		await process_frame
 		await process_frame
 		var gun := _gun_length(bot)
 		print("mockup_gun: scale %.2f -> gun %.2f m long, %.0f%% of the body's height" % [
 			s, gun, gun / 2.0 * 100.0])
-		_cam.global_position = STAGE + Vector3(-2.10, 0.85, -3.40)
-		_cam.look_at(STAGE + Vector3(0, -0.10, 0), Vector3.UP)
+		_cam.global_position = _stage + Vector3(-2.10, 0.85, -3.40)
+		_cam.look_at(_stage + Vector3(0, -0.10, 0), Vector3.UP)
 		var flat := Vector3(_cam.global_position.x, bot.global_position.y, _cam.global_position.z)
 		bot.look_at(flat, Vector3.UP)
 		bot.rotate_y(deg_to_rad(40.0))
@@ -63,6 +80,27 @@ func _run() -> void:
 		bot.free()
 	print("mockup_gun: written to %s" % out_dir)
 	quit(0)
+
+
+## THE DECK THE SUBJECT STANDS ON, measured, not assumed — and the ray is
+## dropped from ABOVE the building on purpose, so it lands on the railhead's
+## open upper deck at y=11.00 rather than the platform floor at 1.19 inside it.
+##
+## Both were rendered and looked at on 2026-10-24. The platform floor works for
+## a shot this close and comes back dim and cluttered — train tracks and
+## carriage sides behind the subject, which is noise in a comparison whose
+## whole point is the outline of a gun. The roof is open sky under the same
+## sun, it is where mockup_shots.gd and mock_damage.gd stage the same bodies,
+## and a sixteen-ray fan found nothing inside 120 m of it in any direction.
+func _deck(at: Vector3) -> float:
+	var space := root.world_3d.direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(at + Vector3(0, 60, 0), at + Vector3(0, -40, 0))
+	var hit := space.intersect_ray(q)
+	if hit.is_empty():
+		push_warning("mockup_gun: no floor under %s in %s, so the soldier is parked at y=0 and may float."
+				% [str(at), LEVEL.get_file()])
+		return 0.0
+	return (hit["position"] as Vector3).y
 
 
 func _soldier(mount_scale: float, at: Vector3) -> Node3D:

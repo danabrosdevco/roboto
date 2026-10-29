@@ -34,35 +34,118 @@ const INDOOR_SPAN := 200.0
 const _TutorialLabel := preload("res://Env/world_objects/tutorial_label.gd")
 const _TutorialToast := preload("res://Character/hud/tutorial_toast.gd")
 
-var _levels := [
+# ─────────────────────────────────────────────
+# WHICH LEVELS GET BAKED — DERIVED FOR THE MISSIONS, EXPLICIT FOR THE REST.
+#
+# This was one hand-typed array of 17 paths and it drifted exactly the way a
+# hand-typed list drifts. The Salient shipped two live operations that were
+# never in it, so both briefings read "NO MAP DATA" and nothing said why
+# (vault Backlog H12); and the RETIRED maps/hillfort_level.tscn sat in it long
+# after the campaign moved to hillfort_wip, which is H14's family of seven
+# stale level tables, one of which printed a tidy `ok` about a level the game
+# does not load.
+#
+# BUT IT IS NOT A MISSION LIST, AND THAT IS THE TRAP. Replacing the whole array
+# with _live_sites.mission_levels() SHRINKS it from 17 rows to 9 and silently
+# stops baking eight maps that are all wanted and all have a .tres on disk —
+# measured 2026-10-24: the base, the Laboratory's arena, three archive levels,
+# the WIP heliostat and the proving ground. A derived list that quietly covers
+# less than the typed one it replaced is worse than the typed one.
+#
+# So the split is: the live missions and the practice track come out of
+# Env/world.tscn via tools/_live_sites.gd and cannot drift, and EVERYTHING ELSE
+# IS TYPED BELOW WITH A LINE SAYING WHO LOADS IT. A row nobody can justify is a
+# row to delete, not a row to leave in place in silence — which is why
+# maps/hillfort_level.tscn is gone from here: its live replacement arrives
+# through the derivation now, and the stale maps/minimaps/hillfort_level.*
+# artefacts on disk are authored output and somebody else's call.
+#
+# RE-BAKE WHEN AN OPS LAYER MOVES. The markers come from the objectives in the
+# SCENE, not from the mission, so causeway, georgetown and polaris — the three
+# operations at the end of the ladder — have to be re-baked whenever their ops
+# layer does. Causeway was in the old list and was baked while the level held no
+# objectives at all, so its .tres carried an image and an empty marker set: a
+# briefing map with nothing on it. Being derived does not re-bake anything; it
+# only guarantees the row is there.
+#
+# ONE PIECE OF NOISE THE DERIVATION ADDS, and it is expected: reading
+# world.tscn pulls in the whole game's script graph, and
+# Character/characters/camera_3d.gd references the `camera_switcher` autoload,
+# which a bare --script run does not stand up. So the bake now prints one
+# "Identifier not found: camera_switcher" compile error at startup. Harmless,
+# documented at the top of tools/_live_sites.gd, do not go hunting it.
+# ─────────────────────────────────────────────
+const _Sites := preload("res://tools/_live_sites.gd")
+
+## Levels that want a minimap and that `world.tscn`'s `missions` array does not
+## name. Every row carries who loads it, because that is the question whoever
+## reads this list next is going to have.
+const EXTRA_LEVELS := [
+	# The train, and the only home base: maps/depot_level.tscn stood here until
+	# it was retired on 2026-10-24 (vault Backlog H15). The base needs its own
+	# minimap because Campaign.minimap_data resolves
+	# res://maps/minimaps/<basename>.tres by convention, and a base without one
+	# is the only thing tools/audit_levels.gd flags about it.
+	"res://maps/railhead_level.tscn",
+	# The Laboratory's arena (lab plan `valley_armour`) and the level 14 suites
+	# load — test_mines, test_vehicle, test_diver and the rest. Not a mission,
+	# emphatically not dead.
 	"res://maps/appendix/valley_level.tscn",
-	"res://maps/valley_basin_level.tscn",
+	# A terrain site that is built and not yet converted: 402 brush pieces, a
+	# navmesh, no slice, no mission. WIP rather than dead (the human,
+	# 2026-10-23), so it keeps its map ready for the conversion.
+	"res://maps/heliostat_level.tscn",
+	# Archive. Loaded by nothing but this tool. Kept so that dropping their maps
+	# here does not quietly pre-empt vault Backlog H17, which is the
+	# appendix-or-delete decision for them.
 	"res://maps/appendix/arena_level.tscn",
 	"res://maps/appendix/homebase_level.tscn",
-	"res://maps/coastal-road_level.tscn",
 	"res://maps/appendix/mutaha_level.tscn",
-	"res://maps/mutaha_wip_level.tscn",
-	"res://maps/hillfort_level.tscn",
-	"res://maps/hillfort_wip_level.tscn",
-	"res://maps/pittsburgh_level.tscn",
-	"res://maps/causeway_level.tscn",
-	# The three operations at the end of the ladder. Causeway was already in
-	# this list but was baked while the level held no objectives at all, so its
-	# .tres carried an image and an empty marker set — a briefing map with
-	# nothing on it. All three need re-baking whenever their ops layer moves,
-	# because the markers come from the objectives in the scene and not from
-	# the mission.
-	"res://maps/georgetown_level.tscn",
-	"res://maps/polaris_level.tscn",
-	"res://maps/depot_level.tscn",
-	# The train. The depot's replacement as the home base — it needs its own
-	# minimap for the same reason the depot has one: Campaign.minimap_data
-	# resolves res://maps/minimaps/<basename>.tres by convention, and a base
-	# without one is the only thing tools/audit_levels.gd flags about it.
-	"res://maps/railhead_level.tscn",
-	"res://maps/proving_level.tscn",
-	"res://maps/heliostat_level.tscn"
 ]
+
+
+## Every level this run will bake: the live mission levels and the practice
+## track, derived, then EXTRA_LEVELS, deduplicated and in that order.
+##
+## Returns EMPTY when the derivation comes back with no missions, and the caller
+## treats that as a hard stop. A bake list that has lost the campaign must FAIL
+## rather than go ahead and bake six archive maps and report success — that is
+## the "a derived list can silently turn a FAILURE into not-applicable" trap the
+## vault records against H14.
+##
+## Static so a probe can ask what the list is without running a bake, which the
+## old `var _levels` could not be asked at all: `_init` is a coroutine, so
+## `minimap_bake.gd.new()` does not even parse.
+static func level_list() -> Array:
+	var out: Array = []
+	var missions: Array = _Sites.mission_levels()
+	var sims: Array = _Sites.sim_levels()
+	if missions.is_empty():
+		print("FAIL  tools/_live_sites.gd returned no live mission levels, so this")
+		print("FAIL  bake would cover none of the campaign. NOTHING BAKED. Check")
+		print("FAIL  Env/world.tscn's `missions` array.")
+		return out
+	print("  missions  %2d  derived from Env/world.tscn: %s" % [
+		missions.size(), ", ".join(_short(missions))])
+	# Named, never skipped in silence — the practice track is a real briefing
+	# with a real map, it is only excluded from `sites()` because it carries no
+	# slice on purpose.
+	print("  sim       %2d  derived (MissionDefinition.sim): %s" % [
+		sims.size(), ", ".join(_short(sims))])
+	print("  extra     %2d  typed in EXTRA_LEVELS: %s" % [
+		EXTRA_LEVELS.size(), ", ".join(_short(EXTRA_LEVELS))])
+	for group in [missions, sims, EXTRA_LEVELS]:
+		for p in group:
+			if not (p in out):
+				out.append(p)
+	return out
+
+
+static func _short(paths: Array) -> PackedStringArray:
+	var out := PackedStringArray()
+	for p in paths:
+		out.append(String(p).get_file().get_basename().trim_suffix("_level"))
+	return out
 
 
 func _init() -> void:
@@ -84,10 +167,28 @@ func _init() -> void:
 	var only: String = ""
 	for a in OS.get_cmdline_user_args():
 		only = a
-	for path in _levels:
+	var levels := level_list()
+	if levels.is_empty():
+		# No "MINIMAP BAKE DONE", so tools/minimap.sh reports FAILED and — the
+		# part that matters — does not go on to run --import.
+		quit(1)
+		return
+	var matched := 0
+	for path in levels:
 		if only != "" and not path.contains(only):
 			continue
+		matched += 1
 		await _bake(path)
+	# A filter that matched nothing baked nothing and used to say so by printing
+	# only "MINIMAP BAKE DONE", which minimap.sh reports as PASS. The live case
+	# is the house `-- --no-save`: run this script by hand with the standard
+	# arguments and `only` becomes "--no-save", which matches no level — the same
+	# shape that made probe_sites_live.gd print an empty table and "0 problem(s)".
+	if only != "" and matched == 0:
+		print("FAIL  no level in the list contains '%s', so nothing was baked. The" % only)
+		print("FAIL  filter is a substring of the level's res:// path.")
+		quit(1)
+		return
 	print("MINIMAP BAKE DONE")
 	quit()
 

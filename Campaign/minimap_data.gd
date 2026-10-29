@@ -87,14 +87,39 @@ func texture() -> Texture2D:
 ## Convention rather than a field on MissionDefinition: every mission already
 ## names its level, and a second reference would be one more thing to forget to
 ## set when adding a mission.
+##
+## EVERY EARLY RETURN WARNS, and the three below all used to be one silent
+## `return null`. The cost is measured: the Salient has two live operations and
+## has never had a minimap baked, so both briefings and the base's map board
+## read "NO MAP DATA" and NOTHING ANYWHERE SAID WHY — it took a level survey to
+## find (vault Backlog H12). A missing minimap is a missing bake, not a
+## condition, so it has to be reported where it is noticed.
+##
+## Each message names the MISSION and the LEVEL: the mission is what the player
+## is looking at, and the level is what tools/minimap.sh takes as its argument.
 static func for_mission(mission: MissionDefinition) -> MinimapData:
-	if mission == null or mission.level_scene == null:
+	# Asked about no mission at all is not a miss. Campaign/mission_map_board.gd
+	# `_show(null)` calls this on every refresh with nothing queued, and warning
+	# there would bury the real misses under base-UI noise.
+	if mission == null:
+		return null
+	if mission.level_scene == null:
+		push_warning("MinimapData.for_mission: mission '%s' names no level_scene, so it can never resolve a minimap and its briefing will read NO MAP DATA." % String(mission.id))
 		return null
 	var base := mission.level_scene.resource_path.get_file().get_basename()
 	var path := "res://maps/minimaps/%s.tres" % base
 	if not ResourceLoader.exists(path):
+		push_warning("MinimapData.for_mission: mission '%s' is on level %s and so wants %s, which is not baked — its briefing and the base's map board will read NO MAP DATA. Bake it with `bash tools/minimap.sh %s`, with the Godot editor CLOSED (it finishes with --import)." % [
+			String(mission.id), mission.level_scene.resource_path, path, base.trim_suffix("_level")])
 		return null
-	return load(path) as MinimapData
+	var data := load(path) as MinimapData
+	if data == null:
+		# The file is there and is not a MinimapData. A stale or half-written
+		# bake looks identical to a missing one from the briefing's side, so it
+		# gets its own line rather than being folded into the row above.
+		push_warning("MinimapData.for_mission: mission '%s' is on level %s and %s exists but did not load as a MinimapData — a corrupt or stale bake. Re-run `bash tools/minimap.sh %s` with the editor closed." % [
+			String(mission.id), mission.level_scene.resource_path, path, base.trim_suffix("_level")])
+	return data
 
 
 ## The objectives a mission actually uses, as indices into the arrays above:

@@ -51,6 +51,15 @@ const SCENES := {
 	"soldier_rifle": &"rifleman",
 	"soldier_rifle_armoured": &"rifleman_armoured",
 	"soldier_shotgun": &"shotgunner",
+	# THESE TWO NAME SCENES THAT NO LONGER EXIST, AND THEY STAY. `enemy_shotgun`
+	# and `boss_guardian` were deleted on 2026-10-24 — bosses are cut and the
+	# bare-`Enemy` scenes went with them. Neither key can ever be hit again, so
+	# they are dead lookups; they are kept because this table is read when a
+	# debrief resolves a kill, career tallies in campaign.json may already
+	# carry what they resolved to, and the cost of two dead dictionary entries
+	# is nothing against the cost of orphaning a player's stats. `shotgunner`
+	# is still a live kind through `soldier_shotgun`; `guardian` was never a
+	# kind with a chassis at all and now never will be.
 	"enemy_shotgun": &"shotgunner",
 	"enemy_chaser": &"chaser",
 	"enemy_nest-chaser": &"leaper",

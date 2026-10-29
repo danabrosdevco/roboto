@@ -71,11 +71,36 @@ func execute(context: AIEquipment.EquipmentContext) -> void:
 		push_error("AIGrenade: no grenade_scene assigned.")
 		return
 
-	var grenade = grenade_scene.instantiate() as AIGrenadeProjectile
 	# THE LEVEL, not the current scene. See AIEquipment.spawn_host — the scene is
 	# Master, which outlives the mission and took the ordnance with it.
+	#
+	# ASKED BEFORE THE PROJECTILE IS BUILT, and that order is the fix. It used to
+	# be asked after, so the bail below dropped the only reference to a whole
+	# AIGrenadeProjectile. Measured 2026-10-26 (K26) by driving this path: it
+	# orphans the RigidBody3D, its shape, the Frag_West mesh AND the entire
+	# explosion.tscn the projectile preloads — 250 leaked instances, 186
+	# resources still in use, exit 139. Unreachable today (every caller parents
+	# the equipment before calling execute(), so spawn_host cannot return null),
+	# but a node that is never built cannot leak if that ever changes.
 	var host: Node = spawn_host(context.owner_ai)
 	if host == null:
+		# NOT SILENT. _spend_equipment consumes the charge and starts the
+		# cooldown whether or not anything left our hand, so a quiet return is a
+		# robot that spends a grenade on nothing and never says so.
+		push_warning("AIGrenade '%s': nowhere to spawn into, so nothing was thrown — the charge is spent anyway." % equipment_name)
+		return
+
+	# CHECKED AND FREED — the same defect as the `spawn_host` reorder above,
+	# one line down and missed by it: the cast result was used unconditionally,
+	# so a grenade_scene that is not an AIGrenadeProjectile orphaned the whole
+	# projectile AND errored on `add_child(null)`. Not in K25's list of sites;
+	# found by grepping the family across the repo. 2026-10-26.
+	var built := grenade_scene.instantiate()
+	var grenade := built as AIGrenadeProjectile
+	if grenade == null:
+		push_warning("AIGrenade '%s': grenade_scene '%s' is not an AIGrenadeProjectile, so nothing was thrown — the charge is spent anyway." % [
+			equipment_name, grenade_scene.resource_path])
+		built.free()
 		return
 	host.add_child(grenade)
 

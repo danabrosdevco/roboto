@@ -6,7 +6,7 @@
 
 [sub_resource type="Resource" id="Resource_nhrgq"]
 script = ExtResource("1_p62p3")
-weapon_ids = Array[StringName]([&"autocannon", &"heavy_mg"])
+weapon_ids = Array[StringName]([&"autocannon"])
 equipment_ids = Array[StringName]([])
 health_bonus = 30
 speed_multiplier = 1.0
@@ -16,7 +16,7 @@ tuning = {}
 
 [sub_resource type="Resource" id="Resource_efkot"]
 script = ExtResource("1_p62p3")
-weapon_ids = Array[StringName]([&"light_cannon", &"heavy_mg"])
+weapon_ids = Array[StringName]([&"autocannon", &"heavy_mg"])
 equipment_ids = Array[StringName]([])
 health_bonus = 60
 speed_multiplier = 1.0
@@ -33,7 +33,7 @@ scene = ExtResource("2_scene")
 cost = 320
 purchasable = true
 supply = 3
-starting_weapon_id = &"autocannon"
+starting_weapon_id = &"machine_gun"
 coax_weapon_id = &"machine_gun"
 base_health = 320
 base_speed = 1.0

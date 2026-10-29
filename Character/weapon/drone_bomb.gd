@@ -69,11 +69,25 @@ func _detonate(body: Node) -> void:
 func _explode() -> void:
 	if explosion_scene == null:
 		return   # warned about in _ready; nothing to spawn
-	var explosion_instance: Node3D = explosion_scene.instantiate()
+	# HOST FIRST, THEN BUILD. The whole explosion scene — meshes, materials,
+	# particles — used to be instantiated above this guard, so a bail dropped
+	# the only reference to it: the H10 defect class, where an orphan holding
+	# Resources is swept at exit after the servers owning its RIDs are gone.
+	#
+	# MEASURED UNREACHABLE (K24, 2026-10-26), and the reasoning is worth
+	# keeping because the guard looks live: this is only ever reached from
+	# _detonate(), i.e. from a contact signal, so the bomb is IN the tree —
+	# and a node in the tree has a parent unless it is the tree's root, which
+	# a RigidBody3D never is. Conversely a bomb out of the tree has no
+	# get_tree() at all and the line below would error before the guard. So
+	# host cannot be null. Kept anyway, built in the safe order, and it now
+	# warns rather than returning in silence.
 	# current_scene is Master in this project — above World, so the blast is not
 	# freed with the bomb's parent. Same host the AI grenade uses.
 	var host: Node = get_tree().current_scene if get_tree().current_scene != null else get_parent()
 	if host == null:
-		return   # nothing to parent a blast to: the level is going away anyway
+		push_warning("%s has nothing to parent its blast to, so it goes off invisibly." % name)
+		return
+	var explosion_instance: Node3D = explosion_scene.instantiate()
 	host.add_child(explosion_instance)
 	explosion_instance.global_position = impact_position

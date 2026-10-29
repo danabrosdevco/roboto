@@ -11,9 +11,19 @@ five different things depending on who said it.
 ## What this is
 
 A first-person squad-command shooter in Godot 4.3. You are a Home Command AKR —
-an autonomous killer robot — commanding a squad of them. Levels are TrenchBroom
-brush geometry via FuncGodot. Structure is persistent squad + discrete missions
-from a home base.
+an autonomous killer robot — commanding a squad of them. Structure is
+persistent squad + discrete missions from a home base.
+
+**How a level is built — two routes, and most sites use both.** A site is a
+pair: `maps/<name>_level.tscn` (a `TrenchBroomLevel` root, the navmesh,
+spawns, objectives, the site slice) instances `maps/<name>_art.tscn`, and the
+**art** holds the geometry. Buildings are TrenchBroom brushes via FuncGodot —
+the `maps/blocks/` prefabs, on every site. Ground is a generated heightfield
+(`Env/terrain/`, a `GeneratedTerrain` node) on most sites, and brush tiles on
+Georgetown and Polaris. So the `_level` file shows neither route: judge a map
+from its `_art`, or run `tools/probe_level_facts.gd`. The proving ground,
+the depot and the old test maps are brushes in the level file itself, with no
+art scene.
 
 **The chain of command, as of 2026-10-09.** Humans built **Argus**, an orbital
 command intelligence, and **Home Command** is its defence component. Argus has

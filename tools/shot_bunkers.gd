@@ -22,18 +22,11 @@ extends SceneTree
 # It loads no campaign and writes none.
 # ─────────────────────────────────────────────
 
-const LEVELS := {
-	"hillfort":   ["res://maps/hillfort_level.tscn",     "HillfortSlice"],
-	"coast":      ["res://maps/coastal-road_level.tscn", "CoastSlice"],
-	"rivers":     ["res://maps/pittsburgh_level.tscn",   "RiversSlice"],
-	"qamareen":   ["res://maps/mutaha_wip_level.tscn",   "QamareenSlice"],
-	"lockside":   ["res://maps/georgetown_level.tscn",   "LocksideSlice"],
-	"polaris":    ["res://maps/polaris_level.tscn",      "PolarisSlice"],
-	"causeway":   ["res://maps/causeway_level.tscn",     "CausewaySlice"],
-	"trenchline": ["res://maps/salient_level.tscn",      "TrenchlineSlice"],
-	"basin":      ["res://maps/valley_basin_level.tscn", "BasinSlice"],
-	"hillfort_wip": ["res://maps/hillfort_wip_level.tscn", "HillfortWipSlice"],
-}
+# THE SITES ARE DERIVED, NOT TYPED (backlog H14). The table that used to be
+# here carried both Hillforts, so one of the ten pictures was of the retired
+# maps/hillfort_level.tscn — a photograph of a bunker on a map the game does
+# not load, filed beside nine real ones with nothing to tell them apart.
+const Sites := preload("res://tools/_live_sites.gd")
 
 ## Where the camera stands relative to the entrance, and what it looks at.
 ## The mouth faces +Z — ExitVolume is at z -4, down the tunnel — so the camera
@@ -59,8 +52,11 @@ func _init() -> void:
 	DisplayServer.window_set_size(Vector2i(1280, 720))
 	DisplayServer.window_set_position(Vector2i(50, 40))
 
-	for name in LEVELS:
-		await _one(String(name), LEVELS[name][0], LEVELS[name][1])
+	for s in Sites.sites():
+		if s.node == "":
+			print("FAIL  %s carries no slice node, so there is no bunker to photograph" % s.level)
+			continue
+		await _one(s.label, s.level, s.node)
 	print("BUNKER SHOTS DONE")
 	quit()
 

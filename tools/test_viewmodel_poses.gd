@@ -75,6 +75,7 @@ func _check(path: String) -> void:
 	var item: Node3D = packed.instantiate()
 	if not item.has_method("update_view"):
 		_fail("%s is not a PlayerEquipment" % path.get_file())
+		item.free()
 		return
 	# No tree and no player: update_view() touches the viewmodel child and the
 	# item's own fields, nothing else. Keeping it out of the tree is what makes
@@ -83,6 +84,11 @@ func _check(path: String) -> void:
 	var vm: Node3D = item.get("viewmodel")
 	if vm == null:
 		print("  %-30s no viewmodel" % path.get_file())
+		# THIS ONE FIRES ON EVERY RUN — the scanner has no viewmodel — and it was
+		# the live half of the leak the comment at the end of this function
+		# describes: measured 2026-10-26, `Leaked instance: Node3D "Scanner"`
+		# plus three AudioStreamWAVs and three GDScripts "still in use at exit".
+		item.free()
 		return
 
 	# What the scene asked for, before anything has had a chance to overwrite it.

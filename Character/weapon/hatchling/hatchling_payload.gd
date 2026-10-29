@@ -55,9 +55,15 @@ func _release() -> void:
 	var faction := source_faction if source_faction != Enums.Factions.NEUTRAL else Enums.Factions.PLAYER
 
 	for i in maxi(1, count):
-		var unit := unit_scene.instantiate() as Soldier
+		# Freed on the bail. The cast nulls the variable and leaves the whole
+		# instanced body alive, and nothing else ever held a reference to it —
+		# so the canister burst, nothing came out, and an orphaned robot sat in
+		# ObjectDB until the exit sweep. K25, 2026-10-26.
+		var built := unit_scene.instantiate()
+		var unit := built as Soldier
 		if unit == null:
 			push_warning("HatchlingPayload: %s is not a Soldier scene." % unit_scene.resource_path)
+			built.free()
 			break
 		# All of this BEFORE add_child. FactionLivery reads `faction` in its own
 		# _ready, so setting it afterwards would paint a player-side hatchling in

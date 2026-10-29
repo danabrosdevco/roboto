@@ -15,17 +15,11 @@ extends SceneTree
 # So this stands each slice up on its own level and asks the built thing.
 # ─────────────────────────────────────────────
 
-const SLICES := {
-	"hillfort":   ["res://Env/world_objects/hillfort_slice.gd",   "res://maps/hillfort_level.tscn"],
-	"coast":      ["res://Env/world_objects/coast_slice.gd",      "res://maps/coastal-road_level.tscn"],
-	"rivers":     ["res://Env/world_objects/rivers_slice.gd",     "res://maps/pittsburgh_level.tscn"],
-	"qamareen":   ["res://Env/world_objects/qamareen_slice.gd",   "res://maps/mutaha_wip_level.tscn"],
-	"lockside":   ["res://Env/world_objects/lockside_slice.gd",   "res://maps/georgetown_level.tscn"],
-	"polaris":    ["res://Env/world_objects/polaris_slice.gd",    "res://maps/polaris_level.tscn"],
-	"causeway":   ["res://Env/world_objects/causeway_slice.gd",   "res://maps/causeway_level.tscn"],
-	"trenchline": ["res://Env/world_objects/trenchline_slice.gd", "res://maps/salient_level.tscn"],
-	"basin":      ["res://Env/world_objects/basin_slice.gd",      "res://maps/valley_basin_level.tscn"],
-}
+# THE SITES ARE DERIVED, NOT TYPED (backlog H14). The table that used to be
+# here named the retired maps/hillfort_level.tscn and not the
+# maps/hillfort_wip_level.tscn the campaign deploys, so the first row tested a
+# bunker nobody can walk into.
+const Sites := preload("res://tools/_live_sites.gd")
 
 var _fails := 0
 
@@ -34,9 +28,17 @@ func _init() -> void:
 	Settings.path = "user://settings_probe.json"
 	Engine.max_fps = 60
 	await process_frame
+	var skipped := Sites.sim_levels()
+	if not skipped.is_empty():
+		print("sim arenas, not sites, skipped: %s" % ", ".join(skipped))
 	print("site         cores  bunker  dock   term  exit  doors  verdict")
-	for name in SLICES:
-		await _one(String(name), SLICES[name][0], SLICES[name][1])
+	for s in Sites.sites():
+		if s.script_path == "":
+			print("%-12s FAIL — %s carries NO SLICE SCRIPT, so nothing can be stood up on it" % [
+				s.label, s.level])
+			_fails += 1
+			continue
+		await _one(s.label, s.script_path, s.level)
 	print("")
 	print("%d problem(s)" % _fails)
 	quit(1 if _fails > 0 else 0)

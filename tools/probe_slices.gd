@@ -14,19 +14,19 @@ extends SceneTree
 #
 # So this loads each level and asks the slice's own lookup for every name it
 # carries, before any of them are wired into a mission.
+#
+# THE LIST IS DERIVED, NOT TYPED (backlog H14). It used to be a nine-row table
+# in this file, and that table named the RETIRED maps/hillfort_level.tscn: the
+# campaign has deployed maps/hillfort_wip_level.tscn since the Hillfort was
+# rebuilt, so this probe printed a tidy `ok` about a level the game does not
+# load and said nothing at all about the one it does. tools/_live_sites.gd now
+# reads the levels off Env/world.tscn's `missions` array and the slice off each
+# level, for the same reason the suite runner reads `# BUCKET:` off each suite
+# rather than keeping its own list: a hand-kept list drifts the first time
+# somebody forgets, and a drifted list still reports a pass.
 # ─────────────────────────────────────────────
 
-const SLICES := {
-	"hillfort":   ["res://Env/world_objects/hillfort_slice.gd",   "res://maps/hillfort_level.tscn"],
-	"coast":      ["res://Env/world_objects/coast_slice.gd",      "res://maps/coastal-road_level.tscn"],
-	"rivers":     ["res://Env/world_objects/rivers_slice.gd",     "res://maps/pittsburgh_level.tscn"],
-	"qamareen":   ["res://Env/world_objects/qamareen_slice.gd",   "res://maps/mutaha_wip_level.tscn"],
-	"lockside":   ["res://Env/world_objects/lockside_slice.gd",   "res://maps/georgetown_level.tscn"],
-	"polaris":    ["res://Env/world_objects/polaris_slice.gd",    "res://maps/polaris_level.tscn"],
-	"causeway":   ["res://Env/world_objects/causeway_slice.gd",   "res://maps/causeway_level.tscn"],
-	"trenchline": ["res://Env/world_objects/trenchline_slice.gd", "res://maps/salient_level.tscn"],
-	"basin":      ["res://Env/world_objects/basin_slice.gd",      "res://maps/valley_basin_level.tscn"],
-}
+const Sites := preload("res://tools/_live_sites.gd")
 
 var _fails := 0
 
@@ -35,8 +35,13 @@ func _init() -> void:
 	Settings.path = "user://settings_probe.json"
 	Engine.max_fps = 60
 	await process_frame
-	for name in SLICES:
-		await _one(String(name), SLICES[name][0], SLICES[name][1])
+	var skipped := Sites.sim_levels()
+	if not skipped.is_empty():
+		# Said out loud rather than dropped: a sim arena is a practice track and
+		# carries no slice on purpose, so it is not a miss.
+		print("sim arenas, not sites, skipped: %s" % ", ".join(skipped))
+	for s in Sites.sites():
+		await _one(s.label, s.script_path, s.level)
 	print("")
 	print("%d problem(s)" % _fails)
 	quit(1 if _fails > 0 else 0)
@@ -46,6 +51,12 @@ func _one(label: String, slice_path: String, level_path: String) -> void:
 	var packed := load(level_path) as PackedScene
 	if packed == null:
 		_bad("%s: cannot load %s" % [label, level_path])
+		return
+	# NO SLICE IS A FAULT, NOT A SKIP. A level regenerated from a template loses
+	# the authored slice node with no error at all — that is the failure this
+	# family of probes exists for, so it must not read as "not a site".
+	if slice_path == "":
+		_bad("%s: %s carries NO SLICE NODE, so it names nothing" % [label, level_path])
 		return
 	var level = packed.instantiate()
 	root.add_child(level)

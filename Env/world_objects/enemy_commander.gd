@@ -124,9 +124,10 @@ func _pick(supply: int) -> Dictionary:
 	return best
 
 
-## An EnemySquadSpec the authored spawner will accept, in ROSTER form — the
-## form every shipped mission uses, where one body is built per roster entry
-## and `count` is ignored.
+## An EnemySquadSpec the authored spawner will accept: a `roster`, one body
+## built per entry. That is the only form there is — the legacy `count` +
+## `chassis` pair this comment used to say was ignored went with H9 on
+## 2026-10-24.
 func _build_spec(template: Dictionary, at: Vector3):
 	var spec = load("res://Campaign/enemy_squad_spec.gd").new()
 	spec.callsign = "%s-%d" % [String(template["label"]), committed_squads + 1]

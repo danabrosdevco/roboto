@@ -37,8 +37,9 @@ func _init() -> void:
 	await process_frame
 
 	# THE ONE THE GAME ACTUALLY USES. Env/world.tscn:94 wires the CampaignManager
-	# to "test_item_catalogue.tres" — 34 items and 12 chassis — and the file
-	# called Campaign/item_catalogue.tres is a 10-item leftover nothing loads.
+	# to "test_item_catalogue.tres" — 32 items and 12 chassis. There used to be
+	# a Campaign/item_catalogue.tres to confuse it with: a seven-item stub
+	# nothing loaded, deleted 2026-10-24.
 	var cat: ItemCatalogue = load("res://Campaign/items & catalogue/test_item_catalogue.tres")
 	if cat == null:
 		printerr("no item catalogue")

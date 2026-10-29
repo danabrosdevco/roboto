@@ -28,7 +28,12 @@ const LEVELS := [
 	"res://maps/pittsburgh_level.tscn",
 	"res://maps/mutaha_wip_level.tscn",
 	"res://maps/valley_basin_level.tscn",
-	"res://maps/hillfort_level.tscn",
+	# hillfort_wip, NOT hillfort. The retired Hillfort also holds core prefabs,
+	# which is why it sat here reading as live until 2026-10-26. K14 derived the
+	# site probes from world.tscn; this list asks a different question (scenes
+	# holding core prefabs, four of them gameplay/*_ops.tscn wrappers rather
+	# than levels) so it stays typed — but it must name the LIVE fort.
+	"res://maps/hillfort_wip_level.tscn",
 	"res://maps/coastal-road_level.tscn",
 	"res://maps/appendix/mutaha_level.tscn",
 	"res://maps/gameplay/causeway_ops.tscn",

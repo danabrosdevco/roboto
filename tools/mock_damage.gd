@@ -67,7 +67,7 @@ extends SceneTree
 #    ON for the live state, which is the change the tell needs.
 #
 # 5. A BARE LEVEL HAS NO HUD AND THEREFORE NO FILTER. mockup_shots.gd's frame
-#    pass loads depot_level alone, which is right for its purpose and wrong
+#    pass loads the base level alone, which is right for its purpose and wrong
 #    here. _install_filter() lifts the SignalFilter ColorRect out of
 #    hud.tscn WITHOUT putting the HUD in the tree, so it arrives carrying the
 #    scene's authored uniforms rather than the shader's declared defaults —
@@ -80,11 +80,18 @@ extends SceneTree
 const _SOLDIER := preload("res://Character/characters/ai/soldier.gd")
 const _SignalArc := preload("res://Character/weapon/appx/signal_arc.gd")
 
-const LEVEL := "res://maps/depot_level.tscn"
+## THE LIVE BASE. This used to be depot_level, which was retired on 2026-10-24
+## (vault Backlog H15) — the railhead is the base world.tscn actually loads.
+## NOTHING ABOUT THE LIGHT CHANGED, which is worth knowing before anyone moves
+## it again: both levels instance the same Env/world_environment.tscn, so the
+## sun is the same sun on the same bearing at the same energy, and LIT below
+## still points across it. What did change is the deck, 16.50 → 11.00 — and
+## that is probed rather than typed, so it cost nothing.
+const LEVEL := "res://maps/railhead_level.tscn"
 const HUD := "res://Character/hud/hud.tscn"
 const SPARK := "res://Character/components/spark_burst.tscn"
 
-## Where the frames stand. depot_level's own deck height is PROBED, not assumed
+## Where the frames stand. The level's own deck height is PROBED, not assumed
 ## — see _ground(). This is only the x/z the stage sits at.
 const STAGE := Vector3(0.0, 0.0, 0.0)
 
@@ -213,11 +220,11 @@ func _note(text: String) -> void:
 # THE RIG
 # ─────────────────────────────────────────────
 func _boot() -> void:
-	# A REAL LEVEL FIRST, for its WorldEnvironment and its sun. depot_level has
-	# no light of its own in its own file — it instances one — which is why this
-	# loads the level rather than building a DirectionalLight3D: a hand-built sun
-	# is a different sun from the game's and the whole point is this frame's own
-	# light.
+	# A REAL LEVEL FIRST, for its WorldEnvironment and its sun. The base has no
+	# light of its own in its own file — it instances Env/world_environment.tscn
+	# — which is why this loads the level rather than building a
+	# DirectionalLight3D: a hand-built sun is a different sun from the game's and
+	# the whole point is this frame's own light.
 	_level = load(LEVEL).instantiate()
 	root.add_child(_level)
 	_cam = Camera3D.new()
@@ -355,7 +362,7 @@ func _face(bot: Node3D, extra_yaw_deg: float = 34.0) -> void:
 
 
 ## THE BEARING THE LIGHT IS ON. Every wide shot uses it unless there is a reason
-## not to: depot_level's sun comes across the stage, and a camera on -Z alone
+## not to: the base's sun comes across the stage, and a camera on -Z alone
 ## photographs five backlit silhouettes that are all the same shape. This is the
 ## bearing the close eye shots came out lit on, measured off those.
 const LIT := Vector3(-0.5, 0.0, -0.87)
@@ -376,10 +383,12 @@ const ACROSS := Vector3(-0.87, 0.0, 0.5)
 ## at the middle of the subject rather than at a typed 1.6 m.
 ##
 ## THE AIM HEIGHT IS NOT THE STAGE'S y, EITHER. STAGE is an x/z mark with a zero
-## in the middle of it and depot_level's deck is at y=16.5, so the first run
-## aimed every wide shot sixteen metres into the ground and the progression
-## sheet came back as a photograph of the floor with no robots in it. Everything
-## vertical in this file goes through _deck.
+## in the middle of it and the base's deck is a long way off zero — 16.5 on the
+## old depot, 11.0 on the railhead — so the first run aimed every wide shot
+## sixteen metres into the ground and the progression sheet came back as a
+## photograph of the floor with no robots in it. Everything vertical in this
+## file goes through _deck, which is why the 2026-10-24 level swap did not
+## repeat it.
 func _frame_up(centre: Vector3, span: float, bearing: Vector3 = LIT,
 		height: float = 2.2) -> void:
 	var dir := Vector3(bearing.x, 0.0, bearing.z).normalized()

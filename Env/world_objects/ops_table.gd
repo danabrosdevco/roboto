@@ -573,10 +573,11 @@ func _facts_for(m) -> Dictionary:
 
 ## What the garrison would cost at the player's own supply prices.
 ##
-## body_count(), NEVER spec.count. A roster-form spec spawns one body per
-## roster entry and ignores count — and every spec in the shipped missions is
-## roster-form while still carrying a stale count of 3, so reading count
-## directly is wrong on every single mission in the game.
+## body_count(), never roster.size() inline. One body per roster entry, asked
+## in one place. The field it used to warn about — a legacy `count` that every
+## shipped spec carried as a stale 3 while its roster said otherwise — was
+## removed by H9 on 2026-10-24; the habit of asking body_count() is what kept
+## this figure right while both forms existed, so keep asking it.
 ##
 ## RESERVE IS COUNTED SEPARATELY. The spawner holds those back and only builds
 ## them when something calls them in, so folding them into the headline figure

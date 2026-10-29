@@ -12,19 +12,24 @@ extends SceneTree
 # so — and that is the failure mode the recon warned about for Georgetown,
 # Polaris and Trenchline, where a --force-level rebuild drops the node with no
 # error at all.
+#
+# "the nine levels exactly as the game does" USED TO BE A TYPED TABLE HERE, and
+# it was wrong about the first row (backlog H14): it named the RETIRED
+# maps/hillfort_level.tscn, while the campaign has deployed
+# maps/hillfort_wip_level.tscn since the Hillfort was rebuilt. So the probe that
+# exists to catch a level losing its slice was reporting `ok` on a level the
+# game does not load, and never looked at the one it does. The levels now come
+# from tools/_live_sites.gd, which reads Env/world.tscn's `missions` array —
+# same principle as the suite runner reading `# BUCKET:` off each file instead
+# of carrying its own list. A hand-kept list in a tool IS the defect.
+#
+# THE SLICE IS DERIVED TOO, as the node whose script extends site_slice.gd, so a
+# renamed slice node no longer reads as a missing slice. A level with NO slice
+# still fails — that is the whole point of the probe and `_live_sites` hands the
+# row over empty rather than dropping it.
 # ─────────────────────────────────────────────
 
-const LEVELS := {
-	"hillfort":   ["res://maps/hillfort_level.tscn",     "HillfortSlice"],
-	"coast":      ["res://maps/coastal-road_level.tscn", "CoastSlice"],
-	"rivers":     ["res://maps/pittsburgh_level.tscn",   "RiversSlice"],
-	"qamareen":   ["res://maps/mutaha_wip_level.tscn",   "QamareenSlice"],
-	"lockside":   ["res://maps/georgetown_level.tscn",   "LocksideSlice"],
-	"polaris":    ["res://maps/polaris_level.tscn",      "PolarisSlice"],
-	"causeway":   ["res://maps/causeway_level.tscn",     "CausewaySlice"],
-	"trenchline": ["res://maps/salient_level.tscn",      "TrenchlineSlice"],
-	"basin":      ["res://maps/valley_basin_level.tscn", "BasinSlice"],
-}
+const Sites := preload("res://tools/_live_sites.gd")
 
 var _fails := 0
 
@@ -33,9 +38,14 @@ func _init() -> void:
 	Settings.path = "user://settings_probe.json"
 	Engine.max_fps = 60
 	await process_frame
+	var skipped := Sites.sim_levels()
+	if not skipped.is_empty():
+		# Named rather than dropped: a sim arena is the practice track (§15),
+		# it is not territory and it carries no slice on purpose.
+		print("sim arenas, not sites, skipped: %s" % ", ".join(skipped))
 	print("site         slice  cores  bunker  operation  verdict")
-	for name in LEVELS:
-		await _one(String(name), LEVELS[name][0], LEVELS[name][1])
+	for s in Sites.sites():
+		await _one(s.label, s.level, s.node)
 	print("")
 	print("%d problem(s)" % _fails)
 	quit(1 if _fails > 0 else 0)
@@ -47,7 +57,9 @@ func _one(label: String, level_path: String, node_name: String) -> void:
 	for _i in 60:
 		await physics_frame
 
-	var slice = level.get_node_or_null(NodePath(node_name))
+	# An empty name is _live_sites saying it found no slice script in this level
+	# at all — kept as a row and failed below, never dropped.
+	var slice = level.get_node_or_null(NodePath(node_name)) if node_name != "" else null
 	var cores := 0
 	var has_bunker := false
 	var has_op := false

@@ -80,6 +80,12 @@ func _one(level_path: String, slice_name: String, yaw: float) -> void:
 		var slice := level.get_node_or_null(NodePath(slice_name))
 		if slice == null:
 			print("FAIL  %s has no %s" % [level_path, slice_name])
+			# FREED, because the level is not in the tree yet on this path and a
+			# mistyped slice name is one argument away. An orphan holding the
+			# whole level's meshes and shapes goes to ObjectDB's end-of-run
+			# sweep, which runs after the servers owning those RIDs are gone
+			# (see Traps, H10) — and with several yaws this repeats per frame.
+			level.free()
 			return
 		slice.bunker_yaw = yaw
 

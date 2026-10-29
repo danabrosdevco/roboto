@@ -249,8 +249,17 @@ patch_authored_level maps/causeway_level.tscn res://maps/gameplay/causeway_ops.t
 # after a rebuild. tools/hillfort_objectives.sh puts its relay back; this puts
 # its cover back.
 for lvl in maps/georgetown_level.tscn maps/polaris_level.tscn maps/causeway_level.tscn \
-		maps/hillfort_level.tscn; do
-	[ -f "$lvl" ] && add_cover_spawner "$lvl"
+		maps/hillfort_wip_level.tscn; do
+	# AND IT SAYS SO WHEN ONE IS MISSING. This was a bare
+	# `[ -f "$lvl" ] && add_cover_spawner "$lvl"`, so a level renamed or
+	# retired out from under the list was skipped in silence — which is how
+	# `maps/hillfort_level.tscn` sat here after the fort was replaced by
+	# hillfort_wip. Every early return warns.
+	if [ -f "$lvl" ]; then
+		add_cover_spawner "$lvl"
+	else
+		echo "   WARNING  $lvl is in this script's list and not on disk — no cover spawner added. Renamed, retired, or a typo." >&2
+	fi
 done
 
 # ── 4 · THE SITE SLICE ───────────────────────────────────────────────────────

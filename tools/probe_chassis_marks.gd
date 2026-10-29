@@ -73,6 +73,18 @@ func _init() -> void:
 				if cat.item(id) == null:
 					print("          FAIL  no catalogue item '%s'" % String(id))
 					_fails += 1
+					continue
+				# THE GATE THE MARK ITSELF HAS TO PASS. apply_line_spec()
+				# writes a mark's ids without asking takes(), so a mark can
+				# arm a line with kit the frame refuses and it PLAYS FINE —
+				# the spawner only checks fits_ai(). Then on LOAD,
+				# _return_unfittable_squad_kit() asks takes(), puts the gun
+				# in stores, and nothing refills the mount. Eight rows across
+				# six lines shipped in exactly that state until 2026-10-24.
+				if not frame.takes(cat.item(id)):
+					print("          FAIL  Mk %d arms this frame with '%s', which takes() refuses — it would be stripped on the next load"
+						% [n, String(id)])
+					_fails += 1
 
 		# MK 0 HAS TO MATCH THE FRAME. Checked against the fields directly
 		# rather than against mark_spec, or this only proves the synthesis

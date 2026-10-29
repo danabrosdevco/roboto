@@ -55,12 +55,16 @@ extends SceneTree
 ## shot is a black rectangle, which is how the first pass of every shooter in
 ## this project has failed.
 ##
-## proving_level AND NOT depot_level, which is what mockup_shots.gd stages
-## props in. depot_level is a shed: measured, the only ground in it is one
-## 16.5 m floor at the origin under a roof, so the 12.4 m core came back with
-## its cap through the ceiling and the 40 m shot had a structural pillar across
-## it. A core is an outdoor objective and the silhouette question cannot be
-## asked indoors. proving_level has flat open ground at y = -1.5 from
+## proving_level AND NOT THE HOME BASE, which is what mockup_shots.gd stages
+## props in. The base at the time was depot_level — retired 2026-10-24, vault
+## Backlog H15 — and it was a shed: measured, the only ground in it was one
+## floor at the origin under a roof, so the 12.4 m core came back with its cap
+## through the ceiling and the 40 m shot had a structural pillar across it. A
+## core is an outdoor objective and the silhouette question cannot be asked
+## indoors. (The finding outlived the level: mockup_shots.gd stages on the
+## railhead's OPEN upper deck for the same reason, not on its platform floor,
+## which is narrower than the depot's hall was.)
+## proving_level has flat open ground at y = -1.5 from
 ## x = -40..40 over z = -80..120. This spot was picked by casting a 16-ray
 ## fan at eye height from every 20 m node on that ground and taking the one
 ## with the longest clearance: 49 m, with the proving ground's own structures

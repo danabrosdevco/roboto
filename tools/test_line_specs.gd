@@ -107,17 +107,30 @@ func _init() -> void:
 	_check("...and the walkers were not touched",
 		Array(walkers[0].weapon_ids) == before_walker, str(walkers[0].weapon_ids))
 
-	# ── THE COAX ARRIVES AS A LINE DECISION ───
+	# ── A SECOND MOUNT ARRIVES AS A LINE DECISION ───
 	# The thing recruit() refuses to hand a single robot, bought once for the
 	# whole line instead. This is the move the system makes, in one check.
-	state.line_marks[&"walker"] = 1
+	#
+	# MK 2, NOT MK 1. The Walker ladder changed on 2026-10-24 — Mk 1 is one
+	# autocannon and Mk 2 is autocannon + heavy_mg, so Mk 2 is now the tier
+	# that fills the second mount. This check used to read mark_spec(1) and
+	# index [1] on it, which went out of bounds the moment Mk 1 became a
+	# single weapon — and an out-of-bounds here does NOT fail the suite, it
+	# HANGS it, because quit() is the last line of this function and never
+	# runs. Hence `want`: a ladder that stops filling a second mount must make
+	# this check go red, never make it spin.
+	state.line_marks[&"walker"] = 2
 	state.apply_line_spec(&"walker")
-	var w1 = walker.mark_spec(1)
-	_check("a walker line at Mk 1 fills the second mount",
-		walkers[0].weapon_ids.size() >= 2 and walkers[0].weapon_ids[1] == w1.weapon_ids[1],
+	var w2 = walker.mark_spec(2)
+	var want: StringName = w2.weapon_ids[1] if w2.weapon_ids.size() > 1 \
+		else &"<walker Mk 2 has no second weapon>"
+	_check("a walker line at Mk 2 fills the second mount",
+		walkers[0].weapon_ids.size() >= 2 and walkers[0].weapon_ids[1] == want,
 		str(walkers[0].weapon_ids))
-	_check("...on both walkers", walkers[1].weapon_ids[1] == w1.weapon_ids[1])
+	_check("...on both walkers",
+		walkers[1].weapon_ids.size() >= 2 and walkers[1].weapon_ids[1] == want,
 
+		str(walkers[1].weapon_ids))
 	# ── A NEW UNIT ARRIVES AT SPEC ────────────
 	var late := state.recruit(rover)
 	_check("a rover built after the upgrade arrives at Mk 1",

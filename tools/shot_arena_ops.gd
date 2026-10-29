@@ -121,7 +121,14 @@ func _deploy(id: StringName) -> void:
 	_cm.debug_mission = m
 	_cm.select_mission(id)
 	await _world.load_next_level(m.level_scene)
-	_cm.on_level_loaded(_world.current_level)
+	# NO SECOND on_level_loaded(). World.load_next_level() ends by calling it
+	# itself, so an explicit call here redeploys BOTH spawners in the same frame
+	# as the first deploy — and tearing a robot down that few frames after it
+	# was stood up leaves the engine something it only trips over in final
+	# cleanup: every assertion printed PASS and the run still handed the shell
+	# exit 139. H10, root-caused 2026-10-24: dropping this one line is the whole
+	# fix. A 10-frame gap before the second call also cures it; one or two
+	# frames do not. The call was redundant either way.
 	for _i in 90:
 		await physics_frame
 

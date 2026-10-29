@@ -307,7 +307,18 @@ func _spawn_side(roster: Array, faction: int, center: Vector3, facing: Vector3, 
 		members.append(s)
 	if members.is_empty():
 		return null
-	var squad := SQUAD_SCENE.instantiate() as Squad
+	# Checked and freed. The cast result was used unconditionally, so a
+	# re-rooted squad.tscn would orphan the instance AND error on the null.
+	# The scene is a `const preload`, so this can only ever go wrong at build
+	# time rather than at runtime — but the other two readers of that same
+	# scene (both spawners) guard it, and a lab that skips in silence is the
+	# one of the three that tells you nothing. K25, 2026-10-26.
+	var built := SQUAD_SCENE.instantiate()
+	var squad := built as Squad
+	if squad == null:
+		push_error("Laboratory: squad.tscn is not a Squad; '%s' fields no squad node." % callsign)
+		built.free()
+		return null
 	squad.name = "Lab_%s" % callsign
 	squad.callsign = callsign
 	squad.player_commandable = false

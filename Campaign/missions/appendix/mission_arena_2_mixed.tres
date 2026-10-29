@@ -11,7 +11,6 @@
 script = ExtResource("2_espec")
 callsign = "SCRAP"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("5_chaser"), ExtResource("5_chaser")])
-count = 0
 posture = 2
 route_tag = &""
 post_tag = &"obj_arena_hostiles"
@@ -26,7 +25,6 @@ wake_after_kills = 0
 script = ExtResource("2_espec")
 callsign = "PICKET"
 roster = Array[ExtResource("4_chassisdef")]([ExtResource("6_shot"), ExtResource("6_shot")])
-count = 0
 posture = 1
 route_tag = &""
 post_tag = &"obj_arena_hostiles"

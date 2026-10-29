@@ -28,6 +28,17 @@ const _CsgBake := preload("res://Character/characters/ai/csg_bake.gd")
 
 @export var world: Node3D
 @export var ai_manager: AIManager
+## DEAD AS OF 2026-10-24 (H9) — nothing reads it any more.
+##
+## Its only reader was the legacy `count` + `chassis` form: a spec with a null
+## `chassis` fell back to this. Both fields are gone, so a roster slot with no
+## frame is now an authoring error _spawn_squad reports by index instead.
+##
+## Left declared rather than deleted because the value lives in Env/world.tscn,
+## which three lanes share and the editor usually has open — removing the export
+## while the scene still assigns it is the same class of edit H9 exists to warn
+## about, and it belongs in its own pass. SquadSpawner's identically named
+## `default_chassis` is NOT dead: squad_spawner.gd:269 still uses it.
 @export var default_chassis: PackedScene
 @export var squad_scene: PackedScene
 # Ring the squad spawns in around its anchor.
@@ -203,11 +214,12 @@ func deploy_force(level: Node, mission: MissionDefinition) -> void:
 		if spec == null:
 			continue
 		if spec.body_count() <= 0:
-			# Was `spec.count <= 0`, which skipped every roster-form spec.
-			# Warned rather than silent: an empty spec is always an authoring
-			# mistake, and the failure it produces is a map with no enemies on
-			# it, which looks like the spawner being broken.
-			push_warning("EnemyForceSpawner: spec '%s' describes 0 bodies (roster empty and count %d). Skipped." % [spec.callsign, spec.count])
+			# Was `spec.count <= 0`, which skipped every roster-form spec back
+			# when there were two forms. Warned rather than silent: an empty
+			# spec is always an authoring mistake, and the failure it produces
+			# is a map with no enemies on it, which looks like the spawner
+			# being broken.
+			push_warning("EnemyForceSpawner: spec '%s' has an empty roster, so it describes 0 bodies. Skipped." % spec.callsign)
 			continue
 		# RESERVES ARE NOT SPAWNED YET.
 		#
@@ -526,27 +538,20 @@ func _check_squad_wiped(body: Enemy) -> void:
 		return
 
 
+## One ChassisDefinition per body, nulls dropped.
+##
+## THERE IS ONE FORM NOW. This used to fork on `spec.roster.is_empty()` and
+## fall back to a legacy `count` + `chassis` pair, wrapping the PackedScene in a
+## throwaway definition with every stat field zeroed so _apply_frame left the
+## scene's authored values alone. Both fields were removed on 2026-10-24 (H9)
+## after the last 43 authored specs were migrated. Kept as a function rather
+## than inlined because a null roster slot has to be dropped here — _spawn_squad
+## reports it per index and a silent skip would make a short squad look authored.
 func _bodies_of(spec: EnemySquadSpec) -> Array[ChassisDefinition]:
 	var out: Array[ChassisDefinition] = []
-	if not spec.roster.is_empty():
-		for frame in spec.roster:
-			if frame != null:
-				out.append(frame)
-		return out
-
-	# Legacy count + chassis. Wrapped in a throwaway definition whose stat
-	# fields are all zero, which _apply_frame reads as "not specified" and
-	# leaves the scene's authored values untouched — the old behaviour exactly.
-	var scene: PackedScene = spec.chassis if spec.chassis != null else default_chassis
-	if scene == null:
-		return out
-	var legacy := ChassisDefinition.new()
-	legacy.scene = scene
-	legacy.base_health = 0
-	legacy.base_accuracy = 0.0
-	legacy.base_sensor_range = 0.0
-	for _i in spec.count:
-		out.append(legacy)
+	for frame in spec.roster:
+		if frame != null:
+			out.append(frame)
 	return out
 
 

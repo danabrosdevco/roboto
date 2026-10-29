@@ -7,8 +7,9 @@ class_name DamageDirections
 # An arc around the centre of the screen for each recent hit, at the bearing of
 # whatever dealt it. Fades over `life` seconds.
 #
-# WHY NOT THE TWO THINGS ALREADY IN THE FOLDER. hit_indicator.gdshader is a CRT
-# mask — aperture grille, curvature, colour offset — not a damage indicator, and
+# WHY NOT THE TWO THINGS ALREADY IN THE FOLDER. hit_indicator.gdshader was a CRT
+# mask — aperture grille, curvature, colour offset — not a damage indicator
+# (deleted 2026-10-23, nothing used it), and
 # farcry2_health_marker.tscn is a forty-pixel ProgressBar. Neither is this, and
 # naming is the only reason they look like they might be.
 #

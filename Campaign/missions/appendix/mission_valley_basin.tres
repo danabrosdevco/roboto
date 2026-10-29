@@ -1,20 +1,20 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3 uid="uid://dyl6yiswx2oy3"]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3 uid="uid://dyl6yiswx2oy3"]
 
 [ext_resource type="Script" path="res://Campaign/mission_definition.gd" id="1_missdef"]
 [ext_resource type="Resource" uid="uid://bpjecuijok5fg" path="res://Campaign/squad_specs/ss_valley_patrol_mid.tres" id="2_8ywia"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_espec"]
 [ext_resource type="Resource" uid="uid://c1xmie20ewrtc" path="res://Campaign/squad_specs/ss_valley_garrison.tres" id="3_idain"]
 [ext_resource type="PackedScene" path="res://maps/valley_basin_level.tscn" id="3_valley"]
-[ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="4_e2np7"]
-[ext_resource type="PackedScene" uid="uid://d2qtk67sm0w38" path="res://Character/characters/ai/enemy_nest-chaser.tscn" id="7_leaper"]
-[ext_resource type="PackedScene" uid="uid://bjnmbvul1677q" path="res://Character/characters/ai/enemy_chaser.tscn" id="8_melee"]
-[ext_resource type="PackedScene" uid="uid://cheli0000001" path="res://Character/characters/ai/enemy_helicopter.tscn" id="9_heli"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="14_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="10_shot"]
+[ext_resource type="Resource" uid="uid://dkmjutumnfq6a" path="res://Campaign/chassis/chassis_hopper.tres" id="11_hopper"]
+[ext_resource type="Resource" uid="uid://coof35gx1tj4g" path="res://Campaign/chassis/chassis_chaser.tres" id="12_chaser"]
+[ext_resource type="Resource" uid="uid://bbdorqb3bt61p" path="res://Campaign/chassis/chassis_helicopter.tres" id="13_heli"]
 
 [sub_resource type="Resource" id="Resource_qpxky"]
 script = ExtResource("2_espec")
 callsign = "ZHENYA"
-count = 4
-chassis = ExtResource("4_e2np7")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot")])
 posture = 1
 route_tag = &""
 post_tag = &"obj_valley_garrison_2"
@@ -26,8 +26,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Resource_fdkc2"]
 script = ExtResource("2_espec")
 callsign = "PAVEL"
-count = 5
-chassis = ExtResource("4_e2np7")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot")])
 posture = 0
 route_tag = &""
 post_tag = &"obj_valley_garrison_3"
@@ -39,8 +38,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Resource_mrptf"]
 script = ExtResource("2_espec")
 callsign = "HOSTILE"
-count = 6
-chassis = ExtResource("4_e2np7")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot")])
 posture = 1
 route_tag = &""
 post_tag = &"obj_valley_garrison_4"
@@ -52,8 +50,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Resource_3jtqa"]
 script = ExtResource("2_espec")
 callsign = "HOSTILE"
-count = 10
-chassis = ExtResource("4_e2np7")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot"), ExtResource("10_shot")])
 posture = 2
 route_tag = &""
 post_tag = &"obj_valley_garrison_5"
@@ -65,8 +62,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_anna_leap"]
 script = ExtResource("2_espec")
 callsign = "ANNA-L"
-count = 1
-chassis = ExtResource("7_leaper")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("11_hopper")])
 posture = 0
 route_tag = &"patrol_valley_mid"
 post_tag = &""
@@ -78,8 +74,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_anna_mel"]
 script = ExtResource("2_espec")
 callsign = "ANNA-M"
-count = 1
-chassis = ExtResource("8_melee")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("12_chaser")])
 posture = 0
 route_tag = &"patrol_valley_mid"
 post_tag = &""
@@ -91,8 +86,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_leon_leap"]
 script = ExtResource("2_espec")
 callsign = "LEONID-L"
-count = 2
-chassis = ExtResource("7_leaper")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("11_hopper"), ExtResource("11_hopper")])
 posture = 1
 route_tag = &""
 post_tag = &"obj_valley_garrison_1"
@@ -104,8 +98,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_leon_mel"]
 script = ExtResource("2_espec")
 callsign = "LEONID-M"
-count = 2
-chassis = ExtResource("8_melee")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("12_chaser"), ExtResource("12_chaser")])
 posture = 1
 route_tag = &""
 post_tag = &"obj_valley_garrison_1"
@@ -117,8 +110,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_zhen_leap"]
 script = ExtResource("2_espec")
 callsign = "ZHENYA-L"
-count = 2
-chassis = ExtResource("7_leaper")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("11_hopper"), ExtResource("11_hopper")])
 posture = 1
 route_tag = &""
 post_tag = &"obj_valley_garrison_2"
@@ -130,8 +122,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_zhen_mel"]
 script = ExtResource("2_espec")
 callsign = "ZHENYA-M"
-count = 2
-chassis = ExtResource("8_melee")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("12_chaser"), ExtResource("12_chaser")])
 posture = 1
 route_tag = &""
 post_tag = &"obj_valley_garrison_2"
@@ -143,8 +134,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_pavel_leap"]
 script = ExtResource("2_espec")
 callsign = "PAVEL-L"
-count = 2
-chassis = ExtResource("7_leaper")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("11_hopper"), ExtResource("11_hopper")])
 posture = 0
 route_tag = &""
 post_tag = &"obj_valley_garrison_3"
@@ -156,8 +146,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_pavel_mel"]
 script = ExtResource("2_espec")
 callsign = "PAVEL-M"
-count = 2
-chassis = ExtResource("8_melee")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("12_chaser"), ExtResource("12_chaser")])
 posture = 0
 route_tag = &""
 post_tag = &"obj_valley_garrison_3"
@@ -169,8 +158,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_g4_leap"]
 script = ExtResource("2_espec")
 callsign = "VOSTOK-L"
-count = 2
-chassis = ExtResource("7_leaper")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("11_hopper"), ExtResource("11_hopper")])
 posture = 1
 route_tag = &""
 post_tag = &"obj_valley_garrison_4"
@@ -182,8 +170,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_g4_mel"]
 script = ExtResource("2_espec")
 callsign = "VOSTOK-M"
-count = 2
-chassis = ExtResource("8_melee")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("12_chaser"), ExtResource("12_chaser")])
 posture = 1
 route_tag = &""
 post_tag = &"obj_valley_garrison_4"
@@ -195,8 +182,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_g5_leap"]
 script = ExtResource("2_espec")
 callsign = "SEVER-L"
-count = 2
-chassis = ExtResource("7_leaper")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("11_hopper"), ExtResource("11_hopper")])
 posture = 2
 route_tag = &""
 post_tag = &"obj_valley_garrison_5"
@@ -208,8 +194,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_g5_mel"]
 script = ExtResource("2_espec")
 callsign = "SEVER-M"
-count = 2
-chassis = ExtResource("8_melee")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("12_chaser"), ExtResource("12_chaser")])
 posture = 2
 route_tag = &""
 post_tag = &"obj_valley_garrison_5"
@@ -221,8 +206,7 @@ reinforcement_tag = &""
 [sub_resource type="Resource" id="Res_heli_w1"]
 script = ExtResource("2_espec")
 callsign = "GRACH"
-count = 1
-chassis = ExtResource("9_heli")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("13_heli")])
 posture = 3
 route_tag = &""
 post_tag = &"obj_valley_garrison_2"
@@ -234,8 +218,7 @@ reinforcement_tag = &"valley_garrison_cap_2"
 [sub_resource type="Resource" id="Res_heli_w2"]
 script = ExtResource("2_espec")
 callsign = "KORSHUN"
-count = 2
-chassis = ExtResource("9_heli")
+roster = Array[ExtResource("14_chassisdef")]([ExtResource("13_heli"), ExtResource("13_heli")])
 posture = 3
 route_tag = &""
 post_tag = &"obj_valley_garrison_3"

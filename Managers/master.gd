@@ -38,7 +38,6 @@ const SFX_CONFIRM := preload("res://sounds/sfx/psx ui sfx/ConfirmH.wav")
 const SFX_DRONE := preload("res://sounds/sfx/darkdrone/Dark Drone_SI 03.wav")
 # By path: a new class_name can be missing from an open editor's class list,
 # and this script failing to compile takes the whole front end with it.
-const _TutorialLibrary := preload("res://Character/hud/tutorial_library.gd")
 const _Analytics := preload("res://Managers/analytics.gd")
 const _Lab := preload("res://Managers/lab.gd")
 const _LabResults := preload("res://Character/hud/lab_results.gd")
@@ -136,13 +135,12 @@ var _filter_material: ShaderMaterial
 var _booting: bool = false
 var _skip_requested: bool = false
 var _paused_by_us: bool = false
-# "", "main", "pause", "options", "tutorials", "dead" or "lab". ESC closes the
-# pause screen but must NOT close the main menu — there is nothing behind it,
-# and treating them the same meant ESC started the game. On "dead" and "lab"
-# (the results screen) it does nothing.
+# "", "main", "pause", "options", "dead" or "lab". ESC closes the pause screen
+# but must NOT close the main menu — there is nothing behind it, and treating
+# them the same meant ESC started the game. On "dead" and "lab" (the results
+# screen) it does nothing.
 var _menu: String = ""
 var _options: OptionsMenu
-var _tutorials: _TutorialLibrary
 # The menu the options screen goes back to: "main" or "pause".
 var _options_from: String = ""
 var _sfx_hover: AudioStreamPlayer
@@ -821,30 +819,13 @@ func _continue_after_death() -> void:
 
 
 # ─────────────────────────────────────────────
-# TUTORIALS
-# Every homebase lesson on one screen. Pause menu only: it is where the base's
-# one remaining sign sends a returning player, and it has to work mid-mission,
-# when the signs themselves are not loaded.
+# NO TUTORIALS SCREEN. The pause-menu TutorialLibrary was deleted 2026-10-24
+# (decided 2026-10-23; vault Backlog H19) with _open_tutorials/_close_tutorials
+# and the "tutorials" _menu state: nothing ever opened it, and the live base
+# holds no TutorialLabel for it to read, so it would have been empty anyway.
+# The live lessons are Character/hud/lesson_prompts.gd and the induction. Do
+# not wire one back in without a menu entry to reach it from.
 # ─────────────────────────────────────────────
-func _open_tutorials() -> void:
-	if not is_instance_valid(_content):
-		return
-	_menu = "tutorials"
-	_clear_content()
-	_tutorials = _TutorialLibrary.new()
-	_tutorials.hover_sound = _sfx_hover
-	_tutorials.confirm_sound = _sfx_confirm
-	# Deferred for the same reason as the options screen: BACK closes it from
-	# inside its own button's pressed signal.
-	_tutorials.closed.connect(_close_tutorials, CONNECT_DEFERRED)
-	_content.add_child(_tutorials)
-
-
-func _close_tutorials() -> void:
-	if _menu != "tutorials":
-		return
-	_tutorials = null
-	_show_pause_menu()
 
 
 # ─────────────────────────────────────────────
@@ -1325,11 +1306,6 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		if is_instance_valid(_options):
 			_options.back()
-		return
-	if esc and _menu == "tutorials":
-		get_viewport().set_input_as_handled()
-		if is_instance_valid(_tutorials):
-			_tutorials.back()
 		return
 
 	if not pause_enabled:

@@ -29,9 +29,16 @@ func can_use(context: EquipmentContext) -> bool:
 
 func execute(context: EquipmentContext) -> void:
 	if context == null or context.owner_ai == null:
+		push_warning("AIRepairKit '%s': no context or no owner, so nothing was repaired." % equipment_name)
 		return
 	var patient := _find_patient(context.owner_ai)
 	if patient == null:
+		# NOT SILENT, and this one is reachable. The ORDERED path never asks
+		# can_use() — the player pointing at something has already overridden
+		# that judgement — so a repair ordered with nobody hurt in range lands
+		# here, and _spend_equipment consumes the charge and starts the cooldown
+		# regardless. order_use_equipment() then returns "" , i.e. success. K26.
+		push_warning("AIRepairKit '%s': nobody in range needs repairing, so the charge was spent for nothing." % equipment_name)
 		return
 	if patient.has_method("apply_healing"):
 		patient.apply_healing(heal_amount, context.owner_ai)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=360 format=4 uid="uid://fgdjjw1lgv8e"]
+[gd_scene load_steps=357 format=4 uid="uid://fgdjjw1lgv8e"]
 
 [ext_resource type="Script" path="res://maps/trench_broom_level.gd" id="1_kgieb"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="2_mbgf5"]
@@ -18,16 +18,13 @@
 [ext_resource type="Material" uid="uid://cori88y5adfc8" path="res://textures/PSX_Textures/concrete_3.tres" id="13_3qvb6"]
 [ext_resource type="PackedScene" uid="uid://d3b6t0u0yav3s" path="res://Env/world_objects/components/interactible_shard.tscn" id="13_bhe8f"]
 [ext_resource type="PackedScene" uid="uid://buetx64wgjk38" path="res://Env/world_objects/pickup.tscn" id="13_r30j6"]
-[ext_resource type="PackedScene" uid="uid://bww5b5c7ej00s" path="res://Character/characters/ai/enemy_shotgun.tscn" id="14_qwspe"]
 [ext_resource type="Material" uid="uid://crt71cj5rx6n6" path="res://textures/Set4All/Concrete/Concrete_01_Orange_Skulls_1.tres" id="15_1mtlu"]
 [ext_resource type="Material" uid="uid://bryuo1nxdimk" path="res://textures/Set4All/Debris/Debris_Trash_Tech_1.tres" id="16_n8yhf"]
 [ext_resource type="Material" uid="uid://djujtutnl2vug" path="res://textures/Set4All/Bricks/Bricks/Bricks_04_Red_Moss_2.tres" id="17_hdi1f"]
 [ext_resource type="PackedScene" uid="uid://qec53sx1mmk2" path="res://3d_assets/Low Poly Furniture/Lights/Ceiling Light.fbx" id="18_4v03s"]
 [ext_resource type="Material" uid="uid://daw6dyv7mkber" path="res://textures/Set4All/Debris/Debris_Trash_Cans_2.tres" id="18_ea1kj"]
-[ext_resource type="PackedScene" uid="uid://bq2p5mjiw62cy" path="res://Character/characters/ai/enemy_template.tscn" id="19_ky2xj"]
 [ext_resource type="PackedScene" uid="uid://bg6q500jq5ifk" path="res://maps/appendix/oyster-bay_level.tscn" id="19_w1lir"]
 [ext_resource type="PackedScene" uid="uid://bjnmbvul1677q" path="res://Character/characters/ai/enemy_chaser.tscn" id="21_4n2ml"]
-[ext_resource type="PackedScene" uid="uid://vckeok0ct116" path="res://Character/characters/ai/boss_guardian.tscn" id="22_qh43v"]
 [ext_resource type="PackedScene" uid="uid://cs6cwmxapywdr" path="res://Managers/AI/squad.tscn" id="22_vcigg"]
 [ext_resource type="PackedScene" uid="uid://d2qtk67sm0w38" path="res://Character/characters/ai/enemy_nest-chaser.tscn" id="23_a840j"]
 
@@ -2286,12 +2283,6 @@ occluder = SubResource("ArrayOccluder3D_3nmuw")
 [node name="entity_5_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_5_func_geo"]
 shape = SubResource("ConcavePolygonShape3D_bkin2")
 
-[node name="entity_6_enm_shotgun" parent="NavigationRegion3D/FuncGodotMap" instance=ExtResource("14_qwspe")]
-transform = Transform3D(-0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, -0.34202, -117.5, -9.75, 63)
-
-[node name="entity_7_enm_shotgun" parent="NavigationRegion3D/FuncGodotMap" instance=ExtResource("14_qwspe")]
-transform = Transform3D(-0.34202, 0, 0.939693, 0, 1, 0, -0.939693, 0, -0.34202, -113.75, -9.75, 63.5)
-
 [node name="entity_8_enm_chaser" parent="NavigationRegion3D/FuncGodotMap" instance=ExtResource("21_4n2ml")]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -124.25, -10, 66.25)
 
@@ -2307,23 +2298,11 @@ transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -98, -
 [node name="entity_12_enm_chaser" parent="NavigationRegion3D/FuncGodotMap" instance=ExtResource("21_4n2ml")]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -95.5, -2, 51.5)
 
-[node name="entity_13_boss_guardian" parent="NavigationRegion3D/FuncGodotMap" instance=ExtResource("22_qh43v")]
-transform = Transform3D(1.19249e-08, 0, -1, 0, 1, 0, 1, 0, 1.19249e-08, -130.5, -9, 53)
-
 [node name="Interactible" parent="NavigationRegion3D" instance=ExtResource("13_bhe8f")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.52151, 0.449806, 50.7488)
 
-[node name="Enemy" parent="." instance=ExtResource("19_ky2xj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.3796, 0.360831, 82.2998)
-
 [node name="Squad2" parent="." node_paths=PackedStringArray("squad_members") instance=ExtResource("22_vcigg")]
-squad_members = [NodePath("Enemy4"), NodePath("Enemy5"), NodePath("Enm_Chaser"), NodePath("Enm_Chaser2")]
-
-[node name="Enemy4" parent="Squad2" instance=ExtResource("19_ky2xj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -51.9581, 1.42671, 76.5697)
-
-[node name="Enemy5" parent="Squad2" instance=ExtResource("19_ky2xj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61.918, 1.41101, 87.0412)
+squad_members = [NodePath("Enm_Chaser"), NodePath("Enm_Chaser2")]
 
 [node name="Enm_Chaser" parent="Squad2" instance=ExtResource("21_4n2ml")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.4348, 1.27176, 84.6941)

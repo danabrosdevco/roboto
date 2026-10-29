@@ -141,8 +141,8 @@ func _init() -> void:
 		if spec.roster.is_empty():
 			empties.append(spec.callsign)
 	_check("no post the map says is defended comes up empty", empties.is_empty(), str(empties))
-	_check("...and count agrees with the roster it is ignoring",
-		_counts_agree(made), "a stale count is a lie to the next reader")
+	_check("...and body_count() agrees with the roster, with nothing else to ask",
+		_counts_agree(made), "body_count() and roster.size() must not disagree")
 
 	# ── seeded ──────────────────────────────────
 	var again: Array = _Gen.compose(authored, basin, 1, Enums.Factions.SWARM, cat, "t/1")
@@ -189,8 +189,12 @@ func _kinds(specs: Array) -> Array:
 	return k
 
 
+## Was `s.count != s.roster.size()`, guarding a generated spec against leaving
+## the legacy `count` field disagreeing with the roster beside it. The field
+## went with H9, so the question became the weaker but still real one: the one
+## remaining way to ask "how many bodies" has to answer off the roster.
 func _counts_agree(specs: Array) -> bool:
 	for s in specs:
-		if s.count != s.roster.size():
+		if s.body_count() != s.roster.size():
 			return false
 	return true

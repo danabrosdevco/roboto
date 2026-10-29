@@ -8,7 +8,8 @@ extends Control
 # full tables (per chassis, every run) are in lab_report.md; OPEN REPORT goes
 # straight to it.
 #
-# Same frame as the options and tutorials screens, opened into Master's overlay.
+# Same frame as the options screen, opened into Master's overlay. (It used to
+# name the tutorials screen too; that was deleted on 2026-10-24 — H19.)
 # ─────────────────────────────────────────────
 
 signal run_again

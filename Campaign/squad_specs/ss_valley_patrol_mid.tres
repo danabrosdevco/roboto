@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="EnemySquadSpec" load_steps=3 format=3 uid="uid://bpjecuijok5fg"]
+[gd_resource type="Resource" script_class="EnemySquadSpec" load_steps=4 format=3 uid="uid://bpjecuijok5fg"]
 
-[ext_resource type="PackedScene" uid="uid://t51su0vouiu6" path="res://Character/characters/ai/soldier_shotgun.tscn" id="1_n0auv"]
+[ext_resource type="Script" path="res://Campaign/chassis_definition.gd" id="1_chassisdef"]
+[ext_resource type="Resource" uid="uid://cl3tjyn172f37" path="res://Campaign/chassis/chassis_shotgunner.tres" id="1_n0auv"]
 [ext_resource type="Script" path="res://Campaign/enemy_squad_spec.gd" id="2_q2r5y"]
 
 [resource]
 script = ExtResource("2_q2r5y")
 callsign = "ANNA"
-count = 3
-chassis = ExtResource("1_n0auv")
+roster = Array[ExtResource("1_chassisdef")]([ExtResource("1_n0auv"), ExtResource("1_n0auv"), ExtResource("1_n0auv")])
 posture = 0
 route_tag = &"patrol_valley_mid"
 post_tag = &""

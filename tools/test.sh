@@ -97,6 +97,26 @@ FAIL=0
 FOUND=0
 SKIPPED=0
 PARKED_NAMES=""
+TIMED_OUT_NAMES=""
+FAILED_NAMES=""
+
+# THE PER-SUITE CAP, ported from tools/bucket.sh on 2026-10-24. Per suite, not
+# for the run; raise it with SUITE_TIMEOUT rather than editing this line.
+#
+# Everything above about hangs is the argument for it: a suite that never
+# terminates stalls everything behind it, and this script had no cap at all
+# while bucket.sh did — which is how one run left twelve orphaned Godot pairs
+# aged four days. A suite that overruns is killed, named in the verdict, and
+# COUNTED AS A FAILURE, because a suite nobody can finish is a suite nobody is
+# watching.
+#
+# AND A TIMEOUT HERE IS AS LIKELY TO BE A ONE-LINE BUG AS A SLOW SUITE.
+# `quit()` is the last line of a suite's _init(), so a runtime error aborts
+# before it and the SceneTree spins forever. Measured 2026-10-24:
+# test_line_specs read an array index that a design change had shortened and
+# timed out at 240s instead of printing a FAIL. Run a timed-out suite on its
+# own and read where the PASSes stop.
+TIMEOUT="${SUITE_TIMEOUT:-240}"
 
 for suite in tools/test_*.gd; do
 	[ -f "$suite" ] || continue
@@ -143,13 +163,25 @@ for suite in tools/test_*.gd; do
 	# the exact behaviour test_profiles and test_profile_menu exist to prove:
 	# it cost 22 assertions across those two suites, all of them reading as
 	# real failures.
-	"$GODOT" --headless --path . --script "res://$suite" 2>&1 \
+	timeout "${TIMEOUT}s" "$GODOT" --headless --path . --script "res://$suite" 2>&1 \
 		| grep -vE "^Godot Engine|^$|godotengine\.org"
 	status=${PIPESTATUS[0]}
-	if [ "$status" -ne 0 ]; then
+	if [ "$status" -eq 124 ]; then
+		echo "   TIMEOUT after ${TIMEOUT}s — counted as a failure."
+		TIMED_OUT_NAMES="$TIMED_OUT_NAMES $base"
+		FAIL=1
+	elif [ "$status" -ne 0 ]; then
+		# NAMED, because this script used to report "SUITE FAILURES — see
+		# above" over a 1.7 MB log and leave you to find them. Worse: the
+		# common failure here exits 139 with NO FAIL line at all — it prints
+		# every assertion clean and then segfaults in cleanup (Backlog H10,
+		# four suites on 2026-10-24), so there is nothing to grep for. A
+		# failure you cannot locate is the one that gets called pre-existing
+		# without being checked.
+		echo "   exit $status — counted as a failure."
+		FAILED_NAMES="$FAILED_NAMES $base($status)"
 		FAIL=1
 	fi
-	echo
 done
 
 if [ "$FOUND" = "0" ]; then
@@ -159,16 +191,24 @@ fi
 
 # The skip count rides along with the verdict on purpose: "ALL SUITES PASS" is
 # a different claim when three of them never ran, and a parked suite that nobody
-# is reminded about is a parked suite forever.
+# is reminded about is a parked suite forever. A TIMED-OUT suite is named for
+# the same reason, and because it is the one failure whose output tells you
+# nothing — you have to re-run it alone to find out why.
 if [ "$SKIPPED" != "0" ]; then
 	SKIP_NOTE=" ($SKIPPED not run$([ "$FAST_ONLY" = "1" ] && echo ", fast tier only")$([ -n "$PARKED_NAMES" ] && echo "; parked:$PARKED_NAMES"))"
 else
 	SKIP_NOTE=""
 fi
 
+if [ -n "$TIMED_OUT_NAMES" ]; then
+	TIMEOUT_NOTE=" (timed out after ${TIMEOUT}s:$TIMED_OUT_NAMES — re-run each alone; a timeout is as likely to be a one-line error as a slow suite)"
+else
+	TIMEOUT_NOTE=""
+fi
+
 if [ "$FAIL" = "0" ]; then
 	echo "ALL SUITES PASS$SKIP_NOTE"
 else
-	echo "SUITE FAILURES — see above.$SKIP_NOTE"
+	echo "SUITE FAILURES — see above.$SKIP_NOTE$TIMEOUT_NOTE$([ -n "$FAILED_NAMES" ] && echo " failed:$FAILED_NAMES")"
 fi
 exit $FAIL

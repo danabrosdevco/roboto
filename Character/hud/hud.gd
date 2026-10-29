@@ -124,6 +124,11 @@ func _on_setting_changed(_key: String) -> void:
 		_filter_mat.set_shader_parameter(p, _base_noise[p] * noise)
 
 
+# DEPRECATED 2026-10-23, AND COMING BACK — do not delete. Reached only through
+# world.tscn's activate_scanner_ui connection, when item_scanner is fitted. It
+# has no bar to drive since the blue strip became signal integrity, so every
+# scan warns from ui.update_scanner. When the scanner returns it needs a strip
+# of its own (vault Backlog K16).
 func activate_scan_effect(time: float):
 	var new_scan_effect_scene = scan_effect_scene.instantiate()
 	add_child(new_scan_effect_scene)

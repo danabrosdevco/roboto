@@ -431,9 +431,31 @@ ADVANCE spawns immediately and the tag does nothing.
 
 Enum: `0` PATROL · `1` GARRISON · `2` ADVANCE · `3` RESERVE.
 
-### 6.5 `roster` is the body count; `count` is dead
-`body_count()` returns `roster.size()` when roster is non-empty. `count` is the
-legacy one-type field and is ignored.
+### 6.5 `roster` is the body count, and it is the only form
+`body_count()` returns `roster.size()`. Ask it rather than `roster.size()`
+inline — eleven call sites already do.
+
+**The legacy `count` + `chassis` pair was removed on 2026-10-24 (H9),** along
+with the 586 stale `count = 0` lines the mission `.tres` files carried for it
+and the 43 specs still authored in the old form (all in
+`Campaign/missions/appendix/mission_valley*.tres` and
+`Campaign/squad_specs/`, none of them live). The order mattered and is the
+reusable lesson: **Godot drops unrecognised properties silently when loading a
+resource,** so deleting the fields before migrating the data would have emptied
+those missions with no error and no warning.
+
+Two things that are easy to get wrong when hand-converting a one-type spec:
+
+- **A `ChassisDefinition`'s `base_health` / `base_accuracy` / `base_sensor_range`
+  OVERRIDE the scene's authored values** (`EnemyForceSpawner._apply_frame`,
+  anything above zero wins). The legacy path wrapped the PackedScene in a
+  definition with all three zeroed, so the scene won. Matching the body count
+  is not matching the squad.
+- **`starting_weapon_id` on the definition issues a gun** the legacy path never
+  issued — skipped only if the scene already carries an `AIWeapon`.
+
+`tools/probe_enemy_force.gd` prints every spec's resolved body list, so a
+conversion can be diffed rather than asserted.
 
 ### 6.6 Level regeneration wipes hand-added nodes
 The terrain recipe + block pass rebuilds `maps/*.tscn` and **does not preserve

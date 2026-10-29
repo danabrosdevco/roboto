@@ -185,8 +185,14 @@ func _rank() -> int:
 static func mount_hat(hat: PackedScene, mount: Node3D, authored_in: Node3D) -> Node3D:
 	if hat == null or mount == null:
 		return null
-	var rig := hat.instantiate() as Node3D
+	# Freed on the bail, and no longer silent. The cast nulls the variable and
+	# leaves the instanced rig alive — and both callers below throw the result
+	# away on null, so nothing could ever free it. K25, 2026-10-26.
+	var built := hat.instantiate()
+	var rig := built as Node3D
 	if rig == null:
+		push_warning("RankKit: headgear '%s' is not a Node3D; nothing fitted." % hat.resource_path)
+		built.free()
 		return null
 	mount.add_child(rig)
 	rig.transform = authored_offset(mount, authored_in)

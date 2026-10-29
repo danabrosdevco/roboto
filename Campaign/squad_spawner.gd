@@ -144,7 +144,18 @@ func _squad_of_team(team_id: StringName) -> Squad:
 func _new_squad(team_id: StringName, members: Array[Soldier]) -> Squad:
 	var squad: Squad = null
 	if squad_scene != null:
-		squad = squad_scene.instantiate() as Squad
+		# FREED IF IT IS NOT A SQUAD, and this is the twin of
+		# EnemyForceSpawner._field_squad, which carries the longer note: a
+		# failed cast nulls the variable and LEAVES THE NODE ALIVE, so the
+		# fallback below quietly took over while a whole orphaned scene stayed
+		# in ObjectDB until the exit sweep tripped over it. Both spawners read
+		# the same `squad_scene` slot in world.tscn, and that slot has held a
+		# robot scene before. K25, 2026-10-26.
+		var built := squad_scene.instantiate()
+		squad = built as Squad
+		if squad == null:
+			push_warning("SquadSpawner: squad_scene '%s' is not a Squad; using a plain one." % squad_scene.resource_path)
+			built.free()
 	if squad == null:
 		squad = Squad.new()
 	squad.name = "PlayerTeam_%s" % team_id

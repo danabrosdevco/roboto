@@ -155,9 +155,11 @@ func _init() -> void:
 	# ── EVERY ID HAS TO EXIST ──────────────────
 	# A weapon or equipment id that is not in the catalogue resolves to null
 	# at apply time and the robot is built holding nothing.
-	# THE REAL ONE, which is not the one that looks canonical.
-	# res://Campaign/item_catalogue.tres is a nine-item stub; the catalogue the
-	# game and every suite actually use is this, via test_ledger.real_catalogue.
+	# THE REAL ONE, AND THERE IS NO LONGER A DECOY BESIDE IT.
+	# res://Campaign/item_catalogue.tres was a seven-item stub that looked
+	# canonical and misled at least twice; nothing loaded it and it was deleted
+	# on 2026-10-24. The catalogue the game and every suite actually use is
+	# this one, via test_ledger.real_catalogue.
 	var cat := load("res://Campaign/items & catalogue/test_item_catalogue.tres")
 	if cat != null:
 		var missing: Array[String] = []

@@ -839,7 +839,13 @@ func start_held() -> void:
 	if _anchor != null and is_instance_valid(_anchor):
 		return   # already standing; re-entering a level must not stack anchors
 	_authored_holder = Holder.HOSTILE
-	var scene: PackedScene = _Tap.new().anchor_scene
+	# THE CONST, NOT `_Tap.new().anchor_scene`. That read stood up a whole
+	# CaptureTap (a StaticBody3D) to get one export default and dropped it
+	# unparented and unfreed — and an orphan holding a Resource segfaults
+	# Godot 4.3 at exit, because ObjectDB's final sweep deletes it after the
+	# servers owning its RIDs are gone. It cost exit 139 on three suites and
+	# leaked a body on every capture. capture_tap.gd has the long version.
+	var scene: PackedScene = _Tap.DEFAULT_ANCHOR_SCENE
 	if scene == null:
 		push_warning("HoldableCore '%s': no anchor scene, so a defended core has nothing the enemy can shoot and cannot be lost." % name)
 		_set_holder(Holder.PLAYER)

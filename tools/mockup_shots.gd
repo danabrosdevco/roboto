@@ -38,9 +38,29 @@ extends SceneTree
 const _Parts := preload("res://tools/mockup_parts.gd")
 const SOLDIER := "res://Character/characters/ai/soldier_chassis.tscn"
 const RIFLE := "res://Character/weapon/ai-wep_m4.tscn"
-const LEVEL := "res://maps/depot_level.tscn"
-## Where the soldiers stand, in a level the camera can see all of.
-const STAGE := Vector3(0.0, 1.2, 0.0)
+## THE LIVE BASE, and the backdrop every kit, rank, prop and frame shot stands
+## in. This used to be depot_level, retired 2026-10-24 (vault Backlog H15) —
+## the railhead is the base world.tscn actually loads.
+##
+## THE LIGHT DID NOT MOVE WITH IT, and that is worth writing down because the
+## note further down this file about which maps carry a sun is wrong: measured
+## 2026-10-24, the depot, the railhead, proving and all four store-shot levels
+## each instance the SAME Env/world_environment.tscn, one WorldEnvironment and
+## one DirectionalLight3D apiece, on an identical bearing at identical energy.
+## There is one sun prefab in this project, so "which level has the light" is
+## the wrong question to ask about any of them.
+const LEVEL := "res://maps/railhead_level.tscn"
+
+## Where the soldiers stand, in x and z only. THE HEIGHT IS DERIVED — see
+## _open_level(). It was a typed 1.2, which was the depot's inner floor plus
+## the metre from a 2 m capsule's centre to its feet; the railhead's floor at
+## the same x/z is at 1.19, so carrying the number across would have buried
+## every subject to the waist and still produced a plausible-looking shot.
+const STAGE_XZ := Vector3(0.0, 0.0, 0.0)
+
+## Centre of a 2 m capsule above the floor it stands on.
+const FEET := 1.01
+
 const SPACING := 2.0
 
 ## The cast, by the name SHOT_BRIEF uses for each frame.
@@ -137,13 +157,21 @@ const SHOTS := [
 		],
 	},
 	{
+		# THE ID KEEPS THE WORD "depot" ON PURPOSE. It is the shot number in
+		# docs/marketing/SHOT_BRIEF.md and the argument this tool is invoked
+		# with; renaming it would break both to fix a word. The brief's own
+		# "· depot_level" line is MARKETING's to correct.
 		"id": "05_depot_manager",
-		"level": "res://maps/depot_level.tscn",
+		# The depot was retired on 2026-10-24 (vault Backlog H15). The railhead
+		# is the base now, and it has no ChassisBays — the equivalent landmark
+		# is the holo table the squad stands round. Both are measured present
+		# in their levels; a missing one skips the shot and says so.
+		"level": "res://maps/railhead_level.tscn",
 		# FULL-SCREEN UI, NO WORLD. The one shot the rig cannot finish on its
 		# own: it wants the squad manager open on a roster with ranks on it,
 		# and ranks come from a played campaign. Staged and framed here; see
 		# the note this prints when it runs.
-		"anchor": "ChassisBays", "toward": "ChassisBays",
+		"anchor": "HoloTable", "toward": "HoloTable",
 		"cam": Vector3(0, 2.0, 7.0), "aim": Vector3(0, 1.2, 0),
 		"cast": [],
 		"ui_only": true,
@@ -153,6 +181,7 @@ const SHOTS := [
 var _cam: Camera3D
 var _hud: CanvasItem = null
 var _host: Node = null
+var _stage := STAGE_XZ
 
 
 func _initialize() -> void:
@@ -232,17 +261,58 @@ func _apply_size(args: Array) -> void:
 # ─────────────────────────────────────────────
 # THE KIT LIST — the original caller, unchanged.
 # ─────────────────────────────────────────────
-func _kit_shots(out_dir: String) -> void:
-	# A real level, for its WorldEnvironment and its sun. Without one the robots
-	# are lit by nothing and every screenshot is a black rectangle.
+## A REAL LEVEL FIRST, for its WorldEnvironment and its sun — without one the
+## subject is lit by nothing and every shot is a black rectangle. That is how
+## the first run of three separate passes in this file failed, which is why
+## this is one function and not six copies of the same eight lines.
+##
+## IT ALSO SETS THE STAGE HEIGHT, which is the half a path substitution misses,
+## and THE RAY IS DROPPED FROM ABOVE THE BUILDING ON PURPOSE. It lands on the
+## railhead's open upper deck at y=11.00, not on the platform floor at 1.19
+## underneath it, and that is the whole reason this pass still works.
+##
+## MEASURED, 2026-10-24, because the first repoint off the retired depot put it
+## on the platform floor and the kit line-up came back as a black rectangle
+## with five pale smears in it — the camera inside a carriage wall. The line-up
+## is the widest shot in the file: thirteen fittings at 2 m spacing is a 24 m
+## row, and _group pulls the camera 0.62 × span + 6 m back for it, so this pass
+## needs something like 25 m across and 21 m behind the stage, clear. The depot
+## had that indoors; it was an 84 m hall. The railhead's platform does not —
+## it is a train. Its roof does: a fan of sixteen rays at eye height from the
+## stage found no obstruction inside 120 m in any direction, and nothing
+## overhead inside 200 m.
+##
+## So the subject stands on the roof under open sky, which is also where
+## mock_damage.gd shoots the same bodies, under the same sun — both bases
+## instance the same Env/world_environment.tscn.
+func _open_level() -> Node:
 	var level: Node = load(LEVEL).instantiate()
 	root.add_child(level)
 	_cam = Camera3D.new()
 	_cam.fov = 42.0
 	root.add_child(_cam)
 	_cam.current = true
+	# Terrain, CSG and FuncGodot all settle a frame or two after entering the
+	# tree. A grab before that photographs a level with holes in it.
 	for _i in 30:
 		await process_frame
+	var space := root.world_3d.direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(
+			STAGE_XZ + Vector3(0, 60, 0), STAGE_XZ + Vector3(0, -40, 0))
+	var hit := space.intersect_ray(q)
+	if hit.is_empty():
+		push_warning("mockup_shots: no floor under %s in %s, so every subject is parked at y=0 and may float."
+				% [str(STAGE_XZ), LEVEL.get_file()])
+		_stage = STAGE_XZ + Vector3(0, FEET, 0)
+	else:
+		_stage = STAGE_XZ + Vector3(0, (hit["position"] as Vector3).y + FEET, 0)
+	print("mockup_shots: %s, floor at y=%.2f, subjects stage at y=%.2f" % [
+			LEVEL.get_file(), _stage.y - FEET, _stage.y])
+	return level
+
+
+func _kit_shots(out_dir: String) -> void:
+	var level: Node = await _open_level()
 
 	# One wide line-up of every fitting, then a portrait of each.
 	var kit: Array = _Parts.capsule_kit_list()
@@ -271,14 +341,7 @@ func _kit_shots(out_dir: String) -> void:
 #
 # The line-up is the one to look at first. The other two explain it.
 func _rank_shots(out_dir: String) -> void:
-	var level: Node = load(LEVEL).instantiate()
-	root.add_child(level)
-	_cam = Camera3D.new()
-	_cam.fov = 42.0
-	root.add_child(_cam)
-	_cam.current = true
-	for _i in 30:
-		await process_frame
+	var level: Node = await _open_level()
 
 	var forms: Array = _Parts.rank_list()
 	await _group(forms, out_dir + "/rank_lineup.png")
@@ -306,12 +369,12 @@ func _rank_row(forms: Array, file: String, yaw_deg: float) -> void:
 	var made: Array[Node3D] = []
 	var span := float(forms.size() - 1) * SPACING
 	for i in forms.size():
-		var at := STAGE + Vector3(-span * 0.5 + float(i) * SPACING, 0, 0)
+		var at := _stage + Vector3(-span * 0.5 + float(i) * SPACING, 0, 0)
 		var bot := _soldier((forms[i] as Array)[1], at)
 		bot.rotation.y = deg_to_rad(yaw_deg)
 		made.append(bot)
-	_cam.global_position = STAGE + Vector3(0, 1.25, -span * 0.62 - 6.8)
-	_cam.look_at(STAGE + Vector3(0, 0.05, 0), Vector3.UP)
+	_cam.global_position = _stage + Vector3(0, 1.25, -span * 0.62 - 6.8)
+	_cam.look_at(_stage + Vector3(0, 0.05, 0), Vector3.UP)
 	await _shoot(file)
 	for n in made:
 		n.free()
@@ -328,14 +391,7 @@ func _rank_row(forms: Array, file: String, yaw_deg: float) -> void:
 # whether the kit reads is to put the two side by side and see if the eye
 # picks the difference out without being told where to look.
 func _vehicle_rank_shots(out_dir: String, forms: Array = [], prefix: String = "vrank") -> void:
-	var level: Node = load(LEVEL).instantiate()
-	root.add_child(level)
-	_cam = Camera3D.new()
-	_cam.fov = 42.0
-	root.add_child(_cam)
-	_cam.current = true
-	for _i in 30:
-		await process_frame
+	var level: Node = await _open_level()
 
 	if forms.is_empty():
 		forms = _Parts.vehicle_rank_list()
@@ -350,21 +406,14 @@ func _vehicle_rank_shots(out_dir: String, forms: Array = [], prefix: String = "v
 
 ## Every hat on every frame, one close each, so seven options compare directly.
 func _vehicle_trial_shots(out_dir: String) -> void:
-	var level: Node = load(LEVEL).instantiate()
-	root.add_child(level)
-	_cam = Camera3D.new()
-	_cam.fov = 42.0
-	root.add_child(_cam)
-	_cam.current = true
-	for _i in 30:
-		await process_frame
+	var level: Node = await _open_level()
 	for row: Array in _Parts.vehicle_hat_trials():
-		var bot := _vehicle(str(row[0]), row[2], STAGE)
+		var bot := _vehicle(str(row[0]), row[2], _stage)
 		# PULLED BACK AND RAISED from _vehicle_single. That framing is cut for a
 		# vehicle with no hat on it, and a bearskin adds 1.12 m — the first run
 		# ran the crown straight out of the top of the frame.
-		_cam.global_position = STAGE + Vector3(-5.0, 2.3, -6.4)
-		_cam.look_at(STAGE + Vector3(0, 0.7, 0), Vector3.UP)
+		_cam.global_position = _stage + Vector3(-5.0, 2.3, -6.4)
+		_cam.look_at(_stage + Vector3(0, 0.7, 0), Vector3.UP)
 		if bot != null:
 			# FACING THE CAMERA, unlike the other vehicle shots. Every hat here
 			# carries its character at the FRONT — peak, brim, badge, plume —
@@ -379,13 +428,13 @@ func _vehicle_trial_shots(out_dir: String) -> void:
 func _vehicle_pair(kind: String, bare: Callable, kitted: Callable, file: String) -> void:
 	# Wider than the soldier spacing: these are 3 m long and would overlap.
 	var gap := 4.6
-	var a := _vehicle(kind, bare, STAGE + Vector3(-gap * 0.5, 0, 0))
-	var b := _vehicle(kind, kitted, STAGE + Vector3(gap * 0.5, 0, 0))
+	var a := _vehicle(kind, bare, _stage + Vector3(-gap * 0.5, 0, 0))
+	var b := _vehicle(kind, kitted, _stage + Vector3(gap * 0.5, 0, 0))
 	for n in [a, b]:
 		if n != null:
 			n.rotation.y = deg_to_rad(214.0)
-	_cam.global_position = STAGE + Vector3(0, 2.6, -9.4)
-	_cam.look_at(STAGE + Vector3(0, -0.2, 0), Vector3.UP)
+	_cam.global_position = _stage + Vector3(0, 2.6, -9.4)
+	_cam.look_at(_stage + Vector3(0, -0.2, 0), Vector3.UP)
 	await _shoot(file)
 	for n in [a, b]:
 		if n != null:
@@ -394,9 +443,9 @@ func _vehicle_pair(kind: String, bare: Callable, kitted: Callable, file: String)
 
 ## The kitted one on its own, close, from the side the kit is on.
 func _vehicle_single(kind: String, kitted: Callable, file: String) -> void:
-	var bot := _vehicle(kind, kitted, STAGE)
-	_cam.global_position = STAGE + Vector3(-3.5, 1.5, -4.6)
-	_cam.look_at(STAGE + Vector3(0, -0.1, 0), Vector3.UP)
+	var bot := _vehicle(kind, kitted, _stage)
+	_cam.global_position = _stage + Vector3(-3.5, 1.5, -4.6)
+	_cam.look_at(_stage + Vector3(0, -0.1, 0), Vector3.UP)
 	if bot != null:
 		bot.rotation.y = deg_to_rad(206.0)
 	await _shoot(file)
@@ -470,16 +519,7 @@ const PROPS := {
 
 
 func _prop_shots(out_dir: String, which: String) -> void:
-	# A REAL LEVEL FIRST, for its WorldEnvironment and its sun, exactly as
-	# _frame_shots does — without one every shot is a black rectangle.
-	var level: Node = load(LEVEL).instantiate()
-	root.add_child(level)
-	_cam = Camera3D.new()
-	_cam.fov = 42.0
-	root.add_child(_cam)
-	_cam.current = true
-	for _i in 30:
-		await process_frame
+	var level: Node = await _open_level()
 	var wanted: Array = PROPS.keys() if which == "props" else [which]
 	for id: String in wanted:
 		if not PROPS.has(id):
@@ -491,12 +531,12 @@ func _prop_shots(out_dir: String, which: String) -> void:
 func _prop_portrait(out_dir: String, id: String) -> void:
 	var prop: Node3D = (load(PROPS[id]) as PackedScene).instantiate()
 	root.add_child(prop)
-	prop.global_position = STAGE
+	prop.global_position = _stage
 	await process_frame
 	await process_frame
 	var bb := _aabb(prop, prop)
 	var size: float = maxf(bb.size.x, maxf(bb.size.y, bb.size.z))
-	var centre := STAGE + bb.position + bb.size * 0.5
+	var centre := _stage + bb.position + bb.size * 0.5
 	# The frames' own bearing, so these sit beside those shots. A core's
 	# approach face is -Z and does NOT turn to meet the camera the way a robot
 	# does, so the camera goes round to the face instead: the console is the
@@ -509,18 +549,7 @@ func _prop_portrait(out_dir: String, id: String) -> void:
 	prop.free()
 
 func _frame_shots(out_dir: String, which: String) -> void:
-	# A REAL LEVEL FIRST, for its WorldEnvironment and its sun — without one
-	# the frames are lit by nothing and every shot is a black rectangle. Same
-	# staging as _kit_shots; the first run of this pass skipped it and every
-	# shot died on a null camera.
-	var level: Node = load(LEVEL).instantiate()
-	root.add_child(level)
-	_cam = Camera3D.new()
-	_cam.fov = 42.0
-	root.add_child(_cam)
-	_cam.current = true
-	for _i in 30:
-		await process_frame
+	var level: Node = await _open_level()
 	var wanted: Array = NEW_FRAMES if which == "frames" else [which]
 	for id: String in wanted:
 		if not FRAMES.has(id):
@@ -530,7 +559,7 @@ func _frame_shots(out_dir: String, which: String) -> void:
 
 
 func _frame_portrait(out_dir: String, id: String) -> void:
-	var bot := _vehicle(id, func(_b): pass, STAGE)
+	var bot := _vehicle(id, func(_b): pass, _stage)
 	if bot == null:
 		return
 	if id in ENEMY_FRAMES:
@@ -543,7 +572,7 @@ func _frame_portrait(out_dir: String, id: String) -> void:
 	await process_frame
 	var bb := _aabb(bot, bot)
 	var size: float = maxf(bb.size.x, maxf(bb.size.y, bb.size.z))
-	var centre := STAGE + bb.position + bb.size * 0.5
+	var centre := _stage + bb.position + bb.size * 0.5
 	# The Rover framing's own bearing, kept so these sit beside the existing
 	# shots, with the distance scaled off the subject instead of assumed.
 	var dir := Vector3(-3.5, 1.5, -4.6).normalized()
@@ -682,19 +711,27 @@ func _store_shots(out_dir: String, which: String) -> void:
 	for _i in 120:
 		await process_frame
 
-	# AND TAKE THE DEPOT BACK DOWN — BUT KEEP ITS SUN. world.tscn ships with
+	# AND TAKE THE BASE BACK DOWN — BUT KEEP ITS SUN. world.tscn ships with
 	# Homebase already in it, because that is where the game starts, so adding
 	# a shot level beside it puts two levels at the same origin: the first pass
-	# came back as a photograph of the inside of a depot wall.
+	# came back as a photograph of the inside of a base wall. (`Homebase` is
+	# the railhead now; it was the depot until 2026-10-24, vault Backlog H15.)
 	#
-	# NONE OF THE FIVE SHOT LEVELS HAS A LIGHT IN IT. Checked: coastal-road,
-	# mutaha, valley_basin, pittsburgh and depot all carry zero
-	# WorldEnvironment and zero DirectionalLight3D — homebase_level is the only
-	# map in the repo that does, and it lights the whole world from there. So
-	# deleting Homebase outright turned every store shot into a dark rectangle.
-	# Its WorldEnvironment is lifted out first and kept for the rest of the run,
-	# which is also what gives SHOT_BRIEF the one time of day held across all
-	# five: there is only one sun, and every level is photographed under it.
+	# THE CLAIM THAT USED TO STAND HERE — that none of the five shot levels has
+	# a light in it and homebase_level is the only map in the repo that does —
+	# IS WRONG, and was measured so on 2026-10-24: coastal-road, mutaha,
+	# valley_basin, pittsburgh, the depot, the railhead and proving each carry
+	# EXACTLY ONE WorldEnvironment and ONE DirectionalLight3D, because they all
+	# instance the same Env/world_environment.tscn. There is one sun prefab in
+	# this project and every level wears it.
+	#
+	# The lift below is kept anyway, and it is not redundant: it is what holds
+	# the light between Homebase coming down and the first shot level going up,
+	# and it is why SHOT_BRIEF gets one time of day across all five. The cost
+	# is that each shot level then brings a second WorldEnvironment in beside
+	# this one, which Godot warns about and resolves by last-in; both are the
+	# same prefab, so the picture is right either way. Collapsing that is a
+	# tidy-up for whoever next has a reason to open this.
 	var homebase := world.get_node_or_null("Homebase")
 	if homebase != null:
 		var sun := homebase.get_node_or_null("WorldEnvironment")
@@ -759,7 +796,7 @@ func _store_shot(out_dir: String, spec: Dictionary) -> void:
 		print("  roster with ranks on it, and ranks come from a campaign that has")
 		print("  been played. This rig will not open a profile to get them: writing")
 		print("  to campaign.json is how a real save got overwritten once already.")
-		print("  Open the depot on your own campaign, press the manager key, and")
+		print("  Open the base on your own campaign, press the manager key, and")
 		print("  grab it. The frame below is the backdrop, for reference.")
 
 	await _pass(out_dir, id)
@@ -847,10 +884,10 @@ func _group(entries: Array, file: String) -> void:
 	var made: Array[Node3D] = []
 	var span := float(entries.size() - 1) * SPACING
 	for i in entries.size():
-		var at := STAGE + Vector3(-span * 0.5 + float(i) * SPACING, 0, 0)
+		var at := _stage + Vector3(-span * 0.5 + float(i) * SPACING, 0, 0)
 		made.append(_soldier((entries[i] as Array)[1], at))
-	_cam.global_position = STAGE + Vector3(0, 1.4, -span * 0.62 - 6.0)
-	_cam.look_at(STAGE + Vector3(0, 0.1, 0), Vector3.UP)
+	_cam.global_position = _stage + Vector3(0, 1.4, -span * 0.62 - 6.0)
+	_cam.look_at(_stage + Vector3(0, 0.1, 0), Vector3.UP)
 	await _shoot(file)
 	for n in made:
 		n.free()
@@ -859,9 +896,9 @@ func _group(entries: Array, file: String) -> void:
 # One soldier, close, turned three-quarter on so the fitted side is toward the
 # camera — the same angle the icons use, for the same reason.
 func _portrait(build: Callable, file: String) -> void:
-	var bot := _soldier(build, STAGE)
-	_cam.global_position = STAGE + Vector3(-2.30, 1.05, -3.80)
-	_cam.look_at(STAGE + Vector3(0, 0.05, 0), Vector3.UP)
+	var bot := _soldier(build, _stage)
+	_cam.global_position = _stage + Vector3(-2.30, 1.05, -3.80)
+	_cam.look_at(_stage + Vector3(0, 0.05, 0), Vector3.UP)
 	# TURNED BY MEASUREMENT, NOT BY GUESSWORK — but on the FLAT only. look_at to
 	# a camera that is above the robot pitches the robot forward to meet it, and
 	# the photograph comes back of a soldier falling over. Aim at the camera's

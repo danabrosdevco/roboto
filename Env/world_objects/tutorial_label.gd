@@ -59,8 +59,27 @@ const _Toast := preload("res://Character/hud/tutorial_toast.gd")
 # lesson is in the pause menu's TUTORIALS screen, and a base full of signs they
 # have already read is just noise. The one line saying so is shown once, on the
 # sign that finishes the tutorial (see mark_read) — not left standing as a sign.
-## Listed in the pause menu's TUTORIALS screen. Off for signs that are
-## directions around the base or flavour rather than lessons.
+#
+# EXCEPT THAT THERE IS NO TUTORIALS SCREEN ANY MORE. tutorial_library.gd and
+# Master._open_tutorials went on 2026-10-24 (vault Backlog H19) because no menu
+# entry opened them, and `in_library` lost its only reader with them. It is
+# DEAD DATA and it is deliberately still here, which H15 decided on the same
+# day for two reasons:
+#
+#   - removing an @export does not just stop the field being read, it empties
+#     every scene still carrying it, in silence. Five nodes in
+#     maps/appendix/homebase_level.tscn carry it (all false), and that level is
+#     TERRAIN's and is itself queued for appendix-or-delete. Dropping authored
+#     values out of somebody else's archive to tidy up a bool is the wrong
+#     trade, and the right order is always data first, field second.
+#   - the lessons are coming back: the base has had no sign content since the
+#     depot layout was rebuilt, and whoever authors them into the train will
+#     want this flag and the screen behind it.
+#
+# So: do NOT read this expecting a library to exist. Nothing lists these.
+## Was listed in the pause menu's TUTORIALS screen. NO READER since 2026-10-24
+## — kept only so the archive level's authored values survive. Off for signs
+## that are directions around the base or flavour rather than lessons.
 @export var in_library: bool = true
 ## Reading this sign finishes the tutorial: it sets completed_tutorial in the
 ## save, and from the next visit home the other signs stand down. Put it on the

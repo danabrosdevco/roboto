@@ -194,7 +194,6 @@ func _garrison(callsign: String, post: String, variance: float, roster: Array) -
 	s.spawn_tag = StringName(post)
 	s.faction = Enums.Factions.ENEMY
 	s.kit_variance = variance
-	s.count = 0
 	s.roster = _roster(roster)
 	return s
 
@@ -210,7 +209,6 @@ func _wave(callsign: String, post: String, after_kills: int, after_seconds: floa
 	s.spawn_tag = StringName(post)
 	s.faction = Enums.Factions.ENEMY
 	s.kit_variance = variance
-	s.count = 0
 	s.roster = _roster(roster)
 	# The tag still has to be set even when a count or a clock is what fires
 	# it: it is what the wave is called in the log.
